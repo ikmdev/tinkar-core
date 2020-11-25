@@ -3,7 +3,6 @@ package org.hl7.tinkar.json;
 import org.eclipse.collections.api.factory.Lists;
 import org.hl7.tinkar.binary.MarshalExceptionUnchecked;
 import org.hl7.tinkar.binary.Marshalable;
-import org.hl7.tinkar.binary.TinkarInput;
 import org.hl7.tinkar.binary.Unmarshaler;
 import org.hl7.tinkar.dto.SemanticVersionDTO;
 import org.junit.jupiter.api.Assertions;

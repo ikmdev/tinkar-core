@@ -34,9 +34,10 @@ public enum FieldDataType {
             case 5: return OBJECT_ARRAY;
             case 6: return IDENTIFIED_THING;
             case 7: return DIGRAPH;
+            default:
+                throw new UnsupportedOperationException("Can't handle token: " +
+                        token);
         }
-        throw new UnsupportedOperationException("Can't handle token: " +
-                token);
     }
 
     public static FieldDataType getFieldDataType(Object obj) {
