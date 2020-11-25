@@ -122,7 +122,7 @@ public interface Marshalable {
         return make(objectClass, TinkarInput.make(output));
     }
 
-    private static <T> T unmarshal(Class<T> objectClass, Class annotationClass,
+    private static <T> T unmarshal(Class<T> objectClass, Class<? extends Annotation> annotationClass,
                                    Object[] parameters) throws IllegalAccessException, InvocationTargetException {
         ArrayList<Method> unmarshalMethodList = new ArrayList<>();
         for (Method method: objectClass.getDeclaredMethods()) {
@@ -138,7 +138,7 @@ public interface Marshalable {
             }
         }
         if (unmarshalMethodList.isEmpty()) {
-            throw new IllegalStateException("No " + annotationClass.getSimpleName() +
+            throw new MarshalExceptionUnchecked("No " + annotationClass.getSimpleName() +
                     " method for class: " + objectClass);
         } else if (unmarshalMethodList.size() == 1) {
             Method unmarshalMethod = unmarshalMethodList.get(0);
