@@ -27,7 +27,7 @@ import java.util.StringTokenizer;
 public final class ItemList {
 
     private String sp = ",";
-    List items = new ArrayList();
+    List<String> items = new ArrayList();
 
     public ItemList() {
     }
@@ -50,7 +50,7 @@ public final class ItemList {
     }
 
     public String[] getArray() {
-        return (String[]) this.items.toArray();
+        return this.items.toArray(new String[this.items.size()]);
     }
 
     public void split(String s, String sp, List append, boolean isMultiToken) {
