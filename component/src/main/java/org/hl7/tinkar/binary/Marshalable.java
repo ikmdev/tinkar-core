@@ -90,59 +90,27 @@ public interface Marshalable {
     static <T> T makeSemanticVersion(Class<T> objectClass, TinkarInput input, ImmutableList<UUID> componentUuids,
                                      ImmutableList<UUID> definitionForSemanticUuids, ImmutableList<UUID> referencedComponentUuids) {
         try {
-            ArrayList<Method> unmarshalMethodList = new ArrayList<>();
-            for (Method method: objectClass.getDeclaredMethods()) {
-                for (Annotation annotation: method.getAnnotations()) {
-                    if (annotation instanceof SemanticVersionUnmarshaler) {
-                        if (Modifier.isStatic(method.getModifiers())) {
-                            unmarshalMethodList.add(method);
-                        } else {
-                            throw new RuntimeException("VersionUnmarshaler method for class: " + objectClass
-                                    + " is not static: " + method);
-                        }
-                    }
-                }
-            }
-            if (unmarshalMethodList.isEmpty()) {
-                throw new IllegalStateException("No VersionUnmarshaler method for class: " + objectClass);
-            } else if (unmarshalMethodList.size() == 1) {
-                Method unmarshalMethod = unmarshalMethodList.get(0);
-                return (T) unmarshalMethod.invoke(null, input, componentUuids, definitionForSemanticUuids, referencedComponentUuids);
-            }
-            throw new RuntimeException("More than one unmarshal method for class: " + objectClass
-                    + " methods: " + unmarshalMethodList);
-
+            return unmarshal(objectClass, SemanticVersionUnmarshaler.class, new Object[] { input, componentUuids, definitionForSemanticUuids, referencedComponentUuids});
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-            throw new RuntimeException(ex);
+            throw new MarshalExceptionUnchecked(ex);
         }
     }
 
     static <T> T makeVersion(Class<T> objectClass, TinkarInput input, ImmutableList<UUID> componentUuids) {
         try {
-            ArrayList<Method> unmarshalMethodList = new ArrayList<>();
-            for (Method method: objectClass.getDeclaredMethods()) {
-                for (Annotation annotation: method.getAnnotations()) {
-                    if (annotation instanceof VersionUnmarshaler) {
-                        if (Modifier.isStatic(method.getModifiers())) {
-                            unmarshalMethodList.add(method);
-                        } else {
-                            throw new RuntimeException("VersionUnmarshaler method for class: " + objectClass
-                                    + " is not static: " + method);
-                        }
-                    }
-                }
-            }
-            if (unmarshalMethodList.isEmpty()) {
-                throw new IllegalStateException("No VersionUnmarshaler method for class: " + objectClass);
-            } else if (unmarshalMethodList.size() == 1) {
-                Method unmarshalMethod = unmarshalMethodList.get(0);
-                return (T) unmarshalMethod.invoke(null, input, componentUuids);
-            }
-            throw new RuntimeException("More than one unmarshal method for class: " + objectClass
-                    + " methods: " + unmarshalMethodList);
+            return unmarshal(objectClass, VersionUnmarshaler.class, new Object[] { input, componentUuids });
 
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-            throw new RuntimeException(ex);
+            throw new MarshalExceptionUnchecked(ex);
+        }
+    }
+
+    static <T> T make(Class<T> objectClass, TinkarInput input) {
+        try {
+            return unmarshal(objectClass, Unmarshaler.class, new Object[] { input });
+
+        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+            throw new MarshalExceptionUnchecked(ex);
         }
     }
 
@@ -154,33 +122,30 @@ public interface Marshalable {
         return make(objectClass, TinkarInput.make(output));
     }
 
-    static <T> T make(Class<T> objectClass, TinkarInput input) {
-        try {
-            ArrayList<Method> unmarshalMethodList = new ArrayList<>();
-            for (Method method: objectClass.getDeclaredMethods()) {
-                for (Annotation annotation: method.getAnnotations()) {
-                    if (annotation instanceof Unmarshaler) {
-                        if (Modifier.isStatic(method.getModifiers())) {
-                            unmarshalMethodList.add(method);
-                        } else {
-                            throw new RuntimeException("Marshaler method for class: " + objectClass
-                                    + " is not static: " + method);
-                        }
+    private static <T> T unmarshal(Class<T> objectClass, Class annotationClass,
+                                   Object[] parameters) throws IllegalAccessException, InvocationTargetException {
+        ArrayList<Method> unmarshalMethodList = new ArrayList<>();
+        for (Method method: objectClass.getDeclaredMethods()) {
+            for (Annotation annotation: method.getAnnotations()) {
+                if (annotation.annotationType().equals(annotationClass)) {
+                    if (Modifier.isStatic(method.getModifiers())) {
+                        unmarshalMethodList.add(method);
+                    } else {
+                        throw new MarshalExceptionUnchecked(annotationClass.getSimpleName() + " method for class: " + objectClass
+                                + " is not static: " + method);
                     }
                 }
             }
-            if (unmarshalMethodList.isEmpty()) {
-                throw new IllegalStateException("No unmarshal method for class: " + objectClass);
-            } else if (unmarshalMethodList.size() == 1) {
-                Method unmarshalMethod = unmarshalMethodList.get(0);
-                     return (T) unmarshalMethod.invoke(null, input);
-             }
-            throw new RuntimeException("More than one unmarshal method for class: " + objectClass
-                    + " methods: " + unmarshalMethodList);
-            
-        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-            throw new RuntimeException(ex);
         }
+        if (unmarshalMethodList.isEmpty()) {
+            throw new IllegalStateException("No " + annotationClass.getSimpleName() +
+                    " method for class: " + objectClass);
+        } else if (unmarshalMethodList.size() == 1) {
+            Method unmarshalMethod = unmarshalMethodList.get(0);
+            return (T) unmarshalMethod.invoke(null, parameters);
+        }
+        throw new MarshalExceptionUnchecked("More than one unmarshal method for class: " + objectClass
+                + " methods: " + unmarshalMethodList);
     }
 
 }
