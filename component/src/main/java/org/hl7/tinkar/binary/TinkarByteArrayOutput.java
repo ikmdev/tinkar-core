@@ -24,14 +24,14 @@ import java.io.ByteArrayOutputStream;
  */
 public class TinkarByteArrayOutput extends TinkarOutput {
 
-    final ByteArrayOutputStream out;
-    private TinkarByteArrayOutput(ByteArrayOutputStream out) {
-        super(out);
-        this.out = out;
+    final ByteArrayOutputStream byteArrayOutputStream;
+    private TinkarByteArrayOutput(ByteArrayOutputStream byteArrayOutputStream) {
+        super(byteArrayOutputStream);
+        this.byteArrayOutputStream = byteArrayOutputStream;
     }
     
     public byte[] getBytes() {
-        return out.toByteArray();
+        return byteArrayOutputStream.toByteArray();
     }
    
     public static TinkarByteArrayOutput make() {
