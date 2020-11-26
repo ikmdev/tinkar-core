@@ -20,11 +20,7 @@ import java.io.Writer;
 import java.util.UUID;
 
 import org.eclipse.collections.api.list.ImmutableList;
-import org.hl7.tinkar.binary.Marshalable;
-import org.hl7.tinkar.binary.Marshaler;
-import org.hl7.tinkar.binary.TinkarInput;
-import org.hl7.tinkar.binary.TinkarOutput;
-import org.hl7.tinkar.binary.Unmarshaler;
+import org.hl7.tinkar.binary.*;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.json.ComponentFieldForJson;
 import org.hl7.tinkar.json.JSONObject;
@@ -37,7 +33,7 @@ import org.hl7.tinkar.json.JsonChronologyUnmarshaler;
  */
 public record ConceptChronologyDTO(ImmutableList<UUID> componentUuids,
                                    ImmutableList<UUID> chronologySetUuids,
-                                   ImmutableList<ConceptVersionDTO> versions)
+                                   ImmutableList<ConceptVersionDTO> conceptVersions)
         implements ChangeSetThing, JsonMarshalable, Marshalable, Concept {
 
     private static final int marshalVersion = 1;
@@ -53,16 +49,16 @@ public record ConceptChronologyDTO(ImmutableList<UUID> componentUuids,
         json.put(ComponentFieldForJson.CLASS, this.getClass().getCanonicalName());
         json.put(ComponentFieldForJson.COMPONENT_UUIDS, componentUuids);
         json.put(ComponentFieldForJson.CHRONOLOGY_SET_UUIDS, chronologySetUuids);
-        json.put(ComponentFieldForJson.VERSIONS, versions);
+        json.put(ComponentFieldForJson.CONCEPT_VERSIONS, conceptVersions);
         json.writeJSONString(writer);
     }
-    
+
     @JsonChronologyUnmarshaler
     public static ConceptChronologyDTO make(JSONObject jsonObject) {
         ImmutableList<UUID> componentUuids = jsonObject.asImmutableUuidList(ComponentFieldForJson.COMPONENT_UUIDS);
         return new ConceptChronologyDTO(componentUuids,
                         jsonObject.asImmutableUuidList(ComponentFieldForJson.CHRONOLOGY_SET_UUIDS),
-                        jsonObject.asConceptVersionList(ComponentFieldForJson.VERSIONS, componentUuids));
+                        jsonObject.asConceptVersionList(ComponentFieldForJson.CONCEPT_VERSIONS, componentUuids));
     }
 
     @Unmarshaler
@@ -78,7 +74,7 @@ public record ConceptChronologyDTO(ImmutableList<UUID> componentUuids,
                 default -> throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
             }
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new MarshalExceptionUnchecked(ex);
         }
     }
 
@@ -91,9 +87,9 @@ public record ConceptChronologyDTO(ImmutableList<UUID> componentUuids,
             out.writeUuidList(chronologySetUuids);
             // Note that the componentIds are not written redundantly
             // in writeConceptVersionList...
-            out.writeConceptVersionList(versions);
+            out.writeConceptVersionList(conceptVersions);
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new MarshalExceptionUnchecked(ex);
         }
     }
 }

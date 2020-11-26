@@ -5,6 +5,8 @@ public class ComponentFieldForJson {
     public static final String CLASS = "class";
     public static final String STAMP = "stamp";
     public static final String VERSIONS = "versions";
+    public static final String CONCEPT_VERSIONS = "conceptVersions";
+    public static final String DEFINITION_VERSIONS = "definitionVersions";
     public static final String CHRONOLOGY_SET_UUIDS = "chronologySetUuids";
     public static final String REFERENCED_COMPONENT_PURPOSE_UUIDS = "referencedComponentPurposeUuids";
     public static final String FIELD_DEFINITIONS = "fieldDefinitions";

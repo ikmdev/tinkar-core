@@ -33,8 +33,6 @@ import org.hl7.tinkar.json.JSONObject;
 import org.hl7.tinkar.json.JsonChronologyUnmarshaler;
 import org.hl7.tinkar.json.JsonMarshalable;
 
-import static org.hl7.tinkar.json.ComponentFieldForJson.*;
-
 /**
  *
  * @author kec
@@ -67,8 +65,8 @@ public record SemanticChronologyDTO(ImmutableList<UUID> componentUuids,
         final JSONObject json = new JSONObject();
         json.put(ComponentFieldForJson.CLASS, this.getClass().getCanonicalName());
         json.put(ComponentFieldForJson.COMPONENT_UUIDS, componentUuids);
-        json.put(DEFINITION_FOR_SEMANTIC_UUIDS, definitionForSemanticUuids);
-        json.put(REFERENCED_COMPONENT_UUIDS, referencedComponentUuids);
+        json.put(ComponentFieldForJson.DEFINITION_FOR_SEMANTIC_UUIDS, definitionForSemanticUuids);
+        json.put(ComponentFieldForJson.REFERENCED_COMPONENT_UUIDS, referencedComponentUuids);
         json.put(ComponentFieldForJson.VERSIONS, versions);
         json.writeJSONString(writer);
     }
@@ -76,12 +74,12 @@ public record SemanticChronologyDTO(ImmutableList<UUID> componentUuids,
     @JsonChronologyUnmarshaler
     public static SemanticChronologyDTO make(JSONObject jsonObject) {
         ImmutableList<UUID> componentUuids = jsonObject.asImmutableUuidList(ComponentFieldForJson.COMPONENT_UUIDS);
-        ImmutableList<UUID> definitionForSemanticUuids = jsonObject.asImmutableUuidList(DEFINITION_FOR_SEMANTIC_UUIDS);
-        ImmutableList<UUID> referencedComponentUuids = jsonObject.asImmutableUuidList(REFERENCED_COMPONENT_UUIDS);
+        ImmutableList<UUID> definitionForSemanticUuids = jsonObject.asImmutableUuidList(ComponentFieldForJson.DEFINITION_FOR_SEMANTIC_UUIDS);
+        ImmutableList<UUID> referencedComponentUuids = jsonObject.asImmutableUuidList(ComponentFieldForJson.REFERENCED_COMPONENT_UUIDS);
         return new SemanticChronologyDTO(componentUuids,
                 definitionForSemanticUuids,
                 referencedComponentUuids,
-                        jsonObject.asSemanticVersionList(VERSIONS,
+                        jsonObject.asSemanticVersionList(ComponentFieldForJson.VERSIONS,
                                 componentUuids,
                                 definitionForSemanticUuids,
                                 referencedComponentUuids)

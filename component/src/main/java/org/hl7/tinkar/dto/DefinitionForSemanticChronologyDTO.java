@@ -37,7 +37,7 @@ import org.hl7.tinkar.json.JsonChronologyUnmarshaler;
  */
 public record DefinitionForSemanticChronologyDTO(ImmutableList<UUID> componentUuids,
                                                  ImmutableList<UUID> chronologySetUuids,
-                                                 ImmutableList<DefinitionForSemanticVersionDTO> versions)
+                                                 ImmutableList<DefinitionForSemanticVersionDTO> definitionVersions)
         implements DefinitionForSemantic, ChangeSetThing, JsonMarshalable, Marshalable {
 
     private static final int marshalVersion = 1;
@@ -53,7 +53,7 @@ public record DefinitionForSemanticChronologyDTO(ImmutableList<UUID> componentUu
         json.put(ComponentFieldForJson.CLASS, this.getClass().getCanonicalName());
         json.put(ComponentFieldForJson.COMPONENT_UUIDS, componentUuids);
         json.put(ComponentFieldForJson.CHRONOLOGY_SET_UUIDS, chronologySetUuids);
-        json.put(ComponentFieldForJson.VERSIONS, versions);
+        json.put(ComponentFieldForJson.DEFINITION_VERSIONS, definitionVersions);
         json.writeJSONString(writer);
     }
     
@@ -62,7 +62,7 @@ public record DefinitionForSemanticChronologyDTO(ImmutableList<UUID> componentUu
         ImmutableList<UUID> componentUuids = jsonObject.asImmutableUuidList(ComponentFieldForJson.COMPONENT_UUIDS);
         return new DefinitionForSemanticChronologyDTO(componentUuids,
                         jsonObject.asImmutableUuidList(ComponentFieldForJson.CHRONOLOGY_SET_UUIDS),
-                        jsonObject.asDefinitionForSemanticVersionList(ComponentFieldForJson.VERSIONS, componentUuids));
+                        jsonObject.asDefinitionForSemanticVersionList(ComponentFieldForJson.DEFINITION_VERSIONS, componentUuids));
     }
 
     @Unmarshaler
@@ -89,7 +89,7 @@ public record DefinitionForSemanticChronologyDTO(ImmutableList<UUID> componentUu
             out.writeInt(marshalVersion);
             out.writeUuidList(componentUuids);
             out.writeUuidList(chronologySetUuids);
-            out.writeDefinitionForSemanticVersionList(versions);
+            out.writeDefinitionForSemanticVersionList(definitionVersions);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
