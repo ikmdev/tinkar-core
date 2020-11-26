@@ -22,6 +22,7 @@ import java.util.UUID;
 
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.hl7.tinkar.binary.MarshalExceptionUnchecked;
 import org.hl7.tinkar.binary.Marshalable;
 import org.hl7.tinkar.binary.TinkarByteArrayOutput;
 import org.hl7.tinkar.binary.TinkarInput;
@@ -200,6 +201,8 @@ public class ChangeSetTest {
         StampDTO newStamp = JsonMarshalable.make(StampDTO.class, component.toJsonString());
         assertEquals(component, newStamp);
 
+        assertThrows(MarshalExceptionUnchecked.class, () -> JsonMarshalable.make(StampDTO.class, "not a good string..."));
+
         StampDTO newerComponent = Marshalable.make(StampDTO.class, component.marshal());
         assertEquals(component, newerComponent);
 
@@ -270,6 +273,9 @@ public class ChangeSetTest {
 
         ConceptVersionDTO newComponent = JsonMarshalable.makeVersion(ConceptVersionDTO.class, component.toJsonString(), componentUuidList);
         assertEquals(component, newComponent);
+
+        assertThrows(MarshalExceptionUnchecked.class, () -> JsonMarshalable.makeVersion(ConceptVersionDTO.class, "not a good string...",
+                componentUuidList));
 
         ConceptVersionDTO newerComponent = Marshalable.makeVersion(ConceptVersionDTO.class, component.marshal(), componentUuidList);
         assertEquals(component, newerComponent);
@@ -364,7 +370,10 @@ public class ChangeSetTest {
         
         SemanticVersionDTO newComponent = JsonMarshalable.makeSemanticVersion(SemanticVersionDTO.class, component.toJsonString(),
                 componentUuids, definitionForSemanticUuids, referencedComponentUuids);
-        assertEquals(component, newComponent); 
+        assertEquals(component, newComponent);
+
+        assertThrows(MarshalExceptionUnchecked.class, () -> JsonMarshalable.makeSemanticVersion(SemanticVersionDTO.class, "not a good string...",
+                componentUuids, definitionForSemanticUuids, referencedComponentUuids));
         
         SemanticVersionDTO newerComponent = Marshalable.makeSemanticVersion(SemanticVersionDTO.class, component.marshal().toInput(),
                 componentUuids, definitionForSemanticUuids, referencedComponentUuids);

@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import org.eclipse.collections.api.list.ImmutableList;
+import org.hl7.tinkar.binary.MarshalExceptionUnchecked;
+import org.hl7.tinkar.binary.Marshalable;
 import org.hl7.tinkar.json.parser.ParseException;
 
 /**
@@ -67,31 +69,12 @@ public interface JsonMarshalable {
                                      ImmutableList<UUID> definitionForSemanticUuids, ImmutableList<UUID> referencedComponentUuids) {
         try {
             JSONObject jsonObject = (JSONObject) JSONValue.parse(makerString);
-            ArrayList<Method> unmarshalMethodList = new ArrayList<>();
-            for (Method method: objectClass.getDeclaredMethods()) {
-                for (Annotation annotation: method.getAnnotations()) {
-                    if (annotation instanceof JsonSemanticVersionUnmarshaler) {
-                        if (Modifier.isStatic(method.getModifiers())) {
-                            unmarshalMethodList.add(method);
-                        } else {
-                            throw new RuntimeException("Marshaler method for class: " + objectClass
-                                    + " is not static: " + method);
-                        }
-                    }
-                }
-            }
-            if (unmarshalMethodList.isEmpty()) {
-                throw new IllegalStateException("No unmarshal method for class: " + objectClass);
-            } else if (unmarshalMethodList.size() == 1) {
-                Method unmarshalMethod = unmarshalMethodList.get(0);
-                return (T) unmarshalMethod.invoke(null, jsonObject, componentUuidList,
-                        definitionForSemanticUuids, referencedComponentUuids);
-            }
-            throw new RuntimeException("More than one unmarshal method for class: " + objectClass
-                    + " methods: " + unmarshalMethodList);
+            return Marshalable.unmarshal(objectClass, JsonSemanticVersionUnmarshaler.class,
+                    new Object[]{ jsonObject, componentUuidList,
+                            definitionForSemanticUuids, referencedComponentUuids});
 
         } catch (ParseException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-            throw new RuntimeException(ex);
+            throw new MarshalExceptionUnchecked(ex);
         }
     }
 
@@ -99,61 +82,22 @@ public interface JsonMarshalable {
     static <T> T makeVersion(Class<T> objectClass, String makerString, ImmutableList<UUID> componentUuidList ) {
         try {
             JSONObject jsonObject = (JSONObject) JSONValue.parse(makerString);
-            ArrayList<Method> unmarshalMethodList = new ArrayList<>();
-            for (Method method: objectClass.getDeclaredMethods()) {
-                for (Annotation annotation: method.getAnnotations()) {
-                    if (annotation instanceof JsonVersionUnmarshaler) {
-                        if (Modifier.isStatic(method.getModifiers())) {
-                            unmarshalMethodList.add(method);
-                        } else {
-                            throw new RuntimeException("Marshaler method for class: " + objectClass
-                                    + " is not static: " + method);
-                        }
-                    }
-                }
-            }
-            if (unmarshalMethodList.isEmpty()) {
-                throw new IllegalStateException("No unmarshal method for class: " + objectClass);
-            } else if (unmarshalMethodList.size() == 1) {
-                Method unmarshalMethod = unmarshalMethodList.get(0);
-                return (T) unmarshalMethod.invoke(null, jsonObject, componentUuidList);
-            }
-            throw new RuntimeException("More than one unmarshal method for class: " + objectClass
-                    + " methods: " + unmarshalMethodList);
+            return Marshalable.unmarshal(objectClass, JsonVersionUnmarshaler.class,
+                    new Object[]{ jsonObject, componentUuidList });
 
         } catch (ParseException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-            throw new RuntimeException(ex);
+            throw new MarshalExceptionUnchecked(ex);
         }
     }
 
     static <T> T make(Class<T> objectClass, String makerString) {
         try {
             JSONObject jsonObject = (JSONObject) JSONValue.parse(makerString);
-            ArrayList<Method> unmarshalMethodList = new ArrayList<>();
-            for (Method method: objectClass.getDeclaredMethods()) {
-                for (Annotation annotation: method.getAnnotations()) {
-                    if (annotation instanceof JsonChronologyUnmarshaler) {
-                        if (Modifier.isStatic(method.getModifiers())) {
-                            unmarshalMethodList.add(method);
-                        } else {
-                            throw new RuntimeException("Marshaler method for class: " + objectClass
-                                    + " is not static: " + method);
-                        }
-                    }
-                }
-            }
-            if (unmarshalMethodList.isEmpty()) {
-                throw new IllegalStateException("No unmarshal method for class: " + objectClass);
-            } else if (unmarshalMethodList.size() == 1) {
-                Method unmarshalMethod = unmarshalMethodList.get(0);
-                     return (T) unmarshalMethod.invoke(null, jsonObject);
-             }
-            throw new RuntimeException("More than one unmarshal method for class: " + objectClass
-                    + " methods: " + unmarshalMethodList);
-            
+            return Marshalable.unmarshal(objectClass, JsonChronologyUnmarshaler.class,
+                    new Object[]{ jsonObject });
         } catch (ParseException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-            throw new RuntimeException(ex);
+            throw new MarshalExceptionUnchecked(ex);
         }
     }
-        
+
 }

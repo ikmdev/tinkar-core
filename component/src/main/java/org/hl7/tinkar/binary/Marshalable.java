@@ -122,8 +122,21 @@ public interface Marshalable {
         return make(objectClass, TinkarInput.make(output));
     }
 
-    private static <T> T unmarshal(Class<T> objectClass, Class<? extends Annotation> annotationClass,
+    static <T> T unmarshal(Class<T> objectClass, Class<? extends Annotation> annotationClass,
                                    Object[] parameters) throws IllegalAccessException, InvocationTargetException {
+        ArrayList<Method> unmarshalMethodList = getUnmarshalMethods(objectClass, annotationClass);
+        if (unmarshalMethodList.isEmpty()) {
+            throw new MarshalExceptionUnchecked("No " + annotationClass.getSimpleName() +
+                    " method for class: " + objectClass);
+        } else if (unmarshalMethodList.size() == 1) {
+            Method unmarshalMethod = unmarshalMethodList.get(0);
+            return (T) unmarshalMethod.invoke(null, parameters);
+        }
+        throw new MarshalExceptionUnchecked("More than one unmarshal method for class: " + objectClass
+                + " methods: " + unmarshalMethodList);
+    }
+
+    static <T> ArrayList<Method> getUnmarshalMethods(Class<T> objectClass, Class<? extends Annotation> annotationClass) {
         ArrayList<Method> unmarshalMethodList = new ArrayList<>();
         for (Method method: objectClass.getDeclaredMethods()) {
             for (Annotation annotation: method.getAnnotations()) {
@@ -137,15 +150,7 @@ public interface Marshalable {
                 }
             }
         }
-        if (unmarshalMethodList.isEmpty()) {
-            throw new MarshalExceptionUnchecked("No " + annotationClass.getSimpleName() +
-                    " method for class: " + objectClass);
-        } else if (unmarshalMethodList.size() == 1) {
-            Method unmarshalMethod = unmarshalMethodList.get(0);
-            return (T) unmarshalMethod.invoke(null, parameters);
-        }
-        throw new MarshalExceptionUnchecked("More than one unmarshal method for class: " + objectClass
-                + " methods: " + unmarshalMethodList);
+        return unmarshalMethodList;
     }
 
 }
