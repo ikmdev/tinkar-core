@@ -22,9 +22,13 @@ import java.util.UUID;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.binary.*;
 import org.hl7.tinkar.component.DefinitionForSemantic;
+import org.hl7.tinkar.json.ComponentFieldForJson;
 import org.hl7.tinkar.json.JSONObject;
 import org.hl7.tinkar.json.JsonMarshalable;
 import org.hl7.tinkar.json.JsonVersionUnmarshaler;
+
+import static org.hl7.tinkar.json.ComponentFieldForJson.FIELD_DEFINITIONS;
+import static org.hl7.tinkar.json.ComponentFieldForJson.REFERENCED_COMPONENT_PURPOSE_UUIDS;
 
 /**
  *
@@ -45,18 +49,18 @@ public record DefinitionForSemanticVersionDTO(ImmutableList<UUID> componentUuids
     @Override
     public void jsonMarshal(Writer writer) {
         final JSONObject json = new JSONObject();
-        json.put(STAMP, stamp);
-        json.put("referencedComponentPurposeUuids", referencedComponentPurposeUuids);
-        json.put("fieldDefinitions", fieldDefinitions);
+        json.put(ComponentFieldForJson.STAMP, stamp);
+        json.put(REFERENCED_COMPONENT_PURPOSE_UUIDS, referencedComponentPurposeUuids);
+        json.put(FIELD_DEFINITIONS, fieldDefinitions);
         json.writeJSONString(writer);
     }
 
     @JsonVersionUnmarshaler
     public static DefinitionForSemanticVersionDTO make(JSONObject jsonObject, ImmutableList<UUID> componentUuids) {
         return new DefinitionForSemanticVersionDTO(componentUuids,
-                StampDTO.make((JSONObject) jsonObject.get(STAMP)),
-                jsonObject.asImmutableUuidList("referencedComponentPurposeUuids"),
-                jsonObject.asFieldDefinitionList("fieldDefinitions"));
+                StampDTO.make((JSONObject) jsonObject.get(ComponentFieldForJson.STAMP)),
+                jsonObject.asImmutableUuidList(REFERENCED_COMPONENT_PURPOSE_UUIDS),
+                jsonObject.asFieldDefinitionList(FIELD_DEFINITIONS));
     }
 
     @VersionUnmarshaler

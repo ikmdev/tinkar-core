@@ -24,10 +24,9 @@ import org.hl7.tinkar.binary.*;
 import org.hl7.tinkar.component.DefinitionForSemantic;
 import org.hl7.tinkar.component.IdentifiedThing;
 import org.hl7.tinkar.component.Semantic;
-import org.hl7.tinkar.json.JSONObject;
-import org.hl7.tinkar.json.JsonMarshalable;
-import org.hl7.tinkar.json.JsonSemanticVersionUnmarshaler;
-import org.hl7.tinkar.json.JsonVersionUnmarshaler;
+import org.hl7.tinkar.json.*;
+
+import static org.hl7.tinkar.json.ComponentFieldForJson.FIELDS;
 
 /**
  *
@@ -59,8 +58,8 @@ public record SemanticVersionDTO(ImmutableList<UUID> componentUuids,
     @Override
     public void jsonMarshal(Writer writer) {
         final JSONObject json = new JSONObject();
-        json.put(STAMP, stamp);
-        json.put("fields", fields);
+        json.put(ComponentFieldForJson.STAMP, stamp);
+        json.put(FIELDS, fields);
         json.writeJSONString(writer);
     }
 
@@ -69,12 +68,12 @@ public record SemanticVersionDTO(ImmutableList<UUID> componentUuids,
                                           ImmutableList<UUID> componentUuids,
                                           ImmutableList<UUID> definitionForSemanticUuids,
                                           ImmutableList<UUID> referencedComponentUuids) {
-        JSONObject jsonStampObject = (JSONObject) jsonObject.get(STAMP);
+        JSONObject jsonStampObject = (JSONObject) jsonObject.get(ComponentFieldForJson.STAMP);
         return new SemanticVersionDTO(componentUuids,
                 definitionForSemanticUuids,
                 referencedComponentUuids,
                 StampDTO.make(jsonStampObject),
-                jsonObject.asImmutableObjectList("fields"));
+                jsonObject.asImmutableObjectList(FIELDS));
     }
 
     @SemanticVersionUnmarshaler

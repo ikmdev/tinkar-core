@@ -27,9 +27,12 @@ import org.hl7.tinkar.binary.TinkarOutput;
 import org.hl7.tinkar.binary.Unmarshaler;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.component.Stamp;
+import org.hl7.tinkar.json.ComponentFieldForJson;
 import org.hl7.tinkar.json.JSONObject;
 import org.hl7.tinkar.json.JsonMarshalable;
 import org.hl7.tinkar.json.JsonChronologyUnmarshaler;
+
+import static org.hl7.tinkar.json.ComponentFieldForJson.*;
 
 public record StampDTO(ImmutableList<UUID> statusUuids,
                        Instant time,
@@ -68,21 +71,21 @@ public record StampDTO(ImmutableList<UUID> statusUuids,
     @Override
     public void jsonMarshal(Writer writer) {
         final JSONObject json = new JSONObject();
-        json.put("statusUuids", statusUuids);
-        json.put("time", time);
-        json.put("authorUuids", authorUuids);
-        json.put("moduleUuids", moduleUuids);
-        json.put("pathUuids", pathUuids);
+        json.put(STATUS_UUIDS, statusUuids);
+        json.put(ComponentFieldForJson.TIME, time);
+        json.put(ComponentFieldForJson.AUTHOR_UUIDS, authorUuids);
+        json.put(ComponentFieldForJson.MODULE_UUIDS, moduleUuids);
+        json.put(ComponentFieldForJson.PATH_UUIDS, pathUuids);
         json.writeJSONString(writer);
     }
 
     @JsonChronologyUnmarshaler
     public static StampDTO make(JSONObject jsonObject) {
-        return new StampDTO(jsonObject.asImmutableUuidList("statusUuids"),
-                jsonObject.asInstant("time"),
-                jsonObject.asImmutableUuidList("authorUuids"),
-                jsonObject.asImmutableUuidList("moduleUuids"),
-                jsonObject.asImmutableUuidList("pathUuids"));
+        return new StampDTO(jsonObject.asImmutableUuidList(STATUS_UUIDS),
+                jsonObject.asInstant(TIME),
+                jsonObject.asImmutableUuidList(AUTHOR_UUIDS),
+                jsonObject.asImmutableUuidList(MODULE_UUIDS),
+                jsonObject.asImmutableUuidList(PATH_UUIDS));
     }
 
     @Unmarshaler

@@ -20,9 +20,4 @@ package org.hl7.tinkar.dto;
  * @author kec
  */
 public interface ChangeSetThing  {
-    String COMPONENT_UUIDS = "componentUuids";
-    String CLASS = "class";
-    String STAMP = "stamp";
-    String VERSIONS = "versions";
-    String CHRONOLOGY_SET_UUIDS = "chronologySetUuids";
 }

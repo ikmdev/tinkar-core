@@ -24,6 +24,7 @@ import org.hl7.tinkar.binary.TinkarOutput;
 import org.hl7.tinkar.binary.Unmarshaler;
 import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.component.StampComment;
+import org.hl7.tinkar.json.ComponentFieldForJson;
 import org.hl7.tinkar.json.JSONObject;
 import org.hl7.tinkar.json.JsonChronologyUnmarshaler;
 import org.hl7.tinkar.json.JsonMarshalable;
@@ -50,17 +51,17 @@ public record StampCommentDTO(StampDTO stamp, String comment)
     @Override
     public void jsonMarshal(Writer writer)  {
         final JSONObject json = new JSONObject();
-        json.put(CLASS, this.getClass().getCanonicalName());
-        json.put(STAMP, stamp);
-        json.put("comment", comment);
+        json.put(ComponentFieldForJson.CLASS, this.getClass().getCanonicalName());
+        json.put(ComponentFieldForJson.STAMP, stamp);
+        json.put(ComponentFieldForJson.COMMENT, comment);
         json.writeJSONString(writer);
     }
 
     @JsonChronologyUnmarshaler
     public static StampCommentDTO make(JSONObject jsonObject) {
         return new StampCommentDTO(
-                StampDTO.make((JSONObject) jsonObject.get(STAMP)),
-                (String) jsonObject.get("comment"));
+                StampDTO.make((JSONObject) jsonObject.get(ComponentFieldForJson.STAMP)),
+                (String) jsonObject.get(ComponentFieldForJson.COMMENT));
     }
 
     @Unmarshaler

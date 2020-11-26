@@ -28,9 +28,12 @@ import org.hl7.tinkar.binary.Unmarshaler;
 import org.hl7.tinkar.component.DefinitionForSemantic;
 import org.hl7.tinkar.component.IdentifiedThing;
 import org.hl7.tinkar.component.Semantic;
+import org.hl7.tinkar.json.ComponentFieldForJson;
 import org.hl7.tinkar.json.JSONObject;
 import org.hl7.tinkar.json.JsonChronologyUnmarshaler;
 import org.hl7.tinkar.json.JsonMarshalable;
+
+import static org.hl7.tinkar.json.ComponentFieldForJson.*;
 
 /**
  *
@@ -39,7 +42,7 @@ import org.hl7.tinkar.json.JsonMarshalable;
 public record SemanticChronologyDTO(ImmutableList<UUID> componentUuids,
                                     ImmutableList<UUID> definitionForSemanticUuids,
                                     ImmutableList<UUID> referencedComponentUuids,
-                                    ImmutableList<SemanticVersionDTO> semanticVersions)
+                                    ImmutableList<SemanticVersionDTO> versions)
         implements Semantic, ChangeSetThing, JsonMarshalable, Marshalable {
 
     private static final int marshalVersion = 1;
@@ -62,23 +65,23 @@ public record SemanticChronologyDTO(ImmutableList<UUID> componentUuids,
     @Override
     public void jsonMarshal(Writer writer) {
         final JSONObject json = new JSONObject();
-        json.put(CLASS, this.getClass().getCanonicalName());
-        json.put("componentUuids", componentUuids);
-        json.put("definitionForSemanticUuids", definitionForSemanticUuids);
-        json.put("referencedComponentUuids", referencedComponentUuids);
-        json.put("semanticVersions", semanticVersions);
+        json.put(ComponentFieldForJson.CLASS, this.getClass().getCanonicalName());
+        json.put(ComponentFieldForJson.COMPONENT_UUIDS, componentUuids);
+        json.put(DEFINITION_FOR_SEMANTIC_UUIDS, definitionForSemanticUuids);
+        json.put(REFERENCED_COMPONENT_UUIDS, referencedComponentUuids);
+        json.put(ComponentFieldForJson.VERSIONS, versions);
         json.writeJSONString(writer);
     }
     
     @JsonChronologyUnmarshaler
     public static SemanticChronologyDTO make(JSONObject jsonObject) {
-        ImmutableList<UUID> componentUuids = jsonObject.asImmutableUuidList("componentUuids");
-        ImmutableList<UUID> definitionForSemanticUuids = jsonObject.asImmutableUuidList("definitionForSemanticUuids");
-        ImmutableList<UUID> referencedComponentUuids = jsonObject.asImmutableUuidList("referencedComponentUuids");
+        ImmutableList<UUID> componentUuids = jsonObject.asImmutableUuidList(ComponentFieldForJson.COMPONENT_UUIDS);
+        ImmutableList<UUID> definitionForSemanticUuids = jsonObject.asImmutableUuidList(DEFINITION_FOR_SEMANTIC_UUIDS);
+        ImmutableList<UUID> referencedComponentUuids = jsonObject.asImmutableUuidList(REFERENCED_COMPONENT_UUIDS);
         return new SemanticChronologyDTO(componentUuids,
                 definitionForSemanticUuids,
                 referencedComponentUuids,
-                        jsonObject.asSemanticVersionList("semanticVersions",
+                        jsonObject.asSemanticVersionList(VERSIONS,
                                 componentUuids,
                                 definitionForSemanticUuids,
                                 referencedComponentUuids)
@@ -113,7 +116,7 @@ public record SemanticChronologyDTO(ImmutableList<UUID> componentUuids,
             out.writeUuidList(componentUuids);
             out.writeUuidList(definitionForSemanticUuids);
             out.writeUuidList(referencedComponentUuids);
-            out.writeSemanticVersionList(semanticVersions);
+            out.writeSemanticVersionList(versions);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }

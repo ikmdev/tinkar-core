@@ -22,6 +22,7 @@ import java.util.UUID;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.binary.*;
 import org.hl7.tinkar.component.Concept;
+import org.hl7.tinkar.json.ComponentFieldForJson;
 import org.hl7.tinkar.json.JSONObject;
 import org.hl7.tinkar.json.JsonMarshalable;
 import org.hl7.tinkar.json.JsonVersionUnmarshaler;
@@ -40,7 +41,7 @@ public record ConceptVersionDTO(ImmutableList<UUID> componentUuids, StampDTO sta
     @Override
     public void jsonMarshal(Writer writer) {
         final JSONObject json = new JSONObject();
-        json.put(STAMP, stamp);
+        json.put(ComponentFieldForJson.STAMP, stamp);
         json.writeJSONString(writer);
     }
 
@@ -48,7 +49,7 @@ public record ConceptVersionDTO(ImmutableList<UUID> componentUuids, StampDTO sta
     public static ConceptVersionDTO make(JSONObject jsonObject, ImmutableList<UUID> componentUuids) {
         return new ConceptVersionDTO(
                 componentUuids,
-                StampDTO.make((JSONObject) jsonObject.get(STAMP)));
+                StampDTO.make((JSONObject) jsonObject.get(ComponentFieldForJson.STAMP)));
     }
 
     @VersionUnmarshaler

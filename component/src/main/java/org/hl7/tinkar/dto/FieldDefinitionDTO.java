@@ -25,6 +25,7 @@ import org.hl7.tinkar.binary.Marshaler;
 import org.hl7.tinkar.binary.TinkarInput;
 import org.hl7.tinkar.binary.TinkarOutput;
 import org.hl7.tinkar.binary.Unmarshaler;
+import org.hl7.tinkar.json.ComponentFieldForJson;
 import org.hl7.tinkar.json.JSONObject;
 import org.hl7.tinkar.json.JsonMarshalable;
 import org.hl7.tinkar.json.JsonChronologyUnmarshaler;
@@ -37,9 +38,9 @@ public record FieldDefinitionDTO(ImmutableList<UUID> dataTypeUuids,
     @Override
     public void jsonMarshal(Writer writer) {
         final JSONObject json = new JSONObject();
-        json.put(CLASS, this.getClass().getCanonicalName());
-        json.put("dataTypeUuids", dataTypeUuids);
-        json.put("purposeUuids", purposeUuids);
+        json.put(ComponentFieldForJson.CLASS, this.getClass().getCanonicalName());
+        json.put(ComponentFieldForJson.DATATYPE_UUIDS, dataTypeUuids);
+        json.put(ComponentFieldForJson.PURPOSE_UUIDS, purposeUuids);
         json.writeJSONString(writer);
     }
 

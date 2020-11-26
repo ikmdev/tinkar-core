@@ -26,6 +26,7 @@ import org.hl7.tinkar.binary.TinkarInput;
 import org.hl7.tinkar.binary.TinkarOutput;
 import org.hl7.tinkar.binary.Unmarshaler;
 import org.hl7.tinkar.component.DefinitionForSemantic;
+import org.hl7.tinkar.json.ComponentFieldForJson;
 import org.hl7.tinkar.json.JSONObject;
 import org.hl7.tinkar.json.JsonMarshalable;
 import org.hl7.tinkar.json.JsonChronologyUnmarshaler;
@@ -49,19 +50,19 @@ public record DefinitionForSemanticChronologyDTO(ImmutableList<UUID> componentUu
     @Override
     public void jsonMarshal(Writer writer) {
         final JSONObject json = new JSONObject();
-        json.put(CLASS, this.getClass().getCanonicalName());
-        json.put(COMPONENT_UUIDS, componentUuids);
-        json.put(CHRONOLOGY_SET_UUIDS, chronologySetUuids);
-        json.put(VERSIONS, versions);
+        json.put(ComponentFieldForJson.CLASS, this.getClass().getCanonicalName());
+        json.put(ComponentFieldForJson.COMPONENT_UUIDS, componentUuids);
+        json.put(ComponentFieldForJson.CHRONOLOGY_SET_UUIDS, chronologySetUuids);
+        json.put(ComponentFieldForJson.VERSIONS, versions);
         json.writeJSONString(writer);
     }
     
     @JsonChronologyUnmarshaler
     public static DefinitionForSemanticChronologyDTO make(JSONObject jsonObject) {
-        ImmutableList<UUID> componentUuids = jsonObject.asImmutableUuidList(COMPONENT_UUIDS);
+        ImmutableList<UUID> componentUuids = jsonObject.asImmutableUuidList(ComponentFieldForJson.COMPONENT_UUIDS);
         return new DefinitionForSemanticChronologyDTO(componentUuids,
-                        jsonObject.asImmutableUuidList(CHRONOLOGY_SET_UUIDS),
-                        jsonObject.asDefinitionForSemanticVersionList(VERSIONS, componentUuids));
+                        jsonObject.asImmutableUuidList(ComponentFieldForJson.CHRONOLOGY_SET_UUIDS),
+                        jsonObject.asDefinitionForSemanticVersionList(ComponentFieldForJson.VERSIONS, componentUuids));
     }
 
     @Unmarshaler
