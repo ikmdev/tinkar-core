@@ -231,18 +231,18 @@ public class Test {
             }
 
             @Override
-            public void startJSON() throws ParseException, IOException {
+            public void startJSON() throws ParseException {
                 found = false;
                 end = false;
             }
 
             @Override
-            public void endJSON() throws ParseException, IOException {
+            public void endJSON() throws ParseException {
                 end = true;
             }
 
             @Override
-            public boolean primitive(Object value) throws ParseException, IOException {
+            public boolean primitive(Object value) throws ParseException {
                 if (key != null) {
                     if (key.equals(matchKey)) {
                         found = true;
@@ -255,33 +255,33 @@ public class Test {
             }
 
             @Override
-            public boolean startArray() throws ParseException, IOException {
+            public boolean startArray() throws ParseException {
                 return true;
             }
 
             @Override
-            public boolean startObject() throws ParseException, IOException {
+            public boolean startObject() throws ParseException {
                 return true;
             }
 
             @Override
-            public boolean startObjectEntry(String key) throws ParseException, IOException {
+            public boolean startObjectEntry(String key) throws ParseException {
                 this.key = key;
                 return true;
             }
 
             @Override
-            public boolean endArray() throws ParseException, IOException {
+            public boolean endArray() throws ParseException {
                 return false;
             }
 
             @Override
-            public boolean endObject() throws ParseException, IOException {
+            public boolean endObject() throws ParseException {
                 return true;
             }
 
             @Override
-            public boolean endObjectEntry() throws ParseException, IOException {
+            public boolean endObjectEntry() throws ParseException {
                 return true;
             }
         }

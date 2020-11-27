@@ -65,8 +65,6 @@ public class YylexTest {
             assertEquals(ParseException.ERROR_UNEXPECTED_CHAR, e.getErrorType());
             assertEquals(0, e.getPosition());
             assertEquals('\b', e.getUnexpectedObject());
-        } catch (IOException ie) {
-            throw ie;
         }
         assertTrue(err != null);
 
@@ -84,8 +82,6 @@ public class YylexTest {
             assertEquals(ParseException.ERROR_UNEXPECTED_CHAR, e.getErrorType());
             assertEquals('a', e.getUnexpectedObject());
             assertEquals(1, e.getPosition());
-        } catch (IOException ie) {
-            throw ie;
         }
         assertTrue(err != null);
     }
