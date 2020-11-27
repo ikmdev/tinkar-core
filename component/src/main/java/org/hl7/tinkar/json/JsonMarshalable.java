@@ -15,19 +15,15 @@
  */
 package org.hl7.tinkar.json;
 
-import java.io.StringWriter;
-import java.io.Writer;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.UUID;
-
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.binary.MarshalExceptionUnchecked;
 import org.hl7.tinkar.binary.Marshalable;
 import org.hl7.tinkar.json.parser.ParseException;
+
+import java.io.StringWriter;
+import java.io.Writer;
+import java.lang.reflect.InvocationTargetException;
+import java.util.UUID;
 
 /**
  *

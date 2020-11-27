@@ -154,12 +154,9 @@ public class UuidT5Generator {
       final byte[] rawBytes = new byte[16];
 
       for (int i = 0, j = 0; i < 36; ++j) {
+
          // Need to bypass hyphens:
-         switch (i) {
-         case 8:
-         case 13:
-         case 18:
-         case 23:
+         if (i == 8 || i == 13 || i == 18 || i == 23) {
             ++i;
          }
 
