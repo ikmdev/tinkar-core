@@ -45,7 +45,7 @@ public class TinkarInput extends DataInputStream {
             }
             return array;
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
     
@@ -53,7 +53,7 @@ public class TinkarInput extends DataInputStream {
         try {
             return Instant.ofEpochSecond(readLong(), readInt());
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
     
@@ -76,7 +76,7 @@ public class TinkarInput extends DataInputStream {
             }
             return Lists.immutable.of(array);
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
     
@@ -90,7 +90,7 @@ public class TinkarInput extends DataInputStream {
             }
             return Lists.immutable.of(array);
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 
@@ -103,7 +103,7 @@ public class TinkarInput extends DataInputStream {
             }
             return Lists.immutable.of(array);
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 
@@ -119,7 +119,7 @@ public class TinkarInput extends DataInputStream {
             }
             return Lists.immutable.of(array);
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 
@@ -136,47 +136,42 @@ public class TinkarInput extends DataInputStream {
             }
             return array;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 
     private void readObject(Object[] array, int i)  {
         try {
             byte token = readByte();
-            switch (FieldDataType.fromToken(token)) {
-                case STRING -> {
-                    array[i] = readUTF();
-                }
-                case FLOAT -> {
-                    array[i] = readFloat();
-                }
-                case BOOLEAN -> {
-                    array[i] = readBoolean();
-                }
-                case BYTE_ARRAY -> {
-                    int size = readInt();
-                    array[i] = readNBytes(size);
-                }
-                case IDENTIFIED_THING -> {
-                    array[i] = new IdentifiedThingDTO(readImmutableUuidList());
-                }
-                case INTEGER -> {
-                    array[i] = readInt();
-                }
-                case OBJECT_ARRAY -> {
-                    int size = readInt();
-                    Object[] objects = new Object[size];
-                    for (int j = 0; j < size; j++) {
-                        readObject(objects, j);
-                    }
-                }
-                case DIGRAPH -> {
-                    throw new UnsupportedEncodingException("Can't handle DIGRAPH.");
-                }
-            }
+            FieldDataType dataType = FieldDataType.fromToken(token);
+            array[i] = switch (dataType) {
+                case STRING -> readUTF();
+                case FLOAT -> readFloat();
+                case BOOLEAN -> readBoolean();
+                case BYTE_ARRAY -> readByteArray();
+                case IDENTIFIED_THING -> new IdentifiedThingDTO(readImmutableUuidList());
+                case INTEGER -> readLong();
+                case OBJECT_ARRAY -> readEmbeddedObjectArray();
+                case DIGRAPH -> throw new UnsupportedEncodingException("Can't handle DIGRAPH.");
+                default -> throw new UnsupportedEncodingException(dataType.toString());
+            };
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
+    }
+
+    private Object[] readEmbeddedObjectArray() throws IOException {
+        int size = readInt();
+        Object[] objects = new Object[size];
+        for (int j = 0; j < size; j++) {
+            readObject(objects, j);
+        }
+        return objects;
+    }
+
+    private byte[] readByteArray() throws IOException {
+        int size = readInt();
+        return readNBytes(size);
     }
 
 }

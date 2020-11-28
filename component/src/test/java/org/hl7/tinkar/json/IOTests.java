@@ -1,9 +1,8 @@
 package org.hl7.tinkar.json;
 
 import org.eclipse.collections.api.factory.Lists;
-import org.hl7.tinkar.binary.MarshalExceptionUnchecked;
-import org.hl7.tinkar.binary.Marshalable;
-import org.hl7.tinkar.binary.Unmarshaler;
+import org.hl7.tinkar.binary.*;
+import org.hl7.tinkar.dto.IdentifiedThingDTO;
 import org.hl7.tinkar.dto.SemanticVersionDTO;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -44,6 +43,17 @@ public class IOTests {
         Assertions.assertThrows(MarshalExceptionUnchecked.class, () -> Marshalable.make(String.class, new byte[0]));
         Assertions.assertThrows(MarshalExceptionUnchecked.class, () -> Marshalable.make(NonStaticAnnotationClass.class, new byte[0]));
         Assertions.assertThrows(MarshalExceptionUnchecked.class, () -> Marshalable.make(MultipleAnnotationClass.class, new byte[0]));
+    }
+
+    @Test
+    public void tinakrInputOutputTests() {
+        TinkarOutput output = TinkarByteArrayOutput.make();
+        Object[] objectArray = new Object[] {"String",
+                Boolean.TRUE, new byte[] {}, (float) 2.0, 10, 3.0,
+                new IdentifiedThingDTO(Lists.immutable.of(UUID.randomUUID())),
+                new Object[] {"one", "two"}
+        };
+        output.writeObjectArray(objectArray);
     }
 
     private static class NonStaticAnnotationClass {

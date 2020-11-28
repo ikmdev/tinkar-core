@@ -46,6 +46,12 @@ public enum FieldDataType {
                 return fieldDataType;
             }
         }
+        if (obj instanceof Integer) {
+            return INTEGER;
+        }
+        if (obj instanceof Double) {
+            return FLOAT;
+        }
         throw new UnsupportedOperationException("Can't handle: " +
                 obj.getClass().getSimpleName() + "\n" +  obj);
     }

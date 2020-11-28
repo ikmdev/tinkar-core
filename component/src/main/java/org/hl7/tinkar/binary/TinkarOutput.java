@@ -19,6 +19,7 @@ package org.hl7.tinkar.binary;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -44,7 +45,7 @@ public class TinkarOutput extends DataOutputStream {
                 writeLong(uuid.getLeastSignificantBits());
             }
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
     
@@ -57,7 +58,7 @@ public class TinkarOutput extends DataOutputStream {
             writeLong(instant.getEpochSecond());
             writeInt(instant.getNano());
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
         
     }    
@@ -69,7 +70,7 @@ public class TinkarOutput extends DataOutputStream {
                 fieldDefinition.marshal(this);
             }
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 
@@ -80,7 +81,7 @@ public class TinkarOutput extends DataOutputStream {
                 version.marshal(this);
             }
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 
@@ -91,7 +92,7 @@ public class TinkarOutput extends DataOutputStream {
                 version.marshal(this);
             }
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 
@@ -102,53 +103,71 @@ public class TinkarOutput extends DataOutputStream {
                 version.marshal(this);
             }
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 
-    private void writeField(Object object) throws IOException {
+    private void writeField(Object object) {
         FieldDataType fieldDataType = FieldDataType.getFieldDataType(object);
-        switch (fieldDataType) {
-            case BOOLEAN -> {
-                writeByte(fieldDataType.token);
-                writeBoolean((boolean) object);
+        try {
+            switch (fieldDataType) {
+                case BOOLEAN -> writeBoolean((boolean) object, fieldDataType);
+                case BYTE_ARRAY -> writeByteArray((byte[]) object, fieldDataType);
+                case IDENTIFIED_THING -> writeIdentifiedThing((IdentifiedThingDTO) object, fieldDataType);
+                case DIGRAPH -> writeDigraph();
+                case FLOAT -> writeFloat((Number) object, fieldDataType);
+                case INTEGER -> writeInteger((Number) object, fieldDataType);
+                case OBJECT_ARRAY -> writeObjectArray((Object[]) object, fieldDataType);
+                case STRING -> writeString((String) object, fieldDataType);
+                default -> throw new UnsupportedOperationException("Can't handle: " + object + " " + fieldDataType);
             }
-            case BYTE_ARRAY -> {
-                writeByte(fieldDataType.token);
-                writeInt(((byte[]) object).length);
-                write((byte[]) object);
-            }
-            case IDENTIFIED_THING -> {
-                writeByte(fieldDataType.token);
-                writeUuidList(((IdentifiedThingDTO) object).componentUuids());
-            }
-            case DIGRAPH -> {
-                throw new UnsupportedOperationException();
-            }
-            case FLOAT -> {
-                writeByte(fieldDataType.token);
-                writeFloat((Float) object);
-            }
-            case INTEGER -> {
-                writeByte(fieldDataType.token);
-                writeInt((Integer) object);
-            }
-            case OBJECT_ARRAY -> {
-                writeByte(fieldDataType.token);
-                Object[] objects = (Object[]) object;
-                writeInt(objects.length);
-                for (int i = 0; i < objects.length; i++) {
-                    writeField(objects[i]);
-                }
-            }
-            case STRING -> {
-                writeByte(fieldDataType.token);
-                writeUTF((String) object);
-            }
-            default -> {
-                throw new UnsupportedOperationException("Can't handle: " + object);
-            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
+    }
+
+    private void writeString(String object, FieldDataType fieldDataType) throws IOException {
+        writeByte(fieldDataType.token);
+        writeUTF(object);
+    }
+
+    private void writeObjectArray(Object[] object, FieldDataType fieldDataType) throws IOException {
+        writeByte(fieldDataType.token);
+        Object[] objects = object;
+        writeInt(objects.length);
+        for (int i = 0; i < objects.length; i++) {
+            writeField(objects[i]);
+        }
+    }
+
+    private void writeInteger(Number object, FieldDataType fieldDataType) throws IOException {
+        writeByte(fieldDataType.token);
+        writeLong(object.longValue());
+    }
+
+    private void writeFloat(Number object, FieldDataType fieldDataType) throws IOException {
+        writeByte(fieldDataType.token);
+        writeFloat(object.floatValue());
+    }
+
+    private void writeDigraph() {
+        throw new UnsupportedOperationException();
+    }
+
+    private void writeIdentifiedThing(IdentifiedThingDTO object, FieldDataType fieldDataType) throws IOException {
+        writeByte(fieldDataType.token);
+        writeUuidList(object.componentUuids());
+    }
+
+    private void writeByteArray(byte[] object, FieldDataType fieldDataType) throws IOException {
+        writeByte(fieldDataType.token);
+        writeInt(object.length);
+        write(object);
+    }
+
+    private void writeBoolean(boolean object, FieldDataType fieldDataType) throws IOException {
+        writeByte(fieldDataType.token);
+        writeBoolean(object);
     }
 
     public void writeUuidList(ImmutableList<UUID> statusUuids) {
@@ -162,7 +181,7 @@ public class TinkarOutput extends DataOutputStream {
                 writeField(object);
             }
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 
