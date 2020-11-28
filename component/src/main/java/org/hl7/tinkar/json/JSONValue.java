@@ -81,129 +81,70 @@ public class JSONValue {
     public static void writeJSONString(Object value, Writer out) throws IOException {
         if (value == null) {
             out.write("null");
-            return;
-        }
-
-        if (value instanceof String string) {
-            out.write('\"');
-            out.write(escape(string));
-            out.write('\"');
-            return;
-        }
-
-        if (value instanceof Double double1) {
+        } else if (value instanceof String string) {
+            writeQuotedEscapedString(out, string);
+        } else if (value instanceof Double double1) {
             if (double1.isInfinite() || double1.isNaN()) {
                 out.write("null");
             } else {
                 out.write(value.toString());
             }
-            return;
-        }
-
-        if (value instanceof Float float1) {
+        } else if (value instanceof Float float1) {
             if (float1.isInfinite() || float1.isNaN()) {
                 out.write("null");
             } else {
                 out.write(value.toString());
             }
-            return;
-        }
-
-        if (value instanceof Number) {
+        } else if (value instanceof Number) {
             out.write(value.toString());
-            return;
-        }
-
-        if (value instanceof Boolean) {
+        } else if (value instanceof Boolean) {
             out.write(value.toString());
-            return;
-        }
-
-        if (value instanceof UUID) {
+        } else if (value instanceof UUID) {
             out.write('\"');
             out.write(value.toString());
             out.write('\"');
-            return;
-        }
-        
-        if (value instanceof Instant) {
+        } else if (value instanceof Instant) {
             out.write('\"');
             out.write(value.toString());
             out.write('\"');
-            return;
-        }
-
-        if ((value instanceof JSONStreamAware)) {
+        } else if ((value instanceof JSONStreamAware)) {
             ((JSONStreamAware) value).writeJSONString(out);
-            return;
-        }
-
-        if ((value instanceof JSONAware)) {
+        } else if ((value instanceof JSONAware)) {
             out.write(((JSONAware) value).toJSONString());
-            return;
-        }
-
-        if (value instanceof Map map) {
+        } else if (value instanceof Map map) {
             JSONObject.writeJSONString(map, out);
-            return;
-        }
-
-        if (value instanceof Collection collection) {
+        } else if (value instanceof Collection collection) {
             JSONArray.writeJSONString(collection, out);
-            return;
-        }
-
-        if (value instanceof byte[] bs) {
+        } else if (value instanceof byte[] bs) {
             JSONArray.writeJSONString(bs, out);
-            return;
-        }
-
-        if (value instanceof short[] ses) {
+        } else if (value instanceof short[] ses) {
             JSONArray.writeJSONString(ses, out);
-            return;
-        }
-
-        if (value instanceof int[] is) {
+        } else if (value instanceof int[] is) {
             JSONArray.writeJSONString(is, out);
-            return;
-        }
-
-        if (value instanceof long[] ls) {
+        } else if (value instanceof long[] ls) {
             JSONArray.writeJSONString(ls, out);
-            return;
-        }
-
-        if (value instanceof float[] fs) {
+        } else if (value instanceof float[] fs) {
             JSONArray.writeJSONString(fs, out);
-            return;
-        }
-
-        if (value instanceof double[] ds) {
+        } else if (value instanceof double[] ds) {
             JSONArray.writeJSONString(ds, out);
-            return;
-        }
-
-        if (value instanceof boolean[] bs) {
+        } else if (value instanceof boolean[] bs) {
             JSONArray.writeJSONString(bs, out);
-            return;
-        }
-
-        if (value instanceof char[] cs) {
+        } else if (value instanceof char[] cs) {
             JSONArray.writeJSONString(cs, out);
-            return;
-        }
-
-        if (value instanceof Object[] objects) {
+        } else if (value instanceof Object[] objects) {
             JSONArray.writeJSONString(objects, out);
-            return;
-        }
-
-        if (value instanceof JsonMarshalable marshalable) {
+        } else if (value instanceof JsonMarshalable marshalable) {
             out.write(marshalable.toJsonString());
-            return;
+        } else {
+            out.write(value.toString());
         }
 
-        out.write(value.toString());
+    }
+
+    public static void writeQuotedEscapedString(Writer out, String string) throws IOException {
+        out.write('\"');
+        out.write(escape(string));
+        out.write('\"');
     }
 
     /**
@@ -296,13 +237,10 @@ public class JSONValue {
         if (Character.isISOControl(ch)) {
             return true;
         }
-        if (ch >= '\u2000' && ch <= '\u20FF') {
-            // UnicodeBlock GENERAL_PUNCTUATION
-            // UnicodeBlock SUPERSCRIPTS_AND_SUBSCRIPTS
-            // UnicodeBlock CURRENCY_SYMBOLS
-            // UnicodeBlock COMBINING_MARKS_FOR_SYMBOLS
-            return true;
-        }
-        return false;
+        // UnicodeBlock GENERAL_PUNCTUATION
+        // UnicodeBlock SUPERSCRIPTS_AND_SUBSCRIPTS
+        // UnicodeBlock CURRENCY_SYMBOLS
+        // UnicodeBlock COMBINING_MARKS_FOR_SYMBOLS
+        return (ch >= '\u2000' && ch <= '\u20FF');
     }
 }
