@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.UUID;
 
 public class IOTests {
@@ -47,13 +48,16 @@ public class IOTests {
 
     @Test
     public void tinakrInputOutputTests() {
-        TinkarOutput output = TinkarByteArrayOutput.make();
+        TinkarByteArrayOutput output = TinkarByteArrayOutput.make();
         Object[] objectArray = new Object[] {"String",
-                Boolean.TRUE, new byte[] {}, (float) 2.0, 10, 3.0,
+                Boolean.TRUE, new byte[] {}, (float) 2.0, 10, (float) 3.0,
                 new IdentifiedThingDTO(Lists.immutable.of(UUID.randomUUID())),
                 new Object[] {"one", "two"}
         };
         output.writeObjectArray(objectArray);
+        TinkarInput input = TinkarInput.make(output);
+        Object[] objectArray2 = input.readObjectArray();
+        Assertions.assertTrue(Arrays.deepEquals(objectArray, objectArray2));
     }
 
     private static class NonStaticAnnotationClass {

@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public enum FieldDataType {
     STRING((byte) 0, String.class, UUID.fromString("601135f2-2bad-11eb-adc1-0242ac120002")),
-    INTEGER((byte) 1, Long.class,  UUID.fromString("60113822-2bad-11eb-adc1-0242ac120002")),
+    INTEGER((byte) 1, Integer.class,  UUID.fromString("60113822-2bad-11eb-adc1-0242ac120002")),
     FLOAT((byte) 2, Float.class,   UUID.fromString("6011391c-2bad-11eb-adc1-0242ac120002")),
     BOOLEAN((byte) 3, Boolean.class, UUID.fromString("601139ee-2bad-11eb-adc1-0242ac120002")),
     BYTE_ARRAY((byte) 4, byte[].class, UUID.fromString("60113aac-2bad-11eb-adc1-0242ac120002")),
@@ -45,9 +45,6 @@ public enum FieldDataType {
             if (fieldDataType.clazz.isAssignableFrom(obj.getClass())) {
                 return fieldDataType;
             }
-        }
-        if (obj instanceof Integer) {
-            return INTEGER;
         }
         if (obj instanceof Double) {
             return FLOAT;

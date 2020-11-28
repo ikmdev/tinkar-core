@@ -150,7 +150,7 @@ public class TinkarInput extends DataInputStream {
                 case BOOLEAN -> readBoolean();
                 case BYTE_ARRAY -> readByteArray();
                 case IDENTIFIED_THING -> new IdentifiedThingDTO(readImmutableUuidList());
-                case INTEGER -> readLong();
+                case INTEGER -> readInt();
                 case OBJECT_ARRAY -> readEmbeddedObjectArray();
                 case DIGRAPH -> throw new UnsupportedEncodingException("Can't handle DIGRAPH.");
                 default -> throw new UnsupportedEncodingException(dataType.toString());

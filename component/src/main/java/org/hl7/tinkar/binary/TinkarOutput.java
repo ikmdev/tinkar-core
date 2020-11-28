@@ -142,7 +142,7 @@ public class TinkarOutput extends DataOutputStream {
 
     private void writeInteger(Number object, FieldDataType fieldDataType) throws IOException {
         writeByte(fieldDataType.token);
-        writeLong(object.longValue());
+        writeInt(object.intValue());
     }
 
     private void writeFloat(Number object, FieldDataType fieldDataType) throws IOException {
