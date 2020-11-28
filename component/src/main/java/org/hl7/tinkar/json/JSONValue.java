@@ -277,8 +277,7 @@ public class JSONValue {
                 case '/' ->
                     sb.append("\\/");
                 default -> {
-                    //Reference: http://www.unicode.org/versions/Unicode5.1.0/
-                    if ((ch >= '\u0000' && ch <= '\u001F') || (ch >= '\u007F' && ch <= '\u009F') || (ch >= '\u2000' && ch <= '\u20FF')) {
+                    if (isSpecial(ch)) {
                         String ss = Integer.toHexString(ch);
                         sb.append("\\u");
                         for (int k = 0; k < 4 - ss.length(); k++) {
@@ -290,7 +289,20 @@ public class JSONValue {
                     }
                 }
             }
-        }//for
+        }
     }
 
+    private static boolean isSpecial(Character ch) {
+        if (Character.isISOControl(ch)) {
+            return true;
+        }
+        if (ch >= '\u2000' && ch <= '\u20FF') {
+            // UnicodeBlock GENERAL_PUNCTUATION
+            // UnicodeBlock SUPERSCRIPTS_AND_SUBSCRIPTS
+            // UnicodeBlock CURRENCY_SYMBOLS
+            // UnicodeBlock COMBINING_MARKS_FOR_SYMBOLS
+            return true;
+        }
+        return false;
+    }
 }

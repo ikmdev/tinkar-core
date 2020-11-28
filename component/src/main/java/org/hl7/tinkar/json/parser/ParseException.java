@@ -33,7 +33,7 @@ public class ParseException extends Exception {
 	public static final int ERROR_UNEXPECTED_EXCEPTION = 2;
 
 	private int errorType;
-	private Object unexpectedObject;
+	private transient Object unexpectedObject;
 	private int position;
 	
 	public ParseException(int errorType){

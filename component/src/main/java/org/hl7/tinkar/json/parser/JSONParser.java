@@ -372,7 +372,8 @@ public class JSONParser {
                         return;
                     }
 
-                    case S_IN_ERROR -> throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
+                    default -> throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
+
                 }//switch
                 if (status == S_IN_ERROR) {
                     throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);

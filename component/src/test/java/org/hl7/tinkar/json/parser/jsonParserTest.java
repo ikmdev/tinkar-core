@@ -1,12 +1,12 @@
 package org.hl7.tinkar.json.parser;
 
+import org.hl7.tinkar.json.JSONValue;
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedList;
 
 import static org.hl7.tinkar.json.parser.JSONParser.S_END;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class jsonParserTest {
 
@@ -19,8 +19,17 @@ public class jsonParserTest {
         assertTrue(parser.peekStatus(emptyStack) == S_END);
     }
 
+    @Test
     public void testIOException() {
         JSONParser parser = new JSONParser();
-        assertThrows(ParseException.class, () -> parser.parse((String) null, (ContainerFactory) null));
+        assertThrows(ParseException.class, () -> parser.parse("", (ContainerFactory) null));
+    }
+
+    @Test
+    public void testEscape() {
+        String test = "\" \\ \b \f \n \r \t / ₠";
+        String expected = "\\\" \\\\ \\b \\f \\n \\r \\t \\/ \\u20A0";
+        assertEquals(expected, JSONValue.escape(test));
     }
 }
+
