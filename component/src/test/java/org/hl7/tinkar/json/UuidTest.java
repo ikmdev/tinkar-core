@@ -1,10 +1,10 @@
 package org.hl7.tinkar.json;
 
+import org.hl7.tinkar.uuid.UuidUtil;
 import org.hl7.tinkar.uuid.UuidT5Generator;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -60,4 +60,25 @@ public class UuidTest {
         UUID result2 = UuidT5Generator.singleSemanticUuid(assemblageIds2, referencedComponentIds2);
         Assertions.assertEquals(result1, result2);
     }
+
+    @Test
+    public void testLongArrayToUuidConversion() {
+        long[] uuidArray = UuidUtil.convert(UUID.fromString("c76757b0-94c8-5127-8ff1-cafe08580a6a"));
+        UUID convertedUuid = UuidUtil.convert(uuidArray);
+        Assertions.assertEquals(UUID.fromString("c76757b0-94c8-5127-8ff1-cafe08580a6a"), convertedUuid);
+    }
+
+    @Test
+    public void uuidTester() {
+        Assertions.assertTrue(UuidUtil.isUUID("c76757b0-94c8-5127-8ff1-cafe08580a6a"));
+        Assertions.assertFalse(UuidUtil.isUUID(null));
+        Assertions.assertFalse(UuidUtil.isUUID("bogus"));
+        Assertions.assertFalse(UuidUtil.isUUID("c76757b0X94c8X5127X8ff1Xcafe08580a6a"));
+
+        UUID[] assemblageIds = new UUID[] { UUID.fromString("c76757b0-94c8-5127-8ff1-cafe08580a6a"), UUID.fromString("59333431-37a9-55a9-adf1-1046b697be19")};
+        UUID[] assemblageIds2 = new UUID[] { UUID.fromString("59333431-37a9-55a9-adf1-1046b697be19"), UUID.fromString("c76757b0-94c8-5127-8ff1-cafe08580a6a")};
+        Assertions.assertEquals(UuidUtil.fromList(assemblageIds), UuidUtil.fromList(assemblageIds2));
+    }
+
+
 }

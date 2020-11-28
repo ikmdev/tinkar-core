@@ -30,7 +30,7 @@ import java.util.UUID;
  * @author darmbrust
  * @author kec
  */
-public class UUIDUtil {
+public class UuidUtil {
     /**
      * Nil UUID
      * The "nil" UUID, a special case, is the UUID 00000000-0000-0000-0000-000000000000; that is, all bits set to zero.[2]
@@ -104,7 +104,7 @@ public class UUIDUtil {
        for (String uuidStr: uuidStrList) {
            buff.append(uuidStr);
        }
-       return UUID.fromString(buff.toString());
+       return UUID.nameUUIDFromBytes(buff.toString().getBytes());
    }
 }
 

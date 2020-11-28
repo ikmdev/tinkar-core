@@ -25,7 +25,7 @@ import java.util.UUID;
 
 import org.hl7.tinkar.json.JSONArray;
 import org.hl7.tinkar.json.JSONObject;
-import org.hl7.tinkar.uuid.UUIDUtil;
+import org.hl7.tinkar.uuid.UuidUtil;
 
 
 /**
@@ -240,7 +240,7 @@ public class JSONParser {
             }
             case Yytoken.TYPE_VALUE -> {
                 List val = (List) valueStack.getFirst();
-                if (token.value instanceof String string && UUIDUtil.isUUID(string)) {
+                if (token.value instanceof String string && UuidUtil.isUUID(string)) {
                     val.add(UUID.fromString(string));
                 } else {
                     val.add(token.value);
