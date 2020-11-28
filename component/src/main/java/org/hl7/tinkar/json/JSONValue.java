@@ -50,7 +50,7 @@ public class JSONValue {
      * @throws IOException
      * @throws ParseException
      */
-    public static Object parse(Reader in) throws IOException, ParseException {
+    public static Object parse(Reader in) throws ParseException {
         JSONParser parser = new JSONParser();
         return parser.parse(in);
     }

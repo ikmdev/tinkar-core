@@ -47,12 +47,12 @@ public class JSONParser {
     public static final int S_END = 6;
     public static final int S_IN_ERROR = -1;
 
-    private LinkedList handlerStatusStack;
+    private LinkedList<Integer> handlerStatusStack;
     private final Yylex lexer = new Yylex((Reader) null);
     private Yytoken token = null;
     private int status = S_INIT;
 
-    protected int peekStatus(LinkedList statusStack) {
+    protected int peekStatus(LinkedList<Integer> statusStack) {
         if (statusStack.isEmpty()) {
             return -1;
         }
@@ -114,8 +114,8 @@ public class JSONParser {
      */
     public Object parse(Reader in, ContainerFactory containerFactory) throws ParseException {
         reset(in);
-        LinkedList<Integer> statusStack = new LinkedList();
-        LinkedList<Object> valueStack = new LinkedList();
+        LinkedList<Integer> statusStack = new LinkedList<>();
+        LinkedList<Object> valueStack = new LinkedList<>();
             do {
                 nextToken();
                 switch (status) {
@@ -331,14 +331,14 @@ public class JSONParser {
         if (isResume) {
             if (handlerStatusStack == null) {
                 reset(in);
-                handlerStatusStack = new LinkedList();
+                handlerStatusStack = new LinkedList<>();
             }
         } else {
             reset(in);
-            handlerStatusStack = new LinkedList();
+            handlerStatusStack = new LinkedList<>();
         }
 
-        LinkedList statusStack = handlerStatusStack;
+        LinkedList<Integer> statusStack = handlerStatusStack;
 
         try {
             do {
@@ -387,7 +387,7 @@ public class JSONParser {
         throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
     }
 
-    public boolean handleS_IN_ARRAY(ContentHandler contentHandler, LinkedList statusStack) throws ParseException {
+    public boolean handleS_IN_ARRAY(ContentHandler contentHandler, LinkedList<Integer> statusStack) throws ParseException {
         nextToken();
         switch (token.type) {
             case Yytoken.TYPE_COMMA -> {
@@ -423,7 +423,7 @@ public class JSONParser {
         return false;
     }
 
-    public boolean handleS_IN_PAIR_VALUE(ContentHandler contentHandler, LinkedList statusStack) throws ParseException {
+    public boolean handleS_IN_PAIR_VALUE(ContentHandler contentHandler, LinkedList<Integer> statusStack) throws ParseException {
         /*
          * S_IN_PAIR_VALUE is just a marker to indicate the end of an object entry, it doesn't proccess any token,
          * therefore delay consuming token until next round.
@@ -435,7 +435,7 @@ public class JSONParser {
         return false;
     }
 
-    public boolean handleS_PASSED_PAIR_KEY(ContentHandler contentHandler, LinkedList statusStack) throws ParseException {
+    public boolean handleS_PASSED_PAIR_KEY(ContentHandler contentHandler, LinkedList<Integer> statusStack) throws ParseException {
         nextToken();
         switch (token.type) {
             case Yytoken.TYPE_COLON -> {
@@ -469,7 +469,7 @@ public class JSONParser {
         return false;
     }
 
-    public boolean handleS_IN_OBJECT(ContentHandler contentHandler, LinkedList statusStack) throws ParseException {
+    public boolean handleS_IN_OBJECT(ContentHandler contentHandler, LinkedList<Integer> statusStack) throws ParseException {
         nextToken();
         switch (token.type) {
             case Yytoken.TYPE_COMMA -> {
@@ -512,7 +512,7 @@ public class JSONParser {
         }
     }
 
-    public boolean handleS_INIT(ContentHandler contentHandler, LinkedList statusStack) throws ParseException {
+    public boolean handleS_INIT(ContentHandler contentHandler, LinkedList<Integer> statusStack) throws ParseException {
         contentHandler.startJSON();
         nextToken();
         switch (token.type) {
