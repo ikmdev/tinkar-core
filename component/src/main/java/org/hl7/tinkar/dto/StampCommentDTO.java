@@ -22,6 +22,7 @@ import org.hl7.tinkar.binary.Marshaler;
 import org.hl7.tinkar.binary.TinkarInput;
 import org.hl7.tinkar.binary.TinkarOutput;
 import org.hl7.tinkar.binary.Unmarshaler;
+import org.hl7.tinkar.changeset.ChangeSetThing;
 import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.component.StampComment;
 import org.hl7.tinkar.json.ComponentFieldForJson;

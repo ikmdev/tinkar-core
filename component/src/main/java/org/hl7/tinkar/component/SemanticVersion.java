@@ -15,8 +15,11 @@
  */package org.hl7.tinkar.component;
 
 import org.eclipse.collections.api.factory.Lists;
-import org.hl7.tinkar.dto.IdentifiedThingDTO;
-import org.hl7.tinkar.dto.SemanticVersionDTO;
+import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.MutableList;
+import org.hl7.tinkar.dto.*;
+
+import java.util.UUID;
 
 /**
  *
@@ -24,26 +27,30 @@ import org.hl7.tinkar.dto.SemanticVersionDTO;
  */
 public interface SemanticVersion extends Version, Semantic {
 
-    Object[] getFields();
+    ImmutableList<Object> getFields();
 
     default SemanticVersionDTO toChangeSetThing() {
-        Object[] convertedFields = new Object[getFields().length];
-        for (int i = 0; i < convertedFields.length; i++) {
-            Object objectToConvert = getFields()[i];
-            if (objectToConvert instanceof IdentifiedThing identifiedThing) {
-                convertedFields[i] = new IdentifiedThingDTO(identifiedThing.getComponentUuids());
+        MutableList<Object> convertedFields = Lists.mutable.empty();
+        convertedFields.forEach(objectToConvert -> {
+            if (objectToConvert instanceof Concept concept) {
+                convertedFields.add(new ConceptDTO(concept.getComponentUuids()));
+            } else if (objectToConvert instanceof DefinitionForSemantic definitionForSemantic) {
+                convertedFields.add(new DefinitionForSemanticDTO(definitionForSemantic.getComponentUuids()));
+            } else if (objectToConvert instanceof Semantic semantic) {
+                convertedFields.add(new SemanticDTO(semantic.getComponentUuids(), semantic.getDefinitionForSemantic(),
+                        semantic.getReferencedComponent()));
             } else if (objectToConvert instanceof Number number) {
-                convertedFields[i] = number;
+                convertedFields.add(number);
             } else if (objectToConvert instanceof String string) {
-                convertedFields[i] = string;
+                convertedFields.add(string);
             } else {
                 throw new UnsupportedOperationException("Can't convert:\n  " + objectToConvert + "\nin\n  " + this);
             }
-        }
+        });
         return new SemanticVersionDTO(getComponentUuids(),
                 getReferencedComponent().getComponentUuids(),
                 getDefinitionForSemantic().getComponentUuids(),
-                getStamp().toChangeSetThing(), Lists.immutable.of(convertedFields));
+                getStamp().toChangeSetThing(), convertedFields.toImmutable());
     }
 
 }

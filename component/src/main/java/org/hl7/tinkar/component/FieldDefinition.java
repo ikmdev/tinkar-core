@@ -24,7 +24,7 @@ public interface FieldDefinition {
 
     /**
      * Underlying object type such as String or Integer.
-     * @return
+     * @return Concept designating the data type of the defined field.
      */
     Concept getDataType();
 
@@ -32,20 +32,20 @@ public interface FieldDefinition {
      * What the object represents: a String might be a URI,
      * a component identifier might represent a mapping, or an
      * integer might represent a coordinate.
-     * @return
+     * @return Concept designating the purpose of the defined field.
      */
     Concept getPurpose();
 
     /**
      * The context in which this specific field is used. Maybe it is the
      * "SNOMED code" in a mapping, or the location of an image if a URI.
-     * @return
+     * @return Concept designating the use of the defined field.
      */
     Concept getUse();
 
     default FieldDefinitionDTO toChangeSetThing() {
         return new FieldDefinitionDTO(getDataType().getComponentUuids(),
-                getPurpose().getComponentUuids());
+                getPurpose().getComponentUuids(), getUse().getComponentUuids());
     }
 
 }

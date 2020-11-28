@@ -25,13 +25,18 @@ import org.hl7.tinkar.binary.Marshaler;
 import org.hl7.tinkar.binary.TinkarInput;
 import org.hl7.tinkar.binary.TinkarOutput;
 import org.hl7.tinkar.binary.Unmarshaler;
+import org.hl7.tinkar.changeset.ChangeSetThing;
+import org.hl7.tinkar.component.Concept;
+import org.hl7.tinkar.component.FieldDefinition;
 import org.hl7.tinkar.json.ComponentFieldForJson;
 import org.hl7.tinkar.json.JSONObject;
 import org.hl7.tinkar.json.JsonMarshalable;
 import org.hl7.tinkar.json.JsonChronologyUnmarshaler;
 
 public record FieldDefinitionDTO(ImmutableList<UUID> dataTypeUuids,
-                                 ImmutableList<UUID>  purposeUuids) implements ChangeSetThing, JsonMarshalable, Marshalable {
+                                 ImmutableList<UUID>  purposeUuids,
+                                 ImmutableList<UUID>  useUuids)
+        implements FieldDefinition, ChangeSetThing, JsonMarshalable, Marshalable {
 
     private static final int marshalVersion = 1;
 
@@ -41,13 +46,15 @@ public record FieldDefinitionDTO(ImmutableList<UUID> dataTypeUuids,
         json.put(ComponentFieldForJson.CLASS, this.getClass().getCanonicalName());
         json.put(ComponentFieldForJson.DATATYPE_UUIDS, dataTypeUuids);
         json.put(ComponentFieldForJson.PURPOSE_UUIDS, purposeUuids);
+        json.put(ComponentFieldForJson.USE_UUIDS, useUuids);
         json.writeJSONString(writer);
     }
 
     @JsonChronologyUnmarshaler
     public static FieldDefinitionDTO make(JSONObject jsonObject) {
-        return new FieldDefinitionDTO(jsonObject.asImmutableUuidList("dataTypeUuids"),
-                jsonObject.asImmutableUuidList("purposeUuids"));
+        return new FieldDefinitionDTO(jsonObject.asImmutableUuidList(ComponentFieldForJson.DATATYPE_UUIDS),
+                jsonObject.asImmutableUuidList(ComponentFieldForJson.PURPOSE_UUIDS),
+                jsonObject.asImmutableUuidList(ComponentFieldForJson.USE_UUIDS));
     }
 
     @Unmarshaler
@@ -57,6 +64,7 @@ public record FieldDefinitionDTO(ImmutableList<UUID> dataTypeUuids,
             switch (objectMarshalVersion) {
                 case marshalVersion -> {
                     return new FieldDefinitionDTO(
+                            in.readImmutableUuidList(),
                             in.readImmutableUuidList(),
                             in.readImmutableUuidList());
                 }
@@ -74,9 +82,24 @@ public record FieldDefinitionDTO(ImmutableList<UUID> dataTypeUuids,
             out.writeInt(marshalVersion);
             out.writeUuidList(dataTypeUuids);
             out.writeUuidList(purposeUuids);
+            out.writeUuidList(useUuids);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
     }
-    
+
+    @Override
+    public Concept getDataType() {
+        return new ConceptDTO(dataTypeUuids);
+    }
+
+    @Override
+    public Concept getPurpose() {
+        return new ConceptDTO(purposeUuids);
+    }
+
+    @Override
+    public Concept getUse() {
+        return new ConceptDTO(useUuids);
+    }
 }

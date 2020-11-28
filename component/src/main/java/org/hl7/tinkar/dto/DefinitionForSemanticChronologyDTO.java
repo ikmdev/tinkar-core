@@ -25,7 +25,10 @@ import org.hl7.tinkar.binary.Marshaler;
 import org.hl7.tinkar.binary.TinkarInput;
 import org.hl7.tinkar.binary.TinkarOutput;
 import org.hl7.tinkar.binary.Unmarshaler;
-import org.hl7.tinkar.component.DefinitionForSemantic;
+import org.hl7.tinkar.changeset.ChangeSetThing;
+import org.hl7.tinkar.component.Concept;
+import org.hl7.tinkar.component.DefinitionForSemanticChronology;
+import org.hl7.tinkar.component.DefinitionForSemanticVersion;
 import org.hl7.tinkar.json.ComponentFieldForJson;
 import org.hl7.tinkar.json.JSONObject;
 import org.hl7.tinkar.json.JsonMarshalable;
@@ -38,7 +41,7 @@ import org.hl7.tinkar.json.JsonChronologyUnmarshaler;
 public record DefinitionForSemanticChronologyDTO(ImmutableList<UUID> componentUuids,
                                                  ImmutableList<UUID> chronologySetUuids,
                                                  ImmutableList<DefinitionForSemanticVersionDTO> definitionVersions)
-        implements DefinitionForSemantic, ChangeSetThing, JsonMarshalable, Marshalable {
+        implements DefinitionForSemanticChronology, ChangeSetThing, JsonMarshalable, Marshalable {
 
     private static final int marshalVersion = 1;
 
@@ -93,5 +96,15 @@ public record DefinitionForSemanticChronologyDTO(ImmutableList<UUID> componentUu
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    @Override
+    public ImmutableList<DefinitionForSemanticVersion> getVersions() {
+        return definitionVersions.collect(definitionForSemanticVersionDTO -> (DefinitionForSemanticVersion) definitionForSemanticVersionDTO);
+    }
+
+    @Override
+    public Concept getChronologySet() {
+        return new ConceptDTO(chronologySetUuids);
     }
 }

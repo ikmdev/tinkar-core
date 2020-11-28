@@ -68,7 +68,7 @@ public class ChangeSetTest {
 
     private static FieldDefinitionDTO makeFieldDefinitionForChangeSet() {
         return new FieldDefinitionDTO(makeUuidList(),
-                makeUuidList());
+                makeUuidList(), makeUuidList());
     }
 
     private static ImmutableList<FieldDefinitionDTO> makeFieldDefinitionList() {

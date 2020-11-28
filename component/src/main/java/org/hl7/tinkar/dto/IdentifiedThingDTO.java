@@ -15,20 +15,11 @@
  */
 package org.hl7.tinkar.dto;
 
-import java.io.IOException;
-import java.io.Writer;
 import java.util.UUID;
 
 import org.eclipse.collections.api.list.ImmutableList;
-import org.hl7.tinkar.binary.Marshalable;
-import org.hl7.tinkar.binary.Marshaler;
-import org.hl7.tinkar.binary.TinkarInput;
-import org.hl7.tinkar.binary.TinkarOutput;
-import org.hl7.tinkar.binary.Unmarshaler;
+import org.hl7.tinkar.changeset.ChangeSetThing;
 import org.hl7.tinkar.component.IdentifiedThing;
-import org.hl7.tinkar.json.JSONObject;
-import org.hl7.tinkar.json.JsonMarshalable;
-import org.hl7.tinkar.json.JsonChronologyUnmarshaler;
 
 /**
  *

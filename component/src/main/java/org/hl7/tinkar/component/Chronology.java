@@ -22,7 +22,7 @@ import org.eclipse.collections.api.list.ImmutableList;
  */
 public interface Chronology extends IdentifiedThing {
     
-    Concept getChronologySet();
+    IdentifiedThing getChronologySet();
 
     ImmutableList<? extends Version> getVersions();
 

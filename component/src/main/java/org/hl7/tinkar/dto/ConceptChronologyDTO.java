@@ -15,17 +15,20 @@
  */
 package org.hl7.tinkar.dto;
 
+import org.eclipse.collections.api.list.ImmutableList;
+import org.hl7.tinkar.binary.*;
+import org.hl7.tinkar.changeset.ChangeSetThing;
+import org.hl7.tinkar.component.Concept;
+import org.hl7.tinkar.component.ConceptChronology;
+import org.hl7.tinkar.component.ConceptVersion;
+import org.hl7.tinkar.json.ComponentFieldForJson;
+import org.hl7.tinkar.json.JSONObject;
+import org.hl7.tinkar.json.JsonChronologyUnmarshaler;
+import org.hl7.tinkar.json.JsonMarshalable;
+
 import java.io.IOException;
 import java.io.Writer;
 import java.util.UUID;
-
-import org.eclipse.collections.api.list.ImmutableList;
-import org.hl7.tinkar.binary.*;
-import org.hl7.tinkar.component.Concept;
-import org.hl7.tinkar.json.ComponentFieldForJson;
-import org.hl7.tinkar.json.JSONObject;
-import org.hl7.tinkar.json.JsonMarshalable;
-import org.hl7.tinkar.json.JsonChronologyUnmarshaler;
 
 /**
  *
@@ -34,7 +37,7 @@ import org.hl7.tinkar.json.JsonChronologyUnmarshaler;
 public record ConceptChronologyDTO(ImmutableList<UUID> componentUuids,
                                    ImmutableList<UUID> chronologySetUuids,
                                    ImmutableList<ConceptVersionDTO> conceptVersions)
-        implements ChangeSetThing, JsonMarshalable, Marshalable, Concept {
+        implements ChangeSetThing, JsonMarshalable, Marshalable, ConceptChronology {
 
     private static final int marshalVersion = 1;
 
@@ -91,5 +94,15 @@ public record ConceptChronologyDTO(ImmutableList<UUID> componentUuids,
         } catch (IOException ex) {
             throw new MarshalExceptionUnchecked(ex);
         }
+    }
+
+    @Override
+    public Concept getChronologySet() {
+        return new ConceptDTO(chronologySetUuids);
+    }
+
+    @Override
+    public ImmutableList<ConceptVersion> getVersions() {
+        return conceptVersions.collect(conceptVersionDTO -> (ConceptVersion) conceptVersionDTO);
     }
 }

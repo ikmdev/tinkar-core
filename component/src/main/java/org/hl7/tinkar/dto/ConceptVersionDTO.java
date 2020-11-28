@@ -21,7 +21,9 @@ import java.util.UUID;
 
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.binary.*;
-import org.hl7.tinkar.component.Concept;
+import org.hl7.tinkar.changeset.ChangeSetThing;
+import org.hl7.tinkar.component.ConceptVersion;
+import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.json.ComponentFieldForJson;
 import org.hl7.tinkar.json.JSONObject;
 import org.hl7.tinkar.json.JsonMarshalable;
@@ -29,7 +31,7 @@ import org.hl7.tinkar.json.JsonVersionUnmarshaler;
 
 
 public record ConceptVersionDTO(ImmutableList<UUID> componentUuids, StampDTO stamp)
-        implements Concept, ChangeSetThing, JsonMarshalable, Marshalable {
+        implements ConceptVersion, ChangeSetThing, JsonMarshalable, Marshalable {
 
     private static final int marshalVersion = 1;
 
@@ -78,5 +80,10 @@ public record ConceptVersionDTO(ImmutableList<UUID> componentUuids, StampDTO sta
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    @Override
+    public Stamp getStamp() {
+        return stamp;
     }
 }

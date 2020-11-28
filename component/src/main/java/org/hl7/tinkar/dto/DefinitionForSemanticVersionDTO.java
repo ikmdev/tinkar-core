@@ -21,7 +21,8 @@ import java.util.UUID;
 
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.binary.*;
-import org.hl7.tinkar.component.DefinitionForSemantic;
+import org.hl7.tinkar.changeset.ChangeSetThing;
+import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.json.ComponentFieldForJson;
 import org.hl7.tinkar.json.JSONObject;
 import org.hl7.tinkar.json.JsonMarshalable;
@@ -37,7 +38,7 @@ import static org.hl7.tinkar.json.ComponentFieldForJson.REFERENCED_COMPONENT_PUR
 public record DefinitionForSemanticVersionDTO(ImmutableList<UUID> componentUuids,
                                               StampDTO stamp, ImmutableList<UUID> referencedComponentPurposeUuids,
                                               ImmutableList<FieldDefinitionDTO> fieldDefinitions)
-        implements DefinitionForSemantic, ChangeSetThing, JsonMarshalable, Marshalable {
+        implements DefinitionForSemanticVersion, ChangeSetThing, JsonMarshalable, Marshalable {
 
     private static final int marshalVersion = 1;
 
@@ -93,5 +94,20 @@ public record DefinitionForSemanticVersionDTO(ImmutableList<UUID> componentUuids
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    @Override
+    public Concept getReferencedComponentPurpose() {
+        return new ConceptDTO(referencedComponentPurposeUuids);
+    }
+
+    @Override
+    public Stamp getStamp() {
+        return stamp;
+    }
+
+    @Override
+    public ImmutableList<FieldDefinition> getFieldDefinitions() {
+        return fieldDefinitions.collect(fieldDefinitionDTO -> (FieldDefinition) fieldDefinitionDTO);
     }
 }

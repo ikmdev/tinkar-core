@@ -13,11 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hl7.tinkar.dto;
+package org.hl7.tinkar.changeset;
+
+import java.util.ArrayList;
 
 /**
  *
  * @author kec
  */
-public interface ChangeSetThing  {
+public class ChangeSetBuilder {
+    ArrayList<ChangeSetThing> changeSetObjects = new ArrayList();
+
+
+    public ChangeSetBuilder add(ChangeSetThing changeSetObject) {
+        changeSetObjects.add(changeSetObject);
+        return this;
+    }
+    
+    public String build() {
+        throw new UnsupportedOperationException();
+    }
+    
 }
