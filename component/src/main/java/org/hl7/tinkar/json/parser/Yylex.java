@@ -622,24 +622,24 @@ class Yylex {
                 case 27:
                     break;
                 case 6: {
-                    return new Yytoken(Yytoken.TYPE_RIGHT_BRACE, null);
+                    return new Yytoken(Yytoken.Type.TYPE_RIGHT_BRACE, null);
                 }
                 case 28:
                     break;
                 case 23: {
                     Boolean val = Boolean.valueOf(yytext());
-                    return new Yytoken(Yytoken.TYPE_VALUE, val);
+                    return new Yytoken(Yytoken.Type.TYPE_VALUE, val);
                 }
                 case 29:
                     break;
                 case 22: {
-                    return new Yytoken(Yytoken.TYPE_VALUE, null);
+                    return new Yytoken(Yytoken.Type.TYPE_VALUE, null);
                 }
                 case 30:
                     break;
                 case 13: {
                     yybegin(YYINITIAL);
-                    return new Yytoken(Yytoken.TYPE_VALUE, sb.toString());
+                    return new Yytoken(Yytoken.Type.TYPE_VALUE, sb.toString());
                 }
                 case 31:
                     break;
@@ -650,7 +650,7 @@ class Yylex {
                     break;
                 case 21: {
                     Double val = Double.valueOf(yytext());
-                    return new Yytoken(Yytoken.TYPE_VALUE, val);
+                    return new Yytoken(Yytoken.Type.TYPE_VALUE, val);
                 }
                 case 33:
                     break;
@@ -660,7 +660,7 @@ class Yylex {
                 case 34:
                     break;
                 case 8: {
-                    return new Yytoken(Yytoken.TYPE_RIGHT_SQUARE, null);
+                    return new Yytoken(Yytoken.Type.TYPE_RIGHT_SQUARE, null);
                 }
                 case 35:
                     break;
@@ -675,7 +675,7 @@ class Yylex {
                 case 37:
                     break;
                 case 10: {
-                    return new Yytoken(Yytoken.TYPE_COLON, null);
+                    return new Yytoken(Yytoken.Type.TYPE_COLON, null);
                 }
                 case 38:
                     break;
@@ -685,7 +685,7 @@ class Yylex {
                 case 39:
                     break;
                 case 5: {
-                    return new Yytoken(Yytoken.TYPE_LEFT_BRACE, null);
+                    return new Yytoken(Yytoken.Type.TYPE_LEFT_BRACE, null);
                 }
                 case 40:
                     break;
@@ -710,13 +710,13 @@ class Yylex {
                 case 43:
                     break;
                 case 7: {
-                    return new Yytoken(Yytoken.TYPE_LEFT_SQUARE, null);
+                    return new Yytoken(Yytoken.Type.TYPE_LEFT_SQUARE, null);
                 }
                 case 44:
                     break;
                 case 2: {
                     Long val = Long.valueOf(yytext());
-                    return new Yytoken(Yytoken.TYPE_VALUE, val);
+                    return new Yytoken(Yytoken.Type.TYPE_VALUE, val);
                 }
                 case 45:
                     break;
@@ -726,7 +726,7 @@ class Yylex {
                 case 46:
                     break;
                 case 9: {
-                    return new Yytoken(Yytoken.TYPE_COMMA, null);
+                    return new Yytoken(Yytoken.Type.TYPE_COMMA, null);
                 }
                 case 47:
                     break;

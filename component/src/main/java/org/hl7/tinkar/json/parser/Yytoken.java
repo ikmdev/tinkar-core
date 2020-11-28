@@ -23,19 +23,22 @@ package org.hl7.tinkar.json.parser;
  * @author FangYidong<fangyidong @ yahoo.com.cn>
  */
 public class Yytoken {
-    public static final int TYPE_VALUE = 0;//JSON primitive value: string,number,boolean,null
-    public static final int TYPE_LEFT_BRACE = 1;
-    public static final int TYPE_RIGHT_BRACE = 2;
-    public static final int TYPE_LEFT_SQUARE = 3;
-    public static final int TYPE_RIGHT_SQUARE = 4;
-    public static final int TYPE_COMMA = 5;
-    public static final int TYPE_COLON = 6;
-    public static final int TYPE_EOF = -1;//end of file
+    public enum Type {
+        TYPE_VALUE,//JSON primitive value: string,number,boolean,null
+        TYPE_LEFT_BRACE,
+        TYPE_RIGHT_BRACE,
+        TYPE_LEFT_SQUARE,
+        TYPE_RIGHT_SQUARE,
+        TYPE_COMMA,
+        TYPE_COLON,
+        TYPE_EOF, //end of file
+        UNUSED; // for unit tests only.
+    }
 
-    public int type = 0;
-    public Object value = null;
+    public final Type type;
+    public final Object value;
 
-    public Yytoken(int type, Object value) {
+    public Yytoken(Type type, Object value) {
         this.type = type;
         this.value = value;
     }

@@ -30,7 +30,7 @@ public class YylexTest {
         StringReader in = new StringReader(s);
         Yylex lexer = new Yylex(in);
         Yytoken token = lexer.yylex();
-        assertEquals(Yytoken.TYPE_VALUE, token.type);
+        assertEquals(Yytoken.Type.TYPE_VALUE, token.type);
         assertEquals("/", token.value);
 
         s = "\"abc\\/\\r\\b\\n\\t\\f\\\\\"";
@@ -38,7 +38,7 @@ public class YylexTest {
         in = new StringReader(s);
         lexer = new Yylex(in);
         token = lexer.yylex();
-        assertEquals(Yytoken.TYPE_VALUE, token.type);
+        assertEquals(Yytoken.Type.TYPE_VALUE, token.type);
         assertEquals("abc/\r\b\n\t\f\\", token.value);
 
         s = "[\t \n\r\n{ \t \t\n\r}";
@@ -46,11 +46,11 @@ public class YylexTest {
         in = new StringReader(s);
         lexer = new Yylex(in);
         token = lexer.yylex();
-        assertEquals(Yytoken.TYPE_LEFT_SQUARE, token.type);
+        assertEquals(Yytoken.Type.TYPE_LEFT_SQUARE, token.type);
         token = lexer.yylex();
-        assertEquals(Yytoken.TYPE_LEFT_BRACE, token.type);
+        assertEquals(Yytoken.Type.TYPE_LEFT_BRACE, token.type);
         token = lexer.yylex();
-        assertEquals(Yytoken.TYPE_RIGHT_BRACE, token.type);
+        assertEquals(Yytoken.Type.TYPE_RIGHT_BRACE, token.type);
 
         s = "\b\f{";
         System.out.println(s);
