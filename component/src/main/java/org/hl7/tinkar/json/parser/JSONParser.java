@@ -132,17 +132,17 @@ public class JSONParser {
 
                     case S_IN_ARRAY -> handleS_IN_ARRAY(containerFactory, statusStack, valueStack);
 
-                    case S_IN_ERROR -> throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
+                    case S_IN_ERROR -> throw new ParseException(getPosition(), ParseException.ErrorType.UNEXPECTED_TOKEN, token);
 
-                    default -> throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_EXCEPTION, token);
+                    default -> throw new ParseException(getPosition(), ParseException.ErrorType.UNEXPECTED_EXCEPTION, token);
                 }
 
                 if (status == S_IN_ERROR) {
-                    throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
+                    throw new ParseException(getPosition(), ParseException.ErrorType.UNEXPECTED_TOKEN, token);
                 }
             } while (token.type != Yytoken.Type.TYPE_EOF);
 
-        throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
+        throw new ParseException(getPosition(), ParseException.ErrorType.UNEXPECTED_TOKEN, token);
     }
 
     public void handleS_INIT(ContainerFactory containerFactory, LinkedList<Integer> statusStack, LinkedList<Object> valueStack) {
@@ -170,7 +170,7 @@ public class JSONParser {
         if (token.type == Yytoken.Type.TYPE_EOF)
             return valueStack.removeFirst();
         else
-            throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
+            throw new ParseException(getPosition(), ParseException.ErrorType.UNEXPECTED_TOKEN, token);
     }
 
     public void handleS_IN_OBJECT(LinkedList<Integer> statusStack, LinkedList<Object> valueStack) {
@@ -350,7 +350,7 @@ public class JSONParser {
         }
 
         status = S_IN_ERROR;
-        throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
+        throw new ParseException(getPosition(), ParseException.ErrorType.UNEXPECTED_TOKEN, token);
     }
 
     public boolean handleParse(ContentHandler contentHandler, LinkedList<Integer> statusStack) throws ParseException {
@@ -384,11 +384,11 @@ public class JSONParser {
                 return true;
             }
 
-            default -> throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
+            default -> throw new ParseException(getPosition(), ParseException.ErrorType.UNEXPECTED_TOKEN, token);
 
         }//switch
         if (status == S_IN_ERROR) {
-            throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
+            throw new ParseException(getPosition(), ParseException.ErrorType.UNEXPECTED_TOKEN, token);
         }
         return false;
     }
@@ -514,7 +514,7 @@ public class JSONParser {
             return;
         } else {
             status = S_IN_ERROR;
-            throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
+            throw new ParseException(getPosition(), ParseException.ErrorType.UNEXPECTED_TOKEN, token);
         }
     }
 

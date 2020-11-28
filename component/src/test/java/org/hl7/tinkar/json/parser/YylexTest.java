@@ -62,7 +62,7 @@ public class YylexTest {
         } catch (ParseException e) {
             err = e;
             System.out.println("error:" + err);
-            assertEquals(ParseException.ERROR_UNEXPECTED_CHAR, e.getErrorType());
+            assertEquals(ParseException.ErrorType.UNEXPECTED_CHAR, e.getErrorType());
             assertEquals(0, e.getPosition());
             assertEquals('\b', e.getUnexpectedObject());
         }
@@ -79,7 +79,7 @@ public class YylexTest {
         } catch (ParseException e) {
             err = e;
             System.out.println("error:" + err);
-            assertEquals(ParseException.ERROR_UNEXPECTED_CHAR, e.getErrorType());
+            assertEquals(ParseException.ErrorType.UNEXPECTED_CHAR, e.getErrorType());
             assertEquals('a', e.getUnexpectedObject());
             assertEquals(1, e.getPosition());
         }

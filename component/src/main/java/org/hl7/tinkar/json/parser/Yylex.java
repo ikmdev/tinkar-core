@@ -655,7 +655,7 @@ class Yylex {
                 case 33:
                     break;
                 case 1: {
-                    throw new ParseException(yychar, ParseException.ERROR_UNEXPECTED_CHAR, yycharat(0));
+                    throw new ParseException(yychar, ParseException.ErrorType.UNEXPECTED_CHAR, yycharat(0));
                 }
                 case 34:
                     break;
@@ -699,7 +699,7 @@ class Yylex {
                         int ch = Integer.parseInt(yytext().substring(2), 16);
                         sb.append((char) ch);
                     } catch (NumberFormatException e) {
-                        throw new ParseException(yychar, ParseException.ERROR_UNEXPECTED_EXCEPTION, e);
+                        throw new ParseException(yychar, ParseException.ErrorType.UNEXPECTED_EXCEPTION, e);
                     }
                 }
                 case 42:

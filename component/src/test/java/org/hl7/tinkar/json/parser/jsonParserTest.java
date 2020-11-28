@@ -31,5 +31,13 @@ public class jsonParserTest {
         String expected = "\\\" \\\\ \\b \\f \\n \\r \\t \\/ \\u20A0";
         assertEquals(expected, JSONValue.escape(test));
     }
+
+    @Test
+    public void testParseException() {
+        assertEquals("Unexpected character (unexpected char) at position 1.", new ParseException(1, ParseException.ErrorType.UNEXPECTED_CHAR, "unexpected char").getMessage());
+        assertEquals("Unexpected exception at position 2: unexpected ex", new ParseException(2, ParseException.ErrorType.UNEXPECTED_EXCEPTION, "unexpected ex").getMessage());
+        assertEquals("Unexpected token unexpected token at position 3.", new ParseException(3, ParseException.ErrorType.UNEXPECTED_TOKEN, "unexpected token").getMessage());
+        assertThrows(UnsupportedOperationException.class, () -> new ParseException(4, ParseException.ErrorType.UNUSED, "unused").getMessage());
+    }
 }
 

@@ -74,7 +74,7 @@ public class Test {
         try {
             parser.parse(s);
         } catch (ParseException pe) {
-            assertEquals(ParseException.ERROR_UNEXPECTED_TOKEN, pe.getErrorType());
+            assertEquals(ParseException.ErrorType.UNEXPECTED_TOKEN, pe.getErrorType());
             assertEquals(8, pe.getPosition());
         }
 
@@ -82,7 +82,7 @@ public class Test {
         try {
             parser.parse(s);
         } catch (ParseException pe) {
-            assertEquals(ParseException.ERROR_UNEXPECTED_TOKEN, pe.getErrorType());
+            assertEquals(ParseException.ErrorType.UNEXPECTED_TOKEN, pe.getErrorType());
             assertEquals(8, pe.getPosition());
         }
 
@@ -90,7 +90,7 @@ public class Test {
         try {
             parser.parse(s);
         } catch (ParseException pe) {
-            assertEquals(ParseException.ERROR_UNEXPECTED_TOKEN, pe.getErrorType());
+            assertEquals(ParseException.ErrorType.UNEXPECTED_TOKEN, pe.getErrorType());
             assertEquals(6, pe.getPosition());
         }
 
@@ -101,11 +101,11 @@ public class Test {
             assertEquals(24, pe.getPosition());
             System.out.println("Error at character position: " + pe.getPosition());
             switch (pe.getErrorType()) {
-                case ParseException.ERROR_UNEXPECTED_TOKEN ->
+                case UNEXPECTED_TOKEN ->
                     System.out.println("Unexpected token: " + pe.getUnexpectedObject());
-                case ParseException.ERROR_UNEXPECTED_CHAR ->
+                case UNEXPECTED_CHAR ->
                     System.out.println("Unexpected character: " + pe.getUnexpectedObject());
-                case ParseException.ERROR_UNEXPECTED_EXCEPTION ->
+                case UNEXPECTED_EXCEPTION ->
                     ((Exception) pe.getUnexpectedObject()).printStackTrace();
             }
         }
