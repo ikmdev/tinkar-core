@@ -56,7 +56,7 @@ public class JSONParser {
         if (statusStack.isEmpty()) {
             return -1;
         }
-        return (Integer) statusStack.getFirst();
+        return statusStack.getFirst();
     }
 
     /**

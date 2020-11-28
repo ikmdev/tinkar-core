@@ -47,7 +47,7 @@ class Yylex {
      * ZZ_LEXSTATE[l+1] is the state in the DFA for the lexical state l at the
      * beginning of a line l is of the form l = 2*k, k a non negative integer
      */
-    private static final int ZZ_LEXSTATE[] = {
+    private static final int[] ZZ_LEXSTATE = {
         0, 0, 1, 1
     };
 
@@ -80,11 +80,11 @@ class Yylex {
 
     private static int[] zzUnpackAction() {
         int[] result = new int[45];
-        zzUnpackAction(ZZ_ACTION_PACKED_0, 0, result);
+        zzUnpack(ZZ_ACTION_PACKED_0, 0, result);
         return result;
     }
 
-    private static int zzUnpackAction(String packed, int offset, int[] result) {
+    private static int zzUnpack(String packed, int offset, int[] result) {
         int i = 0;
         /* index in packed string  */
         int j = offset;
@@ -135,7 +135,7 @@ class Yylex {
     /**
      * The transition table of the DFA
      */
-    private static final int ZZ_TRANS[] = {
+    private static final int[] ZZ_TRANS = {
         2, 2, 3, 4, 2, 2, 2, 5, 2, 6,
         2, 2, 7, 8, 2, 9, 2, 2, 2, 2,
         2, 10, 11, 12, 13, 14, 15, 16, 16, 16,
@@ -211,7 +211,7 @@ class Yylex {
     private static final int ZZ_PUSHBACK_2BIG = 2;
 
     /* error messages for the codes above */
-    private static final String ZZ_ERROR_MSG[] = {
+    private static final String[] ZZ_ERROR_MSG = {
         "Unkown internal scanner error",
         "Error: could not match input",
         "Error: pushback value was too large"
@@ -229,24 +229,8 @@ class Yylex {
 
     private static int[] zzUnpackAttribute() {
         int[] result = new int[45];
-        zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, 0, result);
+        zzUnpack(ZZ_ATTRIBUTE_PACKED_0, 0, result);
         return result;
-    }
-
-    private static int zzUnpackAttribute(String packed, int offset, int[] result) {
-        int i = 0;
-        /* index in packed string  */
-        int j = offset;
-        /* index in unpacked array */
-        int l = packed.length();
-        while (i < l) {
-            int count = packed.charAt(i++);
-            int value = packed.charAt(i++);
-            do {
-                result[j++] = value;
-            } while (--count > 0);
-        }
-        return j;
     }
 
     /**
@@ -268,7 +252,7 @@ class Yylex {
      * this buffer contains the current text to be matched and is the source of
      * the yytext() string
      */
-    private char zzBuffer[] = new char[ZZ_BUFFERSIZE];
+    private char[] zzBuffer = new char[ZZ_BUFFERSIZE];
 
     /**
      * the textposition at the last accepting state
@@ -318,7 +302,7 @@ class Yylex {
     private boolean zzAtEOF;
 
     /* user code: */
-    private StringBuffer sb = new StringBuffer();
+    private StringBuilder sb = new StringBuilder();
 
     int getPosition() {
         return yychar;
@@ -391,7 +375,7 @@ class Yylex {
             /* is the buffer big enough? */
             if (zzCurrentPos >= zzBuffer.length) {
                 /* if not: blow it up */
-                char newBuffer[] = new char[zzCurrentPos * 2];
+                char[] newBuffer = new char[zzCurrentPos * 2];
                 System.arraycopy(zzBuffer, 0, newBuffer, 0, zzBuffer.length);
                 zzBuffer = newBuffer;
             }
@@ -613,7 +597,6 @@ class Yylex {
                             break zzForAction;
                         }
                     }
-
                 }
             }
 
@@ -628,7 +611,7 @@ class Yylex {
                     break;
                 case 4: {
                     sb = null;
-                    sb = new StringBuffer();
+                    sb = new StringBuilder();
                     yybegin(STRING_BEGIN);
                 }
                 case 26:
