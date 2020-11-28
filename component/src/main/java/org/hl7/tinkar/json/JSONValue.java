@@ -33,22 +33,20 @@ import org.hl7.tinkar.json.parser.ParseException;
  * System, and not updated for 8 years. Integrated here to integrate with Java
  * Platform Module System.
  *
- * @author FangYidong<fangyidong@yahoo.com.cn>
+ * @author FangYidong<fangyidong @ yahoo.com.cn>
  */
 public class JSONValue {
 
     /**
      * Parse JSON text into java object from the input source.
      *
-     * @see org.hl7.tinkar.parser.JSONParser
-     *
      * @param in
      * @return Instance of the following: org.hl7.tinkar.JSONObject,
      * org.hl7.tinkar.JSONArray, java.lang.String, java.lang.Number,
      * java.lang.Boolean, null
-     *
      * @throws IOException
      * @throws ParseException
+     * @see org.hl7.tinkar.parser.JSONParser
      */
     public static Object parse(Reader in) throws ParseException {
         JSONParser parser = new JSONParser();
@@ -76,74 +74,81 @@ public class JSONValue {
      * @throws java.io.IOException
      * @see org.hl7.tinkar.JSONObject#writeJSONString(Map, Writer)
      * @see org.hl7.tinkar.JSONArray#writeJSONString(List, Writer)
-     *
      */
     public static void writeJSONString(Object value, Writer out) throws IOException {
         if (value == null) {
             out.write("null");
         } else if (value instanceof String string) {
-            writeQuotedEscapedString(out, string);
-        } else if (value instanceof Double double1) {
-            if (double1.isInfinite() || double1.isNaN()) {
-                out.write("null");
-            } else {
-                out.write(value.toString());
-            }
-        } else if (value instanceof Float float1) {
-            if (float1.isInfinite() || float1.isNaN()) {
-                out.write("null");
-            } else {
-                out.write(value.toString());
-            }
-        } else if (value instanceof Number) {
-            out.write(value.toString());
+            writeQuotedString(out, escape(string));
+        } else if (value instanceof Number num) {
+            handleNumber(num, out);
         } else if (value instanceof Boolean) {
             out.write(value.toString());
         } else if (value instanceof UUID) {
-            out.write('\"');
-            out.write(value.toString());
-            out.write('\"');
+            writeQuotedString(out, value.toString());
         } else if (value instanceof Instant) {
-            out.write('\"');
-            out.write(value.toString());
-            out.write('\"');
+            writeQuotedString(out, value.toString());
         } else if ((value instanceof JSONStreamAware)) {
             ((JSONStreamAware) value).writeJSONString(out);
         } else if ((value instanceof JSONAware)) {
             out.write(((JSONAware) value).toJSONString());
         } else if (value instanceof Map map) {
             JSONObject.writeJSONString(map, out);
+        } else if (value.getClass().isArray()) {
+            handleArray(value, out);
         } else if (value instanceof Collection collection) {
             JSONArray.writeJSONString(collection, out);
-        } else if (value instanceof byte[] bs) {
-            JSONArray.writeJSONString(bs, out);
-        } else if (value instanceof short[] ses) {
-            JSONArray.writeJSONString(ses, out);
-        } else if (value instanceof int[] is) {
-            JSONArray.writeJSONString(is, out);
-        } else if (value instanceof long[] ls) {
-            JSONArray.writeJSONString(ls, out);
-        } else if (value instanceof float[] fs) {
-            JSONArray.writeJSONString(fs, out);
-        } else if (value instanceof double[] ds) {
-            JSONArray.writeJSONString(ds, out);
-        } else if (value instanceof boolean[] bs) {
-            JSONArray.writeJSONString(bs, out);
-        } else if (value instanceof char[] cs) {
-            JSONArray.writeJSONString(cs, out);
-        } else if (value instanceof Object[] objects) {
-            JSONArray.writeJSONString(objects, out);
         } else if (value instanceof JsonMarshalable marshalable) {
             out.write(marshalable.toJsonString());
         } else {
             out.write(value.toString());
         }
-
     }
 
-    public static void writeQuotedEscapedString(Writer out, String string) throws IOException {
+
+    private static void handleArray(Object array, Writer out) throws IOException {
+        if (array instanceof byte[] bs) {
+            JSONArray.writeJSONString(bs, out);
+        } else if (array instanceof short[] ses) {
+            JSONArray.writeJSONString(ses, out);
+        } else if (array instanceof int[] is) {
+            JSONArray.writeJSONString(is, out);
+        } else if (array instanceof long[] ls) {
+            JSONArray.writeJSONString(ls, out);
+        } else if (array instanceof float[] fs) {
+            JSONArray.writeJSONString(fs, out);
+        } else if (array instanceof double[] ds) {
+            JSONArray.writeJSONString(ds, out);
+        } else if (array instanceof boolean[] bs) {
+            JSONArray.writeJSONString(bs, out);
+        } else if (array instanceof char[] cs) {
+            JSONArray.writeJSONString(cs, out);
+        } else if (array instanceof Object[] objects) {
+            JSONArray.writeJSONString(objects, out);
+        }
+    }
+
+    private static void handleNumber(Number num, Writer out) throws IOException {
+        if (num instanceof Double double1) {
+            if (double1.isInfinite() || double1.isNaN()) {
+                out.write("null");
+            } else {
+                out.write(num.toString());
+            }
+        } else if (num instanceof Float float1) {
+            if (float1.isInfinite() || float1.isNaN()) {
+                out.write("null");
+            } else {
+                out.write(num.toString());
+            }
+        } else {
+            out.write(num.toString());
+        }
+    }
+
+    public static void writeQuotedString(Writer out, String s) throws IOException {
         out.write('\"');
-        out.write(escape(string));
+        out.write(s);
         out.write('\"');
     }
 
@@ -157,12 +162,11 @@ public class JSONValue {
      * both JSONAware and Map or List with "this" as the parameter, use
      * JSONObject.toJSONString(Map) or JSONArray.toJSONString(List) instead.
      *
-     * @see org.hl7.tinkar.JSONObject#toJSONString(Map)
-     * @see org.hl7.tinkar.JSONArray#toJSONString(List)
-     *
      * @param value
      * @return JSON text, or "null" if value is null or it's an NaN or an INF
      * number.
+     * @see org.hl7.tinkar.JSONObject#toJSONString(Map)
+     * @see org.hl7.tinkar.JSONArray#toJSONString(List)
      */
     public static String toJSONString(Object value) {
         final StringWriter writer = new StringWriter();
@@ -193,7 +197,7 @@ public class JSONValue {
     }
 
     /**
-     * @param s - Must not be null.
+     * @param s  - Must not be null.
      * @param sb
      */
     static void escape(String s, StringBuilder sb) {
@@ -201,22 +205,14 @@ public class JSONValue {
         for (int i = 0; i < len; i++) {
             char ch = s.charAt(i);
             switch (ch) {
-                case '"' ->
-                    sb.append("\\\"");
-                case '\\' ->
-                    sb.append("\\\\");
-                case '\b' ->
-                    sb.append("\\b");
-                case '\f' ->
-                    sb.append("\\f");
-                case '\n' ->
-                    sb.append("\\n");
-                case '\r' ->
-                    sb.append("\\r");
-                case '\t' ->
-                    sb.append("\\t");
-                case '/' ->
-                    sb.append("\\/");
+                case '"' -> sb.append("\\\"");
+                case '\\' -> sb.append("\\\\");
+                case '\b' -> sb.append("\\b");
+                case '\f' -> sb.append("\\f");
+                case '\n' -> sb.append("\\n");
+                case '\r' -> sb.append("\\r");
+                case '\t' -> sb.append("\\t");
+                case '/' -> sb.append("\\/");
                 default -> {
                     if (isSpecial(ch)) {
                         String ss = Integer.toHexString(ch);
