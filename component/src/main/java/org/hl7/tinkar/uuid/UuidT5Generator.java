@@ -38,7 +38,9 @@ import java.util.function.BiConsumer;
  */
 public class UuidT5Generator {
    /** The Constant ENCODING. */
-   public final static String ENCODING = "UTF-8";
+   public static final String ENCODING = "UTF-8";
+
+   public static final String DIGEST = "SHA-1";
 
    /** The Constant PATH_ID_FROM_FS_DESC. */
    public static final UUID PATH_ID_FROM_FS_DESC = UUID.fromString("5a2e7786-3e41-11dc-8314-0800200c9a66");
@@ -64,7 +66,7 @@ public class UuidT5Generator {
     //~--- get methods ---------------------------------------------------------
 
    /**
-    * Gets the.
+    * Gets a generated UUID from a name with a null namespace.
     *
     * @param name the name
     * @return the uuid
@@ -73,24 +75,43 @@ public class UuidT5Generator {
       return get(null, name);
    }
 
-    public static UUID singleSemanticUuid(UUID[] assemblageIds, UUID[] referencedComponentIds) {
-        Arrays.sort(assemblageIds);
+   /**
+    * Generate a UUID for a semantic set that has one semantic per referenced component.
+    * Sorts the definition uuids and the referenced component uuids (separately) to ensure that order of
+    * UUID presentation does not matter.
+    * @param definitionUuids
+    * @param referencedComponentIds
+    * @return the generated uuid
+    */
+    public static UUID singleSemanticUuid(UUID[] definitionUuids, UUID[] referencedComponentIds) {
+        Arrays.sort(definitionUuids);
         Arrays.sort(referencedComponentIds);
         StringBuilder builder = new StringBuilder();
-        builder.append(Arrays.toString(assemblageIds));
+        builder.append(Arrays.toString(definitionUuids));
         builder.append(Arrays.toString(referencedComponentIds));
         return get(SINGLE_SEMANTIC_FOR_RC_UUID, builder.toString());
     }
    /**
-    * Gets the.
+    * Generates a reproducible UUID from a namespace and a name.
     *
     * @param namespace the namespace
     * @param name the name
-    * @return the uuid
+    * @return the generated uuid
     */
    public static UUID get(UUID namespace, String name) {
+      return getUuidWithEncoding(namespace, name, ENCODING);
+   }
+
+   /**
+    * Generates a reproducible UUID from a namespace and a name in a given encoding.
+    * @param namespace
+    * @param name
+    * @param encoding
+    * @return the generated uuid
+    */
+   public static UUID getUuidWithEncoding(UUID namespace, String name, String encoding) {
       try {
-         final MessageDigest sha1Algorithm = MessageDigest.getInstance("SHA-1");
+         final MessageDigest sha1Algorithm = getDigest(DIGEST);
 
          // Generate the digest.
          sha1Algorithm.reset();
@@ -99,7 +120,7 @@ public class UuidT5Generator {
             sha1Algorithm.update(getRawBytes(namespace));
          }
 
-         sha1Algorithm.update(name.getBytes(ENCODING));
+         sha1Algorithm.update(name.getBytes(encoding));
 
          final byte[] sha1digest = sha1Algorithm.digest();
 
@@ -120,11 +141,18 @@ public class UuidT5Generator {
          }
 
          return new UUID(msb, lsb);
-      } catch (NoSuchAlgorithmException | UnsupportedEncodingException ex) {
-         throw new RuntimeException(ex);
+      } catch (UnsupportedEncodingException ex) {
+         throw new UnsupportedOperationException(ex);
       }
    }
-   
+
+   public static MessageDigest getDigest(String instance) {
+      try {
+         return MessageDigest.getInstance(instance);
+      } catch (NoSuchAlgorithmException e) {
+         throw new UnsupportedOperationException(e);
+      }
+   }
     
     /**
      * Same as {@link #get(UUID, String)} but with an optional consumer, which will get a call with the fed in name and resulting UUID.

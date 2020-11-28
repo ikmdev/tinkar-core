@@ -19,8 +19,6 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.dto.*;
 
-import java.util.UUID;
-
 /**
  *
  * @author kec
