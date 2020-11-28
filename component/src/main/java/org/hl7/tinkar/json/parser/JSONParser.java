@@ -342,50 +342,55 @@ public class JSONParser {
 
         try {
             do {
-                switch (status) {
-                    case S_INIT -> {
-                        if (handleS_INIT(contentHandler, statusStack)) return;
-                    }
-
-                    case S_IN_FINISHED_VALUE -> {
-                        handleS_IN_FINISHED_VALUE(contentHandler);
-                        return;
-                    }
-
-                    case S_IN_OBJECT -> {
-                        if (handleS_IN_OBJECT(contentHandler, statusStack)) return;
-                    }
-
-                    case S_PASSED_PAIR_KEY -> {
-                        if (handleS_PASSED_PAIR_KEY(contentHandler, statusStack)) return;
-                    }
-
-                    case S_IN_PAIR_VALUE -> {
-                        if (handleS_IN_PAIR_VALUE(contentHandler, statusStack)) return;
-                    }
-
-                    case S_IN_ARRAY -> {
-                        if (handleS_IN_ARRAY(contentHandler, statusStack)) return;
-                    }
-
-                    case S_END -> {
-                        return;
-                    }
-
-                    default -> throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
-
-                }//switch
-                if (status == S_IN_ERROR) {
-                    throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
-                }
+                if (handleParse(contentHandler, statusStack)) return;
             } while (token.type != Yytoken.TYPE_EOF);
-        } catch (ParseException | RuntimeException | Error ex) {
+        } catch (ParseException | RuntimeException ex) {
             status = S_IN_ERROR;
             throw ex;
         }
 
         status = S_IN_ERROR;
         throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
+    }
+
+    public boolean handleParse(ContentHandler contentHandler, LinkedList<Integer> statusStack) throws ParseException {
+        switch (status) {
+            case S_INIT -> {
+                if (handleS_INIT(contentHandler, statusStack)) return true;
+            }
+
+            case S_IN_FINISHED_VALUE -> {
+                handleS_IN_FINISHED_VALUE(contentHandler);
+                return true;
+            }
+
+            case S_IN_OBJECT -> {
+                if (handleS_IN_OBJECT(contentHandler, statusStack)) return true;
+            }
+
+            case S_PASSED_PAIR_KEY -> {
+                if (handleS_PASSED_PAIR_KEY(contentHandler, statusStack)) return true;
+            }
+
+            case S_IN_PAIR_VALUE -> {
+                if (handleS_IN_PAIR_VALUE(contentHandler, statusStack)) return true;
+            }
+
+            case S_IN_ARRAY -> {
+                if (handleS_IN_ARRAY(contentHandler, statusStack)) return true;
+            }
+
+            case S_END -> {
+                return true;
+            }
+
+            default -> throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
+
+        }//switch
+        if (status == S_IN_ERROR) {
+            throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
+        }
+        return false;
     }
 
     public boolean handleS_IN_ARRAY(ContentHandler contentHandler, LinkedList<Integer> statusStack) throws ParseException {
