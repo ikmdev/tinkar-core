@@ -1,6 +1,8 @@
 package org.hl7.tinkar.json;
 
 public class ComponentFieldForJson {
+    private ComponentFieldForJson() {}
+
     public static final String AUTHOR_UUIDS = "authorUuids";
     public static final String CHRONOLOGY_SET_UUIDS = "chronologySetUuids";
     public static final String CLASS = "class";

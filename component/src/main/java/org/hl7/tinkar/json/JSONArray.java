@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.io.Writer;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -122,20 +123,46 @@ public class JSONArray extends ArrayList<Object> implements JSONAware, JSONStrea
     }
 
     public static void writeJSONString(byte[] array, Writer out) throws IOException {
-        if (array == null) {
-            out.write("null");
-        } else if (array.length == 0) {
-            out.write("[]");
-        } else {
-            out.write("[");
-            out.write(String.valueOf(array[0]));
+        writeArray(array, out);
+    }
 
-            for (int i = 1; i < array.length; i++) {
-                out.write(",");
-                out.write(String.valueOf(array[i]));
+    public static void writeArray(Object arrayObject, Writer out) throws IOException {
+        if (arrayObject == null) {
+            out.write("null");
+        } else if (arrayObject.getClass().isArray()) {
+            int length = Array.getLength(arrayObject);
+            Class<?> componentType = arrayObject.getClass().getComponentType();
+            boolean quoteValue = false;
+            if (char.class.equals(componentType)) {
+                quoteValue = true;
             }
 
-            out.write("]");
+            if (length == 0) {
+                out.write("[]");
+            } else {
+                out.write("[");
+                if (quoteValue) {
+                    out.write('"');
+                    JSONValue.writeJSONString(Array.get(arrayObject, 0), out);
+                    out.write('"');
+                } else {
+                    out.write(String.valueOf(Array.get(arrayObject, 0)));
+                }
+
+                for (int i = 1; i < length; i++) {
+                    out.write(",");
+                    if (quoteValue) {
+                        out.write('"');
+                        JSONValue.writeJSONString(Array.get(arrayObject, i), out);
+                        out.write('"');
+                    } else {
+                        out.write(String.valueOf(Array.get(arrayObject, i)));
+                    }
+                }
+                out.write("]");
+            }
+        } else {
+            throw new IllegalStateException("Expecting an array. Found: " + arrayObject);
         }
     }
 
@@ -152,21 +179,7 @@ public class JSONArray extends ArrayList<Object> implements JSONAware, JSONStrea
     }
 
     public static void writeJSONString(short[] array, Writer out) throws IOException {
-        if (array == null) {
-            out.write("null");
-        } else if (array.length == 0) {
-            out.write("[]");
-        } else {
-            out.write("[");
-            out.write(String.valueOf(array[0]));
-
-            for (int i = 1; i < array.length; i++) {
-                out.write(",");
-                out.write(String.valueOf(array[i]));
-            }
-
-            out.write("]");
-        }
+        writeArray(array, out);
     }
 
     public static String toJSONString(short[] array) {
@@ -182,21 +195,7 @@ public class JSONArray extends ArrayList<Object> implements JSONAware, JSONStrea
     }
 
     public static void writeJSONString(int[] array, Writer out) throws IOException {
-        if (array == null) {
-            out.write("null");
-        } else if (array.length == 0) {
-            out.write("[]");
-        } else {
-            out.write("[");
-            out.write(String.valueOf(array[0]));
-
-            for (int i = 1; i < array.length; i++) {
-                out.write(",");
-                out.write(String.valueOf(array[i]));
-            }
-
-            out.write("]");
-        }
+        writeArray(array, out);
     }
 
     public static String toJSONString(int[] array) {
@@ -212,21 +211,7 @@ public class JSONArray extends ArrayList<Object> implements JSONAware, JSONStrea
     }
 
     public static void writeJSONString(long[] array, Writer out) throws IOException {
-        if (array == null) {
-            out.write("null");
-        } else if (array.length == 0) {
-            out.write("[]");
-        } else {
-            out.write("[");
-            out.write(String.valueOf(array[0]));
-
-            for (int i = 1; i < array.length; i++) {
-                out.write(",");
-                out.write(String.valueOf(array[i]));
-            }
-
-            out.write("]");
-        }
+        writeArray(array, out);
     }
 
     public static String toJSONString(long[] array) {
@@ -242,21 +227,7 @@ public class JSONArray extends ArrayList<Object> implements JSONAware, JSONStrea
     }
 
     public static void writeJSONString(float[] array, Writer out) throws IOException {
-        if (array == null) {
-            out.write("null");
-        } else if (array.length == 0) {
-            out.write("[]");
-        } else {
-            out.write("[");
-            out.write(String.valueOf(array[0]));
-
-            for (int i = 1; i < array.length; i++) {
-                out.write(",");
-                out.write(String.valueOf(array[i]));
-            }
-
-            out.write("]");
-        }
+        writeArray(array, out);
     }
 
     public static String toJSONString(float[] array) {
@@ -272,21 +243,7 @@ public class JSONArray extends ArrayList<Object> implements JSONAware, JSONStrea
     }
 
     public static void writeJSONString(double[] array, Writer out) throws IOException {
-        if (array == null) {
-            out.write("null");
-        } else if (array.length == 0) {
-            out.write("[]");
-        } else {
-            out.write("[");
-            out.write(String.valueOf(array[0]));
-
-            for (int i = 1; i < array.length; i++) {
-                out.write(",");
-                out.write(String.valueOf(array[i]));
-            }
-
-            out.write("]");
-        }
+        writeArray(array, out);
     }
 
     public static String toJSONString(double[] array) {
@@ -302,21 +259,7 @@ public class JSONArray extends ArrayList<Object> implements JSONAware, JSONStrea
     }
 
     public static void writeJSONString(boolean[] array, Writer out) throws IOException {
-        if (array == null) {
-            out.write("null");
-        } else if (array.length == 0) {
-            out.write("[]");
-        } else {
-            out.write("[");
-            out.write(String.valueOf(array[0]));
-
-            for (int i = 1; i < array.length; i++) {
-                out.write(",");
-                out.write(String.valueOf(array[i]));
-            }
-
-            out.write("]");
-        }
+        writeArray(array, out);
     }
 
     public static String toJSONString(boolean[] array) {
@@ -332,21 +275,7 @@ public class JSONArray extends ArrayList<Object> implements JSONAware, JSONStrea
     }
 
     public static void writeJSONString(char[] array, Writer out) throws IOException {
-        if (array == null) {
-            out.write("null");
-        } else if (array.length == 0) {
-            out.write("[]");
-        } else {
-            out.write("[\"");
-            out.write(String.valueOf(array[0]));
-
-            for (int i = 1; i < array.length; i++) {
-                out.write("\",\"");
-                out.write(String.valueOf(array[i]));
-            }
-
-            out.write("\"]");
-        }
+        writeArray(array, out);
     }
 
     public static String toJSONString(char[] array) {

@@ -58,6 +58,10 @@ public record DefinitionForSemanticVersionDTO(ImmutableList<UUID> componentUuids
         return fieldDefinitionDTOS.collect(fieldDefinitionDTO -> (FieldDefinition) fieldDefinitionDTO);
     }
 
+    /**
+     * Marshal method for DefinitionForSemanticVersionDTO using JSON
+     * @param writer
+     */
     @Override
     public void jsonMarshal(Writer writer) {
         final JSONObject json = new JSONObject();
@@ -67,6 +71,12 @@ public record DefinitionForSemanticVersionDTO(ImmutableList<UUID> componentUuids
         json.writeJSONString(writer);
     }
 
+    /**
+     * Unmarshal method for DefinitionForSemanticVersionDTO using JSON
+     * @param jsonObject
+     * @param componentUuids
+     * @return
+     */
     @JsonVersionUnmarshaler
     public static DefinitionForSemanticVersionDTO make(JSONObject jsonObject, ImmutableList<UUID> componentUuids) {
         return new DefinitionForSemanticVersionDTO(componentUuids,
@@ -75,6 +85,12 @@ public record DefinitionForSemanticVersionDTO(ImmutableList<UUID> componentUuids
                 jsonObject.asFieldDefinitionList(FIELD_DEFINITIONS));
     }
 
+    /**
+     * Unmarshal method for DefinitionForSemanticVersionDTO
+     * @param in
+     * @param componentUuids
+     * @return
+     */
     @VersionUnmarshaler
     public static DefinitionForSemanticVersionDTO make(TinkarInput in, ImmutableList<UUID> componentUuids) {
         try {
@@ -92,6 +108,10 @@ public record DefinitionForSemanticVersionDTO(ImmutableList<UUID> componentUuids
         }
     }
 
+    /**
+     * Marshal method for DefinitionForSemanticVersionDTO
+     * @param out
+     */
     @Override
     @Marshaler
     public void marshal(TinkarOutput out) {

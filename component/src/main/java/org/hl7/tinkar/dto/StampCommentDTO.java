@@ -50,6 +50,10 @@ public record StampCommentDTO(StampDTO stampDTO, String comment)
         return comment;
     }
 
+    /**
+     * Marshal method for StampCommentDTO using JSON
+     * @param writer
+     */
     @Override
     public void jsonMarshal(Writer writer)  {
         final JSONObject json = new JSONObject();
@@ -59,6 +63,11 @@ public record StampCommentDTO(StampDTO stampDTO, String comment)
         json.writeJSONString(writer);
     }
 
+    /**
+     * Unmarshal method for StampCommentDTO using JSON
+     * @param jsonObject
+     * @return
+     */
     @JsonChronologyUnmarshaler
     public static StampCommentDTO make(JSONObject jsonObject) {
         return new StampCommentDTO(
@@ -66,6 +75,11 @@ public record StampCommentDTO(StampDTO stampDTO, String comment)
                 (String) jsonObject.get(ComponentFieldForJson.COMMENT));
     }
 
+    /**
+     * Unarshal method for StampCommentDTO
+     * @param in
+     * @return
+     */
     @Unmarshaler
     public static StampCommentDTO make(TinkarInput in) {
         try {
@@ -82,6 +96,10 @@ public record StampCommentDTO(StampDTO stampDTO, String comment)
         }
     }
 
+    /**
+     * Marshal method for StampCommentDTO
+     * @param out
+     */
     @Override
     @Marshaler
     public void marshal(TinkarOutput out) {
