@@ -90,16 +90,15 @@ public record SemanticChronologyDTO(ImmutableList<UUID> componentUuids,
     public static SemanticChronologyDTO make(TinkarInput in) {
         try {
             int objectMarshalVersion = in.readInt();
-            switch (objectMarshalVersion) {
-                case marshalVersion -> {
-                    ImmutableList<UUID> componentUuids = in.readImmutableUuidList();
-                    ImmutableList<UUID> definitionForSemanticUuids  = in.readImmutableUuidList();
-                    ImmutableList<UUID> referencedComponentUuids = in.readImmutableUuidList();
-                    return new SemanticChronologyDTO(
-                            componentUuids, definitionForSemanticUuids, referencedComponentUuids,
-                            in.readSemanticVersionList(componentUuids, definitionForSemanticUuids, referencedComponentUuids));
-                }
-                default -> throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
+            if (objectMarshalVersion == marshalVersion) {
+                ImmutableList<UUID> componentUuids = in.readImmutableUuidList();
+                ImmutableList<UUID> definitionForSemanticUuids = in.readImmutableUuidList();
+                ImmutableList<UUID> referencedComponentUuids = in.readImmutableUuidList();
+                return new SemanticChronologyDTO(
+                        componentUuids, definitionForSemanticUuids, referencedComponentUuids,
+                        in.readSemanticVersionList(componentUuids, definitionForSemanticUuids, referencedComponentUuids));
+            } else {
+                throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
             }
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);

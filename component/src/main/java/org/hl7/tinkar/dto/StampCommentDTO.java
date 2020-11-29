@@ -70,13 +70,12 @@ public record StampCommentDTO(StampDTO stamp, String comment)
     public static StampCommentDTO make(TinkarInput in) {
         try {
             int objectMarshalVersion = in.readInt();
-            switch (objectMarshalVersion) {
-                case marshalVersion -> {
-                    return new StampCommentDTO(
-                            StampDTO.make(in),
-                            in.readUTF());
-                }
-                default -> throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
+            if (objectMarshalVersion == marshalVersion) {
+                return new StampCommentDTO(
+                        StampDTO.make(in),
+                        in.readUTF());
+            } else {
+                throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
             }
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);

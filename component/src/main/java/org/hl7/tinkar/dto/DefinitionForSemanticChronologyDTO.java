@@ -73,13 +73,12 @@ public record DefinitionForSemanticChronologyDTO(ImmutableList<UUID> componentUu
     public static DefinitionForSemanticChronologyDTO make(TinkarInput in) {
         try {
             int objectMarshalVersion = in.readInt();
-            switch (objectMarshalVersion) {
-                case marshalVersion -> {
-                    ImmutableList<UUID> componentUuids = in.readImmutableUuidList();
-                    return new DefinitionForSemanticChronologyDTO(
-                            componentUuids, in.readImmutableUuidList(), in.readDefinitionForSemanticVersionList(componentUuids));
-                }
-                default -> throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
+            if (objectMarshalVersion == marshalVersion) {
+                ImmutableList<UUID> componentUuids = in.readImmutableUuidList();
+                return new DefinitionForSemanticChronologyDTO(
+                        componentUuids, in.readImmutableUuidList(), in.readDefinitionForSemanticVersionList(componentUuids));
+            } else {
+                throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
             }
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);

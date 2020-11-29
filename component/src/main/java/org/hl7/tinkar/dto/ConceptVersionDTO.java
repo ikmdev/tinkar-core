@@ -59,11 +59,10 @@ public record ConceptVersionDTO(ImmutableList<UUID> componentUuids, StampDTO sta
     public static ConceptVersionDTO make(TinkarInput in, ImmutableList<UUID> componentUuids) {
         try {
             int objectMarshalVersion = in.readInt();
-            switch (objectMarshalVersion) {
-                case marshalVersion -> {
-                    return new ConceptVersionDTO(componentUuids, StampDTO.make(in));
-                }
-                default -> throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
+            if (objectMarshalVersion == marshalVersion) {
+                return new ConceptVersionDTO(componentUuids, StampDTO.make(in));
+            } else {
+                throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
             }
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);

@@ -83,16 +83,14 @@ public record SemanticVersionDTO(ImmutableList<UUID> componentUuids,
                                           ImmutableList<UUID> referencedComponentUuids) {
         try {
             int objectMarshalVersion = in.readInt();
-            switch (objectMarshalVersion) {
-                case marshalVersion -> {
-                    return new SemanticVersionDTO(componentUuids,
-                            definitionForSemanticUuids,
-                            referencedComponentUuids,
-                            StampDTO.make(in),
-                            in.readImmutableObjectList());
-                }
-                default ->
-                    throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
+            if (objectMarshalVersion == marshalVersion) {
+                return new SemanticVersionDTO(componentUuids,
+                        definitionForSemanticUuids,
+                        referencedComponentUuids,
+                        StampDTO.make(in),
+                        in.readImmutableObjectList());
+            } else {
+                throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
             }
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);

@@ -62,14 +62,13 @@ public record FieldDefinitionDTO(ImmutableList<UUID> dataTypeUuids,
     public static FieldDefinitionDTO make(TinkarInput in) {
         try {
             int objectMarshalVersion = in.readInt();
-            switch (objectMarshalVersion) {
-                case marshalVersion -> {
-                    return new FieldDefinitionDTO(
-                            in.readImmutableUuidList(),
-                            in.readImmutableUuidList(),
-                            in.readImmutableUuidList());
-                }
-                default -> throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
+            if (objectMarshalVersion == marshalVersion) {
+                return new FieldDefinitionDTO(
+                        in.readImmutableUuidList(),
+                        in.readImmutableUuidList(),
+                        in.readImmutableUuidList());
+            } else {
+                throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
             }
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);

@@ -69,15 +69,13 @@ public record DefinitionForSemanticVersionDTO(ImmutableList<UUID> componentUuids
     public static DefinitionForSemanticVersionDTO make(TinkarInput in, ImmutableList<UUID> componentUuids) {
         try {
             int objectMarshalVersion = in.readInt();
-            switch (objectMarshalVersion) {
-                case marshalVersion -> {
-                    return new DefinitionForSemanticVersionDTO(componentUuids,
-                            StampDTO.make(in),
-                            in.readImmutableUuidList(),
-                            in.readFieldDefinitionList());
-                }
-                default ->
-                    throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
+            if (objectMarshalVersion == marshalVersion) {
+                return new DefinitionForSemanticVersionDTO(componentUuids,
+                        StampDTO.make(in),
+                        in.readImmutableUuidList(),
+                        in.readFieldDefinitionList());
+            } else {
+                throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
             }
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);

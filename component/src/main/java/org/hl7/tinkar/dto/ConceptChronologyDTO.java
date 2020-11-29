@@ -68,13 +68,12 @@ public record ConceptChronologyDTO(ImmutableList<UUID> componentUuids,
     public static ConceptChronologyDTO make(TinkarInput in) {
         try {
             int objectMarshalVersion = in.readInt();
-            switch (objectMarshalVersion) {
-                case marshalVersion -> {
-                    ImmutableList<UUID> componentUuids = in.readImmutableUuidList();
-                    return new ConceptChronologyDTO(
-                            componentUuids, in.readImmutableUuidList(), in.readConceptVersionList(componentUuids));
-                }
-                default -> throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
+            if (objectMarshalVersion == marshalVersion) {
+                ImmutableList<UUID> componentUuids = in.readImmutableUuidList();
+                return new ConceptChronologyDTO(
+                        componentUuids, in.readImmutableUuidList(), in.readConceptVersionList(componentUuids));
+            } else {
+                throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
             }
         } catch (IOException ex) {
             throw new MarshalExceptionUnchecked(ex);
