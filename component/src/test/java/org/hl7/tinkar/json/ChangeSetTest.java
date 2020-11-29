@@ -221,6 +221,7 @@ public class ChangeSetTest {
         assertTrue(component.author().equals(newestComponent.author()));
         assertTrue(component.module().equals(newestComponent.module()));
         assertTrue(component.path().equals(newestComponent.path()));
+        assertEquals(component, component.toChangeSetThing());
     }
 
     @Test
@@ -262,6 +263,7 @@ public class ChangeSetTest {
         assertTrue(component.hashCode() == newerComponent.hashCode());
         assertFalse(component.equals(makeFieldDefinitionForChangeSet()));
         assertFalse(component.equals("will be false"));
+        assertEquals(component, component.toChangeSetThing());
     }
 
     @Test
@@ -287,6 +289,7 @@ public class ChangeSetTest {
         assertTrue(component.hashCode() == newerComponent.hashCode());
         assertFalse(component.equals(new ConceptVersionDTO(component.componentUuids(), makeStampForChangeSet())));
         assertFalse(component.equals("will be false"));
+        assertEquals(component, component.toChangeSetThing());
     }
 
     @Test
@@ -307,6 +310,7 @@ public class ChangeSetTest {
         assertFalse(component.equals(makeDefinitionForSemanticVersionForChangeSet(componentUuidList)));
         assertFalse(component.equals("will be false"));
         assertTrue(component.componentUuids().equals(newerComponent.componentUuids()));
+        assertEquals(component, component.toChangeSetThing());
     }
 
     @Test
@@ -331,6 +335,7 @@ public class ChangeSetTest {
         newConceptId = makeUuidList();
         assertFalse(component.equals(new ConceptChronologyDTO(newConceptId, makeUuidList(), makeConceptVersionList(newConceptId))));
         assertFalse(component.equals("will be false"));
+        assertEquals(component, component.toChangeSetThing());
     }
 
 
@@ -354,6 +359,7 @@ public class ChangeSetTest {
                 makeDefinitionForSemanticVersionForChangeSetList(componentUuidList))));
         assertFalse(component.equals("will be false"));
         assertTrue(component.componentUuids().equals(newerComponent.componentUuids()));
+        assertEquals(component, component.toChangeSetThing());
 
     }
     
@@ -392,6 +398,7 @@ public class ChangeSetTest {
         assertTrue(component.referencedComponent().equals(newerComponent.referencedComponent()));
         assertTrue(component.definitionForSemantic().componentUuids().equals(newerComponent.definitionForSemantic().componentUuids()));
         assertTrue(component.referencedComponent().componentUuids().equals(newerComponent.referencedComponent().componentUuids()));
+        assertEquals(component, component.toChangeSetThing());
 
     }
     
@@ -425,6 +432,7 @@ public class ChangeSetTest {
         assertTrue(component.componentUuids().equals(newerComponent.componentUuids()));
         assertTrue(component.definitionForSemantic().equals(newerComponent.definitionForSemantic()));
         assertTrue(component.referencedComponent().equals(newerComponent.referencedComponent()));
+        assertEquals(component, component.toChangeSetThing());
     }
         
 }

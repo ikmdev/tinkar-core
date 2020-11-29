@@ -31,14 +31,14 @@ public interface SemanticChronology extends Chronology, Semantic {
      ImmutableList<SemanticVersion> versions();
 
      default SemanticChronologyDTO toChangeSetThing() {
-          MutableList<SemanticVersionDTO> versions = Lists.mutable.ofInitialCapacity(versions().size());
-          for (SemanticVersion semanticVersion : versions) {
-               versions.add(semanticVersion.toChangeSetThing());
+          MutableList<SemanticVersionDTO> changeSetVersions = Lists.mutable.ofInitialCapacity(versions().size());
+          for (SemanticVersion semanticVersion : versions()) {
+               changeSetVersions.add(semanticVersion.toChangeSetThing());
           }
           return new SemanticChronologyDTO(componentUuids(),
-                  chronologySet().componentUuids(),
-                  referencedComponent().componentUuids(),
-                  versions.toImmutable());
+                  definitionForSemantic(),
+                  referencedComponent(),
+                  changeSetVersions.toImmutable());
      }
 
 }

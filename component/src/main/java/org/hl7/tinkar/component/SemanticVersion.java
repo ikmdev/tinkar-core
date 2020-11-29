@@ -29,7 +29,7 @@ public interface SemanticVersion extends Version, Semantic {
 
     default SemanticVersionDTO toChangeSetThing() {
         MutableList<Object> convertedFields = Lists.mutable.empty();
-        convertedFields.forEach(objectToConvert -> {
+        fields().forEach(objectToConvert -> {
             if (objectToConvert instanceof Concept concept) {
                 convertedFields.add(new ConceptDTO(concept.componentUuids()));
             } else if (objectToConvert instanceof DefinitionForSemantic definitionForSemantic) {
@@ -46,8 +46,8 @@ public interface SemanticVersion extends Version, Semantic {
             }
         });
         return new SemanticVersionDTO(componentUuids(),
-                referencedComponent().componentUuids(),
-                definitionForSemantic().componentUuids(),
+                definitionForSemantic(),
+                referencedComponent(),
                 stamp().toChangeSetThing(), convertedFields.toImmutable());
     }
 

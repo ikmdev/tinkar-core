@@ -45,6 +45,14 @@ public record SemanticChronologyDTO(ImmutableList<UUID> componentUuids,
 
     private static final int marshalVersion = 1;
 
+    public SemanticChronologyDTO(ImmutableList<UUID> componentUuids, DefinitionForSemantic definitionForSemantic,
+                              IdentifiedThing referencedComponent, ImmutableList<SemanticVersionDTO> semanticVersions) {
+        this(componentUuids,
+                definitionForSemantic.componentUuids(),
+                referencedComponent.componentUuids(),
+                semanticVersions);
+    }
+
     @Override
     public IdentifiedThing referencedComponent() {
         return new IdentifiedThingDTO(referencedComponentUuids);
