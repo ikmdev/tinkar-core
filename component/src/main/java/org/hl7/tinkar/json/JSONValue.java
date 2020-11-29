@@ -15,10 +15,7 @@
  */
 package org.hl7.tinkar.json;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.io.*;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Map;
@@ -176,7 +173,7 @@ public class JSONValue {
             return writer.toString();
         } catch (IOException e) {
             // This should never happen for a StringWriter
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 

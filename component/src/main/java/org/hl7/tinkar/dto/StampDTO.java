@@ -16,6 +16,7 @@
 package org.hl7.tinkar.dto;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.time.Instant;
 import java.util.UUID;
@@ -105,7 +106,7 @@ public record StampDTO(ImmutableList<UUID> statusUuids,
                 default -> throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
             }
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 
@@ -120,7 +121,7 @@ public record StampDTO(ImmutableList<UUID> statusUuids,
             out.writeUuidList(moduleUuids);
             out.writeUuidList(pathUuids);
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 

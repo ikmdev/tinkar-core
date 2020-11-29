@@ -48,7 +48,7 @@ import java.util.UUID;
                     throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
             }
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 
@@ -59,7 +59,7 @@ import java.util.UUID;
             out.writeInt(marshalVersion);
             throw new UnsupportedOperationException();
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 

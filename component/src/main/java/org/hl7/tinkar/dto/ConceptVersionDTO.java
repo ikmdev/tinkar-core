@@ -16,6 +16,7 @@
 package org.hl7.tinkar.dto;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.util.UUID;
 
@@ -65,7 +66,7 @@ public record ConceptVersionDTO(ImmutableList<UUID> componentUuids, StampDTO sta
                 default -> throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
             }
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 
@@ -78,7 +79,7 @@ public record ConceptVersionDTO(ImmutableList<UUID> componentUuids, StampDTO sta
             // they are written with the ConceptChronologyDTO...
             stamp.marshal(out);
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 

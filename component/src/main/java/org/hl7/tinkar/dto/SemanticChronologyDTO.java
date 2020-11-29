@@ -16,6 +16,7 @@
 package org.hl7.tinkar.dto;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.util.UUID;
 
@@ -101,7 +102,7 @@ public record SemanticChronologyDTO(ImmutableList<UUID> componentUuids,
                 default -> throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
             }
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 
@@ -115,7 +116,7 @@ public record SemanticChronologyDTO(ImmutableList<UUID> componentUuids,
             out.writeUuidList(referencedComponentUuids);
             out.writeSemanticVersionList(versions);
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 

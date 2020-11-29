@@ -16,6 +16,7 @@
 package org.hl7.tinkar.dto;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.util.UUID;
 
@@ -71,7 +72,7 @@ public record FieldDefinitionDTO(ImmutableList<UUID> dataTypeUuids,
                 default -> throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
             }
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 
@@ -84,7 +85,7 @@ public record FieldDefinitionDTO(ImmutableList<UUID> dataTypeUuids,
             out.writeUuidList(purposeUuids);
             out.writeUuidList(useUuids);
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 

@@ -16,6 +16,7 @@
 package org.hl7.tinkar.dto;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.io.Writer;
 import org.hl7.tinkar.binary.Marshalable;
 import org.hl7.tinkar.binary.Marshaler;
@@ -78,7 +79,7 @@ public record StampCommentDTO(StampDTO stamp, String comment)
                 default -> throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
             }
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 
@@ -90,7 +91,7 @@ public record StampCommentDTO(StampDTO stamp, String comment)
             stamp.marshal(out);
             out.writeUTF(comment);
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 }

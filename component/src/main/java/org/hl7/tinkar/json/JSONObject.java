@@ -17,6 +17,7 @@ package org.hl7.tinkar.json;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.time.Instant;
 import java.util.*;
@@ -96,7 +97,7 @@ public class JSONObject extends HashMap<String, Object>
             }
             out.write('}');
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 
