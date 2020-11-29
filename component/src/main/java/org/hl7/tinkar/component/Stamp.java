@@ -24,22 +24,22 @@ import java.time.Instant;
  */
 public interface Stamp {
 
-    Concept getStatus();
+    Concept status();
 
-    Instant getTime();
+    Instant time();
 
-    Concept getAuthor();
+    Concept author();
 
-    Concept getModule();
+    Concept module();
 
-    Concept getPath();
+    Concept path();
 
     default StampDTO toChangeSetThing() {
-        return new StampDTO(getStatus().getComponentUuids(),
-                getTime(),
-                getAuthor().getComponentUuids(),
-                getModule().getComponentUuids(),
-                getPath().getComponentUuids());
+        return new StampDTO(status().componentUuids(),
+                time(),
+                author().componentUuids(),
+                module().componentUuids(),
+                path().componentUuids());
     }
 
 }

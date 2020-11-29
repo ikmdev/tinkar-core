@@ -25,7 +25,6 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.binary.MarshalExceptionUnchecked;
 import org.hl7.tinkar.binary.Marshalable;
 import org.hl7.tinkar.binary.TinkarByteArrayOutput;
-import org.hl7.tinkar.binary.TinkarInput;
 import org.hl7.tinkar.dto.*;
 import org.hl7.tinkar.dto.ConceptChronologyDTO;
 
@@ -216,12 +215,12 @@ public class ChangeSetTest {
         assertTrue(component.hashCode() == newerComponent.hashCode());
         assertFalse(component.equals(makeStampForChangeSet()));
         assertFalse(component.equals("will be false"));
-        assertTrue(component.getStatus().equals(newestComponent.getStatus()));
-        assertTrue(component.getStatus().getComponentUuids().equals(newestComponent.getStatus().getComponentUuids()));
-        assertTrue(component.getTime().equals(newestComponent.getTime()));
-        assertTrue(component.getAuthor().equals(newestComponent.getAuthor()));
-        assertTrue(component.getModule().equals(newestComponent.getModule()));
-        assertTrue(component.getPath().equals(newestComponent.getPath()));
+        assertTrue(component.status().equals(newestComponent.status()));
+        assertTrue(component.status().componentUuids().equals(newestComponent.status().componentUuids()));
+        assertTrue(component.time().equals(newestComponent.time()));
+        assertTrue(component.author().equals(newestComponent.author()));
+        assertTrue(component.module().equals(newestComponent.module()));
+        assertTrue(component.path().equals(newestComponent.path()));
     }
 
     @Test
@@ -241,8 +240,8 @@ public class ChangeSetTest {
         assertTrue(component.hashCode() == newerComponent.hashCode());
         assertFalse(component.equals(new StampCommentDTO(makeStampForChangeSet(), "comment")));
         assertFalse(component.equals("will be false"));
-        assertTrue(component.getStamp().equals(newerComponent.getStamp()));
-        assertTrue(component.getComment().equals(newerComponent.getComment()));
+        assertTrue(component.stampDTO().equals(newerComponent.stampDTO()));
+        assertTrue(component.comment().equals(newerComponent.comment()));
     }
     
     @Test
@@ -286,7 +285,7 @@ public class ChangeSetTest {
 
         assertTrue(component.equals(newerComponent));
         assertTrue(component.hashCode() == newerComponent.hashCode());
-        assertFalse(component.equals(new ConceptVersionDTO(component.getComponentUuids(), makeStampForChangeSet())));
+        assertFalse(component.equals(new ConceptVersionDTO(component.componentUuids(), makeStampForChangeSet())));
         assertFalse(component.equals("will be false"));
     }
 
@@ -307,7 +306,7 @@ public class ChangeSetTest {
         assertTrue(component.equals(newerComponent));
         assertFalse(component.equals(makeDefinitionForSemanticVersionForChangeSet(componentUuidList)));
         assertFalse(component.equals("will be false"));
-        assertTrue(component.getComponentUuids().equals(newerComponent.getComponentUuids()));
+        assertTrue(component.componentUuids().equals(newerComponent.componentUuids()));
     }
 
     @Test
@@ -326,7 +325,7 @@ public class ChangeSetTest {
         testWriteIOException(component);
         assertTrue(component.equals(newerComponent));
         assertTrue(component.hashCode() == newerComponent.hashCode());
-        assertTrue(component.getComponentUuids().equals(newerComponent.getComponentUuids()));
+        assertTrue(component.componentUuids().equals(newerComponent.componentUuids()));
         ImmutableList<UUID> newConceptId = makeUuidList();
         assertFalse(component.equals(new ConceptChronologyDTO(newConceptId, makeUuidList(), makeConceptVersionList(newConceptId))));
         newConceptId = makeUuidList();
@@ -354,7 +353,7 @@ public class ChangeSetTest {
         assertFalse(component.equals(new DefinitionForSemanticChronologyDTO(makeUuidList(), makeUuidList(),
                 makeDefinitionForSemanticVersionForChangeSetList(componentUuidList))));
         assertFalse(component.equals("will be false"));
-        assertTrue(component.getComponentUuids().equals(newerComponent.getComponentUuids()));
+        assertTrue(component.componentUuids().equals(newerComponent.componentUuids()));
 
     }
     
@@ -388,11 +387,11 @@ public class ChangeSetTest {
         assertFalse(component.equals(new SemanticVersionDTO(componentUuids,
                 definitionForSemanticUuids, referencedComponentUuids, makeStampForChangeSet(), makeImmutableObjectList())));
         assertFalse(component.equals("will be false"));
-        assertTrue(component.getComponentUuids().equals(newerComponent.getComponentUuids()));
-        assertTrue(component.getDefinitionForSemantic().equals(newerComponent.getDefinitionForSemantic()));
-        assertTrue(component.getReferencedComponent().equals(newerComponent.getReferencedComponent()));
-        assertTrue(component.getDefinitionForSemantic().getComponentUuids().equals(newerComponent.getDefinitionForSemantic().getComponentUuids()));
-        assertTrue(component.getReferencedComponent().getComponentUuids().equals(newerComponent.getReferencedComponent().getComponentUuids()));
+        assertTrue(component.componentUuids().equals(newerComponent.componentUuids()));
+        assertTrue(component.definitionForSemantic().equals(newerComponent.definitionForSemantic()));
+        assertTrue(component.referencedComponent().equals(newerComponent.referencedComponent()));
+        assertTrue(component.definitionForSemantic().componentUuids().equals(newerComponent.definitionForSemantic().componentUuids()));
+        assertTrue(component.referencedComponent().componentUuids().equals(newerComponent.referencedComponent().componentUuids()));
 
     }
     
@@ -423,9 +422,9 @@ public class ChangeSetTest {
                 makeUuidList(), makeUuidList(), makeSemanticVersionForChangeSetList(makeUuidList(),
                 makeUuidList(), makeUuidList()))));
         assertFalse(component.equals("will be false"));
-        assertTrue(component.getComponentUuids().equals(newerComponent.getComponentUuids()));
-        assertTrue(component.getDefinitionForSemantic().equals(newerComponent.getDefinitionForSemantic()));
-        assertTrue(component.getReferencedComponent().equals(newerComponent.getReferencedComponent()));
+        assertTrue(component.componentUuids().equals(newerComponent.componentUuids()));
+        assertTrue(component.definitionForSemantic().equals(newerComponent.definitionForSemantic()));
+        assertTrue(component.referencedComponent().equals(newerComponent.referencedComponent()));
     }
         
 }

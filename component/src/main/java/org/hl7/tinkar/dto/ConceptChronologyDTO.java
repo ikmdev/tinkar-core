@@ -41,9 +41,15 @@ public record ConceptChronologyDTO(ImmutableList<UUID> componentUuids,
 
     private static final int marshalVersion = 1;
 
+
     @Override
-    public ImmutableList<UUID> getComponentUuids() {
-        return componentUuids;
+    public Concept chronologySet() {
+        return new ConceptDTO(chronologySetUuids);
+    }
+
+    @Override
+    public ImmutableList<ConceptVersion> versions() {
+        return conceptVersions.collect(conceptVersionDTO -> (ConceptVersion) conceptVersionDTO);
     }
 
     @Override
@@ -93,15 +99,5 @@ public record ConceptChronologyDTO(ImmutableList<UUID> componentUuids,
         } catch (IOException ex) {
             throw new MarshalExceptionUnchecked(ex);
         }
-    }
-
-    @Override
-    public Concept getChronologySet() {
-        return new ConceptDTO(chronologySetUuids);
-    }
-
-    @Override
-    public ImmutableList<ConceptVersion> getVersions() {
-        return conceptVersions.collect(conceptVersionDTO -> (ConceptVersion) conceptVersionDTO);
     }
 }

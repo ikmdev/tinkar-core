@@ -46,27 +46,27 @@ public record StampDTO(ImmutableList<UUID> statusUuids,
     private static final int marshalVersion = 1;
 
     @Override
-    public Concept getStatus() {
+    public Concept status() {
         return new ConceptDTO(statusUuids);
     }
 
     @Override
-    public Instant getTime() {
+    public Instant time() {
         return time;
     }
 
     @Override
-    public Concept getAuthor() {
+    public Concept author() {
         return new ConceptDTO(authorUuids);
     }
 
     @Override
-    public Concept getModule() {
+    public Concept module() {
         return new ConceptDTO(moduleUuids);
     }
 
     @Override
-    public Concept getPath() {
+    public Concept path() {
         return new ConceptDTO(pathUuids);
     }
 

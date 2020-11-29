@@ -25,18 +25,18 @@ import org.hl7.tinkar.dto.*;
  */
 public interface SemanticVersion extends Version, Semantic {
 
-    ImmutableList<Object> getFields();
+    ImmutableList<Object> fields();
 
     default SemanticVersionDTO toChangeSetThing() {
         MutableList<Object> convertedFields = Lists.mutable.empty();
         convertedFields.forEach(objectToConvert -> {
             if (objectToConvert instanceof Concept concept) {
-                convertedFields.add(new ConceptDTO(concept.getComponentUuids()));
+                convertedFields.add(new ConceptDTO(concept.componentUuids()));
             } else if (objectToConvert instanceof DefinitionForSemantic definitionForSemantic) {
-                convertedFields.add(new DefinitionForSemanticDTO(definitionForSemantic.getComponentUuids()));
+                convertedFields.add(new DefinitionForSemanticDTO(definitionForSemantic.componentUuids()));
             } else if (objectToConvert instanceof Semantic semantic) {
-                convertedFields.add(new SemanticDTO(semantic.getComponentUuids(), semantic.getDefinitionForSemantic(),
-                        semantic.getReferencedComponent()));
+                convertedFields.add(new SemanticDTO(semantic.componentUuids(), semantic.definitionForSemantic(),
+                        semantic.referencedComponent()));
             } else if (objectToConvert instanceof Number number) {
                 convertedFields.add(number);
             } else if (objectToConvert instanceof String string) {
@@ -45,10 +45,10 @@ public interface SemanticVersion extends Version, Semantic {
                 throw new UnsupportedOperationException("Can't convert:\n  " + objectToConvert + "\nin\n  " + this);
             }
         });
-        return new SemanticVersionDTO(getComponentUuids(),
-                getReferencedComponent().getComponentUuids(),
-                getDefinitionForSemantic().getComponentUuids(),
-                getStamp().toChangeSetThing(), convertedFields.toImmutable());
+        return new SemanticVersionDTO(componentUuids(),
+                referencedComponent().componentUuids(),
+                definitionForSemantic().componentUuids(),
+                stamp().toChangeSetThing(), convertedFields.toImmutable());
     }
 
 }

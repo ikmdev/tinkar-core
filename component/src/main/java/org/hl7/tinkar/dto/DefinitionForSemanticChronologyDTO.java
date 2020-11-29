@@ -46,9 +46,15 @@ public record DefinitionForSemanticChronologyDTO(ImmutableList<UUID> componentUu
 
     private static final int marshalVersion = 1;
 
+
     @Override
-    public ImmutableList<UUID> getComponentUuids() {
-        return componentUuids;
+    public ImmutableList<DefinitionForSemanticVersion> versions() {
+        return definitionVersions.collect(definitionForSemanticVersionDTO -> (DefinitionForSemanticVersion) definitionForSemanticVersionDTO);
+    }
+
+    @Override
+    public Concept chronologySet() {
+        return new ConceptDTO(chronologySetUuids);
     }
 
     @Override
@@ -96,15 +102,5 @@ public record DefinitionForSemanticChronologyDTO(ImmutableList<UUID> componentUu
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }
-    }
-
-    @Override
-    public ImmutableList<DefinitionForSemanticVersion> getVersions() {
-        return definitionVersions.collect(definitionForSemanticVersionDTO -> (DefinitionForSemanticVersion) definitionForSemanticVersionDTO);
-    }
-
-    @Override
-    public Concept getChronologySet() {
-        return new ConceptDTO(chronologySetUuids);
     }
 }

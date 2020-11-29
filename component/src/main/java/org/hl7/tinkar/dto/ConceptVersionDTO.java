@@ -31,20 +31,20 @@ import org.hl7.tinkar.json.JsonMarshalable;
 import org.hl7.tinkar.json.JsonVersionUnmarshaler;
 
 
-public record ConceptVersionDTO(ImmutableList<UUID> componentUuids, StampDTO stamp)
+public record ConceptVersionDTO(ImmutableList<UUID> componentUuids, StampDTO stampDTO)
         implements ConceptVersion, ChangeSetThing, JsonMarshalable, Marshalable {
 
     private static final int marshalVersion = 1;
 
     @Override
-    public ImmutableList<UUID> getComponentUuids() {
-        return componentUuids;
+    public Stamp stamp() {
+        return stampDTO;
     }
 
     @Override
     public void jsonMarshal(Writer writer) {
         final JSONObject json = new JSONObject();
-        json.put(ComponentFieldForJson.STAMP, stamp);
+        json.put(ComponentFieldForJson.STAMP, stampDTO);
         json.writeJSONString(writer);
     }
 
@@ -76,14 +76,9 @@ public record ConceptVersionDTO(ImmutableList<UUID> componentUuids, StampDTO sta
             out.writeInt(marshalVersion);
             // note that componentUuids are not written redundantly here,
             // they are written with the ConceptChronologyDTO...
-            stamp.marshal(out);
+            stampDTO.marshal(out);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }
-    }
-
-    @Override
-    public Stamp getStamp() {
-        return stamp;
     }
 }

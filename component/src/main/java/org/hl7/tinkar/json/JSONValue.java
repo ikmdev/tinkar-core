@@ -34,6 +34,10 @@ import org.hl7.tinkar.json.parser.ParseException;
  */
 public class JSONValue {
 
+    private JSONValue() {
+        // private constructor to prevent instantiation. 
+    }
+
     /**
      * Parse JSON text into java object from the input source.
      *

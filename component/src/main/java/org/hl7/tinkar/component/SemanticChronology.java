@@ -28,16 +28,16 @@ import org.hl7.tinkar.dto.SemanticVersionDTO;
 public interface SemanticChronology extends Chronology, Semantic {
 
      @Override
-     ImmutableList<SemanticVersion> getVersions();
+     ImmutableList<SemanticVersion> versions();
 
      default SemanticChronologyDTO toChangeSetThing() {
-          MutableList<SemanticVersionDTO> versions = Lists.mutable.ofInitialCapacity(getVersions().size());
-          for (SemanticVersion semanticVersion : getVersions()) {
+          MutableList<SemanticVersionDTO> versions = Lists.mutable.ofInitialCapacity(versions().size());
+          for (SemanticVersion semanticVersion : versions) {
                versions.add(semanticVersion.toChangeSetThing());
           }
-          return new SemanticChronologyDTO(getComponentUuids(),
-                  getChronologySet().getComponentUuids(),
-                  getReferencedComponent().getComponentUuids(),
+          return new SemanticChronologyDTO(componentUuids(),
+                  chronologySet().componentUuids(),
+                  referencedComponent().componentUuids(),
                   versions.toImmutable());
      }
 

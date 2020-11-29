@@ -3,7 +3,7 @@ package org.hl7.tinkar.component;
 
 public interface StampComment {
 
-    Stamp getStamp();
+    Stamp stamp();
 
-    String getComment();
+    String comment();
 }

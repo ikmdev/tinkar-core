@@ -26,22 +26,22 @@ import org.hl7.tinkar.dto.FieldDefinitionDTO;
  */
 public interface DefinitionForSemanticVersion extends Version, DefinitionForSemantic {
 
-    ImmutableList<FieldDefinition> getFieldDefinitions();
+    ImmutableList<FieldDefinition> fieldDefinitions();
 
-    Concept getReferencedComponentPurpose();
+    Concept referencedComponentPurpose();
 
 
     default DefinitionForSemanticVersionDTO toChangeSetThing() {
 
-        MutableList<FieldDefinitionDTO> fields = Lists.mutable.ofInitialCapacity(getFieldDefinitions().size());
-        for (FieldDefinition fieldDefinition : getFieldDefinitions()) {
+        MutableList<FieldDefinitionDTO> fields = Lists.mutable.ofInitialCapacity(fieldDefinitions().size());
+        for (FieldDefinition fieldDefinition : fieldDefinitions()) {
             fields.add(fieldDefinition.toChangeSetThing());
         }
 
         return new DefinitionForSemanticVersionDTO(
-                getComponentUuids(),
-                getStamp().toChangeSetThing(),
-                getReferencedComponentPurpose().getComponentUuids(),
+                componentUuids(),
+                stamp().toChangeSetThing(),
+                referencedComponentPurpose().componentUuids(),
                 fields.toImmutable());
     }
 

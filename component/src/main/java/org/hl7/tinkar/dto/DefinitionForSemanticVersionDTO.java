@@ -37,23 +37,33 @@ import static org.hl7.tinkar.json.ComponentFieldForJson.REFERENCED_COMPONENT_PUR
  * @author kec
  */
 public record DefinitionForSemanticVersionDTO(ImmutableList<UUID> componentUuids,
-                                              StampDTO stamp, ImmutableList<UUID> referencedComponentPurposeUuids,
-                                              ImmutableList<FieldDefinitionDTO> fieldDefinitions)
+                                              StampDTO stampDTO, ImmutableList<UUID> referencedComponentPurposeUuids,
+                                              ImmutableList<FieldDefinitionDTO> fieldDefinitionDTOS)
         implements DefinitionForSemanticVersion, ChangeSetThing, JsonMarshalable, Marshalable {
 
     private static final int marshalVersion = 1;
 
     @Override
-    public ImmutableList<UUID> getComponentUuids() {
-        return componentUuids;
+    public Concept referencedComponentPurpose() {
+        return new ConceptDTO(referencedComponentPurposeUuids);
+    }
+
+    @Override
+    public Stamp stamp() {
+        return stampDTO;
+    }
+
+    @Override
+    public ImmutableList<FieldDefinition> fieldDefinitions() {
+        return fieldDefinitionDTOS.collect(fieldDefinitionDTO -> (FieldDefinition) fieldDefinitionDTO);
     }
 
     @Override
     public void jsonMarshal(Writer writer) {
         final JSONObject json = new JSONObject();
-        json.put(ComponentFieldForJson.STAMP, stamp);
+        json.put(ComponentFieldForJson.STAMP, stampDTO);
         json.put(REFERENCED_COMPONENT_PURPOSE_UUIDS, referencedComponentPurposeUuids);
-        json.put(FIELD_DEFINITIONS, fieldDefinitions);
+        json.put(FIELD_DEFINITIONS, fieldDefinitionDTOS);
         json.writeJSONString(writer);
     }
 
@@ -87,26 +97,11 @@ public record DefinitionForSemanticVersionDTO(ImmutableList<UUID> componentUuids
     public void marshal(TinkarOutput out) {
         try {
             out.writeInt(marshalVersion);
-            stamp.marshal(out);
+            stampDTO.marshal(out);
             out.writeUuidList(referencedComponentPurposeUuids);
-            out.writeFieldDefinitionList(fieldDefinitions);
+            out.writeFieldDefinitionList(fieldDefinitionDTOS);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }
-    }
-
-    @Override
-    public Concept getReferencedComponentPurpose() {
-        return new ConceptDTO(referencedComponentPurposeUuids);
-    }
-
-    @Override
-    public Stamp getStamp() {
-        return stamp;
-    }
-
-    @Override
-    public ImmutableList<FieldDefinition> getFieldDefinitions() {
-        return fieldDefinitions.collect(fieldDefinitionDTO -> (FieldDefinition) fieldDefinitionDTO);
     }
 }

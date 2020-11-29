@@ -24,6 +24,6 @@ import java.util.UUID;
  */
 public interface IdentifiedThing {
 
-    ImmutableList<UUID> getComponentUuids();
+    ImmutableList<UUID> componentUuids();
 
 }

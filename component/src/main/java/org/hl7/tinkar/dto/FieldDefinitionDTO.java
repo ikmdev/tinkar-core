@@ -41,6 +41,22 @@ public record FieldDefinitionDTO(ImmutableList<UUID> dataTypeUuids,
 
     private static final int marshalVersion = 1;
 
+
+    @Override
+    public Concept getDataType() {
+        return new ConceptDTO(dataTypeUuids);
+    }
+
+    @Override
+    public Concept getPurpose() {
+        return new ConceptDTO(purposeUuids);
+    }
+
+    @Override
+    public Concept getUse() {
+        return new ConceptDTO(useUuids);
+    }
+
     @Override
     public void jsonMarshal(Writer writer) {
         final JSONObject json = new JSONObject();
@@ -86,20 +102,5 @@ public record FieldDefinitionDTO(ImmutableList<UUID> dataTypeUuids,
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }
-    }
-
-    @Override
-    public Concept getDataType() {
-        return new ConceptDTO(dataTypeUuids);
-    }
-
-    @Override
-    public Concept getPurpose() {
-        return new ConceptDTO(purposeUuids);
-    }
-
-    @Override
-    public Concept getUse() {
-        return new ConceptDTO(useUuids);
     }
 }

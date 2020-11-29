@@ -35,30 +35,33 @@ import static org.hl7.tinkar.json.ComponentFieldForJson.FIELDS;
 public record SemanticVersionDTO(ImmutableList<UUID> componentUuids,
                                  ImmutableList<UUID> definitionForSemanticUuids,
                                  ImmutableList<UUID> referencedComponentUuids,
-                                 StampDTO stamp, ImmutableList<Object> fields)
+                                 StampDTO stampDTO, ImmutableList<Object> fields)
         implements SemanticVersion, ChangeSetThing, JsonMarshalable, Marshalable {
 
     private static final int marshalVersion = 1;
 
-    @Override
-    public ImmutableList<UUID> getComponentUuids() {
-        return componentUuids;
+    public SemanticVersionDTO(ImmutableList<UUID> componentUuids, DefinitionForSemantic definitionForSemantic,
+                              IdentifiedThing referencedComponent, Stamp stamp, ImmutableList<Object> fields) {
+        this(componentUuids,
+                definitionForSemantic.componentUuids(),
+                referencedComponent.componentUuids(),
+                stamp.toChangeSetThing(), fields);
     }
 
     @Override
-    public IdentifiedThing getReferencedComponent() {
+    public IdentifiedThing referencedComponent() {
         return new IdentifiedThingDTO(referencedComponentUuids);
     }
 
     @Override
-    public DefinitionForSemantic getDefinitionForSemantic() {
+    public DefinitionForSemantic definitionForSemantic() {
         return new DefinitionForSemanticDTO(definitionForSemanticUuids);
     }
 
     @Override
     public void jsonMarshal(Writer writer) {
         final JSONObject json = new JSONObject();
-        json.put(ComponentFieldForJson.STAMP, stamp);
+        json.put(ComponentFieldForJson.STAMP, stampDTO);
         json.put(FIELDS, fields);
         json.writeJSONString(writer);
     }
@@ -102,7 +105,7 @@ public record SemanticVersionDTO(ImmutableList<UUID> componentUuids,
     public void marshal(TinkarOutput out) {
         try {
             out.writeInt(marshalVersion);
-            stamp.marshal(out);
+            stampDTO.marshal(out);
             out.writeObjectList(fields);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
@@ -110,12 +113,7 @@ public record SemanticVersionDTO(ImmutableList<UUID> componentUuids,
     }
 
     @Override
-    public ImmutableList<Object> getFields() {
-        return fields;
-    }
-
-    @Override
-    public Stamp getStamp() {
-        return stamp;
+    public Stamp stamp() {
+        return stampDTO;
     }
 }

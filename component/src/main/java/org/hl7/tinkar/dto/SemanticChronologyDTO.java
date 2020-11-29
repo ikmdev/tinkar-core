@@ -40,23 +40,18 @@ import org.hl7.tinkar.json.JsonMarshalable;
 public record SemanticChronologyDTO(ImmutableList<UUID> componentUuids,
                                     ImmutableList<UUID> definitionForSemanticUuids,
                                     ImmutableList<UUID> referencedComponentUuids,
-                                    ImmutableList<SemanticVersionDTO> versions)
+                                    ImmutableList<SemanticVersionDTO> semanticVersions)
         implements SemanticChronology, ChangeSetThing, JsonMarshalable, Marshalable {
 
     private static final int marshalVersion = 1;
 
     @Override
-    public ImmutableList<UUID> getComponentUuids() {
-        return componentUuids;
-    }
-
-    @Override
-    public IdentifiedThing getReferencedComponent() {
+    public IdentifiedThing referencedComponent() {
         return new IdentifiedThingDTO(referencedComponentUuids);
     }
 
     @Override
-    public DefinitionForSemantic getDefinitionForSemantic() {
+    public DefinitionForSemantic definitionForSemantic() {
         return new DefinitionForSemanticDTO(definitionForSemanticUuids);
     }
 
@@ -67,7 +62,7 @@ public record SemanticChronologyDTO(ImmutableList<UUID> componentUuids,
         json.put(ComponentFieldForJson.COMPONENT_UUIDS, componentUuids);
         json.put(ComponentFieldForJson.DEFINITION_FOR_SEMANTIC_UUIDS, definitionForSemanticUuids);
         json.put(ComponentFieldForJson.REFERENCED_COMPONENT_UUIDS, referencedComponentUuids);
-        json.put(ComponentFieldForJson.VERSIONS, versions);
+        json.put(ComponentFieldForJson.VERSIONS, semanticVersions);
         json.writeJSONString(writer);
     }
     
@@ -113,19 +108,19 @@ public record SemanticChronologyDTO(ImmutableList<UUID> componentUuids,
             out.writeUuidList(componentUuids);
             out.writeUuidList(definitionForSemanticUuids);
             out.writeUuidList(referencedComponentUuids);
-            out.writeSemanticVersionList(versions);
+            out.writeSemanticVersionList(semanticVersions);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }
     }
 
     @Override
-    public ImmutableList<SemanticVersion> getVersions() {
-        return null;
+    public ImmutableList<SemanticVersion> versions() {
+        return semanticVersions.collect(semanticVersionDTO ->  semanticVersionDTO);
     }
 
     @Override
-    public IdentifiedThing getChronologySet() {
+    public DefinitionForSemanticDTO chronologySet() {
         return new DefinitionForSemanticDTO(definitionForSemanticUuids);
     }
 }

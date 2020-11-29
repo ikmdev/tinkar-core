@@ -20,7 +20,7 @@
  */
 public interface Semantic extends IdentifiedThing {
 
-     IdentifiedThing getReferencedComponent();
-     DefinitionForSemantic getDefinitionForSemantic();
+     IdentifiedThing referencedComponent();
+     DefinitionForSemantic definitionForSemantic();
     
 }

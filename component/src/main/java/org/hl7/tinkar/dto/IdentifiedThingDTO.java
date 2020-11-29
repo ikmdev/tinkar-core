@@ -28,8 +28,4 @@ import org.hl7.tinkar.component.IdentifiedThing;
 public record IdentifiedThingDTO(ImmutableList<UUID> componentUuids)
         implements IdentifiedThing, ChangeSetThing {
 
-    @Override
-    public ImmutableList<UUID> getComponentUuids() {
-        return componentUuids;
-    }
 }

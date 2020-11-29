@@ -35,18 +35,18 @@ import org.hl7.tinkar.json.JsonMarshalable;
  *
  * @author kec
  */
-public record StampCommentDTO(StampDTO stamp, String comment)
+public record StampCommentDTO(StampDTO stampDTO, String comment)
         implements ChangeSetThing, JsonMarshalable, Marshalable, StampComment {
 
     private static final int marshalVersion = 1;
 
     @Override
-    public Stamp getStamp() {
-        return stamp;
+    public Stamp stamp() {
+        return stampDTO;
     }
 
     @Override
-    public String getComment() {
+    public String comment() {
         return comment;
     }
 
@@ -54,7 +54,7 @@ public record StampCommentDTO(StampDTO stamp, String comment)
     public void jsonMarshal(Writer writer)  {
         final JSONObject json = new JSONObject();
         json.put(ComponentFieldForJson.CLASS, this.getClass().getCanonicalName());
-        json.put(ComponentFieldForJson.STAMP, stamp);
+        json.put(ComponentFieldForJson.STAMP, stampDTO);
         json.put(ComponentFieldForJson.COMMENT, comment);
         json.writeJSONString(writer);
     }
@@ -87,7 +87,7 @@ public record StampCommentDTO(StampDTO stamp, String comment)
     public void marshal(TinkarOutput out) {
         try {
             out.writeInt(marshalVersion);
-            stamp.marshal(out);
+            stampDTO.marshal(out);
             out.writeUTF(comment);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);

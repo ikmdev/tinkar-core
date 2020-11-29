@@ -5,10 +5,6 @@ import org.hl7.tinkar.component.Concept;
 
 import java.util.UUID;
 
-public record ConceptDTO(ImmutableList<UUID> uuids) implements Concept {
+public record ConceptDTO(ImmutableList<UUID> componentUuids) implements Concept {
 
-    @Override
-    public ImmutableList<UUID> getComponentUuids() {
-        return uuids;
-    }
 }

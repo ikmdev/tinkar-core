@@ -27,16 +27,16 @@ import org.hl7.tinkar.dto.ConceptVersionDTO;
 public interface ConceptChronology extends Chronology, Concept {
     
      @Override
-     ImmutableList<ConceptVersion> getVersions();
+     ImmutableList<ConceptVersion> versions();
 
 
      default ConceptChronologyDTO toChangeSetThing() {
-          MutableList<ConceptVersionDTO> versions = Lists.mutable.ofInitialCapacity(getVersions().size());
-          for (ConceptVersion conceptVersion : getVersions()) {
+          MutableList<ConceptVersionDTO> versions = Lists.mutable.ofInitialCapacity(versions().size());
+          for (ConceptVersion conceptVersion : versions()) {
                versions.add(conceptVersion.toChangeSetThing());
           }
-          return new ConceptChronologyDTO(getComponentUuids(),
-                  getChronologySet().getComponentUuids(),
+          return new ConceptChronologyDTO(componentUuids(),
+                  chronologySet().componentUuids(),
                   versions.toImmutable());
      }
 }

@@ -27,10 +27,10 @@ public enum FieldDataType {
     INSTANT((byte) 8, Instant.class, UUID.fromString("9cb1bd10-31b1-11eb-adc1-0242ac120002"));
 
     public final byte token;
-    public final Class clazz;
+    public final Class<? extends Object> clazz;
     public final UUID conceptUuid;
 
-    FieldDataType(byte token, Class clazz, UUID conceptUuid) {
+    FieldDataType(byte token, Class<? extends Object> clazz, UUID conceptUuid) {
         this.token = token;
         this.clazz = clazz;
         this.conceptUuid = conceptUuid;

@@ -11,21 +11,17 @@ public record SemanticDTO(ImmutableList<UUID> componentUuids, ImmutableList<UUID
                           ImmutableList<UUID> referencedComponentUuids) implements Semantic {
 
     public SemanticDTO(ImmutableList<UUID> componentUuids, DefinitionForSemantic definitionForSemantic, IdentifiedThing referencedComponent) {
-        this(componentUuids, definitionForSemantic.getComponentUuids(), definitionForSemantic.getComponentUuids());
+        this(componentUuids, definitionForSemantic.componentUuids(), referencedComponent.componentUuids());
     }
 
     @Override
-    public IdentifiedThing getReferencedComponent() {
+    public IdentifiedThing referencedComponent() {
         return new IdentifiedThingDTO(referencedComponentUuids);
     }
 
     @Override
-    public DefinitionForSemantic getDefinitionForSemantic() {
+    public DefinitionForSemantic definitionForSemantic() {
         return new DefinitionForSemanticDTO(definitionForSemanticUuids);
     }
 
-    @Override
-    public ImmutableList<UUID> getComponentUuids() {
-        return componentUuids;
-    }
 }

@@ -27,15 +27,15 @@ import org.hl7.tinkar.dto.DefinitionForSemanticVersionDTO;
 public interface DefinitionForSemanticChronology extends Chronology, DefinitionForSemantic {
 
      @Override
-     ImmutableList<DefinitionForSemanticVersion> getVersions();
+     ImmutableList<DefinitionForSemanticVersion> versions();
 
      default DefinitionForSemanticChronologyDTO toChangeSetThing() {
-          MutableList<DefinitionForSemanticVersionDTO> versions = Lists.mutable.ofInitialCapacity(getVersions().size());
-          for (DefinitionForSemanticVersion definitionVersion : getVersions()) {
+          MutableList<DefinitionForSemanticVersionDTO> versions = Lists.mutable.ofInitialCapacity(versions().size());
+          for (DefinitionForSemanticVersion definitionVersion : versions()) {
                versions.add(definitionVersion.toChangeSetThing());
           }
-          return new DefinitionForSemanticChronologyDTO(getComponentUuids(),
-                  getChronologySet().getComponentUuids(),
+          return new DefinitionForSemanticChronologyDTO(componentUuids(),
+                  chronologySet().componentUuids(),
                   versions.toImmutable());
      }
 }

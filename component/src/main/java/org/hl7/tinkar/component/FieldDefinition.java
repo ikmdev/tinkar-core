@@ -44,8 +44,8 @@ public interface FieldDefinition {
     Concept getUse();
 
     default FieldDefinitionDTO toChangeSetThing() {
-        return new FieldDefinitionDTO(getDataType().getComponentUuids(),
-                getPurpose().getComponentUuids(), getUse().getComponentUuids());
+        return new FieldDefinitionDTO(getDataType().componentUuids(),
+                getPurpose().componentUuids(), getUse().componentUuids());
     }
 
 }

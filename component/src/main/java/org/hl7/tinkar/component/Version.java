@@ -20,6 +20,6 @@
  */
 public interface Version extends IdentifiedThing {
 
-    Stamp getStamp();
+    Stamp stamp();
 
 }

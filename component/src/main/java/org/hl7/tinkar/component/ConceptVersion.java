@@ -23,7 +23,7 @@ import org.hl7.tinkar.dto.ConceptVersionDTO;
 public interface ConceptVersion extends Version, Concept {
 
     default ConceptVersionDTO toChangeSetThing() {
-        return new ConceptVersionDTO(getComponentUuids(), getStamp().toChangeSetThing());
+        return new ConceptVersionDTO(componentUuids(), stamp().toChangeSetThing());
     }
 
 }
