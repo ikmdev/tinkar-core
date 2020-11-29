@@ -33,7 +33,7 @@ import java.util.Iterator;
  *
  * @author FangYidong<fangyidong@yahoo.com.cn>
  */
-public class JSONArray extends ArrayList implements JSONAware, JSONStreamAware {
+public class JSONArray extends ArrayList<Object> implements JSONAware, JSONStreamAware {
 
     private static final long serialVersionUID = 3957988303675231981L;
 
@@ -51,7 +51,7 @@ public class JSONArray extends ArrayList implements JSONAware, JSONStreamAware {
      * @param c the collection whose elements are to be placed into this
      * JSONArray
      */
-    public JSONArray(Collection c) {
+    public JSONArray(Collection<Object> c) {
         super(c);
     }
 
@@ -66,14 +66,14 @@ public class JSONArray extends ArrayList implements JSONAware, JSONStreamAware {
      * @see org.hl7.tinkar.JSONValue#writeJSONString(Object, Writer)
      *
      */
-    public static void writeJSONString(Collection collection, Writer out) throws IOException {
+    public static void writeJSONString(Collection<Object> collection, Writer out) throws IOException {
         if (collection == null) {
             out.write("null");
             return;
         }
 
         boolean first = true;
-        Iterator iter = collection.iterator();
+        Iterator<Object> iter = collection.iterator();
 
         out.write('[');
         while (iter.hasNext()) {
@@ -109,7 +109,7 @@ public class JSONArray extends ArrayList implements JSONAware, JSONStreamAware {
      * @param collection
      * @return JSON text, or "null" if list is null.
      */
-    public static String toJSONString(Collection collection) {
+    public static String toJSONString(Collection<Object> collection) {
         final StringWriter writer = new StringWriter();
 
         try {
