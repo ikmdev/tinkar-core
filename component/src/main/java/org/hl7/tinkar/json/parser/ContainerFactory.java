@@ -34,10 +34,10 @@ public interface ContainerFactory {
 	/**
 	 * @return A Map instance to store JSON object, or null if you want to use org.hl7.tinkar.JSONObject.
 	 */
-	Map createObjectContainer();
+	Map<String, Object> createObjectContainer();
 	
 	/**
 	 * @return A List instance to store JSON array, or null if you want to use org.hl7.tinkar.JSONArray. 
 	 */
-	List creatArrayContainer();
+	List<Object> creatArrayContainer();
 }

@@ -15,7 +15,6 @@
  */
 package org.hl7.tinkar.json;
 
-import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -113,23 +112,23 @@ public class Test {
         s = "{\"first\": 123, \"second\": [4, 5, 6], \"third\": 789}";
         ContainerFactory containerFactory = new ContainerFactory() {
             @Override
-            public List creatArrayContainer() {
-                return new LinkedList();
+            public List<Object> creatArrayContainer() {
+                return new LinkedList<>();
             }
 
             @Override
-            public Map createObjectContainer() {
-                return new LinkedHashMap();
+            public Map<String, Object> createObjectContainer() {
+                return new LinkedHashMap<>();
             }
 
         };
 
         try {
-            Map json = (Map) parser.parse(s, containerFactory);
+            Map<String, Object> json = (Map<String, Object>) parser.parse(s, containerFactory);
             Iterator iter = json.entrySet().iterator();
             System.out.println("==iterate result==");
             while (iter.hasNext()) {
-                Map.Entry entry = (Map.Entry) iter.next();
+                Map.Entry<String, Object> entry = (Map.Entry<String, Object>) iter.next();
                 System.out.println(entry.getKey() + "=>" + entry.getValue());
             }
 

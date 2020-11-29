@@ -282,20 +282,20 @@ public class JSONParser {
             token = new Yytoken(Yytoken.Type.TYPE_EOF, null);
     }
 
-    private Map createObjectContainer(ContainerFactory containerFactory) {
+    private Map<String, Object> createObjectContainer(ContainerFactory containerFactory) {
         if (containerFactory == null)
             return new JSONObject();
-        Map m = containerFactory.createObjectContainer();
+        Map<String, Object> m = containerFactory.createObjectContainer();
 
         if (m == null)
             return new JSONObject();
         return m;
     }
 
-    private List createArrayContainer(ContainerFactory containerFactory) {
+    private List<Object> createArrayContainer(ContainerFactory containerFactory) {
         if (containerFactory == null)
             return new JSONArray();
-        List l = containerFactory.creatArrayContainer();
+        List<Object> l = containerFactory.creatArrayContainer();
 
         if (l == null)
             return new JSONArray();
