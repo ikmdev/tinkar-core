@@ -56,7 +56,7 @@ public class JSONObject extends HashMap<String, Object>
      *
      * @param map
      */
-    public JSONObject(Map map) {
+    public JSONObject(Map<String, Object> map) {
         super(map);
     }
 
@@ -71,7 +71,7 @@ public class JSONObject extends HashMap<String, Object>
      * @see org.hl7.tinkar.JSONValue#writeJSONString(Object, Writer)
      *
      */
-    public static void writeJSONString(Map map, Writer out) {
+    public static void writeJSONString(Map<String, Object> map, Writer out) {
         try {
             if (map == null) {
                 out.write("null");
@@ -79,7 +79,7 @@ public class JSONObject extends HashMap<String, Object>
             }
 
             boolean first = true;
-            Iterator iter = map.entrySet().stream().sorted(Map.Entry.comparingByKey()).iterator();
+            Iterator<Entry<String, Object>> iter = map.entrySet().stream().sorted(Map.Entry.comparingByKey()).iterator();
 
             out.write('{');
             while (iter.hasNext()) {
@@ -88,7 +88,7 @@ public class JSONObject extends HashMap<String, Object>
                 } else {
                     out.write(',');
                 }
-                Map.Entry entry = (Map.Entry) iter.next();
+                Map.Entry<String, Object> entry = iter.next();
                 out.write('\"');
                 out.write(escape(String.valueOf(entry.getKey())));
                 out.write('\"');
@@ -116,7 +116,7 @@ public class JSONObject extends HashMap<String, Object>
      * @param map
      * @return JSON text, or "null" if map is null.
      */
-    public static String toJSONString(Map map) {
+    public static String toJSONString(Map<String, Object> map) {
         final StringWriter writer = new StringWriter();
             writeJSONString(map, writer);
             return writer.toString();
