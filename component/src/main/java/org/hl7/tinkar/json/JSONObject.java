@@ -221,21 +221,25 @@ public class JSONObject extends HashMap<String, Object>
             } else if (obj instanceof Number number) {
                 array[i] = number;
             } else if (obj instanceof JSONObject jsonObject) {
-                if (jsonObject.containsKey(ComponentFieldForJson.CLASS)) {
-                    try {
-                        String className = (String) jsonObject.get(ComponentFieldForJson.CLASS);
-                        array[i] = JsonMarshalable.make(Class.forName(className), jsonObject.toJSONString());
-                    } catch (ClassNotFoundException e) {
-                        throw new UnsupportedOperationException("JSON object has no class... " + jsonObject, e);
-                    }
-                } else {
-                    throw new UnsupportedOperationException("JSON object has no class... " + jsonObject);
-                }
+                handleJsonObject(array, i, jsonObject);
             } else {
                throw new UnsupportedOperationException("asImmutableObjectList can't handle: " + obj);
             }
         }
         return Lists.immutable.of(array);
+    }
+
+    private void handleJsonObject(Object[] array, int i, JSONObject jsonObject) {
+        if (jsonObject.containsKey(ComponentFieldForJson.CLASS)) {
+            try {
+                String className = (String) jsonObject.get(ComponentFieldForJson.CLASS);
+                array[i] = JsonMarshalable.make(Class.forName(className), jsonObject.toJSONString());
+            } catch (ClassNotFoundException e) {
+                throw new UnsupportedOperationException("JSON object has no class... " + jsonObject, e);
+            }
+        } else {
+            throw new UnsupportedOperationException("[2] JSON object has no class... " + jsonObject);
+        }
     }
 
     public ImmutableList<SemanticVersionDTO> asSemanticVersionList(String key, ImmutableList<UUID> componentUuids,

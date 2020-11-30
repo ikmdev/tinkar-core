@@ -29,10 +29,10 @@ import java.util.Iterator;
  * Apache 2 license Original project had no support for Java Platform Module
  * System, and not updated for 8 years. Integrated here to integrate with Java
  * Platform Module System.
- *
+ * <p>
  * A JSON array. JSONObject supports java.util.List interface.
  *
- * @author FangYidong<fangyidong@yahoo.com.cn>
+ * @author FangYidong<fangyidong @ yahoo.com.cn>
  */
 public class JSONArray extends ArrayList<Object> implements JSONAware, JSONStreamAware {
 
@@ -50,7 +50,7 @@ public class JSONArray extends ArrayList<Object> implements JSONAware, JSONStrea
      * collection, in the order they are returned by the collection's iterator.
      *
      * @param c the collection whose elements are to be placed into this
-     * JSONArray
+     *          JSONArray
      */
     public JSONArray(Collection<Object> c) {
         super(c);
@@ -65,7 +65,6 @@ public class JSONArray extends ArrayList<Object> implements JSONAware, JSONStrea
      * @param out
      * @throws java.io.IOException
      * @see org.hl7.tinkar.JSONValue#writeJSONString(Object, Writer)
-     *
      */
     public static void writeJSONString(Collection<Object> collection, Writer out) throws IOException {
         if (collection == null) {
@@ -105,10 +104,9 @@ public class JSONArray extends ArrayList<Object> implements JSONAware, JSONStrea
      * also a JSONAware, JSONAware specific behaviors will be omitted at this
      * top level.
      *
-     * @see org.hl7.tinkar.JSONValue#toJSONString(Object)
-     *
      * @param collection
      * @return JSON text, or "null" if list is null.
+     * @see org.hl7.tinkar.JSONValue#toJSONString(Object)
      */
     public static String toJSONString(Collection<Object> collection) {
         final StringWriter writer = new StringWriter();
@@ -131,38 +129,42 @@ public class JSONArray extends ArrayList<Object> implements JSONAware, JSONStrea
             out.write("null");
         } else if (arrayObject.getClass().isArray()) {
             int length = Array.getLength(arrayObject);
-            Class<?> componentType = arrayObject.getClass().getComponentType();
-            boolean quoteValue = false;
-            if (char.class.equals(componentType)) {
-                quoteValue = true;
-            }
 
             if (length == 0) {
                 out.write("[]");
             } else {
                 out.write("[");
-                if (quoteValue) {
-                    out.write('"');
-                    JSONValue.writeJSONString(Array.get(arrayObject, 0), out);
-                    out.write('"');
+                Class<?> componentType = arrayObject.getClass().getComponentType();
+                if (char.class.equals(componentType)) {
+                    writeWithQuotes(arrayObject, out, length);
                 } else {
-                    out.write(String.valueOf(Array.get(arrayObject, 0)));
-                }
-
-                for (int i = 1; i < length; i++) {
-                    out.write(",");
-                    if (quoteValue) {
-                        out.write('"');
-                        JSONValue.writeJSONString(Array.get(arrayObject, i), out);
-                        out.write('"');
-                    } else {
-                        out.write(String.valueOf(Array.get(arrayObject, i)));
-                    }
+                    write(arrayObject, out, length);
                 }
                 out.write("]");
             }
         } else {
             throw new IllegalStateException("Expecting an array. Found: " + arrayObject);
+        }
+    }
+
+    private static void write(Object arrayObject, Writer out, int length) throws IOException {
+        out.write(String.valueOf(Array.get(arrayObject, 0)));
+        for (int i = 1; i < length; i++) {
+            out.write(",");
+            out.write(String.valueOf(Array.get(arrayObject, i)));
+        }
+    }
+
+    private static void writeWithQuotes(Object arrayObject, Writer out, int length) throws IOException {
+        out.write('"');
+        JSONValue.writeJSONString(Array.get(arrayObject, 0), out);
+        out.write('"');
+
+        for (int i = 1; i < length; i++) {
+            out.write(",");
+            out.write('"');
+            JSONValue.writeJSONString(Array.get(arrayObject, i), out);
+            out.write('"');
         }
     }
 
