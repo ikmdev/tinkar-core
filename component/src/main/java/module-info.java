@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-@SuppressWarnings("module") // 7 in HL7 is not a version reference
+@SuppressWarnings("module")
+// 7 in HL7 is not a version reference
 module org.hl7.tinkar.component {
     requires java.base;
     requires org.eclipse.collections.api;

@@ -20,10 +20,10 @@ import java.io.StringReader;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
-class YylexTest {
+public class YylexTest {
 
     @Test
-    void testYylex() throws Exception {
+    public void testYylex() throws Exception {
         String s = "\"\\/\"";
         System.out.println(s);
         StringReader in = new StringReader(s);
