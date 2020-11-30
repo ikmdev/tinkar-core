@@ -178,43 +178,33 @@ public class UuidT5Generator {
     }
 
    /**
-    * This routine adapted from org.safehaus.uuid.UUID,
-    * which is licensed under Apache 2.
+    * This routine adapted from com.fasterxml.uuid.impl,
+    * Java Uuid Generator (JUG) which is licensed under Apache 2.
+    */
+   private static final void appendInt(int value, byte[] buffer, int offset)
+   {
+      buffer[offset++] = (byte) (value >> 24);
+      buffer[offset++] = (byte) (value >> 16);
+      buffer[offset++] = (byte) (value >> 8);
+      buffer[offset] = (byte) value;
+   }
+
+   /**
+    * This routine adapted from com.fasterxml.uuid.impl,
+    * Java Uuid Generator (JUG) which is licensed under Apache 2.
     *
-    * @param uid the uid
+    * @param uuid the uid
     * @return the raw bytes
     */
-   public static byte[] getRawBytes(UUID uid) {
-      final String id       = uid.toString();
-      final byte[] rawBytes = new byte[16];
-
-      for (int i = 0, j = 0; i < 36; ++j) {
-
-         // Need to bypass hyphens:
-         if (i == 8 || i == 13 || i == 18 || i == 23) {
-            ++i;
-         }
-
-         char c = id.charAt(i);
-
-         if ((c >= '0') && (c <= '9')) {
-            rawBytes[j] = (byte) ((c - '0') << 4);
-         } else if ((c >= 'a') && (c <= 'f')) {
-            rawBytes[j] = (byte) ((c - 'a' + 10) << 4);
-         }
-
-         c = id.charAt(++i);
-
-         if ((c >= '0') && (c <= '9')) {
-            rawBytes[j] |= (byte) (c - '0');
-         } else if ((c >= 'a') && (c <= 'f')) {
-            rawBytes[j] |= (byte) (c - 'a' + 10);
-         }
-
-         ++i;
-      }
-
-      return rawBytes;
+   public static byte[] getRawBytes(UUID uuid) {
+      long hi = uuid.getMostSignificantBits();
+      long lo = uuid.getLeastSignificantBits();
+      byte[] result = new byte[16];
+      appendInt((int) (hi >> 32), result, 0);
+      appendInt((int) hi, result, 4);
+      appendInt((int) (lo >> 32), result, 8);
+      appendInt((int) lo, result, 12);
+      return result;
    }
 
    /**

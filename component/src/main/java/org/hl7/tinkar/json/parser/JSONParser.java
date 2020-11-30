@@ -364,7 +364,7 @@ public class JSONParser {
         throw new ParseException(getPosition(), ParseException.ErrorType.UNEXPECTED_TOKEN, token);
     }
 
-    public boolean handleParse(ContentHandler contentHandler, List<Integer> statusStack) throws ParseException {
+    public boolean handleParse(ContentHandler contentHandler, LinkedList<Integer> statusStack) throws ParseException {
         switch (status) {
             case S_INIT -> {
                 if (handleS_INIT(contentHandler, statusStack)) return true;
@@ -404,7 +404,7 @@ public class JSONParser {
         return false;
     }
 
-    public boolean handleS_IN_ARRAY(ContentHandler contentHandler, List<Integer> statusStack) throws ParseException {
+    public boolean handleS_IN_ARRAY(ContentHandler contentHandler, LinkedList<Integer> statusStack) throws ParseException {
         nextToken();
         switch (token.type) {
             case TYPE_COMMA -> {
