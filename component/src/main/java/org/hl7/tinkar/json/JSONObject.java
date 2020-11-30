@@ -214,8 +214,25 @@ public class JSONObject extends HashMap<String, Object>
             Object obj = jsonArray.get(i);
             if (obj instanceof String string) {
                 array[i] = string;
+            } else if (obj instanceof Instant instant) {
+                array[i] = instant;
+            } else if (obj instanceof UUID uuid) {
+                array[i] = uuid;
+            } else if (obj instanceof Number number) {
+                array[i] = number;
+            } else if (obj instanceof JSONObject jsonObject) {
+                if (jsonObject.containsKey(ComponentFieldForJson.CLASS)) {
+                    try {
+                        String className = (String) jsonObject.get(ComponentFieldForJson.CLASS);
+                        array[i] = JsonMarshalable.make(Class.forName(className), jsonObject.toJSONString());
+                    } catch (ClassNotFoundException e) {
+                        throw new UnsupportedOperationException("JSON object has no class... " + jsonObject, e);
+                    }
+                } else {
+                    throw new UnsupportedOperationException("JSON object has no class... " + jsonObject);
+                }
             } else {
-                throw new UnsupportedOperationException("Can't handle: " + obj);
+               throw new UnsupportedOperationException("asImmutableObjectList can't handle: " + obj);
             }
         }
         return Lists.immutable.of(array);

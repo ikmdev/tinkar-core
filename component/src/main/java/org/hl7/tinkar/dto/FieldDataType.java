@@ -1,5 +1,7 @@
 package org.hl7.tinkar.dto;
 
+import org.hl7.tinkar.binary.Marshalable;
+import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.dto.digraph.DigraphDTO;
 
 import java.time.Instant;
@@ -22,9 +24,17 @@ public enum FieldDataType {
     BOOLEAN((byte) 3, Boolean.class, UUID.fromString("601139ee-2bad-11eb-adc1-0242ac120002")),
     BYTE_ARRAY((byte) 4, byte[].class, UUID.fromString("60113aac-2bad-11eb-adc1-0242ac120002")),
     OBJECT_ARRAY((byte) 5, Object[].class, UUID.fromString("60113b74-2bad-11eb-adc1-0242ac120002")),
-    IDENTIFIED_THING((byte) 6, IdentifiedThingDTO.class, UUID.fromString("60113d36-2bad-11eb-adc1-0242ac120002")),
-    DIGRAPH((byte) 7, DigraphDTO.class, UUID.fromString("60113dfe-2bad-11eb-adc1-0242ac120002")),
-    INSTANT((byte) 8, Instant.class, UUID.fromString("9cb1bd10-31b1-11eb-adc1-0242ac120002"));
+    DIGRAPH((byte) 6, DigraphDTO.class, UUID.fromString("60113dfe-2bad-11eb-adc1-0242ac120002")),
+    INSTANT((byte) 7, Instant.class, UUID.fromString("9cb1bd10-31b1-11eb-adc1-0242ac120002")),
+    CONCEPT_CHRONOLOGY((byte) 8, ConceptChronology.class, UUID.fromString("60965934-32a2-11eb-adc1-0242ac120002")),
+    CONCEPT((byte) 9, Concept.class, UUID.fromString("6882871c-32a2-11eb-adc1-0242ac120002")),
+    DEFINITION_FOR_SEMANTIC_CHRONOLOGY((byte) 10, DefinitionForSemanticChronology.class, UUID.fromString("6eaa968e-32a2-11eb-adc1-0242ac120002")),
+    DEFINITION_FOR_SEMANTIC((byte) 11, DefinitionForSemantic.class, UUID.fromString("74af5952-32a2-11eb-adc1-0242ac120002")),
+    SEMANTIC_CHRONOLOGY((byte) 12, SemanticChronology.class, UUID.fromString("7a01ea5a-32a2-11eb-adc1-0242ac120002")),
+    SEMANTIC((byte) 13, Semantic.class, UUID.fromString("7f21bbfa-32a2-11eb-adc1-0242ac120002")),
+
+    // Identified thing needs to go last...
+    IDENTIFIED_THING(Byte.MAX_VALUE, IdentifiedThingDTO.class, UUID.fromString("60113d36-2bad-11eb-adc1-0242ac120002"));
 
     public final byte token;
     public final Class<? extends Object> clazz;
@@ -44,11 +54,19 @@ public enum FieldDataType {
             case 3: return BOOLEAN;
             case 4: return BYTE_ARRAY;
             case 5: return OBJECT_ARRAY;
-            case 6: return IDENTIFIED_THING;
-            case 7: return DIGRAPH;
-            case 8: return INSTANT;
+            case 6: return DIGRAPH;
+            case 7: return INSTANT;
+            case 8: return CONCEPT_CHRONOLOGY;
+            case 9: return CONCEPT;
+            case 10: return DEFINITION_FOR_SEMANTIC_CHRONOLOGY;
+            case 11: return DEFINITION_FOR_SEMANTIC;
+            case 12: return SEMANTIC_CHRONOLOGY;
+            case 13: return SEMANTIC;
+
+            // Identified thing needs to go last...
+            case Byte.MAX_VALUE: return IDENTIFIED_THING;
             default:
-                throw new UnsupportedOperationException("Can't handle token: " +
+                throw new UnsupportedOperationException("FieldDatatype.fromToken can't handle token: " +
                         token);
         }
     }
@@ -62,7 +80,10 @@ public enum FieldDataType {
         if (obj instanceof Double) {
             return FLOAT;
         }
-        throw new UnsupportedOperationException("Can't handle: " +
+        if (obj instanceof Long) {
+            return INTEGER;
+        }
+        throw new UnsupportedOperationException("getFieldDataType can't handle: " +
                 obj.getClass().getSimpleName() + "\n" +  obj);
     }
 }

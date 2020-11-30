@@ -13,7 +13,7 @@ public class FieldDataTypeTest {
             Assertions.assertTrue(fieldDataType == FieldDataType.fromToken(fieldDataType.token));
         }
         Assertions.assertTrue(FieldDataType.FLOAT == FieldDataType.getFieldDataType(Double.parseDouble("1.0")));
-        Assertions.assertThrows(UnsupportedOperationException.class, () -> FieldDataType.fromToken((byte) 255));
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> FieldDataType.fromToken(Byte.MIN_VALUE));
         Assertions.assertThrows(UnsupportedOperationException.class, () -> FieldDataType.getFieldDataType(new URI("test")));
     }
 }

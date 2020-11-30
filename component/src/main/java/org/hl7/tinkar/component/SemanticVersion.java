@@ -19,6 +19,8 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.dto.*;
 
+import java.time.Instant;
+
 /**
  *
  * @author kec
@@ -37,10 +39,20 @@ public interface SemanticVersion extends Version, Semantic {
             } else if (objectToConvert instanceof Semantic semantic) {
                 convertedFields.add(new SemanticDTO(semantic.componentUuids(), semantic.definitionForSemantic(),
                         semantic.referencedComponent()));
+            } else if (objectToConvert instanceof IdentifiedThing identifiedThing) {
+                convertedFields.add(new IdentifiedThingDTO(identifiedThing.componentUuids()));
             } else if (objectToConvert instanceof Number number) {
-                convertedFields.add(number);
+                if (number instanceof Long) {
+                    convertedFields.add(number.intValue());
+                } else if (number instanceof Double) {
+                    convertedFields.add(number.floatValue());
+                } else {
+                    convertedFields.add(number);
+                }
             } else if (objectToConvert instanceof String string) {
                 convertedFields.add(string);
+            } else if (objectToConvert instanceof Instant instant) {
+                convertedFields.add(instant);
             } else {
                 throw new UnsupportedOperationException("Can't convert:\n  " + objectToConvert + "\nin\n  " + this);
             }

@@ -153,12 +153,27 @@ public class TinkarInput extends DataInputStream {
                 case INTEGER -> readInt();
                 case OBJECT_ARRAY -> readEmbeddedObjectArray();
                 case DIGRAPH -> throw new UnsupportedEncodingException("Can't handle DIGRAPH.");
+                case INSTANT -> readInstant();
+                case CONCEPT_CHRONOLOGY, CONCEPT, DEFINITION_FOR_SEMANTIC_CHRONOLOGY,
+                        DEFINITION_FOR_SEMANTIC, SEMANTIC_CHRONOLOGY, SEMANTIC -> unmarshal(dataType);
                 default -> throw new UnsupportedEncodingException(dataType.toString());
             };
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
+
+    private Object unmarshal(FieldDataType dataType) {
+        return switch (dataType) {
+            case CONCEPT_CHRONOLOGY -> ConceptChronologyDTO.make(this);
+            case CONCEPT -> ConceptDTO.make(this);
+            case DEFINITION_FOR_SEMANTIC_CHRONOLOGY -> DefinitionForSemanticChronologyDTO.make(this);
+            case DEFINITION_FOR_SEMANTIC -> DefinitionForSemanticDTO.make(this);
+            case SEMANTIC_CHRONOLOGY -> SemanticChronologyDTO.make(this);
+            case SEMANTIC -> SemanticDTO.make(this);
+            default -> throw new UnsupportedOperationException("TinkarInput does know how to unmarshal: " + dataType);
+        };
+     }
 
     private Object[] readEmbeddedObjectArray() throws IOException {
         int size = readInt();

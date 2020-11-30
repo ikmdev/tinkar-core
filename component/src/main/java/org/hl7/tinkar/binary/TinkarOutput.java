@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.eclipse.collections.api.list.ImmutableList;
+import org.hl7.tinkar.component.IdentifiedThing;
 import org.hl7.tinkar.dto.*;
 
 /**
@@ -113,17 +114,41 @@ public class TinkarOutput extends DataOutputStream {
             switch (fieldDataType) {
                 case BOOLEAN -> writeBoolean((boolean) object, fieldDataType);
                 case BYTE_ARRAY -> writeByteArray((byte[]) object, fieldDataType);
-                case IDENTIFIED_THING -> writeIdentifiedThing((IdentifiedThingDTO) object, fieldDataType);
                 case DIGRAPH -> writeDigraph();
                 case FLOAT -> writeFloat((Number) object, fieldDataType);
                 case INTEGER -> writeInteger((Number) object, fieldDataType);
                 case OBJECT_ARRAY -> writeObjectArray((Object[]) object, fieldDataType);
                 case STRING -> writeString((String) object, fieldDataType);
-                default -> throw new UnsupportedOperationException("Can't handle: " + object + " " + fieldDataType);
+                case INSTANT -> writeInstant((Instant) object, fieldDataType);
+                case IDENTIFIED_THING -> writeIdentifiedThing((IdentifiedThing) object, fieldDataType);
+                case CONCEPT,
+                        CONCEPT_CHRONOLOGY,
+                        DEFINITION_FOR_SEMANTIC,
+                        DEFINITION_FOR_SEMANTIC_CHRONOLOGY,
+                        SEMANTIC,
+                        SEMANTIC_CHRONOLOGY -> writeMarshalableObject((Marshalable) object);
+
+                default -> throw new UnsupportedOperationException("writeField can't handle: " + object + " " + fieldDataType);
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+
+    private void writeInstant(Instant instant, FieldDataType fieldDataType) throws IOException {
+        writeByte(fieldDataType.token);
+        writeInstant(instant);
+    }
+
+    private void writeIdentifiedThing(IdentifiedThing object, FieldDataType fieldDataType) throws IOException {
+        writeByte(fieldDataType.token);
+        writeUuidList(object.componentUuids());
+    }
+    private void writeMarshalableObject(Marshalable object) throws IOException {
+        FieldDataType dataType = FieldDataType.getFieldDataType(object);
+        this.writeByte(dataType.token);
+        object.marshal(this);
     }
 
     private void writeString(String object, FieldDataType fieldDataType) throws IOException {
@@ -152,11 +177,6 @@ public class TinkarOutput extends DataOutputStream {
 
     private void writeDigraph() {
         throw new UnsupportedOperationException();
-    }
-
-    private void writeIdentifiedThing(IdentifiedThingDTO object, FieldDataType fieldDataType) throws IOException {
-        writeByte(fieldDataType.token);
-        writeUuidList(object.componentUuids());
     }
 
     private void writeByteArray(byte[] object, FieldDataType fieldDataType) throws IOException {

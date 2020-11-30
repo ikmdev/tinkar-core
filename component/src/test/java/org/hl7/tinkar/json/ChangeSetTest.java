@@ -25,6 +25,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.binary.MarshalExceptionUnchecked;
 import org.hl7.tinkar.binary.Marshalable;
 import org.hl7.tinkar.binary.TinkarByteArrayOutput;
+import org.hl7.tinkar.component.DefinitionForSemantic;
 import org.hl7.tinkar.dto.*;
 import org.hl7.tinkar.dto.ConceptChronologyDTO;
 
@@ -119,12 +120,25 @@ public class ChangeSetTest {
         return Lists.immutable.of(array);
     }
 
-    private static Object[] makeObjectArray() {
+    private static Object[] makeObjectArrayOld() {
         int size = getRandomSize(7);
         Object[] array = new Object[size];
         for (int i = 0; i < size; i++) {
             array[i] = Integer.toString(i);
         }
+        return array;
+    }
+
+    private static Object[] makeObjectArray() {
+        Object[] array = new Object[] {
+                1,
+                (float) 2.0,
+                "a string",
+                Instant.now(),
+                new ConceptDTO(makeUuidList()),
+                new DefinitionForSemanticDTO(makeUuidList()),
+                new SemanticDTO(makeUuidList(), makeUuidList(), makeUuidList())
+        };
         return array;
     }
 

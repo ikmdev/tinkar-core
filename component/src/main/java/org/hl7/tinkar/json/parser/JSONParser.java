@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.hl7.tinkar.json.InstantUtil;
 import org.hl7.tinkar.json.JSONArray;
 import org.hl7.tinkar.json.JSONObject;
 import org.hl7.tinkar.uuid.UuidUtil;
@@ -240,12 +241,21 @@ public class JSONParser {
             }
             case TYPE_VALUE -> {
                 List val = (List) valueStack.getFirst();
-                if (token.value instanceof String string && UuidUtil.isUUID(string)) {
-                    val.add(UUID.fromString(string));
+                if (token.value instanceof String string) {
+                    if (UuidUtil.isUUID(string)) {
+                        val.add(UUID.fromString(string));
+                    } else if (InstantUtil.parse(string).isPresent()) {
+                        val.add(InstantUtil.parse(string).get());
+                    } else {
+                        val.add(token.value);
+                    }
+                } else if (token.value instanceof Double doubleVal) {
+                    val.add(doubleVal.floatValue());
+                } else if (token.value instanceof Long longVal) {
+                    val.add(longVal.intValue());
                 } else {
                     val.add(token.value);
                 }
-
             }
             case TYPE_RIGHT_SQUARE -> {
                 if (valueStack.size() > 1) {
