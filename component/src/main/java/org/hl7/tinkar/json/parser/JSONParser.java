@@ -245,7 +245,7 @@ public class JSONParser {
                     if (UuidUtil.isUUID(string)) {
                         val.add(UUID.fromString(string));
                     } else if (InstantUtil.parse(string).isPresent()) {
-                        val.add(InstantUtil.parse(string).get());
+                        InstantUtil.parse(string).ifPresent(instant -> val.add(instant));
                     } else {
                         val.add(token.value);
                     }
