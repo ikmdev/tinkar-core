@@ -32,6 +32,13 @@ import java.util.UUID;
  */
 public class UuidUtil {
     /**
+     * Utility classes, which are collections of static members, are not meant to be instantiated.
+     * Even abstract utility classes, which can be extended, should not have public constructors.
+     */
+    private UuidUtil() {
+    }
+
+    /**
      * Nil UUID
      * The "nil" UUID, a special case, is the UUID 00000000-0000-0000-0000-000000000000; that is, all bits set to zero.[2]
      */

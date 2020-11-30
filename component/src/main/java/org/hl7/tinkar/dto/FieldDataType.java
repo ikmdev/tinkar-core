@@ -1,6 +1,5 @@
 package org.hl7.tinkar.dto;
 
-import org.hl7.tinkar.binary.Marshalable;
 import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.dto.digraph.DigraphDTO;
 

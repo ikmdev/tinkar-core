@@ -37,6 +37,14 @@ import java.util.function.BiConsumer;
  * @author kec
  */
 public class UuidT5Generator {
+
+   /**
+    * Utility classes, which are collections of static members, are not meant to be instantiated.
+    * Even abstract utility classes, which can be extended, should not have public constructors.
+    */
+   private UuidT5Generator() {
+   }
+
    /** The Constant ENCODING. */
    public static final String ENCODING = "UTF-8";
 

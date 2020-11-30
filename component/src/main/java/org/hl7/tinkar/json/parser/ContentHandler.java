@@ -15,7 +15,6 @@
  */
 package org.hl7.tinkar.json.parser;
 
-import java.io.IOException;
 
 /**
  * Original obtained from: https://github.com/fangyidong/json-simple under Apache 2 license

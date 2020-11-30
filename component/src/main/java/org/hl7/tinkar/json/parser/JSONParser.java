@@ -18,6 +18,7 @@ package org.hl7.tinkar.json.parser;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -245,7 +246,7 @@ public class JSONParser {
                     if (UuidUtil.isUUID(string)) {
                         val.add(UUID.fromString(string));
                     } else if (InstantUtil.parse(string).isPresent()) {
-                        InstantUtil.parse(string).ifPresent(instant -> val.add(instant));
+                        val.add(Instant.parse(string));
                     } else {
                         val.add(token.value);
                     }
