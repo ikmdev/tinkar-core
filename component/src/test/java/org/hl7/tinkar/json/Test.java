@@ -101,11 +101,11 @@ public class Test {
             System.out.println("Error at character position: " + pe.getPosition());
             switch (pe.getErrorType()) {
                 case UNEXPECTED_TOKEN ->
-                    System.out.println("Unexpected token: " + pe.getUnexpectedObject());
+                    System.out.println("Unexpected token: " + pe.getUnexpectedObjectString());
                 case UNEXPECTED_CHAR ->
-                    System.out.println("Unexpected character: " + pe.getUnexpectedObject());
+                    System.out.println("Unexpected character: " + pe.getUnexpectedObjectString());
                 case UNEXPECTED_EXCEPTION ->
-                    ((Exception) pe.getUnexpectedObject()).printStackTrace();
+                    ((Exception) pe.getUnexpectedObjectString()).printStackTrace();
             }
         }
 

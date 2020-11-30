@@ -268,16 +268,16 @@ public class JSONParser {
                 }
             }
             case TYPE_LEFT_BRACE -> {
-                List val = (List) valueStack.getFirst();
-                Map newObject = createObjectContainer(containerFactory);
+                List<Object> val = (List<Object>) valueStack.getFirst();
+                Map<String, Object> newObject = createObjectContainer(containerFactory);
                 val.add(newObject);
                 status = S_IN_OBJECT;
                 statusStack.addFirst(status);
                 valueStack.addFirst(newObject);
             }
             case TYPE_LEFT_SQUARE -> {
-                List val = (List) valueStack.getFirst();
-                List newArray = createArrayContainer(containerFactory);
+                List<Object> val = (List<Object>) valueStack.getFirst();
+                List<Object> newArray = createArrayContainer(containerFactory);
                 val.add(newArray);
                 status = S_IN_ARRAY;
                 statusStack.addFirst(status);
@@ -364,7 +364,7 @@ public class JSONParser {
         throw new ParseException(getPosition(), ParseException.ErrorType.UNEXPECTED_TOKEN, token);
     }
 
-    public boolean handleParse(ContentHandler contentHandler, LinkedList<Integer> statusStack) throws ParseException {
+    public boolean handleParse(ContentHandler contentHandler, List<Integer> statusStack) throws ParseException {
         switch (status) {
             case S_INIT -> {
                 if (handleS_INIT(contentHandler, statusStack)) return true;
@@ -404,7 +404,7 @@ public class JSONParser {
         return false;
     }
 
-    public boolean handleS_IN_ARRAY(ContentHandler contentHandler, LinkedList<Integer> statusStack) throws ParseException {
+    public boolean handleS_IN_ARRAY(ContentHandler contentHandler, List<Integer> statusStack) throws ParseException {
         nextToken();
         switch (token.type) {
             case TYPE_COMMA -> {

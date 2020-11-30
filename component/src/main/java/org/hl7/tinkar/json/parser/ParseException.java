@@ -35,13 +35,13 @@ public class ParseException extends Exception {
     }
 
     private final ErrorType errorType;
-    private transient Object unexpectedObject;
+    private final String unexpectedObjectString;
     private final int position;
 
     public ParseException(int position, ErrorType errorType, Object unexpectedObject) {
         this.position = position;
         this.errorType = errorType;
-        this.unexpectedObject = unexpectedObject;
+        this.unexpectedObjectString = unexpectedObject.toString();
     }
 
     public ErrorType getErrorType() {
@@ -63,8 +63,8 @@ public class ParseException extends Exception {
      * ERROR_UNEXPECTED_EXCEPTION	java.lang.Exception
      * @see org.hl7.tinkar.parser.Yytoken
      */
-    public Object getUnexpectedObject() {
-        return unexpectedObject;
+    public Object getUnexpectedObjectString() {
+        return unexpectedObjectString;
     }
 
 
@@ -73,9 +73,9 @@ public class ParseException extends Exception {
         StringBuilder sb = new StringBuilder();
 
         switch (errorType) {
-            case UNEXPECTED_CHAR -> sb.append("Unexpected character (").append(unexpectedObject).append(") at position ").append(position).append(".");
-            case UNEXPECTED_TOKEN -> sb.append("Unexpected token ").append(unexpectedObject).append(" at position ").append(position).append(".");
-            case UNEXPECTED_EXCEPTION -> sb.append("Unexpected exception at position ").append(position).append(": ").append(unexpectedObject);
+            case UNEXPECTED_CHAR -> sb.append("Unexpected character (").append(unexpectedObjectString).append(") at position ").append(position).append(".");
+            case UNEXPECTED_TOKEN -> sb.append("Unexpected token ").append(unexpectedObjectString).append(" at position ").append(position).append(".");
+            case UNEXPECTED_EXCEPTION -> sb.append("Unexpected exception at position ").append(position).append(": ").append(unexpectedObjectString);
             default -> throw new UnsupportedOperationException(sb.append("Unkown error at position ").append(position).append(".").toString());
         }
         return sb.toString();

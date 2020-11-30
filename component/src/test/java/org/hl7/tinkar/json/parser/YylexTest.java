@@ -15,16 +15,15 @@
  */
 package org.hl7.tinkar.json.parser;
 
-import java.io.IOException;
 import java.io.StringReader;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
-public class YylexTest {
+class YylexTest {
 
     @Test
-    public void testYylex() throws Exception {
+    void testYylex() throws Exception {
         String s = "\"\\/\"";
         System.out.println(s);
         StringReader in = new StringReader(s);
@@ -64,9 +63,9 @@ public class YylexTest {
             System.out.println("error:" + err);
             assertEquals(ParseException.ErrorType.UNEXPECTED_CHAR, e.getErrorType());
             assertEquals(0, e.getPosition());
-            assertEquals('\b', e.getUnexpectedObject());
+            assertEquals("\b", e.getUnexpectedObjectString());
         }
-        assertTrue(err != null);
+        assertNotNull(err);
 
         s = "{a : b}";
         System.out.println(s);
@@ -80,10 +79,10 @@ public class YylexTest {
             err = e;
             System.out.println("error:" + err);
             assertEquals(ParseException.ErrorType.UNEXPECTED_CHAR, e.getErrorType());
-            assertEquals('a', e.getUnexpectedObject());
+            assertEquals("a", e.getUnexpectedObjectString());
             assertEquals(1, e.getPosition());
         }
-        assertTrue(err != null);
+        assertNotNull(err);
     }
 
 }

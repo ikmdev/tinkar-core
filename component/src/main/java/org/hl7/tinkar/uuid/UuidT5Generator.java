@@ -18,7 +18,6 @@ package org.hl7.tinkar.uuid;
 //~--- JDK imports ------------------------------------------------------------
 
 import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
 
 import java.nio.ByteBuffer;
 
