@@ -14,16 +14,11 @@
  * limitations under the License.
  */package org.hl7.tinkar.component;
 
-import org.hl7.tinkar.dto.ConceptVersionDTO;
 
 /**
  *
  * @author kec
  */
 public interface ConceptVersion extends Version, Concept {
-
-    default ConceptVersionDTO toChangeSetThing() {
-        return new ConceptVersionDTO(componentUuids(), stamp().toChangeSetThing());
-    }
 
 }

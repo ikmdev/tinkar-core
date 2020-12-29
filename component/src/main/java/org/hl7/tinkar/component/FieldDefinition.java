@@ -14,7 +14,10 @@
  * limitations under the License.
  */package org.hl7.tinkar.component;
 
-import org.hl7.tinkar.dto.FieldDefinitionDTO;
+
+import org.eclipse.collections.api.list.ImmutableList;
+
+import java.util.UUID;
 
 /**
  *
@@ -37,15 +40,12 @@ public interface FieldDefinition {
     Concept getPurpose();
 
     /**
-     * The context in which this specific field is used. Maybe it is the
+     * The identity of this field. Maybe it is the
      * "SNOMED code" in a mapping, or the location of an image if a URI.
-     * @return Concept designating the use of the defined field.
+     * This concept should be used to present to teh user what this field "is" in
+     * interfaces and similar.
+     * @return Concept designating the identity defined field.
      */
-    Concept getUse();
-
-    default FieldDefinitionDTO toChangeSetThing() {
-        return new FieldDefinitionDTO(getDataType().componentUuids(),
-                getPurpose().componentUuids(), getUse().componentUuids());
-    }
+    Concept getIdentity();
 
 }

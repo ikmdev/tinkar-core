@@ -18,7 +18,7 @@
  *
  * @author kec
  */
-public interface Version extends IdentifiedThing {
+public interface Version extends Component {
 
     Stamp stamp();
 

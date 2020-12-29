@@ -18,6 +18,6 @@
  *
  * @author kec
  */
-public interface Concept extends IdentifiedThing {
+public interface Concept extends Component {
 
 }

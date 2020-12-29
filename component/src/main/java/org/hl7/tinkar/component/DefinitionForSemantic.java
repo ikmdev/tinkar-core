@@ -18,6 +18,6 @@
  *
  * @author kec
  */
-public interface DefinitionForSemantic extends IdentifiedThing {
+public interface DefinitionForSemantic extends Component {
     
 }

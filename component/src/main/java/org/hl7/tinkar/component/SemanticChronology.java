@@ -17,28 +17,14 @@ package org.hl7.tinkar.component;
 
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.MutableList;
-import org.hl7.tinkar.dto.SemanticChronologyDTO;
-import org.hl7.tinkar.dto.SemanticVersionDTO;
 
 /**
  *
  * @author kec
  */
-public interface SemanticChronology extends Chronology, Semantic {
+public interface SemanticChronology<T extends SemanticVersion> extends Chronology<T>, Semantic {
 
      @Override
-     ImmutableList<SemanticVersion> versions();
-
-     default SemanticChronologyDTO toChangeSetThing() {
-          MutableList<SemanticVersionDTO> changeSetVersions = Lists.mutable.ofInitialCapacity(versions().size());
-          for (SemanticVersion semanticVersion : versions()) {
-               changeSetVersions.add(semanticVersion.toChangeSetThing());
-          }
-          return new SemanticChronologyDTO(componentUuids(),
-                  definitionForSemantic(),
-                  referencedComponent(),
-                  changeSetVersions.toImmutable());
-     }
+     ImmutableList<T> versions();
 
 }

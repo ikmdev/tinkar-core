@@ -14,15 +14,13 @@
  * limitations under the License.
  */package org.hl7.tinkar.component;
 
-import org.hl7.tinkar.dto.StampDTO;
-
 import java.time.Instant;
 
 /**
  *
  * @author kec
  */
-public interface Stamp {
+public interface Stamp extends Component {
 
     Concept status();
 
@@ -33,13 +31,5 @@ public interface Stamp {
     Concept module();
 
     Concept path();
-
-    default StampDTO toChangeSetThing() {
-        return new StampDTO(status().componentUuids(),
-                time(),
-                author().componentUuids(),
-                module().componentUuids(),
-                path().componentUuids());
-    }
 
 }

@@ -19,6 +19,5 @@
 module org.hl7.tinkar.component {
     requires java.base;
     requires org.eclipse.collections.api;
-    exports org.hl7.tinkar.dto;
     exports org.hl7.tinkar.component;
 }

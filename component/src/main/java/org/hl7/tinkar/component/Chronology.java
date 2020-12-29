@@ -16,14 +16,16 @@
 
 import org.eclipse.collections.api.list.ImmutableList;
 
+import java.util.UUID;
+
 /**
  *
  * @author kec
  */
-public interface Chronology extends IdentifiedThing {
+public interface Chronology<T extends Version> extends Component {
     
-    IdentifiedThing chronologySet();
+    Component chronologySet();
 
-    ImmutableList<? extends Version> versions();
+    ImmutableList<T> versions();
 
 }

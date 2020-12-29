@@ -14,29 +14,15 @@
  * limitations under the License.
  */package org.hl7.tinkar.component;
 
-import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.MutableList;
-import org.hl7.tinkar.dto.ConceptChronologyDTO;
-import org.hl7.tinkar.dto.ConceptVersionDTO;
 
 /**
  *
  * @author kec
  */
-public interface ConceptChronology extends Chronology, Concept {
+public interface ConceptChronology<T extends ConceptVersion> extends Chronology<T>, Concept {
     
      @Override
-     ImmutableList<ConceptVersion> versions();
+     ImmutableList<T> versions();
 
-
-     default ConceptChronologyDTO toChangeSetThing() {
-          MutableList<ConceptVersionDTO> versions = Lists.mutable.ofInitialCapacity(versions().size());
-          for (ConceptVersion conceptVersion : versions()) {
-               versions.add(conceptVersion.toChangeSetThing());
-          }
-          return new ConceptChronologyDTO(componentUuids(),
-                  chronologySet().componentUuids(),
-                  versions.toImmutable());
-     }
 }

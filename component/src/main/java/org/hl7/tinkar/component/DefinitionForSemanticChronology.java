@@ -14,28 +14,14 @@
  * limitations under the License.
  */package org.hl7.tinkar.component;
 
-import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.MutableList;
-import org.hl7.tinkar.dto.DefinitionForSemanticChronologyDTO;
-import org.hl7.tinkar.dto.DefinitionForSemanticVersionDTO;
 
 /**
  *
  * @author kec
  */
-public interface DefinitionForSemanticChronology extends Chronology, DefinitionForSemantic {
+public interface DefinitionForSemanticChronology<T extends DefinitionForSemanticVersion> extends Chronology<T>, DefinitionForSemantic {
 
      @Override
-     ImmutableList<DefinitionForSemanticVersion> versions();
-
-     default DefinitionForSemanticChronologyDTO toChangeSetThing() {
-          MutableList<DefinitionForSemanticVersionDTO> versions = Lists.mutable.ofInitialCapacity(versions().size());
-          for (DefinitionForSemanticVersion definitionVersion : versions()) {
-               versions.add(definitionVersion.toChangeSetThing());
-          }
-          return new DefinitionForSemanticChronologyDTO(componentUuids(),
-                  chronologySet().componentUuids(),
-                  versions.toImmutable());
-     }
+     ImmutableList<T> versions();
 }

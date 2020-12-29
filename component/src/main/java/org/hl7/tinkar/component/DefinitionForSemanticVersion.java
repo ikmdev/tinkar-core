@@ -14,11 +14,9 @@
  * limitations under the License.
  */package org.hl7.tinkar.component;
 
-import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.MutableList;
-import org.hl7.tinkar.dto.DefinitionForSemanticVersionDTO;
-import org.hl7.tinkar.dto.FieldDefinitionDTO;
+
+import java.util.UUID;
 
 /**
  *
@@ -29,20 +27,5 @@ public interface DefinitionForSemanticVersion extends Version, DefinitionForSema
     ImmutableList<FieldDefinition> fieldDefinitions();
 
     Concept referencedComponentPurpose();
-
-
-    default DefinitionForSemanticVersionDTO toChangeSetThing() {
-
-        MutableList<FieldDefinitionDTO> fields = Lists.mutable.ofInitialCapacity(fieldDefinitions().size());
-        for (FieldDefinition fieldDefinition : fieldDefinitions()) {
-            fields.add(fieldDefinition.toChangeSetThing());
-        }
-
-        return new DefinitionForSemanticVersionDTO(
-                componentUuids(),
-                stamp().toChangeSetThing(),
-                referencedComponentPurpose().componentUuids(),
-                fields.toImmutable());
-    }
 
 }

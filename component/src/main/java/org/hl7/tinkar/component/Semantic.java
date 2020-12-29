@@ -14,13 +14,17 @@
  * limitations under the License.
  */package org.hl7.tinkar.component;
 
+import org.eclipse.collections.api.list.ImmutableList;
+
+import java.util.UUID;
+
 /**
  *
  * @author kec
  */
-public interface Semantic extends IdentifiedThing {
+public interface Semantic extends Component {
 
-     IdentifiedThing referencedComponent();
+     Component referencedComponent();
      DefinitionForSemantic definitionForSemantic();
-    
+
 }
