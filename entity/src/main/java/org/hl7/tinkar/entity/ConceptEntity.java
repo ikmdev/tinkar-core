@@ -11,6 +11,10 @@ public final class ConceptEntity
     private ConceptEntity() {
         super();
     }
+    @Override
+    protected int subclassFieldBytesSize() {
+        return 0; // no additional fields...
+    }
 
     @Override
     protected ConceptEntityVersion makeVersion(ByteBuf readBuf) {

@@ -22,9 +22,9 @@ import java.util.UUID;
  *
  * @author kec
  */
-public interface DefinitionForSemanticVersion extends Version, DefinitionForSemantic {
+public interface DefinitionForSemanticVersion<F extends FieldDefinition> extends Version, DefinitionForSemantic {
 
-    ImmutableList<FieldDefinition> fieldDefinitions();
+    ImmutableList<F> fieldDefinitions();
 
     Concept referencedComponentPurpose();
 

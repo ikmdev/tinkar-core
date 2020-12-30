@@ -31,9 +31,15 @@ public abstract class EntityVersion
     }
 
     protected abstract void finishVersionFill(ByteBuf readBuf);
+    
+    protected int versionSize() {
+        return 9 + subclassFieldBytesSize(); // token, stamp, field count
+    }
+
+    protected abstract int subclassFieldBytesSize();
 
     protected final byte[] getBytes() {
-        ByteBuf byteBuf = ByteBufPool.allocate(32);
+        ByteBuf byteBuf = ByteBufPool.allocate(versionSize());
         byteBuf.writeByte(dataType().token); //ensure that the chronicle byte array sorts first.
         byteBuf.writeInt(stampNid);
         writeVersionFields(byteBuf);

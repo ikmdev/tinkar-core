@@ -17,7 +17,8 @@
 import java.time.Instant;
 
 /**
- *
+ * TODO should stamp become a chronology, so that uncommitted changes would use different versions of the same data
+ * structure?
  * @author kec
  */
 public interface Stamp extends Component {

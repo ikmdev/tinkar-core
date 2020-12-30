@@ -7,9 +7,9 @@
         <groupId>org.hl7.tinkar</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    <artifactId>primitive-data-openhft</artifactId>
+    <artifactId>data-openhft-provider</artifactId>
     <packaging>jar</packaging>
-    <name>TINKAR Provider: Primitive data - OpenHFT</name>
+    <name>TINKAR Provider: Data - OpenHFT</name>
     <dependencies>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>

@@ -8,12 +8,11 @@
     </parent>
     <artifactId>provider</artifactId>
     <packaging>pom</packaging>
-    <name>TINKAR: Providers</name>
+    <name>TINKAR Providers</name>
     <modules>
-        <module>primitive-data-ephemeral</module>
-        <module>primitive-data-mapdb</module>
-        <module>primitive-data-openhft</module>
+        <module>data-ephemeral-provider</module>
+        <module>data-mapdb-provider</module>
+        <module>data-openhft-provider</module>
         <module>entity-provider</module>
-        <module>collection</module>
     </modules>
 </project>

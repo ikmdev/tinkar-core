@@ -44,6 +44,9 @@ public interface FieldDefinition {
      * "SNOMED code" in a mapping, or the location of an image if a URI.
      * This concept should be used to present to teh user what this field "is" in
      * interfaces and similar.
+     * <br/>
+     * Other names to consider: what, as in "what is this" which is slightly different/weaker that identity which
+     * some might tie in with instance value.
      * @return Concept designating the identity defined field.
      */
     Concept getIdentity();

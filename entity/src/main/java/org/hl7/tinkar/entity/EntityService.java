@@ -69,6 +69,10 @@ public interface EntityService extends ChronologyService {
 
     void putEntity(Entity entity);
 
+    default int nidForUuids(Component component) {
+        return nidForUuids(component.componentUuids());
+    }
+
     int nidForUuids(ImmutableList<UUID> uuidList);
     int nidForUuids(UUID... uuids);
     ImmutableList<UUID> uuidListForNid(int nid);

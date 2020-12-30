@@ -21,6 +21,11 @@ public class ConceptEntityVersion
     }
 
     @Override
+    protected int subclassFieldBytesSize() {
+        return 0;
+    }
+
+    @Override
     protected void writeVersionFields(ByteBuf byteBuf) {
         // no additional fields to write.
     }

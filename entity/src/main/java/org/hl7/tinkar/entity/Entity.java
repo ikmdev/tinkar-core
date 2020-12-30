@@ -31,6 +31,16 @@ public abstract class Entity<T extends EntityVersion>
     protected Entity() {
     }
 
+    protected int entitySize() {
+        int size = 12 + subclassFieldBytesSize();
+        for (T version: versions) {
+            size += version.versionSize();
+        }
+        return size;
+    }
+
+    protected abstract int subclassFieldBytesSize();
+
 
     protected final void fill(ByteBuf readBuf) {
         this.nid = readBuf.readInt();
@@ -61,7 +71,7 @@ public abstract class Entity<T extends EntityVersion>
 
     public final byte[] getBytes() {
 
-        ByteBuf byteBuf = ByteBufPool.allocate(32);
+        ByteBuf byteBuf = ByteBufPool.allocate(entitySize());
         byteBuf.writeByte(dataType().token); //ensure that the chronicle byte array sorts first.
         byteBuf.writeInt(nid);
         byteBuf.writeInt(setNid);

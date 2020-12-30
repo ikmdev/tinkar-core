@@ -13,6 +13,11 @@ public class SemanticEntity
     protected int referencedComponentNid;
 
     @Override
+    protected int subclassFieldBytesSize() {
+        return 4; // referenced component
+    }
+
+    @Override
     public FieldDataType dataType() {
         return FieldDataType.SEMANTIC_CHRONOLOGY;
     }

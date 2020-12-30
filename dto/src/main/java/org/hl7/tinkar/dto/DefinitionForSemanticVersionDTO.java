@@ -43,11 +43,11 @@ import static org.hl7.tinkar.dto.json.ComponentFieldForJson.REFERENCED_COMPONENT
 public record DefinitionForSemanticVersionDTO(ImmutableList<UUID> componentUuids,
                                               StampDTO stampDTO, ImmutableList<UUID> referencedComponentPurposeUuids,
                                               ImmutableList<FieldDefinitionDTO> fieldDefinitionDTOS)
-        implements DefinitionForSemanticVersion, JsonMarshalable, Marshalable {
+        implements DefinitionForSemanticVersion<FieldDefinitionDTO>, JsonMarshalable, Marshalable {
 
     private static final int localMarshalVersion = 3;
 
-    public static DefinitionForSemanticVersionDTO make(DefinitionForSemanticVersion definitionForSemanticVersion) {
+    public static DefinitionForSemanticVersionDTO make(DefinitionForSemanticVersion<FieldDefinitionDTO> definitionForSemanticVersion) {
 
         MutableList<FieldDefinitionDTO> fields = Lists.mutable.ofInitialCapacity(definitionForSemanticVersion.fieldDefinitions().size());
         for (FieldDefinition fieldDefinition : definitionForSemanticVersion.fieldDefinitions()) {
@@ -71,8 +71,8 @@ public record DefinitionForSemanticVersionDTO(ImmutableList<UUID> componentUuids
     }
 
     @Override
-    public ImmutableList<FieldDefinition> fieldDefinitions() {
-        return fieldDefinitionDTOS.collect(fieldDefinitionDTO -> (FieldDefinition) fieldDefinitionDTO);
+    public ImmutableList<FieldDefinitionDTO> fieldDefinitions() {
+        return fieldDefinitionDTOS.collect(fieldDefinitionDTO -> fieldDefinitionDTO);
     }
 
     /**

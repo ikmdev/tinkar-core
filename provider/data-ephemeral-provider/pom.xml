@@ -7,9 +7,9 @@
         <groupId>org.hl7.tinkar</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    <artifactId>primitive-data-ephemeral</artifactId>
+    <artifactId>data-ephemeral-provider</artifactId>
     <packaging>jar</packaging>
-    <name>TINKAR Provider: Primitive data - Ephemeral</name>
+    <name>TINKAR Provider: Data - Ephemeral</name>
     <dependencies>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>

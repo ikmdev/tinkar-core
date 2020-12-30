@@ -3,6 +3,7 @@ package org.hl7.tinkar.entity;
 import io.activej.bytebuf.ByteBuf;
 import org.hl7.tinkar.component.Chronology;
 import org.hl7.tinkar.component.DefinitionForSemanticChronology;
+import org.hl7.tinkar.component.DefinitionForSemanticVersion;
 import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.dto.FieldDataType;
 
@@ -11,6 +12,10 @@ public class DefinitionForSemanticEntity
         implements DefinitionForSemanticChronology<DefinitionForSemanticEntityVersion> {
 
     public DefinitionForSemanticEntity() {
+    }
+    @Override
+    protected int subclassFieldBytesSize() {
+        return 0; // no additional fields
     }
 
     @Override
@@ -35,12 +40,12 @@ public class DefinitionForSemanticEntity
 
     @Override
     protected DefinitionForSemanticEntityVersion makeVersion(ByteBuf readBuf) {
-        return null;
+        return DefinitionForSemanticEntityVersion.make(this, readBuf);
     }
 
     @Override
     protected DefinitionForSemanticEntityVersion makeVersion(Version version) {
-        return null;
+        return DefinitionForSemanticEntityVersion.make(this, (DefinitionForSemanticVersion) version);
     }
 
     public static DefinitionForSemanticEntity make(ByteBuf readBuf) {

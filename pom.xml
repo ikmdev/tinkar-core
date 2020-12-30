@@ -100,13 +100,14 @@
         </plugins>
     </build>
     <modules>
+        <module>collection</module>
+        <module>common</module>
         <module>component</module>
         <module>entity</module>
         <module>dto</module>
-        <module>metric</module>
-        <module>common</module>
-        <module>provider</module>
         <module>launcher</module>
+        <module>metric</module>
         <module>test-util</module>
+        <module>provider</module>
     </modules>
 </project>
