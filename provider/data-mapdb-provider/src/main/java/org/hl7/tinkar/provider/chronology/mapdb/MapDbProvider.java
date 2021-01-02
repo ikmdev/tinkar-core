@@ -1,7 +1,8 @@
 package org.hl7.tinkar.provider.chronology.mapdb;
 
 import com.google.auto.service.AutoService;
-import org.hl7.tinkar.component.ChronologyService;
+import org.eclipse.collections.api.block.procedure.Procedure2;
+import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.hl7.tinkar.service.PrimitiveDataService;
 import org.hl7.tinkar.util.UuidUtil;
 import org.mapdb.DB;
@@ -10,13 +11,25 @@ import org.mapdb.HTreeMap;
 import org.mapdb.Serializer;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
+import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
 @AutoService(PrimitiveDataService.class)
 public class MapDbProvider implements PrimitiveDataService {
+
+
+    private static final int EXECUTOR_THREADS = Runtime.getRuntime().availableProcessors() * 2;
+
+    private static ExecutorService executorService = Executors.newFixedThreadPool(EXECUTOR_THREADS);
+
+    protected static MapDbProvider singleton;
 
     private static final File dataDirectory = new File("target/mapdb/");
     static {
@@ -31,18 +44,18 @@ public class MapDbProvider implements PrimitiveDataService {
 
     HTreeMap<Integer, byte[]> nidComponentMap;
     HTreeMap<UUID, Integer> uuidNidMap;
-    HTreeMap<Integer, long[]> nidUuidMap;
     HTreeMap<UUID, Integer> stampUuidNidMap;
 
     public MapDbProvider() {
         System.out.println("Starting MapDbProvider");
         this.db = DBMaker.fileDB(mapdbFile).fileMmapEnable().make();
-        nidUuidMap = db.hashMap("nidUuidMap", Serializer.INTEGER, Serializer.LONG_ARRAY).createOrOpen();
-        uuidNidMap = db.hashMap("uuidNidMap", Serializer.UUID, Serializer.INTEGER).createOrOpen();
+         uuidNidMap = db.hashMap("uuidNidMap", Serializer.UUID, Serializer.INTEGER).createOrOpen();
         stampUuidNidMap = db.hashMap("stampUuidNidMap", Serializer.UUID, Serializer.INTEGER).createOrOpen();
         nidComponentMap = db.hashMap("nidComponentMap", Serializer.INTEGER, Serializer.BYTE_ARRAY).createOrOpen();
+        MapDbProvider.singleton = this;
     }
 
+    @Override
     public void close() {
         db.close();
     }
@@ -64,12 +77,18 @@ public class MapDbProvider implements PrimitiveDataService {
     }
 
     @Override
-    public ConcurrentMap<Integer, long[]> nidUuidMap() {
-        return nidUuidMap;
-    }
-
-    @Override
     public AtomicInteger nextNid() {
         return nextNid;
     }
+
+    @Override
+    public void forEach(BiConsumer<Integer, byte[]> action) {
+        nidComponentMap.forEach(action);
+    }
+
+    @Override
+    public void forEachParallel(Procedure2<Integer, byte[]> action) {
+        nidComponentMap.getEntries().stream().parallel().forEach(entry -> action.accept(entry.getKey(), entry.getValue()));
+     }
+
 }

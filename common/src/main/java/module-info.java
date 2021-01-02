@@ -12,5 +12,6 @@ module org.hl7.tinkar.common {
     requires org.eclipse.collections.api;
     exports org.hl7.tinkar.service;
     exports org.hl7.tinkar.util;
+    exports org.hl7.tinkar.util.time;
     uses CachingService;
 }

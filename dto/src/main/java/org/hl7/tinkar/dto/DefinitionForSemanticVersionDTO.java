@@ -28,13 +28,8 @@ import org.hl7.tinkar.dto.json.JSONObject;
 import org.hl7.tinkar.dto.json.JsonMarshalable;
 import org.hl7.tinkar.dto.json.JsonVersionUnmarshaler;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.util.UUID;
-
-import static org.hl7.tinkar.dto.json.ComponentFieldForJson.FIELD_DEFINITIONS;
-import static org.hl7.tinkar.dto.json.ComponentFieldForJson.REFERENCED_COMPONENT_PURPOSE_UUIDS;
 
 /**
  *
@@ -83,8 +78,8 @@ public record DefinitionForSemanticVersionDTO(ImmutableList<UUID> componentUuids
     public void jsonMarshal(Writer writer) {
         final JSONObject json = new JSONObject();
         json.put(ComponentFieldForJson.STAMP, stampDTO);
-        json.put(REFERENCED_COMPONENT_PURPOSE_UUIDS, referencedComponentPurposeUuids);
-        json.put(FIELD_DEFINITIONS, fieldDefinitionDTOS);
+        json.put(ComponentFieldForJson.REFERENCED_COMPONENT_PURPOSE_UUIDS, referencedComponentPurposeUuids);
+        json.put(ComponentFieldForJson.FIELD_DEFINITIONS, fieldDefinitionDTOS);
         json.writeJSONString(writer);
     }
 
@@ -98,8 +93,8 @@ public record DefinitionForSemanticVersionDTO(ImmutableList<UUID> componentUuids
     public static DefinitionForSemanticVersionDTO make(JSONObject jsonObject, ImmutableList<UUID> componentUuids) {
         return new DefinitionForSemanticVersionDTO(componentUuids,
                 StampDTO.make((JSONObject) jsonObject.get(ComponentFieldForJson.STAMP)),
-                jsonObject.asImmutableUuidList(REFERENCED_COMPONENT_PURPOSE_UUIDS),
-                jsonObject.asFieldDefinitionList(FIELD_DEFINITIONS));
+                jsonObject.asImmutableUuidList(ComponentFieldForJson.REFERENCED_COMPONENT_PURPOSE_UUIDS),
+                jsonObject.asFieldDefinitionList(ComponentFieldForJson.FIELD_DEFINITIONS));
     }
 
     /**

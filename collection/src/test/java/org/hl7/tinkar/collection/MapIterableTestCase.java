@@ -98,33 +98,53 @@ public abstract class MapIterableTestCase
     }
 
     public static String numToText(Integer num) {
-        return switch (num) {
-            case 1 -> "One";
-            case 2 -> "Two";
-            case 3 -> "Three";
-            case 4 -> "Four";
-            case 5 -> "Five";
-            case 6 -> "Six";
-            case 7 -> "Seven";
-            case 8 -> "Eight";
-            case 9 -> "Nine";
-            default -> Integer.toString(num);
-        };
+        switch (num) {
+            case 1:
+                return "One";
+            case 2:
+                return "Two";
+            case 3:
+                return "Three";
+            case 4:
+                return "Four";
+            case 5:
+                return "Five";
+            case 6:
+                return "Six";
+            case 7:
+                return "Seven";
+            case 8:
+                return "Eight";
+            case 9:
+                return "Nine";
+            default:
+                return Integer.toString(num);
+        }
     }
 
     public static int textToNum(String numString) {
-        return switch (numString) {
-            case "One" -> 1;
-            case "Two" -> 2;
-            case "Three" -> 3;
-            case "Four" -> 4;
-            case "Five" -> 5;
-            case "Six" -> 6;
-            case "Seven" -> 7;
-            case "Eight" -> 8;
-            case "Nine" -> 9;
-            default -> Integer.parseInt(numString);
-        };
+        switch (numString) {
+            case "One":
+                return 1;
+            case "Two":
+                return 2;
+            case "Three":
+                return 3;
+            case "Four":
+                return 4;
+            case "Five":
+                return 5;
+            case "Six":
+                return 6;
+            case "Seven":
+                return 7;
+            case "Eight":
+                return 8;
+            case "Nine":
+                return 9;
+            default:
+                return Integer.parseInt(numString);
+        }
     }
 
     public static Integer toInt(UUID value) {
@@ -1086,10 +1106,16 @@ public abstract class MapIterableTestCase
 
         Function<Integer, Iterable<Character>> function = object -> {
             MutableList<Character> result = Lists.mutable.of();
-            char[] chars = switch (object) {
-                case 1 -> "one".toCharArray();
-                case 2 -> "two".toCharArray();
-                default -> "can't handle".toCharArray();
+            char[] chars;
+            switch (object) {
+                case 1:
+                    chars = "one".toCharArray();
+                    break;
+                case 2:
+                    chars ="two".toCharArray();
+                    break;
+                default:
+                    chars ="can't handle".toCharArray();
             };
 
             for (char aChar : chars)

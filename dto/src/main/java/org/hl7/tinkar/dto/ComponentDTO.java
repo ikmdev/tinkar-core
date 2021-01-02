@@ -18,7 +18,6 @@ package org.hl7.tinkar.dto;
 import java.util.UUID;
 
 import org.eclipse.collections.api.list.ImmutableList;
-import org.hl7.tinkar.component.Component;
 
 /**
  *

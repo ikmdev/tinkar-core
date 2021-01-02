@@ -10,8 +10,9 @@ import org.eclipse.collections.api.set.MutableSet;
 import org.hl7.tinkar.component.Chronology;
 import org.hl7.tinkar.component.Component;
 import org.hl7.tinkar.component.Version;
-import org.hl7.tinkar.dto.FieldDataType;
 import org.hl7.tinkar.entity.internal.Get;
+import org.hl7.tinkar.lombok.dto.FieldDataType;
+import org.hl7.tinkar.util.UuidUtil;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -26,6 +27,8 @@ public abstract class Entity<T extends EntityVersion>
     // TODO this should be the definition?
     protected int setNid;
 
+    protected long[] uuidLongArray;
+
     protected final MutableList<T> versions = Lists.mutable.empty();
 
     protected Entity() {
@@ -33,6 +36,7 @@ public abstract class Entity<T extends EntityVersion>
 
     protected int entitySize() {
         int size = 12 + subclassFieldBytesSize();
+        size += 4 + 8 * uuidLongArray.length;
         for (T version: versions) {
             size += version.versionSize();
         }
@@ -45,6 +49,11 @@ public abstract class Entity<T extends EntityVersion>
     protected final void fill(ByteBuf readBuf) {
         this.nid = readBuf.readInt();
         this.setNid = readBuf.readInt();
+        this.uuidLongArray = new long[readBuf.readInt()];
+        for (int i = 0; i < this.uuidLongArray.length; i++) {
+            this.uuidLongArray[i] = readBuf.readLong();
+        }
+
         finishEntityRead(readBuf);
         versions.clear();
         int versionCount = readBuf.readInt();
@@ -61,6 +70,7 @@ public abstract class Entity<T extends EntityVersion>
     protected final void fill(Chronology<Version> chronology) {
         this.nid = Get.entityService().nidForUuids(chronology.componentUuids());
         this.setNid = Get.entityService().nidForUuids(chronology.chronologySet().componentUuids());
+        this.uuidLongArray = UuidUtil.asArray(chronology.componentUuids());
         versions.clear();
         for (Version version: chronology.versions()) {
             versions.add(makeVersion(version));
@@ -75,11 +85,15 @@ public abstract class Entity<T extends EntityVersion>
         byteBuf.writeByte(dataType().token); //ensure that the chronicle byte array sorts first.
         byteBuf.writeInt(nid);
         byteBuf.writeInt(setNid);
+        byteBuf.writeInt(this.uuidLongArray.length);
+        for (int i = 0; i < this.uuidLongArray.length; i++) {
+            byteBuf.writeLong(this.uuidLongArray[i]);
+        }
         finishEntityWrite(byteBuf);
         byteBuf.writeInt(versions.size());
-        int chronicleFields = versions.size() + 1;
+        int chronicleArrayCount = versions.size() + 1;
         int chronicleFieldIndex = 0;
-        byte[][] entityArray = new byte[chronicleFields][];
+        byte[][] entityArray = new byte[chronicleArrayCount][];
         entityArray[chronicleFieldIndex++] = byteBuf.asArray();
         for (EntityVersion version: versions) {
             entityArray[chronicleFieldIndex++] = version.getBytes();
@@ -121,7 +135,7 @@ public abstract class Entity<T extends EntityVersion>
 
     @Override
     public ImmutableList<UUID> componentUuids() {
-        return Get.entityService().uuidListForNid(nid);
+        return UuidUtil.toList(this.uuidLongArray);
     }
 
     public int nid() {

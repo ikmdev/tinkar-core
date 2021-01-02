@@ -16,7 +16,7 @@ public class EntityProxy implements Component {
     }
     @Override
     public ImmutableList<UUID> componentUuids() {
-        return Get.entityService().uuidListForNid(nid);
+        return Get.entityService().getEntityFast(nid).componentUuids();
     }
 
     public static EntityProxy make(int nid) {

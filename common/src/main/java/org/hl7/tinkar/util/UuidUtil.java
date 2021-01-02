@@ -99,6 +99,7 @@ public class UuidUtil {
     }
 
     public static long[] asArray(ListIterable<UUID> uuidList) {
+       uuidList = uuidList.toSortedList();
        int size = uuidList.size();
         long[] values = new long[size * 2];
         for (int i = 0; i < size; i++) {

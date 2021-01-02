@@ -18,7 +18,7 @@
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
-            <artifactId>dto</artifactId>
+            <artifactId>lombok-dto</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
@@ -40,18 +40,6 @@
                 <version>3.0.0-M5</version>
                 <configuration>
                     <argLine>--enable-preview</argLine>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
-                <configuration>
-                    <source>15</source>
-                    <target>15</target>
-                    <compilerArgs>
-                        <arg>--enable-preview</arg>
-                    </compilerArgs>
                 </configuration>
             </plugin>
         </plugins>

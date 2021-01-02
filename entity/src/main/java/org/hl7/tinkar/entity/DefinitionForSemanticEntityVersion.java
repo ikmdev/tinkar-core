@@ -4,12 +4,11 @@ import io.activej.bytebuf.ByteBuf;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
-import org.hl7.tinkar.component.Component;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.component.DefinitionForSemanticVersion;
 import org.hl7.tinkar.component.FieldDefinition;
-import org.hl7.tinkar.dto.FieldDataType;
 import org.hl7.tinkar.entity.internal.Get;
+import org.hl7.tinkar.lombok.dto.FieldDataType;
 
 public class DefinitionForSemanticEntityVersion
         extends EntityVersion

@@ -18,9 +18,9 @@ module org.hl7.tinkar.provider.entity {
     requires org.hl7.tinkar.component;
     requires org.hl7.tinkar.common;
     requires org.hl7.tinkar.entity;
-    requires org.hl7.tinkar.dto;
     requires io.activej.bytebuf;
     requires com.google.auto.service;
+    requires org.hl7.tinkar.dto;
     provides EntityService
             with EntityProvider;
 }

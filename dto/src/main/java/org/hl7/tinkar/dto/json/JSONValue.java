@@ -21,8 +21,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
 
-import org.hl7.tinkar.dto.json.parser.JSONParser;
 import org.hl7.tinkar.dto.json.parser.ParseException;
+import org.hl7.tinkar.dto.json.parser.JSONParser;
 
 /**
  * Original obtained from: https://github.com/fangyidong/json-simple under

@@ -79,8 +79,8 @@ public class TestUtil {
     }
 
     public static ImmutableList<SemanticVersionDTO> makeSemanticVersionForChangeSetList(ImmutableList<UUID> componentUuids,
-                                                                                         ImmutableList<UUID> definitionForSemanticUuids,
-                                                                                         ImmutableList<UUID> referencedComponentUuids) {
+                                                                                        ImmutableList<UUID> definitionForSemanticUuids,
+                                                                                        ImmutableList<UUID> referencedComponentUuids) {
         int size = getRandomSize(7);
         SemanticVersionDTO[] array = new SemanticVersionDTO[size];
         for (int i = 0; i < size; i++) {

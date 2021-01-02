@@ -1,5 +1,4 @@
 package org.hl7.tinkar.dto;
-import org.hl7.tinkar.dto.FieldDataType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

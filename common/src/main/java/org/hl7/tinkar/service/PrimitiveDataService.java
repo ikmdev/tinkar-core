@@ -1,5 +1,6 @@
 package org.hl7.tinkar.service;
 
+import org.eclipse.collections.api.block.procedure.Procedure2;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.ListIterable;
@@ -9,6 +10,7 @@ import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
 public interface PrimitiveDataService {
@@ -90,10 +92,13 @@ public interface PrimitiveDataService {
     byte[] merge(int nid, byte[] value,
                  BiFunction<byte[], byte[], byte[]> remappingFunction);
 
+    void forEach(BiConsumer<Integer, byte[]> action);
+
+    void forEachParallel(Procedure2<Integer, byte[]> action);
+
     byte[] getBytes(int nid);
 
     ConcurrentMap<UUID, Integer> uuidNidMap();
-    ConcurrentMap<Integer, long[]> nidUuidMap();
     AtomicInteger nextNid();
 
     default int valueOrGenerateForList(ListIterable<UUID> sortedUuidList) {
@@ -128,7 +133,6 @@ public interface PrimitiveDataService {
         for (UUID uuid: sortedUuidList) {
             uuidNidMap().put(uuid, foundValue);
         }
-        nidUuidMap().put(foundValue, UuidUtil.asArray(sortedUuidList));
         return foundValue;
     }
 
@@ -138,7 +142,6 @@ public interface PrimitiveDataService {
             return nid;
         }
         nid = uuidNidMap().computeIfAbsent(uuid, uuidKey -> nextNid().getAndIncrement());
-        nidUuidMap().put(nid, UuidUtil.asArray(uuid));
         return nid;
     }
 
@@ -164,12 +167,6 @@ public interface PrimitiveDataService {
         return valueOrGenerateForList(uuidList.toSortedList());
     }
 
-    default UUID[] uuidsForNid(int nid) {
-        return UuidUtil.toArray(nidUuidMap().get(nid));
-    }
-
-    default ImmutableList<UUID> uuidListForNid(int nid) {
-        return UuidUtil.toList(nidUuidMap().get(nid));
-    }
+    void close();
 
 }

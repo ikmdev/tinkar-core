@@ -75,5 +75,4 @@ public interface EntityService extends ChronologyService {
 
     int nidForUuids(ImmutableList<UUID> uuidList);
     int nidForUuids(UUID... uuids);
-    ImmutableList<UUID> uuidListForNid(int nid);
 }

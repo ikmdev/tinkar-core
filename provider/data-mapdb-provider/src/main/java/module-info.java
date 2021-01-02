@@ -16,6 +16,7 @@ module org.hl7.tinkar.provider.chronology.mapdb {
     requires mapdb;
     requires org.apache.logging.log4j;
     requires org.hl7.tinkar.entity;
+    requires org.eclipse.collections.impl;
     provides org.hl7.tinkar.service.PrimitiveDataService
             with MapDbProvider;
 }

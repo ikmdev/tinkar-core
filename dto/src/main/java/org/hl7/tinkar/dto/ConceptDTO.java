@@ -8,7 +8,6 @@ import org.hl7.tinkar.dto.json.JSONObject;
 import org.hl7.tinkar.dto.json.JsonChronologyUnmarshaler;
 import org.hl7.tinkar.dto.json.JsonMarshalable;
 
-import java.io.IOException;
 import java.io.Writer;
 import java.util.UUID;
 

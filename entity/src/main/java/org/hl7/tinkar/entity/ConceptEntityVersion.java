@@ -2,7 +2,7 @@ package org.hl7.tinkar.entity;
 
 import io.activej.bytebuf.ByteBuf;
 import org.hl7.tinkar.component.ConceptVersion;
-import org.hl7.tinkar.dto.FieldDataType;
+import org.hl7.tinkar.lombok.dto.FieldDataType;
 
 public class ConceptEntityVersion
         extends EntityVersion

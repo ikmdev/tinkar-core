@@ -5,8 +5,8 @@ import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.component.Version;
-import org.hl7.tinkar.dto.FieldDataType;
 import org.hl7.tinkar.entity.internal.Get;
+import org.hl7.tinkar.lombok.dto.FieldDataType;
 
 import java.util.UUID;
 

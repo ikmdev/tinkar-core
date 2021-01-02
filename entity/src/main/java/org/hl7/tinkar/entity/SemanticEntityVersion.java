@@ -7,8 +7,8 @@ import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.component.Component;
 import org.hl7.tinkar.component.DefinitionForSemantic;
 import org.hl7.tinkar.component.SemanticVersion;
-import org.hl7.tinkar.dto.FieldDataType;
 import org.hl7.tinkar.entity.internal.Get;
+import org.hl7.tinkar.lombok.dto.FieldDataType;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -75,21 +75,23 @@ public class SemanticEntityVersion
     protected int subclassFieldBytesSize() {
         int size = 0;
         for (Object field: fields) {
-            if (field instanceof Boolean bol) {
+            if (field instanceof Boolean) {
                 size += 2;
-            } else if (field instanceof Float flt) {
+            } else if (field instanceof Float) {
                 size += 5;
-            } else if (field instanceof byte[] byteArray) {
+            } else if (field instanceof byte[]) {
+                byte[] byteArray = (byte[]) field;
                 size += (5 + byteArray.length);
-            } else if (field instanceof Integer integer) {
+            } else if (field instanceof Integer) {
                 size += 5;
-            } else if (field instanceof String string) {
+            } else if (field instanceof String) {
+                String string = (String) field;
                 size += (5 + (string.length() * 2)); // token, length, upper bound on string bytes (average < 16 bit chars for UTF8...).
-            } else if (field instanceof Entity entity) {
+            } else if (field instanceof Entity) {
                 size += 5;
-            } else if (field instanceof EntityProxy proxy) {
+            } else if (field instanceof EntityProxy) {
                 size += 5;
-            } else if (field instanceof Component component) {
+            } else if (field instanceof Component) {
                 size += 5;
             } else {
                 throw new UnsupportedOperationException("Can't handle field size for type: " +
@@ -102,31 +104,36 @@ public class SemanticEntityVersion
     protected void writeVersionFields(ByteBuf writeBuf) {
         writeBuf.writeInt(fields.size());
         for (Object field: fields) {
-            if (field instanceof Boolean bol) {
+            if (field instanceof Boolean) {
                 writeBuf.writeByte(FieldDataType.BOOLEAN.token);
-                writeBuf.writeBoolean(bol);
-            } else if (field instanceof Float flt) {
+                writeBuf.writeBoolean((Boolean) field);
+            } else if (field instanceof Float) {
                 writeBuf.writeByte(FieldDataType.FLOAT.token);
-                writeBuf.writeFloat(flt);
-            } else if (field instanceof byte[] byteArray) {
+                writeBuf.writeFloat((Float) field);
+            } else if (field instanceof byte[]) {
+                byte[] byteArray = (byte[]) field;
                 writeBuf.writeByte(FieldDataType.BYTE_ARRAY.token);
                 writeBuf.writeInt(byteArray.length);
                 writeBuf.write(byteArray);
-            } else if (field instanceof Integer integer) {
+            } else if (field instanceof Integer) {
                 writeBuf.writeByte(FieldDataType.INTEGER.token);
-                writeBuf.writeInt(integer);
-            } else if (field instanceof String string) {
+                writeBuf.writeInt((Integer) field);
+            } else if (field instanceof String) {
+                String string = (String) field;
                 writeBuf.writeByte(FieldDataType.STRING.token);
                 byte[] bytes = string.getBytes(UTF_8);
                 writeBuf.writeInt(bytes.length);
                 writeBuf.write(bytes);
-            } else if (field instanceof Entity entity) {
+            } else if (field instanceof Entity) {
+                Entity entity = (Entity) field;
                 writeBuf.writeByte(FieldDataType.IDENTIFIED_THING.token);
                 writeBuf.writeInt(entity.nid);
-            } else if (field instanceof EntityProxy proxy) {
+            } else if (field instanceof EntityProxy) {
+                EntityProxy proxy = (EntityProxy) field;
                 writeBuf.writeByte(FieldDataType.IDENTIFIED_THING.token);
                 writeBuf.writeInt(proxy.nid);
-            } else if (field instanceof Component component) {
+            } else if (field instanceof Component) {
+                Component component = (Component) field;
                 writeBuf.writeByte(FieldDataType.IDENTIFIED_THING.token);
                 writeBuf.writeInt(Get.entityService().nidForUuids(component));
             } else {
@@ -162,17 +169,18 @@ public class SemanticEntityVersion
         version.fill(semanticEntity, versionToCopy);
         version.fields.clear();
         for (Object obj: versionToCopy.fields()) {
-            if (obj instanceof Boolean bol) {
-               version.fields.add(bol);
-            } else if (obj instanceof Float flt) {
-                version.fields.add(flt);
-            } else if (obj instanceof byte[] byteArray) {
-                version.fields.add(byteArray);
-            } else if (obj instanceof Integer integer) {
-                version.fields.add(integer);
-            } else if (obj instanceof String string) {
-                version.fields.add(string);
-            } else if (obj instanceof Component component) {
+            if (obj instanceof Boolean) {
+               version.fields.add(obj);
+            } else if (obj instanceof Float) {
+                version.fields.add(obj);
+            } else if (obj instanceof byte[]) {
+                version.fields.add(obj);
+            } else if (obj instanceof Integer) {
+                version.fields.add(obj);
+            } else if (obj instanceof String) {
+                version.fields.add(obj);
+            } else if (obj instanceof Component) {
+                Component component = (Component) obj;
                 version.fields.add(EntityProxy.make(Get.entityService().nidForUuids(component)));
             } else {
                 throw new UnsupportedOperationException("Can't handle field conversion of type: " +

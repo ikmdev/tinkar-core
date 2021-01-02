@@ -24,10 +24,6 @@ public class Get {
         return singleton.nidForUuids(uuidList);
     }
 
-    public static ImmutableList<UUID> uuidListForNid(int nid) {
-        return singleton.uuidListForNid(nid);
-    }
-
     public static int stampNid(Stamp stamp) {
         throw new UnsupportedOperationException();
     }

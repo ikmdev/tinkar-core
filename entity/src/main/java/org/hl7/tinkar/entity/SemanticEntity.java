@@ -3,8 +3,8 @@ package org.hl7.tinkar.entity;
 import io.activej.bytebuf.ByteBuf;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.component.*;
-import org.hl7.tinkar.dto.FieldDataType;
 import org.hl7.tinkar.entity.internal.Get;
+import org.hl7.tinkar.lombok.dto.FieldDataType;
 
 public class SemanticEntity
         extends Entity<SemanticEntityVersion>
@@ -39,7 +39,8 @@ public class SemanticEntity
 
     @Override
     protected void finishEntityRead(Chronology chronology) {
-        if (chronology instanceof SemanticChronology semanticChronology) {
+        if (chronology instanceof SemanticChronology) {
+            SemanticChronology semanticChronology = (SemanticChronology) chronology;
             referencedComponentNid = Get.entityService().nidForUuids(semanticChronology.referencedComponent().componentUuids());
         }
     }

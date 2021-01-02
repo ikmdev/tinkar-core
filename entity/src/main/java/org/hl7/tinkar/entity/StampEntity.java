@@ -5,8 +5,8 @@ import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.component.Component;
 import org.hl7.tinkar.component.Stamp;
-import org.hl7.tinkar.dto.StampDTO;
 import org.hl7.tinkar.entity.internal.Get;
+import org.hl7.tinkar.lombok.dto.StampDTO;
 import org.hl7.tinkar.util.UuidT5Generator;
 
 import java.time.Instant;
@@ -37,7 +37,8 @@ public class StampEntity
     }
 
     protected final void fill(Stamp other) {
-        if (other instanceof StampEntity otherEntity) {
+        if (other instanceof StampEntity) {
+            StampEntity otherEntity = (StampEntity) other;
             this.nid = otherEntity.nid;
             this.statusNid = otherEntity.statusNid;
             this.time = otherEntity.time();

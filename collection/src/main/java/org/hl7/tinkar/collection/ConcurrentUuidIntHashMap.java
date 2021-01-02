@@ -1814,7 +1814,8 @@ public final class ConcurrentUuidIntHashMap
             {
                 return false;
             }
-            if (o instanceof ConcurrentUuidIntHashMap.Entry entry) {
+            if (o instanceof ConcurrentUuidIntHashMap.Entry) {
+                ConcurrentUuidIntHashMap.Entry entry = (Entry) o;
                 // avoid object creation to test equality...
                 return this.value == entry.value &&
                         this.key_lsb == entry.key_lsb &&

@@ -5,6 +5,7 @@ import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.values.Values;
+import org.eclipse.collections.api.block.procedure.Procedure2;
 import org.hl7.tinkar.provider.chronology.openhft.internal.Put;
 import org.hl7.tinkar.provider.chronology.openhft.internal.Get;
 import org.hl7.tinkar.service.PrimitiveDataService;
@@ -16,6 +17,7 @@ import java.io.UncheckedIOException;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
 @AutoService(PrimitiveDataService.class)
@@ -27,7 +29,6 @@ public class ComponentProviderOpenHFT implements PrimitiveDataService {
     }
     private static final File nidEntityFile = new File(dataDirectory, "entities.dat");
     private static final File uuidNidFile = new File(dataDirectory, "uuidNidMap.dat");
-    private static final File nidUuidFile = new File(dataDirectory, "nidUuidMap.dat");
     private static final File stampUuidFile = new File(dataDirectory, "stampUuidMap.dat");
 
 
@@ -42,7 +43,6 @@ public class ComponentProviderOpenHFT implements PrimitiveDataService {
 
     ChronicleMap<IntValue, byte[]> nidComponentMap;
     ChronicleMap<long[], IntValue> uuidNidMap;
-    ChronicleMap<IntValue, long[]> nidUuidMap;
 
     ChronicleMap<long[], IntValue> stampUuidNidMap;
 
@@ -63,14 +63,6 @@ public class ComponentProviderOpenHFT implements PrimitiveDataService {
                     .checksumEntries(false)
                     .constantKeySizeBySample(new long[2])
                     .createOrRecoverPersistedTo(stampUuidFile, true);
-
-            this.nidUuidMap = ChronicleMapBuilder
-                    .of(IntValue.class, long[].class)
-                    .name("nidUuidMap")
-                    .entries(10_000_000)
-                    .checksumEntries(false)
-                    .averageValueSize(17)
-                    .createOrRecoverPersistedTo(nidUuidFile, true);
 
             IntValue defaultFirstNidValue = Values.newHeapInstance(IntValue.class);
             defaultFirstNidValue.setValue(Integer.MIN_VALUE + 1);
@@ -94,7 +86,6 @@ public class ComponentProviderOpenHFT implements PrimitiveDataService {
     public void close() {
         this.uuidNidMap.close();
         this.stampUuidNidMap.close();
-        this.nidUuidMap.close();
         this.nidComponentMap.close();
     }
 
@@ -115,13 +106,17 @@ public class ComponentProviderOpenHFT implements PrimitiveDataService {
     }
 
     @Override
-    public ConcurrentMap<Integer, long[]> nidUuidMap() {
-        //return this.nidUuidMap;
+    public AtomicInteger nextNid() {
+        return nextNid;
+    }
+
+    @Override
+    public void forEach(BiConsumer<Integer, byte[]> action) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public AtomicInteger nextNid() {
-        return nextNid;
+    public void forEachParallel(Procedure2<Integer, byte[]> action) {
+        throw new UnsupportedOperationException();
     }
 }

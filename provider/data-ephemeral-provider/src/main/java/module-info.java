@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-import org.hl7.tinkar.provider.chronology.ephemeral.EntityProviderEphemeral;
+import org.hl7.tinkar.provider.chronology.ephemeral.ProviderEphemeral;
 
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
 module org.hl7.tinkar.provider.chronology.ephemeral {
@@ -15,6 +15,7 @@ module org.hl7.tinkar.provider.chronology.ephemeral {
     requires org.hl7.tinkar.test;
     requires com.google.auto.service;
     requires org.apache.logging.log4j;
+    requires org.eclipse.collections.impl;
     provides org.hl7.tinkar.service.PrimitiveDataService
-            with EntityProviderEphemeral;
+            with ProviderEphemeral;
 }

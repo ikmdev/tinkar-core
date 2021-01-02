@@ -15,7 +15,8 @@ import java.util.UUID;
 public class EntityProvider implements EntityService {
     @Override
     public void putChronology(Chronology chronology) {
-        if (chronology instanceof Entity entity) {
+        if (chronology instanceof Entity) {
+            Entity entity = (Entity) chronology;
             putEntity(entity);
         } else {
             putEntity(EntityFactory.make(chronology));
@@ -58,10 +59,5 @@ public class EntityProvider implements EntityService {
     @Override
     public int nidForUuids(UUID... uuids) {
         return Get.dataService().nidForUuids(uuids);
-    }
-
-    @Override
-    public ImmutableList<UUID> uuidListForNid(int nid) {
-        return Get.dataService().uuidListForNid(nid);
     }
 }

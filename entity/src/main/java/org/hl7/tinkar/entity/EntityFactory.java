@@ -5,17 +5,20 @@ import org.hl7.tinkar.component.Chronology;
 import org.hl7.tinkar.component.ConceptChronology;
 import org.hl7.tinkar.component.DefinitionForSemanticChronology;
 import org.hl7.tinkar.component.SemanticChronology;
-import org.hl7.tinkar.dto.FieldDataType;
-import org.hl7.tinkar.dto.StampDTO;
+import org.hl7.tinkar.lombok.dto.FieldDataType;
+import org.hl7.tinkar.lombok.dto.StampDTO;
 
 public class EntityFactory {
 
     public static Entity make(Chronology chronology) {
-        if (chronology instanceof ConceptChronology conceptChronology) {
+        if (chronology instanceof ConceptChronology) {
+            ConceptChronology conceptChronology = (ConceptChronology) chronology;
             return ConceptEntity.make(conceptChronology);
-        } else if (chronology instanceof SemanticChronology semanticChronology) {
-            return SemanticEntity.make(semanticChronology);
-        } else if (chronology instanceof DefinitionForSemanticChronology definitionForSemanticChronology) {
+        } else if (chronology instanceof SemanticChronology) {
+            SemanticChronology conceptChronology = (SemanticChronology) chronology;
+            return SemanticEntity.make(conceptChronology);
+        } else if (chronology instanceof DefinitionForSemanticChronology) {
+            DefinitionForSemanticChronology definitionForSemanticChronology = (DefinitionForSemanticChronology) chronology;
             return DefinitionForSemanticEntity.make(definitionForSemanticChronology);
         }
         throw new UnsupportedOperationException("Can't convert: " + chronology);

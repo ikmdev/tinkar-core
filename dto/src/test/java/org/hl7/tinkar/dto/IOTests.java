@@ -10,8 +10,6 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.UUID;
 
-import static org.hl7.tinkar.dto.TestUtil.makeUuidList;
-
 
 public class IOTests {
 
@@ -21,12 +19,12 @@ public class IOTests {
         Assertions.assertThrows(UncheckedIOException.class, () -> failingInput.readUuidArray());
         Assertions.assertThrows(UncheckedIOException.class, () -> failingInput.readInstant());
         Assertions.assertThrows(UncheckedIOException.class, () -> failingInput.readFieldDefinitionList());
-        Assertions.assertThrows(UncheckedIOException.class, () -> failingInput.readConceptVersionList(makeUuidList()));
-        Assertions.assertThrows(UncheckedIOException.class, () -> failingInput.readDefinitionForSemanticVersionList(makeUuidList()));
-        Assertions.assertThrows(UncheckedIOException.class, () -> failingInput.readSemanticVersionList(makeUuidList(), makeUuidList(), makeUuidList()));
+        Assertions.assertThrows(UncheckedIOException.class, () -> failingInput.readConceptVersionList(TestUtil.makeUuidList()));
+        Assertions.assertThrows(UncheckedIOException.class, () -> failingInput.readDefinitionForSemanticVersionList(TestUtil.makeUuidList()));
+        Assertions.assertThrows(UncheckedIOException.class, () -> failingInput.readSemanticVersionList(TestUtil.makeUuidList(), TestUtil.makeUuidList(), TestUtil.makeUuidList()));
         Assertions.assertThrows(UncheckedIOException.class, () -> failingInput.readObjectArray());
         Assertions.assertThrows(UncheckedIOException.class, () -> SemanticVersionDTO.make(failingInput,
-                makeUuidList(), makeUuidList(), makeUuidList())
+                TestUtil.makeUuidList(), TestUtil.makeUuidList(), TestUtil.makeUuidList())
         );
     }
     @Test

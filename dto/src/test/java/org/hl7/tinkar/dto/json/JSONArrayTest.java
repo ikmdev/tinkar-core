@@ -21,8 +21,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import org.hl7.tinkar.dto.json.JSONArray;
-import org.hl7.tinkar.dto.json.parser.JSONParser;
 import org.hl7.tinkar.dto.json.parser.ParseException;
+import org.hl7.tinkar.dto.json.parser.JSONParser;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class JSONArrayTest {

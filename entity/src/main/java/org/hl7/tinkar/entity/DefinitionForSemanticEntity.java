@@ -5,7 +5,7 @@ import org.hl7.tinkar.component.Chronology;
 import org.hl7.tinkar.component.DefinitionForSemanticChronology;
 import org.hl7.tinkar.component.DefinitionForSemanticVersion;
 import org.hl7.tinkar.component.Version;
-import org.hl7.tinkar.dto.FieldDataType;
+import org.hl7.tinkar.lombok.dto.FieldDataType;
 
 public class DefinitionForSemanticEntity
         extends Entity<DefinitionForSemanticEntityVersion>

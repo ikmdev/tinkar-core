@@ -15,8 +15,6 @@
  */
 package org.hl7.tinkar.dto;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.time.Instant;
 import java.util.UUID;
@@ -26,7 +24,10 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.dto.binary.*;
-import org.hl7.tinkar.dto.json.*;
+import org.hl7.tinkar.dto.json.ComponentFieldForJson;
+import org.hl7.tinkar.dto.json.JSONObject;
+import org.hl7.tinkar.dto.json.JsonMarshalable;
+import org.hl7.tinkar.dto.json.JsonSemanticVersionUnmarshaler;
 
 import static org.hl7.tinkar.dto.json.ComponentFieldForJson.FIELDS;
 

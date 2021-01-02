@@ -21,8 +21,6 @@ import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.dto.binary.*;
 import org.hl7.tinkar.dto.json.*;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.util.UUID;
 

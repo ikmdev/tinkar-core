@@ -27,10 +27,10 @@ import java.util.Map;
 import org.hl7.tinkar.dto.json.JSONArray;
 import org.hl7.tinkar.dto.json.JSONObject;
 import org.hl7.tinkar.dto.json.JSONValue;
-import org.hl7.tinkar.dto.json.parser.ContainerFactory;
 import org.hl7.tinkar.dto.json.parser.ContentHandler;
-import org.hl7.tinkar.dto.json.parser.JSONParser;
 import org.hl7.tinkar.dto.json.parser.ParseException;
+import org.hl7.tinkar.dto.json.parser.ContainerFactory;
+import org.hl7.tinkar.dto.json.parser.JSONParser;
 
 import static org.junit.jupiter.api.Assertions.*;
 
