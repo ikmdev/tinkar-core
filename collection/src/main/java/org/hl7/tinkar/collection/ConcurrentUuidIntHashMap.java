@@ -35,7 +35,6 @@ public final class ConcurrentUuidIntHashMap
         extends AbstractMutableMap<UUID, Integer>
         implements ConcurrentMutableMap<UUID, Integer>, Externalizable
 {
-    @Serial
     private static final long serialVersionUID = 1L;
 
     private static final Object RESIZE_SENTINEL = new Object();

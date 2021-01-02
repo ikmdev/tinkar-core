@@ -5,12 +5,12 @@ import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.entity.ConceptEntity;
 import org.hl7.tinkar.entity.EntityFactory;
 import org.hl7.tinkar.entity.StampEntity;
-import org.hl7.tinkar.provider.chronology.openhft.ComponentProviderOpenHFT;
+import org.hl7.tinkar.provider.chronology.openhft.OpenHFTProvider;
 
 import java.util.UUID;
 
 public class Get {
-    public static ComponentProviderOpenHFT singleton;
+    public static OpenHFTProvider singleton;
 
     public static ConceptEntity concept(int nid) {
          return EntityFactory.make(singleton.getBytes(nid));

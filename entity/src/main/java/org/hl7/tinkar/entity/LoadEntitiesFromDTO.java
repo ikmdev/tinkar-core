@@ -8,6 +8,7 @@ import org.hl7.tinkar.lombok.dto.DefinitionForSemanticChronologyDTO;
 import org.hl7.tinkar.lombok.dto.FieldDataType;
 import org.hl7.tinkar.lombok.dto.SemanticChronologyDTO;
 import org.hl7.tinkar.lombok.dto.binary.TinkarInput;
+import org.hl7.tinkar.util.time.Stopwatch;
 
 import java.io.EOFException;
 import java.io.File;
@@ -21,6 +22,7 @@ public class LoadEntitiesFromDTO {
     protected static final Logger LOG = LogManager.getLogger();
     final File importFile;
     final AtomicInteger importCount = new AtomicInteger();
+    final Stopwatch stopwatch = new Stopwatch();
 
 
     public LoadEntitiesFromDTO(File importFile) {
@@ -33,7 +35,7 @@ public class LoadEntitiesFromDTO {
             try (ZipFile zipFile = new ZipFile(importFile, Charset.forName("UTF-8"))) {
                 ZipEntry tinkZipEntry = zipFile.getEntry("export.tink");
                 TinkarInput tinkIn = new TinkarInput(zipFile.getInputStream(tinkZipEntry));
-                LOG.info(":TIME:Objects: begin processing");
+                LOG.info(":LoadEntitiesFromDTO: begin processing");
 
                 while (true) {
                     FieldDataType fieldDataType = FieldDataType.fromToken(tinkIn.readByte());
@@ -66,11 +68,16 @@ public class LoadEntitiesFromDTO {
             } catch (EOFException eof) {
                 // continue, will autoclose.
             }
-            LOG.info("Imported: " + importCount + " items");
-            LOG.info(":TIME: write load script");
+            stopwatch.end();
+            LOG.info(report());
 
             return importCount.get();
         } finally {
             //Get.activeTasks().remove(this);
         }
-    }}
+    }
+
+    public String report() {
+        return "Imported: " + importCount + " items in: " + stopwatch.elapsedTime();
+    }
+}

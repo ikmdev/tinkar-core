@@ -9,13 +9,10 @@ import org.hl7.tinkar.provider.chronology.mapdb.MapDbProvider;
 module org.hl7.tinkar.provider.chronology.mapdb {
     requires java.base;
     requires org.eclipse.collections.api;
-    requires org.hl7.tinkar.component;
     requires org.hl7.tinkar.common;
     requires com.google.auto.service;
-    requires org.hl7.tinkar.dto;
     requires mapdb;
     requires org.apache.logging.log4j;
-    requires org.hl7.tinkar.entity;
     requires org.eclipse.collections.impl;
     provides org.hl7.tinkar.service.PrimitiveDataService
             with MapDbProvider;

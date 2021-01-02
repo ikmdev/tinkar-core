@@ -107,7 +107,7 @@
         <module>common</module>
         <module>component</module>
         <module>entity</module>
-        <module>dto</module>
+<!--        <module>dto</module>-->
         <module>launcher</module>
         <module>lombok-dto</module>
         <module>metric</module>

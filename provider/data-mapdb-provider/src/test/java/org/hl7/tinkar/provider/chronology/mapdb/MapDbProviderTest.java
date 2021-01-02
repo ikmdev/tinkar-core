@@ -22,7 +22,7 @@ public class MapDbProviderTest {
         LoadEntitiesFromDTO loadTink = new LoadEntitiesFromDTO(file);
         try {
             int count = loadTink.call();
-            System.out.println("Loaded " + count);
+            System.out.println("Loaded. " + loadTink.report());
         } catch (Exception e) {
             fail(e);
         }

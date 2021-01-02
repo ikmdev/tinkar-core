@@ -21,7 +21,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
 @AutoService(PrimitiveDataService.class)
-public class ComponentProviderOpenHFT implements PrimitiveDataService {
+public class OpenHFTProvider implements PrimitiveDataService {
 
     private static final File dataDirectory = new File("target/chronicle-map/");
     static {
@@ -46,7 +46,7 @@ public class ComponentProviderOpenHFT implements PrimitiveDataService {
 
     ChronicleMap<long[], IntValue> stampUuidNidMap;
 
-    public ComponentProviderOpenHFT() {
+    public OpenHFTProvider() {
         try {
             this.uuidNidMap = ChronicleMapBuilder
                     .of(long[].class, IntValue.class)
