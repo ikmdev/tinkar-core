@@ -36,6 +36,11 @@ public class ComponentDTO
     @NonNull
     final ImmutableList<UUID> componentUuids;
 
+    public ComponentDTO(ImmutableList<UUID> componentUuids) {
+        this.componentUuids = componentUuids;
+    }
+
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

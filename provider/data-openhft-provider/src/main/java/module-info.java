@@ -7,7 +7,7 @@
 import org.hl7.tinkar.provider.chronology.openhft.OpenHFTProvider;
 
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
-module org.hl7.tinkar.provider.chronology.persistent {
+module org.hl7.tinkar.provider.chronology.openhft {
     requires java.base;
     requires org.eclipse.collections.api;
     requires org.hl7.tinkar.component;
@@ -20,6 +20,8 @@ module org.hl7.tinkar.provider.chronology.persistent {
     requires org.hl7.tinkar.dto;
     requires org.apache.logging.log4j;
     requires org.hl7.tinkar.entity;
+    requires chronicle.bytes;
+    requires jdk.unsupported;
     provides org.hl7.tinkar.service.PrimitiveDataService
             with OpenHFTProvider;
 }

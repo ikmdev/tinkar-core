@@ -13,6 +13,8 @@
         <module>data-ephemeral-provider</module>
         <module>data-mapdb-provider</module>
         <module>data-openhft-provider</module>
+        <module>data-websocket-client-provider</module>
+        <module>data-websocket-server-provider</module>
         <module>entity-provider</module>
     </modules>
 </project>

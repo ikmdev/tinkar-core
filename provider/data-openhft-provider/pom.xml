@@ -20,50 +20,56 @@
             <groupId>net.openhft</groupId>
             <artifactId>chronicle-map</artifactId>
             <version>3.20.84</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.thoughtworks.xstream</groupId>
-                    <artifactId>xstream</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>net.openhft</groupId>
-                    <artifactId>chronicle-algorithms</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>net.openhft</groupId>
-            <artifactId>chronicle-algorithms</artifactId>
-            <version>2.20.80</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>backport-util-concurrent</groupId>
-                    <artifactId>backport-util-concurrent</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
-        <dependency>
-            <groupId>com.thoughtworks.xstream</groupId>
-            <artifactId>xstream</artifactId>
-            <version>1.4.15</version>
-        </dependency>
-        <dependency>
-            <groupId>xpp3</groupId>
-            <artifactId>xpp3_min</artifactId>
-            <version>1.2.0</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>net.openhft</groupId>-->
+<!--            <artifactId>chronicle-map</artifactId>-->
+<!--            <version>3.17.0</version>-->
+<!--            <exclusions>-->
+<!--                <exclusion>-->
+<!--                    <groupId>com.thoughtworks.xstream</groupId>-->
+<!--                    <artifactId>xstream</artifactId>-->
+<!--                </exclusion>-->
+<!--                <exclusion>-->
+<!--                    <groupId>net.openhft</groupId>-->
+<!--                    <artifactId>chronicle-algorithms</artifactId>-->
+<!--                </exclusion>-->
+<!--            </exclusions>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>net.openhft</groupId>-->
+<!--            <artifactId>chronicle-algorithms</artifactId>-->
+<!--            <version>2.20.80</version>-->
+<!--            <exclusions>-->
+<!--                <exclusion>-->
+<!--                    <groupId>backport-util-concurrent</groupId>-->
+<!--                    <artifactId>backport-util-concurrent</artifactId>-->
+<!--                </exclusion>-->
+<!--            </exclusions>-->
+<!--        </dependency>-->
 
-        <dependency>
-            <groupId>org.ops4j.pax.url</groupId>
-            <artifactId>pax-url-aether</artifactId>
-            <version>2.6.3</version>
-            <scope>test</scope>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.thoughtworks.xstream</groupId>-->
+<!--            <artifactId>xstream</artifactId>-->
+<!--            <version>1.4.15</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>xpp3</groupId>-->
+<!--            <artifactId>xpp3_min</artifactId>-->
+<!--            <version>1.2.0</version>-->
+<!--        </dependency>-->
+
+<!--        <dependency>-->
+<!--            <groupId>org.ops4j.pax.url</groupId>-->
+<!--            <artifactId>pax-url-aether</artifactId>-->
+<!--            <version>2.6.3</version>-->
+<!--            <scope>test</scope>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>io.activej</groupId>
             <artifactId>activej-bytebuf</artifactId>
-            <version>3.1-rc1</version>
+            <version>${activej.version}</version>
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
@@ -81,7 +87,8 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven-surefire-plugin.version}</version>
                 <configuration>
-                    <argLine>--enable-preview --illegal-access=permit --add-opens java.base/java.lang.reflect=chronicle.core --add-opens java.base/sun.nio.ch=chronicle.core --add-exports java.base/jdk.internal.ref=ALL-UNNAMED</argLine>
+                    <!-- <argLine>-Dchronicle.values.dumpCode=true ... -->
+                    <argLine>--illegal-access=permit --add-opens java.base/java.lang.reflect=chronicle.core --add-opens java.base/sun.nio.ch=chronicle.core --add-exports java.base/jdk.internal.ref=ALL-UNNAMED</argLine>
                 </configuration>
             </plugin>
         </plugins>

@@ -23,12 +23,12 @@
         <dependency>
             <groupId>io.activej</groupId>
             <artifactId>activej-inject</artifactId>
-            <version>3.0.1</version>
+            <version>${activej.version}</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>RELEASE</version>
+            <version>${lombok.version}</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

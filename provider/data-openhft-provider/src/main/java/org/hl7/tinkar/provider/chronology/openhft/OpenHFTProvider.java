@@ -23,6 +23,9 @@ import java.util.function.BiFunction;
 @AutoService(PrimitiveDataService.class)
 public class OpenHFTProvider implements PrimitiveDataService {
 
+    // http://blog.siteos.de/java/javaee/chroniclemap/2016/05/16/How-To-Use-ChronicleMap-With-JavaEE.html
+    //
+
     private static final File dataDirectory = new File("target/chronicle-map/");
     static {
         dataDirectory.mkdirs();
@@ -34,12 +37,6 @@ public class OpenHFTProvider implements PrimitiveDataService {
 
     private static final byte[] nextNidKey = UuidUtil.getRawBytes(new UUID(Long.MAX_VALUE, Long.MIN_VALUE));
     private static final AtomicInteger nextNid = new AtomicInteger(Integer.MIN_VALUE + 1);
-
-    private static final ThreadLocal<IntValue> threadLocalKey = new ThreadLocal<>() {
-        @Override protected IntValue initialValue() {
-        return Values.newHeapInstance(IntValue.class);
-        }
-    };
 
     ChronicleMap<IntValue, byte[]> nidComponentMap;
     ChronicleMap<long[], IntValue> uuidNidMap;

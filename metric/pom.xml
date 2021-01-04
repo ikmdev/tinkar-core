@@ -18,7 +18,7 @@
         <dependency>
             <groupId>io.activej</groupId>
             <artifactId>activej-inject</artifactId>
-            <version>3.0.1</version>
+            <version>${activej.version}</version>
         </dependency>
     </dependencies>
 </project>
