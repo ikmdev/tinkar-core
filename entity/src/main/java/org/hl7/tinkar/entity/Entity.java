@@ -146,46 +146,4 @@ public abstract class Entity<T extends EntityVersion>
         return setNid;
     }
 
-    /**
-     * Merge bytes from concurrently created entities. Method is idempotent.
-     * Versions will not be duplicated as a result of calling method multiple times.
-     *
-     * Used for map.merge functions in concurrent maps.
-     * @param bytes1
-     * @param bytes2
-     * @return
-     */
-    public static byte[] merge(byte[] bytes1, byte[] bytes2) {
-        if (Arrays.equals(bytes1, bytes2)) {
-            return bytes1;
-        }
-        try {
-            MutableSet<byte[]> byteArraySet = Sets.mutable.empty();
-            addToSet(bytes1, byteArraySet);
-            addToSet(bytes2, byteArraySet);
-            MutableList<byte[]> byteArrayList = byteArraySet.toList();
-            byteArrayList.sort(Arrays::compare);
-
-            ByteBuf byteBuf = ByteBufPool.allocate(bytes1.length + bytes2.length);
-            byteBuf.writeInt(byteArrayList.size());
-            for (byte[] byteArray: byteArrayList) {
-                byteBuf.writeInt(byteArray.length);
-                byteBuf.put(byteArray);
-            }
-            return byteBuf.asArray();
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    private static void addToSet(byte[] bytes, MutableSet<byte[]> byteArraySet) throws IOException {
-        ByteBuf readBuf = ByteBuf.wrapForReading(bytes);
-        int arrayCount = readBuf.readInt();
-        for (int i = 0; i < arrayCount; i++) {
-            int arraySize = readBuf.readInt();
-            byte[] newArray = new byte[arraySize];
-            readBuf.read(newArray);
-            byteArraySet.add(newArray);
-        }
-    }
 }

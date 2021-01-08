@@ -9,7 +9,7 @@ public class Put {
     public static OpenHFTProvider singleton;
     public static void put(Chronology chronology) {
         Entity entity = EntityFactory.make(chronology);
-        singleton.merge(entity.nid(), entity.getBytes(), Entity::merge);
+        singleton.merge(entity.nid(), entity.getBytes());
     }
 
 }

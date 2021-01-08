@@ -6,6 +6,7 @@
 
 
 import org.hl7.tinkar.provider.websocket.server.DataProviderWebsocketServer;
+import org.hl7.tinkar.service.PrimitiveDataService;
 
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
 module org.hl7.tinkar.provider.websocket.server {
@@ -22,6 +23,7 @@ module org.hl7.tinkar.provider.websocket.server {
     requires org.hl7.tinkar.common;
     requires org.hl7.tinkar.component;
     requires org.hl7.tinkar.test;
+    uses PrimitiveDataService;
     opens org.hl7.tinkar.provider.websocket.server
             to io.activej.inject;
 }

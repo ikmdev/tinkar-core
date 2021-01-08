@@ -13,6 +13,11 @@ import java.util.UUID;
 
 @AutoService(EntityService.class)
 public class EntityProvider implements EntityService {
+
+    public EntityProvider() {
+        System.out.println("Constructing EntityProvider");
+    }
+
     @Override
     public void putChronology(Chronology chronology) {
         if (chronology instanceof Entity) {
@@ -48,7 +53,7 @@ public class EntityProvider implements EntityService {
 
     @Override
     public void putEntity(Entity entity) {
-        Get.dataService().merge(entity.nid(), entity.getBytes(), Entity::merge);
+        Get.dataService().merge(entity.nid(), entity.getBytes());
     }
 
     @Override
@@ -60,4 +65,10 @@ public class EntityProvider implements EntityService {
     public int nidForUuids(UUID... uuids) {
         return Get.dataService().nidForUuids(uuids);
     }
+
+    @Override
+    public Entity unmarshalChronology(byte[] bytes) {
+        return EntityFactory.make(bytes);
+    }
+
 }

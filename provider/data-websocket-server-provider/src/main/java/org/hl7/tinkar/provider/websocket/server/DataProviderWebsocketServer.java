@@ -7,22 +7,41 @@ import io.activej.http.AsyncServlet;
 import io.activej.http.RoutingServlet;
 import io.activej.http.WebSocket.Message;
 import io.activej.inject.annotation.Provides;
+import io.activej.launchers.http.MultithreadedHttpServerLauncher;
+import org.hl7.tinkar.service.PrimitiveDataService;
+import org.hl7.tinkar.service.PrimitiveDataService.RemoteOperations;
 
-public class DataProviderWebsocketServer extends HttpServerLauncher {
+import java.util.ServiceLoader;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class DataProviderWebsocketServer extends MultithreadedHttpServerLauncher {
+
+    private final ServiceLoader<PrimitiveDataService> serviceLoader;
+    private final PrimitiveDataService dataService;
+
+    public DataProviderWebsocketServer() {
+        this.serviceLoader = ServiceLoader.load(PrimitiveDataService.class);
+        this.dataService = this.serviceLoader.findFirst().get();
+    }
 
     @Provides
     AsyncServlet servlet() {
+        AtomicInteger nid = new AtomicInteger();
         return RoutingServlet.create()
                 .mapWebSocket("/", webSocket -> webSocket.readMessage()
-                        .whenResult(message -> System.out.println("Received:" + message.getBuf().readInt()))
+                        .whenResult(message -> {
+                            ByteBuf buf = message.getBuf();
+                            RemoteOperations operation = RemoteOperations.fromToken(buf.readByte());
+                            nid.set(buf.readInt());
+                            System.out.println("Received: " + operation + " for: " + nid);
+                        })
                         .then(() -> {
-                            ByteBuf buf = ByteBufPool.allocate(32);
-                            byte[] data = new byte[] {1, 2, 3};
+                            byte[] data = dataService.getBytes(nid.get());
+                            ByteBuf buf = ByteBufPool.allocate(data.length);
                             buf.writeInt(data.length);
                             buf.write(data);
                             return webSocket.writeMessage(Message.binary(buf));
-                        })
-                        .whenComplete(webSocket::close));
+                        }));
     }
 
     public static void main(String[] args) throws Exception {

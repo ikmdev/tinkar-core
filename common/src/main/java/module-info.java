@@ -9,6 +9,7 @@ import org.hl7.tinkar.service.CachingService;
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
 module org.hl7.tinkar.common {
     requires java.base;
+    requires io.activej.bytebuf;
     requires org.eclipse.collections.api;
     exports org.hl7.tinkar.service;
     exports org.hl7.tinkar.util;

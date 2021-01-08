@@ -21,10 +21,7 @@ import org.eclipse.collections.api.list.ListIterable;
 import org.eclipse.collections.api.list.MutableList;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 //~--- classes ----------------------------------------------------------------
 
@@ -96,6 +93,16 @@ public class UuidUtil {
    }
     public static long[] asArray(UUID uuid) {
         return new long[] {uuid.getMostSignificantBits(), uuid.getLeastSignificantBits()};
+    }
+
+    public static long[] asArray(UUID... uuids) {
+       Arrays.sort(uuids);
+        long[] values = new long[uuids.length * 2];
+        for (int i = 0; i < uuids.length; i++) {
+            values[i*2] = uuids[i].getMostSignificantBits();
+            values[(i*2) + 1] = uuids[i].getLeastSignificantBits();
+        }
+        return values;
     }
 
     public static long[] asArray(ListIterable<UUID> uuidList) {

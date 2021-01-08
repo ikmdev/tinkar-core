@@ -13,6 +13,7 @@ public class Get implements CachingService {
     public Get() {
         this.serviceLoader = ServiceLoader.load(PrimitiveDataService.class);
         this.dataService = this.serviceLoader.findFirst().get();
+        System.out.println("PrimitiveDataService: " + this.dataService);
     }
 
     private static Get singleton = new Get();

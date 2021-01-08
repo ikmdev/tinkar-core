@@ -1,41 +1,51 @@
 package org.hl7.tinkar.provider.chronology.ephemeral;
 
-import com.google.auto.service.AutoService;
-
 import org.eclipse.collections.api.block.procedure.Procedure2;
+import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.hl7.tinkar.service.PrimitiveDataService;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 
-@AutoService(PrimitiveDataService.class)
 public class ProviderEphemeral implements PrimitiveDataService {
+
+    protected static AtomicReference<ProviderEphemeral> providerReference = new AtomicReference<>();
+    protected static ProviderEphemeral singleton;
+
+    protected static ProviderEphemeral provider() {
+        System.out.println("Providing ProviderEphemeral...");
+        if (singleton == null) {
+            singleton = providerReference.updateAndGet(providerEphemeral -> {
+                if (providerEphemeral == null) {
+                    return new ProviderEphemeral();
+                }
+                return providerEphemeral;
+            });
+        }
+        return singleton;
+    }
 
     private static final int EXECUTOR_THREADS = Runtime.getRuntime().availableProcessors() * 2;
 
     private static ExecutorService executorService = Executors.newFixedThreadPool(EXECUTOR_THREADS);
 
-    protected static ProviderEphemeral singleton;
-
     private final ConcurrentHashMap<Integer, byte[]> nidComponentMap = ConcurrentHashMap.newMap();
     private final ConcurrentHashMap<UUID, Integer> uuidNidMap = new ConcurrentHashMap<>();
     private final AtomicInteger nextNid = new AtomicInteger(Integer.MIN_VALUE + 1);
 
-    public ProviderEphemeral() {
-        singleton = this;
+    private ProviderEphemeral() {
+        System.out.println("Constructing ProviderEphemeral");
     }
 
     @Override
-    public byte[] merge(int nid, byte[] value, BiFunction<byte[], byte[], byte[]> remappingFunction) {
-        return nidComponentMap.merge(nid, value, remappingFunction);
+    public byte[] merge(int nid, byte[] value) {
+        return nidComponentMap.merge(nid, value, PrimitiveDataService::merge);
     }
 
     @Override
@@ -46,16 +56,6 @@ public class ProviderEphemeral implements PrimitiveDataService {
     @Override
     public byte[] getBytes(int nid) {
         return nidComponentMap.get(nid);
-    }
-
-    @Override
-    public ConcurrentMap<UUID, Integer> uuidNidMap() {
-        return uuidNidMap;
-    }
-
-    @Override
-    public AtomicInteger nextNid() {
-        return nextNid;
     }
 
     @Override
@@ -70,5 +70,15 @@ public class ProviderEphemeral implements PrimitiveDataService {
             blocks.add(action);
         }
         nidComponentMap.parallelForEachKeyValue(blocks, executorService);
+    }
+
+    @Override
+    public int nidForUuids(UUID... uuids) {
+        return PrimitiveDataService.nidForUuids(uuidNidMap, nextNid, uuids);
+    }
+
+    @Override
+    public int nidForUuids(ImmutableList<UUID> uuidList) {
+        return PrimitiveDataService.nidForUuids(uuidNidMap, nextNid, uuidList);
     }
 }

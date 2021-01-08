@@ -6,9 +6,9 @@
         <groupId>org.hl7.tinkar</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    <artifactId>lombok-dto</artifactId>
+    <artifactId>dto-lombok</artifactId>
     <packaging>jar</packaging>
-    <name>TINKAR: Lombok Data Transfer Objects</name>
+    <name>TINKAR: Data Transfer Objects - Lombok</name>
     <dependencies>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
@@ -30,6 +30,12 @@
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

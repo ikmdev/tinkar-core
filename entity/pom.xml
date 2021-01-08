@@ -20,7 +20,7 @@
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
-            <artifactId>lombok-dto</artifactId>
+            <artifactId>dto-lombok</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
@@ -32,6 +32,12 @@
             <groupId>io.activej</groupId>
             <artifactId>activej-bytebuf</artifactId>
             <version>${activej.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
         </dependency>
      </dependencies>
 </project>

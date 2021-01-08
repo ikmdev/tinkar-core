@@ -6,6 +6,7 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.values.Values;
 import org.eclipse.collections.api.block.procedure.Procedure2;
+import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.provider.chronology.openhft.internal.Put;
 import org.hl7.tinkar.provider.chronology.openhft.internal.Get;
 import org.hl7.tinkar.service.PrimitiveDataService;
@@ -18,7 +19,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 
 @AutoService(PrimitiveDataService.class)
 public class OpenHFTProvider implements PrimitiveDataService {
@@ -87,7 +87,7 @@ public class OpenHFTProvider implements PrimitiveDataService {
     }
 
     @Override
-    public byte[] merge(int nid, byte[] value, BiFunction<byte[], byte[], byte[]> remappingFunction) {
+    public byte[] merge(int nid, byte[] value) {
         return new byte[0];
     }
 
@@ -97,14 +97,15 @@ public class OpenHFTProvider implements PrimitiveDataService {
     }
 
     @Override
-    public ConcurrentMap<UUID, Integer> uuidNidMap() {
-        //return this.uuidNidMap;
+    public int nidForUuids(UUID... uuids) {
         throw new UnsupportedOperationException();
+        //return PrimitiveDataService.nidForUuids(uuidNidMap, nextNid, uuids);
     }
 
     @Override
-    public AtomicInteger nextNid() {
-        return nextNid;
+    public int nidForUuids(ImmutableList<UUID> uuidList) {
+        throw new UnsupportedOperationException();
+        //return PrimitiveDataService.nidForUuids(uuidNidMap, nextNid, uuidList);
     }
 
     @Override

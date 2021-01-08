@@ -6,6 +6,7 @@
 
 import org.hl7.tinkar.entity.EntityService;
 import org.hl7.tinkar.provider.entity.EntityProvider;
+import org.hl7.tinkar.service.PrimitiveDataService;
 
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
 module org.hl7.tinkar.provider.entity {
@@ -23,5 +24,6 @@ module org.hl7.tinkar.provider.entity {
     requires org.hl7.tinkar.dto;
     provides EntityService
             with EntityProvider;
+    uses PrimitiveDataService;
 }
 
