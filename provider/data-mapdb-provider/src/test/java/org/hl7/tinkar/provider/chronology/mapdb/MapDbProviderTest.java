@@ -17,7 +17,6 @@ public class MapDbProviderTest {
     @Test
     public void loadChronologies() {
         File file = new File("/Users/kec/Solor/tinkar-export.zip");
-        //MapDbProvider provider = new MapDbProvider();
 
         LoadEntitiesFromDTO loadTink = new LoadEntitiesFromDTO(file);
         try {
@@ -26,35 +25,34 @@ public class MapDbProviderTest {
         } catch (Exception e) {
             fail(e);
         }
-        //provider.close();
-    }
+     }
     @Test
     public void count() {
         if (MapDbProvider.singleton == null) {
             System.out.println("Reloading MapDbProvider");
             Stopwatch reloadStopwatch = new Stopwatch();
             MapDbProvider provider = new MapDbProvider();
-            System.out.println("Reloading in: " + reloadStopwatch.elapsedTime()+ "\n");
+            System.out.println("MDB Reloading in: " + reloadStopwatch.elapsedTime()+ "\n");
         }
         Assertions.assertNotNull(MapDbProvider.singleton);
         EntityProcessor processor = new EntityCounter();
         MapDbProvider.singleton.forEach(processor);
-        System.out.println("Sequential count: \n" + processor.report() + "\n");
+        System.out.println("MDB Sequential count: \n" + processor.report() + "\n");
         processor = new EntityCounter();
         MapDbProvider.singleton.forEachParallel(processor);
-        System.out.println("Parallel count: \n" + processor.report()+ "\n");
+        System.out.println("MDB Parallel count: \n" + processor.report()+ "\n");
         processor = new EntityRealizer();
         MapDbProvider.singleton.forEach(processor);
-        System.out.println("Sequential realization: \n" + processor.report() + "\n");
+        System.out.println("MDB Sequential realization: \n" + processor.report() + "\n");
         processor = new EntityRealizer();
         MapDbProvider.singleton.forEachParallel(processor);
-        System.out.println("Parallel realization: \n" + processor.report()+ "\n");
+        System.out.println("MDB Parallel realization: \n" + processor.report()+ "\n");
         processor = new EntityRealizer();
         MapDbProvider.singleton.forEach(processor);
-        System.out.println("Sequential realization: \n" + processor.report() + "\n");
+        System.out.println("MDB Sequential realization: \n" + processor.report() + "\n");
         processor = new EntityRealizer();
         MapDbProvider.singleton.forEachParallel(processor);
-        System.out.println("Parallel realization: \n" + processor.report()+ "\n");
+        System.out.println("MDB Parallel realization: \n" + processor.report()+ "\n");
     }
 
     @Test
@@ -64,12 +62,31 @@ public class MapDbProviderTest {
             MapDbProvider.singleton.close();
             closingStopwatch.end();
             MapDbProvider.singleton = null;
-            System.out.println("Closed in: " + closingStopwatch.elapsedTime()+ "\n");
+            System.out.println("MDB Closed in: " + closingStopwatch.elapsedTime()+ "\n");
         }
         System.out.println("Reloading MapDbProvider");
         Stopwatch reloadStopwatch = new Stopwatch();
         MapDbProvider provider = new MapDbProvider();
-        System.out.println("Reloading in: " + reloadStopwatch.elapsedTime()+ "\n");
+        System.out.println("MDB Reloading in: " + reloadStopwatch.elapsedTime()+ "\n");
+        Assertions.assertNotNull(MapDbProvider.singleton);
+        EntityProcessor processor = new EntityCounter();
+        MapDbProvider.singleton.forEach(processor);
+        System.out.println("MDB Sequential count: \n" + processor.report() + "\n");
+        processor = new EntityCounter();
+        MapDbProvider.singleton.forEachParallel(processor);
+        System.out.println("MDB Parallel count: \n" + processor.report()+ "\n");
+        processor = new EntityRealizer();
+        MapDbProvider.singleton.forEach(processor);
+        System.out.println("MDB Sequential realization: \n" + processor.report() + "\n");
+        processor = new EntityRealizer();
+        MapDbProvider.singleton.forEachParallel(processor);
+        System.out.println("MDB Parallel realization: \n" + processor.report()+ "\n");
+        processor = new EntityRealizer();
+        MapDbProvider.singleton.forEach(processor);
+        System.out.println("MDB Sequential realization: \n" + processor.report() + "\n");
+        processor = new EntityRealizer();
+        MapDbProvider.singleton.forEachParallel(processor);
+        System.out.println("MDB Parallel realization: \n" + processor.report()+ "\n");
     }
 
 }

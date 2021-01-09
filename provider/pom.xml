@@ -12,6 +12,7 @@
     <modules>
         <module>data-ephemeral-provider</module>
         <module>data-mapdb-provider</module>
+        <module>data-mvstore-provider</module>
         <module>data-openhft-provider</module>
         <module>data-websocket-client-provider</module>
         <module>data-websocket-server-provider</module>
