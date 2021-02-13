@@ -2,17 +2,16 @@ package org.hl7.tinkar.entity;
 
 import io.activej.bytebuf.ByteBuf;
 import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.list.ImmutableList;
+import org.hl7.tinkar.common.util.id.PublicId;
 import org.hl7.tinkar.component.Component;
 import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.lombok.dto.StampDTO;
-import org.hl7.tinkar.util.UuidT5Generator;
+import org.hl7.tinkar.common.util.UuidT5Generator;
 
 import java.time.Instant;
-import java.util.UUID;
 
-public class StampEntity
+public class StampEntity extends PublicIdForEntity
         implements Stamp, Component {
 
     int nid;
@@ -34,6 +33,7 @@ public class StampEntity
         this.authorNid = readBuf.readInt();
         this.moduleNid = readBuf.readInt();
         this.pathNid = readBuf.readInt();
+        super.fillId(readBuf);
     }
 
     protected final void fill(Stamp other) {
@@ -46,12 +46,12 @@ public class StampEntity
             this.moduleNid = otherEntity.moduleNid;
             this.pathNid = otherEntity.pathNid;
         } else {
-            this.nid = Get.entityService().nidForUuids(other.componentUuids());
-            this.statusNid = Get.entityService().nidForUuids(other.status().componentUuids());
+            this.nid = Get.entityService().nidForPublicId(other);
+            this.statusNid = Get.entityService().nidForPublicId(other.status());
             this.time = other.time();
-            this.authorNid = Get.entityService().nidForUuids(other.author().componentUuids());
-            this.moduleNid = Get.entityService().nidForUuids(other.module().componentUuids());
-            this.pathNid = Get.entityService().nidForUuids(other.path().componentUuids());
+            this.authorNid = Get.entityService().nidForPublicId(other.author());
+            this.moduleNid = Get.entityService().nidForPublicId(other.module());
+            this.pathNid = Get.entityService().nidForPublicId(other.path());
         }
     }
 
@@ -105,12 +105,8 @@ public class StampEntity
     }
 
     @Override
-    public ImmutableList<UUID> componentUuids() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(this.statusNid).append(this.time.getEpochSecond());
-        sb.append(this.time.getNano()).append(this.authorNid);
-        sb.append(this.moduleNid).append(this.pathNid);
-        return Lists.immutable.of(UuidT5Generator.get(UuidT5Generator.STAMP_NAMESPACE, sb.toString()));
+    public PublicId publicId() {
+        return this;
     }
 
     public static StampEntity make(ByteBuf readBuf) {
@@ -118,6 +114,7 @@ public class StampEntity
         stampEntity.fill(readBuf);
         return stampEntity;
     }
+
     public static StampEntity make(StampDTO stamp) {
         StampEntity stampEntity = new StampEntity();
         stampEntity.fill(stamp);

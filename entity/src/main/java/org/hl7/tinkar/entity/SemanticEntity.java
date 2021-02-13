@@ -2,9 +2,9 @@ package org.hl7.tinkar.entity;
 
 import io.activej.bytebuf.ByteBuf;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.lombok.dto.FieldDataType;
+import org.hl7.tinkar.component.*;
 
 public class SemanticEntity
         extends Entity<SemanticEntityVersion>
@@ -33,7 +33,7 @@ public class SemanticEntity
     }
 
     @Override
-    protected void finishEntityRead(ByteBuf readBuf) {
+    protected void finishEntityRead(ByteBuf readBuf, byte formatVersion) {
         this.referencedComponentNid = readBuf.readInt();
     }
 
@@ -41,13 +41,13 @@ public class SemanticEntity
     protected void finishEntityRead(Chronology chronology) {
         if (chronology instanceof SemanticChronology) {
             SemanticChronology semanticChronology = (SemanticChronology) chronology;
-            referencedComponentNid = Get.entityService().nidForUuids(semanticChronology.referencedComponent().componentUuids());
+            referencedComponentNid = Get.entityService().nidForPublicId(semanticChronology.referencedComponent());
         }
     }
 
     @Override
-    protected SemanticEntityVersion makeVersion(ByteBuf readBuf) {
-        return SemanticEntityVersion.make(this, readBuf);
+    protected SemanticEntityVersion makeVersion(ByteBuf readBuf, byte formatVersion) {
+        return SemanticEntityVersion.make(this, readBuf, formatVersion);
     }
 
     @Override
@@ -61,14 +61,14 @@ public class SemanticEntity
     }
 
     @Override
-    public DefinitionForSemantic definitionForSemantic() {
-        return Get.entityService().getEntityFast(setNid);
+    public PatternForSemantic patternForSemantic() {
+        return Get.entityService().getEntityFast(definitionNid);
     }
 
 
-    public static SemanticEntity make(ByteBuf readBuf) {
+    public static SemanticEntity make(ByteBuf readBuf, byte entityFormatVersion) {
         SemanticEntity semanticEntity = new SemanticEntity();
-        semanticEntity.fill(readBuf);
+        semanticEntity.fill(readBuf, entityFormatVersion);
         return semanticEntity;
     }
 

@@ -22,17 +22,17 @@ import lombok.experimental.Accessors;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
+import org.hl7.tinkar.common.util.id.PublicId;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.component.ConceptChronology;
 import org.hl7.tinkar.lombok.dto.binary.*;
-import org.hl7.tinkar.lombok.dto.json.ComponentFieldForJson;
 import org.hl7.tinkar.lombok.dto.json.JSONObject;
-import org.hl7.tinkar.lombok.dto.json.JsonChronologyUnmarshaler;
 import org.hl7.tinkar.lombok.dto.json.JsonMarshalable;
+import org.hl7.tinkar.lombok.dto.json.ComponentFieldForJson;
+import org.hl7.tinkar.lombok.dto.json.JsonChronologyUnmarshaler;
 
 import java.io.Writer;
 import java.util.Objects;
-import java.util.UUID;
 
 /**
  *
@@ -47,15 +47,15 @@ public class ConceptChronologyDTO
 
     private static final int localMarshalVersion = 3;
     @NonNull
-    private final ImmutableList<UUID> chronologySetUuids;
+    private final PublicId chronologySetPublicId;
     @NonNull
     private final ImmutableList<ConceptVersionDTO> conceptVersions;
 
-    public ConceptChronologyDTO(@NonNull ImmutableList<UUID> componentUuids,
-                                @NonNull ImmutableList<UUID> chronologySetUuids,
+    public ConceptChronologyDTO(@NonNull PublicId componentPublicId,
+                                @NonNull PublicId chronologySetPublicId,
                                 @NonNull ImmutableList<ConceptVersionDTO> conceptVersions) {
-        super(componentUuids);
-        this.chronologySetUuids = chronologySetUuids;
+        super(componentPublicId);
+        this.chronologySetPublicId = chronologySetPublicId;
         this.conceptVersions = conceptVersions;
     }
 
@@ -65,12 +65,12 @@ public class ConceptChronologyDTO
         if (!(o instanceof ConceptChronologyDTO)) return false;
         if (!super.equals(o)) return false;
         ConceptChronologyDTO that = (ConceptChronologyDTO) o;
-        return chronologySetUuids.equals(that.chronologySetUuids) && conceptVersions.equals(that.conceptVersions);
+        return chronologySetPublicId.equals(that.chronologySetPublicId) && conceptVersions.equals(that.conceptVersions);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), chronologySetUuids, conceptVersions);
+        return Objects.hash(super.hashCode(), chronologySetPublicId, conceptVersions);
     }
 
     public static ConceptChronologyDTO make(ConceptChronology<ConceptVersionDTO> conceptChronology) {
@@ -78,14 +78,14 @@ public class ConceptChronologyDTO
         for (ConceptVersionDTO conceptVersion : conceptChronology.versions()) {
             versions.add(ConceptVersionDTO.make(conceptVersion));
         }
-        return new ConceptChronologyDTO(conceptChronology.componentUuids(),
-                conceptChronology.chronologySet().componentUuids(),
+        return new ConceptChronologyDTO(conceptChronology.publicId(),
+                conceptChronology.chronologySet().publicId(),
                 versions.toImmutable());
     }
 
     @Override
     public Concept chronologySet() {
-        return new ConceptDTO(chronologySetUuids);
+        return new ConceptDTO(chronologySetPublicId);
     }
 
     @Override
@@ -97,26 +97,26 @@ public class ConceptChronologyDTO
     public void jsonMarshal(Writer writer) {
         final JSONObject json = new JSONObject();
         json.put(ComponentFieldForJson.CLASS, this.getClass().getCanonicalName());
-        json.put(ComponentFieldForJson.COMPONENT_UUIDS, componentUuids());
-        json.put(ComponentFieldForJson.CHRONOLOGY_SET_UUIDS, chronologySetUuids);
+        json.put(ComponentFieldForJson.COMPONENT_PUBLIC_ID, publicId());
+        json.put(ComponentFieldForJson.CHRONOLOGY_SET_PUBLIC_ID, chronologySetPublicId);
         json.put(ComponentFieldForJson.CONCEPT_VERSIONS, conceptVersions);
         json.writeJSONString(writer);
     }
 
     @JsonChronologyUnmarshaler
     public static ConceptChronologyDTO make(JSONObject jsonObject) {
-        ImmutableList<UUID> componentUuids = jsonObject.asImmutableUuidList(ComponentFieldForJson.COMPONENT_UUIDS);
-        return new ConceptChronologyDTO(componentUuids,
-                        jsonObject.asImmutableUuidList(ComponentFieldForJson.CHRONOLOGY_SET_UUIDS),
-                        jsonObject.asConceptVersionList(ComponentFieldForJson.CONCEPT_VERSIONS, componentUuids));
+        PublicId publicId = jsonObject.asPublicId(ComponentFieldForJson.COMPONENT_PUBLIC_ID);
+        return new ConceptChronologyDTO(publicId,
+                        jsonObject.asPublicId(ComponentFieldForJson.CHRONOLOGY_SET_PUBLIC_ID),
+                        jsonObject.asConceptVersionList(ComponentFieldForJson.CONCEPT_VERSIONS, publicId));
     }
 
     @Unmarshaler
     public static ConceptChronologyDTO make(TinkarInput in) {
         if (localMarshalVersion == in.getTinkerFormatVersion()) {
-            ImmutableList<UUID> componentUuids = in.readImmutableUuidList();
+            PublicId publicId = in.getPublicId();
             return new ConceptChronologyDTO(
-                    componentUuids, in.readImmutableUuidList(), in.readConceptVersionList(componentUuids));
+                    publicId, in.getPublicId(), in.readConceptVersionList(publicId));
         } else {
             throw new UnsupportedOperationException("Unsupported version: " + in.getTinkerFormatVersion());
         }
@@ -125,8 +125,8 @@ public class ConceptChronologyDTO
     @Override
     @Marshaler
     public void marshal(TinkarOutput out) {
-        out.writeUuidList(componentUuids());
-        out.writeUuidList(chronologySetUuids);
+        out.putPublicId(publicId());
+        out.putPublicId(chronologySetPublicId);
         // Note that the componentIds are not written redundantly
         // in writeConceptVersionList...
         out.writeConceptVersionList(conceptVersions);

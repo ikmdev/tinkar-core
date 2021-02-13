@@ -14,9 +14,7 @@
  * limitations under the License.
  */package org.hl7.tinkar.component;
 
-import org.eclipse.collections.api.list.ImmutableList;
-
-import java.util.UUID;
+import org.hl7.tinkar.common.util.id.PublicId;
 
 /**
  *
@@ -24,6 +22,6 @@ import java.util.UUID;
  */
 public interface Component {
 
-    ImmutableList<UUID> componentUuids();
+    PublicId publicId();
 
 }

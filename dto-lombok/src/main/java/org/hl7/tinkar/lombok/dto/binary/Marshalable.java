@@ -16,6 +16,7 @@
 package org.hl7.tinkar.lombok.dto.binary;
 
 import org.eclipse.collections.api.list.ImmutableList;
+import org.hl7.tinkar.common.util.id.PublicId;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
@@ -85,27 +86,27 @@ public interface Marshalable {
         return byteArrayOutput;
     }
 
-    static <T> T makeVersion(Class<T> objectClass, TinkarByteArrayOutput output, ImmutableList<UUID> componentUuids) {
-        return makeVersion(objectClass, output.getBytes(), componentUuids);
+    static <T> T makeVersion(Class<T> objectClass, TinkarByteArrayOutput output, PublicId componentPublicId) {
+        return makeVersion(objectClass, output.getBytes(), componentPublicId);
     }
 
-    static <T> T makeVersion(Class<T> objectClass, byte[] input, ImmutableList<UUID> componentUuids) {
-        return makeVersion(objectClass, TinkarInput.make(input), componentUuids);
+    static <T> T makeVersion(Class<T> objectClass, byte[] input, PublicId componentPublicId) {
+        return makeVersion(objectClass, TinkarInput.make(input), componentPublicId);
     }
 
-    static <T> T makeSemanticVersion(Class<T> objectClass, TinkarInput input, ImmutableList<UUID> componentUuids,
-                                     ImmutableList<UUID> definitionForSemanticUuids, ImmutableList<UUID> referencedComponentUuids) {
+    static <T> T makeSemanticVersion(Class<T> objectClass, TinkarInput input, PublicId componentPublicId,
+                                     PublicId pattrenForSemanticPublicId, PublicId referencedComponentPublicId) {
         try {
-            return unmarshal(objectClass, SemanticVersionUnmarshaler.class, new Object[] { input, componentUuids,
-                    definitionForSemanticUuids, referencedComponentUuids});
+            return unmarshal(objectClass, SemanticVersionUnmarshaler.class, new Object[] { input, componentPublicId,
+                    pattrenForSemanticPublicId, referencedComponentPublicId});
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
             throw new MarshalExceptionUnchecked(ex);
         }
     }
 
-    static <T> T makeVersion(Class<T> objectClass, TinkarInput input, ImmutableList<UUID> componentUuids) {
+    static <T> T makeVersion(Class<T> objectClass, TinkarInput input, PublicId componentPublicId) {
         try {
-            return unmarshal(objectClass, VersionUnmarshaler.class, new Object[] { input, componentUuids});
+            return unmarshal(objectClass, VersionUnmarshaler.class, new Object[] { input, componentPublicId});
 
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
             throw new MarshalExceptionUnchecked(ex);

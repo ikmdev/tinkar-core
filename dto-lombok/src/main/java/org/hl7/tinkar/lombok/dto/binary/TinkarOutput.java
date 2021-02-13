@@ -25,8 +25,13 @@ import java.util.List;
 import java.util.UUID;
 
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.impl.list.mutable.primitive.ByteArrayList;
+import org.hl7.tinkar.common.util.id.PublicId;
+import org.hl7.tinkar.common.util.id.VertexId;
 import org.hl7.tinkar.component.Component;
 import org.hl7.tinkar.lombok.dto.*;
+import org.hl7.tinkar.lombok.dto.graph.DiGraphDTO;
+import org.hl7.tinkar.lombok.dto.graph.DiTreeDTO;
 
 /**
  *
@@ -70,7 +75,16 @@ public class TinkarOutput extends DataOutputStream {
             throw new UncheckedIOException(ex);
         }
     }
-    
+
+    public void writeUuid(UUID uuid) {
+        try {
+            writeLong(uuid.getMostSignificantBits());
+            writeLong(uuid.getLeastSignificantBits());
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
+
     /**
      * Always convert to UTC...
      * @param instant 
@@ -107,10 +121,10 @@ public class TinkarOutput extends DataOutputStream {
         }
     }
 
-    public void writeDefinitionForSemanticVersionList(ImmutableList<DefinitionForSemanticVersionDTO> versions) {
+    public void writeDefinitionForSemanticVersionList(ImmutableList<PatternForSemanticVersionDTO> versions) {
         try {
             writeInt(versions.size());
-            for (DefinitionForSemanticVersionDTO version: versions) {
+            for (PatternForSemanticVersionDTO version: versions) {
                 version.marshal(this);
             }
         } catch (IOException ex) {
@@ -129,6 +143,10 @@ public class TinkarOutput extends DataOutputStream {
         }
     }
 
+    public void putTinkarNativeObject(Object object) {
+        writeField(object);
+    }
+
     private void writeField(Object object) {
         FieldDataType fieldDataType = FieldDataType.getFieldDataType(object);
         try {
@@ -137,10 +155,17 @@ public class TinkarOutput extends DataOutputStream {
                     writeBoolean((boolean) object, fieldDataType);
                     break;
                 case BYTE_ARRAY:
+                    if (object instanceof ByteArrayList) {
+                        ByteArrayList bal = (ByteArrayList) object;
+                        object = bal.toArray();
+                    }
                     writeByteArray((byte[]) object, fieldDataType);
                     break;
                 case DIGRAPH:
-                    writeDigraph();
+                    writeDigraph((DiGraphDTO) object);
+                    break;
+                case DITREE:
+                    writeDitree((DiTreeDTO) object);
                     break;
                 case FLOAT:
                     writeFloat((Number) object, fieldDataType);
@@ -162,8 +187,8 @@ public class TinkarOutput extends DataOutputStream {
                     break;
                 case CONCEPT:
                 case CONCEPT_CHRONOLOGY:
-                case DEFINITION_FOR_SEMANTIC:
-                case DEFINITION_FOR_SEMANTIC_CHRONOLOGY:
+                case PATTERN_FOR_SEMANTIC:
+                case PATTERN_FOR_SEMANTIC_CHRONOLOGY:
                 case SEMANTIC:
                 case SEMANTIC_CHRONOLOGY:
                     writeMarshalableObject((Marshalable) object);
@@ -185,7 +210,7 @@ public class TinkarOutput extends DataOutputStream {
 
     private void writeIdentifiedThing(Component object, FieldDataType fieldDataType) throws IOException {
         writeByte(fieldDataType.token);
-        writeUuidList(object.componentUuids());
+        putPublicId(object.publicId());
     }
     private void writeMarshalableObject(Marshalable object) throws IOException {
         FieldDataType dataType = FieldDataType.getFieldDataType(object);
@@ -217,8 +242,14 @@ public class TinkarOutput extends DataOutputStream {
         writeFloat(object.floatValue());
     }
 
-    private void writeDigraph() {
-        throw new UnsupportedOperationException();
+    private void writeDigraph(DiGraphDTO digraph) throws IOException{
+        writeByte(FieldDataType.DIGRAPH.token);
+        digraph.marshal(this);
+    }
+
+    private void writeDitree(DiTreeDTO digree) throws IOException{
+        writeByte(FieldDataType.DITREE.token);
+        digree.marshal(this);
     }
 
     private void writeByteArray(byte[] object, FieldDataType fieldDataType) throws IOException {
@@ -234,6 +265,35 @@ public class TinkarOutput extends DataOutputStream {
 
     public void writeUuidList(ImmutableList<UUID> statusUuids) {
         writeUuidArray(statusUuids.toArray(new UUID[statusUuids.size()]));
+    }
+
+
+    public void writeVertexId(VertexId vertexId) {
+        try {
+            writeLong(vertexId.mostSignificantBits());
+            writeLong(vertexId.leastSignificantBits());
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public void putPublicId(PublicId publicId) {
+        try {
+            writeInt(publicId.uuidCount());
+            publicId.forEach(uuidPart -> {
+                try {
+                    writeLong(uuidPart);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public void putPublicId(Component component) {
+        putPublicId(component.publicId());
     }
 
     public void writeObjectArray(Object[] fields) {
@@ -254,4 +314,21 @@ public class TinkarOutput extends DataOutputStream {
     public void writeObjectList(List<Object> fields) {
         writeObjectArray(fields.toArray());
     }
+
+    public void putInt(int v) {
+        try {
+            writeInt(v);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public void putLong(long v) {
+        try {
+            writeLong(v);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
 }

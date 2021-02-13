@@ -12,6 +12,9 @@ import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.UUID;
 
+/**
+ * TODO: https://vividcode.io/package-java-applications-using-jpackage-in-jdk-14/
+ */
 public class TinkarLauncher extends Launcher {
     public static final Logger LOG = LogManager.getLogger();
 

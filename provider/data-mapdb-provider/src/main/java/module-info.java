@@ -4,7 +4,9 @@
  * and open the template in the editor.
  */
 
-import org.hl7.tinkar.provider.chronology.mapdb.MapDbProvider;
+import org.hl7.tinkar.common.provider.chronology.mapdb.MapDbProvider;
+import org.hl7.tinkar.common.service.PrimitiveDataService;
+
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
 module org.hl7.tinkar.provider.chronology.mapdb {
     requires java.base;
@@ -14,6 +16,6 @@ module org.hl7.tinkar.provider.chronology.mapdb {
     requires mapdb;
     requires org.apache.logging.log4j;
     requires org.eclipse.collections.impl;
-    provides org.hl7.tinkar.service.PrimitiveDataService
+    provides PrimitiveDataService
             with MapDbProvider;
 }

@@ -18,17 +18,16 @@ package org.hl7.tinkar.lombok.dto;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.experimental.Accessors;
-import org.eclipse.collections.api.list.ImmutableList;
+import org.hl7.tinkar.common.util.id.PublicId;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.component.FieldDefinition;
 import org.hl7.tinkar.lombok.dto.binary.*;
-import org.hl7.tinkar.lombok.dto.json.ComponentFieldForJson;
 import org.hl7.tinkar.lombok.dto.json.JSONObject;
-import org.hl7.tinkar.lombok.dto.json.JsonChronologyUnmarshaler;
 import org.hl7.tinkar.lombok.dto.json.JsonMarshalable;
+import org.hl7.tinkar.lombok.dto.json.ComponentFieldForJson;
+import org.hl7.tinkar.lombok.dto.json.JsonChronologyUnmarshaler;
 
 import java.io.Writer;
-import java.util.UUID;
 
 @Value
 @Accessors(fluent = true)
@@ -37,55 +36,55 @@ public class FieldDefinitionDTO
 
     private static final int localMarshalVersion = 3;
 
-    @NonNull private final ImmutableList<UUID> dataTypeUuids;
-    @NonNull private final ImmutableList<UUID>  purposeUuids;
-    @NonNull private final ImmutableList<UUID> identityUuids;
+    @NonNull private final PublicId dataTypePublicId;
+    @NonNull private final PublicId purposePublicId;
+    @NonNull private final PublicId meaningPublicId;
 
 
     public static FieldDefinitionDTO make(FieldDefinition fieldDefinition) {
-        return new FieldDefinitionDTO(fieldDefinition.getDataType().componentUuids(),
-                fieldDefinition.getPurpose().componentUuids(), fieldDefinition.getIdentity().componentUuids());
+        return new FieldDefinitionDTO(fieldDefinition.dataType().publicId(),
+                fieldDefinition.purpose().publicId(), fieldDefinition.meaning().publicId());
     }
 
     @Override
-    public Concept getDataType() {
-        return new ConceptDTO(dataTypeUuids);
+    public Concept dataType() {
+        return new ConceptDTO(dataTypePublicId);
     }
 
     @Override
-    public Concept getPurpose() {
-        return new ConceptDTO(purposeUuids);
+    public Concept purpose() {
+        return new ConceptDTO(purposePublicId);
     }
 
     @Override
-    public Concept getIdentity() {
-        return new ConceptDTO(identityUuids);
+    public Concept meaning() {
+        return new ConceptDTO(meaningPublicId);
     }
 
     @Override
     public void jsonMarshal(Writer writer) {
         final JSONObject json = new JSONObject();
         json.put(ComponentFieldForJson.CLASS, this.getClass().getCanonicalName());
-        json.put(ComponentFieldForJson.DATATYPE_UUIDS, dataTypeUuids);
-        json.put(ComponentFieldForJson.PURPOSE_UUIDS, purposeUuids);
-        json.put(ComponentFieldForJson.USE_UUIDS, identityUuids);
+        json.put(ComponentFieldForJson.DATATYPE_PUBLIC_ID, dataTypePublicId);
+        json.put(ComponentFieldForJson.PURPOSE_PUBLIC_ID, purposePublicId);
+        json.put(ComponentFieldForJson.MEANING_PUBLIC_ID, meaningPublicId);
         json.writeJSONString(writer);
     }
 
     @JsonChronologyUnmarshaler
     public static FieldDefinitionDTO make(JSONObject jsonObject) {
-        return new FieldDefinitionDTO(jsonObject.asImmutableUuidList(ComponentFieldForJson.DATATYPE_UUIDS),
-                jsonObject.asImmutableUuidList(ComponentFieldForJson.PURPOSE_UUIDS),
-                jsonObject.asImmutableUuidList(ComponentFieldForJson.USE_UUIDS));
+        return new FieldDefinitionDTO(jsonObject.asPublicId(ComponentFieldForJson.DATATYPE_PUBLIC_ID),
+                jsonObject.asPublicId(ComponentFieldForJson.PURPOSE_PUBLIC_ID),
+                jsonObject.asPublicId(ComponentFieldForJson.MEANING_PUBLIC_ID));
     }
 
     @Unmarshaler
     public static FieldDefinitionDTO make(TinkarInput in) {
         if (localMarshalVersion == in.getTinkerFormatVersion()) {
             return new FieldDefinitionDTO(
-                    in.readImmutableUuidList(),
-                    in.readImmutableUuidList(),
-                    in.readImmutableUuidList());
+                    in.getPublicId(),
+                    in.getPublicId(),
+                    in.getPublicId());
         } else {
             throw new UnsupportedOperationException("Unsupported version: " + in.getTinkerFormatVersion());
         }
@@ -94,8 +93,8 @@ public class FieldDefinitionDTO
     @Override
     @Marshaler
     public void marshal(TinkarOutput out) {
-        out.writeUuidList(dataTypeUuids);
-        out.writeUuidList(purposeUuids);
-        out.writeUuidList(identityUuids);
+        out.putPublicId(dataTypePublicId);
+        out.putPublicId(purposePublicId);
+        out.putPublicId(meaningPublicId);
     }
 }

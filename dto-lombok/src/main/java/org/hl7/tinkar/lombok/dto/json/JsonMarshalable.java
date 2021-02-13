@@ -16,6 +16,7 @@
 package org.hl7.tinkar.lombok.dto.json;
 
 import org.eclipse.collections.api.list.ImmutableList;
+import org.hl7.tinkar.common.util.id.PublicId;
 import org.hl7.tinkar.lombok.dto.binary.MarshalExceptionUnchecked;
 import org.hl7.tinkar.lombok.dto.binary.Marshalable;
 import org.hl7.tinkar.lombok.dto.json.parser.ParseException;
@@ -61,13 +62,13 @@ public interface JsonMarshalable {
     }
 
 
-    static <T> T makeSemanticVersion(Class<T> objectClass, String makerString, ImmutableList<UUID> componentUuidList,
-                                     ImmutableList<UUID> definitionForSemanticUuids, ImmutableList<UUID> referencedComponentUuids) {
+    static <T> T makeSemanticVersion(Class<T> objectClass, String makerString, PublicId componentPublicId,
+                                     PublicId patterenForSemanticPublicId, PublicId referencedComponentPublicId) {
         try {
             JSONObject jsonObject = (JSONObject) JSONValue.parse(makerString);
             return Marshalable.unmarshal(objectClass, JsonSemanticVersionUnmarshaler.class,
-                    new Object[]{ jsonObject, componentUuidList,
-                            definitionForSemanticUuids, referencedComponentUuids});
+                    new Object[]{ jsonObject, componentPublicId,
+                            patterenForSemanticPublicId, referencedComponentPublicId});
 
         } catch (ParseException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
             throw new MarshalExceptionUnchecked(ex);
@@ -75,11 +76,11 @@ public interface JsonMarshalable {
     }
 
 
-    static <T> T makeVersion(Class<T> objectClass, String makerString, ImmutableList<UUID> componentUuidList ) {
+    static <T> T makeVersion(Class<T> objectClass, String makerString, PublicId componentPublicId ) {
         try {
             JSONObject jsonObject = (JSONObject) JSONValue.parse(makerString);
             return Marshalable.unmarshal(objectClass, JsonVersionUnmarshaler.class,
-                    new Object[]{ jsonObject, componentUuidList });
+                    new Object[]{ jsonObject, componentPublicId });
 
         } catch (ParseException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
             throw new MarshalExceptionUnchecked(ex);

@@ -14,11 +14,7 @@
  * limitations under the License.
  */package org.hl7.tinkar.component;
 
-import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.MutableList;
-
-import java.time.Instant;
 
 /**
  *

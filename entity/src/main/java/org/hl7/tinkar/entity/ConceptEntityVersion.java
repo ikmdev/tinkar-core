@@ -16,7 +16,7 @@ public class ConceptEntityVersion
     }
 
     @Override
-    protected void finishVersionFill(ByteBuf readBuf) {
+    protected void finishVersionFill(ByteBuf readBuf, byte formatVersion) {
         // no additional fields to read.
     }
 
@@ -30,9 +30,9 @@ public class ConceptEntityVersion
         // no additional fields to write.
     }
 
-    public static ConceptEntityVersion make(ConceptEntity conceptEntity, ByteBuf readBuf) {
+    public static ConceptEntityVersion make(ConceptEntity conceptEntity, ByteBuf readBuf, byte formatVersion) {
         ConceptEntityVersion version = new ConceptEntityVersion();
-        version.fill(conceptEntity, readBuf);
+        version.fill(conceptEntity, readBuf, formatVersion);
         return version;
     }
 

@@ -15,20 +15,22 @@
  */
 package org.hl7.tinkar.lombok.dto.json;
 
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.factory.Maps;
+import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.map.ImmutableMap;
+import org.eclipse.collections.api.map.MutableMap;
+import org.eclipse.collections.impl.list.mutable.primitive.ByteArrayList;
+import org.hl7.tinkar.common.util.id.PublicId;
+import org.hl7.tinkar.common.util.id.PublicIds;
+import org.hl7.tinkar.lombok.dto.*;
+
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.time.Instant;
 import java.util.*;
-
-import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.list.ImmutableList;
-import org.hl7.tinkar.lombok.dto.ConceptVersionDTO;
-import org.hl7.tinkar.lombok.dto.DefinitionForSemanticVersionDTO;
-
-import org.hl7.tinkar.lombok.dto.FieldDefinitionDTO;
-import org.hl7.tinkar.lombok.dto.SemanticVersionDTO;
 
 /**
  * Original obtained from: https://github.com/fangyidong/json-simple under
@@ -45,6 +47,7 @@ public class JSONObject extends HashMap<String, Object>
         implements Map<String, Object>, JSONAware, JSONStreamAware {
 
     private static final long serialVersionUID = -503443796854799292L;
+    public static final String DATA_APPLICATION_OCTET_STREAM_BASE_64 = "data:application/octet-stream;base64,";
 
     public JSONObject() {
         super();
@@ -165,6 +168,11 @@ public class JSONObject extends HashMap<String, Object>
         return Lists.immutable.of(asUuidArray(key));
     }
 
+    public PublicId asPublicId(String key) {
+        UUID[] uuids = asUuidArray(key);
+        return PublicIds.of(uuids);
+    }
+
     public UUID[] asUuidArray(String key) {
         JSONArray jsonArray = (JSONArray) get(key);
         UUID[] array = new UUID[jsonArray.size()];
@@ -187,20 +195,23 @@ public class JSONObject extends HashMap<String, Object>
         return Instant.parse((String) get(key));
     }
 
-    public ImmutableList<ConceptVersionDTO> asConceptVersionList(String key, ImmutableList<UUID> componentUuids) {
+    public ImmutableList<ConceptVersionDTO> asConceptVersionList(String key, PublicId publicId) {
         JSONArray jsonArray = (JSONArray) get(key);
         ConceptVersionDTO[] array = new ConceptVersionDTO[jsonArray.size()];
         for (int i = 0; i < array.length; i++) {
-            array[i] = ConceptVersionDTO.make((JSONObject) jsonArray.get(i), componentUuids);
+            array[i] = ConceptVersionDTO.make((JSONObject) jsonArray.get(i), publicId);
         }
         return Lists.immutable.of(array);
     }
+    public ConceptDTO asConcept(String key) {
+        return ConceptDTO.make((JSONObject) get(key));
+    }
 
-    public ImmutableList<DefinitionForSemanticVersionDTO> asDefinitionForSemanticVersionList(String key, ImmutableList<UUID> componentUuids) {
+    public ImmutableList<PatternForSemanticVersionDTO> asDefinitionForSemanticVersionList(String key, PublicId componentPublicId) {
         JSONArray jsonArray = (JSONArray) get(key);
-        DefinitionForSemanticVersionDTO[] array = new DefinitionForSemanticVersionDTO[jsonArray.size()];
+        PatternForSemanticVersionDTO[] array = new PatternForSemanticVersionDTO[jsonArray.size()];
         for (int i = 0; i < array.length; i++) {
-            array[i] = DefinitionForSemanticVersionDTO.make((JSONObject) jsonArray.get(i), componentUuids);
+            array[i] = PatternForSemanticVersionDTO.make((JSONObject) jsonArray.get(i), componentPublicId);
         }
         return Lists.immutable.of(array);
     }
@@ -230,10 +241,14 @@ public class JSONObject extends HashMap<String, Object>
     }
 
     private void handleJsonObject(Object[] array, int i, JSONObject jsonObject) {
+        array[i] = unmarshalJsonObject(jsonObject);
+    }
+
+    private <T extends Object> T unmarshalJsonObject(JSONObject jsonObject) {
         if (jsonObject.containsKey(ComponentFieldForJson.CLASS)) {
             try {
                 String className = (String) jsonObject.get(ComponentFieldForJson.CLASS);
-                array[i] = JsonMarshalable.make(Class.forName(className), jsonObject.toJSONString());
+                return (T) JsonMarshalable.make(Class.forName(className), jsonObject.toJSONString());
             } catch (ClassNotFoundException e) {
                 throw new UnsupportedOperationException("JSON object has no class... " + jsonObject, e);
             }
@@ -242,16 +257,38 @@ public class JSONObject extends HashMap<String, Object>
         }
     }
 
-    public ImmutableList<SemanticVersionDTO> asSemanticVersionList(String key, ImmutableList<UUID> componentUuids,
-                                                                   ImmutableList<UUID> definitionForSemanticUuids,
-                                                                   ImmutableList<UUID> referencedComponentUuids) {
+    public ImmutableList<SemanticVersionDTO> asSemanticVersionList(String key, PublicId componentPublicId,
+                                                                   PublicId definitionForSemanticPublicId,
+                                                                   PublicId referencedComponentPublicId) {
         JSONArray jsonArray = (JSONArray) get(key);
         SemanticVersionDTO[] array = new SemanticVersionDTO[jsonArray.size()];
         for (int i = 0; i < array.length; i++) {
-            array[i] = SemanticVersionDTO.make((JSONObject) jsonArray.get(i), componentUuids,
-                    definitionForSemanticUuids,
-                    referencedComponentUuids);
+            array[i] = SemanticVersionDTO.make((JSONObject) jsonArray.get(i), componentPublicId,
+                    definitionForSemanticPublicId,
+                    referencedComponentPublicId);
         }
         return Lists.immutable.of(array);
     }
+
+
+    public ImmutableMap<ConceptDTO, Object> getConceptObjectMap(String key) {
+        JSONObject map = (JSONObject) get(key);
+        MutableMap<ConceptDTO, Object> conceptObjectMutableMap = Maps.mutable.withInitialCapacity(map.size());
+        map.forEach((s, o) -> {
+            if (o instanceof JSONObject) {
+                JSONObject jo = (JSONObject) o;
+                o = unmarshalJsonObject(jo);
+            } else if (o instanceof String) {
+                String oStr = (String) o;
+                if (oStr.startsWith(DATA_APPLICATION_OCTET_STREAM_BASE_64)) {
+                    String base64Str = oStr.substring(DATA_APPLICATION_OCTET_STREAM_BASE_64.length());
+                    byte[] base64Decoded = Base64.getDecoder().decode(base64Str);
+                    o = new ByteArrayList(base64Decoded);
+                }
+            }
+            conceptObjectMutableMap.put(ConceptDTO.make(s), o);
+        });
+        return conceptObjectMutableMap.toImmutable();
+    }
+
 }

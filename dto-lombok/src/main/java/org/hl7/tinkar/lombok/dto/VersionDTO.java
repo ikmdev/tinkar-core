@@ -4,11 +4,10 @@ import lombok.NonNull;
 import lombok.Value;
 import lombok.experimental.Accessors;
 import lombok.experimental.NonFinal;
-import org.eclipse.collections.api.list.ImmutableList;
+import org.hl7.tinkar.common.util.id.PublicId;
 import org.hl7.tinkar.component.Version;
 
 import java.util.Objects;
-import java.util.UUID;
 
 
 @Value
@@ -17,12 +16,12 @@ import java.util.UUID;
 public class VersionDTO
         implements DTO, Version {
     @NonNull
-    final protected ImmutableList<UUID> componentUuids;
+    final protected PublicId publicId;
     @NonNull
     final protected StampDTO stamp;
 
-    public VersionDTO(@NonNull ImmutableList<UUID> componentUuids, @NonNull StampDTO stamp) {
-        this.componentUuids = componentUuids;
+    public VersionDTO(@NonNull PublicId publicId, @NonNull StampDTO stamp) {
+        this.publicId = publicId;
         this.stamp = stamp;
     }
 
@@ -31,11 +30,11 @@ public class VersionDTO
         if (this == o) return true;
         if (!(o instanceof VersionDTO)) return false;
         VersionDTO that = (VersionDTO) o;
-        return componentUuids.equals(that.componentUuids) && stamp.equals(that.stamp);
+        return publicId.equals(that.publicId) && stamp.equals(that.stamp);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(componentUuids, stamp);
+        return Objects.hash(publicId, stamp);
     }
 }

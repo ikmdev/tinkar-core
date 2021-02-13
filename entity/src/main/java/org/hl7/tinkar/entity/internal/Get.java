@@ -1,7 +1,7 @@
 package org.hl7.tinkar.entity.internal;
 
 import org.hl7.tinkar.entity.EntityService;
-import org.hl7.tinkar.service.CachingService;
+import org.hl7.tinkar.common.service.CachingService;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;

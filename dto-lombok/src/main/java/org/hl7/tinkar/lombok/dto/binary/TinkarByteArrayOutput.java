@@ -17,7 +17,6 @@ package org.hl7.tinkar.lombok.dto.binary;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
 
 /**
  *

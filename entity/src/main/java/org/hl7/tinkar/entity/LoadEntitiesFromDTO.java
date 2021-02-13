@@ -4,11 +4,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.lombok.dto.ConceptChronologyDTO;
-import org.hl7.tinkar.lombok.dto.DefinitionForSemanticChronologyDTO;
 import org.hl7.tinkar.lombok.dto.FieldDataType;
-import org.hl7.tinkar.lombok.dto.SemanticChronologyDTO;
+import org.hl7.tinkar.lombok.dto.PatternForSemanticChronologyDTO;
 import org.hl7.tinkar.lombok.dto.binary.TinkarInput;
-import org.hl7.tinkar.util.time.Stopwatch;
+import org.hl7.tinkar.common.util.time.Stopwatch;
+import org.hl7.tinkar.lombok.dto.SemanticChronologyDTO;
 
 import java.io.EOFException;
 import java.io.File;
@@ -52,8 +52,8 @@ public class LoadEntitiesFromDTO {
                             importCount.incrementAndGet();
                         }
                         break;
-                        case DEFINITION_FOR_SEMANTIC_CHRONOLOGY: {
-                            DefinitionForSemanticChronologyDTO dsDTO = DefinitionForSemanticChronologyDTO.make(tinkIn);
+                        case PATTERN_FOR_SEMANTIC_CHRONOLOGY: {
+                            PatternForSemanticChronologyDTO dsDTO = PatternForSemanticChronologyDTO.make(tinkIn);
                             Get.entityService().putChronology(dsDTO);
                             importCount.incrementAndGet();
                         }

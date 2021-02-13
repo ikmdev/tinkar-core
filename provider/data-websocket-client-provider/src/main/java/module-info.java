@@ -4,6 +4,8 @@
  * and open the template in the editor.
  */
 
+import org.hl7.tinkar.entity.EntityService;
+
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
 module org.hl7.tinkar.provider.websocket.client {
     requires com.google.auto.service;
@@ -23,6 +25,7 @@ module org.hl7.tinkar.provider.websocket.client {
     requires org.hl7.tinkar.test;
     requires java.net.http;
     requires org.hl7.tinkar.entity;
-    opens org.hl7.tinkar.provider.websocket.client
+    uses EntityService;
+    opens org.hl7.tinkar.common.provider.websocket.client
             to io.activej.inject;
 }

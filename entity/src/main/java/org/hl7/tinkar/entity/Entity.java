@@ -3,32 +3,26 @@ package org.hl7.tinkar.entity;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
-import org.eclipse.collections.api.set.MutableSet;
+import org.hl7.tinkar.common.util.id.PublicId;
 import org.hl7.tinkar.component.Chronology;
 import org.hl7.tinkar.component.Component;
 import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.lombok.dto.FieldDataType;
-import org.hl7.tinkar.util.UuidUtil;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.util.Arrays;
 import java.util.UUID;
+import java.util.function.LongConsumer;
 
-public abstract class Entity<T extends EntityVersion>
-        implements Chronology<T>, Component {
+public abstract class Entity<T extends EntityVersion> extends PublicIdForEntity
+        implements Chronology<T>, Component, ComponentWithNid {
 
+    public static final byte ENTITY_FORMAT_VERSION = 1;
     protected int nid;
 
     // TODO this should be the definition?
-    protected int setNid;
-
-    protected long[] uuidLongArray;
-
+    protected int definitionNid;
     protected final MutableList<T> versions = Lists.mutable.empty();
 
     protected Entity() {
@@ -36,41 +30,67 @@ public abstract class Entity<T extends EntityVersion>
 
     protected int entitySize() {
         int size = 12 + subclassFieldBytesSize();
-        size += 4 + 8 * uuidLongArray.length;
+        size += 4 + 16; //4 = UUID count, 16 = primordial uuid bytes.
+        if (additionalUuidLongs != null) {
+            size += 8 * additionalUuidLongs.length;
+        }
         for (T version: versions) {
             size += version.versionSize();
         }
-        return size;
+        return size + 32; // extra 32 to make it less brittle.
     }
 
     protected abstract int subclassFieldBytesSize();
 
 
-    protected final void fill(ByteBuf readBuf) {
+    protected final void fill(ByteBuf readBuf, byte entityFormatVersion) {
+        if (entityFormatVersion != ENTITY_FORMAT_VERSION) {
+            throw new IllegalStateException("Unsupported entity format version: " + entityFormatVersion);
+        }
         this.nid = readBuf.readInt();
-        this.setNid = readBuf.readInt();
-        this.uuidLongArray = new long[readBuf.readInt()];
-        for (int i = 0; i < this.uuidLongArray.length; i++) {
-            this.uuidLongArray[i] = readBuf.readLong();
+        this.definitionNid = readBuf.readInt();
+        this.mostSignificantBits = readBuf.readLong();
+        this.leastSignificantBits = readBuf.readLong();
+
+        int additionalUuidLongCount = readBuf.readByte();
+        if (additionalUuidLongCount > 0) {
+            this.additionalUuidLongs = new long[additionalUuidLongCount];
+            for (int i = 0; i < this.additionalUuidLongs.length; i++) {
+                this.additionalUuidLongs[i] = readBuf.readLong();
+            }
+        } else {
+            this.additionalUuidLongs = null;
         }
 
-        finishEntityRead(readBuf);
+        finishEntityRead(readBuf, entityFormatVersion);
         versions.clear();
         int versionCount = readBuf.readInt();
         for (int i = 0; i < versionCount; i++) {
-            readBuf.readInt(); // size of version array, not used here.
-            versions.add(makeVersion(readBuf));
+            versions.add(makeVersion(readBuf, entityFormatVersion));
         }
     }
 
-    protected abstract void finishEntityRead(ByteBuf readBuf);
+    protected abstract void finishEntityRead(ByteBuf readBuf, byte formatVersion);
 
     protected abstract void finishEntityRead(Chronology<Version> chronology);
 
     protected final void fill(Chronology<Version> chronology) {
-        this.nid = Get.entityService().nidForUuids(chronology.componentUuids());
-        this.setNid = Get.entityService().nidForUuids(chronology.chronologySet().componentUuids());
-        this.uuidLongArray = UuidUtil.asArray(chronology.componentUuids());
+        this.nid = Get.entityService().nidForPublicId(chronology.publicId());
+        this.definitionNid = Get.entityService().nidForPublicId(chronology.chronologySet().publicId());
+        ImmutableList<UUID> componentUuids = chronology.publicId().asUuidList();
+        UUID firstUuid = componentUuids.get(0);
+
+        this.mostSignificantBits = firstUuid.getMostSignificantBits();
+        this.leastSignificantBits = firstUuid.getLeastSignificantBits();
+        if (componentUuids.size() > 1) {
+            this.additionalUuidLongs = new long[(componentUuids.size() - 1) * 2];
+            for (int i = 0; i < additionalUuidLongs.length; i+=2) {
+                int listIndex = i * 2;
+                this.additionalUuidLongs[i] = componentUuids.get(listIndex).getMostSignificantBits();
+                this.additionalUuidLongs[i+1] = componentUuids.get(listIndex).getLeastSignificantBits();
+            }
+        }
+        finishEntityRead(chronology);
         versions.clear();
         for (Version version: chronology.versions()) {
             versions.add(makeVersion(version));
@@ -81,13 +101,20 @@ public abstract class Entity<T extends EntityVersion>
 
     public final byte[] getBytes() {
 
-        ByteBuf byteBuf = ByteBufPool.allocate(entitySize());
+        ByteBuf byteBuf = ByteBufPool.allocate(entitySize() + 1); // one byte for version...
+        byteBuf.writeByte(ENTITY_FORMAT_VERSION);
         byteBuf.writeByte(dataType().token); //ensure that the chronicle byte array sorts first.
         byteBuf.writeInt(nid);
-        byteBuf.writeInt(setNid);
-        byteBuf.writeInt(this.uuidLongArray.length);
-        for (int i = 0; i < this.uuidLongArray.length; i++) {
-            byteBuf.writeLong(this.uuidLongArray[i]);
+        byteBuf.writeInt(definitionNid);
+        byteBuf.writeLong(mostSignificantBits);
+        byteBuf.writeLong(leastSignificantBits);
+        if (this.additionalUuidLongs == null) {
+            byteBuf.writeByte((byte) 0);
+        } else {
+            byteBuf.writeByte((byte) this.additionalUuidLongs.length);
+            for (int i = 0; i < this.additionalUuidLongs.length; i++) {
+                byteBuf.writeLong(this.additionalUuidLongs[i]);
+            }
         }
         finishEntityWrite(byteBuf);
         byteBuf.writeInt(versions.size());
@@ -115,7 +142,7 @@ public abstract class Entity<T extends EntityVersion>
 
     protected abstract void finishEntityWrite(ByteBuf byteBuf);
 
-    protected abstract T makeVersion(ByteBuf readBuf);
+    protected abstract T makeVersion(ByteBuf readBuf, byte formatVersion);
 
     protected abstract T makeVersion(Version version);
 
@@ -134,16 +161,16 @@ public abstract class Entity<T extends EntityVersion>
     }
 
     @Override
-    public ImmutableList<UUID> componentUuids() {
-        return UuidUtil.toList(this.uuidLongArray);
+    public PublicId publicId() {
+        return this;
     }
 
     public int nid() {
         return nid;
     }
 
-    public int setNid() {
-        return setNid;
+    public int definitionNid() {
+        return definitionNid;
     }
 
 }

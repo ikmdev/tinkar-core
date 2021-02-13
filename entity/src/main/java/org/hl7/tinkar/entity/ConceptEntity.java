@@ -1,7 +1,10 @@
 package org.hl7.tinkar.entity;
 
 import io.activej.bytebuf.ByteBuf;
-import org.hl7.tinkar.component.*;
+import org.hl7.tinkar.component.Chronology;
+import org.hl7.tinkar.component.ConceptChronology;
+import org.hl7.tinkar.component.ConceptVersion;
+import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.lombok.dto.FieldDataType;
 
 public final class ConceptEntity
@@ -17,8 +20,8 @@ public final class ConceptEntity
     }
 
     @Override
-    protected ConceptEntityVersion makeVersion(ByteBuf readBuf) {
-        return ConceptEntityVersion.make(this, readBuf);
+    protected ConceptEntityVersion makeVersion(ByteBuf readBuf, byte formatVersion) {
+        return ConceptEntityVersion.make(this, readBuf, formatVersion);
     }
 
     @Override
@@ -37,7 +40,7 @@ public final class ConceptEntity
     }
 
     @Override
-    protected void finishEntityRead(ByteBuf readBuf) {
+    protected void finishEntityRead(ByteBuf readBuf, byte formatVersion) {
         // no extra fields to read.
     }
 
@@ -46,9 +49,9 @@ public final class ConceptEntity
         // no extra fields to read.
     }
 
-    public static ConceptEntity make(ByteBuf readBuf) {
+    public static ConceptEntity make(ByteBuf readBuf, byte entityFormatVersion) {
         ConceptEntity conceptEntity = new ConceptEntity();
-        conceptEntity.fill(readBuf);
+        conceptEntity.fill(readBuf, entityFormatVersion);
         return conceptEntity;
     }
 

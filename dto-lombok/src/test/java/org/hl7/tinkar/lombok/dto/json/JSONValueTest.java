@@ -15,6 +15,8 @@
  */
 package org.hl7.tinkar.lombok.dto.json;
 
+import org.hl7.tinkar.lombok.dto.json.JSONObject;
+import org.hl7.tinkar.lombok.dto.json.JSONValue;
 import org.junit.jupiter.api.Assertions;
 
 import java.io.IOException;
@@ -26,10 +28,10 @@ public class JSONValueTest {
 
     @org.junit.jupiter.api.Test
     public void testByteArrayToString() throws IOException {
-        Assertions.assertEquals("null", JSONValue.toJSONString((byte[]) null));
-        assertEquals("[]", JSONValue.toJSONString(new byte[0]));
-        assertEquals("[12]", JSONValue.toJSONString(new byte[]{12}));
-        assertEquals("[-7,22,86,-99]", JSONValue.toJSONString(new byte[]{-7, 22, 86, -99}));
+        assertEquals("null", JSONValue.toJSONString((byte[]) null));
+        assertEquals("\"" + JSONObject.DATA_APPLICATION_OCTET_STREAM_BASE_64 + "\"", JSONValue.toJSONString(new byte[0]));
+        assertEquals("\"" + JSONObject.DATA_APPLICATION_OCTET_STREAM_BASE_64 + "DA==\"", JSONValue.toJSONString(new byte[]{12}));
+        assertEquals("\"" + JSONObject.DATA_APPLICATION_OCTET_STREAM_BASE_64 + "+RZWnQ==\"", JSONValue.toJSONString(new byte[]{-7, 22, 86, -99}));
 
         StringWriter writer;
 
@@ -39,15 +41,15 @@ public class JSONValueTest {
 
         writer = new StringWriter();
         JSONValue.writeJSONString(new byte[0], writer);
-        assertEquals("[]", writer.toString());
+        Assertions.assertEquals("\"" + JSONObject.DATA_APPLICATION_OCTET_STREAM_BASE_64 + "\"", writer.toString());
 
         writer = new StringWriter();
         JSONValue.writeJSONString(new byte[]{12}, writer);
-        assertEquals("[12]", writer.toString());
+        Assertions.assertEquals("\"" + JSONObject.DATA_APPLICATION_OCTET_STREAM_BASE_64 + "DA==\"", writer.toString());
 
         writer = new StringWriter();
         JSONValue.writeJSONString(new byte[]{-7, 22, 86, -99}, writer);
-        assertEquals("[-7,22,86,-99]", writer.toString());
+        Assertions.assertEquals("\"" + JSONObject.DATA_APPLICATION_OCTET_STREAM_BASE_64 + "+RZWnQ==\"", writer.toString());
     }
 
     @org.junit.jupiter.api.Test

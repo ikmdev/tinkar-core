@@ -2,13 +2,11 @@ package org.hl7.tinkar.entity;
 
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
-import org.eclipse.collections.api.list.ImmutableList;
+import org.hl7.tinkar.common.util.id.PublicId;
 import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.lombok.dto.FieldDataType;
-
-import java.util.UUID;
 
 public abstract class EntityVersion
         implements Version {
@@ -19,18 +17,23 @@ public abstract class EntityVersion
 
     public abstract FieldDataType dataType();
 
-    protected final void fill(Entity chronology, ByteBuf readBuf) {
+    protected final void fill(Entity chronology, ByteBuf readBuf, byte formatVersion) {
         this.chronology = chronology;
+        int versionArraySize = readBuf.readInt();
+        byte token = readBuf.readByte();
+        if (dataType().token != token) {
+            throw new IllegalStateException("Wrong token for type: " + token);
+        }
         this.stampNid = readBuf.readInt();
-        finishVersionFill(readBuf);
+        finishVersionFill(readBuf, formatVersion);
     }
 
     protected final void fill(Entity chronology, Version version) {
         this.chronology = chronology;
-        this.stampNid = Get.entityService().nidForUuids(version.stamp().componentUuids());
+        this.stampNid = Get.entityService().nidForPublicId(version.stamp());
     }
 
-    protected abstract void finishVersionFill(ByteBuf readBuf);
+    protected abstract void finishVersionFill(ByteBuf readBuf, byte formatVersion);
     
     protected int versionSize() {
         return 9 + subclassFieldBytesSize(); // token, stamp, field count
@@ -49,8 +52,8 @@ public abstract class EntityVersion
     protected abstract void writeVersionFields(ByteBuf writeBuf);
 
     @Override
-    public ImmutableList<UUID> componentUuids() {
-        return chronology.componentUuids();
+    public PublicId publicId() {
+        return chronology.publicId();
     }
 
     @Override

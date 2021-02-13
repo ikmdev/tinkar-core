@@ -4,7 +4,8 @@
  * and open the template in the editor.
  */
 
-import org.hl7.tinkar.provider.chronology.openhft.OpenHFTProvider;
+import org.hl7.tinkar.common.provider.chronology.openhft.OpenHFTProvider;
+import org.hl7.tinkar.common.service.PrimitiveDataService;
 
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
 module org.hl7.tinkar.provider.chronology.openhft {
@@ -22,6 +23,6 @@ module org.hl7.tinkar.provider.chronology.openhft {
     requires org.hl7.tinkar.entity;
     requires chronicle.bytes;
     requires jdk.unsupported;
-    provides org.hl7.tinkar.service.PrimitiveDataService
+    provides PrimitiveDataService
             with OpenHFTProvider;
 }

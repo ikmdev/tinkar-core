@@ -3,7 +3,7 @@ package org.hl7.tinkar.entity;
 import io.activej.bytebuf.ByteBuf;
 import org.hl7.tinkar.component.Chronology;
 import org.hl7.tinkar.component.ConceptChronology;
-import org.hl7.tinkar.component.DefinitionForSemanticChronology;
+import org.hl7.tinkar.component.PatternForSemanticChronology;
 import org.hl7.tinkar.component.SemanticChronology;
 import org.hl7.tinkar.lombok.dto.FieldDataType;
 import org.hl7.tinkar.lombok.dto.StampDTO;
@@ -13,33 +13,42 @@ public class EntityFactory {
     public static Entity make(Chronology chronology) {
         if (chronology instanceof ConceptChronology) {
             ConceptChronology conceptChronology = (ConceptChronology) chronology;
-            return ConceptEntity.make(conceptChronology);
+            ConceptEntity conceptEntity = ConceptEntity.make(conceptChronology);
+            return conceptEntity;
         } else if (chronology instanceof SemanticChronology) {
-            SemanticChronology conceptChronology = (SemanticChronology) chronology;
-            return SemanticEntity.make(conceptChronology);
-        } else if (chronology instanceof DefinitionForSemanticChronology) {
-            DefinitionForSemanticChronology definitionForSemanticChronology = (DefinitionForSemanticChronology) chronology;
-            return DefinitionForSemanticEntity.make(definitionForSemanticChronology);
+            SemanticChronology semanticChronology = (SemanticChronology) chronology;
+            SemanticEntity semanticEntity =  SemanticEntity.make(semanticChronology);
+           return semanticEntity;
+        } else if (chronology instanceof PatternForSemanticChronology) {
+            PatternForSemanticChronology definitionForSemanticChronology = (PatternForSemanticChronology) chronology;
+            PatternForSemanticEntity patternForSemanticEntity = PatternForSemanticEntity.make(definitionForSemanticChronology);
+            return patternForSemanticEntity;
+
         }
         throw new UnsupportedOperationException("Can't convert: " + chronology);
     }
 
     public static <T extends Entity<V>, V extends EntityVersion> T make(byte[] data) {
-        return make(ByteBuf.wrapForReading(data));
+        ByteBuf buf = ByteBuf.wrapForReading(data);
+        // bytes starts with number of arrays (int = 4 bytes), then size of first array (int = 4 bytes), then type token, -1 since index starts at 0...
+        int numberOfArrays = buf.readInt();
+        int sizeOfFirstArray = buf.readInt();
+        byte formatVersion = buf.readByte();
+        return make(buf, formatVersion);
     }
 
-    public static <T extends Entity<V>, V extends EntityVersion> T make(ByteBuf readBuf) {
+    public static <T extends Entity<V>, V extends EntityVersion> T make(ByteBuf readBuf, byte entityFormatVersion) {
 
         FieldDataType fieldDataType = FieldDataType.fromToken(readBuf.readByte());
         switch (fieldDataType) {
             case CONCEPT_CHRONOLOGY:
-                return (T) ConceptEntity.make(readBuf);
+                return (T) ConceptEntity.make(readBuf, entityFormatVersion);
 
             case SEMANTIC_CHRONOLOGY:
-                return (T) SemanticEntity.make(readBuf);
+                return (T) SemanticEntity.make(readBuf, entityFormatVersion);
 
-            case DEFINITION_FOR_SEMANTIC_CHRONOLOGY:
-                return (T) DefinitionForSemanticEntity.make(readBuf);
+            case PATTERN_FOR_SEMANTIC_CHRONOLOGY:
+                return (T) PatternForSemanticEntity.make(readBuf, entityFormatVersion);
 
             default:
                 throw new UnsupportedOperationException("Can't handle fieldDataType: " + fieldDataType);

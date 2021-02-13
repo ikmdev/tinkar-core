@@ -12,6 +12,6 @@ module org.hl7.tinkar.collection {
     requires org.apache.logging.log4j;
     requires org.eclipse.collections.api;
     requires org.eclipse.collections.impl;
-    exports org.hl7.tinkar.collection;
+    exports org.hl7.tinkar.common.collection;
 }
 

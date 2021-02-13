@@ -22,18 +22,18 @@ import lombok.experimental.Accessors;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
+import org.hl7.tinkar.common.util.id.PublicId;
 import org.hl7.tinkar.component.Component;
-import org.hl7.tinkar.component.DefinitionForSemantic;
+import org.hl7.tinkar.component.PatternForSemantic;
 import org.hl7.tinkar.component.SemanticChronology;
 import org.hl7.tinkar.lombok.dto.binary.*;
-import org.hl7.tinkar.lombok.dto.json.ComponentFieldForJson;
 import org.hl7.tinkar.lombok.dto.json.JSONObject;
-import org.hl7.tinkar.lombok.dto.json.JsonChronologyUnmarshaler;
 import org.hl7.tinkar.lombok.dto.json.JsonMarshalable;
+import org.hl7.tinkar.lombok.dto.json.ComponentFieldForJson;
+import org.hl7.tinkar.lombok.dto.json.JsonChronologyUnmarshaler;
 
 import java.io.Writer;
 import java.util.Objects;
-import java.util.UUID;
 
 /**
  *
@@ -51,21 +51,21 @@ public class SemanticChronologyDTO
     @NonNull
     protected final ImmutableList<SemanticVersionDTO> semanticVersions;
 
-    public SemanticChronologyDTO(@NonNull ImmutableList<UUID> componentUuids,
-                                 @NonNull ImmutableList<UUID> definitionForSemanticUuids,
-                                 @NonNull ImmutableList<UUID> referencedComponentUuids,
+    public SemanticChronologyDTO(@NonNull PublicId componentUuids,
+                                 @NonNull PublicId definitionForSemanticUuids,
+                                 @NonNull PublicId referencedComponentUuids,
                                  @NonNull ImmutableList<SemanticVersionDTO> semanticVersions) {
         super(componentUuids, definitionForSemanticUuids, referencedComponentUuids);
         this.semanticVersions = semanticVersions;
     }
 
-    public SemanticChronologyDTO(ImmutableList<UUID> componentUuids,
-                                 DefinitionForSemantic definitionForSemantic,
+    public SemanticChronologyDTO(PublicId componentUuids,
+                                 PatternForSemantic patternForSemantic,
                                  Component referencedComponent,
                                  ImmutableList<SemanticVersionDTO> semanticVersions) {
         this(componentUuids,
-                definitionForSemantic.componentUuids(),
-                referencedComponent.componentUuids(),
+                patternForSemantic.publicId(),
+                referencedComponent.publicId(),
                 semanticVersions);
     }
 
@@ -88,54 +88,54 @@ public class SemanticChronologyDTO
         for (SemanticVersionDTO semanticVersion : semanticChronology.versions()) {
             changeSetVersions.add(SemanticVersionDTO.make(semanticVersion));
         }
-        return new SemanticChronologyDTO(semanticChronology.componentUuids(),
-                semanticChronology.definitionForSemantic(),
+        return new SemanticChronologyDTO(semanticChronology.publicId(),
+                semanticChronology.patternForSemantic(),
                 semanticChronology.referencedComponent(),
                 changeSetVersions.toImmutable());
     }
 
     @Override
     public Component referencedComponent() {
-        return new ComponentDTO(referencedComponentUuids);
+        return new ComponentDTO(referencedComponentPublicId);
     }
 
     @Override
-    public DefinitionForSemantic definitionForSemantic() {
-        return new DefinitionForSemanticDTO(definitionForSemanticUuids);
+    public PatternForSemantic patternForSemantic() {
+        return new PatternForSemanticDTO(definitionForSemanticPublicId);
     }
 
     @Override
     public void jsonMarshal(Writer writer) {
         final JSONObject json = new JSONObject();
         json.put(ComponentFieldForJson.CLASS, this.getClass().getCanonicalName());
-        json.put(ComponentFieldForJson.COMPONENT_UUIDS, componentUuids());
-        json.put(ComponentFieldForJson.DEFINITION_FOR_SEMANTIC_UUIDS, definitionForSemanticUuids);
-        json.put(ComponentFieldForJson.REFERENCED_COMPONENT_UUIDS, referencedComponentUuids);
+        json.put(ComponentFieldForJson.COMPONENT_PUBLIC_ID, publicId());
+        json.put(ComponentFieldForJson.PATTERN_FOR_SEMANTIC_PUBLIC_ID, definitionForSemanticPublicId);
+        json.put(ComponentFieldForJson.REFERENCED_COMPONENT_PUBLIC_ID, referencedComponentPublicId);
         json.put(ComponentFieldForJson.VERSIONS, semanticVersions);
         json.writeJSONString(writer);
     }
     
     @JsonChronologyUnmarshaler
     public static SemanticChronologyDTO make(JSONObject jsonObject) {
-        ImmutableList<UUID> componentUuids = jsonObject.asImmutableUuidList(ComponentFieldForJson.COMPONENT_UUIDS);
-        ImmutableList<UUID> definitionForSemanticUuids = jsonObject.asImmutableUuidList(ComponentFieldForJson.DEFINITION_FOR_SEMANTIC_UUIDS);
-        ImmutableList<UUID> referencedComponentUuids = jsonObject.asImmutableUuidList(ComponentFieldForJson.REFERENCED_COMPONENT_UUIDS);
-        return new SemanticChronologyDTO(componentUuids,
-                definitionForSemanticUuids,
-                referencedComponentUuids,
+        PublicId componentPublicId = jsonObject.asPublicId(ComponentFieldForJson.COMPONENT_PUBLIC_ID);
+        PublicId definitionForSemanticPublicId = jsonObject.asPublicId(ComponentFieldForJson.PATTERN_FOR_SEMANTIC_PUBLIC_ID);
+        PublicId referencedComponentPublicId = jsonObject.asPublicId(ComponentFieldForJson.REFERENCED_COMPONENT_PUBLIC_ID);
+        return new SemanticChronologyDTO(componentPublicId,
+                definitionForSemanticPublicId,
+                referencedComponentPublicId,
                         jsonObject.asSemanticVersionList(ComponentFieldForJson.VERSIONS,
-                                componentUuids,
-                                definitionForSemanticUuids,
-                                referencedComponentUuids)
+                                componentPublicId,
+                                definitionForSemanticPublicId,
+                                referencedComponentPublicId)
                 );
     }
 
     @Unmarshaler
     public static SemanticChronologyDTO make(TinkarInput in) {
         if (localMarshalVersion == in.getTinkerFormatVersion()) {
-            ImmutableList<UUID> componentUuids = in.readImmutableUuidList();
-            ImmutableList<UUID> definitionForSemanticUuids = in.readImmutableUuidList();
-            ImmutableList<UUID> referencedComponentUuids = in.readImmutableUuidList();
+            PublicId componentUuids = in.getPublicId();
+            PublicId definitionForSemanticUuids = in.getPublicId();
+            PublicId referencedComponentUuids = in.getPublicId();
             return new SemanticChronologyDTO(
                     componentUuids, definitionForSemanticUuids, referencedComponentUuids,
                     in.readSemanticVersionList(componentUuids, definitionForSemanticUuids, referencedComponentUuids));
@@ -147,9 +147,9 @@ public class SemanticChronologyDTO
     @Override
     @Marshaler
     public void marshal(TinkarOutput out) {
-        out.writeUuidList(componentUuids());
-        out.writeUuidList(definitionForSemanticUuids);
-        out.writeUuidList(referencedComponentUuids);
+        out.putPublicId(publicId());
+        out.putPublicId(definitionForSemanticPublicId);
+        out.putPublicId(referencedComponentPublicId);
         out.writeSemanticVersionList(semanticVersions);
     }
 
@@ -159,8 +159,8 @@ public class SemanticChronologyDTO
     }
 
     @Override
-    public DefinitionForSemanticDTO chronologySet() {
-        return new DefinitionForSemanticDTO(definitionForSemanticUuids);
+    public PatternForSemanticDTO chronologySet() {
+        return new PatternForSemanticDTO(definitionForSemanticPublicId);
     }
 }
 

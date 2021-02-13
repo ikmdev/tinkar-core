@@ -19,5 +19,8 @@
 module org.hl7.tinkar.component {
     requires java.base;
     requires org.eclipse.collections.api;
+    requires org.hl7.tinkar.common;
     exports org.hl7.tinkar.component;
+    exports org.hl7.tinkar.component.graph;
+    exports org.hl7.tinkar.component.location;
 }

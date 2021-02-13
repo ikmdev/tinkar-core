@@ -22,17 +22,17 @@ import lombok.experimental.Accessors;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
-import org.hl7.tinkar.component.*;
+import org.hl7.tinkar.common.util.id.PublicId;
 import org.hl7.tinkar.lombok.dto.binary.*;
-import org.hl7.tinkar.lombok.dto.json.ComponentFieldForJson;
 import org.hl7.tinkar.lombok.dto.json.JSONObject;
 import org.hl7.tinkar.lombok.dto.json.JsonMarshalable;
+import org.hl7.tinkar.component.*;
+import org.hl7.tinkar.lombok.dto.json.ComponentFieldForJson;
 import org.hl7.tinkar.lombok.dto.json.JsonSemanticVersionUnmarshaler;
 
 import java.io.Writer;
 import java.time.Instant;
 import java.util.Objects;
-import java.util.UUID;
 
 import static org.hl7.tinkar.lombok.dto.json.ComponentFieldForJson.FIELDS;
 
@@ -49,31 +49,31 @@ public class SemanticVersionDTO
 
     private static final int localMarshalVersion = 3;
     @NonNull
-    protected final ImmutableList<UUID> definitionForSemanticUuids;
+    protected final PublicId definitionForSemanticPublicId;
     @NonNull
-    protected final ImmutableList<UUID> referencedComponentUuids;
+    protected final PublicId referencedComponentPublicId;
     @NonNull
     protected final ImmutableList<Object> fields;
 
-    public SemanticVersionDTO(@NonNull ImmutableList<UUID> componentUuids,
-                              @NonNull ImmutableList<UUID> definitionForSemanticUuids,
-                              @NonNull ImmutableList<UUID> referencedComponentUuids,
+    public SemanticVersionDTO(@NonNull PublicId componentUuids,
+                              @NonNull PublicId definitionForSemanticPublicId,
+                              @NonNull PublicId referencedComponentPublicId,
                               @NonNull StampDTO stamp,
-                               @NonNull ImmutableList<Object> fields) {
+                              @NonNull ImmutableList<Object> fields) {
         super(componentUuids, stamp);
-        this.definitionForSemanticUuids = definitionForSemanticUuids;
-        this.referencedComponentUuids = referencedComponentUuids;
+        this.definitionForSemanticPublicId = definitionForSemanticPublicId;
+        this.referencedComponentPublicId = referencedComponentPublicId;
         this.fields = fields;
     }
 
-    public SemanticVersionDTO(@NonNull ImmutableList<UUID> componentUuids,
-                              @NonNull DefinitionForSemantic definitionForSemantic,
+    public SemanticVersionDTO(@NonNull PublicId componentPublicId,
+                              @NonNull PatternForSemantic patternForSemantic,
                               @NonNull Component referencedComponent,
                               @NonNull Stamp stamp,
                               @NonNull ImmutableList<Object> fields) {
-        this(componentUuids,
-             definitionForSemantic.componentUuids(),
-             referencedComponent.componentUuids(),
+        this(componentPublicId,
+             patternForSemantic.publicId(),
+             referencedComponent.publicId(),
              StampDTO.make(stamp),
              fields);
     }
@@ -84,12 +84,12 @@ public class SemanticVersionDTO
         if (!(o instanceof SemanticVersionDTO)) return false;
         if (!super.equals(o)) return false;
         SemanticVersionDTO that = (SemanticVersionDTO) o;
-        return definitionForSemanticUuids.equals(that.definitionForSemanticUuids) && referencedComponentUuids.equals(that.referencedComponentUuids) && fields.equals(that.fields);
+        return definitionForSemanticPublicId.equals(that.definitionForSemanticPublicId) && referencedComponentPublicId.equals(that.referencedComponentPublicId) && fields.equals(that.fields);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), definitionForSemanticUuids, referencedComponentUuids, fields);
+        return Objects.hash(super.hashCode(), definitionForSemanticPublicId, referencedComponentPublicId, fields);
     }
 
     public static SemanticVersionDTO make(SemanticVersion semanticVersion) {
@@ -97,17 +97,17 @@ public class SemanticVersionDTO
         semanticVersion.fields().forEach(objectToConvert -> {
             if (objectToConvert instanceof Concept) {
                 Concept concept = (Concept) objectToConvert;
-                convertedFields.add(new ConceptDTO(concept.componentUuids()));
-            } else if (objectToConvert instanceof DefinitionForSemantic) {
-                DefinitionForSemantic definitionForSemantic = (DefinitionForSemantic) objectToConvert;
-                convertedFields.add(new DefinitionForSemanticDTO(definitionForSemantic.componentUuids()));
+                convertedFields.add(new ConceptDTO(concept.publicId()));
+            } else if (objectToConvert instanceof PatternForSemantic) {
+                PatternForSemantic patternForSemantic = (PatternForSemantic) objectToConvert;
+                convertedFields.add(new PatternForSemanticDTO(patternForSemantic.publicId()));
             } else if (objectToConvert instanceof Semantic) {
                 Semantic semantic = (Semantic) objectToConvert;
-                convertedFields.add(new SemanticDTO(semantic.componentUuids(), semantic.definitionForSemantic(),
+                convertedFields.add(new SemanticDTO(semantic.publicId(), semantic.patternForSemantic(),
                         semantic.referencedComponent()));
             } else if (objectToConvert instanceof Component) {
                 Component component = (Component) objectToConvert;
-                convertedFields.add(new ComponentDTO(component.componentUuids()));
+                convertedFields.add(new ComponentDTO(component.publicId()));
             } else if (objectToConvert instanceof Number) {
                 Number number = (Number) objectToConvert;
                 if (number instanceof Long) {
@@ -125,20 +125,20 @@ public class SemanticVersionDTO
                 throw new UnsupportedOperationException("Can't convert:\n  " + objectToConvert + "\nin\n  " + semanticVersion);
             }
         });
-        return new SemanticVersionDTO(semanticVersion.componentUuids(),
-                semanticVersion.definitionForSemantic(),
+        return new SemanticVersionDTO(semanticVersion.publicId(),
+                semanticVersion.patternForSemantic(),
                 semanticVersion.referencedComponent(),
                 StampDTO.make(semanticVersion.stamp()), convertedFields.toImmutable());
     }
 
     @Override
     public Component referencedComponent() {
-        return new ComponentDTO(referencedComponentUuids);
+        return new ComponentDTO(referencedComponentPublicId);
     }
 
     @Override
-    public DefinitionForSemantic definitionForSemantic() {
-        return new DefinitionForSemanticDTO(definitionForSemanticUuids);
+    public PatternForSemantic patternForSemantic() {
+        return new PatternForSemanticDTO(definitionForSemanticPublicId);
     }
 
     @Override
@@ -151,26 +151,26 @@ public class SemanticVersionDTO
 
     @JsonSemanticVersionUnmarshaler
     public static SemanticVersionDTO make(JSONObject jsonObject,
-                                          ImmutableList<UUID> componentUuids,
-                                          ImmutableList<UUID> definitionForSemanticUuids,
-                                          ImmutableList<UUID> referencedComponentUuids) {
+                                          PublicId componentPublicId,
+                                          PublicId definitionForSemanticPublicId,
+                                          PublicId referencedComponentPublicId) {
         JSONObject jsonStampObject = (JSONObject) jsonObject.get(ComponentFieldForJson.STAMP);
-        return new SemanticVersionDTO(componentUuids,
-                definitionForSemanticUuids,
-                referencedComponentUuids,
+        return new SemanticVersionDTO(componentPublicId,
+                definitionForSemanticPublicId,
+                referencedComponentPublicId,
                 StampDTO.make(jsonStampObject),
                 jsonObject.asImmutableObjectList(FIELDS));
     }
 
     @SemanticVersionUnmarshaler
     public static SemanticVersionDTO make(TinkarInput in,
-                                          ImmutableList<UUID> componentUuids,
-                                          ImmutableList<UUID> definitionForSemanticUuids,
-                                          ImmutableList<UUID> referencedComponentUuids) {
+                                          PublicId componentPublicId,
+                                          PublicId definitionForSemanticPublicId,
+                                          PublicId referencedComponentPublicId) {
         if (localMarshalVersion == in.getTinkerFormatVersion()) {
-            return new SemanticVersionDTO(componentUuids,
-                    definitionForSemanticUuids,
-                    referencedComponentUuids,
+            return new SemanticVersionDTO(componentPublicId,
+                    definitionForSemanticPublicId,
+                    referencedComponentPublicId,
                     StampDTO.make(in),
                     in.readImmutableObjectList());
         } else {

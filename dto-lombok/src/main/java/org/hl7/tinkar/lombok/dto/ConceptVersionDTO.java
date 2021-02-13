@@ -20,6 +20,7 @@ import lombok.ToString;
 import lombok.Value;
 import lombok.experimental.Accessors;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.hl7.tinkar.common.util.id.PublicId;
 import org.hl7.tinkar.component.ConceptVersion;
 import org.hl7.tinkar.lombok.dto.binary.*;
 import org.hl7.tinkar.lombok.dto.json.*;
@@ -36,8 +37,8 @@ public class ConceptVersionDTO extends VersionDTO
 
     private static final int localMarshalVersion = 3;
 
-    public ConceptVersionDTO(@NonNull ImmutableList<UUID> componentUuids, @NonNull StampDTO stamp) {
-        super(componentUuids, stamp);
+    public ConceptVersionDTO(@NonNull PublicId componentPublicId, @NonNull StampDTO stamp) {
+        super(componentPublicId, stamp);
     }
 
     @Override
@@ -54,7 +55,7 @@ public class ConceptVersionDTO extends VersionDTO
     }
 
     public static ConceptVersionDTO make(ConceptVersion conceptVersion) {
-        return new ConceptVersionDTO(conceptVersion.componentUuids(), StampDTO.make(conceptVersion.stamp()));
+        return new ConceptVersionDTO(conceptVersion.publicId(), StampDTO.make(conceptVersion.stamp()));
     }
 
     /**
@@ -72,26 +73,26 @@ public class ConceptVersionDTO extends VersionDTO
     /**
      * Version unmarshaler for ConceptVersionDTO using JSON
      * @param jsonObject
-     * @param componentUuids
+     * @param publicId
      * @return
      */
     @JsonVersionUnmarshaler
-    public static ConceptVersionDTO make(JSONObject jsonObject, ImmutableList<UUID> componentUuids) {
+    public static ConceptVersionDTO make(JSONObject jsonObject, PublicId publicId) {
         return new ConceptVersionDTO(
-                componentUuids,
+                publicId,
                 StampDTO.make((JSONObject) jsonObject.get(ComponentFieldForJson.STAMP)));
     }
 
     /**
      * Version unmarshaler for ConceptVersionDTO.
      * @param in
-     * @param componentUuids
+     * @param publicId
      * @return new instance of ConceptVersionDTO created from the input.
      */
     @VersionUnmarshaler
-    public static ConceptVersionDTO make(TinkarInput in, ImmutableList<UUID> componentUuids) {
+    public static ConceptVersionDTO make(TinkarInput in, PublicId publicId) {
         if (localMarshalVersion == in.getTinkerFormatVersion()) {
-            return new ConceptVersionDTO(componentUuids, StampDTO.make(in));
+            return new ConceptVersionDTO(publicId, StampDTO.make(in));
         } else {
             throw new UnsupportedOperationException("Unsupported version: " + in.getTinkerFormatVersion());
         }

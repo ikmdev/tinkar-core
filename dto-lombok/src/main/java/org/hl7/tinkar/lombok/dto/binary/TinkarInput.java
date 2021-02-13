@@ -21,7 +21,15 @@ import java.util.UUID;
 
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.hl7.tinkar.common.util.id.PublicId;
+import org.hl7.tinkar.common.util.id.PublicIds;
+import org.hl7.tinkar.common.util.id.VertexId;
+import org.hl7.tinkar.common.util.id.VertexIds;
+import org.hl7.tinkar.component.location.PlanarPoint;
+import org.hl7.tinkar.component.location.SpatialPoint;
 import org.hl7.tinkar.lombok.dto.*;
+import org.hl7.tinkar.lombok.dto.graph.DiTreeDTO;
+import org.hl7.tinkar.lombok.dto.graph.DiGraphDTO;
 
 /**
  *
@@ -71,6 +79,15 @@ public class TinkarInput extends DataInputStream {
             throw new UncheckedIOException(ex);
         }
     }
+
+    public UUID getUuid() {
+        try {
+          return new UUID(readLong(), readLong());
+         } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
+
     
     public Instant readInstant()  {
         try {
@@ -114,12 +131,12 @@ public class TinkarInput extends DataInputStream {
     }
     
 
-    public ImmutableList<ConceptVersionDTO> readConceptVersionList(ImmutableList<UUID> componentUuids) {
+    public ImmutableList<ConceptVersionDTO> readConceptVersionList(PublicId publicId) {
         try {
             int length = readInt();
             ConceptVersionDTO[] array = new ConceptVersionDTO[length];
             for (int i = 0; i < length; i++) {
-                array[i] = ConceptVersionDTO.make(this, componentUuids);
+                array[i] = ConceptVersionDTO.make(this, publicId);
             }
             return Lists.immutable.of(array);
         } catch (IOException ex) {
@@ -127,12 +144,12 @@ public class TinkarInput extends DataInputStream {
         }
     }
 
-    public ImmutableList<DefinitionForSemanticVersionDTO> readDefinitionForSemanticVersionList(ImmutableList<UUID> componentUuids) {
+    public ImmutableList<PatternForSemanticVersionDTO> readDefinitionForSemanticVersionList(PublicId componentPublicId) {
         try {
             int length = readInt();
-            DefinitionForSemanticVersionDTO[] array = new DefinitionForSemanticVersionDTO[length];
+            PatternForSemanticVersionDTO[] array = new PatternForSemanticVersionDTO[length];
             for (int i = 0; i < length; i++) {
-                array[i] = DefinitionForSemanticVersionDTO.make(this, componentUuids);
+                array[i] = PatternForSemanticVersionDTO.make(this, componentPublicId);
             }
             return Lists.immutable.of(array);
         } catch (IOException ex) {
@@ -140,15 +157,15 @@ public class TinkarInput extends DataInputStream {
         }
     }
 
-    public ImmutableList<SemanticVersionDTO> readSemanticVersionList(ImmutableList<UUID> componentUuids,
-                                                                     ImmutableList<UUID> definitionForSemanticUuids,
-                                                                     ImmutableList<UUID> referencedComponentUuids) {
+    public ImmutableList<SemanticVersionDTO> readSemanticVersionList(PublicId componentPublicId,
+                                                                     PublicId definitionForSemanticPublicId,
+                                                                     PublicId referencedComponentPublicId) {
         try {
             int length = readInt();
             SemanticVersionDTO[] array = new SemanticVersionDTO[length];
             for (int i = 0; i < length; i++) {
-                array[i] = SemanticVersionDTO.make(this, componentUuids,
-                        definitionForSemanticUuids, referencedComponentUuids);
+                array[i] = SemanticVersionDTO.make(this, componentPublicId,
+                        definitionForSemanticPublicId, referencedComponentPublicId);
             }
             return Lists.immutable.of(array);
         } catch (IOException ex) {
@@ -177,67 +194,100 @@ public class TinkarInput extends DataInputStream {
         try {
             byte token = readByte();
             FieldDataType dataType = FieldDataType.fromToken(token);
-            switch (dataType) {
-                case STRING:
-                    array[i] = readUTF();
-                    break;
-                case FLOAT:
-                    array[i] = readFloat();
-                    break;
-                case BOOLEAN:
-                    array[i] = readBoolean();
-                    break;
-                case BYTE_ARRAY:
-                    array[i] = readByteArray();
-                    break;
-                case IDENTIFIED_THING:
-                    array[i] = new ComponentDTO(readImmutableUuidList());
-                    break;
-                case INTEGER:
-                    array[i] = readInt();
-                    break;
-                case OBJECT_ARRAY:
-                    array[i] = readEmbeddedObjectArray();
-                    break;
-                case INSTANT:
-                    array[i] = readInstant();
-                    break;
-                case DIGRAPH:
-                    throw new UnsupportedEncodingException("Can't handle DIGRAPH.");
-                case CONCEPT_CHRONOLOGY:
-                case CONCEPT:
-                case DEFINITION_FOR_SEMANTIC_CHRONOLOGY:
-                case DEFINITION_FOR_SEMANTIC:
-                case SEMANTIC_CHRONOLOGY:
-                case SEMANTIC:
-                    array[i] = unmarshal(dataType);
-                    break;
-                default:
-                    throw new UnsupportedEncodingException(dataType.toString());
+            array[i] = unmarshal(dataType);
+         } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+    public Object getTinkarNativeObject() {
+        try {
+            byte token = readByte();
+            FieldDataType dataType = FieldDataType.fromToken(token);
+            return unmarshal(dataType);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public VertexId readVertexId() {
+        try {
+            return VertexIds.of(readLong(), readLong());
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public PublicId getPublicId() {
+        try {
+            int uuidCount = readInt();
+            if (uuidCount == 1) {
+                return PublicIds.of(readLong(), readLong());
             }
+            if (uuidCount == 2) {
+                return PublicIds.of(readLong(), readLong(), readLong(), readLong());
+            }
+            if (uuidCount == 3) {
+                return PublicIds.of(readLong(), readLong(), readLong(), readLong(), readLong(), readLong());
+            }
+
+
+            long[] uuidParts = new long[uuidCount * 2];
+            for (int i = 0; i < uuidCount; i++) {
+                uuidParts[i*2] = readLong();
+                uuidParts[i*2 + 1] = readLong();
+            }
+            return PublicIds.of(uuidParts);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
     private Object unmarshal(FieldDataType dataType) {
-        switch (dataType) {
-            case CONCEPT_CHRONOLOGY:
-                return ConceptChronologyDTO.make(this);
-            case CONCEPT:
-                return ConceptDTO.make(this);
-            case DEFINITION_FOR_SEMANTIC_CHRONOLOGY:
-                return DefinitionForSemanticChronologyDTO.make(this);
-            case DEFINITION_FOR_SEMANTIC:
-                return DefinitionForSemanticDTO.make(this);
-            case SEMANTIC_CHRONOLOGY:
-                return SemanticChronologyDTO.make(this);
-            case SEMANTIC:
-                return SemanticDTO.make(this);
-            default:
-                throw new UnsupportedOperationException("TinkarInput does know how to unmarshal: " + dataType);
+        try {
+            switch (dataType) {
+                case STRING:
+                    return readUTF();
+                case FLOAT:
+                    return readFloat();
+                case BOOLEAN:
+                    return readBoolean();
+                case BYTE_ARRAY:
+                    return readByteArray();
+                case IDENTIFIED_THING:
+                    return new ComponentDTO(getPublicId());
+                case INTEGER:
+                    return readInt();
+                case OBJECT_ARRAY:
+                    return readEmbeddedObjectArray();
+                case INSTANT:
+                    return readInstant();
+                case CONCEPT_CHRONOLOGY:
+                    return ConceptChronologyDTO.make(this);
+                case CONCEPT:
+                    return ConceptDTO.make(this);
+                case PATTERN_FOR_SEMANTIC_CHRONOLOGY:
+                    return PatternForSemanticChronologyDTO.make(this);
+                case PATTERN_FOR_SEMANTIC:
+                    return PatternForSemanticDTO.make(this);
+                case SEMANTIC_CHRONOLOGY:
+                    return SemanticChronologyDTO.make(this);
+                case SEMANTIC:
+                    return SemanticDTO.make(this);
+                case DITREE:
+                    return DiTreeDTO.make(this);
+                case DIGRAPH:
+                    return DiGraphDTO.make(this);
+                case SPATIAL_POINT:
+                    return new SpatialPoint(readInt(), readInt(), readInt());
+                case PLANAR_POINT:
+                    return new PlanarPoint(readInt(), readInt());
+                default:
+                    throw new UnsupportedOperationException("TinkarInput does know how to unmarshal: " + dataType);
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
-     }
+    }
 
     private Object[] readEmbeddedObjectArray() throws IOException {
         int size = readInt();
@@ -251,5 +301,20 @@ public class TinkarInput extends DataInputStream {
     private byte[] readByteArray() throws IOException {
         int size = readInt();
         return readNBytes(size);
+    }
+
+    public int getInt() {
+        try {
+            return readInt();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+    public long getLong() {
+        try {
+            return readLong();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }

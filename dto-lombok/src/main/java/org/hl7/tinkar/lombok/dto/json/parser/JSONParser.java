@@ -27,7 +27,7 @@ import java.util.UUID;
 import org.hl7.tinkar.lombok.dto.json.InstantUtil;
 import org.hl7.tinkar.lombok.dto.json.JSONObject;
 import org.hl7.tinkar.lombok.dto.json.JSONArray;
-import org.hl7.tinkar.util.UuidUtil;
+import org.hl7.tinkar.common.util.UuidUtil;
 
 
 /**
@@ -224,7 +224,11 @@ public class JSONParser {
                 statusStack.removeFirst();
                 String key = (String) valueStack.removeFirst();
                 Map parent = (Map) valueStack.getFirst();
-                parent.put(key, token.value);
+                if (token.value instanceof String && UuidUtil.isUUID((String) token.value)) {
+                    parent.put(key, UUID.fromString((String) token.value));
+                } else {
+                    parent.put(key, token.value);
+                }
                 status = peekStatus(statusStack);
             }
             break;

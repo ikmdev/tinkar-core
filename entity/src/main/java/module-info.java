@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-import org.hl7.tinkar.service.CachingService;
+import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.entity.EntityService;
 
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
@@ -15,6 +15,8 @@ module org.hl7.tinkar.entity {
     requires io.activej.bytebuf;
     requires org.apache.logging.log4j;
     requires org.hl7.tinkar.common;
+    requires org.jgrapht.core;
+    requires org.eclipse.collections.impl;
     exports org.hl7.tinkar.entity;
     uses CachingService;
     uses EntityService;

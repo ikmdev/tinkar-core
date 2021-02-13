@@ -15,10 +15,6 @@
  */package org.hl7.tinkar.component;
 
 
-import org.eclipse.collections.api.list.ImmutableList;
-
-import java.util.UUID;
-
 /**
  *
  * @author kec
@@ -29,26 +25,29 @@ public interface FieldDefinition {
      * Underlying object type such as String or Integer.
      * @return Concept designating the data type of the defined field.
      */
-    Concept getDataType();
+    Concept dataType();
 
     /**
-     * What the object represents: a String might be a URI,
-     * a component identifier might represent a mapping, or an
-     * integer might represent a coordinate.
+     * How this field is intended to be used. The objective to be reached; a target; an aim; a goal.
+     * e.g. The purpose of an identifier may be "globally unique identification"
+     * <br/>
+     *  Meaning is the symbolic value of something while purpose is an objective to be reached;
+     *  a target; an aim; a goal.
+     * <br/>
      * @return Concept designating the purpose of the defined field.
      */
-    Concept getPurpose();
+    Concept purpose();
 
     /**
-     * The identity of this field. Maybe it is the
-     * "SNOMED code" in a mapping, or the location of an image if a URI.
-     * This concept should be used to present to teh user what this field "is" in
-     * interfaces and similar.
+     * The meaning of this field. Maybe it is the "SNOMED code" in a mapping.
+     * This concept should be used to present to the user what this field "means" so they
+     * can interpret what this field represents in user interfaces and similar.
      * <br/>
-     * Other names to consider: what, as in "what is this" which is slightly different/weaker that identity which
-     * some might tie in with instance value.
-     * @return Concept designating the identity defined field.
+     *  Meaning is the symbolic value of something while purpose is an objective to be reached;
+     *  a target; an aim; a goal.
+     * <br/>
+     * @return Concept designating the meaning (symbolic value) of this field.
      */
-    Concept getIdentity();
+    Concept meaning();
 
 }

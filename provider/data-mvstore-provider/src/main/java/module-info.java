@@ -5,7 +5,8 @@
  */
 
 
-import org.hl7.tinkar.provider.chronology.mvstore.MVStoreProvider;
+import org.hl7.tinkar.common.provider.chronology.mvstore.MVStoreProvider;
+import org.hl7.tinkar.common.service.PrimitiveDataService;
 
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
 module org.hl7.tinkar.provider.chronology.openhft {
@@ -20,6 +21,6 @@ module org.hl7.tinkar.provider.chronology.openhft {
     requires org.hl7.tinkar.entity;
     requires jdk.unsupported;
     requires com.h2database.mvstore;
-    provides org.hl7.tinkar.service.PrimitiveDataService
+    provides PrimitiveDataService
             with MVStoreProvider;
 }

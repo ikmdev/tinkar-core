@@ -5,42 +5,43 @@ import lombok.ToString;
 import lombok.Value;
 import lombok.experimental.Accessors;
 import lombok.experimental.NonFinal;
-import org.eclipse.collections.api.list.ImmutableList;
+import lombok.experimental.SuperBuilder;
+import org.hl7.tinkar.common.util.id.PublicId;
 import org.hl7.tinkar.component.Component;
-import org.hl7.tinkar.component.DefinitionForSemantic;
+import org.hl7.tinkar.component.PatternForSemantic;
 import org.hl7.tinkar.component.Semantic;
 import org.hl7.tinkar.lombok.dto.binary.*;
-import org.hl7.tinkar.lombok.dto.json.ComponentFieldForJson;
 import org.hl7.tinkar.lombok.dto.json.JSONObject;
-import org.hl7.tinkar.lombok.dto.json.JsonChronologyUnmarshaler;
 import org.hl7.tinkar.lombok.dto.json.JsonMarshalable;
+import org.hl7.tinkar.lombok.dto.json.ComponentFieldForJson;
+import org.hl7.tinkar.lombok.dto.json.JsonChronologyUnmarshaler;
 
 import java.io.Writer;
 import java.util.Objects;
-import java.util.UUID;
 
 @Value
 @Accessors(fluent = true)
 @NonFinal
 @ToString(callSuper = true)
+@SuperBuilder
 public class SemanticDTO
     extends ComponentDTO
         implements JsonMarshalable, Marshalable, Semantic {
     private static final int localMarshalVersion = 3;
 
     @NonNull
-    protected final ImmutableList<UUID> definitionForSemanticUuids;
+    protected final PublicId definitionForSemanticPublicId;
     @NonNull
-    protected final ImmutableList<UUID> referencedComponentUuids;
+    protected final PublicId referencedComponentPublicId;
 
-    public SemanticDTO(@NonNull ImmutableList<UUID> componentUuids, @NonNull ImmutableList<UUID> definitionForSemanticUuids, @NonNull ImmutableList<UUID> referencedComponentUuids) {
-        super(componentUuids);
-        this.definitionForSemanticUuids = definitionForSemanticUuids;
-        this.referencedComponentUuids = referencedComponentUuids;
+    public SemanticDTO(@NonNull PublicId componentPublicId, @NonNull PublicId definitionForSemanticPublicId, @NonNull PublicId referencedComponentPublicId) {
+        super(componentPublicId);
+        this.definitionForSemanticPublicId = definitionForSemanticPublicId;
+        this.referencedComponentPublicId = referencedComponentPublicId;
     }
 
-    public SemanticDTO(ImmutableList<UUID> componentUuids, DefinitionForSemantic definitionForSemantic, Component referencedComponent) {
-        this(componentUuids, definitionForSemantic.componentUuids(), referencedComponent.componentUuids());
+    public SemanticDTO(PublicId componentPublicId, PatternForSemantic patternForSemantic, Component referencedComponent) {
+        this(componentPublicId, patternForSemantic.publicId(), referencedComponent.publicId());
     }
 
     @Override
@@ -49,49 +50,49 @@ public class SemanticDTO
         if (!(o instanceof SemanticDTO)) return false;
         if (!super.equals(o)) return false;
         SemanticDTO that = (SemanticDTO) o;
-        return definitionForSemanticUuids.equals(that.definitionForSemanticUuids) && referencedComponentUuids.equals(that.referencedComponentUuids);
+        return definitionForSemanticPublicId.equals(that.definitionForSemanticPublicId) && referencedComponentPublicId.equals(that.referencedComponentPublicId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), definitionForSemanticUuids, referencedComponentUuids);
+        return Objects.hash(super.hashCode(), definitionForSemanticPublicId, referencedComponentPublicId);
     }
 
     @Override
     public Component referencedComponent() {
-        return new ComponentDTO(referencedComponentUuids);
+        return new ComponentDTO(referencedComponentPublicId);
     }
 
     @Override
-    public DefinitionForSemantic definitionForSemantic() {
-        return new DefinitionForSemanticDTO(definitionForSemanticUuids);
+    public PatternForSemantic patternForSemantic() {
+        return new PatternForSemanticDTO(definitionForSemanticPublicId);
     }
 
     @Override
     public void jsonMarshal(Writer writer) {
         final JSONObject json = new JSONObject();
         json.put(ComponentFieldForJson.CLASS, this.getClass().getCanonicalName());
-        json.put(ComponentFieldForJson.COMPONENT_UUIDS, componentUuids());
-        json.put(ComponentFieldForJson.DEFINITION_FOR_SEMANTIC_UUIDS, definitionForSemanticUuids);
-        json.put(ComponentFieldForJson.REFERENCED_COMPONENT_UUIDS, referencedComponentUuids);
+        json.put(ComponentFieldForJson.COMPONENT_PUBLIC_ID, publicId());
+        json.put(ComponentFieldForJson.PATTERN_FOR_SEMANTIC_PUBLIC_ID, definitionForSemanticPublicId);
+        json.put(ComponentFieldForJson.REFERENCED_COMPONENT_PUBLIC_ID, referencedComponentPublicId);
         json.writeJSONString(writer);
     }
 
     @JsonChronologyUnmarshaler
     public static SemanticDTO make(JSONObject jsonObject) {
-        ImmutableList<UUID> componentUuids = jsonObject.asImmutableUuidList(ComponentFieldForJson.COMPONENT_UUIDS);
-        ImmutableList<UUID> definitionForSemanticUuids = jsonObject.asImmutableUuidList(ComponentFieldForJson.DEFINITION_FOR_SEMANTIC_UUIDS);
-        ImmutableList<UUID> referencedComponentUuids = jsonObject.asImmutableUuidList(ComponentFieldForJson.REFERENCED_COMPONENT_UUIDS);
-        return new SemanticDTO(componentUuids, definitionForSemanticUuids, referencedComponentUuids);
+        PublicId componentPublicId = jsonObject.asPublicId(ComponentFieldForJson.COMPONENT_PUBLIC_ID);
+        PublicId definitionForSemanticPublicId = jsonObject.asPublicId(ComponentFieldForJson.PATTERN_FOR_SEMANTIC_PUBLIC_ID);
+        PublicId referencedComponentPublicId = jsonObject.asPublicId(ComponentFieldForJson.REFERENCED_COMPONENT_PUBLIC_ID);
+        return new SemanticDTO(componentPublicId, definitionForSemanticPublicId, referencedComponentPublicId);
     }
 
     @Unmarshaler
     public static SemanticDTO make(TinkarInput in) {
         if (localMarshalVersion == in.getTinkerFormatVersion()) {
-            ImmutableList<UUID> componentUuids = in.readImmutableUuidList();
-            ImmutableList<UUID> definitionForSemanticUuids = in.readImmutableUuidList();
-            ImmutableList<UUID> referencedComponentUuids = in.readImmutableUuidList();
-            return new SemanticDTO(componentUuids, definitionForSemanticUuids, referencedComponentUuids);
+            PublicId componentPublicId = in.getPublicId();
+            PublicId definitionForSemanticPublicId = in.getPublicId();
+            PublicId referencedComponentPublicId = in.getPublicId();
+            return new SemanticDTO(componentPublicId, definitionForSemanticPublicId, referencedComponentPublicId);
         } else {
             throw new UnsupportedOperationException("Unsupported version: " + marshalVersion);
         }
@@ -100,8 +101,8 @@ public class SemanticDTO
     @Override
     @Marshaler
     public void marshal(TinkarOutput out) {
-        out.writeUuidList(componentUuids());
-        out.writeUuidList(definitionForSemanticUuids);
-        out.writeUuidList(referencedComponentUuids);
+        out.putPublicId(publicId());
+        out.putPublicId(definitionForSemanticPublicId);
+        out.putPublicId(referencedComponentPublicId);
     }
 }

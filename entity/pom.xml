@@ -14,6 +14,11 @@
     <name>TINKAR: Entity</name>
     <dependencies>
         <dependency>
+            <groupId>org.jgrapht</groupId>
+            <artifactId>jgrapht-core</artifactId>
+            <version>${jgrapht.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>component</artifactId>
             <version>${project.parent.version}</version>
@@ -39,5 +44,6 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
+
      </dependencies>
 </project>

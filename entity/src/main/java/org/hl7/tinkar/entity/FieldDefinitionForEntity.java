@@ -8,23 +8,23 @@ import org.hl7.tinkar.entity.internal.Get;
 public class FieldDefinitionForEntity
     implements FieldDefinition {
 
-    protected DefinitionForSemanticEntityVersion enclosingVersion;
+    protected PatternForSemanticEntityVersion enclosingVersion;
     protected int dataTypeNid;
     protected int purposeNid;
     protected int identityNid;
 
     @Override
-    public ConceptEntity getDataType() {
+    public ConceptEntity dataType() {
         return Get.entityService().getEntityFast(dataTypeNid);
     }
 
     @Override
-    public ConceptEntity getPurpose() {
+    public ConceptEntity purpose() {
         return Get.entityService().getEntityFast(purposeNid);
     }
 
     @Override
-    public ConceptEntity getIdentity() {
+    public ConceptEntity meaning() {
         return Get.entityService().getEntityFast(identityNid);
     }
 
@@ -32,18 +32,18 @@ public class FieldDefinitionForEntity
      * TODO interface for write, fill, etc.
      * @param readBuf
      */
-    public void fill(DefinitionForSemanticEntityVersion enclosingVersion, ByteBuf readBuf) {
+    public void fill(PatternForSemanticEntityVersion enclosingVersion, ByteBuf readBuf) {
         this.enclosingVersion = enclosingVersion;
         dataTypeNid = readBuf.readInt();
         purposeNid = readBuf.readInt();
         identityNid = readBuf.readInt();
     }
 
-    public void fill(DefinitionForSemanticEntityVersion enclosingVersion, FieldDefinition fieldDefinition) {
+    public void fill(PatternForSemanticEntityVersion enclosingVersion, FieldDefinition fieldDefinition) {
         this.enclosingVersion = enclosingVersion;
-        dataTypeNid = Get.entityService().nidForUuids(fieldDefinition.getDataType());
-        purposeNid = Get.entityService().nidForUuids(fieldDefinition.getPurpose());
-        identityNid = Get.entityService().nidForUuids(fieldDefinition.getIdentity());
+        dataTypeNid = Get.entityService().nidForPublicId(fieldDefinition.dataType());
+        purposeNid = Get.entityService().nidForPublicId(fieldDefinition.purpose());
+        identityNid = Get.entityService().nidForPublicId(fieldDefinition.meaning());
     }
 
     public void write(ByteBuf writeBuf) {
@@ -52,13 +52,13 @@ public class FieldDefinitionForEntity
         writeBuf.writeInt(identityNid);
     }
 
-    public static FieldDefinitionForEntity make(DefinitionForSemanticEntityVersion enclosingVersion, ByteBuf readBuf) {
+    public static FieldDefinitionForEntity make(PatternForSemanticEntityVersion enclosingVersion, ByteBuf readBuf) {
         FieldDefinitionForEntity fieldDefinitionForEntity = new FieldDefinitionForEntity();
         fieldDefinitionForEntity.fill(enclosingVersion, readBuf);
         return fieldDefinitionForEntity;
     }
 
-    public static FieldDefinitionForEntity make(DefinitionForSemanticEntityVersion enclosingVersion, FieldDefinition fieldDefinition) {
+    public static FieldDefinitionForEntity make(PatternForSemanticEntityVersion enclosingVersion, FieldDefinition fieldDefinition) {
         FieldDefinitionForEntity fieldDefinitionForEntity = new FieldDefinitionForEntity();
         fieldDefinitionForEntity.fill(enclosingVersion, fieldDefinition);
         return fieldDefinitionForEntity;

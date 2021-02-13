@@ -4,6 +4,8 @@
  * and open the template in the editor.
  */
 
+import org.hl7.tinkar.component.ChronologyService;
+
 module org.hl7.tinkar.launcher {
     requires io.activej.inject;
     requires io.activej.launcher;
@@ -12,5 +14,5 @@ module org.hl7.tinkar.launcher {
     requires org.apache.logging.log4j;
     requires org.hl7.tinkar.component;
     requires org.hl7.tinkar.common;
-    uses org.hl7.tinkar.component.ChronologyService;
+    uses ChronologyService;
 }

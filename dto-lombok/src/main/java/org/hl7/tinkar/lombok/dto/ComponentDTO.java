@@ -19,7 +19,9 @@ import lombok.NonNull;
 import lombok.Value;
 import lombok.experimental.Accessors;
 import lombok.experimental.NonFinal;
+import lombok.experimental.SuperBuilder;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.hl7.tinkar.common.util.id.PublicId;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -31,26 +33,31 @@ import java.util.UUID;
 @Value
 @Accessors(fluent = true)
 @NonFinal
+@SuperBuilder
 public class ComponentDTO
         implements DTO {
     @NonNull
-    final ImmutableList<UUID> componentUuids;
+    final PublicId componentPublicId;
 
-    public ComponentDTO(ImmutableList<UUID> componentUuids) {
-        this.componentUuids = componentUuids;
+    public ComponentDTO(PublicId componentPublicId) {
+        this.componentPublicId = componentPublicId;
     }
 
-    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof ComponentDTO)) return false;
         ComponentDTO that = (ComponentDTO) o;
-        return componentUuids.equals(that.componentUuids);
+        return componentPublicId.equals(that.componentPublicId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(componentUuids);
+        return componentPublicId.hashCode();
+    }
+
+    @Override
+    public PublicId publicId() {
+        return componentPublicId;
     }
 }

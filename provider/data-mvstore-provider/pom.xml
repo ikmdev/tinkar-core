@@ -20,7 +20,7 @@
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>entity-provider</artifactId>
             <version>${project.parent.version}</version>
-            <scope>test</scope>
+<!--            <scope>test</scope>-->
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.h2database/h2 -->
         <!-- https://mvnrepository.com/artifact/com.h2database/h2-mvstore -->

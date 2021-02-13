@@ -17,10 +17,12 @@ package org.hl7.tinkar.lombok.dto.json;
 
 import java.io.*;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
 
+import org.eclipse.collections.impl.list.mutable.primitive.ByteArrayList;
 import org.hl7.tinkar.lombok.dto.json.parser.JSONParser;
 import org.hl7.tinkar.lombok.dto.json.parser.ParseException;
 
@@ -89,6 +91,12 @@ public class JSONValue {
             writeQuotedString(out, value.toString());
         } else if (value instanceof Instant) {
             writeQuotedString(out, value.toString());
+        } else if (value instanceof ByteArrayList) {
+            ByteArrayList bal = (ByteArrayList) value;
+            writeQuotedString(out, JSONObject.DATA_APPLICATION_OCTET_STREAM_BASE_64 + Base64.getEncoder().encodeToString(bal.toArray()));
+        } else if (value instanceof byte[]) {
+            byte[] byteArray = (byte[]) value;
+            writeQuotedString(out, JSONObject.DATA_APPLICATION_OCTET_STREAM_BASE_64 + Base64.getEncoder().encodeToString(byteArray));
         } else if ((value instanceof JSONStreamAware)) {
             ((JSONStreamAware) value).writeJSONString(out);
         } else if ((value instanceof JSONAware)) {

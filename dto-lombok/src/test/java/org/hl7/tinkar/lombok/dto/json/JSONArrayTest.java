@@ -22,6 +22,7 @@ import java.util.HashSet;
 
 import org.hl7.tinkar.lombok.dto.json.parser.JSONParser;
 import org.hl7.tinkar.lombok.dto.json.parser.ParseException;
+import org.hl7.tinkar.lombok.dto.json.JSONArray;
 
 import static org.junit.jupiter.api.Assertions.*;
 
