@@ -1,7 +1,6 @@
-package org.hl7.tinkar.common.util.id.impl;
+package org.hl7.tinkar.common.util.id;
 
-import org.hl7.tinkar.common.util.id.PublicId;
-import org.hl7.tinkar.common.util.id.PublicIdList;
+import org.hl7.tinkar.common.util.id.impl.PublicIdCollections;
 
 import java.util.List;
 
@@ -67,6 +66,9 @@ public class PublicIdListFactory {
     public PublicIdList of(PublicId one, PublicId two, PublicId three, PublicId four, PublicId five, PublicId six, PublicId seven, PublicId eight, PublicId nine, PublicId ten)
     {
         return new PublicIdCollections.ListN<>(one, two, three, four, five, six, seven, eight, nine, ten);
+    }
+    public PublicIdList ofArray(PublicId[] items) {
+        return of(items);
     }
 
     public PublicIdList of(PublicId... items)

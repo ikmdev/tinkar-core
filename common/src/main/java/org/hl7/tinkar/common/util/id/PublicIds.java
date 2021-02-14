@@ -1,7 +1,6 @@
 package org.hl7.tinkar.common.util.id;
 
 import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.common.util.id.impl.*;
 
 import java.util.List;

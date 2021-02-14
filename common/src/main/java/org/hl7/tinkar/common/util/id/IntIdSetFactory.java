@@ -1,6 +1,7 @@
-package org.hl7.tinkar.common.util.id.impl;
+package org.hl7.tinkar.common.util.id;
 
 import org.hl7.tinkar.common.util.id.IntIdSet;
+import org.hl7.tinkar.common.util.id.impl.*;
 
 
 public enum IntIdSetFactory {
@@ -8,7 +9,7 @@ public enum IntIdSetFactory {
 
     public IntIdSet empty()
     {
-        return IntId0.INSTANCE;
+        return IntId0Set.INSTANCE;
     }
 
     public IntIdSet of()
@@ -18,7 +19,7 @@ public enum IntIdSetFactory {
 
     public IntIdSet of(int one)
     {
-        return new IntId1(one);
+        return new IntId1Set(one);
     }
 
 

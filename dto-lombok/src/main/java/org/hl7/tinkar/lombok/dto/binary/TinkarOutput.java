@@ -27,6 +27,8 @@ import java.util.UUID;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.impl.list.mutable.primitive.ByteArrayList;
 import org.hl7.tinkar.common.util.id.PublicId;
+import org.hl7.tinkar.common.util.id.PublicIdList;
+import org.hl7.tinkar.common.util.id.PublicIdSet;
 import org.hl7.tinkar.common.util.id.VertexId;
 import org.hl7.tinkar.component.Component;
 import org.hl7.tinkar.lombok.dto.*;
@@ -185,6 +187,13 @@ public class TinkarOutput extends DataOutputStream {
                 case IDENTIFIED_THING:
                     writeIdentifiedThing((Component) object, fieldDataType);
                     break;
+
+                case COMPONENT_ID_LIST:
+                    writeIdList((PublicIdList<PublicId>) object, fieldDataType);
+                    break;
+                case COMPONENT_ID_SET:
+                    writeIdSet((PublicIdSet<PublicId>) object, fieldDataType);
+                    break;
                 case CONCEPT:
                 case CONCEPT_CHRONOLOGY:
                 case PATTERN_FOR_SEMANTIC:
@@ -200,6 +209,22 @@ public class TinkarOutput extends DataOutputStream {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    private void writeIdList(PublicIdList<PublicId> idList, FieldDataType fieldDataType) throws IOException {
+        writeInt(idList.size());
+        idList.forEach(publicId -> {
+            putInt(publicId.uuidCount());
+            publicId.forEach(longValue -> putLong(longValue));
+        });
+    }
+
+    private void writeIdSet(PublicIdSet<PublicId> idSet, FieldDataType fieldDataType) throws IOException {
+        writeInt(idSet.size());
+        idSet.forEach(publicId -> {
+            putInt(publicId.uuidCount());
+            publicId.forEach(longValue -> putLong(longValue));
+        });
     }
 
 

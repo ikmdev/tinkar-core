@@ -1,6 +1,7 @@
-package org.hl7.tinkar.common.util.id.impl;
+package org.hl7.tinkar.common.util.id;
 
 import org.hl7.tinkar.common.util.id.IntIdList;
+import org.hl7.tinkar.common.util.id.impl.*;
 
 /**
  *
@@ -10,7 +11,7 @@ public enum IntIdListFactory {
 
     public IntIdList empty()
     {
-        return IntId0.INSTANCE;
+        return IntId0List.INSTANCE;
     }
 
     public IntIdList of()
@@ -20,7 +21,7 @@ public enum IntIdListFactory {
 
     public IntIdList of(int one)
     {
-        return new IntId1(one);
+        return new IntId1List(one);
     }
 
     public IntIdList of(int one, int two)
@@ -36,7 +37,7 @@ public enum IntIdListFactory {
         }
         if (elements.length == 1)
         {
-            return new IntId1(elements[0]);
+            return new IntId1List(elements[0]);
         }
         if (elements.length == 2)
         {

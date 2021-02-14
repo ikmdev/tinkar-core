@@ -4,7 +4,13 @@ import io.activej.bytebuf.ByteBuf;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
+import org.eclipse.collections.impl.factory.primitive.IntLists;
+import org.eclipse.collections.impl.factory.primitive.IntSets;
+import org.hl7.tinkar.common.util.id.*;
 import org.hl7.tinkar.component.*;
+import org.hl7.tinkar.component.graph.DiGraph;
 import org.hl7.tinkar.component.graph.DiTree;
 import org.hl7.tinkar.component.graph.Vertex;
 import org.hl7.tinkar.component.location.PlanarPoint;
@@ -13,6 +19,7 @@ import org.hl7.tinkar.entity.graph.DiGraphEntity;
 import org.hl7.tinkar.entity.graph.DiTreeEntity;
 import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.lombok.dto.FieldDataType;
+import org.hl7.tinkar.lombok.dto.graph.DiGraphDTO;
 import org.hl7.tinkar.lombok.dto.graph.DiTreeDTO;
 
 import java.time.Instant;
@@ -82,10 +89,22 @@ public class SemanticEntityVersion
                 return new PlanarPoint(readBuf.readInt(), readBuf.readInt());
             case SPATIAL_POINT:
                 return new SpatialPoint(readBuf.readInt(), readBuf.readInt(), readBuf.readInt());
+            case COMPONENT_ID_LIST:
+                return IntIds.list.of(readIntArray(readBuf));
+            case COMPONENT_ID_SET:
+                return IntIds.set.of(readIntArray(readBuf));
              default:
                 throw new UnsupportedOperationException("Can't handle field read of type: " +
                         dataType);
         }
+    }
+    static protected int[] readIntArray(ByteBuf readBuf) {
+        int size = readBuf.readInt();
+        int[] array = new int[size];
+        for (int i = 0; i < size; i++) {
+            array[i] = readBuf.readInt();
+        }
+        return array;
     }
 
     @Override
@@ -113,10 +132,17 @@ public class SemanticEntityVersion
             } else if (field instanceof DiTreeEntity) {
                 DiTreeEntity treeEntity = (DiTreeEntity) field;
                 size += treeEntity.size();
+            } else if (field instanceof IntIdSet) {
+                IntIdSet ids = (IntIdSet) field;
+                size += 5 + (ids.size() * 4);
+            } else if (field instanceof IntIdList) {
+                IntIdList ids = (IntIdList) field;
+                size += 5 + (ids.size() * 4);
             } else {
                 throw new UnsupportedOperationException("Can't handle field size for type: " +
                         field.getClass().getName());
-            }        }
+            }
+        }
         return size;
     }
 
@@ -205,6 +231,16 @@ public class SemanticEntityVersion
             writeBuf.writeInt(point.x);
             writeBuf.writeInt(point.y);
             writeBuf.writeInt(point.z);
+        } else if (field instanceof IntIdList) {
+            writeBuf.writeByte(FieldDataType.COMPONENT_ID_LIST.token);
+            IntIdList ids = (IntIdList) field;
+            writeBuf.writeInt(ids.size());
+            ids.forEach(id -> writeBuf.writeInt(id));
+        } else if (field instanceof IntIdSet) {
+            writeBuf.writeByte(FieldDataType.COMPONENT_ID_SET.token);
+            IntIdSet ids = (IntIdSet) field;
+            writeBuf.writeInt(ids.size());
+            ids.forEach(id -> writeBuf.writeInt(id));
         } else {
             throw new UnsupportedOperationException("Can't handle field write of type: " +
                     field.getClass().getName());
@@ -253,6 +289,26 @@ public class SemanticEntityVersion
             } else if (obj instanceof DiTreeDTO) {
                 DiTree<Vertex> component = (DiTree<Vertex>) obj;
                 version.fields.add(DiTreeEntity.make(component));
+            } else if (obj instanceof DiGraphDTO) {
+                DiGraph<Vertex> component = (DiGraph<Vertex>) obj;
+                version.fields.add(DiGraphEntity.make(component));
+            } else if (obj instanceof PublicIdSet) {
+                PublicIdSet<PublicId> component = (PublicIdSet<PublicId>) obj;
+                MutableIntSet idSet = IntSets.mutable.withInitialCapacity(component.size());
+                component.forEach(publicId -> {
+                    if (publicId == null) {
+                        throw new IllegalStateException("PublicId cannot be null");
+                    }
+                    idSet.add(Get.entityService().nidForPublicId(publicId));
+                });
+                version.fields.add(IntIds.set.ofAlreadySorted(idSet.toSortedArray()));
+            } else if (obj instanceof PublicIdList) {
+                PublicIdList<PublicId> component = (PublicIdList<PublicId>) obj;
+                MutableIntList idList = IntLists.mutable.withInitialCapacity(component.size());
+                component.forEach(publicId -> {
+                    idList.add(Get.entityService().nidForPublicId(publicId));
+                });
+                version.fields.add(IntIds.list.of(idList.toArray()));
             } else {
                 throw new UnsupportedOperationException("Can't handle field conversion of type: " +
                         obj.getClass().getName());

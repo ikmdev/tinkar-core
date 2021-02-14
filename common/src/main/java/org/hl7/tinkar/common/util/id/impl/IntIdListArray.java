@@ -8,7 +8,7 @@ import java.util.stream.IntStream;
 
 /**
  */
-final class IntIdListArray
+public final class IntIdListArray
         implements IntIdList
 {
     private final int[] elements;

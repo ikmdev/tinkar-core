@@ -19,12 +19,10 @@ import java.io.*;
 import java.time.Instant;
 import java.util.UUID;
 
+import lombok.SneakyThrows;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.hl7.tinkar.common.util.id.PublicId;
-import org.hl7.tinkar.common.util.id.PublicIds;
-import org.hl7.tinkar.common.util.id.VertexId;
-import org.hl7.tinkar.common.util.id.VertexIds;
+import org.hl7.tinkar.common.util.id.*;
 import org.hl7.tinkar.component.location.PlanarPoint;
 import org.hl7.tinkar.component.location.SpatialPoint;
 import org.hl7.tinkar.lombok.dto.*;
@@ -281,12 +279,42 @@ public class TinkarInput extends DataInputStream {
                     return new SpatialPoint(readInt(), readInt(), readInt());
                 case PLANAR_POINT:
                     return new PlanarPoint(readInt(), readInt());
+                case COMPONENT_ID_LIST:
+                    return readIdList();
+                case COMPONENT_ID_SET:
+                    return readIdSet();
                 default:
                     throw new UnsupportedOperationException("TinkarInput does know how to unmarshal: " + dataType);
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    private PublicIdList<PublicId>  readIdList() throws IOException {
+        PublicId[] publicIds = getPublicIds();
+        return PublicIds.list.ofArray(publicIds);
+    }
+
+    private PublicIdSet<PublicId>  readIdSet() throws IOException {
+        PublicId[] publicIds = getPublicIds();
+        return PublicIds.set.ofArray(publicIds);
+    }
+
+    private PublicId[] getPublicIds() throws IOException {
+        int size = getInt();
+        PublicId[] publicIds = new PublicId[size];
+        for (int publicIdCount = 0; publicIdCount < size; publicIdCount++) {
+            UUID[] uuidArray = new UUID[getInt()];
+            if (uuidArray.length == 0) {
+                throw new IllegalStateException("UUID array with size 0");
+            }
+            for (int uuidCount = 0; uuidCount < uuidArray.length; uuidCount++) {
+                uuidArray[uuidCount] = new UUID(readLong(), readLong());
+            }
+            publicIds[publicIdCount] = PublicIds.of(uuidArray);
+        }
+        return publicIds;
     }
 
     private Object[] readEmbeddedObjectArray() throws IOException {

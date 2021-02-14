@@ -1,8 +1,7 @@
-package org.hl7.tinkar.common.util.id.impl;
+package org.hl7.tinkar.common.util.id;
 
 import org.eclipse.collections.impl.utility.Iterate;
-import org.hl7.tinkar.common.util.id.PublicId;
-import org.hl7.tinkar.common.util.id.PublicIdSet;
+import org.hl7.tinkar.common.util.id.impl.PublicIdCollections;
 
 import java.util.Objects;
 
@@ -77,6 +76,9 @@ public class PublicIdSetFactory {
             return this.of(one, two, three);
         }
         return new PublicIdCollections.SetN<>(one, two, three, four);
+    }
+    public PublicIdSet<PublicId> ofArray(PublicId[] items) {
+        return of(items);
     }
 
     public <E extends PublicId> PublicIdSet<E> of(E... items)

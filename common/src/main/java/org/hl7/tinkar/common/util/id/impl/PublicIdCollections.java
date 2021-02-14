@@ -12,7 +12,7 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-class PublicIdCollections {
+public class PublicIdCollections {
     /**
      * A "salt" value used for randomizing iteration order. This is initialized once
      * and stays constant for the lifetime of the JVM. It need not be truly random, but
@@ -348,7 +348,7 @@ class PublicIdCollections {
         }
     }
 
-    static final class List12<E extends PublicId> extends PublicIdCollections.AbstractImmutableList<E>
+    public static final class List12<E extends PublicId> extends PublicIdCollections.AbstractImmutableList<E>
             {
 
         
@@ -357,12 +357,12 @@ class PublicIdCollections {
         
         private final E e1;
 
-        List12(E e0) {
+        public List12(E e0) {
             this.e0 = Objects.requireNonNull(e0);
             this.e1 = null;
         }
 
-        List12(E e0, E e1) {
+        public List12(E e0, E e1) {
             this.e0 = Objects.requireNonNull(e0);
             this.e1 = Objects.requireNonNull(e1);
         }
@@ -417,16 +417,16 @@ class PublicIdCollections {
                 }
             }
 
-    static final class ListN<E extends PublicId> extends PublicIdCollections.AbstractImmutableList<E>
+    public static final class ListN<E extends PublicId> extends PublicIdCollections.AbstractImmutableList<E>
             {
 
-        static final PublicIdList EMPTY_LIST = new PublicIdCollections.ListN<>();
+        public static final PublicIdList EMPTY_LIST = new PublicIdCollections.ListN<>();
 
         
         private final E[] elements;
 
         @SafeVarargs
-        ListN(E... input) {
+        public ListN(E... input) {
             // copy and check manually to avoid TOCTOU
             @SuppressWarnings("unchecked")
             E[] tmp = (E[])new Object[input.length]; // implicit nullcheck of input
@@ -454,7 +454,9 @@ class PublicIdCollections {
                 @Override
                 public void forEach(Consumer<? super E> consumer) {
                     for (E element: elements) {
-                        consumer.accept(element);
+                        if (element != null) {
+                            consumer.accept(element);
+                        }
                     }
                 }
 
@@ -504,11 +506,11 @@ class PublicIdCollections {
     }
 
     @SuppressWarnings("unchecked")
-    static <E extends PublicId> Set<E> emptySet() {
+    public static <E extends PublicId> Set<E> emptySet() {
         return (Set<E>) PublicIdCollections.SetN.EMPTY_SET;
     }
 
-    static final class Set12<E extends PublicId> extends PublicIdCollections.AbstractImmutableSet<E>
+    public static final class Set12<E extends PublicId> extends PublicIdCollections.AbstractImmutableSet<E>
     {
 
         
@@ -516,12 +518,12 @@ class PublicIdCollections {
         
         final E e1;
 
-        Set12(E e0) {
+        public Set12(E e0) {
             this.e0 = Objects.requireNonNull(e0);
             this.e1 = null;
         }
 
-        Set12(E e0, E e1) {
+        public Set12(E e0, E e1) {
             if (e0.equals(Objects.requireNonNull(e1))) { // implicit nullcheck of e0
                 throw new IllegalArgumentException("duplicate element: " + e0);
             }
@@ -610,22 +612,22 @@ class PublicIdCollections {
      * least one null is always present.
      * @param <E> the element type
      */
-    static final class SetN<E extends PublicId> extends PublicIdCollections.AbstractImmutableSet<E>
+    public static final class SetN<E extends PublicId> extends PublicIdCollections.AbstractImmutableSet<E>
         {
 
-        static final Set<?> EMPTY_SET = new PublicIdCollections.SetN<>();
+            public static final Set<?> EMPTY_SET = new PublicIdCollections.SetN<>();
 
         
-        final E[] elements;
+        final PublicId[] elements;
         
         final int size;
 
         @SafeVarargs
         @SuppressWarnings("unchecked")
-        SetN(E... input) {
+        public SetN(E... input) {
             size = input.length; // implicit nullcheck of input
 
-            elements = (E[])new Object[EXPAND_FACTOR * input.length];
+            elements = new PublicId[EXPAND_FACTOR * input.length];
             for (int i = 0; i < input.length; i++) {
                 E e = input[i];
                 int idx = probe(e); // implicit nullcheck of e
@@ -685,7 +687,7 @@ class PublicIdCollections {
                 if (hasNext()) {
                     E element;
                     // skip null elements
-                    while ((element = elements[nextIndex()]) == null) {}
+                    while ((element = (E) elements[nextIndex()]) == null) {}
                     remaining--;
                     return element;
                 } else {
@@ -702,7 +704,7 @@ class PublicIdCollections {
         @Override
         public int hashCode() {
             int h = 0;
-            for (E e : elements) {
+            for (PublicId e : elements) {
                 if (e != null) {
                     h += e.hashCode();
                 }
@@ -717,7 +719,7 @@ class PublicIdCollections {
         private int probe(Object pe) {
             int idx = Math.floorMod(pe.hashCode(), elements.length);
             while (true) {
-                E ee = elements[idx];
+                E ee = (E) elements[idx];
                 if (ee == null) {
                     return -idx - 1;
                 } else if (pe.equals(ee)) {
@@ -729,8 +731,11 @@ class PublicIdCollections {
         }
             @Override
             public void forEach(Consumer<? super E> consumer) {
-                for (E element: elements) {
-                    consumer.accept(element);
+                for (PublicId element: elements) {
+                    if (element != null) {
+                        consumer.accept((E) element);
+                    }
+
                 }
             }
 
@@ -741,7 +746,7 @@ class PublicIdCollections {
 
             @Override
             public boolean contains(PublicId value) {
-                for (E element: elements) {
+                for (PublicId element: elements) {
                     if (value.equals(element)) {
                         return true;
                     }
