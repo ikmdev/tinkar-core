@@ -4,11 +4,11 @@
  * and open the template in the editor.
  */
 
-import org.hl7.tinkar.common.provider.chronology.ephemeral.ProviderEphemeralFactory;
+import org.hl7.tinkar.provider.ephemeral.ProviderEphemeralFactory;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
 
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
-module org.hl7.tinkar.provider.chronology.ephemeral {
+module org.hl7.tinkar.provider.ephemeral {
     requires java.base;
     requires org.eclipse.collections.api;
     requires org.hl7.tinkar.component;

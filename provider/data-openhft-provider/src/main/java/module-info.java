@@ -4,11 +4,11 @@
  * and open the template in the editor.
  */
 
-import org.hl7.tinkar.common.provider.chronology.openhft.OpenHFTProvider;
+import org.hl7.tinkar.provider.openhft.OpenHFTProvider;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
 
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
-module org.hl7.tinkar.provider.chronology.openhft {
+module org.hl7.tinkar.provider.openhft {
     requires java.base;
     requires org.eclipse.collections.api;
     requires org.hl7.tinkar.component;
@@ -18,7 +18,7 @@ module org.hl7.tinkar.provider.chronology.openhft {
     requires chronicle.core;
     requires chronicle.values;
     requires io.activej.bytebuf;
-    requires org.hl7.tinkar.dto;
+    requires org.hl7.tinkar.lombok.dto;
     requires org.apache.logging.log4j;
     requires org.hl7.tinkar.entity;
     requires chronicle.bytes;

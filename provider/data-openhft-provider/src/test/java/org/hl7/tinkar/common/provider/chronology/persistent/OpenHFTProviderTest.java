@@ -1,7 +1,7 @@
 package org.hl7.tinkar.common.provider.chronology.persistent;
 
 import org.hl7.tinkar.entity.LoadEntitiesFromDTO;
-import org.hl7.tinkar.common.provider.chronology.openhft.OpenHFTProvider;
+import org.hl7.tinkar.provider.openhft.OpenHFTProvider;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 

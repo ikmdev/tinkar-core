@@ -21,9 +21,8 @@ module org.hl7.tinkar.provider.websocket.server {
     requires org.eclipse.collections.impl;
     requires org.hl7.tinkar.common;
     requires org.hl7.tinkar.component;
-    requires org.hl7.tinkar.test;
     requires org.hl7.tinkar.entity;
     uses PrimitiveDataService;
-    opens org.hl7.tinkar.common.provider.websocket.server
+    opens org.hl7.tinkar.provider.websocket.server
             to io.activej.inject;
 }

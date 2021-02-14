@@ -26,6 +26,6 @@ module org.hl7.tinkar.provider.websocket.client {
     requires java.net.http;
     requires org.hl7.tinkar.entity;
     uses EntityService;
-    opens org.hl7.tinkar.common.provider.websocket.client
+    opens org.hl7.tinkar.provider.websocket.client
             to io.activej.inject;
 }

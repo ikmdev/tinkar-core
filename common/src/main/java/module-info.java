@@ -13,6 +13,7 @@ module org.hl7.tinkar.common {
     requires org.eclipse.collections.api;
     requires org.eclipse.collections.impl;
     requires RoaringBitmap;
+    requires java.prefs;
     exports org.hl7.tinkar.common.service;
     exports org.hl7.tinkar.common.util;
     exports org.hl7.tinkar.common.util.id;

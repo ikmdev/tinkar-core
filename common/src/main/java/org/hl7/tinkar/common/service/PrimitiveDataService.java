@@ -44,6 +44,8 @@ public interface PrimitiveDataService {
         }
     }
 
+    void close();
+
     int nidForUuids(UUID... uuids);
 
     int nidForUuids(ImmutableList<UUID> uuidList);
@@ -53,8 +55,6 @@ public interface PrimitiveDataService {
     void forEachParallel(Procedure2<Integer, byte[]> action);
 
     byte[] getBytes(int nid);
-
-    void close();
 
     /**
      * If the specified nid (native identifier -- an int) is not already associated

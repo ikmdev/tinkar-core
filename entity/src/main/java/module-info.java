@@ -11,13 +11,14 @@ import org.hl7.tinkar.entity.EntityService;
 module org.hl7.tinkar.entity {
     requires org.hl7.tinkar.component;
     requires org.eclipse.collections.api;
-    requires org.hl7.tinkar.dto;
+    requires org.hl7.tinkar.lombok.dto;
     requires io.activej.bytebuf;
     requires org.apache.logging.log4j;
     requires org.hl7.tinkar.common;
     requires org.jgrapht.core;
     requires org.eclipse.collections.impl;
     exports org.hl7.tinkar.entity;
+    exports org.hl7.tinkar.entity.util;
     uses CachingService;
     uses EntityService;
 }

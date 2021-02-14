@@ -5,7 +5,7 @@
  */
 
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
-module org.hl7.tinkar.dto {
+module org.hl7.tinkar.lombok.dto {
     requires java.base;
     requires org.eclipse.collections.api;
     requires org.eclipse.collections.impl;
