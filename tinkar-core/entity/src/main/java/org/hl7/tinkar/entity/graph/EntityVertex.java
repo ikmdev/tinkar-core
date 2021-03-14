@@ -92,11 +92,11 @@ public class EntityVertex implements Vertex, VertexId {
                 return (T) object;
             }
             return (T) SemanticProxy.make(Get.entityService().nidForComponent((Semantic) object));
-        } else if (object instanceof PatternForSemantic) {
-            if (object instanceof PatternForSemanticProxy) {
+        } else if (object instanceof TypePatternForSemantic) {
+            if (object instanceof TypePatternForSemanticProxy) {
                 return (T) object;
             }
-            return (T) PatternForSemanticProxy.make(Get.entityService().nidForComponent((PatternForSemantic) object));
+            return (T) TypePatternForSemanticProxy.make(Get.entityService().nidForComponent((TypePatternForSemantic) object));
         } else if (object instanceof Stamp & !(object instanceof StampDTO)) {
             Stamp stampValue = (Stamp) object;
             return (T) StampDTO.builder()

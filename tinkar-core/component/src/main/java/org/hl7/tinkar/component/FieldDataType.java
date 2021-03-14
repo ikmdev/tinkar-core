@@ -25,11 +25,11 @@ import java.util.UUID;
 public enum FieldDataType {
     // Changing CONCEPT_CHRONOLOGY token to 1 so that reading a default 0 throws an error...
     CONCEPT_CHRONOLOGY((byte) 1, ConceptChronology.class, UUID.fromString("60965934-32a2-11eb-adc1-0242ac120002")),
-    PATTERN_FOR_SEMANTIC_CHRONOLOGY((byte) 2, PatternForSemanticChronology.class, UUID.fromString("6eaa968e-32a2-11eb-adc1-0242ac120002")),
+    PATTERN_FOR_SEMANTIC_CHRONOLOGY((byte) 2, TypePatternForSemanticChronology.class, UUID.fromString("6eaa968e-32a2-11eb-adc1-0242ac120002")),
     SEMANTIC_CHRONOLOGY((byte) 3, SemanticChronology.class, UUID.fromString("7a01ea5a-32a2-11eb-adc1-0242ac120002")),
 
     CONCEPT_VERSION((byte) 4, ConceptVersion.class, UUID.fromString("fd3bd442-4578-11eb-b378-0242ac130002")),
-    PATTERN_FOR_SEMANTIC_VERSION((byte) 5, PatternForSemanticVersion.class, UUID.fromString("044565be-4579-11eb-b378-0242ac130002")),
+    PATTERN_FOR_SEMANTIC_VERSION((byte) 5, TypePatternForSemanticVersion.class, UUID.fromString("044565be-4579-11eb-b378-0242ac130002")),
     SEMANTIC_VERSION((byte) 6, SemanticVersion.class, UUID.fromString("09a3328e-4579-11eb-b378-0242ac130002")),
 
     STAMP((byte) 7, Stamp.class, UUID.fromString("f37e9591-e3a1-419a-a674-e504ce58943b")),
@@ -42,7 +42,7 @@ public enum FieldDataType {
     DIGRAPH((byte) 14, DiGraph.class, UUID.fromString("60113dfe-2bad-11eb-adc1-0242ac120002")),
     INSTANT((byte) 15, Instant.class, UUID.fromString("9cb1bd10-31b1-11eb-adc1-0242ac120002")),
     CONCEPT((byte) 16, Concept.class, UUID.fromString("6882871c-32a2-11eb-adc1-0242ac120002")),
-    PATTERN_FOR_SEMANTIC((byte) 17, PatternForSemantic.class, UUID.fromString("74af5952-32a2-11eb-adc1-0242ac120002")),
+    PATTERN_FOR_SEMANTIC((byte) 17, TypePatternForSemantic.class, UUID.fromString("74af5952-32a2-11eb-adc1-0242ac120002")),
     SEMANTIC((byte) 18, Semantic.class, UUID.fromString("7f21bbfa-32a2-11eb-adc1-0242ac120002")),
 
     DITREE((byte) 19, DiTree.class, UUID.fromString("32f64fc6-5371-11eb-ae93-0242ac130002")),

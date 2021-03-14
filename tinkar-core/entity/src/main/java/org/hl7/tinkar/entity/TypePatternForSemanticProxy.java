@@ -1,13 +1,13 @@
 package org.hl7.tinkar.entity;
 
 import org.hl7.tinkar.common.id.PublicId;
-import org.hl7.tinkar.component.PatternForSemantic;
+import org.hl7.tinkar.component.TypePatternForSemantic;
 import org.hl7.tinkar.entity.internal.Get;
 
-public class PatternForSemanticProxy implements PatternForSemantic, ComponentWithNid {
+public class TypePatternForSemanticProxy implements TypePatternForSemantic, ComponentWithNid {
     int nid;
 
-    private PatternForSemanticProxy(int nid) {
+    private TypePatternForSemanticProxy(int nid) {
         this.nid = nid;
     }
     @Override
@@ -20,8 +20,8 @@ public class PatternForSemanticProxy implements PatternForSemantic, ComponentWit
         return nid;
     }
 
-    public static PatternForSemanticProxy make(int nid) {
-        return new PatternForSemanticProxy(nid);
+    public static TypePatternForSemanticProxy make(int nid) {
+        return new TypePatternForSemanticProxy(nid);
     }
 
 }

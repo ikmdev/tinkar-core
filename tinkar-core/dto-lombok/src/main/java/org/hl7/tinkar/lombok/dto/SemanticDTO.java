@@ -8,7 +8,7 @@ import lombok.experimental.NonFinal;
 import lombok.experimental.SuperBuilder;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.Component;
-import org.hl7.tinkar.component.PatternForSemantic;
+import org.hl7.tinkar.component.TypePatternForSemantic;
 import org.hl7.tinkar.component.Semantic;
 import org.hl7.tinkar.lombok.dto.binary.*;
 import org.hl7.tinkar.lombok.dto.json.JSONObject;
@@ -40,8 +40,8 @@ public class SemanticDTO
         this.referencedComponentPublicId = referencedComponentPublicId;
     }
 
-    public SemanticDTO(PublicId componentPublicId, PatternForSemantic patternForSemantic, Component referencedComponent) {
-        this(componentPublicId, patternForSemantic.publicId(), referencedComponent.publicId());
+    public SemanticDTO(PublicId componentPublicId, TypePatternForSemantic typePatternForSemantic, Component referencedComponent) {
+        this(componentPublicId, typePatternForSemantic.publicId(), referencedComponent.publicId());
     }
 
     @Override
@@ -63,8 +63,8 @@ public class SemanticDTO
     }
 
     @Override
-    public PatternForSemantic patternForSemantic() {
-        return new PatternForSemanticDTO(definitionForSemanticPublicId);
+    public TypePatternForSemantic patternForSemantic() {
+        return new TypePatternForSemanticDTO(definitionForSemanticPublicId);
     }
 
     @Override

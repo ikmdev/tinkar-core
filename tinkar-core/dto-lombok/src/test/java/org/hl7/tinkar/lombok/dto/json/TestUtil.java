@@ -81,15 +81,15 @@ public class TestUtil {
         return Lists.immutable.of(array);
     }
 
-    public static PatternForSemanticVersionDTO makeDefinitionForSemanticVersionForChangeSet(PublicId componentPublicId) {
+    public static TypePatternForSemanticVersionDTO makeDefinitionForSemanticVersionForChangeSet(PublicId componentPublicId) {
 
-        return new PatternForSemanticVersionDTO(componentPublicId, makeStampForChangeSet(), makePublicId(),
+        return new TypePatternForSemanticVersionDTO(componentPublicId, makeStampForChangeSet(), makePublicId(),
                 makePublicId(), makeFieldDefinitionList());
     }
 
-    public static ImmutableList<PatternForSemanticVersionDTO> makeDefinitionForSemanticVersionForChangeSetList(PublicId componentPublicId) {
+    public static ImmutableList<TypePatternForSemanticVersionDTO> makeDefinitionForSemanticVersionForChangeSetList(PublicId componentPublicId) {
         int size = getRandomSize(4);
-        PatternForSemanticVersionDTO[] array = new PatternForSemanticVersionDTO[size];
+        TypePatternForSemanticVersionDTO[] array = new TypePatternForSemanticVersionDTO[size];
         for (int i = 0; i < size; i++) {
             array[i] = makeDefinitionForSemanticVersionForChangeSet(componentPublicId);
         }
@@ -137,7 +137,7 @@ public class TestUtil {
                 "a string",
                 Instant.ofEpochMilli(Instant.now().toEpochMilli()),
                 new ConceptDTO(makePublicId()),
-                new PatternForSemanticDTO(makePublicId()),
+                new TypePatternForSemanticDTO(makePublicId()),
                 new SemanticDTO(makePublicId(), makePublicId(), makePublicId())
         };
         return array;
@@ -153,9 +153,9 @@ public class TestUtil {
         return new ConceptChronologyDTO(componentPublicId, makePublicId(), makeConceptVersionList(componentPublicId));
     }
 
-    public static PatternForSemanticChronologyDTO makeDefinitionForSemanticChronology() {
+    public static TypePatternForSemanticChronologyDTO makeDefinitionForSemanticChronology() {
         PublicId componentPublicId = makePublicId();
-        return new PatternForSemanticChronologyDTO(componentPublicId, makePublicId(), makeDefinitionForSemanticVersionForChangeSetList(componentPublicId));
+        return new TypePatternForSemanticChronologyDTO(componentPublicId, makePublicId(), makeDefinitionForSemanticVersionForChangeSetList(componentPublicId));
     }
 
     public static SemanticChronologyDTO makeSemanticChronology() {

@@ -3,7 +3,7 @@ package org.hl7.tinkar.entity;
 import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.lombok.dto.ConceptChronologyDTO;
 import org.hl7.tinkar.component.FieldDataType;
-import org.hl7.tinkar.lombok.dto.PatternForSemanticChronologyDTO;
+import org.hl7.tinkar.lombok.dto.TypePatternForSemanticChronologyDTO;
 import org.hl7.tinkar.lombok.dto.binary.TinkarInput;
 import org.hl7.tinkar.common.util.time.Stopwatch;
 import org.hl7.tinkar.lombok.dto.SemanticChronologyDTO;
@@ -54,7 +54,7 @@ public class LoadEntitiesFromDTO {
                         }
                         break;
                         case PATTERN_FOR_SEMANTIC_CHRONOLOGY: {
-                            PatternForSemanticChronologyDTO dsDTO = PatternForSemanticChronologyDTO.make(tinkIn);
+                            TypePatternForSemanticChronologyDTO dsDTO = TypePatternForSemanticChronologyDTO.make(tinkIn);
                             Get.entityService().putChronology(dsDTO);
                             importCount.incrementAndGet();
                         }

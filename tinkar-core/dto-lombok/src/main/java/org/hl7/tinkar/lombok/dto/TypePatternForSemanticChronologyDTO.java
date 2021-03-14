@@ -24,7 +24,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.Concept;
-import org.hl7.tinkar.component.PatternForSemanticChronology;
+import org.hl7.tinkar.component.TypePatternForSemanticChronology;
 import org.hl7.tinkar.lombok.dto.binary.*;
 import org.hl7.tinkar.lombok.dto.json.JSONObject;
 import org.hl7.tinkar.lombok.dto.json.JsonMarshalable;
@@ -41,18 +41,18 @@ import java.util.Objects;
 @Value
 @Accessors(fluent = true)
 @ToString(callSuper = true)
-public class PatternForSemanticChronologyDTO
-    extends PatternForSemanticDTO
-        implements PatternForSemanticChronology<PatternForSemanticVersionDTO>, DTO, JsonMarshalable, Marshalable {
+public class TypePatternForSemanticChronologyDTO
+    extends TypePatternForSemanticDTO
+        implements TypePatternForSemanticChronology<TypePatternForSemanticVersionDTO>, DTO, JsonMarshalable, Marshalable {
 
     private static final int localMarshalVersion = 3;
 
     @NonNull protected final PublicId chronologySetPublicId;
-    @NonNull protected final ImmutableList<PatternForSemanticVersionDTO> definitionVersions;
+    @NonNull protected final ImmutableList<TypePatternForSemanticVersionDTO> definitionVersions;
 
-    public PatternForSemanticChronologyDTO(@NonNull PublicId componentPublicId,
-                                           @NonNull PublicId chronologySetPublicId,
-                                           @NonNull ImmutableList<PatternForSemanticVersionDTO> definitionVersions) {
+    public TypePatternForSemanticChronologyDTO(@NonNull PublicId componentPublicId,
+                                               @NonNull PublicId chronologySetPublicId,
+                                               @NonNull ImmutableList<TypePatternForSemanticVersionDTO> definitionVersions) {
         super(componentPublicId);
         this.chronologySetPublicId = chronologySetPublicId;
         this.definitionVersions = definitionVersions;
@@ -61,7 +61,7 @@ public class PatternForSemanticChronologyDTO
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof PatternForSemanticChronologyDTO that)) return false;
+        if (!(o instanceof TypePatternForSemanticChronologyDTO that)) return false;
         if (!super.equals(o)) return false;
         return chronologySetPublicId.equals(that.chronologySetPublicId) && definitionVersions.equals(that.definitionVersions);
     }
@@ -71,18 +71,18 @@ public class PatternForSemanticChronologyDTO
         return Objects.hash(super.hashCode(), chronologySetPublicId, definitionVersions);
     }
 
-    public static PatternForSemanticChronologyDTO make(PatternForSemanticChronology<PatternForSemanticVersionDTO> definitionForSemanticChronology) {
-        MutableList<PatternForSemanticVersionDTO> versions = Lists.mutable.ofInitialCapacity(definitionForSemanticChronology.versions().size());
-        for (PatternForSemanticVersionDTO definitionVersion : definitionForSemanticChronology.versions()) {
-            versions.add(PatternForSemanticVersionDTO.make(definitionVersion));
+    public static TypePatternForSemanticChronologyDTO make(TypePatternForSemanticChronology<TypePatternForSemanticVersionDTO> definitionForSemanticChronology) {
+        MutableList<TypePatternForSemanticVersionDTO> versions = Lists.mutable.ofInitialCapacity(definitionForSemanticChronology.versions().size());
+        for (TypePatternForSemanticVersionDTO definitionVersion : definitionForSemanticChronology.versions()) {
+            versions.add(TypePatternForSemanticVersionDTO.make(definitionVersion));
         }
-        return new PatternForSemanticChronologyDTO(definitionForSemanticChronology.publicId(),
+        return new TypePatternForSemanticChronologyDTO(definitionForSemanticChronology.publicId(),
                 definitionForSemanticChronology.chronologySet().publicId(),
                 versions.toImmutable());
     }
 
     @Override
-    public ImmutableList<PatternForSemanticVersionDTO> versions() {
+    public ImmutableList<TypePatternForSemanticVersionDTO> versions() {
         return definitionVersions.collect(definitionForSemanticVersionDTO -> definitionForSemanticVersionDTO);
     }
 
@@ -102,18 +102,18 @@ public class PatternForSemanticChronologyDTO
     }
     
     @JsonChronologyUnmarshaler
-    public static PatternForSemanticChronologyDTO make(JSONObject jsonObject) {
+    public static TypePatternForSemanticChronologyDTO make(JSONObject jsonObject) {
         PublicId componentPublicId = jsonObject.asPublicId(ComponentFieldForJson.COMPONENT_PUBLIC_ID);
-        return new PatternForSemanticChronologyDTO(componentPublicId,
+        return new TypePatternForSemanticChronologyDTO(componentPublicId,
                         jsonObject.asPublicId(ComponentFieldForJson.CHRONOLOGY_SET_PUBLIC_ID),
                         jsonObject.asDefinitionForSemanticVersionList(ComponentFieldForJson.DEFINITION_VERSIONS, componentPublicId));
     }
 
     @Unmarshaler
-    public static PatternForSemanticChronologyDTO make(TinkarInput in) {
+    public static TypePatternForSemanticChronologyDTO make(TinkarInput in) {
         if (localMarshalVersion == in.getTinkerFormatVersion()) {
             PublicId componentPublicId = in.getPublicId();
-            return new PatternForSemanticChronologyDTO(
+            return new TypePatternForSemanticChronologyDTO(
                     componentPublicId, in.getPublicId(), in.readDefinitionForSemanticVersionList(componentPublicId));
         } else {
             throw new UnsupportedOperationException("Unsupported version: " + in.getTinkerFormatVersion());

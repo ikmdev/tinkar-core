@@ -18,6 +18,6 @@
  *
  * @author kec
  */
-public interface PatternForSemantic extends Component {
+public interface TypePatternForSemantic extends Component {
     
 }

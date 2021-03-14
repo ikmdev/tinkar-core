@@ -123,10 +123,10 @@ public class TinkarOutput extends DataOutputStream {
         }
     }
 
-    public void writeDefinitionForSemanticVersionList(ImmutableList<PatternForSemanticVersionDTO> versions) {
+    public void writeDefinitionForSemanticVersionList(ImmutableList<TypePatternForSemanticVersionDTO> versions) {
         try {
             writeInt(versions.size());
-            for (PatternForSemanticVersionDTO version: versions) {
+            for (TypePatternForSemanticVersionDTO version: versions) {
                 version.marshal(this);
             }
         } catch (IOException ex) {

@@ -23,7 +23,6 @@ import org.hl7.tinkar.lombok.dto.graph.DiGraphDTO;
 import org.hl7.tinkar.lombok.dto.graph.DiTreeDTO;
 
 import java.time.Instant;
-import java.util.Arrays;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -81,7 +80,7 @@ public class SemanticEntityVersion
             case SEMANTIC:
                 return SemanticProxy.make(readBuf.readInt());
             case PATTERN_FOR_SEMANTIC:
-                return PatternForSemanticProxy.make(readBuf.readInt());
+                return TypePatternForSemanticProxy.make(readBuf.readInt());
             case IDENTIFIED_THING:
                 return EntityProxy.make(readBuf.readInt());
             case INSTANT:
@@ -189,7 +188,7 @@ public class SemanticEntityVersion
             } else {
                 writeBuf.writeInt(Get.entityService().nidForComponent(semantic));
             }
-        } else if (field instanceof PatternForSemantic pattern) {
+        } else if (field instanceof TypePatternForSemantic pattern) {
             writeBuf.writeByte(FieldDataType.PATTERN_FOR_SEMANTIC.token);
             if (field instanceof ComponentWithNid) {
                 writeBuf.writeInt(((ComponentWithNid) field).nid());
@@ -237,7 +236,7 @@ public class SemanticEntityVersion
     }
 
     @Override
-    public PatternForSemantic patternForSemantic() {
+    public TypePatternForSemantic patternForSemantic() {
         return Get.entityService().getEntityFast(getSemanticEntity().definitionNid);
     }
 

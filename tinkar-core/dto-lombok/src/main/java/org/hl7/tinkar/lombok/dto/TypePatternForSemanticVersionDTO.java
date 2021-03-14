@@ -25,7 +25,7 @@ import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.component.FieldDefinition;
-import org.hl7.tinkar.component.PatternForSemanticVersion;
+import org.hl7.tinkar.component.TypePatternForSemanticVersion;
 import org.hl7.tinkar.lombok.dto.binary.*;
 import org.hl7.tinkar.lombok.dto.json.JSONObject;
 import org.hl7.tinkar.lombok.dto.json.JsonMarshalable;
@@ -44,9 +44,9 @@ import static org.hl7.tinkar.lombok.dto.json.ComponentFieldForJson.*;
 @Value
 @Accessors(fluent = true)
 @ToString(callSuper = true)
-public class PatternForSemanticVersionDTO
+public class TypePatternForSemanticVersionDTO
     extends VersionDTO
-        implements PatternForSemanticVersion<FieldDefinitionDTO>, JsonMarshalable, Marshalable {
+        implements TypePatternForSemanticVersion<FieldDefinitionDTO>, JsonMarshalable, Marshalable {
 
     private static final int localMarshalVersion = 3;
 
@@ -54,11 +54,11 @@ public class PatternForSemanticVersionDTO
     @NonNull private final PublicId referencedComponentMeaningPublicId;
     @NonNull private final ImmutableList<FieldDefinitionDTO> fieldDefinitionDTOS;
 
-    public PatternForSemanticVersionDTO(@NonNull PublicId componentPublicId,
-                                        @NonNull StampDTO stamp,
-                                        @NonNull PublicId referencedComponentPurposePublicId,
-                                        @NonNull PublicId referencedComponentMeaningPublicId,
-                                        @NonNull ImmutableList<FieldDefinitionDTO> fieldDefinitionDTOS) {
+    public TypePatternForSemanticVersionDTO(@NonNull PublicId componentPublicId,
+                                            @NonNull StampDTO stamp,
+                                            @NonNull PublicId referencedComponentPurposePublicId,
+                                            @NonNull PublicId referencedComponentMeaningPublicId,
+                                            @NonNull ImmutableList<FieldDefinitionDTO> fieldDefinitionDTOS) {
         super(componentPublicId, stamp);
         this.referencedComponentPurposePublicId = referencedComponentPurposePublicId;
         this.referencedComponentMeaningPublicId = referencedComponentMeaningPublicId;
@@ -68,7 +68,7 @@ public class PatternForSemanticVersionDTO
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof PatternForSemanticVersionDTO that)) return false;
+        if (!(o instanceof TypePatternForSemanticVersionDTO that)) return false;
         if (!super.equals(o)) return false;
         return referencedComponentPurposePublicId.equals(that.referencedComponentPurposePublicId) && fieldDefinitionDTOS.equals(that.fieldDefinitionDTOS);
     }
@@ -78,14 +78,14 @@ public class PatternForSemanticVersionDTO
         return Objects.hash(super.hashCode(), referencedComponentPurposePublicId, fieldDefinitionDTOS);
     }
 
-    public static PatternForSemanticVersionDTO make(PatternForSemanticVersion<FieldDefinitionDTO> definitionForSemanticVersion) {
+    public static TypePatternForSemanticVersionDTO make(TypePatternForSemanticVersion<FieldDefinitionDTO> definitionForSemanticVersion) {
 
         MutableList<FieldDefinitionDTO> fields = Lists.mutable.ofInitialCapacity(definitionForSemanticVersion.fieldDefinitions().size());
         for (FieldDefinition fieldDefinition : definitionForSemanticVersion.fieldDefinitions()) {
             fields.add(FieldDefinitionDTO.make(fieldDefinition));
         }
 
-        return new PatternForSemanticVersionDTO(
+        return new TypePatternForSemanticVersionDTO(
                 definitionForSemanticVersion.publicId(),
                 StampDTO.make(definitionForSemanticVersion.stamp()),
                 definitionForSemanticVersion.referencedComponentPurpose().publicId(),
@@ -108,7 +108,7 @@ public class PatternForSemanticVersionDTO
     }
 
     /**
-     * Marshal method for PatternForSemanticVersionDTO using JSON
+     * Marshal method for TypePatternForSemanticVersionDTO using JSON
      * @param writer
      */
     @Override
@@ -122,14 +122,14 @@ public class PatternForSemanticVersionDTO
     }
 
     /**
-     * Unmarshal method for PatternForSemanticVersionDTO using JSON
+     * Unmarshal method for TypePatternForSemanticVersionDTO using JSON
      * @param jsonObject
      * @param componentPublicId
      * @return
      */
     @JsonVersionUnmarshaler
-    public static PatternForSemanticVersionDTO make(JSONObject jsonObject, PublicId componentPublicId) {
-        return new PatternForSemanticVersionDTO(componentPublicId,
+    public static TypePatternForSemanticVersionDTO make(JSONObject jsonObject, PublicId componentPublicId) {
+        return new TypePatternForSemanticVersionDTO(componentPublicId,
                 StampDTO.make((JSONObject) jsonObject.get(ComponentFieldForJson.STAMP)),
                 jsonObject.asPublicId(REFERENCED_COMPONENT_PURPOSE_PUBLIC_ID),
                 jsonObject.asPublicId(REFERENCED_COMPONENT_MEANING_PUBLIC_ID),
@@ -137,15 +137,15 @@ public class PatternForSemanticVersionDTO
     }
 
     /**
-     * Unmarshal method for PatternForSemanticVersionDTO
+     * Unmarshal method for TypePatternForSemanticVersionDTO
      * @param in
      * @param componentPublicId
      * @return
      */
     @VersionUnmarshaler
-    public static PatternForSemanticVersionDTO make(TinkarInput in, PublicId componentPublicId) {
+    public static TypePatternForSemanticVersionDTO make(TinkarInput in, PublicId componentPublicId) {
         if (localMarshalVersion == in.getTinkerFormatVersion()) {
-            return new PatternForSemanticVersionDTO(componentPublicId,
+            return new TypePatternForSemanticVersionDTO(componentPublicId,
                     StampDTO.make(in),
                     in.getPublicId(),
                     in.getPublicId(),
@@ -156,7 +156,7 @@ public class PatternForSemanticVersionDTO
     }
 
     /**
-     * Marshal method for PatternForSemanticVersionDTO
+     * Marshal method for TypePatternForSemanticVersionDTO
      * @param out
      */
     @Override

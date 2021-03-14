@@ -66,7 +66,7 @@ public class SemanticEntity
     }
 
     @Override
-    public PatternForSemantic patternForSemantic() {
+    public TypePatternForSemantic patternForSemantic() {
         return Get.entityService().getEntityFast(definitionNid);
     }
 

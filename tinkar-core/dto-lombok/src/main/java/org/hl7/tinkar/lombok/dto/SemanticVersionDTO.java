@@ -67,12 +67,12 @@ public class SemanticVersionDTO
     }
 
     public SemanticVersionDTO(@NonNull PublicId componentPublicId,
-                              @NonNull PatternForSemantic patternForSemantic,
+                              @NonNull TypePatternForSemantic typePatternForSemantic,
                               @NonNull Component referencedComponent,
                               @NonNull Stamp stamp,
                               @NonNull ImmutableList<Object> fields) {
         this(componentPublicId,
-             patternForSemantic.publicId(),
+             typePatternForSemantic.publicId(),
              referencedComponent.publicId(),
              StampDTO.make(stamp),
              fields);
@@ -96,8 +96,8 @@ public class SemanticVersionDTO
         semanticVersion.fields().forEach(objectToConvert -> {
             if (objectToConvert instanceof Concept concept) {
                 convertedFields.add(new ConceptDTO(concept.publicId()));
-            } else if (objectToConvert instanceof PatternForSemantic patternForSemantic) {
-                convertedFields.add(new PatternForSemanticDTO(patternForSemantic.publicId()));
+            } else if (objectToConvert instanceof TypePatternForSemantic typePatternForSemantic) {
+                convertedFields.add(new TypePatternForSemanticDTO(typePatternForSemantic.publicId()));
             } else if (objectToConvert instanceof Semantic semantic) {
                 convertedFields.add(new SemanticDTO(semantic.publicId(), semantic.patternForSemantic(),
                         semantic.referencedComponent()));
@@ -131,8 +131,8 @@ public class SemanticVersionDTO
     }
 
     @Override
-    public PatternForSemantic patternForSemantic() {
-        return new PatternForSemanticDTO(definitionForSemanticPublicId);
+    public TypePatternForSemantic patternForSemantic() {
+        return new TypePatternForSemanticDTO(definitionForSemanticPublicId);
     }
 
     @Override

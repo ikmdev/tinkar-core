@@ -2,7 +2,7 @@ package org.hl7.tinkar.entity;
 
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.Component;
-import org.hl7.tinkar.component.PatternForSemantic;
+import org.hl7.tinkar.component.TypePatternForSemantic;
 import org.hl7.tinkar.component.Semantic;
 import org.hl7.tinkar.entity.internal.Get;
 
@@ -24,7 +24,7 @@ public class SemanticProxy implements Semantic, ComponentWithNid {
     }
 
     @Override
-    public PatternForSemantic patternForSemantic() {
+    public TypePatternForSemantic patternForSemantic() {
         return ((Semantic) Get.entityService().getEntityFast(nid)).patternForSemantic();
     }
 

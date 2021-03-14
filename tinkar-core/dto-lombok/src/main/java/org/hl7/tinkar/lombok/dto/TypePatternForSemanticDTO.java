@@ -6,7 +6,7 @@ import lombok.Value;
 import lombok.experimental.Accessors;
 import lombok.experimental.NonFinal;
 import org.hl7.tinkar.common.id.PublicId;
-import org.hl7.tinkar.component.PatternForSemantic;
+import org.hl7.tinkar.component.TypePatternForSemantic;
 import org.hl7.tinkar.lombok.dto.binary.*;
 import org.hl7.tinkar.lombok.dto.json.JSONObject;
 import org.hl7.tinkar.lombok.dto.json.JsonMarshalable;
@@ -19,19 +19,19 @@ import java.io.Writer;
 @Accessors(fluent = true)
 @NonFinal
 @ToString(callSuper = true)
-public class PatternForSemanticDTO
+public class TypePatternForSemanticDTO
     extends ComponentDTO
-        implements PatternForSemantic, JsonMarshalable, Marshalable {
+        implements TypePatternForSemantic, JsonMarshalable, Marshalable {
     private static final int localMarshalVersion = 3;
 
-    public PatternForSemanticDTO(@NonNull PublicId componentPublicId) {
+    public TypePatternForSemanticDTO(@NonNull PublicId componentPublicId) {
         super(componentPublicId);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof PatternForSemanticDTO that)) return false;
+        if (!(o instanceof TypePatternForSemanticDTO that)) return false;
         return super.equals(that);
     }
 
@@ -49,16 +49,16 @@ public class PatternForSemanticDTO
     }
 
     @JsonChronologyUnmarshaler
-    public static PatternForSemanticDTO make(JSONObject jsonObject) {
+    public static TypePatternForSemanticDTO make(JSONObject jsonObject) {
         PublicId componentPublicId = jsonObject.asPublicId(ComponentFieldForJson.COMPONENT_PUBLIC_ID);
-        return new PatternForSemanticDTO(componentPublicId);
+        return new TypePatternForSemanticDTO(componentPublicId);
     }
 
     @Unmarshaler
-    public static PatternForSemanticDTO make(TinkarInput in) {
+    public static TypePatternForSemanticDTO make(TinkarInput in) {
         if (localMarshalVersion == in.getTinkerFormatVersion()) {
             PublicId componentPublicId = in.getPublicId();
-            return new PatternForSemanticDTO(componentPublicId);
+            return new TypePatternForSemanticDTO(componentPublicId);
         } else {
             throw new UnsupportedOperationException("Unsupported version: " + marshalVersion);
         }

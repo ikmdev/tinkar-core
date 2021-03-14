@@ -16,7 +16,7 @@ import org.hl7.tinkar.component.graph.Vertex;
 import org.hl7.tinkar.lombok.dto.binary.*;
 import org.hl7.tinkar.lombok.dto.json.*;
 import org.hl7.tinkar.component.Concept;
-import org.hl7.tinkar.component.PatternForSemantic;
+import org.hl7.tinkar.component.TypePatternForSemantic;
 import org.hl7.tinkar.component.Semantic;
 import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.lombok.dto.*;
@@ -67,11 +67,11 @@ public final class VertexDTO implements Vertex, JsonMarshalable, Marshalable {
                 return (T) object;
             }
             return (T) SemanticDTO.builder().componentPublicId(semanticValue.publicId()).build();
-        } else if (object instanceof PatternForSemantic patternForSemanticValue) {
-            if (object instanceof PatternForSemanticDTO & !(object instanceof PatternForSemanticChronologyDTO)) {
+        } else if (object instanceof TypePatternForSemantic typePatternForSemanticValue) {
+            if (object instanceof TypePatternForSemanticDTO & !(object instanceof TypePatternForSemanticChronologyDTO)) {
                 return (T) object;
             }
-            return (T) PatternForSemanticDTO.builder().componentPublicId(patternForSemanticValue.publicId()).build();
+            return (T) TypePatternForSemanticDTO.builder().componentPublicId(typePatternForSemanticValue.publicId()).build();
         } else if (object instanceof Stamp & !(object instanceof StampDTO)) {
             Stamp stampValue = (Stamp) object;
             return (T) StampDTO.builder()

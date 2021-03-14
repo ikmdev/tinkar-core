@@ -211,11 +211,11 @@ public class JSONObject extends HashMap<String, Object>
         return ConceptDTO.make((JSONObject) get(key));
     }
 
-    public ImmutableList<PatternForSemanticVersionDTO> asDefinitionForSemanticVersionList(String key, PublicId componentPublicId) {
+    public ImmutableList<TypePatternForSemanticVersionDTO> asDefinitionForSemanticVersionList(String key, PublicId componentPublicId) {
         JSONArray jsonArray = (JSONArray) get(key);
-        PatternForSemanticVersionDTO[] array = new PatternForSemanticVersionDTO[jsonArray.size()];
+        TypePatternForSemanticVersionDTO[] array = new TypePatternForSemanticVersionDTO[jsonArray.size()];
         for (int i = 0; i < array.length; i++) {
-            array[i] = PatternForSemanticVersionDTO.make((JSONObject) jsonArray.get(i), componentPublicId);
+            array[i] = TypePatternForSemanticVersionDTO.make((JSONObject) jsonArray.get(i), componentPublicId);
         }
         return Lists.immutable.of(array);
     }

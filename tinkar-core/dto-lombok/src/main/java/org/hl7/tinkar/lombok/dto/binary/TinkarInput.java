@@ -149,12 +149,12 @@ public class TinkarInput extends DataInputStream {
         }
     }
 
-    public ImmutableList<PatternForSemanticVersionDTO> readDefinitionForSemanticVersionList(PublicId componentPublicId) {
+    public ImmutableList<TypePatternForSemanticVersionDTO> readDefinitionForSemanticVersionList(PublicId componentPublicId) {
         try {
             int length = readInt();
-            PatternForSemanticVersionDTO[] array = new PatternForSemanticVersionDTO[length];
+            TypePatternForSemanticVersionDTO[] array = new TypePatternForSemanticVersionDTO[length];
             for (int i = 0; i < length; i++) {
-                array[i] = PatternForSemanticVersionDTO.make(this, componentPublicId);
+                array[i] = TypePatternForSemanticVersionDTO.make(this, componentPublicId);
             }
             return Lists.immutable.of(array);
         } catch (IOException ex) {
@@ -271,9 +271,9 @@ public class TinkarInput extends DataInputStream {
                 case CONCEPT:
                     return ConceptDTO.make(this);
                 case PATTERN_FOR_SEMANTIC_CHRONOLOGY:
-                    return PatternForSemanticChronologyDTO.make(this);
+                    return TypePatternForSemanticChronologyDTO.make(this);
                 case PATTERN_FOR_SEMANTIC:
-                    return PatternForSemanticDTO.make(this);
+                    return TypePatternForSemanticDTO.make(this);
                 case SEMANTIC_CHRONOLOGY:
                     return SemanticChronologyDTO.make(this);
                 case SEMANTIC:

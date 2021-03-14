@@ -24,7 +24,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.Component;
-import org.hl7.tinkar.component.PatternForSemantic;
+import org.hl7.tinkar.component.TypePatternForSemantic;
 import org.hl7.tinkar.component.SemanticChronology;
 import org.hl7.tinkar.lombok.dto.binary.*;
 import org.hl7.tinkar.lombok.dto.json.JSONObject;
@@ -60,11 +60,11 @@ public class SemanticChronologyDTO
     }
 
     public SemanticChronologyDTO(PublicId componentUuids,
-                                 PatternForSemantic patternForSemantic,
+                                 TypePatternForSemantic typePatternForSemantic,
                                  Component referencedComponent,
                                  ImmutableList<SemanticVersionDTO> semanticVersions) {
         this(componentUuids,
-                patternForSemantic.publicId(),
+                typePatternForSemantic.publicId(),
                 referencedComponent.publicId(),
                 semanticVersions);
     }
@@ -99,8 +99,8 @@ public class SemanticChronologyDTO
     }
 
     @Override
-    public PatternForSemantic patternForSemantic() {
-        return new PatternForSemanticDTO(definitionForSemanticPublicId);
+    public TypePatternForSemantic patternForSemantic() {
+        return new TypePatternForSemanticDTO(definitionForSemanticPublicId);
     }
 
     @Override
@@ -158,8 +158,8 @@ public class SemanticChronologyDTO
     }
 
     @Override
-    public PatternForSemanticDTO chronologySet() {
-        return new PatternForSemanticDTO(definitionForSemanticPublicId);
+    public TypePatternForSemanticDTO chronologySet() {
+        return new TypePatternForSemanticDTO(definitionForSemanticPublicId);
     }
 }
 
