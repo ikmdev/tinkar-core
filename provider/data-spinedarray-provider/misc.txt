@@ -1,0 +1,2 @@
+https://blogs.oracle.com/javamagazine/creating-a-java-off-heap-in-memory-database?source=:em:nw:mt::::RC_WWMK200429P00043:NSL400131165
+

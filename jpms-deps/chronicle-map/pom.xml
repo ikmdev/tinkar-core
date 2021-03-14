@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>tinkar-jpms-deps</artifactId>
+        <groupId>org.hl7.tinkar</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>chronicle-map</artifactId>
+    <packaging>jar</packaging>
+    <name>TINKAR: Chronicle map</name>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.moditect</groupId>
+                <artifactId>moditect-maven-plugin</artifactId>
+                <version>1.0.0.RC1</version>
+                <executions>
+                    <execution>
+                        <id>add-module-infos</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>add-module-info</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/moditect</outputDirectory>
+                            <modules>
+                                <module>
+                                    <artifact>
+                                        <groupId>net.openhft</groupId>
+                                        <artifactId>chronicle-map</artifactId>
+                                        <version>3.20.84</version>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        open module org.hl7.tinkar.chroniclemap {
+                                            requires java.naming;
+                                            requires java.management;
+                                            requires jdk.unsupported;
+                                            exports net.openhft.chronicle.core.values;
+                                            exports net.openhft.chronicle.map;
+                                            exports net.openhft.chronicle.values;
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>net.openhft</groupId>
+                                        <artifactId>chronicle-values</artifactId>
+                                        <version>2.20.80</version>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        open module org.hl7.tinkar.chroniclemap {
+                                        requires java.naming;
+                                        requires java.management;
+                                        requires jdk.unsupported;
+                                        exports net.openhft.chronicle.core.values;
+                                        exports net.openhft.chronicle.map;
+                                        exports net.openhft.chronicle.values;
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>net.openhft</groupId>
+                                        <artifactId>chronicle-core</artifactId>
+                                        <version>2.20.122</version>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        open module org.hl7.tinkar.chroniclemap {
+                                        requires java.naming;
+                                        requires java.management;
+                                        requires jdk.unsupported;
+                                        exports net.openhft.chronicle.core.values;
+                                        exports net.openhft.chronicle.map;
+                                        exports net.openhft.chronicle.values;
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>com.intellij</groupId>
+                                        <artifactId>annotations</artifactId>
+                                        <version>12.0</version>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        open module org.hl7.tinkar.chroniclemap {
+                                        requires java.naming;
+                                        requires java.management;
+                                        requires jdk.unsupported;
+                                        exports net.openhft.chronicle.core.values;
+                                        exports net.openhft.chronicle.map;
+                                        exports net.openhft.chronicle.values;
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>net.openhft</groupId>
+                                        <artifactId>chronicle-bytes</artifactId>
+                                        <version>2.20.80</version>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        open module org.hl7.tinkar.chroniclemap {
+                                        requires java.naming;
+                                        requires java.management;
+                                        requires jdk.unsupported;
+                                        exports net.openhft.chronicle.core.values;
+                                        exports net.openhft.chronicle.map;
+                                        exports net.openhft.chronicle.values;
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>net.openhft</groupId>
+                                        <artifactId>chronicle-threads</artifactId>
+                                        <version>2.20.104</version>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        open module org.hl7.tinkar.chroniclemap {
+                                        requires java.naming;
+                                        requires java.management;
+                                        requires jdk.unsupported;
+                                        exports net.openhft.chronicle.core.values;
+                                        exports net.openhft.chronicle.map;
+                                        exports net.openhft.chronicle.values;
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+<!--                                <module>-->
+<!--                                    <artifact>-->
+<!--                                        <groupId>net.openhft</groupId>-->
+<!--                                        <artifactId>affinity</artifactId>-->
+<!--                                        <version>3.20.0</version>-->
+<!--                                    </artifact>-->
+<!--                                    <moduleInfoSource>-->
+<!--                                        open module org.hl7.tinkar.chroniclemap {-->
+<!--                                        exports net.openhft.chronicle.core.values;-->
+<!--                                        exports net.openhft.chronicle.map;-->
+<!--                                        exports net.openhft.chronicle.values;-->
+<!--                                        }-->
+<!--                                    </moduleInfoSource>-->
+<!--                                </module>-->
+                                <module>
+                                    <artifact>
+                                        <groupId>com.squareup</groupId>
+                                        <artifactId>javapoet</artifactId>
+                                        <version>1.12.1</version>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        open module org.hl7.tinkar.chroniclemap {
+                                        requires java.naming;
+                                        requires java.management;
+                                        requires jdk.unsupported;
+                                        exports net.openhft.chronicle.core.values;
+                                        exports net.openhft.chronicle.map;
+                                        exports net.openhft.chronicle.values;
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>org.slf4j</groupId>
+                                        <artifactId>slf4j-api</artifactId>
+                                        <version>1.7.30</version>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        open module org.hl7.tinkar.chroniclemap {
+                                        requires java.naming;
+                                        requires java.management;
+                                        requires jdk.unsupported;
+                                        exports net.openhft.chronicle.core.values;
+                                        exports net.openhft.chronicle.map;
+                                        exports net.openhft.chronicle.values;
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>net.openhft</groupId>
+                                        <artifactId>chronicle-wire</artifactId>
+                                        <version>2.20.111</version>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        open module org.hl7.tinkar.chroniclemap {
+                                        requires java.naming;
+                                        requires java.management;
+                                        requires jdk.unsupported;
+                                        exports net.openhft.chronicle.core.values;
+                                        exports net.openhft.chronicle.map;
+                                        exports net.openhft.chronicle.values;
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>net.openhft</groupId>
+                                        <artifactId>compiler</artifactId>
+                                        <version>2.4.0</version>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        open module org.hl7.tinkar.chroniclemap {
+                                        requires java.naming;
+                                        requires java.management;
+                                        requires jdk.unsupported;
+                                        exports net.openhft.chronicle.core.values;
+                                        exports net.openhft.chronicle.map;
+                                        exports net.openhft.chronicle.values;
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>net.openhft</groupId>
+                                        <artifactId>chronicle-algorithms</artifactId>
+                                        <version>2.20.80</version>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        open module org.hl7.tinkar.chroniclemap {
+                                        requires java.naming;
+                                        requires java.management;
+                                        requires jdk.unsupported;
+                                        exports net.openhft.chronicle.core.values;
+                                        exports net.openhft.chronicle.map;
+                                        exports net.openhft.chronicle.values;
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>net.java.dev.jna</groupId>
+                                        <artifactId>jna</artifactId>
+                                        <version>5.5.0</version>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        open module org.hl7.tinkar.chroniclemap {
+                                        requires java.naming;
+                                        requires java.management;
+                                        requires jdk.unsupported;
+                                        exports net.openhft.chronicle.core.values;
+                                        exports net.openhft.chronicle.map;
+                                        exports net.openhft.chronicle.values;
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>net.java.dev.jna</groupId>
+                                        <artifactId>jna-platform</artifactId>
+                                        <version>5.5.0</version>
+                                    </artifact>
+                                    <moduleInfoSource>
+                                        open module org.hl7.tinkar.chroniclemap {
+                                        requires java.naming;
+                                        requires java.management;
+                                        requires jdk.unsupported;
+                                        exports net.openhft.chronicle.core.values;
+                                        exports net.openhft.chronicle.map;
+                                        exports net.openhft.chronicle.values;
+                                        }
+                                    </moduleInfoSource>
+                                </module>
+                            </modules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <phase>prepare-package</phase>
+                        <configuration>
+                            <target>
+                                <echo message="unzipping file" />
+                                <unzip src="${project.build.directory}/moditect/chronicle-map-3.20.84.jar"
+                                       dest="${project.build.directory}/classes/" />
+                                <unzip src="${project.build.directory}/moditect/chronicle-values-2.20.80.jar"
+                                       dest="${project.build.directory}/classes/" />
+                                <unzip src="${project.build.directory}/moditect/chronicle-core-2.20.122.jar"
+                                       dest="${project.build.directory}/classes/" />
+                                <unzip src="${project.build.directory}/moditect/annotations-12.0.jar"
+                                       dest="${project.build.directory}/classes/" />
+                                <unzip src="${project.build.directory}/moditect/chronicle-bytes-2.20.80.jar"
+                                       dest="${project.build.directory}/classes/" />
+                                <unzip src="${project.build.directory}/moditect/chronicle-threads-2.20.104.jar"
+                                       dest="${project.build.directory}/classes/" />
+<!--                                <unzip src="${project.build.directory}/moditect/affinity-3.20.0.jar"-->
+<!--                                       dest="${project.build.directory}/classes/" />-->
+                                <unzip src="${project.build.directory}/moditect/javapoet-1.12.1.jar"
+                                       dest="${project.build.directory}/classes/" />
+                                <unzip src="${project.build.directory}/moditect/slf4j-api-1.7.30.jar"
+                                       dest="${project.build.directory}/classes/" />
+                                <unzip src="${project.build.directory}/moditect/chronicle-wire-2.20.111.jar"
+                                       dest="${project.build.directory}/classes/" />
+                                <unzip src="${project.build.directory}/moditect/compiler-2.4.0.jar"
+                                       dest="${project.build.directory}/classes/" />
+                                <unzip src="${project.build.directory}/moditect/chronicle-algorithms-2.20.80.jar"
+                                       dest="${project.build.directory}/classes/" />
+                                <unzip src="${project.build.directory}/moditect/jna-5.5.0.jar"
+                                       dest="${project.build.directory}/classes/" />
+                                <unzip src="${project.build.directory}/moditect/jna-platform-5.5.0.jar"
+                                       dest="${project.build.directory}/classes/" />
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
