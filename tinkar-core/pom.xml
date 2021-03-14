@@ -77,7 +77,6 @@
                         <verbose>true</verbose>
                         <fork>true</fork>
                         <compilerArgs>
-                            <arg>-J-Xss40m</arg>
                             <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
                             <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
                             <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
