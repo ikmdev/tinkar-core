@@ -264,8 +264,7 @@ public class StampFilterImmutable
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof StampFilterImmutable)) return false;
-        StampFilterImmutable that = (StampFilterImmutable) o;
+        if (!(o instanceof StampFilterImmutable that)) return false;
         return getAllowedStates().equals(that.getAllowedStates()) &&
                 getStampPosition().equals(that.getStampPosition()) &&
                 getModuleNids().equals(that.getModuleNids()) &&

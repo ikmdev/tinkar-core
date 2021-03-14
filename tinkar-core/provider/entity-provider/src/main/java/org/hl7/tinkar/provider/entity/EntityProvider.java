@@ -20,8 +20,7 @@ public class EntityProvider implements EntityService {
 
     @Override
     public void putChronology(Chronology chronology) {
-        if (chronology instanceof Entity) {
-            Entity entity = (Entity) chronology;
+        if (chronology instanceof Entity entity) {
             putEntity(entity);
         } else {
             putEntity(EntityFactory.make(chronology));
@@ -53,8 +52,7 @@ public class EntityProvider implements EntityService {
 
     @Override
     public void putEntity(Entity entity) {
-        if (entity instanceof SemanticEntity) {
-            SemanticEntity semanticEntity = (SemanticEntity) entity;
+        if (entity instanceof SemanticEntity semanticEntity) {
             Get.dataService().merge(entity.nid(),
                     entity.definitionNid(),
                     semanticEntity.referencedComponentNid(),

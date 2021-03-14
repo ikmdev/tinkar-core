@@ -10,8 +10,7 @@ public class Put {
     public static MVStoreProvider singleton;
     public static void put(Chronology chronology) {
         Entity entity = EntityFactory.make(chronology);
-        if (entity instanceof SemanticEntity) {
-            SemanticEntity semanticEntity = (SemanticEntity) entity;
+        if (entity instanceof SemanticEntity semanticEntity) {
             singleton.merge(entity.nid(),
                     entity.definitionNid(),
                     semanticEntity.referencedComponentNid(),

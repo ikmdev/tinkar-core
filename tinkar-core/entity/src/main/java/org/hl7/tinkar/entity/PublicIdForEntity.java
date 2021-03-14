@@ -50,8 +50,7 @@ public class PublicIdForEntity implements PublicId {
     public boolean equals(Object o) {
         if (this == o) return true;
 
-        if (o instanceof PublicId) {
-            PublicId publicId = (PublicId) o;
+        if (o instanceof PublicId publicId) {
             UUID[] thisUuids = asUuidArray();
             return Arrays.stream(publicId.asUuidArray()).anyMatch(uuid -> {
                 for (UUID thisUuid: thisUuids) {

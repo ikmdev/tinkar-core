@@ -116,13 +116,11 @@ public class SemanticEntityVersion
                 size += 2;
             } else if (field instanceof Float) {
                 size += 5;
-            } else if (field instanceof byte[]) {
-                byte[] byteArray = (byte[]) field;
+            } else if (field instanceof byte[] byteArray) {
                 size += (5 + byteArray.length);
             } else if (field instanceof Integer) {
                 size += 5;
-            } else if (field instanceof String) {
-                String string = (String) field;
+            } else if (field instanceof String string) {
                 size += (5 + (string.length() * 2)); // token, length, upper bound on string bytes (average < 16 bit chars for UTF8...).
             } else if (field instanceof Entity) {
                 size += 5;
@@ -130,14 +128,11 @@ public class SemanticEntityVersion
                 size += 5;
             } else if (field instanceof Component) {
                 size += 5;
-            } else if (field instanceof DiTreeEntity) {
-                DiTreeEntity treeEntity = (DiTreeEntity) field;
+            } else if (field instanceof DiTreeEntity treeEntity) {
                 size += treeEntity.size();
-            } else if (field instanceof IntIdSet) {
-                IntIdSet ids = (IntIdSet) field;
+            } else if (field instanceof IntIdSet ids) {
                 size += 5 + (ids.size() * 4);
-            } else if (field instanceof IntIdList) {
-                IntIdList ids = (IntIdList) field;
+            } else if (field instanceof IntIdList ids) {
                 size += 5 + (ids.size() * 4);
             } else if (field instanceof Instant) {
                 size += 8;
@@ -164,84 +159,70 @@ public class SemanticEntityVersion
         } else if (field instanceof Float) {
             writeBuf.writeByte(FieldDataType.FLOAT.token);
             writeBuf.writeFloat((Float) field);
-        } else if (field instanceof byte[]) {
-            byte[] byteArray = (byte[]) field;
+        } else if (field instanceof byte[] byteArray) {
             writeBuf.writeByte(FieldDataType.BYTE_ARRAY.token);
             writeBuf.writeInt(byteArray.length);
             writeBuf.write(byteArray);
         } else if (field instanceof Integer) {
             writeBuf.writeByte(FieldDataType.INTEGER.token);
             writeBuf.writeInt((Integer) field);
-        } else if (field instanceof Instant) {
+        } else if (field instanceof Instant instantField) {
             writeBuf.writeByte(FieldDataType.INSTANT.token);
-            Instant instantField = (Instant) field;
             writeBuf.writeLong(instantField.getEpochSecond());
             writeBuf.writeInt(instantField.getNano());
-        } else if (field instanceof String) {
-            String string = (String) field;
+        } else if (field instanceof String string) {
             writeBuf.writeByte(FieldDataType.STRING.token);
             byte[] bytes = string.getBytes(UTF_8);
             writeBuf.writeInt(bytes.length);
             writeBuf.write(bytes);
-        } else if (field instanceof Concept) {
-            Concept concept = (Concept) field;
+        } else if (field instanceof Concept concept) {
             writeBuf.writeByte(FieldDataType.CONCEPT.token);
             if (field instanceof ComponentWithNid) {
                 writeBuf.writeInt(((ComponentWithNid) field).nid());
             } else {
                 writeBuf.writeInt(Get.entityService().nidForComponent(concept));
             }
-        } else if (field instanceof Semantic) {
-            Semantic semantic = (Semantic) field;
+        } else if (field instanceof Semantic semantic) {
             writeBuf.writeByte(FieldDataType.SEMANTIC.token);
             if (field instanceof ComponentWithNid) {
                 writeBuf.writeInt(((ComponentWithNid) field).nid());
             } else {
                 writeBuf.writeInt(Get.entityService().nidForComponent(semantic));
             }
-        } else if (field instanceof PatternForSemantic) {
-            PatternForSemantic pattern = (PatternForSemantic) field;
+        } else if (field instanceof PatternForSemantic pattern) {
             writeBuf.writeByte(FieldDataType.PATTERN_FOR_SEMANTIC.token);
             if (field instanceof ComponentWithNid) {
                 writeBuf.writeInt(((ComponentWithNid) field).nid());
             } else {
                 writeBuf.writeInt(Get.entityService().nidForComponent(pattern));
             }
-        } else if (field instanceof Entity) {
-            Entity entity = (Entity) field;
+        } else if (field instanceof Entity entity) {
             writeBuf.writeByte(FieldDataType.IDENTIFIED_THING.token);
             writeBuf.writeInt(entity.nid);
-        } else if (field instanceof EntityProxy) {
-            EntityProxy proxy = (EntityProxy) field;
+        } else if (field instanceof EntityProxy proxy) {
             writeBuf.writeByte(FieldDataType.IDENTIFIED_THING.token);
             writeBuf.writeInt(proxy.nid);
-        } else if (field instanceof Component) {
-            Component component = (Component) field;
+        } else if (field instanceof Component component) {
             writeBuf.writeByte(FieldDataType.IDENTIFIED_THING.token);
             writeBuf.writeInt(Get.entityService().nidForComponent(component));
-        } else if (field instanceof DiTreeEntity) {
-            DiTreeEntity diTreeEntity = (DiTreeEntity) field;
+        } else if (field instanceof DiTreeEntity diTreeEntity) {
             writeBuf.writeByte(FieldDataType.DITREE.token);
             writeBuf.write(diTreeEntity.getBytes());
-        } else if (field instanceof PlanarPoint) {
+        } else if (field instanceof PlanarPoint point) {
             writeBuf.writeByte(FieldDataType.PLANAR_POINT.token);
-            PlanarPoint point = (PlanarPoint) field;
             writeBuf.writeInt(point.x);
             writeBuf.writeInt(point.y);
-        } else if (field instanceof SpatialPoint) {
+        } else if (field instanceof SpatialPoint point) {
             writeBuf.writeByte(FieldDataType.SPATIAL_POINT.token);
-            SpatialPoint point = (SpatialPoint) field;
             writeBuf.writeInt(point.x);
             writeBuf.writeInt(point.y);
             writeBuf.writeInt(point.z);
-        } else if (field instanceof IntIdList) {
+        } else if (field instanceof IntIdList ids) {
             writeBuf.writeByte(FieldDataType.COMPONENT_ID_LIST.token);
-            IntIdList ids = (IntIdList) field;
             writeBuf.writeInt(ids.size());
             ids.forEach(id -> writeBuf.writeInt(id));
-        } else if (field instanceof IntIdSet) {
+        } else if (field instanceof IntIdSet ids) {
             writeBuf.writeByte(FieldDataType.COMPONENT_ID_SET.token);
-            IntIdSet ids = (IntIdSet) field;
             writeBuf.writeInt(ids.size());
             ids.forEach(id -> writeBuf.writeInt(id));
         } else {
@@ -288,8 +269,7 @@ public class SemanticEntityVersion
                 version.fields.add(obj);
             } else if (obj instanceof Instant) {
                 version.fields.add(obj);
-            } else if (obj instanceof Component) {
-                Component component = (Component) obj;
+            } else if (obj instanceof Component component) {
                 version.fields.add(EntityProxy.make(Get.entityService().nidForComponent(component)));
             } else if (obj instanceof DiTreeDTO) {
                 DiTree<Vertex> component = (DiTree<Vertex>) obj;

@@ -134,8 +134,7 @@ public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordin
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof EditCoordinateImmutable)) return false;
-        EditCoordinateImmutable that = (EditCoordinateImmutable) o;
+        if (!(o instanceof EditCoordinateImmutable that)) return false;
         return getAuthorNidForChanges() == that.getAuthorNidForChanges() &&
                 getDefaultModuleNid() == that.getDefaultModuleNid() &&
                 getPromotionPathNid() == that.getPromotionPathNid() &&

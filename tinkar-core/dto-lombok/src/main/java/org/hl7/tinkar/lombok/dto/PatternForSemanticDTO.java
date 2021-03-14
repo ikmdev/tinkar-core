@@ -31,8 +31,7 @@ public class PatternForSemanticDTO
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof PatternForSemanticDTO)) return false;
-        PatternForSemanticDTO that = (PatternForSemanticDTO) o;
+        if (!(o instanceof PatternForSemanticDTO that)) return false;
         return super.equals(that);
     }
 

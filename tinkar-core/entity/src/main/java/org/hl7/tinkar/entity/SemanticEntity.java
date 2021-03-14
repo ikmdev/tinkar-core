@@ -41,8 +41,7 @@ public class SemanticEntity
 
     @Override
     protected void finishEntityRead(Chronology chronology) {
-        if (chronology instanceof SemanticChronology) {
-            SemanticChronology semanticChronology = (SemanticChronology) chronology;
+        if (chronology instanceof SemanticChronology semanticChronology) {
             referencedComponentNid = Get.entityService().nidForComponent(semanticChronology.referencedComponent());
         }
     }

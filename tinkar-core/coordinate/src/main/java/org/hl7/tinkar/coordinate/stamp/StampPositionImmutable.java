@@ -148,11 +148,9 @@ public final class StampPositionImmutable
             return false;
         }
 
-        if (!(obj instanceof StampPosition)) {
+        if (!(obj instanceof final StampPosition other)) {
             return false;
         }
-
-        final StampPosition other = (StampPosition) obj;
 
         if (this.time != other.time()) {
             return false;

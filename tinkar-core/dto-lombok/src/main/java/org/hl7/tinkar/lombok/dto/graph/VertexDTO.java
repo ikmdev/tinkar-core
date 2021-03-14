@@ -57,23 +57,20 @@ public final class VertexDTO implements Vertex, JsonMarshalable, Marshalable {
     }
 
     public static <T extends Object> T abstractObject(Object object) {
-        if (object instanceof Concept) {
+        if (object instanceof Concept conceptValue) {
             if (object instanceof ConceptDTO & !(object instanceof ConceptChronologyDTO)) {
                 return (T) object;
             }
-            Concept conceptValue = (Concept) object;
             return (T) ConceptDTO.builder().componentPublicId(conceptValue.publicId()).build();
-        } else if (object instanceof Semantic) {
+        } else if (object instanceof Semantic semanticValue) {
             if (object instanceof SemanticDTO & !(object instanceof SemanticChronologyDTO)) {
                 return (T) object;
             }
-            Semantic semanticValue = (Semantic) object;
             return (T) SemanticDTO.builder().componentPublicId(semanticValue.publicId()).build();
-        } else if (object instanceof PatternForSemantic) {
+        } else if (object instanceof PatternForSemantic patternForSemanticValue) {
             if (object instanceof PatternForSemanticDTO & !(object instanceof PatternForSemanticChronologyDTO)) {
                 return (T) object;
             }
-            PatternForSemantic patternForSemanticValue = (PatternForSemantic) object;
             return (T) PatternForSemanticDTO.builder().componentPublicId(patternForSemanticValue.publicId()).build();
         } else if (object instanceof Stamp & !(object instanceof StampDTO)) {
             Stamp stampValue = (Stamp) object;
@@ -88,8 +85,7 @@ public final class VertexDTO implements Vertex, JsonMarshalable, Marshalable {
             object = ((Double) object).floatValue();
         } else if (object instanceof Integer) {
             object = ((Integer) object).longValue();
-        } else if (object instanceof byte[]) {
-            byte[] byteArray = (byte[]) object;
+        } else if (object instanceof byte[] byteArray) {
             object = new ByteArrayList(byteArray);
         }
         return (T) object;
@@ -116,8 +112,7 @@ public final class VertexDTO implements Vertex, JsonMarshalable, Marshalable {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof VertexDTO)) return false;
-        VertexDTO vertexDTO = (VertexDTO) o;
+        if (!(o instanceof VertexDTO vertexDTO)) return false;
         return vertexIdLsb == vertexDTO.vertexIdLsb &&
                 vertexIdMsb == vertexDTO.vertexIdMsb &&
                 meaning.equals(vertexDTO.meaning) &&

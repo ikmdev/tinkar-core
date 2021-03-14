@@ -11,16 +11,13 @@ import org.hl7.tinkar.lombok.dto.StampDTO;
 public class EntityFactory {
 
     public static Entity make(Chronology chronology) {
-        if (chronology instanceof ConceptChronology) {
-            ConceptChronology conceptChronology = (ConceptChronology) chronology;
+        if (chronology instanceof ConceptChronology conceptChronology) {
             ConceptEntity conceptEntity = ConceptEntity.make(conceptChronology);
             return conceptEntity;
-        } else if (chronology instanceof SemanticChronology) {
-            SemanticChronology semanticChronology = (SemanticChronology) chronology;
+        } else if (chronology instanceof SemanticChronology semanticChronology) {
             SemanticEntity semanticEntity =  SemanticEntity.make(semanticChronology);
            return semanticEntity;
-        } else if (chronology instanceof PatternForSemanticChronology) {
-            PatternForSemanticChronology definitionForSemanticChronology = (PatternForSemanticChronology) chronology;
+        } else if (chronology instanceof PatternForSemanticChronology definitionForSemanticChronology) {
             PatternForSemanticEntity patternForSemanticEntity = PatternForSemanticEntity.make(definitionForSemanticChronology);
             return patternForSemanticEntity;
 

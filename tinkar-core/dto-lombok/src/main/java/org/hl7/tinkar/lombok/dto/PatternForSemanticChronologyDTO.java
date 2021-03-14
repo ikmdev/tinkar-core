@@ -61,9 +61,8 @@ public class PatternForSemanticChronologyDTO
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof PatternForSemanticChronologyDTO)) return false;
+        if (!(o instanceof PatternForSemanticChronologyDTO that)) return false;
         if (!super.equals(o)) return false;
-        PatternForSemanticChronologyDTO that = (PatternForSemanticChronologyDTO) o;
         return chronologySetPublicId.equals(that.chronologySetPublicId) && definitionVersions.equals(that.definitionVersions);
     }
 

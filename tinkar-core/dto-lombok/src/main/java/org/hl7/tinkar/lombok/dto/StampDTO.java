@@ -67,9 +67,8 @@ public class StampDTO
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof StampDTO)) return false;
+        if (!(o instanceof StampDTO stampDTO)) return false;
         if (!super.equals(o)) return false;
-        StampDTO stampDTO = (StampDTO) o;
         return statusPublicId.equals(stampDTO.statusPublicId) &&
                 time == stampDTO.time &&
                 authorPublicId.equals(stampDTO.authorPublicId) &&

@@ -52,23 +52,19 @@ public class PublicId1 extends PublicIdA implements VertexId {
     public boolean equals(Object o) {
         if (this == o) return true;
 
-        if (o instanceof PublicId) {
-            if (o instanceof PublicId1) {
-                PublicId1 publicId1 = (PublicId1) o;
+        if (o instanceof PublicId publicId) {
+            if (o instanceof PublicId1 publicId1) {
                 return msb == publicId1.msb && lsb == publicId1.lsb;
             }
-            if (o instanceof PublicId2) {
-                PublicId2 publicId2 = (PublicId2) o;
+            if (o instanceof PublicId2 publicId2) {
                 return msb == publicId2.msb && lsb == publicId2.lsb ||
                         msb == publicId2.msb2 && lsb == publicId2.lsb2;
             }
-            if (o instanceof PublicId3) {
-                PublicId3 publicId3 = (PublicId3) o;
+            if (o instanceof PublicId3 publicId3) {
                 return msb == publicId3.msb && lsb == publicId3.lsb ||
                         msb == publicId3.msb2 && lsb == publicId3.lsb2 ||
                         msb == publicId3.msb3 && lsb == publicId3.lsb3;
             }
-            PublicId publicId = (PublicId) o;
             UUID[] thisUuids = asUuidArray();
             return Arrays.stream(publicId.asUuidArray()).anyMatch(uuid -> {
                 for (UUID thisUuid : thisUuids) {

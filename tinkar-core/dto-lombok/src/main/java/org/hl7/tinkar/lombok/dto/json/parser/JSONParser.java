@@ -273,11 +273,9 @@ public class JSONParser {
                     } else {
                         val.add(token.value);
                     }
-                } else if (token.value instanceof Double) {
-                    Double doubleVal = (Double) token.value;
+                } else if (token.value instanceof Double doubleVal) {
                     val.add(doubleVal.floatValue());
-                } else if (token.value instanceof Long) {
-                    Long longVal = (Long) token.value;
+                } else if (token.value instanceof Long longVal) {
                     val.add(longVal.intValue());
                 } else {
                     val.add(token.value);

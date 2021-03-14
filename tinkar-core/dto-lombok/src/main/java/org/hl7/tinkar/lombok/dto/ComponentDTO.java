@@ -43,8 +43,7 @@ public class ComponentDTO
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof ComponentDTO)) return false;
-        ComponentDTO that = (ComponentDTO) o;
+        if (!(o instanceof ComponentDTO that)) return false;
         return componentPublicId.equals(that.componentPublicId);
     }
 

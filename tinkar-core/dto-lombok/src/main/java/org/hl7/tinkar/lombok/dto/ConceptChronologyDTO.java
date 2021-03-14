@@ -62,9 +62,8 @@ public class ConceptChronologyDTO
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof ConceptChronologyDTO)) return false;
+        if (!(o instanceof ConceptChronologyDTO that)) return false;
         if (!super.equals(o)) return false;
-        ConceptChronologyDTO that = (ConceptChronologyDTO) o;
         return chronologySetPublicId.equals(that.chronologySetPublicId) && conceptVersions.equals(that.conceptVersions);
     }
 

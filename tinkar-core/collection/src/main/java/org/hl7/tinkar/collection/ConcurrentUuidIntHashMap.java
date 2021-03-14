@@ -822,9 +822,8 @@ public final class ConcurrentUuidIntHashMap
             }
             this.resize(this.table, capacity + 1);
         }
-        if (map instanceof ConcurrentUuidIntHashMap && chunks > 1 && map.size() > 50000)
+        if (map instanceof ConcurrentUuidIntHashMap incoming && chunks > 1 && map.size() > 50000)
         {
-            ConcurrentUuidIntHashMap incoming = (ConcurrentUuidIntHashMap) map;
             AtomicReferenceArray currentArray = incoming.table;
             FutureTask<?>[] futures = new FutureTask<?>[chunks];
             int chunkSize = currentArray.length() / chunks;
@@ -1853,8 +1852,7 @@ public final class ConcurrentUuidIntHashMap
             {
                 return false;
             }
-            if (o instanceof ConcurrentUuidIntHashMap.Entry) {
-                ConcurrentUuidIntHashMap.Entry entry = (Entry) o;
+            if (o instanceof Entry entry) {
                 // avoid object creation to test equality...
                 return this.value == entry.value &&
                         this.key_lsb == entry.key_lsb &&

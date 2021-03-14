@@ -402,14 +402,12 @@ public interface ManifoldCoordinate {
         if (object == null) {
             return;
         }
-        if (object instanceof Concept) {
-            Concept Concept = (Concept) object;
-            sb.append(toString.apply(Concept));
+        if (object instanceof Concept concept) {
+            sb.append(toString.apply(concept));
         } else if (object instanceof Collection) {
 
-            if (object instanceof Set) {
+            if (object instanceof Set set) {
                 // a set, so order does not matter. Alphabetic order desirable.
-                Set set = (Set) object;
                 if (set.isEmpty()) {
                     toConceptString(set.toArray(), toString, sb);
                 } else {

@@ -81,9 +81,8 @@ public class SemanticVersionDTO
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof SemanticVersionDTO)) return false;
+        if (!(o instanceof SemanticVersionDTO that)) return false;
         if (!super.equals(o)) return false;
-        SemanticVersionDTO that = (SemanticVersionDTO) o;
         return definitionForSemanticPublicId.equals(that.definitionForSemanticPublicId) && referencedComponentPublicId.equals(that.referencedComponentPublicId) && fields.equals(that.fields);
     }
 
@@ -95,21 +94,16 @@ public class SemanticVersionDTO
     public static SemanticVersionDTO make(SemanticVersion semanticVersion) {
         MutableList<Object> convertedFields = Lists.mutable.empty();
         semanticVersion.fields().forEach(objectToConvert -> {
-            if (objectToConvert instanceof Concept) {
-                Concept concept = (Concept) objectToConvert;
+            if (objectToConvert instanceof Concept concept) {
                 convertedFields.add(new ConceptDTO(concept.publicId()));
-            } else if (objectToConvert instanceof PatternForSemantic) {
-                PatternForSemantic patternForSemantic = (PatternForSemantic) objectToConvert;
+            } else if (objectToConvert instanceof PatternForSemantic patternForSemantic) {
                 convertedFields.add(new PatternForSemanticDTO(patternForSemantic.publicId()));
-            } else if (objectToConvert instanceof Semantic) {
-                Semantic semantic = (Semantic) objectToConvert;
+            } else if (objectToConvert instanceof Semantic semantic) {
                 convertedFields.add(new SemanticDTO(semantic.publicId(), semantic.patternForSemantic(),
                         semantic.referencedComponent()));
-            } else if (objectToConvert instanceof Component) {
-                Component component = (Component) objectToConvert;
+            } else if (objectToConvert instanceof Component component) {
                 convertedFields.add(new ComponentDTO(component.publicId()));
-            } else if (objectToConvert instanceof Number) {
-                Number number = (Number) objectToConvert;
+            } else if (objectToConvert instanceof Number number) {
                 if (number instanceof Long) {
                     convertedFields.add(number.intValue());
                 } else if (number instanceof Double) {

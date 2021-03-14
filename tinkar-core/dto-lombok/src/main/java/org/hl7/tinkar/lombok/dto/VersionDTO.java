@@ -28,8 +28,7 @@ public class VersionDTO
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof VersionDTO)) return false;
-        VersionDTO that = (VersionDTO) o;
+        if (!(o instanceof VersionDTO that)) return false;
         return publicId.equals(that.publicId) && stamp.equals(that.stamp);
     }
 

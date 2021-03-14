@@ -91,11 +91,9 @@ public class JSONValue {
             writeQuotedString(out, value.toString());
         } else if (value instanceof Instant) {
             writeQuotedString(out, value.toString());
-        } else if (value instanceof ByteArrayList) {
-            ByteArrayList bal = (ByteArrayList) value;
+        } else if (value instanceof ByteArrayList bal) {
             writeQuotedString(out, JSONObject.DATA_APPLICATION_OCTET_STREAM_BASE_64 + Base64.getEncoder().encodeToString(bal.toArray()));
-        } else if (value instanceof byte[]) {
-            byte[] byteArray = (byte[]) value;
+        } else if (value instanceof byte[] byteArray) {
             writeQuotedString(out, JSONObject.DATA_APPLICATION_OCTET_STREAM_BASE_64 + Base64.getEncoder().encodeToString(byteArray));
         } else if ((value instanceof JSONStreamAware)) {
             ((JSONStreamAware) value).writeJSONString(out);

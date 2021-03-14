@@ -14,8 +14,7 @@ public class PlanarPoint {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof PlanarPoint)) return false;
-        PlanarPoint that = (PlanarPoint) o;
+        if (!(o instanceof PlanarPoint that)) return false;
         return x == that.x && y == that.y;
     }
 

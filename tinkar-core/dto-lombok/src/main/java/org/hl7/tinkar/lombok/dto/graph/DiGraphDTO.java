@@ -50,9 +50,8 @@ public final class DiGraphDTO extends GraphDTO implements DiGraph<VertexDTO>, Ma
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof DiGraphDTO)) return false;
+        if (!(o instanceof DiGraphDTO that)) return false;
         if (!super.equals(o)) return false;
-        DiGraphDTO that = (DiGraphDTO) o;
         return rootSequences.equals(that.rootSequences) && predecessorMap.equals(that.predecessorMap);
     }
 

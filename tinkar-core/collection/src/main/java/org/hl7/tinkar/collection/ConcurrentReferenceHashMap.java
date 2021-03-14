@@ -1091,11 +1091,10 @@ public class ConcurrentReferenceHashMap<K, V>
          */
         @Override
         public boolean contains(Object o) {
-            if (!(o instanceof Map.Entry)) {
+            if (!(o instanceof final Entry<?, ?> e)) {
                 return false;
             }
 
-            final Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
             final V               v = ConcurrentReferenceHashMap.this.get(e.getKey());
 
             return (v != null) && v.equals(e.getValue());
@@ -1119,11 +1118,9 @@ public class ConcurrentReferenceHashMap<K, V>
          */
         @Override
         public boolean remove(Object o) {
-            if (!(o instanceof Map.Entry)) {
+            if (!(o instanceof final Entry<?, ?> e)) {
                 return false;
             }
-
-            final Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
 
             return ConcurrentReferenceHashMap.this.remove(e.getKey(), e.getValue());
         }
@@ -2187,11 +2184,9 @@ public class ConcurrentReferenceHashMap<K, V>
          */
         @Override
         public boolean equals(Object o) {
-            if (!(o instanceof Map.Entry)) {
+            if (!(o instanceof final Entry<?, ?> e)) {
                 return false;
             }
-
-            final Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
 
             return eq(this.key, e.getKey()) && eq(this.value, e.getValue());
         }

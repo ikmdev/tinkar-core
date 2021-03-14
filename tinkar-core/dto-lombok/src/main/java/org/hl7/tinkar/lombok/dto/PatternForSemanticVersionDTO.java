@@ -68,9 +68,8 @@ public class PatternForSemanticVersionDTO
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof PatternForSemanticVersionDTO)) return false;
+        if (!(o instanceof PatternForSemanticVersionDTO that)) return false;
         if (!super.equals(o)) return false;
-        PatternForSemanticVersionDTO that = (PatternForSemanticVersionDTO) o;
         return referencedComponentPurposePublicId.equals(that.referencedComponentPurposePublicId) && fieldDefinitionDTOS.equals(that.fieldDefinitionDTOS);
     }
 

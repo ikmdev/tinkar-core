@@ -271,8 +271,7 @@ public abstract class ManifoldCoordinateImmutable implements ManifoldCoordinate,
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof ManifoldCoordinateImmutable)) return false;
-        ManifoldCoordinateImmutable that = (ManifoldCoordinateImmutable) o;
+        if (!(o instanceof ManifoldCoordinateImmutable that)) return false;
         return this.navigationCoordinateImmutable.equals(that.navigationCoordinateImmutable) &&
                 this.vertexSort.equals(that.vertexSort) &&
                 this.vertexStampFilter.equals(that.vertexStampFilter) &&

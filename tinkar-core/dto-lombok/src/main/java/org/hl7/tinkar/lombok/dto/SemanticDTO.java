@@ -47,9 +47,8 @@ public class SemanticDTO
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof SemanticDTO)) return false;
+        if (!(o instanceof SemanticDTO that)) return false;
         if (!super.equals(o)) return false;
-        SemanticDTO that = (SemanticDTO) o;
         return definitionForSemanticPublicId.equals(that.definitionForSemanticPublicId) && referencedComponentPublicId.equals(that.referencedComponentPublicId);
     }
 

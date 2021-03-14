@@ -136,8 +136,7 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate,
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof StampPathImmutable)) return false;
-        StampPathImmutable that = (StampPathImmutable) o;
+        if (!(o instanceof StampPathImmutable that)) return false;
         return pathConceptNid() == that.pathConceptNid() &&
                 getPathOrigins().equals(that.getPathOrigins());
     }

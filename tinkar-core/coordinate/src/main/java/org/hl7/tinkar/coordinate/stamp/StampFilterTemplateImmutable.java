@@ -148,8 +148,7 @@ public class StampFilterTemplateImmutable  implements StampFilterTemplate, Immut
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof StampFilterTemplate)) return false;
-        StampFilterTemplate that = (StampFilterTemplate) o;
+        if (!(o instanceof StampFilterTemplate that)) return false;
         return getAllowedStates().equals(that.getAllowedStates()) &&
                 getModuleNids().equals(that.getModuleNids()) &&
                 getExcludedModuleNids().equals(that.getExcludedModuleNids()) &&

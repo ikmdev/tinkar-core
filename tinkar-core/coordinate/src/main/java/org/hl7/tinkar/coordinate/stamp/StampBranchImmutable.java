@@ -89,8 +89,7 @@ public class StampBranchImmutable implements StampBranch, ImmutableCoordinate, C
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof StampBranch)) return false;
-        StampBranch that = (StampBranch) o;
+        if (!(o instanceof StampBranch that)) return false;
         return getPathOfBranchNid() == that.getPathOfBranchNid() &&
                 getBranchOriginTime() == that.getBranchOriginTime();
     }

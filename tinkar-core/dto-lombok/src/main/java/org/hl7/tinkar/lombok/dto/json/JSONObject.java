@@ -279,11 +279,9 @@ public class JSONObject extends HashMap<String, Object>
         JSONObject map = (JSONObject) get(key);
         MutableMap<ConceptDTO, Object> conceptObjectMutableMap = Maps.mutable.withInitialCapacity(map.size());
         map.forEach((s, o) -> {
-            if (o instanceof JSONObject) {
-                JSONObject jo = (JSONObject) o;
+            if (o instanceof JSONObject jo) {
                 o = unmarshalJsonObject(jo);
-            } else if (o instanceof String) {
-                String oStr = (String) o;
+            } else if (o instanceof String oStr) {
                 if (oStr.startsWith(DATA_APPLICATION_OCTET_STREAM_BASE_64)) {
                     String base64Str = oStr.substring(DATA_APPLICATION_OCTET_STREAM_BASE_64.length());
                     byte[] base64Decoded = Base64.getDecoder().decode(base64Str);

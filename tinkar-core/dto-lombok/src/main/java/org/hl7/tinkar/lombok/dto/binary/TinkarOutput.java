@@ -157,8 +157,7 @@ public class TinkarOutput extends DataOutputStream {
                     writeBoolean((boolean) object, fieldDataType);
                     break;
                 case BYTE_ARRAY:
-                    if (object instanceof ByteArrayList) {
-                        ByteArrayList bal = (ByteArrayList) object;
+                    if (object instanceof ByteArrayList bal) {
                         object = bal.toArray();
                     }
                     writeByteArray((byte[]) object, fieldDataType);

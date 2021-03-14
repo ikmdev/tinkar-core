@@ -110,8 +110,7 @@ public class EntityVertex implements Vertex, VertexId {
             object = ((Double) object).floatValue();
         } else if (object instanceof Integer) {
             object = ((Integer) object).longValue();
-        } else if (object instanceof byte[]) {
-            byte[] byteArray = (byte[]) object;
+        } else if (object instanceof byte[] byteArray) {
             object = new ByteArrayList(byteArray);
         }
         return (T) object;

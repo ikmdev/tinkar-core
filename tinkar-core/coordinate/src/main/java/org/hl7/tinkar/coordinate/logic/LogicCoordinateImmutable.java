@@ -91,8 +91,7 @@ public final class LogicCoordinateImmutable implements LogicCoordinate, Immutabl
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof LogicCoordinate)) return false;
-        LogicCoordinate that = (LogicCoordinate) o;
+        if (!(o instanceof LogicCoordinate that)) return false;
         return getClassifierNid() == that.getClassifierNid() &&
                 getDescriptionLogicProfileNid() == that.getDescriptionLogicProfileNid() &&
                 getInferredAssemblageNid() == that.getInferredAssemblageNid() &&

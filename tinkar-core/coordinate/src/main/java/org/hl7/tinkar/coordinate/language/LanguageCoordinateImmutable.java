@@ -222,8 +222,7 @@ public final class LanguageCoordinateImmutable implements LanguageCoordinate, Im
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof LanguageCoordinateImmutable)) return false;
-        LanguageCoordinateImmutable that = (LanguageCoordinateImmutable) o;
+        if (!(o instanceof LanguageCoordinateImmutable that)) return false;
         return getLanguageConceptNid() == that.getLanguageConceptNid() &&
                 getDescriptionTypePreferenceList().equals(that.getDescriptionTypePreferenceList()) &&
                 getDialectAssemblagePreferenceList().equals(that.getDialectAssemblagePreferenceList()) &&

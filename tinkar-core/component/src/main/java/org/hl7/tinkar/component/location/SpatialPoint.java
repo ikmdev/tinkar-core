@@ -16,8 +16,7 @@ public class SpatialPoint {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof SpatialPoint)) return false;
-        SpatialPoint that = (SpatialPoint) o;
+        if (!(o instanceof SpatialPoint that)) return false;
         return x == that.x && y == that.y && z == that.z;
     }
 

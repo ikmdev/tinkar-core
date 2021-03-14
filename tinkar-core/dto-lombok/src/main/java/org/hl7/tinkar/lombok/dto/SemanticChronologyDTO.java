@@ -72,9 +72,8 @@ public class SemanticChronologyDTO
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof SemanticChronologyDTO)) return false;
+        if (!(o instanceof SemanticChronologyDTO that)) return false;
         if (!super.equals(o)) return false;
-        SemanticChronologyDTO that = (SemanticChronologyDTO) o;
         return semanticVersions.equals(that.semanticVersions);
     }
 

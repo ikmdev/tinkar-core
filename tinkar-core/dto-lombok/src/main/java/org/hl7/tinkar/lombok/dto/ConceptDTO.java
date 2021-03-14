@@ -35,8 +35,7 @@ public class ConceptDTO extends ComponentDTO
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof ConceptDTO)) return false;
-        ConceptDTO that = (ConceptDTO) o;
+        if (!(o instanceof ConceptDTO that)) return false;
         return super.equals(that);
     }
 

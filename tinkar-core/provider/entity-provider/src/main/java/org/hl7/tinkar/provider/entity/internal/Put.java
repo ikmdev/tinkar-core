@@ -12,16 +12,13 @@ import org.hl7.tinkar.entity.SemanticEntity;
 public class Put {
 
     public static void dto(Chronology chronology) {
-        if (chronology instanceof SemanticChronology) {
-            SemanticChronology semanticChronology = (SemanticChronology) chronology;
+        if (chronology instanceof SemanticChronology semanticChronology) {
             SemanticEntity semanticEntity = SemanticEntity.make(semanticChronology);
             Put.entity(semanticEntity);
-        } else if (chronology instanceof ConceptChronology) {
-            ConceptChronology conceptChronology = (ConceptChronology) chronology;
+        } else if (chronology instanceof ConceptChronology conceptChronology) {
             ConceptEntity conceptEntity = ConceptEntity.make(conceptChronology);
             Put.entity(conceptEntity);
-        } else if (chronology instanceof PatternForSemanticChronology) {
-            PatternForSemanticChronology definitionForSemanticChronology = (PatternForSemanticChronology) chronology;
+        } else if (chronology instanceof PatternForSemanticChronology definitionForSemanticChronology) {
             PatternForSemanticEntity definitionForSemanticEntity = PatternForSemanticEntity.make(definitionForSemanticChronology);
             Put.entity(definitionForSemanticEntity);
         } else {

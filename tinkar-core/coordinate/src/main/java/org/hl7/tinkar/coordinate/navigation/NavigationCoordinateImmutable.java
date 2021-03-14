@@ -119,8 +119,7 @@ public final class NavigationCoordinateImmutable implements NavigationCoordinate
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof NavigationCoordinateImmutable)) return false;
-        NavigationCoordinateImmutable that = (NavigationCoordinateImmutable) o;
+        if (!(o instanceof NavigationCoordinateImmutable that)) return false;
         return getNavigationConceptNids().equals(that.getNavigationConceptNids());
     }
 

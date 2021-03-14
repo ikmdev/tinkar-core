@@ -35,8 +35,7 @@ public class StampEntity extends PublicIdForEntity
     }
 
     protected final void fill(Stamp other) {
-        if (other instanceof StampEntity) {
-            StampEntity otherEntity = (StampEntity) other;
+        if (other instanceof StampEntity otherEntity) {
             this.nid = otherEntity.nid;
             this.statusNid = otherEntity.statusNid;
             this.time = otherEntity.time();

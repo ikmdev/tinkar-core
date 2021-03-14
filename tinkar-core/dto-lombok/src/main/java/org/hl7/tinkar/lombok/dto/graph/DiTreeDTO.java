@@ -47,9 +47,8 @@ public class DiTreeDTO extends GraphDTO implements DiTree<VertexDTO>, Marshalabl
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof DiTreeDTO)) return false;
+        if (!(o instanceof DiTreeDTO diTreeDTO)) return false;
         if (!super.equals(o)) return false;
-        DiTreeDTO diTreeDTO = (DiTreeDTO) o;
         return root.equals(diTreeDTO.root) && predecessorMap.equals(diTreeDTO.predecessorMap);
     }
 

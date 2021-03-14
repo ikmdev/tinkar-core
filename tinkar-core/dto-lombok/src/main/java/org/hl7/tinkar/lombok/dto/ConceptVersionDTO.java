@@ -43,8 +43,7 @@ public class ConceptVersionDTO extends VersionDTO
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof ConceptVersionDTO)) return false;
-        ConceptVersionDTO that = (ConceptVersionDTO) o;
+        if (!(o instanceof ConceptVersionDTO that)) return false;
         return super.equals(that);
     }
 
