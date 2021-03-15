@@ -19,12 +19,12 @@ import java.io.Writer;
 @Accessors(fluent = true)
 @NonFinal
 @ToString(callSuper = true)
-public class TypePatternForSemanticDTO
+public class TypePatternDTO
     extends ComponentDTO
         implements TypePatternForSemantic, JsonMarshalable, Marshalable {
     private static final int localMarshalVersion = 3;
 
-    public TypePatternForSemanticDTO(@NonNull PublicId componentPublicId) {
+    public TypePatternDTO(@NonNull PublicId componentPublicId) {
         super(componentPublicId);
     }
 

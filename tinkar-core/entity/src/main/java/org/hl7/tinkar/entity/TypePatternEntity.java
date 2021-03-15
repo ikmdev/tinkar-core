@@ -4,11 +4,11 @@ import io.activej.bytebuf.ByteBuf;
 import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.component.TypePatternForSemanticChronology;
 
-public class TypePatternForSemanticEntity
+public class TypePatternEntity
         extends Entity<TypePatternForSemanticEntityVersion>
         implements TypePatternForSemanticChronology<TypePatternForSemanticEntityVersion> {
 
-    public TypePatternForSemanticEntity() {
+    public TypePatternEntity() {
     }
     @Override
     protected int subclassFieldBytesSize() {

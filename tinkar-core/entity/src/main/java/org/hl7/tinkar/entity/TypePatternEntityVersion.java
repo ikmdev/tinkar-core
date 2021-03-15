@@ -10,7 +10,7 @@ import org.hl7.tinkar.component.TypePatternForSemanticVersion;
 import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.component.FieldDataType;
 
-public class TypePatternForSemanticEntityVersion
+public class TypePatternEntityVersion
         extends EntityVersion
         implements TypePatternForSemanticVersion<FieldDefinitionForEntity> {
 

@@ -41,7 +41,7 @@ import java.util.Objects;
 @Value
 @Accessors(fluent = true)
 @ToString(callSuper = true)
-public class TypePatternForSemanticChronologyDTO
+public class TypePatternChronologyDTO
     extends TypePatternForSemanticDTO
         implements TypePatternForSemanticChronology<TypePatternForSemanticVersionDTO>, DTO, JsonMarshalable, Marshalable {
 
@@ -50,9 +50,9 @@ public class TypePatternForSemanticChronologyDTO
     @NonNull protected final PublicId chronologySetPublicId;
     @NonNull protected final ImmutableList<TypePatternForSemanticVersionDTO> definitionVersions;
 
-    public TypePatternForSemanticChronologyDTO(@NonNull PublicId componentPublicId,
-                                               @NonNull PublicId chronologySetPublicId,
-                                               @NonNull ImmutableList<TypePatternForSemanticVersionDTO> definitionVersions) {
+    public TypePatternChronologyDTO(@NonNull PublicId componentPublicId,
+                                    @NonNull PublicId chronologySetPublicId,
+                                    @NonNull ImmutableList<TypePatternForSemanticVersionDTO> definitionVersions) {
         super(componentPublicId);
         this.chronologySetPublicId = chronologySetPublicId;
         this.definitionVersions = definitionVersions;

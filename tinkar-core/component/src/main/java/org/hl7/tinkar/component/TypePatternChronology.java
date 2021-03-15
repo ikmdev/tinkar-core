@@ -20,13 +20,8 @@ import org.eclipse.collections.api.list.ImmutableList;
  *
  * @author kec
  */
-public interface TypePatternForSemanticVersion<F extends FieldDefinition> extends Version, TypePatternForSemantic {
+public interface TypePatternChronology<T extends TypePatternForSemanticVersion> extends Chronology<T>, TypePatternForSemantic {
 
-    ImmutableList<F> fieldDefinitions();
-
-    Concept referencedComponentPurpose();
-
-    Concept referencedComponentMeaning();
-
-
+     @Override
+     ImmutableList<T> versions();
 }

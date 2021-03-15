@@ -44,7 +44,7 @@ import static org.hl7.tinkar.lombok.dto.json.ComponentFieldForJson.*;
 @Value
 @Accessors(fluent = true)
 @ToString(callSuper = true)
-public class TypePatternForSemanticVersionDTO
+public class TypePatternVersionDTO
     extends VersionDTO
         implements TypePatternForSemanticVersion<FieldDefinitionDTO>, JsonMarshalable, Marshalable {
 
@@ -54,11 +54,11 @@ public class TypePatternForSemanticVersionDTO
     @NonNull private final PublicId referencedComponentMeaningPublicId;
     @NonNull private final ImmutableList<FieldDefinitionDTO> fieldDefinitionDTOS;
 
-    public TypePatternForSemanticVersionDTO(@NonNull PublicId componentPublicId,
-                                            @NonNull StampDTO stamp,
-                                            @NonNull PublicId referencedComponentPurposePublicId,
-                                            @NonNull PublicId referencedComponentMeaningPublicId,
-                                            @NonNull ImmutableList<FieldDefinitionDTO> fieldDefinitionDTOS) {
+    public TypePatternVersionDTO(@NonNull PublicId componentPublicId,
+                                 @NonNull StampDTO stamp,
+                                 @NonNull PublicId referencedComponentPurposePublicId,
+                                 @NonNull PublicId referencedComponentMeaningPublicId,
+                                 @NonNull ImmutableList<FieldDefinitionDTO> fieldDefinitionDTOS) {
         super(componentPublicId, stamp);
         this.referencedComponentPurposePublicId = referencedComponentPurposePublicId;
         this.referencedComponentMeaningPublicId = referencedComponentMeaningPublicId;
