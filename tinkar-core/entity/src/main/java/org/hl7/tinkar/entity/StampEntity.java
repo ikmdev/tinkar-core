@@ -5,9 +5,7 @@ import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.Component;
 import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.entity.internal.Get;
-import org.hl7.tinkar.lombok.dto.StampDTO;
-
-import java.time.Instant;
+import org.hl7.tinkar.dto.StampDTO;
 
 public class StampEntity extends PublicIdForEntity
         implements Stamp, Component {

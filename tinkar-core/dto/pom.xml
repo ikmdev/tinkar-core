@@ -1,21 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <build>
         <plugins>
+
         </plugins>
     </build>
     <parent>
-        <groupId>org.hl7.tinkar</groupId>
         <artifactId>tinkar</artifactId>
+        <groupId>org.hl7.tinkar</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    <artifactId>entity</artifactId>
+    <artifactId>dto</artifactId>
     <packaging>jar</packaging>
-    <name>TINKAR: Entity</name>
+    <name>TINKAR: Data Transfer Objects</name>
     <dependencies>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
@@ -24,18 +22,19 @@
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
-            <artifactId>dto</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.hl7.tinkar</groupId>
             <artifactId>common</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.hl7.tinkar</groupId>
-            <artifactId>caffeine</artifactId>
-            <version>${project.parent.version}</version>
+            <groupId>io.activej</groupId>
+            <artifactId>activej-inject</artifactId>
+            <version>${activej.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.soabase.record-builder</groupId>
+            <artifactId>record-builder-core</artifactId>
+            <version>${record-builder-core.version}</version>
+<!--            <scope>provided</scope>-->
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -43,5 +42,5 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
-     </dependencies>
+    </dependencies>
 </project>

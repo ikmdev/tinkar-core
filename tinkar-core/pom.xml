@@ -110,7 +110,7 @@
         <module>component</module>
         <module>coordinate</module>
         <module>entity</module>
-        <module>dto-lombok</module>
+        <module>dto</module>
         <module>terms</module>
         <module>test-util</module>
         <module>provider</module>

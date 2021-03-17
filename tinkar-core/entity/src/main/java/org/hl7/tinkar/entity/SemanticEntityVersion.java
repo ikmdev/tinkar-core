@@ -19,8 +19,8 @@ import org.hl7.tinkar.entity.graph.DiGraphEntity;
 import org.hl7.tinkar.entity.graph.DiTreeEntity;
 import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.component.FieldDataType;
-import org.hl7.tinkar.lombok.dto.graph.DiGraphDTO;
-import org.hl7.tinkar.lombok.dto.graph.DiTreeDTO;
+import org.hl7.tinkar.dto.graph.DiGraphDTO;
+import org.hl7.tinkar.dto.graph.DiTreeDTO;
 
 import java.time.Instant;
 

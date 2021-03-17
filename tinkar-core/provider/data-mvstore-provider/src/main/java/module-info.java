@@ -15,7 +15,7 @@ module org.hl7.tinkar.provider.mvstore {
     requires org.hl7.tinkar.common;
     requires org.hl7.tinkar.component;
     requires org.hl7.tinkar.entity;
-    requires org.hl7.tinkar.lombok.dto;
+    requires org.hl7.tinkar.dto;
     requires org.hl7.tinkar.mvstore;
 
     provides PrimitiveDataService

@@ -11,9 +11,10 @@ import org.eclipse.collections.impl.map.mutable.primitive.IntObjectHashMap;
 import org.hl7.tinkar.common.id.VertexId;
 import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.component.graph.Vertex;
+import org.hl7.tinkar.dto.StampDTO;
+import org.hl7.tinkar.dto.StampDTOBuilder;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.entity.internal.Get;
-import org.hl7.tinkar.lombok.dto.*;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;

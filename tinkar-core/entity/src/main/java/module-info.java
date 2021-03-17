@@ -10,7 +10,7 @@ import org.hl7.tinkar.entity.EntityService;
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
 module org.hl7.tinkar.entity {
     requires transitive org.hl7.tinkar.component;
-    requires org.hl7.tinkar.lombok.dto;
+    requires org.hl7.tinkar.dto;
     requires java.logging;
     requires transitive org.hl7.tinkar.common;
     requires transitive org.hl7.tinkar.caffeine;

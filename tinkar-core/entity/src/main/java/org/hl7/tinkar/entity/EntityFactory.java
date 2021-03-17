@@ -3,7 +3,7 @@ package org.hl7.tinkar.entity;
 import io.activej.bytebuf.ByteBuf;
 import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.component.TypePatternChronology;
-import org.hl7.tinkar.lombok.dto.StampDTO;
+import org.hl7.tinkar.dto.StampDTO;
 
 public class EntityFactory {
 
