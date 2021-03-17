@@ -15,45 +15,12 @@
  */
 package org.hl7.tinkar.lombok.dto;
 
-import lombok.NonNull;
-import lombok.Value;
-import lombok.experimental.Accessors;
-import lombok.experimental.NonFinal;
-import lombok.experimental.SuperBuilder;
-import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.id.PublicId;
 
 /**
  *
  * @author kec
  */
-@Value
-@Accessors(fluent = true)
-@NonFinal
-@SuperBuilder
-public class ComponentDTO
+public record ComponentDTO(PublicId publicId)
         implements DTO {
-    @NonNull
-    final PublicId componentPublicId;
-
-    public ComponentDTO(PublicId componentPublicId) {
-        this.componentPublicId = componentPublicId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ComponentDTO that)) return false;
-        return componentPublicId.equals(that.componentPublicId);
-    }
-
-    @Override
-    public int hashCode() {
-        return componentPublicId.hashCode();
-    }
-
-    @Override
-    public PublicId publicId() {
-        return componentPublicId;
-    }
 }

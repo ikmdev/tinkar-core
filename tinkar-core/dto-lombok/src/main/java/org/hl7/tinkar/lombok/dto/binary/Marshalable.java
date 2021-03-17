@@ -92,11 +92,9 @@ public interface Marshalable {
         return makeVersion(objectClass, TinkarInput.make(input), componentPublicId);
     }
 
-    static <T> T makeSemanticVersion(Class<T> objectClass, TinkarInput input, PublicId componentPublicId,
-                                     PublicId pattrenForSemanticPublicId, PublicId referencedComponentPublicId) {
+    static <T> T makeSemanticVersion(Class<T> objectClass, TinkarInput input, PublicId publicId) {
         try {
-            return unmarshal(objectClass, SemanticVersionUnmarshaler.class, new Object[] { input, componentPublicId,
-                    pattrenForSemanticPublicId, referencedComponentPublicId});
+            return unmarshal(objectClass, SemanticVersionUnmarshaler.class, new Object[] { input, publicId});
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
             throw new MarshalExceptionUnchecked(ex);
         }

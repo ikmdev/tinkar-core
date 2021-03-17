@@ -15,71 +15,23 @@
  */
 package org.hl7.tinkar.lombok.dto;
 
-import lombok.NonNull;
-import lombok.ToString;
-import lombok.Value;
-import lombok.experimental.Accessors;
-import lombok.experimental.SuperBuilder;
+
+import io.soabase.recordbuilder.core.RecordBuilder;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.lombok.dto.binary.*;
-import org.hl7.tinkar.lombok.dto.json.JSONObject;
-import org.hl7.tinkar.lombok.dto.json.JsonMarshalable;
-import org.hl7.tinkar.lombok.dto.json.ComponentFieldForJson;
-import org.hl7.tinkar.lombok.dto.json.JsonChronologyUnmarshaler;
 
-import java.io.Writer;
-import java.time.Instant;
-import java.util.Objects;
-
-import static org.hl7.tinkar.lombok.dto.json.ComponentFieldForJson.*;
-
-@Value
-@Accessors(fluent = true)
-@ToString(callSuper = true)
-@SuperBuilder
-public class StampDTO
-    extends ComponentDTO
-        implements JsonMarshalable, Marshalable, Stamp, DTO {
+@RecordBuilder
+public record StampDTO(PublicId publicId,
+                      PublicId statusPublicId,
+                      long time,
+                      PublicId authorPublicId,
+                      PublicId modulePublicId,
+                      PublicId pathPublicId)
+        implements Marshalable, Stamp, DTO {
     private static final int localMarshalVersion = 3;
 
-    @NonNull private final PublicId statusPublicId;
-    @NonNull private final long time;
-    @NonNull private final PublicId authorPublicId;
-    @NonNull private final PublicId modulePublicId;
-    @NonNull private final PublicId pathPublicId;
-
-    public StampDTO(@NonNull PublicId publicId,
-                    @NonNull PublicId statusPublicId,
-                    @NonNull long time,
-                    @NonNull PublicId authorPublicId,
-                    @NonNull PublicId modulePublicId,
-                    @NonNull PublicId pathPublicId) {
-        super(publicId);
-        this.statusPublicId = statusPublicId;
-        this.time = time;
-        this.authorPublicId = authorPublicId;
-        this.modulePublicId = modulePublicId;
-        this.pathPublicId = pathPublicId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof StampDTO stampDTO)) return false;
-        if (!super.equals(o)) return false;
-        return statusPublicId.equals(stampDTO.statusPublicId) &&
-                time == stampDTO.time &&
-                authorPublicId.equals(stampDTO.authorPublicId) &&
-                modulePublicId.equals(stampDTO.modulePublicId) &&
-                pathPublicId.equals(stampDTO.pathPublicId);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), statusPublicId, time, authorPublicId, modulePublicId, pathPublicId);
-    }
 
     public static StampDTO make(Stamp stamp) {
         return new StampDTO(stamp.publicId(),
@@ -113,28 +65,6 @@ public class StampDTO
     @Override
     public Concept path() {
         return new ConceptDTO(pathPublicId);
-    }
-
-    @Override
-    public void jsonMarshal(Writer writer) {
-        final JSONObject json = new JSONObject();
-        json.put(COMPONENT_PUBLIC_ID, publicId());
-        json.put(STATUS_PUBLIC_ID, statusPublicId);
-        json.put(TIME, time);
-        json.put(ComponentFieldForJson.AUTHOR_PUBLIC_ID, authorPublicId);
-        json.put(ComponentFieldForJson.MODULE_PUBLIC_ID, modulePublicId);
-        json.put(ComponentFieldForJson.PATH_PUBLIC_ID, pathPublicId);
-        json.writeJSONString(writer);
-    }
-
-    @JsonChronologyUnmarshaler
-    public static StampDTO make(JSONObject jsonObject) {
-        return new StampDTO(jsonObject.asPublicId(COMPONENT_PUBLIC_ID),
-                jsonObject.asPublicId(STATUS_PUBLIC_ID),
-                jsonObject.asLong(TIME),
-                jsonObject.asPublicId(AUTHOR_PUBLIC_ID),
-                jsonObject.asPublicId(MODULE_PUBLIC_ID),
-                jsonObject.asPublicId(PATH_PUBLIC_ID));
     }
 
     @Unmarshaler

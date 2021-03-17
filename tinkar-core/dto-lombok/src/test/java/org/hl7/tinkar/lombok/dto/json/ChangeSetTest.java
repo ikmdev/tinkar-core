@@ -60,7 +60,7 @@ public class ChangeSetTest {
         TinkarByteArrayOutput out = TinkarByteArrayOutput.make(-1); //an invalid version number...
         out.toInput();
         assertThrows(RuntimeException.class, () -> Marshalable.makeSemanticVersion(clazz, out.toInput(),
-                TestUtil.makePublicId(), TestUtil.makePublicId(), TestUtil.makePublicId()));
+                TestUtil.makePublicId()));
     }
 
     private void testReadIOException(Class clazz) {
@@ -69,7 +69,7 @@ public class ChangeSetTest {
 
     private void testReadSemanticVersionIOException(Class clazz, int marshalVersion) {
         assertThrows(RuntimeException.class, () -> Marshalable.makeSemanticVersion(clazz, new TinkarFailingInput(),
-                TestUtil.makePublicId(), TestUtil.makePublicId(), TestUtil.makePublicId()));
+                TestUtil.makePublicId()));
     }
 
     private void testReadVersionIOException(Class clazz) {
@@ -79,10 +79,6 @@ public class ChangeSetTest {
     @Test
     public void testStampForChangeSet() {
         StampDTO component = TestUtil.makeStampForChangeSet();
-        StampDTO newStamp = JsonMarshalable.make(StampDTO.class, component.toJsonString());
-        assertEquals(component, newStamp);
-
-        assertThrows(MarshalExceptionUnchecked.class, () -> JsonMarshalable.make(StampDTO.class, "not a good string..."));
 
         StampDTO newerComponent = Marshalable.make(StampDTO.class, component.marshal());
         assertEquals(component, newerComponent);
@@ -111,9 +107,6 @@ public class ChangeSetTest {
         
         FieldDefinitionDTO component = TestUtil.makeFieldDefinitionForChangeSet();
         
-        FieldDefinitionDTO newComponent = JsonMarshalable.make(FieldDefinitionDTO.class, component.toJsonString());
-        assertEquals(component, newComponent); 
-        
         FieldDefinitionDTO newerComponent = Marshalable.make(FieldDefinitionDTO.class, component.marshal());
         assertEquals(component, newerComponent);
 
@@ -133,12 +126,6 @@ public class ChangeSetTest {
         PublicId componentPublicId = TestUtil.makePublicId();
         ConceptVersionDTO component = new ConceptVersionDTO(componentPublicId, TestUtil.makeStampForChangeSet());
 
-        ConceptVersionDTO newComponent = JsonMarshalable.makeVersion(ConceptVersionDTO.class, component.toJsonString(), componentPublicId);
-        assertEquals(component, newComponent);
-
-        assertThrows(MarshalExceptionUnchecked.class, () -> JsonMarshalable.makeVersion(ConceptVersionDTO.class, "not a good string...",
-                componentPublicId));
-
         ConceptVersionDTO newerComponent = Marshalable.makeVersion(ConceptVersionDTO.class, component.marshal(), componentPublicId);
         assertEquals(component, newerComponent);
 
@@ -154,33 +141,27 @@ public class ChangeSetTest {
     }
 
     @Test
-    public void testDefinitionForSemanticVersionForChangeSet() {
+    public void testTypePatternVersionForChangeSet() {
         PublicId componentPublicId = TestUtil.makePublicId();
-        TypePatternForSemanticVersionDTO component = TestUtil.makeDefinitionForSemanticVersionForChangeSet(componentPublicId);
-        
-        TypePatternForSemanticVersionDTO newComponent = JsonMarshalable.makeVersion(TypePatternForSemanticVersionDTO.class, component.toJsonString(), componentPublicId);
-        assertEquals(component, newComponent); 
-        
-        TypePatternForSemanticVersionDTO newerComponent = Marshalable.makeVersion(TypePatternForSemanticVersionDTO.class, component.marshal(), componentPublicId);
+        TypePatternVersionDTO component = TestUtil.makeTypePatternVersionForChangeSet(componentPublicId);
+
+        TypePatternVersionDTO newerComponent = Marshalable.makeVersion(TypePatternVersionDTO.class, component.marshal(), componentPublicId);
         assertEquals(component, newerComponent);
 
-        testInvalidMarshalVersionForVersion(TypePatternForSemanticVersionDTO.class);
-        testReadVersionIOException(TypePatternForSemanticVersionDTO.class);
+        testInvalidMarshalVersionForVersion(TypePatternVersionDTO.class);
+        testReadVersionIOException(TypePatternVersionDTO.class);
         testWriteIOExceptionForVersion(component);
         assertTrue(component.equals(newerComponent));
-        assertFalse(component.equals(TestUtil.makeDefinitionForSemanticVersionForChangeSet(componentPublicId)));
+        assertFalse(component.equals(TestUtil.makeTypePatternVersionForChangeSet(componentPublicId)));
         assertFalse(component.equals("will be false"));
         assertTrue(component.publicId().equals(newerComponent.publicId()));
-        assertEquals(component, TypePatternForSemanticVersionDTO.make(component));
+        assertEquals(component, TypePatternVersionDTO.make(component));
     }
 
     @Test
     public void testConceptChronologyForChangeSet() {
         ConceptChronologyDTO component = TestUtil.makeConceptChronology();
-        
-        ConceptChronologyDTO newComponent = JsonMarshalable.make(ConceptChronologyDTO.class, component.toJsonString());
-        assertEquals(component, newComponent); 
-        
+
         ConceptChronologyDTO newerComponent = Marshalable.make(ConceptChronologyDTO.class, component.marshal());
         assertEquals(component, newerComponent);
 
@@ -191,34 +172,31 @@ public class ChangeSetTest {
         assertTrue(component.hashCode() == newerComponent.hashCode());
         assertTrue(component.publicId().equals(newerComponent.publicId()));
         PublicId newConceptId = TestUtil.makePublicId();
-        assertFalse(component.equals(new ConceptChronologyDTO(newConceptId, TestUtil.makePublicId(), TestUtil.makeConceptVersionList(newConceptId))));
+        assertFalse(component.equals(new ConceptChronologyDTO(newConceptId, TestUtil.makeConceptVersionList(newConceptId))));
         newConceptId = TestUtil.makePublicId();
-        assertFalse(component.equals(new ConceptChronologyDTO(newConceptId, TestUtil.makePublicId(), TestUtil.makeConceptVersionList(newConceptId))));
+        assertFalse(component.equals(new ConceptChronologyDTO(newConceptId, TestUtil.makeConceptVersionList(newConceptId))));
         assertFalse(component.equals("will be false"));
         assertEquals(component, ConceptChronologyDTO.make(component));
     }
 
 
     @Test
-    public void testDefinitionForSemanticChronologyForChangeSet() {
-         TypePatternForSemanticChronologyDTO component = TestUtil.makeDefinitionForSemanticChronology();
-        
-        TypePatternForSemanticChronologyDTO newComponent = JsonMarshalable.make(TypePatternForSemanticChronologyDTO.class, component.toJsonString());
-        assertEquals(component, newComponent); 
-        
-        TypePatternForSemanticChronologyDTO newerComponent = Marshalable.make(TypePatternForSemanticChronologyDTO.class, component.marshal());
+    public void testTypePatternChronologyForChangeSet() {
+         TypePatternChronologyDTO component = TestUtil.makeTypePatternChronology();
+
+        TypePatternChronologyDTO newerComponent = Marshalable.make(TypePatternChronologyDTO.class, component.marshal());
         assertEquals(component, newerComponent);
 
-        testInvalidMarshalVersion(TypePatternForSemanticChronologyDTO.class);
-        testReadIOException(TypePatternForSemanticChronologyDTO.class);
+        testInvalidMarshalVersion(TypePatternChronologyDTO.class);
+        testReadIOException(TypePatternChronologyDTO.class);
         testWriteIOException(component);
         assertTrue(component.equals(newerComponent));
         assertTrue(component.hashCode() == newerComponent.hashCode());
-        assertFalse(component.equals(new TypePatternForSemanticChronologyDTO(TestUtil.makePublicId(), TestUtil.makePublicId(),
-                TestUtil.makeDefinitionForSemanticVersionForChangeSetList(component.publicId()))));
+        assertFalse(component.equals(new TypePatternChronologyDTO(TestUtil.makePublicId(),
+                TestUtil.makeTypePatternVersionForChangeSetList(component.publicId()))));
         assertFalse(component.equals("will be false"));
         assertTrue(component.publicId().equals(newerComponent.publicId()));
-        assertEquals(component, TypePatternForSemanticChronologyDTO.make(component));
+        assertEquals(component, TypePatternChronologyDTO.make(component));
 
     }
     
@@ -226,21 +204,14 @@ public class ChangeSetTest {
     @Test
     public void testSemanticVersionForChangeSet() {
         PublicId componentPublicId = TestUtil.makePublicId();
-        PublicId patternForSemanticPublicId = TestUtil.makePublicId();
+        PublicId typePatternPublicId = TestUtil.makePublicId();
         PublicId referencedComponentPublicId = TestUtil.makePublicId();
 
         SemanticVersionDTO component = new SemanticVersionDTO(componentPublicId,
-                patternForSemanticPublicId, referencedComponentPublicId, TestUtil.makeStampForChangeSet(), TestUtil.makeImmutableObjectList());
-        
-        SemanticVersionDTO newComponent = JsonMarshalable.makeSemanticVersion(SemanticVersionDTO.class, component.toJsonString(),
-                componentPublicId, patternForSemanticPublicId, referencedComponentPublicId);
-        assertEquals(component, newComponent);
+                TestUtil.makeStampForChangeSet(), TestUtil.makeImmutableObjectList());
 
-        assertThrows(MarshalExceptionUnchecked.class, () -> JsonMarshalable.makeSemanticVersion(SemanticVersionDTO.class, "not a good string...",
-                componentPublicId, patternForSemanticPublicId, referencedComponentPublicId));
-        
         SemanticVersionDTO newerComponent = Marshalable.makeSemanticVersion(SemanticVersionDTO.class, component.marshal().toInput(),
-                componentPublicId, patternForSemanticPublicId, referencedComponentPublicId);
+                componentPublicId);
         assertEquals(component, newerComponent);
 
         testInvalidMarshalVersionForSemanticVersion(SemanticVersionDTO.class, Marshalable.marshalVersion);
@@ -250,13 +221,9 @@ public class ChangeSetTest {
         assertTrue(component.equals(newerComponent));
         assertTrue(component.hashCode() == newerComponent.hashCode());
         assertFalse(component.equals(new SemanticVersionDTO(componentPublicId,
-                patternForSemanticPublicId, referencedComponentPublicId, TestUtil.makeStampForChangeSet(), TestUtil.makeImmutableObjectList())));
+                TestUtil.makeStampForChangeSet(), TestUtil.makeImmutableObjectList())));
         assertFalse(component.equals("will be false"));
         assertTrue(component.publicId().equals(newerComponent.publicId()));
-        assertTrue(component.patternForSemantic().equals(newerComponent.patternForSemantic()));
-        assertTrue(component.referencedComponent().equals(newerComponent.referencedComponent()));
-        assertTrue(component.patternForSemantic().publicId().equals(newerComponent.patternForSemantic().publicId()));
-        assertTrue(component.referencedComponent().publicId().equals(newerComponent.referencedComponent().publicId()));
         assertEquals(component, SemanticVersionDTO.make(component));
     }
     
@@ -266,9 +233,7 @@ public class ChangeSetTest {
 
         SemanticChronologyDTO component = TestUtil.makeSemanticChronology();
         
-        SemanticChronologyDTO newComponent = JsonMarshalable.make(SemanticChronologyDTO.class, component.toJsonString());
-        assertEquals(component, newComponent); 
-        
+
         SemanticChronologyDTO newerComponent = Marshalable.make(SemanticChronologyDTO.class, component.marshal());
         assertEquals(component, newerComponent);
 
@@ -282,7 +247,7 @@ public class ChangeSetTest {
                 TestUtil.makePublicId(), TestUtil.makePublicId()))));
         assertFalse(component.equals("will be false"));
         assertTrue(component.publicId().equals(newerComponent.publicId()));
-        assertTrue(component.patternForSemantic().equals(newerComponent.patternForSemantic()));
+        assertTrue(component.typePattern().equals(newerComponent.typePattern()));
         assertTrue(component.referencedComponent().equals(newerComponent.referencedComponent()));
         assertEquals(component, SemanticChronologyDTO.make(component));
     }

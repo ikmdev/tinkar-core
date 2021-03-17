@@ -14,7 +14,6 @@ module org.hl7.tinkar.provider.ephemeral {
     requires org.hl7.tinkar.component;
     requires org.hl7.tinkar.common;
     requires org.hl7.tinkar.test;
-    requires lombok;
     provides PrimitiveDataService
             with ProviderEphemeralFactory;
 }

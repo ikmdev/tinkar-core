@@ -1,9 +1,7 @@
 package org.hl7.tinkar.lombok.dto.graph;
 
 
-import lombok.NonNull;
-import lombok.Value;
-import lombok.experimental.Accessors;
+
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -16,48 +14,19 @@ import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.hl7.tinkar.lombok.dto.binary.*;
 import org.hl7.tinkar.component.graph.DiGraph;
 
-import java.util.Objects;
-
-
-@Value
-@Accessors(fluent = true)
-public final class DiGraphDTO extends GraphDTO implements DiGraph<VertexDTO>, Marshalable {
+public  record DiGraphDTO(ImmutableIntList rootSequences,
+                          ImmutableIntObjectMap<ImmutableIntList> predecessorMap,
+                          ImmutableList<VertexDTO> vertexMap,
+                          ImmutableIntObjectMap<ImmutableIntList> successorMap)
+        implements DiGraph<VertexDTO>, GraphDefaults, Marshalable {
 
     private static final int LOCAL_MARSHAL_VERSION = 3;
-
-    @NonNull
-    private final ImmutableIntList rootSequences;
-
-    @NonNull
-    private final ImmutableIntObjectMap<ImmutableIntList> predecessorMap;
-
-    public DiGraphDTO(@NonNull ImmutableIntList rootSequences,
-                      @NonNull ImmutableIntObjectMap<ImmutableIntList> predecessorMap,
-                      @NonNull ImmutableList<VertexDTO> vertexMap,
-                      @NonNull ImmutableIntObjectMap<ImmutableIntList> successorMap) {
-        super(vertexMap, successorMap);
-        this.rootSequences = rootSequences;
-        this.predecessorMap = predecessorMap;
-    }
 
     @Override
     public ImmutableList<VertexDTO> roots() {
         MutableList<VertexDTO> roots = Lists.mutable.ofInitialCapacity(rootSequences.size());
         rootSequences.forEach(rootSequence -> roots.add(vertex(rootSequence)));
         return roots.toImmutable();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof DiGraphDTO that)) return false;
-        if (!super.equals(o)) return false;
-        return rootSequences.equals(that.rootSequences) && predecessorMap.equals(that.predecessorMap);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), rootSequences, predecessorMap);
     }
 
     @Override
@@ -74,8 +43,8 @@ public final class DiGraphDTO extends GraphDTO implements DiGraph<VertexDTO>, Ma
     @Unmarshaler
     public static DiGraphDTO make(TinkarInput in) {
         if (LOCAL_MARSHAL_VERSION == in.getTinkerFormatVersion()) {
-            ImmutableList<VertexDTO> vertexMap = GraphDTO.unmarshalVertexMap(in);
-            ImmutableIntObjectMap<ImmutableIntList> successorMap = GraphDTO.unmarshalSuccessorMap(in, vertexMap);
+            ImmutableList<VertexDTO> vertexMap = GraphDefaults.unmarshalVertexMap(in);
+            ImmutableIntObjectMap<ImmutableIntList> successorMap = GraphDefaults.unmarshalSuccessorMap(in, vertexMap);
 
             int rootCount = in.getInt();
             MutableIntList roots = IntLists.mutable.empty();

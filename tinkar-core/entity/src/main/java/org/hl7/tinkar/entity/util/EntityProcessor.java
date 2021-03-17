@@ -1,6 +1,5 @@
 package org.hl7.tinkar.entity.util;
 
-import org.eclipse.collections.api.block.procedure.Procedure2;
 import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.common.util.time.Stopwatch;
 
@@ -21,7 +20,7 @@ public abstract class EntityProcessor implements ObjIntConsumer<byte[]> {
         // bytes starts with number of arrays (int = 4 bytes), then size of first array (int = 4 bytes), then entity format version then type token, -1 since index starts at 0...
         FieldDataType componentType = FieldDataType.fromToken(bytes[9]);
         switch (componentType) {
-            case PATTERN_FOR_SEMANTIC_CHRONOLOGY:
+            case TYPE_PATTERN_CHRONOLOGY:
                 definitionForSemanticCount.incrementAndGet();
                 break;
             case CONCEPT_CHRONOLOGY:

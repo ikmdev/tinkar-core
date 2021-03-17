@@ -20,7 +20,4 @@
  */
 public interface Semantic extends Component {
 
-     Component referencedComponent();
-     TypePatternForSemantic patternForSemantic();
-
 }

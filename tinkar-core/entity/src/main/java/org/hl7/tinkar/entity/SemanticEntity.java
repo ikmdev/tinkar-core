@@ -14,6 +14,8 @@ public class SemanticEntity
 
     protected int referencedComponentNid;
 
+    protected int typePatternNid;
+
     @Override
     protected int subclassFieldBytesSize() {
         return 4; // referenced component
@@ -32,17 +34,20 @@ public class SemanticEntity
     @Override
     protected void finishEntityWrite(ByteBuf byteBuf) {
         byteBuf.writeInt(referencedComponentNid);
+        byteBuf.writeInt(typePatternNid);
     }
 
     @Override
     protected void finishEntityRead(ByteBuf readBuf, byte formatVersion) {
         this.referencedComponentNid = readBuf.readInt();
+        this.typePatternNid = readBuf.readInt();
     }
 
     @Override
     protected void finishEntityRead(Chronology chronology) {
         if (chronology instanceof SemanticChronology semanticChronology) {
             referencedComponentNid = Get.entityService().nidForComponent(semanticChronology.referencedComponent());
+            typePatternNid = Get.entityService().nidForComponent(semanticChronology.typePattern());
         }
     }
 
@@ -65,9 +70,13 @@ public class SemanticEntity
         return this.referencedComponentNid;
     }
 
+    public int typePatternNid() {
+        return this.typePatternNid;
+    }
+
     @Override
-    public TypePatternForSemantic patternForSemantic() {
-        return Get.entityService().getEntityFast(definitionNid);
+    public TypePattern typePattern() {
+        return Get.entityService().getEntityFast(typePatternNid);
     }
 
 
@@ -88,7 +97,7 @@ public class SemanticEntity
         return "SemanticEntity<" +
                 nid +
                 "> " + Arrays.toString(publicId().asUuidArray()) +
-                ", definitionNid=" + definitionNid +
+                ", typePatternNid=" + typePatternNid +
                 ", referencedComponentNid=" + referencedComponentNid +
                 ", versions=" + versions +
                 '}';

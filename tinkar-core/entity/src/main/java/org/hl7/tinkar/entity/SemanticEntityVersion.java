@@ -79,8 +79,8 @@ public class SemanticEntityVersion
                 return ConceptProxy.make(readBuf.readInt());
             case SEMANTIC:
                 return SemanticProxy.make(readBuf.readInt());
-            case PATTERN_FOR_SEMANTIC:
-                return TypePatternForSemanticProxy.make(readBuf.readInt());
+            case TYPE_PATTERN:
+                return TypePatternProxy.make(readBuf.readInt());
             case IDENTIFIED_THING:
                 return EntityProxy.make(readBuf.readInt());
             case INSTANT:
@@ -188,8 +188,8 @@ public class SemanticEntityVersion
             } else {
                 writeBuf.writeInt(Get.entityService().nidForComponent(semantic));
             }
-        } else if (field instanceof TypePatternForSemantic pattern) {
-            writeBuf.writeByte(FieldDataType.PATTERN_FOR_SEMANTIC.token);
+        } else if (field instanceof TypePattern pattern) {
+            writeBuf.writeByte(FieldDataType.TYPE_PATTERN.token);
             if (field instanceof ComponentWithNid) {
                 writeBuf.writeInt(((ComponentWithNid) field).nid());
             } else {
@@ -228,16 +228,6 @@ public class SemanticEntityVersion
             throw new UnsupportedOperationException("Can't handle field write of type: " +
                     field.getClass().getName());
         }
-    }
-
-    @Override
-    public Component referencedComponent() {
-        return Get.entityService().getEntityFast(getSemanticEntity().referencedComponentNid);
-    }
-
-    @Override
-    public TypePatternForSemantic patternForSemantic() {
-        return Get.entityService().getEntityFast(getSemanticEntity().definitionNid);
     }
 
     @Override

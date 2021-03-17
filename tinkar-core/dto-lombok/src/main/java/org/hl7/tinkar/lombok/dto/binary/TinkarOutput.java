@@ -123,10 +123,10 @@ public class TinkarOutput extends DataOutputStream {
         }
     }
 
-    public void writeDefinitionForSemanticVersionList(ImmutableList<TypePatternForSemanticVersionDTO> versions) {
+    public void writeTypePatternVersionList(ImmutableList<TypePatternVersionDTO> versions) {
         try {
             writeInt(versions.size());
-            for (TypePatternForSemanticVersionDTO version: versions) {
+            for (TypePatternVersionDTO version: versions) {
                 version.marshal(this);
             }
         } catch (IOException ex) {
@@ -195,8 +195,8 @@ public class TinkarOutput extends DataOutputStream {
                     break;
                 case CONCEPT:
                 case CONCEPT_CHRONOLOGY:
-                case PATTERN_FOR_SEMANTIC:
-                case PATTERN_FOR_SEMANTIC_CHRONOLOGY:
+                case TYPE_PATTERN:
+                case TYPE_PATTERN_CHRONOLOGY:
                 case SEMANTIC:
                 case SEMANTIC_CHRONOLOGY:
                     writeMarshalableObject((Marshalable) object);

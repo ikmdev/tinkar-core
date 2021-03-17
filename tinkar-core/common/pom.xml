@@ -46,6 +46,6 @@
                     <argLine>--add-opens org.hl7.tinkar.util/org.hl7.tinkar.util.id=ALL-UNNAMED</argLine>
                 </configuration>
             </plugin>
-        </plugins>
+         </plugins>
     </build>
 </project>

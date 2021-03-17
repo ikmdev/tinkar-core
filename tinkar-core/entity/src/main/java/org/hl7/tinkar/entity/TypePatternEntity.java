@@ -2,11 +2,11 @@ package org.hl7.tinkar.entity;
 
 import io.activej.bytebuf.ByteBuf;
 import org.hl7.tinkar.component.*;
-import org.hl7.tinkar.component.TypePatternForSemanticChronology;
+import org.hl7.tinkar.component.TypePatternChronology;
 
 public class TypePatternEntity
-        extends Entity<TypePatternForSemanticEntityVersion>
-        implements TypePatternForSemanticChronology<TypePatternForSemanticEntityVersion> {
+        extends Entity<TypePatternEntityVersion>
+        implements TypePatternChronology<TypePatternEntityVersion> {
 
     public TypePatternEntity() {
     }
@@ -27,7 +27,7 @@ public class TypePatternEntity
 
     @Override
     public FieldDataType dataType() {
-        return FieldDataType.PATTERN_FOR_SEMANTIC_CHRONOLOGY;
+        return FieldDataType.TYPE_PATTERN_CHRONOLOGY;
     }
 
     @Override
@@ -36,24 +36,24 @@ public class TypePatternEntity
     }
 
     @Override
-    protected TypePatternForSemanticEntityVersion makeVersion(ByteBuf readBuf, byte formatVersion) {
-        return TypePatternForSemanticEntityVersion.make(this, readBuf, formatVersion);
+    protected TypePatternEntityVersion makeVersion(ByteBuf readBuf, byte formatVersion) {
+        return TypePatternEntityVersion.make(this, readBuf, formatVersion);
     }
 
     @Override
-    protected TypePatternForSemanticEntityVersion makeVersion(Version version) {
-        return TypePatternForSemanticEntityVersion.make(this, (TypePatternForSemanticVersion) version);
+    protected TypePatternEntityVersion makeVersion(Version version) {
+        return TypePatternEntityVersion.make(this, (TypePatternVersion) version);
     }
 
-    public static TypePatternForSemanticEntity make(ByteBuf readBuf, byte entityFormatVersion) {
-        TypePatternForSemanticEntity definitionForSemanticEntity = new TypePatternForSemanticEntity();
-        definitionForSemanticEntity.fill(readBuf, entityFormatVersion);
-        return definitionForSemanticEntity;
+    public static TypePatternEntity make(ByteBuf readBuf, byte entityFormatVersion) {
+        TypePatternEntity definitionEntity = new TypePatternEntity();
+        definitionEntity.fill(readBuf, entityFormatVersion);
+        return definitionEntity;
     }
 
-    public static TypePatternForSemanticEntity make(TypePatternForSemanticChronology other) {
-        TypePatternForSemanticEntity definitionForSemanticEntity = new TypePatternForSemanticEntity();
-        definitionForSemanticEntity.fill(other);
-        return definitionForSemanticEntity;
+    public static TypePatternEntity make(TypePatternChronology other) {
+        TypePatternEntity definitionEntity = new TypePatternEntity();
+        definitionEntity.fill(other);
+        return definitionEntity;
     }
 }

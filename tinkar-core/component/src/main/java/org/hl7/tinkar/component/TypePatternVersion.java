@@ -20,7 +20,7 @@ import org.eclipse.collections.api.list.ImmutableList;
  *
  * @author kec
  */
-public interface TypePatternVersion<F extends FieldDefinition> extends Version, TypePatternForSemantic {
+public interface TypePatternVersion<F extends FieldDefinition> extends Version, TypePattern {
 
     ImmutableList<F> fieldDefinitions();
 

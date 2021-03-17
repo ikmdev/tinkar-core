@@ -1,8 +1,6 @@
 package org.hl7.tinkar.lombok.dto.graph;
 
-import lombok.NonNull;
-import lombok.Value;
-import lombok.experimental.Accessors;
+
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -20,42 +18,14 @@ import org.hl7.tinkar.component.graph.DiTree;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Objects;
 import java.util.Optional;
 
-@Value
-@Accessors(fluent = true)
-public class DiTreeDTO extends GraphDTO implements DiTree<VertexDTO>, Marshalable {
+public record DiTreeDTO(VertexDTO root,
+                        ImmutableIntIntMap predecessorMap,
+                        ImmutableList<VertexDTO> vertexMap,
+                        ImmutableIntObjectMap<ImmutableIntList> successorMap)
+        implements DiTree<VertexDTO>, GraphDefaults, Marshalable {
 
-    private static final int LOCAL_MARSHAL_VERSION = 3;
-
-    @NonNull
-    VertexDTO root;
-
-    @NonNull
-    ImmutableIntIntMap predecessorMap;
-
-     public DiTreeDTO(@NonNull VertexDTO root,
-                     @NonNull ImmutableIntIntMap predecessorMap,
-                     @NonNull ImmutableList<VertexDTO> vertexMap,
-                     @NonNull ImmutableIntObjectMap<ImmutableIntList> successorMap) {
-        super(vertexMap, successorMap);
-        this.root = root;
-        this.predecessorMap = predecessorMap;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof DiTreeDTO diTreeDTO)) return false;
-        if (!super.equals(o)) return false;
-        return root.equals(diTreeDTO.root) && predecessorMap.equals(diTreeDTO.predecessorMap);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), root, predecessorMap);
-    }
 
     @Override
     public Optional<VertexDTO> predecessor(VertexDTO vertex) {
@@ -66,8 +36,8 @@ public class DiTreeDTO extends GraphDTO implements DiTree<VertexDTO>, Marshalabl
     public static DiTreeDTO make(TinkarInput in) {
         try {
             if (LOCAL_MARSHAL_VERSION == in.getTinkerFormatVersion()) {
-                ImmutableList<VertexDTO> vertexMap = GraphDTO.unmarshalVertexMap(in);
-                ImmutableIntObjectMap<ImmutableIntList> successorMap = GraphDTO.unmarshalSuccessorMap(in, vertexMap);
+                ImmutableList<VertexDTO> vertexMap = GraphDefaults.unmarshalVertexMap(in);
+                ImmutableIntObjectMap<ImmutableIntList> successorMap = GraphDefaults.unmarshalSuccessorMap(in, vertexMap);
                 VertexDTO root = vertexMap.get(in.getInt());
                 int predecessorMapSize = in.readInt();
                 MutableIntIntMap predecessorMap = IntIntMaps.mutable.ofInitialCapacity(predecessorMapSize);

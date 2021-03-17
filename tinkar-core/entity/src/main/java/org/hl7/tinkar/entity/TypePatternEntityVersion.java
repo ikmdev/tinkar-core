@@ -6,13 +6,13 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.component.FieldDefinition;
-import org.hl7.tinkar.component.TypePatternForSemanticVersion;
+import org.hl7.tinkar.component.TypePatternVersion;
 import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.component.FieldDataType;
 
 public class TypePatternEntityVersion
         extends EntityVersion
-        implements TypePatternForSemanticVersion<FieldDefinitionForEntity> {
+        implements TypePatternVersion<FieldDefinitionForEntity> {
 
     // TODO should we have a referenced component "identity" or "what" field as well?
     protected int referencedComponentPurposeNid;
@@ -37,7 +37,7 @@ public class TypePatternEntityVersion
 
     @Override
     public FieldDataType dataType() {
-        return FieldDataType.PATTERN_FOR_SEMANTIC_VERSION;
+        return FieldDataType.TYPE_PATTERN_VERSION;
     }
 
     @Override
@@ -71,19 +71,19 @@ public class TypePatternEntityVersion
         return size;
     }
 
-    public static TypePatternForSemanticEntityVersion make(TypePatternForSemanticEntity definitionForSemanticEntity, ByteBuf readBuf, byte formatVersion) {
-        TypePatternForSemanticEntityVersion version = new TypePatternForSemanticEntityVersion();
-        version.fill(definitionForSemanticEntity, readBuf, formatVersion);
+    public static TypePatternEntityVersion make(TypePatternEntity definitionEntity, ByteBuf readBuf, byte formatVersion) {
+        TypePatternEntityVersion version = new TypePatternEntityVersion();
+        version.fill(definitionEntity, readBuf, formatVersion);
         return version;
     }
 
-    public static TypePatternForSemanticEntityVersion make(TypePatternForSemanticEntity definitionForSemanticEntity, TypePatternForSemanticVersion<FieldDefinition> definitionForSemanticVersion) {
-        TypePatternForSemanticEntityVersion version = new TypePatternForSemanticEntityVersion();
-        version.fill(definitionForSemanticEntity, definitionForSemanticVersion);
-        version.referencedComponentPurposeNid = Get.entityService().nidForComponent(definitionForSemanticVersion.referencedComponentPurpose());
-        version.referencedComponentMeaningNid = Get.entityService().nidForComponent(definitionForSemanticVersion.referencedComponentMeaning());
+    public static TypePatternEntityVersion make(TypePatternEntity definitionEntity, TypePatternVersion<FieldDefinition> definitionVersion) {
+        TypePatternEntityVersion version = new TypePatternEntityVersion();
+        version.fill(definitionEntity, definitionVersion);
+        version.referencedComponentPurposeNid = Get.entityService().nidForComponent(definitionVersion.referencedComponentPurpose());
+        version.referencedComponentMeaningNid = Get.entityService().nidForComponent(definitionVersion.referencedComponentMeaning());
         version.fieldDefinitionForEntities.clear();
-        for (FieldDefinition fieldDefinition: definitionForSemanticVersion.fieldDefinitions()) {
+        for (FieldDefinition fieldDefinition: definitionVersion.fieldDefinitions()) {
             version.fieldDefinitionForEntities.add(FieldDefinitionForEntity.make(version, fieldDefinition));
         }
         return version;

@@ -54,11 +54,11 @@ public class EntityProvider implements EntityService {
     public void putEntity(Entity entity) {
         if (entity instanceof SemanticEntity semanticEntity) {
             Get.dataService().merge(entity.nid(),
-                    entity.definitionNid(),
+                    semanticEntity.typePatternNid(),
                     semanticEntity.referencedComponentNid(),
                     entity.getBytes());
         } else {
-            Get.dataService().merge(entity.nid(), entity.definitionNid(), Integer.MAX_VALUE, entity.getBytes());
+            Get.dataService().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, entity.getBytes());
         }
     }
 

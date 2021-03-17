@@ -8,7 +8,7 @@ import org.hl7.tinkar.entity.internal.Get;
 public class FieldDefinitionForEntity
     implements FieldDefinition {
 
-    protected TypePatternForSemanticEntityVersion enclosingVersion;
+    protected TypePatternEntityVersion enclosingVersion;
     protected int dataTypeNid;
     protected int purposeNid;
     protected int identityNid;
@@ -32,14 +32,14 @@ public class FieldDefinitionForEntity
      * TODO interface for write, fill, etc.
      * @param readBuf
      */
-    public void fill(TypePatternForSemanticEntityVersion enclosingVersion, ByteBuf readBuf) {
+    public void fill(TypePatternEntityVersion enclosingVersion, ByteBuf readBuf) {
         this.enclosingVersion = enclosingVersion;
         dataTypeNid = readBuf.readInt();
         purposeNid = readBuf.readInt();
         identityNid = readBuf.readInt();
     }
 
-    public void fill(TypePatternForSemanticEntityVersion enclosingVersion, FieldDefinition fieldDefinition) {
+    public void fill(TypePatternEntityVersion enclosingVersion, FieldDefinition fieldDefinition) {
         this.enclosingVersion = enclosingVersion;
         dataTypeNid = Get.entityService().nidForComponent(fieldDefinition.dataType());
         purposeNid = Get.entityService().nidForComponent(fieldDefinition.purpose());
@@ -52,13 +52,13 @@ public class FieldDefinitionForEntity
         writeBuf.writeInt(identityNid);
     }
 
-    public static FieldDefinitionForEntity make(TypePatternForSemanticEntityVersion enclosingVersion, ByteBuf readBuf) {
+    public static FieldDefinitionForEntity make(TypePatternEntityVersion enclosingVersion, ByteBuf readBuf) {
         FieldDefinitionForEntity fieldDefinitionForEntity = new FieldDefinitionForEntity();
         fieldDefinitionForEntity.fill(enclosingVersion, readBuf);
         return fieldDefinitionForEntity;
     }
 
-    public static FieldDefinitionForEntity make(TypePatternForSemanticEntityVersion enclosingVersion, FieldDefinition fieldDefinition) {
+    public static FieldDefinitionForEntity make(TypePatternEntityVersion enclosingVersion, FieldDefinition fieldDefinition) {
         FieldDefinitionForEntity fieldDefinitionForEntity = new FieldDefinitionForEntity();
         fieldDefinitionForEntity.fill(enclosingVersion, fieldDefinition);
         return fieldDefinitionForEntity;

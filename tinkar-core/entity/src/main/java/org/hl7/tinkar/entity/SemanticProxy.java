@@ -1,12 +1,14 @@
 package org.hl7.tinkar.entity;
 
+import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.Component;
-import org.hl7.tinkar.component.TypePatternForSemantic;
 import org.hl7.tinkar.component.Semantic;
+import org.hl7.tinkar.component.SemanticChronology;
+import org.hl7.tinkar.component.TypePattern;
 import org.hl7.tinkar.entity.internal.Get;
 
-public class SemanticProxy implements Semantic, ComponentWithNid {
+public class SemanticProxy implements SemanticChronology, ComponentWithNid {
     int nid;
 
     private SemanticProxy(int nid) {
@@ -20,12 +22,17 @@ public class SemanticProxy implements Semantic, ComponentWithNid {
 
     @Override
     public Component referencedComponent() {
-        return ((Semantic) Get.entityService().getEntityFast(nid)).referencedComponent();
+        return ((SemanticChronology) Get.entityService().getEntityFast(nid)).referencedComponent();
     }
 
     @Override
-    public TypePatternForSemantic patternForSemantic() {
-        return ((Semantic) Get.entityService().getEntityFast(nid)).patternForSemantic();
+    public TypePattern typePattern() {
+        return ((SemanticChronology) Get.entityService().getEntityFast(nid)).typePattern();
+    }
+
+    @Override
+    public ImmutableList versions() {
+        return ((SemanticChronology) Get.entityService().getEntityFast(nid)).versions();
     }
 
     @Override

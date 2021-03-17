@@ -15,31 +15,16 @@
  */
 package org.hl7.tinkar.lombok.dto;
 
-import lombok.NonNull;
-import lombok.Value;
-import lombok.experimental.Accessors;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.component.FieldDefinition;
 import org.hl7.tinkar.lombok.dto.binary.*;
-import org.hl7.tinkar.lombok.dto.json.JSONObject;
-import org.hl7.tinkar.lombok.dto.json.JsonMarshalable;
-import org.hl7.tinkar.lombok.dto.json.ComponentFieldForJson;
-import org.hl7.tinkar.lombok.dto.json.JsonChronologyUnmarshaler;
 
-import java.io.Writer;
 
-@Value
-@Accessors(fluent = true)
-public class FieldDefinitionDTO
-        implements FieldDefinition, JsonMarshalable, Marshalable {
+public record FieldDefinitionDTO(PublicId dataTypePublicId, PublicId purposePublicId, PublicId meaningPublicId)
+        implements FieldDefinition, Marshalable {
 
     private static final int localMarshalVersion = 3;
-
-    @NonNull private final PublicId dataTypePublicId;
-    @NonNull private final PublicId purposePublicId;
-    @NonNull private final PublicId meaningPublicId;
-
 
     public static FieldDefinitionDTO make(FieldDefinition fieldDefinition) {
         return new FieldDefinitionDTO(fieldDefinition.dataType().publicId(),
@@ -59,23 +44,6 @@ public class FieldDefinitionDTO
     @Override
     public Concept meaning() {
         return new ConceptDTO(meaningPublicId);
-    }
-
-    @Override
-    public void jsonMarshal(Writer writer) {
-        final JSONObject json = new JSONObject();
-        json.put(ComponentFieldForJson.CLASS, this.getClass().getCanonicalName());
-        json.put(ComponentFieldForJson.DATATYPE_PUBLIC_ID, dataTypePublicId);
-        json.put(ComponentFieldForJson.PURPOSE_PUBLIC_ID, purposePublicId);
-        json.put(ComponentFieldForJson.MEANING_PUBLIC_ID, meaningPublicId);
-        json.writeJSONString(writer);
-    }
-
-    @JsonChronologyUnmarshaler
-    public static FieldDefinitionDTO make(JSONObject jsonObject) {
-        return new FieldDefinitionDTO(jsonObject.asPublicId(ComponentFieldForJson.DATATYPE_PUBLIC_ID),
-                jsonObject.asPublicId(ComponentFieldForJson.PURPOSE_PUBLIC_ID),
-                jsonObject.asPublicId(ComponentFieldForJson.MEANING_PUBLIC_ID));
     }
 
     @Unmarshaler

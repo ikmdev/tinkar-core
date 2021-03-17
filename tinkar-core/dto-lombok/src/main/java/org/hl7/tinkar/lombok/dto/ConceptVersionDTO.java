@@ -15,71 +15,20 @@
  */
 package org.hl7.tinkar.lombok.dto;
 
-import lombok.NonNull;
-import lombok.ToString;
-import lombok.Value;
-import lombok.experimental.Accessors;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.ConceptVersion;
 import org.hl7.tinkar.lombok.dto.binary.*;
-import org.hl7.tinkar.lombok.dto.json.*;
-
-import java.io.Writer;
-import java.util.UUID;
 
 
-@Value
-@Accessors(fluent = true)
-@ToString(callSuper = true)
-public class ConceptVersionDTO extends VersionDTO
-        implements ConceptVersion, DTO, JsonMarshalable, Marshalable {
+public record ConceptVersionDTO(PublicId publicId, StampDTO stamp)
+        implements ConceptVersion, DTO, Marshalable {
 
     private static final int localMarshalVersion = 3;
-
-    public ConceptVersionDTO(@NonNull PublicId componentPublicId, @NonNull StampDTO stamp) {
-        super(componentPublicId, stamp);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ConceptVersionDTO that)) return false;
-        return super.equals(that);
-    }
-
-    @Override
-    public int hashCode() {
-        return super.hashCode();
-    }
 
     public static ConceptVersionDTO make(ConceptVersion conceptVersion) {
         return new ConceptVersionDTO(conceptVersion.publicId(), StampDTO.make(conceptVersion.stamp()));
     }
 
-    /**
-     * Marshaler for ConceptVersionDTO using JSON
-     * @param writer
-     */
-    @JsonMarshaler
-    @Override
-    public void jsonMarshal(Writer writer) {
-        final JSONObject json = new JSONObject();
-        json.put(ComponentFieldForJson.STAMP, stamp);
-        json.writeJSONString(writer);
-    }
-
-    /**
-     * Version unmarshaler for ConceptVersionDTO using JSON
-     * @param jsonObject
-     * @param publicId
-     * @return
-     */
-    @JsonVersionUnmarshaler
-    public static ConceptVersionDTO make(JSONObject jsonObject, PublicId publicId) {
-        return new ConceptVersionDTO(
-                publicId,
-                StampDTO.make((JSONObject) jsonObject.get(ComponentFieldForJson.STAMP)));
-    }
 
     /**
      * Version unmarshaler for ConceptVersionDTO.

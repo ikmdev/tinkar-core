@@ -2,7 +2,7 @@ package org.hl7.tinkar.entity;
 
 import io.activej.bytebuf.ByteBuf;
 import org.hl7.tinkar.component.*;
-import org.hl7.tinkar.component.TypePatternForSemanticChronology;
+import org.hl7.tinkar.component.TypePatternChronology;
 import org.hl7.tinkar.lombok.dto.StampDTO;
 
 public class EntityFactory {
@@ -14,9 +14,9 @@ public class EntityFactory {
         } else if (chronology instanceof SemanticChronology semanticChronology) {
             SemanticEntity semanticEntity =  SemanticEntity.make(semanticChronology);
            return semanticEntity;
-        } else if (chronology instanceof TypePatternForSemanticChronology definitionForSemanticChronology) {
-            TypePatternForSemanticEntity patternForSemanticEntity = TypePatternForSemanticEntity.make(definitionForSemanticChronology);
-            return patternForSemanticEntity;
+        } else if (chronology instanceof TypePatternChronology definitionChronology) {
+            TypePatternEntity patternEntity = TypePatternEntity.make(definitionChronology);
+            return patternEntity;
 
         }
         throw new UnsupportedOperationException("Can't convert: " + chronology);
@@ -43,8 +43,8 @@ public class EntityFactory {
             case SEMANTIC_CHRONOLOGY:
                 return (T) SemanticEntity.make(readBuf, entityFormatVersion);
 
-            case PATTERN_FOR_SEMANTIC_CHRONOLOGY:
-                return (T) TypePatternForSemanticEntity.make(readBuf, entityFormatVersion);
+            case TYPE_PATTERN_CHRONOLOGY:
+                return (T) TypePatternEntity.make(readBuf, entityFormatVersion);
 
             default:
                 throw new UnsupportedOperationException("Can't handle fieldDataType: " + fieldDataType);

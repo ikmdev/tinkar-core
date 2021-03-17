@@ -13,12 +13,11 @@ public class Put {
         Entity entity = EntityFactory.make(chronology);
         if (entity instanceof SemanticEntity semanticEntity) {
             singleton.merge(entity.nid(),
-                    entity.definitionNid(),
+                    semanticEntity.typePatternNid(),
                     semanticEntity.referencedComponentNid(),
                     entity.getBytes());
         } else {
-            singleton.merge(entity.nid(), entity.definitionNid(), Integer.MAX_VALUE, entity.getBytes());
+            singleton.merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, entity.getBytes());
         }
     }
-
 }

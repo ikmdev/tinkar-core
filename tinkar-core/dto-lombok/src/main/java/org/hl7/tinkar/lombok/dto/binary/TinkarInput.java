@@ -149,12 +149,12 @@ public class TinkarInput extends DataInputStream {
         }
     }
 
-    public ImmutableList<TypePatternForSemanticVersionDTO> readDefinitionForSemanticVersionList(PublicId componentPublicId) {
+    public ImmutableList<TypePatternVersionDTO> readTypePatternVersionList(PublicId componentPublicId) {
         try {
             int length = readInt();
-            TypePatternForSemanticVersionDTO[] array = new TypePatternForSemanticVersionDTO[length];
+            TypePatternVersionDTO[] array = new TypePatternVersionDTO[length];
             for (int i = 0; i < length; i++) {
-                array[i] = TypePatternForSemanticVersionDTO.make(this, componentPublicId);
+                array[i] = TypePatternVersionDTO.make(this, componentPublicId);
             }
             return Lists.immutable.of(array);
         } catch (IOException ex) {
@@ -163,14 +163,13 @@ public class TinkarInput extends DataInputStream {
     }
 
     public ImmutableList<SemanticVersionDTO> readSemanticVersionList(PublicId componentPublicId,
-                                                                     PublicId definitionForSemanticPublicId,
+                                                                     PublicId typePatternPublicId,
                                                                      PublicId referencedComponentPublicId) {
         try {
             int length = readInt();
             SemanticVersionDTO[] array = new SemanticVersionDTO[length];
             for (int i = 0; i < length; i++) {
-                array[i] = SemanticVersionDTO.make(this, componentPublicId,
-                        definitionForSemanticPublicId, referencedComponentPublicId);
+                array[i] = SemanticVersionDTO.make(this, componentPublicId);
             }
             return Lists.immutable.of(array);
         } catch (IOException ex) {
@@ -270,10 +269,10 @@ public class TinkarInput extends DataInputStream {
                     return ConceptChronologyDTO.make(this);
                 case CONCEPT:
                     return ConceptDTO.make(this);
-                case PATTERN_FOR_SEMANTIC_CHRONOLOGY:
-                    return TypePatternForSemanticChronologyDTO.make(this);
-                case PATTERN_FOR_SEMANTIC:
-                    return TypePatternForSemanticDTO.make(this);
+                case TYPE_PATTERN_CHRONOLOGY:
+                    return TypePatternChronologyDTO.make(this);
+                case TYPE_PATTERN:
+                    return TypePatternDTO.make(this);
                 case SEMANTIC_CHRONOLOGY:
                     return SemanticChronologyDTO.make(this);
                 case SEMANTIC:

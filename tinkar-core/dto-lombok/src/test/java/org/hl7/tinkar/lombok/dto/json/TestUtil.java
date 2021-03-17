@@ -10,6 +10,7 @@ import org.hl7.tinkar.common.id.VertexId;
 import org.hl7.tinkar.common.id.VertexIds;
 import org.hl7.tinkar.lombok.dto.graph.VertexDTO;
 import org.hl7.tinkar.lombok.dto.*;
+import org.hl7.tinkar.lombok.dto.graph.VertexDTOBuilder;
 
 import java.time.Instant;
 import java.util.Random;
@@ -21,19 +22,19 @@ public class TestUtil {
 
     public static VertexDTO emptyVertex() {
         VertexId vertexId = VertexIds.newRandom();
-        return VertexDTO.builder()
+        return VertexDTOBuilder.builder()
                 .vertexIdMsb(vertexId.mostSignificantBits())
                 .vertexIdLsb(vertexId.leastSignificantBits())
-                .meaning(VertexDTO.abstractObject(ConceptDTO.builder().componentPublicId(TestUtil.makePublicId()).build()))
+                .meaning(VertexDTO.abstractObject(ConceptDTOBuilder.builder().publicId(TestUtil.makePublicId()).build()))
                 .properties(Maps.immutable.empty()).build();
     }
 
     public static VertexDTO vertexWithProperties(MutableMap<ConceptDTO, Object> propertyMap) {
         VertexId vertexId = VertexIds.newRandom();
-        return VertexDTO.builder()
+        return VertexDTOBuilder.builder()
                 .vertexIdMsb(vertexId.mostSignificantBits())
                 .vertexIdLsb(vertexId.leastSignificantBits())
-                .meaning(VertexDTO.abstractObject(ConceptDTO.builder().componentPublicId(TestUtil.makePublicId()).build()))
+                .meaning(VertexDTO.abstractObject(ConceptDTOBuilder.builder().publicId(TestUtil.makePublicId()).build()))
                 .properties(propertyMap.toImmutable()).build();
     }
 
@@ -81,17 +82,17 @@ public class TestUtil {
         return Lists.immutable.of(array);
     }
 
-    public static TypePatternForSemanticVersionDTO makeDefinitionForSemanticVersionForChangeSet(PublicId componentPublicId) {
+    public static TypePatternVersionDTO makeTypePatternVersionForChangeSet(PublicId componentPublicId) {
 
-        return new TypePatternForSemanticVersionDTO(componentPublicId, makeStampForChangeSet(), makePublicId(),
+        return new TypePatternVersionDTO(componentPublicId, makeStampForChangeSet(), makePublicId(),
                 makePublicId(), makeFieldDefinitionList());
     }
 
-    public static ImmutableList<TypePatternForSemanticVersionDTO> makeDefinitionForSemanticVersionForChangeSetList(PublicId componentPublicId) {
+    public static ImmutableList<TypePatternVersionDTO> makeTypePatternVersionForChangeSetList(PublicId componentPublicId) {
         int size = getRandomSize(4);
-        TypePatternForSemanticVersionDTO[] array = new TypePatternForSemanticVersionDTO[size];
+        TypePatternVersionDTO[] array = new TypePatternVersionDTO[size];
         for (int i = 0; i < size; i++) {
-            array[i] = makeDefinitionForSemanticVersionForChangeSet(componentPublicId);
+            array[i] = makeTypePatternVersionForChangeSet(componentPublicId);
         }
         return Lists.immutable.of(array);
     }
@@ -110,13 +111,12 @@ public class TestUtil {
     }
 
     public static ImmutableList<SemanticVersionDTO> makeSemanticVersionForChangeSetList(PublicId componentPublicId,
-                                                                                        PublicId definitionForSemanticPublicId,
+                                                                                        PublicId typePatternPublicId,
                                                                                         PublicId referencedComponentPublicId) {
         int size = getRandomSize(7);
         SemanticVersionDTO[] array = new SemanticVersionDTO[size];
         for (int i = 0; i < size; i++) {
-            array[i] = new SemanticVersionDTO(componentPublicId, definitionForSemanticPublicId,
-                    referencedComponentPublicId, makeStampForChangeSet(), makeImmutableObjectList());
+            array[i] = new SemanticVersionDTO(componentPublicId, makeStampForChangeSet(), makeImmutableObjectList());
         }
         return Lists.immutable.of(array);
     }
@@ -137,8 +137,8 @@ public class TestUtil {
                 "a string",
                 Instant.ofEpochMilli(Instant.now().toEpochMilli()),
                 new ConceptDTO(makePublicId()),
-                new TypePatternForSemanticDTO(makePublicId()),
-                new SemanticDTO(makePublicId(), makePublicId(), makePublicId())
+                new TypePatternDTO(makePublicId()),
+                new SemanticDTO(makePublicId())
         };
         return array;
     }
@@ -150,22 +150,22 @@ public class TestUtil {
 
     public static ConceptChronologyDTO makeConceptChronology() {
         PublicId componentPublicId = makePublicId();
-        return new ConceptChronologyDTO(componentPublicId, makePublicId(), makeConceptVersionList(componentPublicId));
+        return new ConceptChronologyDTO(componentPublicId, makeConceptVersionList(componentPublicId));
     }
 
-    public static TypePatternForSemanticChronologyDTO makeDefinitionForSemanticChronology() {
+    public static TypePatternChronologyDTO makeTypePatternChronology() {
         PublicId componentPublicId = makePublicId();
-        return new TypePatternForSemanticChronologyDTO(componentPublicId, makePublicId(), makeDefinitionForSemanticVersionForChangeSetList(componentPublicId));
+        return new TypePatternChronologyDTO(componentPublicId, makeTypePatternVersionForChangeSetList(componentPublicId));
     }
 
     public static SemanticChronologyDTO makeSemanticChronology() {
         PublicId componentPublicId = makePublicId();
-        PublicId definitionForSemanticPublicId = makePublicId();
+        PublicId typePatternPublicId = makePublicId();
         PublicId referencedComponentPublicId = makePublicId();
 
         return new SemanticChronologyDTO(componentPublicId,
-                definitionForSemanticPublicId, referencedComponentPublicId,
+                typePatternPublicId, referencedComponentPublicId,
                 makeSemanticVersionForChangeSetList(componentPublicId,
-                        definitionForSemanticPublicId, referencedComponentPublicId));
+                        typePatternPublicId, referencedComponentPublicId));
     }
 }

@@ -23,6 +23,10 @@ import org.eclipse.collections.api.list.ImmutableList;
  */
 public interface SemanticChronology<T extends SemanticVersion> extends Chronology<T>, Semantic {
 
+     Component referencedComponent();
+
+     TypePattern typePattern();
+
      @Override
      ImmutableList<T> versions();
 

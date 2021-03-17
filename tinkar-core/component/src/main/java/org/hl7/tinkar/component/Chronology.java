@@ -21,8 +21,6 @@ import org.eclipse.collections.api.list.ImmutableList;
  * @author kec
  */
 public interface Chronology<T extends Version> extends Component {
-    
-    Component chronologySet();
 
     ImmutableList<T> versions();
 

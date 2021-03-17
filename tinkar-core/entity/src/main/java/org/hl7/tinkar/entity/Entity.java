@@ -43,7 +43,6 @@ public abstract class Entity<T extends EntityVersion> extends PublicIdForEntity
 
 
     protected int nid;
-    protected int definitionNid;
     protected final MutableList<T> versions = Lists.mutable.empty();
 
     protected Entity() {
@@ -69,7 +68,6 @@ public abstract class Entity<T extends EntityVersion> extends PublicIdForEntity
             throw new IllegalStateException("Unsupported entity format version: " + entityFormatVersion);
         }
         this.nid = readBuf.readInt();
-        this.definitionNid = readBuf.readInt();
         this.mostSignificantBits = readBuf.readLong();
         this.leastSignificantBits = readBuf.readLong();
 
@@ -97,7 +95,6 @@ public abstract class Entity<T extends EntityVersion> extends PublicIdForEntity
 
     protected final void fill(Chronology<Version> chronology) {
         this.nid = Get.entityService().nidForPublicId(chronology.publicId());
-        this.definitionNid = Get.entityService().nidForPublicId(chronology.chronologySet().publicId());
         ImmutableList<UUID> componentUuids = chronology.publicId().asUuidList();
         UUID firstUuid = componentUuids.get(0);
 
@@ -126,7 +123,6 @@ public abstract class Entity<T extends EntityVersion> extends PublicIdForEntity
         byteBuf.writeByte(ENTITY_FORMAT_VERSION);
         byteBuf.writeByte(dataType().token); //ensure that the chronicle byte array sorts first.
         byteBuf.writeInt(nid);
-        byteBuf.writeInt(definitionNid);
         byteBuf.writeLong(mostSignificantBits);
         byteBuf.writeLong(leastSignificantBits);
         if (this.additionalUuidLongs == null) {
@@ -168,11 +164,6 @@ public abstract class Entity<T extends EntityVersion> extends PublicIdForEntity
     protected abstract T makeVersion(Version version);
 
     @Override
-    public Entity<EntityVersion> chronologySet() {
-        return getFast(definitionNid);
-    }
-
-    @Override
     public ImmutableList<T> versions() {
         return versions.toImmutable();
     }
@@ -188,10 +179,6 @@ public abstract class Entity<T extends EntityVersion> extends PublicIdForEntity
 
     public int nid() {
         return nid;
-    }
-
-    public int definitionNid() {
-        return definitionNid;
     }
 
 }

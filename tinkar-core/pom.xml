@@ -14,8 +14,7 @@
         <eclipse-collections-api.version>11.0.0.M1</eclipse-collections-api.version>
         <jgrapht.version>1.5.0</jgrapht.version>
         <junit.version>5.6.3</junit.version>
-        <lombok.version>1.18.18</lombok.version>
-        <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
+         <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.1.2</maven-dependency-plugin.version>
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
@@ -25,6 +24,7 @@
         <maven.compiler.target>16</maven.compiler.target>
         <roaringbitmap.version>0.9.8</roaringbitmap.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <record-builder-core.version>1.19</record-builder-core.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -33,12 +33,6 @@
                 <artifactId>junit-jupiter-engine</artifactId>
                 <version>${junit.version}</version>
                 <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.projectlombok</groupId>
-                <artifactId>lombok</artifactId>
-                <scope>compile</scope>
-                <version>${lombok.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -74,27 +68,17 @@
                     <configuration>
                         <source>${maven.compiler.source}</source>
                         <target>${maven.compiler.target}</target>
-                        <verbose>true</verbose>
                         <fork>true</fork>
-                        <compilerArgs>
-                            <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
-                            <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
-                            <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
-                            <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED</arg>
-                            <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED</arg>
-                            <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED</arg>
-                            <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED</arg>
-                            <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>
-                            <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
-                            <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.jvm=ALL-UNNAMED</arg>
-                        </compilerArgs>
-                         <annotationProcessorPaths>
-                            <path>
-                                <groupId>org.projectlombok</groupId>
-                                <artifactId>lombok</artifactId>
-                                <version>${lombok.version}</version>
-                            </path>
+                        <annotationProcessorPaths>
+                            <annotationProcessorPath>
+                                <groupId>io.soabase.record-builder</groupId>
+                                <artifactId>record-builder-processor</artifactId>
+                                <version>${record-builder-core.version}</version>
+                            </annotationProcessorPath>
                         </annotationProcessorPaths>
+                        <annotationProcessors>
+                            <annotationProcessor>io.soabase.recordbuilder.processor.RecordBuilderProcessor</annotationProcessor>
+                        </annotationProcessors>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -113,6 +97,12 @@
                 </plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+        </plugins>
     </build>
     <modules>
         <module>collection</module>
