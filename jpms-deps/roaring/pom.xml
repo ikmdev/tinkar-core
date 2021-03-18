@@ -56,7 +56,7 @@
                         <configuration>
                             <target>
                                 <echo message="unzipping file" />
-                                <unzip src="${project.build.directory}/moditect/RoaringBitmap-0.9.8.jar"
+                                <unzip src="${project.build.directory}/moditect/RoaringBitmap-${roaringbitmap.version}.jar"
                                        dest="${project.build.directory}/classes/" />
                             </target>
                         </configuration>

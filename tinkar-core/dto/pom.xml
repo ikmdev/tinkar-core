@@ -31,10 +31,10 @@
             <version>${activej.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.soabase.record-builder</groupId>
+            <groupId>org.hl7.tinkar</groupId>
             <artifactId>record-builder-core</artifactId>
-            <version>${record-builder-core.version}</version>
-<!--            <scope>provided</scope>-->
+            <version>${project.parent.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>

@@ -9,7 +9,7 @@ module org.hl7.tinkar.dto {
     requires java.base;
     requires org.hl7.tinkar.common;
     requires org.hl7.tinkar.component;
-    requires record.builder.core;
+    requires static org.hl7.tinkar.record.builder;
     requires java.compiler;
     exports org.hl7.tinkar.dto.binary;
     exports org.hl7.tinkar.dto.changeset;

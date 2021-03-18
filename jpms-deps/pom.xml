@@ -13,14 +13,16 @@
         <build-helper-maven-plugin.version>3.2.0</build-helper-maven-plugin.version>
         <caffeine.version>3.0.0</caffeine.version>
         <eclipse-collections-api.version>11.0.0.M1</eclipse-collections-api.version>
+        <h2-mvstore.version>1.4.200</h2-mvstore.version>
         <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.1.2</maven-dependency-plugin.version>
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
         <maven-source-plugin.version>3.2.0</maven-source-plugin.version>
         <maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>16</maven.compiler.source>
+        <maven.compiler.target>16</maven.compiler.target>
+        <record-builder-core.version>1.19</record-builder-core.version>
         <roaringbitmap.version>0.9.8</roaringbitmap.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
@@ -95,6 +97,7 @@
         <module>chronicle-map</module>
         <module>eclipse-collections</module>
         <module>mvstore</module>
+        <module>record-builder-core</module>
         <module>roaring</module>
     </modules>
 </project>
