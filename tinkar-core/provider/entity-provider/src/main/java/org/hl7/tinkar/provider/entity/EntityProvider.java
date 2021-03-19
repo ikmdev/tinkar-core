@@ -1,7 +1,6 @@
 package org.hl7.tinkar.provider.entity;
 
 import io.activej.bytebuf.ByteBuf;
-import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.Chronology;
@@ -11,6 +10,7 @@ import org.hl7.tinkar.provider.entity.internal.Get;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class EntityProvider implements EntityService {
 
@@ -91,8 +91,8 @@ public class EntityProvider implements EntityService {
     }
 
     @Override
-    public void forEachEntityOfType(int typeDefinitionNid, IntProcedure procedure) {
-        Get.dataService().forEachEntityOfType(typeDefinitionNid, procedure);
+    public void forEachEntityOfType(int typeDefinitionNid, Consumer<SemanticEntity> procedure) {
+        Get.dataService().forEachEntityOfType(typeDefinitionNid, (int nid) -> procedure.accept(getEntityFast(nid)));
     }
 
     @Override
@@ -101,8 +101,8 @@ public class EntityProvider implements EntityService {
     }
 
     @Override
-    public void forEachSemanticForComponent(int componentNid, IntProcedure procedure) {
-        Get.dataService().forEachSemanticForComponent(componentNid, procedure);
+    public void forEachSemanticForComponent(int componentNid, Consumer<SemanticEntity> procedure) {
+        Get.dataService().forEachSemanticNidForComponent(componentNid, (int nid) -> procedure.accept(getEntityFast(nid)));
     }
 
     @Override
@@ -111,8 +111,8 @@ public class EntityProvider implements EntityService {
     }
 
     @Override
-    public void forEachSemanticForComponentOfType(int componentNid, int typeDefinitionNid, IntProcedure procedure) {
-        Get.dataService().forEachSemanticForComponentOfType(componentNid, typeDefinitionNid, procedure);
+    public void forEachSemanticForComponentOfType(int componentNid, int typeDefinitionNid, Consumer<SemanticEntity> procedure) {
+        Get.dataService().forEachSemanticNidForComponentOfType(componentNid, typeDefinitionNid, (int nid) -> procedure.accept(getEntityFast(nid)));
     }
 
     @Override

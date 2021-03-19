@@ -87,9 +87,8 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate,
         }
         return SINGLETONS.computeIfAbsent(pathConceptNid,
                 pathNid -> {
-                    throw new UnsupportedOperationException();
-//                    ImmutableSet<StampPositionImmutable> pathOrigins = Get.versionManagmentPathService().getOrigins(pathNid);
-//                    return new StampPathImmutable(pathNid, pathOrigins);
+                    ImmutableSet<StampPositionImmutable> pathOrigins = PathProvider.getPathOrigins(pathNid);
+                    return new StampPathImmutable(pathNid, pathOrigins);
                 });
     }
 

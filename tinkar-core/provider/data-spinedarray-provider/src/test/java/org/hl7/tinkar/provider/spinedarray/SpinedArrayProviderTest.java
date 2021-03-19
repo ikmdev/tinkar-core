@@ -63,9 +63,9 @@ public class SpinedArrayProviderTest {
             SpinedArrayProvider.singleton.close();
             closingStopwatch.end();
             SpinedArrayProvider.singleton = null;
-            System.out.println("MVS Closed in: " + closingStopwatch.elapsedTime()+ "\n");
+            System.out.println("SAP Closed in: " + closingStopwatch.elapsedTime()+ "\n");
         }
-        System.out.println("Reloading MVStoreProvider");
+        System.out.println("Reloading SpinedArrayProvider");
         Stopwatch reloadStopwatch = new Stopwatch();
         SpinedArrayProvider provider = new SpinedArrayProvider();
         System.out.println("SAP Reloading in: " + reloadStopwatch.elapsedTime()+ "\n");

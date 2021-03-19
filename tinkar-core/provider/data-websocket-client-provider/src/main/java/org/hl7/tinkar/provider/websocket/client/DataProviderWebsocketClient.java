@@ -83,7 +83,7 @@ public class DataProviderWebsocketClient
     }
 
     @Override
-    public void forEachSemanticForComponent(int componentNid, IntProcedure procedure) {
+    public void forEachSemanticNidForComponent(int componentNid, IntProcedure procedure) {
         throw new UnsupportedOperationException();
     }
 
@@ -142,7 +142,7 @@ public class DataProviderWebsocketClient
     }
 
     @Override
-    public void forEachSemanticForComponentOfType(int componentNid, int typeDefinitionNid, IntProcedure procedure) {
+    public void forEachSemanticNidForComponentOfType(int componentNid, int typeDefinitionNid, IntProcedure procedure) {
         throw new UnsupportedOperationException();
     }
 

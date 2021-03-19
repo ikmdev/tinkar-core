@@ -49,12 +49,14 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
 import org.hl7.tinkar.common.service.CachingService;
+import org.hl7.tinkar.common.service.PrimitiveDataService;
 import org.hl7.tinkar.component.Chronology;
 import org.hl7.tinkar.component.LatestVersion;
 import org.hl7.tinkar.component.graph.DiTree;
 import org.hl7.tinkar.coordinate.CoordinateUtil;
 import org.hl7.tinkar.coordinate.language.DefaultDescriptionText;
 import org.hl7.tinkar.entity.Entity;
+import org.hl7.tinkar.entity.EntityService;
 import org.hl7.tinkar.entity.EntityVersion;
 import org.hl7.tinkar.entity.StampEntity;
 import org.hl7.tinkar.entity.graph.DiTreeEntity;
@@ -880,26 +882,40 @@ public class RelativePositionCalculator implements CachingService {
 //            return true;
 //        }
 //
-//        final Optional<StampPathImmutable> stampPath = getFromDisk(pathConceptId);
+//        final Optional<StampPathImmutable> stampPath = constructFromSemantics(pathConceptId);
 //
 //        return stampPath.isPresent();
     }
 
     public static StampPath getStampPath(int stampPathNid) {
-        throw new UnsupportedOperationException();
-//        if (exists(stampPathNid)) {
+ //        if (exists(stampPathNid)) {
 //            return this.pathMap.get(stampPathNid);
 //        }
 //
-//        final Optional<StampPathImmutable> stampPath = getFromDisk(stampPathNid);
-//
-//        if (stampPath.isPresent()) {
-//            return stampPath.get();
-//        }
-//
-//        throw new IllegalStateException("No path for: " + stampPathNid + " " +
-//                Get.conceptService().getConceptChronology(stampPathNid).toString());
+        final Optional<StampPathImmutable> stampPath = constructFromSemantics(stampPathNid);
+
+        if (stampPath.isPresent()) {
+            return stampPath.get();
+        }
+
+        throw new IllegalStateException("No path for: " + stampPathNid + " " +
+                EntityService.get().getEntityFast(stampPathNid));
     }
+
+    private static Optional<StampPathImmutable> constructFromSemantics(int stampPathNid) {
+        int[] nids = EntityService.get().semanticNidsForComponentOfType(stampPathNid, TinkarTerm.PATH.nid());
+        if (nids.length == 1) {
+            int pathId = nids[0];
+            assert pathId == stampPathNid:
+                    "pathId: " + pathId + " stampPathSequence: " + stampPathNid;
+            final StampPathImmutable stampPath = StampPathImmutable.make(stampPathNid);
+            //this.pathMap.put(stampPathNid, stampPath);
+            return Optional.of(stampPath);
+        } else {
+            throw new UnsupportedOperationException("Wrong nid count: " + Arrays.toString(nids));
+        }
+   }
+
 
     @Override
     public void reset() {

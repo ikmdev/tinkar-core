@@ -88,20 +88,20 @@ public interface PrimitiveDataService {
         return intList.toArray();
     }
 
-    void forEachSemanticForComponent(int componentNid, IntProcedure procedure);
+    void forEachSemanticNidForComponent(int componentNid, IntProcedure procedure);
 
     default int[] semanticNidsForComponent(int componentNid) {
         MutableIntList intList = IntLists.mutable.empty();
-        forEachSemanticForComponent(componentNid, nid -> intList.add(nid));
+        forEachSemanticNidForComponent(componentNid, nid -> intList.add(nid));
         return intList.toArray();
     }
 
 
-    void forEachSemanticForComponentOfType(int componentNid, int typeDefinitionNid, IntProcedure procedure);
+    void forEachSemanticNidForComponentOfType(int componentNid, int typeDefinitionNid, IntProcedure procedure);
 
     default int[] semanticNidsForComponentOfType(int componentNid, int typeDefinitionNid) {
         MutableIntList intList = IntLists.mutable.empty();
-        forEachSemanticForComponentOfType(componentNid, typeDefinitionNid, nid -> intList.add(nid));
+        forEachSemanticNidForComponentOfType(componentNid, typeDefinitionNid, nid -> intList.add(nid));
         return intList.toArray();
     }
 

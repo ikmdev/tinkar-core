@@ -8,10 +8,15 @@ import org.hl7.tinkar.component.Chronology;
 import org.hl7.tinkar.component.ChronologyService;
 import org.hl7.tinkar.component.Component;
 import org.hl7.tinkar.component.Version;
+import org.hl7.tinkar.entity.internal.Get;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public interface EntityService extends ChronologyService {
+    static EntityService get() {
+        return Get.entityService();
+    }
 
     @Override
     default <T extends Chronology<V>, V extends Version> Optional<T> getChronology(Component component) {
@@ -102,9 +107,9 @@ public interface EntityService extends ChronologyService {
 
 
     /**
-     * Note, this method does nothing to the sort order of the entire uuidList,
-     * it only ensures that the UUIDs assigned to each nid are added in
-     * a consistent order. Used to create consistent identifiers for objects.
+     * Note, this method does not sort the provided uuidList,
+     * it only ensures that the UUIDs assigned to each nid are added to the existing list
+     * in a sorted order. This method is to create reproducible identifiers for objects.
      *
      * @param uuidList
      * @param nids
@@ -120,15 +125,15 @@ public interface EntityService extends ChronologyService {
         }
     }
 
-    void forEachEntityOfType(int typeDefinitionNid, IntProcedure procedure);
+    void forEachEntityOfType(int typeDefinitionNid, Consumer<SemanticEntity> procedure);
 
     int[] entityNidsOfType(int setNid);
 
-    void forEachSemanticForComponent(int componentNid, IntProcedure procedure);
+    void forEachSemanticForComponent(int componentNid, Consumer<SemanticEntity> procedure);
 
     int[] semanticNidsForComponent(int componentNid);
 
-    void forEachSemanticForComponentOfType(int componentNid, int typeDefinitionNid, IntProcedure procedure);
+    void forEachSemanticForComponentOfType(int componentNid, int typeDefinitionNid, Consumer<SemanticEntity> procedure);
 
     int[] semanticNidsForComponentOfType(int componentNid, int typeDefinitionNid);
 }

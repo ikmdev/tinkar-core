@@ -26,7 +26,6 @@
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>entity-provider</artifactId>
             <version>${project.parent.version}</version>
-            <!--            <scope>test</scope>-->
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>

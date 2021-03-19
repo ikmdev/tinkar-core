@@ -79,7 +79,7 @@ public class MVStoreProvider implements PrimitiveDataService {
     }
 
     @Override
-    public void forEachSemanticForComponent(int componentNid, IntProcedure procedure) {
+    public void forEachSemanticNidForComponent(int componentNid, IntProcedure procedure) {
         nidToReferencedComponentNidMap.forEach((nid, referencedComponentNid) -> {
             if (componentNid == referencedComponentNid) {
                 procedure.accept(nid);
@@ -88,7 +88,7 @@ public class MVStoreProvider implements PrimitiveDataService {
     }
 
     @Override
-    public void forEachSemanticForComponentOfType(int componentNid, int typeDefinitionNid, IntProcedure procedure) {
+    public void forEachSemanticNidForComponentOfType(int componentNid, int typeDefinitionNid, IntProcedure procedure) {
         nidToReferencedComponentNidMap.forEach((nid, referencedComponentNid) -> {
             if (componentNid == referencedComponentNid) {
                 if (nidToTypeDefNidMap.get(nid) == typeDefinitionNid) {
