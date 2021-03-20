@@ -5,8 +5,10 @@ import java.util.logging.Logger;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
+import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.coordinate.edit.Activity;
 import org.hl7.tinkar.coordinate.edit.EditCoordinateImmutable;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinate;
@@ -16,8 +18,8 @@ import org.hl7.tinkar.coordinate.manifold.ManifoldCoordinateImmutable;
 import org.hl7.tinkar.coordinate.stamp.*;
 import org.hl7.tinkar.terms.TinkarTerm;
 //Even though this class is static, needs to be a service, so that the reset() gets fired at appropriate times.
-//@TODO Service annotation
-public class Coordinates /* implements CachingService */ {
+@AutoService(CachingService.class)
+public class Coordinates implements CachingService  {
 
     private static final Logger LOG = CoordinateUtil.LOG;
     
@@ -33,6 +35,11 @@ public class Coordinates /* implements CachingService */ {
                 TinkarTerm.SOLOR_OVERLAY_MODULE.nid()
             );
         }
+    }
+
+    @Override
+    public void reset() {
+
     }
 
     public static class Logic {

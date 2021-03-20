@@ -1,5 +1,6 @@
 package org.hl7.tinkar.entity.internal;
 
+import com.google.auto.service.AutoService;
 import org.hl7.tinkar.entity.EntityService;
 import org.hl7.tinkar.common.service.CachingService;
 
@@ -9,7 +10,7 @@ import java.util.ServiceLoader;
 
 //TODO how to initialize service after reset...
 
-//@TODO Service annotation
+@AutoService(CachingService.class)
 public class Get implements CachingService {
     private static Get singleton = new Get();
 

@@ -4,6 +4,7 @@ package org.hl7.tinkar.coordinate.manifold;
 import java.util.EnumSet;
 import java.util.Objects;
 
+import com.google.auto.service.AutoService;
 import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
 import org.hl7.tinkar.common.binary.Decoder;
 import org.hl7.tinkar.common.binary.DecoderInput;
@@ -29,7 +30,7 @@ import org.hl7.tinkar.coordinate.stamp.StampFilterImmutable;
 import org.hl7.tinkar.coordinate.stamp.StateSet;
 
 //This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
-//@TODO Service annotation
+@AutoService(CachingService.class)
 public abstract class ManifoldCoordinateImmutable implements ManifoldCoordinate, ImmutableCoordinate, /*CommitListener, */ CachingService {
 
     private static final ConcurrentReferenceHashMap<ManifoldCoordinateImmutable, ManifoldCoordinateImmutable> SINGLETONS =

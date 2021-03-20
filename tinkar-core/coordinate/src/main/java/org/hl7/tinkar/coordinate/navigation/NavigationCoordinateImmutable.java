@@ -2,6 +2,8 @@ package org.hl7.tinkar.coordinate.navigation;
 
 
 import java.util.Objects;
+
+import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
@@ -15,8 +17,8 @@ import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 import org.hl7.tinkar.coordinate.logic.LogicCoordinate;
 import org.hl7.tinkar.coordinate.logic.PremiseType;
 
-//@TODO Service annotation
 //This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
+@AutoService(CachingService.class)
 public final class NavigationCoordinateImmutable implements NavigationCoordinate, ImmutableCoordinate, CachingService {
 
     private static final ConcurrentReferenceHashMap<NavigationCoordinateImmutable, NavigationCoordinateImmutable> SINGLETONS =

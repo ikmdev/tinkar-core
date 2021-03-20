@@ -2,6 +2,7 @@ package org.hl7.tinkar.coordinate.edit;
 
 import java.util.Objects;
 
+import com.google.auto.service.AutoService;
 import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
 import org.hl7.tinkar.common.binary.Decoder;
 import org.hl7.tinkar.common.binary.DecoderInput;
@@ -14,7 +15,7 @@ import org.hl7.tinkar.entity.Entity;
 
 
 //This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
-//@TODO Service annotation
+@AutoService(CachingService.class)
 public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordinate, CachingService {
     private static final int marshalVersion = 2;
 

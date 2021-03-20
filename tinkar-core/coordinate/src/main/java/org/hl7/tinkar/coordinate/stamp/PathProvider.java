@@ -1,5 +1,6 @@
 package org.hl7.tinkar.coordinate.stamp;
 
+import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.set.ImmutableSet;
@@ -11,7 +12,7 @@ import org.hl7.tinkar.terms.TinkarTerm;
 
 import java.util.Optional;
 
-//@TODO Service annotation
+@AutoService(CachingService.class)
 public class PathProvider implements CachingService {
 
     public static ImmutableSet<StampPositionImmutable> getPathOrigins(int pathNid) {

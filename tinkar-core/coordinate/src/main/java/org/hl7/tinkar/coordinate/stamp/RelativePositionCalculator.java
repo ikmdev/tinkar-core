@@ -43,6 +43,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
+import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
@@ -71,7 +72,7 @@ import static org.hl7.tinkar.coordinate.stamp.RelativePosition.*;
  * @author kec
  */
 //This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
-//@TODO Service annotation
+@AutoService(CachingService.class)
 public class RelativePositionCalculator implements CachingService {
     /** The Constant LOG. */
     private static final Logger LOG = CoordinateUtil.LOG;

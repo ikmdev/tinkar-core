@@ -2,6 +2,7 @@ package org.hl7.tinkar.coordinate.stamp;
 
 import java.util.Objects;
 
+import com.google.auto.service.AutoService;
 import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
 import org.hl7.tinkar.common.binary.Decoder;
 import org.hl7.tinkar.common.binary.DecoderInput;
@@ -12,7 +13,7 @@ import org.hl7.tinkar.coordinate.language.DefaultDescriptionText;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 
 //This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
-//@TODO Service annotation
+@AutoService(CachingService.class)
 public class StampBranchImmutable implements StampBranch, ImmutableCoordinate, CachingService {
 
     private static final ConcurrentReferenceHashMap<Integer, StampBranchImmutable> SINGLETONS =

@@ -10,21 +10,24 @@
     <name>TINKAR: (MMP)</name>
     <properties>
         <activej.version>4.0-rc1</activej.version>
+        <auto-service.version>1.0-rc7</auto-service.version>
         <build-helper-maven-plugin.version>3.2.0</build-helper-maven-plugin.version>
         <eclipse-collections-api.version>11.0.0.M1</eclipse-collections-api.version>
         <jgrapht.version>1.5.0</jgrapht.version>
         <junit.version>5.6.3</junit.version>
-         <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
+        <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-dependency-plugin.version>3.1.2</maven-dependency-plugin.version>
+        <maven-failsafe-plugin.version>3.0.0-M5</maven-failsafe-plugin.version>
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
         <maven-source-plugin.version>3.2.0</maven-source-plugin.version>
         <maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>
         <maven.compiler.source>16</maven.compiler.source>
         <maven.compiler.target>16</maven.compiler.target>
-        <roaringbitmap.version>0.9.8</roaringbitmap.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <record-builder-core.version>1.19</record-builder-core.version>
+        <roaringbitmap.version>0.9.8</roaringbitmap.version>
+        <testng.version>7.4.0</testng.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -63,6 +66,11 @@
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>${maven-failsafe-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${maven-compiler-plugin.version}</version>
                     <configuration>
@@ -75,9 +83,15 @@
                                 <artifactId>record-builder-processor</artifactId>
                                 <version>${record-builder-core.version}</version>
                             </annotationProcessorPath>
+                            <annotationProcessorPath>
+                                <groupId>com.google.auto.service</groupId>
+                                <artifactId>auto-service</artifactId>
+                                <version>${auto-service.version}</version>
+                            </annotationProcessorPath>
                         </annotationProcessorPaths>
                         <annotationProcessors>
                             <annotationProcessor>io.soabase.recordbuilder.processor.RecordBuilderProcessor</annotationProcessor>
+                            <annotationProcessor>com.google.auto.service.processor.AutoServiceProcessor</annotationProcessor>
                         </annotationProcessors>
                     </configuration>
                 </plugin>
@@ -114,6 +128,6 @@
         <module>terms</module>
         <module>test-util</module>
         <module>provider</module>
-        <module>launcher</module>
+        <module>integration</module>
     </modules>
 </project>

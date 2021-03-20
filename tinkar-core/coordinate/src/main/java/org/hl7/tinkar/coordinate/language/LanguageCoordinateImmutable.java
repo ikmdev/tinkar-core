@@ -4,6 +4,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.github.benmanes.caffeine.cache.Cache;
+import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
@@ -20,7 +21,7 @@ import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.component.Concept;
 
 //This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
-//@TODO Service annotation
+@AutoService(CachingService.class)
 public final class LanguageCoordinateImmutable implements LanguageCoordinate, ImmutableCoordinate, /*ChronologyChangeListener,*/ CachingService {
 
     private static final ConcurrentReferenceHashMap<LanguageCoordinateImmutable, LanguageCoordinateImmutable> SINGLETONS =

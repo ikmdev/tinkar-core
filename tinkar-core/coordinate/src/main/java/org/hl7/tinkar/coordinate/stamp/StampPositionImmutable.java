@@ -1,6 +1,7 @@
 package org.hl7.tinkar.coordinate.stamp;
 
 
+import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
 import org.hl7.tinkar.common.binary.Decoder;
@@ -15,7 +16,7 @@ import org.hl7.tinkar.entity.Entity;
 
 //This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
 // No arg constructor for Service Provider Interface (SPI) generated instance is required
-//@TODO Service annotation
+@AutoService(CachingService.class)
 public final class StampPositionImmutable
         implements StampPosition, Comparable<StampPosition>, ImmutableCoordinate, CachingService {
 

@@ -8,10 +8,13 @@ import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.provider.entity.internal.Get;
 
+import com.google.auto.service.AutoService;
+
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+@AutoService(EntityService.class)
 public class EntityProvider implements EntityService {
 
     public EntityProvider() {

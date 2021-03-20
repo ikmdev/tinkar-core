@@ -15,6 +15,7 @@ module org.hl7.tinkar.provider.entity {
     requires org.hl7.tinkar.common;
     requires org.hl7.tinkar.entity;
     requires org.hl7.tinkar.dto;
+    requires static org.hl7.tinkar.autoservice;
     provides EntityService
             with EntityProvider;
     uses PrimitiveDataService;

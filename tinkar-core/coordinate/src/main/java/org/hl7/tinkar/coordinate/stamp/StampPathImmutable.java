@@ -1,6 +1,8 @@
 package org.hl7.tinkar.coordinate.stamp;
 
 import java.util.Objects;
+
+import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.MutableSet;
@@ -18,8 +20,7 @@ import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.terms.TinkarTerm;
 
 //This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
-//@TODO Service annotation
-
+@AutoService(CachingService.class)
 public final class StampPathImmutable implements StampPath, ImmutableCoordinate, CachingService {
 
     private static final ConcurrentReferenceHashMap<Integer, StampPathImmutable> SINGLETONS =

@@ -35,10 +35,10 @@
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>auto-service</artifactId>
+            <scope>provided</scope>
+            <version>${project.parent.version}</version>
         </dependency>
     </dependencies>
 </project>

@@ -12,6 +12,7 @@ module org.hl7.tinkar.coordinate {
     exports org.hl7.tinkar.coordinate.navigation;
     exports org.hl7.tinkar.coordinate.stamp;
 
+    requires static org.hl7.tinkar.autoservice;
     requires org.hl7.tinkar.collection;
     requires transitive org.hl7.tinkar.terms;
 }

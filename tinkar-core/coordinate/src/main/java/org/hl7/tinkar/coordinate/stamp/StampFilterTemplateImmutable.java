@@ -1,5 +1,6 @@
 package org.hl7.tinkar.coordinate.stamp;
 
+import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
@@ -15,7 +16,7 @@ import org.hl7.tinkar.entity.ConceptEntity;
 
 import java.util.Objects;
 import java.util.Set;
-//@TODO Service annotation
+@AutoService(CachingService.class)
 public class StampFilterTemplateImmutable  implements StampFilterTemplate, ImmutableCoordinate, CachingService {
 
     private static final ConcurrentReferenceHashMap<StampFilterTemplateImmutable, StampFilterTemplateImmutable> SINGLETONS =

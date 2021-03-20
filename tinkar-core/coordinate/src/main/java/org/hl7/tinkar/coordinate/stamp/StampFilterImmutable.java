@@ -43,6 +43,7 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
 
+import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
@@ -75,8 +76,7 @@ import org.hl7.tinkar.entity.ConceptEntity;
  *
  */
 //This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
-//@TODO Service annotation
-
+@AutoService(CachingService.class)
 public class StampFilterImmutable
         implements StampFilter, ImmutableCoordinate, CachingService {
 
