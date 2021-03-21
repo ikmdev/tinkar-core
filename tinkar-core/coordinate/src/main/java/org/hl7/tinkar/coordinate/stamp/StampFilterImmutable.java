@@ -93,8 +93,8 @@ public class StampFilterImmutable
 
     private transient RelativePositionCalculator relativePositionCalculator;
 
-    private StampFilterImmutable() {
-        // No arg constructor for HK2 managed instance
+    public StampFilterImmutable() {
+        // No arg constructor for ServiceLoader
         // This instance just enables reset functionality...
         this.allowedStates = null;
         this.stampPosition = null;

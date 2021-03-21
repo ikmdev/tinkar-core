@@ -1,5 +1,7 @@
 package org.hl7.tinkar.provider.mvstore;
 
+import org.hl7.tinkar.common.service.DataServiceController;
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.entity.util.EntityCounter;
 import org.hl7.tinkar.entity.util.EntityProcessor;
 import org.hl7.tinkar.entity.util.EntityRealizer;
@@ -16,6 +18,14 @@ public class MVStoreProviderTest {
 
     @Test
     public void loadChronologies() {
+        PrimitiveData.selectProvider((dataServiceController) -> {
+            String name = (String) dataServiceController.property(DataServiceController.ControllerProperty.NAME);
+            if (name.equals(MVStoreController.PROVIDER_NAME)) {
+                return 1;
+            }
+            return -1;
+        });
+        PrimitiveData.start();
         File file = new File("/Users/kec/Solor/tinkar-export.zip");
 
         LoadEntitiesFromDTO loadTink = new LoadEntitiesFromDTO(file);
@@ -30,65 +40,64 @@ public class MVStoreProviderTest {
 
     @Test
     public void count() {
-        if (MVStoreProvider.singleton == null) {
+        if (!PrimitiveData.running()) {
             System.out.println("Reloading MVStoreProvider");
             Stopwatch reloadStopwatch = new Stopwatch();
-            MVStoreProvider provider = new MVStoreProvider();
+            PrimitiveData.start();
             System.out.println("Reloading in: " + reloadStopwatch.elapsedTime()+ "\n");
         }
         Assertions.assertNotNull(MVStoreProvider.singleton);
         EntityProcessor processor = new EntityCounter();
-        MVStoreProvider.singleton.forEach(processor);
+        PrimitiveData.get().forEach(processor);
         System.out.println("MVS Sequential count: \n" + processor.report() + "\n");
         processor = new EntityCounter();
-        MVStoreProvider.singleton.forEachParallel(processor);
+        PrimitiveData.get().forEachParallel(processor);
         System.out.println("MVS Parallel count: \n" + processor.report()+ "\n");
         processor = new EntityRealizer();
-        MVStoreProvider.singleton.forEach(processor);
+        PrimitiveData.get().forEach(processor);
         System.out.println("MVS Sequential realization: \n" + processor.report() + "\n");
         processor = new EntityRealizer();
-        MVStoreProvider.singleton.forEachParallel(processor);
+        PrimitiveData.get().forEachParallel(processor);
         System.out.println("MVS Parallel realization: \n" + processor.report()+ "\n");
         processor = new EntityRealizer();
-        MVStoreProvider.singleton.forEach(processor);
+        PrimitiveData.get().forEach(processor);
         System.out.println("MVS Sequential realization: \n" + processor.report() + "\n");
         processor = new EntityRealizer();
-        MVStoreProvider.singleton.forEachParallel(processor);
+        PrimitiveData.get().forEachParallel(processor);
         System.out.println("MVS Parallel realization: \n" + processor.report()+ "\n");
     }
 
     @Test
     public void openAndClose() {
-        if (MVStoreProvider.singleton != null) {
+        if (PrimitiveData.running()) {
             Stopwatch closingStopwatch = new Stopwatch();
-            MVStoreProvider.singleton.close();
+            PrimitiveData.stop();
             closingStopwatch.end();
-            MVStoreProvider.singleton = null;
             System.out.println("MVS Closed in: " + closingStopwatch.elapsedTime()+ "\n");
         }
         System.out.println("Reloading MVStoreProvider");
         Stopwatch reloadStopwatch = new Stopwatch();
-        MVStoreProvider provider = new MVStoreProvider();
+        PrimitiveData.start();
         System.out.println("MVS Reloading in: " + reloadStopwatch.elapsedTime()+ "\n");
-        Assertions.assertNotNull(MVStoreProvider.singleton);
         EntityProcessor processor = new EntityCounter();
-        MVStoreProvider.singleton.forEach(processor);
+        PrimitiveData.get().forEach(processor);
         System.out.println("MVS Sequential count: \n" + processor.report() + "\n");
         processor = new EntityCounter();
-        MVStoreProvider.singleton.forEachParallel(processor);
+        PrimitiveData.get().forEachParallel(processor);
         System.out.println("MVS Parallel count: \n" + processor.report()+ "\n");
         processor = new EntityRealizer();
-        MVStoreProvider.singleton.forEach(processor);
+        PrimitiveData.get().forEach(processor);
         System.out.println("MVS Sequential realization: \n" + processor.report() + "\n");
         processor = new EntityRealizer();
-        MVStoreProvider.singleton.forEachParallel(processor);
+        PrimitiveData.get().forEachParallel(processor);
         System.out.println("MVS Parallel realization: \n" + processor.report()+ "\n");
         processor = new EntityRealizer();
-        MVStoreProvider.singleton.forEach(processor);
+        PrimitiveData.get().forEach(processor);
         System.out.println("MVS Sequential realization: \n" + processor.report() + "\n");
         processor = new EntityRealizer();
-        MVStoreProvider.singleton.forEachParallel(processor);
+        PrimitiveData.get().forEachParallel(processor);
         System.out.println("MVS Parallel realization: \n" + processor.report()+ "\n");
+        PrimitiveData.get().close();
     }
 
 }

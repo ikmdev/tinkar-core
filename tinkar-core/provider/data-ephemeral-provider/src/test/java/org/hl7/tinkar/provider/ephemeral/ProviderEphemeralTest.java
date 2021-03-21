@@ -1,5 +1,7 @@
 package org.hl7.tinkar.provider.ephemeral;
 
+import org.hl7.tinkar.common.service.DataServiceController;
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.entity.util.EntityCounter;
 import org.hl7.tinkar.entity.util.EntityProcessor;
 import org.hl7.tinkar.entity.util.EntityRealizer;
@@ -14,12 +16,20 @@ public class ProviderEphemeralTest {
 
     @Test
     public void loadChronologies() {
+        PrimitiveData.selectProvider((dataServiceController) -> {
+            String name = (String) dataServiceController.property(DataServiceController.ControllerProperty.NAME);
+            if (name.equals(ProviderEphemeralController.PROVIDER_NAME)) {
+                return 1;
+            }
+            return -1;
+        });
+        PrimitiveData.start();
         File file = new File("/Users/kec/Solor/tinkar-export.zip");
         LoadEntitiesFromDTO loadTink = new LoadEntitiesFromDTO(file);
         try {
             int count = loadTink.call();
             System.out.println("Loaded. " + loadTink.report());
-        } catch (Exception e) {
+        } catch (Throwable e) {
             fail(e);
         }
     }

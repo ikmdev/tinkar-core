@@ -1,5 +1,6 @@
 package org.hl7.tinkar.provider.spinedarray;
 
+import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.collection.ConcurrentUuidIntHashMap;
@@ -73,6 +74,12 @@ public class SpinedArrayProvider implements PrimitiveDataService {
 
     @Override
     public void close() {
+        save();
+        entityToBytesMap.close();
+        SpinedArrayProvider.singleton = null;
+    }
+
+    public void save() {
         UUID nextNidKey = new UUID(0,0);
         uuidToNidMap.put(nextNidKey, nextNid.get());
         try (ObjectOutputStream objectOutputStream =

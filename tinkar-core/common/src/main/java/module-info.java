@@ -5,6 +5,9 @@
  */
 
 import org.hl7.tinkar.common.service.CachingService;
+import org.hl7.tinkar.common.service.DataServiceController;
+import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.common.service.ServiceProperties;
 
 @SuppressWarnings("module")
         // 7 in HL7 is not a version reference
@@ -15,6 +18,7 @@ module org.hl7.tinkar.common {
     requires transitive org.hl7.tinkar.eclipse.collections;
     requires transitive org.hl7.tinkar.activej;
     requires transitive java.logging;
+    requires transitive static org.hl7.tinkar.autoservice;
 
     exports org.hl7.tinkar.common.service;
     exports org.hl7.tinkar.common.id;
@@ -23,5 +27,8 @@ module org.hl7.tinkar.common {
     exports org.hl7.tinkar.common.util.uuid;
     exports org.hl7.tinkar.common.binary;
 
+    provides CachingService with ServiceProperties, PrimitiveData;
+
     uses CachingService;
+    uses DataServiceController;
 }

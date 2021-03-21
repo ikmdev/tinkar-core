@@ -12,18 +12,33 @@
     <dependencies>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
-            <artifactId>common</artifactId>
+            <artifactId>coordinate</artifactId>
             <version>${project.parent.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
-            <artifactId>coordinate</artifactId>
+            <artifactId>data-spinedarray-provider</artifactId>
             <version>${project.parent.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>data-ephemeral-provider</artifactId>
             <version>${project.parent.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>data-mvstore-provider</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>entity-provider</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testng</groupId>
@@ -35,9 +50,52 @@
     <build>
         <plugins>
             <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <skipTests>true</skipTests>
+                </configuration>
+            </plugin>
+            <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <executions>
                     <execution>
+                        <id>ephemeral-suite</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                        <configuration>
+                            <suiteXmlFiles>
+                                <suiteXmlFile>src/test/resources/ephemeral-testng.xml</suiteXmlFile>
+                            </suiteXmlFiles>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>spinedstore-suite</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                        <configuration>
+                            <suiteXmlFiles>
+                                <suiteXmlFile>src/test/resources/spinedstore-testng.xml</suiteXmlFile>
+                            </suiteXmlFiles>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>mvstore-suite</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                        <configuration>
+                            <suiteXmlFiles>
+                                <suiteXmlFile>src/test/resources/mvstore-testng.xml</suiteXmlFile>
+                            </suiteXmlFiles>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>spinedarray-suite</id>
                         <goals>
                             <goal>integration-test</goal>
                             <goal>verify</goal>

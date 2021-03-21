@@ -1,5 +1,6 @@
 package org.hl7.tinkar.provider.ephemeral;
 
+import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.block.procedure.Procedure2;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -17,16 +18,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.ObjIntConsumer;
 
+
 public class ProviderEphemeral implements PrimitiveDataService {
 
     protected static AtomicReference<ProviderEphemeral> providerReference = new AtomicReference<>();
     protected static ProviderEphemeral singleton;
 
-    protected static ProviderEphemeral provider() {
-        System.out.println("Providing ProviderEphemeral...");
+    public static PrimitiveDataService provider() {
         if (singleton == null) {
             singleton = providerReference.updateAndGet(providerEphemeral -> {
                 if (providerEphemeral == null) {
+                    executorService = Executors.newFixedThreadPool(EXECUTOR_THREADS);
                     return new ProviderEphemeral();
                 }
                 return providerEphemeral;
@@ -90,7 +92,12 @@ public class ProviderEphemeral implements PrimitiveDataService {
 
     @Override
     public void close() {
-        executorService.shutdown();
+        this.providerReference.set(null);
+        this.singleton = null;
+        if (executorService != null) {
+            executorService.shutdown();
+            executorService = null;
+        }
     }
 
     @Override

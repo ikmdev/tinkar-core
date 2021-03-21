@@ -1,5 +1,8 @@
 package org.hl7.tinkar.provider.spinedarray;
 
+import org.hl7.tinkar.common.service.DataServiceController;
+import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.common.service.ServiceProperties;
 import org.hl7.tinkar.common.util.time.Stopwatch;
 import org.hl7.tinkar.entity.LoadEntitiesFromDTO;
 import org.hl7.tinkar.entity.util.EntityCounter;
@@ -16,6 +19,14 @@ public class SpinedArrayProviderTest {
 
     @Test
     public void loadChronologies() {
+        PrimitiveData.selectProvider((dataServiceController) -> {
+            String name = (String) dataServiceController.property(DataServiceController.ControllerProperty.NAME);
+            if (name.equals(SpinedArrayController.PROVIDER_NAME)) {
+                return 1;
+            }
+            return -1;
+        });
+        PrimitiveData.start();
         File file = new File("/Users/kec/Solor/tinkar-export.zip");
 
         LoadEntitiesFromDTO loadTink = new LoadEntitiesFromDTO(file);

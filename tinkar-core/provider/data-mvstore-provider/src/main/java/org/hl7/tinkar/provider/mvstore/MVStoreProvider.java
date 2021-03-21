@@ -1,5 +1,6 @@
 package org.hl7.tinkar.provider.mvstore;
 
+import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.h2.mvstore.MVMap;
@@ -13,6 +14,7 @@ import org.hl7.tinkar.common.service.PrimitiveDataService;
 
 import java.io.File;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ObjIntConsumer;
 
@@ -63,10 +65,14 @@ public class MVStoreProvider implements PrimitiveDataService {
     }
 
     public void close() {
+        save();
+        this.store.close();
+    }
+
+    public void save() {
         this.uuidToNidMap.put(nextNidKey, nextNid.get());
         this.store.commit();
         this.offHeap.sync();
-        this.store.close();
     }
 
     @Override

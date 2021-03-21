@@ -1,11 +1,22 @@
 package org.hl7.tinkar.integration.coordinate;
 
+import org.hl7.tinkar.common.service.ServiceProperties;
 import org.hl7.tinkar.coordinate.Coordinates;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
+import java.util.logging.Logger;
+
 class CoordinatesTest {
+    private static Logger LOG = Logger.getLogger(CoordinatesTest.class.getName());
+
+    @BeforeSuite
+    public void setupSuite() {
+        LOG.info("setupSuite: " + this.getClass().getSimpleName());
+        LOG.info(ServiceProperties.jvmUuid());
+    }
 
     private Coordinates coordinatesUnderTest;
 
@@ -21,12 +32,12 @@ class CoordinatesTest {
 
     @Test(groups = { "fast" })
     public void aFastTest() {
-        System.out.println("Fast test");
+        LOG.info("Fast test");
     }
 
     @Test(groups = { "slow" })
     public void aSlowTest() {
-        System.out.println("Slow test");
+        LOG.info("Slow test");
     }
 
 }

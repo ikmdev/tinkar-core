@@ -5,6 +5,8 @@
  */
 
 
+import org.hl7.tinkar.common.service.DataServiceController;
+import org.hl7.tinkar.provider.mvstore.MVStoreController;
 import org.hl7.tinkar.provider.mvstore.MVStoreProvider;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
 
@@ -18,6 +20,6 @@ module org.hl7.tinkar.provider.mvstore {
     requires org.hl7.tinkar.dto;
     requires org.hl7.tinkar.mvstore;
 
-    provides PrimitiveDataService
-            with MVStoreProvider;
+    provides DataServiceController
+            with MVStoreController;
 }

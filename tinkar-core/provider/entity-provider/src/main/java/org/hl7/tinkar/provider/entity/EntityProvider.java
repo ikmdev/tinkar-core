@@ -3,10 +3,10 @@ package org.hl7.tinkar.provider.entity;
 import io.activej.bytebuf.ByteBuf;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.id.PublicId;
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.Chronology;
 import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.entity.*;
-import org.hl7.tinkar.provider.entity.internal.Get;
 
 import com.google.auto.service.AutoService;
 
@@ -37,7 +37,7 @@ public class EntityProvider implements EntityService {
 
     @Override
     public <T extends Entity<V>, V extends EntityVersion> T getEntityFast(int nid) {
-        byte[] bytes = Get.dataService().getBytes(nid);
+        byte[] bytes = PrimitiveData.get().getBytes(nid);
         if (bytes == null) {
             return null;
         }
@@ -46,7 +46,7 @@ public class EntityProvider implements EntityService {
 
     @Override
     public StampEntity getStampFast(int nid) {
-        byte[] bytes = Get.dataService().getBytes(nid);
+        byte[] bytes = PrimitiveData.get().getBytes(nid);
         if (bytes == null) {
             return null;
         }
@@ -56,23 +56,23 @@ public class EntityProvider implements EntityService {
     @Override
     public void putEntity(Entity entity) {
         if (entity instanceof SemanticEntity semanticEntity) {
-            Get.dataService().merge(entity.nid(),
+            PrimitiveData.get().merge(entity.nid(),
                     semanticEntity.typePatternNid(),
                     semanticEntity.referencedComponentNid(),
                     entity.getBytes());
         } else {
-            Get.dataService().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, entity.getBytes());
+            PrimitiveData.get().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, entity.getBytes());
         }
     }
 
     @Override
     public int nidForPublicId(ImmutableList<UUID> uuidList) {
-        return Get.dataService().nidForUuids(uuidList);
+        return PrimitiveData.get().nidForUuids(uuidList);
     }
 
     @Override
     public int nidForPublicId(UUID... uuids) {
-        return Get.dataService().nidForUuids(uuids);
+        return PrimitiveData.get().nidForUuids(uuids);
     }
 
     @Override
@@ -85,7 +85,7 @@ public class EntityProvider implements EntityService {
 
     @Override
     public int nidForPublicId(PublicId publicId) {
-        return Get.dataService().nidForUuids(publicId.asUuidArray());
+        return PrimitiveData.get().nidForUuids(publicId.asUuidArray());
     }
 
     @Override
@@ -95,31 +95,31 @@ public class EntityProvider implements EntityService {
 
     @Override
     public void forEachEntityOfType(int typeDefinitionNid, Consumer<SemanticEntity> procedure) {
-        Get.dataService().forEachEntityOfType(typeDefinitionNid, (int nid) -> procedure.accept(getEntityFast(nid)));
+        PrimitiveData.get().forEachEntityOfType(typeDefinitionNid, (int nid) -> procedure.accept(getEntityFast(nid)));
     }
 
     @Override
     public int[] entityNidsOfType(int setNid) {
-        return Get.dataService().entityNidsOfType(setNid);
+        return PrimitiveData.get().entityNidsOfType(setNid);
     }
 
     @Override
     public void forEachSemanticForComponent(int componentNid, Consumer<SemanticEntity> procedure) {
-        Get.dataService().forEachSemanticNidForComponent(componentNid, (int nid) -> procedure.accept(getEntityFast(nid)));
+        PrimitiveData.get().forEachSemanticNidForComponent(componentNid, (int nid) -> procedure.accept(getEntityFast(nid)));
     }
 
     @Override
     public int[] semanticNidsForComponent(int componentNid) {
-        return Get.dataService().semanticNidsForComponent(componentNid);
+        return PrimitiveData.get().semanticNidsForComponent(componentNid);
     }
 
     @Override
     public void forEachSemanticForComponentOfType(int componentNid, int typeDefinitionNid, Consumer<SemanticEntity> procedure) {
-        Get.dataService().forEachSemanticNidForComponentOfType(componentNid, typeDefinitionNid, (int nid) -> procedure.accept(getEntityFast(nid)));
+        PrimitiveData.get().forEachSemanticNidForComponentOfType(componentNid, typeDefinitionNid, (int nid) -> procedure.accept(getEntityFast(nid)));
     }
 
     @Override
     public int[] semanticNidsForComponentOfType(int componentNid, int typeDefinitionNid) {
-        return Get.dataService().semanticNidsForComponentOfType(componentNid, typeDefinitionNid);
+        return PrimitiveData.get().semanticNidsForComponentOfType(componentNid, typeDefinitionNid);
     }
 }

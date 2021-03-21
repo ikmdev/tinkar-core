@@ -4,8 +4,8 @@
  * and open the template in the editor.
  */
 
-import org.hl7.tinkar.provider.ephemeral.ProviderEphemeralFactory;
-import org.hl7.tinkar.common.service.PrimitiveDataService;
+import org.hl7.tinkar.common.service.DataServiceController;
+import org.hl7.tinkar.provider.ephemeral.ProviderEphemeralController;
 
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
 module org.hl7.tinkar.provider.ephemeral {
@@ -14,6 +14,6 @@ module org.hl7.tinkar.provider.ephemeral {
     requires org.hl7.tinkar.component;
     requires org.hl7.tinkar.common;
     requires org.hl7.tinkar.test;
-    provides PrimitiveDataService
-            with ProviderEphemeralFactory;
+    provides DataServiceController
+            with ProviderEphemeralController;
 }
