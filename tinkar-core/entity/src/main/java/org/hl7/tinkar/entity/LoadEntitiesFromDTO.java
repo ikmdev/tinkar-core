@@ -28,6 +28,7 @@ public class LoadEntitiesFromDTO {
 
     public LoadEntitiesFromDTO(File importFile) {
         this.importFile = importFile;
+        LOG.info("Loading entities from: " + importFile.getAbsolutePath());
     }
 
     public Integer call() throws IOException {

@@ -10,7 +10,6 @@ import org.hl7.tinkar.entity.util.EntityCounter;
 import org.hl7.tinkar.entity.util.EntityProcessor;
 import org.hl7.tinkar.entity.util.EntityRealizer;
 import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
@@ -43,78 +42,71 @@ public class MVStoreProviderTest {
         PrimitiveData.stop();
     }
 
-    @BeforeMethod
-    public void setUp() {
-        LOG.info("setUp");
-    }
-
     @Test
     public void loadChronologies() throws IOException {
-        File file = new File("/Users/kec/Solor/tinkar-export.zip");
+        File file = new File(System.getProperty("user.dir"), "/src/test/resources/tinkar-export.zip");
         LoadEntitiesFromDTO loadTink = new LoadEntitiesFromDTO(file);
         int count = loadTink.call();
-        LOG.info("Loaded. " + loadTink.report());
+        LOG.info("Loaded. " + loadTink.report() + "\n\n");
     }
 
-    @Test
+    @Test(dependsOnMethods = { "loadChronologies" })
     public void count() {
         if (!PrimitiveData.running()) {
-            System.out.println("Reloading MVStoreProvider");
+            LOG.info("Reloading MVStoreProvider");
             Stopwatch reloadStopwatch = new Stopwatch();
             PrimitiveData.start();
-            System.out.println("Reloading in: " + reloadStopwatch.elapsedTime()+ "\n");
+            LOG.info("Reloading in: " + reloadStopwatch.elapsedTime()+ "\n\n");
         }
         EntityProcessor processor = new EntityCounter();
         PrimitiveData.get().forEach(processor);
-        System.out.println("MVS Sequential count: \n" + processor.report() + "\n");
+        LOG.info("MVS Sequential count: \n" + processor.report() + "\n\n");
         processor = new EntityCounter();
         PrimitiveData.get().forEachParallel(processor);
-        System.out.println("MVS Parallel count: \n" + processor.report()+ "\n");
+        LOG.info("MVS Parallel count: \n" + processor.report()+ "\n\n");
         processor = new EntityRealizer();
         PrimitiveData.get().forEach(processor);
-        System.out.println("MVS Sequential realization: \n" + processor.report() + "\n");
+        LOG.info("MVS Sequential realization: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
         PrimitiveData.get().forEachParallel(processor);
-        System.out.println("MVS Parallel realization: \n" + processor.report()+ "\n");
+        LOG.info("MVS Parallel realization: \n" + processor.report()+ "\n\n");
         processor = new EntityRealizer();
         PrimitiveData.get().forEach(processor);
-        System.out.println("MVS Sequential realization: \n" + processor.report() + "\n");
+        LOG.info("MVS Sequential realization: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
         PrimitiveData.get().forEachParallel(processor);
-        System.out.println("MVS Parallel realization: \n" + processor.report()+ "\n");
+        LOG.info("MVS Parallel realization: \n" + processor.report()+ "\n\n");
     }
 
-    @Test
+    @Test(dependsOnMethods = { "loadChronologies" })
     public void openAndClose() {
         if (PrimitiveData.running()) {
             Stopwatch closingStopwatch = new Stopwatch();
             PrimitiveData.stop();
             closingStopwatch.end();
-            System.out.println("MVS Closed in: " + closingStopwatch.elapsedTime()+ "\n");
+            LOG.info("MVS Closed in: " + closingStopwatch.elapsedTime()+ "\n\n");
         }
-        System.out.println("Reloading MVStoreProvider");
+        LOG.info("Reloading MVStoreProvider");
         Stopwatch reloadStopwatch = new Stopwatch();
         PrimitiveData.start();
-        System.out.println("MVS Reloading in: " + reloadStopwatch.elapsedTime()+ "\n");
+        LOG.info("MVS Reloading in: " + reloadStopwatch.elapsedTime()+ "\n\n");
         EntityProcessor processor = new EntityCounter();
         PrimitiveData.get().forEach(processor);
-        System.out.println("MVS Sequential count: \n" + processor.report() + "\n");
+        LOG.info("MVS Sequential count: \n" + processor.report() + "\n\n");
         processor = new EntityCounter();
         PrimitiveData.get().forEachParallel(processor);
-        System.out.println("MVS Parallel count: \n" + processor.report()+ "\n");
+        LOG.info("MVS Parallel count: \n" + processor.report()+ "\n\n");
         processor = new EntityRealizer();
         PrimitiveData.get().forEach(processor);
-        System.out.println("MVS Sequential realization: \n" + processor.report() + "\n");
+        LOG.info("MVS Sequential realization: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
         PrimitiveData.get().forEachParallel(processor);
-        System.out.println("MVS Parallel realization: \n" + processor.report()+ "\n");
+        LOG.info("MVS Parallel realization: \n" + processor.report()+ "\n\n");
         processor = new EntityRealizer();
         PrimitiveData.get().forEach(processor);
-        System.out.println("MVS Sequential realization: \n" + processor.report() + "\n");
+        LOG.info("MVS Sequential realization: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
         PrimitiveData.get().forEachParallel(processor);
-        System.out.println("MVS Parallel realization: \n" + processor.report()+ "\n");
+        LOG.info("MVS Parallel realization: \n" + processor.report()+ "\n\n");
      }
-
-
 }
