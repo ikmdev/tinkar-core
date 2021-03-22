@@ -14,37 +14,31 @@
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>coordinate</artifactId>
             <version>${project.parent.version}</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>data-spinedarray-provider</artifactId>
             <version>${project.parent.version}</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>data-ephemeral-provider</artifactId>
             <version>${project.parent.version}</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>data-mvstore-provider</artifactId>
             <version>${project.parent.version}</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>entity-provider</artifactId>
             <version>${project.parent.version}</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>${testng.version}</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>
@@ -65,6 +59,8 @@
                             <goal>verify</goal>
                         </goals>
                         <configuration>
+                            <skipTests>true</skipTests>
+                            <trimStackTrace>false</trimStackTrace>
                             <suiteXmlFiles>
                                 <suiteXmlFile>src/test/resources/ephemeral-testng.xml</suiteXmlFile>
                             </suiteXmlFiles>
@@ -77,6 +73,8 @@
                             <goal>verify</goal>
                         </goals>
                         <configuration>
+                            <skipTests>true</skipTests>
+                            <trimStackTrace>false</trimStackTrace>
                             <suiteXmlFiles>
                                 <suiteXmlFile>src/test/resources/spinedstore-testng.xml</suiteXmlFile>
                             </suiteXmlFiles>
@@ -89,20 +87,22 @@
                             <goal>verify</goal>
                         </goals>
                         <configuration>
+                            <trimStackTrace>false</trimStackTrace>
                             <suiteXmlFiles>
                                 <suiteXmlFile>src/test/resources/mvstore-testng.xml</suiteXmlFile>
                             </suiteXmlFiles>
                         </configuration>
                     </execution>
                     <execution>
-                        <id>spinedarray-suite</id>
+                        <id>coordinate-suite</id>
                         <goals>
                             <goal>integration-test</goal>
                             <goal>verify</goal>
                         </goals>
                         <configuration>
+                            <trimStackTrace>false</trimStackTrace>
                             <suiteXmlFiles>
-                                <suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
+                                <suiteXmlFile>src/test/resources/coordinate-testng.xml</suiteXmlFile>
                             </suiteXmlFiles>
                         </configuration>
                     </execution>

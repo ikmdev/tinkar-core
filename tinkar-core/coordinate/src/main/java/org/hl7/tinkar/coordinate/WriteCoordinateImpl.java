@@ -19,7 +19,7 @@ package org.hl7.tinkar.coordinate;
 import java.time.Instant;
 import java.util.Optional;
 
-import org.hl7.tinkar.coordinate.language.DefaultDescriptionText;
+import org.hl7.tinkar.entity.DefaultDescriptionText;
 import org.hl7.tinkar.coordinate.stamp.State;
 
 /**

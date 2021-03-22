@@ -82,4 +82,19 @@ public class PublicIdForEntity implements PublicId {
             }
         }
     }
+
+    protected void writeId(ByteBuf writeBuf) {
+        writeBuf.writeLong(this.mostSignificantBits);
+        writeBuf.writeLong(this.leastSignificantBits);
+        if (additionalUuidLongs == null) {
+            writeBuf.writeInt(0);
+        } else {
+            writeBuf.writeInt(additionalUuidLongs.length);
+            for (long additionalIdLong: additionalUuidLongs) {
+                writeBuf.writeLong(additionalIdLong);
+            }
+        }
+
+
+    }
 }

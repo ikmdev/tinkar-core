@@ -8,7 +8,7 @@ import java.util.UUID;
 
 import org.hl7.tinkar.component.LatestVersion;
 import org.hl7.tinkar.component.Version;
-import org.hl7.tinkar.coordinate.language.DefaultDescriptionText;
+import org.hl7.tinkar.entity.DefaultDescriptionText;
 import org.hl7.tinkar.coordinate.TimeBasedAnalogMaker;
 import org.hl7.tinkar.entity.ConceptEntity;
 import org.hl7.tinkar.entity.Entity;

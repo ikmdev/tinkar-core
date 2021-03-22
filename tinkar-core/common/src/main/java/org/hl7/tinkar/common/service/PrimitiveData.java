@@ -2,6 +2,7 @@ package org.hl7.tinkar.common.service;
 
 import com.google.auto.service.AutoService;
 
+import java.util.List;
 import java.util.ServiceLoader;
 import java.util.function.ToIntFunction;
 
@@ -44,7 +45,7 @@ public class PrimitiveData implements CachingService {
         throw new IllegalStateException("No provider. Call Select provider prior to get()");
     }
 
-    public static void selectProvider(ToIntFunction<DataServiceController> scorer) {
+    public static void selectController(ToIntFunction<DataServiceController> scorer) {
         DataServiceController<PrimitiveDataService> topContender = null;
         int topScore = -1;
         int controllerCount = 0;
@@ -60,11 +61,29 @@ public class PrimitiveData implements CachingService {
             }
         }
         if (topScore > -1) {
-            controllerSingleton = topContender;
-
+            setController(topContender);
         } else {
             throw new IllegalStateException("No DataServiceController selected for provider. Tried " + controllerCount);
         }
+    }
+
+    public static List<DataServiceController> getControllerOptions() {
+        return ServiceLoader.load(DataServiceController.class)
+                .stream().map(dataServiceControllerProvider ->  dataServiceControllerProvider.get()).toList();
+    }
+
+    public static void selectControllerByName(String name) {
+        PrimitiveData.selectController((dataServiceController) -> {
+            String controllerName = (String) dataServiceController.property(DataServiceController.ControllerProperty.NAME);
+            if (name.equals(controllerName)) {
+                return 1;
+            }
+            return -1;
+        });
+    }
+
+    public static void setController(DataServiceController controller) {
+        controllerSingleton = controller;
     }
 
     public PrimitiveData() {

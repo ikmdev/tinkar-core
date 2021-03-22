@@ -5,6 +5,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.Chronology;
+import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.entity.*;
 
@@ -22,11 +23,18 @@ public class EntityProvider implements EntityService {
     }
 
     @Override
-    public void putChronology(Chronology chronology) {
+    public <T extends Chronology<V>, V extends Version> void putChronology(T chronology) {
         if (chronology instanceof Entity entity) {
             putEntity(entity);
         } else {
             putEntity(EntityFactory.make(chronology));
+            for (Version version: chronology.versions()) {
+                Stamp stamp = version.stamp();
+                int nid = PrimitiveData.get().nidForUuids(stamp.publicId().asUuidArray());
+                if (PrimitiveData.get().getBytes(nid) == null) {
+                    putEntity(EntityFactory.make(stamp));
+                }
+            }
         }
     }
 
@@ -66,6 +74,11 @@ public class EntityProvider implements EntityService {
     }
 
     @Override
+    public void putStamp(StampEntity stampEntity) {
+        PrimitiveData.get().merge(stampEntity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, stampEntity.getBytes());
+    }
+
+    @Override
     public int nidForPublicId(ImmutableList<UUID> uuidList) {
         return PrimitiveData.get().nidForUuids(uuidList);
     }
@@ -77,8 +90,8 @@ public class EntityProvider implements EntityService {
 
     @Override
     public <T extends Chronology<V>, V extends Version> Optional<T> getChronology(PublicId publicId) {
-        if (publicId instanceof Entity) {
-            return Optional.ofNullable((T) getEntityFast(((Entity) publicId).nid()));
+        if (publicId instanceof EntityFacade entityFacade) {
+            return Optional.ofNullable((T) getEntityFast(entityFacade.nid()));
         }
         return Optional.ofNullable((T) getEntityFast(nidForPublicId(publicId)));
     }

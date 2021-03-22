@@ -6,7 +6,7 @@ import org.hl7.tinkar.component.TypePatternChronology;
 
 public class TypePatternEntity
         extends Entity<TypePatternEntityVersion>
-        implements TypePatternChronology<TypePatternEntityVersion> {
+        implements TypePatternChronology<TypePatternEntityVersion>, TypePatternFacade {
 
     public TypePatternEntity() {
     }

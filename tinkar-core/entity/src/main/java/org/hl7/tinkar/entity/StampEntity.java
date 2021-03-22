@@ -1,114 +1,139 @@
 package org.hl7.tinkar.entity;
 
 import io.activej.bytebuf.ByteBuf;
+import io.activej.bytebuf.ByteBufPool;
 import org.hl7.tinkar.common.id.PublicId;
-import org.hl7.tinkar.component.Component;
-import org.hl7.tinkar.component.Stamp;
+import org.hl7.tinkar.common.util.time.DateTimeUtil;
+import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.dto.StampDTO;
 
-public class StampEntity extends PublicIdForEntity
-        implements Stamp, Component {
+import static org.hl7.tinkar.component.FieldDataType.STAMP;
+import static org.hl7.tinkar.entity.Entity.ENTITY_FORMAT_VERSION;
 
-    int nid;
+public class StampEntity extends Entity<StampEntityVersion>
+         implements Stamp<StampEntityVersion>, Component, Version {
 
-    // Object + fields takes > 224 native bits + 16 bytes.
-    // Minimum object size is 16 bytes for modern 64-bit JDK since the object has 12-byte header,
-    // padded to a multiple of 8 bytes. In 32-bit JDK, the overhead is 8 bytes, padded to a multiple
-    // of 4 bytes.
-    int statusNid;
-    long time;
-    int authorNid;
-    int moduleNid;
-    int pathNid;
-
-    protected final void fill(ByteBuf readBuf) {
-        this.nid = readBuf.readInt();
-        this.statusNid = readBuf.readInt();
-        this.time = readBuf.readLong();
-        this.authorNid = readBuf.readInt();
-        this.moduleNid = readBuf.readInt();
-        this.pathNid = readBuf.readInt();
-        super.fillId(readBuf);
-    }
-
-    protected final void fill(Stamp other) {
-        if (other instanceof StampEntity otherEntity) {
-            this.nid = otherEntity.nid;
-            this.statusNid = otherEntity.statusNid;
-            this.time = otherEntity.time();
-            this.authorNid = otherEntity.authorNid;
-            this.moduleNid = otherEntity.moduleNid;
-            this.pathNid = otherEntity.pathNid;
-        } else {
-            this.nid = Get.entityService().nidForComponent(other);
-            this.statusNid = Get.entityService().nidForComponent(other.state());
-            this.time = other.time();
-            this.authorNid = Get.entityService().nidForComponent(other.author());
-            this.moduleNid = Get.entityService().nidForComponent(other.module());
-            this.pathNid = Get.entityService().nidForComponent(other.path());
+    private StampEntityVersion lastVersion() {
+        if (versions.size() == 1) {
+            return versions.get(0);
         }
+        StampEntityVersion latest = null;
+        for (StampEntityVersion version: versions) {
+            if (latest == null || latest.time < version.time) {
+                latest = version;
+            }
+        }
+        return latest;
     }
-
-    public int nid() {
-        return nid;
-    }
-
-    public int statusNid() {
-        return statusNid;
-    }
-
-    public int authorNid() {
-        return authorNid;
-    }
-
-    public int moduleNid() {
-        return moduleNid;
-    }
-
-    public int pathNid() {
-        return pathNid;
-    }
-
     @Override
-    public ConceptEntity state() {
-        return Get.entityService().getEntityFast(this.statusNid);
+    public Concept state() {
+        return lastVersion().state();
+    }
+
+    public int stateNid() {
+        return lastVersion().statusNid;
     }
 
     @Override
     public long time() {
-        return time;
+        return lastVersion().time;
     }
 
     @Override
-    public ConceptEntity author() {
-        return Get.entityService().getEntityFast(this.authorNid);
+    public Concept author() {
+        return lastVersion().author();
+    }
+
+    public int authorNid() {
+        return lastVersion().authorNid;
     }
 
     @Override
-    public ConceptEntity module() {
-        return Get.entityService().getEntityFast(this.moduleNid);
+    public Concept module() {
+        return lastVersion().module();
+    }
+
+    public int moduleNid() {
+        return lastVersion().moduleNid;
     }
 
     @Override
-    public ConceptEntity path() {
-        return Get.entityService().getEntityFast(this.pathNid);
+    public Concept path() {
+        return lastVersion().path();
+    }
+
+    public int pathNid() {
+        return lastVersion().pathNid;
     }
 
     @Override
-    public PublicId publicId() {
+    protected int subclassFieldBytesSize() {
+        return 0;
+    }
+
+    @Override
+    protected void finishEntityRead(ByteBuf readBuf, byte formatVersion) {
+
+    }
+
+    @Override
+    protected void finishEntityRead(Chronology<Version> chronology) {
+
+    }
+
+    @Override
+    public FieldDataType dataType() {
+        return STAMP;
+    }
+
+    @Override
+    protected void finishEntityWrite(ByteBuf byteBuf) {
+
+    }
+
+    @Override
+    protected StampEntityVersion makeVersion(ByteBuf readBuf, byte formatVersion) {
+        return StampEntityVersion.make(this, readBuf, formatVersion);
+    }
+
+    public static StampEntity make(ByteBuf readBuf, byte entityFormatVersion) {
+        StampEntity stampEntity = new StampEntity();
+        stampEntity.fill(readBuf, entityFormatVersion);
+        return stampEntity;
+    }
+
+    @Override
+    public Stamp stamp() {
         return this;
     }
 
-    public static StampEntity make(ByteBuf readBuf) {
+    public static StampEntity make(Stamp other) {
         StampEntity stampEntity = new StampEntity();
-        stampEntity.fill(readBuf);
+        stampEntity.fill(other);
         return stampEntity;
     }
 
-    public static StampEntity make(StampDTO stamp) {
-        StampEntity stampEntity = new StampEntity();
-        stampEntity.fill(stamp);
-        return stampEntity;
+    @Override
+    protected StampEntityVersion makeVersion(Version version) {
+        return StampEntityVersion.make(this, (StampDTO) version);
     }
+
+    public String describe() {
+        return "s:" + DefaultDescriptionText.get(stateNid()) +
+                " t:" + DateTimeUtil.format(time()) +
+                " a:" + DefaultDescriptionText.get(authorNid()) +
+                " m:" + DefaultDescriptionText.get(moduleNid()) +
+                " p:" + DefaultDescriptionText.get(pathNid());
+    }
+
+    @Override
+    public String toString() {
+        return "StampEntity{" +
+                "<" + nid +
+                "> , " + publicId().asUuidList() + " "
+                + describe() +
+                '}';
+    }
+
 }

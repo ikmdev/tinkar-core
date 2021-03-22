@@ -11,6 +11,7 @@ import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.set.MutableSet;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
+import org.hl7.tinkar.common.id.PublicId;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -49,6 +50,10 @@ public interface PrimitiveDataService {
     void close();
 
     int nidForUuids(UUID... uuids);
+
+    default int nidForPublicId(PublicId publicId) {
+        return nidForUuids(publicId.asUuidArray());
+    }
 
     int nidForUuids(ImmutableList<UUID> uuidList);
 

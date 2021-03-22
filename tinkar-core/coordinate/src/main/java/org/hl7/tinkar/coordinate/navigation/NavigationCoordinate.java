@@ -3,7 +3,7 @@ package org.hl7.tinkar.coordinate.navigation;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
-import org.hl7.tinkar.coordinate.language.DefaultDescriptionText;
+import org.hl7.tinkar.entity.DefaultDescriptionText;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.terms.TinkarTerm;

@@ -8,7 +8,7 @@ import org.hl7.tinkar.component.SemanticChronology;
 import org.hl7.tinkar.component.TypePattern;
 import org.hl7.tinkar.entity.internal.Get;
 
-public class SemanticProxy implements SemanticChronology, ComponentWithNid {
+public class SemanticProxy implements SemanticFacade {
     int nid;
 
     private SemanticProxy(int nid) {

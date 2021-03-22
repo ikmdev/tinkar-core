@@ -42,6 +42,15 @@ public enum State implements Concept, ComponentWithNid {
         return nidStateMap.get(concept.nid());
 
     }
+    public static State fromConceptNid(int conceptNid) {
+        if (nidStateMap.size() < 5) {
+            for (State state: State.values()) {
+                nidStateMap.put(state.nid(), state);
+            }
+        }
+        return nidStateMap.get(conceptNid);
+
+    }
 
     private static MutableIntObjectMap<State> nidStateMap = IntObjectMaps.mutable.ofInitialCapacity(5);
 }

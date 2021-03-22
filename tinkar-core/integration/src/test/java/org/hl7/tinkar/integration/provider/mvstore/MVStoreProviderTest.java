@@ -1,19 +1,19 @@
 package org.hl7.tinkar.integration.provider.mvstore;
 
 
-import org.hl7.tinkar.common.service.DataServiceController;
 import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.common.service.ServiceKeys;
 import org.hl7.tinkar.common.service.ServiceProperties;
 import org.hl7.tinkar.common.util.time.Stopwatch;
 import org.hl7.tinkar.entity.LoadEntitiesFromDTO;
 import org.hl7.tinkar.entity.util.EntityCounter;
 import org.hl7.tinkar.entity.util.EntityProcessor;
 import org.hl7.tinkar.entity.util.EntityRealizer;
+import org.hl7.tinkar.integration.TestConstants;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.logging.Logger;
 
@@ -25,13 +25,8 @@ public class MVStoreProviderTest {
     public void setupSuite() {
         LOG.info("setupSuite: " + this.getClass().getSimpleName());
         LOG.info(ServiceProperties.jvmUuid());
-        PrimitiveData.selectProvider((dataServiceController) -> {
-            String name = (String) dataServiceController.property(DataServiceController.ControllerProperty.NAME);
-            if (name.equals("MVStore")) {
-                return 1;
-            }
-            return -1;
-        });
+        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, TestConstants.MVSTORE_ROOT);
+        PrimitiveData.selectControllerByName(TestConstants.MV_STORE_NAME);
         PrimitiveData.start();
     }
 
@@ -44,8 +39,7 @@ public class MVStoreProviderTest {
 
     @Test
     public void loadChronologies() throws IOException {
-        File file = new File(System.getProperty("user.dir"), "/src/test/resources/tinkar-export.zip");
-        LoadEntitiesFromDTO loadTink = new LoadEntitiesFromDTO(file);
+        LoadEntitiesFromDTO loadTink = new LoadEntitiesFromDTO(TestConstants.TINK_TEST_FILE);
         int count = loadTink.call();
         LOG.info("Loaded. " + loadTink.report() + "\n\n");
     }

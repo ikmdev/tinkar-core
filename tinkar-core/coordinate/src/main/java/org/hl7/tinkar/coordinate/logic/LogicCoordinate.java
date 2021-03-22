@@ -40,7 +40,7 @@
 package org.hl7.tinkar.coordinate.logic;
 
 import org.hl7.tinkar.component.LatestVersion;
-import org.hl7.tinkar.coordinate.language.DefaultDescriptionText;
+import org.hl7.tinkar.entity.DefaultDescriptionText;
 import org.hl7.tinkar.coordinate.stamp.StampFilter;
 import org.hl7.tinkar.entity.ConceptEntity;
 import org.hl7.tinkar.entity.Entity;

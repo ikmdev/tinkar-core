@@ -5,6 +5,11 @@ import org.hl7.tinkar.entity.ConceptProxy;
 import java.util.UUID;
 
 public class TinkarTerm {
+    public static final ConceptProxy DESCRIPTION_PATTERN =
+            new ConceptProxy("Description pattern", UUID.fromString("a4de0039-2625-5842-8a4c-d1ce6aebf021"));
+
+    public static final ConceptProxy PATH_ORIGINS_PATTERN =
+            new ConceptProxy("Path Origin pattern", UUID.fromString("70f89dd5-2cdb-59bb-bbaa-98527513547c"));
 
 
     /** Java binding for the concept described as <strong><em>Acceptable (SOLOR)</em></strong>;

@@ -4,7 +4,7 @@ import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.TypePattern;
 import org.hl7.tinkar.entity.internal.Get;
 
-public class TypePatternProxy implements TypePattern, ComponentWithNid {
+public class TypePatternProxy implements TypePatternFacade {
     int nid;
 
     private TypePatternProxy(int nid) {

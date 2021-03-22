@@ -17,6 +17,7 @@ import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 import org.hl7.tinkar.coordinate.stamp.StampFilter;
 import org.hl7.tinkar.coordinate.stamp.StampFilterImmutable;
 import org.hl7.tinkar.entity.ConceptEntity;
+import org.hl7.tinkar.entity.DefaultDescriptionText;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.component.Concept;
 

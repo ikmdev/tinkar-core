@@ -9,7 +9,7 @@ import org.hl7.tinkar.component.FieldDataType;
 
 public final class ConceptEntity
         extends Entity<ConceptEntityVersion>
-        implements ConceptChronology<ConceptEntityVersion> {
+        implements ConceptChronology<ConceptEntityVersion>, ConceptFacade {
 
     private ConceptEntity() {
         super();
@@ -61,4 +61,10 @@ public final class ConceptEntity
         return conceptEntity;
     }
 
+    @Override
+    public String toString() {
+        return "ConceptEntity{" + DefaultDescriptionText.get(nid) +
+                " <" + nid + "> " + publicId().asUuidList() +
+                " v: " + versions + '}';
+    }
 }

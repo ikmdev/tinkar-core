@@ -2,13 +2,12 @@ package org.hl7.tinkar.entity;
 
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.Component;
-import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.entity.internal.Get;
 
 import java.util.*;
 import java.util.function.LongConsumer;
 
-public class ConceptProxy implements Concept, ComponentWithNid, PublicId {
+public class ConceptProxy implements ConceptFacade {
     /**
      * Universal identifiers for the concept proxied by the this object.
      */

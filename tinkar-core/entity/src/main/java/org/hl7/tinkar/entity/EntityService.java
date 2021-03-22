@@ -86,6 +86,8 @@ public interface EntityService extends ChronologyService {
 
     void putEntity(Entity entity);
 
+    void putStamp(StampEntity stampEntity);
+
     default int nidForComponent(Component component) {
         if (component instanceof ComponentWithNid) {
             return ((ComponentWithNid) component).nid();

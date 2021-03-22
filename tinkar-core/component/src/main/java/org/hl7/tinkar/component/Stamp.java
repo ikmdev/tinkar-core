@@ -14,6 +14,8 @@
  * limitations under the License.
  */package org.hl7.tinkar.component;
 
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.util.time.DateTimeUtil;
 
 import java.time.Instant;
@@ -23,7 +25,7 @@ import java.time.Instant;
  * structure?
  * @author kec
  */
-public interface Stamp extends Component {
+public interface Stamp<T extends Stamp> extends Chronology<T>, Component, Version {
 
     Concept state();
 
@@ -38,5 +40,15 @@ public interface Stamp extends Component {
     Concept module();
 
     Concept path();
+
+    @Override
+    default Stamp stamp() {
+        return this;
+    }
+
+    @Override
+    default ImmutableList<T> versions() {
+        return (ImmutableList<T>) Lists.immutable.of(this);
+    }
 
 }

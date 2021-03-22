@@ -9,15 +9,13 @@ public class EntityFactory {
 
     public static Entity make(Chronology chronology) {
         if (chronology instanceof ConceptChronology conceptChronology) {
-            ConceptEntity conceptEntity = ConceptEntity.make(conceptChronology);
-            return conceptEntity;
+            return ConceptEntity.make(conceptChronology);
         } else if (chronology instanceof SemanticChronology semanticChronology) {
-            SemanticEntity semanticEntity =  SemanticEntity.make(semanticChronology);
-           return semanticEntity;
+            return SemanticEntity.make(semanticChronology);
         } else if (chronology instanceof TypePatternChronology definitionChronology) {
-            TypePatternEntity patternEntity = TypePatternEntity.make(definitionChronology);
-            return patternEntity;
-
+            return TypePatternEntity.make(definitionChronology);
+        } else if (chronology instanceof Stamp stamp) {
+            return StampEntity.make(stamp);
         }
         throw new UnsupportedOperationException("Can't convert: " + chronology);
     }
@@ -46,6 +44,9 @@ public class EntityFactory {
             case TYPE_PATTERN_CHRONOLOGY:
                 return (T) TypePatternEntity.make(readBuf, entityFormatVersion);
 
+            case STAMP:
+                return (T) StampEntity.make(readBuf, entityFormatVersion);
+
             default:
                 throw new UnsupportedOperationException("Can't handle fieldDataType: " + fieldDataType);
 
@@ -57,11 +58,13 @@ public class EntityFactory {
     }
 
     public static StampEntity makeStamp(ByteBuf readBuf) {
-
+        int numberOfArrays = readBuf.readInt();
+        int sizeOfFirstArray = readBuf.readInt();
+        byte entityFormatVersion = readBuf.readByte();
         FieldDataType fieldDataType = FieldDataType.fromToken(readBuf.readByte());
         switch (fieldDataType) {
             case STAMP:
-                return StampEntity.make(readBuf);
+                return StampEntity.make(readBuf, entityFormatVersion);
 
             default:
                 throw new UnsupportedOperationException("Can't handle fieldDataType: " + fieldDataType);

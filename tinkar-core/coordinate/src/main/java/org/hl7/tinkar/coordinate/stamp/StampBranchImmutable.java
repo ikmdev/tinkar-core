@@ -9,7 +9,7 @@ import org.hl7.tinkar.common.binary.DecoderInput;
 import org.hl7.tinkar.common.binary.Encoder;
 import org.hl7.tinkar.common.binary.EncoderOutput;
 import org.hl7.tinkar.common.service.CachingService;
-import org.hl7.tinkar.coordinate.language.DefaultDescriptionText;
+import org.hl7.tinkar.entity.DefaultDescriptionText;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 
 //This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
@@ -100,7 +100,6 @@ public class StampBranchImmutable implements StampBranch, ImmutableCoordinate, C
         return Objects.hash(getPathOfBranchNid(), getBranchOriginTime());
     }
 
-
     /**
      * To string.
      *
@@ -122,10 +121,9 @@ public class StampBranchImmutable implements StampBranch, ImmutableCoordinate, C
 
         sb.append(" start branch for '")
                 .append(DefaultDescriptionText.get(this.branchConceptNid))
-                .append("' path}");
+                .append("'}");
         return sb.toString();
     }
-
 
     public String toUserString() {
         final StringBuilder sb = new StringBuilder("At date/time ");
@@ -140,8 +138,7 @@ public class StampBranchImmutable implements StampBranch, ImmutableCoordinate, C
 
         sb.append(" start branch for '")
                 .append(DefaultDescriptionText.get(this.branchConceptNid))
-                .append("' path}");
+                .append("'}");
         return sb.toString();
     }
-
 }

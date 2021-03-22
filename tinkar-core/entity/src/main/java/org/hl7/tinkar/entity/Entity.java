@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public abstract class Entity<T extends EntityVersion> extends PublicIdForEntity
-        implements Chronology<T>, Component, ComponentWithNid {
+        implements Chronology<T>, EntityFacade {
 
     public static final byte ENTITY_FORMAT_VERSION = 1;
 

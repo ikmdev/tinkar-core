@@ -1,12 +1,12 @@
 package org.hl7.tinkar.integration.provider.ephemeral;
 
-import org.hl7.tinkar.common.service.DataServiceController;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.service.ServiceProperties;
 import org.hl7.tinkar.entity.LoadEntitiesFromDTO;
 import org.hl7.tinkar.entity.util.EntityCounter;
 import org.hl7.tinkar.entity.util.EntityProcessor;
 import org.hl7.tinkar.entity.util.EntityRealizer;
+import org.hl7.tinkar.integration.TestConstants;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -23,13 +23,7 @@ public class EphemeralProviderTest {
     public void setupSuite() {
         LOG.info("setupSuite: " + this.getClass().getSimpleName());
         LOG.info(ServiceProperties.jvmUuid());
-        PrimitiveData.selectProvider((dataServiceController) -> {
-            String name = (String) dataServiceController.property(DataServiceController.ControllerProperty.NAME);
-            if (name.equals("EphemeralStore")) {
-                return 1;
-            }
-            return -1;
-        });
+        PrimitiveData.selectControllerByName(TestConstants.EPHEMERAL_STORE_NAME);
         PrimitiveData.start();
     }
 

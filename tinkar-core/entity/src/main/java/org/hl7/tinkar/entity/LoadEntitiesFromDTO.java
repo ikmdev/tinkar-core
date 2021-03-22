@@ -1,5 +1,6 @@
 package org.hl7.tinkar.entity;
 
+import org.hl7.tinkar.dto.StampDTO;
 import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.dto.ConceptChronologyDTO;
 import org.hl7.tinkar.component.FieldDataType;
@@ -57,6 +58,7 @@ public class LoadEntitiesFromDTO {
                         case TYPE_PATTERN_CHRONOLOGY: {
                             TypePatternChronologyDTO dsDTO = TypePatternChronologyDTO.make(tinkIn);
                             Get.entityService().putChronology(dsDTO);
+                            LOG.info("TypePattern: " + dsDTO);
                             importCount.incrementAndGet();
                         }
                         break;
@@ -74,10 +76,15 @@ public class LoadEntitiesFromDTO {
             LOG.info(report());
             ConceptProxy PATH_ORIGINS_ASSEMBLAGE =
                     new ConceptProxy("Path origins assemblage (SOLOR)", UUID.fromString("1239b874-41b4-32a1-981f-88b448829b4b"));
-            ConceptProxy DESCRIPTION_ASSEMBLAGE = new ConceptProxy("Description assemblage", UUID.fromString("c9b9a4ac-3a1c-516c-bbef-3a13e30df27d"));
             ConceptProxy ENGLISH_LANGUAGE = new ConceptProxy("English language", UUID.fromString("06d905ea-c647-3af9-bfe5-2514e135b558"));
 
-            int[] originNids = Get.entityService().entityNidsOfType(PATH_ORIGINS_ASSEMBLAGE.nid());
+
+            ConceptProxy DESCRIPTION_PATTERN =
+                    new ConceptProxy("Description pattern", UUID.fromString("a4de0039-2625-5842-8a4c-d1ce6aebf021"));
+            ConceptProxy PATH_ORIGINS_PATTERN =
+                    new ConceptProxy("Path Origin pattern", UUID.fromString("70f89dd5-2cdb-59bb-bbaa-98527513547c"));
+
+            int[] originNids = Get.entityService().entityNidsOfType(PATH_ORIGINS_PATTERN.nid());
             LOG.info("Origin nids: " + Arrays.toString(originNids));
             for (int originNid: originNids) {
                 LOG.info("Origin semantic: " + Get.entityService().getEntityFast(originNid));
@@ -87,15 +94,8 @@ public class LoadEntitiesFromDTO {
                 LOG.info("Referencing semantic: " + Get.entityService().getEntityFast(referencingSemanticNid));
             }
 
-
-            LOG.info("Trying type: DESCRIPTION_ASSEMBLAGE");
-            int[] referencingSemanticNidsOfType = Get.entityService().semanticNidsForComponentOfType(PATH_ORIGINS_ASSEMBLAGE.nid(), DESCRIPTION_ASSEMBLAGE.nid());
-            for (int referencingSemanticNid: referencingSemanticNidsOfType) {
-                LOG.info("Referencing semantic of type: " + Get.entityService().getEntityFast(referencingSemanticNid));
-            }
-
-            LOG.info("Trying type: ENGLISH_LANGUAGE");
-            int[] referencingSemanticNidsOfType2 = Get.entityService().semanticNidsForComponentOfType(PATH_ORIGINS_ASSEMBLAGE.nid(), ENGLISH_LANGUAGE.nid());
+            LOG.info("Trying type: DESCRIPTION_PATTERN");
+            int[] referencingSemanticNidsOfType2 = Get.entityService().semanticNidsForComponentOfType(PATH_ORIGINS_ASSEMBLAGE.nid(), DESCRIPTION_PATTERN.nid());
             for (int referencingSemanticNid: referencingSemanticNidsOfType2) {
                 LOG.info("Referencing semantic of type: " + Get.entityService().getEntityFast(referencingSemanticNid));
             }

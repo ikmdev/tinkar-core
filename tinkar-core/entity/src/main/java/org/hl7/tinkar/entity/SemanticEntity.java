@@ -10,7 +10,7 @@ import java.util.Arrays;
 
 public class SemanticEntity
         extends Entity<SemanticEntityVersion>
-        implements SemanticChronology<SemanticEntityVersion> {
+        implements SemanticFacade {
 
     protected int referencedComponentNid;
 
@@ -97,9 +97,9 @@ public class SemanticEntity
         return "SemanticEntity<" +
                 nid +
                 "> " + Arrays.toString(publicId().asUuidArray()) +
-                ", typePatternNid=" + typePatternNid +
-                ", referencedComponentNid=" + referencedComponentNid +
-                ", versions=" + versions +
+                ", type: " + DefaultDescriptionText.get(typePatternNid) +
+                ", rc: " + DefaultDescriptionText.get(referencedComponentNid) +
+                ", v: " + versions +
                 '}';
     }
 }

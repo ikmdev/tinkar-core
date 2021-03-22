@@ -4,7 +4,7 @@ import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.Component;
 import org.hl7.tinkar.entity.internal.Get;
 
-public class EntityProxy implements Component {
+public class EntityProxy implements EntityFacade {
     int nid;
     private EntityProxy() {
     }
@@ -19,5 +19,10 @@ public class EntityProxy implements Component {
 
     public static EntityProxy make(int nid) {
         return new EntityProxy(nid);
+    }
+
+    @Override
+    public int nid() {
+        return nid;
     }
 }

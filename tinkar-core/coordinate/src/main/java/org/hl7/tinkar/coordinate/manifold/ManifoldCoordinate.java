@@ -51,7 +51,7 @@ import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.coordinate.edit.Activity;
 import org.hl7.tinkar.coordinate.edit.EditCoordinate;
-import org.hl7.tinkar.coordinate.language.DefaultDescriptionText;
+import org.hl7.tinkar.entity.DefaultDescriptionText;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinate;
 import org.hl7.tinkar.coordinate.logic.LogicCoordinate;
 import org.hl7.tinkar.coordinate.logic.PremiseSet;

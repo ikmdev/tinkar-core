@@ -50,12 +50,11 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
 import org.hl7.tinkar.common.service.CachingService;
-import org.hl7.tinkar.common.service.PrimitiveDataService;
 import org.hl7.tinkar.component.Chronology;
 import org.hl7.tinkar.component.LatestVersion;
 import org.hl7.tinkar.component.graph.DiTree;
 import org.hl7.tinkar.coordinate.CoordinateUtil;
-import org.hl7.tinkar.coordinate.language.DefaultDescriptionText;
+import org.hl7.tinkar.entity.DefaultDescriptionText;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.entity.EntityService;
 import org.hl7.tinkar.entity.EntityVersion;
@@ -479,7 +478,7 @@ public class RelativePositionCalculator implements CachingService {
             return stampIsAllowedState.get(stampNid);
         }
         StampEntity stamp = Entity.getStamp(stampNid);
-        boolean allowed = this.allowedStates.contains(State.fromConcept(stamp.state()));
+        boolean allowed = this.allowedStates.contains(State.fromConceptNid(stamp.stateNid()));
         stampIsAllowedState.put(stampNid, allowed);
         return allowed;
     }
@@ -506,7 +505,7 @@ public class RelativePositionCalculator implements CachingService {
     public boolean isLatestActive(int[] stampNids) {
         for (int stampNid: getLatestStampNidsAsSet(stampNids)) {
             StampEntity stamp = Entity.getStamp(stampNid);
-            if (State.fromConcept(stamp.state()) == State.ACTIVE) {
+            if (State.fromConceptNid(stamp.stateNid()) == State.ACTIVE) {
                 return true;
             }
         }
@@ -587,7 +586,7 @@ public class RelativePositionCalculator implements CachingService {
 
             latestVersionSet.stream()
                     .forEach((version) -> {
-                        if (State.fromConcept(version.stamp().state()) != State.ACTIVE) {
+                        if (State.fromConceptNid(version.stamp().stateNid()) != State.ACTIVE) {
                             inactiveVersions.add(version);
                         }
                     });

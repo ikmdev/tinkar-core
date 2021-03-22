@@ -43,12 +43,9 @@ import java.util.OptionalInt;
 import java.util.UUID;
 
 import org.hl7.tinkar.coordinate.stamp.StampFilter;
-import org.hl7.tinkar.entity.ConceptEntity;
-import org.hl7.tinkar.entity.Entity;
+import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.component.LatestVersion;
 import org.hl7.tinkar.component.Concept;
-import org.hl7.tinkar.entity.SemanticEntity;
-import org.hl7.tinkar.entity.SemanticEntityVersion;
 import org.hl7.tinkar.terms.TinkarTerm;
 
 /**

@@ -6,11 +6,10 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.MutableSet;
 import org.hl7.tinkar.common.service.CachingService;
-import org.hl7.tinkar.entity.EntityService;
-import org.hl7.tinkar.entity.SemanticEntityVersion;
+import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.terms.TinkarTerm;
 
-import java.util.Optional;
+import java.time.Instant;
 
 @AutoService(CachingService.class)
 public class PathProvider implements CachingService {
@@ -24,7 +23,15 @@ public class PathProvider implements CachingService {
             if (semanticEntity.versions().size() == 1) {
                 SemanticEntityVersion originVersion = semanticEntity.versions().get(0);
                 ImmutableList<Object> fields = originVersion.fields();
-                originSet.add(StampPositionImmutable.make((long) fields.get(1), (int) fields.get(0)));
+                ConceptFacade pathConcept;
+                if (fields.get(0) instanceof ConceptFacade conceptFacade) {
+                    pathConcept = conceptFacade;
+                } else if (fields.get(0) instanceof EntityFacade entityFacade) {
+                    pathConcept = new ConceptProxy(entityFacade.nid());
+                } else {
+                    throw new IllegalStateException("Can't construct ConceptFacade from: " + fields.get(0));
+                }
+                originSet.add(StampPositionImmutable.make((Instant) fields.get(1), pathConcept));
             } else {
                 throw new UnsupportedOperationException("Can't handle more than one version yet...");
             }

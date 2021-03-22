@@ -10,7 +10,7 @@ public abstract class EntityProcessor implements ObjIntConsumer<byte[]> {
 
     AtomicInteger conceptCount = new AtomicInteger();
     AtomicInteger semanticCount = new AtomicInteger();
-    AtomicInteger definitionForSemanticCount = new AtomicInteger();
+    AtomicInteger typePatternCount = new AtomicInteger();
     AtomicInteger stampCount = new AtomicInteger();
     AtomicInteger other = new AtomicInteger();
     Stopwatch stopwatch = new Stopwatch();
@@ -21,7 +21,7 @@ public abstract class EntityProcessor implements ObjIntConsumer<byte[]> {
         FieldDataType componentType = FieldDataType.fromToken(bytes[9]);
         switch (componentType) {
             case TYPE_PATTERN_CHRONOLOGY:
-                definitionForSemanticCount.incrementAndGet();
+                typePatternCount.incrementAndGet();
                 break;
             case CONCEPT_CHRONOLOGY:
                 conceptCount.incrementAndGet();
@@ -37,7 +37,6 @@ public abstract class EntityProcessor implements ObjIntConsumer<byte[]> {
         }
         processBytesForType(componentType, bytes);
     }
-
 
     public abstract void processBytesForType(FieldDataType componentType, byte[] bytes);
 
@@ -55,8 +54,8 @@ public abstract class EntityProcessor implements ObjIntConsumer<byte[]> {
         if (semanticCount.get() > 0) {
             sb.append("\nSemantics: ").append(semanticCount);
         }
-        if (definitionForSemanticCount.get() > 0) {
-            sb.append("\nDefinitions for Semantics: ").append(definitionForSemanticCount);
+        if (typePatternCount.get() > 0) {
+            sb.append("\nType pattern: ").append(typePatternCount);
         }
         if (stampCount.get() > 0) {
             sb.append("\nStamps: ").append(stampCount);
@@ -67,5 +66,4 @@ public abstract class EntityProcessor implements ObjIntConsumer<byte[]> {
         sb.append("\n");
         return sb.toString();
     }
-
 }

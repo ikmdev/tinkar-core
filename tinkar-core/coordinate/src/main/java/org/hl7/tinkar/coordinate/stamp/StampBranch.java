@@ -1,7 +1,7 @@
 package org.hl7.tinkar.coordinate.stamp;
 
 import org.hl7.tinkar.component.Concept;
-import org.hl7.tinkar.coordinate.language.DefaultDescriptionText;
+import org.hl7.tinkar.entity.DefaultDescriptionText;
 import org.hl7.tinkar.entity.Entity;
 
 import java.time.Instant;

@@ -9,10 +9,14 @@ import org.hl7.tinkar.common.binary.DecoderInput;
 import org.hl7.tinkar.common.binary.Encoder;
 import org.hl7.tinkar.common.binary.EncoderOutput;
 import org.hl7.tinkar.common.service.CachingService;
+import org.hl7.tinkar.common.util.time.DateTimeUtil;
 import org.hl7.tinkar.component.Concept;
-import org.hl7.tinkar.coordinate.language.DefaultDescriptionText;
+import org.hl7.tinkar.entity.DefaultDescriptionText;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
+import org.hl7.tinkar.entity.ConceptFacade;
 import org.hl7.tinkar.entity.Entity;
+
+import java.time.Instant;
 
 //This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
 // No arg constructor for Service Provider Interface (SPI) generated instance is required
@@ -58,16 +62,24 @@ public final class StampPositionImmutable
         this.pathForPositionNid = pathForPositionNid;
     }
 
-    private StampPositionImmutable(long time, Concept pathForPosition) {
+    private StampPositionImmutable(long time, ConceptFacade pathForPosition) {
         this.time    = time;
         this.pathForPositionNid = Entity.provider().nidForComponent(pathForPosition);
+    }
+
+    public static StampPositionImmutable make(Instant time, ConceptFacade pathForPosition) {
+        return SINGLETONS.computeIfAbsent(new StampPositionImmutable(DateTimeUtil.instantToEpochMs(time), pathForPosition.nid()), stampPositionImmutable -> stampPositionImmutable);
+    }
+
+    public static StampPositionImmutable make(Instant time, int pathForPositionNid) {
+        return SINGLETONS.computeIfAbsent(new StampPositionImmutable(DateTimeUtil.instantToEpochMs(time), pathForPositionNid), stampPositionImmutable -> stampPositionImmutable);
     }
 
     public static StampPositionImmutable make(long time, int pathForPositionNid) {
         return SINGLETONS.computeIfAbsent(new StampPositionImmutable(time, pathForPositionNid), stampPositionImmutable -> stampPositionImmutable);
     }
 
-    public static StampPositionImmutable make(long time, Concept pathForPosition) {
+    public static StampPositionImmutable make(long time, ConceptFacade pathForPosition) {
         return SINGLETONS.computeIfAbsent(new StampPositionImmutable(time, pathForPosition), stampPositionImmutable -> stampPositionImmutable);
     }
 
@@ -195,7 +207,7 @@ public final class StampPositionImmutable
 
         sb.append(" on '")
                 .append(DefaultDescriptionText.get(this.pathForPositionNid))
-                .append("' path}");
+                .append("'}");
         return sb.toString();
     }
 

@@ -3,7 +3,7 @@ package org.hl7.tinkar.coordinate.navigation;
 
 import org.hl7.tinkar.common.binary.*;
 import org.hl7.tinkar.coordinate.manifold.ManifoldCoordinateImmutable;
-import org.hl7.tinkar.coordinate.language.DefaultDescriptionText;
+import org.hl7.tinkar.entity.DefaultDescriptionText;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinate;
 import org.hl7.tinkar.coordinate.stamp.StampFilter;
 

@@ -9,6 +9,7 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.hl7.tinkar.common.id.*;
+import org.hl7.tinkar.common.util.time.DateTimeUtil;
 import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.component.graph.DiGraph;
 import org.hl7.tinkar.component.graph.DiTree;
@@ -39,6 +40,11 @@ public class SemanticEntityVersion
 
     private SemanticEntity getSemanticEntity() {
         return (SemanticEntity) this.chronology;
+    }
+
+    @Override
+    public SemanticEntity chronology() {
+        return (SemanticEntity) super.chronology();
     }
 
     @Override
@@ -121,9 +127,7 @@ public class SemanticEntityVersion
                 size += 5;
             } else if (field instanceof String string) {
                 size += (5 + (string.length() * 2)); // token, length, upper bound on string bytes (average < 16 bit chars for UTF8...).
-            } else if (field instanceof Entity) {
-                size += 5;
-            } else if (field instanceof EntityProxy) {
+            } else if (field instanceof EntityFacade) {
                 size += 5;
             } else if (field instanceof Component) {
                 size += 5;
@@ -293,7 +297,118 @@ public class SemanticEntityVersion
 
     @Override
     public String toString() {
-        return "{s:" + stampNid +
-                " f:" + fields + '}';
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+        sb.append(Entity.getStamp(stampNid).describe());
+        sb.append(" f: [");
+        Entity typePattern = Entity.getFast(this.chronology().typePatternNid);
+        if (typePattern instanceof TypePatternEntity typePatternEntity) {
+            // TODO get proper version after relative position computer available.
+            // Maybe put stamp coordinate on thread, or relative position computer on thread
+            TypePatternEntityVersion typePatternEntityVersion =  typePatternEntity.versions.get(0);
+            for (int i = 0; i < fields.size(); i++) {
+                if (i > 0) {
+                    sb.append("; ");
+                }
+                Object field = fields.get(i);
+                if (i < typePatternEntityVersion.fieldDefinitionForEntities.size()) {
+                    FieldDefinitionForEntity fieldDefinition = typePatternEntityVersion.fieldDefinitionForEntities.get(i);
+                    sb.append(DefaultDescriptionText.get(fieldDefinition.identityNid));
+                } else {
+                    sb.append("Size error @ " + i);
+                }
+                sb.append(": ");
+                if (field instanceof EntityFacade entity) {
+                    sb.append(DefaultDescriptionText.get(entity.nid()));
+                } else if (field instanceof String string) {
+                    sb.append(string);
+                } else if (field instanceof Instant instant) {
+                    sb.append(DateTimeUtil.format(instant));
+                } else if (field instanceof IntIdList intIdList)  {
+                    if (intIdList.size() == 0) {
+                        sb.append("ø, ");
+                    } else {
+                        for (int j = 0; j < intIdList.size(); j++) {
+                            if (j > 0) {
+                                sb.append(", ");
+                            }
+                            sb.append(DefaultDescriptionText.get(intIdList.get(j)));
+                        }
+                    }
+                } else if (field instanceof IntIdSet intIdSet)  {
+                    if (intIdSet.size() == 0) {
+                        sb.append("ø, ");
+                    } else {
+                        int[] idSetArray = intIdSet.toArray();
+                        for (int j = 0; j < idSetArray.length; j++) {
+                            if (j > 0) {
+                                sb.append(", ");
+                            }
+                            sb.append(DefaultDescriptionText.get(idSetArray[j]));
+                        }
+                    }
+                 } else {
+                    sb.append(field);
+                }
+            }
+        } else {
+            sb.append("Bad typePattern: ");
+            sb.append(DefaultDescriptionText.get(typePattern.nid));
+            sb.append("; ");
+            for (int i = 0; i < fields.size(); i++) {
+                Object field = fields.get(i);
+                if (i > 0) {
+                    sb.append("; ");
+                }
+                 if (field instanceof EntityFacade entity) {
+                     sb.append("Entity: ");
+                     sb.append(DefaultDescriptionText.get(entity.nid()));
+                } else if (field instanceof String string) {
+                     sb.append("String: ");
+                     sb.append(string);
+                } else if (field instanceof Instant instant) {
+                     sb.append("Instant: ");
+                     sb.append(DateTimeUtil.format(instant));
+                } else if (field instanceof Long aLong) {
+                     sb.append("Long: ");
+                     sb.append(DateTimeUtil.format(aLong));
+                } else if (field instanceof IntIdList intIdList)  {
+                     sb.append(field.getClass().getSimpleName());
+                     sb.append(": ");
+                     if (intIdList.size() == 0) {
+                         sb.append("ø, ");
+                     } else {
+                         for (int j = 0; j < intIdList.size(); j++) {
+                             if (j > 0) {
+                                 sb.append(", ");
+                             }
+                             sb.append(DefaultDescriptionText.get(intIdList.get(j)));
+                         }
+                     }
+                 } else if (field instanceof IntIdSet intIdSet)  {
+                     sb.append(field.getClass().getSimpleName());
+                     sb.append(": ");
+                     if (intIdSet.size() == 0) {
+                         sb.append("ø, ");
+                     } else {
+                         int[] idSetArray = intIdSet.toArray();
+                         for (int j = 0; j < idSetArray.length; j++) {
+                             if (j > 0) {
+                                 sb.append(", ");
+                             }
+                             sb.append(DefaultDescriptionText.get(idSetArray[j]));
+                         }
+                     }
+                 } else {
+                     sb.append(field.getClass().getSimpleName());
+                     sb.append(": ");
+                     sb.append(field);
+                 }
+            }
+        }
+
+        sb.append("]}");
+
+        return sb.toString();
     }
 }

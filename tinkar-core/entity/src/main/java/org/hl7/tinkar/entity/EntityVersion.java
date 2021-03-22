@@ -6,10 +6,12 @@ import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.factory.Lists;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.id.VertexId;
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.component.graph.Vertex;
+import org.hl7.tinkar.dto.StampDTO;
 import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.component.FieldDataType;
 
@@ -37,7 +39,8 @@ public abstract class EntityVersion
 
     protected final void fill(Entity chronology, Version version) {
         this.chronology = chronology;
-        this.stampNid = Get.entityService().nidForComponent(version.stamp());
+        Stamp stamp = version.stamp();
+        this.stampNid = Get.entityService().nidForComponent(stamp);
     }
 
     protected abstract void finishVersionFill(ByteBuf readBuf, byte formatVersion);
@@ -70,5 +73,10 @@ public abstract class EntityVersion
     @Override
     public StampEntity stamp() {
         return Get.entityService().getStampFast(stampNid);
+    }
+
+    @Override
+    public String toString() {
+        return stamp().describe();
     }
 }

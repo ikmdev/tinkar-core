@@ -41,4 +41,9 @@ public class ConceptEntityVersion
         version.fill(conceptEntity, versionToCopy);
         return version;
     }
+
+    @Override
+    public String toString() {
+        return "{" + super.toString() + "}";
+    }
 }
