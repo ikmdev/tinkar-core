@@ -7,6 +7,7 @@ import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.component.*;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 public class SemanticEntity
         extends Entity<SemanticEntityVersion>
@@ -94,10 +95,11 @@ public class SemanticEntity
 
     @Override
     public String toString() {
-        return "SemanticEntity<" +
+        return "SemanticEntity{" +
+                "type: " + DefaultDescriptionText.get(typePatternNid) +
+                " <" +
                 nid +
                 "> " + Arrays.toString(publicId().asUuidArray()) +
-                ", type: " + DefaultDescriptionText.get(typePatternNid) +
                 ", rc: " + DefaultDescriptionText.get(referencedComponentNid) +
                 ", v: " + versions +
                 '}';

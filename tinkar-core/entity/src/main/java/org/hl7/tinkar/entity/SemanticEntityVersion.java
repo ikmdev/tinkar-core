@@ -313,7 +313,7 @@ public class SemanticEntityVersion
                 Object field = fields.get(i);
                 if (i < typePatternEntityVersion.fieldDefinitionForEntities.size()) {
                     FieldDefinitionForEntity fieldDefinition = typePatternEntityVersion.fieldDefinitionForEntities.get(i);
-                    sb.append(DefaultDescriptionText.get(fieldDefinition.identityNid));
+                    sb.append(DefaultDescriptionText.get(fieldDefinition.meaningNid));
                 } else {
                     sb.append("Size error @ " + i);
                 }

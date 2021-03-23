@@ -6,6 +6,7 @@ import org.hl7.tinkar.common.service.ServiceKeys;
 import org.hl7.tinkar.common.service.ServiceProperties;
 import org.hl7.tinkar.coordinate.stamp.PathProvider;
 import org.hl7.tinkar.coordinate.stamp.StampPositionImmutable;
+import org.hl7.tinkar.entity.DefaultDescriptionText;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.entity.EntityService;
 import org.hl7.tinkar.entity.SemanticEntity;
@@ -40,10 +41,8 @@ class CoordinatesTest {
         for (int pathNid: PrimitiveData.get().entityNidsOfType(PATH_ORIGINS_PATTERN.nid())) {
             SemanticEntity originSemantic = EntityService.get().getEntityFast(pathNid);
             Entity pathEntity = EntityService.get().getEntityFast(originSemantic.referencedComponentNid());
-            LOG.info("originSemantic: " + originSemantic);
-            LOG.info("pathEntity: " + pathEntity);
-            ImmutableSet<StampPositionImmutable> origins = PathProvider.getPathOrigins(originSemantic.referencedComponentNid());
-            LOG.info("Origin: " + origins);
+            ImmutableSet<StampPositionImmutable> origin = PathProvider.getPathOrigins(originSemantic.referencedComponentNid());
+            LOG.info("Path '" + DefaultDescriptionText.get(pathEntity.nid()) + "' has an origin of: " + origin);
         }
     }
 

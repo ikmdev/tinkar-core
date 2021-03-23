@@ -4,6 +4,7 @@ import org.hl7.tinkar.common.service.PrimitiveData;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -13,6 +14,9 @@ public class DefaultDescriptionText {
     static final ConceptProxy DESCRIPTION_PATTERN =
             new ConceptProxy("Description pattern", UUID.fromString("a4de0039-2625-5842-8a4c-d1ce6aebf021"));
 
+    public static Optional<String> getOptional(int nid) {
+        return Optional.ofNullable(get(nid));
+    }
     public static String get(int nid) {
         int[] semanticNids = PrimitiveData.get().semanticNidsForComponentOfType(nid, DESCRIPTION_PATTERN.nid());
         for (int semanticNid: semanticNids) {

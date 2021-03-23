@@ -47,6 +47,10 @@ public interface EntityService extends ChronologyService {
         return Optional.ofNullable(getEntityFast(nid));
     }
 
+    default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(EntityFacade entityFacade) {
+        return Optional.ofNullable(getEntityFast(entityFacade.nid()));
+    }
+
     default <T extends Entity<V>, V extends EntityVersion> T getEntityFast(ImmutableList<UUID> uuidList) {
         return getEntityFast(nidForPublicId(uuidList));
     }
@@ -57,6 +61,9 @@ public interface EntityService extends ChronologyService {
 
     <T extends Entity<V>, V extends EntityVersion> T getEntityFast(int nid);
 
+    default <T extends Entity<V>, V extends EntityVersion> T getEntityFast(EntityFacade entityFacade) {
+        return getEntityFast(entityFacade.nid());
+    }
 
     default Optional<StampEntity> getStamp(Component component) {
         return getStamp(nidForPublicId(component.publicId()));

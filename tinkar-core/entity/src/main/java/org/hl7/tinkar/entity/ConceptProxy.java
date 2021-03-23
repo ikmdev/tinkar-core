@@ -7,7 +7,7 @@ import org.hl7.tinkar.entity.internal.Get;
 import java.util.*;
 import java.util.function.LongConsumer;
 
-public class ConceptProxy implements ConceptFacade {
+public class ConceptProxy implements ConceptFacade, PublicId {
     /**
      * Universal identifiers for the concept proxied by the this object.
      */
@@ -106,9 +106,19 @@ public class ConceptProxy implements ConceptFacade {
 
     @Override
     public String toString() {
-        return "ConceptProxy: " +  name +
-                " " + Arrays.toString(uuids) +
-                " <" + cachedNid +
-                '>';
+        StringBuilder sb = new StringBuilder();
+        sb.append("ConceptProxy{");
+        Optional<String> stringOptional = DefaultDescriptionText.getOptional(nid());
+        if (stringOptional.isPresent()) {
+            sb.append(stringOptional.get());
+            sb.append(' ');
+        }
+        sb.append("<");
+        sb.append(nid());
+        sb.append("> ");
+        sb.append(Arrays.toString(publicId().asUuidArray()));
+        sb.append('}');
+        return sb.toString();
     }
+
 }

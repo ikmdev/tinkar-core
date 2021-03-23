@@ -11,7 +11,7 @@ public class FieldDefinitionForEntity
     protected TypePatternEntityVersion enclosingVersion;
     protected int dataTypeNid;
     protected int purposeNid;
-    protected int identityNid;
+    protected int meaningNid;
 
     @Override
     public ConceptEntity dataType() {
@@ -25,7 +25,7 @@ public class FieldDefinitionForEntity
 
     @Override
     public ConceptEntity meaning() {
-        return Get.entityService().getEntityFast(identityNid);
+        return Get.entityService().getEntityFast(meaningNid);
     }
 
     /**
@@ -36,20 +36,20 @@ public class FieldDefinitionForEntity
         this.enclosingVersion = enclosingVersion;
         dataTypeNid = readBuf.readInt();
         purposeNid = readBuf.readInt();
-        identityNid = readBuf.readInt();
+        meaningNid = readBuf.readInt();
     }
 
     public void fill(TypePatternEntityVersion enclosingVersion, FieldDefinition fieldDefinition) {
         this.enclosingVersion = enclosingVersion;
         dataTypeNid = Get.entityService().nidForComponent(fieldDefinition.dataType());
         purposeNid = Get.entityService().nidForComponent(fieldDefinition.purpose());
-        identityNid = Get.entityService().nidForComponent(fieldDefinition.meaning());
+        meaningNid = Get.entityService().nidForComponent(fieldDefinition.meaning());
     }
 
     public void write(ByteBuf writeBuf) {
         writeBuf.writeInt(dataTypeNid);
         writeBuf.writeInt(purposeNid);
-        writeBuf.writeInt(identityNid);
+        writeBuf.writeInt(meaningNid);
     }
 
     public static FieldDefinitionForEntity make(TypePatternEntityVersion enclosingVersion, ByteBuf readBuf) {
@@ -64,4 +64,12 @@ public class FieldDefinitionForEntity
         return fieldDefinitionForEntity;
     }
 
+    @Override
+    public String toString() {
+        return "FieldDef{t: " +
+                DefaultDescriptionText.get(dataTypeNid) + " p: " +
+                DefaultDescriptionText.get(purposeNid) + " m: " +
+                DefaultDescriptionText.get(meaningNid) +
+                '}';
+    }
 }

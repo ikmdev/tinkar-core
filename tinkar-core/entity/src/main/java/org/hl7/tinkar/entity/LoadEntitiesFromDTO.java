@@ -58,7 +58,6 @@ public class LoadEntitiesFromDTO {
                         case TYPE_PATTERN_CHRONOLOGY: {
                             TypePatternChronologyDTO dsDTO = TypePatternChronologyDTO.make(tinkIn);
                             Get.entityService().putChronology(dsDTO);
-                            LOG.info("TypePattern: " + dsDTO);
                             importCount.incrementAndGet();
                         }
                         break;
@@ -74,10 +73,6 @@ public class LoadEntitiesFromDTO {
             }
             stopwatch.end();
             LOG.info(report());
-            ConceptProxy PATH_ORIGINS_ASSEMBLAGE =
-                    new ConceptProxy("Path origins assemblage (SOLOR)", UUID.fromString("1239b874-41b4-32a1-981f-88b448829b4b"));
-            ConceptProxy ENGLISH_LANGUAGE = new ConceptProxy("English language", UUID.fromString("06d905ea-c647-3af9-bfe5-2514e135b558"));
-
 
             ConceptProxy DESCRIPTION_PATTERN =
                     new ConceptProxy("Description pattern", UUID.fromString("a4de0039-2625-5842-8a4c-d1ce6aebf021"));
@@ -89,16 +84,20 @@ public class LoadEntitiesFromDTO {
             for (int originNid: originNids) {
                 LOG.info("Origin semantic: " + Get.entityService().getEntityFast(originNid));
             }
-            int[] referencingSemanticNids = Get.entityService().semanticNidsForComponent(PATH_ORIGINS_ASSEMBLAGE.nid());
+            int[] referencingSemanticNids = Get.entityService().semanticNidsForComponent(PATH_ORIGINS_PATTERN.nid());
             for (int referencingSemanticNid: referencingSemanticNids) {
                 LOG.info("Referencing semantic: " + Get.entityService().getEntityFast(referencingSemanticNid));
             }
 
             LOG.info("Trying type: DESCRIPTION_PATTERN");
-            int[] referencingSemanticNidsOfType2 = Get.entityService().semanticNidsForComponentOfType(PATH_ORIGINS_ASSEMBLAGE.nid(), DESCRIPTION_PATTERN.nid());
-            for (int referencingSemanticNid: referencingSemanticNidsOfType2) {
-                LOG.info("Referencing semantic of type: " + Get.entityService().getEntityFast(referencingSemanticNid));
+            int[] referencingSemanticDescriptions = Get.entityService().semanticNidsForComponentOfType(PATH_ORIGINS_PATTERN.nid(), DESCRIPTION_PATTERN.nid());
+            for (int descriptionNid: referencingSemanticDescriptions) {
+                LOG.info("Referenced component description: " + Get.entityService().getEntityFast(descriptionNid));
             }
+
+            LOG.info("Description pattern: " + Get.entityService().getEntityFast(DESCRIPTION_PATTERN));
+
+
 
             return importCount.get();
         } finally {
