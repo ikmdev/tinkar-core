@@ -1,6 +1,5 @@
 package org.hl7.tinkar.entity;
 
-import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.id.PublicIds;
@@ -9,6 +8,8 @@ import org.hl7.tinkar.component.ChronologyService;
 import org.hl7.tinkar.component.Component;
 import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.entity.internal.Get;
+import org.hl7.tinkar.terms.ComponentWithNid;
+import org.hl7.tinkar.terms.EntityFacade;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -25,7 +26,7 @@ public interface EntityService extends ChronologyService {
 
     @Override
     default <T extends Chronology<V>, V extends Version> Optional<T> getChronology(UUID... uuids) {
-        return getChronology(nidForPublicId(uuids));
+        return getChronology(nidForUuids(uuids));
     }
 
     <T extends Chronology<V>, V extends Version> Optional<T> getChronology(int nid);
@@ -36,11 +37,11 @@ public interface EntityService extends ChronologyService {
     }
 
     default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(ImmutableList<UUID> uuidList) {
-        return getEntity(nidForPublicId(uuidList));
+        return getEntity(nidForUuids(uuidList));
     }
 
     default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(UUID... uuids) {
-        return getEntity(nidForPublicId(uuids));
+        return getEntity(nidForUuids(uuids));
     }
 
     default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(int nid) {
@@ -52,11 +53,11 @@ public interface EntityService extends ChronologyService {
     }
 
     default <T extends Entity<V>, V extends EntityVersion> T getEntityFast(ImmutableList<UUID> uuidList) {
-        return getEntityFast(nidForPublicId(uuidList));
+        return getEntityFast(nidForUuids(uuidList));
     }
 
     default <T extends Entity<V>, V extends EntityVersion> T getEntityFast(UUID... uuids) {
-        return getEntityFast(nidForPublicId(uuids));
+        return getEntityFast(nidForUuids(uuids));
     }
 
     <T extends Entity<V>, V extends EntityVersion> T getEntityFast(int nid);
@@ -70,11 +71,11 @@ public interface EntityService extends ChronologyService {
     }
 
     default Optional<StampEntity> getStamp(ImmutableList<UUID> uuidList) {
-        return getStamp(nidForPublicId(uuidList));
+        return getStamp(nidForUuids(uuidList));
     }
 
     default Optional<StampEntity> getStamp(UUID... uuids) {
-        return getStamp(nidForPublicId(uuids));
+        return getStamp(nidForUuids(uuids));
     }
 
     default Optional<StampEntity> getStamp(int nid) {
@@ -82,11 +83,11 @@ public interface EntityService extends ChronologyService {
     }
 
     default StampEntity getStampFast(ImmutableList<UUID> uuidList) {
-        return getStampFast(nidForPublicId(uuidList));
+        return getStampFast(nidForUuids(uuidList));
     }
 
     default StampEntity getStampFast(UUID... uuids) {
-        return getStampFast(nidForPublicId(uuids));
+        return getStampFast(nidForUuids(uuids));
     }
 
     StampEntity getStampFast(int nid);
@@ -102,11 +103,11 @@ public interface EntityService extends ChronologyService {
         return nidForPublicId(component.publicId());
     }
 
-    default int nidForPublicId(ImmutableList<UUID> uuidList) {
+    default int nidForUuids(ImmutableList<UUID> uuidList) {
         return nidForPublicId(PublicIds.of(uuidList.toArray(new UUID[uuidList.size()])));
     }
 
-    default int nidForPublicId(UUID... uuids) {
+    default int nidForUuids(UUID... uuids) {
         return nidForPublicId(PublicIds.of(uuids));
     }
 

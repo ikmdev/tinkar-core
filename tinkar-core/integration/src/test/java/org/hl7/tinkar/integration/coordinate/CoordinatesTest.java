@@ -4,13 +4,15 @@ import org.eclipse.collections.api.set.ImmutableSet;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.service.ServiceKeys;
 import org.hl7.tinkar.common.service.ServiceProperties;
+import org.hl7.tinkar.coordinate.Coordinates;
 import org.hl7.tinkar.coordinate.stamp.PathProvider;
+import org.hl7.tinkar.coordinate.stamp.RelativePositionCalculator;
+import org.hl7.tinkar.coordinate.stamp.StampFilterRecord;
 import org.hl7.tinkar.coordinate.stamp.StampPositionImmutable;
-import org.hl7.tinkar.entity.DefaultDescriptionText;
-import org.hl7.tinkar.entity.Entity;
-import org.hl7.tinkar.entity.EntityService;
-import org.hl7.tinkar.entity.SemanticEntity;
+import org.hl7.tinkar.entity.*;
+import org.hl7.tinkar.entity.calculator.LatestVersion;
 import org.hl7.tinkar.integration.TestConstants;
+import org.hl7.tinkar.terms.TinkarTerm;
 import org.testng.Assert;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -37,14 +39,27 @@ class CoordinatesTest {
     }
 
     @Test
-    void getPathOrigins() {
+    void pathOrigins() {
         for (int pathNid: PrimitiveData.get().entityNidsOfType(PATH_ORIGINS_PATTERN.nid())) {
             SemanticEntity originSemantic = EntityService.get().getEntityFast(pathNid);
             Entity pathEntity = EntityService.get().getEntityFast(originSemantic.referencedComponentNid());
             ImmutableSet<StampPositionImmutable> origin = PathProvider.getPathOrigins(originSemantic.referencedComponentNid());
-            LOG.info("Path '" + DefaultDescriptionText.get(pathEntity.nid()) + "' has an origin of: " + origin);
+            LOG.info("Path '" + PrimitiveData.text(pathEntity.nid()) + "' has an origin of: " + origin);
         }
     }
+
+    @Test
+    void computeLatest() {
+        StampFilterRecord developmentLatestFilter = Coordinates.Filter.DevelopmentLatest();
+        LOG.info("development latest filter '" + developmentLatestFilter);
+        ConceptEntity englishLanguage = Entity.getFast(TinkarTerm.ENGLISH_LANGUAGE);
+        RelativePositionCalculator calculator = RelativePositionCalculator.getCalculator(developmentLatestFilter);
+        LatestVersion<EntityVersion> latest = calculator.getLatestVersion(englishLanguage);
+        LOG.info("Latest computed: '" + latest);
+
+        Entity.provider().forEachSemanticForComponent(TinkarTerm.ENGLISH_LANGUAGE.nid(), semanticEntity -> LOG.info(semanticEntity.toString() + "\n"));
+    }
+
 
 
 }

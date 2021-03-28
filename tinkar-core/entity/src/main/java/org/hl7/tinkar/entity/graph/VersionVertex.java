@@ -5,6 +5,13 @@ import org.hl7.tinkar.entity.EntityVersion;
 
 import java.util.UUID;
 
+/**
+ * Used when constructing a tree of versions to return from relative position calculator method
+ * getVersionGraphList. This is not the more general EntityVertex which is a property graph node.
+ * TODO consider if we need this class, or if the entty vertex can be used instead.
+ * Might require model data concepts specific to the version graphs of the relative position calculator.
+ * @param <V>
+ */
 public class VersionVertex<V extends EntityVersion> extends EntityVertex {
     private final V entityVersion;
 

@@ -45,7 +45,6 @@ import java.util.Arrays;
 
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.hl7.tinkar.common.id.PublicId;
-import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.entity.ConceptEntity;
 import org.hl7.tinkar.entity.Entity;
 
@@ -101,7 +100,7 @@ public interface StampPath
     *
     * @return a StampFilterImmutable representing the latest on this path, with no author constraints.
     */
-   default StampFilterImmutable getStampFilter() {
+   default StampFilterRecord getStampFilter() {
       return StampPathImmutable.getStampFilter(this);
    }
 }

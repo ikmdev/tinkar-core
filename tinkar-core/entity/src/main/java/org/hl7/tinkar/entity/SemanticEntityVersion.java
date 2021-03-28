@@ -9,6 +9,7 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.hl7.tinkar.common.id.*;
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.time.DateTimeUtil;
 import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.component.graph.DiGraph;
@@ -22,6 +23,7 @@ import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.dto.graph.DiGraphDTO;
 import org.hl7.tinkar.dto.graph.DiTreeDTO;
+import org.hl7.tinkar.terms.*;
 
 import java.time.Instant;
 
@@ -81,12 +83,18 @@ public class SemanticEntityVersion
                 return DiTreeEntity.make(readBuf, formatVersion);
            case DIGRAPH:
                 return DiGraphEntity.make(readBuf, formatVersion);
-            case CONCEPT:
-                return ConceptProxy.make(readBuf.readInt());
-            case SEMANTIC:
-                return SemanticProxy.make(readBuf.readInt());
-            case TYPE_PATTERN:
-                return TypePatternProxy.make(readBuf.readInt());
+            case CONCEPT: {
+                int nid = readBuf.readInt();
+                return ConceptProxy.make(nid);
+            }
+            case SEMANTIC: {
+                int nid = readBuf.readInt();
+                return SemanticProxy.make(nid);
+            }
+            case TYPE_PATTERN: {
+                int nid = readBuf.readInt();
+                return TypePatternProxy.make(nid);
+            }
             case IDENTIFIED_THING:
                 return EntityProxy.make(readBuf.readInt());
             case INSTANT:
@@ -204,7 +212,7 @@ public class SemanticEntityVersion
             writeBuf.writeInt(entity.nid);
         } else if (field instanceof EntityProxy proxy) {
             writeBuf.writeByte(FieldDataType.IDENTIFIED_THING.token);
-            writeBuf.writeInt(proxy.nid);
+            writeBuf.writeInt(proxy.nid());
         } else if (field instanceof Component component) {
             writeBuf.writeByte(FieldDataType.IDENTIFIED_THING.token);
             writeBuf.writeInt(Get.entityService().nidForComponent(component));
@@ -303,6 +311,7 @@ public class SemanticEntityVersion
         sb.append(" f: [");
         Entity typePattern = Entity.getFast(this.chronology().typePatternNid);
         if (typePattern instanceof TypePatternEntity typePatternEntity) {
+            sb.append("     \n");
             // TODO get proper version after relative position computer available.
             // Maybe put stamp coordinate on thread, or relative position computer on thread
             TypePatternEntityVersion typePatternEntityVersion =  typePatternEntity.versions.get(0);
@@ -313,13 +322,13 @@ public class SemanticEntityVersion
                 Object field = fields.get(i);
                 if (i < typePatternEntityVersion.fieldDefinitionForEntities.size()) {
                     FieldDefinitionForEntity fieldDefinition = typePatternEntityVersion.fieldDefinitionForEntities.get(i);
-                    sb.append(DefaultDescriptionText.get(fieldDefinition.meaningNid));
+                    sb.append(PrimitiveData.text(fieldDefinition.meaningNid));
                 } else {
                     sb.append("Size error @ " + i);
                 }
                 sb.append(": ");
                 if (field instanceof EntityFacade entity) {
-                    sb.append(DefaultDescriptionText.get(entity.nid()));
+                    sb.append(PrimitiveData.text(entity.nid()));
                 } else if (field instanceof String string) {
                     sb.append(string);
                 } else if (field instanceof Instant instant) {
@@ -332,7 +341,7 @@ public class SemanticEntityVersion
                             if (j > 0) {
                                 sb.append(", ");
                             }
-                            sb.append(DefaultDescriptionText.get(intIdList.get(j)));
+                            sb.append(PrimitiveData.text(intIdList.get(j)));
                         }
                     }
                 } else if (field instanceof IntIdSet intIdSet)  {
@@ -344,7 +353,7 @@ public class SemanticEntityVersion
                             if (j > 0) {
                                 sb.append(", ");
                             }
-                            sb.append(DefaultDescriptionText.get(idSetArray[j]));
+                            sb.append(PrimitiveData.text(idSetArray[j]));
                         }
                     }
                  } else {
@@ -353,7 +362,7 @@ public class SemanticEntityVersion
             }
         } else {
             sb.append("Bad typePattern: ");
-            sb.append(DefaultDescriptionText.get(typePattern.nid));
+            sb.append(PrimitiveData.text(typePattern.nid));
             sb.append("; ");
             for (int i = 0; i < fields.size(); i++) {
                 Object field = fields.get(i);
@@ -362,7 +371,7 @@ public class SemanticEntityVersion
                 }
                  if (field instanceof EntityFacade entity) {
                      sb.append("Entity: ");
-                     sb.append(DefaultDescriptionText.get(entity.nid()));
+                     sb.append(PrimitiveData.text(entity.nid()));
                 } else if (field instanceof String string) {
                      sb.append("String: ");
                      sb.append(string);
@@ -382,7 +391,7 @@ public class SemanticEntityVersion
                              if (j > 0) {
                                  sb.append(", ");
                              }
-                             sb.append(DefaultDescriptionText.get(intIdList.get(j)));
+                             sb.append(PrimitiveData.text(intIdList.get(j)));
                          }
                      }
                  } else if (field instanceof IntIdSet intIdSet)  {
@@ -396,7 +405,7 @@ public class SemanticEntityVersion
                              if (j > 0) {
                                  sb.append(", ");
                              }
-                             sb.append(DefaultDescriptionText.get(idSetArray[j]));
+                             sb.append(PrimitiveData.text(idSetArray[j]));
                          }
                      }
                  } else {

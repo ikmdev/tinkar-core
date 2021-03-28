@@ -2,16 +2,17 @@ package org.hl7.tinkar.entity;
 
 import io.activej.bytebuf.ByteBuf;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.component.*;
+import org.hl7.tinkar.terms.SemanticFacade;
 
 import java.util.Arrays;
-import java.util.Optional;
 
 public class SemanticEntity
         extends Entity<SemanticEntityVersion>
-        implements SemanticFacade {
+        implements SemanticFacade, SemanticChronology<SemanticEntityVersion> {
 
     protected int referencedComponentNid;
 
@@ -96,11 +97,11 @@ public class SemanticEntity
     @Override
     public String toString() {
         return "SemanticEntity{" +
-                "type: " + DefaultDescriptionText.get(typePatternNid) +
+                "type: " + PrimitiveData.text(typePatternNid) +
                 " <" +
                 nid +
                 "> " + Arrays.toString(publicId().asUuidArray()) +
-                ", rc: " + DefaultDescriptionText.get(referencedComponentNid) +
+                ", rc: " + PrimitiveData.text(referencedComponentNid) +
                 ", v: " + versions +
                 '}';
     }

@@ -16,22 +16,18 @@
     <dependencies>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
-            <artifactId>common</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.hl7.tinkar</groupId>
             <artifactId>collection</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-        <dependency>
+       <dependency>
             <groupId>org.hl7.tinkar</groupId>
-            <artifactId>component</artifactId>
+            <artifactId>entity</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
-            <artifactId>terms</artifactId>
+            <artifactId>record-builder-core</artifactId>
+            <scope>provided</scope>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>

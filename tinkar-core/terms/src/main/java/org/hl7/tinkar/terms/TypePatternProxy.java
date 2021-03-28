@@ -1,69 +1,32 @@
-package org.hl7.tinkar.entity;
+package org.hl7.tinkar.terms;
 
 import org.hl7.tinkar.common.id.PublicId;
-import org.hl7.tinkar.component.TypePattern;
-import org.hl7.tinkar.entity.internal.Get;
 
-import java.util.Arrays;
-import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.UUID;
 
-public class TypePatternProxy implements TypePatternFacade {
-    /**
-     * Universal identifiers for the concept proxied by the this object.
-     */
-    private UUID[] uuids;
+public class TypePatternProxy extends EntityProxy implements TypePatternFacade {
 
-    private int cachedNid = 0;
-
-    public TypePatternProxy(int nid) {
-        this.cachedNid = nid;
+    private TypePatternProxy(int nid) {
+        super(nid);
     }
 
-    public TypePatternProxy(UUID... uuids) {
-        this.uuids = uuids;
+    private TypePatternProxy(String name, UUID... uuids) {
+        super(name, uuids);
     }
 
-    @Override
-    public PublicId publicId() {
-        return Get.entityService().getEntityFast(nid()).publicId();
+    private TypePatternProxy(String name, PublicId publicId) {
+        super(name, publicId);
     }
 
-
-    @Override
-    public int nid() {
-        if (cachedNid == 0) {
-            try {
-                cachedNid = Get.entityService().nidForPublicId(uuids);
-            }
-            catch (NoSuchElementException e) {
-                //This it to help me bootstrap the system... normally, all metadata will be pre-assigned by the IdentifierProvider upon startup.
-                throw new NoSuchElementException();
-            }
-        }
-        return cachedNid;
+    public static TypePatternProxy make(String name, PublicId publicId) {
+        return new TypePatternProxy(name, publicId);
     }
 
     public static TypePatternProxy make(int nid) {
         return new TypePatternProxy(nid);
     }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("TypePatternProxy{");
-        Optional<String> stringOptional = DefaultDescriptionText.getOptional(nid());
-        if (stringOptional.isPresent()) {
-            sb.append(stringOptional.get());
-            sb.append(' ');
-        }
-        sb.append("<");
-        sb.append(nid());
-        sb.append("> ");
-        sb.append(Arrays.toString(publicId().asUuidArray()));
-        sb.append('}');
-        return sb.toString();
+    public static TypePatternProxy make(String name, UUID... uuids) {
+        return new TypePatternProxy(name, uuids);
     }
 
 }

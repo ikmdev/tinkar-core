@@ -19,7 +19,7 @@
     <dependencies>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
-            <artifactId>component</artifactId>
+            <artifactId>terms</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>

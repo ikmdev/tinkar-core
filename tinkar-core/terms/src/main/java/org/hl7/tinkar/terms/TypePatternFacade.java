@@ -1,4 +1,4 @@
-package org.hl7.tinkar.entity;
+package org.hl7.tinkar.terms;
 
 import org.hl7.tinkar.component.TypePattern;
 

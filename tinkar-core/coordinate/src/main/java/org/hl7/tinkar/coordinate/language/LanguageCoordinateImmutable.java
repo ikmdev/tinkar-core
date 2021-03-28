@@ -13,11 +13,11 @@ import org.hl7.tinkar.common.binary.DecoderInput;
 import org.hl7.tinkar.common.binary.Encoder;
 import org.hl7.tinkar.common.binary.EncoderOutput;
 import org.hl7.tinkar.common.service.CachingService;
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 import org.hl7.tinkar.coordinate.stamp.StampFilter;
-import org.hl7.tinkar.coordinate.stamp.StampFilterImmutable;
+import org.hl7.tinkar.coordinate.stamp.StampFilterRecord;
 import org.hl7.tinkar.entity.ConceptEntity;
-import org.hl7.tinkar.entity.DefaultDescriptionText;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.component.Concept;
 
@@ -37,11 +37,11 @@ public final class LanguageCoordinateImmutable implements LanguageCoordinate, Im
     final private ImmutableIntList dialectAssemblagePreferenceList;
     final private ImmutableIntList modulePreferenceListForLanguage;
 
-    private ConcurrentReferenceHashMap<StampFilterImmutable, Cache<Integer, String>> preferredCaches;
+    private ConcurrentReferenceHashMap<StampFilterRecord, Cache<Integer, String>> preferredCaches;
 
-    private ConcurrentReferenceHashMap<StampFilterImmutable, Cache<Integer, String>> fqnCaches;
+    private ConcurrentReferenceHashMap<StampFilterRecord, Cache<Integer, String>> fqnCaches;
 
-    private ConcurrentReferenceHashMap<StampFilterImmutable, Cache<Integer, String>> descriptionCaches;
+    private ConcurrentReferenceHashMap<StampFilterRecord, Cache<Integer, String>> descriptionCaches;
 
     private LanguageCoordinateImmutable(ConceptEntity languageConcept,
                                         ImmutableIntList descriptionTypePreferenceList,
@@ -349,9 +349,9 @@ public final class LanguageCoordinateImmutable implements LanguageCoordinate, Im
      */
     @Override
     public String toString() {
-        return "Language Coordinate{" + DefaultDescriptionText.get(this.languageConceptNid)
-                + ", dialect preference: " + DefaultDescriptionText.getList(this.dialectAssemblagePreferenceList.toArray())
-                + ", type preference: " + DefaultDescriptionText.getList(this.descriptionTypePreferenceList.toArray())
-                + ", module preference: " + DefaultDescriptionText.getList(this.modulePreferenceListForLanguage.toArray()) + '}';
+        return "Language Coordinate{" + PrimitiveData.text(this.languageConceptNid)
+                + ", dialect preference: " + PrimitiveData.textList(this.dialectAssemblagePreferenceList.toArray())
+                + ", type preference: " + PrimitiveData.textList(this.descriptionTypePreferenceList.toArray())
+                + ", module preference: " + PrimitiveData.textList(this.modulePreferenceListForLanguage.toArray()) + '}';
     }
 }

@@ -8,28 +8,28 @@ public interface StampFilterProxy extends StampFilter, StampFilterTemplateProxy 
     StampFilter getStampFilter();
 
     @Override
-    default int getPathNidForFilter() {
-        return getStampFilter().getPathNidForFilter();
+    default int pathNidForFilter() {
+        return getStampFilter().pathNidForFilter();
     }
 
     @Override
-    default StateSet getAllowedStates() {
-        return getStampFilter().getAllowedStates();
+    default StateSet allowedStates() {
+        return getStampFilter().allowedStates();
     }
 
     @Override
-    default ImmutableIntSet getModuleNids() {
-        return getStampFilter().getModuleNids();
+    default ImmutableIntSet moduleNids() {
+        return getStampFilter().moduleNids();
     }
 
     @Override
-    default ImmutableIntList getModulePriorityOrder() {
-        return getStampFilter().getModulePriorityOrder();
+    default ImmutableIntList modulePriorityOrder() {
+        return getStampFilter().modulePriorityOrder();
     }
 
     @Override
-    default StampPosition getStampPosition() {
-        return getStampFilter().getStampPosition();
+    default StampPosition stampPosition() {
+        return getStampFilter().stampPosition();
     }
 
     @Override
@@ -38,13 +38,13 @@ public interface StampFilterProxy extends StampFilter, StampFilterTemplateProxy 
     }
 
     @Override
-    default StampFilter makeCoordinateAnalog(StateSet stateSet) {
-        return getStampFilter().makeCoordinateAnalog(stateSet);
+    default StampFilter withAllowedStates(StateSet stateSet) {
+        return getStampFilter().withAllowedStates(stateSet);
     }
 
     @Override
-    default StampFilter makeCoordinateAnalog(long stampPositionTime) {
-        return getStampFilter().makeCoordinateAnalog(stampPositionTime);
+    default StampFilter withStampPositionTime(long stampPositionTime) {
+        return getStampFilter().withStampPositionTime(stampPositionTime);
     }
 
 }

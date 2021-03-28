@@ -57,18 +57,18 @@ public interface StateBasedAnalogMaker<T> {
     * @param states - the allowed status for the resulting analog
     * @return a new {@code <T>} with the specified allowed states.
     */
-   default T makeCoordinateAnalog(State... states) {
-      return makeCoordinateAnalog(StateSet.of(states));
+   default T withAllowedStates(State... states) {
+      return withAllowedStates(StateSet.of(states));
    }
    
    /**
     * @param stateSet - the allowed status for the resulting analog
     * @return new {@code <T>} with the specified allowed states.
     */
-   default T makeCoordinateAnalog(Set<State> stateSet) {
-      return makeCoordinateAnalog(StateSet.of(stateSet));
+   default T withAllowedStates(Set<State> stateSet) {
+      return withAllowedStates(StateSet.of(stateSet));
    }
 
-   T makeCoordinateAnalog(StateSet stateSet);
+   T withAllowedStates(StateSet stateSet);
 }
 

@@ -44,14 +44,14 @@ package org.hl7.tinkar.coordinate.manifold;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.text.NaturalOrder;
 import org.hl7.tinkar.common.util.time.DateTimeUtil;
-import org.hl7.tinkar.component.LatestVersion;
+import org.hl7.tinkar.entity.calculator.LatestVersion;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.coordinate.edit.Activity;
 import org.hl7.tinkar.coordinate.edit.EditCoordinate;
-import org.hl7.tinkar.entity.DefaultDescriptionText;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinate;
 import org.hl7.tinkar.coordinate.logic.LogicCoordinate;
 import org.hl7.tinkar.coordinate.logic.PremiseSet;
@@ -124,7 +124,7 @@ public interface ManifoldCoordinate {
     }
 
     default int getPathNidForFilter() {
-        return getViewStampFilter().getPathNidForFilter();
+        return getViewStampFilter().pathNidForFilter();
     }
 
     default int getPathNidForChanges() {
@@ -295,7 +295,7 @@ public interface ManifoldCoordinate {
     default String getPreferredDescriptionText(int conceptNid) {
         try {
             return getLanguageCoordinate().getRegularDescriptionText(conceptNid, getViewStampFilter())
-                    .orElse("No desc for: " + DefaultDescriptionText.get(conceptNid));
+                    .orElse("No desc for: " + PrimitiveData.text(conceptNid));
         } catch (NoSuchElementException ex) {
             return ex.getLocalizedMessage();
         }
@@ -307,7 +307,7 @@ public interface ManifoldCoordinate {
 
     default String getFullyQualifiedDescriptionText(int conceptNid) {
         return getLanguageCoordinate().getFullyQualifiedNameText(conceptNid, getViewStampFilter())
-                .orElse("No desc for: " + DefaultDescriptionText.get(conceptNid));
+                .orElse("No desc for: " + PrimitiveData.text(conceptNid));
     }
 
     default String getFullyQualifiedDescriptionText(ConceptEntity concept) {
@@ -532,7 +532,7 @@ public interface ManifoldCoordinate {
 
     default String getPathString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(this.getPreferredDescriptionText(getViewStampFilter().getPathNidForFilter()));
+        sb.append(this.getPreferredDescriptionText(getViewStampFilter().pathNidForFilter()));
         return sb.toString();
     }
 
@@ -572,7 +572,7 @@ public interface ManifoldCoordinate {
         switch (getCurrentActivity()) {
             case DEVELOPING:
             case MODULARIZING:
-                return getViewStampFilter().getPathNidForFilter();
+                return getViewStampFilter().pathNidForFilter();
             case PROMOTING:
                 return getEditCoordinate().getPromotionPathNid();
             case VIEWING:
@@ -596,7 +596,7 @@ public interface ManifoldCoordinate {
      * @return a new manifold coordinate
      */
     default ManifoldCoordinate makeCoordinateAnalog(StampFilter stampFilter) {
-        return ManifoldCoordinateImmutable.make(stampFilter, this.getLanguageCoordinate(), this.getVertexSort(), stampFilter.getAllowedStates(), this.getNavigationCoordinate(),
+        return ManifoldCoordinateImmutable.make(stampFilter, this.getLanguageCoordinate(), this.getVertexSort(), stampFilter.allowedStates(), this.getNavigationCoordinate(),
                 this.getLogicCoordinate(), this.getCurrentActivity(), this.getEditCoordinate());
     }
 

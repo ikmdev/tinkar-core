@@ -40,9 +40,9 @@
 package org.hl7.tinkar.coordinate.stamp;
 
 //~--- JDK imports ------------------------------------------------------------
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.time.DateTimeUtil;
 import org.hl7.tinkar.component.Concept;
-import org.hl7.tinkar.entity.DefaultDescriptionText;
 import org.hl7.tinkar.entity.Entity;
 
 import java.time.Instant;
@@ -110,7 +110,7 @@ public interface StampPosition
       final StringBuilder sb = new StringBuilder();
       sb.append(DateTimeUtil.format(time()));
       sb.append(" on ")
-              .append(DefaultDescriptionText.get(this.getPathForPositionNid()));
+              .append(PrimitiveData.text(this.getPathForPositionNid()));
       return sb.toString();
    }
 }

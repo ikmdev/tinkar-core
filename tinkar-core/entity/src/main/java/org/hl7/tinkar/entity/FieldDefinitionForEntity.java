@@ -2,6 +2,7 @@ package org.hl7.tinkar.entity;
 
 
 import io.activej.bytebuf.ByteBuf;
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.FieldDefinition;
 import org.hl7.tinkar.entity.internal.Get;
 
@@ -67,9 +68,9 @@ public class FieldDefinitionForEntity
     @Override
     public String toString() {
         return "FieldDef{t: " +
-                DefaultDescriptionText.get(dataTypeNid) + " p: " +
-                DefaultDescriptionText.get(purposeNid) + " m: " +
-                DefaultDescriptionText.get(meaningNid) +
+                PrimitiveData.text(dataTypeNid) + " p: " +
+                PrimitiveData.text(purposeNid) + " m: " +
+                PrimitiveData.text(meaningNid) +
                 '}';
     }
 }

@@ -17,6 +17,25 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+/**
+ Concerned that MVStore may not be "bullet proof" based on this exception. Will watch, and save for posterity.
+ *
+ Mar 28, 2021 9:41:28 AM org.hl7.tinkar.integration.provider.mvstore.MVStoreProviderTest teardownSuite
+ INFO: teardownSuite
+
+ java.lang.IllegalStateException: Chunk 77 not found [1.4.200/9]
+
+ at org.h2.mvstore.DataUtils.newIllegalStateException(DataUtils.java:950)
+ at org.h2.mvstore.MVStore.getChunk(MVStore.java:1230)
+ at org.h2.mvstore.MVStore.readBufferForPage(MVStore.java:1214)
+ at org.h2.mvstore.MVStore.readPage(MVStore.java:2209)
+ at org.h2.mvstore.MVMap.readPage(MVMap.java:672)
+ at org.h2.mvstore.Page$NonLeaf.getChildPage(Page.java:1043)
+ at org.h2.mvstore.Cursor.hasNext(Cursor.java:53)
+ at org.h2.mvstore.MVMap$2$1.hasNext(MVMap.java:802)
+ at java.base/java.util.concurrent.ConcurrentMap.forEach(ConcurrentMap.java:112)
+ at org.hl7.tinkar.provider.mvstore.MVStoreProvider.forEachSemanticNidForComponentOfType(MVStoreProvider.java:98)
+ */
 public class MVStoreProviderTest {
 
     private static Logger LOG = Logger.getLogger(MVStoreProviderTest.class.getName());

@@ -39,8 +39,8 @@
 
 package org.hl7.tinkar.coordinate.logic;
 
-import org.hl7.tinkar.component.LatestVersion;
-import org.hl7.tinkar.entity.DefaultDescriptionText;
+import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.entity.calculator.LatestVersion;
 import org.hl7.tinkar.coordinate.stamp.StampFilter;
 import org.hl7.tinkar.entity.ConceptEntity;
 import org.hl7.tinkar.entity.Entity;
@@ -68,8 +68,8 @@ public interface LogicCoordinate {
        ArrayList<UUID> uuidList = new ArrayList();
        Entity.provider().addSortedUuids(uuidList, getClassifierNid());
        Entity.provider().addSortedUuids(uuidList, getDescriptionLogicProfileNid());
-       Entity.provider().addSortedUuids(uuidList, getInferredAssemblageNid());
-       Entity.provider().addSortedUuids(uuidList, getStatedAssemblageNid());
+       Entity.provider().addSortedUuids(uuidList, getInferredSemanticTypeNid());
+       Entity.provider().addSortedUuids(uuidList, getStatedSemanticTypeNid());
        Entity.provider().addSortedUuids(uuidList, getConceptAssemblageNid());
        Entity.provider().addSortedUuids(uuidList, getDigraphIdentityNid());
        Entity.provider().addSortedUuids(uuidList, getRootNid());
@@ -102,10 +102,10 @@ public interface LogicCoordinate {
     * @return concept nid for the assemblage where the inferred logical form
     * of concept definition graphs are stored.
     */
-   int getInferredAssemblageNid();
+   int getInferredSemanticTypeNid();
 
    default Concept getInferredAssemblage() {
-      return Entity.getFast(getInferredAssemblageNid());
+      return Entity.getFast(getInferredSemanticTypeNid());
    }
    /**
     * Gets the stated assemblage nid.
@@ -113,10 +113,10 @@ public interface LogicCoordinate {
     * @return concept nid for the assemblage where the stated logical form
     * of concept definition graphs are stored.
     */
-   int getStatedAssemblageNid();
+   int getStatedSemanticTypeNid();
 
    default Concept getStatedAssemblage() {
-      return Entity.getFast(getStatedAssemblageNid());
+      return Entity.getFast(getStatedSemanticTypeNid());
    }
 
    /**
@@ -209,20 +209,20 @@ public interface LogicCoordinate {
    }
 
    default String toUserString() {
-      StringBuilder sb = new StringBuilder("   stated assemblage: ");
-      sb.append(DefaultDescriptionText.get(this.getStatedAssemblageNid()));
-      sb.append("\n   inferred assemblage: ");
-      sb.append(DefaultDescriptionText.get(this.getInferredAssemblageNid()));
+      StringBuilder sb = new StringBuilder("   stated semantic type: ");
+      sb.append(PrimitiveData.text(this.getStatedSemanticTypeNid()));
+      sb.append("\n   inferred semantic type: ");
+      sb.append(PrimitiveData.text(this.getInferredSemanticTypeNid()));
       sb.append("\n   profile: ");
-      sb.append(DefaultDescriptionText.get(this.getDescriptionLogicProfileNid()));
+      sb.append(PrimitiveData.text(this.getDescriptionLogicProfileNid()));
       sb.append("\n   classifier: ");
-      sb.append(DefaultDescriptionText.get(this.getClassifierNid()));
+      sb.append(PrimitiveData.text(this.getClassifierNid()));
       sb.append("\n   computed digraph: ");
-      sb.append(DefaultDescriptionText.get(this.getDigraphIdentityNid()));
-      sb.append("\n   concept assemblage: ");
-      sb.append(DefaultDescriptionText.get(this.getConceptAssemblageNid()));
+      sb.append(PrimitiveData.text(this.getDigraphIdentityNid()));
+      sb.append("\n   concept set: ");
+      sb.append(PrimitiveData.text(this.getConceptAssemblageNid()));
       sb.append("\n   root: ");
-      sb.append(DefaultDescriptionText.get(this.getRootNid()));
+      sb.append(PrimitiveData.text(this.getRootNid()));
 
       return sb.toString();
    }
@@ -237,6 +237,5 @@ public interface LogicCoordinate {
 //      return TinkarTerm.SOLOR_ROOT;
    }
    LogicCoordinateImmutable toLogicCoordinateImmutable();
-
 }
 

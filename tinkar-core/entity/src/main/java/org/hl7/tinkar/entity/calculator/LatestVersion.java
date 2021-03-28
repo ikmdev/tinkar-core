@@ -1,4 +1,4 @@
-package org.hl7.tinkar.component.calculator;
+package org.hl7.tinkar.entity.calculator;
 /*
  * Licensed under the Apache License, Version 2.0 (the "License");
  *
@@ -253,7 +253,7 @@ public final class LatestVersion<V> {
      */
     @Override
     public String toString() {
-        return "LatestVersion{" + this.value + ", contradictions=" + contradictions() + '}';
+        return "LatestVersion«" + this.value + ", contradictions: " + contradictions() + '»';
     }
 
     public String toStringOr(Function<V, String> toStringFunction, String ifMissing) {

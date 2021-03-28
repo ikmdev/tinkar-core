@@ -19,7 +19,7 @@ package org.hl7.tinkar.coordinate;
 import java.time.Instant;
 import java.util.Optional;
 
-import org.hl7.tinkar.entity.DefaultDescriptionText;
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.coordinate.stamp.State;
 
 /**
@@ -168,11 +168,11 @@ public class WriteCoordinateImpl implements WriteCoordinate
 			sb.append(Instant.ofEpochMilli(getTime()));
 		}
 		sb.append(", a:");
-		sb.append(DefaultDescriptionText.get(getAuthorNid()));
+		sb.append(PrimitiveData.text(getAuthorNid()));
 		sb.append(", m:");
-		sb.append(DefaultDescriptionText.get(getModuleNid()));
+		sb.append(PrimitiveData.text(getModuleNid()));
 		sb.append(", p: ");
-		sb.append(DefaultDescriptionText.get(getPathNid()));
+		sb.append(PrimitiveData.text(getPathNid()));
 		sb.append(", ");
 		//sb.append(getTransaction().isEmpty() ? "no transaction" : getTransaction().get().toString());
 		sb.append('}');

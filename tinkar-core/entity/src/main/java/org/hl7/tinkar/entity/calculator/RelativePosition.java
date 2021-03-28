@@ -1,4 +1,4 @@
-package org.hl7.tinkar.coordinate.stamp;
+package org.hl7.tinkar.entity.calculator;
 
 public enum RelativePosition {
     /** The before. */

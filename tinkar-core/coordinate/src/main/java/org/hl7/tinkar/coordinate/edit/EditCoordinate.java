@@ -39,8 +39,8 @@
 
 package org.hl7.tinkar.coordinate.edit;
 
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.Concept;
-import org.hl7.tinkar.entity.DefaultDescriptionText;
 import org.hl7.tinkar.entity.Entity;
 
 import java.util.ArrayList;
@@ -130,10 +130,10 @@ public interface EditCoordinate {
 
    default String toUserString() {
       StringBuilder sb = new StringBuilder();
-      sb.append("author: ").append(DefaultDescriptionText.get(getAuthorNidForChanges())).append("\n");
-      sb.append("default module: ").append(DefaultDescriptionText.get(getDefaultModuleNid())).append("\n");
-      sb.append("destination module: ").append(DefaultDescriptionText.get(getDestinationModuleNid())).append("\n");
-      sb.append("promotion path: ").append(DefaultDescriptionText.get(getPromotionPathNid())).append("\n");
+      sb.append("author: ").append(PrimitiveData.text(getAuthorNidForChanges())).append("\n");
+      sb.append("default module: ").append(PrimitiveData.text(getDefaultModuleNid())).append("\n");
+      sb.append("destination module: ").append(PrimitiveData.text(getDestinationModuleNid())).append("\n");
+      sb.append("promotion path: ").append(PrimitiveData.text(getPromotionPathNid())).append("\n");
       return sb.toString();
    }
    

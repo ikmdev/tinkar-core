@@ -117,22 +117,22 @@ public class StampFilterTemplateImmutable  implements StampFilterTemplate, Immut
     }
 
     @Override
-    public StateSet getAllowedStates() {
+    public StateSet allowedStates() {
         return this.allowedStates;
     }
 
     @Override
-    public ImmutableIntSet getModuleNids() {
+    public ImmutableIntSet moduleNids() {
         return this.moduleNids;
     }
 
     @Override
-    public ImmutableIntSet getExcludedModuleNids() {
+    public ImmutableIntSet excludedModuleNids() {
         return this.excludedModuleNids;
     }
 
     @Override
-    public ImmutableIntList getModulePriorityOrder() {
+    public ImmutableIntList modulePriorityOrder() {
         return this.modulePreferenceOrder;
     }
 
@@ -150,17 +150,17 @@ public class StampFilterTemplateImmutable  implements StampFilterTemplate, Immut
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof StampFilterTemplate that)) return false;
-        return getAllowedStates().equals(that.getAllowedStates()) &&
-                getModuleNids().equals(that.getModuleNids()) &&
-                getExcludedModuleNids().equals(that.getExcludedModuleNids()) &&
-                getModulePriorityOrder().equals(that.getModulePriorityOrder());
+        return allowedStates().equals(that.allowedStates()) &&
+                moduleNids().equals(that.moduleNids()) &&
+                excludedModuleNids().equals(that.excludedModuleNids()) &&
+                modulePriorityOrder().equals(that.modulePriorityOrder());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getAllowedStates(),
-                getModuleNids(),
-                getExcludedModuleNids(),
-                getModulePriorityOrder());
+        return Objects.hash(allowedStates(),
+                moduleNids(),
+                excludedModuleNids(),
+                modulePriorityOrder());
     }
 }

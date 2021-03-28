@@ -6,8 +6,9 @@ import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.time.DateTimeUtil;
 import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.component.Stamp;
-import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.dto.StampDTO;
+import org.hl7.tinkar.terms.ConceptFacade;
+import org.hl7.tinkar.terms.ConceptProxy;
 
 public class StampEntityVersion extends EntityVersion implements Stamp {
 
@@ -52,7 +53,7 @@ public class StampEntityVersion extends EntityVersion implements Stamp {
 
     @Override
     public ConceptFacade state() {
-        return new ConceptProxy(statusNid);
+        return ConceptProxy.make(statusNid);
     }
 
     @Override
@@ -62,17 +63,17 @@ public class StampEntityVersion extends EntityVersion implements Stamp {
 
     @Override
     public ConceptFacade author() {
-        return new ConceptProxy(authorNid);
+        return ConceptProxy.make(authorNid);
     }
 
     @Override
     public ConceptFacade module() {
-        return new ConceptProxy(moduleNid);
+        return ConceptProxy.make(moduleNid);
     }
 
     @Override
     public ConceptFacade path() {
-        return new ConceptProxy(pathNid);
+        return ConceptProxy.make(pathNid);
     }
 
     @Override
@@ -82,11 +83,11 @@ public class StampEntityVersion extends EntityVersion implements Stamp {
 
 
     public String describe() {
-        return "s:" + DefaultDescriptionText.get(statusNid) +
+        return "s:" + PrimitiveData.text(statusNid) +
                 " t:" + DateTimeUtil.format(time()) +
-                " a:" + DefaultDescriptionText.get(authorNid) +
-                " m:" + DefaultDescriptionText.get(moduleNid) +
-                " p:" + DefaultDescriptionText.get(pathNid);
+                " a:" + PrimitiveData.text(authorNid) +
+                " m:" + PrimitiveData.text(moduleNid) +
+                " p:" + PrimitiveData.text(pathNid);
     }
 
     @Override

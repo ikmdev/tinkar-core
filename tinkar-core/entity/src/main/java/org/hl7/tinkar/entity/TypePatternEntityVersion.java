@@ -6,6 +6,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.common.id.IntIdList;
 import org.hl7.tinkar.common.id.IntIdSet;
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.time.DateTimeUtil;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.component.FieldDefinition;
@@ -101,9 +102,9 @@ public class TypePatternEntityVersion
         sb.append(Entity.getStamp(stampNid).describe());
 
         sb.append(" rcp: ");
-        sb.append(DefaultDescriptionText.get(referencedComponentPurposeNid));
+        sb.append(PrimitiveData.text(referencedComponentPurposeNid));
         sb.append(" rcm: ");
-        sb.append(DefaultDescriptionText.get(referencedComponentMeaningNid));
+        sb.append(PrimitiveData.text(referencedComponentMeaningNid));
         sb.append(" f: [");
              // TODO get proper version after relative position computer available.
             // Maybe put stamp coordinate on thread, or relative position computer on thread

@@ -10,8 +10,8 @@ import org.hl7.tinkar.common.binary.DecoderInput;
 import org.hl7.tinkar.common.binary.Encoder;
 import org.hl7.tinkar.common.binary.EncoderOutput;
 import org.hl7.tinkar.common.service.CachingService;
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.Concept;
-import org.hl7.tinkar.entity.DefaultDescriptionText;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 import org.hl7.tinkar.entity.ConceptEntity;
 import org.hl7.tinkar.entity.Entity;
@@ -95,8 +95,8 @@ public final class LogicCoordinateImmutable implements LogicCoordinate, Immutabl
         if (!(o instanceof LogicCoordinate that)) return false;
         return getClassifierNid() == that.getClassifierNid() &&
                 getDescriptionLogicProfileNid() == that.getDescriptionLogicProfileNid() &&
-                getInferredAssemblageNid() == that.getInferredAssemblageNid() &&
-                getStatedAssemblageNid() == that.getStatedAssemblageNid() &&
+                getInferredSemanticTypeNid() == that.getInferredSemanticTypeNid() &&
+                getStatedSemanticTypeNid() == that.getStatedSemanticTypeNid() &&
                 getConceptAssemblageNid() == that.getConceptAssemblageNid() &&
                 getDigraphIdentityNid() == that.getDigraphIdentityNid() &&
                 getRootNid() == that.getRootNid();
@@ -104,8 +104,8 @@ public final class LogicCoordinateImmutable implements LogicCoordinate, Immutabl
 
     @Override
     public int hashCode() {
-        return Objects.hash(getClassifierNid(), getDescriptionLogicProfileNid(), getInferredAssemblageNid(),
-                getStatedAssemblageNid(), getConceptAssemblageNid(), getDigraphIdentityNid(), getRootNid());
+        return Objects.hash(getClassifierNid(), getDescriptionLogicProfileNid(), getInferredSemanticTypeNid(),
+                getStatedSemanticTypeNid(), getConceptAssemblageNid(), getDigraphIdentityNid(), getRootNid());
     }
 
     public static LogicCoordinateImmutable make(int classifierNid,
@@ -157,12 +157,12 @@ public final class LogicCoordinateImmutable implements LogicCoordinate, Immutabl
     }
 
     @Override
-    public int getInferredAssemblageNid() {
+    public int getInferredSemanticTypeNid() {
         return this.inferredAssemblageNid;
     }
 
     @Override
-    public int getStatedAssemblageNid() {
+    public int getStatedSemanticTypeNid() {
         return this.statedAssemblageNid;
     }
 
@@ -189,13 +189,13 @@ public final class LogicCoordinateImmutable implements LogicCoordinate, Immutabl
     @Override
     public String toString() {
         return "LogicCoordinateImpl{" +
-                "stated axioms:" + DefaultDescriptionText.get(this.statedAssemblageNid) + "<" + this.statedAssemblageNid + ">,\n" +
-                "inferred axioms:" + DefaultDescriptionText.get(this.inferredAssemblageNid) + "<" + this.inferredAssemblageNid + ">, \n" +
-                "profile:" + DefaultDescriptionText.get(this.descriptionLogicProfileNid) + "<" + this.descriptionLogicProfileNid + ">, \n" +
-                "classifier:" + DefaultDescriptionText.get(this.classifierNid) + "<" + this.classifierNid + ">, \n" +
-                "concepts:" + DefaultDescriptionText.get(this.conceptAssemblageNid) + "<" + this.conceptAssemblageNid + ">, \n" +
-                "digraph identity:" + DefaultDescriptionText.get(this.digraphIdentityNid) + "<" + this.digraphIdentityNid + ">, \n" +
-                "root:" + DefaultDescriptionText.get(this.rootNid) + "<" + this.rootNid + ">,\n" +
+                "stated axioms:" + PrimitiveData.text(this.statedAssemblageNid) + "<" + this.statedAssemblageNid + ">,\n" +
+                "inferred axioms:" + PrimitiveData.text(this.inferredAssemblageNid) + "<" + this.inferredAssemblageNid + ">, \n" +
+                "profile:" + PrimitiveData.text(this.descriptionLogicProfileNid) + "<" + this.descriptionLogicProfileNid + ">, \n" +
+                "classifier:" + PrimitiveData.text(this.classifierNid) + "<" + this.classifierNid + ">, \n" +
+                "concepts:" + PrimitiveData.text(this.conceptAssemblageNid) + "<" + this.conceptAssemblageNid + ">, \n" +
+                "digraph identity:" + PrimitiveData.text(this.digraphIdentityNid) + "<" + this.digraphIdentityNid + ">, \n" +
+                "root:" + PrimitiveData.text(this.rootNid) + "<" + this.rootNid + ">,\n" +
         "}";
     }
     @Override

@@ -3,9 +3,7 @@ package org.hl7.tinkar.entity;
 import io.activej.bytebuf.ByteBuf;
 import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.component.TypePatternChronology;
-
-import java.util.Arrays;
-import java.util.Optional;
+import org.hl7.tinkar.terms.TypePatternFacade;
 
 public class TypePatternEntity
         extends Entity<TypePatternEntityVersion>
@@ -58,26 +56,6 @@ public class TypePatternEntity
         TypePatternEntity definitionEntity = new TypePatternEntity();
         definitionEntity.fill(other);
         return definitionEntity;
-    }
-
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("TypePatternEntity{");
-        Optional<String> stringOptional = DefaultDescriptionText.getOptional(this.nid);
-        if (stringOptional.isPresent()) {
-            sb.append(stringOptional.get());
-            sb.append(' ');
-        }
-        sb.append("<");
-        sb.append(nid);
-        sb.append("> ");
-        sb.append(Arrays.toString(publicId().asUuidArray()));
-        sb.append(", v: ");
-        sb.append(versions);
-        sb.append('}');
-        return sb.toString();
     }
 
 }

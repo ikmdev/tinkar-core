@@ -1,8 +1,5 @@
 package org.hl7.tinkar.integration;
 
-import org.hl7.tinkar.common.service.ServiceKeys;
-import org.hl7.tinkar.common.service.ServiceProperties;
-
 import java.io.File;
 
 public class TestConstants {

@@ -3,6 +3,7 @@ package org.hl7.tinkar.entity;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import org.hl7.tinkar.common.id.PublicId;
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.time.DateTimeUtil;
 import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.entity.internal.Get;
@@ -120,11 +121,11 @@ public class StampEntity extends Entity<StampEntityVersion>
     }
 
     public String describe() {
-        return "s:" + DefaultDescriptionText.get(stateNid()) +
+        return "s:" + PrimitiveData.text(stateNid()) +
                 " t:" + DateTimeUtil.format(time()) +
-                " a:" + DefaultDescriptionText.get(authorNid()) +
-                " m:" + DefaultDescriptionText.get(moduleNid()) +
-                " p:" + DefaultDescriptionText.get(pathNid());
+                " a:" + PrimitiveData.text(authorNid()) +
+                " m:" + PrimitiveData.text(moduleNid()) +
+                " p:" + PrimitiveData.text(pathNid());
     }
 
     @Override

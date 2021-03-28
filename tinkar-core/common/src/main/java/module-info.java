@@ -4,10 +4,7 @@
  * and open the template in the editor.
  */
 
-import org.hl7.tinkar.common.service.CachingService;
-import org.hl7.tinkar.common.service.DataServiceController;
-import org.hl7.tinkar.common.service.PrimitiveData;
-import org.hl7.tinkar.common.service.ServiceProperties;
+import org.hl7.tinkar.common.service.*;
 
 @SuppressWarnings("module")
         // 7 in HL7 is not a version reference
@@ -29,6 +26,8 @@ module org.hl7.tinkar.common {
 
     provides CachingService with ServiceProperties, PrimitiveData;
 
+    uses DefaultDescriptionForNidService;
+    uses PublicIdService;
     uses CachingService;
     uses DataServiceController;
 }

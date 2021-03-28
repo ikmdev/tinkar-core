@@ -6,12 +6,15 @@ import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.common.id.PublicId;
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.Chronology;
 import org.hl7.tinkar.component.Component;
 import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.component.FieldDataType;
+import org.hl7.tinkar.terms.EntityFacade;
 
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -32,15 +35,21 @@ public abstract class Entity<T extends EntityVersion> extends PublicIdForEntity
         return Get.entityService().getEntity(nid);
     }
 
+    public static <T extends Entity<V>, V extends EntityVersion> Optional<T> get(EntityFacade facade) {
+        return Get.entityService().getEntity(facade.nid());
+    }
+
     public static <T extends Entity<V>, V extends EntityVersion> T getFast(int nid) {
         return Get.entityService().getEntityFast(nid);
+    }
+
+    public static <T extends Entity<V>, V extends EntityVersion> T getFast(EntityFacade facade) {
+        return Get.entityService().getEntityFast(facade.nid());
     }
 
     public static StampEntity getStamp(int nid) {
         return Get.entityService().getStampFast(nid);
     }
-
-
 
     protected int nid;
     protected final MutableList<T> versions = Lists.mutable.empty();
@@ -180,5 +189,26 @@ public abstract class Entity<T extends EntityVersion> extends PublicIdForEntity
     public int nid() {
         return nid;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(this.getClass().getSimpleName());
+        sb.append("{");
+        Optional<String> stringOptional = PrimitiveData.textOptional(this.nid);
+        if (stringOptional.isPresent()) {
+            sb.append(stringOptional.get());
+            sb.append(' ');
+        }
+        sb.append("<");
+        sb.append(nid);
+        sb.append("> ");
+        sb.append(Arrays.toString(publicId().asUuidArray()));
+        sb.append(", v: ");
+        sb.append(versions);
+        sb.append('}');
+        return sb.toString();
+    }
+
 
 }

@@ -104,6 +104,19 @@ public class DiTreeEntity<V extends EntityVertex> extends DiGraphAbstract<V> imp
         }
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(this.getClass().getSimpleName()).append("{\n");
+
+        for (V vertex: vertexMap) {
+            sb.append(vertex.toGraphFormatString("    "));
+        }
+        sb.append('}');
+
+        return sb.toString();
+    }
+
     public static <V extends EntityVertex> Builder<V> builder() {
         return new Builder();
     }

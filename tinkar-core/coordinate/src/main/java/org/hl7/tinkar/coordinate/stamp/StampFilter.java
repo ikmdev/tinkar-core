@@ -6,13 +6,13 @@ import java.time.Instant;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
-import org.hl7.tinkar.component.LatestVersion;
+import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.entity.calculator.LatestVersion;
 import org.hl7.tinkar.component.Version;
-import org.hl7.tinkar.entity.DefaultDescriptionText;
+import org.hl7.tinkar.terms.ConceptFacade;
 import org.hl7.tinkar.coordinate.TimeBasedAnalogMaker;
 import org.hl7.tinkar.entity.ConceptEntity;
 import org.hl7.tinkar.entity.Entity;
-import org.hl7.tinkar.component.Concept;
 
 public interface StampFilter extends StampFilterTemplate, TimeBasedAnalogMaker<StampFilter>, StateBasedAnalogMaker<StampFilter> {
 
@@ -23,39 +23,37 @@ public interface StampFilter extends StampFilterTemplate, TimeBasedAnalogMaker<S
      */
     default UUID getStampFilterUuid() {
         ArrayList<UUID> uuidList = new ArrayList<>();
-        for (State state: getAllowedStates().toEnumSet()) {
+        for (State state: allowedStates().toEnumSet()) {
             Entity.provider().addSortedUuids(uuidList, state.nid());
         }
-        Entity.provider().addSortedUuids(uuidList, getStampPosition().getPathForPositionNid());
-        Entity.provider().addSortedUuids(uuidList, getModuleNids().toArray());
-        Entity.provider().addSortedUuids(uuidList, getModulePriorityOrder().toArray());
+        Entity.provider().addSortedUuids(uuidList, stampPosition().getPathForPositionNid());
+        Entity.provider().addSortedUuids(uuidList, moduleNids().toArray());
+        Entity.provider().addSortedUuids(uuidList, modulePriorityOrder().toArray());
         StringBuilder b = new StringBuilder();
         b.append(uuidList.toString());
-        b.append(getStampPosition().time());
+        b.append(stampPosition().time());
         return UUID.nameUUIDFromBytes(b.toString().getBytes());
     }
 
-    int getPathNidForFilter();
+    int pathNidForFilter();
 
-    default Concept getPathConceptForFilter() {
-        return Entity.getFast(getPathNidForFilter());
+    default ConceptFacade pathForFilter() {
+        return Entity.getFast(pathNidForFilter());
     }
 
     /**
      * Create a new Filter ImmutableCoordinate identical to the this coordinate, but with the modules modified.
      * @param modules the new modules list.
-     * @param add - true, if the modules parameter should be appended to the existing modules, false if the 
-     * supplied modules should replace the existing modules
      * @return the new path coordinate
      */
-    StampFilter makeModuleAnalog(Collection<ConceptEntity> modules, boolean add);
+    StampFilter withModules(Collection<ConceptEntity> modules);
 
     /**
      * Create a new Filter ImmutableCoordinate identical to the this coordinate, but with the path for position replaced.
      * @param pathForPosition the new path for position
      * @return the new path coordinate
      */
-    StampFilter makePathAnalog(ConceptEntity pathForPosition);
+    StampFilter withPath(ConceptFacade pathForPosition);
 
     /**
      * Gets the stamp position.
@@ -64,7 +62,7 @@ public interface StampFilter extends StampFilterTemplate, TimeBasedAnalogMaker<S
      * compute what stamped objects versions are the latest with respect to this
      * position.
      */
-    StampPosition getStampPosition();
+    StampPosition stampPosition();
 
     /**
      * @return multi-line string output suitable for presentation to user, as opposed to use in debugging.
@@ -73,51 +71,50 @@ public interface StampFilter extends StampFilterTemplate, TimeBasedAnalogMaker<S
     default String toUserString() {
         final StringBuilder builder = new StringBuilder();
 
-        builder.append("   allowed states: ");
-        builder.append(this.getAllowedStates().toUserString());
+        builder.append("allowed states: ");
+        builder.append(this.allowedStates().toUserString());
 
         builder.append("\n   position: ")
-                .append(this.getStampPosition().toUserString())
+                .append(this.stampPosition().toUserString())
                 .append("\n   modules: ");
 
-        if (this.getModuleNids().isEmpty()) {
+        if (this.moduleNids().isEmpty()) {
             builder.append("all ");
         } else {
-            builder.append(DefaultDescriptionText.getList(this.getModuleNids().toArray()))
+            builder.append(PrimitiveData.textList(this.moduleNids().toArray()))
                     .append(" ");
         }
 
         builder.append("\n   excluded modules: ");
 
-        if (this.getExcludedModuleNids().isEmpty()) {
+        if (this.excludedModuleNids().isEmpty()) {
             builder.append("none ");
         } else {
-            builder.append(DefaultDescriptionText.getList(this.getExcludedModuleNids().toArray()))
+            builder.append(PrimitiveData.textList(this.excludedModuleNids().toArray()))
                     .append(" ");
         }
 
         builder.append("\n   module priorities: ");
-        if (this.getModulePriorityOrder().isEmpty()) {
-            builder.append("none ");
+        if (this.modulePriorityOrder().isEmpty()) {
+            builder.append("none");
         } else {
-            builder.append(DefaultDescriptionText.getList(this.getModulePriorityOrder().toArray()))
-                    .append(" ");
+            builder.append(PrimitiveData.textList(this.modulePriorityOrder().toArray()));
         }
 
         return builder.toString();
     }
 
-    default StampFilterImmutable toStampFilterImmutable() {
-        return StampFilterImmutable.make(getAllowedStates(),
-                getStampPosition());
+    default StampFilterRecord toStampFilterImmutable() {
+        return StampFilterRecord.make(allowedStates(),
+                stampPosition());
     }
 
-    default long getTime() {
-        return getStampPosition().time();
+    default long time() {
+        return stampPosition().time();
     }
 
     default Instant getTimeAsInstant() {
-        return getStampPosition().instant();
+        return stampPosition().instant();
     }
 
     RelativePositionCalculator getRelativePositionCalculator();

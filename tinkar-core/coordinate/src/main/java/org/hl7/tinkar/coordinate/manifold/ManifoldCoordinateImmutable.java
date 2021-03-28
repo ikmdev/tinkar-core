@@ -26,7 +26,7 @@ import org.hl7.tinkar.coordinate.navigation.NavigationCoordinateImmutable;
 import org.hl7.tinkar.coordinate.navigation.VertexSort;
 import org.hl7.tinkar.coordinate.navigation.VertexSortNone;
 import org.hl7.tinkar.coordinate.stamp.StampFilter;
-import org.hl7.tinkar.coordinate.stamp.StampFilterImmutable;
+import org.hl7.tinkar.coordinate.stamp.StampFilterRecord;
 import org.hl7.tinkar.coordinate.stamp.StateSet;
 
 //This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
@@ -40,10 +40,10 @@ public abstract class ManifoldCoordinateImmutable implements ManifoldCoordinate,
     private static final int marshalVersion = 6;
 
 
-    private final StampFilterImmutable viewStampFilter;
+    private final StampFilterRecord viewStampFilter;
     private final LanguageCoordinateImmutable languageCoordinate;
     private final VertexSort vertexSort;
-    private final StampFilterImmutable vertexStampFilter;
+    private final StampFilterRecord vertexStampFilter;
     private final NavigationCoordinateImmutable navigationCoordinateImmutable;
     private final LogicCoordinateImmutable logicCoordinateImmutable;
     private final Activity activity;
@@ -73,7 +73,7 @@ public abstract class ManifoldCoordinateImmutable implements ManifoldCoordinate,
      * @see #make(StampFilter, LanguageCoordinate, VertexSort, StateSet, NavigationCoordinate, LogicCoordinate, Activity, EditCoordinate)
      * for defaults on null values 
      */
-    private ManifoldCoordinateImmutable(StampFilterImmutable viewStampFilter,
+    private ManifoldCoordinateImmutable(StampFilterRecord viewStampFilter,
                                         LanguageCoordinateImmutable languageCoordinate,
                                         VertexSort vertexSort,
                                         StateSet vertexStateSet,
@@ -286,10 +286,10 @@ public abstract class ManifoldCoordinateImmutable implements ManifoldCoordinate,
     public PremiseSet getPremiseTypes() {
         if (this.premiseTypes == null) {
             EnumSet<PremiseType> premiseTypeEnumSet = EnumSet.noneOf(PremiseType.class);
-            if (getNavigationCoordinate().getNavigationConceptNids().contains(getLogicCoordinate().getInferredAssemblageNid())) {
+            if (getNavigationCoordinate().getNavigationConceptNids().contains(getLogicCoordinate().getInferredSemanticTypeNid())) {
                 premiseTypeEnumSet.add(PremiseType.INFERRED);
             }
-            if (getNavigationCoordinate().getNavigationConceptNids().contains(getLogicCoordinate().getStatedAssemblageNid())) {
+            if (getNavigationCoordinate().getNavigationConceptNids().contains(getLogicCoordinate().getStatedSemanticTypeNid())) {
                 premiseTypeEnumSet.add(PremiseType.STATED);
             }
             this.premiseTypes = PremiseSet.of(premiseTypeEnumSet);
@@ -309,11 +309,11 @@ public abstract class ManifoldCoordinateImmutable implements ManifoldCoordinate,
 
     @Override
     public StateSet getVertexStatusSet() {
-        return this.vertexStampFilter.getAllowedStates();
+        return this.vertexStampFilter.allowedStates();
     }
 
     @Override
-    public StampFilterImmutable getViewStampFilter() {
+    public StampFilterRecord getViewStampFilter() {
         return this.viewStampFilter;
     }
 

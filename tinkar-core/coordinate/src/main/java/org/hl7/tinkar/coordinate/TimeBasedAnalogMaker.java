@@ -61,7 +61,7 @@ public interface TimeBasedAnalogMaker<T> {
     *  @return a new {@code <T>}  with the specified stamp position time.
     */
    default T makeAnalog(CharSequence dateTimeText) {
-      return makeCoordinateAnalog(LocalDateTime.parse(dateTimeText)
+      return withStampPositionTime(LocalDateTime.parse(dateTimeText)
                                      .toEpochSecond(ZoneOffset.UTC) * 1000);
    }
 
@@ -71,7 +71,7 @@ public interface TimeBasedAnalogMaker<T> {
     * @param stampPositionTime the time of the stamp position for the analog
     * @return a new {@code <T>}  with the specified stamp position time.
     */
-   T makeCoordinateAnalog(long stampPositionTime);
+   T withStampPositionTime(long stampPositionTime);
 
    /**
     * Analog: A structural derivative that often differs by a single element.
@@ -79,7 +79,7 @@ public interface TimeBasedAnalogMaker<T> {
     * @return a new {@code <T>}  with the specified stamp position time.
     */
    default T makeAnalog(TemporalAccessor temporalSpecification) {
-      return makeCoordinateAnalog(LocalDateTime.from(temporalSpecification)
+      return withStampPositionTime(LocalDateTime.from(temporalSpecification)
                                      .toEpochSecond(ZoneOffset.UTC) * 1000);
    }
 
@@ -94,7 +94,7 @@ public interface TimeBasedAnalogMaker<T> {
     * @return a new {@code <T>}  with the specified stamp position time.
     */
    default T makeAnalog(int year, int month, int dayOfMonth, int hour, int minute, int second) {
-      return makeCoordinateAnalog(LocalDateTime.of(year, month, dayOfMonth, hour, minute, second)
+      return withStampPositionTime(LocalDateTime.of(year, month, dayOfMonth, hour, minute, second)
                                      .toEpochSecond(ZoneOffset.UTC) * 1000);
    }
 }

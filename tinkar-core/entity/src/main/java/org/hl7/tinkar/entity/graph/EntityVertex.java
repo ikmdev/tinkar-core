@@ -9,12 +9,13 @@ import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.impl.list.mutable.primitive.ByteArrayList;
 import org.eclipse.collections.impl.map.mutable.primitive.IntObjectHashMap;
 import org.hl7.tinkar.common.id.VertexId;
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.component.graph.Vertex;
-import org.hl7.tinkar.dto.StampDTO;
-import org.hl7.tinkar.dto.StampDTOBuilder;
+import org.hl7.tinkar.dto.*;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.entity.internal.Get;
+import org.hl7.tinkar.terms.*;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -29,13 +30,62 @@ public class EntityVertex implements Vertex, VertexId {
     protected int meaningNid;
     private ImmutableIntObjectMap<Object> properties;
 
-    protected EntityVertex() {}
+    protected EntityVertex() {
+    }
+    public String toGraphFormatString(String prepend) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(prepend);
+        sb.append("[").append(vertexIndex).append("] ");
+
+        if (properties.containsKey(meaningNid))  {
+            Object property = properties.get(meaningNid);
+            if (property instanceof ConceptFacade conceptFacade) {
+                sb.append(PrimitiveData.text(conceptFacade.nid()));
+            } else if (property instanceof TypePatternFacade typePatternFacade) {
+                sb.append(PrimitiveData.text(typePatternFacade.nid()));
+            } {
+                sb.append(property.toString());
+            }
+
+        } else {
+            sb.append(PrimitiveData.text(meaningNid));
+        }
+
+        sb.append("\n");
+        int[] propertyKeys = properties.keySet().toArray();
+        for (int i = 0; i < propertyKeys.length; i++) {
+            sb.append(prepend);
+            sb.append("    •").append(PrimitiveData.text(meaningNid));
+            sb.append(": ");
+            Object value = properties.get(propertyKeys[i]);
+            if (value instanceof ConceptFacade conceptFacade) {
+                sb.append(PrimitiveData.text(conceptFacade.nid()));
+            } else if (value instanceof TypePatternFacade typePatternFacade) {
+                sb.append(PrimitiveData.text(typePatternFacade.nid()));
+            } else {
+                sb.append(value.toString());
+            }
+            sb.append("\n");
+        }
+        return sb.toString();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("EntityVertex{").append(vertexId().asUuid());
+        sb.append(", index: ").append(vertexIndex);
+        sb.append(", meaning: ").append(PrimitiveData.text(meaningNid));
+        sb.append(", properties=").append(properties).append('}');
+
+        return sb.toString();
+    }
 
     public final byte[] getBytes() {
         int bufSize = DEFAULT_SIZE;
         AtomicReference<ByteBuf> byteBufRef =
                 new AtomicReference<>(ByteBufPool.allocate(bufSize));
-         while (true) {
+        while (true) {
             try {
                 ByteBuf byteBuf = byteBufRef.get();
                 byteBuf.writeLong(mostSignificantBits);
@@ -57,7 +107,7 @@ public class EntityVertex implements Vertex, VertexId {
                 bufSize = bufSize + DEFAULT_SIZE;
                 System.out.println("Growing Vertex size: " + bufSize);
                 byteBufRef.set(ByteBufPool.allocate(bufSize));
-           }
+            }
         }
     }
 
@@ -83,21 +133,33 @@ public class EntityVertex implements Vertex, VertexId {
     }
 
     public static <T extends Object> T abstractObject(Object object) {
-        if (object instanceof Concept) {
+        if (object instanceof Concept concept) {
             if (object instanceof ConceptProxy) {
                 return (T) object;
             }
-             return (T) ConceptProxy.make(Get.entityService().nidForComponent((Concept) object));
-        } else if (object instanceof Semantic) {
+            int nid = PrimitiveData.get().nidForPublicId(concept.publicId());
+            if (concept instanceof ConceptDTO) {
+                return (T) ConceptProxy.make(nid);
+            }
+            return (T) ConceptProxy.make(nid);
+        } else if (object instanceof Semantic semantic) {
             if (object instanceof SemanticProxy) {
                 return (T) object;
             }
-            return (T) SemanticProxy.make(Get.entityService().nidForComponent((Semantic) object));
-        } else if (object instanceof TypePattern) {
+            int nid = PrimitiveData.get().nidForPublicId(semantic.publicId());
+            if (semantic instanceof SemanticDTO) {
+                return (T) SemanticProxy.make(nid);
+            }
+            return (T) SemanticProxy.make(nid);
+        } else if (object instanceof TypePattern typePattern) {
             if (object instanceof TypePatternProxy) {
                 return (T) object;
             }
-            return (T) TypePatternProxy.make(Get.entityService().nidForComponent((TypePattern) object));
+            int nid = PrimitiveData.get().nidForPublicId(typePattern.publicId());
+            if (typePattern instanceof TypePatternDTO) {
+                return (T) TypePatternProxy.make(nid);
+            }
+            return (T) TypePatternProxy.make(nid);
         } else if (object instanceof Stamp & !(object instanceof StampDTO)) {
             Stamp stampValue = (Stamp) object;
             return (T) StampDTOBuilder.builder()
@@ -142,6 +204,7 @@ public class EntityVertex implements Vertex, VertexId {
     protected void setVertexIndex(int vertexIndex) {
         this.vertexIndex = vertexIndex;
     }
+
     @Override
     public int vertexIndex() {
         return vertexIndex;
@@ -177,6 +240,7 @@ public class EntityVertex implements Vertex, VertexId {
         }
         return (T) properties.get(Get.entityService().nidForComponent(propertyConcept));
     }
+
     public <T> T propertyFast(ConceptEntity conceptEntity) {
         return (T) properties.get(conceptEntity.nid());
     }

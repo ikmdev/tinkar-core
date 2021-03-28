@@ -42,8 +42,8 @@ package org.hl7.tinkar.coordinate.logic;
 
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.Concept;
-import org.hl7.tinkar.entity.ComponentWithNid;
-import org.hl7.tinkar.entity.ConceptProxy;
+import org.hl7.tinkar.terms.ComponentWithNid;
+import org.hl7.tinkar.terms.ConceptProxy;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.terms.TinkarTerm;
 

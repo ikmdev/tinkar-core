@@ -75,6 +75,10 @@ public abstract class EntityVersion
         return Get.entityService().getStampFast(stampNid);
     }
 
+    public int stampNid() {
+        return stampNid;
+    }
+
     @Override
     public String toString() {
         return stamp().describe();

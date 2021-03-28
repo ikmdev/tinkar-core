@@ -5,9 +5,9 @@ import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.Concept;
-import org.hl7.tinkar.entity.ComponentWithNid;
+import org.hl7.tinkar.terms.ComponentWithNid;
 import org.hl7.tinkar.entity.ConceptEntity;
-import org.hl7.tinkar.entity.ConceptProxy;
+import org.hl7.tinkar.terms.ConceptProxy;
 import org.hl7.tinkar.terms.TinkarTerm;
 
 public enum State implements Concept, ComponentWithNid {

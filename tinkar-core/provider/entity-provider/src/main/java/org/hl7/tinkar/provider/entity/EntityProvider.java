@@ -1,22 +1,41 @@
 package org.hl7.tinkar.provider.entity;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import io.activej.bytebuf.ByteBuf;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.id.PublicId;
+import org.hl7.tinkar.common.service.CachingService;
+import org.hl7.tinkar.common.service.DefaultDescriptionForNidService;
 import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.common.service.PublicIdService;
 import org.hl7.tinkar.component.Chronology;
 import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.entity.*;
 
 import com.google.auto.service.AutoService;
+import org.hl7.tinkar.terms.EntityFacade;
 
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-@AutoService(EntityService.class)
-public class EntityProvider implements EntityService {
+import static org.hl7.tinkar.terms.TinkarTerm.DESCRIPTION_PATTERN;
+
+@AutoService({EntityService.class, PublicIdService.class, DefaultDescriptionForNidService.class})
+public class EntityProvider implements EntityService, PublicIdService, DefaultDescriptionForNidService {
+
+    @AutoService(CachingService.class)
+    public static class CacheProvider implements CachingService {
+
+        @Override
+        public void reset() {
+            STRING_CACHE.invalidateAll();
+        }
+    }
+    private static final Cache<Integer, String> STRING_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
+
 
     public EntityProvider() {
         System.out.println("Constructing EntityProvider");
@@ -39,8 +58,30 @@ public class EntityProvider implements EntityService {
     }
 
     @Override
+    public String textFast(int nid) {
+        return STRING_CACHE.get(nid, integer -> {
+            int[] semanticNids = PrimitiveData.get().semanticNidsForComponentOfType(nid, DESCRIPTION_PATTERN.nid());
+            for (int semanticNid: semanticNids) {
+                SemanticEntity descripitonSemantic = Entity.getFast(semanticNid);
+                SemanticEntityVersion version = descripitonSemantic.versions().get(0);
+                for (Object field: version.fields()) {
+                    if (field instanceof String stringField) {
+                        return stringField;
+                    }
+                }
+            }
+            return null;
+        });
+    }
+
+    @Override
     public <T extends Chronology<V>, V extends Version> Optional<T> getChronology(int nid) {
         return Optional.ofNullable((T) getEntityFast(nid));
+    }
+
+    @Override
+    public PublicId publicId(int nid) {
+        return getEntityFast(nid).publicId();
     }
 
     @Override
@@ -79,12 +120,12 @@ public class EntityProvider implements EntityService {
     }
 
     @Override
-    public int nidForPublicId(ImmutableList<UUID> uuidList) {
+    public int nidForUuids(ImmutableList<UUID> uuidList) {
         return PrimitiveData.get().nidForUuids(uuidList);
     }
 
     @Override
-    public int nidForPublicId(UUID... uuids) {
+    public int nidForUuids(UUID... uuids) {
         return PrimitiveData.get().nidForUuids(uuids);
     }
 

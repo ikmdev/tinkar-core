@@ -3,9 +3,9 @@ package org.hl7.tinkar.coordinate.navigation;
 
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.hl7.tinkar.common.binary.*;
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.text.NaturalOrder;
 import org.hl7.tinkar.coordinate.manifold.ManifoldCoordinateImmutable;
-import org.hl7.tinkar.entity.DefaultDescriptionText;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinate;
 import org.hl7.tinkar.coordinate.stamp.StampFilter;
 
@@ -79,7 +79,7 @@ public class VertexSortNaturalOrder implements VertexSort, Encodable {
 
     @Override
     public String getVertexLabel(int vertexConceptNid, LanguageCoordinate languageCoordinate, StampFilter stampFilter) {
-        return languageCoordinate.getDescriptionText(vertexConceptNid, stampFilter).orElse(DefaultDescriptionText.get(vertexConceptNid));
+        return languageCoordinate.getDescriptionText(vertexConceptNid, stampFilter).orElse(PrimitiveData.text(vertexConceptNid));
     }
 
     @Decoder

@@ -39,13 +39,13 @@ public interface LogicCoordinateProxy extends LogicCoordinate {
    }
 
    @Override
-   default int getInferredAssemblageNid() {
-      return getLogicCoordinate().getInferredAssemblageNid();
+   default int getInferredSemanticTypeNid() {
+      return getLogicCoordinate().getInferredSemanticTypeNid();
    }
 
    @Override
-   default int getStatedAssemblageNid() {
-      return getLogicCoordinate().getStatedAssemblageNid();
+   default int getStatedSemanticTypeNid() {
+      return getLogicCoordinate().getStatedSemanticTypeNid();
    }
 
    @Override

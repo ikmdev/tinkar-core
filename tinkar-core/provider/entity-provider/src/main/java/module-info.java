@@ -4,6 +4,8 @@
  * and open the template in the editor.
  */
 
+import org.hl7.tinkar.common.service.DefaultDescriptionForNidService;
+import org.hl7.tinkar.common.service.PublicIdService;
 import org.hl7.tinkar.entity.EntityService;
 import org.hl7.tinkar.provider.entity.EntityProvider;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
@@ -16,7 +18,12 @@ module org.hl7.tinkar.provider.entity {
     requires org.hl7.tinkar.entity;
     requires org.hl7.tinkar.dto;
     requires static org.hl7.tinkar.autoservice;
+    requires org.hl7.tinkar.terms;
     provides EntityService
+            with EntityProvider;
+    provides PublicIdService
+            with EntityProvider;
+    provides DefaultDescriptionForNidService
             with EntityProvider;
     uses PrimitiveDataService;
 }

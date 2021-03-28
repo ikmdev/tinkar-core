@@ -1,5 +1,6 @@
 import org.hl7.tinkar.common.service.CachingService;
-import org.hl7.tinkar.coordinate.stamp.StampFilterImmutable;
+import org.hl7.tinkar.coordinate.stamp.RelativePositionCalculator;
+import org.hl7.tinkar.coordinate.stamp.StampFilterRecord;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -17,8 +18,11 @@ module org.hl7.tinkar.coordinate {
 
     requires org.hl7.tinkar.collection;
     requires transitive org.hl7.tinkar.terms;
+    requires static org.hl7.tinkar.record.builder;
+    requires static java.compiler;
+    requires org.hl7.tinkar.entity;
 
-    provides CachingService with StampFilterImmutable;
+    provides CachingService with RelativePositionCalculator.CacheProvider;
 
     uses CachingService;
 }

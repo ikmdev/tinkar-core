@@ -68,13 +68,13 @@ public final class NavigationCoordinateImmutable implements NavigationCoordinate
 
     public static NavigationCoordinateImmutable makeInferred(LogicCoordinate logicCoordinate) {
         return SINGLETONS.computeIfAbsent(new NavigationCoordinateImmutable(
-                        IntSets.immutable.of(logicCoordinate.getInferredAssemblageNid())),
+                        IntSets.immutable.of(logicCoordinate.getInferredSemanticTypeNid())),
                 digraphCoordinateImmutable -> digraphCoordinateImmutable);
     }
 
     public static NavigationCoordinateImmutable makeStated(LogicCoordinate logicCoordinate) {
         return SINGLETONS.computeIfAbsent(new NavigationCoordinateImmutable(
-                        IntSets.immutable.of(logicCoordinate.getStatedAssemblageNid())),
+                        IntSets.immutable.of(logicCoordinate.getStatedSemanticTypeNid())),
                 digraphCoordinateImmutable -> digraphCoordinateImmutable);
     }
 

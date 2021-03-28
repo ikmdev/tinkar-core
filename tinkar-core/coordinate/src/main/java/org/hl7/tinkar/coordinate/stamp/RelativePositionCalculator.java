@@ -50,41 +50,48 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
 import org.hl7.tinkar.common.service.CachingService;
-import org.hl7.tinkar.component.Chronology;
-import org.hl7.tinkar.component.LatestVersion;
+import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.entity.calculator.LatestVersion;
 import org.hl7.tinkar.component.graph.DiTree;
 import org.hl7.tinkar.coordinate.CoordinateUtil;
-import org.hl7.tinkar.entity.DefaultDescriptionText;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.entity.EntityService;
 import org.hl7.tinkar.entity.EntityVersion;
 import org.hl7.tinkar.entity.StampEntity;
+import org.hl7.tinkar.entity.calculator.RelativePosition;
+import org.hl7.tinkar.entity.calculator.VersionCalculator;
 import org.hl7.tinkar.entity.graph.DiTreeEntity;
 import org.hl7.tinkar.entity.graph.VersionVertex;
 import org.hl7.tinkar.terms.TinkarTerm;
 
-import static org.hl7.tinkar.coordinate.stamp.RelativePosition.*;
+import static org.hl7.tinkar.entity.calculator.RelativePosition.*;
 
 /**
  * The Class RelativePositionCalculator.
  *
  * @author kec
  */
-//This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
-@AutoService(CachingService.class)
-public class RelativePositionCalculator implements CachingService {
+public class RelativePositionCalculator<V extends EntityVersion, E extends Entity<V>> implements VersionCalculator<V, E> {
     /** The Constant LOG. */
     private static final Logger LOG = CoordinateUtil.LOG;
 
-    private static final ConcurrentReferenceHashMap<StampFilterImmutable, RelativePositionCalculator> SINGLETONS =
+    private static final ConcurrentReferenceHashMap<StampFilterRecord, RelativePositionCalculator> SINGLETONS =
             new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
                     ConcurrentReferenceHashMap.ReferenceType.WEAK);
+
+    @AutoService(CachingService.class)
+    public static class CacheProvider implements CachingService {
+        @Override
+        public void reset() {
+            SINGLETONS.clear();
+        }
+    }
 
     /** The error count. */
     private int  errorCount   = 0;
 
     /** The coordinate. */
-    private final StampFilterImmutable filter;
+    private final StampFilterRecord filter;
     private final StateSet allowedStates;
     private final ConcurrentHashMap<Integer, Boolean> stampOnRoute = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, Boolean> stampIsAllowedState = new ConcurrentHashMap<>();
@@ -98,24 +105,14 @@ public class RelativePositionCalculator implements CachingService {
 
     /**
      * Instantiates a new relative position calculator.
-     */
-    private RelativePositionCalculator() {
-        // No arg constructor for HK2 managed instance
-        // This instance just enables reset functionality...
-        this.filter = null;
-        this.allowedStates = null;
-    }
-
-    /**
-     * Instantiates a new relative position calculator.
      *
      * @param filter the coordinate
      */
-    private RelativePositionCalculator(StampFilterImmutable filter) {
+    private RelativePositionCalculator(StampFilterRecord filter) {
         //For the internal callback to populate the cache
         this.filter = filter;
-        this.pathNidSegmentMap = setupPathNidSegmentMap(filter.getStampPosition().toStampPositionImmutable());
-        this.allowedStates          = filter.getAllowedStates();
+        this.pathNidSegmentMap = setupPathNidSegmentMap(filter.stampPosition().toStampPositionImmutable());
+        this.allowedStates          = filter.allowedStates();
     }
 
     /**
@@ -233,42 +230,26 @@ public class RelativePositionCalculator implements CachingService {
     /**
      * On route.
      *
-     * @param <V>
-     * @param version the version
+      * @param version the version
      * @return true, if successful
      */
-    public <V extends EntityVersion> boolean onRoute(V version) {
+    public boolean onRoute(V version) {
         return onRoute(version.stamp());
     }
 
     /**
      * Relative position.
      *
-     * @param stampSequence1 the stamp sequence 1
-     * @param stampSequence2 the stamp sequence 2
+     * @param stampNid the stamp sequence 1
+     * @param stampNid the stamp sequence 2
      * @return the relative position
      */
-    public RelativePosition relativePosition(int stampSequence1, int stampSequence2) {
-        if (!(onRoute(stampSequence1) && onRoute(stampSequence2))) {
+    public RelativePosition relativePosition(int stampNid, int stampNid2) {
+        if (!(onRoute(stampNid) && onRoute(stampNid2))) {
             return RelativePosition.UNREACHABLE;
         }
 
-        return fastRelativePosition(stampSequence1, stampSequence2);
-    }
-
-    /**
-     * Relative position.
-     *
-     * @param v1 the v 1
-     * @param v2 the v 2
-     * @return the relative position
-     */
-    public RelativePosition relativePosition(EntityVersion v1, EntityVersion v2) {
-        if (!(onRoute(v1) && onRoute(v2))) {
-            return RelativePosition.UNREACHABLE;
-        }
-
-        return fastRelativePosition(v1, v2);
+        return fastRelativePosition(stampNid, stampNid2);
     }
 
     /**
@@ -323,11 +304,10 @@ public class RelativePositionCalculator implements CachingService {
     /**
      * Handle part.
      *
-     * @param <V> the value type
      * @param partsForPosition the parts for position
      * @param part the part
      */
-    private <V extends EntityVersion> void handlePart(HashSet<V> partsForPosition, EntityVersion part) {
+    private void handlePart(HashSet<V> partsForPosition, EntityVersion part) {
         // create a list of values so we don't have any
         // concurrent modification issues with removing/adding
         // items to the partsForPosition.
@@ -489,7 +469,7 @@ public class RelativePositionCalculator implements CachingService {
      * @param filter the filter
      * @return the calculator
      */
-    public static RelativePositionCalculator getCalculator(StampFilterImmutable filter) {
+    public static RelativePositionCalculator getCalculator(StampFilterRecord filter) {
         return SINGLETONS.computeIfAbsent(filter,
                 filterKey -> new RelativePositionCalculator(filter));
     }
@@ -560,12 +540,10 @@ public class RelativePositionCalculator implements CachingService {
     /**
      * Gets the latest EntityVersion.
      *
-     * @param <C> the generic type
-     * @param <V> the value type
      * @param chronicle the chronicle
      * @return the latest version
      */
-    public <C extends Chronology<V>, V extends EntityVersion> LatestVersion<V> getLatestVersion(C chronicle) {
+    public LatestVersion<V> getLatestVersion(E chronicle) {
         final HashSet<V> latestVersionSet = new HashSet<>();
 
         chronicle.versions()
@@ -581,7 +559,7 @@ public class RelativePositionCalculator implements CachingService {
                             }
                         });
 
-        if (this.filter.getAllowedStates().isActiveOnly()) {
+        if (this.filter.allowedStates().isActiveOnly()) {
             final HashSet<V> inactiveVersions = new HashSet<>();
 
             latestVersionSet.stream()
@@ -653,7 +631,7 @@ public class RelativePositionCalculator implements CachingService {
          */
         @Override
         public String toString() {
-            return "Segment{" + this.segmentSequence + ", pathConcept=" + DefaultDescriptionText.get(this.pathConceptNid) + "<" + this.pathConceptNid + ">, endTime=" +
+            return "Segment{" + this.segmentSequence + ", pathConcept=" + PrimitiveData.text(this.pathConceptNid) + "<" + this.pathConceptNid + ">, endTime=" +
                     this.endTime + ", precedingSegments=" + this.precedingSegments + '}';
         }
 
@@ -666,10 +644,10 @@ public class RelativePositionCalculator implements CachingService {
          * @return true, if successful
          */
         private boolean containsPosition(int pathConceptNid, int moduleConceptNid, long time) {
-            if (RelativePositionCalculator.this.filter.getModuleNids().isEmpty() ||
-                    RelativePositionCalculator.this.filter.getModuleNids().contains(moduleConceptNid)) {
-                if (RelativePositionCalculator.this.filter.getExcludedModuleNids().isEmpty() ||
-                        !RelativePositionCalculator.this.filter.getExcludedModuleNids().contains(moduleConceptNid)) {
+            if (RelativePositionCalculator.this.filter.moduleNids().isEmpty() ||
+                    RelativePositionCalculator.this.filter.moduleNids().contains(moduleConceptNid)) {
+                if (RelativePositionCalculator.this.filter.excludedModuleNids().isEmpty() ||
+                        !RelativePositionCalculator.this.filter.excludedModuleNids().contains(moduleConceptNid)) {
                     if ((this.pathConceptNid == pathConceptNid) && (time != Long.MIN_VALUE)) {
                         return time < this.endTime;
                     }
@@ -915,11 +893,5 @@ public class RelativePositionCalculator implements CachingService {
             throw new UnsupportedOperationException("Wrong nid count: " + Arrays.toString(nids));
         }
    }
-
-
-    @Override
-    public void reset() {
-        SINGLETONS.clear();
-    }
 }
 

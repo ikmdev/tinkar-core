@@ -42,9 +42,10 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
 
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.coordinate.stamp.StampFilter;
 import org.hl7.tinkar.entity.*;
-import org.hl7.tinkar.component.LatestVersion;
+import org.hl7.tinkar.entity.calculator.LatestVersion;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.terms.TinkarTerm;
 
@@ -340,10 +341,10 @@ public interface LanguageCoordinate {
    }
 
    default String toUserString() {
-           return "   language: " + DefaultDescriptionText.get(this.getLanguageConceptNid())
-                   + ",\n   dialect preference: " + DefaultDescriptionText.getList(this.getDialectAssemblagePreferenceList())
-                   + ",\n   type preference: " + DefaultDescriptionText.getList(this.getDescriptionTypePreferenceList())
-                   + ",\n   module preference: " + DefaultDescriptionText.getList(this.getModulePreferenceListForLanguage());
+           return "   language: " + PrimitiveData.text(this.getLanguageConceptNid())
+                   + ",\n   dialect preference: " + PrimitiveData.textList(this.getDialectAssemblagePreferenceList())
+                   + ",\n   type preference: " + PrimitiveData.textList(this.getDescriptionTypePreferenceList())
+                   + ",\n   module preference: " + PrimitiveData.textList(this.getModulePreferenceListForLanguage());
 
    }
 

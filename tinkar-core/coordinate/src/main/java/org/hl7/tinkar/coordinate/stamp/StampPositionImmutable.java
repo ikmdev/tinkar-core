@@ -1,86 +1,39 @@
 package org.hl7.tinkar.coordinate.stamp;
 
 
-import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.set.ImmutableSet;
-import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
 import org.hl7.tinkar.common.binary.Decoder;
 import org.hl7.tinkar.common.binary.DecoderInput;
 import org.hl7.tinkar.common.binary.Encoder;
 import org.hl7.tinkar.common.binary.EncoderOutput;
-import org.hl7.tinkar.common.service.CachingService;
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.time.DateTimeUtil;
 import org.hl7.tinkar.component.Concept;
-import org.hl7.tinkar.entity.DefaultDescriptionText;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
-import org.hl7.tinkar.entity.ConceptFacade;
+import org.hl7.tinkar.terms.ConceptFacade;
 import org.hl7.tinkar.entity.Entity;
 
 import java.time.Instant;
 
-//This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
-// No arg constructor for Service Provider Interface (SPI) generated instance is required
-@AutoService(CachingService.class)
-public final class StampPositionImmutable
-        implements StampPosition, Comparable<StampPosition>, ImmutableCoordinate, CachingService {
-
-    private static final ConcurrentReferenceHashMap<StampPositionImmutable, StampPositionImmutable> SINGLETONS =
-            new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
-                                             ConcurrentReferenceHashMap.ReferenceType.WEAK);
-
-
+public record StampPositionImmutable(long time, int pathForPositionNid)
+        implements StampPosition, Comparable<StampPosition>, ImmutableCoordinate {
 
     public static final int marshalVersion = 1;
 
-    /** The time. */
-    private final long time;
-
-    private final int pathForPositionNid;
-
-    private transient StampPathImmutable stampPath;
-
-    private StampPositionImmutable() {
-        // No arg constructor for Service Provider Interface (SPI) generated instance
-        // This instance just enables reset functionality...
-        this.time    = Long.MIN_VALUE;
-        this.pathForPositionNid = Integer.MAX_VALUE;
-    }
-    
-    @Override
-    public void reset() {
-        SINGLETONS.clear();
-    }
-
-    /**
-     * Instantiates a new stamp position impl.
-     *
-     * @param time the time
-     * @param pathForPositionNid the path nid
-     */
-    private StampPositionImmutable(long time, int pathForPositionNid) {
-        this.time    = time;
-        this.pathForPositionNid = pathForPositionNid;
-    }
-
-    private StampPositionImmutable(long time, ConceptFacade pathForPosition) {
-        this.time    = time;
-        this.pathForPositionNid = Entity.provider().nidForComponent(pathForPosition);
-    }
-
     public static StampPositionImmutable make(Instant time, ConceptFacade pathForPosition) {
-        return SINGLETONS.computeIfAbsent(new StampPositionImmutable(DateTimeUtil.instantToEpochMs(time), pathForPosition.nid()), stampPositionImmutable -> stampPositionImmutable);
+        return new StampPositionImmutable(DateTimeUtil.instantToEpochMs(time), pathForPosition.nid());
     }
 
     public static StampPositionImmutable make(Instant time, int pathForPositionNid) {
-        return SINGLETONS.computeIfAbsent(new StampPositionImmutable(DateTimeUtil.instantToEpochMs(time), pathForPositionNid), stampPositionImmutable -> stampPositionImmutable);
+        return new StampPositionImmutable(DateTimeUtil.instantToEpochMs(time), pathForPositionNid);
     }
 
     public static StampPositionImmutable make(long time, int pathForPositionNid) {
-        return SINGLETONS.computeIfAbsent(new StampPositionImmutable(time, pathForPositionNid), stampPositionImmutable -> stampPositionImmutable);
+        return new StampPositionImmutable(time, pathForPositionNid);
     }
 
     public static StampPositionImmutable make(long time, ConceptFacade pathForPosition) {
-        return SINGLETONS.computeIfAbsent(new StampPositionImmutable(time, pathForPosition), stampPositionImmutable -> stampPositionImmutable);
+        return new StampPositionImmutable(time, pathForPosition.nid());
     }
 
     @Override
@@ -206,15 +159,12 @@ public final class StampPositionImmutable
         }
 
         sb.append(" on '")
-                .append(DefaultDescriptionText.get(this.pathForPositionNid))
+                .append(PrimitiveData.text(this.pathForPositionNid))
                 .append("'}");
         return sb.toString();
     }
 
     public ImmutableSet<StampPositionImmutable> getPathOrigins() {
-        if (this.stampPath == null) {
-            this.stampPath = StampPathImmutable.make(getPathForPositionNid());
-        }
-        return this.stampPath.getPathOrigins();
+        return PathProvider.getPathOrigins(this.pathForPositionNid);
     }
 }

@@ -300,26 +300,26 @@ public class Coordinates implements CachingService  {
 
     public static class Filter {
 
-        public static StampFilterImmutable DevelopmentLatest() {
-            return StampFilterImmutable.make(StateSet.ACTIVE_AND_INACTIVE,
+        public static StampFilterRecord DevelopmentLatest() {
+            return StampFilterRecord.make(StateSet.ACTIVE_AND_INACTIVE,
                     Position.LatestOnDevelopment(),
                     IntSets.immutable.empty());
         }
 
-        public static StampFilterImmutable DevelopmentLatestActiveOnly() {
-            return StampFilterImmutable.make(StateSet.ACTIVE_ONLY,
+        public static StampFilterRecord DevelopmentLatestActiveOnly() {
+            return StampFilterRecord.make(StateSet.ACTIVE_ONLY,
                     Position.LatestOnDevelopment(),
                     IntSets.immutable.empty());
         }
 
-        public static StampFilterImmutable MasterLatest() {
-            return StampFilterImmutable.make(StateSet.ACTIVE_AND_INACTIVE,
+        public static StampFilterRecord MasterLatest() {
+            return StampFilterRecord.make(StateSet.ACTIVE_AND_INACTIVE,
                     Position.LatestOnMaster(),
                     IntSets.immutable.empty());
         }
 
-        public static StampFilterImmutable MasterLatestActiveOnly() {
-            return StampFilterImmutable.make(StateSet.ACTIVE_ONLY,
+        public static StampFilterRecord MasterLatestActiveOnly() {
+            return StampFilterRecord.make(StateSet.ACTIVE_ONLY,
                     Position.LatestOnMaster(),
                     IntSets.immutable.empty());
         }

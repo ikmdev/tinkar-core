@@ -13,19 +13,25 @@ import org.hl7.tinkar.common.binary.DecoderInput;
 import org.hl7.tinkar.common.binary.Encoder;
 import org.hl7.tinkar.common.binary.EncoderOutput;
 import org.hl7.tinkar.common.service.CachingService;
-import org.hl7.tinkar.component.Concept;
-import org.hl7.tinkar.entity.DefaultDescriptionText;
+import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.terms.ConceptFacade;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
-import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.terms.TinkarTerm;
 
-//This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
-@AutoService(CachingService.class)
-public final class StampPathImmutable implements StampPath, ImmutableCoordinate, CachingService {
+public final class StampPathImmutable implements StampPath, ImmutableCoordinate {
 
     private static final ConcurrentReferenceHashMap<Integer, StampPathImmutable> SINGLETONS =
             new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.STRONG,
                     ConcurrentReferenceHashMap.ReferenceType.WEAK);
+
+    @AutoService(CachingService.class)
+    public static class CachingProvider implements CachingService {
+
+        @Override
+        public void reset() {
+            SINGLETONS.clear();
+        }
+    }
 
     private static final int marshalVersion = 1;
 
@@ -33,20 +39,8 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate,
 
     private final ImmutableSet<StampPositionImmutable> pathOrigins;
 
-    private StampPathImmutable() {
-        // No arg constructor for HK2 managed instance
-        // This instance just enables reset functionality...
-        this.pathConceptNid = Integer.MAX_VALUE;
-        this.pathOrigins = null;
-    }
-    
-    @Override
-    public void reset() {
-        SINGLETONS.clear();
-    }
-
-    private StampPathImmutable(Concept pathConcept, ImmutableSet<StampPositionImmutable> pathOrigins) {
-        this.pathConceptNid = Entity.provider().nidForComponent(pathConcept);
+    private StampPathImmutable(ConceptFacade pathConcept, ImmutableSet<StampPositionImmutable> pathOrigins) {
+        this.pathConceptNid = pathConcept.nid();
         this.pathOrigins = pathOrigins;
     }
 
@@ -66,7 +60,7 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate,
         this.pathOrigins = mutableOrigins.toImmutable();
     }
 
-    public static StampPathImmutable make(Concept pathConcept, ImmutableSet<StampPositionImmutable> pathOrigins) {
+    public static StampPathImmutable make(ConceptFacade pathConcept, ImmutableSet<StampPositionImmutable> pathOrigins) {
         return make(pathConcept, pathOrigins);
     }
 
@@ -79,8 +73,8 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate,
     }
 
 
-    public static StampPathImmutable make(Concept pathConcept) {
-        return make(Entity.provider().nidForComponent(pathConcept));
+    public static StampPathImmutable make(ConceptFacade pathConcept) {
+        return make(pathConcept.nid());
     }
     public static StampPathImmutable make(int pathConceptNid) {
         if (pathConceptNid == TinkarTerm.UNINITIALIZED_COMPONENT.nid()) {
@@ -147,9 +141,9 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate,
     }
 
 
-    public static final StampFilterImmutable getStampFilter(StampPath stampPath) {
-        return StampFilterImmutable.make(StateSet.ACTIVE_AND_INACTIVE,
-                StampPositionImmutable.make(Long.MAX_VALUE, stampPath.pathConcept()),
+    public static final StampFilterRecord getStampFilter(StampPath stampPath) {
+        return StampFilterRecord.make(StateSet.ACTIVE_AND_INACTIVE,
+                StampPositionImmutable.make(Long.MAX_VALUE, stampPath.pathConceptNid()),
                 IntSets.immutable.empty());
     }
 
@@ -157,7 +151,7 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate,
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         sb.append("StampPathImmutable:{");
-        sb.append(DefaultDescriptionText.get(this.pathConceptNid));
+        sb.append(PrimitiveData.text(this.pathConceptNid));
         sb.append(" Origins: ").append(this.pathOrigins).append("}");
         return sb.toString();
     }

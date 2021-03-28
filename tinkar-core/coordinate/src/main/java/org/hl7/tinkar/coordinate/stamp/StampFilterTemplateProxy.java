@@ -7,22 +7,22 @@ public interface StampFilterTemplateProxy extends StampFilterTemplate {
     StampFilterTemplate getStampFilterTemplate();
 
     @Override
-    default StateSet getAllowedStates() {
-        return getStampFilterTemplate().getAllowedStates();
+    default StateSet allowedStates() {
+        return getStampFilterTemplate().allowedStates();
     }
 
     @Override
-    default ImmutableIntSet getModuleNids() {
-        return getStampFilterTemplate().getModuleNids();
+    default ImmutableIntSet moduleNids() {
+        return getStampFilterTemplate().moduleNids();
     }
 
     @Override
-    default ImmutableIntList getModulePriorityOrder() {
-        return getStampFilterTemplate().getModulePriorityOrder();
+    default ImmutableIntList modulePriorityOrder() {
+        return getStampFilterTemplate().modulePriorityOrder();
     }
 
     @Override
-    default ImmutableIntSet getExcludedModuleNids() {
-        return getStampFilterTemplate().getExcludedModuleNids();
+    default ImmutableIntSet excludedModuleNids() {
+        return getStampFilterTemplate().excludedModuleNids();
     }
 }

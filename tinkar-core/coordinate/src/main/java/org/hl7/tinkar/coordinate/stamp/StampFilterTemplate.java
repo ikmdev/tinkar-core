@@ -4,7 +4,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
-import org.hl7.tinkar.entity.DefaultDescriptionText;
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.component.Concept;
 
@@ -20,7 +20,7 @@ public interface StampFilterTemplate {
      *
      * @return the set of allowed states for results based on this stamp coordinate.
      */
-    StateSet getAllowedStates();
+    StateSet allowedStates();
     /**
      * An empty array is a wild-card, and should match all modules. If there are
      * one or more module nids specified, only those modules will be included
@@ -28,7 +28,7 @@ public interface StampFilterTemplate {
      * @return an unmodifiable set of module nids to include in results based on this
      * stamp coordinate.
      */
-    ImmutableIntSet getModuleNids();
+    ImmutableIntSet moduleNids();
 
     /**
      * An empty array indicates that no modules should be excluded. If there are
@@ -37,7 +37,7 @@ public interface StampFilterTemplate {
      * @return an unmodifiable set of module nids to exclude in results based on this
      * stamp filter.
      */
-    ImmutableIntSet getExcludedModuleNids();
+    ImmutableIntSet excludedModuleNids();
 
     /**
      * An empty array indicates that no modules should be excluded. If there are
@@ -46,8 +46,8 @@ public interface StampFilterTemplate {
      * @return an unmodifiable set of modules to exclude in results based on this
      * stamp filter.
      */
-    default ImmutableSet<Concept> getExcludedModules() {
-        return getExcludedModuleNids().collect(nid -> Entity.getFast(nid));
+    default ImmutableSet<Concept> excludedModules() {
+        return excludedModuleNids().collect(nid -> Entity.getFast(nid));
     }
 
     /**
@@ -57,8 +57,8 @@ public interface StampFilterTemplate {
      * @return an unmodifiable set of modules to include in results based on this
      * stamp coordinate.
      */
-    default ImmutableSet<Concept> getModuleSpecifications() {
-        return getModuleNids().collect(nid -> Entity.getFast(nid));
+    default ImmutableSet<Concept> moduleSpecifications() {
+        return moduleNids().collect(nid -> Entity.getFast(nid));
 
     }
 
@@ -69,7 +69,7 @@ public interface StampFilterTemplate {
      * @return an unmodifiable module preference list for versions.
      */
 
-    ImmutableIntList getModulePriorityOrder();
+    ImmutableIntList modulePriorityOrder();
 
     /**
      * Gets the module preference list for versions. Used to adjudicate which component to
@@ -78,8 +78,8 @@ public interface StampFilterTemplate {
      * @return an unmodifiable module preference list for versions.
      */
 
-    default ImmutableList<Concept> getModulePriorityOrderSpecifications() {
-        return getModulePriorityOrder().collect(nid -> Entity.getFast(nid));
+    default ImmutableList<Concept> modulePriorityOrderSpecifications() {
+        return modulePriorityOrder().collect(nid -> Entity.getFast(nid));
     }
 
     /**
@@ -90,22 +90,22 @@ public interface StampFilterTemplate {
         final StringBuilder builder = new StringBuilder();
 
         builder.append("   allowed states: ");
-        builder.append(this.getAllowedStates().toUserString());
+        builder.append(this.allowedStates().toUserString());
 
         builder.append("\n   modules: ");
 
-        if (this.getModuleNids().isEmpty()) {
+        if (this.moduleNids().isEmpty()) {
             builder.append("all ");
         } else {
-            builder.append(DefaultDescriptionText.getList(this.getModuleNids().toArray()))
+            builder.append(PrimitiveData.textList(this.moduleNids().toArray()))
                     .append(" ");
         }
 
         builder.append("\n   module priorities: ");
-        if (this.getModulePriorityOrder().isEmpty()) {
+        if (this.modulePriorityOrder().isEmpty()) {
             builder.append("none ");
         } else {
-            builder.append(DefaultDescriptionText.getList(this.getModulePriorityOrder().toArray()))
+            builder.append(PrimitiveData.textList(this.modulePriorityOrder().toArray()))
                     .append(" ");
         }
 
