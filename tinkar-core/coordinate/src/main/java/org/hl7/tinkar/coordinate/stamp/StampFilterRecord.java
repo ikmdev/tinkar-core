@@ -75,50 +75,25 @@ import org.hl7.tinkar.entity.ConceptEntity;
  * Created by kec on 2/16/15.
  *
  */
-//This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
-@AutoService(CachingService.class)
-public class StampFilterImmutable
-        implements StampFilter, ImmutableCoordinate, CachingService {
+public record StampFilterImmutable(StateSet allowedStates, StampPosition stampPosition, ImmutableIntSet moduleNids,
+        ImmutableIntSet excludedModuleNids, ImmutableIntList modulePriorityOrder)
+        implements StampFilter, ImmutableCoordinate {
 
     private static final ConcurrentReferenceHashMap<StampFilterImmutable, StampFilterImmutable> SINGLETONS =
             new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
-                                             ConcurrentReferenceHashMap.ReferenceType.WEAK);
+                    ConcurrentReferenceHashMap.ReferenceType.WEAK);
     private static final int marshalVersion = 1;
 
-    private final StateSet allowedStates;
-    private final StampPosition stampPosition;
-    private final ImmutableIntSet moduleNids;
-    private final ImmutableIntSet excludedModuleNids;
-    private final ImmutableIntList modulePreferenceOrder;
+    @AutoService(CachingService.class)
+    public static class CacheProvider implements CachingService {
+        @Override
+        public void reset() {
+            SINGLETONS.clear();
+        }
+    }
 
     private transient RelativePositionCalculator relativePositionCalculator;
 
-    public StampFilterImmutable() {
-        // No arg constructor for ServiceLoader
-        // This instance just enables reset functionality...
-        this.allowedStates = null;
-        this.stampPosition = null;
-        this.moduleNids = null;
-        this.excludedModuleNids = null;
-        this.modulePreferenceOrder = null;
-    }
-
-    @Override
-    public void reset() {
-        SINGLETONS.clear();
-    }
-
-    private StampFilterImmutable(StateSet allowedStates,
-                                 StampPosition stampPosition,
-                                 ImmutableIntSet moduleNids,
-                                 ImmutableIntSet excludedModuleNids,
-                                 ImmutableIntList modulePreferenceOrder) {
-        this.allowedStates = allowedStates;
-        this.stampPosition = stampPosition;
-        this.moduleNids = moduleNids == null ? IntSets.immutable.empty() : moduleNids;
-        this.excludedModuleNids = excludedModuleNids;
-        this.modulePreferenceOrder = modulePreferenceOrder == null ? IntLists.immutable.empty() : modulePreferenceOrder;
-    }
 
     @Override
     @Encoder
@@ -206,31 +181,6 @@ public class StampFilterImmutable
     }
 
     @Override
-    public StateSet getAllowedStates() {
-        return this.allowedStates;
-    }
-
-   @Override
-   public StampPosition getStampPosition() {
-       return this.stampPosition;
-   }
-
-    @Override
-    public ImmutableIntSet getModuleNids() {
-        return this.moduleNids;
-    }
-
-    @Override
-    public ImmutableIntSet getExcludedModuleNids() {
-        return this.excludedModuleNids;
-    }
-
-    @Override
-    public ImmutableIntList getModulePriorityOrder() {
-        return this.modulePreferenceOrder;
-    }
-
-    @Override
     public String toString() {
         return "StampFilterImmutable{" + toUserString() + "}";
     }
@@ -247,39 +197,20 @@ public class StampFilterImmutable
         return make(stateSet,
                 this.stampPosition,
                 this.moduleNids,
-                this.modulePreferenceOrder);
+                this.modulePriorityOrder);
     }
 
     @Override
     public StampFilterImmutable makeCoordinateAnalog(long stampPositionTime) {
         return make(this.allowedStates,
                 StampPositionImmutable.make(stampPositionTime, this.stampPosition.getPathForPositionNid()),
-                this.moduleNids, this.modulePreferenceOrder);
+                this.moduleNids, this.modulePriorityOrder);
     }
 
     public StampFilterImmutable toStampFilterImmutable() {
         return this;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof StampFilterImmutable that)) return false;
-        return getAllowedStates().equals(that.getAllowedStates()) &&
-                getStampPosition().equals(that.getStampPosition()) &&
-                getModuleNids().equals(that.getModuleNids()) &&
-                getExcludedModuleNids().equals(that.getExcludedModuleNids()) &&
-                getModulePriorityOrder().equals(that.getModulePriorityOrder());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getAllowedStates(),
-                getStampPosition(),
-                getModuleNids(),
-                getExcludedModuleNids(),
-                getModulePriorityOrder());
-    }
 
     @Override
     public int getPathNidForFilter() {
@@ -303,12 +234,12 @@ public class StampFilterImmutable
     public StampFilterImmutable makePathAnalog(ConceptEntity pathForPosition) {
         return make(this.allowedStates,
                 StampPositionImmutable.make(this.stampPosition.time(), pathForPosition.nid()),
-                this.moduleNids, this.excludedModuleNids, this.modulePreferenceOrder);
+                this.moduleNids, this.excludedModuleNids, this.modulePriorityOrder);
     }
 
     @Override
     public StampFilterTemplateImmutable toStampFilterTemplateImmutable() {
-        return StampFilterTemplateImmutable.make(this.allowedStates, this.moduleNids, this.excludedModuleNids, this.modulePreferenceOrder);
+        return StampFilterTemplateImmutable.make(this.allowedStates, this.moduleNids, this.excludedModuleNids, this.modulePriorityOrder);
     }
 }
 
