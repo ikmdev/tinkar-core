@@ -14,6 +14,7 @@ import org.hl7.tinkar.component.graph.Graph;
 import org.hl7.tinkar.component.graph.Vertex;
 
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
 
 public abstract class DiGraphAbstract<V extends EntityVertex> {
@@ -36,6 +37,10 @@ public abstract class DiGraphAbstract<V extends EntityVertex> {
         return successorMap;
     }
 
+    public Optional<ImmutableIntList> successorNids(int vertexIndex) {
+        return Optional.ofNullable(successorMap.get(vertexIndex));
+    }
+
     public V vertex(int vertexIndex) {
         return vertexMap.get(vertexIndex);
     }
@@ -51,11 +56,14 @@ public abstract class DiGraphAbstract<V extends EntityVertex> {
 
     public ImmutableList<V> successors(V vertex) {
         ImmutableIntList successorList = successorMap.get(vertex.vertexIndex());
-        MutableList<V> successors = Lists.mutable.ofInitialCapacity(successorList.size());
-        successorList.forEach(successorIndex -> {
-            successors.add(vertex(successorIndex));
-        });
-        return successors.toImmutable();
+        if (successorList != null) {
+            MutableList<V> successors = Lists.mutable.ofInitialCapacity(successorList.size());
+            successorList.forEach(successorIndex -> {
+                successors.add(vertex(successorIndex));
+            });
+            return successors.toImmutable();
+        }
+        return Lists.immutable.empty();
     }
 
     public int size() {

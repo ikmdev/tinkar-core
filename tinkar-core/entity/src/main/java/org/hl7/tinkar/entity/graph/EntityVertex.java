@@ -3,6 +3,7 @@ package org.hl7.tinkar.entity.graph;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.RichIterable;
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
@@ -32,20 +33,22 @@ public class EntityVertex implements Vertex, VertexId {
 
     protected EntityVertex() {
     }
-    public String toGraphFormatString(String prepend) {
+    public String toGraphFormatString(String prepend, DiGraphAbstract diGraph) {
         StringBuilder sb = new StringBuilder();
         sb.append(prepend);
-        sb.append("[").append(vertexIndex).append("] ");
+        sb.append(" [").append(vertexIndex).append("]");
+        Optional<ImmutableIntList> optionalSuccessorNids = diGraph.successorNids(this.vertexIndex);
+        if (optionalSuccessorNids.isPresent()) {
+            sb.append("➞");
+            sb.append(optionalSuccessorNids.get().toString().replace(" ", ""));
+        }
+        sb.append(" ");
 
         if (properties.containsKey(meaningNid))  {
             Object property = properties.get(meaningNid);
-            if (property instanceof ConceptFacade conceptFacade) {
-                sb.append(PrimitiveData.text(conceptFacade.nid()));
-            } else if (property instanceof TypePatternFacade typePatternFacade) {
-                sb.append(PrimitiveData.text(typePatternFacade.nid()));
-            } {
-                sb.append(property.toString());
-            }
+            sb.append(PrimitiveData.text(meaningNid));
+            sb.append(": ");
+            propertyToString(sb, property);
 
         } else {
             sb.append(PrimitiveData.text(meaningNid));
@@ -54,20 +57,33 @@ public class EntityVertex implements Vertex, VertexId {
         sb.append("\n");
         int[] propertyKeys = properties.keySet().toArray();
         for (int i = 0; i < propertyKeys.length; i++) {
-            sb.append(prepend);
-            sb.append("    •").append(PrimitiveData.text(meaningNid));
-            sb.append(": ");
-            Object value = properties.get(propertyKeys[i]);
-            if (value instanceof ConceptFacade conceptFacade) {
-                sb.append(PrimitiveData.text(conceptFacade.nid()));
-            } else if (value instanceof TypePatternFacade typePatternFacade) {
-                sb.append(PrimitiveData.text(typePatternFacade.nid()));
-            } else {
-                sb.append(value.toString());
+            if (propertyKeys[i] != meaningNid) {
+                sb.append(prepend);
+                sb.append("    •").append(PrimitiveData.text(propertyKeys[i]));
+                sb.append(": ");
+                Object value = properties.get(propertyKeys[i]);
+                if (value instanceof ConceptFacade conceptFacade) {
+                    sb.append(PrimitiveData.text(conceptFacade.nid()));
+                } else if (value instanceof TypePatternFacade typePatternFacade) {
+                    sb.append(PrimitiveData.text(typePatternFacade.nid()));
+                } else {
+                    sb.append(value.toString());
+                }
+                sb.append("\n");
             }
-            sb.append("\n");
         }
+
         return sb.toString();
+    }
+
+    private void propertyToString(StringBuilder sb, Object property) {
+        if (property instanceof ConceptFacade conceptFacade) {
+            sb.append(PrimitiveData.text(conceptFacade.nid()));
+        } else if (property instanceof TypePatternFacade typePatternFacade) {
+            sb.append(PrimitiveData.text(typePatternFacade.nid()));
+        } else {
+            sb.append(property.toString());
+        }
     }
 
     @Override

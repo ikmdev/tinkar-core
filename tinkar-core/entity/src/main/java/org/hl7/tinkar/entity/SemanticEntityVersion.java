@@ -308,57 +308,67 @@ public class SemanticEntityVersion
         StringBuilder sb = new StringBuilder();
         sb.append("{");
         sb.append(Entity.getStamp(stampNid).describe());
-        sb.append(" f: [");
         Entity typePattern = Entity.getFast(this.chronology().typePatternNid);
         if (typePattern instanceof TypePatternEntity typePatternEntity) {
-            sb.append("     \n");
             // TODO get proper version after relative position computer available.
             // Maybe put stamp coordinate on thread, or relative position computer on thread
             TypePatternEntityVersion typePatternEntityVersion =  typePatternEntity.versions.get(0);
+            sb.append("\n");
             for (int i = 0; i < fields.size(); i++) {
-                if (i > 0) {
-                    sb.append("; ");
-                }
+               sb.append("Field ");
+               sb.append((i+1));
+                sb.append(": [");
+               StringBuilder fieldStringBuilder = new StringBuilder();
+
                 Object field = fields.get(i);
                 if (i < typePatternEntityVersion.fieldDefinitionForEntities.size()) {
                     FieldDefinitionForEntity fieldDefinition = typePatternEntityVersion.fieldDefinitionForEntities.get(i);
-                    sb.append(PrimitiveData.text(fieldDefinition.meaningNid));
+                    fieldStringBuilder.append(PrimitiveData.text(fieldDefinition.meaningNid));
                 } else {
-                    sb.append("Size error @ " + i);
+                    fieldStringBuilder.append("Size error @ " + i);
                 }
-                sb.append(": ");
+                fieldStringBuilder.append(": ");
                 if (field instanceof EntityFacade entity) {
-                    sb.append(PrimitiveData.text(entity.nid()));
+                    fieldStringBuilder.append(PrimitiveData.text(entity.nid()));
                 } else if (field instanceof String string) {
-                    sb.append(string);
+                    fieldStringBuilder.append(string);
                 } else if (field instanceof Instant instant) {
-                    sb.append(DateTimeUtil.format(instant));
+                    fieldStringBuilder.append(DateTimeUtil.format(instant));
                 } else if (field instanceof IntIdList intIdList)  {
                     if (intIdList.size() == 0) {
-                        sb.append("ø, ");
+                        fieldStringBuilder.append("ø");
                     } else {
                         for (int j = 0; j < intIdList.size(); j++) {
                             if (j > 0) {
-                                sb.append(", ");
+                                fieldStringBuilder.append(", ");
                             }
-                            sb.append(PrimitiveData.text(intIdList.get(j)));
+                            fieldStringBuilder.append(PrimitiveData.text(intIdList.get(j)));
                         }
                     }
                 } else if (field instanceof IntIdSet intIdSet)  {
                     if (intIdSet.size() == 0) {
-                        sb.append("ø, ");
+                        fieldStringBuilder.append("ø");
                     } else {
                         int[] idSetArray = intIdSet.toArray();
                         for (int j = 0; j < idSetArray.length; j++) {
                             if (j > 0) {
-                                sb.append(", ");
+                                fieldStringBuilder.append(", ");
                             }
-                            sb.append(PrimitiveData.text(idSetArray[j]));
+                            fieldStringBuilder.append(PrimitiveData.text(idSetArray[j]));
                         }
                     }
                  } else {
-                    sb.append(field);
+                    fieldStringBuilder.append(field);
                 }
+                String fieldString = fieldStringBuilder.toString();
+                if (fieldString.contains("\n")) {
+                    sb.append("\n");
+                    sb.append(fieldString);
+                } else {
+                    sb.append(fieldString);
+                }
+                sb.append("]\n");
+
             }
         } else {
             sb.append("Bad typePattern: ");

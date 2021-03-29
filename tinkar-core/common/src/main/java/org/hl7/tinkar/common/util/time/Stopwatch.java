@@ -30,4 +30,14 @@ public class Stopwatch {
         }
         return DurationUtil.format(Duration.between(startTime, endForDuration));
     }
+    public String averageElapsedTimeForElement (int count) {
+        Instant endForDuration = endTime;
+        if (endForDuration == null) {
+            endForDuration = Instant.now();
+        }
+        Duration entireDuration = Duration.between(this.startTime, endForDuration);
+        Duration average = entireDuration.dividedBy(count);
+
+        return DurationUtil.format(average);
+    }
 }

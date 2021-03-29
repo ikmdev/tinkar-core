@@ -11,6 +11,7 @@ import org.hl7.tinkar.coordinate.stamp.StampFilterRecord;
 import org.hl7.tinkar.coordinate.stamp.StampPositionImmutable;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.entity.calculator.LatestVersion;
+import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.integration.TestConstants;
 import org.hl7.tinkar.terms.TinkarTerm;
 import org.testng.Assert;
@@ -57,9 +58,17 @@ class CoordinatesTest {
         LatestVersion<EntityVersion> latest = calculator.getLatestVersion(englishLanguage);
         LOG.info("Latest computed: '" + latest);
 
-        Entity.provider().forEachSemanticForComponent(TinkarTerm.ENGLISH_LANGUAGE.nid(), semanticEntity -> LOG.info(semanticEntity.toString() + "\n"));
+        Entity.provider().forEachSemanticForComponent(TinkarTerm.ENGLISH_LANGUAGE.nid(), semanticEntity -> {
+            LOG.info(semanticEntity.toString() + "\n");
+            for (int acceptibilityNid: Get.entityService().semanticNidsForComponentOfType(semanticEntity.nid(), TinkarTerm.US_DIALECT_PATTERN.nid())) {
+                LOG.info("  Acceptability US: \n    " + Get.entityService().getEntityFast(acceptibilityNid));
+            }
+        });
+        Entity.provider().forEachSemanticForComponent(TinkarTerm.NECESSARY_SET.nid(), semanticEntity -> {
+            LOG.info(semanticEntity.toString() + "\n");
+            for (int acceptibilityNid: Get.entityService().semanticNidsForComponentOfType(semanticEntity.nid(), TinkarTerm.US_DIALECT_PATTERN.nid())) {
+                LOG.info("  Acceptability US: \n    " + Get.entityService().getEntityFast(acceptibilityNid));
+            }
+        });
     }
-
-
-
 }

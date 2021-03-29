@@ -11,9 +11,12 @@ import org.eclipse.collections.api.map.primitive.ImmutableIntIntMap;
 import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
 import org.eclipse.collections.api.map.primitive.MutableIntIntMap;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
+import org.eclipse.collections.api.set.primitive.IntSet;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
+import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.hl7.tinkar.component.graph.DiTree;
 import org.hl7.tinkar.component.graph.Vertex;
 
@@ -109,12 +112,34 @@ public class DiTreeEntity<V extends EntityVertex> extends DiGraphAbstract<V> imp
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName()).append("{\n");
 
-        for (V vertex: vertexMap) {
-            sb.append(vertex.toGraphFormatString("    "));
+        MutableIntSet coveredIndexes = IntSets.mutable.empty();
+        int nextIndex = root.vertexIndex;
+        while (nextIndex > -1) {
+            dfsProcess(root().vertexIndex, sb, 1, coveredIndexes);
+            if (coveredIndexes.size() < vertexMap.size()) {
+                for (int i = 0; i < vertexMap.size(); i++) {
+                    if (!coveredIndexes.contains(i)) {
+                        nextIndex = i;
+                        break;
+                    }
+                }
+            } else {
+                nextIndex = -1;
+            }
         }
         sb.append('}');
 
         return sb.toString();
+    }
+
+    private void dfsProcess(int start, StringBuilder sb, int depth, MutableIntSet coveredIndexes) {
+        V vertex = vertexMap.get(start);
+        coveredIndexes.add(start);
+        sb.append(vertex.toGraphFormatString("  ".repeat(depth), this));
+        Optional<ImmutableIntList> optionalSuccessors = successorNids(start);
+        if (optionalSuccessors.isPresent()) {
+            optionalSuccessors.get().forEach(i -> dfsProcess(i, sb, depth + 1, coveredIndexes));
+        }
     }
 
     public static <V extends EntityVertex> Builder<V> builder() {

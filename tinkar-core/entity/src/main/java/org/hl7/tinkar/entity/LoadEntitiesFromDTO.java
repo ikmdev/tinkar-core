@@ -8,6 +8,7 @@ import org.hl7.tinkar.dto.binary.TinkarInput;
 import org.hl7.tinkar.common.util.time.Stopwatch;
 import org.hl7.tinkar.dto.SemanticChronologyDTO;
 import org.hl7.tinkar.terms.ConceptProxy;
+import org.hl7.tinkar.terms.TinkarTerm;
 
 import java.io.EOFException;
 import java.io.File;
@@ -94,6 +95,12 @@ public class LoadEntitiesFromDTO {
             int[] referencingSemanticDescriptions = Get.entityService().semanticNidsForComponentOfType(PATH_ORIGINS_PATTERN.nid(), DESCRIPTION_PATTERN.nid());
             for (int descriptionNid: referencingSemanticDescriptions) {
                 LOG.info("Semantic of type DESCRIPTION_PATTERN referencing PATH_ORIGINS_PATTERN: \n    " + Get.entityService().getEntityFast(descriptionNid));
+                for (int acceptibilityNid: Get.entityService().semanticNidsForComponentOfType(descriptionNid, TinkarTerm.US_ENGLISH_DIALECT.nid())) {
+                    LOG.info("  Acceptability US: \n    " + Get.entityService().getEntityFast(acceptibilityNid));
+                }
+                for (int acceptibilityNid: Get.entityService().semanticNidsForComponentOfType(descriptionNid, TinkarTerm.GB_ENGLISH_DIALECT.nid())) {
+                    LOG.info("  Acceptability GB: \n    " + Get.entityService().getEntityFast(acceptibilityNid));
+                }
             }
 
             LOG.info("Description pattern: \n    " + Get.entityService().getEntityFast(DESCRIPTION_PATTERN));

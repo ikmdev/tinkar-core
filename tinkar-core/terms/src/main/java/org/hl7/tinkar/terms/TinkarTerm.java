@@ -9,6 +9,11 @@ public class TinkarTerm {
     public static final ConceptProxy PATH_ORIGINS_PATTERN =
             ConceptProxy.make("Path Origin pattern", UUID.fromString("70f89dd5-2cdb-59bb-bbaa-98527513547c"));
 
+    public static final ConceptProxy GB_DIALECT_PATTERN =
+            ConceptProxy.make("GB English dialect", UUID.fromString("561f817a-130e-5e56-984d-910e9991558c"));
+
+    public static final ConceptProxy US_DIALECT_PATTERN =
+            ConceptProxy.make("US Dialect pattern", UUID.fromString("08f9112c-c041-56d3-b89b-63258f070074"));
 
     /** Java binding for the concept described as <strong><em>Acceptable (SOLOR)</em></strong>;
      * identified by UUID: {@code

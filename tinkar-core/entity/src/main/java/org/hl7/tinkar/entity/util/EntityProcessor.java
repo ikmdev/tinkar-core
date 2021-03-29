@@ -8,6 +8,7 @@ import java.util.function.ObjIntConsumer;
 
 public abstract class EntityProcessor implements ObjIntConsumer<byte[]> {
 
+    AtomicInteger totalCount = new AtomicInteger();
     AtomicInteger conceptCount = new AtomicInteger();
     AtomicInteger semanticCount = new AtomicInteger();
     AtomicInteger typePatternCount = new AtomicInteger();
@@ -22,18 +23,23 @@ public abstract class EntityProcessor implements ObjIntConsumer<byte[]> {
         switch (componentType) {
             case TYPE_PATTERN_CHRONOLOGY:
                 typePatternCount.incrementAndGet();
+                totalCount.incrementAndGet();
                 break;
             case CONCEPT_CHRONOLOGY:
                 conceptCount.incrementAndGet();
+                totalCount.incrementAndGet();
                 break;
             case SEMANTIC_CHRONOLOGY:
                 semanticCount.incrementAndGet();
+                totalCount.incrementAndGet();
                 break;
             case STAMP:
                 stampCount.incrementAndGet();
+                totalCount.incrementAndGet();
                 break;
             default:
                 other.incrementAndGet();
+                totalCount.incrementAndGet();
         }
         processBytesForType(componentType, bytes);
     }
@@ -48,6 +54,7 @@ public abstract class EntityProcessor implements ObjIntConsumer<byte[]> {
         this.stopwatch.end();
         StringBuilder sb = new StringBuilder();
         sb.append("Duration: ").append(stopwatch.elapsedTime());
+        sb.append("\nAverage realization time: ").append(stopwatch.averageElapsedTimeForElement(totalCount.get()));
         if (conceptCount.get() > 0) {
             sb.append("\nConcepts: ").append(conceptCount);
         }

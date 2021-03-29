@@ -122,7 +122,7 @@ public class EntityProxy implements EntityFacade, PublicId {
     public final String toString() {
         return this.getClass().getSimpleName() + "{"
                  + description() +
-                " " + Arrays.toString(uuids) +
+                " " + Arrays.toString(asUuidArray()) +
                 "<" + cachedNid +
                 ">}";
     }
