@@ -49,6 +49,10 @@ public class SemanticEntityVersion
         return (SemanticEntity) super.chronology();
     }
 
+    public PatternEntity pattern() {
+        return Entity.getFast(getSemanticEntity().patternNid);
+    }
+
     @Override
     protected void finishVersionFill(ByteBuf readBuf, byte formatVersion) {
         fields.clear();
@@ -91,9 +95,9 @@ public class SemanticEntityVersion
                 int nid = readBuf.readInt();
                 return SemanticProxy.make(nid);
             }
-            case TYPE_PATTERN: {
+            case PATTERN: {
                 int nid = readBuf.readInt();
-                return TypePatternProxy.make(nid);
+                return PatternProxy.make(nid);
             }
             case IDENTIFIED_THING:
                 return EntityProxy.make(readBuf.readInt());
@@ -163,6 +167,10 @@ public class SemanticEntityVersion
         }
     }
 
+    public FieldDataType fieldDataType(int fieldIndex) {
+        return FieldDataType.getFieldDataType(fields.get(fieldIndex));
+    }
+
     public static void writeField(ByteBuf writeBuf, Object field) {
         if (field instanceof Boolean) {
             writeBuf.writeByte(FieldDataType.BOOLEAN.token);
@@ -200,8 +208,8 @@ public class SemanticEntityVersion
             } else {
                 writeBuf.writeInt(Get.entityService().nidForComponent(semantic));
             }
-        } else if (field instanceof TypePattern pattern) {
-            writeBuf.writeByte(FieldDataType.TYPE_PATTERN.token);
+        } else if (field instanceof Pattern pattern) {
+            writeBuf.writeByte(FieldDataType.PATTERN.token);
             if (field instanceof ComponentWithNid) {
                 writeBuf.writeInt(((ComponentWithNid) field).nid());
             } else {
@@ -236,6 +244,22 @@ public class SemanticEntityVersion
             writeBuf.writeByte(FieldDataType.COMPONENT_ID_SET.token);
             writeBuf.writeInt(ids.size());
             ids.forEach(id -> writeBuf.writeInt(id));
+        } else if (field instanceof PublicIdList publicIdList) {
+            MutableIntList nidList = IntLists.mutable.withInitialCapacity(publicIdList.size());
+            publicIdList.forEach(publicId -> {
+                nidList.add(PrimitiveData.get().nidForPublicId((PublicId)  publicId));
+            });
+            writeBuf.writeByte(FieldDataType.COMPONENT_ID_LIST.token);
+            writeBuf.writeInt(nidList.size());
+            nidList.forEach(id -> writeBuf.writeInt(id));
+        } else  if (field instanceof PublicIdSet publicIdSet) {
+            MutableIntList nidSet = IntLists.mutable.withInitialCapacity(publicIdSet.size());
+            publicIdSet.forEach(publicId -> {
+                nidSet.add(PrimitiveData.get().nidForPublicId((PublicId)  publicId));
+            });
+            writeBuf.writeByte(FieldDataType.COMPONENT_ID_SET.token);
+            writeBuf.writeInt(nidSet.size());
+            nidSet.forEach(id -> writeBuf.writeInt(id));
         } else {
             throw new UnsupportedOperationException("Can't handle field write of type: " +
                     field.getClass().getName());
@@ -308,11 +332,11 @@ public class SemanticEntityVersion
         StringBuilder sb = new StringBuilder();
         sb.append("{");
         sb.append(Entity.getStamp(stampNid).describe());
-        Entity typePattern = Entity.getFast(this.chronology().typePatternNid);
-        if (typePattern instanceof TypePatternEntity typePatternEntity) {
+        Entity pattern = Entity.getFast(this.chronology().patternNid);
+        if (pattern instanceof PatternEntity patternEntity) {
             // TODO get proper version after relative position computer available.
             // Maybe put stamp coordinate on thread, or relative position computer on thread
-            TypePatternEntityVersion typePatternEntityVersion =  typePatternEntity.versions.get(0);
+            PatternEntityVersion patternEntityVersion =  patternEntity.versions.get(0);
             sb.append("\n");
             for (int i = 0; i < fields.size(); i++) {
                sb.append("Field ");
@@ -321,8 +345,8 @@ public class SemanticEntityVersion
                StringBuilder fieldStringBuilder = new StringBuilder();
 
                 Object field = fields.get(i);
-                if (i < typePatternEntityVersion.fieldDefinitionForEntities.size()) {
-                    FieldDefinitionForEntity fieldDefinition = typePatternEntityVersion.fieldDefinitionForEntities.get(i);
+                if (i < patternEntityVersion.fieldDefinitionForEntities.size()) {
+                    FieldDefinitionForEntity fieldDefinition = patternEntityVersion.fieldDefinitionForEntities.get(i);
                     fieldStringBuilder.append(PrimitiveData.text(fieldDefinition.meaningNid));
                 } else {
                     fieldStringBuilder.append("Size error @ " + i);
@@ -371,8 +395,8 @@ public class SemanticEntityVersion
 
             }
         } else {
-            sb.append("Bad typePattern: ");
-            sb.append(PrimitiveData.text(typePattern.nid));
+            sb.append("Bad pattern: ");
+            sb.append(PrimitiveData.text(pattern.nid));
             sb.append("; ");
             for (int i = 0; i < fields.size(); i++) {
                 Object field = fields.get(i);

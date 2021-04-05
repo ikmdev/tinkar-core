@@ -16,7 +16,7 @@ public class SemanticEntity
 
     protected int referencedComponentNid;
 
-    protected int typePatternNid;
+    protected int patternNid;
 
     @Override
     protected int subclassFieldBytesSize() {
@@ -36,20 +36,20 @@ public class SemanticEntity
     @Override
     protected void finishEntityWrite(ByteBuf byteBuf) {
         byteBuf.writeInt(referencedComponentNid);
-        byteBuf.writeInt(typePatternNid);
+        byteBuf.writeInt(patternNid);
     }
 
     @Override
     protected void finishEntityRead(ByteBuf readBuf, byte formatVersion) {
         this.referencedComponentNid = readBuf.readInt();
-        this.typePatternNid = readBuf.readInt();
+        this.patternNid = readBuf.readInt();
     }
 
     @Override
     protected void finishEntityRead(Chronology chronology) {
         if (chronology instanceof SemanticChronology semanticChronology) {
             referencedComponentNid = Get.entityService().nidForComponent(semanticChronology.referencedComponent());
-            typePatternNid = Get.entityService().nidForComponent(semanticChronology.typePattern());
+            patternNid = Get.entityService().nidForComponent(semanticChronology.pattern());
         }
     }
 
@@ -72,13 +72,13 @@ public class SemanticEntity
         return this.referencedComponentNid;
     }
 
-    public int typePatternNid() {
-        return this.typePatternNid;
+    public int patternNid() {
+        return this.patternNid;
     }
 
     @Override
-    public TypePattern typePattern() {
-        return Get.entityService().getEntityFast(typePatternNid);
+    public Pattern pattern() {
+        return Get.entityService().getEntityFast(patternNid);
     }
 
 
@@ -97,7 +97,7 @@ public class SemanticEntity
     @Override
     public String toString() {
         return "SemanticEntity{" +
-                "type: " + PrimitiveData.text(typePatternNid) +
+                "type: " + PrimitiveData.text(patternNid) +
                 " <" +
                 nid +
                 "> " + Arrays.toString(publicId().asUuidArray()) +

@@ -12,7 +12,6 @@ import io.activej.inject.annotation.Provides;
 import io.activej.inject.module.Module;
 import io.activej.launcher.Launcher;
 import io.activej.service.ServiceGraphModule;
-import org.eclipse.collections.api.block.procedure.Procedure2;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
@@ -24,7 +23,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
 import java.util.function.ObjIntConsumer;
 
 public class DataProviderWebsocketClient
@@ -78,7 +76,7 @@ public class DataProviderWebsocketClient
     }
 
     @Override
-    public void forEachEntityOfType(int typeDefinitionNid, IntProcedure procedure) {
+    public void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure) {
         throw new UnsupportedOperationException();
     }
 
@@ -127,7 +125,7 @@ public class DataProviderWebsocketClient
     }
 
     @Override
-    public byte[] merge(int nid, int setNid, int referencedComponentNid, byte[] value) {
+    public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value) {
         throw new UnsupportedOperationException();
     }
 
@@ -142,7 +140,7 @@ public class DataProviderWebsocketClient
     }
 
     @Override
-    public void forEachSemanticNidForComponentOfType(int componentNid, int typeDefinitionNid, IntProcedure procedure) {
+    public void forEachSemanticNidForComponentOfPattern(int componentNid, int patternNid, IntProcedure procedure) {
         throw new UnsupportedOperationException();
     }
 

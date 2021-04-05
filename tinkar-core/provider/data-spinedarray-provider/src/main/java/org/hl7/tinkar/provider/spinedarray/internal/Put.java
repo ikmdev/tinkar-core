@@ -1,6 +1,5 @@
 package org.hl7.tinkar.provider.spinedarray.internal;
 
-import org.hl7.tinkar.common.service.PrimitiveDataService;
 import org.hl7.tinkar.entity.EntityFactory;
 import org.hl7.tinkar.component.Chronology;
 import org.hl7.tinkar.entity.Entity;
@@ -13,7 +12,7 @@ public class Put {
         Entity entity = EntityFactory.make(chronology);
         if (entity instanceof SemanticEntity semanticEntity) {
             singleton.merge(entity.nid(),
-                    semanticEntity.typePatternNid(),
+                    semanticEntity.patternNid(),
                     semanticEntity.referencedComponentNid(),
                     entity.getBytes());
         } else {

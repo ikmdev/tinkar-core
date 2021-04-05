@@ -1,18 +1,14 @@
 package org.hl7.tinkar.coordinate.stamp;
 
+import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.coordinate.TimeBasedAnalogMaker;
+import org.hl7.tinkar.entity.Entity;
+import org.hl7.tinkar.terms.ConceptFacade;
+import org.hl7.tinkar.terms.State;
+
 import java.util.ArrayList;
 import java.util.Collection;
-import java.time.Instant;
-import java.util.NoSuchElementException;
 import java.util.UUID;
-
-import org.hl7.tinkar.common.service.PrimitiveData;
-import org.hl7.tinkar.entity.calculator.LatestVersion;
-import org.hl7.tinkar.component.Version;
-import org.hl7.tinkar.terms.ConceptFacade;
-import org.hl7.tinkar.coordinate.TimeBasedAnalogMaker;
-import org.hl7.tinkar.entity.ConceptEntity;
-import org.hl7.tinkar.entity.Entity;
 
 public interface StampFilter extends StampFilterTemplate, TimeBasedAnalogMaker<StampFilter>, StateBasedAnalogMaker<StampFilter> {
 
@@ -37,7 +33,7 @@ public interface StampFilter extends StampFilterTemplate, TimeBasedAnalogMaker<S
 
     int pathNidForFilter();
 
-    default ConceptFacade pathForFilter() {
+    default org.hl7.tinkar.terms.ConceptFacade pathForFilter() {
         return Entity.getFast(pathNidForFilter());
     }
 
@@ -46,7 +42,7 @@ public interface StampFilter extends StampFilterTemplate, TimeBasedAnalogMaker<S
      * @param modules the new modules list.
      * @return the new path coordinate
      */
-    StampFilter withModules(Collection<ConceptEntity> modules);
+    StampFilter withModules(Collection<ConceptFacade> modules);
 
     /**
      * Create a new Filter ImmutableCoordinate identical to the this coordinate, but with the path for position replaced.
@@ -113,20 +109,7 @@ public interface StampFilter extends StampFilterTemplate, TimeBasedAnalogMaker<S
         return stampPosition().time();
     }
 
-    default Instant getTimeAsInstant() {
-        return stampPosition().instant();
-    }
+    StampCalculator stampCalculator();
 
-    RelativePositionCalculator getRelativePositionCalculator();
-
-    default LatestVersion<Version> latestConceptVersion(int conceptNid) {
-        try {
-            throw new UnsupportedOperationException();
-//
-//            return Entity.provider().getEntityFast(conceptNid).getLatestVersion(this);
-        } catch (NoSuchElementException e) {
-            return new LatestVersion<>();
-        }
-    }
 
 }

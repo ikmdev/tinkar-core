@@ -51,14 +51,14 @@ public final class ConceptEntity
     }
 
     public static ConceptEntity make(ByteBuf readBuf, byte entityFormatVersion) {
-        ConceptEntity conceptEntity = new ConceptEntity();
-        conceptEntity.fill(readBuf, entityFormatVersion);
-        return conceptEntity;
+        ConceptEntity conceptFacade = new ConceptEntity();
+        conceptFacade.fill(readBuf, entityFormatVersion);
+        return conceptFacade;
     }
 
     public static ConceptEntity make(ConceptChronology other) {
-        ConceptEntity conceptEntity = new ConceptEntity();
-        conceptEntity.fill(other);
-        return conceptEntity;
+        ConceptEntity conceptFacade = new ConceptEntity();
+        conceptFacade.fill(other);
+        return conceptFacade;
     }
 }

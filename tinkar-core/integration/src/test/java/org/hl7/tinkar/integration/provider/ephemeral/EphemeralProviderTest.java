@@ -35,7 +35,7 @@ public class EphemeralProviderTest {
 
     @Test
     public void loadChronologies() throws IOException {
-        File file = new File(System.getProperty("user.dir"), "/src/test/resources/tinkar-export.zip");
+        File file = TestConstants.TINK_TEST_FILE;
         LoadEntitiesFromDTO loadTink = new LoadEntitiesFromDTO(file);
         int count = loadTink.call();
         LOG.info("Loaded. " + loadTink.report() + "\n\n");

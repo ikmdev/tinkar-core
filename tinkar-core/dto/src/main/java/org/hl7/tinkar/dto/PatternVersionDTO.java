@@ -22,7 +22,7 @@ import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.component.FieldDefinition;
-import org.hl7.tinkar.component.TypePatternVersion;
+import org.hl7.tinkar.component.PatternVersion;
 import org.hl7.tinkar.dto.binary.*;
 
 /**
@@ -30,28 +30,28 @@ import org.hl7.tinkar.dto.binary.*;
  * @author kec
  */
 
-public record TypePatternVersionDTO(PublicId publicId,
-                                    StampDTO stamp,
-                                    PublicId referencedComponentPurposePublicId,
-                                    PublicId referencedComponentMeaningPublicId,
-                                    ImmutableList<FieldDefinitionDTO> fieldDefinitionDTOS)
-        implements TypePatternVersion<FieldDefinitionDTO>, Marshalable {
+public record PatternVersionDTO(PublicId publicId,
+                                StampDTO stamp,
+                                PublicId referencedComponentPurposePublicId,
+                                PublicId referencedComponentMeaningPublicId,
+                                ImmutableList<FieldDefinitionDTO> fieldDefinitionDTOS)
+        implements PatternVersion<FieldDefinitionDTO>, Marshalable {
 
     private static final int localMarshalVersion = 3;
 
 
-    public static TypePatternVersionDTO make(TypePatternVersion<FieldDefinitionDTO> typePatternVersion) {
+    public static PatternVersionDTO make(PatternVersion<FieldDefinitionDTO> patternVersion) {
 
-        MutableList<FieldDefinitionDTO> fields = Lists.mutable.ofInitialCapacity(typePatternVersion.fieldDefinitions().size());
-        for (FieldDefinition fieldDefinition : typePatternVersion.fieldDefinitions()) {
+        MutableList<FieldDefinitionDTO> fields = Lists.mutable.ofInitialCapacity(patternVersion.fieldDefinitions().size());
+        for (FieldDefinition fieldDefinition : patternVersion.fieldDefinitions()) {
             fields.add(FieldDefinitionDTO.make(fieldDefinition));
         }
 
-        return new TypePatternVersionDTO(
-                typePatternVersion.publicId(),
-                StampDTO.make(typePatternVersion.stamp()),
-                typePatternVersion.referencedComponentPurpose().publicId(),
-                typePatternVersion.referencedComponentMeaning().publicId(),
+        return new PatternVersionDTO(
+                patternVersion.publicId(),
+                StampDTO.make(patternVersion.stamp()),
+                patternVersion.referencedComponentPurpose().publicId(),
+                patternVersion.referencedComponentMeaning().publicId(),
                 fields.toImmutable());
     }
     @Override
@@ -70,15 +70,15 @@ public record TypePatternVersionDTO(PublicId publicId,
     }
 
     /**
-     * Unmarshal method for TypePatternVersionDTO
+     * Unmarshal method for PatternVersionDTO
      * @param in
      * @param componentPublicId
      * @return
      */
     @VersionUnmarshaler
-    public static TypePatternVersionDTO make(TinkarInput in, PublicId componentPublicId) {
+    public static PatternVersionDTO make(TinkarInput in, PublicId componentPublicId) {
         if (localMarshalVersion == in.getTinkerFormatVersion()) {
-            return new TypePatternVersionDTO(componentPublicId,
+            return new PatternVersionDTO(componentPublicId,
                     StampDTO.make(in),
                     in.getPublicId(),
                     in.getPublicId(),
@@ -89,7 +89,7 @@ public record TypePatternVersionDTO(PublicId publicId,
     }
 
     /**
-     * Marshal method for TypePatternVersionDTO
+     * Marshal method for PatternVersionDTO
      * @param out
      */
     @Override

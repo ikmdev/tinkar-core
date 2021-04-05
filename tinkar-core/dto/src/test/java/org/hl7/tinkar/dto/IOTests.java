@@ -22,7 +22,7 @@ public class IOTests {
         Assertions.assertThrows(UncheckedIOException.class, () -> failingInput.readInstant());
         Assertions.assertThrows(UncheckedIOException.class, () -> failingInput.readFieldDefinitionList());
         Assertions.assertThrows(UncheckedIOException.class, () -> failingInput.readConceptVersionList(makePublicId()));
-        Assertions.assertThrows(UncheckedIOException.class, () -> failingInput.readTypePatternVersionList(makePublicId()));
+        Assertions.assertThrows(UncheckedIOException.class, () -> failingInput.readPatternVersionList(makePublicId()));
         Assertions.assertThrows(UncheckedIOException.class, () -> failingInput.readSemanticVersionList(makePublicId(), makePublicId(), makePublicId()));
         Assertions.assertThrows(UncheckedIOException.class, () -> failingInput.readObjectArray());
         Assertions.assertThrows(UncheckedIOException.class, () -> SemanticVersionDTO.make(failingInput,
@@ -36,7 +36,7 @@ public class IOTests {
         Assertions.assertThrows(UncheckedIOException.class, () -> tinkarFailingOutput.writeInstant(Instant.now()));
         Assertions.assertThrows(UncheckedIOException.class, () -> tinkarFailingOutput.writeFieldDefinitionList(Lists.immutable.empty()));
         Assertions.assertThrows(UncheckedIOException.class, () -> tinkarFailingOutput.writeConceptVersionList(Lists.immutable.empty()));
-        Assertions.assertThrows(UncheckedIOException.class, () -> tinkarFailingOutput.writeTypePatternVersionList(Lists.immutable.empty()));
+        Assertions.assertThrows(UncheckedIOException.class, () -> tinkarFailingOutput.writePatternVersionList(Lists.immutable.empty()));
         Assertions.assertThrows(UncheckedIOException.class, () -> tinkarFailingOutput.writeSemanticVersionList(Lists.immutable.empty()));
         Assertions.assertThrows(UncheckedIOException.class, () -> tinkarFailingOutput.writeObjectArray(new Object[0]));
     }

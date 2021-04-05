@@ -18,6 +18,6 @@
  *
  * @author kec
  */
-public interface TypePattern extends Component {
+public interface Pattern extends Component {
     
 }

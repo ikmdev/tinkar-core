@@ -1,6 +1,5 @@
 package org.hl7.tinkar.provider.mvstore;
 
-import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.h2.mvstore.MVMap;
@@ -14,7 +13,6 @@ import org.hl7.tinkar.common.service.PrimitiveDataService;
 
 import java.io.File;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ObjIntConsumer;
 
@@ -36,7 +34,7 @@ public class MVStoreProvider implements PrimitiveDataService {
     final MVMap<Integer, byte[]> nidToComponentMap;
     final MVMap<UUID, Integer> uuidToNidMap;
     final MVMap<UUID, Integer> stampUuidToNidMap;
-    final MVMap<Integer, Integer> nidToTypeDefNidMap;
+    final MVMap<Integer, Integer> nidToPatternNidMap;
     final MVMap<Integer, Integer> nidToReferencedComponentNidMap;
 
    public MVStoreProvider() {
@@ -51,7 +49,7 @@ public class MVStoreProvider implements PrimitiveDataService {
         this.nidToComponentMap = store.openMap("nidToComponentMap");
         this.uuidToNidMap = store.openMap("uuidToNidMap");
         this.stampUuidToNidMap = store.openMap("stampUuidToNidMap");
-       this.nidToTypeDefNidMap = store.openMap("nidToTypeDefNidMap");
+       this.nidToPatternNidMap = store.openMap("nidToPatternNidMap");
        this.nidToReferencedComponentNidMap = store.openMap("nidToReferencedComponentNidMap");
 
         if (this.uuidToNidMap.containsKey(nextNidKey)) {
@@ -76,9 +74,9 @@ public class MVStoreProvider implements PrimitiveDataService {
     }
 
     @Override
-    public void forEachEntityOfType(int typeDefinitionNid, IntProcedure procedure) {
-        this.nidToTypeDefNidMap.forEach((nid, defForNid) -> {
-            if (defForNid == typeDefinitionNid) {
+    public void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure) {
+        this.nidToPatternNidMap.forEach((nid, defForNid) -> {
+            if (defForNid == patternNid) {
                 procedure.accept(nid);
             }
         });
@@ -94,20 +92,20 @@ public class MVStoreProvider implements PrimitiveDataService {
     }
 
     @Override
-    public void forEachSemanticNidForComponentOfType(int componentNid, int typeDefinitionNid, IntProcedure procedure) {
-        nidToReferencedComponentNidMap.forEach((nid, referencedComponentNid) -> {
+    public void forEachSemanticNidForComponentOfPattern(int componentNid, int patternNid, IntProcedure procedure) {
+        nidToReferencedComponentNidMap.forEach((semanticNid, referencedComponentNid) -> {
             if (componentNid == referencedComponentNid) {
-                if (nidToTypeDefNidMap.get(nid) == typeDefinitionNid) {
-                    procedure.accept(nid);
+                if (nidToPatternNidMap.get(semanticNid) == patternNid) {
+                    procedure.accept(semanticNid);
                 }
             }
         });
     }
 
     @Override
-    public byte[] merge(int nid, int definitionNid, int referencedComponentNid, byte[] value) {
-       if (!nidToTypeDefNidMap.containsKey(nid)) {
-           nidToTypeDefNidMap.putIfAbsent(nid, definitionNid);
+    public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value) {
+       if (!nidToPatternNidMap.containsKey(nid)) {
+           nidToPatternNidMap.putIfAbsent(nid, patternNid);
            nidToReferencedComponentNidMap.put(nid, referencedComponentNid);
        }
 

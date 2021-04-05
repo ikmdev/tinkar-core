@@ -149,12 +149,12 @@ public class TinkarInput extends DataInputStream {
         }
     }
 
-    public ImmutableList<TypePatternVersionDTO> readTypePatternVersionList(PublicId componentPublicId) {
+    public ImmutableList<PatternVersionDTO> readPatternVersionList(PublicId componentPublicId) {
         try {
             int length = readInt();
-            TypePatternVersionDTO[] array = new TypePatternVersionDTO[length];
+            PatternVersionDTO[] array = new PatternVersionDTO[length];
             for (int i = 0; i < length; i++) {
-                array[i] = TypePatternVersionDTO.make(this, componentPublicId);
+                array[i] = PatternVersionDTO.make(this, componentPublicId);
             }
             return Lists.immutable.of(array);
         } catch (IOException ex) {
@@ -163,7 +163,7 @@ public class TinkarInput extends DataInputStream {
     }
 
     public ImmutableList<SemanticVersionDTO> readSemanticVersionList(PublicId componentPublicId,
-                                                                     PublicId typePatternPublicId,
+                                                                     PublicId patternPublicId,
                                                                      PublicId referencedComponentPublicId) {
         try {
             int length = readInt();
@@ -269,10 +269,10 @@ public class TinkarInput extends DataInputStream {
                     return ConceptChronologyDTO.make(this);
                 case CONCEPT:
                     return ConceptDTO.make(this);
-                case TYPE_PATTERN_CHRONOLOGY:
-                    return TypePatternChronologyDTO.make(this);
-                case TYPE_PATTERN:
-                    return TypePatternDTO.make(this);
+                case PATTERN_CHRONOLOGY:
+                    return PatternChronologyDTO.make(this);
+                case PATTERN:
+                    return PatternDTO.make(this);
                 case SEMANTIC_CHRONOLOGY:
                     return SemanticChronologyDTO.make(this);
                 case SEMANTIC:

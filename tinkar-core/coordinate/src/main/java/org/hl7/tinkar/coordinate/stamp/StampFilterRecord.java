@@ -53,7 +53,6 @@ import org.hl7.tinkar.common.binary.DecoderInput;
 import org.hl7.tinkar.common.binary.Encoder;
 import org.hl7.tinkar.common.binary.EncoderOutput;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
-import org.hl7.tinkar.entity.ConceptEntity;
 import org.hl7.tinkar.terms.ConceptFacade;
 
 /**
@@ -136,7 +135,7 @@ public record StampFilterRecord(StateSet allowedStates, StampPositionImmutable s
     }
 
     public static StampFilterRecord make(StateSet allowedStates, int path,
-                                         Set<ConceptEntity> modules) {
+                                         Set<ConceptFacade> modules) {
         ImmutableIntSet moduleNids = IntSets.immutable.of(modules.stream().mapToInt(value -> value.nid()).toArray());
         StampPositionImmutable stampPosition = StampPositionImmutable.make(Long.MAX_VALUE, path);
 
@@ -167,8 +166,8 @@ public record StampFilterRecord(StateSet allowedStates, StampPositionImmutable s
         return "StampFilterRecord{" + toUserString() + "}";
     }
 
-    public RelativePositionCalculator getRelativePositionCalculator() {
-        return RelativePositionCalculator.getCalculator(this);
+    public StampCalculator stampCalculator() {
+        return StampCalculator.getCalculator(this);
     }
 
     @Override
@@ -195,7 +194,7 @@ public record StampFilterRecord(StateSet allowedStates, StampPositionImmutable s
 
 
     @Override
-    public StampFilterRecord withModules(Collection<ConceptEntity> modules) {
+    public StampFilterRecord withModules(Collection<ConceptFacade> modules) {
         MutableIntSet mis = modules == null ? IntSets.mutable.empty() : 
         IntSets.mutable.ofAll(modules.stream().mapToInt(concept -> concept.nid()));
          return make(this.allowedStates,
@@ -204,7 +203,7 @@ public record StampFilterRecord(StateSet allowedStates, StampPositionImmutable s
     }
 
     @Override
-    public StampFilterRecord withPath(ConceptFacade pathForPosition) {
+    public StampFilterRecord withPath(org.hl7.tinkar.terms.ConceptFacade pathForPosition) {
         return make(this.allowedStates,
                 StampPositionImmutable.make(this.stampPosition.time(), pathForPosition.nid()),
                 this.moduleNids, this.excludedModuleNids, this.modulePriorityOrder);

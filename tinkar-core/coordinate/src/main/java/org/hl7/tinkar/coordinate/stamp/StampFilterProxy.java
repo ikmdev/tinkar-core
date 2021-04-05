@@ -33,8 +33,8 @@ public interface StampFilterProxy extends StampFilter, StampFilterTemplateProxy 
     }
 
     @Override
-    default RelativePositionCalculator getRelativePositionCalculator() {
-        return getStampFilter().getRelativePositionCalculator();
+    default StampCalculator stampCalculator() {
+        return getStampFilter().stampCalculator();
     }
 
     @Override

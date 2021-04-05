@@ -1,14 +1,10 @@
-package org.hl7.tinkar.coordinate.stamp;
+package org.hl7.tinkar.terms;
 
 
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.Concept;
-import org.hl7.tinkar.terms.ComponentWithNid;
-import org.hl7.tinkar.entity.ConceptEntity;
-import org.hl7.tinkar.terms.ConceptProxy;
-import org.hl7.tinkar.terms.TinkarTerm;
 
 public enum State implements Concept, ComponentWithNid {
     ACTIVE(TinkarTerm.ACTIVE_STATE),
@@ -33,7 +29,7 @@ public enum State implements Concept, ComponentWithNid {
         return proxyForState.nid();
     }
 
-    public static State fromConcept(ConceptEntity concept) {
+    public static State fromConcept(ConceptFacade concept) {
         if (nidStateMap.size() < 5) {
             for (State state: State.values()) {
                 nidStateMap.put(state.nid(), state);

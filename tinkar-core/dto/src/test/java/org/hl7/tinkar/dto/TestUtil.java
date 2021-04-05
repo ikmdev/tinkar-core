@@ -81,17 +81,17 @@ public class TestUtil {
         return Lists.immutable.of(array);
     }
 
-    public static TypePatternVersionDTO makeTypePatternVersionForChangeSet(PublicId componentPublicId) {
+    public static PatternVersionDTO makePatternVersionForChangeSet(PublicId componentPublicId) {
 
-        return new TypePatternVersionDTO(componentPublicId, makeStampForChangeSet(), makePublicId(),
+        return new PatternVersionDTO(componentPublicId, makeStampForChangeSet(), makePublicId(),
                 makePublicId(), makeFieldDefinitionList());
     }
 
-    public static ImmutableList<TypePatternVersionDTO> makeTypePatternVersionForChangeSetList(PublicId componentPublicId) {
+    public static ImmutableList<PatternVersionDTO> makePatternVersionForChangeSetList(PublicId componentPublicId) {
         int size = getRandomSize(4);
-        TypePatternVersionDTO[] array = new TypePatternVersionDTO[size];
+        PatternVersionDTO[] array = new PatternVersionDTO[size];
         for (int i = 0; i < size; i++) {
-            array[i] = makeTypePatternVersionForChangeSet(componentPublicId);
+            array[i] = makePatternVersionForChangeSet(componentPublicId);
         }
         return Lists.immutable.of(array);
     }
@@ -110,7 +110,7 @@ public class TestUtil {
     }
 
     public static ImmutableList<SemanticVersionDTO> makeSemanticVersionForChangeSetList(PublicId componentPublicId,
-                                                                                        PublicId typePatternPublicId,
+                                                                                        PublicId patternPublicId,
                                                                                         PublicId referencedComponentPublicId) {
         int size = getRandomSize(7);
         SemanticVersionDTO[] array = new SemanticVersionDTO[size];
@@ -136,7 +136,7 @@ public class TestUtil {
                 "a string",
                 Instant.ofEpochMilli(Instant.now().toEpochMilli()),
                 new ConceptDTO(makePublicId()),
-                new TypePatternDTO(makePublicId()),
+                new PatternDTO(makePublicId()),
                 new SemanticDTO(makePublicId())
         };
         return array;
@@ -152,19 +152,19 @@ public class TestUtil {
         return new ConceptChronologyDTO(componentPublicId, makeConceptVersionList(componentPublicId));
     }
 
-    public static TypePatternChronologyDTO makeTypePatternChronology() {
+    public static PatternChronologyDTO makePatternChronology() {
         PublicId componentPublicId = makePublicId();
-        return new TypePatternChronologyDTO(componentPublicId, makeTypePatternVersionForChangeSetList(componentPublicId));
+        return new PatternChronologyDTO(componentPublicId, makePatternVersionForChangeSetList(componentPublicId));
     }
 
     public static SemanticChronologyDTO makeSemanticChronology() {
         PublicId componentPublicId = makePublicId();
-        PublicId typePatternPublicId = makePublicId();
+        PublicId patternPublicId = makePublicId();
         PublicId referencedComponentPublicId = makePublicId();
 
         return new SemanticChronologyDTO(componentPublicId,
-                typePatternPublicId, referencedComponentPublicId,
+                patternPublicId, referencedComponentPublicId,
                 makeSemanticVersionForChangeSetList(componentPublicId,
-                        typePatternPublicId, referencedComponentPublicId));
+                        patternPublicId, referencedComponentPublicId));
     }
 }

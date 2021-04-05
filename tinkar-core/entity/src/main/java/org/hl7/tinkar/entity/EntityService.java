@@ -135,15 +135,15 @@ public interface EntityService extends ChronologyService {
         }
     }
 
-    void forEachEntityOfType(int typeDefinitionNid, Consumer<SemanticEntity> procedure);
+    void forEachEntityOfPattern(int patternNid, Consumer<SemanticEntity> procedure);
 
-    int[] entityNidsOfType(int setNid);
+    int[] entityNidsOfPattern(int patternNid);
 
     void forEachSemanticForComponent(int componentNid, Consumer<SemanticEntity> procedure);
 
     int[] semanticNidsForComponent(int componentNid);
 
-    void forEachSemanticForComponentOfType(int componentNid, int typeDefinitionNid, Consumer<SemanticEntity> procedure);
+    void forEachSemanticForComponentOfPattern(int componentNid, int patternNid, Consumer<SemanticEntity> procedure);
 
-    int[] semanticNidsForComponentOfType(int componentNid, int typeDefinitionNid);
+    int[] semanticNidsForComponentOfPattern(int componentNid, int patternNid);
 }

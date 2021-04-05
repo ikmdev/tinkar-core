@@ -4,23 +4,18 @@ import io.activej.bytebuf.ByteBuf;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
-import org.hl7.tinkar.common.id.IntIdList;
-import org.hl7.tinkar.common.id.IntIdSet;
 import org.hl7.tinkar.common.service.PrimitiveData;
-import org.hl7.tinkar.common.util.time.DateTimeUtil;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.component.FieldDefinition;
-import org.hl7.tinkar.component.TypePatternVersion;
+import org.hl7.tinkar.component.PatternVersion;
 import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.component.FieldDataType;
+import org.hl7.tinkar.terms.ConceptFacade;
 
-import java.time.Instant;
-
-public class TypePatternEntityVersion
+public class PatternEntityVersion
         extends EntityVersion
-        implements TypePatternVersion<FieldDefinitionForEntity> {
+        implements PatternVersion<FieldDefinitionForEntity> {
 
-    // TODO should we have a referenced component "identity" or "what" field as well?
     protected int referencedComponentPurposeNid;
     protected int referencedComponentMeaningNid;
     protected final MutableList<FieldDefinitionForEntity> fieldDefinitionForEntities = Lists.mutable.empty();
@@ -43,7 +38,40 @@ public class TypePatternEntityVersion
 
     @Override
     public FieldDataType dataType() {
-        return FieldDataType.TYPE_PATTERN_VERSION;
+        return FieldDataType.PATTERN_VERSION;
+    }
+
+    public <T> T getFieldWithMeaning(ConceptFacade fieldMeaning, SemanticEntityVersion version) {
+        return (T) version.fields.get(indexForMeaning(fieldMeaning));
+    }
+    public <T> T getFieldWithPurpose(ConceptFacade fieldPurpose, SemanticEntityVersion version) {
+        return (T) version.fields.get(indexForPurpose(fieldPurpose));
+    }
+
+    public int indexForMeaning(ConceptFacade meaning) {
+        return indexForMeaning(meaning.nid());
+    }
+
+    public int indexForPurpose(ConceptFacade purpose) {
+        return indexForPurpose(purpose.nid());
+    }
+
+    public int indexForMeaning(int meaningNid) {
+        for (int i = 0; i < fieldDefinitions().size(); i++) {
+            if (fieldDefinitions().get(i).meaningNid == meaningNid) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public int indexForPurpose(int purposeNid) {
+        for (int i = 0; i < fieldDefinitions().size(); i++) {
+            if (fieldDefinitions().get(i).purposeNid == purposeNid) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     @Override
@@ -77,19 +105,19 @@ public class TypePatternEntityVersion
         return size;
     }
 
-    public static TypePatternEntityVersion make(TypePatternEntity definitionEntity, ByteBuf readBuf, byte formatVersion) {
-        TypePatternEntityVersion version = new TypePatternEntityVersion();
+    public static PatternEntityVersion make(PatternEntity definitionEntity, ByteBuf readBuf, byte formatVersion) {
+        PatternEntityVersion version = new PatternEntityVersion();
         version.fill(definitionEntity, readBuf, formatVersion);
         return version;
     }
 
-    public static TypePatternEntityVersion make(TypePatternEntity definitionEntity, TypePatternVersion<FieldDefinition> definitionVersion) {
-        TypePatternEntityVersion version = new TypePatternEntityVersion();
-        version.fill(definitionEntity, definitionVersion);
-        version.referencedComponentPurposeNid = Get.entityService().nidForComponent(definitionVersion.referencedComponentPurpose());
-        version.referencedComponentMeaningNid = Get.entityService().nidForComponent(definitionVersion.referencedComponentMeaning());
+    public static PatternEntityVersion make(PatternEntity patternEntity, PatternVersion<FieldDefinition> patternVersion) {
+        PatternEntityVersion version = new PatternEntityVersion();
+        version.fill(patternEntity, patternVersion);
+        version.referencedComponentPurposeNid = Get.entityService().nidForComponent(patternVersion.referencedComponentPurpose());
+        version.referencedComponentMeaningNid = Get.entityService().nidForComponent(patternVersion.referencedComponentMeaning());
         version.fieldDefinitionForEntities.clear();
-        for (FieldDefinition fieldDefinition: definitionVersion.fieldDefinitions()) {
+        for (FieldDefinition fieldDefinition: patternVersion.fieldDefinitions()) {
             version.fieldDefinitionForEntities.add(FieldDefinitionForEntity.make(version, fieldDefinition));
         }
         return version;

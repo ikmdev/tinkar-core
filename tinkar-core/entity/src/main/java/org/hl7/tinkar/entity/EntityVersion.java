@@ -26,6 +26,10 @@ public abstract class EntityVersion
 
     public abstract FieldDataType dataType();
 
+    public final int nid() {
+        return chronology.nid();
+    }
+
     protected final void fill(Entity chronology, ByteBuf readBuf, byte formatVersion) {
         this.chronology = chronology;
         int versionArraySize = readBuf.readInt();

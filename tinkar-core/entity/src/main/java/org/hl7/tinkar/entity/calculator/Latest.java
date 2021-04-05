@@ -40,6 +40,9 @@ package org.hl7.tinkar.entity.calculator;
 
 //~--- JDK imports ------------------------------------------------------------
 
+import org.hl7.tinkar.entity.EntityVersion;
+import org.hl7.tinkar.terms.State;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -64,9 +67,9 @@ import java.util.stream.Stream;
  * @param <V> the value type
  * TODO [KEC] search for all get() methods to make sure test for isPresent() is completed.
  */
-public final class LatestVersion<V> {
+public final class Latest<V> {
 
-    private static final LatestVersion<?> EMPTY = new LatestVersion<>();
+    private static final Latest<?> EMPTY = new Latest<>();
     /** The value. */
     V value;
 
@@ -74,21 +77,21 @@ public final class LatestVersion<V> {
     Set<V> contradictions;
 
     //~--- constructors --------------------------------------------------------
-    public LatestVersion() {}
+    public Latest() {}
 
     /**
      * Instantiates a new latest version.
      *
      * @param versionType the version type
      */
-    public LatestVersion(Class<V> versionType) {}
+    public Latest(Class<V> versionType) {}
 
     /**
      * Instantiates a new latest version.
      *
      * @param versions the versions
      */
-    public LatestVersion(List<V> versions) {
+    public Latest(List<V> versions) {
         this.value = Objects.requireNonNull(versions.get(0), "latest version cannot be null");
 
         if (versions.size() < 2) {
@@ -103,7 +106,7 @@ public final class LatestVersion<V> {
      *
      * @param latest the latest
      */
-    public LatestVersion(V latest) {
+    public Latest(V latest) {
         this.value          = Objects.requireNonNull(latest, "latest version cannot be null");
         this.contradictions = null;
     }
@@ -114,7 +117,7 @@ public final class LatestVersion<V> {
      * @param latest the latest
      * @param contradictions the contradictions
      */
-    public LatestVersion(V latest, Collection<V> contradictions) {
+    public Latest(V latest, Collection<V> contradictions) {
         this.value = latest;
 
         if (contradictions == null) {
@@ -148,7 +151,7 @@ public final class LatestVersion<V> {
      * @param consumer the consumer to process the value if it is present.
      * @return the latest version unmodified for use in a fluent API manner.
      */
-    public LatestVersion<V> ifPresent(Consumer<? super V> consumer) {
+    public Latest<V> ifPresent(Consumer<? super V> consumer) {
         if (value != null) {
             consumer.accept(this.value);
         }
@@ -213,7 +216,7 @@ public final class LatestVersion<V> {
      * @param runnable the runnable to execute if the value is present
      * @return the latest version unmodified for use in a fluent API manner.
      */
-    public LatestVersion<V> ifAbsent(Runnable runnable) {
+    public Latest<V> ifAbsent(Runnable runnable) {
         if (value == null) {
             runnable.run();
         }
@@ -278,11 +281,11 @@ public final class LatestVersion<V> {
      * @param predicate a predicate to apply to the value, if present
      * @return an Optional describing the value of this Optional if a value is present and the value matches the given predicate, otherwise an empty Optional
      */
-    public LatestVersion<V> filter(Predicate<LatestVersion<V>> predicate) {
+    public Latest<V> filter(Predicate<Latest<V>> predicate) {
         if (predicate.test(this)) {
             return this;
         }
-        return new LatestVersion<>();
+        return new Latest<>();
     }
 
     /**
@@ -292,7 +295,7 @@ public final class LatestVersion<V> {
      * @param mapper a mapping function to apply to the value, if present
      * @return an Optional describing the result of applying a mapping function to the value of this Optional, if a value is present, otherwise an empty Optional
      */
-    public <U> LatestVersion<U> map(Function<? super LatestVersion<V>,? extends LatestVersion<U>> mapper) {
+    public <U> Latest<U> map(Function<? super Latest<V>,? extends Latest<U>> mapper) {
         return mapper.apply(this);
     }
 
@@ -340,18 +343,36 @@ public final class LatestVersion<V> {
         }
         return !this.contradictions.isEmpty();
     }
-    public static <T> LatestVersion<T> of(T value) {
-        return new LatestVersion<>(value);
+    public static <T> Latest<T> of(T value) {
+        return new Latest<>(value);
     }
 
-    public static <T> LatestVersion<T> ofNullable(T value) {
+    public static <T> Latest<T> ofNullable(T value) {
         return value == null ? empty() : of(value);
     }
 
-    public static<T> LatestVersion<T> empty() {
+    public static<T> Latest<T> empty() {
         @SuppressWarnings("unchecked")
-        LatestVersion<T> t = (LatestVersion<T>) EMPTY;
+        Latest<T> t = (Latest<T>) EMPTY;
         return t;
     }
+
+    public void sortByState() {
+        if (value != null && value instanceof EntityVersion entityVersion) {
+            if (entityVersion.stamp().state() != State.ACTIVE) {
+                //See if we have an active one to swap it with.
+                if  (contradictions != null)
+                for (V c : contradictions) {
+                    if (entityVersion.stamp().state() == State.ACTIVE) {
+                        contradictions.remove(c);
+                        contradictions.add(value);
+                        value = c;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
 }
 

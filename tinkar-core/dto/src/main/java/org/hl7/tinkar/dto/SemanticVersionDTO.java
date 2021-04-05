@@ -49,8 +49,8 @@ public record SemanticVersionDTO(PublicId publicId,
         semanticVersion.fields().forEach(objectToConvert -> {
             if (objectToConvert instanceof Concept concept) {
                 convertedFields.add(new ConceptDTO(concept.publicId()));
-            } else if (objectToConvert instanceof TypePattern typePattern) {
-                convertedFields.add(new TypePatternDTO(typePattern.publicId()));
+            } else if (objectToConvert instanceof Pattern pattern) {
+                convertedFields.add(new PatternDTO(pattern.publicId()));
             } else if (objectToConvert instanceof Semantic semantic) {
                 convertedFields.add(new SemanticDTO(semantic.publicId()));
             } else if (objectToConvert instanceof Component component) {

@@ -35,7 +35,7 @@ import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.dto.ConceptVersionDTO;
 import org.hl7.tinkar.dto.FieldDefinitionDTO;
 import org.hl7.tinkar.dto.SemanticVersionDTO;
-import org.hl7.tinkar.dto.TypePatternVersionDTO;
+import org.hl7.tinkar.dto.PatternVersionDTO;
 import org.hl7.tinkar.dto.graph.DiGraphDTO;
 import org.hl7.tinkar.dto.graph.DiTreeDTO;
 
@@ -126,10 +126,10 @@ public class TinkarOutput extends DataOutputStream {
         }
     }
 
-    public void writeTypePatternVersionList(ImmutableList<TypePatternVersionDTO> versions) {
+    public void writePatternVersionList(ImmutableList<PatternVersionDTO> versions) {
         try {
             writeInt(versions.size());
-            for (TypePatternVersionDTO version: versions) {
+            for (PatternVersionDTO version: versions) {
                 version.marshal(this);
             }
         } catch (IOException ex) {
@@ -198,8 +198,8 @@ public class TinkarOutput extends DataOutputStream {
                     break;
                 case CONCEPT:
                 case CONCEPT_CHRONOLOGY:
-                case TYPE_PATTERN:
-                case TYPE_PATTERN_CHRONOLOGY:
+                case PATTERN:
+                case PATTERN_CHRONOLOGY:
                 case SEMANTIC:
                 case SEMANTIC_CHRONOLOGY:
                     writeMarshalableObject((Marshalable) object);

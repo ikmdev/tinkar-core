@@ -4346,7 +4346,7 @@ public class TinkarTerm {
      * <a href="http://localhost:8080/terminology/rest/concept/6155818b-09ed-388e-82ce-caa143423e99">
      * 6155818b-09ed-388e-82ce-caa143423e99</a>}.*/
     public static final ConceptProxy ROLE =
-            ConceptProxy.make("Role (SOLOR)", UUID.fromString("6155818b-09ed-388e-82ce-caa143423e99"));
+            ConceptProxy.make("Role (SOLOR)", UUID.fromString("46ae9325-dd24-5008-8fda-80cf1f0977c7"));
 
     /** Java binding for the concept described as <strong><em>Role group (SOLOR)</em></strong>;
      * identified by UUID: {@code

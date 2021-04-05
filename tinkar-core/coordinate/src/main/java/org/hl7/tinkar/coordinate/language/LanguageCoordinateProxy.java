@@ -16,13 +16,13 @@
  */
 package org.hl7.tinkar.coordinate.language;
 
-import java.util.List;
-
-import org.hl7.tinkar.entity.calculator.LatestVersion;
-import org.hl7.tinkar.component.Concept;
+import org.eclipse.collections.api.list.ImmutableList;
+import org.hl7.tinkar.entity.calculator.Latest;
 import org.hl7.tinkar.coordinate.stamp.StampFilter;
 import org.hl7.tinkar.entity.SemanticEntity;
 import org.hl7.tinkar.entity.SemanticEntityVersion;
+import org.hl7.tinkar.terms.ConceptFacade;
+import org.hl7.tinkar.terms.PatternFacade;
 
 /**
  *
@@ -43,13 +43,13 @@ public interface LanguageCoordinateProxy extends LanguageCoordinate {
    }
 
    @Override
-   default Concept[] getDescriptionTypeSpecPreferenceList() {
-      return getLanguageCoordinate().getDescriptionTypeSpecPreferenceList();
+   default ConceptFacade[] getDescriptionTypeFacadePreferenceList() {
+      return getLanguageCoordinate().getDescriptionTypeFacadePreferenceList();
    }
 
    @Override
-   default Concept[] getDialectAssemblageSpecPreferenceList() {
-      return getLanguageCoordinate().getDialectAssemblageSpecPreferenceList();
+   default PatternFacade[] getDialectPatternFacadePreferenceList() {
+      return getLanguageCoordinate().getDialectPatternFacadePreferenceList();
    }
 
    @Override
@@ -58,22 +58,22 @@ public interface LanguageCoordinateProxy extends LanguageCoordinate {
    }
 
    @Override
-   default Concept[] getModuleSpecPreferenceListForLanguage() {
-      return getLanguageCoordinate().getModuleSpecPreferenceListForLanguage();
+   default ConceptFacade[] getModuleFacadePreferenceListForLanguage() {
+      return getLanguageCoordinate().getModuleFacadePreferenceListForLanguage();
    }
 
    @Override
-   default Concept getLanguageConcept() {
+   default ConceptFacade getLanguageConcept() {
       return getLanguageCoordinate().getLanguageConcept();
    }
 
    @Override
-   default LatestVersion<SemanticEntityVersion> getDefinitionDescription(List<SemanticEntity> descriptionList, StampFilter stampFilter) {
+   default Latest<SemanticEntityVersion> getDefinitionDescription(ImmutableList<SemanticEntity> descriptionList, StampFilter stampFilter) {
       return getLanguageCoordinate().getDefinitionDescription(descriptionList, stampFilter);
    }
 
    @Override
-   default LatestVersion<SemanticEntityVersion> getDescription(List<SemanticEntity> descriptionList, StampFilter stampFilter) {
+   default Latest<SemanticEntityVersion> getDescription(ImmutableList<SemanticEntity> descriptionList, StampFilter stampFilter) {
       return getLanguageCoordinate().getDescription(descriptionList, stampFilter);
    }
 
@@ -83,12 +83,12 @@ public interface LanguageCoordinateProxy extends LanguageCoordinate {
    }
 
    @Override
-   default int[] getDialectAssemblagePreferenceList() {
-      return getLanguageCoordinate().getDialectAssemblagePreferenceList();
+   default int[] getDialectPatternPreferenceList() {
+      return getLanguageCoordinate().getDialectPatternPreferenceList();
    }
 
    @Override
-   default LatestVersion<SemanticEntityVersion> getFullyQualifiedDescription(List<SemanticEntity> descriptionList, StampFilter stampFilter) {
+   default Latest<SemanticEntityVersion> getFullyQualifiedDescription(ImmutableList<SemanticEntity> descriptionList, StampFilter stampFilter) {
       return getLanguageCoordinate().getFullyQualifiedDescription(descriptionList, stampFilter);
    }
 
@@ -98,7 +98,7 @@ public interface LanguageCoordinateProxy extends LanguageCoordinate {
    }
 
    @Override
-   default LatestVersion<SemanticEntityVersion> getRegularDescription(List<SemanticEntity> descriptionList, StampFilter stampFilter) {
+   default Latest<SemanticEntityVersion> getRegularDescription(ImmutableList<SemanticEntity> descriptionList, StampFilter stampFilter) {
       return getLanguageCoordinate().getRegularDescription(descriptionList, stampFilter);
    }
 }

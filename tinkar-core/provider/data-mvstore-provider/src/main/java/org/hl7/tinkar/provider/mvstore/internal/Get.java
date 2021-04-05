@@ -2,8 +2,8 @@ package org.hl7.tinkar.provider.mvstore.internal;
 
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.component.Stamp;
-import org.hl7.tinkar.entity.EntityFactory;
 import org.hl7.tinkar.entity.ConceptEntity;
+import org.hl7.tinkar.entity.EntityFactory;
 import org.hl7.tinkar.entity.StampEntity;
 import org.hl7.tinkar.provider.mvstore.MVStoreProvider;
 

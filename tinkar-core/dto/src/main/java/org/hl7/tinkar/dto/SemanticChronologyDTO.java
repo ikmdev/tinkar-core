@@ -20,8 +20,8 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.Component;
+import org.hl7.tinkar.component.Pattern;
 import org.hl7.tinkar.component.SemanticChronology;
-import org.hl7.tinkar.component.TypePattern;
 import org.hl7.tinkar.dto.binary.*;
 
 /**
@@ -29,7 +29,7 @@ import org.hl7.tinkar.dto.binary.*;
  * @author kec
  */
 public record SemanticChronologyDTO(PublicId publicId,
-                                    PublicId typePatternPublicId,
+                                    PublicId patternPublicId,
                                     PublicId referencedComponentPublicId,
                                     ImmutableList<SemanticVersionDTO> semanticVersions)
     implements SemanticChronology<SemanticVersionDTO>, DTO, Marshalable {
@@ -37,11 +37,11 @@ public record SemanticChronologyDTO(PublicId publicId,
     private static final int localMarshalVersion = 3;
 
     public SemanticChronologyDTO(PublicId componentUuids,
-                                 TypePattern typePatternForSemantic,
+                                 Pattern patternForSemantic,
                                  Component referencedComponent,
                                  ImmutableList<SemanticVersionDTO> semanticVersions) {
         this(componentUuids,
-                typePatternForSemantic.publicId(),
+                patternForSemantic.publicId(),
                 referencedComponent.publicId(),
                 semanticVersions);
     }
@@ -52,7 +52,7 @@ public record SemanticChronologyDTO(PublicId publicId,
             changeSetVersions.add(SemanticVersionDTO.make(semanticVersion));
         }
         return new SemanticChronologyDTO(semanticChronology.publicId(),
-                semanticChronology.typePattern(),
+                semanticChronology.pattern(),
                 semanticChronology.referencedComponent(),
                 changeSetVersions.toImmutable());
     }
@@ -63,19 +63,19 @@ public record SemanticChronologyDTO(PublicId publicId,
     }
 
     @Override
-    public TypePattern typePattern() {
-        return new TypePatternDTO(typePatternPublicId);
+    public Pattern pattern() {
+        return new PatternDTO(patternPublicId);
     }
 
     @Unmarshaler
     public static SemanticChronologyDTO make(TinkarInput in) {
         if (localMarshalVersion == in.getTinkerFormatVersion()) {
             PublicId componentUuids = in.getPublicId();
-            PublicId definitionForSemanticUuids = in.getPublicId();
+            PublicId patternUuids = in.getPublicId();
             PublicId referencedComponentUuids = in.getPublicId();
             return new SemanticChronologyDTO(
-                    componentUuids, definitionForSemanticUuids, referencedComponentUuids,
-                    in.readSemanticVersionList(componentUuids, definitionForSemanticUuids, referencedComponentUuids));
+                    componentUuids, patternUuids, referencedComponentUuids,
+                    in.readSemanticVersionList(componentUuids, patternUuids, referencedComponentUuids));
         } else {
             throw new UnsupportedOperationException("Unsupported version: " + in.getTinkerFormatVersion());
         }
@@ -85,7 +85,7 @@ public record SemanticChronologyDTO(PublicId publicId,
     @Marshaler
     public void marshal(TinkarOutput out) {
         out.putPublicId(publicId());
-        out.putPublicId(typePatternPublicId);
+        out.putPublicId(patternPublicId);
         out.putPublicId(referencedComponentPublicId);
         out.writeSemanticVersionList(semanticVersions);
     }

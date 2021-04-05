@@ -59,7 +59,7 @@
                             <goal>verify</goal>
                         </goals>
                         <configuration>
-                            <skipTests>true</skipTests>
+<!--                            <skipTests>true</skipTests>-->
                             <trimStackTrace>false</trimStackTrace>
                             <suiteXmlFiles>
                                 <suiteXmlFile>src/test/resources/ephemeral-testng.xml</suiteXmlFile>
@@ -73,7 +73,7 @@
                             <goal>verify</goal>
                         </goals>
                         <configuration>
-                            <skipTests>true</skipTests>
+<!--                            <skipTests>true</skipTests>-->
                             <trimStackTrace>false</trimStackTrace>
                             <suiteXmlFiles>
                                 <suiteXmlFile>src/test/resources/spinedstore-testng.xml</suiteXmlFile>

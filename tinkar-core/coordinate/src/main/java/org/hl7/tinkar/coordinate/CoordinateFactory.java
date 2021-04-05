@@ -54,7 +54,7 @@ import org.hl7.tinkar.coordinate.language.LanguageCoordinate;
 import org.hl7.tinkar.coordinate.logic.LogicCoordinate;
 import org.hl7.tinkar.coordinate.manifold.ManifoldCoordinate;
 import org.hl7.tinkar.coordinate.stamp.StampFilter;
-import org.hl7.tinkar.coordinate.stamp.State;
+import org.hl7.tinkar.terms.State;
 
 //~--- interfaces -------------------------------------------------------------
 

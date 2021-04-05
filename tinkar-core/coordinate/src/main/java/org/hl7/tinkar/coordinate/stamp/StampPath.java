@@ -45,8 +45,8 @@ import java.util.Arrays;
 
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.hl7.tinkar.common.id.PublicId;
-import org.hl7.tinkar.entity.ConceptEntity;
 import org.hl7.tinkar.entity.Entity;
+import org.hl7.tinkar.terms.ConceptFacade;
 
 //~--- interfaces -------------------------------------------------------------
 
@@ -68,7 +68,7 @@ public interface StampPath
       return Entity.provider().getEntityFast(pathConceptNid());
    }
 
-   default ConceptEntity pathConcept() {
+   default ConceptFacade pathConcept() {
       return Entity.getFast(pathConceptNid());
    }
 

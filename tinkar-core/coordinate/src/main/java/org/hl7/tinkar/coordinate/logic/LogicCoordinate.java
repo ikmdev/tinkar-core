@@ -40,12 +40,12 @@
 package org.hl7.tinkar.coordinate.logic;
 
 import org.hl7.tinkar.common.service.PrimitiveData;
-import org.hl7.tinkar.entity.calculator.LatestVersion;
+import org.hl7.tinkar.entity.calculator.Latest;
 import org.hl7.tinkar.coordinate.stamp.StampFilter;
-import org.hl7.tinkar.entity.ConceptEntity;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.entity.graph.DiTreeEntity;
+import org.hl7.tinkar.terms.ConceptFacade;
 import org.hl7.tinkar.terms.TinkarTerm;
 
 import java.util.ArrayList;
@@ -145,7 +145,7 @@ public interface LogicCoordinate {
       return Entity.getFast(getDigraphIdentityNid());
    }
 
-   default Optional<DiTreeEntity> getStatedLogicalExpression(ConceptEntity spec, StampFilter stampFilter) {
+   default Optional<DiTreeEntity> getStatedLogicalExpression(ConceptFacade spec, StampFilter stampFilter) {
       return getStatedLogicalExpression(spec.nid(), stampFilter);
    }
 
@@ -153,7 +153,7 @@ public interface LogicCoordinate {
       return getLogicalExpression(conceptNid, PremiseType.STATED, stampFilter);
    }
 
-   default Optional<DiTreeEntity> getInferredLogicalExpression(ConceptEntity spec, StampFilter stampFilter) {
+   default Optional<DiTreeEntity> getInferredLogicalExpression(ConceptFacade spec, StampFilter stampFilter) {
       return getInferredLogicalExpression(spec.nid(), stampFilter);
    }
 
@@ -186,23 +186,23 @@ public interface LogicCoordinate {
 //      return Optional.empty();
    }
 
-   default LatestVersion<DiTreeEntity> getStatedLogicGraphVersion(int conceptNid, StampFilter stampFilter) {
+   default Latest<DiTreeEntity> getStatedLogicGraphVersion(int conceptNid, StampFilter stampFilter) {
       return getLogicGraphVersion(conceptNid, PremiseType.STATED, stampFilter);
    }
 
-   default LatestVersion<DiTreeEntity> getInferredLogicGraphVersion(ConceptEntity Concept, StampFilter stampFilter) {
+   default Latest<DiTreeEntity> getInferredLogicGraphVersion(ConceptFacade Concept, StampFilter stampFilter) {
       return getLogicGraphVersion(Concept.nid(), PremiseType.INFERRED, stampFilter);
    }
 
-   default LatestVersion<DiTreeEntity> getStatedLogicGraphVersion(ConceptEntity Concept, StampFilter stampFilter) {
+   default Latest<DiTreeEntity> getStatedLogicGraphVersion(ConceptFacade Concept, StampFilter stampFilter) {
       return getLogicGraphVersion(Concept.nid(), PremiseType.STATED, stampFilter);
    }
 
-   default LatestVersion<DiTreeEntity> getInferredLogicGraphVersion(int conceptNid, StampFilter stampFilter) {
+   default Latest<DiTreeEntity> getInferredLogicGraphVersion(int conceptNid, StampFilter stampFilter) {
       return getLogicGraphVersion(conceptNid, PremiseType.INFERRED, stampFilter);
    }
 
-   default LatestVersion<DiTreeEntity> getLogicGraphVersion(int conceptNid, PremiseType premiseType, StampFilter stampFilter) {
+   default Latest<DiTreeEntity> getLogicGraphVersion(int conceptNid, PremiseType premiseType, StampFilter stampFilter) {
       throw new UnsupportedOperationException();
 //      ConceptEntity concept = Entity.getFast(conceptNid);
 //      return concept.getLogicalDefinition(stampFilter, premiseType, this);

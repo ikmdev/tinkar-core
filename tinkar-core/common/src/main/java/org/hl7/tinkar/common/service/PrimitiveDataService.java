@@ -74,7 +74,7 @@ public interface PrimitiveDataService {
      *
      *
      * @param nid native identifier (an int) with which the resulting value is to be associated
-     * @param setNid
+     * @param patternNid
      * @param referencedComponentNid if the bytes are for a semantic, the referenced component nid,
      *                               otherwise Integer.MAX_VALUE.
      * @param value the non-null value to be merged with the existing value
@@ -83,13 +83,13 @@ public interface PrimitiveDataService {
      * @return the new value associated with the specified nid, or null if no
      *         value is associated with the nid
      */
-    byte[] merge(int nid, int setNid, int referencedComponentNid, byte[] value);
+    byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value);
 
-    void forEachEntityOfType(int typeDefinitionNid, IntProcedure procedure);
+    void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure);
 
-    default int[] entityNidsOfType(int typeDefinitionNid) {
+    default int[] entityNidsOfPattern(int patternNid) {
         MutableIntList intList = IntLists.mutable.empty();
-        forEachEntityOfType(typeDefinitionNid, nid -> intList.add(nid));
+        forEachSemanticNidOfPattern(patternNid, nid -> intList.add(nid));
         return intList.toArray();
     }
 
@@ -102,11 +102,11 @@ public interface PrimitiveDataService {
     }
 
 
-    void forEachSemanticNidForComponentOfType(int componentNid, int typeDefinitionNid, IntProcedure procedure);
+    void forEachSemanticNidForComponentOfPattern(int componentNid, int patternNid, IntProcedure procedure);
 
-    default int[] semanticNidsForComponentOfType(int componentNid, int typeDefinitionNid) {
+    default int[] semanticNidsForComponentOfPattern(int componentNid, int patternNid) {
         MutableIntList intList = IntLists.mutable.empty();
-        forEachSemanticNidForComponentOfType(componentNid, typeDefinitionNid, nid -> intList.add(nid));
+        forEachSemanticNidForComponentOfPattern(componentNid, patternNid, nid -> intList.add(nid));
         return intList.toArray();
     }
 

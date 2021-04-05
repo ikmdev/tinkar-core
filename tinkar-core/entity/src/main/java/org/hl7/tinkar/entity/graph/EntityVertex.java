@@ -62,10 +62,10 @@ public class EntityVertex implements Vertex, VertexId {
                 sb.append("    •").append(PrimitiveData.text(propertyKeys[i]));
                 sb.append(": ");
                 Object value = properties.get(propertyKeys[i]);
-                if (value instanceof ConceptFacade conceptFacade) {
+                if (value instanceof org.hl7.tinkar.terms.ConceptFacade conceptFacade) {
                     sb.append(PrimitiveData.text(conceptFacade.nid()));
-                } else if (value instanceof TypePatternFacade typePatternFacade) {
-                    sb.append(PrimitiveData.text(typePatternFacade.nid()));
+                } else if (value instanceof PatternFacade patternFacade) {
+                    sb.append(PrimitiveData.text(patternFacade.nid()));
                 } else {
                     sb.append(value.toString());
                 }
@@ -77,10 +77,10 @@ public class EntityVertex implements Vertex, VertexId {
     }
 
     private void propertyToString(StringBuilder sb, Object property) {
-        if (property instanceof ConceptFacade conceptFacade) {
+        if (property instanceof org.hl7.tinkar.terms.ConceptFacade conceptFacade) {
             sb.append(PrimitiveData.text(conceptFacade.nid()));
-        } else if (property instanceof TypePatternFacade typePatternFacade) {
-            sb.append(PrimitiveData.text(typePatternFacade.nid()));
+        } else if (property instanceof PatternFacade patternFacade) {
+            sb.append(PrimitiveData.text(patternFacade.nid()));
         } else {
             sb.append(property.toString());
         }
@@ -167,15 +167,15 @@ public class EntityVertex implements Vertex, VertexId {
                 return (T) SemanticProxy.make(nid);
             }
             return (T) SemanticProxy.make(nid);
-        } else if (object instanceof TypePattern typePattern) {
-            if (object instanceof TypePatternProxy) {
+        } else if (object instanceof Pattern pattern) {
+            if (object instanceof PatternProxy) {
                 return (T) object;
             }
-            int nid = PrimitiveData.get().nidForPublicId(typePattern.publicId());
-            if (typePattern instanceof TypePatternDTO) {
-                return (T) TypePatternProxy.make(nid);
+            int nid = PrimitiveData.get().nidForPublicId(pattern.publicId());
+            if (pattern instanceof PatternDTO) {
+                return (T) PatternProxy.make(nid);
             }
-            return (T) TypePatternProxy.make(nid);
+            return (T) PatternProxy.make(nid);
         } else if (object instanceof Stamp & !(object instanceof StampDTO)) {
             Stamp stampValue = (Stamp) object;
             return (T) StampDTOBuilder.builder()
@@ -200,8 +200,8 @@ public class EntityVertex implements Vertex, VertexId {
         this.mostSignificantBits = anotherId.mostSignificantBits();
         this.leastSignificantBits = anotherId.leastSignificantBits();
         this.vertexIndex = another.vertexIndex();
-        if (another.meaning() instanceof ConceptEntity) {
-            this.meaningNid = ((ConceptEntity) another.meaning()).nid();
+        if (another.meaning() instanceof ConceptFacade) {
+            this.meaningNid = ((ConceptFacade) another.meaning()).nid();
         } else {
             this.meaningNid = Get.entityService().nidForComponent(another.meaning());
         }
@@ -243,26 +243,26 @@ public class EntityVertex implements Vertex, VertexId {
 
     @Override
     public <T> Optional<T> property(Concept propertyConcept) {
-        if (propertyConcept instanceof ConceptEntity) {
-            return property((ConceptEntity) propertyConcept);
+        if (propertyConcept instanceof ConceptFacade) {
+            return property((ConceptFacade) propertyConcept);
         }
         return Optional.ofNullable(propertyFast(propertyConcept));
     }
 
     @Override
     public <T> T propertyFast(Concept propertyConcept) {
-        if (propertyConcept instanceof ConceptEntity) {
-            return propertyFast((ConceptEntity) propertyConcept);
+        if (propertyConcept instanceof ConceptFacade) {
+            return propertyFast((ConceptFacade) propertyConcept);
         }
         return (T) properties.get(Get.entityService().nidForComponent(propertyConcept));
     }
 
-    public <T> T propertyFast(ConceptEntity conceptEntity) {
-        return (T) properties.get(conceptEntity.nid());
+    public <T> T propertyFast(ConceptFacade conceptFacade) {
+        return (T) properties.get(conceptFacade.nid());
     }
 
-    public <T> Optional<T> property(ConceptEntity conceptEntity) {
-        return Optional.ofNullable(propertyFast(conceptEntity));
+    public <T> Optional<T> property(ConceptFacade conceptFacade) {
+        return Optional.ofNullable(propertyFast(conceptFacade));
     }
 
     @Override

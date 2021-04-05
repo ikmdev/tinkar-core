@@ -7,6 +7,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.factory.Sets;
+import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.coordinate.edit.Activity;
@@ -67,16 +68,14 @@ public class Coordinates implements CachingService  {
          * @return the language coordinate
          *
          */
-        public static LanguageCoordinateImmutable AnyLanguageRegularName(boolean regularNameOnly) {
-            throw new UnsupportedOperationException();
-//            return LanguageCoordinateImmutable.make(
-//                    TinkarTerm.LANGUAGE,
-//                    regularNameOnly ? IntLists.immutable.of(expandDescriptionTypePreferenceList(null, TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()))
-//                        : IntLists.immutable.of(expandDescriptionTypePreferenceList(null, TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
-//                            TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(), TinkarTerm.DEFINITION_DESCRIPTION_TYPE.nid())),
-//                    IntLists.immutable.empty(),
-//                    IntLists.immutable.empty()
-//            );
+        public static LanguageCoordinateImmutable AnyLanguageRegularName() {
+            return LanguageCoordinateImmutable.make(
+                    TinkarTerm.LANGUAGE,
+                    IntLists.immutable.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
+                    IntLists.immutable.of(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
+                    IntLists.immutable.empty(),
+                    IntLists.immutable.empty()
+            );
         }
 
         /**
@@ -89,16 +88,14 @@ public class Coordinates implements CachingService  {
          *     return a regular name or definition if fqn name isn't available. 
          * @return the language coordinate
          */
-        public static LanguageCoordinateImmutable AnyLanguageFullyQualifiedName(boolean fqnOnly) {
-            throw new UnsupportedOperationException();
-//            return LanguageCoordinateImmutable.make(
-//                    TinkarTerm.LANGUAGE,
-//                    fqnOnly ? IntLists.immutable.of(expandDescriptionTypePreferenceList(null, TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()))
-//                            : IntLists.immutable.of(expandDescriptionTypePreferenceList(null, TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
-//                                TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(), TinkarTerm.DEFINITION_DESCRIPTION_TYPE.nid())),
-//                    IntLists.immutable.empty(),
-//                    IntLists.immutable.empty()
-//            );
+        public static LanguageCoordinateImmutable AnyLanguageFullyQualifiedName() {
+            return LanguageCoordinateImmutable.make(
+                    TinkarTerm.LANGUAGE,
+                    IntLists.immutable.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
+                    IntLists.immutable.of(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
+                    IntLists.immutable.empty(),
+                    IntLists.immutable.empty()
+            );
         }
 
         /**
@@ -112,72 +109,66 @@ public class Coordinates implements CachingService  {
          * @return a coordinate that prefers definitions, of arbitrary language.
          * type
          */
-        public static LanguageCoordinateImmutable AnyLanguageDefinition(boolean defOnly) {
-            throw new UnsupportedOperationException();
-//            return LanguageCoordinateImmutable.make(
-//                    TinkarTerm.LANGUAGE,
-//                    defOnly ? IntLists.immutable.of(expandDescriptionTypePreferenceList(null, TinkarTerm.DEFINITION_DESCRIPTION_TYPE.nid()))
-//                            : IntLists.immutable.of(expandDescriptionTypePreferenceList(null, TinkarTerm.DEFINITION_DESCRIPTION_TYPE.nid(),
-//                                TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(), TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid())),
-//                    IntLists.immutable.empty(),
-//                    IntLists.immutable.empty()
-//            );
+        public static LanguageCoordinateImmutable AnyLanguageDefinition() {
+            return LanguageCoordinateImmutable.make(
+                    TinkarTerm.LANGUAGE,
+                    IntLists.immutable.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
+                    IntLists.immutable.of(TinkarTerm.DEFINITION_DESCRIPTION_TYPE.nid()),
+                   IntLists.immutable.empty(),
+                    IntLists.immutable.empty()
+            );
         }
 
         /**
          * @return US English language coordinate, preferring FQNs, but allowing regular names, if no FQN is found.
          */
         public static LanguageCoordinateImmutable UsEnglishFullyQualifiedName() {
-            throw new UnsupportedOperationException();
-//            return LanguageCoordinateImmutable.make(
-//                    TinkarTerm.ENGLISH_LANGUAGE.nid(),
-//                    IntLists.immutable.of(expandDescriptionTypePreferenceList(null, TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
-//                            TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid())),
-//                    IntLists.immutable.of(TinkarTerm.US_DIALECT_ASSEMBLAGE.nid(), TinkarTerm.GB_DIALECT_ASSEMBLAGE.nid()),
-//                    IntLists.immutable.of(TinkarTerm.SCT_CORE_MODULE.nid(), TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid()),
-//                    AnyLanguageFullyQualifiedName(false)
-//            );
+            return LanguageCoordinateImmutable.make(
+                    TinkarTerm.ENGLISH_LANGUAGE.nid(),
+                    IntLists.immutable.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
+                    IntLists.immutable.of(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
+                            TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
+                    IntLists.immutable.of(TinkarTerm.US_DIALECT_PATTERN.nid(), TinkarTerm.GB_DIALECT_PATTERN.nid()),
+                    IntLists.immutable.of(TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid())
+            );
         }
 
         /**
          * @return US English language coordinate, preferring regular name, but allowing FQN names is no regular name is found
          */
         public static LanguageCoordinateImmutable UsEnglishRegularName() {
-            throw new UnsupportedOperationException();
-//            return LanguageCoordinateImmutable.make(
-//                    TinkarTerm.ENGLISH_LANGUAGE.nid(),
-//                    IntLists.immutable.of(expandDescriptionTypePreferenceList(null, TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
-//                            TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid())),
-//                    IntLists.immutable.of(TinkarTerm.US_DIALECT_ASSEMBLAGE.nid(), TinkarTerm.GB_DIALECT_ASSEMBLAGE.nid()),
-//                    IntLists.immutable.of(TinkarTerm.SCT_CORE_MODULE.nid(), TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid()),
-//                    AnyLanguageRegularName(false)
-//            );
+             return LanguageCoordinateImmutable.make(
+                    TinkarTerm.ENGLISH_LANGUAGE.nid(),
+                     IntLists.immutable.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
+                    IntLists.immutable.of(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
+                            TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
+                    IntLists.immutable.of(TinkarTerm.US_DIALECT_PATTERN.nid(), TinkarTerm.GB_DIALECT_PATTERN.nid()),
+                    IntLists.immutable.of(TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid())
+            );
         }
 
         public static LanguageCoordinateImmutable GbEnglishFullyQualifiedName() {
-            throw new UnsupportedOperationException();
-//            return LanguageCoordinateImmutable.make(
-//                    TinkarTerm.ENGLISH_LANGUAGE.nid(),
-//                    IntLists.immutable.of(expandDescriptionTypePreferenceList(null, TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
-//                            TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid())),
-//                    IntLists.immutable.of(TinkarTerm.GB_DIALECT_ASSEMBLAGE.nid(),
-//                            TinkarTerm.US_DIALECT_ASSEMBLAGE.nid()),
-//                    IntLists.immutable.of(TinkarTerm.SCT_CORE_MODULE.nid(), TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid()),
-//                    AnyLanguageFullyQualifiedName(false)
-//            );
+            return LanguageCoordinateImmutable.make(
+                    TinkarTerm.ENGLISH_LANGUAGE.nid(),
+                    IntLists.immutable.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
+                    IntLists.immutable.of(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
+                            TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
+                    IntLists.immutable.of(TinkarTerm.GB_DIALECT_PATTERN.nid(),
+                            TinkarTerm.US_DIALECT_PATTERN.nid()),
+                    IntLists.immutable.of(TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid())
+             );
         }
 
         public static LanguageCoordinateImmutable GbEnglishPreferredName() {
-            throw new UnsupportedOperationException();
-//            return LanguageCoordinateImmutable.make(
-//                    TinkarTerm.ENGLISH_LANGUAGE.nid(),
-//                    IntLists.immutable.of(expandDescriptionTypePreferenceList(null, TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
-//                            TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid())),
-//                    IntLists.immutable.of(TinkarTerm.GB_DIALECT_ASSEMBLAGE.nid(),
-//                            TinkarTerm.US_DIALECT_ASSEMBLAGE.nid()),
-//                    IntLists.immutable.of(TinkarTerm.SCT_CORE_MODULE.nid(), TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid()),
-//                    AnyLanguageRegularName(false)
-//            );
+            return LanguageCoordinateImmutable.make(
+                    TinkarTerm.ENGLISH_LANGUAGE.nid(),
+                    IntLists.immutable.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
+                    IntLists.immutable.of(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
+                            TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
+                    IntLists.immutable.of(TinkarTerm.GB_DIALECT_PATTERN.nid(),
+                            TinkarTerm.US_DIALECT_PATTERN.nid()),
+                    IntLists.immutable.of(TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid())
+            );
         }
 
         public static LanguageCoordinateImmutable SpanishFullyQualifiedName() {
@@ -188,8 +179,6 @@ public class Coordinates implements CachingService  {
 //                            TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid())),
 //                    IntLists.immutable.of(TinkarTerm.SPANISH_LATIN_AMERICA_DIALECT_ASSEMBLAGE.nid()),
 //                    IntLists.immutable.of(TinkarTerm.SCT_CORE_MODULE.nid(), TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid()),
-//                    // Adding next priority language coordinate to be available for testing, and fallback.
-//                    UsEnglishFullyQualifiedName()
 //            );
         }
 
@@ -201,100 +190,7 @@ public class Coordinates implements CachingService  {
 //                            TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid())),
 //                    IntLists.immutable.of(TinkarTerm.SPANISH_LATIN_AMERICA_DIALECT_ASSEMBLAGE.nid()),
 //                    IntLists.immutable.of(TinkarTerm.SCT_CORE_MODULE.nid(), TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid()),
-//                    // Adding next priority language coordinate to be available for testing, and fallback.
-//                    UsEnglishFullyQualifiedName()
 //            );
-        }
-        
-        /**
-         * Take in a list of the description type prefs, such as {@link TinkarTerm#FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE}, {@link TinkarTerm#REGULAR_NAME_DESCRIPTION_TYPE}
-         * and include any non-core description types that are linked to these core types, in the right order, so that the LanguageCoordinates can include the 
-         * non-core description types in the appropriate places when looking for descriptions.
-         * @param descriptionTypePreferenceList the starting list - should only consist of core description types - 
-         * {@link TinkarTerm#FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE}, {@link TinkarTerm#REGULAR_NAME_DESCRIPTION_TYPE}, {@link TinkarTerm#DEFINITION_DESCRIPTION_TYPE}
-         * @param stampFilter - optional - if not provided, uses {@link sh.isaac.api.coordinate.Coordinates.Filter#DevelopmentLatestActiveOnly()}
-         * @return the initial list, plus any equivalent non-core types in the appropriate order.  See {@link DynamicConstants#DYNAMIC_DESCRIPTION_CORE_TYPE}
-         */
-        public static int[] expandDescriptionTypePreferenceList(StampFilter stampFilter, int ... descriptionTypePreferenceList) {
-            throw new UnsupportedOperationException();
-//            LOG.trace("Expand desription types requested");
-//            StampFilter filter = stampFilter == null ? Coordinates.Filter.DevelopmentLatestActiveOnly() : stampFilter;
-//            int requestKey = filter.hashCode();
-//            for (int nid : descriptionTypePreferenceList) {
-//                requestKey = 97 * requestKey + nid;
-//            }
-//
-//            return LANG_EXPAND_CACHE.get(requestKey, keyAgain -> {
-//                long time = System.currentTimeMillis();
-//
-//                if (ccl == null) {
-//                    ccl = new ChronologyChangeListener() {
-//                        UUID me = UUID.randomUUID();
-//                        {
-//                            Get.commitService().addChangeListener(this);
-//                        }
-//
-//                        @Override
-//                        public void handleCommit(CommitRecord commitRecord) {
-//                            // ignore
-//                        }
-//
-//                        @Override
-//                        public void handleChange(SemanticEntity sc) {
-//                            LANG_EXPAND_CACHE.invalidateAll();
-//                        }
-//
-//                        @Override
-//                        public void handleChange(ConceptChronology cc) {
-//                            LANG_EXPAND_CACHE.invalidateAll();
-//                        }
-//
-//                        @Override
-//                        public UUID getListenerUuid() {
-//                            return me;
-//                        }
-//                    };
-//                }
-//                MutableIntObjectMap<MutableIntSet> equivalentTypes = MutableIntObjectMapFactoryImpl.INSTANCE.empty();
-//
-//                //Collect the mappings from core types -> non core types
-//                IntStream nids = Get.identifierService().getNidsForAssemblage(DynamicConstants.get().DYNAMIC_DESCRIPTION_CORE_TYPE.nid(), false);
-//                nids.forEach(nid -> {
-//                    SemanticEntity sc = Get.assemblageService().getSemanticEntity(nid);
-//                    DynamicVersion dv = (DynamicVersion) sc.getLatestVersion(filter).get();
-//                    int coreType = Get.identifierService().getNidForUuids(((DynamicUUID) dv.getData(0)).getDataUUID());
-//                    MutableIntSet mapped = equivalentTypes.get(coreType);
-//                    if (mapped == null) {
-//                        mapped = MutableIntSetFactoryImpl.INSTANCE.empty();
-//                        equivalentTypes.put(coreType, mapped);
-//                    }
-//                    mapped.add(sc.getReferencedComponentNid());
-//                });
-//
-//                if (equivalentTypes.isEmpty()) {
-//                    //this method is a noop
-//                    LOG.trace("Expanded description types call is a noop in {}ms", System.currentTimeMillis() - time);
-//                    return descriptionTypePreferenceList;
-//                }
-//
-//                MutableIntList result = IntLists.mutable.empty();
-//                IntList startNids = IntLists.immutable.of(descriptionTypePreferenceList);
-//                for (int coreType : descriptionTypePreferenceList) {
-//                    if (!result.contains(coreType)) {
-//                        result.add(coreType);
-//                    }
-//                    MutableIntSet nonCoreTypes = equivalentTypes.get(coreType);
-//                    if (nonCoreTypes != null) {
-//                        nonCoreTypes.forEach(type -> {
-//                            if (!result.contains(type)) {
-//                                result.add(type);
-//                            }
-//                        });
-//                    }
-//                }
-//                LOG.info("Expanded language type list from {} to {} in {}ms", startNids, result, System.currentTimeMillis() - time);
-//                return result.toArray(new int[result.size()]);
-//            });
         }
     }
 

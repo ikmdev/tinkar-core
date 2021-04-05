@@ -4,7 +4,11 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.auto.service.AutoService;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
@@ -17,22 +21,34 @@ import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 import org.hl7.tinkar.coordinate.stamp.StampFilter;
 import org.hl7.tinkar.coordinate.stamp.StampFilterRecord;
-import org.hl7.tinkar.entity.ConceptEntity;
-import org.hl7.tinkar.entity.Entity;
-import org.hl7.tinkar.component.Concept;
+import org.hl7.tinkar.terms.State;
+import org.hl7.tinkar.entity.*;
+import org.hl7.tinkar.entity.calculator.Latest;
+import org.hl7.tinkar.terms.ConceptFacade;
+import org.hl7.tinkar.terms.EntityFacade;
+import org.hl7.tinkar.terms.PatternFacade;
+import org.hl7.tinkar.terms.TinkarTerm;
 
-//This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
-@AutoService(CachingService.class)
-public final class LanguageCoordinateImmutable implements LanguageCoordinate, ImmutableCoordinate, /*ChronologyChangeListener,*/ CachingService {
+public final class LanguageCoordinateImmutable implements LanguageCoordinate, ImmutableCoordinate /*ChronologyChangeListener,*/ {
 
     private static final ConcurrentReferenceHashMap<LanguageCoordinateImmutable, LanguageCoordinateImmutable> SINGLETONS =
             new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
                     ConcurrentReferenceHashMap.ReferenceType.WEAK);
 
+
+    @AutoService(CachingService.class)
+    public static class CacheProvider implements CachingService {
+        @Override
+        public void reset() {
+            SINGLETONS.clear();
+        }
+    }
+
     private static final int marshalVersion = 1;
     public static final String UNKNOWN_COMPONENT_TYPE = "Unknown component type";
 
     final private int languageConceptNid;
+    final private ImmutableIntList descriptionPatternList;
     final private ImmutableIntList descriptionTypePreferenceList;
     final private ImmutableIntList dialectAssemblagePreferenceList;
     final private ImmutableIntList modulePreferenceListForLanguage;
@@ -43,31 +59,25 @@ public final class LanguageCoordinateImmutable implements LanguageCoordinate, Im
 
     private ConcurrentReferenceHashMap<StampFilterRecord, Cache<Integer, String>> descriptionCaches;
 
-    private LanguageCoordinateImmutable(ConceptEntity languageConcept,
+    private LanguageCoordinateImmutable(ConceptFacade languageConcept,
+                                        ImmutableIntList descriptionPatternList,
                                         ImmutableIntList descriptionTypePreferenceList,
                                         ImmutableIntList dialectAssemblagePreferenceList,
                                         ImmutableIntList modulePreferenceListForLanguage) {
-        this(languageConcept.nid(), descriptionTypePreferenceList, dialectAssemblagePreferenceList,
+        this(languageConcept.nid(), descriptionPatternList, descriptionTypePreferenceList, dialectAssemblagePreferenceList,
                 modulePreferenceListForLanguage);
     }
 
     private LanguageCoordinateImmutable(int languageConceptNid,
-                                       ImmutableIntList descriptionTypePreferenceList,
-                                       ImmutableIntList dialectAssemblagePreferenceList,
-                                       ImmutableIntList modulePreferenceListForLanguage) {
+                                        ImmutableIntList descriptionPatternList,
+                                        ImmutableIntList descriptionTypePreferenceList,
+                                        ImmutableIntList dialectAssemblagePreferenceList,
+                                        ImmutableIntList modulePreferenceListForLanguage) {
         this.languageConceptNid = languageConceptNid;
+        this.descriptionPatternList = descriptionPatternList;
         this.descriptionTypePreferenceList = descriptionTypePreferenceList;
         this.dialectAssemblagePreferenceList = dialectAssemblagePreferenceList == null ? IntLists.immutable.empty() : dialectAssemblagePreferenceList;
         this.modulePreferenceListForLanguage = modulePreferenceListForLanguage == null ? IntLists.immutable.empty() : modulePreferenceListForLanguage;
-    }
-    
-    private LanguageCoordinateImmutable() {
-        // No arg constructor for HK2 managed instance
-        // This instance just enables reset functionality...
-        this.languageConceptNid = Integer.MAX_VALUE;
-        this.descriptionTypePreferenceList = null;
-        this.dialectAssemblagePreferenceList = null;
-        this.modulePreferenceListForLanguage = null;
     }
 
     private LanguageCoordinateImmutable setupCache() {
@@ -83,9 +93,8 @@ public final class LanguageCoordinateImmutable implements LanguageCoordinate, Im
                 new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
                         ConcurrentReferenceHashMap.ReferenceType.WEAK);
 
-        throw new UnsupportedOperationException();
-//        Get.commitService().addChangeListener(this);
-//        return this;
+        //        Get.commitService().addChangeListener(this);
+        return this;
     }
 /*
     @Override
@@ -113,13 +122,8 @@ public final class LanguageCoordinateImmutable implements LanguageCoordinate, Im
     }
 */
 
-    @Override
-    public void reset() {
-        SINGLETONS.clear();
-    }
-
     public LanguageCoordinateImmutable(DecoderInput in) {
-        this(in.readNid(), IntLists.immutable.of(in.readNidArray()), IntLists.immutable.of(in.readNidArray()),
+        this(in.readNid(), IntLists.immutable.of(in.readNidArray()), IntLists.immutable.of(in.readNidArray()), IntLists.immutable.of(in.readNidArray()),
                 IntLists.immutable.of(in.readNidArray()));
     }
 
@@ -144,18 +148,32 @@ public final class LanguageCoordinateImmutable implements LanguageCoordinate, Im
         }
     }
 
-    public static LanguageCoordinateImmutable make(ConceptEntity languageConcept,
+    public static LanguageCoordinateImmutable make(ConceptFacade languageConcept,
+                                                   ImmutableIntList descriptionPatternList,
                                                    ImmutableIntList descriptionTypePreferenceList,
                                                    ImmutableIntList dialectAssemblagePreferenceList,
-                                                   ImmutableIntList modulePreferenceListForLanguage)  {
+                                                   ImmutableIntList modulePreferenceListForLanguage) {
         return SINGLETONS.computeIfAbsent(new LanguageCoordinateImmutable(languageConcept.nid(),
+                        descriptionPatternList,
                         descriptionTypePreferenceList, dialectAssemblagePreferenceList,
                         modulePreferenceListForLanguage),
                 languageCoordinateImmutable -> languageCoordinateImmutable.setupCache());
     }
 
+    public static LanguageCoordinateImmutable make(ConceptFacade languageConcept,
+                                                   PatternFacade patternFacade,
+                                                   ImmutableIntList descriptionTypePreferenceList,
+                                                   ImmutableIntList dialectAssemblagePreferenceList,
+                                                   ImmutableIntList modulePreferenceListForLanguage) {
+        return SINGLETONS.computeIfAbsent(new LanguageCoordinateImmutable(languageConcept.nid(),
+                        IntLists.immutable.of(patternFacade.nid()),
+                        descriptionTypePreferenceList, dialectAssemblagePreferenceList,
+                        modulePreferenceListForLanguage),
+                languageCoordinateImmutable -> languageCoordinateImmutable.setupCache());
+    }
+
+
     /**
-     * 
      * @param languageConceptNid
      * @param descriptionTypePreferenceList
      * @param dialectAssemblagePreferenceList
@@ -163,10 +181,12 @@ public final class LanguageCoordinateImmutable implements LanguageCoordinate, Im
      * @return
      */
     public static LanguageCoordinateImmutable make(int languageConceptNid,
+                                                   ImmutableIntList descriptionPatternList,
                                                    ImmutableIntList descriptionTypePreferenceList,
                                                    ImmutableIntList dialectAssemblagePreferenceList,
-                                                   ImmutableIntList modulePreferenceListForLanguage)  {
+                                                   ImmutableIntList modulePreferenceListForLanguage) {
         return SINGLETONS.computeIfAbsent(new LanguageCoordinateImmutable(languageConceptNid,
+                        descriptionPatternList,
                         descriptionTypePreferenceList, dialectAssemblagePreferenceList,
                         modulePreferenceListForLanguage),
                 languageCoordinateImmutable -> languageCoordinateImmutable.setupCache());
@@ -179,20 +199,20 @@ public final class LanguageCoordinateImmutable implements LanguageCoordinate, Im
     }
 
     @Override
-    public Concept[] getDescriptionTypeSpecPreferenceList() {
+    public ConceptFacade[] getDescriptionTypeFacadePreferenceList() {
         return this.descriptionTypePreferenceList.collect(nid ->
-                Entity.getFast(nid)).toArray(new Concept[this.descriptionTypePreferenceList.size()]);
+                Entity.getFast(nid)).toArray(new ConceptFacade[this.descriptionTypePreferenceList.size()]);
     }
 
     @Override
-    public int[] getDialectAssemblagePreferenceList() {
+    public int[] getDialectPatternPreferenceList() {
         return this.dialectAssemblagePreferenceList.toArray();
     }
 
     @Override
-    public Concept[] getDialectAssemblageSpecPreferenceList() {
-         return this.dialectAssemblagePreferenceList.collect(nid ->
-                Entity.getFast(nid)).toArray(new Concept[this.dialectAssemblagePreferenceList.size()]);
+    public PatternFacade[] getDialectPatternFacadePreferenceList() {
+        return this.dialectAssemblagePreferenceList.collect(nid ->
+                Entity.getFast(nid)).toArray(new PatternFacade[this.dialectAssemblagePreferenceList.size()]);
     }
 
     @Override
@@ -201,9 +221,9 @@ public final class LanguageCoordinateImmutable implements LanguageCoordinate, Im
     }
 
     @Override
-    public Concept[] getModuleSpecPreferenceListForLanguage() {
+    public ConceptFacade[] getModuleFacadePreferenceListForLanguage() {
         return this.modulePreferenceListForLanguage.collect(nid ->
-                Entity.getFast(nid)).toArray(new Concept[this.modulePreferenceListForLanguage.size()]);
+                Entity.getFast(nid)).toArray(new ConceptFacade[this.modulePreferenceListForLanguage.size()]);
     }
 
     @Override
@@ -212,7 +232,7 @@ public final class LanguageCoordinateImmutable implements LanguageCoordinate, Im
     }
 
     @Override
-    public Concept getLanguageConcept() {
+    public org.hl7.tinkar.terms.ConceptFacade getLanguageConcept() {
         return Entity.getFast(this.languageConceptNid);
     }
 
@@ -227,119 +247,67 @@ public final class LanguageCoordinateImmutable implements LanguageCoordinate, Im
         if (!(o instanceof LanguageCoordinateImmutable that)) return false;
         return getLanguageConceptNid() == that.getLanguageConceptNid() &&
                 getDescriptionTypePreferenceList().equals(that.getDescriptionTypePreferenceList()) &&
-                getDialectAssemblagePreferenceList().equals(that.getDialectAssemblagePreferenceList()) &&
+                getDialectPatternPreferenceList().equals(that.getDialectPatternPreferenceList()) &&
                 getModulePreferenceListForLanguage().equals(that.getModulePreferenceListForLanguage());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getLanguageConceptNid(), getDescriptionTypePreferenceList(), getDialectAssemblagePreferenceList(), getModulePreferenceListForLanguage());
+        return Objects.hash(getLanguageConceptNid(), getDescriptionTypePreferenceList(), getDialectPatternPreferenceList(), getModulePreferenceListForLanguage());
     }
+
     @Override
     public Optional<String> getDescriptionText(int componentNid, StampFilter stampFilter) {
-        throw new UnsupportedOperationException();
-//        Cache<Integer, String> descriptionCache = this.descriptionCaches.computeIfAbsent(stampFilter.toStampFilterImmutable(),
-//                stampFilterImmutable -> Caffeine.newBuilder().maximumSize(100000).build());
-//        String descriptionText = descriptionCache.getIfPresent(componentNid);
-//        if (descriptionText == null) {
-//            descriptionText = getDescriptionTextForCache(componentNid, stampFilter);
-//            if (descriptionText != null) {
-//                descriptionCache.put(componentNid, descriptionText);
-//            }
-//        }
-//        return Optional.ofNullable(descriptionText);
+        Cache<Integer, String> descriptionCache = this.descriptionCaches.computeIfAbsent(stampFilter.toStampFilterImmutable(),
+                stampFilterImmutable -> Caffeine.newBuilder().maximumSize(10240).build());
+        return Optional.ofNullable(descriptionCache.get(componentNid, nid -> {
+            Latest<SemanticEntityVersion> latestDescription
+                        = getDescription(getDescriptionsForComponent(componentNid), stampFilter);
+            if (latestDescription.isPresent()) {
+                return extractText(stampFilter, latestDescription);
+            }
+            return null;
+          }));
     }
-    private String getDescriptionTextForCache(int componentNid, StampFilter stampFilter) {
-        throw new UnsupportedOperationException();
-//        switch (Get.identifierService().getObjectTypeForComponent(componentNid)) {
-//            case CONCEPT: {
-//                LatestVersion<SemanticEntityVersion> latestDescription
-//                        = getDescription(Get.conceptService().getConceptDescriptions(componentNid), stampFilter);
-//                return latestDescription.isPresent() ? latestDescription.get().getText() : null;
-//            }
-//            case SEMANTIC: {
-//                return getSemanticString(componentNid, stampFilter);
-//            }
-//            case UNKNOWN:
-//            default:
-//                return UNKNOWN_COMPONENT_TYPE;
-//        }
-    }
+
     @Override
-    public Optional<String> getRegularDescriptionText(int componentNid, StampFilter stampFilter) {
-        throw new UnsupportedOperationException();
-//        Cache<Integer, String> preferredCache = this.preferredCaches.computeIfAbsent(stampFilter.toStampFilterImmutable(),
-//                stampFilterImmutable -> Caffeine.newBuilder().maximumSize(100000).build());
-//
-//        String preferredDescriptionText = preferredCache.getIfPresent(componentNid);
-//        if (preferredDescriptionText == null) {
-//            preferredDescriptionText = getPreferredDescriptionTextForCache(componentNid, stampFilter);
-//            if (preferredDescriptionText != null) {
-//                preferredCache.put(componentNid, preferredDescriptionText);
-//            }
-//        }
-//        return Optional.ofNullable(preferredDescriptionText);
+    public Optional<String> getRegularDescriptionText(int entityNid, StampFilter stampFilter) {
+        Cache<Integer, String> preferredCache = this.preferredCaches.computeIfAbsent(stampFilter.toStampFilterImmutable(),
+                stampFilterImmutable -> Caffeine.newBuilder().maximumSize(10240).build());
+
+        return Optional.ofNullable(preferredCache.get(entityNid, nid -> {
+            Latest<SemanticEntityVersion> latestDescription
+                    = getRegularDescription(getDescriptionsForComponent(entityNid), stampFilter);
+            if (latestDescription.isPresent()) {
+                return extractText(stampFilter, latestDescription);
+            }
+            return null;
+        }));
+
     }
-    private String getPreferredDescriptionTextForCache(int componentNid, StampFilter stampFilter) {
-        throw new UnsupportedOperationException();
-//        switch (Get.identifierService().getObjectTypeForComponent(componentNid)) {
-//            case CONCEPT: {
-//                LatestVersion<SemanticEntityVersion> latestDescription
-//                        = getRegularDescription(Get.conceptService().getConceptDescriptions(componentNid), stampFilter);
-//                return latestDescription.isPresent() ? latestDescription.get().getText() : null;
-//            }
-//            case SEMANTIC: {
-//                return getSemanticString(componentNid, stampFilter);
-//            }
-//            case UNKNOWN:
-//            default:
-//                return UNKNOWN_COMPONENT_TYPE;
-//        }
+
+    private String extractText(StampFilter stampFilter, Latest<SemanticEntityVersion> latestDescription) {
+        SemanticEntityVersion descriptionVersion = latestDescription.get();
+        PatternEntity pattern = descriptionVersion.pattern();
+        PatternEntityVersion patternVersion = (PatternEntityVersion) stampFilter.stampCalculator().latest(pattern).get();
+        String descriptionText = (String) descriptionVersion.fields().get(patternVersion.indexForMeaning(TinkarTerm.TEXT_FOR_DESCRIPTION));
+        return descriptionText;
     }
+
+
     @Override
     public Optional<String> getFullyQualifiedNameText(int componentNid, StampFilter stampFilter) {
-        throw new UnsupportedOperationException();
-//        Cache<Integer, String> fqnCache = this.fqnCaches.computeIfAbsent(stampFilter.toStampFilterImmutable(),
-//                stampFilterImmutable -> Caffeine.newBuilder().maximumSize(100000).build());
-//
-//        String fullyQualifiedNameText = fqnCache.getIfPresent(componentNid);
-//        if (fullyQualifiedNameText == null) {
-//            fullyQualifiedNameText = getFullyQualifiedNameTextForCache(componentNid, stampFilter);
-//            if (fullyQualifiedNameText != null) {
-//                fqnCache.put(componentNid, fullyQualifiedNameText);
-//            }
-//        }
-//        return Optional.ofNullable(fullyQualifiedNameText);
-    }
+       Cache<Integer, String> fqnCache = this.fqnCaches.computeIfAbsent(stampFilter.toStampFilterImmutable(),
+                stampFilterImmutable -> Caffeine.newBuilder().maximumSize(10240).build());
 
-    private String getFullyQualifiedNameTextForCache(int componentNid, StampFilter stampFilter) {
-        throw new UnsupportedOperationException();
-//        switch (Get.identifierService().getObjectTypeForComponent(componentNid)) {
-//            case CONCEPT: {
-//                LatestVersion<SemanticEntityVersion> latestDescription
-//                        = getFullyQualifiedDescription(Get.conceptService().getConceptDescriptions(componentNid), stampFilter);
-//                return latestDescription.isPresent() ? latestDescription.get().getText() : null;
-//            }
-//            case SEMANTIC: {
-//                return getSemanticString(componentNid, stampFilter);
-//            }
-//            case UNKNOWN:
-//            default:
-//                return UNKNOWN_COMPONENT_TYPE;
-//        }
-    }
-
-    private String getSemanticString(int componentNid, StampFilter stampFilter) {
-        throw new UnsupportedOperationException();
-//        SemanticEntity sc = Get.assemblageService().getSemanticEntity(componentNid);
-//        if (sc.getVersionType() == VersionType.DESCRIPTION) {
-//            LatestVersion<SemanticEntityVersion> latestDescription = sc.getLatestVersion(stampFilter);
-//            if (latestDescription.isPresent()) {
-//                return latestDescription.get().getText();
-//            }
-//            return "INACTIVE: " + ((SemanticEntityVersion) sc.getVersionList().get(0)).getText();
-//        }
-//        return Get.assemblageService().getSemanticEntity(componentNid).getVersionType().toString();
+        return Optional.ofNullable(fqnCache.get(componentNid, nid -> {
+            Latest<SemanticEntityVersion> latestDescription
+                    = getFullyQualifiedDescription(getDescriptionsForComponent(componentNid), stampFilter);
+            if (latestDescription.isPresent()) {
+                return extractText(stampFilter, latestDescription);
+            }
+            return null;
+        }));
     }
 
     /**
@@ -350,8 +318,67 @@ public final class LanguageCoordinateImmutable implements LanguageCoordinate, Im
     @Override
     public String toString() {
         return "Language Coordinate{" + PrimitiveData.text(this.languageConceptNid)
+                + ", patterns: " + PrimitiveData.textList(this.descriptionPatternList.toArray())
                 + ", dialect preference: " + PrimitiveData.textList(this.dialectAssemblagePreferenceList.toArray())
                 + ", type preference: " + PrimitiveData.textList(this.descriptionTypePreferenceList.toArray())
                 + ", module preference: " + PrimitiveData.textList(this.modulePreferenceListForLanguage.toArray()) + '}';
     }
+
+    @Override
+    public int[] getDescriptionPatternList() {
+        return this.descriptionPatternList.toArray();
+    }
+
+    @Override
+    public PatternFacade[] getDescriptionPatternFacadePreferenceList() {
+        PatternEntity[] patternEntities = new PatternEntity[this.descriptionPatternList.size()];
+        for (int i = 0; i < patternEntities.length; i++) {
+            patternEntities[i] = Entity.getFast(this.descriptionPatternList.get(i));
+        }
+        return patternEntities;
+    }
+
+
+    @Override
+    public ImmutableList<SemanticEntity> getDescriptionsForComponent(int componentNid) {
+        MutableList<SemanticEntity> descriptionList = Lists.mutable.empty();
+        for (int descriptionPatternNid : descriptionPatternList.toArray()) {
+            PrimitiveData.get().forEachSemanticNidForComponentOfPattern(componentNid, descriptionPatternNid,
+                    semanticNid -> descriptionList.add(Entity.getFast(semanticNid)));
+        }
+        return descriptionList.toImmutable();
+    }
+
+    @Override
+    public ImmutableList<SemanticEntityVersion> getDescriptionsForComponentOfType(int componentNid,
+                                                                                  int descriptionTypeNid,
+                                                                                  StampFilter stampFilter) {
+        MutableList<SemanticEntityVersion> descriptionList = Lists.mutable.empty();
+        for (int descriptionPatternNid : descriptionPatternList.toArray()) {
+            PatternEntity descriptionPattern = Entity.getFast(descriptionPatternNid);
+            Latest<PatternEntityVersion> descriptionPatternVersion = stampFilter.stampCalculator().latest(descriptionPattern);
+            descriptionPatternVersion.ifPresent(patternEntityVersion -> {
+                if (patternEntityVersion.stamp().state() == State.ACTIVE) {
+                    int typeIndex = patternEntityVersion.indexForMeaning(TinkarTerm.DESCRIPTION_TYPE);
+                    PrimitiveData.get().forEachSemanticNidForComponentOfPattern(componentNid, descriptionPatternNid,
+                            semanticNid -> {
+                                SemanticEntity descriptionSemantic = Entity.getFast(semanticNid);
+                                Latest<SemanticEntityVersion> latestDescriptionVersion =
+                                        stampFilter.stampCalculator().latest(descriptionSemantic);
+                                latestDescriptionVersion.ifPresent(descriptionVersion -> {
+                                    Object fieldValue = descriptionVersion.fields().get(typeIndex);
+                                    if (fieldValue instanceof EntityFacade entityFacade) {
+                                        if (entityFacade.nid() == descriptionTypeNid) {
+                                            descriptionList.add(descriptionVersion);
+                                        }
+                                    }
+                                });
+
+                            });
+                }
+            });
+        }
+        return descriptionList.toImmutable();
+    }
+
 }

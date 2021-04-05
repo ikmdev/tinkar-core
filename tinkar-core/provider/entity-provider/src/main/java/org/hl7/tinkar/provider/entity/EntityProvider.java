@@ -16,6 +16,7 @@ import org.hl7.tinkar.entity.*;
 
 import com.google.auto.service.AutoService;
 import org.hl7.tinkar.terms.EntityFacade;
+import org.hl7.tinkar.terms.TinkarTerm;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -59,18 +60,32 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
     @Override
     public String textFast(int nid) {
+        // TODO use a default langauge coordinate instead of this hardcode routine.
         return STRING_CACHE.get(nid, integer -> {
-            int[] semanticNids = PrimitiveData.get().semanticNidsForComponentOfType(nid, DESCRIPTION_PATTERN.nid());
+            int[] semanticNids = PrimitiveData.get().semanticNidsForComponentOfPattern(nid, DESCRIPTION_PATTERN.nid());
+            String anyString = null;
+            String fqnString = null;
             for (int semanticNid: semanticNids) {
-                SemanticEntity descripitonSemantic = Entity.getFast(semanticNid);
-                SemanticEntityVersion version = descripitonSemantic.versions().get(0);
-                for (Object field: version.fields()) {
-                    if (field instanceof String stringField) {
-                        return stringField;
-                    }
+                SemanticEntity descriptionSemantic = Entity.getFast(semanticNid);
+                PatternEntity patternEntity = Entity.getFast(descriptionSemantic.patternNid());
+                // TODO: use version computer to get version
+                PatternEntityVersion patternEntityVersion = patternEntity.versions().get(0);
+                SemanticEntityVersion version = descriptionSemantic.versions().get(0);
+                int indexForMeaning = patternEntityVersion.indexForMeaning(TinkarTerm.DESCRIPTION_TYPE);
+                int indexForText = patternEntityVersion.indexForMeaning(TinkarTerm.TEXT_FOR_DESCRIPTION);
+                if (version.fields().get(indexForMeaning).equals(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE)) {
+                    return (String) version.fields().get(indexForText);
                 }
+                if (version.fields().get(indexForMeaning).equals(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE)) {
+                    fqnString = (String) version.fields().get(indexForText);
+                }
+                anyString = (String) version.fields().get(indexForText);
+
             }
-            return null;
+            if (fqnString != null) {
+                return fqnString;
+            }
+            return anyString;
         });
     }
 
@@ -106,7 +121,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     public void putEntity(Entity entity) {
         if (entity instanceof SemanticEntity semanticEntity) {
             PrimitiveData.get().merge(entity.nid(),
-                    semanticEntity.typePatternNid(),
+                    semanticEntity.patternNid(),
                     semanticEntity.referencedComponentNid(),
                     entity.getBytes());
         } else {
@@ -148,13 +163,13 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     }
 
     @Override
-    public void forEachEntityOfType(int typeDefinitionNid, Consumer<SemanticEntity> procedure) {
-        PrimitiveData.get().forEachEntityOfType(typeDefinitionNid, (int nid) -> procedure.accept(getEntityFast(nid)));
+    public void forEachEntityOfPattern(int patternNid, Consumer<SemanticEntity> procedure) {
+        PrimitiveData.get().forEachSemanticNidOfPattern(patternNid, (int nid) -> procedure.accept(getEntityFast(nid)));
     }
 
     @Override
-    public int[] entityNidsOfType(int setNid) {
-        return PrimitiveData.get().entityNidsOfType(setNid);
+    public int[] entityNidsOfPattern(int patternNid) {
+        return PrimitiveData.get().entityNidsOfPattern(patternNid);
     }
 
     @Override
@@ -168,12 +183,12 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     }
 
     @Override
-    public void forEachSemanticForComponentOfType(int componentNid, int typeDefinitionNid, Consumer<SemanticEntity> procedure) {
-        PrimitiveData.get().forEachSemanticNidForComponentOfType(componentNid, typeDefinitionNid, (int nid) -> procedure.accept(getEntityFast(nid)));
+    public void forEachSemanticForComponentOfPattern(int componentNid, int patternNid, Consumer<SemanticEntity> procedure) {
+        PrimitiveData.get().forEachSemanticNidForComponentOfPattern(componentNid, patternNid, (int nid) -> procedure.accept(getEntityFast(nid)));
     }
 
     @Override
-    public int[] semanticNidsForComponentOfType(int componentNid, int typeDefinitionNid) {
-        return PrimitiveData.get().semanticNidsForComponentOfType(componentNid, typeDefinitionNid);
+    public int[] semanticNidsForComponentOfPattern(int componentNid, int patternNid) {
+        return PrimitiveData.get().semanticNidsForComponentOfPattern(componentNid, patternNid);
     }
 }

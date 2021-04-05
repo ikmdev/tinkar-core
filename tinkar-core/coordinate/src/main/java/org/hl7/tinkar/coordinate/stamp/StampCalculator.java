@@ -41,6 +41,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.logging.Logger;
 
 import com.google.auto.service.AutoService;
@@ -51,17 +52,17 @@ import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
 import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.common.service.PrimitiveData;
-import org.hl7.tinkar.entity.calculator.LatestVersion;
+import org.hl7.tinkar.component.PatternVersion;
+import org.hl7.tinkar.entity.*;
+import org.hl7.tinkar.entity.calculator.Latest;
 import org.hl7.tinkar.component.graph.DiTree;
 import org.hl7.tinkar.coordinate.CoordinateUtil;
-import org.hl7.tinkar.entity.Entity;
-import org.hl7.tinkar.entity.EntityService;
-import org.hl7.tinkar.entity.EntityVersion;
-import org.hl7.tinkar.entity.StampEntity;
 import org.hl7.tinkar.entity.calculator.RelativePosition;
+import org.hl7.tinkar.entity.calculator.TriConsumer;
 import org.hl7.tinkar.entity.calculator.VersionCalculator;
 import org.hl7.tinkar.entity.graph.DiTreeEntity;
 import org.hl7.tinkar.entity.graph.VersionVertex;
+import org.hl7.tinkar.terms.State;
 import org.hl7.tinkar.terms.TinkarTerm;
 
 import static org.hl7.tinkar.entity.calculator.RelativePosition.*;
@@ -71,11 +72,11 @@ import static org.hl7.tinkar.entity.calculator.RelativePosition.*;
  *
  * @author kec
  */
-public class RelativePositionCalculator<V extends EntityVersion, E extends Entity<V>> implements VersionCalculator<V, E> {
+public class StampCalculator implements VersionCalculator{
     /** The Constant LOG. */
     private static final Logger LOG = CoordinateUtil.LOG;
 
-    private static final ConcurrentReferenceHashMap<StampFilterRecord, RelativePositionCalculator> SINGLETONS =
+    private static final ConcurrentReferenceHashMap<StampFilterRecord, StampCalculator> SINGLETONS =
             new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
                     ConcurrentReferenceHashMap.ReferenceType.WEAK);
 
@@ -108,7 +109,7 @@ public class RelativePositionCalculator<V extends EntityVersion, E extends Entit
      *
      * @param filter the coordinate
      */
-    private RelativePositionCalculator(StampFilterRecord filter) {
+    private StampCalculator(StampFilterRecord filter) {
         //For the internal callback to populate the cache
         this.filter = filter;
         this.pathNidSegmentMap = setupPathNidSegmentMap(filter.stampPosition().toStampPositionImmutable());
@@ -233,7 +234,7 @@ public class RelativePositionCalculator<V extends EntityVersion, E extends Entit
       * @param version the version
      * @return true, if successful
      */
-    public boolean onRoute(V version) {
+    public boolean onRoute(EntityVersion version) {
         return onRoute(version.stamp());
     }
 
@@ -307,7 +308,7 @@ public class RelativePositionCalculator<V extends EntityVersion, E extends Entit
      * @param partsForPosition the parts for position
      * @param part the part
      */
-    private void handlePart(HashSet<V> partsForPosition, EntityVersion part) {
+    private void handlePart(HashSet<EntityVersion> partsForPosition, EntityVersion part) {
         // create a list of values so we don't have any
         // concurrent modification issues with removing/adding
         // items to the partsForPosition.
@@ -316,15 +317,15 @@ public class RelativePositionCalculator<V extends EntityVersion, E extends Entit
         for (final EntityVersion prevPartToTest: partsToCompare) {
             switch (fastRelativePosition(part, prevPartToTest)) {
                 case AFTER:
-                    partsForPosition.remove((V) prevPartToTest);
-                    partsForPosition.add((V) part);
+                    partsForPosition.remove(prevPartToTest);
+                    partsForPosition.add(part);
                     break;
 
                 case BEFORE:
                     break;
 
                 case CONTRADICTION:
-                    partsForPosition.add((V) part);
+                    partsForPosition.add(part);
                     break;
 
                 case EQUAL:
@@ -469,9 +470,9 @@ public class RelativePositionCalculator<V extends EntityVersion, E extends Entit
      * @param filter the filter
      * @return the calculator
      */
-    public static RelativePositionCalculator getCalculator(StampFilterRecord filter) {
+    public static StampCalculator getCalculator(StampFilterRecord filter) {
         return SINGLETONS.computeIfAbsent(filter,
-                filterKey -> new RelativePositionCalculator(filter));
+                filterKey -> new StampCalculator(filter));
     }
 
     /**
@@ -543,13 +544,13 @@ public class RelativePositionCalculator<V extends EntityVersion, E extends Entit
      * @param chronicle the chronicle
      * @return the latest version
      */
-    public LatestVersion<V> getLatestVersion(E chronicle) {
-        final HashSet<V> latestVersionSet = new HashSet<>();
+    public <V extends EntityVersion> Latest<V> latest(Entity<V> chronicle) {
+        final HashSet<EntityVersion> latestVersionSet = new HashSet<>();
 
         chronicle.versions()
                 .stream()
                 .filter((newVersionToTest) -> (newVersionToTest.stamp().time() > Long.MIN_VALUE))
-                .filter((newVersionToTest) -> (onRoute(newVersionToTest)))
+                .filter((newVersionToTest) -> (onRoute(newVersionToTest.stamp())))
                 .forEach(
                         (newVersionToTest) -> {
                             if (latestVersionSet.isEmpty()) {
@@ -560,7 +561,7 @@ public class RelativePositionCalculator<V extends EntityVersion, E extends Entit
                         });
 
         if (this.filter.allowedStates().isActiveOnly()) {
-            final HashSet<V> inactiveVersions = new HashSet<>();
+            final HashSet<EntityVersion> inactiveVersions = new HashSet<>();
 
             latestVersionSet.stream()
                     .forEach((version) -> {
@@ -571,17 +572,17 @@ public class RelativePositionCalculator<V extends EntityVersion, E extends Entit
             latestVersionSet.removeAll(inactiveVersions);
         }
 
-        final List<V> latestVersionList = new ArrayList<>(latestVersionSet);
+        final List<EntityVersion> latestVersionList = new ArrayList<>(latestVersionSet);
 
         if (latestVersionList.isEmpty()) {
-            return new LatestVersion<>();
+            return new Latest<>();
         }
 
         if (latestVersionList.size() == 1) {
-            return new LatestVersion<>(latestVersionList.get(0));
+            return (Latest<V>) new Latest<>(latestVersionList.get(0));
         }
 
-        return new LatestVersion<>(latestVersionList.get(0), latestVersionList.subList(1, latestVersionList.size()));
+        return (Latest<V>) new Latest<>(latestVersionList.get(0), latestVersionList.subList(1, latestVersionList.size()));
     }
 
     /**
@@ -644,10 +645,10 @@ public class RelativePositionCalculator<V extends EntityVersion, E extends Entit
          * @return true, if successful
          */
         private boolean containsPosition(int pathConceptNid, int moduleConceptNid, long time) {
-            if (RelativePositionCalculator.this.filter.moduleNids().isEmpty() ||
-                    RelativePositionCalculator.this.filter.moduleNids().contains(moduleConceptNid)) {
-                if (RelativePositionCalculator.this.filter.excludedModuleNids().isEmpty() ||
-                        !RelativePositionCalculator.this.filter.excludedModuleNids().contains(moduleConceptNid)) {
+            if (StampCalculator.this.filter.moduleNids().isEmpty() ||
+                    StampCalculator.this.filter.moduleNids().contains(moduleConceptNid)) {
+                if (StampCalculator.this.filter.excludedModuleNids().isEmpty() ||
+                        !StampCalculator.this.filter.excludedModuleNids().contains(moduleConceptNid)) {
                     if ((this.pathConceptNid == pathConceptNid) && (time != Long.MIN_VALUE)) {
                         return time < this.endTime;
                     }
@@ -881,7 +882,7 @@ public class RelativePositionCalculator<V extends EntityVersion, E extends Entit
     }
 
     private static Optional<StampPathImmutable> constructFromSemantics(int stampPathNid) {
-        int[] nids = EntityService.get().semanticNidsForComponentOfType(stampPathNid, TinkarTerm.PATH.nid());
+        int[] nids = EntityService.get().semanticNidsForComponentOfPattern(stampPathNid, TinkarTerm.PATH.nid());
         if (nids.length == 1) {
             int pathId = nids[0];
             assert pathId == stampPathNid:
@@ -893,5 +894,42 @@ public class RelativePositionCalculator<V extends EntityVersion, E extends Entit
             throw new UnsupportedOperationException("Wrong nid count: " + Arrays.toString(nids));
         }
    }
+
+    @Override
+    public <V extends EntityVersion> Latest<V> latest(int nid) {
+        return this.latest(Entity.getFast(nid));
+    }
+
+    @Override
+    public void forEachSemanticVersionOfPattern(int patternNid, BiConsumer<SemanticEntityVersion, PatternVersion> procedure) {
+        Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
+        latestPatternVersion.ifPresent(patternEntityVersion -> PrimitiveData.get().forEachSemanticNidOfPattern(patternNid, semanticNid -> {
+            Latest<SemanticEntityVersion> latestSemanticVersion = this.latest(semanticNid);
+            latestSemanticVersion.ifPresent(semanticEntityVersion -> procedure.accept(semanticEntityVersion, patternEntityVersion));
+         }));
+    }
+
+    @Override
+    public void forEachSemanticVersionForComponent(int componentNid,
+                                                   BiConsumer<SemanticEntityVersion, EntityVersion> procedure) {
+        Latest<EntityVersion> latestEntityVersion = this.latest(componentNid);
+        latestEntityVersion.ifPresent(entityVersion -> PrimitiveData.get().forEachSemanticNidForComponent(componentNid, semanticNid -> {
+            Latest<SemanticEntityVersion> latestSemanticVersion = this.latest(semanticNid);
+            latestSemanticVersion.ifPresent(semanticEntityVersion -> procedure.accept(semanticEntityVersion, entityVersion));
+        }));
+    }
+
+    @Override
+    public void forEachSemanticVersionForComponentOfPattern(int componentNid, int patternNid,
+                                                            TriConsumer<SemanticEntityVersion, EntityVersion, PatternVersion> procedure) {
+        Latest<EntityVersion> latestComponentVersion = this.latest(componentNid);
+        latestComponentVersion.ifPresent(entityVersion -> {
+            Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
+            latestPatternVersion.ifPresent(patternEntityVersion -> PrimitiveData.get().forEachSemanticNidOfPattern(patternNid, semanticNid -> {
+                Latest<SemanticEntityVersion> latestSemanticVersion = this.latest(semanticNid);
+                latestSemanticVersion.ifPresent(semanticEntityVersion -> procedure.accept(semanticEntityVersion, entityVersion, patternEntityVersion));
+            }));
+        });
+    }
 }
 

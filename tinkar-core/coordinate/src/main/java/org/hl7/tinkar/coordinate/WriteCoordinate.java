@@ -18,7 +18,7 @@ package org.hl7.tinkar.coordinate;
 
 import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.coordinate.edit.EditCoordinateImmutable;
-import org.hl7.tinkar.coordinate.stamp.State;
+import org.hl7.tinkar.terms.State;
 
 /**
  * Simplified interface for providing coordinates to methods that write content.

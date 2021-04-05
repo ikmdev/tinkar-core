@@ -13,8 +13,8 @@ import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
-import org.hl7.tinkar.entity.ConceptEntity;
 import org.hl7.tinkar.entity.Entity;
+import org.hl7.tinkar.terms.ConceptFacade;
 
 //This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
 @AutoService(CachingService.class)
@@ -120,13 +120,13 @@ public final class LogicCoordinateImmutable implements LogicCoordinate, Immutabl
                 logicCoordinateImmutable -> logicCoordinateImmutable);
     }
 
-    public static LogicCoordinateImmutable make(ConceptEntity classifier,
-                                                ConceptEntity descriptionLogicProfile,
-                                                ConceptEntity inferredAssemblage,
-                                                ConceptEntity statedAssemblage,
-                                                ConceptEntity conceptAssemblage,
-                                                ConceptEntity digraphIdentity,
-                                                ConceptEntity root)  {
+    public static LogicCoordinateImmutable make(ConceptFacade classifier,
+                                                ConceptFacade descriptionLogicProfile,
+                                                ConceptFacade inferredAssemblage,
+                                                ConceptFacade statedAssemblage,
+                                                ConceptFacade conceptAssemblage,
+                                                ConceptFacade digraphIdentity,
+                                                ConceptFacade root)  {
         return SINGLETONS.computeIfAbsent(new LogicCoordinateImmutable(classifier.nid(), descriptionLogicProfile.nid(),
                         inferredAssemblage.nid(), statedAssemblage.nid(), conceptAssemblage.nid(), digraphIdentity.nid(),
                         root.nid()),

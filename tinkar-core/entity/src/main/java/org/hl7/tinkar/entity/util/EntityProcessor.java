@@ -11,7 +11,7 @@ public abstract class EntityProcessor implements ObjIntConsumer<byte[]> {
     AtomicInteger totalCount = new AtomicInteger();
     AtomicInteger conceptCount = new AtomicInteger();
     AtomicInteger semanticCount = new AtomicInteger();
-    AtomicInteger typePatternCount = new AtomicInteger();
+    AtomicInteger patternCount = new AtomicInteger();
     AtomicInteger stampCount = new AtomicInteger();
     AtomicInteger other = new AtomicInteger();
     Stopwatch stopwatch = new Stopwatch();
@@ -21,8 +21,8 @@ public abstract class EntityProcessor implements ObjIntConsumer<byte[]> {
         // bytes starts with number of arrays (int = 4 bytes), then size of first array (int = 4 bytes), then entity format version then type token, -1 since index starts at 0...
         FieldDataType componentType = FieldDataType.fromToken(bytes[9]);
         switch (componentType) {
-            case TYPE_PATTERN_CHRONOLOGY:
-                typePatternCount.incrementAndGet();
+            case PATTERN_CHRONOLOGY:
+                patternCount.incrementAndGet();
                 totalCount.incrementAndGet();
                 break;
             case CONCEPT_CHRONOLOGY:
@@ -61,8 +61,8 @@ public abstract class EntityProcessor implements ObjIntConsumer<byte[]> {
         if (semanticCount.get() > 0) {
             sb.append("\nSemantics: ").append(semanticCount);
         }
-        if (typePatternCount.get() > 0) {
-            sb.append("\nType pattern: ").append(typePatternCount);
+        if (patternCount.get() > 0) {
+            sb.append("\nType pattern: ").append(patternCount);
         }
         if (stampCount.get() > 0) {
             sb.append("\nStamps: ").append(stampCount);

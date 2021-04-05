@@ -12,7 +12,7 @@ public class Put {
         Entity entity = EntityFactory.make(chronology);
         if (entity instanceof SemanticEntity semanticEntity) {
             singleton.merge(entity.nid(),
-                    semanticEntity.typePatternNid(),
+                    semanticEntity.patternNid(),
                     semanticEntity.referencedComponentNid(),
                     entity.getBytes());
         } else {

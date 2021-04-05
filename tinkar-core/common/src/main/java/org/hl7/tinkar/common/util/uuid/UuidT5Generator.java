@@ -85,17 +85,17 @@ public class UuidT5Generator {
 
    /**
     * Generate a UUID for a semantic set that has one semantic per referenced component.
-    * Sorts the definition uuids and the referenced component uuids (separately) to ensure that order of
+    * Sorts the pattern uuids and the referenced component uuids (separately) to ensure that order of
     * UUID presentation does not matter.
-    * @param definitionUuids
+    * @param patternUuids
     * @param referencedComponentIds
     * @return the generated uuid
     */
-    public static UUID singleSemanticUuid(UUID[] definitionUuids, UUID[] referencedComponentIds) {
-        Arrays.sort(definitionUuids);
+    public static UUID singleSemanticUuid(UUID[] patternUuids, UUID[] referencedComponentIds) {
+        Arrays.sort(patternUuids);
         Arrays.sort(referencedComponentIds);
         StringBuilder builder = new StringBuilder();
-        builder.append(Arrays.toString(definitionUuids));
+        builder.append(Arrays.toString(patternUuids));
         builder.append(Arrays.toString(referencedComponentIds));
         return get(SINGLE_SEMANTIC_FOR_RC_UUID, builder.toString());
     }

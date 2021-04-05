@@ -12,7 +12,7 @@ import org.hl7.tinkar.component.graph.Vertex;
 import org.hl7.tinkar.dto.*;
 import org.hl7.tinkar.dto.binary.*;
 import org.hl7.tinkar.component.Concept;
-import org.hl7.tinkar.component.TypePattern;
+import org.hl7.tinkar.component.Pattern;
 import org.hl7.tinkar.component.Semantic;
 import org.hl7.tinkar.component.Stamp;
 
@@ -43,11 +43,11 @@ public final record VertexDTO(long vertexIdMsb, long vertexIdLsb, int vertexInde
                 return (T) object;
             }
             return (T) SemanticDTOBuilder.builder().publicId(semanticValue.publicId()).build();
-        } else if (object instanceof TypePattern typePatternValue) {
-            if (object instanceof TypePatternDTO & !(object instanceof TypePatternChronologyDTO)) {
+        } else if (object instanceof Pattern patternValue) {
+            if (object instanceof PatternDTO & !(object instanceof PatternChronologyDTO)) {
                 return (T) object;
             }
-            return (T) TypePatternDTOBuilder.builder().publicId(typePatternValue.publicId()).build();
+            return (T) PatternDTOBuilder.builder().publicId(patternValue.publicId()).build();
         } else if (object instanceof Stamp & !(object instanceof StampDTO)) {
             Stamp stampValue = (Stamp) object;
             return (T) StampDTOBuilder.builder()

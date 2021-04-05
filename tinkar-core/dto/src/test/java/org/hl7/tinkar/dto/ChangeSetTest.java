@@ -139,21 +139,21 @@ public class ChangeSetTest {
     }
 
     @Test
-    public void testTypePatternVersionForChangeSet() {
+    public void testPatternVersionForChangeSet() {
         PublicId componentPublicId = TestUtil.makePublicId();
-        TypePatternVersionDTO component = TestUtil.makeTypePatternVersionForChangeSet(componentPublicId);
+        PatternVersionDTO component = TestUtil.makePatternVersionForChangeSet(componentPublicId);
 
-        TypePatternVersionDTO newerComponent = Marshalable.makeVersion(TypePatternVersionDTO.class, component.marshal(), componentPublicId);
+        PatternVersionDTO newerComponent = Marshalable.makeVersion(PatternVersionDTO.class, component.marshal(), componentPublicId);
         assertEquals(component, newerComponent);
 
-        testInvalidMarshalVersionForVersion(TypePatternVersionDTO.class);
-        testReadVersionIOException(TypePatternVersionDTO.class);
+        testInvalidMarshalVersionForVersion(PatternVersionDTO.class);
+        testReadVersionIOException(PatternVersionDTO.class);
         testWriteIOExceptionForVersion(component);
         assertTrue(component.equals(newerComponent));
-        assertFalse(component.equals(TestUtil.makeTypePatternVersionForChangeSet(componentPublicId)));
+        assertFalse(component.equals(TestUtil.makePatternVersionForChangeSet(componentPublicId)));
         assertFalse(component.equals("will be false"));
         assertTrue(component.publicId().equals(newerComponent.publicId()));
-        assertEquals(component, TypePatternVersionDTO.make(component));
+        assertEquals(component, PatternVersionDTO.make(component));
     }
 
     @Test
@@ -179,22 +179,22 @@ public class ChangeSetTest {
 
 
     @Test
-    public void testTypePatternChronologyForChangeSet() {
-         TypePatternChronologyDTO component = TestUtil.makeTypePatternChronology();
+    public void testPatternChronologyForChangeSet() {
+         PatternChronologyDTO component = TestUtil.makePatternChronology();
 
-        TypePatternChronologyDTO newerComponent = Marshalable.make(TypePatternChronologyDTO.class, component.marshal());
+        PatternChronologyDTO newerComponent = Marshalable.make(PatternChronologyDTO.class, component.marshal());
         assertEquals(component, newerComponent);
 
-        testInvalidMarshalVersion(TypePatternChronologyDTO.class);
-        testReadIOException(TypePatternChronologyDTO.class);
+        testInvalidMarshalVersion(PatternChronologyDTO.class);
+        testReadIOException(PatternChronologyDTO.class);
         testWriteIOException(component);
         assertTrue(component.equals(newerComponent));
         assertTrue(component.hashCode() == newerComponent.hashCode());
-        assertFalse(component.equals(new TypePatternChronologyDTO(TestUtil.makePublicId(),
-                TestUtil.makeTypePatternVersionForChangeSetList(component.publicId()))));
+        assertFalse(component.equals(new PatternChronologyDTO(TestUtil.makePublicId(),
+                TestUtil.makePatternVersionForChangeSetList(component.publicId()))));
         assertFalse(component.equals("will be false"));
         assertTrue(component.publicId().equals(newerComponent.publicId()));
-        assertEquals(component, TypePatternChronologyDTO.make(component));
+        assertEquals(component, PatternChronologyDTO.make(component));
 
     }
     
@@ -202,7 +202,7 @@ public class ChangeSetTest {
     @Test
     public void testSemanticVersionForChangeSet() {
         PublicId componentPublicId = TestUtil.makePublicId();
-        PublicId typePatternPublicId = TestUtil.makePublicId();
+        PublicId patternPublicId = TestUtil.makePublicId();
         PublicId referencedComponentPublicId = TestUtil.makePublicId();
 
         SemanticVersionDTO component = new SemanticVersionDTO(componentPublicId,
@@ -245,7 +245,7 @@ public class ChangeSetTest {
                 TestUtil.makePublicId(), TestUtil.makePublicId()))));
         assertFalse(component.equals("will be false"));
         assertTrue(component.publicId().equals(newerComponent.publicId()));
-        assertTrue(component.typePattern().equals(newerComponent.typePattern()));
+        assertTrue(component.pattern().equals(newerComponent.pattern()));
         assertTrue(component.referencedComponent().equals(newerComponent.referencedComponent()));
         assertEquals(component, SemanticChronologyDTO.make(component));
     }

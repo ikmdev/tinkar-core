@@ -2,7 +2,7 @@ package org.hl7.tinkar.entity;
 
 import io.activej.bytebuf.ByteBuf;
 import org.hl7.tinkar.component.*;
-import org.hl7.tinkar.component.TypePatternChronology;
+import org.hl7.tinkar.component.PatternChronology;
 import org.hl7.tinkar.dto.StampDTO;
 
 public class EntityFactory {
@@ -12,8 +12,8 @@ public class EntityFactory {
             return ConceptEntity.make(conceptChronology);
         } else if (chronology instanceof SemanticChronology semanticChronology) {
             return SemanticEntity.make(semanticChronology);
-        } else if (chronology instanceof TypePatternChronology definitionChronology) {
-            return TypePatternEntity.make(definitionChronology);
+        } else if (chronology instanceof PatternChronology patternChronology) {
+            return PatternEntity.make(patternChronology);
         } else if (chronology instanceof Stamp stamp) {
             return StampEntity.make(stamp);
         }
@@ -41,8 +41,8 @@ public class EntityFactory {
             case SEMANTIC_CHRONOLOGY:
                 return (T) SemanticEntity.make(readBuf, entityFormatVersion);
 
-            case TYPE_PATTERN_CHRONOLOGY:
-                return (T) TypePatternEntity.make(readBuf, entityFormatVersion);
+            case PATTERN_CHRONOLOGY:
+                return (T) PatternEntity.make(readBuf, entityFormatVersion);
 
             case STAMP:
                 return (T) StampEntity.make(readBuf, entityFormatVersion);

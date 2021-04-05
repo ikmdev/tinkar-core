@@ -4,6 +4,7 @@ import java.io.File;
 
 public class TestConstants {
     public static final File TINK_TEST_FILE = new File(System.getProperty("user.dir"), "/src/test/resources/tinkar-export.zip");
+//    public static final File TINK_TEST_FILE = new File("/Users/kec/Solor/tinkar-solor-us-export.zip");
 
     public static final File MVSTORE_ROOT = new File(System.getProperty("user.dir"), "/target/mvstore");
     public static final File SAP_ROOT = new File(System.getProperty("user.dir"), "/target/spinedarrays");

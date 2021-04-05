@@ -47,7 +47,7 @@ import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.text.NaturalOrder;
 import org.hl7.tinkar.common.util.time.DateTimeUtil;
-import org.hl7.tinkar.entity.calculator.LatestVersion;
+import org.hl7.tinkar.entity.calculator.Latest;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.coordinate.edit.Activity;
@@ -61,10 +61,10 @@ import org.hl7.tinkar.coordinate.navigation.NavigationCoordinateImmutable;
 import org.hl7.tinkar.coordinate.navigation.VertexSort;
 import org.hl7.tinkar.coordinate.stamp.StampFilter;
 import org.hl7.tinkar.coordinate.stamp.StateSet;
-import org.hl7.tinkar.entity.ConceptEntity;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.entity.SemanticEntity;
 import org.hl7.tinkar.entity.SemanticEntityVersion;
+import org.hl7.tinkar.terms.ConceptFacade;
 
 import java.time.Instant;
 import java.util.*;
@@ -169,15 +169,15 @@ public interface ManifoldCoordinate {
      */
     StampFilter getVertexStampFilter();
 
-    default LatestVersion<SemanticEntityVersion> getDescription(
-            ConceptEntity concept) {
+    default Latest<SemanticEntityVersion> getDescription(
+            ConceptFacade concept) {
         return this.getLanguageCoordinate().getDescription(concept.nid(), this.getViewStampFilter());
     }
 
     default Optional<String> getDescriptionText(int conceptNid) {
         getLanguageCoordinate().getDescriptionText(conceptNid, this.getViewStampFilter());
-        LatestVersion<SemanticEntityVersion> latestVersion = getDescription(conceptNid);
-        if (latestVersion.isPresent()) {
+        Latest<SemanticEntityVersion> latest = getDescription(conceptNid);
+        if (latest.isPresent()) {
             throw new UnsupportedOperationException();
             //return Optional.of(latestVersion.get().getText());
         }
@@ -185,18 +185,18 @@ public interface ManifoldCoordinate {
     }
 
 
-    default Optional<String> getDescriptionText(ConceptEntity concept) {
+    default Optional<String> getDescriptionText(ConceptFacade concept) {
         return getDescriptionText(concept.nid());
     }
 
-    default LatestVersion<SemanticEntityVersion> getDescription(
+    default Latest<SemanticEntityVersion> getDescription(
             int conceptNid) {
         return this.getLanguageCoordinate().getDescription(conceptNid, this.getViewStampFilter());
     }
 
 
-    default LatestVersion<SemanticEntityVersion> getDescription(
-            List<SemanticEntity> descriptionList) {
+    default Latest<SemanticEntityVersion> getDescription(
+            ImmutableList<SemanticEntity> descriptionList) {
         return this.getLanguageCoordinate().getDescription(descriptionList, this.getViewStampFilter());
     }
 
@@ -267,9 +267,9 @@ public interface ManifoldCoordinate {
         return results.toImmutable();
     }
 
-    default ImmutableList<String> getPreferredDescriptionTextList(Collection<ConceptEntity> conceptCollection) {
+    default ImmutableList<String> getPreferredDescriptionTextList(Collection<ConceptFacade> conceptCollection) {
         MutableList<String> results = Lists.mutable.empty();
-        for (ConceptEntity concept: conceptCollection) {
+        for (ConceptFacade concept: conceptCollection) {
             results.add(getPreferredDescriptionText(concept));
         }
         return results.toImmutable();
@@ -283,9 +283,9 @@ public interface ManifoldCoordinate {
         return results.toImmutable();
     }
 
-    default ImmutableList<String> getFullyQualifiedNameTextList(Collection<ConceptEntity> conceptCollection) {
+    default ImmutableList<String> getFullyQualifiedNameTextList(Collection<ConceptFacade> conceptCollection) {
         MutableList<String> results = Lists.mutable.empty();
-        for (ConceptEntity concept: conceptCollection) {
+        for (ConceptFacade concept: conceptCollection) {
             results.add(getFullyQualifiedDescriptionText(concept));
         }
         return results.toImmutable();
@@ -301,7 +301,7 @@ public interface ManifoldCoordinate {
         }
     }
 
-    default String getPreferredDescriptionText(ConceptEntity concept) {
+    default String getPreferredDescriptionText(ConceptFacade concept) {
         return getPreferredDescriptionText(concept.nid());
     }
 
@@ -310,24 +310,24 @@ public interface ManifoldCoordinate {
                 .orElse("No desc for: " + PrimitiveData.text(conceptNid));
     }
 
-    default String getFullyQualifiedDescriptionText(ConceptEntity concept) {
+    default String getFullyQualifiedDescriptionText(ConceptFacade concept) {
         return getFullyQualifiedDescriptionText(concept.nid());
     }
 
-    default LatestVersion<SemanticEntityVersion> getFullyQualifiedDescription(int conceptNid) {
+    default Latest<SemanticEntityVersion> getFullyQualifiedDescription(int conceptNid) {
         return getLanguageCoordinate().getFullyQualifiedDescription(conceptNid, getViewStampFilter());
     }
 
-    default LatestVersion<SemanticEntityVersion> getFullyQualifiedDescription(ConceptEntity concept) {
+    default Latest<SemanticEntityVersion> getFullyQualifiedDescription(ConceptFacade concept) {
         return getFullyQualifiedDescription(concept.nid());
     }
 
 
-    default LatestVersion<SemanticEntityVersion> getPreferredDescription(int conceptNid) {
+    default Latest<SemanticEntityVersion> getPreferredDescription(int conceptNid) {
         return getLanguageCoordinate().getRegularDescription(conceptNid, getViewStampFilter());
     }
 
-    default LatestVersion<SemanticEntityVersion> getPreferredDescription(ConceptEntity concept) {
+    default Latest<SemanticEntityVersion> getPreferredDescription(ConceptFacade concept) {
         return getPreferredDescription(concept.nid());
     }
 

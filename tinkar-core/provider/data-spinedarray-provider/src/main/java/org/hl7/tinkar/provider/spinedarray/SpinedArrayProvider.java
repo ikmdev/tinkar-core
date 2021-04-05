@@ -1,6 +1,5 @@
 package org.hl7.tinkar.provider.spinedarray;
 
-import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.collection.ConcurrentUuidIntHashMap;
@@ -31,11 +30,11 @@ public class SpinedArrayProvider implements PrimitiveDataService {
 
     final ConcurrentUuidIntHashMap uuidToNidMap = new ConcurrentUuidIntHashMap();
     final SpinedByteArrayMap entityToBytesMap;
-    final SpinedIntIntMap nidToTypeDefNidMap;
+    final SpinedIntIntMap nidToPatternNidMap;
     final SpinedIntIntMap nidToReferencedComponentNidMap;
 
     final File uuidNidMapFile;
-    final File nidToTypeDefNidMapDirectory;
+    final File nidToPatternNidMapDirectory;
     final File nidToByteArrayMapDirectory;
     final File nidToReferencedComponentNidMapDirectory;
 
@@ -47,16 +46,16 @@ public class SpinedArrayProvider implements PrimitiveDataService {
         Put.singleton = this;
 
         this.uuidNidMapFile = new File(configuredRoot, "uuidNidMap");
-        this.nidToTypeDefNidMapDirectory = new File(configuredRoot, "nidToTypeDefNidMap");
-        this.nidToTypeDefNidMapDirectory.mkdirs();
+        this.nidToPatternNidMapDirectory = new File(configuredRoot, "nidToPatternNidMap");
+        this.nidToPatternNidMapDirectory.mkdirs();
         this.nidToByteArrayMapDirectory = new File(configuredRoot, "nidToByteArrayMap");
         this.nidToByteArrayMapDirectory.mkdirs();
         this.nidToReferencedComponentNidMapDirectory = new File(configuredRoot, "nidToReferencedComponentNidMap");
         this.nidToReferencedComponentNidMapDirectory.mkdirs();
 
         this.entityToBytesMap = new SpinedByteArrayMap(new ByteArrayFileStore(nidToByteArrayMapDirectory));
-        this.nidToTypeDefNidMap = new SpinedIntIntMap(KeyType.NID_KEY);
-        this.nidToTypeDefNidMap.read(this.nidToTypeDefNidMapDirectory);
+        this.nidToPatternNidMap = new SpinedIntIntMap(KeyType.NID_KEY);
+        this.nidToPatternNidMap.read(this.nidToPatternNidMapDirectory);
         this.nidToReferencedComponentNidMap = new SpinedIntIntMap(KeyType.NID_KEY);
         this.nidToReferencedComponentNidMap.read(this.nidToReferencedComponentNidMapDirectory);
 
@@ -88,7 +87,7 @@ public class SpinedArrayProvider implements PrimitiveDataService {
         } catch (IOException e) {
             LOG.log(ERROR, e.getLocalizedMessage(), e);
         }
-        nidToTypeDefNidMap.write(this.nidToTypeDefNidMapDirectory);
+        nidToPatternNidMap.write(this.nidToPatternNidMapDirectory);
         this.entityToBytesMap.write();
     }
 
@@ -144,18 +143,18 @@ public class SpinedArrayProvider implements PrimitiveDataService {
     }
 
     @Override
-    public byte[] merge(int nid, int setNid, int referencedComponentNid, byte[] value) {
+    public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value) {
         if (!this.entityToBytesMap.containsKey(nid)) {
-            this.nidToTypeDefNidMap.put(nid, setNid);
+            this.nidToPatternNidMap.put(nid, patternNid);
             this.nidToReferencedComponentNidMap.put(nid, referencedComponentNid);
         }
         return this.entityToBytesMap.accumulateAndGet(nid, value, PrimitiveDataService::merge);
     }
 
     @Override
-    public void forEachEntityOfType(int typePatternNid, IntProcedure procedure) {
-        nidToTypeDefNidMap.forEach((nid, defNidForNid) -> {
-            if (defNidForNid == typePatternNid) {
+    public void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure) {
+        nidToPatternNidMap.forEach((nid, defNidForNid) -> {
+            if (defNidForNid == patternNid) {
                 procedure.accept(nid);
             }
         });
@@ -172,10 +171,10 @@ public class SpinedArrayProvider implements PrimitiveDataService {
 
 
     @Override
-    public void forEachSemanticNidForComponentOfType(int componentNid, int typeDefinitionNid, IntProcedure procedure) {
+    public void forEachSemanticNidForComponentOfPattern(int componentNid, int patternNid, IntProcedure procedure) {
         nidToReferencedComponentNidMap.forEach((nid, referencedComponentNid) -> {
             if (componentNid == referencedComponentNid) {
-                if (nidToTypeDefNidMap.get(nid) == typeDefinitionNid) {
+                if (nidToPatternNidMap.get(nid) == patternNid) {
                     procedure.accept(nid);
                 }
             }

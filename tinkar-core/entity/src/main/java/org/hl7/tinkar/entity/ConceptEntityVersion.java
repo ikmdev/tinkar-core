@@ -30,15 +30,15 @@ public class ConceptEntityVersion
         // no additional fields to write.
     }
 
-    public static ConceptEntityVersion make(ConceptEntity conceptEntity, ByteBuf readBuf, byte formatVersion) {
+    public static ConceptEntityVersion make(ConceptEntity conceptFacade, ByteBuf readBuf, byte formatVersion) {
         ConceptEntityVersion version = new ConceptEntityVersion();
-        version.fill(conceptEntity, readBuf, formatVersion);
+        version.fill(conceptFacade, readBuf, formatVersion);
         return version;
     }
 
-    public static ConceptEntityVersion make(ConceptEntity conceptEntity, ConceptVersion versionToCopy) {
+    public static ConceptEntityVersion make(ConceptEntity conceptFacade, ConceptVersion versionToCopy) {
         ConceptEntityVersion version = new ConceptEntityVersion();
-        version.fill(conceptEntity, versionToCopy);
+        version.fill(conceptFacade, versionToCopy);
         return version;
     }
 

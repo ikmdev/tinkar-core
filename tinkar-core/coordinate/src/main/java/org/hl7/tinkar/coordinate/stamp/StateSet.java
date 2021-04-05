@@ -7,6 +7,7 @@ import org.hl7.tinkar.common.binary.Encoder;
 import org.hl7.tinkar.common.binary.EncoderOutput;
 import org.hl7.tinkar.common.util.uuid.UuidT5Generator;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
+import org.hl7.tinkar.terms.State;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;

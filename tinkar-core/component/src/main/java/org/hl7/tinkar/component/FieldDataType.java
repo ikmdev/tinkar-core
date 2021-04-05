@@ -25,11 +25,11 @@ import java.util.UUID;
 public enum FieldDataType {
     // Changing CONCEPT_CHRONOLOGY token to 1 so that reading a default 0 throws an error...
     CONCEPT_CHRONOLOGY((byte) 1, ConceptChronology.class, UUID.fromString("60965934-32a2-11eb-adc1-0242ac120002")),
-    TYPE_PATTERN_CHRONOLOGY((byte) 2, TypePatternChronology.class, UUID.fromString("6eaa968e-32a2-11eb-adc1-0242ac120002")),
+    PATTERN_CHRONOLOGY((byte) 2, PatternChronology.class, UUID.fromString("6eaa968e-32a2-11eb-adc1-0242ac120002")),
     SEMANTIC_CHRONOLOGY((byte) 3, SemanticChronology.class, UUID.fromString("7a01ea5a-32a2-11eb-adc1-0242ac120002")),
 
     CONCEPT_VERSION((byte) 4, ConceptVersion.class, UUID.fromString("fd3bd442-4578-11eb-b378-0242ac130002")),
-    TYPE_PATTERN_VERSION((byte) 5, TypePatternVersion.class, UUID.fromString("044565be-4579-11eb-b378-0242ac130002")),
+    PATTERN_VERSION((byte) 5, PatternVersion.class, UUID.fromString("044565be-4579-11eb-b378-0242ac130002")),
     SEMANTIC_VERSION((byte) 6, SemanticVersion.class, UUID.fromString("09a3328e-4579-11eb-b378-0242ac130002")),
 
     STAMP((byte) 7, Stamp.class, UUID.fromString("f37e9591-e3a1-419a-a674-e504ce58943b")),
@@ -42,7 +42,7 @@ public enum FieldDataType {
     DIGRAPH((byte) 14, DiGraph.class, UUID.fromString("60113dfe-2bad-11eb-adc1-0242ac120002")),
     INSTANT((byte) 15, Instant.class, UUID.fromString("9cb1bd10-31b1-11eb-adc1-0242ac120002")),
     CONCEPT((byte) 16, Concept.class, UUID.fromString("6882871c-32a2-11eb-adc1-0242ac120002")),
-    TYPE_PATTERN((byte) 17, TypePattern.class, UUID.fromString("74af5952-32a2-11eb-adc1-0242ac120002")),
+    PATTERN((byte) 17, Pattern.class, UUID.fromString("74af5952-32a2-11eb-adc1-0242ac120002")),
     SEMANTIC((byte) 18, Semantic.class, UUID.fromString("7f21bbfa-32a2-11eb-adc1-0242ac120002")),
 
     DITREE((byte) 19, DiTree.class, UUID.fromString("32f64fc6-5371-11eb-ae93-0242ac130002")),
@@ -70,10 +70,10 @@ public enum FieldDataType {
         switch (token) {
             case 0: throw new IllegalStateException("Token 0 is not allowed");
             case 1: return CONCEPT_CHRONOLOGY;
-            case 2: return TYPE_PATTERN_CHRONOLOGY;
+            case 2: return PATTERN_CHRONOLOGY;
             case 3: return SEMANTIC_CHRONOLOGY;
             case 4: return CONCEPT_VERSION;
-            case 5: return TYPE_PATTERN_VERSION;
+            case 5: return PATTERN_VERSION;
             case 6: return SEMANTIC_VERSION;
             case 7: return STAMP;
             case 8: return STRING;
@@ -85,7 +85,7 @@ public enum FieldDataType {
             case 14: return DIGRAPH;
             case 15: return INSTANT;
             case 16: return CONCEPT;
-            case 17: return TYPE_PATTERN;
+            case 17: return PATTERN;
             case 18: return SEMANTIC;
             case 19: return DITREE;
             case 20: return VERTEX;

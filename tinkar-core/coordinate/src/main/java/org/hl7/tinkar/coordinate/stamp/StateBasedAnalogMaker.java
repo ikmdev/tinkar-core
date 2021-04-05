@@ -40,6 +40,8 @@
 package org.hl7.tinkar.coordinate.stamp;
 
 
+import org.hl7.tinkar.terms.State;
+
 import java.util.Set;
 
 //~--- interfaces -------------------------------------------------------------

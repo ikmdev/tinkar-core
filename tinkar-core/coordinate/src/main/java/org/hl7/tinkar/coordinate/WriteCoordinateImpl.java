@@ -20,7 +20,7 @@ import java.time.Instant;
 import java.util.Optional;
 
 import org.hl7.tinkar.common.service.PrimitiveData;
-import org.hl7.tinkar.coordinate.stamp.State;
+import org.hl7.tinkar.terms.State;
 
 /**
  * Transaction is an optional part of this class, to aid in building, but since it isn't part of the actual

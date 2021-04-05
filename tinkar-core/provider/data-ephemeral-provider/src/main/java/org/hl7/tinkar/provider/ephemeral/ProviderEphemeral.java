@@ -1,13 +1,11 @@
 package org.hl7.tinkar.provider.ephemeral;
 
-import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.block.procedure.Procedure2;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.hl7.tinkar.collection.KeyType;
 import org.hl7.tinkar.collection.SpinedIntIntMapAtomic;
-import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
 
 import java.util.ArrayList;
@@ -48,7 +46,7 @@ public class ProviderEphemeral implements PrimitiveDataService {
 
     // TODO I don't think the spines need to be atomic for this use case of nids -> elementIndices.
     //  There is no update after initial value set...
-    final SpinedIntIntMapAtomic nidToTypeDefNidMap = new SpinedIntIntMapAtomic(KeyType.NID_KEY);
+    final SpinedIntIntMapAtomic nidToPatternNidMap = new SpinedIntIntMapAtomic(KeyType.NID_KEY);
     final SpinedIntIntMapAtomic nidToReferencedComponentNidMap = new SpinedIntIntMapAtomic(KeyType.NID_KEY);
 
     private ProviderEphemeral() {
@@ -56,9 +54,9 @@ public class ProviderEphemeral implements PrimitiveDataService {
     }
 
     @Override
-    public void forEachEntityOfType(int typeDefinitionNid, IntProcedure procedure) {
-        nidToTypeDefNidMap.forEach((nid, setNid) -> {
-            if (typeDefinitionNid == setNid) {
+    public void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure) {
+        nidToPatternNidMap.forEach((nid, setNid) -> {
+            if (patternNid == setNid) {
                 procedure.accept(nid);
             }
         });
@@ -74,10 +72,10 @@ public class ProviderEphemeral implements PrimitiveDataService {
     }
 
     @Override
-    public void forEachSemanticNidForComponentOfType(int componentNid, int typeDefinitionNid, IntProcedure procedure) {
+    public void forEachSemanticNidForComponentOfPattern(int componentNid, int patternNid, IntProcedure procedure) {
         nidToReferencedComponentNidMap.forEach((nid, referencedComponentNid) -> {
             if (componentNid == referencedComponentNid) {
-                if (nidToTypeDefNidMap.get(nid) == typeDefinitionNid) {
+                if (nidToPatternNidMap.get(nid) == patternNid) {
                     procedure.accept(nid);
                 }
             }
@@ -85,8 +83,8 @@ public class ProviderEphemeral implements PrimitiveDataService {
     }
 
     @Override
-    public byte[] merge(int nid, int setNid, int referencedComponentNid, byte[] value) {
-        nidToTypeDefNidMap.put(nid, setNid);
+    public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value) {
+        nidToPatternNidMap.put(nid, patternNid);
         nidToReferencedComponentNidMap.put(nid, referencedComponentNid);
         return nidComponentMap.merge(nid, value, PrimitiveDataService::merge);
     }

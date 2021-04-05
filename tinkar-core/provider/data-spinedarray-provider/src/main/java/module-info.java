@@ -17,7 +17,7 @@ module org.hl7.tinkar.provider.openhft {
     requires org.hl7.tinkar.component;
     requires org.hl7.tinkar.entity;
     requires org.hl7.tinkar.collection;
-    requires org.hl7.tinkar.autoservice;
+    requires static org.hl7.tinkar.autoservice;
 
     provides DataServiceController
             with SpinedArrayController;

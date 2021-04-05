@@ -25,7 +25,7 @@ public interface SemanticChronology<T extends SemanticVersion> extends Chronolog
 
      Component referencedComponent();
 
-     TypePattern typePattern();
+     Pattern pattern();
 
      @Override
      ImmutableList<T> versions();

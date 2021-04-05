@@ -33,7 +33,7 @@ public class PathProvider {
 
         return SINGLETONS.computeIfAbsent(pathNid, newPathNid -> {
             MutableSet<StampPositionImmutable> originSet = Sets.mutable.empty();
-            EntityService.get().forEachSemanticForComponentOfType(pathNid, TinkarTerm.PATH_ORIGINS_ASSEMBLAGE.nid(), semanticEntity -> {
+            EntityService.get().forEachSemanticForComponentOfPattern(pathNid, TinkarTerm.PATH_ORIGINS_ASSEMBLAGE.nid(), semanticEntity -> {
                 // Get versions, get fields.
                 // TODO assumption 1... Only one version.
                 if (semanticEntity.versions().size() == 1) {

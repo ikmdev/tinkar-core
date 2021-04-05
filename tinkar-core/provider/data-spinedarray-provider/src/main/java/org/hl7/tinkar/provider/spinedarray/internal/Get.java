@@ -3,8 +3,8 @@ package org.hl7.tinkar.provider.spinedarray.internal;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
 import org.hl7.tinkar.component.Stamp;
-import org.hl7.tinkar.entity.EntityFactory;
 import org.hl7.tinkar.entity.ConceptEntity;
+import org.hl7.tinkar.entity.EntityFactory;
 import org.hl7.tinkar.entity.StampEntity;
 
 import java.util.UUID;

@@ -134,9 +134,11 @@ public class SpinedIntIntMap {
         }
         int spineIndex = index / spineSize;
         int indexInSpine = index % spineSize;
-        if (spineIndex > this.spines.size() + 2) {
-            throw new IllegalStateException("Trying to add spine: " + spineIndex + " for: " + index);
-        }
+//        Had an occasion where this illegal state was thrown...
+//        Trying to add spine: 507 for: 5198069
+//        if (spineIndex > this.spines.size() + 2) {
+//            throw new IllegalStateException("Trying to add spine: " + spineIndex + " for: " + index);
+//        }
         this.changedSpineIndexes.add(spineIndex);
         this.spines.computeIfAbsent(spineIndex, this::newSpine).set(indexInSpine, element);
     }

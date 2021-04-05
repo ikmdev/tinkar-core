@@ -20,13 +20,8 @@ import org.eclipse.collections.api.list.ImmutableList;
  *
  * @author kec
  */
-public interface TypePatternVersion<F extends FieldDefinition> extends Version, TypePattern {
+public interface PatternChronology<T extends PatternVersion> extends Chronology<T>, Pattern {
 
-    ImmutableList<F> fieldDefinitions();
-
-    Concept referencedComponentPurpose();
-
-    Concept referencedComponentMeaning();
-
-
+     @Override
+     ImmutableList<T> versions();
 }

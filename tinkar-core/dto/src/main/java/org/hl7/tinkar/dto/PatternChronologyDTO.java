@@ -19,39 +19,39 @@ import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.common.id.PublicId;
-import org.hl7.tinkar.component.TypePatternChronology;
+import org.hl7.tinkar.component.PatternChronology;
 import org.hl7.tinkar.dto.binary.*;
 
 /**
  *
  * @author kec
  */
-public record TypePatternChronologyDTO(PublicId publicId,
-                                      ImmutableList<TypePatternVersionDTO> typePatternVersions)
-        implements TypePatternChronology<TypePatternVersionDTO>, DTO, Marshalable {
+public record PatternChronologyDTO(PublicId publicId,
+                                   ImmutableList<PatternVersionDTO> patternVersions)
+        implements PatternChronology<PatternVersionDTO>, DTO, Marshalable {
 
     private static final int localMarshalVersion = 3;
 
-    public static TypePatternChronologyDTO make(TypePatternChronology<TypePatternVersionDTO> typePatternChronology) {
-        MutableList<TypePatternVersionDTO> versions = Lists.mutable.ofInitialCapacity(typePatternChronology.versions().size());
-        for (TypePatternVersionDTO definitionVersion : typePatternChronology.versions()) {
-            versions.add(TypePatternVersionDTO.make(definitionVersion));
+    public static PatternChronologyDTO make(PatternChronology<PatternVersionDTO> patternChronology) {
+        MutableList<PatternVersionDTO> versions = Lists.mutable.ofInitialCapacity(patternChronology.versions().size());
+        for (PatternVersionDTO patternVersion : patternChronology.versions()) {
+            versions.add(PatternVersionDTO.make(patternVersion));
         }
-        return new TypePatternChronologyDTO(typePatternChronology.publicId(),
+        return new PatternChronologyDTO(patternChronology.publicId(),
                 versions.toImmutable());
     }
 
     @Override
-    public ImmutableList<TypePatternVersionDTO> versions() {
-        return typePatternVersions.collect(typePatternVersionDTO -> typePatternVersionDTO);
+    public ImmutableList<PatternVersionDTO> versions() {
+        return patternVersions.collect(patternVersionDTO -> patternVersionDTO);
     }
 
     @Unmarshaler
-    public static TypePatternChronologyDTO make(TinkarInput in) {
+    public static PatternChronologyDTO make(TinkarInput in) {
         if (localMarshalVersion == in.getTinkerFormatVersion()) {
             PublicId publicId = in.getPublicId();
-            return new TypePatternChronologyDTO(
-                    publicId, in.readTypePatternVersionList(publicId));
+            return new PatternChronologyDTO(
+                    publicId, in.readPatternVersionList(publicId));
         } else {
             throw new UnsupportedOperationException("Unsupported version: " + in.getTinkerFormatVersion());
         }
@@ -61,6 +61,6 @@ public record TypePatternChronologyDTO(PublicId publicId,
     @Marshaler
     public void marshal(TinkarOutput out) {
         out.putPublicId(publicId());
-        out.writeTypePatternVersionList(typePatternVersions);
+        out.writePatternVersionList(patternVersions);
     }
 }

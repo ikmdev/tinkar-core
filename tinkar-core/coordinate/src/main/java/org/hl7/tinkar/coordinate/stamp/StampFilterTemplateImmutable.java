@@ -12,7 +12,7 @@ import org.hl7.tinkar.common.binary.Encoder;
 import org.hl7.tinkar.common.binary.EncoderOutput;
 import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
-import org.hl7.tinkar.entity.ConceptEntity;
+import org.hl7.tinkar.terms.ConceptFacade;
 
 import java.util.Objects;
 import java.util.Set;
@@ -101,7 +101,7 @@ public class StampFilterTemplateImmutable  implements StampFilterTemplate, Immut
     }
 
     public static StampFilterTemplateImmutable make(StateSet allowedStates,
-                                                    Set<ConceptEntity> modules) {
+                                                    Set<ConceptFacade> modules) {
         ImmutableIntSet moduleNids = IntSets.immutable.of(modules.stream().mapToInt(value -> value.nid()).toArray());
 
         return SINGLETONS.computeIfAbsent(new StampFilterTemplateImmutable(allowedStates,
