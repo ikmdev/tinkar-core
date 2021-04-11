@@ -15,6 +15,18 @@ public class TinkarTerm {
     public static final ConceptProxy US_DIALECT_PATTERN =
             ConceptProxy.make("US Dialect pattern", UUID.fromString("08f9112c-c041-56d3-b89b-63258f070074"));
 
+    public static final ConceptProxy INFERRED_NAVIGATION_PATTERN =
+            ConceptProxy.make("Inferred navigation", UUID.fromString("a53cc42d-c07e-5934-96b3-2ede3264474e"));
+
+    public static final ConceptProxy STATED_NAVIGATION_PATTERN =
+            ConceptProxy.make("Stated navigation" , UUID.fromString("d02957d6-132d-5b3c-adba-505f5778d998"));
+
+    public static final ConceptProxy EL_PLUS_PLUS_STATED_AXIOMS_PATTERN =
+            ConceptProxy.make("EL++ stated form pattern", UUID.fromString("e813eb92-7d07-5035-8d43-e81249f5b36e"));
+
+    public static final ConceptProxy EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN =
+            ConceptProxy.make("EL ++ Inferred form pattern", UUID.fromString("9f011812-15c9-5b1b-85f8-bb262bc1b2a2"));
+
     /** Java binding for the concept described as <strong><em>Acceptable (SOLOR)</em></strong>;
      * identified by UUID: {@code
      * <a href="http://localhost:8080/terminology/rest/concept/12b9e103-060e-3256-9982-18c1191af60e">

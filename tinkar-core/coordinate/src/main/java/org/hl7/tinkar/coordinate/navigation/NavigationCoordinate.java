@@ -31,7 +31,7 @@ public interface NavigationCoordinate {
 
 
     static ImmutableIntSet defaultNavigationConceptIdentifierNids() {
-        return IntSets.immutable.of(TinkarTerm.EL_PLUS_PLUS_INFERRED_FORM_ASSEMBLAGE.nid());
+        return IntSets.immutable.of(TinkarTerm.INFERRED_NAVIGATION.nid());
     }
 
     default UUID getNavigationCoordinateUuid() {

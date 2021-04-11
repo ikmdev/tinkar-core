@@ -11,9 +11,9 @@ module org.hl7.tinkar.coordinate {
     exports org.hl7.tinkar.coordinate.edit;
     exports org.hl7.tinkar.coordinate.language;
     exports org.hl7.tinkar.coordinate.logic;
-    exports org.hl7.tinkar.coordinate.manifold;
     exports org.hl7.tinkar.coordinate.navigation;
     exports org.hl7.tinkar.coordinate.stamp;
+    exports org.hl7.tinkar.coordinate.view;
 
     requires org.hl7.tinkar.collection;
     requires transitive org.hl7.tinkar.terms;

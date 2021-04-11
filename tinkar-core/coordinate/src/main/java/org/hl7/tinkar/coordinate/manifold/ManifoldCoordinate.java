@@ -58,7 +58,7 @@ import org.hl7.tinkar.coordinate.logic.PremiseSet;
 import org.hl7.tinkar.coordinate.logic.PremiseType;
 import org.hl7.tinkar.coordinate.navigation.NavigationCoordinate;
 import org.hl7.tinkar.coordinate.navigation.NavigationCoordinateImmutable;
-import org.hl7.tinkar.coordinate.navigation.VertexSort;
+import org.hl7.tinkar.coordinate.view.VertexSort;
 import org.hl7.tinkar.coordinate.stamp.StampFilter;
 import org.hl7.tinkar.coordinate.stamp.StateSet;
 import org.hl7.tinkar.entity.Entity;
@@ -76,8 +76,10 @@ import java.util.function.Function;
  * The Interface ManifoldCoordinate.
  *
  * @author kec
- * TODO consider deprecation/deletion and switch to diagraph coordinate.
+ * TODO consider deprecation/deletion and switch to view coordinate.
  */
+@Deprecated
+
 public interface ManifoldCoordinate {
 
     static UUID getManifoldCoordinateUuid(ManifoldCoordinate manifoldCoordinate) {
@@ -132,7 +134,8 @@ public interface ManifoldCoordinate {
     }
 
     default int[] sortVertexes(int[] vertexConceptNids) {
-        return getVertexSort().sortVertexes(vertexConceptNids, toManifoldCoordinateImmutable());
+        //return getVertexSort().sortVertexes(vertexConceptNids, toManifoldCoordinateImmutable());
+        throw new UnsupportedOperationException();
     }
 
     /**

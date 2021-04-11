@@ -52,13 +52,12 @@ import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
 import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.common.service.PrimitiveData;
-import org.hl7.tinkar.component.PatternVersion;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.entity.calculator.Latest;
 import org.hl7.tinkar.component.graph.DiTree;
 import org.hl7.tinkar.coordinate.CoordinateUtil;
 import org.hl7.tinkar.entity.calculator.RelativePosition;
-import org.hl7.tinkar.entity.calculator.TriConsumer;
+import org.hl7.tinkar.common.util.functional.TriConsumer;
 import org.hl7.tinkar.entity.calculator.VersionCalculator;
 import org.hl7.tinkar.entity.graph.DiTreeEntity;
 import org.hl7.tinkar.entity.graph.VersionVertex;
@@ -114,6 +113,10 @@ public class StampCalculator implements VersionCalculator{
         this.filter = filter;
         this.pathNidSegmentMap = setupPathNidSegmentMap(filter.stampPosition().toStampPositionImmutable());
         this.allowedStates          = filter.allowedStates();
+    }
+
+    public StampFilter filter() {
+        return this.filter;
     }
 
     /**
@@ -901,7 +904,7 @@ public class StampCalculator implements VersionCalculator{
     }
 
     @Override
-    public void forEachSemanticVersionOfPattern(int patternNid, BiConsumer<SemanticEntityVersion, PatternVersion> procedure) {
+    public void forEachSemanticVersionOfPattern(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
         Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
         latestPatternVersion.ifPresent(patternEntityVersion -> PrimitiveData.get().forEachSemanticNidOfPattern(patternNid, semanticNid -> {
             Latest<SemanticEntityVersion> latestSemanticVersion = this.latest(semanticNid);
@@ -921,7 +924,7 @@ public class StampCalculator implements VersionCalculator{
 
     @Override
     public void forEachSemanticVersionForComponentOfPattern(int componentNid, int patternNid,
-                                                            TriConsumer<SemanticEntityVersion, EntityVersion, PatternVersion> procedure) {
+                                                            TriConsumer<SemanticEntityVersion, EntityVersion, PatternEntityVersion> procedure) {
         Latest<EntityVersion> latestComponentVersion = this.latest(componentNid);
         latestComponentVersion.ifPresent(entityVersion -> {
             Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);

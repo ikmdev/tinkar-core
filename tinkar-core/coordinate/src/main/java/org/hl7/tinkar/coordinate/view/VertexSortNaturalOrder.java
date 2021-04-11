@@ -1,12 +1,12 @@
-package org.hl7.tinkar.coordinate.navigation;
+package org.hl7.tinkar.coordinate.view;
 
 
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.hl7.tinkar.common.binary.*;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.text.NaturalOrder;
-import org.hl7.tinkar.coordinate.manifold.ManifoldCoordinateImmutable;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinate;
+import org.hl7.tinkar.coordinate.stamp.StampCalculator;
 import org.hl7.tinkar.coordinate.stamp.StampFilter;
 
 import java.util.UUID;
@@ -27,15 +27,14 @@ public class VertexSortNaturalOrder implements VertexSort, Encodable {
     }
 
     @Override
-    public final int[] sortVertexes(int[] vertexConceptNids, ManifoldCoordinateImmutable manifold) {
+    public final int[] sortVertexes(int[] vertexConceptNids, View view) {
         if (vertexConceptNids.length < 2) {
             // nothing to sort, skip creating the objects for sort.
             return vertexConceptNids;
         }
-        final LanguageCoordinate languageCoordinate = manifold.getLanguageCoordinate();
-        final StampFilter stampFilter = manifold.getViewStampFilter();
+
         return IntLists.immutable.of(vertexConceptNids).primitiveStream().mapToObj(vertexConceptNid ->
-                new VertexItem(vertexConceptNid, getVertexLabel(vertexConceptNid, languageCoordinate, stampFilter)))
+                new VertexItem(vertexConceptNid, view.language().getDescriptionTextOrNid(vertexConceptNid, view.stampFilter())))
                 .sorted().mapToInt(value -> value.nid).toArray();
     }
 

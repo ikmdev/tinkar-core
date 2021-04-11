@@ -45,7 +45,6 @@ public final class LanguageCoordinateImmutable implements LanguageCoordinate, Im
     }
 
     private static final int marshalVersion = 1;
-    public static final String UNKNOWN_COMPONENT_TYPE = "Unknown component type";
 
     final private int languageConceptNid;
     final private ImmutableIntList descriptionPatternList;
@@ -53,11 +52,13 @@ public final class LanguageCoordinateImmutable implements LanguageCoordinate, Im
     final private ImmutableIntList dialectAssemblagePreferenceList;
     final private ImmutableIntList modulePreferenceListForLanguage;
 
-    private ConcurrentReferenceHashMap<StampFilterRecord, Cache<Integer, String>> preferredCaches;
+    private Cache<StampFilterRecord, Cache<Integer, String>> preferredCaches;
 
-    private ConcurrentReferenceHashMap<StampFilterRecord, Cache<Integer, String>> fqnCaches;
+    private Cache<StampFilterRecord, Cache<Integer, String>> fqnCaches;
 
-    private ConcurrentReferenceHashMap<StampFilterRecord, Cache<Integer, String>> descriptionCaches;
+    private Cache<StampFilterRecord, Cache<Integer, String>> descriptionCaches;
+
+    private Cache<StampFilterRecord, Cache<Integer, String>> definitionCaches;
 
     private LanguageCoordinateImmutable(ConceptFacade languageConcept,
                                         ImmutableIntList descriptionPatternList,
@@ -82,16 +83,16 @@ public final class LanguageCoordinateImmutable implements LanguageCoordinate, Im
 
     private LanguageCoordinateImmutable setupCache() {
         this.preferredCaches =
-                new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
-                        ConcurrentReferenceHashMap.ReferenceType.WEAK);
+                Caffeine.newBuilder().maximumSize(128).build();
 
         this.fqnCaches =
-                new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
-                        ConcurrentReferenceHashMap.ReferenceType.WEAK);
+                Caffeine.newBuilder().maximumSize(128).build();
 
         this.descriptionCaches =
-                new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
-                        ConcurrentReferenceHashMap.ReferenceType.WEAK);
+                Caffeine.newBuilder().maximumSize(128).build();
+
+        this.definitionCaches =
+                Caffeine.newBuilder().maximumSize(128).build();
 
         //        Get.commitService().addChangeListener(this);
         return this;
@@ -258,7 +259,7 @@ public final class LanguageCoordinateImmutable implements LanguageCoordinate, Im
 
     @Override
     public Optional<String> getDescriptionText(int componentNid, StampFilter stampFilter) {
-        Cache<Integer, String> descriptionCache = this.descriptionCaches.computeIfAbsent(stampFilter.toStampFilterImmutable(),
+        Cache<Integer, String> descriptionCache = this.descriptionCaches.get(stampFilter.toStampFilterImmutable(),
                 stampFilterImmutable -> Caffeine.newBuilder().maximumSize(10240).build());
         return Optional.ofNullable(descriptionCache.get(componentNid, nid -> {
             Latest<SemanticEntityVersion> latestDescription
@@ -272,7 +273,7 @@ public final class LanguageCoordinateImmutable implements LanguageCoordinate, Im
 
     @Override
     public Optional<String> getRegularDescriptionText(int entityNid, StampFilter stampFilter) {
-        Cache<Integer, String> preferredCache = this.preferredCaches.computeIfAbsent(stampFilter.toStampFilterImmutable(),
+        Cache<Integer, String> preferredCache = this.preferredCaches.get(stampFilter.toStampFilterImmutable(),
                 stampFilterImmutable -> Caffeine.newBuilder().maximumSize(10240).build());
 
         return Optional.ofNullable(preferredCache.get(entityNid, nid -> {
@@ -289,20 +290,34 @@ public final class LanguageCoordinateImmutable implements LanguageCoordinate, Im
     private String extractText(StampFilter stampFilter, Latest<SemanticEntityVersion> latestDescription) {
         SemanticEntityVersion descriptionVersion = latestDescription.get();
         PatternEntity pattern = descriptionVersion.pattern();
-        PatternEntityVersion patternVersion = (PatternEntityVersion) stampFilter.stampCalculator().latest(pattern).get();
+        PatternEntityVersion patternVersion = stampFilter.stampCalculator().latest(pattern).get();
         String descriptionText = (String) descriptionVersion.fields().get(patternVersion.indexForMeaning(TinkarTerm.TEXT_FOR_DESCRIPTION));
         return descriptionText;
     }
 
-
     @Override
     public Optional<String> getFullyQualifiedNameText(int componentNid, StampFilter stampFilter) {
-       Cache<Integer, String> fqnCache = this.fqnCaches.computeIfAbsent(stampFilter.toStampFilterImmutable(),
+       Cache<Integer, String> fqnCache = this.fqnCaches.get(stampFilter.toStampFilterImmutable(),
                 stampFilterImmutable -> Caffeine.newBuilder().maximumSize(10240).build());
 
         return Optional.ofNullable(fqnCache.get(componentNid, nid -> {
             Latest<SemanticEntityVersion> latestDescription
                     = getFullyQualifiedDescription(getDescriptionsForComponent(componentNid), stampFilter);
+            if (latestDescription.isPresent()) {
+                return extractText(stampFilter, latestDescription);
+            }
+            return null;
+        }));
+    }
+
+    @Override
+    public Optional<String> getDefinitionDescriptionText(int componentNid, StampFilter stampFilter) {
+        Cache<Integer, String> definitionCache = this.definitionCaches.get(stampFilter.toStampFilterImmutable(),
+                stampFilterImmutable -> Caffeine.newBuilder().maximumSize(10240).build());
+
+        return Optional.ofNullable(definitionCache.get(componentNid, nid -> {
+            Latest<SemanticEntityVersion> latestDescription
+                    = getDefinitionDescription(getDescriptionsForComponent(componentNid), stampFilter);
             if (latestDescription.isPresent()) {
                 return extractText(stampFilter, latestDescription);
             }
@@ -337,7 +352,6 @@ public final class LanguageCoordinateImmutable implements LanguageCoordinate, Im
         }
         return patternEntities;
     }
-
 
     @Override
     public ImmutableList<SemanticEntity> getDescriptionsForComponent(int componentNid) {
@@ -380,5 +394,4 @@ public final class LanguageCoordinateImmutable implements LanguageCoordinate, Im
         }
         return descriptionList.toImmutable();
     }
-
 }

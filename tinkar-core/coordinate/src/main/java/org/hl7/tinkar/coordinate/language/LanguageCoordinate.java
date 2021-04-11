@@ -57,6 +57,7 @@ import org.hl7.tinkar.terms.TinkarTerm;
  * ImmutableCoordinate to manage the retrieval and display of language and dialect information.
  * <p>
  * Created by kec on 2/16/15.
+ * TODO move determination of descriptions to language calculator...
  */
 public interface LanguageCoordinate {
 
@@ -125,6 +126,13 @@ public interface LanguageCoordinate {
      */
     default Optional<String> getDescriptionText(int componentNid, StampFilter stampFilter) {
         return toLanguageCoordinateImmutable().getDescriptionText(componentNid, stampFilter);
+    }
+    default String getDescriptionTextOrNid(int componentNid, StampFilter stampFilter) {
+        Optional<String> text = toLanguageCoordinateImmutable().getDescriptionText(componentNid, stampFilter);
+        if (text.isPresent()) {
+            return text.get();
+        }
+        return Integer.toString(componentNid);
     }
 
     /**
@@ -261,6 +269,12 @@ public interface LanguageCoordinate {
     default Latest<SemanticEntityVersion> getDefinitionDescription(ImmutableList<SemanticEntity> descriptionList, StampFilter stampFilter) {
         return getSpecifiedDescription(stampFilter, descriptionList, new int[]{TinkarTerm.DEFINITION_DESCRIPTION_TYPE.nid()});
     }
+
+    default Optional<String> getDefinitionDescriptionText(EntityFacade entityFacade, StampFilter stampFilter) {
+        return getDefinitionDescriptionText(entityFacade.nid(), stampFilter);
+    }
+    Optional<String> getDefinitionDescriptionText(int entityNid, StampFilter stampFilter);
+
 
     /**
      * Gets the latestDescription of type {@link TinkarTerm#REGULAR_NAME_DESCRIPTION_TYPE}.  Will return empty, if

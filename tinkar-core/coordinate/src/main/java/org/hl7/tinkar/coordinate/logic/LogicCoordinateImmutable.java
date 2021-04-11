@@ -16,9 +16,16 @@ import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.terms.ConceptFacade;
 
-//This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
-@AutoService(CachingService.class)
 public final class LogicCoordinateImmutable implements LogicCoordinate, ImmutableCoordinate, CachingService {
+
+
+    @AutoService(CachingService.class)
+    public static class CacheProvider implements CachingService {
+        @Override
+        public void reset() {
+            SINGLETONS.clear();
+        }
+    }
 
     private static final ConcurrentReferenceHashMap<LogicCoordinateImmutable, LogicCoordinateImmutable> SINGLETONS =
             new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
@@ -28,24 +35,13 @@ public final class LogicCoordinateImmutable implements LogicCoordinate, Immutabl
 
     private final int classifierNid;
     private final int descriptionLogicProfileNid;
-    private final int inferredAssemblageNid;
-    private final int statedAssemblageNid;
-    private final int conceptAssemblageNid;
-    private final int digraphIdentityNid;
+    private final int inferredAxiomsPatternNid;
+    private final int statedAxiomsPatternNid;
+    private final int conceptMemberPatternNid;
+    private final int statedNavigationPatternNid;
+    private final int inferredNavigationPatternNid;
     private final int rootNid;
 
-    private LogicCoordinateImmutable() {
-        // No arg constructor for HK2 managed instance
-        // This instance just enables reset functionality...
-        this.classifierNid = Integer.MAX_VALUE;
-        this.descriptionLogicProfileNid = Integer.MAX_VALUE;
-        this.inferredAssemblageNid = Integer.MAX_VALUE;
-        this.statedAssemblageNid = Integer.MAX_VALUE;
-        this.conceptAssemblageNid = Integer.MAX_VALUE;
-        this.digraphIdentityNid = Integer.MAX_VALUE;
-        this.rootNid = Integer.MAX_VALUE;
-    }
-    
     @Override
     public void reset() {
         SINGLETONS.clear();
@@ -53,27 +49,30 @@ public final class LogicCoordinateImmutable implements LogicCoordinate, Immutabl
 
     private LogicCoordinateImmutable(int classifierNid,
                                     int descriptionLogicProfileNid,
-                                    int inferredAssemblageNid,
-                                    int statedAssemblageNid,
-                                    int conceptAssemblageNid,
-                                    int digraphIdentityNid,
+                                    int inferredAxiomsPatternNid,
+                                    int statedAxiomsPatternNid,
+                                    int conceptMemberPatternNid,
+                                    int statedNavigationPatternNid,
+                                     int inferredNavigationPatternNid,
                                      int rootNid) {
         this.classifierNid = classifierNid;
         this.descriptionLogicProfileNid = descriptionLogicProfileNid;
-        this.inferredAssemblageNid = inferredAssemblageNid;
-        this.statedAssemblageNid = statedAssemblageNid;
-        this.conceptAssemblageNid = conceptAssemblageNid;
-        this.digraphIdentityNid = digraphIdentityNid;
+        this.inferredAxiomsPatternNid = inferredAxiomsPatternNid;
+        this.statedAxiomsPatternNid = statedAxiomsPatternNid;
+        this.conceptMemberPatternNid = conceptMemberPatternNid;
+        this.statedNavigationPatternNid = statedNavigationPatternNid;
+        this.inferredNavigationPatternNid = inferredNavigationPatternNid;
         this.rootNid = rootNid;
     }
 
     private LogicCoordinateImmutable(DecoderInput in, int version) {
         this.classifierNid = in.readNid();
         this.descriptionLogicProfileNid = in.readNid();
-        this.inferredAssemblageNid = in.readNid();
-        this.statedAssemblageNid = in.readNid();
-        this.conceptAssemblageNid = in.readNid();
-        this.digraphIdentityNid = in.readNid();
+        this.inferredAxiomsPatternNid = in.readNid();
+        this.statedAxiomsPatternNid = in.readNid();
+        this.conceptMemberPatternNid = in.readNid();
+        this.statedNavigationPatternNid = in.readNid();
+        this.inferredNavigationPatternNid = in.readNid();
         this.rootNid = in.readNid();
     }
 
@@ -82,10 +81,11 @@ public final class LogicCoordinateImmutable implements LogicCoordinate, Immutabl
     public void encode(EncoderOutput out) {
         out.writeNid(this.classifierNid);
         out.writeNid(this.descriptionLogicProfileNid);
-        out.writeNid(this.inferredAssemblageNid);
-        out.writeNid(this.statedAssemblageNid);
-        out.writeNid(this.conceptAssemblageNid);
-        out.writeNid(this.digraphIdentityNid);
+        out.writeNid(this.inferredAxiomsPatternNid);
+        out.writeNid(this.statedAxiomsPatternNid);
+        out.writeNid(this.conceptMemberPatternNid);
+        out.writeNid(this.statedNavigationPatternNid);
+        out.writeNid(this.inferredNavigationPatternNid);
         out.writeNid(this.rootNid);
     }
 
@@ -95,17 +95,19 @@ public final class LogicCoordinateImmutable implements LogicCoordinate, Immutabl
         if (!(o instanceof LogicCoordinate that)) return false;
         return getClassifierNid() == that.getClassifierNid() &&
                 getDescriptionLogicProfileNid() == that.getDescriptionLogicProfileNid() &&
-                getInferredSemanticTypeNid() == that.getInferredSemanticTypeNid() &&
-                getStatedSemanticTypeNid() == that.getStatedSemanticTypeNid() &&
-                getConceptAssemblageNid() == that.getConceptAssemblageNid() &&
-                getDigraphIdentityNid() == that.getDigraphIdentityNid() &&
+                getInferredAxiomsPatternNid() == that.getInferredAxiomsPatternNid() &&
+                getStatedAxiomsPatternNid() == that.getStatedAxiomsPatternNid() &&
+                getConceptMemberPatternNid() == that.getConceptMemberPatternNid() &&
+                getStatedNavigationPatternNid() == that.getStatedNavigationPatternNid() &&
+                getInferredNavigationPatternNid() == that.getInferredNavigationPatternNid() &&
                 getRootNid() == that.getRootNid();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getClassifierNid(), getDescriptionLogicProfileNid(), getInferredSemanticTypeNid(),
-                getStatedSemanticTypeNid(), getConceptAssemblageNid(), getDigraphIdentityNid(), getRootNid());
+        return Objects.hash(getClassifierNid(), getDescriptionLogicProfileNid(), getInferredAxiomsPatternNid(),
+                getStatedAxiomsPatternNid(), getConceptMemberPatternNid(), getStatedNavigationPatternNid(),
+                getInferredNavigationPatternNid(), getRootNid());
     }
 
     public static LogicCoordinateImmutable make(int classifierNid,
@@ -113,10 +115,12 @@ public final class LogicCoordinateImmutable implements LogicCoordinate, Immutabl
                                                 int inferredAssemblageNid,
                                                 int statedAssemblageNid,
                                                 int conceptAssemblageNid,
-                                                int digraphIdentityNid,
+                                                int statedNavigationPatternNid,
+                                                int inferredNavigationPatternNid,
                                                 int rootNid)  {
         return SINGLETONS.computeIfAbsent(new LogicCoordinateImmutable(classifierNid, descriptionLogicProfileNid,
-                        inferredAssemblageNid, statedAssemblageNid, conceptAssemblageNid, digraphIdentityNid, rootNid),
+                        inferredAssemblageNid, statedAssemblageNid, conceptAssemblageNid, statedNavigationPatternNid,
+                        inferredNavigationPatternNid, rootNid),
                 logicCoordinateImmutable -> logicCoordinateImmutable);
     }
 
@@ -125,11 +129,12 @@ public final class LogicCoordinateImmutable implements LogicCoordinate, Immutabl
                                                 ConceptFacade inferredAssemblage,
                                                 ConceptFacade statedAssemblage,
                                                 ConceptFacade conceptAssemblage,
-                                                ConceptFacade digraphIdentity,
+                                                ConceptFacade statedNavigationPattern,
+                                                ConceptFacade inferredNavigationPattern,
                                                 ConceptFacade root)  {
         return SINGLETONS.computeIfAbsent(new LogicCoordinateImmutable(classifier.nid(), descriptionLogicProfile.nid(),
-                        inferredAssemblage.nid(), statedAssemblage.nid(), conceptAssemblage.nid(), digraphIdentity.nid(),
-                        root.nid()),
+                        inferredAssemblage.nid(), statedAssemblage.nid(), conceptAssemblage.nid(), statedNavigationPattern.nid(),
+                        inferredNavigationPattern.nid(), root.nid()),
                 logicCoordinateImmutable -> logicCoordinateImmutable);
     }
 
@@ -157,18 +162,18 @@ public final class LogicCoordinateImmutable implements LogicCoordinate, Immutabl
     }
 
     @Override
-    public int getInferredSemanticTypeNid() {
-        return this.inferredAssemblageNid;
+    public int getInferredAxiomsPatternNid() {
+        return this.inferredAxiomsPatternNid;
     }
 
     @Override
-    public int getStatedSemanticTypeNid() {
-        return this.statedAssemblageNid;
+    public int getStatedAxiomsPatternNid() {
+        return this.statedAxiomsPatternNid;
     }
 
     @Override
-    public int getConceptAssemblageNid() {
-        return this.conceptAssemblageNid;
+    public int getConceptMemberPatternNid() {
+        return this.conceptMemberPatternNid;
     }
 
     @Override
@@ -182,19 +187,25 @@ public final class LogicCoordinateImmutable implements LogicCoordinate, Immutabl
     }
 
     @Override
-    public int getDigraphIdentityNid() {
-        return this.digraphIdentityNid;
+    public int getStatedNavigationPatternNid() {
+        return this.statedNavigationPatternNid;
+    }
+
+    @Override
+    public int getInferredNavigationPatternNid() {
+        return this.inferredNavigationPatternNid;
     }
 
     @Override
     public String toString() {
         return "LogicCoordinateImpl{" +
-                "stated axioms:" + PrimitiveData.text(this.statedAssemblageNid) + "<" + this.statedAssemblageNid + ">,\n" +
-                "inferred axioms:" + PrimitiveData.text(this.inferredAssemblageNid) + "<" + this.inferredAssemblageNid + ">, \n" +
-                "profile:" + PrimitiveData.text(this.descriptionLogicProfileNid) + "<" + this.descriptionLogicProfileNid + ">, \n" +
-                "classifier:" + PrimitiveData.text(this.classifierNid) + "<" + this.classifierNid + ">, \n" +
-                "concepts:" + PrimitiveData.text(this.conceptAssemblageNid) + "<" + this.conceptAssemblageNid + ">, \n" +
-                "digraph identity:" + PrimitiveData.text(this.digraphIdentityNid) + "<" + this.digraphIdentityNid + ">, \n" +
+                "stated axioms: " + PrimitiveData.text(this.statedAxiomsPatternNid) + "<" + this.statedAxiomsPatternNid + ">,\n" +
+                "inferred axioms: " + PrimitiveData.text(this.inferredAxiomsPatternNid) + "<" + this.inferredAxiomsPatternNid + ">, \n" +
+                "profile: " + PrimitiveData.text(this.descriptionLogicProfileNid) + "<" + this.descriptionLogicProfileNid + ">, \n" +
+                "classifier: " + PrimitiveData.text(this.classifierNid) + "<" + this.classifierNid + ">, \n" +
+                "concept members: " + PrimitiveData.text(this.conceptMemberPatternNid) + "<" + this.conceptMemberPatternNid + ">, \n" +
+                "stated navigation: " + PrimitiveData.text(this.statedNavigationPatternNid) + "<" + this.statedNavigationPatternNid + ">, \n" +
+                "inferred navigation: " + PrimitiveData.text(this.inferredNavigationPatternNid) + "<" + this.inferredNavigationPatternNid + ">, \n" +
                 "root:" + PrimitiveData.text(this.rootNid) + "<" + this.rootNid + ">,\n" +
         "}";
     }

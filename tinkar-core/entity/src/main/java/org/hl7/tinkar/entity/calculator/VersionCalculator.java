@@ -1,10 +1,7 @@
 package org.hl7.tinkar.entity.calculator;
 
-import org.hl7.tinkar.component.PatternVersion;
-import org.hl7.tinkar.entity.Entity;
-import org.hl7.tinkar.entity.EntityVersion;
-import org.hl7.tinkar.entity.SemanticEntityVersion;
-import org.hl7.tinkar.entity.StampEntity;
+import org.hl7.tinkar.common.util.functional.TriConsumer;
+import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.terms.EntityFacade;
 import org.hl7.tinkar.terms.PatternFacade;
 
@@ -24,20 +21,19 @@ public interface VersionCalculator {
         return relativePosition(stamp1.nid(), stamp2.nid());
     }
 
-
     default <V extends EntityVersion> Latest<V> latest(EntityFacade entityFacade) {
         return latest(entityFacade.nid());
     }
+
     <V extends EntityVersion> Latest<V> latest(int nid);
 
     default void forEachSemanticVersionOfPattern(PatternFacade patternFacade,
-                                                 BiConsumer<SemanticEntityVersion, PatternVersion> procedure) {
+                                                 BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
         forEachSemanticVersionOfPattern(patternFacade.nid(), procedure);
 
     }
 
-    void forEachSemanticVersionOfPattern(int patternNid, BiConsumer<SemanticEntityVersion, PatternVersion> procedure);
-
+    void forEachSemanticVersionOfPattern(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure);
 
     default void forEachSemanticVersionForComponent(EntityFacade component,
                                                     BiConsumer<SemanticEntityVersion, EntityVersion> procedure) {
@@ -49,10 +45,10 @@ public interface VersionCalculator {
 
     default void forEachSemanticVersionForComponentOfPattern(EntityFacade component,
                                                              PatternFacade patternFacade,
-                                                             TriConsumer<SemanticEntityVersion, EntityVersion, PatternVersion> procedure) {
+                                                             TriConsumer<SemanticEntityVersion, EntityVersion, PatternEntityVersion> procedure) {
         forEachSemanticVersionForComponentOfPattern(component.nid(), patternFacade.nid(), procedure);
     }
 
-    void forEachSemanticVersionForComponentOfPattern(int componentNid, int patternNid, TriConsumer<SemanticEntityVersion, EntityVersion, PatternVersion> procedure);
+    void forEachSemanticVersionForComponentOfPattern(int componentNid, int patternNid, TriConsumer<SemanticEntityVersion, EntityVersion, PatternEntityVersion> procedure);
 
 }

@@ -1,4 +1,4 @@
-package org.hl7.tinkar.coordinate.navigation;
+package org.hl7.tinkar.coordinate.view;
 
 
 import java.util.UUID;
@@ -30,8 +30,8 @@ public interface VertexSort extends Encodable {
      * Sort the vertex concept nids with respect to settings from the
      * digraphCoordinate where appropriate.
      * @param vertexConceptNids
-     * @param manifold
+     * @param view
      * @return sorted vertexConceptNids
      */
-    int[] sortVertexes(int[] vertexConceptNids, ManifoldCoordinateImmutable manifold);
+    int[] sortVertexes(int[] vertexConceptNids, View view);
 }

@@ -39,23 +39,23 @@ public interface LogicCoordinateProxy extends LogicCoordinate {
    }
 
    @Override
-   default int getInferredSemanticTypeNid() {
-      return getLogicCoordinate().getInferredSemanticTypeNid();
+   default int getInferredAxiomsPatternNid() {
+      return getLogicCoordinate().getInferredAxiomsPatternNid();
    }
 
    @Override
-   default int getStatedSemanticTypeNid() {
-      return getLogicCoordinate().getStatedSemanticTypeNid();
+   default int getStatedAxiomsPatternNid() {
+      return getLogicCoordinate().getStatedAxiomsPatternNid();
    }
 
    @Override
-   default int getConceptAssemblageNid() {
-      return getLogicCoordinate().getConceptAssemblageNid();
+   default int getConceptMemberPatternNid() {
+      return getLogicCoordinate().getConceptMemberPatternNid();
    }
 
    @Override
-   default int getDigraphIdentityNid() {
-      return getLogicCoordinate().getDigraphIdentityNid();
+   default int getStatedNavigationPatternNid() {
+      return getLogicCoordinate().getStatedNavigationPatternNid();
    }
 
    @Override

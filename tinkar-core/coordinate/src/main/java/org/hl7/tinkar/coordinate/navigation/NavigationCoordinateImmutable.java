@@ -12,14 +12,24 @@ import org.hl7.tinkar.common.binary.DecoderInput;
 import org.hl7.tinkar.common.binary.Encoder;
 import org.hl7.tinkar.common.binary.EncoderOutput;
 import org.hl7.tinkar.common.service.CachingService;
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.coordinate.Coordinates;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 import org.hl7.tinkar.coordinate.logic.LogicCoordinate;
 import org.hl7.tinkar.coordinate.logic.PremiseType;
+import org.hl7.tinkar.terms.TinkarTerm;
 
 //This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
-@AutoService(CachingService.class)
 public final class NavigationCoordinateImmutable implements NavigationCoordinate, ImmutableCoordinate, CachingService {
+
+
+    @AutoService(CachingService.class)
+    public static class CacheProvider implements CachingService {
+        @Override
+        public void reset() {
+            SINGLETONS.clear();
+        }
+    }
 
     private static final ConcurrentReferenceHashMap<NavigationCoordinateImmutable, NavigationCoordinateImmutable> SINGLETONS =
             new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
@@ -28,12 +38,6 @@ public final class NavigationCoordinateImmutable implements NavigationCoordinate
     private static final int marshalVersion = 5;
 
     private final ImmutableIntSet navigationConceptNids;
-
-    private NavigationCoordinateImmutable() {
-        // No arg constructor for HK2 managed instance
-        // This instance just enables reset functionality...
-        this.navigationConceptNids = null;
-     }
 
     @Override
     public void reset() {
@@ -47,34 +51,33 @@ public final class NavigationCoordinateImmutable implements NavigationCoordinate
     private NavigationCoordinateImmutable(ImmutableIntSet navigationConceptNids) {
         this.navigationConceptNids = navigationConceptNids;
     }
+
     public static NavigationCoordinateImmutable make(ImmutableIntSet digraphConceptNids) {
         return SINGLETONS.computeIfAbsent(new NavigationCoordinateImmutable(digraphConceptNids),
                 digraphCoordinateImmutable -> digraphCoordinateImmutable);
     }
 
     public static NavigationCoordinateImmutable makeInferred() {
-        throw new UnsupportedOperationException();
-//        return SINGLETONS.computeIfAbsent(new NavigationCoordinateImmutable(
-//                        IntSets.immutable.of(TinkarTerm.EL_PLUS_PLUS_INFERRED_ASSEMBLAGE.nid())),
-//                digraphCoordinateImmutable -> digraphCoordinateImmutable);
+        return SINGLETONS.computeIfAbsent(new NavigationCoordinateImmutable(
+                        IntSets.immutable.of(TinkarTerm.INFERRED_NAVIGATION_PATTERN.nid())),
+                digraphCoordinateImmutable -> digraphCoordinateImmutable);
     }
 
     public static NavigationCoordinateImmutable makeStated() {
-        throw new UnsupportedOperationException();
-//        return SINGLETONS.computeIfAbsent(new NavigationCoordinateImmutable(
-//                        IntSets.immutable.of(TinkarTerm.EL_PLUS_PLUS_STATED_ASSEMBLAGE.nid())),
-//                digraphCoordinateImmutable -> digraphCoordinateImmutable);
+        return SINGLETONS.computeIfAbsent(new NavigationCoordinateImmutable(
+                        IntSets.immutable.of(TinkarTerm.STATED_NAVIGATION_PATTERN.nid())),
+                digraphCoordinateImmutable -> digraphCoordinateImmutable);
     }
 
     public static NavigationCoordinateImmutable makeInferred(LogicCoordinate logicCoordinate) {
         return SINGLETONS.computeIfAbsent(new NavigationCoordinateImmutable(
-                        IntSets.immutable.of(logicCoordinate.getInferredSemanticTypeNid())),
+                        IntSets.immutable.of(logicCoordinate.getInferredAxiomsPatternNid())),
                 digraphCoordinateImmutable -> digraphCoordinateImmutable);
     }
 
     public static NavigationCoordinateImmutable makeStated(LogicCoordinate logicCoordinate) {
         return SINGLETONS.computeIfAbsent(new NavigationCoordinateImmutable(
-                        IntSets.immutable.of(logicCoordinate.getStatedSemanticTypeNid())),
+                        IntSets.immutable.of(logicCoordinate.getStatedAxiomsPatternNid())),
                 digraphCoordinateImmutable -> digraphCoordinateImmutable);
     }
 
@@ -132,10 +135,15 @@ public final class NavigationCoordinateImmutable implements NavigationCoordinate
 
     @Override
     public String toString() {
+        StringBuilder sb = new StringBuilder("[");
+        for (int nid: navigationConceptNids.toArray()) {
+            sb.append(PrimitiveData.text(nid));
+            sb.append(", ");
+        }
+        sb.delete(sb.length()-2, sb.length()-1);
+        sb.append("]");
         return "NavigationCoordinateImmutable{" +
-                "navigationConcepts=" + navigationConceptNids +
+                "navigationConcepts=" + sb.toString() +
                 '}';
     }
-
-
 }

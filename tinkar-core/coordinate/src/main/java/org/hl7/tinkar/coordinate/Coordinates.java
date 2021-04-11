@@ -1,33 +1,29 @@
 package org.hl7.tinkar.coordinate;
 
-import java.util.List;
-import java.util.logging.Logger;
-
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
-import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.coordinate.edit.Activity;
 import org.hl7.tinkar.coordinate.edit.EditCoordinateImmutable;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinate;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinateImmutable;
 import org.hl7.tinkar.coordinate.logic.LogicCoordinateImmutable;
 import org.hl7.tinkar.coordinate.manifold.ManifoldCoordinateImmutable;
+import org.hl7.tinkar.coordinate.navigation.NavigationCoordinate;
+import org.hl7.tinkar.coordinate.navigation.NavigationCoordinateImmutable;
 import org.hl7.tinkar.coordinate.stamp.*;
+import org.hl7.tinkar.coordinate.view.ViewProvider;
 import org.hl7.tinkar.terms.TinkarTerm;
-//Even though this class is static, needs to be a service, so that the reset() gets fired at appropriate times.
-@AutoService(CachingService.class)
-public class Coordinates implements CachingService  {
+
+import java.util.List;
+import java.util.logging.Logger;
+
+public class Coordinates   {
 
     private static final Logger LOG = CoordinateUtil.LOG;
     
     //private static ChronologyChangeListener ccl;
 
-    private static final Cache<Integer, int[]> LANG_EXPAND_CACHE = Caffeine.newBuilder().maximumSize(100).build();
-    
     public static class  Edit {
         public static EditCoordinateImmutable Default() {
             return EditCoordinateImmutable.make(
@@ -38,29 +34,24 @@ public class Coordinates implements CachingService  {
         }
     }
 
-    @Override
-    public void reset() {
-
-    }
-
     public static class Logic {
         public static LogicCoordinateImmutable ElPlusPlus() {
-            throw new UnsupportedOperationException();
-//            return LogicCoordinateImmutable.make(TinkarTerm.SNOROCKET_CLASSIFIER,
-//                    TinkarTerm.EL_PLUS_PLUS_LOGIC_PROFILE,
-//                    TinkarTerm.EL_PLUS_PLUS_INFERRED_ASSEMBLAGE,
-//                    TinkarTerm.EL_PLUS_PLUS_STATED_ASSEMBLAGE,
-//                    TinkarTerm.SOLOR_CONCEPT_ASSEMBLAGE,
-//                    TinkarTerm.EL_PLUS_PLUS_DIGRAPH,
-//                    TinkarTerm.SOLOR_ROOT);
+            return LogicCoordinateImmutable.make(TinkarTerm.SNOROCKET_CLASSIFIER,
+                    TinkarTerm.EL_PLUS_PLUS_PROFILE,
+                    TinkarTerm.EL_PLUS_PLUS_INFERRED_FORM_ASSEMBLAGE,
+                    TinkarTerm.EL_PLUS_PLUS_STATED_FORM_ASSEMBLAGE,
+                    TinkarTerm.SOLOR_CONCEPT_ASSEMBLAGE,
+                    TinkarTerm.STATED_NAVIGATION,
+                    TinkarTerm.INFERRED_NAVIGATION,
+                    TinkarTerm.NAVIGATION_VERTEX);
         }
     }
 
     public static class Language {
         /**
          * A coordinate that completely ignores language - descriptions ranked by this coordinate will only be ranked by
-         * description type and module preference.  This coordinate is primarily useful as a fallback coordinate for the final
-         * {@link LanguageCoordinate#getNextPriorityLanguageCoordinate()} in a chain
+         * description type and module preference.  This coordinate is primarily useful as a fallback coordinate if no
+         *
          *
          * See {@link LanguageCoordinateService#getSpecifiedDescription(StampFilter, List, LanguageCoordinate)}
          * @param regularNameOnly if true,  only return regularname.  If false, prefer regular name, but will
@@ -172,25 +163,25 @@ public class Coordinates implements CachingService  {
         }
 
         public static LanguageCoordinateImmutable SpanishFullyQualifiedName() {
-            throw new UnsupportedOperationException();
-//            return LanguageCoordinateImmutable.make(
-//                    TinkarTerm.SPANISH_LANGUAGE.nid(),
-//                    IntLists.immutable.of(expandDescriptionTypePreferenceList(null, TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
-//                            TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid())),
-//                    IntLists.immutable.of(TinkarTerm.SPANISH_LATIN_AMERICA_DIALECT_ASSEMBLAGE.nid()),
-//                    IntLists.immutable.of(TinkarTerm.SCT_CORE_MODULE.nid(), TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid()),
-//            );
+            return LanguageCoordinateImmutable.make(
+                    TinkarTerm.SPANISH_LANGUAGE.nid(),
+                    IntLists.immutable.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
+                    IntLists.immutable.of(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
+                            TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
+                    IntLists.immutable.empty(),
+                    IntLists.immutable.of(TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid())
+            );
         }
 
         public static LanguageCoordinateImmutable SpanishPreferredName() {
-            throw new UnsupportedOperationException();
-//            return LanguageCoordinateImmutable.make(
-//                    TinkarTerm.SPANISH_LANGUAGE.nid(),
-//                    IntLists.immutable.of(expandDescriptionTypePreferenceList(null, TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
-//                            TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid())),
-//                    IntLists.immutable.of(TinkarTerm.SPANISH_LATIN_AMERICA_DIALECT_ASSEMBLAGE.nid()),
-//                    IntLists.immutable.of(TinkarTerm.SCT_CORE_MODULE.nid(), TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid()),
-//            );
+            return LanguageCoordinateImmutable.make(
+                    TinkarTerm.SPANISH_LANGUAGE.nid(),
+                    IntLists.immutable.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
+                    IntLists.immutable.of(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
+                            TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
+                    IntLists.immutable.empty(),
+                    IntLists.immutable.of(TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid())
+            );
         }
     }
 
@@ -237,17 +228,19 @@ public class Coordinates implements CachingService  {
         }
 
         public static StampPathImmutable Development() {
-            return StampPathImmutable.make(TinkarTerm.DEVELOPMENT_PATH, Sets.immutable.of(StampPositionImmutable.make(Long.MAX_VALUE, TinkarTerm.PRIMORDIAL_PATH.nid())));
+            return StampPathImmutable.make(TinkarTerm.DEVELOPMENT_PATH, Sets.immutable.of(StampPositionImmutable.make(Long.MAX_VALUE, TinkarTerm.SANDBOX_PATH.nid())));
         }
     }
 
     public static class Manifold {
+        @Deprecated
         public static final ManifoldCoordinateImmutable DevelopmentInferredRegularNameSort() {
             return ManifoldCoordinateImmutable.makeInferred(
                     Path.Development().getStampFilter(),
                     Language.UsEnglishRegularName(),
                     Logic.ElPlusPlus(), Activity.DEVELOPING, Edit.Default());
         }
+        @Deprecated
         public static final ManifoldCoordinateImmutable DevelopmentStatedRegularNameSort() {
             return ManifoldCoordinateImmutable.makeStated(
                     Path.Development().getStampFilter(),
@@ -255,10 +248,24 @@ public class Coordinates implements CachingService  {
                     Logic.ElPlusPlus(), Activity.DEVELOPING, Edit.Default());
         }
     }
-    
-//
-//    @Override
-//    public void reset() {
-//       LANG_EXPAND_CACHE.invalidateAll();
-//    }
+
+    public static class Navigation {
+        public static final NavigationCoordinate inferred() {
+            return NavigationCoordinateImmutable.makeInferred();
+        }
+
+        public static final NavigationCoordinate stated() {
+            return NavigationCoordinateImmutable.makeStated();
+        }
+    }
+
+    public static class View {
+        public static final org.hl7.tinkar.coordinate.view.View DefaultView() {
+            return ViewProvider.make(StampCalculator.getCalculator(Filter.DevelopmentLatest()),
+                    Language.UsEnglishRegularName(),
+                    Logic.ElPlusPlus(),
+                    Navigation.inferred());
+        }
+    }
+
 }

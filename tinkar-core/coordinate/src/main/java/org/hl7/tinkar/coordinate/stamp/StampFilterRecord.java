@@ -203,7 +203,7 @@ public record StampFilterRecord(StateSet allowedStates, StampPositionImmutable s
     }
 
     @Override
-    public StampFilterRecord withPath(org.hl7.tinkar.terms.ConceptFacade pathForPosition) {
+    public StampFilterRecord withPath(ConceptFacade pathForPosition) {
         return make(this.allowedStates,
                 StampPositionImmutable.make(this.stampPosition.time(), pathForPosition.nid()),
                 this.moduleNids, this.excludedModuleNids, this.modulePriorityOrder);

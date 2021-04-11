@@ -1,4 +1,4 @@
-package org.hl7.tinkar.coordinate.navigation;
+package org.hl7.tinkar.coordinate.view;
 
 
 import org.hl7.tinkar.common.binary.*;
@@ -36,7 +36,7 @@ public class VertexSortNone implements VertexSort, Encodable {
     }
 
     @Override
-    public int[] sortVertexes(int[] vertexConceptNids, ManifoldCoordinateImmutable manifold) {
+    public int[] sortVertexes(int[] vertexConceptNids, View view) {
         return vertexConceptNids;
     }
 

@@ -157,7 +157,13 @@ public final class Latest<V> {
         }
         return this;
     }
-
+    public void ifPresentOrElse(Consumer<? super V> action, Runnable emptyAction) {
+        if (value != null) {
+            action.accept(value);
+        } else {
+            emptyAction.run();
+        }
+    }
     /**
      * Return true if there is a value present, otherwise false.
      * @return true if there is a value present, otherwise false.

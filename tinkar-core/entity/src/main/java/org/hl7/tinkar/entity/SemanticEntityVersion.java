@@ -53,6 +53,10 @@ public class SemanticEntityVersion
         return Entity.getFast(getSemanticEntity().patternNid);
     }
 
+    public int patternNid() {
+        return getSemanticEntity().patternNid;
+    }
+
     @Override
     protected void finishVersionFill(ByteBuf readBuf, byte formatVersion) {
         fields.clear();
@@ -229,13 +233,13 @@ public class SemanticEntityVersion
             writeBuf.write(diTreeEntity.getBytes());
         } else if (field instanceof PlanarPoint point) {
             writeBuf.writeByte(FieldDataType.PLANAR_POINT.token);
-            writeBuf.writeInt(point.x);
-            writeBuf.writeInt(point.y);
+            writeBuf.writeInt(point.x());
+            writeBuf.writeInt(point.y());
         } else if (field instanceof SpatialPoint point) {
             writeBuf.writeByte(FieldDataType.SPATIAL_POINT.token);
-            writeBuf.writeInt(point.x);
-            writeBuf.writeInt(point.y);
-            writeBuf.writeInt(point.z);
+            writeBuf.writeInt(point.x());
+            writeBuf.writeInt(point.y());
+            writeBuf.writeInt(point.z());
         } else if (field instanceof IntIdList ids) {
             writeBuf.writeByte(FieldDataType.COMPONENT_ID_LIST.token);
             writeBuf.writeInt(ids.size());
@@ -271,6 +275,16 @@ public class SemanticEntityVersion
         return fields.toImmutable();
     }
 
+    public ImmutableList<Field> fields(PatternEntityVersion patternVersion) {
+        Field[] fieldArray = new Field[fields.size()];
+        for (int i = 0; i < fieldArray.length; i++) {
+            Object value = fields.get(i);
+            FieldDefinitionForEntity fieldDef = patternVersion.fieldDefinitions().get(i);
+            fieldArray[i] = new FieldRecord(value, fieldDef.purposeNid, fieldDef.meaningNid);
+        }
+        return Lists.immutable.of(fieldArray);
+    }
+
     public static SemanticEntityVersion make(SemanticEntity semanticEntity, ByteBuf readBuf, byte formatVersion) {
         SemanticEntityVersion version = new SemanticEntityVersion();
         version.fill(semanticEntity, readBuf, formatVersion);
@@ -293,6 +307,10 @@ public class SemanticEntityVersion
             } else if (obj instanceof String) {
                 version.fields.add(obj);
             } else if (obj instanceof Instant) {
+                version.fields.add(obj);
+            } else if (obj instanceof PlanarPoint) {
+                version.fields.add(obj);
+            } else if (obj instanceof SpatialPoint) {
                 version.fields.add(obj);
             } else if (obj instanceof Component component) {
                 version.fields.add(EntityProxy.make(Get.entityService().nidForComponent(component)));

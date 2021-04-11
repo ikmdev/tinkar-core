@@ -1,6 +1,8 @@
 package org.hl7.tinkar.integration.coordinate;
 
 import org.eclipse.collections.api.set.ImmutableSet;
+import org.hl7.tinkar.common.id.IntIdList;
+import org.hl7.tinkar.common.id.IntIdSet;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.service.ServiceKeys;
 import org.hl7.tinkar.common.service.ServiceProperties;
@@ -10,6 +12,7 @@ import org.hl7.tinkar.coordinate.stamp.PathProvider;
 import org.hl7.tinkar.coordinate.stamp.StampCalculator;
 import org.hl7.tinkar.coordinate.stamp.StampFilterRecord;
 import org.hl7.tinkar.coordinate.stamp.StampPositionImmutable;
+import org.hl7.tinkar.coordinate.view.View;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.entity.calculator.Latest;
 import org.hl7.tinkar.entity.internal.Get;
@@ -19,6 +22,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
+import java.util.Optional;
 import java.util.logging.Logger;
 
 import static org.hl7.tinkar.terms.TinkarTerm.PATH_ORIGINS_PATTERN;
@@ -74,9 +78,63 @@ class CoordinatesTest {
     }
 
     @Test
-    void fqn() {
+    void names() {
         LanguageCoordinateImmutable usFqn = Coordinates.Language.UsEnglishFullyQualifiedName();
         LOG.info("fqn: " + usFqn.getDescriptionText(TinkarTerm.NECESSARY_SET, Coordinates.Filter.DevelopmentLatest()) + "\n");
         LOG.info("reg: " + usFqn.getRegularDescriptionText(TinkarTerm.NECESSARY_SET, Coordinates.Filter.DevelopmentLatest()) + "\n");
+        LOG.info("def: " + usFqn.getDefinitionDescriptionText(TinkarTerm.NECESSARY_SET, Coordinates.Filter.DevelopmentLatest()) + "\n");
     }
+
+    @Test
+    void navigate() {
+        View view = Coordinates.View.DefaultView();
+        IntIdSet children = view.children(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
+        StringBuilder sb = new StringBuilder("Focus: [");
+        Optional<String> optionalName = view.language().getRegularDescriptionText(TinkarTerm.DESCRIPTION_ACCEPTABILITY, Coordinates.Filter.DevelopmentLatest());
+        optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(TinkarTerm.DESCRIPTION_ACCEPTABILITY.nid()));
+        sb.append("]\nchildren: [");
+        for (int childNid: children.toArray()) {
+            optionalName = view.language().getRegularDescriptionText(childNid, Coordinates.Filter.DevelopmentLatest());
+            optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(childNid));
+            sb.append(", ");
+        }
+        sb.delete(sb.length() - 2, sb.length());
+        sb.append("]\nparents: [");
+        IntIdSet parents = view.parents(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
+        for (int parentNid: parents.toArray()) {
+            optionalName = view.language().getRegularDescriptionText(parentNid, Coordinates.Filter.DevelopmentLatest());
+            optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(parentNid));
+            sb.append(", ");
+        }
+        sb.delete(sb.length() - 2, sb.length());
+        sb.append("]\n");
+        LOG.info(sb.toString());
+    }
+
+    @Test
+    void sortedNavigate() {
+        View view = Coordinates.View.DefaultView();
+        IntIdList children = view.sortedChildren(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
+        StringBuilder sb = new StringBuilder("Focus: [");
+        Optional<String> optionalName = view.language().getRegularDescriptionText(TinkarTerm.DESCRIPTION_ACCEPTABILITY, Coordinates.Filter.DevelopmentLatest());
+        optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(TinkarTerm.DESCRIPTION_ACCEPTABILITY.nid()));
+        sb.append("]\nsorted children: [");
+        for (int childNid: children.toArray()) {
+            optionalName = view.language().getRegularDescriptionText(childNid, Coordinates.Filter.DevelopmentLatest());
+            optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(childNid));
+            sb.append(", ");
+        }
+        sb.delete(sb.length() - 2, sb.length());
+        sb.append("]\nsorted parents: [");
+        IntIdList parents = view.sortedParents(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
+        for (int parentNid: parents.toArray()) {
+            optionalName = view.language().getRegularDescriptionText(parentNid, Coordinates.Filter.DevelopmentLatest());
+            optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(parentNid));
+            sb.append(", ");
+        }
+        sb.delete(sb.length() - 2, sb.length());
+        sb.append("]\n");
+        LOG.info(sb.toString());
+    }
+
 }

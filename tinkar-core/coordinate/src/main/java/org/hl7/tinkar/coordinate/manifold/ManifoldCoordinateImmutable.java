@@ -23,14 +23,15 @@ import org.hl7.tinkar.coordinate.logic.PremiseSet;
 import org.hl7.tinkar.coordinate.logic.PremiseType;
 import org.hl7.tinkar.coordinate.navigation.NavigationCoordinate;
 import org.hl7.tinkar.coordinate.navigation.NavigationCoordinateImmutable;
-import org.hl7.tinkar.coordinate.navigation.VertexSort;
-import org.hl7.tinkar.coordinate.navigation.VertexSortNone;
+import org.hl7.tinkar.coordinate.view.VertexSort;
+import org.hl7.tinkar.coordinate.view.VertexSortNone;
 import org.hl7.tinkar.coordinate.stamp.StampFilter;
 import org.hl7.tinkar.coordinate.stamp.StampFilterRecord;
 import org.hl7.tinkar.coordinate.stamp.StateSet;
 
 //This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
 @AutoService(CachingService.class)
+@Deprecated
 public abstract class ManifoldCoordinateImmutable implements ManifoldCoordinate, ImmutableCoordinate, /*CommitListener, */ CachingService {
 
     private static final ConcurrentReferenceHashMap<ManifoldCoordinateImmutable, ManifoldCoordinateImmutable> SINGLETONS =
@@ -286,10 +287,10 @@ public abstract class ManifoldCoordinateImmutable implements ManifoldCoordinate,
     public PremiseSet getPremiseTypes() {
         if (this.premiseTypes == null) {
             EnumSet<PremiseType> premiseTypeEnumSet = EnumSet.noneOf(PremiseType.class);
-            if (getNavigationCoordinate().getNavigationConceptNids().contains(getLogicCoordinate().getInferredSemanticTypeNid())) {
+            if (getNavigationCoordinate().getNavigationConceptNids().contains(getLogicCoordinate().getInferredAxiomsPatternNid())) {
                 premiseTypeEnumSet.add(PremiseType.INFERRED);
             }
-            if (getNavigationCoordinate().getNavigationConceptNids().contains(getLogicCoordinate().getStatedSemanticTypeNid())) {
+            if (getNavigationCoordinate().getNavigationConceptNids().contains(getLogicCoordinate().getStatedAxiomsPatternNid())) {
                 premiseTypeEnumSet.add(PremiseType.STATED);
             }
             this.premiseTypes = PremiseSet.of(premiseTypeEnumSet);
