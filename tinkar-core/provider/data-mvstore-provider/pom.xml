@@ -30,7 +30,7 @@
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>mvstore</artifactId>
-            <version>${project.parent.version}</version>
+            <version>${tinkar-jpms-deps.version}</version>
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>

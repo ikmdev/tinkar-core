@@ -28,13 +28,13 @@
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>record-builder-core</artifactId>
             <scope>provided</scope>
-            <version>${project.parent.version}</version>
+            <version>${tinkar-jpms-deps.version}</version>
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>auto-service</artifactId>
             <scope>provided</scope>
-            <version>${project.parent.version}</version>
+            <version>${tinkar-jpms-deps.version}</version>
         </dependency>
     </dependencies>
 </project>
