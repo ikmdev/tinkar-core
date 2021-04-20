@@ -16,6 +16,8 @@
  */
 package org.hl7.tinkar.collection;
 
+import org.hl7.tinkar.common.service.Executor;
+
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Spliterator;
@@ -48,15 +50,13 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
     private final boolean[] changedSpineIndexes = new boolean[DEFAULT_SPINE_SIZE];
     private Function<E, String> elementStringConverter;
 
-    ExecutorService exec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
-
     public SpinedIntObjectMap(int spineCount) {
         this.spineSize = DEFAULT_SPINE_SIZE;
         this.spineCount.set(spineCount);
     }
 
     public void close() {
-        exec.shutdown();
+        // nothing to do...
     }
 
     public void setElementStringConverter(Function<E, String> elementStringConverter) {
@@ -268,7 +268,7 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
         ArrayList<Future<?>> futures = new ArrayList<>(currentSpineCount);
         for (int spineIndex = 0; spineIndex < currentSpineCount; spineIndex++) {
             final int indexToProcess = spineIndex;
-            Future<?> future = exec.submit(() -> forEachOnSpine(consumer, indexToProcess));
+            Future<?> future = Executor.threadPool().submit(() -> forEachOnSpine(consumer, indexToProcess));
             futures.add(future);
         }
         for (Future<?> future: futures) {

@@ -4,7 +4,7 @@ import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.service.ServiceKeys;
 import org.hl7.tinkar.common.service.ServiceProperties;
 import org.hl7.tinkar.common.util.time.Stopwatch;
-import org.hl7.tinkar.entity.LoadEntitiesFromDTO;
+import org.hl7.tinkar.entity.load.LoadEntitiesFromDtoFile;
 import org.hl7.tinkar.entity.util.EntityCounter;
 import org.hl7.tinkar.entity.util.EntityProcessor;
 import org.hl7.tinkar.entity.util.EntityRealizer;
@@ -26,7 +26,7 @@ public class SpinedArrayProviderTest {
         LOG.info("setupSuite: " + this.getClass().getSimpleName());
         LOG.info(ServiceProperties.jvmUuid());
         ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, TestConstants.SAP_ROOT);
-        PrimitiveData.selectControllerByName(TestConstants.SAP_STORE_NAME);
+        PrimitiveData.selectControllerByName(TestConstants.SA_STORE_OPEN_NAME);
         PrimitiveData.start();
     }
 
@@ -40,8 +40,8 @@ public class SpinedArrayProviderTest {
     @Test
     public void loadChronologies() throws IOException {
         File file = TestConstants.TINK_TEST_FILE;
-        LoadEntitiesFromDTO loadTink = new LoadEntitiesFromDTO(file);
-        int count = loadTink.call();
+        LoadEntitiesFromDtoFile loadTink = new LoadEntitiesFromDtoFile(file);
+        int count = loadTink.compute();
         LOG.info("Loaded. " + loadTink.report());
     }
 
@@ -51,7 +51,7 @@ public class SpinedArrayProviderTest {
             LOG.info("Reloading SAPtoreProvider");
             Stopwatch reloadStopwatch = new Stopwatch();
             PrimitiveData.start();
-            LOG.info("Reloading in: " + reloadStopwatch.elapsedTime()+ "\n\n");
+            LOG.info("Reloading in: " + reloadStopwatch.durationString()+ "\n\n");
         }
         EntityProcessor processor = new EntityCounter();
         PrimitiveData.get().forEach(processor);
@@ -79,12 +79,12 @@ public class SpinedArrayProviderTest {
             Stopwatch closingStopwatch = new Stopwatch();
             PrimitiveData.stop();
             closingStopwatch.end();
-            LOG.info("SAP Closed in: " + closingStopwatch.elapsedTime()+ "\n\n");
+            LOG.info("SAP Closed in: " + closingStopwatch.durationString()+ "\n\n");
         }
         LOG.info("Reloading SAPtoreProvider");
         Stopwatch reloadStopwatch = new Stopwatch();
         PrimitiveData.start();
-        LOG.info("SAP Reloading in: " + reloadStopwatch.elapsedTime()+ "\n\n");
+        LOG.info("SAP Reloading in: " + reloadStopwatch.durationString()+ "\n\n");
         EntityProcessor processor = new EntityCounter();
         PrimitiveData.get().forEach(processor);
         LOG.info("SAP Sequential count: \n" + processor.report() + "\n\n");

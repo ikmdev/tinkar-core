@@ -4,7 +4,9 @@
  * and open the template in the editor.
  */
 
+import org.hl7.tinkar.common.service.DataServiceController;
 import org.hl7.tinkar.entity.EntityService;
+import org.hl7.tinkar.provider.websocket.client.WebsocketServiceController;
 
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
 module org.hl7.tinkar.provider.websocket.client {
@@ -20,6 +22,10 @@ module org.hl7.tinkar.provider.websocket.client {
     requires org.hl7.tinkar.test;
     requires java.net.http;
     requires org.hl7.tinkar.entity;
+
+    provides DataServiceController
+            with WebsocketServiceController;
+
     uses EntityService;
     opens org.hl7.tinkar.provider.websocket.client
             to io.activej.inject;

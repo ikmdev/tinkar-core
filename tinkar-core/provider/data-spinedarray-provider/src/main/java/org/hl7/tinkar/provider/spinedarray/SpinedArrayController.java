@@ -1,25 +1,8 @@
 package org.hl7.tinkar.provider.spinedarray;
 
-import com.google.auto.service.AutoService;
-import org.hl7.tinkar.common.service.DataServiceController;
-import org.hl7.tinkar.common.service.PrimitiveDataService;
+import org.hl7.tinkar.common.service.*;
 
-@AutoService(DataServiceController.class)
-public class SpinedArrayController implements DataServiceController<PrimitiveDataService> {
-    public static String PROVIDER_NAME = "SpinedArrayStore";
-
-    @Override
-    public Object property(ControllerProperty key) {
-        switch (key) {
-            case NAME -> {
-                return PROVIDER_NAME;
-            }
-            case DATA_LOADED -> {
-                return true;
-            }
-        }
-        throw new IllegalStateException("No such key: " + key);
-    }
+public abstract class SpinedArrayController implements DataServiceController<PrimitiveDataService> {
 
     @Override
     public boolean running() {
@@ -42,7 +25,6 @@ public class SpinedArrayController implements DataServiceController<PrimitiveDat
             SpinedArrayProvider.singleton.close();
             SpinedArrayProvider.singleton = null;
         }
-
     }
 
     @Override
@@ -61,5 +43,10 @@ public class SpinedArrayController implements DataServiceController<PrimitiveDat
             start();
         }
         return SpinedArrayProvider.singleton;
+    }
+
+    @Override
+    public String toString() {
+        return controllerName();
     }
 }

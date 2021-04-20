@@ -23,14 +23,18 @@ public class Stopwatch {
         this.endTime = Instant.now();
     }
 
-    public String elapsedTime () {
+    public Duration duration() {
         Instant endForDuration = endTime;
         if (endForDuration == null) {
             endForDuration = Instant.now();
         }
-        return DurationUtil.format(Duration.between(startTime, endForDuration));
+        return Duration.between(startTime, endForDuration);
     }
-    public String averageElapsedTimeForElement (int count) {
+
+    public String durationString () {
+        return DurationUtil.format(duration());
+    }
+    public Duration averageDurationForElement (int count) {
         Instant endForDuration = endTime;
         if (endForDuration == null) {
             endForDuration = Instant.now();
@@ -38,6 +42,10 @@ public class Stopwatch {
         Duration entireDuration = Duration.between(this.startTime, endForDuration);
         Duration average = entireDuration.dividedBy(count);
 
-        return DurationUtil.format(average);
+        return average;
+    }
+
+    public String averageDurationForElementString (int count) {
+        return DurationUtil.format(averageDurationForElement (count));
     }
 }

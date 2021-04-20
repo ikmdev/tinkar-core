@@ -6,6 +6,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.hl7.tinkar.collection.KeyType;
 import org.hl7.tinkar.collection.SpinedIntIntMapAtomic;
+import org.hl7.tinkar.common.service.Executor;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
 
 import java.util.ArrayList;
@@ -27,7 +28,6 @@ public class ProviderEphemeral implements PrimitiveDataService {
         if (singleton == null) {
             singleton = providerReference.updateAndGet(providerEphemeral -> {
                 if (providerEphemeral == null) {
-                    executorService = Executors.newFixedThreadPool(EXECUTOR_THREADS);
                     return new ProviderEphemeral();
                 }
                 return providerEphemeral;
@@ -35,10 +35,6 @@ public class ProviderEphemeral implements PrimitiveDataService {
         }
         return singleton;
     }
-
-    private static final int EXECUTOR_THREADS = Runtime.getRuntime().availableProcessors() * 2;
-
-    private static ExecutorService executorService = Executors.newFixedThreadPool(EXECUTOR_THREADS);
 
     private final ConcurrentHashMap<Integer, byte[]> nidComponentMap = ConcurrentHashMap.newMap();
     private final ConcurrentHashMap<UUID, Integer> uuidNidMap = new ConcurrentHashMap<>();
@@ -93,10 +89,6 @@ public class ProviderEphemeral implements PrimitiveDataService {
     public void close() {
         this.providerReference.set(null);
         this.singleton = null;
-        if (executorService != null) {
-            executorService.shutdown();
-            executorService = null;
-        }
     }
 
     @Override
@@ -111,11 +103,12 @@ public class ProviderEphemeral implements PrimitiveDataService {
 
     @Override
     public void forEachParallel(ObjIntConsumer<byte[]> action) {
-        List<Procedure2<Integer, byte[]>> blocks = new ArrayList<>(EXECUTOR_THREADS);
-        for (int i = 0; i < EXECUTOR_THREADS; i++) {
+        int threadCount = Executor.threadPool().getMaximumPoolSize();
+        List<Procedure2<Integer, byte[]>> blocks = new ArrayList<>(threadCount);
+        for (int i = 0; i < threadCount; i++) {
             blocks.add((Procedure2<Integer, byte[]>) (integer, bytes) -> action.accept(bytes, integer));
         }
-        nidComponentMap.parallelForEachKeyValue(blocks, executorService);
+        nidComponentMap.parallelForEachKeyValue(blocks, Executor.threadPool());
     }
 
     @Override

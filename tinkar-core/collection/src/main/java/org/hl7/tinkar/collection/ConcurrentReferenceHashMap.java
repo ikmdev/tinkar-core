@@ -238,7 +238,7 @@ public class ConcurrentReferenceHashMap<K, V>
      */
 
     /**
-     * An option specifying which Java reference type should be used to refer to a key and/or value.
+     * An uri specifying which Java reference type should be used to refer to a key and/or value.
      */
     public static enum ReferenceType {
         /** Indicates a normal Java strong reference should be used. */

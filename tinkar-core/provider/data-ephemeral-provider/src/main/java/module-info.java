@@ -5,8 +5,8 @@
  */
 
 import org.hl7.tinkar.common.service.DataServiceController;
-import org.hl7.tinkar.common.service.PublicIdService;
-import org.hl7.tinkar.provider.ephemeral.ProviderEphemeralController;
+import org.hl7.tinkar.common.service.LoadDataFromFileController;
+import org.hl7.tinkar.provider.ephemeral.ProviderEphemeralNewController;
 
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
 module org.hl7.tinkar.provider.ephemeral {
@@ -16,6 +16,8 @@ module org.hl7.tinkar.provider.ephemeral {
     requires org.hl7.tinkar.common;
     requires org.hl7.tinkar.test;
     provides DataServiceController
-            with ProviderEphemeralController;
+            with ProviderEphemeralNewController;
+
+    uses LoadDataFromFileController;
 
 }

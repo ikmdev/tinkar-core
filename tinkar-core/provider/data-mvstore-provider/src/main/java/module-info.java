@@ -6,9 +6,9 @@
 
 
 import org.hl7.tinkar.common.service.DataServiceController;
-import org.hl7.tinkar.provider.mvstore.MVStoreController;
-import org.hl7.tinkar.provider.mvstore.MVStoreProvider;
-import org.hl7.tinkar.common.service.PrimitiveDataService;
+import org.hl7.tinkar.common.service.LoadDataFromFileController;
+import org.hl7.tinkar.provider.mvstore.MvStoreOpenController;
+import org.hl7.tinkar.provider.mvstore.MvStoreNewController;
 
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
 module org.hl7.tinkar.provider.mvstore {
@@ -20,6 +20,8 @@ module org.hl7.tinkar.provider.mvstore {
     requires org.hl7.tinkar.dto;
     requires org.hl7.tinkar.mvstore;
 
+    uses LoadDataFromFileController;
+
     provides DataServiceController
-            with MVStoreController;
+            with MvStoreOpenController, MvStoreNewController;
 }

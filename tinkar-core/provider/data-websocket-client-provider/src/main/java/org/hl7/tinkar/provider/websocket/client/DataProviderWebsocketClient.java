@@ -17,6 +17,8 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
 import org.hl7.tinkar.common.util.uuid.UuidUtil;
 import org.hl7.tinkar.provider.websocket.client.internal.Get;
+
+import java.net.URI;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,6 +41,12 @@ public class DataProviderWebsocketClient
 
     private static final Integer wsKey = Integer.valueOf(1);
 
+    private final URI uri;
+
+    public DataProviderWebsocketClient(URI uri) {
+        this.uri = uri;
+    }
+
     @Provides
     Eventloop eventloop() {
         return Eventloop.create();
@@ -53,7 +61,7 @@ public class DataProviderWebsocketClient
         return wsMap.computeIfAbsent(wsKey, (Integer key) ->
                 {
                     try {
-                        return httpClient.webSocketRequest(HttpRequest.get("ws://127.0.0.1:8080/")).toCompletableFuture().get();
+                        return httpClient.webSocketRequest(HttpRequest.get(uri.toString())).toCompletableFuture().get();
                     } catch (Exception e) {
                         e.printStackTrace();
                         throw new RuntimeException(e);
@@ -210,7 +218,7 @@ public class DataProviderWebsocketClient
     }
 
     public static void main(String[] args) throws Exception {
-        DataProviderWebsocketClient client = new DataProviderWebsocketClient();
+        DataProviderWebsocketClient client = new DataProviderWebsocketClient(new URI("ws://127.0.0.1:8080/"));
         client.launch(args);
     }
 }

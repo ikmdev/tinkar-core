@@ -1,8 +1,9 @@
 package org.hl7.tinkar.integration.provider.ephemeral;
 
+import org.hl7.tinkar.common.service.DataUriOption;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.service.ServiceProperties;
-import org.hl7.tinkar.entity.LoadEntitiesFromDTO;
+import org.hl7.tinkar.entity.load.LoadEntitiesFromDtoFile;
 import org.hl7.tinkar.entity.util.EntityCounter;
 import org.hl7.tinkar.entity.util.EntityProcessor;
 import org.hl7.tinkar.entity.util.EntityRealizer;
@@ -24,6 +25,8 @@ public class EphemeralProviderTest {
         LOG.info("setupSuite: " + this.getClass().getSimpleName());
         LOG.info(ServiceProperties.jvmUuid());
         PrimitiveData.selectControllerByName(TestConstants.EPHEMERAL_STORE_NAME);
+        PrimitiveData.getController().setDataUriOption(
+                new DataUriOption(TestConstants.TINK_TEST_FILE.getName(), TestConstants.TINK_TEST_FILE.toURI()));
         PrimitiveData.start();
     }
 
@@ -36,8 +39,8 @@ public class EphemeralProviderTest {
     @Test
     public void loadChronologies() throws IOException {
         File file = TestConstants.TINK_TEST_FILE;
-        LoadEntitiesFromDTO loadTink = new LoadEntitiesFromDTO(file);
-        int count = loadTink.call();
+        LoadEntitiesFromDtoFile loadTink = new LoadEntitiesFromDtoFile(file);
+        int count = loadTink.compute();
         LOG.info("Loaded. " + loadTink.report() + "\n\n");
     }
 

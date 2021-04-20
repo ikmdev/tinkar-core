@@ -5,7 +5,9 @@
  */
 
 import org.hl7.tinkar.common.service.CachingService;
+import org.hl7.tinkar.common.service.LoadDataFromFileController;
 import org.hl7.tinkar.entity.EntityService;
+import org.hl7.tinkar.entity.load.LoadEntitiesFromFileController;
 
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
 module org.hl7.tinkar.entity {
@@ -21,6 +23,10 @@ module org.hl7.tinkar.entity {
     exports org.hl7.tinkar.entity.calculator;
     exports org.hl7.tinkar.entity.graph;
     exports org.hl7.tinkar.entity.util;
+    exports org.hl7.tinkar.entity.load;
+
+    provides LoadDataFromFileController
+            with LoadEntitiesFromFileController;
 
     uses CachingService;
     uses EntityService;

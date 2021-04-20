@@ -1,7 +1,6 @@
 package org.hl7.tinkar.provider.websocket.server;
 
-import org.hl7.tinkar.entity.LoadEntitiesFromDTO;
-import org.hl7.tinkar.provider.websocket.server.DataProviderWebsocketServer;
+import org.hl7.tinkar.entity.load.LoadEntitiesFromDtoFile;
 
 import java.io.File;
 
@@ -9,7 +8,7 @@ public class StartServer {
     public static void main(String[] args) {
         try {
             File file = new File("/Users/kec/Solor/tinkar-export.zip");
-            LoadEntitiesFromDTO loadTink = new LoadEntitiesFromDTO(file);
+            LoadEntitiesFromDtoFile loadTink = new LoadEntitiesFromDtoFile(file);
             int count = loadTink.call();
             System.out.println("Loaded. " + loadTink.report());
             DataProviderWebsocketServer server = new DataProviderWebsocketServer();

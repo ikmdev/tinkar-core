@@ -35,7 +35,7 @@ class CoordinatesTest {
         LOG.info("setupSuite: " + this.getClass().getSimpleName());
         LOG.info(ServiceProperties.jvmUuid());
         ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, TestConstants.MVSTORE_ROOT);
-        PrimitiveData.selectControllerByName(TestConstants.MV_STORE_NAME);
+        PrimitiveData.selectControllerByName(TestConstants.MV_STORE_OPEN_NAME);
         PrimitiveData.start();
     }
 

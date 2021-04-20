@@ -48,7 +48,7 @@ import java.util.Comparator;
  *
  * @author kec
  */
-public class NaturalOrder implements Comparator<String> {
+public class NaturalOrder implements Comparator<Object> {
 
    /**
     * From stack overflow...
@@ -117,8 +117,8 @@ public class NaturalOrder implements Comparator<String> {
       return (Character.toLowerCase(c1) - Character.toLowerCase(c2));
    }
    @Override
-   public int compare(String o1, String o2) {
-      return compareStrings(o1, o2);
+   public int compare(Object o1, Object o2) {
+      return compareStrings(o1.toString(), o2.toString());
    }
 }
 

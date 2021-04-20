@@ -25,10 +25,6 @@ public class PrimitiveData implements CachingService {
         singleton = new PrimitiveData();
     }
 
-    public static Object property(DataServiceController.ControllerProperty key) {
-        return controllerSingleton.property(key);
-    }
-
     public static void start() {
         controllerSingleton.start();
     }
@@ -59,7 +55,7 @@ public class PrimitiveData implements CachingService {
         throw new IllegalStateException("No provider. Call Select provider prior to get()");
     }
 
-    public static void selectController(ToIntFunction<DataServiceController> scorer) {
+    public static void selectController(ToIntFunction<DataServiceController<?>> scorer) {
         DataServiceController<PrimitiveDataService> topContender = null;
         int topScore = -1;
         int controllerCount = 0;
@@ -82,18 +78,22 @@ public class PrimitiveData implements CachingService {
     }
 
     public static List<DataServiceController> getControllerOptions() {
-        return ServiceLoader.load(DataServiceController.class)
-                .stream().map(dataServiceControllerProvider ->  dataServiceControllerProvider.get()).toList();
+        final List<DataServiceController> dataServiceControllers = ServiceLoader.load(DataServiceController.class)
+                .stream().map(dataServiceControllerProvider -> dataServiceControllerProvider.get()).toList();
+        return dataServiceControllers;
     }
 
     public static void selectControllerByName(String name) {
         PrimitiveData.selectController((dataServiceController) -> {
-            String controllerName = (String) dataServiceController.property(DataServiceController.ControllerProperty.NAME);
-            if (name.equals(controllerName)) {
+            if (name.equals(dataServiceController.controllerName())) {
                 return 1;
             }
             return -1;
         });
+    }
+
+    public static DataServiceController getController() {
+        return controllerSingleton;
     }
 
     public static void setController(DataServiceController controller) {

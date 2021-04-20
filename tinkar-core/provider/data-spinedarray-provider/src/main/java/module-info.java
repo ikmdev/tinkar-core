@@ -6,13 +6,13 @@
 
 
 import org.hl7.tinkar.common.service.DataServiceController;
-import org.hl7.tinkar.common.service.PrimitiveDataService;
+import org.hl7.tinkar.common.service.LoadDataFromFileController;
 import org.hl7.tinkar.entity.EntityService;
-import org.hl7.tinkar.provider.spinedarray.SpinedArrayController;
-import org.hl7.tinkar.provider.spinedarray.SpinedArrayProvider;
+import org.hl7.tinkar.provider.spinedarray.SpinedArrayNewController;
+import org.hl7.tinkar.provider.spinedarray.SpinedArrayOpenController;
 
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
-module org.hl7.tinkar.provider.openhft {
+module org.hl7.tinkar.provider.spinedarray {
     requires org.hl7.tinkar.common;
     requires org.hl7.tinkar.component;
     requires org.hl7.tinkar.entity;
@@ -20,7 +20,8 @@ module org.hl7.tinkar.provider.openhft {
     requires static org.hl7.tinkar.autoservice;
 
     provides DataServiceController
-            with SpinedArrayController;
-    uses EntityService;
+            with SpinedArrayOpenController, SpinedArrayNewController;
+
+    uses LoadDataFromFileController;
 
 }

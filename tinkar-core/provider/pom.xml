@@ -16,5 +16,6 @@
         <module>data-websocket-client-provider</module>
         <module>data-websocket-server-provider</module>
         <module>entity-provider</module>
+        <module>executor-provider</module>
     </modules>
 </project>

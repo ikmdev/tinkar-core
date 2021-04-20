@@ -53,8 +53,8 @@ public abstract class EntityProcessor implements ObjIntConsumer<byte[]> {
     public String report() {
         this.stopwatch.end();
         StringBuilder sb = new StringBuilder();
-        sb.append("Duration: ").append(stopwatch.elapsedTime());
-        sb.append("\nAverage realization time: ").append(stopwatch.averageElapsedTimeForElement(totalCount.get()));
+        sb.append("Duration: ").append(stopwatch.durationString());
+        sb.append("\nAverage realization time: ").append(stopwatch.averageDurationForElementString(totalCount.get()));
         if (conceptCount.get() > 0) {
             sb.append("\nConcepts: ").append(conceptCount);
         }
