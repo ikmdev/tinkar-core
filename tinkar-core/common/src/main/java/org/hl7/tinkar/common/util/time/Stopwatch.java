@@ -5,10 +5,19 @@ import java.time.Instant;
 
 public class Stopwatch {
     private Instant startTime;
+    private Instant lastUpdate;
     private Instant endTime;
+    private Duration updateInterval = Duration.ofMillis(100);
 
     public Stopwatch() {
         this.startTime = Instant.now();
+        this.lastUpdate = startTime;
+    }
+
+    public Stopwatch(Duration updateInterval) {
+        this.startTime = Instant.now();
+        this.lastUpdate = startTime;
+        this.updateInterval = updateInterval;
     }
 
     public void end() {
@@ -31,9 +40,20 @@ public class Stopwatch {
         return Duration.between(startTime, endForDuration);
     }
 
+    public boolean updateIntervalElapsed() {
+        Instant now = Instant.now();
+        if (this.updateInterval.compareTo(Duration.between(this.lastUpdate, now))  < 0) {
+            this.lastUpdate = now;
+            return true;
+        }
+        return false;
+    }
+
     public String durationString () {
         return DurationUtil.format(duration());
     }
+
+
     public Duration averageDurationForElement (int count) {
         Instant endForDuration = endTime;
         if (endForDuration == null) {

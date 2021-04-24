@@ -11,9 +11,36 @@ public abstract class TrackingCallable<V> implements Callable<V> {
     TrackingListener listener;
     double workDone;
     double maxWork;
+    double updateThreshold = 0.005;
+
     String title;
     String message;
     V value;
+    boolean allowUserCancel = true;
+    boolean isCanceled = false;
+
+    public TrackingCallable() {
+    }
+
+    public TrackingCallable(boolean allowUserCancel) {
+        this.allowUserCancel = allowUserCancel;
+    }
+
+    public boolean isCanceled() {
+        return this.isCanceled;
+    }
+
+    public void cancel() {
+        this.isCanceled = true;
+    }
+
+    public boolean allowUserCancel() {
+        return allowUserCancel;
+    }
+
+    public boolean updateIntervalElapsed() {
+        return stopwatch.updateIntervalElapsed();
+    }
 
     @Override
     public final V call() throws Exception {
@@ -47,11 +74,21 @@ public abstract class TrackingCallable<V> implements Callable<V> {
     }
 
     public Duration estimateTimeRemaining() {
-        return duration().multipliedBy((long) (maxWork/workDone));
+        if (maxWork == 0) {
+            return Duration.ofDays(365);
+        }
+        double percentDone = workDone / maxWork;
+        if (percentDone < 0.00001) {
+            return Duration.ofDays(365);
+        }
+        //(TimeTaken / linesProcessed) * linesLeft = timeLeft
+        double secondsDuration = duration().getSeconds();
+        double secondsRemaining = secondsDuration/workDone * (maxWork - workDone);
+        return Duration.ofSeconds((long) secondsRemaining);
     }
 
     public String estimateTimeRemainingString() {
-        return DurationUtil.format(estimateTimeRemaining());
+        return "About " + DurationUtil.format(estimateTimeRemaining())  + " remaining.";
     }
 
     public Duration duration() {
@@ -77,10 +114,14 @@ public abstract class TrackingCallable<V> implements Callable<V> {
     }
 
     protected void updateMessage(String message) {
-        this.message = message;
-        if (listener != null) {
+        if (message != null && this.message == null) {
+            if (listener != null) {
+                listener.updateMessage(message);
+            }
+        } else if (listener != null && !this.message.equals(message)) {
             listener.updateMessage(message);
         }
+        this.message = message;
     }
 
     protected void updateTitle(String title) {
@@ -95,9 +136,22 @@ public abstract class TrackingCallable<V> implements Callable<V> {
     }
 
     protected void updateProgress(double workDone, double maxWork) {
-        this.workDone = workDone;
-        this.maxWork = maxWork;
-        if (listener != null) {
+        boolean update = false;
+
+        if (this.maxWork != maxWork) {
+            this.maxWork = maxWork;
+            this.workDone = workDone;
+            update = true;
+        } else {
+            double difference = workDone - this.workDone;
+            double percentDifference = difference/maxWork;
+            if (percentDifference > updateThreshold) {
+                update = true;
+                this.workDone = workDone;
+            }
+        }
+
+        if (listener != null && update) {
             listener.updateProgress(workDone, maxWork);
         }
     }

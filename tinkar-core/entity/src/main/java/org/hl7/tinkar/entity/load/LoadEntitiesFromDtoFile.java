@@ -44,11 +44,14 @@ public class LoadEntitiesFromDtoFile extends TrackingCallable<Integer> {
             TinkarInput tinkIn = new TinkarInput(countingInputStream);
             LOG.info(":LoadEntitiesFromDTO: begin processing");
 
-            while (true) {
-                updateProgress(countingInputStream.getBytesRead(), totalSize);
-                FieldDataType fieldDataType = FieldDataType.fromToken(tinkIn.readByte());
 
-                updateMessage("Count: " + importCount + " Time remaining: " + estimateTimeRemainingString());
+            while (!isCanceled()) {
+                if (updateIntervalElapsed()) {
+                    updateProgress(countingInputStream.getBytesRead(), totalSize);
+                    updateMessage(String.format("Count: %,d; " + estimateTimeRemainingString(), importCount.get()));
+                }
+
+                FieldDataType fieldDataType = FieldDataType.fromToken(tinkIn.readByte());
 
                 switch (fieldDataType) {
                     case CONCEPT_CHRONOLOGY: {
