@@ -18,6 +18,7 @@ public abstract class TrackingCallable<V> implements Callable<V> {
     V value;
     boolean allowUserCancel = true;
     boolean isCanceled = false;
+    boolean retainWhenComplete = false;
 
     public TrackingCallable() {
     }
@@ -40,6 +41,14 @@ public abstract class TrackingCallable<V> implements Callable<V> {
 
     public boolean updateIntervalElapsed() {
         return stopwatch.updateIntervalElapsed();
+    }
+
+    public boolean retainWhenComplete() {
+        return retainWhenComplete;
+    }
+
+    public void setRetainWhenComplete(boolean retainWhenComplete) {
+        this.retainWhenComplete = retainWhenComplete;
     }
 
     @Override
@@ -71,6 +80,14 @@ public abstract class TrackingCallable<V> implements Callable<V> {
         } else {
             throw new IllegalStateException("Listener already set");
         }
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getMessage() {
+        return message;
     }
 
     public Duration estimateTimeRemaining() {

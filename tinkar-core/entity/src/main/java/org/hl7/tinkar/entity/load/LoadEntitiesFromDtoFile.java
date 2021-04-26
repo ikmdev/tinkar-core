@@ -32,14 +32,16 @@ public class LoadEntitiesFromDtoFile extends TrackingCallable<Integer> {
     public LoadEntitiesFromDtoFile(File importFile) {
         this.importFile = importFile;
         LOG.info("Loading entities from: " + importFile.getAbsolutePath());
+        this.setRetainWhenComplete(true);
     }
 
     public Integer compute() throws IOException {
         updateTitle("Loading " + importFile.getName());
-
+        double sizeForAll = 0;
         try (ZipFile zipFile = new ZipFile(importFile, Charset.forName("UTF-8"))) {
             ZipEntry tinkZipEntry = zipFile.getEntry("export.tink");
             double totalSize = tinkZipEntry.getSize();
+            sizeForAll += totalSize;
             CountingInputStream countingInputStream = new CountingInputStream(zipFile.getInputStream(tinkZipEntry));
             TinkarInput tinkIn = new TinkarInput(countingInputStream);
             LOG.info(":LoadEntitiesFromDTO: begin processing");
@@ -48,7 +50,8 @@ public class LoadEntitiesFromDtoFile extends TrackingCallable<Integer> {
             while (!isCanceled()) {
                 if (updateIntervalElapsed()) {
                     updateProgress(countingInputStream.getBytesRead(), totalSize);
-                    updateMessage(String.format("Count: %,d; " + estimateTimeRemainingString(), importCount.get()));
+                    updateMessage(String.format("Count: %,d   " + estimateTimeRemainingString(), importCount.get()));
+                    updateTitle("Loading " + importFile.getName());
                 }
 
                 FieldDataType fieldDataType = FieldDataType.fromToken(tinkIn.readByte());
@@ -83,6 +86,10 @@ public class LoadEntitiesFromDtoFile extends TrackingCallable<Integer> {
             // continue, will autoclose.
         }
         LOG.info(report());
+        updateProgress(sizeForAll, sizeForAll);
+        updateMessage(String.format("Imported %,d items in " + durationString(), importCount.get()));
+        updateTitle("Loaded from " + importFile.getName());
+
         return importCount.get();
     }
 
