@@ -24,7 +24,7 @@
         <maven.compiler.source>16</maven.compiler.source>
         <maven.compiler.target>16</maven.compiler.target>
         <record-builder-core.version>1.19</record-builder-core.version>
-        <roaringbitmap.version>0.9.8</roaringbitmap.version>
+        <roaringbitmap.version>0.9.10</roaringbitmap.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <dependencyManagement>

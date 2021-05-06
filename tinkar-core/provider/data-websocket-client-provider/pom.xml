@@ -23,15 +23,9 @@
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
-            <artifactId>common</artifactId>
+            <artifactId>component</artifactId>
             <version>${project.parent.version}</version>
        </dependency>
-        <dependency>
-            <groupId>org.hl7.tinkar</groupId>
-            <artifactId>test-util</artifactId>
-            <version>${project.parent.version}</version>
-            <optional>true</optional>
-        </dependency>
         <dependency>
             <groupId>io.activej</groupId>
             <artifactId>activej-launchers-http</artifactId>

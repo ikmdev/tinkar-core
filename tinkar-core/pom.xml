@@ -139,7 +139,6 @@
         <module>entity</module>
         <module>dto</module>
         <module>terms</module>
-        <module>test-util</module>
         <module>provider</module>
         <module>integration</module>
     </modules>
