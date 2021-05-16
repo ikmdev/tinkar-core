@@ -1,48 +1,21 @@
 package org.hl7.tinkar.common.id;
 
-import org.hl7.tinkar.common.id.IntIdList;
-import org.hl7.tinkar.common.id.impl.*;
+import java.util.Collection;
+import java.util.function.ToIntFunction;
 
-/**
- *
- */
-public enum IntIdListFactory {
-    INSTANCE;
+public interface IntIdListFactory {
+    IntIdList empty();
 
-    public IntIdList empty()
-    {
-        return IntId0List.INSTANCE;
+    IntIdList of();
+
+    IntIdList of(int one);
+
+    IntIdList of(int one, int two);
+
+    IntIdList of(int... elements);
+
+    default <T> IntIdList of(Collection<T> components, ToIntFunction<T> function) {
+        return of(components.stream().mapToInt(component -> function.applyAsInt(component)).toArray());
     }
 
-    public IntIdList of()
-    {
-        return this.empty();
-    }
-
-    public IntIdList of(int one)
-    {
-        return new IntId1List(one);
-    }
-
-    public IntIdList of(int one, int two)
-    {
-        return new IntId2List(one, two);
-    }
-
-    public IntIdList of(int... elements)
-    {
-        if (elements == null || elements.length == 0)
-        {
-            return this.empty();
-        }
-        if (elements.length == 1)
-        {
-            return new IntId1List(elements[0]);
-        }
-        if (elements.length == 2)
-        {
-            return new IntId2List(elements[0], elements[1]);
-        }
-        return new IntIdListArray(elements);
-    }
 }

@@ -70,4 +70,9 @@ public class IntIdSetArray
 
         return Arrays.binarySearch(elements, value) >= 0;
     }
+
+    @Override
+    public boolean isEmpty() {
+        return elements.length == 0;
+    }
 }

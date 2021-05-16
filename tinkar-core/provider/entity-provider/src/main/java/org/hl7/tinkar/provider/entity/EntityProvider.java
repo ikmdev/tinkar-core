@@ -60,7 +60,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
     @Override
     public String textFast(int nid) {
-        // TODO use a default langauge coordinate instead of this hardcode routine.
+        // TODO use a default language coordinate instead of this hardcode routine.
         return STRING_CACHE.get(nid, integer -> {
             int[] semanticNids = PrimitiveData.get().semanticNidsForComponentOfPattern(nid, DESCRIPTION_PATTERN.nid());
             String anyString = null;

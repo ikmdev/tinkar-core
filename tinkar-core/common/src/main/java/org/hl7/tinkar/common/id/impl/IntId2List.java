@@ -17,4 +17,9 @@ public class IntId2List extends IntId2 implements IntIdList {
         }
         throw new IndexOutOfBoundsException("Index: " + index);
     }
+
+    @Override
+    public boolean isEmpty() {
+        return false;
+    }
 }

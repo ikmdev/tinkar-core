@@ -9,4 +9,9 @@ public class IntId2Set extends IntId2 implements IntIdSet {
             throw new IllegalStateException("Duplicate values in set: " + element);
         }
     }
+
+    @Override
+    public boolean isEmpty() {
+        return false;
+    }
 }

@@ -5,9 +5,8 @@ import java.util.UUID;
 
 import org.hl7.tinkar.common.binary.Encodable;
 import org.hl7.tinkar.component.Concept;
-import org.hl7.tinkar.coordinate.manifold.ManifoldCoordinateImmutable;
-import org.hl7.tinkar.coordinate.language.LanguageCoordinate;
-import org.hl7.tinkar.coordinate.stamp.StampFilter;
+import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculator;
+import org.hl7.tinkar.coordinate.navigation.calculator.NavigationCalculator;
 import org.hl7.tinkar.entity.Entity;
 
 public interface VertexSort extends Encodable {
@@ -20,18 +19,18 @@ public interface VertexSort extends Encodable {
 
     String getVertexSortName();
 
-    String getVertexLabel(int vertexConceptNid, LanguageCoordinate languageCoordinate, StampFilter stampFilter);
+    String getVertexLabel(int vertexConceptNid, LanguageCalculator languageCalculator);
 
-    default String getVertexLabel(Concept vertexConcept, LanguageCoordinate languageCoordinate, StampFilter stampFilter) {
-        return getVertexLabel(Entity.provider().nidForComponent(vertexConcept), languageCoordinate, stampFilter);
+    default String getVertexLabel(Concept vertexConcept, LanguageCalculator languageCalculator) {
+        return getVertexLabel(Entity.provider().nidForComponent(vertexConcept), languageCalculator);
     }
 
     /**
      * Sort the vertex concept nids with respect to settings from the
      * digraphCoordinate where appropriate.
      * @param vertexConceptNids
-     * @param view
+     * @param navigationCalculator
      * @return sorted vertexConceptNids
      */
-    int[] sortVertexes(int[] vertexConceptNids, View view);
+    int[] sortVertexes(int[] vertexConceptNids, NavigationCalculator navigationCalculator);
 }

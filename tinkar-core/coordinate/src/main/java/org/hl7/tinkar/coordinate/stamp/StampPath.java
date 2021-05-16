@@ -92,7 +92,7 @@ public interface StampPath
     *
     * @return The origins of this path.
     */
-   ImmutableSet<StampPositionImmutable> getPathOrigins();
+   ImmutableSet<StampPositionRecord> getPathOrigins();
 
    StampPathImmutable toStampPathImmutable();
 

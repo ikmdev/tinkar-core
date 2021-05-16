@@ -52,8 +52,8 @@ import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.coordinate.edit.EditCoordinate;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinate;
 import org.hl7.tinkar.coordinate.logic.LogicCoordinate;
-import org.hl7.tinkar.coordinate.manifold.ManifoldCoordinate;
 import org.hl7.tinkar.coordinate.stamp.StampFilter;
+import org.hl7.tinkar.coordinate.view.ViewCoordinate;
 import org.hl7.tinkar.terms.State;
 
 //~--- interfaces -------------------------------------------------------------
@@ -78,14 +78,14 @@ public interface CoordinateFactory
     *
     * @return the taxonomy coordinate
     */
-   ManifoldCoordinate createDefaultInferredManifoldCoordinate();
+   ViewCoordinate createDefaultInferredView();
 
    /**
     * Creates a new ImmutableCoordinate object.
     *
     * @return the taxonomy coordinate
     */
-   ManifoldCoordinate createDefaultStatedManifoldCoordinate();
+   ViewCoordinate createDefaultStatedView();
 
    /**
     * Creates a new ImmutableCoordinate object.
@@ -125,9 +125,9 @@ public interface CoordinateFactory
     * @param logicCoordinate the logic coordinate
     * @return the taxonomy coordinate
     */
-   ManifoldCoordinate createInferredManifoldCoordinate(StampFilter stampFilter,
-                                                                                 LanguageCoordinate languageCoordinate,
-                                                                                 LogicCoordinate logicCoordinate);
+   ViewCoordinate createInferredView(StampFilter stampFilter,
+                                     LanguageCoordinate languageCoordinate,
+                                     LogicCoordinate logicCoordinate);
 
    /**
     * Creates a new ImmutableCoordinate object.
@@ -222,8 +222,8 @@ public interface CoordinateFactory
     * @param logicCoordinate the logic coordinate
     * @return the taxonomy coordinate
     */
-   ManifoldCoordinate createStatedManifoldCoordinate(StampFilter stampFilter,
-                                                                               LanguageCoordinate languageCoordinate,
-                                                                               LogicCoordinate logicCoordinate);
+   ViewCoordinate createStatedView(StampFilter stampFilter,
+                                   LanguageCoordinate languageCoordinate,
+                                   LogicCoordinate logicCoordinate);
 }
 

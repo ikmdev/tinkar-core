@@ -12,4 +12,12 @@ public interface IntIdCollection extends IdCollection {
     int[] toArray();
 
     boolean contains(int value);
+
+    boolean isEmpty();
+
+    default boolean notEmpty() {
+        return !isEmpty();
+    }
+
+
 }

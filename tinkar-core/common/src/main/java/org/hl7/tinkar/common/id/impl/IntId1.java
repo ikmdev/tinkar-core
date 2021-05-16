@@ -36,4 +36,9 @@ public class IntId1  {
         }
         throw new IndexOutOfBoundsException();
     }
+
+    public boolean isEmpty() {
+        return false;
+    }
+
 }

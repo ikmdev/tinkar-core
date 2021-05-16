@@ -1,16 +1,23 @@
 package org.hl7.tinkar.coordinate.stamp;
 
+import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.set.ImmutableSet;
+import org.hl7.tinkar.common.id.IntIdList;
+import org.hl7.tinkar.common.id.IntIdSet;
+import org.hl7.tinkar.common.id.IntIds;
 import org.hl7.tinkar.common.service.PrimitiveData;
-import org.hl7.tinkar.coordinate.TimeBasedAnalogMaker;
+import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.terms.ConceptFacade;
 import org.hl7.tinkar.terms.State;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
-public interface StampFilter extends StampFilterTemplate, TimeBasedAnalogMaker<StampFilter>, StateBasedAnalogMaker<StampFilter> {
+public interface StampFilter
+        extends TimeBasedAnalogMaker<StampFilter> {
 
     /**
      * @return a content based uuid, such that identical stamp coordinates
@@ -24,7 +31,7 @@ public interface StampFilter extends StampFilterTemplate, TimeBasedAnalogMaker<S
         }
         Entity.provider().addSortedUuids(uuidList, stampPosition().getPathForPositionNid());
         Entity.provider().addSortedUuids(uuidList, moduleNids().toArray());
-        Entity.provider().addSortedUuids(uuidList, modulePriorityOrder().toArray());
+        Entity.provider().addSortedUuids(uuidList, modulePriorityNidList().toArray());
         StringBuilder b = new StringBuilder();
         b.append(uuidList.toString());
         b.append(stampPosition().time());
@@ -33,23 +40,41 @@ public interface StampFilter extends StampFilterTemplate, TimeBasedAnalogMaker<S
 
     int pathNidForFilter();
 
-    default org.hl7.tinkar.terms.ConceptFacade pathForFilter() {
+    StampFilter withAllowedStates(StateSet stateSet);
+    StampFilter withStampPosition(StampPositionRecord stampPosition);
+    StampFilter withModuleNids(IntIdSet moduleNids);
+    StampFilter withExcludedModuleNids(IntIdSet excludedModuleNids);
+    StampFilter withModulePriorityNidList(IntIdList modulePriorityNidList);
+
+    default ConceptFacade pathForFilter() {
         return Entity.getFast(pathNidForFilter());
     }
 
     /**
-     * Create a new Filter ImmutableCoordinate identical to the this coordinate, but with the modules modified.
+     * Create a new StampFilter identical to the this filter, but with the modules modified.
+     *
      * @param modules the new modules list.
      * @return the new path coordinate
      */
-    StampFilter withModules(Collection<ConceptFacade> modules);
+    default StampFilter withModules(Collection<ConceptFacade> modules) {
+        return withModuleNids(IntIds.set.of(modules, module -> module.nid()));
+    }
+    default StampFilter withExcludedModules(Collection<ConceptFacade> excludedModules) {
+        return withExcludedModuleNids(IntIds.set.of(excludedModules, module -> module.nid()));
+    }
+    default StampFilter withModulePriorityNidList(List<ConceptFacade> excludedModules) {
+        return withModulePriorityNidList(IntIds.list.of(excludedModules, module -> module.nid()));
+    }
 
     /**
      * Create a new Filter ImmutableCoordinate identical to the this coordinate, but with the path for position replaced.
+     *
      * @param pathForPosition the new path for position
      * @return the new path coordinate
      */
-    StampFilter withPath(ConceptFacade pathForPosition);
+    default StampFilter withPath(ConceptFacade pathForPosition) {
+        return withStampPosition(stampPosition().withPathForPositionNid(pathForPosition.nid()).toStampPositionImmutable());
+   }
 
     /**
      * Gets the stamp position.
@@ -91,10 +116,10 @@ public interface StampFilter extends StampFilterTemplate, TimeBasedAnalogMaker<S
         }
 
         builder.append("\n   module priorities: ");
-        if (this.modulePriorityOrder().isEmpty()) {
+        if (this.modulePriorityNidList().isEmpty()) {
             builder.append("none");
         } else {
-            builder.append(PrimitiveData.textList(this.modulePriorityOrder().toArray()));
+            builder.append(PrimitiveData.textList(this.modulePriorityNidList().toArray()));
         }
 
         return builder.toString();
@@ -109,7 +134,79 @@ public interface StampFilter extends StampFilterTemplate, TimeBasedAnalogMaker<S
         return stampPosition().time();
     }
 
-    StampCalculator stampCalculator();
+    /**
+     * Determine what states should be included in results based on this
+     * stamp coordinate. If current—but inactive—versions are desired,
+     * the allowed states must include {@code Status.INACTIVE}
+     *
+     * @return the set of allowed states for results based on this stamp coordinate.
+     */
+    StateSet allowedStates();
 
+    /**
+     * An empty array is a wild-card, and should match all modules. If there are
+     * one or more module nids specified, only those modules will be included
+     * in the results.
+     *
+     * @return an unmodifiable set of module nids to include in results based on this
+     * stamp coordinate.
+     */
+    IntIdSet moduleNids();
 
+    /**
+     * An empty array indicates that no modules should be excluded. If there are
+     * one or more module nids specified, only those modules will be excluded
+     * from the results.
+     *
+     * @return an unmodifiable set of module nids to exclude in results based on this
+     * stamp filter.
+     */
+    IntIdSet excludedModuleNids();
+
+    /**
+     * An empty array indicates that no modules should be excluded. If there are
+     * one or more module nids specified, only those modules will be excluded
+     * from the results.
+     *
+     * @return an unmodifiable set of modules to exclude in results based on this
+     * stamp filter.
+     */
+    default ImmutableSet<Concept> excludedModules() {
+        return excludedModuleNids().map(nid -> Entity.getFast(nid));
+    }
+
+    /**
+     * An empty list is a wild-card, and should match all modules. If there are
+     * one or more modules specified, only those modules will be included
+     * in the results.
+     *
+     * @return an unmodifiable set of modules to include in results based on this
+     * stamp coordinate.
+     */
+    default ImmutableSet<Concept> moduleSpecifications() {
+        return moduleNids().map(nid -> Entity.getFast(nid));
+
+    }
+
+    /**
+     * Gets the module preference list for versions. Used to adjudicate which component to
+     * return when more than one version is available. For example, if two modules
+     * have versions the same component, which one do you prefer to return?
+     *
+     * @return an unmodifiable module preference list for versions.
+     */
+
+    IntIdList modulePriorityNidList();
+
+    /**
+     * Gets the module preference list for versions. Used to adjudicate which component to
+     * return when more than one version is available. For example, if two modules
+     * have versions the same component, which one do you prefer to return?
+     *
+     * @return an unmodifiable module preference list for versions.
+     */
+
+    default ImmutableList<Concept> modulePriorityOrderSpecifications() {
+        return modulePriorityNidList().map(nid -> Entity.getFast(nid));
+    }
 }

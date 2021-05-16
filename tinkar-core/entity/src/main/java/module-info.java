@@ -20,7 +20,6 @@ module org.hl7.tinkar.entity {
     requires org.hl7.tinkar.terms;
 
     exports org.hl7.tinkar.entity;
-    exports org.hl7.tinkar.entity.calculator;
     exports org.hl7.tinkar.entity.graph;
     exports org.hl7.tinkar.entity.util;
     exports org.hl7.tinkar.entity.load;

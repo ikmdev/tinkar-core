@@ -34,4 +34,9 @@ public abstract class IntId0
     public boolean contains(int value) {
         return false;
     }
+
+    public boolean isEmpty() {
+        return false;
+    }
+
 }

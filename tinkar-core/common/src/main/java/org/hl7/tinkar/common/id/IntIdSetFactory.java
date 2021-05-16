@@ -1,70 +1,22 @@
 package org.hl7.tinkar.common.id;
 
-import org.hl7.tinkar.common.id.IntIdSet;
-import org.hl7.tinkar.common.id.impl.*;
+import java.util.Collection;
+import java.util.function.ToIntFunction;
 
+public interface IntIdSetFactory {
+    IntIdSet empty();
 
-public enum IntIdSetFactory {
-    INSTANCE;
+    IntIdSet of();
 
-    public IntIdSet empty()
-    {
-        return IntId0Set.INSTANCE;
-    }
+    IntIdSet of(int one);
 
-    public IntIdSet of()
-    {
-        return this.empty();
-    }
+    IntIdSet of(int one, int two);
 
-    public IntIdSet of(int one)
-    {
-        return new IntId1Set(one);
-    }
+    IntIdSet of(int... elements);
 
+    IntIdSet ofAlreadySorted(int... elements);
 
-    public IntIdSet of(int one, int two)
-    {
-        return new IntId2Set(one, two);
-    }
-
-    public IntIdSet of(int... elements)
-    {
-        if (elements == null || elements.length == 0)
-        {
-            return empty();
-        }
-        if (elements.length == 1)
-        {
-            return this.of(elements[0]);
-        }
-        if (elements.length == 2)
-        {
-            return this.of(elements[0], elements[1]);
-        }
-        if (elements.length < 1024) {
-            return IntIdSetArray.newIntIdSet(elements);
-        }
-        return IntIdSetRoaring.newIntIdSet(elements);
-    }
-
-    public IntIdSet ofAlreadySorted(int... elements)
-    {
-        if (elements == null || elements.length == 0)
-        {
-            return empty();
-        }
-        if (elements.length == 1)
-        {
-            return this.of(elements[0]);
-        }
-        if (elements.length == 2)
-        {
-            return this.of(elements[0], elements[1]);
-        }
-        if (elements.length < 1024) {
-            return IntIdSetArray.newIntIdSetAlreadySorted(elements);
-        }
-        return IntIdSetRoaring.newIntIdSetAlreadySorted(elements);
+    default <T> IntIdSet of(Collection<T> components, ToIntFunction<T> function) {
+        return of(components.stream().mapToInt(component -> function.applyAsInt(component)).toArray());
     }
 }

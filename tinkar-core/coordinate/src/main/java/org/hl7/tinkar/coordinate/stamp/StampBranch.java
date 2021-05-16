@@ -25,7 +25,6 @@ public interface StampBranch
         return Instant.ofEpochMilli(this.getBranchOriginTime());
     }
 
-
     /**
      * Compare to.
      *
@@ -55,7 +54,7 @@ public interface StampBranch
         return Entity.getFast(getPathOfBranchNid());
     }
 
-    StampBranchImmutable toStampBranchImmutable();
+    StampBranchRecord toStampBranchRecord();
 
     default String toUserString() {
         final StringBuilder sb = new StringBuilder();

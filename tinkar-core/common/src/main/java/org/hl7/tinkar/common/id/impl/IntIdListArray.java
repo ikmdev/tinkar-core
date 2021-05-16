@@ -53,4 +53,9 @@ public final class IntIdListArray
     public int get(int index) {
         return elements[index];
     }
+
+    @Override
+    public boolean isEmpty() {
+        return elements.length == 0;
+    }
 }

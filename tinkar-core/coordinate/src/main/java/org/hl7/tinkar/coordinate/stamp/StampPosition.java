@@ -104,7 +104,11 @@ public interface StampPosition
       return Entity.getFast(getPathForPositionNid());
    }
 
-   StampPositionImmutable toStampPositionImmutable();
+
+   StampPosition withTime(long time);
+   StampPosition withPathForPositionNid(int pathForPositionNid);
+
+   StampPositionRecord toStampPositionImmutable();
 
    default String toUserString() {
       final StringBuilder sb = new StringBuilder();

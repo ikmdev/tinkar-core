@@ -7,4 +7,6 @@ public class IntId1Set extends IntId1 implements IntIdSet {
     public IntId1Set(int element) {
         super(element);
     }
+
+
 }

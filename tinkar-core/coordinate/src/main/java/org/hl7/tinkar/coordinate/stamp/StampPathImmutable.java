@@ -1,22 +1,23 @@
 package org.hl7.tinkar.coordinate.stamp;
 
-import java.util.Objects;
-
 import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.MutableSet;
-import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
 import org.hl7.tinkar.common.binary.Decoder;
 import org.hl7.tinkar.common.binary.DecoderInput;
 import org.hl7.tinkar.common.binary.Encoder;
 import org.hl7.tinkar.common.binary.EncoderOutput;
+import org.hl7.tinkar.common.id.IntIds;
 import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.common.service.PrimitiveData;
-import org.hl7.tinkar.terms.ConceptFacade;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
+import org.hl7.tinkar.coordinate.stamp.calculator.PathProvider;
+import org.hl7.tinkar.terms.ConceptFacade;
 import org.hl7.tinkar.terms.TinkarTerm;
+
+import java.util.Objects;
 
 public final class StampPathImmutable implements StampPath, ImmutableCoordinate {
 
@@ -37,15 +38,15 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
 
     private final int pathConceptNid;
 
-    private final ImmutableSet<StampPositionImmutable> pathOrigins;
+    private final ImmutableSet<StampPositionRecord> pathOrigins;
 
-    private StampPathImmutable(ConceptFacade pathConcept, ImmutableSet<StampPositionImmutable> pathOrigins) {
+    private StampPathImmutable(ConceptFacade pathConcept, ImmutableSet<StampPositionRecord> pathOrigins) {
         this.pathConceptNid = pathConcept.nid();
         this.pathOrigins = pathOrigins;
     }
 
 
-    private StampPathImmutable(int pathConceptNid, ImmutableSet<StampPositionImmutable> pathOrigins) {
+    private StampPathImmutable(int pathConceptNid, ImmutableSet<StampPositionRecord> pathOrigins) {
         this.pathConceptNid = pathConceptNid;
         this.pathOrigins = pathOrigins;
     }
@@ -53,18 +54,18 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
     private StampPathImmutable(DecoderInput in) {
         this.pathConceptNid = in.readNid();
         int pathOriginsSize = in.readVarInt();
-        MutableSet<StampPositionImmutable> mutableOrigins = Sets.mutable.ofInitialCapacity(pathOriginsSize);
+        MutableSet<StampPositionRecord> mutableOrigins = Sets.mutable.ofInitialCapacity(pathOriginsSize);
         for (int i = 0; i < pathOriginsSize; i++) {
-            mutableOrigins.add(StampPositionImmutable.make(in.readLong(), in.readNid()));
+            mutableOrigins.add(StampPositionRecord.make(in.readLong(), in.readNid()));
         }
         this.pathOrigins = mutableOrigins.toImmutable();
     }
 
-    public static StampPathImmutable make(ConceptFacade pathConcept, ImmutableSet<StampPositionImmutable> pathOrigins) {
+    public static StampPathImmutable make(ConceptFacade pathConcept, ImmutableSet<StampPositionRecord> pathOrigins) {
         return make(pathConcept, pathOrigins);
     }
 
-    public static StampPathImmutable make(int pathConceptNid, ImmutableSet<StampPositionImmutable> pathOrigins) {
+    public static StampPathImmutable make(int pathConceptNid, ImmutableSet<StampPositionRecord> pathOrigins) {
         if (pathConceptNid == TinkarTerm.UNINITIALIZED_COMPONENT.nid()) {
             return new StampPathImmutable(pathConceptNid, pathOrigins);
         }
@@ -82,7 +83,7 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
         }
         return SINGLETONS.computeIfAbsent(pathConceptNid,
                 pathNid -> {
-                    ImmutableSet<StampPositionImmutable> pathOrigins = PathProvider.getPathOrigins(pathNid);
+                    ImmutableSet<StampPositionRecord> pathOrigins = PathProvider.getPathOrigins(pathNid);
                     return new StampPathImmutable(pathNid, pathOrigins);
                 });
     }
@@ -108,7 +109,7 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
     public void encode(EncoderOutput out) {
         out.writeInt(this.pathConceptNid);
         out.writeVarInt(this.pathOrigins.size());
-        for (StampPositionImmutable stampPosition: this.pathOrigins) {
+        for (StampPositionRecord stampPosition: this.pathOrigins) {
             stampPosition.encode(out);
         }
     }
@@ -123,7 +124,7 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
     }
 
     @Override
-    public ImmutableSet<StampPositionImmutable> getPathOrigins() {
+    public ImmutableSet<StampPositionRecord> getPathOrigins() {
         return this.pathOrigins;
     }
 
@@ -143,8 +144,8 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
 
     public static final StampFilterRecord getStampFilter(StampPath stampPath) {
         return StampFilterRecord.make(StateSet.ACTIVE_AND_INACTIVE,
-                StampPositionImmutable.make(Long.MAX_VALUE, stampPath.pathConceptNid()),
-                IntSets.immutable.empty());
+                StampPositionRecord.make(Long.MAX_VALUE, stampPath.pathConceptNid()),
+                IntIds.set.empty());
     }
 
     @Override

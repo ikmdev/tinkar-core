@@ -5,9 +5,8 @@ import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.hl7.tinkar.common.binary.*;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.text.NaturalOrder;
-import org.hl7.tinkar.coordinate.language.LanguageCoordinate;
-import org.hl7.tinkar.coordinate.stamp.StampCalculator;
-import org.hl7.tinkar.coordinate.stamp.StampFilter;
+import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculator;
+import org.hl7.tinkar.coordinate.navigation.calculator.NavigationCalculator;
 
 import java.util.UUID;
 
@@ -27,14 +26,14 @@ public class VertexSortNaturalOrder implements VertexSort, Encodable {
     }
 
     @Override
-    public final int[] sortVertexes(int[] vertexConceptNids, View view) {
+    public final int[] sortVertexes(int[] vertexConceptNids, NavigationCalculator navigationCalculator) {
         if (vertexConceptNids.length < 2) {
             // nothing to sort, skip creating the objects for sort.
             return vertexConceptNids;
         }
 
         return IntLists.immutable.of(vertexConceptNids).primitiveStream().mapToObj(vertexConceptNid ->
-                new VertexItem(vertexConceptNid, view.language().getDescriptionTextOrNid(vertexConceptNid, view.stampFilter())))
+                new VertexItem(vertexConceptNid, navigationCalculator.getDescriptionTextOrNid(vertexConceptNid)))
                 .sorted().mapToInt(value -> value.nid).toArray();
     }
 
@@ -77,8 +76,8 @@ public class VertexSortNaturalOrder implements VertexSort, Encodable {
     }
 
     @Override
-    public String getVertexLabel(int vertexConceptNid, LanguageCoordinate languageCoordinate, StampFilter stampFilter) {
-        return languageCoordinate.getDescriptionText(vertexConceptNid, stampFilter).orElse(PrimitiveData.text(vertexConceptNid));
+    public String getVertexLabel(int vertexConceptNid, LanguageCalculator languageCalculator) {
+        return languageCalculator.getDescriptionText(vertexConceptNid).orElse(PrimitiveData.text(vertexConceptNid));
     }
 
     @Decoder

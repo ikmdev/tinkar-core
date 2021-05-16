@@ -1,6 +1,7 @@
 package org.hl7.tinkar.entity;
 
 import org.eclipse.collections.api.list.ImmutableList;
+import org.hl7.tinkar.common.id.IntIdList;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.id.PublicIds;
 import org.hl7.tinkar.component.Chronology;
@@ -133,6 +134,9 @@ public interface EntityService extends ChronologyService {
                 uuidList.add(nidUuid);
             }
         }
+    }
+    default void addSortedUuids(List<UUID> uuidList, IntIdList idList) throws NoSuchElementException {
+        addSortedUuids(uuidList, idList.toArray());
     }
 
     void forEachEntityOfPattern(int patternNid, Consumer<SemanticEntity> procedure);
