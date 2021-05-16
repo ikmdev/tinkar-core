@@ -31,6 +31,7 @@ public class EntityProxy implements EntityFacade, PublicId {
     }
     protected EntityProxy(String description, UUID[] uuids) {
         this.uuids = uuids;
+        Arrays.sort(this.uuids);
         this.description = description;
     }
 
@@ -81,6 +82,11 @@ public class EntityProxy implements EntityFacade, PublicId {
     @Override
     public final boolean equals(Object o) {
         if (this == o) return true;
+        if (o instanceof EntityProxy other) {
+            if (this.cachedNid == 0 && other.cachedNid == 0) {
+                return Arrays.equals(this.uuids, other.uuids);
+            }
+        }
         if (o instanceof ComponentWithNid) {
             return this.nid() == ((ComponentWithNid)o).nid();
         }
@@ -101,13 +107,8 @@ public class EntityProxy implements EntityFacade, PublicId {
     @Override
     public final int nid() {
         if (cachedNid == 0) {
-            try {
-                cachedNid = PrimitiveData.get().nidForUuids(uuids);
-            } catch (NoSuchElementException e) {
-                //This is to help bootstrap the system...
-                throw new NoSuchElementException();
-            }
-        }
+            cachedNid = PrimitiveData.get().nidForUuids(uuids);
+         }
         return cachedNid;
     }
 

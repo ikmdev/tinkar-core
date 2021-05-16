@@ -42,6 +42,7 @@ package org.hl7.tinkar.coordinate.edit;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.entity.Entity;
+import org.hl7.tinkar.terms.ConceptFacade;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -78,7 +79,7 @@ public interface EditCoordinate {
     */
    int getAuthorNidForChanges();
    
-   default Concept getAuthorForChanges() {
+   default ConceptFacade getAuthorForChanges() {
        return Entity.getFast(getAuthorNidForChanges());
    }
 
@@ -94,7 +95,7 @@ public interface EditCoordinate {
     * content retain their module.
     * @return
     */
-   default Concept getDefaultModule() {
+   default ConceptFacade getDefaultModule() {
       return Entity.getFast(getDefaultModuleNid());
    }
 
@@ -108,7 +109,7 @@ public interface EditCoordinate {
     * The destination module is the module that existing content is moved to when Modularizing
     * @return the destination module concept
     */
-   default Concept getDestinationModule() {
+   default ConceptFacade getDestinationModule() {
       return Entity.getFast(getDestinationModuleNid());
    }
 
@@ -124,7 +125,7 @@ public interface EditCoordinate {
     * The promotion path is the path that existing content is moved to when Promoting
     * @return the promotion concept
     */
-   default Concept getPromotionPath() {
+   default ConceptFacade getPromotionPath() {
       return Entity.getFast(getPromotionPathNid());
    }
 

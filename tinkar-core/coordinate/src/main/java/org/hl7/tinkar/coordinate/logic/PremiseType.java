@@ -43,6 +43,7 @@ package org.hl7.tinkar.coordinate.logic;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.terms.ComponentWithNid;
+import org.hl7.tinkar.terms.ConceptFacade;
 import org.hl7.tinkar.terms.ConceptProxy;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.terms.TinkarTerm;
@@ -73,7 +74,7 @@ public enum PremiseType implements Concept, ComponentWithNid {
       this.flags = new int[] { taxonomyFlag.bits };
    }
 
-    public Concept getPremiseTypeConcept() {
+    public ConceptFacade getPremiseTypeConcept() {
         return premiseTypeConcept;
     }
    
@@ -95,7 +96,7 @@ public enum PremiseType implements Concept, ComponentWithNid {
 
 
 
-   public static PremiseType fromConcept(Concept concept) {
+   public static PremiseType fromConcept(ConceptFacade concept) {
       if (Entity.nid(concept) == TinkarTerm.INFERRED_PREMISE_TYPE.nid()) {
          return INFERRED;
       }

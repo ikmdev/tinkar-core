@@ -44,6 +44,7 @@ import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.time.DateTimeUtil;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.entity.Entity;
+import org.hl7.tinkar.terms.ConceptFacade;
 
 import java.time.Instant;
 
@@ -96,11 +97,11 @@ public interface StampPosition
    int getPathForPositionNid();
 
    /**
-    * Gets the stamp path concept nid.
+    * Gets the stamp path ConceptFacade.
     *
-    * @return the stamp path concept nid
+    * @return the stamp path ConceptFacade
     */
-   default Concept getPathForPositionConcept() {
+   default ConceptFacade getPathForPositionConcept() {
       return Entity.getFast(getPathForPositionNid());
    }
 

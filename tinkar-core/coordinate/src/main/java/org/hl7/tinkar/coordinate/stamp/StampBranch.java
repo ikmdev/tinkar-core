@@ -3,6 +3,7 @@ package org.hl7.tinkar.coordinate.stamp;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.entity.Entity;
+import org.hl7.tinkar.terms.ConceptFacade;
 
 import java.time.Instant;
 
@@ -46,11 +47,11 @@ public interface StampBranch
     int getPathOfBranchNid();
 
     /**
-     * Gets the stamp path concept nid.
+     * Gets the stamp path ConceptFacade.
      *
-     * @return the stamp path concept nid
+     * @return the stamp path ConceptFacade
      */
-    default Concept getPathOfBranchConcept() {
+    default ConceptFacade getPathOfBranchConcept() {
         return Entity.getFast(getPathOfBranchNid());
     }
 

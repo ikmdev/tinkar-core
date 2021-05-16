@@ -48,7 +48,7 @@ import java.util.EnumSet;
 
 /**
  * An enum of flags used by taxonomy records to indicate if the specified
- * concept is either a parent of, or child of, or other type of relationship.
+ * ConceptFacade is either a parent of, or child of, or other type of relationship.
  * These flags are designed to support a bit representation within the top 8
  * bits of a 32 bit integer (without interfering with the sign bit), enabling
  * multiple flags to be associated with a STAMP value within a single integer.
@@ -83,7 +83,7 @@ public enum TaxonomyFlag {
     NON_DL_REL(0x08000000),
 
     /**
-     * The concept status flag.
+     * The ConceptFacade status flag.
      */
 
     // 0000 1000

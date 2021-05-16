@@ -58,9 +58,9 @@ import org.hl7.tinkar.terms.ConceptFacade;
 public interface StampPath
         extends Comparable<StampPath> {
    /**
-    * Gets the path concept nid.
+    * Gets the path Concept nid.
     *
-    * @return the nid of the concept that defines this STAMP path.
+    * @return the nid of the Concept that defines this STAMP path.
     */
    int pathConceptNid();
 

@@ -97,11 +97,11 @@ public record StampPositionRecord(long time, int pathForPositionNid)
     }
 
     /**
-     * Gets the stamp path concept nid.
+     * Gets the stamp path ConceptFacade.
      *
-     * @return the stamp path concept nid
+     * @return the stamp path ConceptFacade
      */
-    public Concept getPathForPositionConcept() {
+    public ConceptFacade getPathForPositionConcept() {
         return Entity.getFast(this.pathForPositionNid);
     }
 

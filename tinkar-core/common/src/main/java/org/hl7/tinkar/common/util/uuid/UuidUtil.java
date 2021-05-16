@@ -222,5 +222,42 @@ public class UuidUtil {
         return uuids;
     }
 
+    public static String toString(UUID... uuids) {
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i  < uuids.length; i++) {
+            sb.append(uuids[i].toString());
+            if (i < uuids.length  - 2) {
+                sb.append(", ");
+            }
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
+    public static String toString(Iterable<UUID> uuids) {
+        StringBuilder sb = new StringBuilder("[");
+        int i = 0;
+        for (UUID uuid: uuids) {
+            sb.append(uuid.toString());
+        }
+        sb.append(", ");
+        sb.deleteCharAt(sb.length()-1);
+        sb.append("]");
+        return sb.toString();
+    }
+
+    public static String toString(PublicId publicId) {
+        return toString(publicId.asUuidArray());
+    }
+
+    public static UUID[] fromString(String uuidListString) {
+        String[] elements = uuidListString.substring(uuidListString.indexOf('[') + 1, uuidListString.indexOf(']')).split(",");
+        UUID[] uuids = new UUID[elements.length];
+        for (int i = 0; i < elements.length; i++) {
+            uuids[i] = UUID.fromString(elements[i].trim());
+        }
+        return uuids;
+    }
+
 }
 

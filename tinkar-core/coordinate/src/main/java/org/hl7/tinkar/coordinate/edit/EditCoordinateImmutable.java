@@ -12,6 +12,7 @@ import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 import org.hl7.tinkar.entity.Entity;
+import org.hl7.tinkar.terms.ConceptFacade;
 
 
 //This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
@@ -81,8 +82,8 @@ public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordin
      * @param destinationModule The destination module is the module that existing content is moved to when Modularizing
      * @return
      */
-    public static EditCoordinateImmutable make(Concept author, Concept defaultModule, Concept promotionPath,
-                                               Concept destinationModule) {
+    public static EditCoordinateImmutable make(ConceptFacade author, ConceptFacade defaultModule, ConceptFacade promotionPath,
+                                               ConceptFacade destinationModule) {
         return make(Entity.nid(author), Entity.nid(defaultModule), Entity.nid(promotionPath), Entity.nid(destinationModule));
     }
 

@@ -625,7 +625,7 @@ public class StampCalculatorWithCache implements StampCalculator {
          * Instantiates a new segment.
          *
          * @param segmentSequence the segment sequence
-         * @param pathConceptNid the path concept nid
+         * @param pathConceptNid the path Concept nid
          * @param endTime the end time
          * @param precedingSegments the preceding segments
          */
@@ -650,8 +650,8 @@ public class StampCalculatorWithCache implements StampCalculator {
         /**
          * Contains position.
          *
-         * @param pathConceptNid the path concept nid
-         * @param moduleConceptNid the module concept nid
+         * @param pathConceptNid the path Concept nid
+         * @param moduleConceptNid the module Concept nid
          * @param time the time
          * @return true, if successful
          */
