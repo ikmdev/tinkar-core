@@ -18,8 +18,7 @@ import org.hl7.tinkar.coordinate.language.LanguageCoordinate;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinateRecord;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculator;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
-import org.hl7.tinkar.coordinate.stamp.StampFilter;
-import org.hl7.tinkar.coordinate.stamp.StampFilterRecord;
+import org.hl7.tinkar.coordinate.stamp.StampCoordinateRecord;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.coordinate.stamp.calculator.Latest;
 import org.hl7.tinkar.terms.EntityFacade;
@@ -35,7 +34,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
     /** The Constant LOG. */
     private static final Logger LOG = CoordinateUtil.LOG;
 
-    private static record StampLangRecord(StampFilterRecord stampFilter,
+    private static record StampLangRecord(StampCoordinateRecord stampFilter,
                                           ImmutableList<LanguageCoordinateRecord> languageCoordinateList){}
 
     private static final ConcurrentReferenceHashMap<StampLangRecord, LanguageCalculatorWithCache> SINGLETONS =
@@ -50,11 +49,11 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
         }
     }
     /**
-     * Gets the stampFilter.
+     * Gets the stampCoordinateRecord.
      *
-     * @return the stampFilter
+     * @return the stampCoordinateRecord
      */
-    public static LanguageCalculatorWithCache getCalculator(StampFilterRecord stampFilter,
+    public static LanguageCalculatorWithCache getCalculator(StampCoordinateRecord stampFilter,
                                                             ImmutableList<LanguageCoordinateRecord> languageCoordinateList) {
         return SINGLETONS.computeIfAbsent(new StampLangRecord(stampFilter, languageCoordinateList),
                 filterKey -> new LanguageCalculatorWithCache(stampFilter, languageCoordinateList));
@@ -83,7 +82,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
     private final Semaphore indexForTextMapSemaphore = new Semaphore(1);
     private final Semaphore indexForTypeMapSemaphore = new Semaphore(1);
 
-    public LanguageCalculatorWithCache(StampFilterRecord stampFilter, ImmutableList<LanguageCoordinateRecord> languageCoordinateList) {
+    public LanguageCalculatorWithCache(StampCoordinateRecord stampFilter, ImmutableList<LanguageCoordinateRecord> languageCoordinateList) {
         this.stampCalculator = StampCalculatorWithCache.getCalculator(stampFilter);
         this.languageCoordinateList = languageCoordinateList;
     }

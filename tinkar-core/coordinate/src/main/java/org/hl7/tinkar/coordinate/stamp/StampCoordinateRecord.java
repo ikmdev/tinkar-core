@@ -71,9 +71,9 @@ import org.hl7.tinkar.terms.ConceptFacade;
  */
 
 @RecordBuilder
-public record StampFilterRecord(StateSet allowedStates, StampPositionRecord stampPosition, IntIdSet moduleNids,
-                                IntIdSet excludedModuleNids, IntIdList modulePriorityNidList)
-        implements StampFilter, ImmutableCoordinate, StampFilterRecordBuilder.With {
+public record StampCoordinateRecord(StateSet allowedStates, StampPositionRecord stampPosition, IntIdSet moduleNids,
+                                    IntIdSet excludedModuleNids, IntIdList modulePriorityNidList)
+        implements StampCoordinate, ImmutableCoordinate, StampCoordinateRecordBuilder.With {
     private static final int marshalVersion = 1;
 
     @Override
@@ -87,11 +87,11 @@ public record StampFilterRecord(StateSet allowedStates, StampPositionRecord stam
     }
 
     @Decoder
-    public static StampFilterRecord decode(DecoderInput in) {
+    public static StampCoordinateRecord decode(DecoderInput in) {
         int objectMarshalVersion = in.encodingFormatVersion();
         switch (objectMarshalVersion) {
             case marshalVersion:
-                return new StampFilterRecord(StateSet.decode(in),
+                return new StampCoordinateRecord(StateSet.decode(in),
                         StampPositionRecord.decode(in),
                         IntIds.set.of(in.readNidArray()),
                         IntIds.set.of(in.readNidArray()),
@@ -100,20 +100,20 @@ public record StampFilterRecord(StateSet allowedStates, StampPositionRecord stam
                 throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
         }
     }
-    public static StampFilterRecord make(StateSet allowedStates,
-                                         StampPosition stampPosition,
-                                         IntIdSet moduleNids,
-                                         IntIdSet excludedModuleNids,
-                                         IntIdList modulePreferenceOrder) {
-        return new StampFilterRecord(allowedStates, stampPosition.toStampPositionImmutable(),
+    public static StampCoordinateRecord make(StateSet allowedStates,
+                                             StampPosition stampPosition,
+                                             IntIdSet moduleNids,
+                                             IntIdSet excludedModuleNids,
+                                             IntIdList modulePreferenceOrder) {
+        return new StampCoordinateRecord(allowedStates, stampPosition.toStampPositionImmutable(),
                 moduleNids, excludedModuleNids, modulePreferenceOrder);
     }
 
-    public static StampFilterRecord make(StateSet allowedStates,
-                                         StampPosition stampPosition,
-                                         IntIdSet moduleNids,
-                                         IntIdList modulePreferenceOrder) {
-        return new StampFilterRecord(allowedStates, stampPosition.toStampPositionImmutable(),
+    public static StampCoordinateRecord make(StateSet allowedStates,
+                                             StampPosition stampPosition,
+                                             IntIdSet moduleNids,
+                                             IntIdList modulePreferenceOrder) {
+        return new StampCoordinateRecord(allowedStates, stampPosition.toStampPositionImmutable(),
                 moduleNids, IntIds.set.empty(), modulePreferenceOrder);
     }
 
@@ -124,34 +124,34 @@ public record StampFilterRecord(StateSet allowedStates, StampPositionRecord stam
      * @param moduleNids - null is treated as an empty set, which allows any module
      * @return
      */
-    public static StampFilterRecord make(StateSet allowedStates,
-                                         StampPosition stampPosition,
-                                         IntIdSet moduleNids) {
-        return new StampFilterRecord(allowedStates, stampPosition.toStampPositionImmutable(),
+    public static StampCoordinateRecord make(StateSet allowedStates,
+                                             StampPosition stampPosition,
+                                             IntIdSet moduleNids) {
+        return new StampCoordinateRecord(allowedStates, stampPosition.toStampPositionImmutable(),
                 moduleNids, IntIds.set.empty(), IntIds.list.empty());
     }
 
-    public static StampFilterRecord make(StateSet allowedStates, int path,
-                                         Set<ConceptFacade> modules) {
+    public static StampCoordinateRecord make(StateSet allowedStates, int path,
+                                             Set<ConceptFacade> modules) {
         IntIdSet moduleNids = IntIds.set.of(modules.stream().mapToInt(value -> value.nid()).toArray());
         StampPositionRecord stampPosition = StampPositionRecord.make(Long.MAX_VALUE, path);
 
-        return new StampFilterRecord(allowedStates,
+        return new StampCoordinateRecord(allowedStates,
                 stampPosition, moduleNids, IntIds.set.empty(), IntIds.list.empty());
     }
 
-    public static StampFilterRecord make(StateSet allowedStates, int path) {
+    public static StampCoordinateRecord make(StateSet allowedStates, int path) {
         StampPositionRecord stampPosition = StampPositionRecord.make(Long.MAX_VALUE, path);
 
-        return new StampFilterRecord(allowedStates,
+        return new StampCoordinateRecord(allowedStates,
                 stampPosition,
                 IntIds.set.empty(),
                 IntIds.set.empty(),
                 IntIds.list.empty());
     }
 
-    public static StampFilterRecord make(StateSet allowedStates, StampPosition stampPosition) {
-        return new StampFilterRecord(allowedStates,
+    public static StampCoordinateRecord make(StateSet allowedStates, StampPosition stampPosition) {
+        return new StampCoordinateRecord(allowedStates,
                 stampPosition.toStampPositionImmutable(),
                 IntIds.set.empty(),
                 IntIds.set.empty(),
@@ -168,13 +168,13 @@ public record StampFilterRecord(StateSet allowedStates, StampPositionRecord stam
     }
 
     @Override
-    public StampFilterRecord withStampPositionTime(long stampPositionTime) {
+    public StampCoordinateRecord withStampPositionTime(long stampPositionTime) {
         return make(this.allowedStates,
                 StampPositionRecord.make(stampPositionTime, this.stampPosition.getPathForPositionNid()),
                 this.moduleNids, this.modulePriorityNidList);
     }
 
-    public StampFilterRecord toStampFilterImmutable() {
+    public StampCoordinateRecord toStampCoordinateRecord() {
         return this;
     }
 
@@ -186,7 +186,7 @@ public record StampFilterRecord(StateSet allowedStates, StampPositionRecord stam
 
 
     @Override
-    public StampFilterRecord withModules(Collection<ConceptFacade> modules) {
+    public StampCoordinateRecord withModules(Collection<ConceptFacade> modules) {
         IntIdSet mis = modules == null ? IntIds.set.empty() :
                 IntIds.set.of(modules.stream().mapToInt(concept -> concept.nid()).toArray());
          return make(this.allowedStates,
@@ -195,35 +195,35 @@ public record StampFilterRecord(StateSet allowedStates, StampPositionRecord stam
     }
 
     @Override
-    public StampFilterRecord withPath(ConceptFacade pathForPosition) {
+    public StampCoordinateRecord withPath(ConceptFacade pathForPosition) {
         return make(this.allowedStates,
                 StampPositionRecord.make(this.stampPosition.time(), pathForPosition.nid()),
                 this.moduleNids, this.excludedModuleNids, this.modulePriorityNidList);
     }
 
     @Override
-    public StampFilterRecord withAllowedStates(StateSet allowedStates) {
-        return StampFilterRecordBuilder.With.super.withAllowedStates(allowedStates);
+    public StampCoordinateRecord withAllowedStates(StateSet allowedStates) {
+        return StampCoordinateRecordBuilder.With.super.withAllowedStates(allowedStates);
     }
 
     @Override
-    public StampFilterRecord withStampPosition(StampPositionRecord stampPosition) {
-        return StampFilterRecordBuilder.With.super.withStampPosition(stampPosition);
+    public StampCoordinateRecord withStampPosition(StampPositionRecord stampPosition) {
+        return StampCoordinateRecordBuilder.With.super.withStampPosition(stampPosition);
     }
 
     @Override
-    public StampFilterRecord withModuleNids(IntIdSet moduleNids) {
-        return StampFilterRecordBuilder.With.super.withModuleNids(moduleNids);
+    public StampCoordinateRecord withModuleNids(IntIdSet moduleNids) {
+        return StampCoordinateRecordBuilder.With.super.withModuleNids(moduleNids);
     }
 
     @Override
-    public StampFilterRecord withExcludedModuleNids(IntIdSet excludedModuleNids) {
-        return StampFilterRecordBuilder.With.super.withExcludedModuleNids(excludedModuleNids);
+    public StampCoordinateRecord withExcludedModuleNids(IntIdSet excludedModuleNids) {
+        return StampCoordinateRecordBuilder.With.super.withExcludedModuleNids(excludedModuleNids);
     }
 
     @Override
-    public StampFilterRecord withModulePriorityNidList(IntIdList modulePriorityNidList) {
-        return StampFilterRecordBuilder.With.super.withModulePriorityNidList(modulePriorityNidList);
+    public StampCoordinateRecord withModulePriorityNidList(IntIdList modulePriorityNidList) {
+        return StampCoordinateRecordBuilder.With.super.withModulePriorityNidList(modulePriorityNidList);
     }
 }
 

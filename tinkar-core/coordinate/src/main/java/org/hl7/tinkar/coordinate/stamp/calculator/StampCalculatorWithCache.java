@@ -76,7 +76,7 @@ public class StampCalculatorWithCache implements StampCalculator {
     /** The Constant LOG. */
     private static final Logger LOG = CoordinateUtil.LOG;
 
-    private static final ConcurrentReferenceHashMap<StampFilterRecord, StampCalculatorWithCache> SINGLETONS =
+    private static final ConcurrentReferenceHashMap<StampCoordinateRecord, StampCalculatorWithCache> SINGLETONS =
             new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
                     ConcurrentReferenceHashMap.ReferenceType.WEAK);
 
@@ -92,7 +92,7 @@ public class StampCalculatorWithCache implements StampCalculator {
     private int  errorCount   = 0;
 
     /** The coordinate. */
-    private final StampFilterRecord filter;
+    private final StampCoordinateRecord filter;
     private final StateSet allowedStates;
     private final ConcurrentHashMap<Integer, Boolean> stampOnRoute = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, Boolean> stampIsAllowedState = new ConcurrentHashMap<>();
@@ -112,18 +112,18 @@ public class StampCalculatorWithCache implements StampCalculator {
     ConcurrentHashMap<Integer, Segment> pathNidSegmentMap;
 
     /**
-     * Instantiates a new relative position stampFilter.
+     * Instantiates a new relative position stampCoordinateRecord.
      *
      * @param filter the coordinate
      */
-    private StampCalculatorWithCache(StampFilterRecord filter) {
+    private StampCalculatorWithCache(StampCoordinateRecord filter) {
         //For the internal callback to populate the cache
         this.filter = filter;
         this.pathNidSegmentMap = setupPathNidSegmentMap(filter.stampPosition().toStampPositionImmutable());
         this.allowedStates          = filter.allowedStates();
     }
 
-    public StampFilterRecord filter() {
+    public StampCoordinateRecord filter() {
         return this.filter;
     }
 
@@ -476,12 +476,12 @@ public class StampCalculatorWithCache implements StampCalculator {
     }
 
     /**
-     * Gets the stampFilter.
+     * Gets the stampCoordinateRecord.
      *
      * @param filter the filter
-     * @return the stampFilter
+     * @return the stampCoordinateRecord
      */
-    public static StampCalculatorWithCache getCalculator(StampFilterRecord filter) {
+    public static StampCalculatorWithCache getCalculator(StampCoordinateRecord filter) {
         return SINGLETONS.computeIfAbsent(filter,
                 filterKey -> new StampCalculatorWithCache(filter));
     }

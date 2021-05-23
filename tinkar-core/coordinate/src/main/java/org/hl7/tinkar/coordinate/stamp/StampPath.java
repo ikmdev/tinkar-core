@@ -100,7 +100,7 @@ public interface StampPath
     *
     * @return a StampFilterImmutable representing the latest on this path, with no author constraints.
     */
-   default StampFilterRecord getStampFilter() {
+   default StampCoordinateRecord getStampFilter() {
       return StampPathImmutable.getStampFilter(this);
    }
 }

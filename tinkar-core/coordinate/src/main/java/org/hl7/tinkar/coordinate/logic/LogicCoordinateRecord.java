@@ -13,6 +13,7 @@ import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.terms.ConceptFacade;
+import org.hl7.tinkar.terms.PatternFacade;
 
 @RecordBuilder
 public record LogicCoordinateRecord(int classifierNid,
@@ -65,27 +66,27 @@ public record LogicCoordinateRecord(int classifierNid,
 
     public static LogicCoordinateRecord make(int classifierNid,
                                              int descriptionLogicProfileNid,
-                                             int inferredAssemblageNid,
-                                             int statedAssemblageNid,
-                                             int conceptAssemblageNid,
+                                             int inferredAxiomsPatternNid,
+                                             int statedAxiomsPatternNid,
+                                             int conceptMemberPatternNid,
                                              int statedNavigationPatternNid,
                                              int inferredNavigationPatternNid,
                                              int rootNid)  {
         return new LogicCoordinateRecord(classifierNid, descriptionLogicProfileNid,
-                        inferredAssemblageNid, statedAssemblageNid, conceptAssemblageNid, statedNavigationPatternNid,
+                        inferredAxiomsPatternNid, statedAxiomsPatternNid, conceptMemberPatternNid, statedNavigationPatternNid,
                         inferredNavigationPatternNid, rootNid);
     }
 
     public static LogicCoordinateRecord make(ConceptFacade classifier,
                                              ConceptFacade descriptionLogicProfile,
-                                             ConceptFacade inferredAssemblage,
-                                             ConceptFacade statedAssemblage,
-                                             ConceptFacade conceptAssemblage,
-                                             ConceptFacade statedNavigationPattern,
-                                             ConceptFacade inferredNavigationPattern,
+                                             PatternFacade inferredAxiomsPattern,
+                                             PatternFacade statedAxiomsPattern,
+                                             PatternFacade conceptMemberPattern,
+                                             PatternFacade statedNavigationPattern,
+                                             PatternFacade inferredNavigationPattern,
                                              ConceptFacade root)  {
         return new LogicCoordinateRecord(classifier.nid(), descriptionLogicProfile.nid(),
-                        inferredAssemblage.nid(), statedAssemblage.nid(), conceptAssemblage.nid(), statedNavigationPattern.nid(),
+                        inferredAxiomsPattern.nid(), statedAxiomsPattern.nid(), conceptMemberPattern.nid(), statedNavigationPattern.nid(),
                         inferredNavigationPattern.nid(), root.nid());
     }
 

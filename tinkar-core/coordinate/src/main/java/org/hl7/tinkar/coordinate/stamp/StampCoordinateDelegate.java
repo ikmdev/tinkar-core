@@ -3,9 +3,9 @@ package org.hl7.tinkar.coordinate.stamp;
 import org.hl7.tinkar.common.id.IntIdList;
 import org.hl7.tinkar.common.id.IntIdSet;
 
-public interface StampFilterDelegate extends StampFilter {
+public interface StampCoordinateDelegate extends StampCoordinate {
 
-    StampFilter getStampFilter();
+    StampCoordinate getStampFilter();
 
     @Override
     default int pathNidForFilter() {
@@ -33,12 +33,12 @@ public interface StampFilterDelegate extends StampFilter {
     }
 
     @Override
-    default StampFilter withAllowedStates(StateSet stateSet) {
+    default StampCoordinate withAllowedStates(StateSet stateSet) {
         return getStampFilter().withAllowedStates(stateSet);
     }
 
     @Override
-    default StampFilter withStampPositionTime(long stampPositionTime) {
+    default StampCoordinate withStampPositionTime(long stampPositionTime) {
         return getStampFilter().withStampPositionTime(stampPositionTime);
     }
 
@@ -48,22 +48,22 @@ public interface StampFilterDelegate extends StampFilter {
     }
 
     @Override
-    default StampFilter withStampPosition(StampPositionRecord stampPosition) {
+    default StampCoordinate withStampPosition(StampPositionRecord stampPosition) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    default StampFilter withModuleNids(IntIdSet moduleNids) {
+    default StampCoordinate withModuleNids(IntIdSet moduleNids) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    default StampFilter withExcludedModuleNids(IntIdSet excludedModuleNids) {
+    default StampCoordinate withExcludedModuleNids(IntIdSet excludedModuleNids) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    default StampFilter withModulePriorityNidList(IntIdList modulePriorityNidList) {
+    default StampCoordinate withModulePriorityNidList(IntIdList modulePriorityNidList) {
         throw new UnsupportedOperationException();
     }
 }

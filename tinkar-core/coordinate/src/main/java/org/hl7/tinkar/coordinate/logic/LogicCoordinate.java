@@ -42,11 +42,11 @@ package org.hl7.tinkar.coordinate.logic;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.entity.PatternEntity;
 import org.hl7.tinkar.coordinate.stamp.calculator.Latest;
-import org.hl7.tinkar.coordinate.stamp.StampFilter;
+import org.hl7.tinkar.coordinate.stamp.StampCoordinate;
 import org.hl7.tinkar.entity.Entity;
-import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.entity.graph.DiTreeEntity;
 import org.hl7.tinkar.terms.ConceptFacade;
+import org.hl7.tinkar.terms.PatternFacade;
 import org.hl7.tinkar.terms.TinkarTerm;
 
 import java.util.ArrayList;
@@ -83,7 +83,7 @@ public interface LogicCoordinate {
     */
    int classifierNid();
 
-   default Concept classifier() {
+   default ConceptFacade classifier() {
       return Entity.getFast(classifierNid());
    }
 
@@ -94,7 +94,7 @@ public interface LogicCoordinate {
     */
    int descriptionLogicProfileNid();
 
-   default Concept descriptionLogicProfile() {
+   default ConceptFacade descriptionLogicProfile() {
       return Entity.getFast(descriptionLogicProfileNid());
    }
    /**
@@ -137,6 +137,9 @@ public interface LogicCoordinate {
    default int statedNavigationPatternNid() {
       return TinkarTerm.STATED_NAVIGATION.nid();
    }
+   default PatternFacade statedNavigationPattern() {
+      return PatternFacade.make(statedNavigationPatternNid());
+   }
 
    /**
     *
@@ -145,8 +148,11 @@ public interface LogicCoordinate {
    default int inferredNavigationPatternNid() {
       return TinkarTerm.INFERRED_NAVIGATION.nid();
    }
+   default PatternFacade inferredNavigationPattern() {
+      return PatternFacade.make(inferredNavigationPatternNid());
+   }
 
-   default Latest<DiTreeEntity> getAxiomsVersion(int conceptNid, PremiseType premiseType, StampFilter stampFilter) {
+   default Latest<DiTreeEntity> getAxiomsVersion(int conceptNid, PremiseType premiseType, StampCoordinate stampCoordinate) {
       throw new UnsupportedOperationException();
 //      int assemblageSequence;
 //
@@ -156,13 +162,13 @@ public interface LogicCoordinate {
 //         assemblageSequence = getStatedAssemblageNid();
 //      }
 //      ImmutableList<LatestVersion<DiTreeEntity>> latestVersionList = Get.assemblageService()
-//              .getSnapshot(LogicGraphVersion.class, stampFilter)
+//              .getSnapshot(LogicGraphVersion.class, stampCoordinateRecord)
 //              .getLatestSemanticVersionsForComponentFromAssemblage(conceptNid, assemblageSequence);
 //      if (latestVersionList.isEmpty()) {
 //         return Optional.empty();
 //      }
 //      LatestVersion<DiTreeEntity> logicalDef = Get.assemblageService()
-//              .getSnapshot(LogicGraphVersion.class, stampFilter)
+//              .getSnapshot(LogicGraphVersion.class, stampCoordinateRecord)
 //              .getLatestSemanticVersionsForComponentFromAssemblage(conceptNid, assemblageSequence).get(0);
 //
 //      if (logicalDef.isPresent()) {
@@ -171,20 +177,20 @@ public interface LogicCoordinate {
 //      return Optional.empty();
    }
 
-   default Latest<DiTreeEntity> getStatedAxiomsVersion(int conceptNid, StampFilter stampFilter) {
-      return getAxiomsVersion(conceptNid, PremiseType.STATED, stampFilter);
+   default Latest<DiTreeEntity> getStatedAxiomsVersion(int conceptNid, StampCoordinate stampCoordinate) {
+      return getAxiomsVersion(conceptNid, PremiseType.STATED, stampCoordinate);
    }
 
-   default Latest<DiTreeEntity> getInferredAxiomsVersion(ConceptFacade Concept, StampFilter stampFilter) {
-      return getAxiomsVersion(Concept.nid(), PremiseType.INFERRED, stampFilter);
+   default Latest<DiTreeEntity> getInferredAxiomsVersion(ConceptFacade Concept, StampCoordinate stampCoordinate) {
+      return getAxiomsVersion(Concept.nid(), PremiseType.INFERRED, stampCoordinate);
    }
 
-   default Latest<DiTreeEntity> getStatedAxiomsVersion(ConceptFacade Concept, StampFilter stampFilter) {
-      return getAxiomsVersion(Concept.nid(), PremiseType.STATED, stampFilter);
+   default Latest<DiTreeEntity> getStatedAxiomsVersion(ConceptFacade Concept, StampCoordinate stampCoordinate) {
+      return getAxiomsVersion(Concept.nid(), PremiseType.STATED, stampCoordinate);
    }
 
-   default Latest<DiTreeEntity> getInferredAxiomsVersion(int conceptNid, StampFilter stampFilter) {
-      return getAxiomsVersion(conceptNid, PremiseType.INFERRED, stampFilter);
+   default Latest<DiTreeEntity> getInferredAxiomsVersion(int conceptNid, StampCoordinate stampCoordinate) {
+      return getAxiomsVersion(conceptNid, PremiseType.INFERRED, stampCoordinate);
    }
 
    default String toUserString() {
@@ -210,7 +216,7 @@ public interface LogicCoordinate {
 
    int rootNid();
 
-   default Concept root() {
+   default ConceptFacade root() {
       return Entity.getFast(rootNid());
    }
 

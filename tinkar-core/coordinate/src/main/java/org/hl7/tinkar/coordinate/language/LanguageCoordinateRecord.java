@@ -77,37 +77,38 @@ public final record LanguageCoordinateRecord(int languageConceptNid,
 
     /**
      * @param languageConceptNid
-     * @param descriptionTypePreferenceList
-     * @param dialectAssemblagePreferenceList
-     * @param modulePreferenceListForLanguage - if null, treated as empty
+     * @param descriptionPatternNidList
+     * @param descriptionTypePreferenceNidList
+     * @param dialectPatternPreferenceNidList
+     * @param modulePreferenceNidListForLanguage
      * @return
      */
     public static LanguageCoordinateRecord make(int languageConceptNid,
-                                                IntIdList descriptionPatternList,
-                                                IntIdList descriptionTypePreferenceList,
-                                                IntIdList dialectAssemblagePreferenceList,
-                                                IntIdList modulePreferenceListForLanguage) {
+                                                IntIdList descriptionPatternNidList,
+                                                IntIdList descriptionTypePreferenceNidList,
+                                                IntIdList dialectPatternPreferenceNidList,
+                                                IntIdList modulePreferenceNidListForLanguage) {
 
         return new LanguageCoordinateRecord(languageConceptNid,
-                        descriptionPatternList,
-                        descriptionTypePreferenceList,
-                        dialectAssemblagePreferenceList,
-                        modulePreferenceListForLanguage);
+                        descriptionPatternNidList,
+                        descriptionTypePreferenceNidList,
+                        dialectPatternPreferenceNidList,
+                        modulePreferenceNidListForLanguage);
     }
 
     @Override
     public ImmutableList<ConceptFacade> descriptionTypePreferenceList() {
-        return this.descriptionTypePreferenceNidList.map(nid -> ConceptProxy.make(nid));
+        return this.descriptionTypePreferenceNidList.map(ConceptFacade::make);
     }
 
     @Override
     public ImmutableList<PatternFacade> dialectPatternPreferenceList() {
-        return this.dialectPatternPreferenceNidList.map(nid -> PatternProxy.make(nid));
+        return this.dialectPatternPreferenceNidList.map(PatternFacade::make);
     }
 
     @Override
     public ImmutableList<ConceptFacade> modulePreferenceListForLanguage() {
-        return this.modulePreferenceNidListForLanguage.map(nid -> ConceptProxy.make(nid));
+        return this.modulePreferenceNidListForLanguage.map(ConceptFacade::make);
     }
 
     @Override

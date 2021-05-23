@@ -15,7 +15,7 @@ import org.hl7.tinkar.coordinate.language.LanguageCoordinateRecord;
 import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculator;
 import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculatorWithCache;
 import org.hl7.tinkar.coordinate.navigation.NavigationCoordinateRecord;
-import org.hl7.tinkar.coordinate.stamp.StampFilterRecord;
+import org.hl7.tinkar.coordinate.stamp.StampCoordinateRecord;
 import org.hl7.tinkar.coordinate.stamp.calculator.Latest;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculator;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
@@ -34,8 +34,8 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
     /** The Constant LOG. */
     private static final Logger LOG = CoordinateUtil.LOG;
 
-    private static record StampLangNavRecord(StampFilterRecord stampFilter,
-                                          ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
+    private static record StampLangNavRecord(StampCoordinateRecord stampFilter,
+                                             ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
                                              NavigationCoordinateRecord navigationCoordinate){}
 
     private static final ConcurrentReferenceHashMap<StampLangNavRecord, NavigationCalculatorWithCache> SINGLETONS =
@@ -51,13 +51,13 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
     }
 
     /**
-     * Gets the stampFilter.
+     * Gets the stampCoordinateRecord.
      *
-     * @return the stampFilter
+     * @return the stampCoordinateRecord
      */
-    public static NavigationCalculatorWithCache getCalculator(StampFilterRecord stampFilter,
-                                                            ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
-                                                            NavigationCoordinateRecord navigationCoordinate) {
+    public static NavigationCalculatorWithCache getCalculator(StampCoordinateRecord stampFilter,
+                                                              ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
+                                                              NavigationCoordinateRecord navigationCoordinate) {
         return SINGLETONS.computeIfAbsent(new StampLangNavRecord(stampFilter, languageCoordinateList, navigationCoordinate),
                 filterKey -> new NavigationCalculatorWithCache(stampFilter,
                         languageCoordinateList, navigationCoordinate));
@@ -67,7 +67,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
     private final LanguageCalculatorWithCache  languageCalculator;
     private final NavigationCoordinateRecord navigationCoordinate;
 
-    public NavigationCalculatorWithCache(StampFilterRecord stampFilter,
+    public NavigationCalculatorWithCache(StampCoordinateRecord stampFilter,
                                          ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
                                          NavigationCoordinateRecord navigationCoordinate) {
         this.stampCalculator = StampCalculatorWithCache.getCalculator(stampFilter);
@@ -97,12 +97,12 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
 
     @Override
     public IntIdList sortedParents(int conceptNid) {
-        return IntIds.list.of(VertexSortNaturalOrder.SINGLETON.sortVertexes(parents(conceptNid).toArray(), this));
+        return IntIds.list.of(VertexSortNaturalOrder.SINGLETON.sortVertexes(unsortedParents(conceptNid).toArray(), this));
     }
 
     @Override
     public IntIdList sortedChildren(int conceptNid) {
-        return IntIds.list.of(VertexSortNaturalOrder.SINGLETON.sortVertexes(children(conceptNid).toArray(), this));
+        return IntIds.list.of(VertexSortNaturalOrder.SINGLETON.sortVertexes(unsortedChildren(conceptNid).toArray(), this));
     }
 
     public IntIdList unsortedChildren(int conceptNid) {
@@ -110,7 +110,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
     }
 
     private IntIdList getIntIdListForMeaning(int conceptNid, ConceptProxy fieldMeaning) {
-        IntIdSet navigationPatternNids = navigationCoordinate.getNavigationConceptNids();
+        IntIdSet navigationPatternNids = navigationCoordinate.navigationPatternNids();
         MutableIntSet childrenNidSet = IntSets.mutable.empty();
         navigationPatternNids.forEach(navPatternNid -> {
             Latest<PatternEntityVersion> latestPatternEntityVersion = stampCalculator().latest(navPatternNid);

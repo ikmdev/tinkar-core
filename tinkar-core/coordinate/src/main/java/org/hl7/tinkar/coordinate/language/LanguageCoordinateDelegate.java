@@ -75,6 +75,16 @@ public interface LanguageCoordinateDelegate extends LanguageCoordinate {
    }
 
    @Override
+   default IntIdList descriptionPatternPreferenceNidList() {
+      return getLanguageCoordinate().descriptionPatternPreferenceNidList();
+   }
+
+   @Override
+   default PatternFacade[] descriptionPatternPreferenceArray() {
+      return getLanguageCoordinate().descriptionPatternPreferenceArray();
+   }
+
+   @Override
    default int languageConceptNid() {
       return getLanguageCoordinate().languageConceptNid();
    }

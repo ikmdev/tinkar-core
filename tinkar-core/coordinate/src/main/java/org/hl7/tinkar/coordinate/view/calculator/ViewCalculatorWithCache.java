@@ -27,7 +27,7 @@ public class ViewCalculatorWithCache implements ViewCalculator, StampCalculatorD
     /** The Constant LOG. */
     private static final Logger LOG = CoordinateUtil.LOG;
 
-    private static record StampLangNavViewRecord(StampFilterRecord stampFilter,
+    private static record StampLangNavViewRecord(StampCoordinateRecord stampFilter,
                                                  ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
                                                  NavigationCoordinateRecord navigationCoordinate,
                                                  ViewCoordinateRecord viewCoordinateRecord){}
@@ -44,11 +44,11 @@ public class ViewCalculatorWithCache implements ViewCalculator, StampCalculatorD
         }
     }
     /**
-     * Gets the stampFilter.
+     * Gets the stampCoordinateRecord.
      *
-     * @return the stampFilter
+     * @return the stampCoordinateRecord
      */
-    public static ViewCalculatorWithCache getCalculator(StampFilterRecord stampFilter,
+    public static ViewCalculatorWithCache getCalculator(StampCoordinateRecord stampFilter,
                                                         ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
                                                         NavigationCoordinateRecord navigationCoordinate,
                                                         ViewCoordinateRecord viewCoordinateRecord) {
@@ -63,15 +63,15 @@ public class ViewCalculatorWithCache implements ViewCalculator, StampCalculatorD
     private final NavigationCalculator navigationCalculator;
     private final ViewCoordinateRecord viewCoordinateRecord;
 
-    public ViewCalculatorWithCache(StampFilter stampFilter,
+    public ViewCalculatorWithCache(StampCoordinate stampCoordinate,
                                    ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
                                    NavigationCoordinate navigationCoordinate,
                                    ViewCoordinateRecord viewCoordinateRecord) {
-        this.stampCalculator = StampCalculatorWithCache.getCalculator(stampFilter.toStampFilterImmutable());
-        this.languageCalculator = LanguageCalculatorWithCache.getCalculator(stampFilter.toStampFilterImmutable(),
+        this.stampCalculator = StampCalculatorWithCache.getCalculator(stampCoordinate.toStampCoordinateRecord());
+        this.languageCalculator = LanguageCalculatorWithCache.getCalculator(stampCoordinate.toStampCoordinateRecord(),
                 languageCoordinateList);
-        this.navigationCalculator = NavigationCalculatorWithCache.getCalculator(stampFilter.toStampFilterImmutable(),
-                languageCoordinateList, navigationCoordinate.toNavigationCoordinateImmutable());
+        this.navigationCalculator = NavigationCalculatorWithCache.getCalculator(stampCoordinate.toStampCoordinateRecord(),
+                languageCoordinateList, navigationCoordinate.toNavigationCoordinateRecord());
         this.viewCoordinateRecord = viewCoordinateRecord;
     }
 

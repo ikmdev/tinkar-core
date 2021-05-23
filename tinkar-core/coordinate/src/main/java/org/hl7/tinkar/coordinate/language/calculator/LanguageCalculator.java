@@ -5,7 +5,7 @@ import org.hl7.tinkar.common.id.IntIdList;
 import org.hl7.tinkar.common.id.IntIds;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinate;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinateRecord;
-import org.hl7.tinkar.coordinate.stamp.StampFilter;
+import org.hl7.tinkar.coordinate.stamp.StampCoordinate;
 import org.hl7.tinkar.entity.SemanticEntity;
 import org.hl7.tinkar.entity.SemanticEntityVersion;
 import org.hl7.tinkar.coordinate.stamp.calculator.Latest;
@@ -95,7 +95,9 @@ public interface LanguageCalculator {
     default Latest<SemanticEntityVersion> getDescription(int entityNid) {
         return getDescription(getDescriptionsForComponent(entityNid));
     }
-
+    default Latest<SemanticEntityVersion> getDescription(EntityFacade entityFacade) {
+        return getDescription(entityFacade.nid());
+    }
     Optional<String> getTextFromSemanticVersion(SemanticEntityVersion semanticEntityVersion);
 
 
@@ -186,12 +188,12 @@ public interface LanguageCalculator {
      */
     default Latest<SemanticEntityVersion> getFullyQualifiedDescription(int conceptId) {
         throw new UnsupportedOperationException();
-        //return getFullyQualifiedDescription(Get.conceptService().getConceptDescriptions(conceptId), stampFilter);
+        //return getFullyQualifiedDescription(Get.conceptService().getConceptDescriptions(conceptId), stampCoordinateRecord);
     }
 
     /**
      * TODO needs update. Add info on patterns, and we don't use getNextPriorityLanguageCoordinate anymore...
-     * The developer can pass an ordered list of language coordinates to the language stampFilter.
+     * The developer can pass an ordered list of language coordinates to the language stampCoordinateRecord.
      * <p>
      * Gets the specified description(s).
      * <p>
@@ -235,7 +237,7 @@ public interface LanguageCalculator {
 
 
     /**
-     * Same as getSpecifiedDescription(StampFilter stampFilter,
+     * Same as getSpecifiedDescription(StampFilter stampCoordinateRecord,
      * List<SemanticChronology> descriptionList,
      * LanguageCoordinate languageCoordinate);
      * but allows the descriptionTypePriority to be independent of the coordinate, without forcing a clone of
@@ -253,10 +255,10 @@ public interface LanguageCalculator {
      * Call getRegularName or getFullyQualifiedName for better quality names before calling this method.
      *
      * @param componentNid
-     * @param stampFilter
+     * @param stampCoordinate
      * @return
      */
-    default String getAnyName(int componentNid, StampFilter stampFilter) {
+    default String getAnyName(int componentNid, StampCoordinate stampCoordinate) {
         throw new UnsupportedOperationException();
 //       switch (Get.identifierService().getObjectTypeForComponent(componentNid)) {
 //           case CONCEPT: {
@@ -270,7 +272,7 @@ public interface LanguageCalculator {
 //           case SEMANTIC: {
 //               SemanticEntity sc = Get.assemblageService().getSemanticEntity(componentNid);
 //               if (sc.getVersionType() == VersionType.DESCRIPTION) {
-//                   LatestVersion<SemanticEntityVersion> latestDescription = sc.getLatestVersion(stampFilter);
+//                   LatestVersion<SemanticEntityVersion> latestDescription = sc.getLatestVersion(stampCoordinateRecord);
 //                   if (latestDescription.isPresent()) {
 //                       return latestDescription.get().getText();
 //                   }
@@ -284,13 +286,13 @@ public interface LanguageCalculator {
 //       }
     }
 
-    default OptionalInt getAcceptabilityNid(int descriptionNid, int dialectAssemblageNid, StampFilter stampFilter) {
+    default OptionalInt getAcceptabilityNid(int descriptionNid, int dialectAssemblageNid, StampCoordinate stampCoordinate) {
         throw new UnsupportedOperationException();
 //       ImmutableIntSet acceptabilityChronologyNids = Get.assemblageService().getSemanticNidsForComponentFromAssemblage(descriptionNid, dialectAssemblageNid);
 //
 //       for (int acceptabilityChronologyNid: acceptabilityChronologyNids.toArray()) {
 //           SemanticEntity acceptabilityChronology = Get.assemblageService().getSemanticEntity(acceptabilityChronologyNid);
-//               LatestVersion<ComponentNidVersion> latestAcceptability = acceptabilityChronology.getLatestVersion(stampFilter);
+//               LatestVersion<ComponentNidVersion> latestAcceptability = acceptabilityChronology.getLatestVersion(stampCoordinateRecord);
 //               if (latestAcceptability.isPresent()) {
 //                   return OptionalInt.of(latestAcceptability.get().getComponentNid());
 //               }

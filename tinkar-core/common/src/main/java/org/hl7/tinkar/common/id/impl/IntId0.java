@@ -36,7 +36,7 @@ public abstract class IntId0
     }
 
     public boolean isEmpty() {
-        return false;
+        return true;
     }
 
 }

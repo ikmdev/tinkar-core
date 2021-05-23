@@ -1,11 +1,14 @@
 package org.hl7.tinkar.coordinate.view;
 
-import org.eclipse.collections.api.list.ListIterable;
+import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinate;
 import org.hl7.tinkar.coordinate.logic.LogicCoordinate;
 import org.hl7.tinkar.coordinate.navigation.NavigationCoordinate;
-import org.hl7.tinkar.coordinate.stamp.StampFilter;
+import org.hl7.tinkar.coordinate.stamp.StampCoordinate;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public interface ViewCoordinate {
@@ -24,23 +27,41 @@ public interface ViewCoordinate {
 //        return UUID.nameUUIDFromBytes(sb.toString().getBytes());
     }
 
-    StampFilter stampFilter();
+    ViewCoordinateRecord toViewCoordinateRecord();
 
-    <T extends LanguageCoordinate> ListIterable<T> languageList();
+    StampCoordinate stampCoordinate();
 
-    LogicCoordinate logic();
+    <T extends LanguageCoordinate> Iterable<T> languageCoordinateIterable();
 
-    NavigationCoordinate navigation();
+    default <T extends LanguageCoordinate> List<T> languageCoordinates() {
+        Iterable<T> languageCoordinateIterable = languageCoordinateIterable();
+        if (languageCoordinateIterable instanceof ImmutableList<T> immutableList) {
+            return immutableList.castToList();
+        }
+        if (languageCoordinateIterable instanceof MutableList<T> mutableList) {
+            return mutableList;
+        }
+        if (languageCoordinateIterable instanceof List<T> list) {
+            return list;
+        }
+        List<T> newList = new ArrayList<>();
+        languageCoordinateIterable.forEach(languageCoordinate -> newList.add(languageCoordinate));
+        return newList;
+    }
+
+    LogicCoordinate logicCoordinate();
+
+    NavigationCoordinate navigationCoordinate();
 
     default String toUserString() {
         StringBuilder sb = new StringBuilder("View: ");
-        sb.append("\n").append(navigation().toUserString());
-        sb.append("\n\nView filter:\n").append(stampFilter().toUserString());
+        sb.append("\n").append(navigationCoordinate().toUserString());
+        sb.append("\n\nView filter:\n").append(stampCoordinate().toUserString());
         sb.append("\n\nLanguage coordinates:\n");
-        for (LanguageCoordinate languageCoordinate: languageList()) {
+        for (LanguageCoordinate languageCoordinate: languageCoordinateIterable()) {
             sb.append("  ").append(languageCoordinate.toUserString()).append("\n");
         }
-        sb.append("\n\nLogic:\n").append(logic().toUserString());
+        sb.append("\n\nLogic:\n").append(logicCoordinate().toUserString());
         return sb.toString();
     }
 

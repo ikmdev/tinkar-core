@@ -16,6 +16,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Optional;
 
 public class ProxyFactory {
     public static final String CONCEPT_ELEMENT = "concept";
@@ -33,7 +34,32 @@ public class ProxyFactory {
         }
     });
 
-    static EntityFacade fromXmlFragment(String xmlString) {
+    public static Optional<EntityFacade> fromXmlFragmentOptional(String xmlString) {
+        try {
+            Document doc = documentBuilder.get().parse(new InputSource(new StringReader(xmlString)));
+            Element element = doc.getDocumentElement();
+            Attr uuids = element.getAttributeNode(UUIDS_ATTRIBUTE);
+            Attr desc = element.getAttributeNode(DESCRIPTION_ATTRIBUTE);
+            EntityFacade facade = switch (element.getTagName()) {
+                case ENTITY_ELEMENT -> EntityProxy.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
+                case PATTERN_ELEMENT -> PatternProxy.make(desc.getName(), UuidUtil.fromString(uuids.getValue()));
+                case SEMANTIC_ELEMENT -> SemanticProxy.make(desc.getName(), UuidUtil.fromString(uuids.getValue()));
+                case CONCEPT_ELEMENT -> ConceptProxy.make(desc.getName(), UuidUtil.fromString(uuids.getValue()));
+                default -> {
+                    IllegalStateException ex = new IllegalStateException("Unexpected value: " + element.getTagName());
+                    ex.printStackTrace();
+                    yield null;
+                }
+            };
+            return Optional.ofNullable(facade);
+        } catch (SAXException | IOException e) {
+            e.printStackTrace();
+        }
+
+        return Optional.empty();
+    }
+
+    public static EntityFacade fromXmlFragment(String xmlString) {
         try {
             Document doc = documentBuilder.get().parse(new InputSource(new StringReader(xmlString)));
             Element element = doc.getDocumentElement();

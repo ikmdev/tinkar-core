@@ -13,7 +13,7 @@ import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculatorWithCache
 import org.hl7.tinkar.coordinate.stamp.StampPositionRecord;
 import org.hl7.tinkar.coordinate.stamp.calculator.PathProvider;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
-import org.hl7.tinkar.coordinate.stamp.StampFilterRecord;
+import org.hl7.tinkar.coordinate.stamp.StampCoordinateRecord;
 import org.hl7.tinkar.coordinate.view.calculator.ViewCalculator;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.coordinate.stamp.calculator.Latest;
@@ -58,7 +58,7 @@ class CoordinatesTest {
 
     @Test
     void computeLatest() {
-        StampFilterRecord developmentLatestFilter = Coordinates.Stamp.DevelopmentLatest();
+        StampCoordinateRecord developmentLatestFilter = Coordinates.Stamp.DevelopmentLatest();
         LOG.info("development latest filter '" + developmentLatestFilter);
         ConceptEntity englishLanguage = Entity.getFast(TinkarTerm.ENGLISH_LANGUAGE);
         StampCalculatorWithCache calculator = StampCalculatorWithCache.getCalculator(developmentLatestFilter);

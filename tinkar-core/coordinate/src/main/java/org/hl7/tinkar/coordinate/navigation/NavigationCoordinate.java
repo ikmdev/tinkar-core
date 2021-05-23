@@ -29,7 +29,7 @@ public interface NavigationCoordinate {
 
     static UUID getNavigationCoordinateUuid(NavigationCoordinate navigationCoordinate) {
         ArrayList<UUID> uuidList = new ArrayList<>();
-        for (int nid: navigationCoordinate.getNavigationConceptNids().toArray()) {
+        for (int nid: navigationCoordinate.navigationPatternNids().toArray()) {
             Entity.provider().addSortedUuids(uuidList, nid);
         }
         return UUID.nameUUIDFromBytes(uuidList.toString().getBytes());
@@ -46,7 +46,7 @@ public interface NavigationCoordinate {
 
     //---------------------------
 
-    IntIdSet getNavigationConceptNids();
+    IntIdSet navigationPatternNids();
 
 
     StateSet vertexStates();
@@ -77,14 +77,14 @@ public interface NavigationCoordinate {
     }
 
     default ImmutableSet<Concept> getNavigationIdentifierConcepts() {
-        return IntSets.immutable.of(getNavigationConceptNids().toArray()).collect(nid -> Entity.getFast(nid));
+        return IntSets.immutable.of(navigationPatternNids().toArray()).collect(nid -> Entity.getFast(nid));
     }
 
-    NavigationCoordinateRecord toNavigationCoordinateImmutable();
+    NavigationCoordinateRecord toNavigationCoordinateRecord();
 
     default String toUserString() {
         StringBuilder sb = new StringBuilder("Navigators: ");
-        for (int nid: getNavigationConceptNids().toArray()) {
+        for (int nid: navigationPatternNids().toArray()) {
             sb.append("\n     ").append(PrimitiveData.text(nid));
         }
         sb.append("\n\nVertex states:\n").append(vertexStates());

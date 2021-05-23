@@ -9,6 +9,7 @@ import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.terms.ConceptFacade;
+import org.hl7.tinkar.terms.EntityFacade;
 import org.hl7.tinkar.terms.State;
 
 import java.util.ArrayList;
@@ -16,8 +17,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-public interface StampFilter
-        extends TimeBasedAnalogMaker<StampFilter> {
+public interface StampCoordinate
+        extends TimeBasedAnalogMaker<StampCoordinate> {
 
     /**
      * @return a content based uuid, such that identical stamp coordinates
@@ -40,11 +41,11 @@ public interface StampFilter
 
     int pathNidForFilter();
 
-    StampFilter withAllowedStates(StateSet stateSet);
-    StampFilter withStampPosition(StampPositionRecord stampPosition);
-    StampFilter withModuleNids(IntIdSet moduleNids);
-    StampFilter withExcludedModuleNids(IntIdSet excludedModuleNids);
-    StampFilter withModulePriorityNidList(IntIdList modulePriorityNidList);
+    StampCoordinate withAllowedStates(StateSet stateSet);
+    StampCoordinate withStampPosition(StampPositionRecord stampPosition);
+    StampCoordinate withModuleNids(IntIdSet moduleNids);
+    StampCoordinate withExcludedModuleNids(IntIdSet excludedModuleNids);
+    StampCoordinate withModulePriorityNidList(IntIdList modulePriorityNidList);
 
     default ConceptFacade pathForFilter() {
         return Entity.getFast(pathNidForFilter());
@@ -56,14 +57,14 @@ public interface StampFilter
      * @param modules the new modules list.
      * @return the new path coordinate
      */
-    default StampFilter withModules(Collection<ConceptFacade> modules) {
-        return withModuleNids(IntIds.set.of(modules, module -> module.nid()));
+    default StampCoordinate withModules(Collection<ConceptFacade> modules) {
+        return withModuleNids(IntIds.set.of(modules, EntityFacade::toNid));
     }
-    default StampFilter withExcludedModules(Collection<ConceptFacade> excludedModules) {
-        return withExcludedModuleNids(IntIds.set.of(excludedModules, module -> module.nid()));
+    default StampCoordinate withExcludedModules(Collection<ConceptFacade> excludedModules) {
+        return withExcludedModuleNids(IntIds.set.of(excludedModules, EntityFacade::toNid));
     }
-    default StampFilter withModulePriorityNidList(List<ConceptFacade> excludedModules) {
-        return withModulePriorityNidList(IntIds.list.of(excludedModules, module -> module.nid()));
+    default StampCoordinate withModulePriorityNidList(List<ConceptFacade> excludedModules) {
+        return withModulePriorityNidList(IntIds.list.of(excludedModules, EntityFacade::toNid));
     }
 
     /**
@@ -72,7 +73,7 @@ public interface StampFilter
      * @param pathForPosition the new path for position
      * @return the new path coordinate
      */
-    default StampFilter withPath(ConceptFacade pathForPosition) {
+    default StampCoordinate withPath(ConceptFacade pathForPosition) {
         return withStampPosition(stampPosition().withPathForPositionNid(pathForPosition.nid()).toStampPositionImmutable());
    }
 
@@ -125,8 +126,8 @@ public interface StampFilter
         return builder.toString();
     }
 
-    default StampFilterRecord toStampFilterImmutable() {
-        return StampFilterRecord.make(allowedStates(),
+    default StampCoordinateRecord toStampCoordinateRecord() {
+        return StampCoordinateRecord.make(allowedStates(),
                 stampPosition());
     }
 

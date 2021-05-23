@@ -16,6 +16,8 @@
  */
 package org.hl7.tinkar.coordinate.logic;
 
+import org.hl7.tinkar.terms.ConceptFacade;
+
 /**
  *
  * @author kec
@@ -31,6 +33,11 @@ public interface LogicCoordinateDelegate extends LogicCoordinate {
    @Override
    default int classifierNid() {
       return getLogicCoordinate().classifierNid();
+   }
+
+   @Override
+   default int rootNid() {
+      return getLogicCoordinate().rootNid();
    }
 
    @Override
@@ -57,6 +64,9 @@ public interface LogicCoordinateDelegate extends LogicCoordinate {
    default int statedNavigationPatternNid() {
       return getLogicCoordinate().statedNavigationPatternNid();
    }
+
+   @Override
+   default int inferredNavigationPatternNid() { return getLogicCoordinate().statedNavigationPatternNid(); }
 
    @Override
    default LogicCoordinateRecord toLogicCoordinateRecord() {

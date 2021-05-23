@@ -7,7 +7,7 @@ import org.hl7.tinkar.coordinate.language.LanguageCoordinateRecord;
 import org.hl7.tinkar.coordinate.logic.LogicCoordinateRecord;
 import org.hl7.tinkar.coordinate.navigation.NavigationCoordinate;
 import org.hl7.tinkar.coordinate.navigation.NavigationCoordinateRecord;
-import org.hl7.tinkar.coordinate.stamp.StampFilterRecord;
+import org.hl7.tinkar.coordinate.stamp.StampCoordinateRecord;
 import org.hl7.tinkar.coordinate.stamp.StampPathImmutable;
 import org.hl7.tinkar.coordinate.stamp.StampPositionRecord;
 import org.hl7.tinkar.coordinate.stamp.StateSet;
@@ -174,26 +174,26 @@ public class Coordinates   {
 
     public static class Stamp {
 
-        public static StampFilterRecord DevelopmentLatest() {
-            return StampFilterRecord.make(StateSet.ACTIVE_AND_INACTIVE,
+        public static StampCoordinateRecord DevelopmentLatest() {
+            return StampCoordinateRecord.make(StateSet.ACTIVE_AND_INACTIVE,
                     Position.LatestOnDevelopment(),
                     IntIds.set.empty());
         }
 
-        public static StampFilterRecord DevelopmentLatestActiveOnly() {
-            return StampFilterRecord.make(StateSet.ACTIVE_ONLY,
+        public static StampCoordinateRecord DevelopmentLatestActiveOnly() {
+            return StampCoordinateRecord.make(StateSet.ACTIVE_ONLY,
                     Position.LatestOnDevelopment(),
                     IntIds.set.empty());
         }
 
-        public static StampFilterRecord MasterLatest() {
-            return StampFilterRecord.make(StateSet.ACTIVE_AND_INACTIVE,
+        public static StampCoordinateRecord MasterLatest() {
+            return StampCoordinateRecord.make(StateSet.ACTIVE_AND_INACTIVE,
                     Position.LatestOnMaster(),
                     IntIds.set.empty());
         }
 
-        public static StampFilterRecord MasterLatestActiveOnly() {
-            return StampFilterRecord.make(StateSet.ACTIVE_ONLY,
+        public static StampCoordinateRecord MasterLatestActiveOnly() {
+            return StampCoordinateRecord.make(StateSet.ACTIVE_ONLY,
                     Position.LatestOnMaster(),
                     IntIds.set.empty());
         }
@@ -235,8 +235,7 @@ public class Coordinates   {
             return ViewCoordinateRecord.make(Stamp.DevelopmentLatest(),
                     Language.UsEnglishRegularName(),
                     Logic.ElPlusPlus(),
-                    Navigation.inferred(),
-                    StateSet.ACTIVE_ONLY);
+                    Navigation.inferred());
         }
     }
 }

@@ -52,7 +52,7 @@ import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.coordinate.edit.EditCoordinate;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinate;
 import org.hl7.tinkar.coordinate.logic.LogicCoordinate;
-import org.hl7.tinkar.coordinate.stamp.StampFilter;
+import org.hl7.tinkar.coordinate.stamp.StampCoordinate;
 import org.hl7.tinkar.coordinate.view.ViewCoordinate;
 import org.hl7.tinkar.terms.State;
 
@@ -107,7 +107,7 @@ public interface CoordinateFactory
     * @return a {@code StampFilter} representing the latest active version on the development path
     * of components in all modules. Inactive versions are not included in computed results.
     */
-   StampFilter createDevelopmentLatestActiveOnlyStampFilter();
+   StampCoordinate createDevelopmentLatestActiveOnlyStampFilter();
 
    /**
     * Creates a new ImmutableCoordinate object.
@@ -115,17 +115,17 @@ public interface CoordinateFactory
     * @return a {@code StampCoordinate} representing the latest version on the development path
     * of components in all modules.
     */
-   StampFilter createDevelopmentLatestStampFilter();
+   StampCoordinate createDevelopmentLatestStampFilter();
 
    /**
     * Creates a new ImmutableCoordinate object.
     *
-    * @param stampFilter the stamp coordinate
+    * @param stampCoordinate the stamp coordinate
     * @param languageCoordinate the language coordinate
     * @param logicCoordinate the logic coordinate
     * @return the taxonomy coordinate
     */
-   ViewCoordinate createInferredView(StampFilter stampFilter,
+   ViewCoordinate createInferredView(StampCoordinate stampCoordinate,
                                      LanguageCoordinate languageCoordinate,
                                      LogicCoordinate logicCoordinate);
 
@@ -135,7 +135,7 @@ public interface CoordinateFactory
     * @return a {@code StampCoordinate} representing the latest active version on the master path
     * of components in all modules. Inactive versions are not included in computed results.
     */
-   StampFilter createMasterLatestActiveOnlyStampFilter();
+   StampCoordinate createMasterLatestActiveOnlyStampFilter();
 
    /**
     * Creates a new ImmutableCoordinate object.
@@ -143,7 +143,7 @@ public interface CoordinateFactory
     * @return a {@code StampCoordinate} representing the latest version on the master path
     * of components in all modules.
     */
-   StampFilter createMasterLatestStampFilter();
+   StampCoordinate createMasterLatestStampFilter();
 
    /**
     * Creates a new ImmutableCoordinate object.
@@ -158,7 +158,7 @@ public interface CoordinateFactory
     * @param dateTimeText the text to parse such as "2007-12-03T10:15:30", which is specified by the ISO-8601 extended offset date-time format.
     * @return a new instance that implements {@code StampCoordinate} with the provided temporal information
     */
-   StampFilter createStampFilter(Concept stampPath, List<Concept> moduleSpecificationList, List<Concept> modulePriorityList, EnumSet<State> allowedStateSet, CharSequence dateTimeText);
+   StampCoordinate createStampFilter(Concept stampPath, List<Concept> moduleSpecificationList, List<Concept> modulePriorityList, EnumSet<State> allowedStateSet, CharSequence dateTimeText);
    /**
     * Creates a new ImmutableCoordinate object.
     *
@@ -172,11 +172,11 @@ public interface CoordinateFactory
     * @param temporal the temporal object to specify the time on a path for the returned  {@code StampCoordinate}
     * @return a new instance that implements {@code StampCoordinate} with the provided temporal information
     */
-   StampFilter createStampFilter(Concept stampPath,
-                                 Collection<Concept> moduleSpecificationList,
-                                 List<Concept> modulePriorityList,
-                                 EnumSet<State> allowedStateSet,
-                                 TemporalAccessor temporal);
+   StampCoordinate createStampFilter(Concept stampPath,
+                                     Collection<Concept> moduleSpecificationList,
+                                     List<Concept> modulePriorityList,
+                                     EnumSet<State> allowedStateSet,
+                                     TemporalAccessor temporal);
 
    /**
     * Creates a new ImmutableCoordinate object.
@@ -196,16 +196,16 @@ public interface CoordinateFactory
     * @param second the second-of-minute to represent, from 0 to 59
     * @return a new instance that implements {@code StampCoordinate} with the provided temporal information
     */
-   StampFilter createStampFilter(Concept stampPath,
-                                 Collection<Concept> moduleSpecificationList,
-                                 List<Concept> modulePriorityList,
-                                 EnumSet<State> allowedStateSet,
-                                 int year,
-                                 int month,
-                                 int dayOfMonth,
-                                 int hour,
-                                 int minute,
-                                 int second);
+   StampCoordinate createStampFilter(Concept stampPath,
+                                     Collection<Concept> moduleSpecificationList,
+                                     List<Concept> modulePriorityList,
+                                     EnumSet<State> allowedStateSet,
+                                     int year,
+                                     int month,
+                                     int dayOfMonth,
+                                     int hour,
+                                     int minute,
+                                     int second);
 
    /**
     * Creates a new ImmutableCoordinate object.
@@ -217,12 +217,12 @@ public interface CoordinateFactory
    /**
     * Creates a new ImmutableCoordinate object.
     *
-    * @param stampFilter the stamp coordinate
+    * @param stampCoordinate the stamp coordinate
     * @param languageCoordinate the language coordinate
     * @param logicCoordinate the logic coordinate
     * @return the taxonomy coordinate
     */
-   ViewCoordinate createStatedView(StampFilter stampFilter,
+   ViewCoordinate createStatedView(StampCoordinate stampCoordinate,
                                    LanguageCoordinate languageCoordinate,
                                    LogicCoordinate logicCoordinate);
 }

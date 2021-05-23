@@ -18,7 +18,7 @@ import org.hl7.tinkar.coordinate.stamp.StateSet;
 import org.hl7.tinkar.terms.TinkarTerm;
 
 @RecordBuilder
-public record NavigationCoordinateRecord(IntIdSet navigationConceptNids,
+public record NavigationCoordinateRecord(IntIdSet navigationPatternNids,
                                          StateSet vertexStates,
                                          boolean sortVertices,
                                          IntIdList verticesSortPatternNidList)
@@ -36,12 +36,16 @@ public record NavigationCoordinateRecord(IntIdSet navigationConceptNids,
         return this.sortVertices;
     }
 
-    public static NavigationCoordinateRecord make(IntIdSet digraphConceptNids) {
-        return new NavigationCoordinateRecord(digraphConceptNids, StateSet.ACTIVE_ONLY, true, IntIds.list.empty());
+    public static NavigationCoordinateRecord make(IntIdSet navigationPatternNids) {
+        return new NavigationCoordinateRecord(navigationPatternNids, StateSet.ACTIVE_ONLY, true, IntIds.list.empty());
     }
 
-    public static NavigationCoordinateRecord make(IntIdSet digraphConceptNids, boolean sortVertices) {
-        return new NavigationCoordinateRecord(digraphConceptNids, StateSet.ACTIVE_ONLY, sortVertices, IntIds.list.empty());
+    public static NavigationCoordinateRecord make(IntIdSet navigationPatternNids,
+                                                  StateSet vertexStates,
+                                                  boolean sortVertices,
+                                                  IntIdList verticesSortPatternNidList) {
+        return new NavigationCoordinateRecord(navigationPatternNids, vertexStates,
+                                              sortVertices, verticesSortPatternNidList);
     }
 
     public static NavigationCoordinateRecord makeInferred() {
@@ -78,7 +82,7 @@ public record NavigationCoordinateRecord(IntIdSet navigationConceptNids,
     @Override
     @Encoder
     public void encode(EncoderOutput out) {
-        out.writeNidArray(this.navigationConceptNids.toArray());
+        out.writeNidArray(this.navigationPatternNids.toArray());
         vertexStates.encode(out);
         out.writeBoolean(this.sortVertices);
         out.writeNidArray(this.verticesSortPatternNidList.toArray());
@@ -98,12 +102,7 @@ public record NavigationCoordinateRecord(IntIdSet navigationConceptNids,
     }
 
     @Override
-    public IntIdSet getNavigationConceptNids() {
-        return this.navigationConceptNids;
-    }
-
-    @Override
-    public NavigationCoordinateRecord toNavigationCoordinateImmutable() {
+    public NavigationCoordinateRecord toNavigationCoordinateRecord() {
         return this;
     }
 
@@ -111,18 +110,18 @@ public record NavigationCoordinateRecord(IntIdSet navigationConceptNids,
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof NavigationCoordinateRecord that)) return false;
-        return getNavigationConceptNids().equals(that.getNavigationConceptNids());
+        return navigationPatternNids().equals(that.navigationPatternNids());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getNavigationConceptNids());
+        return Objects.hash(navigationPatternNids());
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("[");
-        for (int nid: navigationConceptNids.toArray()) {
+        for (int nid: navigationPatternNids.toArray()) {
             sb.append(PrimitiveData.text(nid));
             sb.append(", ");
         }

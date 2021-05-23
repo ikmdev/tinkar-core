@@ -142,8 +142,8 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
     }
 
 
-    public static final StampFilterRecord getStampFilter(StampPath stampPath) {
-        return StampFilterRecord.make(StateSet.ACTIVE_AND_INACTIVE,
+    public static final StampCoordinateRecord getStampFilter(StampPath stampPath) {
+        return StampCoordinateRecord.make(StateSet.ACTIVE_AND_INACTIVE,
                 StampPositionRecord.make(Long.MAX_VALUE, stampPath.pathConceptNid()),
                 IntIds.set.empty());
     }
