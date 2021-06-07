@@ -15,11 +15,12 @@ import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.component.graph.Vertex;
 import org.hl7.tinkar.dto.*;
 import org.hl7.tinkar.entity.*;
-import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.terms.*;
 
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.LongConsumer;
 
 import static org.hl7.tinkar.entity.Entity.ENTITY_FORMAT_VERSION;
 
@@ -203,11 +204,11 @@ public class EntityVertex implements Vertex, VertexId {
         if (another.meaning() instanceof ConceptFacade) {
             this.meaningNid = ((ConceptFacade) another.meaning()).nid();
         } else {
-            this.meaningNid = Get.entityService().nidForComponent(another.meaning());
+            this.meaningNid = EntityService.get().nidForComponent(another.meaning());
         }
         MutableIntObjectMap<Object> mutableProperties = new IntObjectHashMap(another.propertyKeys().size());
         another.propertyKeys().forEach(concept -> {
-            mutableProperties.put(Get.entityService().nidForComponent(concept), abstractObject(another.propertyFast(concept)));
+            mutableProperties.put(EntityService.get().nidForComponent(concept), abstractObject(another.propertyFast(concept)));
         });
         this.properties = mutableProperties.toImmutable();
     }
@@ -237,8 +238,24 @@ public class EntityVertex implements Vertex, VertexId {
     }
 
     @Override
+    public UUID[] asUuidArray() {
+        return new UUID[] { asUuid() };
+    }
+
+    @Override
+    public int uuidCount() {
+        return 1;
+    }
+
+    @Override
+    public void forEach(LongConsumer consumer) {
+        consumer.accept(this.mostSignificantBits);
+        consumer.accept(this.leastSignificantBits);
+    }
+
+    @Override
     public Concept meaning() {
-        return Get.entityService().getEntityFast(meaningNid);
+        return EntityService.get().getEntityFast(meaningNid);
     }
 
     @Override
@@ -254,7 +271,7 @@ public class EntityVertex implements Vertex, VertexId {
         if (propertyConcept instanceof ConceptFacade) {
             return propertyFast((ConceptFacade) propertyConcept);
         }
-        return (T) properties.get(Get.entityService().nidForComponent(propertyConcept));
+        return (T) properties.get(EntityService.get().nidForComponent(propertyConcept));
     }
 
     public <T> T propertyFast(ConceptFacade conceptFacade) {

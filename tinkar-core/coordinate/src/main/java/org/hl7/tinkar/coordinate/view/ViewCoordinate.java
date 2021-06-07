@@ -3,6 +3,9 @@ package org.hl7.tinkar.coordinate.view;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinate;
+import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculator;
+import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculatorDelegate;
+import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculatorWithCache;
 import org.hl7.tinkar.coordinate.logic.LogicCoordinate;
 import org.hl7.tinkar.coordinate.navigation.NavigationCoordinate;
 import org.hl7.tinkar.coordinate.stamp.StampCoordinate;
@@ -11,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public interface ViewCoordinate {
+public interface ViewCoordinate extends LanguageCalculatorDelegate {
 
     static UUID getViewUuid(ViewCoordinate viewCalculator) {
         throw new UnsupportedOperationException();
@@ -28,6 +31,12 @@ public interface ViewCoordinate {
     }
 
     ViewCoordinateRecord toViewCoordinateRecord();
+
+    @Override
+    default LanguageCalculator languageCalculator() {
+        return LanguageCalculatorWithCache.getCalculator(stampCoordinate().toStampCoordinateRecord(),
+                languageCoordinateList());
+    }
 
     StampCoordinate stampCoordinate();
 

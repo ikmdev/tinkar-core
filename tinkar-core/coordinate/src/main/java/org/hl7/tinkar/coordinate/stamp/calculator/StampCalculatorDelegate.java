@@ -2,12 +2,18 @@ package org.hl7.tinkar.coordinate.stamp.calculator;
 
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.util.functional.TriConsumer;
+import org.hl7.tinkar.coordinate.stamp.StateSet;
 import org.hl7.tinkar.entity.*;
 
 import java.util.function.BiConsumer;
 
 public interface StampCalculatorDelegate extends StampCalculator {
     StampCalculator stampCalculator();
+
+    @Override
+    default StateSet allowedStates() {
+        return stampCalculator().allowedStates();
+    }
 
     @Override
     default <V extends EntityVersion> Latest<V> latest(Entity<V> chronicle) {

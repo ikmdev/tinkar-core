@@ -3,18 +3,19 @@ package org.hl7.tinkar.coordinate.language.calculator;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.id.IntIdList;
 import org.hl7.tinkar.common.id.IntIds;
+import org.hl7.tinkar.common.util.text.NaturalOrder;
+import org.hl7.tinkar.common.util.time.DateTimeUtil;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinate;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinateRecord;
 import org.hl7.tinkar.coordinate.stamp.StampCoordinate;
+import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.entity.SemanticEntity;
 import org.hl7.tinkar.entity.SemanticEntityVersion;
 import org.hl7.tinkar.coordinate.stamp.calculator.Latest;
-import org.hl7.tinkar.terms.ConceptFacade;
-import org.hl7.tinkar.terms.EntityFacade;
-import org.hl7.tinkar.terms.TinkarTerm;
+import org.hl7.tinkar.terms.*;
 
-import java.util.Optional;
-import java.util.OptionalInt;
+import java.util.*;
+import java.util.function.Function;
 
 public interface LanguageCalculator {
 
@@ -99,6 +100,140 @@ public interface LanguageCalculator {
         return getDescription(entityFacade.nid());
     }
     Optional<String> getTextFromSemanticVersion(SemanticEntityVersion semanticEntityVersion);
+    default String getPreferredDescriptionStringOrNid(int nid) {
+        return toEntityStringOrNid(nid, this::getRegularDescriptionText);
+    }
+    default String getPreferredDescriptionStringOrNid(EntityFacade entityFacade) {
+        return toEntityStringOrNid(entityFacade, this::getRegularDescriptionText);
+    }
+
+    /**
+     * Used where a String property is optionally an Entity XML fragment, or
+     * similar circumstances.
+     *
+     * @param possibleEntityString
+     * @return
+     */
+    default String toPreferredEntityStringOrInputString(String possibleEntityString) {
+        return toEntityStringOrInputString(possibleEntityString, this::getRegularDescriptionText);
+    }
+
+    /**
+     * Used where a String property is optionally an Entity XML fragment, or
+     * similar circumstances.
+     *
+     * @param possibleEntityString
+     * @return
+     */
+    default String toFullyQualifiedEntityStringOrInputString(String possibleEntityString) {
+        return toEntityStringOrInputString(possibleEntityString, this::getFullyQualifiedNameText);
+    }
+
+    default String toEntityStringOrInputString(String possibleEntityString, Function<Integer,Optional<String>> toOptionalEntityString) {
+        Optional<EntityFacade> optionalEntity = ProxyFactory.fromXmlFragmentOptional(possibleEntityString);
+        if (optionalEntity.isPresent()) {
+            Optional<String> optionalEntityString = toOptionalEntityString.apply(optionalEntity.get().nid());
+            return optionalEntityString.get();
+        }
+        return possibleEntityString;
+    }
+
+    default String toEntityStringOrPublicIdAndNid(EntityFacade entityFacade) {
+        return toEntityStringOrPublicIdAndNid(entityFacade, this::getRegularDescriptionText);
+    }
+
+    default String toEntityStringOrNid(int nid, Function<Integer,Optional<String>> toOptionalEntityString) {
+        Optional<String> optionalEntityString = toOptionalEntityString.apply(nid);
+        if (optionalEntityString.isPresent()) {
+            return optionalEntityString.get();
+        }
+        return Integer.toString(nid);
+    }
+
+    default String toEntityStringOrNid(EntityFacade entityFacade, Function<EntityFacade,Optional<String>> toOptionalEntityString) {
+        Optional<String> optionalEntityString = toOptionalEntityString.apply(entityFacade);
+        if (optionalEntityString.isPresent()) {
+            return optionalEntityString.get();
+        }
+        return Integer.toString(entityFacade.nid());
+    }
+
+    default String toEntityStringOrPublicIdAndNid(EntityFacade entityFacade, Function<EntityFacade,Optional<String>> toOptionalEntityString) {
+        Optional<String> optionalEntityString = toOptionalEntityString.apply(entityFacade);
+        if (optionalEntityString.isPresent()) {
+            return optionalEntityString.get();
+        }
+        return Entity.get(entityFacade).get().publicId().toString() + " <" + Integer.toString(entityFacade.nid()) + ">";
+    }
+
+    default String toEntityString(Object object, Function<EntityFacade,String> toEntityString) {
+        StringBuilder sb = new StringBuilder();
+        toEntityString(object, toEntityString, sb);
+        return sb.toString();
+    }
+
+    default void toEntityString(Object object, Function<EntityFacade,String> toEntityString, StringBuilder sb) {
+        if (object == null) {
+            return;
+        }
+        if (object instanceof EntityFacade entityFacade) {
+            sb.append(toEntityString.apply(entityFacade));
+        } else if (object instanceof Collection) {
+
+            if (object instanceof Set) {
+                // a set, so order does not matter. Alphabetic order desirable.
+                Set set = (Set) object;
+                if (set.isEmpty()) {
+                    toEntityString(set.toArray(), toEntityString, sb);
+                } else {
+                    Object[] conceptSpecs = set.toArray();
+                    Arrays.sort(conceptSpecs, (o1, o2) ->
+                            NaturalOrder.compareStrings(toEntityString.apply((EntityFacade) o1), toEntityString.apply((EntityFacade) o2)));
+                    toEntityString(conceptSpecs, toEntityString, sb);
+                }
+            } else {
+                // not a set, so order matters
+                Collection collection = (Collection) object;
+                toEntityString(collection.toArray(), toEntityString, sb);
+            }
+        } else if (object.getClass().isArray()) {
+            Object[] a = (Object[]) object;
+            final int iMax = a.length - 1;
+            if (iMax == -1) {
+                sb.append("[]");
+            } else {
+                sb.append('[');
+                int indent = sb.length();
+                for (int i = 0; ; i++) {
+                    if (i > 0) {
+                        sb.append('\u200A');
+                    }
+                    sb.append(toEntityString(a[i], toEntityString));
+                    if (i == iMax) {
+                        sb.append(']').toString();
+                        return;
+                    }
+                    if (iMax > 0) {
+                        sb.append(",\n");
+                        for (int indentIndex = 0; indentIndex < indent; indentIndex++) {
+                            sb.append('\u2004'); //
+                        }
+                    }
+                }
+            }
+        } else if (object instanceof String string) {
+            Optional<EntityFacade> optionalEntity = ProxyFactory.fromXmlFragmentOptional(string);
+            if (optionalEntity.isPresent()) {
+                sb.append(toEntityString(optionalEntity.get(), toEntityString));
+            } else {
+                sb.append(string);
+            }
+        } else if (object instanceof Long) {
+            sb.append(DateTimeUtil.format((Long) object));
+        } else {
+            sb.append(object.toString());
+        }
+    }
 
 
     /**

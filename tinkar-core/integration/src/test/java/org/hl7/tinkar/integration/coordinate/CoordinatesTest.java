@@ -8,16 +8,15 @@ import org.hl7.tinkar.common.service.ServiceKeys;
 import org.hl7.tinkar.common.service.ServiceProperties;
 import org.hl7.tinkar.coordinate.Calculators;
 import org.hl7.tinkar.coordinate.Coordinates;
+import org.hl7.tinkar.coordinate.PathService;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinateRecord;
 import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculatorWithCache;
 import org.hl7.tinkar.coordinate.stamp.StampPositionRecord;
-import org.hl7.tinkar.coordinate.stamp.calculator.PathProvider;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import org.hl7.tinkar.coordinate.stamp.StampCoordinateRecord;
 import org.hl7.tinkar.coordinate.view.calculator.ViewCalculator;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.coordinate.stamp.calculator.Latest;
-import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.integration.TestConstants;
 import org.hl7.tinkar.terms.TinkarTerm;
 import org.testng.Assert;
@@ -51,7 +50,7 @@ class CoordinatesTest {
         for (int pathNid : PrimitiveData.get().entityNidsOfPattern(PATH_ORIGINS_PATTERN.nid())) {
             SemanticEntity originSemantic = EntityService.get().getEntityFast(pathNid);
             Entity pathEntity = EntityService.get().getEntityFast(originSemantic.referencedComponentNid());
-            ImmutableSet<StampPositionRecord> origin = PathProvider.getPathOrigins(originSemantic.referencedComponentNid());
+            ImmutableSet<StampPositionRecord> origin = PathService.get().getPathOrigins(originSemantic.referencedComponentNid());
             LOG.info("Path '" + PrimitiveData.text(pathEntity.nid()) + "' has an origin of: " + origin);
         }
     }
@@ -67,14 +66,14 @@ class CoordinatesTest {
 
         Entity.provider().forEachSemanticForComponent(TinkarTerm.ENGLISH_LANGUAGE.nid(), semanticEntity -> {
             LOG.info(semanticEntity.toString() + "\n");
-            for (int acceptibilityNid : Get.entityService().semanticNidsForComponentOfPattern(semanticEntity.nid(), TinkarTerm.US_DIALECT_PATTERN.nid())) {
-                LOG.info("  Acceptability US: \n    " + Get.entityService().getEntityFast(acceptibilityNid));
+            for (int acceptibilityNid : EntityService.get().semanticNidsForComponentOfPattern(semanticEntity.nid(), TinkarTerm.US_DIALECT_PATTERN.nid())) {
+                LOG.info("  Acceptability US: \n    " + EntityService.get().getEntityFast(acceptibilityNid));
             }
         });
         Entity.provider().forEachSemanticForComponent(TinkarTerm.NECESSARY_SET.nid(), semanticEntity -> {
             LOG.info(semanticEntity.toString() + "\n");
-            for (int acceptibilityNid : Get.entityService().semanticNidsForComponentOfPattern(semanticEntity.nid(), TinkarTerm.US_DIALECT_PATTERN.nid())) {
-                LOG.info("  Acceptability US: \n    " + Get.entityService().getEntityFast(acceptibilityNid));
+            for (int acceptibilityNid : EntityService.get().semanticNidsForComponentOfPattern(semanticEntity.nid(), TinkarTerm.US_DIALECT_PATTERN.nid())) {
+                LOG.info("  Acceptability US: \n    " + EntityService.get().getEntityFast(acceptibilityNid));
             }
         });
     }
@@ -91,7 +90,7 @@ class CoordinatesTest {
     @Test
     void navigate() {
         ViewCalculator viewCalculator = Calculators.View.Default();
-        IntIdList children = viewCalculator.children(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
+        IntIdList children = viewCalculator.childrenOf(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
         StringBuilder sb = new StringBuilder("Focus: [");
         Optional<String> optionalName = viewCalculator.getRegularDescriptionText(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
         optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(TinkarTerm.DESCRIPTION_ACCEPTABILITY.nid()));
@@ -103,7 +102,7 @@ class CoordinatesTest {
         }
         sb.delete(sb.length() - 2, sb.length());
         sb.append("]\nparents: [");
-        IntIdList parents = viewCalculator.parents(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
+        IntIdList parents = viewCalculator.parentsOf(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
         for (int parentNid: parents.toArray()) {
             optionalName = viewCalculator.getRegularDescriptionText(parentNid);
             optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(parentNid));
@@ -117,7 +116,7 @@ class CoordinatesTest {
     @Test
     void sortedNavigate() {
         ViewCalculator viewCalculator = Calculators.View.Default();
-        IntIdList children = viewCalculator.sortedChildren(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
+        IntIdList children = viewCalculator.sortedChildrenOf(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
         StringBuilder sb = new StringBuilder("Focus: [");
         Optional<String> optionalName = viewCalculator.getRegularDescriptionText(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
         optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(TinkarTerm.DESCRIPTION_ACCEPTABILITY.nid()));
@@ -129,7 +128,7 @@ class CoordinatesTest {
         }
         sb.delete(sb.length() - 2, sb.length());
         sb.append("]\nsorted parents: [");
-        IntIdList parents = viewCalculator.sortedParents(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
+        IntIdList parents = viewCalculator.sortedParentsOf(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
         for (int parentNid: parents.toArray()) {
             optionalName = viewCalculator.getRegularDescriptionText(parentNid);
             optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(parentNid));

@@ -8,7 +8,6 @@ import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.component.FieldDefinition;
 import org.hl7.tinkar.component.PatternVersion;
-import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.terms.ConceptFacade;
 
@@ -28,12 +27,12 @@ public class PatternEntityVersion
 
     @Override
     public Concept referencedComponentPurpose() {
-        return Get.entityService().getEntityFast(referencedComponentPurposeNid);
+        return EntityService.get().getEntityFast(referencedComponentPurposeNid);
     }
 
     @Override
     public Concept referencedComponentMeaning() {
-        return Get.entityService().getEntityFast(referencedComponentMeaningNid);
+        return EntityService.get().getEntityFast(referencedComponentMeaningNid);
     }
 
     @Override
@@ -114,8 +113,8 @@ public class PatternEntityVersion
     public static PatternEntityVersion make(PatternEntity patternEntity, PatternVersion<FieldDefinition> patternVersion) {
         PatternEntityVersion version = new PatternEntityVersion();
         version.fill(patternEntity, patternVersion);
-        version.referencedComponentPurposeNid = Get.entityService().nidForComponent(patternVersion.referencedComponentPurpose());
-        version.referencedComponentMeaningNid = Get.entityService().nidForComponent(patternVersion.referencedComponentMeaning());
+        version.referencedComponentPurposeNid = EntityService.get().nidForComponent(patternVersion.referencedComponentPurpose());
+        version.referencedComponentMeaningNid = EntityService.get().nidForComponent(patternVersion.referencedComponentMeaning());
         version.fieldDefinitionForEntities.clear();
         for (FieldDefinition fieldDefinition: patternVersion.fieldDefinitions()) {
             version.fieldDefinitionForEntities.add(FieldDefinitionForEntity.make(version, fieldDefinition));

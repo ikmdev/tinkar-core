@@ -16,7 +16,7 @@ import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
 import org.hl7.tinkar.common.util.uuid.UuidUtil;
-import org.hl7.tinkar.provider.websocket.client.internal.Get;
+import org.hl7.tinkar.entity.EntityService;
 
 import java.net.URI;
 import java.util.UUID;
@@ -90,6 +90,11 @@ public class DataProviderWebsocketClient
 
     @Override
     public void forEachSemanticNidForComponent(int componentNid, IntProcedure procedure) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long writeSequence() {
         throw new UnsupportedOperationException();
     }
 
@@ -170,7 +175,7 @@ public class DataProviderWebsocketClient
                         byte[] readData = new byte[length];
                         readBuf.read(readData);
                         readDataReference.set(readData);
-                        System.out.println("Received: " + Get.entityService().unmarshalChronology(readData));
+                        System.out.println("Received: " + EntityService.get().unmarshalChronology(readData));
 
                     });
         });
@@ -212,7 +217,7 @@ public class DataProviderWebsocketClient
                             int length = readBuf.readInt();
                             byte[] readData = new byte[length];
                             readBuf.read(readData);
-                            System.out.println("Received: " + Get.entityService().unmarshalChronology(readData));
+                            System.out.println("Received: " + EntityService.get().unmarshalChronology(readData));
                         })
                         .whenComplete(webSocket::close));
     }

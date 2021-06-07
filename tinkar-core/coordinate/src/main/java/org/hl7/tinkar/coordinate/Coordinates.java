@@ -181,7 +181,7 @@ public class Coordinates   {
         }
 
         public static StampCoordinateRecord DevelopmentLatestActiveOnly() {
-            return StampCoordinateRecord.make(StateSet.ACTIVE_ONLY,
+            return StampCoordinateRecord.make(StateSet.ACTIVE,
                     Position.LatestOnDevelopment(),
                     IntIds.set.empty());
         }
@@ -193,7 +193,7 @@ public class Coordinates   {
         }
 
         public static StampCoordinateRecord MasterLatestActiveOnly() {
-            return StampCoordinateRecord.make(StateSet.ACTIVE_ONLY,
+            return StampCoordinateRecord.make(StateSet.ACTIVE,
                     Position.LatestOnMaster(),
                     IntIds.set.empty());
         }

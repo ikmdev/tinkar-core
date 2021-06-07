@@ -10,7 +10,6 @@ import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.Chronology;
 import org.hl7.tinkar.component.Component;
 import org.hl7.tinkar.component.Version;
-import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.terms.EntityFacade;
 
@@ -24,31 +23,31 @@ public abstract class Entity<T extends EntityVersion> extends PublicIdForEntity
     public static final byte ENTITY_FORMAT_VERSION = 1;
 
     public static EntityService provider() {
-        return Get.entityService();
+        return EntityService.get();
     }
 
     public static int nid(Component component) {
-        return Get.entityService().nidForComponent(component);
+        return EntityService.get().nidForComponent(component);
     }
 
     public static <T extends Entity<V>, V extends EntityVersion> Optional<T> get(int nid) {
-        return Get.entityService().getEntity(nid);
+        return EntityService.get().getEntity(nid);
     }
 
     public static <T extends Entity<V>, V extends EntityVersion> Optional<T> get(EntityFacade facade) {
-        return Get.entityService().getEntity(facade.nid());
+        return EntityService.get().getEntity(facade.nid());
     }
 
     public static <T extends Entity<V>, V extends EntityVersion> T getFast(int nid) {
-        return Get.entityService().getEntityFast(nid);
+        return EntityService.get().getEntityFast(nid);
     }
 
     public static <T extends Entity<V>, V extends EntityVersion> T getFast(EntityFacade facade) {
-        return Get.entityService().getEntityFast(facade.nid());
+        return EntityService.get().getEntityFast(facade.nid());
     }
 
     public static StampEntity getStamp(int nid) {
-        return Get.entityService().getStampFast(nid);
+        return EntityService.get().getStampFast(nid);
     }
 
     protected int nid;
@@ -103,7 +102,7 @@ public abstract class Entity<T extends EntityVersion> extends PublicIdForEntity
     protected abstract void finishEntityRead(Chronology<Version> chronology);
 
     protected final void fill(Chronology<Version> chronology) {
-        this.nid = Get.entityService().nidForPublicId(chronology.publicId());
+        this.nid = EntityService.get().nidForPublicId(chronology.publicId());
         ImmutableList<UUID> componentUuids = chronology.publicId().asUuidList();
         UUID firstUuid = componentUuids.get(0);
 

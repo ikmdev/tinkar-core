@@ -2,22 +2,17 @@ package org.hl7.tinkar.entity.load;
 
 import org.hl7.tinkar.common.service.TrackingCallable;
 import org.hl7.tinkar.common.util.io.CountingInputStream;
-import org.hl7.tinkar.entity.internal.Get;
+import org.hl7.tinkar.entity.EntityService;
 import org.hl7.tinkar.dto.ConceptChronologyDTO;
 import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.dto.PatternChronologyDTO;
 import org.hl7.tinkar.dto.binary.TinkarInput;
-import org.hl7.tinkar.common.util.time.Stopwatch;
 import org.hl7.tinkar.dto.SemanticChronologyDTO;
-import org.hl7.tinkar.terms.ConceptProxy;
-import org.hl7.tinkar.terms.TinkarTerm;
 
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
@@ -59,19 +54,19 @@ public class LoadEntitiesFromDtoFile extends TrackingCallable<Integer> {
                 switch (fieldDataType) {
                     case CONCEPT_CHRONOLOGY: {
                         ConceptChronologyDTO ccDTO = ConceptChronologyDTO.make(tinkIn);
-                        Get.entityService().putChronology(ccDTO);
+                        EntityService.get().putChronology(ccDTO);
                         importCount.incrementAndGet();
                     }
                     break;
                     case SEMANTIC_CHRONOLOGY: {
                         SemanticChronologyDTO scDTO = SemanticChronologyDTO.make(tinkIn);
-                        Get.entityService().putChronology(scDTO);
+                        EntityService.get().putChronology(scDTO);
                         importCount.incrementAndGet();
                     }
                     break;
                     case PATTERN_CHRONOLOGY: {
                         PatternChronologyDTO dsDTO = PatternChronologyDTO.make(tinkIn);
-                        Get.entityService().putChronology(dsDTO);
+                        EntityService.get().putChronology(dsDTO);
                         importCount.incrementAndGet();
                     }
                     break;

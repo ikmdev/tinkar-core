@@ -7,6 +7,7 @@ import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.hl7.tinkar.collection.KeyType;
 import org.hl7.tinkar.collection.SpinedIntIntMapAtomic;
 import org.hl7.tinkar.common.service.Executor;
+import org.hl7.tinkar.common.service.NidGenerator;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
 
 import java.util.ArrayList;
@@ -16,13 +17,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
 
 
-public class ProviderEphemeral implements PrimitiveDataService {
+public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
 
     protected static AtomicReference<ProviderEphemeral> providerReference = new AtomicReference<>();
     protected static ProviderEphemeral singleton;
+    protected static LongAdder writeSequence = new LongAdder();
 
     public static PrimitiveDataService provider() {
         if (singleton == null) {
@@ -82,7 +85,14 @@ public class ProviderEphemeral implements PrimitiveDataService {
     public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value) {
         nidToPatternNidMap.put(nid, patternNid);
         nidToReferencedComponentNidMap.put(nid, referencedComponentNid);
-        return nidComponentMap.merge(nid, value, PrimitiveDataService::merge);
+        byte[] mergedBytes = nidComponentMap.merge(nid, value, PrimitiveDataService::merge);
+        writeSequence.increment();
+        return mergedBytes;
+    }
+
+    @Override
+    public long writeSequence() {
+        return writeSequence.sum();
     }
 
     @Override
@@ -113,11 +123,16 @@ public class ProviderEphemeral implements PrimitiveDataService {
 
     @Override
     public int nidForUuids(UUID... uuids) {
-        return PrimitiveDataService.nidForUuids(uuidNidMap, nextNid, uuids);
+        return PrimitiveDataService.nidForUuids(uuidNidMap, this, uuids);
     }
 
     @Override
     public int nidForUuids(ImmutableList<UUID> uuidList) {
-        return PrimitiveDataService.nidForUuids(uuidNidMap, nextNid, uuidList);
+        return PrimitiveDataService.nidForUuids(uuidNidMap, this, uuidList);
+    }
+
+    @Override
+    public int newNid() {
+        return nextNid.getAndIncrement();
     }
 }

@@ -13,6 +13,7 @@ import org.hl7.tinkar.common.id.IntIds;
 import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
+import org.hl7.tinkar.coordinate.PathService;
 import org.hl7.tinkar.coordinate.stamp.calculator.PathProvider;
 import org.hl7.tinkar.terms.ConceptFacade;
 import org.hl7.tinkar.terms.TinkarTerm;
@@ -83,7 +84,7 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
         }
         return SINGLETONS.computeIfAbsent(pathConceptNid,
                 pathNid -> {
-                    ImmutableSet<StampPositionRecord> pathOrigins = PathProvider.getPathOrigins(pathNid);
+                    ImmutableSet<StampPositionRecord> pathOrigins = PathService.get().getPathOrigins(pathNid);
                     return new StampPathImmutable(pathNid, pathOrigins);
                 });
     }

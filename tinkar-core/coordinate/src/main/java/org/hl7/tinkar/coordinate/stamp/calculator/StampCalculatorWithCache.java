@@ -104,6 +104,11 @@ public class StampCalculatorWithCache implements StampCalculator {
         return patternVersionCache.get(patternNid, nid -> latest(patternNid));
     }
 
+    @Override
+    public StateSet allowedStates() {
+        return allowedStates;
+    }
+
     /**
      * Mapping from pathNid to each segment for that pathNid. There is one entry
      * for each path reachable antecedent to the destination position of the
@@ -893,7 +898,7 @@ public class StampCalculatorWithCache implements StampCalculator {
     }
 
     private static Optional<StampPathImmutable> constructFromSemantics(int stampPathNid) {
-        int[] nids = EntityService.get().semanticNidsForComponentOfPattern(stampPathNid, TinkarTerm.PATH.nid());
+        int[] nids = EntityService.get().semanticNidsForComponentOfPattern(stampPathNid, TinkarTerm.PATHS_ASSEMBLAGE.nid());
         if (nids.length == 1) {
             int pathId = nids[0];
             assert pathId == stampPathNid:

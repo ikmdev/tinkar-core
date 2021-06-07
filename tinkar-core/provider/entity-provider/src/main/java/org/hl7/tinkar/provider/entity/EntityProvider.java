@@ -3,6 +3,8 @@ package org.hl7.tinkar.provider.entity;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import io.activej.bytebuf.ByteBuf;
+import io.smallrye.mutiny.Multi;
+import io.smallrye.mutiny.operators.multi.processors.BroadcastProcessor;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.service.CachingService;
@@ -17,9 +19,12 @@ import org.hl7.tinkar.entity.*;
 import com.google.auto.service.AutoService;
 import org.hl7.tinkar.terms.EntityFacade;
 import org.hl7.tinkar.terms.TinkarTerm;
+import org.reactivestreams.FlowAdapters;
+import org.reactivestreams.Subscriber;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.Flow;
 import java.util.function.Consumer;
 
 import static org.hl7.tinkar.terms.TinkarTerm.DESCRIPTION_PATTERN;
@@ -35,18 +40,36 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
             STRING_CACHE.invalidateAll();
         }
     }
+    protected static final System.Logger LOG = System.getLogger(EntityProvider.class.getName());
+
     private static final Cache<Integer, String> STRING_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
 
+    //Multi<Entity<? extends EntityVersion>> chronologyBroadcaster = BroadcastProcessor.create().toHotStream();
+    //  <T extends Entity<? extends EntityVersion>>
 
+    final Multi<Entity<? extends EntityVersion>> entityStream;
+    final BroadcastProcessor<Entity<? extends EntityVersion>> processor;
+
+
+    /**
+     * TODO elegant shutdown of entityStream and others
+     */
     public EntityProvider() {
         System.out.println("Constructing EntityProvider");
+        this.processor = BroadcastProcessor.create();
+        this.entityStream = processor.toHotStream();
     }
+    @Override
+    public void subscribe(Flow.Subscriber<? super Entity<? extends EntityVersion>> subscriber) {
+        entityStream.subscribe().withSubscriber(FlowAdapters.toSubscriber(subscriber));
+    }
+
 
     @Override
     public <T extends Chronology<V>, V extends Version> void putChronology(T chronology) {
         if (chronology instanceof Entity entity) {
             putEntity(entity);
-        } else {
+         } else {
             putEntity(EntityFactory.make(chronology));
             for (Version version: chronology.versions()) {
                 Stamp stamp = version.stamp();
@@ -127,6 +150,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         } else {
             PrimitiveData.get().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, entity.getBytes());
         }
+        processor.onNext(entity);
     }
 
     @Override

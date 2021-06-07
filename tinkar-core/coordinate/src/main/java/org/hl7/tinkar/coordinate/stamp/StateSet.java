@@ -21,11 +21,11 @@ public class StateSet implements ImmutableCoordinate, Iterable<State> {
             new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
                     ConcurrentReferenceHashMap.ReferenceType.WEAK);
 
-    public static final StateSet ACTIVE_ONLY = make(State.ACTIVE);
-    public static final StateSet ACTIVE_AND_INACTIVE = make(State.ACTIVE, State.INACTIVE, State.WITHDRAWN);
-    public static final StateSet INACTIVE = make(State.INACTIVE, State.WITHDRAWN);
+    public static final StateSet ACTIVE = make(State.ACTIVE);
+    public static final StateSet ACTIVE_AND_INACTIVE = make(State.ACTIVE, State.INACTIVE);
+    public static final StateSet ACTIVE_INACTIVE_AND_WITHDRAWN = make(State.ACTIVE, State.INACTIVE, State.WITHDRAWN);
+    public static final StateSet INACTIVE = make(State.INACTIVE);
     public static final StateSet WITHDRAWN = make(State.WITHDRAWN);
-    public static final StateSet INACTIVE_ONLY = make(State.INACTIVE);
 
     private static final int marshalVersion = 1;
 
@@ -139,7 +139,7 @@ public class StateSet implements ImmutableCoordinate, Iterable<State> {
     }
 
     public boolean isActiveOnly() {
-        return (this.bits ^ ACTIVE_ONLY.bits) == 0;
+        return (this.bits ^ ACTIVE.bits) == 0;
     }
 
     @Override

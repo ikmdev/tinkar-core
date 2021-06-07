@@ -37,7 +37,7 @@ public record NavigationCoordinateRecord(IntIdSet navigationPatternNids,
     }
 
     public static NavigationCoordinateRecord make(IntIdSet navigationPatternNids) {
-        return new NavigationCoordinateRecord(navigationPatternNids, StateSet.ACTIVE_ONLY, true, IntIds.list.empty());
+        return new NavigationCoordinateRecord(navigationPatternNids, StateSet.ACTIVE, true, IntIds.list.empty());
     }
 
     public static NavigationCoordinateRecord make(IntIdSet navigationPatternNids,
@@ -51,25 +51,25 @@ public record NavigationCoordinateRecord(IntIdSet navigationPatternNids,
     public static NavigationCoordinateRecord makeInferred() {
         return new NavigationCoordinateRecord(
                 IntIds.set.of(TinkarTerm.INFERRED_NAVIGATION_PATTERN.nid()),
-                StateSet.ACTIVE_ONLY, true, IntIds.list.empty());
+                StateSet.ACTIVE, true, IntIds.list.empty());
     }
 
     public static NavigationCoordinateRecord makeStated() {
         return new NavigationCoordinateRecord(
                 IntIds.set.of(TinkarTerm.STATED_NAVIGATION_PATTERN.nid()),
-                StateSet.ACTIVE_ONLY, true, IntIds.list.empty());
+                StateSet.ACTIVE, true, IntIds.list.empty());
     }
 
     public static NavigationCoordinateRecord makeInferred(LogicCoordinate logicCoordinate) {
         return new NavigationCoordinateRecord(
                 IntIds.set.of(logicCoordinate.inferredAxiomsPatternNid()),
-                StateSet.ACTIVE_ONLY, true, IntIds.list.empty());
+                StateSet.ACTIVE, true, IntIds.list.empty());
     }
 
     public static NavigationCoordinateRecord makeStated(LogicCoordinate logicCoordinate) {
         return new NavigationCoordinateRecord(
                 IntIds.set.of(logicCoordinate.statedAxiomsPatternNid()),
-                StateSet.ACTIVE_ONLY, true, IntIds.list.empty());
+                StateSet.ACTIVE, true, IntIds.list.empty());
     }
 
     public static NavigationCoordinateRecord make(PremiseType premiseType) {

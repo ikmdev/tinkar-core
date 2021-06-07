@@ -3,6 +3,7 @@ package org.hl7.tinkar.coordinate.stamp.calculator;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.util.functional.QuadConsumer;
 import org.hl7.tinkar.common.util.functional.TriConsumer;
+import org.hl7.tinkar.coordinate.stamp.StateSet;
 import org.hl7.tinkar.coordinate.stamp.calculator.Latest;
 import org.hl7.tinkar.coordinate.stamp.calculator.RelativePosition;
 import org.hl7.tinkar.entity.*;
@@ -16,6 +17,8 @@ public interface StampCalculator {
     <V extends EntityVersion> Latest<V> latest(Entity<V> chronicle);
 
     RelativePosition relativePosition(int stampNid, int stampNid2);
+
+    StateSet allowedStates();
 
     default RelativePosition relativePosition(EntityVersion v1, EntityVersion v2) {
         return relativePosition(v1.stampNid(), v2.stampNid());

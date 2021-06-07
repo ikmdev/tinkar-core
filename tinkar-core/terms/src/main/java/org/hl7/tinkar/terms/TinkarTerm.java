@@ -3,23 +3,23 @@ package org.hl7.tinkar.terms;
 import java.util.UUID;
 
 public class TinkarTerm {
-    public static final ConceptProxy DESCRIPTION_PATTERN =
-            ConceptProxy.make("Description pattern", UUID.fromString("a4de0039-2625-5842-8a4c-d1ce6aebf021"));
+    public static final PatternProxy DESCRIPTION_PATTERN =
+            PatternProxy.make("Description pattern", UUID.fromString("a4de0039-2625-5842-8a4c-d1ce6aebf021"));
 
-    public static final ConceptProxy PATH_ORIGINS_PATTERN =
-            ConceptProxy.make("Path Origin pattern", UUID.fromString("70f89dd5-2cdb-59bb-bbaa-98527513547c"));
+    public static final PatternProxy PATH_ORIGINS_PATTERN =
+            PatternProxy.make("Path Origin pattern", UUID.fromString("70f89dd5-2cdb-59bb-bbaa-98527513547c"));
 
-    public static final ConceptProxy GB_DIALECT_PATTERN =
-            ConceptProxy.make("GB English dialect", UUID.fromString("561f817a-130e-5e56-984d-910e9991558c"));
+    public static final PatternProxy GB_DIALECT_PATTERN =
+            PatternProxy.make("GB English dialect", UUID.fromString("561f817a-130e-5e56-984d-910e9991558c"));
 
-    public static final ConceptProxy US_DIALECT_PATTERN =
-            ConceptProxy.make("US Dialect pattern", UUID.fromString("08f9112c-c041-56d3-b89b-63258f070074"));
+    public static final PatternProxy US_DIALECT_PATTERN =
+            PatternProxy.make("US Dialect pattern", UUID.fromString("08f9112c-c041-56d3-b89b-63258f070074"));
 
-    public static final ConceptProxy INFERRED_NAVIGATION_PATTERN =
-            ConceptProxy.make("Inferred navigation", UUID.fromString("a53cc42d-c07e-5934-96b3-2ede3264474e"));
+    public static final PatternProxy INFERRED_NAVIGATION_PATTERN =
+            PatternProxy.make("Inferred navigation", UUID.fromString("a53cc42d-c07e-5934-96b3-2ede3264474e"));
 
-    public static final ConceptProxy STATED_NAVIGATION_PATTERN =
-            ConceptProxy.make("Stated navigation" , UUID.fromString("d02957d6-132d-5b3c-adba-505f5778d998"));
+    public static final PatternProxy STATED_NAVIGATION_PATTERN =
+            PatternProxy.make("Stated navigation" , UUID.fromString("d02957d6-132d-5b3c-adba-505f5778d998"));
 
     public static final PatternProxy EL_PLUS_PLUS_STATED_AXIOMS_PATTERN =
             PatternProxy.make("EL++ stated form pattern", UUID.fromString("e813eb92-7d07-5035-8d43-e81249f5b36e"));
@@ -1256,8 +1256,8 @@ public class TinkarTerm {
      * identified by UUID: {@code
      * <a href="http://localhost:8080/terminology/rest/concept/b1dbb86b-e283-549e-ba94-5cb7dc3190c1">
      * b1dbb86b-e283-549e-ba94-5cb7dc3190c1</a>}.*/
-    public static final ConceptProxy DEPENDENCY_MANAGEMENT_ASSEMBLAGE =
-            ConceptProxy.make("Dependency management assemblage (SOLOR)", UUID.fromString("b1dbb86b-e283-549e-ba94-5cb7dc3190c1"));
+    public static final PatternProxy DEPENDENCY_MANAGEMENT_ASSEMBLAGE =
+            PatternProxy.make("Dependency management assemblage (SOLOR)", UUID.fromString("b1dbb86b-e283-549e-ba94-5cb7dc3190c1"));
 
     /** Java binding for the concept described as <strong><em>Description (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -1690,8 +1690,8 @@ public class TinkarTerm {
      * identified by UUID: {@code
      * <a href="http://localhost:8080/terminology/rest/concept/aca20339-3fb0-540c-99bb-e366f3a30a1b">
      * aca20339-3fb0-540c-99bb-e366f3a30a1b</a>}.*/
-    public static final ConceptProxy EL_PLUS_PLUS_INFERRED_DIGRAPH =
-            ConceptProxy.make("EL++ Inferred Digraph (SOLOR)", UUID.fromString("aca20339-3fb0-540c-99bb-e366f3a30a1b"));
+    public static final PatternProxy EL_PLUS_PLUS_INFERRED_DIGRAPH =
+            PatternProxy.make("EL++ Inferred Digraph (SOLOR)", UUID.fromString("aca20339-3fb0-540c-99bb-e366f3a30a1b"));
 
     /** Java binding for the concept described as <strong><em>EL++ Inferred terminological axioms (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -1711,8 +1711,8 @@ public class TinkarTerm {
      * identified by UUID: {@code
      * <a href="http://localhost:8080/terminology/rest/concept/d67c1c32-95ca-54a5-a4de-8b48312eb292">
      * d67c1c32-95ca-54a5-a4de-8b48312eb292</a>}.*/
-    public static final ConceptProxy EL_PLUS_PLUS_STATED_DIGRAPH =
-            ConceptProxy.make("EL++ Stated Digraph (SOLOR)", UUID.fromString("d67c1c32-95ca-54a5-a4de-8b48312eb292"));
+    public static final PatternProxy EL_PLUS_PLUS_STATED_DIGRAPH =
+            PatternProxy.make("EL++ Stated Digraph (SOLOR)", UUID.fromString("d67c1c32-95ca-54a5-a4de-8b48312eb292"));
 
     /** Java binding for the concept described as <strong><em>EL++ Stated terminological axioms (SOLOR)</em></strong>;
      * identified by UUID: {@code

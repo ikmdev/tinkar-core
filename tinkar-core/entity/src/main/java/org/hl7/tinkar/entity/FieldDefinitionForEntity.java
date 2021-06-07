@@ -4,7 +4,6 @@ package org.hl7.tinkar.entity;
 import io.activej.bytebuf.ByteBuf;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.FieldDefinition;
-import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.terms.ConceptFacade;
 
 public class FieldDefinitionForEntity
@@ -17,17 +16,17 @@ public class FieldDefinitionForEntity
 
     @Override
     public ConceptFacade dataType() {
-        return Get.entityService().getEntityFast(dataTypeNid);
+        return EntityService.get().getEntityFast(dataTypeNid);
     }
 
     @Override
     public ConceptFacade purpose() {
-        return Get.entityService().getEntityFast(purposeNid);
+        return EntityService.get().getEntityFast(purposeNid);
     }
 
     @Override
     public ConceptFacade meaning() {
-        return Get.entityService().getEntityFast(meaningNid);
+        return EntityService.get().getEntityFast(meaningNid);
     }
 
     /**
@@ -43,9 +42,9 @@ public class FieldDefinitionForEntity
 
     public void fill(PatternEntityVersion enclosingVersion, FieldDefinition fieldDefinition) {
         this.enclosingVersion = enclosingVersion;
-        dataTypeNid = Get.entityService().nidForComponent(fieldDefinition.dataType());
-        purposeNid = Get.entityService().nidForComponent(fieldDefinition.purpose());
-        meaningNid = Get.entityService().nidForComponent(fieldDefinition.meaning());
+        dataTypeNid = EntityService.get().nidForComponent(fieldDefinition.dataType());
+        purposeNid = EntityService.get().nidForComponent(fieldDefinition.purpose());
+        meaningNid = EntityService.get().nidForComponent(fieldDefinition.meaning());
     }
 
     public void write(ByteBuf writeBuf) {

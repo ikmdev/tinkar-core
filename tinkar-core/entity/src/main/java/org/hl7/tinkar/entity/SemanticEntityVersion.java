@@ -19,7 +19,6 @@ import org.hl7.tinkar.component.location.PlanarPoint;
 import org.hl7.tinkar.component.location.SpatialPoint;
 import org.hl7.tinkar.entity.graph.DiGraphEntity;
 import org.hl7.tinkar.entity.graph.DiTreeEntity;
-import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.dto.graph.DiGraphDTO;
 import org.hl7.tinkar.dto.graph.DiTreeDTO;
@@ -203,21 +202,21 @@ public class SemanticEntityVersion
             if (field instanceof ComponentWithNid) {
                 writeBuf.writeInt(((ComponentWithNid) field).nid());
             } else {
-                writeBuf.writeInt(Get.entityService().nidForComponent(concept));
+                writeBuf.writeInt(EntityService.get().nidForComponent(concept));
             }
         } else if (field instanceof Semantic semantic) {
             writeBuf.writeByte(FieldDataType.SEMANTIC.token);
             if (field instanceof ComponentWithNid) {
                 writeBuf.writeInt(((ComponentWithNid) field).nid());
             } else {
-                writeBuf.writeInt(Get.entityService().nidForComponent(semantic));
+                writeBuf.writeInt(EntityService.get().nidForComponent(semantic));
             }
         } else if (field instanceof Pattern pattern) {
             writeBuf.writeByte(FieldDataType.PATTERN.token);
             if (field instanceof ComponentWithNid) {
                 writeBuf.writeInt(((ComponentWithNid) field).nid());
             } else {
-                writeBuf.writeInt(Get.entityService().nidForComponent(pattern));
+                writeBuf.writeInt(EntityService.get().nidForComponent(pattern));
             }
         } else if (field instanceof Entity entity) {
             writeBuf.writeByte(FieldDataType.IDENTIFIED_THING.token);
@@ -227,7 +226,7 @@ public class SemanticEntityVersion
             writeBuf.writeInt(proxy.nid());
         } else if (field instanceof Component component) {
             writeBuf.writeByte(FieldDataType.IDENTIFIED_THING.token);
-            writeBuf.writeInt(Get.entityService().nidForComponent(component));
+            writeBuf.writeInt(EntityService.get().nidForComponent(component));
         } else if (field instanceof DiTreeEntity diTreeEntity) {
             writeBuf.writeByte(FieldDataType.DITREE.token);
             writeBuf.write(diTreeEntity.getBytes());
@@ -313,7 +312,7 @@ public class SemanticEntityVersion
             } else if (obj instanceof SpatialPoint) {
                 version.fields.add(obj);
             } else if (obj instanceof Component component) {
-                version.fields.add(EntityProxy.make(Get.entityService().nidForComponent(component)));
+                version.fields.add(EntityProxy.make(EntityService.get().nidForComponent(component)));
             } else if (obj instanceof DiTreeDTO) {
                 DiTree<Vertex> component = (DiTree<Vertex>) obj;
                 version.fields.add(DiTreeEntity.make(component));
@@ -327,14 +326,14 @@ public class SemanticEntityVersion
                     if (publicId == null) {
                         throw new IllegalStateException("PublicId cannot be null");
                     }
-                    idSet.add(Get.entityService().nidForPublicId(publicId));
+                    idSet.add(EntityService.get().nidForPublicId(publicId));
                 });
                 version.fields.add(IntIds.set.ofAlreadySorted(idSet.toSortedArray()));
             } else if (obj instanceof PublicIdList) {
                 PublicIdList<PublicId> component = (PublicIdList<PublicId>) obj;
                 MutableIntList idList = IntLists.mutable.withInitialCapacity(component.size());
                 component.forEach(publicId -> {
-                    idList.add(Get.entityService().nidForPublicId(publicId));
+                    idList.add(EntityService.get().nidForPublicId(publicId));
                 });
                 version.fields.add(IntIds.list.of(idList.toArray()));
             } else {

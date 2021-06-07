@@ -1,5 +1,8 @@
 import org.hl7.tinkar.common.service.CachingService;
+import org.hl7.tinkar.coordinate.stamp.calculator.PathProvider;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
+import org.hl7.tinkar.coordinate.PathService;
+
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -24,7 +27,11 @@ module org.hl7.tinkar.coordinate {
     requires static java.compiler;
     requires org.hl7.tinkar.entity;
 
-    provides CachingService with StampCalculatorWithCache.CacheProvider;
+    provides CachingService with
+            StampCalculatorWithCache.CacheProvider;
+
+    provides PathService with PathProvider;
 
     uses CachingService;
+    uses PathService;
 }

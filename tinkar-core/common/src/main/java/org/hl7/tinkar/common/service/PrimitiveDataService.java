@@ -13,13 +13,11 @@ import org.eclipse.collections.api.set.MutableSet;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.hl7.tinkar.common.id.PublicId;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ObjIntConsumer;
 
 public interface PrimitiveDataService {
@@ -47,6 +45,8 @@ public interface PrimitiveDataService {
             }
         }
     }
+
+    long writeSequence();
 
     void close();
 
@@ -113,7 +113,7 @@ public interface PrimitiveDataService {
 
     static int valueOrGenerateForList(ListIterable<UUID> sortedUuidList,
                                       ConcurrentMap<UUID, Integer> uuidNidMap,
-                                      AtomicInteger nextNid) {
+                                      NidGenerator nidGenerator) {
         boolean missingMap = false;
         int foundValue = Integer.MIN_VALUE;
 
@@ -140,7 +140,7 @@ public interface PrimitiveDataService {
             return foundValue;
         }
         if (foundValue == Integer.MIN_VALUE) {
-            foundValue = valueOrGenerateAndPut(sortedUuidList.get(0), uuidNidMap, nextNid);
+            foundValue = valueOrGenerateAndPut(sortedUuidList.get(0), uuidNidMap, nidGenerator);
         }
         for (UUID uuid: sortedUuidList) {
             uuidNidMap.put(uuid, foundValue);
@@ -148,37 +148,37 @@ public interface PrimitiveDataService {
         return foundValue;
     }
 
-    static int nidForUuids(ConcurrentMap<UUID, Integer> uuidNidMap, AtomicInteger nextNid, ImmutableList<UUID> uuidList) {
+    static int nidForUuids(ConcurrentMap<UUID, Integer> uuidNidMap, NidGenerator nidGenerator, ImmutableList<UUID> uuidList) {
         switch (uuidList.size()) {
             case 0:
                 throw new IllegalStateException("uuidList cannot be empty");
             case 1: {
-                return valueOrGenerateAndPut(uuidList.get(0), uuidNidMap, nextNid);
+                return valueOrGenerateAndPut(uuidList.get(0), uuidNidMap, nidGenerator);
             }
         }
-        return valueOrGenerateForList(uuidList.toSortedList(), uuidNidMap, nextNid);
+        return valueOrGenerateForList(uuidList.toSortedList(), uuidNidMap, nidGenerator);
     }
 
     static int valueOrGenerateAndPut(UUID uuid,
                                      ConcurrentMap<UUID, Integer> uuidNidMap,
-                                     AtomicInteger nextNid) {
+                                     NidGenerator nidGenerator) {
         Integer nid = uuidNidMap.get(uuid);
         if (nid != null) {
             return nid;
         }
-        nid = uuidNidMap.computeIfAbsent(uuid, uuidKey -> nextNid.getAndIncrement());
+        nid = uuidNidMap.computeIfAbsent(uuid, uuidKey -> nidGenerator.newNid());
         return nid;
     }
 
-    static int nidForUuids(ConcurrentMap<UUID, Integer> uuidNidMap, AtomicInteger nextNid, UUID... uuids) {
+    static int nidForUuids(ConcurrentMap<UUID, Integer> uuidNidMap, NidGenerator nidGenerator, UUID... uuids) {
         switch (uuids.length) {
             case 0:
                 throw new IllegalStateException("uuidList cannot be empty");
             case 1:
-                return valueOrGenerateAndPut(uuids[0], uuidNidMap, nextNid);
+                return valueOrGenerateAndPut(uuids[0], uuidNidMap, nidGenerator);
         }
         Arrays.sort(uuids);
-        return valueOrGenerateForList(Lists.immutable.of(uuids), uuidNidMap, nextNid);
+        return valueOrGenerateForList(Lists.immutable.of(uuids), uuidNidMap, nidGenerator);
     }
 
 

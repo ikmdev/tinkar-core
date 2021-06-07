@@ -6,6 +6,7 @@ import org.hl7.tinkar.collection.ConcurrentUuidIntHashMap;
 import org.hl7.tinkar.collection.KeyType;
 import org.hl7.tinkar.collection.SpinedByteArrayMap;
 import org.hl7.tinkar.collection.SpinedIntIntMap;
+import org.hl7.tinkar.common.service.NidGenerator;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
 import org.hl7.tinkar.common.service.ServiceKeys;
 import org.hl7.tinkar.common.service.ServiceProperties;
@@ -16,17 +17,19 @@ import java.io.*;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
 
 // TODO finish replacing logging api with System logger?
 import static java.lang.System.Logger.Level.ERROR;
 
-public class SpinedArrayProvider implements PrimitiveDataService {
+public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
     protected static final System.Logger LOG = System.getLogger(SpinedArrayProvider.class.getName());
 
     private static final File defaultDataDirectory = new File("target/spinedarrays/");
     protected static SpinedArrayProvider singleton;
-    final AtomicInteger nextNid = new AtomicInteger(Integer.MIN_VALUE);
+    protected static LongAdder writeSequence = new LongAdder();
+    final AtomicInteger nextNid = new AtomicInteger(Integer.MIN_VALUE + 1);
 
     final ConcurrentUuidIntHashMap uuidToNidMap = new ConcurrentUuidIntHashMap();
     final SpinedByteArrayMap entityToBytesMap;
@@ -92,14 +95,19 @@ public class SpinedArrayProvider implements PrimitiveDataService {
     }
 
     @Override
+    public int newNid() {
+        return nextNid.getAndIncrement();
+    }
+
+    @Override
     public int nidForUuids(UUID... uuids) {
         if (uuids.length == 1) {
-            return uuidToNidMap.getIfAbsentPut(uuids[0], () -> nextNid.incrementAndGet());
+            return uuidToNidMap.getIfAbsentPut(uuids[0], () -> newNid());
         }
         int nid = Integer.MAX_VALUE;
         for (UUID uuid : uuids) {
             if (nid == Integer.MAX_VALUE) {
-                nid = uuidToNidMap.getIfAbsentPut(uuids[0], () -> nextNid.incrementAndGet());
+                nid = uuidToNidMap.getIfAbsentPut(uuids[0], () -> newNid());
             } else {
                 uuidToNidMap.put(uuid, nid);
             }
@@ -110,12 +118,12 @@ public class SpinedArrayProvider implements PrimitiveDataService {
     @Override
     public int nidForUuids(ImmutableList<UUID> uuidList) {
         if (uuidList.size() == 1) {
-            return uuidToNidMap.getIfAbsentPut(uuidList.get(0), () -> nextNid.incrementAndGet());
+            return uuidToNidMap.getIfAbsentPut(uuidList.get(0), () -> newNid());
         }
         int nid = Integer.MAX_VALUE;
         for (UUID uuid : uuidList) {
             if (nid == Integer.MAX_VALUE) {
-                nid = uuidToNidMap.getIfAbsentPut(uuid, () -> nextNid.incrementAndGet());
+                nid = uuidToNidMap.getIfAbsentPut(uuid, () -> newNid());
             } else {
                 uuidToNidMap.put(uuid, nid);
             }
@@ -148,7 +156,14 @@ public class SpinedArrayProvider implements PrimitiveDataService {
             this.nidToPatternNidMap.put(nid, patternNid);
             this.nidToReferencedComponentNidMap.put(nid, referencedComponentNid);
         }
-        return this.entityToBytesMap.accumulateAndGet(nid, value, PrimitiveDataService::merge);
+        byte[] mergedBytes = this.entityToBytesMap.accumulateAndGet(nid, value, PrimitiveDataService::merge);
+        writeSequence.increment();
+        return mergedBytes;
+    }
+
+    @Override
+    public long writeSequence() {
+        return writeSequence.sum();
     }
 
     @Override

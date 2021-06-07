@@ -16,6 +16,7 @@ import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculator;
 import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculatorWithCache;
 import org.hl7.tinkar.coordinate.navigation.NavigationCoordinateRecord;
 import org.hl7.tinkar.coordinate.stamp.StampCoordinateRecord;
+import org.hl7.tinkar.coordinate.stamp.StateSet;
 import org.hl7.tinkar.coordinate.stamp.calculator.Latest;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculator;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
@@ -29,6 +30,7 @@ import java.util.logging.Logger;
 
 /**
  * TODO: Filter vertex concepts by status values.
+ * TODO: Sort based on patterns in addition to natural order
  */
 public class NavigationCalculatorWithCache implements NavigationCalculator {
     /** The Constant LOG. */
@@ -64,6 +66,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
     }
 
     private final StampCalculatorWithCache stampCalculator;
+    private final StampCalculatorWithCache vertexStampCalculator;
     private final LanguageCalculatorWithCache  languageCalculator;
     private final NavigationCoordinateRecord navigationCoordinate;
 
@@ -73,6 +76,75 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         this.stampCalculator = StampCalculatorWithCache.getCalculator(stampFilter);
         this.languageCalculator = LanguageCalculatorWithCache.getCalculator(stampFilter, languageCoordinateList);
         this.navigationCoordinate = navigationCoordinate;
+        this.vertexStampCalculator = StampCalculatorWithCache.getCalculator(stampFilter.withAllowedStates(navigationCoordinate.vertexStates()));
+    }
+
+    @Override
+    public IntIdSet kindOfSet(int conceptNid) {
+        MutableIntSet kindNids = IntSets.mutable.of(conceptNid);
+        unsortedDescendentsOf(conceptNid).forEach(descendentNid -> kindNids.add(descendentNid));
+        return IntIds.set.of(kindNids.toArray());
+    }
+
+    @Override
+    public IntIdSet unsortedDescendentsOf(int conceptNid) {
+        MutableIntSet nidSet = IntSets.mutable.empty();
+        addDescendents(conceptNid, nidSet);
+        return IntIds.set.of(nidSet.toArray());
+    }
+
+    private void addDescendents(int conceptNid, MutableIntSet nidSet) {
+        if (!nidSet.contains(conceptNid)) {
+            childrenOf(conceptNid).forEach(childNid -> {
+                addDescendents(childNid, nidSet);
+                nidSet.add(childNid);
+            });
+        }
+    }
+
+    @Override
+    public IntIdSet unsortedAncestorsOf(int conceptNid) {
+        MutableIntSet nidSet = IntSets.mutable.empty();
+        addAncestors(conceptNid, nidSet);
+        return IntIds.set.of(nidSet.toArray());
+    }
+
+    private void addAncestors(int conceptNid, MutableIntSet nidSet) {
+        if (!nidSet.contains(conceptNid)) {
+            parentsOf(conceptNid).forEach(parentNid -> {
+                addAncestors(parentNid, nidSet);
+                nidSet.add(parentNid);
+            });
+        }
+    }
+
+
+    @Override
+    public IntIdList sortedDescendentsOf(int conceptNid) {
+        // TODO add pattern sort...
+        return IntIds.list.of(VertexSortNaturalOrder.SINGLETON.sortVertexes(unsortedDescendentsOf(conceptNid).toArray(), this));
+    }
+
+    @Override
+    public IntIdList sortedAncestorsOf(int conceptNid) {
+        // TODO add pattern sort...
+        return IntIds.list.of(VertexSortNaturalOrder.SINGLETON.sortVertexes(unsortedAncestorsOf(conceptNid).toArray(), this));
+    }
+
+    @Override
+    public IntIdList toSortedList(IntIdList inputList) {
+        // TODO add pattern sort...
+        return IntIds.list.of(VertexSortNaturalOrder.SINGLETON.sortVertexes(inputList.toArray(), this));
+    }
+
+    @Override
+    public StateSet allowedVertexStates() {
+        return vertexStampCalculator.allowedStates();
+    }
+
+    @Override
+    public StampCalculatorWithCache vertexStampCalculator() {
+        return this.vertexStampCalculator;
     }
 
     @Override
@@ -91,52 +163,57 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
     }
 
     @Override
-    public IntIdList unsortedParents(int conceptNid) {
+    public IntIdList unsortedParentsOf(int conceptNid) {
         return getIntIdListForMeaning(conceptNid, TinkarTerm.RELATIONSHIP_ORIGIN);
     }
 
     @Override
-    public IntIdList sortedParents(int conceptNid) {
-        return IntIds.list.of(VertexSortNaturalOrder.SINGLETON.sortVertexes(unsortedParents(conceptNid).toArray(), this));
+    public IntIdList sortedParentsOf(int conceptNid) {
+        return IntIds.list.of(VertexSortNaturalOrder.SINGLETON.sortVertexes(unsortedParentsOf(conceptNid).toArray(), this));
     }
 
     @Override
-    public IntIdList sortedChildren(int conceptNid) {
-        return IntIds.list.of(VertexSortNaturalOrder.SINGLETON.sortVertexes(unsortedChildren(conceptNid).toArray(), this));
+    public IntIdList sortedChildrenOf(int conceptNid) {
+        return IntIds.list.of(VertexSortNaturalOrder.SINGLETON.sortVertexes(unsortedChildrenOf(conceptNid).toArray(), this));
     }
 
-    public IntIdList unsortedChildren(int conceptNid) {
+    public IntIdList unsortedChildrenOf(int conceptNid) {
         return getIntIdListForMeaning(conceptNid, TinkarTerm.RELATIONSHIP_DESTINATION);
     }
 
-    private IntIdList getIntIdListForMeaning(int conceptNid, ConceptProxy fieldMeaning) {
+    private IntIdList getIntIdListForMeaning(int referencedComponentNid, ConceptProxy fieldMeaning) {
         IntIdSet navigationPatternNids = navigationCoordinate.navigationPatternNids();
-        MutableIntSet childrenNidSet = IntSets.mutable.empty();
+        MutableIntSet nidsInList = IntSets.mutable.empty();
         navigationPatternNids.forEach(navPatternNid -> {
             Latest<PatternEntityVersion> latestPatternEntityVersion = stampCalculator().latest(navPatternNid);
             latestPatternEntityVersion.ifPresentOrElse(
                     (patternEntityVersion) -> {
                         int indexForMeaning = patternEntityVersion.indexForMeaning(fieldMeaning);
-                        int[] semantics = PrimitiveData.get().semanticNidsForComponentOfPattern(conceptNid, navPatternNid);
+                        int[] semantics = PrimitiveData.get().semanticNidsForComponentOfPattern(referencedComponentNid, navPatternNid);
                         if (semantics.length > 1) {
                             throw new IllegalStateException("More than one navigation semantic for concept: " +
-                                    PrimitiveData.text(conceptNid) + " in " + PrimitiveData.text(navPatternNid));
+                                    PrimitiveData.text(referencedComponentNid) + " in " + PrimitiveData.text(navPatternNid));
                         } else if (semantics.length == 0) {
                             // Nothing to add...
                         } else {
                             Latest<SemanticEntityVersion> latestNavigationSemantic = stampCalculator().latest(semantics[0]);
-                            if (latestNavigationSemantic.isAbsent()) {
-                                // Nothing to add...
-                            } else {
+                            latestNavigationSemantic.ifPresent(semanticEntityVersion -> {
                                 SemanticEntityVersion navigationSemantic = latestNavigationSemantic.get();
                                 IntIdSet intIdSet = (IntIdSet) navigationSemantic.fields().get(indexForMeaning);
-                                childrenNidSet.addAll(intIdSet.toArray());
-                            }
+                                // Filter here by allowed vertex state...
+                                if (navigationCoordinate.vertexStates() == StateSet.ACTIVE_INACTIVE_AND_WITHDRAWN) {
+                                    nidsInList.addAll(intIdSet.toArray());
+                                } else {
+                                    intIdSet.forEach(nid ->
+                                            vertexStampCalculator.latest(nid).ifPresent(entityVersion -> nidsInList.add(entityVersion.nid()))
+                                    );
+                                }
+                            });
                         }
                     },
                     () -> {throw new IllegalStateException("No active pattern version. " + latestPatternEntityVersion);});
         });
-        return IntIds.list.of(childrenNidSet.toArray());
+        return IntIds.list.of(nidsInList.toArray());
     }
 
 }

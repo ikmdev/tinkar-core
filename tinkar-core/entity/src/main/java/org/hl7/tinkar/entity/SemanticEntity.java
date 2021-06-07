@@ -3,7 +3,6 @@ package org.hl7.tinkar.entity;
 import io.activej.bytebuf.ByteBuf;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.service.PrimitiveData;
-import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.terms.SemanticFacade;
@@ -48,8 +47,8 @@ public class SemanticEntity
     @Override
     protected void finishEntityRead(Chronology chronology) {
         if (chronology instanceof SemanticChronology semanticChronology) {
-            referencedComponentNid = Get.entityService().nidForComponent(semanticChronology.referencedComponent());
-            patternNid = Get.entityService().nidForComponent(semanticChronology.pattern());
+            referencedComponentNid = EntityService.get().nidForComponent(semanticChronology.referencedComponent());
+            patternNid = EntityService.get().nidForComponent(semanticChronology.pattern());
         }
     }
 
@@ -65,7 +64,7 @@ public class SemanticEntity
 
     @Override
     public Entity referencedComponent() {
-        return Get.entityService().getEntityFast(this.referencedComponentNid);
+        return EntityService.get().getEntityFast(this.referencedComponentNid);
     }
 
     public int referencedComponentNid() {
@@ -78,7 +77,7 @@ public class SemanticEntity
 
     @Override
     public Pattern pattern() {
-        return Get.entityService().getEntityFast(patternNid);
+        return EntityService.get().getEntityFast(patternNid);
     }
 
 

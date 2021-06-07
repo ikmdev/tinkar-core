@@ -1,16 +1,12 @@
 package org.hl7.tinkar.entity;
 
 import io.activej.bytebuf.ByteBuf;
-import io.activej.bytebuf.ByteBufPool;
-import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.time.DateTimeUtil;
 import org.hl7.tinkar.component.*;
-import org.hl7.tinkar.entity.internal.Get;
 import org.hl7.tinkar.dto.StampDTO;
 
 import static org.hl7.tinkar.component.FieldDataType.STAMP;
-import static org.hl7.tinkar.entity.Entity.ENTITY_FORMAT_VERSION;
 
 public class StampEntity extends Entity<StampEntityVersion>
          implements Stamp<StampEntityVersion>, Component, Version {

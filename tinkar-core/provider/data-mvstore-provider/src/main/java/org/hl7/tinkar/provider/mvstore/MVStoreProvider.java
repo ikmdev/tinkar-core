@@ -5,6 +5,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.h2.mvstore.OffHeapStore;
+import org.hl7.tinkar.common.service.NidGenerator;
 import org.hl7.tinkar.common.service.ServiceKeys;
 import org.hl7.tinkar.common.service.ServiceProperties;
 import org.hl7.tinkar.provider.mvstore.internal.Get;
@@ -14,20 +15,22 @@ import org.hl7.tinkar.common.service.PrimitiveDataService;
 import java.io.File;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
 
 /**
  *
  * TODO: Maybe also consider making use of: https://blogs.oracle.com/javamagazine/creating-a-java-off-heap-in-memory-database?source=:em:nw:mt:::RC_WWMK200429P00043:NSL400123121
  */
-public class MVStoreProvider implements PrimitiveDataService {
+public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
 
     protected static MVStoreProvider singleton;
+    protected LongAdder writeSequence = new LongAdder();
+    protected final AtomicInteger nextNid;
     private static final File defaultDataDirectory = new File("target/mvstore/");
     private static final String databaseFileName = "mvstore.dat";
 
     private static final UUID nextNidKey = new UUID(Long.MAX_VALUE, Long.MIN_VALUE);
-    private static final AtomicInteger nextNid = new AtomicInteger(Integer.MIN_VALUE + 1);
 
     final OffHeapStore offHeap;
     final MVStore store;
@@ -49,11 +52,13 @@ public class MVStoreProvider implements PrimitiveDataService {
         this.nidToComponentMap = store.openMap("nidToComponentMap");
         this.uuidToNidMap = store.openMap("uuidToNidMap");
         this.stampUuidToNidMap = store.openMap("stampUuidToNidMap");
-       this.nidToPatternNidMap = store.openMap("nidToPatternNidMap");
-       this.nidToReferencedComponentNidMap = store.openMap("nidToReferencedComponentNidMap");
+        this.nidToPatternNidMap = store.openMap("nidToPatternNidMap");
+        this.nidToReferencedComponentNidMap = store.openMap("nidToReferencedComponentNidMap");
 
         if (this.uuidToNidMap.containsKey(nextNidKey)) {
-            this.nextNid.set(this.uuidToNidMap.get(nextNidKey));
+            this.nextNid = new AtomicInteger(this.uuidToNidMap.get(nextNidKey));
+        } else {
+            this.nextNid = new AtomicInteger(Integer.MIN_VALUE + 1);
         }
 
         Get.singleton = this;
@@ -71,6 +76,11 @@ public class MVStoreProvider implements PrimitiveDataService {
         this.uuidToNidMap.put(nextNidKey, nextNid.get());
         this.store.commit();
         this.offHeap.sync();
+    }
+
+    @Override
+    public int newNid() {
+        return nextNid.getAndIncrement();
     }
 
     @Override
@@ -108,8 +118,14 @@ public class MVStoreProvider implements PrimitiveDataService {
            nidToPatternNidMap.putIfAbsent(nid, patternNid);
            nidToReferencedComponentNidMap.put(nid, referencedComponentNid);
        }
+       byte[] mergedBytes = nidToComponentMap.merge(nid, value, PrimitiveDataService::merge);
+       writeSequence.increment();
+       return mergedBytes;
+    }
 
-        return nidToComponentMap.merge(nid, value, PrimitiveDataService::merge);
+    @Override
+    public long writeSequence() {
+        return writeSequence.sum();
     }
 
     @Override
@@ -119,12 +135,12 @@ public class MVStoreProvider implements PrimitiveDataService {
 
     @Override
     public int nidForUuids(UUID... uuids) {
-        return PrimitiveDataService.nidForUuids(uuidToNidMap, nextNid, uuids);
+        return PrimitiveDataService.nidForUuids(uuidToNidMap, this, uuids);
     }
 
     @Override
     public int nidForUuids(ImmutableList<UUID> uuidList) {
-        return PrimitiveDataService.nidForUuids(uuidToNidMap, nextNid, uuidList);
+        return PrimitiveDataService.nidForUuids(uuidToNidMap, this, uuidList);
     }
 
     @Override

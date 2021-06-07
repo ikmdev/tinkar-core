@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.UUID;
 import java.util.function.LongConsumer;
 
-public interface PublicId {
+public interface PublicId extends Comparable<PublicId> {
 
     UUID[] asUuidArray();
 
@@ -34,4 +34,13 @@ public interface PublicId {
             return false;
         });
      }
+
+    @Override
+    default int compareTo(PublicId o) {
+        UUID[] thisArray = asUuidArray();
+        UUID[] thatArray = o.asUuidArray();
+        Arrays.sort(thisArray);
+        Arrays.sort(thatArray);
+        return Arrays.compare(thisArray, thatArray);
+    }
 }

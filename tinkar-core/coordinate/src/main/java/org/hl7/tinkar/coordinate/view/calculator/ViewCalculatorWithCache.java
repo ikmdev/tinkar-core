@@ -89,4 +89,6 @@ public class ViewCalculatorWithCache implements ViewCalculator, StampCalculatorD
     public NavigationCalculator navigationCalculator() {
         return navigationCalculator;
     }
+
+
 }
