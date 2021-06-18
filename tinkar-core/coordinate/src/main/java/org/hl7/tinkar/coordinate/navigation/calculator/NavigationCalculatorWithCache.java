@@ -80,6 +80,11 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
     }
 
     @Override
+    public ImmutableList<LanguageCoordinateRecord> languageCoordinateList() {
+        return languageCalculator.languageCoordinateList();
+    }
+
+    @Override
     public IntIdSet kindOfSet(int conceptNid) {
         MutableIntSet kindNids = IntSets.mutable.of(conceptNid);
         unsortedDescendentsOf(conceptNid).forEach(descendentNid -> kindNids.add(descendentNid));

@@ -16,15 +16,24 @@ public abstract class TrackingCallable<V> implements Callable<V> {
     String title;
     String message;
     V value;
-    boolean allowUserCancel = true;
     boolean isCanceled = false;
-    boolean retainWhenComplete = false;
+
+    final boolean allowUserCancel;
+    final boolean retainWhenComplete;
 
     public TrackingCallable() {
+        this.allowUserCancel = true;
+        this.retainWhenComplete = false;
+    }
+
+    public TrackingCallable(boolean allowUserCancel, boolean retainWhenComplete) {
+        this.allowUserCancel = allowUserCancel;
+        this.retainWhenComplete = retainWhenComplete;
     }
 
     public TrackingCallable(boolean allowUserCancel) {
         this.allowUserCancel = allowUserCancel;
+        this.retainWhenComplete = false;
     }
 
     public boolean isCanceled() {
@@ -45,10 +54,6 @@ public abstract class TrackingCallable<V> implements Callable<V> {
 
     public boolean retainWhenComplete() {
         return retainWhenComplete;
-    }
-
-    public void setRetainWhenComplete(boolean retainWhenComplete) {
-        this.retainWhenComplete = retainWhenComplete;
     }
 
     @Override

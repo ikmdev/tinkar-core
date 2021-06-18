@@ -133,7 +133,9 @@ public interface LanguageCalculator {
         Optional<EntityFacade> optionalEntity = ProxyFactory.fromXmlFragmentOptional(possibleEntityString);
         if (optionalEntity.isPresent()) {
             Optional<String> optionalEntityString = toOptionalEntityString.apply(optionalEntity.get().nid());
-            return optionalEntityString.get();
+            if (optionalEntityString.isPresent()) {
+                return optionalEntityString.get();
+            }
         }
         return possibleEntityString;
     }
@@ -178,11 +180,10 @@ public interface LanguageCalculator {
         }
         if (object instanceof EntityFacade entityFacade) {
             sb.append(toEntityString.apply(entityFacade));
-        } else if (object instanceof Collection) {
+        } else if (object instanceof Collection collection) {
 
-            if (object instanceof Set) {
+            if (object instanceof Set set) {
                 // a set, so order does not matter. Alphabetic order desirable.
-                Set set = (Set) object;
                 if (set.isEmpty()) {
                     toEntityString(set.toArray(), toEntityString, sb);
                 } else {
@@ -193,7 +194,6 @@ public interface LanguageCalculator {
                 }
             } else {
                 // not a set, so order matters
-                Collection collection = (Collection) object;
                 toEntityString(collection.toArray(), toEntityString, sb);
             }
         } else if (object.getClass().isArray()) {
@@ -251,14 +251,7 @@ public interface LanguageCalculator {
         return getRegularDescriptionText(entity.nid());
     }
 
-    default Optional<String> getRegularDescriptionText(int entityNid) {
-        Latest<SemanticEntityVersion> latestRegularDescription =  getSpecifiedDescription(getDescriptionsForComponent(entityNid),
-                IntIds.list.of(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()));
-        if (latestRegularDescription.isPresent()) {
-            return getTextFromSemanticVersion(latestRegularDescription.get());
-        }
-        return Optional.empty();
-    }
+    Optional<String> getRegularDescriptionText(int entityNid);
 
     /**
      * Return a description of type {@link TinkarTerm#DEFINITION_DESCRIPTION_TYPE}, or an empty latest version, if none are of type definition in this or any

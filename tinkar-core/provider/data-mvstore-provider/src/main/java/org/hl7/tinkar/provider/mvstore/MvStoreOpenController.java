@@ -24,11 +24,7 @@ public class MvStoreOpenController extends MvStoreController {
 
     @Override
     public void setDataUriOption(DataUriOption option) {
-        try {
-            ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, option.uri().toURL().getFile());
-        } catch (MalformedURLException e) {
-            throw new UncheckedIOException(e);
-        }
+        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, option.toFile());
     }
 
 }

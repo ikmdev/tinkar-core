@@ -55,7 +55,7 @@ public class EntityProxy implements EntityFacade, PublicId {
     @Override
     public UUID[] asUuidArray() {
         if (this.uuids == null) {
-            this.uuids =PrimitiveData.publicId(nid()).asUuidArray();
+            this.uuids = PrimitiveData.publicId(nid()).asUuidArray();
         }
         return this.uuids;
     }
@@ -101,7 +101,7 @@ public class EntityProxy implements EntityFacade, PublicId {
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(asUuidArray());
+        return Integer.hashCode(nid());
     }
 
     @Override

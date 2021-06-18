@@ -5,7 +5,7 @@
     <parent>
         <artifactId>tinkar-jpms-deps</artifactId>
         <groupId>org.hl7.tinkar</groupId>
-        <version>1.0</version>
+        <version>1.0.1</version>
     </parent>
     <artifactId>eclipse-collections</artifactId>
     <packaging>jar</packaging>

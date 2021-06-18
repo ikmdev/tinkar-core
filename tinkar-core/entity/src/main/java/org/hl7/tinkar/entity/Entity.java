@@ -14,6 +14,7 @@ import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.terms.EntityFacade;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -209,5 +210,18 @@ public abstract class Entity<T extends EntityVersion> extends PublicIdForEntity
         return sb.toString();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null) return false;
+        if (o instanceof EntityFacade entityFacade) {
+            return nid == entityFacade.nid();
+        }
+        return false;
+    }
 
+    @Override
+    public int hashCode() {
+        return Integer.hashCode(nid);
+    }
 }

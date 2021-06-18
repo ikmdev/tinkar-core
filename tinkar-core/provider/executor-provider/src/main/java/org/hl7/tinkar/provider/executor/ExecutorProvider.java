@@ -3,6 +3,7 @@ package org.hl7.tinkar.provider.executor;
 import org.hl7.tinkar.common.service.Executor;
 import org.hl7.tinkar.common.service.ExecutorService;
 import org.hl7.tinkar.common.util.thread.NamedThreadFactory;
+import org.hl7.tinkar.common.util.thread.PausableThreadPoolExecutor;
 import org.hl7.tinkar.common.util.thread.ThreadPoolExecutorFixed;
 
 import java.util.UUID;
@@ -44,6 +45,9 @@ public class ExecutorProvider implements ExecutorService {
 
     /** The thread pool executor. */
     private ThreadPoolExecutor threadPoolExecutor;
+
+    /** The thread pool executor. */
+    private PausableThreadPoolExecutor afterDataLoadExecutor;
 
     /** The io thread pool executor. */
     private ThreadPoolExecutor ioThreadPoolExecutor;
@@ -96,6 +100,17 @@ public class ExecutorProvider implements ExecutorService {
                     new LinkedBlockingQueue<>(),
                     new NamedThreadFactory("Tinkar-Q-work-thread", true));
             this.threadPoolExecutor.allowCoreThreadTimeOut(true);
+
+            // The non-blocking executor - set core threads equal to max - otherwise, it will never increase the thread count
+            // with an unbounded queue.
+            this.afterDataLoadExecutor = new PausableThreadPoolExecutor(maximumPoolSize,
+                    maximumPoolSize,
+                    keepAliveTime,
+                    timeUnit,
+                    new LinkedBlockingQueue<>(),
+                    new NamedThreadFactory("Tinkar-Q-work-thread", true));
+            this.afterDataLoadExecutor.allowCoreThreadTimeOut(true);
+            this.afterDataLoadExecutor.pause();
 
             // The IO non-blocking executor - set core threads equal to max - otherwise, it will never increase the thread count
             // with an unbounded queue.
@@ -188,6 +203,11 @@ public class ExecutorProvider implements ExecutorService {
     @Override
     public ThreadPoolExecutor ioThreadPool() {
         return this.ioThreadPoolExecutor;
+    }
+
+    @Override
+    public PausableThreadPoolExecutor afterDataLoadThreadPool() {
+        return this.afterDataLoadExecutor;
     }
 
     /**

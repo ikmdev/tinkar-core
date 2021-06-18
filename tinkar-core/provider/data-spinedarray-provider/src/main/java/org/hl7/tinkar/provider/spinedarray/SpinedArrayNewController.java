@@ -7,6 +7,7 @@ import org.eclipse.collections.api.map.MutableMap;
 import org.hl7.tinkar.common.service.*;
 import org.hl7.tinkar.common.validation.ValidationRecord;
 import org.hl7.tinkar.common.validation.ValidationSeverity;
+import org.hl7.tinkar.provider.spinedarray.internal.Get;
 
 import java.io.File;
 import java.io.UncheckedIOException;
@@ -63,6 +64,7 @@ public class SpinedArrayNewController extends SpinedArrayController {
                 LoadDataFromFileController loader = controllerFinder.findFirst().get();
                 Future<Integer> loadFuture = (Future<Integer>) loader.load(new File(importDataFileString));
                 int count = loadFuture.get();
+                Get.singleton.save();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } catch (ExecutionException e) {

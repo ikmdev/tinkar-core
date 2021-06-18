@@ -24,6 +24,7 @@ public class SpinedArrayFileStore {
 
     public SpinedArrayFileStore(File directory, Semaphore diskSemaphore) {
         this.directory = directory;
+        this.directory.mkdirs();
         this.spineSize = SpineFileUtil.readSpineCount(directory);
         this.diskSemaphore = diskSemaphore;
     }
@@ -45,9 +46,7 @@ public class SpinedArrayFileStore {
         if (directory == null) {
             return 0;
         }
-        File[] files = directory.listFiles((pathname) -> {
-            return pathname.getName().startsWith(SPINE_PREFIX);
-        });
+        File[] files = directory.listFiles((pathname) -> pathname.getName().startsWith(SPINE_PREFIX));
         int size = 0;
         for (File spineFile : files) {
             size = (int) (size + spineFile.length());

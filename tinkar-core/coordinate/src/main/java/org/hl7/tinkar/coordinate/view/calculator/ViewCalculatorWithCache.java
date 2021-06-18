@@ -57,6 +57,14 @@ public class ViewCalculatorWithCache implements ViewCalculator, StampCalculatorD
                 filterKey -> new ViewCalculatorWithCache(stampFilter,
                         languageCoordinateList, navigationCoordinate, viewCoordinateRecord));
     }
+    public static ViewCalculatorWithCache getCalculator(ViewCoordinateRecord viewCoordinateRecord) {
+        return SINGLETONS.computeIfAbsent(new StampLangNavViewRecord(viewCoordinateRecord.stampCoordinate(),
+                        viewCoordinateRecord.languageCoordinateList(),
+                        viewCoordinateRecord.navigationCoordinate(), viewCoordinateRecord),
+                filterKey -> new ViewCalculatorWithCache(viewCoordinateRecord.stampCoordinate(),
+                        viewCoordinateRecord.languageCoordinateList(),
+                        viewCoordinateRecord.navigationCoordinate(), viewCoordinateRecord));
+    }
 
     private final StampCalculatorWithCache stampCalculator;
     private final LanguageCalculator languageCalculator;
@@ -73,6 +81,11 @@ public class ViewCalculatorWithCache implements ViewCalculator, StampCalculatorD
         this.navigationCalculator = NavigationCalculatorWithCache.getCalculator(stampCoordinate.toStampCoordinateRecord(),
                 languageCoordinateList, navigationCoordinate.toNavigationCoordinateRecord());
         this.viewCoordinateRecord = viewCoordinateRecord;
+    }
+
+    @Override
+    public ImmutableList<LanguageCoordinateRecord> languageCoordinateList() {
+        return this.languageCalculator.languageCoordinateList();
     }
 
     @Override

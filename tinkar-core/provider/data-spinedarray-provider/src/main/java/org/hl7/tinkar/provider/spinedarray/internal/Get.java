@@ -6,11 +6,12 @@ import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.entity.ConceptEntity;
 import org.hl7.tinkar.entity.EntityFactory;
 import org.hl7.tinkar.entity.StampEntity;
+import org.hl7.tinkar.provider.spinedarray.SpinedArrayProvider;
 
 import java.util.UUID;
 
 public class Get {
-    public static PrimitiveDataService singleton;
+    public static SpinedArrayProvider singleton;
 
     public static ConceptEntity concept(int nid) {
         return EntityFactory.make(singleton.getBytes(nid));

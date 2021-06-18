@@ -1,5 +1,7 @@
 package org.hl7.tinkar.common.service;
 
+import org.hl7.tinkar.common.util.thread.PausableThreadPoolExecutor;
+
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -14,6 +16,12 @@ public interface ExecutorService {
 
     /** The thread pool executor. */
     ThreadPoolExecutor threadPool();
+
+    /** Thread pool for processes that require the data store
+     * to be loaded before execution.
+     * @return
+     */
+    PausableThreadPoolExecutor afterDataLoadThreadPool();
 
     /** The io thread pool executor. */
     ThreadPoolExecutor ioThreadPool();

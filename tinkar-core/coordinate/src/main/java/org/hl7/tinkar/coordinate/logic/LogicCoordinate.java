@@ -40,13 +40,13 @@
 package org.hl7.tinkar.coordinate.logic;
 
 import org.hl7.tinkar.common.service.PrimitiveData;
-import org.hl7.tinkar.entity.PatternEntity;
 import org.hl7.tinkar.coordinate.stamp.calculator.Latest;
 import org.hl7.tinkar.coordinate.stamp.StampCoordinate;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.entity.graph.DiTreeEntity;
 import org.hl7.tinkar.terms.ConceptFacade;
 import org.hl7.tinkar.terms.PatternFacade;
+import org.hl7.tinkar.terms.PatternProxy;
 import org.hl7.tinkar.terms.TinkarTerm;
 
 import java.util.ArrayList;
@@ -105,8 +105,8 @@ public interface LogicCoordinate {
     */
    int inferredAxiomsPatternNid();
 
-   default PatternEntity inferredAxiomsPattern() {
-      return Entity.getFast(inferredAxiomsPatternNid());
+   default PatternFacade inferredAxiomsPattern() {
+      return PatternProxy.make(inferredAxiomsPatternNid());
    }
    /**
     * Gets the stated assemblage nid.
@@ -116,8 +116,8 @@ public interface LogicCoordinate {
     */
    int statedAxiomsPatternNid();
 
-   default PatternEntity statedAxiomsPattern() {
-      return Entity.getFast(statedAxiomsPatternNid());
+   default PatternFacade statedAxiomsPattern() {
+      return PatternProxy.make(statedAxiomsPatternNid());
    }
 
    /**
@@ -125,8 +125,8 @@ public interface LogicCoordinate {
     * @return the nid for the assemblage within which the concepts to be classified are defined within. 
     */
    int conceptMemberPatternNid();
-   default PatternEntity conceptMemberPattern() {
-      return Entity.getFast(conceptMemberPatternNid());
+   default PatternFacade conceptMemberPattern() {
+      return PatternProxy.make(conceptMemberPatternNid());
    }
 
 

@@ -38,20 +38,25 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
 
     private static final Logger LOG = LogManager.getLogManager().getLogger(SpinedIntObjectMap.class.getName());
 
-    public static final int DEFAULT_SPINE_SIZE = 8192;
+    public static final int DEFAULT_SPINE_SIZE = 10240;
+    public static final int DEFAULT_MAX_SPINE_COUNT = 10240;
 
     private final Semaphore newSpineSemaphore = new Semaphore(1);
     protected final Semaphore fileSemaphore = new Semaphore(1);
 
+    protected final int maxSpineCount;
     protected final int spineSize;
     // TODO: consider growth strategies instead of just a large array expected to be big enough to hold all the spines...
-    private final AtomicReferenceArray<AtomicReferenceArray<E>> spines = new AtomicReferenceArray(DEFAULT_SPINE_SIZE);
+    private final AtomicReferenceArray<AtomicReferenceArray<E>> spines;
     private final AtomicInteger spineCount = new AtomicInteger();
-    private final boolean[] changedSpineIndexes = new boolean[DEFAULT_SPINE_SIZE];
+    private final boolean[] changedSpineIndexes;
     private Function<E, String> elementStringConverter;
 
     public SpinedIntObjectMap(int spineCount) {
+        this.maxSpineCount = DEFAULT_MAX_SPINE_COUNT;
         this.spineSize = DEFAULT_SPINE_SIZE;
+        this.spines = new AtomicReferenceArray(this.maxSpineCount);
+        this.changedSpineIndexes = new boolean[this.maxSpineCount * this.spineSize];
         this.spineCount.set(spineCount);
     }
 
@@ -103,7 +108,6 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
         for (int i = 0; i < spines.length(); i++) {
             spines.set(i, null);
         }
-        ;
     }
 
     public void printToConsole() {
@@ -257,7 +261,6 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
 
     public final void forEach(ObjIntConsumer<E> consumer) {
         int currentSpineCount = this.spineCount.get();
-        int key = 0;
         for (int spineIndex = 0; spineIndex < currentSpineCount; spineIndex++) {
             forEachOnSpine(consumer, spineIndex);
         }
@@ -352,7 +355,7 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
         int currentPosition;
 
         public SpinedValueSpliterator() {
-            this.end = DEFAULT_SPINE_SIZE * spineCount.get();
+            this.end = spineSize * spineCount.get();
             this.currentPosition = 0;
         }
 

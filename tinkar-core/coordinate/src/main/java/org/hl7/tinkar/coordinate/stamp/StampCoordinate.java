@@ -9,6 +9,7 @@ import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.terms.ConceptFacade;
+import org.hl7.tinkar.terms.ConceptProxy;
 import org.hl7.tinkar.terms.EntityFacade;
 import org.hl7.tinkar.terms.State;
 
@@ -48,7 +49,7 @@ public interface StampCoordinate
     StampCoordinate withModulePriorityNidList(IntIdList modulePriorityNidList);
 
     default ConceptFacade pathForFilter() {
-        return Entity.getFast(pathNidForFilter());
+        return ConceptProxy.make(pathNidForFilter());
     }
 
     /**

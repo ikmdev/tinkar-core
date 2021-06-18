@@ -31,9 +31,7 @@ public class SpineFileUtil {
         return 0;
     }
     public static void writeSpineCount(File directory, int count) throws IOException {
-        File[] spineCountFiles = directory.listFiles((pathname) -> {
-            return pathname.getName().startsWith(SPINE_COUNT_PREFIX);
-        });
+        File[] spineCountFiles = directory.listFiles((pathname) -> pathname.getName().startsWith(SPINE_COUNT_PREFIX));
         for (File countFile: spineCountFiles) {
             countFile.delete();
         }
@@ -43,8 +41,8 @@ public class SpineFileUtil {
     }
 
 
-    public static File getSpineDirectory(File parentDirectory, int assemblageNid) {
-        File spinedMapDirectory = new File(parentDirectory, Integer.toUnsignedString(assemblageNid));
+    public static File getSpineDirectory(File parentDirectory, int patternNid) {
+        File spinedMapDirectory = new File(parentDirectory, Integer.toUnsignedString(patternNid));
 
         spinedMapDirectory.mkdirs();
         return spinedMapDirectory;

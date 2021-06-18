@@ -16,11 +16,7 @@ public class SpinedArrayOpenController extends SpinedArrayController {
 
     @Override
     public void setDataUriOption(DataUriOption option) {
-        try {
-            ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, option.uri().toURL().getFile());
-        } catch (MalformedURLException e) {
-            throw new UncheckedIOException(e);
-        }
+        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, option.toFile());
     }
 
     @Override

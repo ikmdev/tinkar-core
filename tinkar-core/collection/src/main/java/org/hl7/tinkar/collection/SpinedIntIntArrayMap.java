@@ -39,11 +39,11 @@ public class SpinedIntIntArrayMap implements IntObjectMap<int[]> {
 
     private static final Logger LOG = LogManager.getLogManager().getLogger(SpinedIntIntArrayMap.class.getName());
 
-    private static final int DEFAULT_ELEMENTS_PER_SPINE = 1024;
+    private static final int DEFAULT_ELEMENTS_PER_SPINE = 10240;
 
     protected final IntIntArrayStore intIntArrayStore;
     protected final int elementsPerSpine;
-    private final ConcurrentSpineList<AtomicReferenceArray<int[]>> spines = new ConcurrentSpineList<AtomicReferenceArray<int[]>>(16884, this::newSpine);
+    private final ConcurrentSpineList<AtomicReferenceArray<int[]>> spines = new ConcurrentSpineList<AtomicReferenceArray<int[]>>(1688, this::newSpine);
     protected final ConcurrentSkipListSet<Integer> changedSpineIndexes = new ConcurrentSkipListSet<>();
 
     public SpinedIntIntArrayMap(IntIntArrayStore intIntArrayStore) {

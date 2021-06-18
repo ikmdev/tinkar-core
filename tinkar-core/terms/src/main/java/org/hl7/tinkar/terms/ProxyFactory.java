@@ -35,27 +35,29 @@ public class ProxyFactory {
     });
 
     public static Optional<EntityFacade> fromXmlFragmentOptional(String xmlString) {
-        try {
-            Document doc = documentBuilder.get().parse(new InputSource(new StringReader(xmlString)));
-            Element element = doc.getDocumentElement();
-            Attr uuids = element.getAttributeNode(UUIDS_ATTRIBUTE);
-            Attr desc = element.getAttributeNode(DESCRIPTION_ATTRIBUTE);
-            EntityFacade facade = switch (element.getTagName()) {
-                case ENTITY_ELEMENT -> EntityProxy.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
-                case PATTERN_ELEMENT -> PatternProxy.make(desc.getName(), UuidUtil.fromString(uuids.getValue()));
-                case SEMANTIC_ELEMENT -> SemanticProxy.make(desc.getName(), UuidUtil.fromString(uuids.getValue()));
-                case CONCEPT_ELEMENT -> ConceptProxy.make(desc.getName(), UuidUtil.fromString(uuids.getValue()));
-                default -> {
-                    IllegalStateException ex = new IllegalStateException("Unexpected value: " + element.getTagName());
-                    ex.printStackTrace();
-                    yield null;
-                }
-            };
-            return Optional.ofNullable(facade);
-        } catch (SAXException | IOException e) {
-            e.printStackTrace();
+        if (xmlString.contains("<") && xmlString.contains(">")) {
+            try {
+                Document doc = documentBuilder.get().parse(new InputSource(new StringReader(xmlString)));
+                Element element = doc.getDocumentElement();
+                Attr uuids = element.getAttributeNode(UUIDS_ATTRIBUTE);
+                Attr desc = element.getAttributeNode(DESCRIPTION_ATTRIBUTE);
+                EntityFacade facade = switch (element.getTagName()) {
+                    case ENTITY_ELEMENT -> EntityProxy.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
+                    case PATTERN_ELEMENT -> PatternProxy.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
+                    case SEMANTIC_ELEMENT -> SemanticProxy.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
+                    case CONCEPT_ELEMENT -> ConceptProxy.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
+                    default -> {
+                        IllegalStateException ex = new IllegalStateException("Unexpected value: " + element.getTagName());
+                        ex.printStackTrace();
+                        yield null;
+                    }
+                };
+                return Optional.ofNullable(facade);
+            } catch (SAXException | IOException e) {
+                System.out.println("Input string: " + xmlString);
+                e.printStackTrace();
+            }
         }
-
         return Optional.empty();
     }
 

@@ -76,6 +76,9 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
     private final Cache<Integer, Latest<PatternEntityVersion>> patternCaches =
             Caffeine.newBuilder().maximumSize(128).build();
 
+    private final Cache<Integer, ImmutableList<SemanticEntity>> descriptionsForComponentCache =
+            Caffeine.newBuilder().maximumSize(1024).build();
+
     private final MutableIntObjectMap<OptionalInt> indexForTextMap = IntObjectMaps.mutable.empty();
     private final MutableIntObjectMap<OptionalInt> indexForTypeMap = IntObjectMaps.mutable.empty();
 
@@ -143,23 +146,25 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
 
     @Override
     public ImmutableList<SemanticEntity> getDescriptionsForComponent(int componentNid) {
-        // Need semantics for each pattern in the language coordinate. If none in first priority,
-        // repeat for each additional.
-        for (LanguageCoordinate languageCoordinate : languageCoordinateList) {
-            MutableList<SemanticEntity> descriptionList = Lists.mutable.ofInitialCapacity(16);
-             for (int descPatternNid : languageCoordinate.descriptionPatternPreferenceNidList().toArray()) {
-                EntityService.get().forEachSemanticForComponentOfPattern(componentNid, descPatternNid, semanticEntity -> {
-                    descriptionList.add(semanticEntity);
-                });
+        return descriptionsForComponentCache.get(componentNid, nid -> {
+            // Need semantics for each pattern in the language coordinate. If none in first priority,
+            // repeat for each additional.
+            for (LanguageCoordinate languageCoordinate : languageCoordinateList) {
+                MutableList<SemanticEntity> descriptionList = Lists.mutable.ofInitialCapacity(16);
+                for (int descPatternNid : languageCoordinate.descriptionPatternPreferenceNidList().toArray()) {
+                    EntityService.get().forEachSemanticForComponentOfPattern(componentNid, descPatternNid, semanticEntity -> {
+                        descriptionList.add(semanticEntity);
+                    });
+                    if (descriptionList.notEmpty()) {
+                        break;
+                    }
+                }
                 if (descriptionList.notEmpty()) {
-                    break;
+                    return descriptionList.toImmutable();
                 }
             }
-            if (descriptionList.notEmpty()) {
-                return descriptionList.toImmutable();
-            }
-        }
-        return Lists.immutable.empty();
+            return Lists.immutable.empty();
+        });
     }
 
 

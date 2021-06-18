@@ -100,6 +100,9 @@ public class StampCalculatorWithCache implements StampCalculator {
     Cache<Integer, Latest<PatternEntityVersion>> patternVersionCache =
             Caffeine.newBuilder().maximumSize(128).build();
 
+    Cache<Integer, Latest<EntityVersion>> latestCache =
+            Caffeine.newBuilder().maximumSize(10240).build();
+
     public Latest<PatternEntityVersion> latestPatternEntityVersion(int patternNid) {
         return patternVersionCache.get(patternNid, nid -> latest(patternNid));
     }
@@ -223,7 +226,9 @@ public class StampCalculatorWithCache implements StampCalculator {
      * @return true, if successful
      */
     public boolean onRoute(int stampNid) {
-
+        if (stampOnRoute.containsKey(stampNid)) {
+            return stampOnRoute.get(stampNid);
+        }
         StampEntity stamp = Entity.getStamp(stampNid);
         return onRoute(stamp);
     }
@@ -911,16 +916,27 @@ public class StampCalculatorWithCache implements StampCalculator {
         }
    }
 
+    public <V extends EntityVersion> Latest<V> latestIfPattern(int nid, int patternNid) {
+
+        Entity entity = EntityService.get().getEntityFast(nid);
+        if (entity instanceof SemanticEntity semanticEntity) {
+            if (semanticEntity.patternNid() == patternNid) {
+                return (Latest<V>) latestCache.get(nid, latestNid -> this.latest(Entity.getFast(latestNid)));
+            }
+        }
+        return Latest.empty();
+    }
+
     @Override
     public <V extends EntityVersion> Latest<V> latest(int nid) {
-        return this.latest(Entity.getFast(nid));
+        return (Latest<V>) latestCache.get(nid, latestNid -> this.latest(Entity.getFast(latestNid)));
     }
 
     @Override
     public void forEachSemanticVersionOfPattern(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
         Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
         latestPatternVersion.ifPresent(patternEntityVersion -> PrimitiveData.get().forEachSemanticNidOfPattern(patternNid, semanticNid -> {
-            Latest<SemanticEntityVersion> latestSemanticVersion = this.latest(semanticNid);
+            Latest<SemanticEntityVersion> latestSemanticVersion = this.latestIfPattern(semanticNid, patternNid);
             latestSemanticVersion.ifPresent(semanticEntityVersion -> procedure.accept(semanticEntityVersion, patternEntityVersion));
          }));
     }
@@ -941,7 +957,8 @@ public class StampCalculatorWithCache implements StampCalculator {
         Latest<EntityVersion> latestComponentVersion = this.latest(componentNid);
         latestComponentVersion.ifPresent(entityVersion -> {
             Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
-            latestPatternVersion.ifPresent(patternEntityVersion -> PrimitiveData.get().forEachSemanticNidOfPattern(patternNid, semanticNid -> {
+            latestPatternVersion.ifPresent(patternEntityVersion ->
+                    PrimitiveData.get().forEachSemanticNidForComponentOfPattern(componentNid, patternNid, semanticNid -> {
                 Latest<SemanticEntityVersion> latestSemanticVersion = this.latest(semanticNid);
                 latestSemanticVersion.ifPresent(semanticEntityVersion -> procedure.accept(semanticEntityVersion, entityVersion, patternEntityVersion));
             }));

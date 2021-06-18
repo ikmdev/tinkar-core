@@ -27,7 +27,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <record-builder-core.version>1.19</record-builder-core.version>
         <roaringbitmap.version>0.9.8</roaringbitmap.version>
-        <tinkar-jpms-deps.version>1.0</tinkar-jpms-deps.version>
+        <tinkar-jpms-deps.version>1.0.1</tinkar-jpms-deps.version>
         <testng.version>7.4.0</testng.version>
     </properties>
     <dependencyManagement>

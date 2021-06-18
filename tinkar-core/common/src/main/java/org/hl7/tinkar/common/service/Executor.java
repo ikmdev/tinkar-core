@@ -1,6 +1,7 @@
 package org.hl7.tinkar.common.service;
 
 import com.google.auto.service.AutoService;
+import org.hl7.tinkar.common.util.thread.PausableThreadPoolExecutor;
 
 import java.util.List;
 import java.util.ServiceConfigurationError;
@@ -61,28 +62,35 @@ public class Executor implements CachingService {
         return executorSingleton.forkJoinThreadPool();
     }
 
-    public static  ThreadPoolExecutor blockingThreadPool() {
+    public static ThreadPoolExecutor blockingThreadPool() {
         if (executorSingleton == null) {
             start();
         }
         return executorSingleton.blockingThreadPool();
     }
 
-    public static  ThreadPoolExecutor threadPool() {
+    public static ThreadPoolExecutor threadPool() {
         if (executorSingleton == null) {
             start();
         }
         return executorSingleton.threadPool();
     }
 
-    public static  ThreadPoolExecutor ioThreadPool() {
+    public static PausableThreadPoolExecutor afterDataLoadThreadPool() {
+        if (executorSingleton == null) {
+            start();
+        }
+        return executorSingleton.afterDataLoadThreadPool();
+    }
+
+    public static ThreadPoolExecutor ioThreadPool() {
         if (executorSingleton == null) {
             start();
         }
         return executorSingleton.ioThreadPool();
     }
 
-    public static  ScheduledExecutorService scheduled() {
+    public static ScheduledExecutorService scheduled() {
         if (executorSingleton == null) {
             start();
         }

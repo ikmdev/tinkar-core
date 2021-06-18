@@ -120,15 +120,33 @@ public record NavigationCoordinateRecord(IntIdSet navigationPatternNids,
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("[");
+        /*
+        IntIdSet navigationPatternNids,
+                                         StateSet vertexStates,
+                                         boolean sortVertices,
+                                         IntIdList verticesSortPatternNidList
+         */
+        StringBuilder sb = new StringBuilder("NavigationCoordinateRecord{");
+
+        sb.append("navigationConcepts=[");
         for (int nid: navigationPatternNids.toArray()) {
             sb.append(PrimitiveData.text(nid));
             sb.append(", ");
         }
         sb.delete(sb.length()-2, sb.length()-1);
-        sb.append("]");
-        return "NavigationCoordinateImmutable{" +
-                "navigationConcepts=" + sb.toString() +
-                '}';
+        sb.append("], ");
+        sb.append("vertexStates=").append(vertexStates);
+        sb.append(", sortVertices=").append(sortVertices);
+        sb.append(", verticesSortPatternList=[");
+        for (int nid: verticesSortPatternNidList.toArray()) {
+            sb.append(PrimitiveData.text(nid));
+            sb.append(", ");
+        }
+        if (verticesSortPatternNidList.notEmpty()) {
+            sb.delete(sb.length()-2, sb.length()-1);
+        }
+        sb.append("]}");
+
+        return sb.toString();
     }
 }

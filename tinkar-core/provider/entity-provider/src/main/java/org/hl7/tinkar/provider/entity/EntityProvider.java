@@ -38,11 +38,16 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         @Override
         public void reset() {
             STRING_CACHE.invalidateAll();
+            ENTITY_CACHE.invalidateAll();
         }
     }
+
     protected static final System.Logger LOG = System.getLogger(EntityProvider.class.getName());
 
     private static final Cache<Integer, String> STRING_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
+    private static final Cache<Integer, Entity> ENTITY_CACHE = Caffeine.newBuilder().maximumSize(10240).build();
+    private static final Cache<Integer, StampEntity> STAMP_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
+
 
     //Multi<Entity<? extends EntityVersion>> chronologyBroadcaster = BroadcastProcessor.create().toHotStream();
     //  <T extends Entity<? extends EntityVersion>>
@@ -59,6 +64,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         this.processor = BroadcastProcessor.create();
         this.entityStream = processor.toHotStream();
     }
+
     @Override
     public void subscribe(Flow.Subscriber<? super Entity<? extends EntityVersion>> subscriber) {
         entityStream.subscribe().withSubscriber(FlowAdapters.toSubscriber(subscriber));
@@ -68,10 +74,11 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     @Override
     public <T extends Chronology<V>, V extends Version> void putChronology(T chronology) {
         if (chronology instanceof Entity entity) {
+            ENTITY_CACHE.invalidate(entity.nid());
             putEntity(entity);
-         } else {
+        } else {
             putEntity(EntityFactory.make(chronology));
-            for (Version version: chronology.versions()) {
+            for (Version version : chronology.versions()) {
                 Stamp stamp = version.stamp();
                 int nid = PrimitiveData.get().nidForUuids(stamp.publicId().asUuidArray());
                 if (PrimitiveData.get().getBytes(nid) == null) {
@@ -88,7 +95,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
             int[] semanticNids = PrimitiveData.get().semanticNidsForComponentOfPattern(nid, DESCRIPTION_PATTERN.nid());
             String anyString = null;
             String fqnString = null;
-            for (int semanticNid: semanticNids) {
+            for (int semanticNid : semanticNids) {
                 SemanticEntity descriptionSemantic = Entity.getFast(semanticNid);
                 PatternEntity patternEntity = Entity.getFast(descriptionSemantic.patternNid());
                 // TODO: use version computer to get version
@@ -124,24 +131,31 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
     @Override
     public <T extends Entity<V>, V extends EntityVersion> T getEntityFast(int nid) {
-        byte[] bytes = PrimitiveData.get().getBytes(nid);
-        if (bytes == null) {
-            return null;
-        }
-       return EntityFactory.make(bytes);
+        return (T) ENTITY_CACHE.get(nid, entityNid -> {
+            byte[] bytes = PrimitiveData.get().getBytes(nid);
+            if (bytes == null) {
+                return null;
+            }
+            return EntityFactory.make(bytes);
+        });
     }
 
     @Override
     public StampEntity getStampFast(int nid) {
-        byte[] bytes = PrimitiveData.get().getBytes(nid);
-        if (bytes == null) {
-            return null;
-        }
-        return EntityFactory.makeStamp(ByteBuf.wrapForReading(bytes));
+        return STAMP_CACHE.get(nid, stampNid -> {
+                    byte[] bytes = PrimitiveData.get().getBytes(nid);
+                    if (bytes == null) {
+                        return null;
+                    }
+                    return EntityFactory.make(bytes);
+                }
+        );
     }
 
     @Override
     public void putEntity(Entity entity) {
+        ENTITY_CACHE.invalidate(entity.nid());
+        STAMP_CACHE.invalidate(entity.nid());
         if (entity instanceof SemanticEntity semanticEntity) {
             PrimitiveData.get().merge(entity.nid(),
                     semanticEntity.patternNid(),
@@ -155,6 +169,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
     @Override
     public void putStamp(StampEntity stampEntity) {
+        STAMP_CACHE.invalidate(stampEntity.nid());
         PrimitiveData.get().merge(stampEntity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, stampEntity.getBytes());
     }
 

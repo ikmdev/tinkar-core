@@ -13,8 +13,8 @@ public interface LanguageCalculatorDelegate extends LanguageCalculator {
     LanguageCalculator languageCalculator();
 
     @Override
-    default ImmutableList<LanguageCoordinateRecord> languageCoordinateList() {
-        return languageCalculator().languageCoordinateList();
+    default Optional<String> getRegularDescriptionText(int entityNid) {
+        return languageCalculator().getRegularDescriptionText(entityNid);
     }
 
     @Override
