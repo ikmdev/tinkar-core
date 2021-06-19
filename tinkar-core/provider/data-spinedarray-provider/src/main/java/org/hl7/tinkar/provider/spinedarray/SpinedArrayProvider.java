@@ -35,8 +35,6 @@ import static java.lang.System.Logger.Level.ERROR;
 
 public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
     protected static final System.Logger LOG = System.getLogger(SpinedArrayProvider.class.getName());
-    protected static final int MAX_PATTERN_ELEMENT_ARRAY_SIZE = 10240;
-    private static final int[] MAX_PATTERN_ELEMENT = new int[]{Integer.MAX_VALUE};
 
     protected static final File defaultDataDirectory = new File("target/spinedarrays/");
     protected static SpinedArrayProvider singleton;
@@ -182,51 +180,15 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
                     //int citingComponentNid = (int) (citationLong >> 32);
                     //int patternNid = (int) citationLong;
                     this.nidToCitingComponentsNidMap.accumulateAndGet(referencedComponentNid, new long[]{citationLong},
-                            SpinedArrayProvider::mergeCitations);
+                            PrimitiveDataService::mergeCitations);
                     this.patternToElementNidsMap.accumulateAndGet(patternNid, new int[]{nid},
-                            SpinedArrayProvider::mergePatternElements);
+                            PrimitiveDataService::mergePatternElements);
                 }
             }
             byte[] mergedBytes = this.entityToBytesMap.accumulateAndGet(nid, value, PrimitiveDataService::merge);
             writeSequence.increment();
             return mergedBytes;
      }
-
-    static long[] mergeCitations(long[] citation1, long[] citation2) {
-        if (citation1 == null) {
-            return citation2;
-        }
-        if (citation2 == null) {
-            return citation1;
-        }
-        if (Arrays.equals(citation1, citation2)) {
-            return citation1;
-        }
-        MutableLongSet citationSet = LongSets.mutable.of(citation1);
-        citationSet.addAll(citation2);
-        return citationSet.toSortedArray();
-    }
-
-    static int[] mergePatternElements(int[] elements1, int[] elements2) {
-        if (elements1 == null || elements1.length == 0) {
-            return elements2;
-        }
-        if (elements1.length == 1 && elements1[0] == Integer.MAX_VALUE) {
-            return elements1;
-        }
-        if (elements2 == null) {
-            return elements1;
-        }
-        if (elements1.length + elements2.length > MAX_PATTERN_ELEMENT_ARRAY_SIZE) {
-            return MAX_PATTERN_ELEMENT;
-        }
-        if (Arrays.equals(elements1, elements2)) {
-            return elements1;
-        }
-        MutableIntSet citationSet = IntSets.mutable.of(elements1);
-        citationSet.addAll(elements2);
-        return citationSet.toSortedArray();
-    }
 
     @Override
     public long writeSequence() {

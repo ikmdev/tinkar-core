@@ -5,6 +5,8 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.h2.mvstore.OffHeapStore;
+import org.hl7.tinkar.collection.SpinedIntIntArrayMap;
+import org.hl7.tinkar.collection.SpinedIntLongArrayMap;
 import org.hl7.tinkar.common.service.NidGenerator;
 import org.hl7.tinkar.common.service.ServiceKeys;
 import org.hl7.tinkar.common.service.ServiceProperties;
@@ -38,7 +40,11 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     final MVMap<UUID, Integer> uuidToNidMap;
     final MVMap<UUID, Integer> stampUuidToNidMap;
     final MVMap<Integer, Integer> nidToPatternNidMap;
-    final MVMap<Integer, Integer> nidToReferencedComponentNidMap;
+    /**
+     * Using "citing" instead of "referencing" to make the field names more distinct.
+     */
+    final MVMap<Integer, long[]> nidToCitingComponentsNidMap;
+    final MVMap<Integer, int[]> patternToElementNidsMap;
 
    public MVStoreProvider() {
         this.offHeap = new OffHeapStore();
@@ -53,7 +59,8 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         this.uuidToNidMap = store.openMap("uuidToNidMap");
         this.stampUuidToNidMap = store.openMap("stampUuidToNidMap");
         this.nidToPatternNidMap = store.openMap("nidToPatternNidMap");
-        this.nidToReferencedComponentNidMap = store.openMap("nidToReferencedComponentNidMap");
+        this.nidToCitingComponentsNidMap = store.openMap("nidToCitingComponentsNidMap");
+        this.patternToElementNidsMap = store.openMap("patternToElementNidsMap");
 
         if (this.uuidToNidMap.containsKey(nextNidKey)) {
             this.nextNid = new AtomicInteger(this.uuidToNidMap.get(nextNidKey));
@@ -94,29 +101,47 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
 
     @Override
     public void forEachSemanticNidForComponent(int componentNid, IntProcedure procedure) {
-        nidToReferencedComponentNidMap.forEach((nid, referencedComponentNid) -> {
-            if (componentNid == referencedComponentNid) {
-                procedure.accept(nid);
+        long[] citationLongs = this.nidToCitingComponentsNidMap.get(componentNid);
+        if (citationLongs != null) {
+            for (long citationLong : citationLongs) {
+                int citingComponentNid = (int) (citationLong >> 32);
+                procedure.accept(citingComponentNid);
             }
-        });
+        }
     }
 
     @Override
     public void forEachSemanticNidForComponentOfPattern(int componentNid, int patternNid, IntProcedure procedure) {
-        nidToReferencedComponentNidMap.forEach((semanticNid, referencedComponentNid) -> {
-            if (componentNid == referencedComponentNid) {
-                if (nidToPatternNidMap.get(semanticNid) == patternNid) {
-                    procedure.accept(semanticNid);
+        long[] citationLongs = this.nidToCitingComponentsNidMap.get(componentNid);
+        if (citationLongs != null) {
+            for (long citationLong : citationLongs) {
+                int citingComponentNid = (int) (citationLong >> 32);
+                int citingComponentPatternNid = (int) citationLong;
+                if (patternNid == citingComponentPatternNid) {
+                    procedure.accept(citingComponentNid);
                 }
             }
-        });
+        }
     }
 
     @Override
     public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value) {
        if (!nidToPatternNidMap.containsKey(nid)) {
-           nidToPatternNidMap.putIfAbsent(nid, patternNid);
-           nidToReferencedComponentNidMap.put(nid, referencedComponentNid);
+           this.nidToPatternNidMap.put(nid, patternNid);
+           if (patternNid != Integer.MAX_VALUE) {
+
+               this.nidToPatternNidMap.put(nid, patternNid);
+               if (patternNid != Integer.MAX_VALUE) {
+                   // Citing component, pattern...
+                   long citationLong = (((long) nid) << 32) | (patternNid & 0xffffffffL);
+                   //int citingComponentNid = (int) (citationLong >> 32);
+                   //int patternNid = (int) citationLong;
+                   this.nidToCitingComponentsNidMap.merge(referencedComponentNid, new long[]{citationLong},
+                           PrimitiveDataService::mergeCitations);
+                   this.patternToElementNidsMap.merge(patternNid, new int[]{nid},
+                           PrimitiveDataService::mergePatternElements);
+               }
+           }
        }
        byte[] mergedBytes = nidToComponentMap.merge(nid, value, PrimitiveDataService::merge);
        writeSequence.increment();

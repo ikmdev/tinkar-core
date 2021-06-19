@@ -10,7 +10,11 @@ import org.eclipse.collections.api.list.ListIterable;
 import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.set.MutableSet;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
+import org.eclipse.collections.impl.factory.primitive.IntSets;
+import org.eclipse.collections.impl.factory.primitive.LongSets;
 import org.hl7.tinkar.common.id.PublicId;
 
 import java.io.IOException;
@@ -45,6 +49,8 @@ public interface PrimitiveDataService {
             }
         }
     }
+    int MAX_PATTERN_ELEMENT_ARRAY_SIZE = 10240;
+    int[] MAX_PATTERN_ELEMENT = new int[]{Integer.MAX_VALUE};
 
     long writeSequence();
 
@@ -218,6 +224,42 @@ public interface PrimitiveDataService {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    static long[] mergeCitations(long[] citation1, long[] citation2) {
+        if (citation1 == null) {
+            return citation2;
+        }
+        if (citation2 == null) {
+            return citation1;
+        }
+        if (Arrays.equals(citation1, citation2)) {
+            return citation1;
+        }
+        MutableLongSet citationSet = LongSets.mutable.of(citation1);
+        citationSet.addAll(citation2);
+        return citationSet.toSortedArray();
+    }
+
+    static int[] mergePatternElements(int[] elements1, int[] elements2) {
+        if (elements1 == null || elements1.length == 0) {
+            return elements2;
+        }
+        if (elements1.length == 1 && elements1[0] == Integer.MAX_VALUE) {
+            return elements1;
+        }
+        if (elements2 == null) {
+            return elements1;
+        }
+        if (elements1.length + elements2.length > MAX_PATTERN_ELEMENT_ARRAY_SIZE) {
+            return MAX_PATTERN_ELEMENT;
+        }
+        if (Arrays.equals(elements1, elements2)) {
+            return elements1;
+        }
+        MutableIntSet citationSet = IntSets.mutable.of(elements1);
+        citationSet.addAll(elements2);
+        return citationSet.toSortedArray();
     }
 
     private static void addToSet(byte[] bytes, MutableSet<byte[]> byteArraySet) throws IOException {

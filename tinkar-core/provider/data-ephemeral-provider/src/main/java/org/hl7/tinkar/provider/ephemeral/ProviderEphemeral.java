@@ -46,7 +46,11 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     // TODO I don't think the spines need to be atomic for this use case of nids -> elementIndices.
     //  There is no update after initial value set...
     final SpinedIntIntMapAtomic nidToPatternNidMap = new SpinedIntIntMapAtomic(KeyType.NID_KEY);
-    final SpinedIntIntMapAtomic nidToReferencedComponentNidMap = new SpinedIntIntMapAtomic(KeyType.NID_KEY);
+    /**
+     * Using "citing" instead of "referencing" to make the field names more distinct.
+     */
+    final ConcurrentHashMap<Integer, long[]> nidToCitingComponentsNidMap = ConcurrentHashMap.newMap();
+    final ConcurrentHashMap<Integer, int[]> patternToElementNidsMap = ConcurrentHashMap.newMap();
 
     private ProviderEphemeral() {
         System.out.println("Constructing ProviderEphemeral");
@@ -63,28 +67,48 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
 
     @Override
     public void forEachSemanticNidForComponent(int componentNid, IntProcedure procedure) {
-        nidToReferencedComponentNidMap.forEach((nid, referencedComponentNid) -> {
-            if (componentNid == referencedComponentNid) {
-                procedure.accept(nid);
+        long[] citationLongs = this.nidToCitingComponentsNidMap.get(componentNid);
+        if (citationLongs != null) {
+            for (long citationLong : citationLongs) {
+                int citingComponentNid = (int) (citationLong >> 32);
+                procedure.accept(citingComponentNid);
             }
-        });
+        }
     }
 
     @Override
     public void forEachSemanticNidForComponentOfPattern(int componentNid, int patternNid, IntProcedure procedure) {
-        nidToReferencedComponentNidMap.forEach((nid, referencedComponentNid) -> {
-            if (componentNid == referencedComponentNid) {
-                if (nidToPatternNidMap.get(nid) == patternNid) {
-                    procedure.accept(nid);
+        long[] citationLongs = this.nidToCitingComponentsNidMap.get(componentNid);
+        if (citationLongs != null) {
+            for (long citationLong : citationLongs) {
+                int citingComponentNid = (int) (citationLong >> 32);
+                int citingComponentPatternNid = (int) citationLong;
+                if (patternNid == citingComponentPatternNid) {
+                    procedure.accept(citingComponentNid);
                 }
             }
-        });
+        }
     }
 
     @Override
     public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value) {
-        nidToPatternNidMap.put(nid, patternNid);
-        nidToReferencedComponentNidMap.put(nid, referencedComponentNid);
+        if (!nidToPatternNidMap.containsKey(nid)) {
+            this.nidToPatternNidMap.put(nid, patternNid);
+            if (patternNid != Integer.MAX_VALUE) {
+
+                this.nidToPatternNidMap.put(nid, patternNid);
+                if (patternNid != Integer.MAX_VALUE) {
+                    // Citing component, pattern...
+                    long citationLong = (((long) nid) << 32) | (patternNid & 0xffffffffL);
+                    //int citingComponentNid = (int) (citationLong >> 32);
+                    //int patternNid = (int) citationLong;
+                    this.nidToCitingComponentsNidMap.merge(referencedComponentNid, new long[]{citationLong},
+                            PrimitiveDataService::mergeCitations);
+                    this.patternToElementNidsMap.merge(patternNid, new int[]{nid},
+                            PrimitiveDataService::mergePatternElements);
+                }
+            }
+        }
         byte[] mergedBytes = nidComponentMap.merge(nid, value, PrimitiveDataService::merge);
         writeSequence.increment();
         return mergedBytes;
