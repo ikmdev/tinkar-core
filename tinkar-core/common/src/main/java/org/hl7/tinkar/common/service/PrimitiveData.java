@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.function.ToIntFunction;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @AutoService(CachingService.class)
@@ -30,7 +31,15 @@ public class PrimitiveData implements CachingService {
     }
 
     public static void stop() {
-        controllerSingleton.stop();
+        SimpleIndeterminateTracker progressTask = new SimpleIndeterminateTracker("Stop primitive data provider");
+        Executor.threadPool().submit(progressTask);
+        try {
+            controllerSingleton.stop();
+        } catch (Throwable ex) {
+            LOG.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+        } finally {
+            progressTask.finished();
+        }
     }
 
     public static void save() {
@@ -167,4 +176,9 @@ public class PrimitiveData implements CachingService {
     public static PublicId publicId(int nid) {
         return publicIdServiceSingleton.publicId(nid);
     }
+
+    public static int nid(PublicId publicId) {
+        return get().nidForPublicId(publicId);
+    }
+
 }

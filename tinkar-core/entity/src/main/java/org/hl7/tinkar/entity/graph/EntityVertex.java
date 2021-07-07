@@ -307,4 +307,8 @@ public class EntityVertex implements Vertex, VertexId {
             throw new UnsupportedOperationException("Unsupported version: " + entityFormatVersion);
         }
     }
+
+    public int getMeaningNid() {
+        return meaningNid;
+    }
 }

@@ -7,8 +7,6 @@ import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
-import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
-import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
 import org.hl7.tinkar.common.id.IntIdList;
 import org.hl7.tinkar.common.service.CachingService;
@@ -16,18 +14,16 @@ import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.coordinate.CoordinateUtil;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinate;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinateRecord;
+import org.hl7.tinkar.coordinate.stamp.StampCoordinateRecord;
+import org.hl7.tinkar.coordinate.stamp.calculator.Latest;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculator;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
-import org.hl7.tinkar.coordinate.stamp.StampCoordinateRecord;
 import org.hl7.tinkar.entity.*;
-import org.hl7.tinkar.coordinate.stamp.calculator.Latest;
 import org.hl7.tinkar.terms.EntityFacade;
 import org.hl7.tinkar.terms.TinkarTerm;
 
-
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.concurrent.Semaphore;
 import java.util.logging.Logger;
 
 public class LanguageCalculatorWithCache implements LanguageCalculator {
@@ -73,17 +69,8 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
     private final Cache<Integer, String> definitionCache =
             Caffeine.newBuilder().maximumSize(1024).build();
 
-    private final Cache<Integer, Latest<PatternEntityVersion>> patternCaches =
-            Caffeine.newBuilder().maximumSize(128).build();
-
     private final Cache<Integer, ImmutableList<SemanticEntity>> descriptionsForComponentCache =
             Caffeine.newBuilder().maximumSize(1024).build();
-
-    private final MutableIntObjectMap<OptionalInt> indexForTextMap = IntObjectMaps.mutable.empty();
-    private final MutableIntObjectMap<OptionalInt> indexForTypeMap = IntObjectMaps.mutable.empty();
-
-    private final Semaphore indexForTextMapSemaphore = new Semaphore(1);
-    private final Semaphore indexForTypeMapSemaphore = new Semaphore(1);
 
     public LanguageCalculatorWithCache(StampCoordinateRecord stampFilter, ImmutableList<LanguageCoordinateRecord> languageCoordinateList) {
         this.stampCalculator = StampCalculatorWithCache.getCalculator(stampFilter);
@@ -102,41 +89,12 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
     }
 
     private Latest<PatternEntityVersion> getPattern(int patternNid) {
-        return patternCaches.get(patternNid, nid ->
-                stampCalculator.latest(patternNid));
-    }
-
-    private OptionalInt getIndexForMeaning(int patternNid, int meaningNid, Semaphore indexSemaphore, MutableIntObjectMap<OptionalInt> indexMap) {
-        if (indexMap.containsKey(patternNid)) {
-            return indexMap.get(patternNid);
-        }
-        try {
-            indexSemaphore.acquireUninterruptibly();
-            if (indexMap.containsKey(patternNid)) {
-                return indexMap.get(patternNid);
-            }
-            Latest<PatternEntityVersion> latestPatternVersion = getPattern(patternNid);
-            if (latestPatternVersion.isPresent()) {
-                OptionalInt optionalIndexForText;
-                int indexForText = latestPatternVersion.get().indexForMeaning(meaningNid);
-                if (indexForText < 0) {
-                    optionalIndexForText = OptionalInt.empty();
-                } else {
-                    optionalIndexForText = OptionalInt.of(indexForText);
-                }
-                indexMap.put(patternNid, optionalIndexForText);
-                return optionalIndexForText;
-            }
-            indexMap.put(patternNid, OptionalInt.empty());
-            return OptionalInt.empty();
-        } finally {
-            indexSemaphore.release();
-        }
+        return stampCalculator.latestPatternEntityVersion(patternNid);
     }
 
     public Optional<String> getTextFromSemanticVersion(SemanticEntityVersion semanticEntityVersion) {
-        OptionalInt optionalIndexForText = getIndexForMeaning(semanticEntityVersion.patternNid(),
-                TinkarTerm.TEXT_FOR_DESCRIPTION.nid(), indexForTextMapSemaphore, indexForTextMap);
+        OptionalInt optionalIndexForText = stampCalculator.getIndexForMeaning(semanticEntityVersion.patternNid(),
+                TinkarTerm.TEXT_FOR_DESCRIPTION.nid());
         if (optionalIndexForText.isPresent()) {
             String text = (String) semanticEntityVersion.fields().get(optionalIndexForText.getAsInt());
             return Optional.of(text);
@@ -188,8 +146,8 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
         for (LanguageCoordinate languageCoordinate : languageCoordinateList()) {
             MutableList<SemanticEntityVersion> descriptionList = Lists.mutable.empty();
             for (int descriptionPatternNid : languageCoordinate.descriptionPatternPreferenceNidList().toArray()) {
-                OptionalInt optionalTypeIndex = getIndexForMeaning(descriptionPatternNid,
-                        TinkarTerm.DESCRIPTION_TYPE.nid(), indexForTypeMapSemaphore, indexForTypeMap);
+                OptionalInt optionalTypeIndex = stampCalculator.getIndexForMeaning(descriptionPatternNid,
+                        TinkarTerm.DESCRIPTION_TYPE.nid());
                 if (optionalTypeIndex.isPresent()) {
                     PrimitiveData.get().forEachSemanticNidForComponentOfPattern(componentNid, descriptionPatternNid,
                             semanticNid -> {

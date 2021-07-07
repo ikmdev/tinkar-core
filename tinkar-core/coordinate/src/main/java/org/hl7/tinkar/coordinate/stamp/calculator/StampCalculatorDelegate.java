@@ -5,6 +5,7 @@ import org.hl7.tinkar.common.util.functional.TriConsumer;
 import org.hl7.tinkar.coordinate.stamp.StateSet;
 import org.hl7.tinkar.entity.*;
 
+import java.util.OptionalInt;
 import java.util.function.BiConsumer;
 
 public interface StampCalculatorDelegate extends StampCalculator {
@@ -48,5 +49,20 @@ public interface StampCalculatorDelegate extends StampCalculator {
     @Override
     default void forEachSemanticVersionWithFieldsForComponent(int componentNid, TriConsumer<SemanticEntityVersion, ImmutableList<Field>, EntityVersion> procedure) {
         stampCalculator().forEachSemanticVersionWithFieldsForComponent(componentNid, procedure);
+    }
+
+    @Override
+    default Latest<PatternEntityVersion> latestPatternEntityVersion(int patternNid) {
+        return stampCalculator().latestPatternEntityVersion(patternNid);
+    }
+
+    @Override
+    default OptionalInt getIndexForMeaning(int patternNid, int meaningNid) {
+        return stampCalculator().getIndexForMeaning(patternNid, meaningNid);
+    }
+
+    @Override
+    default OptionalInt getIndexForPurpose(int patternNid, int purposeNid) {
+        return stampCalculator().getIndexForPurpose(patternNid, purposeNid);
     }
 }

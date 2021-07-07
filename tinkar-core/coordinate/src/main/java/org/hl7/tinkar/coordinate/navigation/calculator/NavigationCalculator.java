@@ -5,10 +5,12 @@ import org.hl7.tinkar.common.id.IntIdList;
 import org.hl7.tinkar.common.id.IntIdSet;
 import org.hl7.tinkar.common.id.IntIds;
 import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculatorDelegate;
+import org.hl7.tinkar.coordinate.navigation.NavigationCoordinateRecord;
 import org.hl7.tinkar.coordinate.stamp.StateSet;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculatorDelegate;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import org.hl7.tinkar.terms.ConceptFacade;
+import org.hl7.tinkar.terms.PatternFacade;
 
 public interface NavigationCalculator extends StampCalculatorDelegate, LanguageCalculatorDelegate {
 
@@ -118,4 +120,14 @@ public interface NavigationCalculator extends StampCalculatorDelegate, LanguageC
         // TODO add pattern sort to implementation...
         return toSortedList(IntIds.list.of(inputSet.toArray()));
     }
+
+    NavigationCoordinateRecord navigationCoordinate();
+
+
+    default IntIdList unsortedParentsOf(ConceptFacade concept, PatternFacade patternFacade) {
+        return unsortedParentsOf(concept.nid(), patternFacade.nid());
+    }
+    IntIdList unsortedParentsOf(int conceptNid, int patternNid);
+
+
 }

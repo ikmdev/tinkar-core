@@ -4,15 +4,26 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.util.functional.QuadConsumer;
 import org.hl7.tinkar.common.util.functional.TriConsumer;
 import org.hl7.tinkar.coordinate.stamp.StateSet;
-import org.hl7.tinkar.coordinate.stamp.calculator.Latest;
-import org.hl7.tinkar.coordinate.stamp.calculator.RelativePosition;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.terms.EntityFacade;
 import org.hl7.tinkar.terms.PatternFacade;
 
+import java.util.OptionalInt;
 import java.util.function.BiConsumer;
 
 public interface StampCalculator {
+
+    default boolean isLatestActive(EntityFacade facade) {
+        return isLatestActive(facade.nid());
+    }
+
+    default boolean isLatestActive(int nid) {
+        Latest<EntityVersion> latest = latest(nid);
+        if (latest.isPresent()) {
+            return StateSet.ACTIVE.contains(latest.get().stamp().state());
+        }
+        return false;
+    }
 
     <V extends EntityVersion> Latest<V> latest(Entity<V> chronicle);
 
@@ -86,4 +97,8 @@ public interface StampCalculator {
     void forEachSemanticVersionWithFieldsForComponent(int componentNid,
                                                       TriConsumer<SemanticEntityVersion, ImmutableList<Field>, EntityVersion> procedure);
 
+    Latest<PatternEntityVersion> latestPatternEntityVersion(int patternNid);
+
+    OptionalInt getIndexForMeaning(int patternNid, int meaningNid);
+    OptionalInt getIndexForPurpose(int patternNid, int meaningNid);
 }

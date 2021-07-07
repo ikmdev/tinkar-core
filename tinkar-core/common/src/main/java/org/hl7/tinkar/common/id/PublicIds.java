@@ -3,6 +3,7 @@ package org.hl7.tinkar.common.id;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.id.impl.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +29,9 @@ public class PublicIds {
     }
     public static final PublicId of(ImmutableList<UUID> list) {
         return of(list.toArray(new UUID[list.size()]));
+    }
+    public static final PublicId of(String... uuidStrings) {
+        return of(Arrays.stream(uuidStrings).map(s -> UUID.fromString(s)).toList());
     }
     public static final PublicId of(UUID... uuids) {
         if (uuids.length == 1) {

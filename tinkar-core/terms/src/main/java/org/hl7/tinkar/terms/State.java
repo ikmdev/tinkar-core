@@ -1,6 +1,7 @@
 package org.hl7.tinkar.terms;
 
 
+import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.hl7.tinkar.common.id.PublicId;
@@ -29,24 +30,20 @@ public enum State implements Concept, ComponentWithNid {
         return proxyForState.nid();
     }
 
-    public static State fromConcept(ConceptFacade concept) {
-        if (nidStateMap.size() < 5) {
-            for (State state: State.values()) {
-                nidStateMap.put(state.nid(), state);
-            }
-        }
-        return nidStateMap.get(concept.nid());
+    private static ImmutableIntObjectMap<State> nidStateMap;
 
+    static {
+        MutableIntObjectMap<State> mutableNidStateMap = IntObjectMaps.mutable.ofInitialCapacity(5);
+        for (State state: State.values()) {
+            mutableNidStateMap.put(state.nid(), state);
+        }
+        nidStateMap = mutableNidStateMap.toImmutable();
     }
+
     public static State fromConceptNid(int conceptNid) {
-        if (nidStateMap.size() < 5) {
-            for (State state: State.values()) {
-                nidStateMap.put(state.nid(), state);
-            }
-        }
         return nidStateMap.get(conceptNid);
-
     }
-
-    private static MutableIntObjectMap<State> nidStateMap = IntObjectMaps.mutable.ofInitialCapacity(5);
+    public static State fromConcept(ConceptFacade concept) {
+        return nidStateMap.get(concept.nid());
+    }
 }

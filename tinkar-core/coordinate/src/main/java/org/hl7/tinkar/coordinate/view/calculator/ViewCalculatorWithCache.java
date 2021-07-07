@@ -9,6 +9,11 @@ import org.hl7.tinkar.coordinate.language.*;
 import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculator;
 import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculatorDelegate;
 import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculatorWithCache;
+import org.hl7.tinkar.coordinate.logic.LogicCoordinate;
+import org.hl7.tinkar.coordinate.logic.LogicCoordinateRecord;
+import org.hl7.tinkar.coordinate.logic.calculator.LogicCalculator;
+import org.hl7.tinkar.coordinate.logic.calculator.LogicCalculatorDelegate;
+import org.hl7.tinkar.coordinate.logic.calculator.LogicCalculatorWithCache;
 import org.hl7.tinkar.coordinate.navigation.NavigationCoordinate;
 import org.hl7.tinkar.coordinate.navigation.NavigationCoordinateRecord;
 import org.hl7.tinkar.coordinate.navigation.calculator.NavigationCalculator;
@@ -23,16 +28,11 @@ import org.hl7.tinkar.coordinate.view.ViewCoordinateRecord;
 import java.util.logging.Logger;
 
 public class ViewCalculatorWithCache implements ViewCalculator, StampCalculatorDelegate,
-        LanguageCalculatorDelegate, NavigationCalculatorDelegate {
+        LanguageCalculatorDelegate, NavigationCalculatorDelegate, LogicCalculatorDelegate {
     /** The Constant LOG. */
     private static final Logger LOG = CoordinateUtil.LOG;
 
-    private static record StampLangNavViewRecord(StampCoordinateRecord stampFilter,
-                                                 ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
-                                                 NavigationCoordinateRecord navigationCoordinate,
-                                                 ViewCoordinateRecord viewCoordinateRecord){}
-
-    private static final ConcurrentReferenceHashMap<StampLangNavViewRecord, ViewCalculatorWithCache> SINGLETONS =
+    private static final ConcurrentReferenceHashMap<ViewCoordinateRecord, ViewCalculatorWithCache> SINGLETONS =
             new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
                     ConcurrentReferenceHashMap.ReferenceType.WEAK);
 
@@ -43,49 +43,42 @@ public class ViewCalculatorWithCache implements ViewCalculator, StampCalculatorD
             SINGLETONS.clear();
         }
     }
-    /**
-     * Gets the stampCoordinateRecord.
-     *
-     * @return the stampCoordinateRecord
-     */
-    public static ViewCalculatorWithCache getCalculator(StampCoordinateRecord stampFilter,
-                                                        ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
-                                                        NavigationCoordinateRecord navigationCoordinate,
-                                                        ViewCoordinateRecord viewCoordinateRecord) {
-        return SINGLETONS.computeIfAbsent(new StampLangNavViewRecord(stampFilter, languageCoordinateList,
-                        navigationCoordinate, viewCoordinateRecord),
-                filterKey -> new ViewCalculatorWithCache(stampFilter,
-                        languageCoordinateList, navigationCoordinate, viewCoordinateRecord));
-    }
+
     public static ViewCalculatorWithCache getCalculator(ViewCoordinateRecord viewCoordinateRecord) {
-        return SINGLETONS.computeIfAbsent(new StampLangNavViewRecord(viewCoordinateRecord.stampCoordinate(),
-                        viewCoordinateRecord.languageCoordinateList(),
-                        viewCoordinateRecord.navigationCoordinate(), viewCoordinateRecord),
-                filterKey -> new ViewCalculatorWithCache(viewCoordinateRecord.stampCoordinate(),
-                        viewCoordinateRecord.languageCoordinateList(),
-                        viewCoordinateRecord.navigationCoordinate(), viewCoordinateRecord));
+        return SINGLETONS.computeIfAbsent(viewCoordinateRecord,
+                filterKey -> new ViewCalculatorWithCache(viewCoordinateRecord));
     }
 
     private final StampCalculatorWithCache stampCalculator;
     private final LanguageCalculator languageCalculator;
     private final NavigationCalculator navigationCalculator;
+    private final LogicCalculator logicCalculator;
     private final ViewCoordinateRecord viewCoordinateRecord;
 
-    public ViewCalculatorWithCache(StampCoordinate stampCoordinate,
-                                   ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
-                                   NavigationCoordinate navigationCoordinate,
-                                   ViewCoordinateRecord viewCoordinateRecord) {
-        this.stampCalculator = StampCalculatorWithCache.getCalculator(stampCoordinate.toStampCoordinateRecord());
-        this.languageCalculator = LanguageCalculatorWithCache.getCalculator(stampCoordinate.toStampCoordinateRecord(),
-                languageCoordinateList);
-        this.navigationCalculator = NavigationCalculatorWithCache.getCalculator(stampCoordinate.toStampCoordinateRecord(),
-                languageCoordinateList, navigationCoordinate.toNavigationCoordinateRecord());
+    public ViewCalculatorWithCache(ViewCoordinateRecord viewCoordinateRecord) {
+        this.stampCalculator = StampCalculatorWithCache.getCalculator(viewCoordinateRecord.stampCoordinate());
+        this.languageCalculator = LanguageCalculatorWithCache.getCalculator(viewCoordinateRecord.stampCoordinate(),
+                viewCoordinateRecord.languageCoordinateList());
+        this.navigationCalculator = NavigationCalculatorWithCache.getCalculator(viewCoordinateRecord.stampCoordinate(),
+                viewCoordinateRecord.languageCoordinateList(), viewCoordinateRecord.navigationCoordinate());
+        this.logicCalculator = LogicCalculatorWithCache.getCalculator(viewCoordinateRecord.logicCoordinate(), viewCoordinateRecord.stampCoordinate());
         this.viewCoordinateRecord = viewCoordinateRecord;
+
+    }
+
+    @Override
+    public ViewCoordinateRecord viewCoordinateRecord() {
+        return viewCoordinateRecord;
     }
 
     @Override
     public ImmutableList<LanguageCoordinateRecord> languageCoordinateList() {
         return this.languageCalculator.languageCoordinateList();
+    }
+
+    @Override
+    public LogicCalculator logicCalculator() {
+        return this.logicCalculator;
     }
 
     @Override

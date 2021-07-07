@@ -5,6 +5,7 @@ import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.time.DateTimeUtil;
 import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.dto.StampDTO;
+import org.hl7.tinkar.terms.State;
 
 import static org.hl7.tinkar.component.FieldDataType.STAMP;
 
@@ -24,8 +25,8 @@ public class StampEntity extends Entity<StampEntityVersion>
         return latest;
     }
     @Override
-    public Concept state() {
-        return lastVersion().state();
+    public State state() {
+        return State.fromConceptNid(lastVersion().statusNid);
     }
 
     public int stateNid() {

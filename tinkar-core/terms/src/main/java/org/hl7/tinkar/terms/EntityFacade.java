@@ -24,4 +24,8 @@ public interface EntityFacade extends Component, ComponentWithNid {
         return entityFacade.nid();
     }
 
+    default  <T extends EntityProxy> T toProxy() {
+        return ProxyFactory.fromFacade(this);
+    }
+
 }

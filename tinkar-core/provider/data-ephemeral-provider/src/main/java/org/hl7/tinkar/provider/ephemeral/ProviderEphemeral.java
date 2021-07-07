@@ -9,6 +9,7 @@ import org.hl7.tinkar.collection.SpinedIntIntMapAtomic;
 import org.hl7.tinkar.common.service.Executor;
 import org.hl7.tinkar.common.service.NidGenerator;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
+import org.hl7.tinkar.common.util.ints2long.IntsInLong;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -98,11 +99,8 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
 
                 this.nidToPatternNidMap.put(nid, patternNid);
                 if (patternNid != Integer.MAX_VALUE) {
-                    // Citing component, pattern...
-                    long citationLong = (((long) nid) << 32) | (patternNid & 0xffffffffL);
-                    //int citingComponentNid = (int) (citationLong >> 32);
-                    //int patternNid = (int) citationLong;
-                    this.nidToCitingComponentsNidMap.merge(referencedComponentNid, new long[]{citationLong},
+                     long citationLong = IntsInLong.ints2Long(nid, patternNid);
+                     this.nidToCitingComponentsNidMap.merge(referencedComponentNid, new long[]{citationLong},
                             PrimitiveDataService::mergeCitations);
                     this.patternToElementNidsMap.merge(patternNid, new int[]{nid},
                             PrimitiveDataService::mergePatternElements);

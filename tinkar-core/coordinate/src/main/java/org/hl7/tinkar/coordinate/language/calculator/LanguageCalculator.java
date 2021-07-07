@@ -1,7 +1,10 @@
 package org.hl7.tinkar.coordinate.language.calculator;
 
+import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.common.id.IntIdList;
+import org.hl7.tinkar.common.id.IntIdSet;
 import org.hl7.tinkar.common.id.IntIds;
 import org.hl7.tinkar.common.util.text.NaturalOrder;
 import org.hl7.tinkar.common.util.time.DateTimeUtil;
@@ -38,6 +41,41 @@ public interface LanguageCalculator {
     default ImmutableList<SemanticEntityVersion> getDescriptionsForComponentOfType(EntityFacade entityFacade,
                                                                                    ConceptFacade descriptionTypeFacade) {
         return getDescriptionsForComponentOfType(entityFacade.nid(), descriptionTypeFacade.nid());
+    }
+    default ImmutableList<String> getPreferredDescriptionTextListForComponents(IntIdSet ids) {
+        return getPreferredDescriptionTextListForComponents(ids.toArray());
+    }
+
+    default ImmutableList<String> getPreferredDescriptionTextListForComponents(int... nids) {
+        MutableList<String> descriptionTextList = Lists.mutable.ofInitialCapacity(nids.length);
+        for (int nid: nids) {
+            descriptionTextList.add(getPreferredDescriptionTextWithFallbackOrNid(nid));
+        }
+        return descriptionTextList.toImmutable();
+    }
+
+    default ImmutableList<String> getPreferredDescriptionTextListForComponents(EntityFacade... entities) {
+        MutableList<String> descriptionTextList = Lists.mutable.ofInitialCapacity(entities.length);
+        for (EntityFacade entity: entities) {
+            descriptionTextList.add(getPreferredDescriptionTextWithFallbackOrNid(entity));
+        }
+        return descriptionTextList.toImmutable();
+    }
+
+    default ImmutableList<String> getFullyQualifiedTextListForComponents(EntityFacade... entities) {
+        MutableList<String> descriptionTextList = Lists.mutable.ofInitialCapacity(entities.length);
+        for (EntityFacade entity: entities) {
+            descriptionTextList.add(getFullyQualifiedNameTextOrNid(entity));
+        }
+        return descriptionTextList.toImmutable();
+    }
+
+    default ImmutableList<String> getDescriptionTextListForComponents(EntityFacade... entities) {
+        MutableList<String> descriptionTextList = Lists.mutable.ofInitialCapacity(entities.length);
+        for (EntityFacade entity: entities) {
+            descriptionTextList.add(getDescriptionTextOrNid(entity));
+        }
+        return descriptionTextList.toImmutable();
     }
 
     ImmutableList<SemanticEntityVersion> getDescriptionsForComponentOfType(int componentNid,
@@ -78,6 +116,9 @@ public interface LanguageCalculator {
      */
     Optional<String> getDescriptionText(int componentNid);
 
+    default String getDescriptionTextOrNid(EntityFacade entity) {
+        return getDescriptionTextOrNid(entity.nid());
+    }
     default String getDescriptionTextOrNid(int componentNid) {
         Optional<String> text = getDescriptionText(componentNid);
         if (text.isPresent()) {
@@ -100,6 +141,23 @@ public interface LanguageCalculator {
         return getDescription(entityFacade.nid());
     }
     Optional<String> getTextFromSemanticVersion(SemanticEntityVersion semanticEntityVersion);
+
+    default String getPreferredDescriptionTextWithFallbackOrNid(EntityFacade entityFacade) {
+        return getPreferredDescriptionTextWithFallbackOrNid(entityFacade.nid());
+    }
+
+    default String getPreferredDescriptionTextWithFallbackOrNid(int nid) {
+        Optional<String> optionalResult = getRegularDescriptionText(nid);
+        if (optionalResult.isPresent()) {
+            return optionalResult.get();
+        }
+        optionalResult = getFullyQualifiedNameText(nid);
+        if (optionalResult.isPresent()) {
+            return optionalResult.get();
+        }
+        return Integer.toString(nid);
+    }
+
     default String getPreferredDescriptionStringOrNid(int nid) {
         return toEntityStringOrNid(nid, this::getRegularDescriptionText);
     }
@@ -118,6 +176,7 @@ public interface LanguageCalculator {
         return toEntityStringOrInputString(possibleEntityString, this::getRegularDescriptionText);
     }
 
+
     /**
      * Used where a String property is optionally an Entity XML fragment, or
      * similar circumstances.
@@ -130,7 +189,7 @@ public interface LanguageCalculator {
     }
 
     default String toEntityStringOrInputString(String possibleEntityString, Function<Integer,Optional<String>> toOptionalEntityString) {
-        Optional<EntityFacade> optionalEntity = ProxyFactory.fromXmlFragmentOptional(possibleEntityString);
+        Optional<EntityProxy> optionalEntity = ProxyFactory.fromXmlFragmentOptional(possibleEntityString);
         if (optionalEntity.isPresent()) {
             Optional<String> optionalEntityString = toOptionalEntityString.apply(optionalEntity.get().nid());
             if (optionalEntityString.isPresent()) {
@@ -222,7 +281,7 @@ public interface LanguageCalculator {
                 }
             }
         } else if (object instanceof String string) {
-            Optional<EntityFacade> optionalEntity = ProxyFactory.fromXmlFragmentOptional(string);
+            Optional<EntityProxy> optionalEntity = ProxyFactory.fromXmlFragmentOptional(string);
             if (optionalEntity.isPresent()) {
                 sb.append(toEntityString(optionalEntity.get(), toEntityString));
             } else {
@@ -294,6 +353,17 @@ public interface LanguageCalculator {
 
     default Optional<String> getFullyQualifiedNameText(int componentNid) {
         return getDescriptionTextForComponentOfType(componentNid, TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid());
+    }
+    default String getFullyQualifiedNameTextOrNid(EntityFacade entityFacade) {
+        return getFullyQualifiedNameTextOrNid(entityFacade.nid());
+    }
+
+    default String getFullyQualifiedNameTextOrNid(int componentNid) {
+        Optional<String> optionalText = getDescriptionTextForComponentOfType(componentNid, TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid());
+        if (optionalText.isPresent()) {
+            return optionalText.get();
+        }
+        return Integer.toString(componentNid);
     }
 
     /**

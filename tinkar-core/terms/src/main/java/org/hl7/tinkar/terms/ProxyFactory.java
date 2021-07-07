@@ -34,14 +34,14 @@ public class ProxyFactory {
         }
     });
 
-    public static Optional<EntityFacade> fromXmlFragmentOptional(String xmlString) {
+    public static <T extends EntityProxy> Optional<T> fromXmlFragmentOptional(String xmlString) {
         if (xmlString.contains("<") && xmlString.contains(">")) {
             try {
                 Document doc = documentBuilder.get().parse(new InputSource(new StringReader(xmlString)));
                 Element element = doc.getDocumentElement();
                 Attr uuids = element.getAttributeNode(UUIDS_ATTRIBUTE);
                 Attr desc = element.getAttributeNode(DESCRIPTION_ATTRIBUTE);
-                EntityFacade facade = switch (element.getTagName()) {
+                EntityProxy proxy = switch (element.getTagName()) {
                     case ENTITY_ELEMENT -> EntityProxy.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
                     case PATTERN_ELEMENT -> PatternProxy.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
                     case SEMANTIC_ELEMENT -> SemanticProxy.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
@@ -52,7 +52,7 @@ public class ProxyFactory {
                         yield null;
                     }
                 };
-                return Optional.ofNullable(facade);
+                return (Optional<T>) Optional.ofNullable(proxy);
             } catch (SAXException | IOException e) {
                 System.out.println("Input string: " + xmlString);
                 e.printStackTrace();
@@ -61,13 +61,29 @@ public class ProxyFactory {
         return Optional.empty();
     }
 
-    public static EntityFacade fromXmlFragment(String xmlString) {
+    public static <T extends EntityProxy> T fromFacade(EntityFacade facade) {
+        if (facade instanceof EntityProxy proxy) {
+            return (T) proxy;
+        }
+        if (facade instanceof Concept) {
+            return (T) ConceptProxy.make(facade.nid());
+        }
+        if (facade instanceof Pattern) {
+            return (T) PatternProxy.make(facade.nid());
+        }
+        if (facade instanceof Semantic) {
+            return (T) SemanticProxy.make(facade.nid());
+        }
+        throw new UnsupportedOperationException("Can't handle: " + facade);
+    }
+
+    public static <T extends EntityProxy> T fromXmlFragment(String xmlString) {
         try {
             Document doc = documentBuilder.get().parse(new InputSource(new StringReader(xmlString)));
             Element element = doc.getDocumentElement();
             Attr uuids = element.getAttributeNode(UUIDS_ATTRIBUTE);
             Attr desc = element.getAttributeNode(DESCRIPTION_ATTRIBUTE);
-            return switch (element.getTagName()) {
+            return (T) switch (element.getTagName()) {
                 case ENTITY_ELEMENT -> EntityProxy.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
                 case PATTERN_ELEMENT -> PatternProxy.make(desc.getName(), UuidUtil.fromString(uuids.getValue()));
                 case SEMANTIC_ELEMENT -> SemanticProxy.make(desc.getName(), UuidUtil.fromString(uuids.getValue()));

@@ -27,6 +27,9 @@ public class TinkarTerm {
     public static final PatternProxy EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN =
             PatternProxy.make("EL ++ Inferred form pattern", UUID.fromString("9f011812-15c9-5b1b-85f8-bb262bc1b2a2"));
 
+    /** ConceptProxy for: "Tinkar root concept". */
+    public static ConceptProxy ROOT_VERTEX = ConceptProxy.make("Root vertex", UUID.fromString("7c21b6c5-cf11-5af9-893b-743f004c97f5"));
+
     /** Java binding for the concept described as <strong><em>Acceptable (SOLOR)</em></strong>;
      * identified by UUID: {@code
      * <a href="http://localhost:8080/terminology/rest/concept/12b9e103-060e-3256-9982-18c1191af60e">

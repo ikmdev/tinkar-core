@@ -48,13 +48,17 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
+import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
 import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.common.util.ints2long.IntsInLong;
 import org.hl7.tinkar.coordinate.stamp.*;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.component.graph.DiTree;
@@ -82,6 +86,7 @@ public class StampCalculatorWithCache implements StampCalculator {
 
     @AutoService(CachingService.class)
     public static class CacheProvider implements CachingService {
+        // TODO: this has implicit assumption that no one will hold on to a calculator... Should we be defensive?
         @Override
         public void reset() {
             SINGLETONS.clear();
@@ -98,7 +103,13 @@ public class StampCalculatorWithCache implements StampCalculator {
     private final ConcurrentHashMap<Integer, Boolean> stampIsAllowedState = new ConcurrentHashMap<>();
 
     Cache<Integer, Latest<PatternEntityVersion>> patternVersionCache =
-            Caffeine.newBuilder().maximumSize(128).build();
+            Caffeine.newBuilder().maximumSize(512).build();
+
+    Cache<Long, OptionalInt> indexForMeaningCache =
+            Caffeine.newBuilder().maximumSize(1024).build();
+
+    Cache<Long, OptionalInt> indexForPurposeCache =
+            Caffeine.newBuilder().maximumSize(1024).build();
 
     Cache<Integer, Latest<EntityVersion>> latestCache =
             Caffeine.newBuilder().maximumSize(10240).build();
@@ -977,5 +988,39 @@ public class StampCalculatorWithCache implements StampCalculator {
                 });
     }
 
+    public OptionalInt getIndexForMeaning(int patternNid, int meaningNid) {
+        long patternMeaningKey = IntsInLong.ints2Long(patternNid, meaningNid);
+        return indexForMeaningCache.get(patternMeaningKey, key -> {
+            Latest<PatternEntityVersion> latestPatternVersion = latestPatternEntityVersion(patternNid);
+            if (latestPatternVersion.isPresent()) {
+                OptionalInt optionalIndexForMeaning;
+                int indexForMeaning = latestPatternVersion.get().indexForMeaning(meaningNid);
+                if (indexForMeaning < 0) {
+                    optionalIndexForMeaning = OptionalInt.empty();
+                } else {
+                    optionalIndexForMeaning = OptionalInt.of(indexForMeaning);
+                }
+                return optionalIndexForMeaning;
+            }
+            return OptionalInt.empty();
+        });
+    }
+    public OptionalInt getIndexForPurpose(int patternNid, int purposeNid) {
+        long patternMeaningKey = IntsInLong.ints2Long(patternNid, purposeNid);
+        return indexForPurposeCache.get(patternMeaningKey, key -> {
+            Latest<PatternEntityVersion> latestPatternVersion = latestPatternEntityVersion(patternNid);
+            if (latestPatternVersion.isPresent()) {
+                OptionalInt optionalIndexForMeaning;
+                int indexForMeaning = latestPatternVersion.get().indexForPurpose(purposeNid);
+                if (indexForMeaning < 0) {
+                    optionalIndexForMeaning = OptionalInt.empty();
+                } else {
+                    optionalIndexForMeaning = OptionalInt.of(indexForMeaning);
+                }
+                return optionalIndexForMeaning;
+            }
+            return OptionalInt.empty();
+        });
+    }
 }
 

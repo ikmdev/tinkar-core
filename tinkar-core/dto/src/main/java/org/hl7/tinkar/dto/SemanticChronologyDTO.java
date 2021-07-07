@@ -22,6 +22,7 @@ import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.Component;
 import org.hl7.tinkar.component.Pattern;
 import org.hl7.tinkar.component.SemanticChronology;
+import org.hl7.tinkar.component.SemanticVersion;
 import org.hl7.tinkar.dto.binary.*;
 
 /**
@@ -46,9 +47,9 @@ public record SemanticChronologyDTO(PublicId publicId,
                 semanticVersions);
     }
 
-    public static SemanticChronologyDTO make(SemanticChronology<SemanticVersionDTO> semanticChronology) {
+    public static SemanticChronologyDTO make(SemanticChronology<? extends SemanticVersion> semanticChronology) {
         MutableList<SemanticVersionDTO> changeSetVersions = Lists.mutable.ofInitialCapacity(semanticChronology.versions().size());
-        for (SemanticVersionDTO semanticVersion : semanticChronology.versions()) {
+        for (SemanticVersion semanticVersion : semanticChronology.versions()) {
             changeSetVersions.add(SemanticVersionDTO.make(semanticVersion));
         }
         return new SemanticChronologyDTO(semanticChronology.publicId(),

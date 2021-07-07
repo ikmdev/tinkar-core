@@ -1,8 +1,12 @@
 package org.hl7.tinkar.coordinate.navigation.calculator;
 
+import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.id.IntIdList;
 import org.hl7.tinkar.common.id.IntIdSet;
+import org.hl7.tinkar.coordinate.language.LanguageCoordinateRecord;
+import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculator;
 import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculatorDelegate;
+import org.hl7.tinkar.coordinate.navigation.NavigationCoordinateRecord;
 import org.hl7.tinkar.coordinate.stamp.StateSet;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculator;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculatorDelegate;
@@ -82,4 +86,22 @@ public interface NavigationCalculatorDelegate extends NavigationCalculator, Lang
         return navigationCalculator().sortedChildrenOf(conceptNid);
     }
 
+    default NavigationCoordinateRecord navigationCoordinate() {
+        return navigationCalculator().navigationCoordinate();
+    }
+
+    @Override
+    default IntIdList unsortedParentsOf(int conceptNid, int patternNid) {
+        return navigationCalculator().unsortedParentsOf(conceptNid, patternNid);
+    }
+
+    @Override
+    default ImmutableList<LanguageCoordinateRecord> languageCoordinateList() {
+        return navigationCalculator().languageCoordinateList();
+    }
+
+    @Override
+    default LanguageCalculator languageCalculator() {
+        return navigationCalculator().languageCalculator();
+    }
 }

@@ -80,7 +80,7 @@ public class LoadEntitiesFromDtoFile extends TrackingCallable<Integer> {
             TinkarInput tinkIn = new TinkarInput(countingInputStream);
             LOG.info(":LoadEntitiesFromDTO: begin processing");
 
-            while (!isCanceled()) {
+            while (!isCancelled()) {
                 if (updateIntervalElapsed()) {
                     updateTitle("Loading " + importFile.getName());
                     updateProgress(countingInputStream.getBytesRead(), totalSize);

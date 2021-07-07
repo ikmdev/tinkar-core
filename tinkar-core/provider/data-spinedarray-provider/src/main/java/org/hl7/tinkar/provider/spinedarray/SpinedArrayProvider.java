@@ -14,6 +14,7 @@ import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.eclipse.collections.impl.factory.primitive.LongSets;
 import org.hl7.tinkar.collection.*;
 import org.hl7.tinkar.common.service.*;
+import org.hl7.tinkar.common.util.ints2long.IntsInLong;
 import org.hl7.tinkar.provider.spinedarray.internal.Get;
 import org.hl7.tinkar.provider.spinedarray.internal.Put;
 
@@ -175,10 +176,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
 
                 this.nidToPatternNidMap.put(nid, patternNid);
                 if (patternNid != Integer.MAX_VALUE) {
-                    // Citing component, pattern...
-                    long citationLong = (((long) nid) << 32) | (patternNid & 0xffffffffL);
-                    //int citingComponentNid = (int) (citationLong >> 32);
-                    //int patternNid = (int) citationLong;
+                    long citationLong = IntsInLong.ints2Long(nid, patternNid);
                     this.nidToCitingComponentsNidMap.accumulateAndGet(referencedComponentNid, new long[]{citationLong},
                             PrimitiveDataService::mergeCitations);
                     this.patternToElementNidsMap.accumulateAndGet(patternNid, new int[]{nid},

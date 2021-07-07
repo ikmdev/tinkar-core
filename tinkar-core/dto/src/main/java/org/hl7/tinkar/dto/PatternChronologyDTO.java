@@ -20,6 +20,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.PatternChronology;
+import org.hl7.tinkar.component.PatternVersion;
 import org.hl7.tinkar.dto.binary.*;
 
 /**
@@ -32,9 +33,9 @@ public record PatternChronologyDTO(PublicId publicId,
 
     private static final int localMarshalVersion = 3;
 
-    public static PatternChronologyDTO make(PatternChronology<PatternVersionDTO> patternChronology) {
+    public static PatternChronologyDTO make(PatternChronology<? extends PatternVersion> patternChronology) {
         MutableList<PatternVersionDTO> versions = Lists.mutable.ofInitialCapacity(patternChronology.versions().size());
-        for (PatternVersionDTO patternVersion : patternChronology.versions()) {
+        for (PatternVersion patternVersion : patternChronology.versions()) {
             versions.add(PatternVersionDTO.make(patternVersion));
         }
         return new PatternChronologyDTO(patternChronology.publicId(),

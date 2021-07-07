@@ -40,7 +40,7 @@ public record PatternVersionDTO(PublicId publicId,
     private static final int localMarshalVersion = 3;
 
 
-    public static PatternVersionDTO make(PatternVersion<FieldDefinitionDTO> patternVersion) {
+    public static PatternVersionDTO make(PatternVersion<? extends FieldDefinition> patternVersion) {
 
         MutableList<FieldDefinitionDTO> fields = Lists.mutable.ofInitialCapacity(patternVersion.fieldDefinitions().size());
         for (FieldDefinition fieldDefinition : patternVersion.fieldDefinitions()) {

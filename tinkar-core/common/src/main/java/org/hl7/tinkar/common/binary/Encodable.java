@@ -1,7 +1,5 @@
 package org.hl7.tinkar.common.binary;
 
-import org.hl7.tinkar.common.id.PublicId;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -21,7 +19,7 @@ import java.util.ArrayList;
  // to handle special cases.
 
  @Decoder
- public static Stamp make(TinkarInput in) {
+ public static decode(DecoderInput in) {
      try {
         int objectMarshalVersion = in.readInt();
         switch (objectMarshalVersion) {
@@ -37,7 +35,7 @@ import java.util.ArrayList;
 
  @Override
  @Encoder
- public void encode(TinkarOutput out) {
+ public void encode(EncoderOutput out) {
      try {
         out.writeInt(marshalVersion);
         throw new UnsupportedOperationException();
@@ -58,15 +56,39 @@ public interface Encodable {
      * If a component or version encoding format changes, bump the encoding version for the entire
      * set of marshalable objects.
      */
-    public static final int encodingVersion = 1;
+    default int getEncodingVersion() {
+        return 1;
+    }
 
     @Encoder
     void encode(EncoderOutput out);
 
+    default void addToEncodable(EncoderOutput out) {
+        out.writeString(this.getClass().getName());
+        encode(out);
+    }
+
+    default byte[] toBytes() {
+        EncoderOutput out = encode();
+        return out.buf.asArray();
+    }
     default EncoderOutput encode() {
         EncoderOutput encoderOutput = new EncoderOutput();
+        encoderOutput.writeInt(getEncodingVersion());
+        encoderOutput.writeString(this.getClass().getName());
         encode(encoderOutput);
         return encoderOutput;
+    }
+
+    static <T> T decode(byte[] bytes) {
+        try {
+            DecoderInput input = new DecoderInput(bytes);
+            String objectClassString = input.readString();
+            return (T) decode(Class.forName(objectClassString), Decoder.class, new Object[] { input });
+
+        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | ClassNotFoundException ex) {
+            throw new EncodingExceptionUnchecked(ex);
+        }
     }
 
     static <T> T decode(Class<T> objectClass, byte[] bytes) {
@@ -76,7 +98,7 @@ public interface Encodable {
             return decode(objectClass, Decoder.class, new Object[] { input });
 
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-            throw new EncodingExUnchecked(ex);
+            throw new EncodingExceptionUnchecked(ex);
         }
     }
 
@@ -86,7 +108,7 @@ public interface Encodable {
             return decode(objectClass, Decoder.class, new Object[] { input });
 
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-            throw new EncodingExUnchecked(ex);
+            throw new EncodingExceptionUnchecked(ex);
         }
     }
 
@@ -94,13 +116,13 @@ public interface Encodable {
                            Object[] parameters) throws IllegalAccessException, InvocationTargetException {
         ArrayList<Method> unmarshalMethodList = getDecodingMethods(objectClass, annotationClass);
         if (unmarshalMethodList.isEmpty()) {
-            throw new EncodingExUnchecked("No " + annotationClass.getSimpleName() +
+            throw new EncodingExceptionUnchecked("No " + annotationClass.getSimpleName() +
                     " method for class: " + objectClass);
         } else if (unmarshalMethodList.size() == 1) {
             Method unmarshalMethod = unmarshalMethodList.get(0);
             return (T) unmarshalMethod.invoke(null, parameters);
         }
-        throw new EncodingExUnchecked("More than one unmarshal method for class: " + objectClass
+        throw new EncodingExceptionUnchecked("More than one unmarshal method for class: " + objectClass
                 + " methods: " + unmarshalMethodList);
     }
 
@@ -112,7 +134,7 @@ public interface Encodable {
                     if (Modifier.isStatic(method.getModifiers())) {
                         unmarshalMethodList.add(method);
                     } else {
-                        throw new EncodingExUnchecked(annotationClass.getSimpleName() + " method for class: " + objectClass
+                        throw new EncodingExceptionUnchecked(annotationClass.getSimpleName() + " method for class: " + objectClass
                                 + " is not static: " + method);
                     }
                 }

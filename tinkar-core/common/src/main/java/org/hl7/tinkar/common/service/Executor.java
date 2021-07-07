@@ -76,13 +76,6 @@ public class Executor implements CachingService {
         return executorSingleton.threadPool();
     }
 
-    public static PausableThreadPoolExecutor afterDataLoadThreadPool() {
-        if (executorSingleton == null) {
-            start();
-        }
-        return executorSingleton.afterDataLoadThreadPool();
-    }
-
     public static ThreadPoolExecutor ioThreadPool() {
         if (executorSingleton == null) {
             start();

@@ -16,7 +16,7 @@ public abstract class TrackingCallable<V> implements Callable<V> {
     String title;
     String message;
     V value;
-    boolean isCanceled = false;
+    boolean isCancelled = false;
 
     final boolean allowUserCancel;
     final boolean retainWhenComplete;
@@ -36,12 +36,12 @@ public abstract class TrackingCallable<V> implements Callable<V> {
         this.retainWhenComplete = false;
     }
 
-    public boolean isCanceled() {
-        return this.isCanceled;
+    public boolean isCancelled() {
+        return this.isCancelled;
     }
 
     public void cancel() {
-        this.isCanceled = true;
+        this.isCancelled = true;
     }
 
     public boolean allowUserCancel() {
@@ -117,6 +117,10 @@ public abstract class TrackingCallable<V> implements Callable<V> {
         return stopwatch.duration();
     }
 
+    public void completedUnitOfWork() {
+        workDone++;
+    }
+
     public String durationString() {
         return stopwatch.durationString();
     }
@@ -153,6 +157,9 @@ public abstract class TrackingCallable<V> implements Callable<V> {
         }
     }
 
+    protected void addToTotalWork(long ammountToAdd) {
+        updateProgress(workDone, this.maxWork + ammountToAdd);
+    }
     protected void updateProgress(long workDone, long maxWork) {
         updateProgress((double)workDone, (double)maxWork);
     }

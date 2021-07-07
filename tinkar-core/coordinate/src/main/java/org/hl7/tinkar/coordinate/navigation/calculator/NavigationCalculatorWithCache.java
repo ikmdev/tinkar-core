@@ -221,4 +221,46 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         return IntIds.list.of(nidsInList.toArray());
     }
 
+    @Override
+    public NavigationCoordinateRecord navigationCoordinate() {
+        return this.navigationCoordinate;
+    }
+
+    @Override
+    public IntIdList unsortedParentsOf(int conceptNid, int patternNid) {
+        return getIntIdListForMeaningFromPattern(conceptNid, TinkarTerm.RELATIONSHIP_ORIGIN, patternNid);
+    }
+
+
+    private IntIdList getIntIdListForMeaningFromPattern(int referencedComponentNid, ConceptProxy fieldMeaning, int patternNid) {
+        MutableIntSet nidsInList = IntSets.mutable.empty();
+        Latest<PatternEntityVersion> latestPatternEntityVersion = stampCalculator().latest(patternNid);
+        latestPatternEntityVersion.ifPresentOrElse(
+                (patternEntityVersion) -> {
+                    int indexForMeaning = patternEntityVersion.indexForMeaning(fieldMeaning);
+                    int[] semantics = PrimitiveData.get().semanticNidsForComponentOfPattern(referencedComponentNid, patternNid);
+                    if (semantics.length > 1) {
+                        throw new IllegalStateException("More than one navigation semantic for concept: " +
+                                PrimitiveData.text(referencedComponentNid) + " in " + PrimitiveData.text(patternNid));
+                    } else if (semantics.length == 0) {
+                        // Nothing to add...
+                    } else {
+                        Latest<SemanticEntityVersion> latestNavigationSemantic = stampCalculator().latest(semantics[0]);
+                        latestNavigationSemantic.ifPresent(semanticEntityVersion -> {
+                            SemanticEntityVersion navigationSemantic = latestNavigationSemantic.get();
+                            IntIdSet intIdSet = (IntIdSet) navigationSemantic.fields().get(indexForMeaning);
+                            // Filter here by allowed vertex state...
+                            if (navigationCoordinate.vertexStates() == StateSet.ACTIVE_INACTIVE_AND_WITHDRAWN) {
+                                nidsInList.addAll(intIdSet.toArray());
+                            } else {
+                                intIdSet.forEach(nid ->
+                                        vertexStampCalculator.latest(nid).ifPresent(entityVersion -> nidsInList.add(entityVersion.nid()))
+                                );
+                            }
+                        });
+                    }
+                },
+                () -> {throw new IllegalStateException("No active pattern version. " + latestPatternEntityVersion);});
+        return IntIds.list.of(nidsInList.toArray());
+    }
 }

@@ -24,6 +24,9 @@ public interface PublicId extends Comparable<PublicId> {
     void forEach(LongConsumer consumer);
 
     static boolean equals(PublicId one, PublicId two) {
+        if (one == two) {
+            return true;
+        }
         UUID[] oneUuids = one.asUuidArray();
         return Arrays.stream(two.asUuidArray()).anyMatch(twoUuid -> {
             for (UUID oneUuid : oneUuids) {
@@ -37,6 +40,9 @@ public interface PublicId extends Comparable<PublicId> {
 
     @Override
     default int compareTo(PublicId o) {
+        if (this == o) {
+            return 0;
+        }
         UUID[] thisArray = asUuidArray();
         UUID[] thatArray = o.asUuidArray();
         Arrays.sort(thisArray);

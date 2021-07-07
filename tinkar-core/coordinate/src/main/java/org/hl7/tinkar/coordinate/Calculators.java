@@ -15,9 +15,6 @@ public class Calculators {
     public static class View {
         public static ViewCalculatorWithCache Default() {
             return ViewCalculatorWithCache.getCalculator(
-                    Coordinates.Stamp.DevelopmentLatest(),
-                    Lists.immutable.of(Coordinates.Language.UsEnglishRegularName()),
-                    Coordinates.Navigation.inferred().toNavigationCoordinateRecord(),
                     Coordinates.View.DefaultView());
         }
     }

@@ -2,7 +2,6 @@ package org.hl7.tinkar.provider.entity;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import io.activej.bytebuf.ByteBuf;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.operators.multi.processors.BroadcastProcessor;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -20,7 +19,6 @@ import com.google.auto.service.AutoService;
 import org.hl7.tinkar.terms.EntityFacade;
 import org.hl7.tinkar.terms.TinkarTerm;
 import org.reactivestreams.FlowAdapters;
-import org.reactivestreams.Subscriber;
 
 import java.util.Optional;
 import java.util.UUID;

@@ -67,12 +67,12 @@ public class EncoderOutput {
 
     public void writeString(String string) {
         growIfNeeded(string.length() * 3);
-        int headAtStart = buf.head();
+        int tailAtStart = buf.tail();
         buf.writeInt(0); // place for length of bytes for string.
         int byteCount = ByteBufStrings.encodeUtf8(buf.array(), buf.tail(), string);
-        buf.head(headAtStart);
+        buf.tail(tailAtStart);
         buf.writeInt(byteCount);
-        buf.moveHead(byteCount);
+        buf.moveTail(byteCount);
     }
 
     public void writeBoolean(boolean v) {

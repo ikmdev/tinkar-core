@@ -10,6 +10,7 @@ import org.hl7.tinkar.collection.SpinedIntLongArrayMap;
 import org.hl7.tinkar.common.service.NidGenerator;
 import org.hl7.tinkar.common.service.ServiceKeys;
 import org.hl7.tinkar.common.service.ServiceProperties;
+import org.hl7.tinkar.common.util.ints2long.IntsInLong;
 import org.hl7.tinkar.provider.mvstore.internal.Get;
 import org.hl7.tinkar.provider.mvstore.internal.Put;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
@@ -132,10 +133,7 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
 
                this.nidToPatternNidMap.put(nid, patternNid);
                if (patternNid != Integer.MAX_VALUE) {
-                   // Citing component, pattern...
-                   long citationLong = (((long) nid) << 32) | (patternNid & 0xffffffffL);
-                   //int citingComponentNid = (int) (citationLong >> 32);
-                   //int patternNid = (int) citationLong;
+                   long citationLong = IntsInLong.ints2Long(nid, patternNid);
                    this.nidToCitingComponentsNidMap.merge(referencedComponentNid, new long[]{citationLong},
                            PrimitiveDataService::mergeCitations);
                    this.patternToElementNidsMap.merge(patternNid, new int[]{nid},

@@ -55,6 +55,8 @@ public class PatternEntityVersion
         return indexForPurpose(purpose.nid());
     }
 
+    // TODO: should allow more than one index for meaning?
+    // TODO: Note the stamp calculator caches these indexes. Consider how to optimize, and eliminate unoptimized calls?
     public int indexForMeaning(int meaningNid) {
         for (int i = 0; i < fieldDefinitions().size(); i++) {
             if (fieldDefinitions().get(i).meaningNid == meaningNid) {
@@ -64,6 +66,8 @@ public class PatternEntityVersion
         return -1;
     }
 
+    // TODO: should allow more than one index for purpose?
+    // TODO: Note the stamp calculator caches these indexes. Consider how to optimize, and eliminate unoptimized calls?
     public int indexForPurpose(int purposeNid) {
         for (int i = 0; i < fieldDefinitions().size(); i++) {
             if (fieldDefinitions().get(i).purposeNid == purposeNid) {
