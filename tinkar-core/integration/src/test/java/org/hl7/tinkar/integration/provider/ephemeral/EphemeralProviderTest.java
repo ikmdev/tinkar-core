@@ -41,7 +41,7 @@ public class EphemeralProviderTest {
         File file = TestConstants.TINK_TEST_FILE;
         LoadEntitiesFromDtoFile loadTink = new LoadEntitiesFromDtoFile(file);
         int count = loadTink.compute();
-        LOG.info("Loaded. " + loadTink.report() + "\n\n");
+        LOG.info("File Loaded. " + loadTink.report() + "\n\n");
     }
 
     @Test(dependsOnMethods = { "loadChronologies" })
