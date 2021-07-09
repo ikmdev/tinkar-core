@@ -19,6 +19,13 @@ public class PatternEntityVersion
     protected int referencedComponentMeaningNid;
     protected final MutableList<FieldDefinitionForEntity> fieldDefinitionForEntities = Lists.mutable.empty();
 
+    public int referencedComponentPurposeNid() {
+        return referencedComponentPurposeNid;
+    }
+
+    public int referencedComponentMeaningNid() {
+        return referencedComponentMeaningNid;
+    }
 
     @Override
     public ImmutableList<FieldDefinitionForEntity> fieldDefinitions() {

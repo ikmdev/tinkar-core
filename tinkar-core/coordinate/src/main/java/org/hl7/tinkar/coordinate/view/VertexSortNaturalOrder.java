@@ -1,11 +1,16 @@
 package org.hl7.tinkar.coordinate.view;
 
 
+import org.eclipse.collections.api.collection.ImmutableCollection;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.hl7.tinkar.common.binary.*;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.text.NaturalOrder;
 import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculator;
+import org.hl7.tinkar.coordinate.navigation.calculator.Edge;
 import org.hl7.tinkar.coordinate.navigation.calculator.NavigationCalculator;
 
 import java.util.UUID;
@@ -36,6 +41,22 @@ public class VertexSortNaturalOrder implements VertexSort, Encodable {
                 new VertexItem(vertexConceptNid, navigationCalculator.getDescriptionTextOrNid(vertexConceptNid)))
                 .sorted().mapToInt(value -> value.nid).toArray();
     }
+
+    @Override
+    public final ImmutableList<Edge> sortEdges(ImmutableCollection<Edge> edges, NavigationCalculator navigationCalculator) {
+        if (edges.size() < 2) {
+            // nothing to sort, skip creating the objects for sort.
+            return Lists.immutable.ofAll(edges);
+        }
+
+        MutableList<Edge> edgesToSort = Lists.mutable.ofAll(edges);
+        edgesToSort.sort((o1, o2) -> NaturalOrder.compareStrings(
+                navigationCalculator.getDescriptionTextOrNid(o1.destinationNid()),
+                navigationCalculator.getDescriptionTextOrNid(o2.destinationNid())));
+
+        return edgesToSort.toImmutable();
+    }
+
 
     private static class VertexItem implements Comparable<VertexItem> {
         private final int nid;

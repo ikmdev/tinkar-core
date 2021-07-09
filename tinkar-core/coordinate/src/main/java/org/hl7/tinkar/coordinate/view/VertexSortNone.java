@@ -1,9 +1,13 @@
 package org.hl7.tinkar.coordinate.view;
 
 
+import org.eclipse.collections.api.collection.ImmutableCollection;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.binary.*;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculator;
+import org.hl7.tinkar.coordinate.navigation.calculator.Edge;
 import org.hl7.tinkar.coordinate.navigation.calculator.NavigationCalculator;
 
 import java.util.UUID;
@@ -52,6 +56,11 @@ public class VertexSortNone implements VertexSort, Encodable {
             default:
                 throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
         }
+    }
+
+    @Override
+    public ImmutableList<Edge> sortEdges(ImmutableCollection<Edge> edges, NavigationCalculator navigationCalculator) {
+        return Lists.immutable.ofAll(edges);
     }
 
     @Override

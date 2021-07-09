@@ -1,5 +1,6 @@
 package org.hl7.tinkar.coordinate.navigation.calculator;
 
+import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.id.IdList;
 import org.hl7.tinkar.common.id.IntIdList;
 import org.hl7.tinkar.common.id.IntIdSet;
@@ -29,40 +30,62 @@ public interface NavigationCalculator extends StampCalculatorDelegate, LanguageC
         }
         return unsortedParentsOf(conceptNid);
     }
-    default IntIdList descendentsOf(ConceptFacade concept) {
+    default IntIdSet descendentsOf(ConceptFacade concept) {
         return descendentsOf(concept.nid());
     }
-    default IntIdList descendentsOf(int conceptNid) {
-        if (sortVertices()) {
-            return sortedDescendentsOf(conceptNid);
-        }
-        return IntIds.list.of(unsortedDescendentsOf(conceptNid).toArray());
-    }
+    IntIdSet descendentsOf(int conceptNid);
 
-    default IntIdList ancestorsOf(ConceptFacade concept) {
+    default IntIdSet ancestorsOf(ConceptFacade concept) {
         return descendentsOf(concept.nid());
     }
-    default IntIdList ancestorsOf(int conceptNid) {
-        if (sortVertices()) {
-            return sortedAncestorsOf(conceptNid);
-        }
-        return IntIds.list.of(unsortedAncestorsOf(conceptNid).toArray());
-    }
+    IntIdSet ancestorsOf(int conceptNid);
 
-    default IntIdList kindOf(ConceptFacade concept) {
-        return childrenOf(concept.nid());
+    default IntIdSet kindOf(ConceptFacade concept) {
+        return kindOf(concept.nid());
     }
-    default IntIdList kindOf(int conceptNid) {
-        if (sortVertices()) {
-            return kindOf(conceptNid);
-        }
-        return kindOf(conceptNid);
-    }
+    IntIdSet kindOf(int conceptNid);
 
-    default IntIdSet kindOfSet(ConceptFacade concept) {
-        return kindOfSet(concept.nid());
+    default ImmutableList<Edge> parentEdges(ConceptFacade concept) {
+        return childEdges(concept.nid());
     }
-    IntIdSet kindOfSet(int conceptNid);
+    default ImmutableList<Edge> parentEdges(int conceptNid) {
+        if (sortVertices()) {
+            return sortedParentEdges(conceptNid);
+        }
+        return unsortedParentEdges(conceptNid);
+    }
+    default ImmutableList<Edge> sortedParentEdges(ConceptFacade concept) {
+        return sortedParentEdges(concept.nid());
+    }
+    ImmutableList<Edge> sortedParentEdges(int conceptNid);
+
+
+    default ImmutableList<Edge> unsortedParentEdges(ConceptFacade concept) {
+        return unsortedParentEdges(concept.nid());
+    }
+    ImmutableList<Edge> unsortedParentEdges(int conceptNid);
+
+
+    default ImmutableList<Edge> childEdges(ConceptFacade concept) {
+        return childEdges(concept.nid());
+    }
+    default ImmutableList<Edge> childEdges(int conceptNid) {
+        if (sortVertices()) {
+            return sortedChildEdges(conceptNid);
+        }
+        return unsortedChildEdges(conceptNid);
+    }
+    default ImmutableList<Edge> sortedChildEdges(ConceptFacade concept) {
+        return sortedChildEdges(concept.nid());
+    }
+    ImmutableList<Edge> sortedChildEdges(int conceptNid);
+
+
+    default ImmutableList<Edge> unsortedChildEdges(ConceptFacade concept) {
+        return unsortedChildEdges(concept.nid());
+    }
+    ImmutableList<Edge> unsortedChildEdges(int conceptNid);
+
 
     default IntIdList childrenOf(ConceptFacade concept) {
         return childrenOf(concept.nid());
@@ -84,30 +107,10 @@ public interface NavigationCalculator extends StampCalculatorDelegate, LanguageC
     }
     IntIdList sortedChildrenOf(int conceptNid);
 
-    default IntIdList sortedDescendentsOf(ConceptFacade concept) {
-        return sortedDescendentsOf(concept.nid());
-    }
-    IntIdList sortedDescendentsOf(int conceptNid);
-
-    default IntIdList sortedAncestorsOf(ConceptFacade concept) {
-        return sortedAncestorsOf(concept.nid());
-    }
-    IntIdList sortedAncestorsOf(int conceptNid);
-
-    default IntIdSet unsortedAncestorsOf(ConceptFacade concept) {
-        return unsortedAncestorsOf(concept.nid());
-    }
-    IntIdSet unsortedAncestorsOf(int conceptNid);
-
     default IntIdList unsortedChildrenOf(ConceptFacade concept) {
         return unsortedChildrenOf(concept.nid());
     }
     IntIdList unsortedChildrenOf(int conceptNid);
-
-    default IntIdSet unsortedDescendentsOf(ConceptFacade concept) {
-        return unsortedDescendentsOf(concept.nid());
-    }
-    IntIdSet unsortedDescendentsOf(int conceptNid);
 
     default IntIdList unsortedParentsOf(ConceptFacade concept) {
         return unsortedParentsOf(concept.nid());
