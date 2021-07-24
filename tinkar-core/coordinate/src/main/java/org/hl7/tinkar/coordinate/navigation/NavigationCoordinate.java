@@ -11,8 +11,8 @@ import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.coordinate.stamp.StateSet;
 import org.hl7.tinkar.entity.Entity;
+import org.hl7.tinkar.terms.EntityProxy;
 import org.hl7.tinkar.terms.PatternFacade;
-import org.hl7.tinkar.terms.PatternProxy;
 import org.hl7.tinkar.terms.TinkarTerm;
 
 import java.util.ArrayList;
@@ -73,7 +73,7 @@ public interface NavigationCoordinate {
      */
     default ImmutableList<PatternFacade> verticesSortPatternList() {
         return Lists.immutable.of(verticesSortPatternNidList().intStream()
-                .mapToObj(nid -> (PatternFacade) PatternProxy.make(nid)).toArray(PatternFacade[]::new));
+                .mapToObj(nid -> (PatternFacade) EntityProxy.Pattern.make(nid)).toArray(PatternFacade[]::new));
     }
 
     default ImmutableSet<Concept> getNavigationIdentifierConcepts() {

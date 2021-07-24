@@ -9,7 +9,7 @@ import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.entity.internal.StampServiceGetter;
 import org.hl7.tinkar.entity.util.StampRealizer;
 import org.hl7.tinkar.terms.ConceptFacade;
-import org.hl7.tinkar.terms.ConceptProxy;
+import org.hl7.tinkar.terms.EntityProxy;
 
 public interface StampService {
 
@@ -31,7 +31,7 @@ public interface StampService {
     default ImmutableSet<ConceptFacade> getAuthorsInUse() {
         MutableSet<ConceptFacade> authors = Sets.mutable.empty();
         for (int authorNid: getAuthorNidsInUse().toArray()) {
-            authors.add(ConceptProxy.make(authorNid));
+            authors.add(EntityProxy.Concept.make(authorNid));
         }
         return authors.toImmutable();
     }
@@ -41,7 +41,7 @@ public interface StampService {
     default ImmutableSet<ConceptFacade> getModulesInUse() {
         MutableSet<ConceptFacade> modules = Sets.mutable.empty();
         for (int moduleNid: getModuleNidsInUse().toArray()) {
-            modules.add(ConceptProxy.make(moduleNid));
+            modules.add(EntityProxy.Concept.make(moduleNid));
         }
         return modules.toImmutable();
     }
@@ -51,7 +51,7 @@ public interface StampService {
     default ImmutableSet<ConceptFacade> getPathsInUse() {
         MutableSet<ConceptFacade> paths = Sets.mutable.empty();
         for (int pathNid: getPathNidsInUse().toArray()) {
-            paths.add(ConceptProxy.make(pathNid));
+            paths.add(EntityProxy.Concept.make(pathNid));
         }
         return paths.toImmutable();
     }

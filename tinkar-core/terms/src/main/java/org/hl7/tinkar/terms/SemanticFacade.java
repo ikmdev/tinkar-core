@@ -1,11 +1,9 @@
 package org.hl7.tinkar.terms;
 
-import org.hl7.tinkar.component.Semantic;
-
-public interface SemanticFacade extends Semantic, EntityFacade  {
+public interface SemanticFacade extends org.hl7.tinkar.component.Semantic, EntityFacade  {
 
     static SemanticFacade make(int nid) {
-        return SemanticProxy.make(nid);
+        return EntityProxy.Semantic.make(nid);
     }
 
     static int toNid(SemanticFacade facade) {

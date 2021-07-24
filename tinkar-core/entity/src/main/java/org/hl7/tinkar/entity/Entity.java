@@ -12,6 +12,7 @@ import org.hl7.tinkar.component.Component;
 import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.terms.EntityFacade;
+import org.hl7.tinkar.terms.SemanticFacade;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -29,6 +30,24 @@ public abstract class Entity<T extends EntityVersion> extends PublicIdForEntity
 
     public static int nid(Component component) {
         return EntityService.get().nidForComponent(component);
+    }
+
+    public static Optional<ConceptEntity> getConceptForSemantic(SemanticFacade semanticFacade) {
+        return getConceptForSemantic(semanticFacade.nid());
+    }
+    public static Optional<ConceptEntity> getConceptForSemantic(int semanticNid) {
+        Optional<? extends Entity<? extends EntityVersion>> optionalEntity = get(semanticNid);
+        if (optionalEntity.isPresent()) {
+            if (optionalEntity.get() instanceof SemanticEntity semanticEntity) {
+                Entity<?> referencedEntity = Entity.getFast(semanticEntity.referencedComponentNid);
+                if (referencedEntity instanceof ConceptEntity conceptEntity) {
+                    return Optional.of(conceptEntity);
+                } else if (referencedEntity instanceof SemanticEntity referencedSemantic) {
+                    return getConceptForSemantic(referencedSemantic);
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     public static <T extends Entity<V>, V extends EntityVersion> Optional<T> get(int nid) {

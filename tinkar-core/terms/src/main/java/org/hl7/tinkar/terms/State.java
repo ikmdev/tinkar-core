@@ -5,18 +5,17 @@ import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.hl7.tinkar.common.id.PublicId;
-import org.hl7.tinkar.component.Concept;
 
-public enum State implements Concept, ComponentWithNid {
+public enum State implements org.hl7.tinkar.component.Concept, ComponentWithNid {
     ACTIVE(TinkarTerm.ACTIVE_STATE),
     INACTIVE(TinkarTerm.INACTIVE_STATE),
     WITHDRAWN(TinkarTerm.WITHDRAWN_STATE),
     CANCELED(TinkarTerm.CANCELED_STATE),
     PRIMORDIAL(TinkarTerm.PRIMORDIAL_STATE);
 
-    final ConceptProxy proxyForState;
+    final EntityProxy.Concept proxyForState;
 
-    State(ConceptProxy proxyForState) {
+    State(EntityProxy.Concept proxyForState) {
         this.proxyForState = proxyForState;
     }
 

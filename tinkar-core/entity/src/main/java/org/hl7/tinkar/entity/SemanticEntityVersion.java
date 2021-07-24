@@ -92,15 +92,15 @@ public class SemanticEntityVersion
                 return DiGraphEntity.make(readBuf, formatVersion);
             case CONCEPT: {
                 int nid = readBuf.readInt();
-                return ConceptProxy.make(nid);
+                return EntityProxy.Concept.make(nid);
             }
             case SEMANTIC: {
                 int nid = readBuf.readInt();
-                return SemanticProxy.make(nid);
+                return EntityProxy.Semantic.make(nid);
             }
             case PATTERN: {
                 int nid = readBuf.readInt();
-                return PatternProxy.make(nid);
+                return EntityProxy.Pattern.make(nid);
             }
             case IDENTIFIED_THING:
                 return EntityProxy.make(readBuf.readInt());

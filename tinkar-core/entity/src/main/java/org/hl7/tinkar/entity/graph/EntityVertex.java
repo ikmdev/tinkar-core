@@ -151,32 +151,32 @@ public class EntityVertex implements Vertex, VertexId {
 
     public static <T extends Object> T abstractObject(Object object) {
         if (object instanceof Concept concept) {
-            if (object instanceof ConceptProxy) {
+            if (object instanceof EntityProxy.Concept) {
                 return (T) object;
             }
             int nid = PrimitiveData.get().nidForPublicId(concept.publicId());
             if (concept instanceof ConceptDTO) {
-                return (T) ConceptProxy.make(nid);
+                return (T) EntityProxy.Concept.make(nid);
             }
-            return (T) ConceptProxy.make(nid);
+            return (T) EntityProxy.Concept.make(nid);
         } else if (object instanceof Semantic semantic) {
-            if (object instanceof SemanticProxy) {
+            if (object instanceof EntityProxy.Semantic) {
                 return (T) object;
             }
             int nid = PrimitiveData.get().nidForPublicId(semantic.publicId());
             if (semantic instanceof SemanticDTO) {
-                return (T) SemanticProxy.make(nid);
+                return (T) EntityProxy.Semantic.make(nid);
             }
-            return (T) SemanticProxy.make(nid);
+            return (T) EntityProxy.Semantic.make(nid);
         } else if (object instanceof Pattern pattern) {
-            if (object instanceof PatternProxy) {
+            if (object instanceof EntityProxy.Pattern) {
                 return (T) object;
             }
             int nid = PrimitiveData.get().nidForPublicId(pattern.publicId());
             if (pattern instanceof PatternDTO) {
-                return (T) PatternProxy.make(nid);
+                return (T) EntityProxy.Pattern.make(nid);
             }
-            return (T) PatternProxy.make(nid);
+            return (T) EntityProxy.Pattern.make(nid);
         } else if (object instanceof Stamp & !(object instanceof StampDTO)) {
             Stamp stampValue = (Stamp) object;
             return (T) StampDTOBuilder.builder()
@@ -284,7 +284,7 @@ public class EntityVertex implements Vertex, VertexId {
 
     @Override
     public RichIterable<Concept> propertyKeys() {
-        return properties.keySet().collect(nid -> ConceptProxy.make(nid));
+        return properties.keySet().collect(nid -> EntityProxy.Concept.make(nid));
     }
 
     public static EntityVertex make(Vertex vertex) {

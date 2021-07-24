@@ -6,6 +6,7 @@ import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.component.FieldDataType;
+import org.hl7.tinkar.terms.ProxyFactory;
 
 public abstract class EntityVersion
         implements Version {
@@ -19,6 +20,11 @@ public abstract class EntityVersion
     public final int nid() {
         return chronology.nid();
     }
+
+    public String toXmlFragment() {
+        return VersionProxyFactory.toXmlFragment(this);
+    }
+
 
     protected final void fill(Entity chronology, ByteBuf readBuf, byte formatVersion) {
         this.chronology = chronology;

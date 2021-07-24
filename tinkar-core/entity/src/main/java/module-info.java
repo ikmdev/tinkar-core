@@ -19,6 +19,7 @@ module org.hl7.tinkar.entity {
     requires transitive org.hl7.tinkar.caffeine;
     requires static org.hl7.tinkar.autoservice;
     requires transitive org.hl7.tinkar.terms;
+    requires java.xml;
 
     exports org.hl7.tinkar.entity;
     exports org.hl7.tinkar.entity.graph;

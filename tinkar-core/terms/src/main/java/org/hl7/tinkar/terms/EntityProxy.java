@@ -1,12 +1,10 @@
 package org.hl7.tinkar.terms;
 
 import org.hl7.tinkar.common.id.PublicId;
-import org.hl7.tinkar.common.id.PublicIds;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.Component;
 
 import java.util.Arrays;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.function.LongConsumer;
 
@@ -80,7 +78,7 @@ public class EntityProxy implements EntityFacade, PublicId {
     }
 
     @Override
-    public final boolean equals(Object o) {
+    public boolean equals(Object o) {
         if (this == o) return true;
         if (o instanceof EntityProxy other) {
             if (this.cachedNid == 0 && other.cachedNid == 0) {
@@ -120,11 +118,97 @@ public class EntityProxy implements EntityFacade, PublicId {
     }
 
     @Override
-    public final String toString() {
+    public String toString() {
         return this.getClass().getSimpleName() + "{"
                  + description() +
                 " " + Arrays.toString(asUuidArray()) +
                 "<" + cachedNid +
                 ">}";
+    }
+
+    public static class Concept extends EntityProxy implements ConceptFacade, PublicId {
+
+
+        private Concept(int conceptNid) {
+            super(conceptNid);
+        }
+
+        private Concept(String name, UUID... uuids) {
+            super(name, uuids);
+        }
+
+        private Concept(String name, PublicId publicId) {
+            super(name, publicId);
+        }
+
+        public static Concept make(String name, PublicId publicId) {
+            return new Concept(name, publicId);
+        }
+
+        public static Concept make(int nid) {
+            return new Concept(nid);
+        }
+
+        public static Concept make(String name, UUID... uuids) {
+            return new Concept(name, uuids);
+        }
+
+
+    }
+
+    public static class Pattern extends EntityProxy implements PatternFacade {
+
+        private Pattern(int nid) {
+            super(nid);
+        }
+
+        private Pattern(String name, UUID... uuids) {
+            super(name, uuids);
+        }
+
+        private Pattern(String name, PublicId publicId) {
+            super(name, publicId);
+        }
+
+        public static Pattern make(String name, PublicId publicId) {
+            return new Pattern(name, publicId);
+        }
+
+        public static Pattern make(int nid) {
+            return new Pattern(nid);
+        }
+
+        public static Pattern make(String name, UUID... uuids) {
+            return new Pattern(name, uuids);
+        }
+
+    }
+
+    public static class Semantic extends EntityProxy implements SemanticFacade {
+
+
+        private Semantic(String name, UUID... uuids) {
+            super(name, uuids);
+        }
+
+        private Semantic(int nid) {
+            super(nid);
+        }
+
+        private Semantic(String name, PublicId publicId) {
+            super(name, publicId);
+        }
+
+        public static Semantic make(String name, PublicId publicId) {
+            return new Semantic(name, publicId);
+        }
+
+        public static Semantic make(int nid) {
+            return new Semantic(nid);
+        }
+
+        public static Semantic make(String name, UUID... uuids) {
+            return new Semantic(name, uuids);
+        }
     }
 }

@@ -41,19 +41,15 @@ package org.hl7.tinkar.coordinate.logic;
 
 
 import org.hl7.tinkar.common.id.PublicId;
-import org.hl7.tinkar.component.Concept;
-import org.hl7.tinkar.terms.ComponentWithNid;
-import org.hl7.tinkar.terms.ConceptFacade;
-import org.hl7.tinkar.terms.ConceptProxy;
+import org.hl7.tinkar.terms.*;
 import org.hl7.tinkar.entity.Entity;
-import org.hl7.tinkar.terms.TinkarTerm;
 
 /**
  * The Enum PremiseType.
  *
  * @author kec
  */
-public enum PremiseType implements Concept, ComponentWithNid {
+public enum PremiseType implements org.hl7.tinkar.component.Concept, ComponentWithNid {
    /**
     * Compute the taxonomy from stated axioms.
     */
@@ -65,10 +61,10 @@ public enum PremiseType implements Concept, ComponentWithNid {
    INFERRED("Inferred", TinkarTerm.INFERRED_PREMISE_TYPE, TaxonomyFlag.INFERRED);
    
    String displayName;
-   ConceptProxy premiseTypeConcept;
+   EntityProxy.Concept premiseTypeConcept;
    int[] flags;
 
-   PremiseType(String displayName, ConceptProxy premiseTypeConcept, TaxonomyFlag taxonomyFlag) {
+   PremiseType(String displayName, EntityProxy.Concept premiseTypeConcept, TaxonomyFlag taxonomyFlag) {
       this.displayName = displayName;
       this.premiseTypeConcept = premiseTypeConcept;
       this.flags = new int[] { taxonomyFlag.bits };

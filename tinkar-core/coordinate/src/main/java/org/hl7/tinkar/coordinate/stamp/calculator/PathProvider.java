@@ -10,10 +10,7 @@ import org.hl7.tinkar.coordinate.PathService;
 import org.hl7.tinkar.coordinate.stamp.StampPathImmutable;
 import org.hl7.tinkar.coordinate.stamp.StampPositionRecord;
 import org.hl7.tinkar.entity.*;
-import org.hl7.tinkar.terms.ConceptFacade;
-import org.hl7.tinkar.terms.ConceptProxy;
-import org.hl7.tinkar.terms.EntityFacade;
-import org.hl7.tinkar.terms.TinkarTerm;
+import org.hl7.tinkar.terms.*;
 
 import java.time.Instant;
 
@@ -41,7 +38,7 @@ public class PathProvider implements PathService {
                 if (fields.get(0) instanceof ConceptFacade conceptFacade) {
                     pathConcept = conceptFacade;
                 } else if (fields.get(0) instanceof EntityFacade entityFacade) {
-                    pathConcept = ConceptProxy.make(entityFacade.nid());
+                    pathConcept = EntityProxy.Concept.make(entityFacade.nid());
                 } else {
                     throw new IllegalStateException("Can't construct ConceptFacade from: " + fields.get(0));
                 }

@@ -8,7 +8,6 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
-import org.hl7.tinkar.collection.IntObjectMap;
 import org.hl7.tinkar.common.id.IntIdList;
 import org.hl7.tinkar.common.id.IntIdSet;
 import org.hl7.tinkar.common.id.IntIds;
@@ -25,13 +24,11 @@ import org.hl7.tinkar.coordinate.stamp.calculator.Latest;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculator;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import org.hl7.tinkar.coordinate.view.VertexSortNaturalOrder;
-import org.hl7.tinkar.entity.ConceptEntity;
 import org.hl7.tinkar.entity.PatternEntityVersion;
 import org.hl7.tinkar.entity.SemanticEntityVersion;
-import org.hl7.tinkar.terms.ConceptProxy;
+import org.hl7.tinkar.terms.EntityProxy;
 import org.hl7.tinkar.terms.TinkarTerm;
 
-import java.util.HashSet;
 import java.util.logging.Logger;
 
 /**
@@ -172,7 +169,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         return getIntIdListForMeaning(conceptNid, TinkarTerm.RELATIONSHIP_DESTINATION);
     }
 
-    private IntIdList getIntIdListForMeaning(int referencedComponentNid, ConceptProxy fieldMeaning) {
+    private IntIdList getIntIdListForMeaning(int referencedComponentNid, EntityProxy.Concept fieldMeaning) {
         IntIdSet navigationPatternNids = navigationCoordinate.navigationPatternNids();
         MutableIntSet nidsInList = IntSets.mutable.empty();
         navigationPatternNids.forEach(navPatternNid -> {
@@ -192,13 +189,13 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
     }
 
 
-    private IntIdList getIntIdListForMeaningFromPattern(int referencedComponentNid, ConceptProxy fieldMeaning, int patternNid) {
+    private IntIdList getIntIdListForMeaningFromPattern(int referencedComponentNid, EntityProxy.Concept fieldMeaning, int patternNid) {
         MutableIntSet nidsInList = IntSets.mutable.empty();
         IntIdListForMeaningFromPattern(referencedComponentNid, fieldMeaning, patternNid, nidsInList, navigationCoordinate.vertexStates());
         return IntIds.list.of(nidsInList.toArray());
     }
 
-    private void IntIdListForMeaningFromPattern(int referencedComponentNid, ConceptProxy fieldMeaning, int patternNid, MutableIntSet nidsInList, StateSet states) {
+    private void IntIdListForMeaningFromPattern(int referencedComponentNid, EntityProxy.Concept fieldMeaning, int patternNid, MutableIntSet nidsInList, StateSet states) {
         Latest<PatternEntityVersion> latestPatternEntityVersion = stampCalculator().latest(patternNid);
         latestPatternEntityVersion.ifPresentOrElse(
                 (patternEntityVersion) -> {
@@ -258,7 +255,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         return getEdges(conceptNid, TinkarTerm.RELATIONSHIP_DESTINATION);
     }
 
-    private ImmutableList<Edge> getEdges(int conceptNid, ConceptProxy relationshipDirection) {
+    private ImmutableList<Edge> getEdges(int conceptNid, EntityProxy.Concept relationshipDirection) {
         MutableIntObjectMap<MutableEdge> edges = IntObjectMaps.mutable.empty();
         for (int patternNid: navigationCoordinate.navigationPatternNids().toArray()) {
             stampCalculator.latestPatternEntityVersion(patternNid).ifPresent(patternEntityVersion -> {

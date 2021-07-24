@@ -2,9 +2,6 @@ package org.hl7.tinkar.terms;
 
 import org.hl7.tinkar.common.util.text.EscapeUtil;
 import org.hl7.tinkar.common.util.uuid.UuidUtil;
-import org.hl7.tinkar.component.Concept;
-import org.hl7.tinkar.component.Pattern;
-import org.hl7.tinkar.component.Semantic;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -43,9 +40,9 @@ public class ProxyFactory {
                 Attr desc = element.getAttributeNode(DESCRIPTION_ATTRIBUTE);
                 EntityProxy proxy = switch (element.getTagName()) {
                     case ENTITY_ELEMENT -> EntityProxy.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
-                    case PATTERN_ELEMENT -> PatternProxy.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
-                    case SEMANTIC_ELEMENT -> SemanticProxy.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
-                    case CONCEPT_ELEMENT -> ConceptProxy.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
+                    case PATTERN_ELEMENT -> EntityProxy.Pattern.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
+                    case SEMANTIC_ELEMENT -> EntityProxy.Semantic.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
+                    case CONCEPT_ELEMENT -> EntityProxy.Concept.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
                     default -> {
                         IllegalStateException ex = new IllegalStateException("Unexpected value: " + element.getTagName());
                         ex.printStackTrace();
@@ -65,14 +62,14 @@ public class ProxyFactory {
         if (facade instanceof EntityProxy proxy) {
             return (T) proxy;
         }
-        if (facade instanceof Concept) {
-            return (T) ConceptProxy.make(facade.nid());
+        if (facade instanceof org.hl7.tinkar.component.Concept) {
+            return (T) EntityProxy.Concept.make(facade.nid());
         }
-        if (facade instanceof Pattern) {
-            return (T) PatternProxy.make(facade.nid());
+        if (facade instanceof org.hl7.tinkar.component.Pattern) {
+            return (T) EntityProxy.Pattern.make(facade.nid());
         }
-        if (facade instanceof Semantic) {
-            return (T) SemanticProxy.make(facade.nid());
+        if (facade instanceof org.hl7.tinkar.component.Semantic) {
+            return (T) EntityProxy.Semantic.make(facade.nid());
         }
         throw new UnsupportedOperationException("Can't handle: " + facade);
     }
@@ -85,9 +82,9 @@ public class ProxyFactory {
             Attr desc = element.getAttributeNode(DESCRIPTION_ATTRIBUTE);
             return (T) switch (element.getTagName()) {
                 case ENTITY_ELEMENT -> EntityProxy.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
-                case PATTERN_ELEMENT -> PatternProxy.make(desc.getName(), UuidUtil.fromString(uuids.getValue()));
-                case SEMANTIC_ELEMENT -> SemanticProxy.make(desc.getName(), UuidUtil.fromString(uuids.getValue()));
-                case CONCEPT_ELEMENT -> ConceptProxy.make(desc.getName(), UuidUtil.fromString(uuids.getValue()));
+                case PATTERN_ELEMENT -> EntityProxy.Pattern.make(desc.getName(), UuidUtil.fromString(uuids.getValue()));
+                case SEMANTIC_ELEMENT -> EntityProxy.Semantic.make(desc.getName(), UuidUtil.fromString(uuids.getValue()));
+                case CONCEPT_ELEMENT -> EntityProxy.Concept.make(desc.getName(), UuidUtil.fromString(uuids.getValue()));
                 default -> throw new IllegalStateException("Unexpected value: " + element.getTagName());
             };
         } catch (SAXException | IOException e) {
@@ -97,13 +94,13 @@ public class ProxyFactory {
 
     static String toXmlFragment(EntityFacade facade) {
         StringBuilder sb = new StringBuilder("<");
-        if (facade instanceof Concept) {
+        if (facade instanceof org.hl7.tinkar.component.Concept) {
            sb.append(CONCEPT_ELEMENT).append(" " +
                    DESCRIPTION_ATTRIBUTE + "=\"");
-       } else if (facade instanceof Semantic) {
+       } else if (facade instanceof org.hl7.tinkar.component.Semantic) {
             sb.append(SEMANTIC_ELEMENT).append(" " +
                     DESCRIPTION_ATTRIBUTE + "=\"");
-       } else if (facade instanceof Pattern) {
+       } else if (facade instanceof org.hl7.tinkar.component.Pattern) {
             sb.append(PATTERN_ELEMENT).append(" " +
                     DESCRIPTION_ATTRIBUTE + "=\"");
        } else {

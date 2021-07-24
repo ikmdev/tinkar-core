@@ -6,12 +6,8 @@ import org.hl7.tinkar.common.id.IntIdList;
 import org.hl7.tinkar.common.id.IntIdSet;
 import org.hl7.tinkar.common.id.IntIds;
 import org.hl7.tinkar.common.service.PrimitiveData;
-import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.entity.Entity;
-import org.hl7.tinkar.terms.ConceptFacade;
-import org.hl7.tinkar.terms.ConceptProxy;
-import org.hl7.tinkar.terms.EntityFacade;
-import org.hl7.tinkar.terms.State;
+import org.hl7.tinkar.terms.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,7 +45,7 @@ public interface StampCoordinate
     StampCoordinate withModulePriorityNidList(IntIdList modulePriorityNidList);
 
     default ConceptFacade pathForFilter() {
-        return ConceptProxy.make(pathNidForFilter());
+        return EntityProxy.Concept.make(pathNidForFilter());
     }
 
     /**
@@ -173,7 +169,7 @@ public interface StampCoordinate
      * @return an unmodifiable set of modules to exclude in results based on this
      * stamp filter.
      */
-    default ImmutableSet<Concept> excludedModules() {
+    default ImmutableSet<org.hl7.tinkar.component.Concept> excludedModules() {
         return excludedModuleNids().map(nid -> Entity.getFast(nid));
     }
 
@@ -185,7 +181,7 @@ public interface StampCoordinate
      * @return an unmodifiable set of modules to include in results based on this
      * stamp coordinate.
      */
-    default ImmutableSet<Concept> moduleSpecifications() {
+    default ImmutableSet<org.hl7.tinkar.component.Concept> moduleSpecifications() {
         return moduleNids().map(nid -> Entity.getFast(nid));
 
     }
@@ -208,7 +204,7 @@ public interface StampCoordinate
      * @return an unmodifiable module preference list for versions.
      */
 
-    default ImmutableList<Concept> modulePriorityOrderSpecifications() {
+    default ImmutableList<org.hl7.tinkar.component.Concept> modulePriorityOrderSpecifications() {
         return modulePriorityNidList().map(nid -> Entity.getFast(nid));
     }
 }

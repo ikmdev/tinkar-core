@@ -14,9 +14,7 @@ import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.terms.ConceptFacade;
-import org.hl7.tinkar.terms.ConceptProxy;
 import org.hl7.tinkar.terms.PatternFacade;
-import org.hl7.tinkar.terms.PatternProxy;
 
 @RecordBuilder
 public final record LanguageCoordinateRecord(int languageConceptNid,

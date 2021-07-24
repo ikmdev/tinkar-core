@@ -8,7 +8,7 @@ import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.dto.StampDTO;
 import org.hl7.tinkar.terms.ConceptFacade;
-import org.hl7.tinkar.terms.ConceptProxy;
+import org.hl7.tinkar.terms.EntityProxy;
 
 public class StampEntityVersion extends EntityVersion implements Stamp {
 
@@ -53,7 +53,7 @@ public class StampEntityVersion extends EntityVersion implements Stamp {
 
     @Override
     public ConceptFacade state() {
-        return ConceptProxy.make(statusNid);
+        return EntityProxy.Concept.make(statusNid);
     }
 
     @Override
@@ -63,17 +63,17 @@ public class StampEntityVersion extends EntityVersion implements Stamp {
 
     @Override
     public ConceptFacade author() {
-        return ConceptProxy.make(authorNid);
+        return EntityProxy.Concept.make(authorNid);
     }
 
     @Override
     public ConceptFacade module() {
-        return ConceptProxy.make(moduleNid);
+        return EntityProxy.Concept.make(moduleNid);
     }
 
     @Override
     public ConceptFacade path() {
-        return ConceptProxy.make(pathNid);
+        return EntityProxy.Concept.make(pathNid);
     }
 
     @Override

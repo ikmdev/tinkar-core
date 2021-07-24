@@ -44,10 +44,7 @@ import org.hl7.tinkar.coordinate.stamp.calculator.Latest;
 import org.hl7.tinkar.coordinate.stamp.StampCoordinate;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.entity.graph.DiTreeEntity;
-import org.hl7.tinkar.terms.ConceptFacade;
-import org.hl7.tinkar.terms.PatternFacade;
-import org.hl7.tinkar.terms.PatternProxy;
-import org.hl7.tinkar.terms.TinkarTerm;
+import org.hl7.tinkar.terms.*;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -106,7 +103,7 @@ public interface LogicCoordinate {
    int inferredAxiomsPatternNid();
 
    default PatternFacade inferredAxiomsPattern() {
-      return PatternProxy.make(inferredAxiomsPatternNid());
+      return EntityProxy.Pattern.make(inferredAxiomsPatternNid());
    }
    /**
     * Gets the stated assemblage nid.
@@ -117,7 +114,7 @@ public interface LogicCoordinate {
    int statedAxiomsPatternNid();
 
    default PatternFacade statedAxiomsPattern() {
-      return PatternProxy.make(statedAxiomsPatternNid());
+      return EntityProxy.Pattern.make(statedAxiomsPatternNid());
    }
 
    /**
@@ -126,7 +123,7 @@ public interface LogicCoordinate {
     */
    int conceptMemberPatternNid();
    default PatternFacade conceptMemberPattern() {
-      return PatternProxy.make(conceptMemberPatternNid());
+      return EntityProxy.Pattern.make(conceptMemberPatternNid());
    }
 
 
