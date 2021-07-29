@@ -4,3 +4,8 @@ target
 */target/
 release.properties
 .idea
+*.settings
+*.project
+*.classpath
+*factorypath
+.vscode/*
