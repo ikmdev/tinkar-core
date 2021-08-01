@@ -3,11 +3,14 @@ package org.hl7.tinkar.coordinate.stamp.calculator;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.util.functional.QuadConsumer;
 import org.hl7.tinkar.common.util.functional.TriConsumer;
+import org.hl7.tinkar.component.graph.DiTree;
 import org.hl7.tinkar.coordinate.stamp.StateSet;
 import org.hl7.tinkar.entity.*;
+import org.hl7.tinkar.entity.graph.VersionVertex;
 import org.hl7.tinkar.terms.EntityFacade;
 import org.hl7.tinkar.terms.PatternFacade;
 
+import java.util.List;
 import java.util.OptionalInt;
 import java.util.function.BiConsumer;
 
@@ -25,15 +28,19 @@ public interface StampCalculator {
         return false;
     }
 
-    <V extends EntityVersion> Latest<V> latest(Entity<V> chronicle);
+    <V extends EntityVersion> Latest<V> latest(int nid);
 
-    RelativePosition relativePosition(int stampNid, int stampNid2);
+    <V extends EntityVersion> List<DiTree<VersionVertex<V>>> getVersionGraphList(Entity<V> chronicle);
+
+    <V extends EntityVersion> Latest<V> latest(Entity<V> chronicle);
 
     StateSet allowedStates();
 
     default RelativePosition relativePosition(EntityVersion v1, EntityVersion v2) {
         return relativePosition(v1.stampNid(), v2.stampNid());
     }
+
+    RelativePosition relativePosition(int stampNid, int stampNid2);
 
     default RelativePosition relativePosition(StampEntity stamp1, StampEntity stamp2) {
         return relativePosition(stamp1.nid(), stamp2.nid());
@@ -42,8 +49,6 @@ public interface StampCalculator {
     default <V extends EntityVersion> Latest<V> latest(EntityFacade entityFacade) {
         return latest(entityFacade.nid());
     }
-
-    <V extends EntityVersion> Latest<V> latest(int nid);
 
     default void forEachSemanticVersionOfPattern(PatternFacade patternFacade,
                                                  BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
@@ -100,5 +105,6 @@ public interface StampCalculator {
     Latest<PatternEntityVersion> latestPatternEntityVersion(int patternNid);
 
     OptionalInt getIndexForMeaning(int patternNid, int meaningNid);
+
     OptionalInt getIndexForPurpose(int patternNid, int meaningNid);
 }

@@ -2,18 +2,24 @@ package org.hl7.tinkar.coordinate.stamp.calculator;
 
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.util.functional.TriConsumer;
+import org.hl7.tinkar.component.graph.DiTree;
 import org.hl7.tinkar.coordinate.stamp.StateSet;
 import org.hl7.tinkar.entity.*;
+import org.hl7.tinkar.entity.graph.VersionVertex;
 
+import java.util.List;
 import java.util.OptionalInt;
 import java.util.function.BiConsumer;
 
 public interface StampCalculatorDelegate extends StampCalculator {
-    StampCalculator stampCalculator();
+    @Override
+    default <V extends EntityVersion> Latest<V> latest(int nid) {
+        return stampCalculator().latest(nid);
+    }
 
     @Override
-    default StateSet allowedStates() {
-        return stampCalculator().allowedStates();
+    default <V extends EntityVersion> List<DiTree<VersionVertex<V>>> getVersionGraphList(Entity<V> chronicle) {
+        return stampCalculator().getVersionGraphList(chronicle);
     }
 
     @Override
@@ -22,13 +28,15 @@ public interface StampCalculatorDelegate extends StampCalculator {
     }
 
     @Override
-    default RelativePosition relativePosition(int stampNid, int stampNid2) {
-        return stampCalculator().relativePosition(stampNid, stampNid2);
+    default StateSet allowedStates() {
+        return stampCalculator().allowedStates();
     }
 
+    StampCalculator stampCalculator();
+
     @Override
-    default <V extends EntityVersion> Latest<V> latest(int nid) {
-        return stampCalculator().latest(nid);
+    default RelativePosition relativePosition(int stampNid, int stampNid2) {
+        return stampCalculator().relativePosition(stampNid, stampNid2);
     }
 
     @Override
