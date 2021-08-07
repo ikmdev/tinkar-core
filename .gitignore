@@ -9,3 +9,4 @@ release.properties
 *.classpath
 *factorypath
 .vscode/*
+tinkar-core/.vscode/*
