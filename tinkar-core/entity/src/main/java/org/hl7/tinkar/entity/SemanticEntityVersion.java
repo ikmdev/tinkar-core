@@ -17,12 +17,14 @@ import org.hl7.tinkar.component.graph.DiTree;
 import org.hl7.tinkar.component.graph.Vertex;
 import org.hl7.tinkar.component.location.PlanarPoint;
 import org.hl7.tinkar.component.location.SpatialPoint;
-import org.hl7.tinkar.entity.graph.DiGraphEntity;
-import org.hl7.tinkar.entity.graph.DiTreeEntity;
-import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.dto.graph.DiGraphDTO;
 import org.hl7.tinkar.dto.graph.DiTreeDTO;
-import org.hl7.tinkar.terms.*;
+import org.hl7.tinkar.entity.graph.DiGraphEntity;
+import org.hl7.tinkar.entity.graph.DiTreeEntity;
+import org.hl7.tinkar.terms.ComponentWithNid;
+import org.hl7.tinkar.terms.ConceptToDataType;
+import org.hl7.tinkar.terms.EntityFacade;
+import org.hl7.tinkar.terms.EntityProxy;
 
 import java.time.Instant;
 
@@ -34,26 +36,69 @@ public class SemanticEntityVersion
 
     protected final MutableList<Object> fields = Lists.mutable.empty();
 
+    public static SemanticEntityVersion make(SemanticEntity semanticEntity, ByteBuf readBuf, byte formatVersion) {
+        SemanticEntityVersion version = new SemanticEntityVersion();
+        version.fill(semanticEntity, readBuf, formatVersion);
+        return version;
+    }
+
+    public static SemanticEntityVersion make(SemanticEntity semanticEntity, SemanticVersion versionToCopy) {
+        SemanticEntityVersion version = new SemanticEntityVersion();
+        version.fill(semanticEntity, versionToCopy);
+        version.fields.clear();
+        for (Object obj : versionToCopy.fields()) {
+            if (obj instanceof Boolean) {
+                version.fields.add(obj);
+            } else if (obj instanceof Float) {
+                version.fields.add(obj);
+            } else if (obj instanceof byte[]) {
+                version.fields.add(obj);
+            } else if (obj instanceof Integer) {
+                version.fields.add(obj);
+            } else if (obj instanceof String) {
+                version.fields.add(obj);
+            } else if (obj instanceof Instant) {
+                version.fields.add(obj);
+            } else if (obj instanceof PlanarPoint) {
+                version.fields.add(obj);
+            } else if (obj instanceof SpatialPoint) {
+                version.fields.add(obj);
+            } else if (obj instanceof Component component) {
+                version.fields.add(EntityProxy.make(EntityService.get().nidForComponent(component)));
+            } else if (obj instanceof DiTreeDTO) {
+                DiTree<Vertex> component = (DiTree<Vertex>) obj;
+                version.fields.add(DiTreeEntity.make(component));
+            } else if (obj instanceof DiGraphDTO) {
+                DiGraph<Vertex> component = (DiGraph<Vertex>) obj;
+                version.fields.add(DiGraphEntity.make(component));
+            } else if (obj instanceof PublicIdSet) {
+                PublicIdSet<PublicId> component = (PublicIdSet<PublicId>) obj;
+                MutableIntSet idSet = IntSets.mutable.withInitialCapacity(component.size());
+                component.forEach(publicId -> {
+                    if (publicId == null) {
+                        throw new IllegalStateException("PublicId cannot be null");
+                    }
+                    idSet.add(EntityService.get().nidForPublicId(publicId));
+                });
+                version.fields.add(IntIds.set.ofAlreadySorted(idSet.toSortedArray()));
+            } else if (obj instanceof PublicIdList) {
+                PublicIdList<PublicId> component = (PublicIdList<PublicId>) obj;
+                MutableIntList idList = IntLists.mutable.withInitialCapacity(component.size());
+                component.forEach(publicId -> {
+                    idList.add(EntityService.get().nidForPublicId(publicId));
+                });
+                version.fields.add(IntIds.list.of(idList.toArray()));
+            } else {
+                throw new UnsupportedOperationException("Can't handle field conversion of type: " +
+                        obj.getClass().getName());
+            }
+        }
+        return version;
+    }
+
     @Override
     public FieldDataType dataType() {
         return FieldDataType.SEMANTIC_VERSION;
-    }
-
-    private SemanticEntity getSemanticEntity() {
-        return (SemanticEntity) this.chronology;
-    }
-
-    @Override
-    public SemanticEntity chronology() {
-        return (SemanticEntity) super.chronology();
-    }
-
-    public PatternEntity pattern() {
-        return Entity.getFast(getSemanticEntity().patternNid);
-    }
-
-    public int patternNid() {
-        return getSemanticEntity().patternNid;
     }
 
     @Override
@@ -72,7 +117,7 @@ public class SemanticEntityVersion
                 return readBuf.readBoolean();
             case FLOAT:
                 return readBuf.readFloat();
-             case BYTE_ARRAY: {
+            case BYTE_ARRAY: {
                 int length = readBuf.readInt();
                 byte[] bytes = new byte[length];
                 readBuf.read(bytes);
@@ -88,7 +133,7 @@ public class SemanticEntityVersion
             }
             case DITREE:
                 return DiTreeEntity.make(readBuf, formatVersion);
-           case DIGRAPH:
+            case DIGRAPH:
                 return DiGraphEntity.make(readBuf, formatVersion);
             case CONCEPT: {
                 int nid = readBuf.readInt();
@@ -114,11 +159,12 @@ public class SemanticEntityVersion
                 return IntIds.list.of(readIntArray(readBuf));
             case COMPONENT_ID_SET:
                 return IntIds.set.of(readIntArray(readBuf));
-             default:
+            default:
                 throw new UnsupportedOperationException("Can't handle field read of type: " +
                         dataType);
         }
     }
+
     static protected int[] readIntArray(ByteBuf readBuf) {
         int size = readBuf.readInt();
         int[] array = new int[size];
@@ -131,7 +177,7 @@ public class SemanticEntityVersion
     @Override
     protected int subclassFieldBytesSize() {
         int size = 0;
-        for (Object field: fields) {
+        for (Object field : fields) {
             if (field instanceof Boolean) {
                 size += 2;
             } else if (field instanceof Float) {
@@ -165,13 +211,142 @@ public class SemanticEntityVersion
     @Override
     protected void writeVersionFields(ByteBuf writeBuf) {
         writeBuf.writeInt(fields.size());
-        for (Object field: fields) {
+        for (Object field : fields) {
             writeField(writeBuf, field);
         }
     }
 
-    public FieldDataType fieldDataType(int fieldIndex) {
-        return FieldDataType.getFieldDataType(fields.get(fieldIndex));
+    @Override
+    public SemanticEntity chronology() {
+        return (SemanticEntity) super.chronology();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+        sb.append(Entity.getStamp(stampNid).describe());
+        Entity pattern = Entity.getFast(this.chronology().patternNid);
+        if (pattern instanceof PatternEntity patternEntity) {
+            // TODO get proper version after relative position computer available.
+            // Maybe put stamp coordinate on thread, or relative position computer on thread
+            PatternEntityVersion patternEntityVersion = patternEntity.versions.get(0);
+            sb.append("\n");
+            for (int i = 0; i < fields.size(); i++) {
+                sb.append("Field ");
+                sb.append((i + 1));
+                sb.append(": [");
+                StringBuilder fieldStringBuilder = new StringBuilder();
+
+                Object field = fields.get(i);
+                if (i < patternEntityVersion.fieldDefinitionForEntities.size()) {
+                    FieldDefinitionForEntity fieldDefinition = patternEntityVersion.fieldDefinitionForEntities.get(i);
+                    fieldStringBuilder.append(PrimitiveData.text(fieldDefinition.meaningNid));
+                } else {
+                    fieldStringBuilder.append("Size error @ " + i);
+                }
+                fieldStringBuilder.append(": ");
+                if (field instanceof EntityFacade entity) {
+                    fieldStringBuilder.append(PrimitiveData.text(entity.nid()));
+                } else if (field instanceof String string) {
+                    fieldStringBuilder.append(string);
+                } else if (field instanceof Instant instant) {
+                    fieldStringBuilder.append(DateTimeUtil.format(instant));
+                } else if (field instanceof IntIdList intIdList) {
+                    if (intIdList.size() == 0) {
+                        fieldStringBuilder.append("ø");
+                    } else {
+                        for (int j = 0; j < intIdList.size(); j++) {
+                            if (j > 0) {
+                                fieldStringBuilder.append(", ");
+                            }
+                            fieldStringBuilder.append(PrimitiveData.text(intIdList.get(j)));
+                        }
+                    }
+                } else if (field instanceof IntIdSet intIdSet) {
+                    if (intIdSet.size() == 0) {
+                        fieldStringBuilder.append("ø");
+                    } else {
+                        int[] idSetArray = intIdSet.toArray();
+                        for (int j = 0; j < idSetArray.length; j++) {
+                            if (j > 0) {
+                                fieldStringBuilder.append(", ");
+                            }
+                            fieldStringBuilder.append(PrimitiveData.text(idSetArray[j]));
+                        }
+                    }
+                } else {
+                    fieldStringBuilder.append(field);
+                }
+                String fieldString = fieldStringBuilder.toString();
+                if (fieldString.contains("\n")) {
+                    sb.append("\n");
+                    sb.append(fieldString);
+                } else {
+                    sb.append(fieldString);
+                }
+                sb.append("]\n");
+
+            }
+        } else {
+            sb.append("Bad pattern: ");
+            sb.append(PrimitiveData.text(pattern.nid));
+            sb.append("; ");
+            for (int i = 0; i < fields.size(); i++) {
+                Object field = fields.get(i);
+                if (i > 0) {
+                    sb.append("; ");
+                }
+                if (field instanceof EntityFacade entity) {
+                    sb.append("Entity: ");
+                    sb.append(PrimitiveData.text(entity.nid()));
+                } else if (field instanceof String string) {
+                    sb.append("String: ");
+                    sb.append(string);
+                } else if (field instanceof Instant instant) {
+                    sb.append("Instant: ");
+                    sb.append(DateTimeUtil.format(instant));
+                } else if (field instanceof Long aLong) {
+                    sb.append("Long: ");
+                    sb.append(DateTimeUtil.format(aLong));
+                } else if (field instanceof IntIdList intIdList) {
+                    sb.append(field.getClass().getSimpleName());
+                    sb.append(": ");
+                    if (intIdList.size() == 0) {
+                        sb.append("ø, ");
+                    } else {
+                        for (int j = 0; j < intIdList.size(); j++) {
+                            if (j > 0) {
+                                sb.append(", ");
+                            }
+                            sb.append(PrimitiveData.text(intIdList.get(j)));
+                        }
+                    }
+                } else if (field instanceof IntIdSet intIdSet) {
+                    sb.append(field.getClass().getSimpleName());
+                    sb.append(": ");
+                    if (intIdSet.size() == 0) {
+                        sb.append("ø, ");
+                    } else {
+                        int[] idSetArray = intIdSet.toArray();
+                        for (int j = 0; j < idSetArray.length; j++) {
+                            if (j > 0) {
+                                sb.append(", ");
+                            }
+                            sb.append(PrimitiveData.text(idSetArray[j]));
+                        }
+                    }
+                } else {
+                    sb.append(field.getClass().getSimpleName());
+                    sb.append(": ");
+                    sb.append(field);
+                }
+            }
+        }
+
+        sb.append("]}");
+
+        return sb.toString();
     }
 
     public static void writeField(ByteBuf writeBuf, Object field) {
@@ -250,15 +425,15 @@ public class SemanticEntityVersion
         } else if (field instanceof PublicIdList publicIdList) {
             MutableIntList nidList = IntLists.mutable.withInitialCapacity(publicIdList.size());
             publicIdList.forEach(publicId -> {
-                nidList.add(PrimitiveData.get().nidForPublicId((PublicId)  publicId));
+                nidList.add(PrimitiveData.get().nidForPublicId((PublicId) publicId));
             });
             writeBuf.writeByte(FieldDataType.COMPONENT_ID_LIST.token);
             writeBuf.writeInt(nidList.size());
             nidList.forEach(id -> writeBuf.writeInt(id));
-        } else  if (field instanceof PublicIdSet publicIdSet) {
+        } else if (field instanceof PublicIdSet publicIdSet) {
             MutableIntList nidSet = IntLists.mutable.withInitialCapacity(publicIdSet.size());
             publicIdSet.forEach(publicId -> {
-                nidSet.add(PrimitiveData.get().nidForPublicId((PublicId)  publicId));
+                nidSet.add(PrimitiveData.get().nidForPublicId((PublicId) publicId));
             });
             writeBuf.writeByte(FieldDataType.COMPONENT_ID_SET.token);
             writeBuf.writeInt(nidSet.size());
@@ -267,6 +442,22 @@ public class SemanticEntityVersion
             throw new UnsupportedOperationException("Can't handle field write of type: " +
                     field.getClass().getName());
         }
+    }
+
+    public PatternEntity pattern() {
+        return Entity.getFast(getSemanticEntity().patternNid);
+    }
+
+    private SemanticEntity getSemanticEntity() {
+        return (SemanticEntity) this.chronology;
+    }
+
+    public int patternNid() {
+        return getSemanticEntity().patternNid;
+    }
+
+    public FieldDataType fieldDataType(int fieldIndex) {
+        return FieldDataType.getFieldDataType(fields.get(fieldIndex));
     }
 
     @Override
@@ -279,196 +470,8 @@ public class SemanticEntityVersion
         for (int i = 0; i < fieldArray.length; i++) {
             Object value = fields.get(i);
             FieldDefinitionForEntity fieldDef = patternVersion.fieldDefinitions().get(i);
-            fieldArray[i] = new FieldRecord(value, fieldDef.purposeNid, fieldDef.meaningNid);
+            fieldArray[i] = new FieldRecord(value, fieldDef.purposeNid, fieldDef.meaningNid, ConceptToDataType.convert(fieldDef.dataType()));
         }
         return Lists.immutable.of(fieldArray);
-    }
-
-    public static SemanticEntityVersion make(SemanticEntity semanticEntity, ByteBuf readBuf, byte formatVersion) {
-        SemanticEntityVersion version = new SemanticEntityVersion();
-        version.fill(semanticEntity, readBuf, formatVersion);
-        return version;
-    }
-
-    public static SemanticEntityVersion make(SemanticEntity semanticEntity, SemanticVersion versionToCopy) {
-        SemanticEntityVersion version = new SemanticEntityVersion();
-        version.fill(semanticEntity, versionToCopy);
-        version.fields.clear();
-        for (Object obj: versionToCopy.fields()) {
-            if (obj instanceof Boolean) {
-               version.fields.add(obj);
-            } else if (obj instanceof Float) {
-                version.fields.add(obj);
-            } else if (obj instanceof byte[]) {
-                version.fields.add(obj);
-            } else if (obj instanceof Integer) {
-                version.fields.add(obj);
-            } else if (obj instanceof String) {
-                version.fields.add(obj);
-            } else if (obj instanceof Instant) {
-                version.fields.add(obj);
-            } else if (obj instanceof PlanarPoint) {
-                version.fields.add(obj);
-            } else if (obj instanceof SpatialPoint) {
-                version.fields.add(obj);
-            } else if (obj instanceof Component component) {
-                version.fields.add(EntityProxy.make(EntityService.get().nidForComponent(component)));
-            } else if (obj instanceof DiTreeDTO) {
-                DiTree<Vertex> component = (DiTree<Vertex>) obj;
-                version.fields.add(DiTreeEntity.make(component));
-            } else if (obj instanceof DiGraphDTO) {
-                DiGraph<Vertex> component = (DiGraph<Vertex>) obj;
-                version.fields.add(DiGraphEntity.make(component));
-            } else if (obj instanceof PublicIdSet) {
-                PublicIdSet<PublicId> component = (PublicIdSet<PublicId>) obj;
-                MutableIntSet idSet = IntSets.mutable.withInitialCapacity(component.size());
-                component.forEach(publicId -> {
-                    if (publicId == null) {
-                        throw new IllegalStateException("PublicId cannot be null");
-                    }
-                    idSet.add(EntityService.get().nidForPublicId(publicId));
-                });
-                version.fields.add(IntIds.set.ofAlreadySorted(idSet.toSortedArray()));
-            } else if (obj instanceof PublicIdList) {
-                PublicIdList<PublicId> component = (PublicIdList<PublicId>) obj;
-                MutableIntList idList = IntLists.mutable.withInitialCapacity(component.size());
-                component.forEach(publicId -> {
-                    idList.add(EntityService.get().nidForPublicId(publicId));
-                });
-                version.fields.add(IntIds.list.of(idList.toArray()));
-            } else {
-                throw new UnsupportedOperationException("Can't handle field conversion of type: " +
-                        obj.getClass().getName());
-            }
-        }
-        return version;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        sb.append(Entity.getStamp(stampNid).describe());
-        Entity pattern = Entity.getFast(this.chronology().patternNid);
-        if (pattern instanceof PatternEntity patternEntity) {
-            // TODO get proper version after relative position computer available.
-            // Maybe put stamp coordinate on thread, or relative position computer on thread
-            PatternEntityVersion patternEntityVersion =  patternEntity.versions.get(0);
-            sb.append("\n");
-            for (int i = 0; i < fields.size(); i++) {
-               sb.append("Field ");
-               sb.append((i+1));
-                sb.append(": [");
-               StringBuilder fieldStringBuilder = new StringBuilder();
-
-                Object field = fields.get(i);
-                if (i < patternEntityVersion.fieldDefinitionForEntities.size()) {
-                    FieldDefinitionForEntity fieldDefinition = patternEntityVersion.fieldDefinitionForEntities.get(i);
-                    fieldStringBuilder.append(PrimitiveData.text(fieldDefinition.meaningNid));
-                } else {
-                    fieldStringBuilder.append("Size error @ " + i);
-                }
-                fieldStringBuilder.append(": ");
-                if (field instanceof EntityFacade entity) {
-                    fieldStringBuilder.append(PrimitiveData.text(entity.nid()));
-                } else if (field instanceof String string) {
-                    fieldStringBuilder.append(string);
-                } else if (field instanceof Instant instant) {
-                    fieldStringBuilder.append(DateTimeUtil.format(instant));
-                } else if (field instanceof IntIdList intIdList)  {
-                    if (intIdList.size() == 0) {
-                        fieldStringBuilder.append("ø");
-                    } else {
-                        for (int j = 0; j < intIdList.size(); j++) {
-                            if (j > 0) {
-                                fieldStringBuilder.append(", ");
-                            }
-                            fieldStringBuilder.append(PrimitiveData.text(intIdList.get(j)));
-                        }
-                    }
-                } else if (field instanceof IntIdSet intIdSet)  {
-                    if (intIdSet.size() == 0) {
-                        fieldStringBuilder.append("ø");
-                    } else {
-                        int[] idSetArray = intIdSet.toArray();
-                        for (int j = 0; j < idSetArray.length; j++) {
-                            if (j > 0) {
-                                fieldStringBuilder.append(", ");
-                            }
-                            fieldStringBuilder.append(PrimitiveData.text(idSetArray[j]));
-                        }
-                    }
-                 } else {
-                    fieldStringBuilder.append(field);
-                }
-                String fieldString = fieldStringBuilder.toString();
-                if (fieldString.contains("\n")) {
-                    sb.append("\n");
-                    sb.append(fieldString);
-                } else {
-                    sb.append(fieldString);
-                }
-                sb.append("]\n");
-
-            }
-        } else {
-            sb.append("Bad pattern: ");
-            sb.append(PrimitiveData.text(pattern.nid));
-            sb.append("; ");
-            for (int i = 0; i < fields.size(); i++) {
-                Object field = fields.get(i);
-                if (i > 0) {
-                    sb.append("; ");
-                }
-                 if (field instanceof EntityFacade entity) {
-                     sb.append("Entity: ");
-                     sb.append(PrimitiveData.text(entity.nid()));
-                } else if (field instanceof String string) {
-                     sb.append("String: ");
-                     sb.append(string);
-                } else if (field instanceof Instant instant) {
-                     sb.append("Instant: ");
-                     sb.append(DateTimeUtil.format(instant));
-                } else if (field instanceof Long aLong) {
-                     sb.append("Long: ");
-                     sb.append(DateTimeUtil.format(aLong));
-                } else if (field instanceof IntIdList intIdList)  {
-                     sb.append(field.getClass().getSimpleName());
-                     sb.append(": ");
-                     if (intIdList.size() == 0) {
-                         sb.append("ø, ");
-                     } else {
-                         for (int j = 0; j < intIdList.size(); j++) {
-                             if (j > 0) {
-                                 sb.append(", ");
-                             }
-                             sb.append(PrimitiveData.text(intIdList.get(j)));
-                         }
-                     }
-                 } else if (field instanceof IntIdSet intIdSet)  {
-                     sb.append(field.getClass().getSimpleName());
-                     sb.append(": ");
-                     if (intIdSet.size() == 0) {
-                         sb.append("ø, ");
-                     } else {
-                         int[] idSetArray = intIdSet.toArray();
-                         for (int j = 0; j < idSetArray.length; j++) {
-                             if (j > 0) {
-                                 sb.append(", ");
-                             }
-                             sb.append(PrimitiveData.text(idSetArray[j]));
-                         }
-                     }
-                 } else {
-                     sb.append(field.getClass().getSimpleName());
-                     sb.append(": ");
-                     sb.append(field);
-                 }
-            }
-        }
-
-        sb.append("]}");
-
-        return sb.toString();
     }
 }

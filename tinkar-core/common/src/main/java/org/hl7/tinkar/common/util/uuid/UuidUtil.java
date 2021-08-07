@@ -34,86 +34,87 @@ import java.util.*;
  */
 public class UuidUtil {
     /**
+     * Nil UUID
+     * The "nil" UUID, a special case, is the UUID 00000000-0000-0000-0000-000000000000; that is, all bits set to zero.[2]
+     */
+    public static final UUID NIL_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
+
+    /**
      * Utility classes, which are collections of static members, are not meant to be instantiated.
      * Even abstract utility classes, which can be extended, should not have public constructors.
      */
     private UuidUtil() {
     }
 
+    //~--- get methods ---------------------------------------------------------
+
     /**
-     * Nil UUID
-     * The "nil" UUID, a special case, is the UUID 00000000-0000-0000-0000-000000000000; that is, all bits set to zero.[2]
+     * Checks if uuid.
+     *
+     * @param string the string
+     * @return true, if uuid
      */
-    public static final UUID NIL_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
+    public static boolean isUUID(String string) {
+        return (getUUID(string).isPresent());
+    }
 
-   //~--- get methods ---------------------------------------------------------
+    /**
+     * Gets the uuid.
+     *
+     * @param string the string
+     * @return the uuid
+     */
+    public static Optional<UUID> getUUID(String string) {
+        if (string == null) {
+            return Optional.empty();
+        }
 
-   /**
-    * Gets the uuid.
-    *
-    * @param string the string
-    * @return the uuid
-    */
-   public static Optional<UUID> getUUID(String string) {
-      if (string == null) {
-         return Optional.empty();
-      }
+        if (string.length() != 36) {
+            return Optional.empty();
+        }
 
-      if (string.length() != 36) {
-         return Optional.empty();
-      }
+        try {
+            return Optional.of(UUID.fromString(string));
+        } catch (final IllegalArgumentException e) {
+            return Optional.empty();
+        }
+    }
 
-      try {
-         return Optional.of(UUID.fromString(string));
-      } catch (final IllegalArgumentException e) {
-         return Optional.empty();
-      }
-   }
+    public static UUID fromList(UUID... uuids) {
+        List<String> uuidStrList = new ArrayList<>();
+        for (UUID uuid : uuids) {
+            uuidStrList.add(uuid.toString());
+        }
+        uuidStrList.sort((String o1, String o2) -> o1.compareTo(o2));
+        StringBuilder buff = new StringBuilder();
+        for (String uuidStr : uuidStrList) {
+            buff.append(uuidStr);
+        }
+        return UUID.nameUUIDFromBytes(buff.toString().getBytes());
+    }
 
-   /**
-    * Checks if uuid.
-    *
-    * @param string the string
-    * @return true, if uuid
-    */
-   public static boolean isUUID(String string) {
-      return (getUUID(string).isPresent());
-   }
-   
-   public static UUID fromList(UUID... uuids) {
-       List<String> uuidStrList = new ArrayList<>();
-       for (UUID uuid: uuids) {
-           uuidStrList.add(uuid.toString());
-       }
-       uuidStrList.sort((String o1, String o2) -> o1.compareTo(o2));
-       StringBuilder buff = new StringBuilder();
-       for (String uuidStr: uuidStrList) {
-           buff.append(uuidStr);
-       }
-       return UUID.nameUUIDFromBytes(buff.toString().getBytes());
-   }
     public static long[] asArray(UUID uuid) {
-        return new long[] {uuid.getMostSignificantBits(), uuid.getLeastSignificantBits()};
+        return new long[]{uuid.getMostSignificantBits(), uuid.getLeastSignificantBits()};
     }
 
     public static long[] asArray(UUID... uuids) {
-       Arrays.sort(uuids);
+        Arrays.sort(uuids);
         long[] values = new long[uuids.length * 2];
         for (int i = 0; i < uuids.length; i++) {
-            values[i*2] = uuids[i].getMostSignificantBits();
-            values[(i*2) + 1] = uuids[i].getLeastSignificantBits();
+            values[i * 2] = uuids[i].getMostSignificantBits();
+            values[(i * 2) + 1] = uuids[i].getLeastSignificantBits();
         }
         return values;
     }
 
     public static long[] asArray(ListIterable<UUID> uuidList) {
-       uuidList = uuidList.toSortedList();
-       int size = uuidList.size();
+        uuidList = uuidList.toSortedList();
+        int size = uuidList.size();
         long[] values = new long[size * 2];
         for (int i = 0; i < size; i++) {
             UUID uuid = uuidList.get(i);
-            values[i*2] = uuid.getMostSignificantBits();
-            values[(i*2) + 1] = uuid.getLeastSignificantBits();
+            values[i * 2] = uuid.getMostSignificantBits();
+            values[(i * 2) + 1] = uuid.getLeastSignificantBits();
 
         }
         return values;
@@ -124,32 +125,19 @@ public class UuidUtil {
     }
 
     public static ImmutableList<UUID> toList(long[] array) {
-        MutableList<UUID> uuidList = Lists.mutable.ofInitialCapacity(array.length/2);
-        for (int i = 0; i < array.length/2; i++) {
-            uuidList.add(new UUID(array[i*2], array[(i*2) + 1]));
+        MutableList<UUID> uuidList = Lists.mutable.ofInitialCapacity(array.length / 2);
+        for (int i = 0; i < array.length / 2; i++) {
+            uuidList.add(new UUID(array[i * 2], array[(i * 2) + 1]));
         }
         return uuidList.toImmutable();
     }
 
     public static UUID[] toArray(long[] array) {
-        UUID[] uuidArray = new UUID[array.length/2];
-        for (int i = 0; i < array.length/2; i++) {
-            uuidArray[i] = new UUID(array[i*2], array[(i*2) + 1]);
+        UUID[] uuidArray = new UUID[array.length / 2];
+        for (int i = 0; i < array.length / 2; i++) {
+            uuidArray[i] = new UUID(array[i * 2], array[(i * 2) + 1]);
         }
         return uuidArray;
-    }
-
-
-    /**
-     * This routine adapted from com.fasterxml.uuid.impl,
-     * Java Uuid Generator (JUG) which is licensed under Apache 2.
-     */
-    private static final void appendInt(int value, byte[] buffer, int offset)
-    {
-        buffer[offset++] = (byte) (value >> 24);
-        buffer[offset++] = (byte) (value >> 16);
-        buffer[offset++] = (byte) (value >> 8);
-        buffer[offset] = (byte) value;
     }
 
     /**
@@ -171,6 +159,17 @@ public class UuidUtil {
     }
 
     /**
+     * This routine adapted from com.fasterxml.uuid.impl,
+     * Java Uuid Generator (JUG) which is licensed under Apache 2.
+     */
+    private static final void appendInt(int value, byte[] buffer, int offset) {
+        buffer[offset++] = (byte) (value >> 24);
+        buffer[offset++] = (byte) (value >> 16);
+        buffer[offset++] = (byte) (value >> 8);
+        buffer[offset] = (byte) value;
+    }
+
+    /**
      * Generates a uuid from the given {@code byteArray}.
      *
      * @param byteArray the bytes to use for generating the uuid
@@ -185,26 +184,15 @@ public class UuidUtil {
 
         return new UUID(raw.getLong(raw.position()), raw.getLong(raw.position() + 8));
     }
-    public static String toString(UUID... uuids) {
-        StringBuilder sb = new StringBuilder("[");
-        for (int i = 0; i  < uuids.length; i++) {
-            sb.append(uuids[i].toString());
-            if (i < uuids.length  - 2) {
-                sb.append(", ");
-            }
-        }
-        sb.append("]");
-        return sb.toString();
-    }
 
     public static String toString(Iterable<UUID> uuids) {
         StringBuilder sb = new StringBuilder("[");
         int i = 0;
-        for (UUID uuid: uuids) {
+        for (UUID uuid : uuids) {
             sb.append(uuid.toString());
         }
         sb.append(", ");
-        sb.deleteCharAt(sb.length()-1);
+        sb.deleteCharAt(sb.length() - 1);
         sb.append("]");
         return sb.toString();
     }
@@ -213,10 +201,25 @@ public class UuidUtil {
         return toString(publicId.asUuidArray());
     }
 
+    public static String toString(UUID... uuids) {
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < uuids.length; i++) {
+            sb.append(uuids[i].toString());
+            if (i < uuids.length - 1) {
+                sb.append(", ");
+            }
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
     public static UUID[] fromString(String uuidListString) {
         String[] elements = uuidListString.substring(uuidListString.indexOf('[') + 1, uuidListString.indexOf(']')).split(",");
         UUID[] uuids = new UUID[elements.length];
         for (int i = 0; i < elements.length; i++) {
+            if (elements[i].trim().length() > 36) {
+                throw new IllegalArgumentException("UUID string too large: " + elements[i].trim());
+            }
             uuids[i] = UUID.fromString(elements[i].trim());
         }
         return uuids;

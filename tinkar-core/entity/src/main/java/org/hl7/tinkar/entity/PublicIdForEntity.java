@@ -16,34 +16,8 @@ public class PublicIdForEntity implements PublicId {
     protected long[] additionalUuidLongs;
 
     @Override
-    public UUID[] asUuidArray() {
-        UUID[] uuidArray = new UUID[uuidCount()];
-        uuidArray[0] = new UUID(mostSignificantBits, leastSignificantBits);
-        if (additionalUuidLongs != null) {
-            for (int i = 1; i < uuidArray.length; i++) {
-                uuidArray[i] = new UUID(additionalUuidLongs[((i-1) * 2) ], additionalUuidLongs[((i-1) * 2) + 1]);
-            }
-        }
-        return uuidArray;
-    }
-
-    @Override
-    public int uuidCount() {
-        if (additionalUuidLongs != null) {
-            return (additionalUuidLongs.length/2) + 1;
-        }
-        return 1;
-    }
-
-    @Override
-    public void forEach(LongConsumer consumer) {
-        consumer.accept(mostSignificantBits);
-        consumer.accept(leastSignificantBits);
-        if (additionalUuidLongs != null) {
-            for (long uuidPart: additionalUuidLongs) {
-                consumer.accept(uuidPart);
-            }
-        }
+    public int hashCode() {
+        return Arrays.hashCode(additionalUuidLongs);
     }
 
     @Override
@@ -53,7 +27,7 @@ public class PublicIdForEntity implements PublicId {
         if (o instanceof PublicId publicId) {
             UUID[] thisUuids = asUuidArray();
             return Arrays.stream(publicId.asUuidArray()).anyMatch(uuid -> {
-                for (UUID thisUuid: thisUuids) {
+                for (UUID thisUuid : thisUuids) {
                     if (uuid.equals(thisUuid)) {
                         return true;
                     }
@@ -65,8 +39,34 @@ public class PublicIdForEntity implements PublicId {
     }
 
     @Override
-    public int hashCode() {
-        return Arrays.hashCode(additionalUuidLongs);
+    public UUID[] asUuidArray() {
+        UUID[] uuidArray = new UUID[uuidCount()];
+        uuidArray[0] = new UUID(mostSignificantBits, leastSignificantBits);
+        if (additionalUuidLongs != null) {
+            for (int i = 1; i < uuidArray.length; i++) {
+                uuidArray[i] = new UUID(additionalUuidLongs[((i - 1) * 2)], additionalUuidLongs[((i - 1) * 2) + 1]);
+            }
+        }
+        return uuidArray;
+    }
+
+    @Override
+    public int uuidCount() {
+        if (additionalUuidLongs != null) {
+            return (additionalUuidLongs.length / 2) + 1;
+        }
+        return 1;
+    }
+
+    @Override
+    public void forEach(LongConsumer consumer) {
+        consumer.accept(mostSignificantBits);
+        consumer.accept(leastSignificantBits);
+        if (additionalUuidLongs != null) {
+            for (long uuidPart : additionalUuidLongs) {
+                consumer.accept(uuidPart);
+            }
+        }
     }
 
     protected void fillId(ByteBuf readBuf) {
@@ -90,7 +90,7 @@ public class PublicIdForEntity implements PublicId {
             writeBuf.writeInt(0);
         } else {
             writeBuf.writeInt(additionalUuidLongs.length);
-            for (long additionalIdLong: additionalUuidLongs) {
+            for (long additionalIdLong : additionalUuidLongs) {
                 writeBuf.writeLong(additionalIdLong);
             }
         }
