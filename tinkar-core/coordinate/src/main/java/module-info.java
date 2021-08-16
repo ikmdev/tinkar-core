@@ -1,7 +1,7 @@
 import org.hl7.tinkar.common.service.CachingService;
+import org.hl7.tinkar.coordinate.PathService;
 import org.hl7.tinkar.coordinate.stamp.calculator.PathProvider;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
-import org.hl7.tinkar.coordinate.PathService;
 
 
 /*
@@ -28,6 +28,7 @@ module org.hl7.tinkar.coordinate {
     requires static org.hl7.tinkar.record.builder;
     requires static java.compiler;
     requires org.hl7.tinkar.entity;
+    requires org.slf4j;
 
     provides CachingService with
             StampCalculatorWithCache.CacheProvider;

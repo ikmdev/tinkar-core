@@ -12,7 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */package org.hl7.tinkar.component;
+ */
+package org.hl7.tinkar.component;
 
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -23,17 +24,18 @@ import java.time.Instant;
 /**
  * TODO should stamp become a chronology, so that uncommitted changes would use different versions of the same data
  * structure?
+ *
  * @author kec
  */
 public interface Stamp<T extends Stamp> extends Chronology<T>, Component, Version {
 
     Concept state();
 
-    long time();
-
     default Instant instant() {
         return DateTimeUtil.epochMsToInstant(time());
     }
+
+    long time();
 
     Concept author();
 

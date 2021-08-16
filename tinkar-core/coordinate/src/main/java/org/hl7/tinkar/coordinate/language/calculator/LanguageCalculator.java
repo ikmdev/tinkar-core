@@ -73,20 +73,24 @@ public interface LanguageCalculator {
 
     Optional<String> getRegularDescriptionText(int entityNid);
 
-    /**
-     * Gets the text of type {@link TinkarTerm#FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE}.  Will return empty, if
-     * no matching description type is found in this or any nested language coordinates
-     *
-     * @param componentNid the componentNid to get a regular name for.
-     * @return the regular name text
-     */
-
-
     default Optional<String> getFullyQualifiedNameText(int componentNid) {
         return getDescriptionTextForComponentOfType(componentNid, TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid());
     }
 
     Optional<String> getDescriptionTextForComponentOfType(int entityNid, int descriptionTypeNid);
+
+    /**
+     * Gets the text of type {@link TinkarTerm#FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE}.  Will return empty, if
+     * no matching description type is found in this or any nested language coordinates
+     *
+     * @param componentFacade the component to get a regular name for.
+     * @return the regular name text
+     */
+
+
+    default Optional<String> getFullyQualifiedNameText(EntityFacade componentFacade) {
+        return getFullyQualifiedNameText(componentFacade.nid());
+    }
 
     default ImmutableList<String> getPreferredDescriptionTextListForComponents(EntityFacade... entities) {
         MutableList<String> descriptionTextList = Lists.mutable.ofInitialCapacity(entities.length);
@@ -434,6 +438,10 @@ public interface LanguageCalculator {
         return getDescriptionTextForComponentOfType(entityNid, TinkarTerm.DEFINITION_DESCRIPTION_TYPE.nid());
     }
 
+    default Latest<SemanticEntityVersion> getRegularDescription(EntityFacade entity) {
+        return getRegularDescription(entity.nid());
+    }
+
     /**
      * Gets the latestDescription of type {@link TinkarTerm#REGULAR_NAME_DESCRIPTION_TYPE}.  Will return empty, if
      * no matching description type is found in this or any nested language coordinates
@@ -456,6 +464,10 @@ public interface LanguageCalculator {
         return getSpecifiedDescription(descriptionList, IntIds.list.of(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()));
     }
 
+    default Latest<SemanticEntityVersion> getFullyQualifiedDescription(EntityFacade entityFacade) {
+        return getFullyQualifiedDescription(entityFacade.nid());
+    }
+
     /**
      * Gets the latestDescription of type {@link TinkarTerm#FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE}.  Will return empty, if
      * no matching description type is found in this or any nested language coordinates
@@ -464,8 +476,7 @@ public interface LanguageCalculator {
      * @return the fully specified latestDescription
      */
     default Latest<SemanticEntityVersion> getFullyQualifiedDescription(int conceptId) {
-        throw new UnsupportedOperationException();
-        //return getFullyQualifiedDescription(Get.conceptService().getConceptDescriptions(conceptId), stampCoordinateRecord);
+        return getSpecifiedDescription(getDescriptionsForComponent(conceptId), IntIds.list.of(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()));
     }
 
     /**

@@ -24,11 +24,11 @@ import org.hl7.tinkar.dto.binary.*;
 
 @RecordBuilder
 public record StampDTO(PublicId publicId,
-                      PublicId statusPublicId,
-                      long time,
-                      PublicId authorPublicId,
-                      PublicId modulePublicId,
-                      PublicId pathPublicId)
+                       PublicId statusPublicId,
+                       long time,
+                       PublicId authorPublicId,
+                       PublicId modulePublicId,
+                       PublicId pathPublicId)
         implements Marshalable, Stamp, DTO {
     private static final int localMarshalVersion = 3;
 
@@ -40,6 +40,20 @@ public record StampDTO(PublicId publicId,
                 stamp.author().publicId(),
                 stamp.module().publicId(),
                 stamp.path().publicId());
+    }
+
+    @Unmarshaler
+    public static StampDTO make(TinkarInput in) {
+        if (localMarshalVersion == in.getTinkerFormatVersion()) {
+            return new StampDTO(in.getPublicId(),
+                    in.getPublicId(),
+                    in.getLong(),
+                    in.getPublicId(),
+                    in.getPublicId(),
+                    in.getPublicId());
+        } else {
+            throw new UnsupportedOperationException("Unsupported version: " + localMarshalVersion);
+        }
     }
 
     @Override
@@ -65,20 +79,6 @@ public record StampDTO(PublicId publicId,
     @Override
     public Concept path() {
         return new ConceptDTO(pathPublicId);
-    }
-
-    @Unmarshaler
-    public static StampDTO make(TinkarInput in) {
-        if (localMarshalVersion == in.getTinkerFormatVersion()) {
-            return new StampDTO(in.getPublicId(),
-                    in.getPublicId(),
-                    in.getLong(),
-                    in.getPublicId(),
-                    in.getPublicId(),
-                    in.getPublicId());
-        } else {
-            throw new UnsupportedOperationException("Unsupported version: " + localMarshalVersion);
-        }
     }
 
     @Override

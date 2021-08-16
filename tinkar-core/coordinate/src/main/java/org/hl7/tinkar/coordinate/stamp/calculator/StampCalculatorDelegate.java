@@ -6,6 +6,7 @@ import org.hl7.tinkar.component.graph.DiTree;
 import org.hl7.tinkar.coordinate.stamp.StateSet;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.entity.graph.VersionVertex;
+import org.hl7.tinkar.terms.EntityFacade;
 
 import java.util.List;
 import java.util.OptionalInt;
@@ -31,8 +32,6 @@ public interface StampCalculatorDelegate extends StampCalculator {
     default StateSet allowedStates() {
         return stampCalculator().allowedStates();
     }
-
-    StampCalculator stampCalculator();
 
     @Override
     default RelativePosition relativePosition(int stampNid, int stampNid2) {
@@ -73,4 +72,31 @@ public interface StampCalculatorDelegate extends StampCalculator {
     default OptionalInt getIndexForPurpose(int patternNid, int purposeNid) {
         return stampCalculator().getIndexForPurpose(patternNid, purposeNid);
     }
+
+    @Override
+    default <T> Latest<Field<T>> getFieldForSemanticWithMeaning(SemanticEntityVersion semanticVersion, EntityFacade meaning) {
+        return stampCalculator().getFieldForSemanticWithMeaning(semanticVersion, meaning);
+    }
+
+    @Override
+    default <T> Latest<Field<T>> getFieldForSemantic(Latest<SemanticEntityVersion> latestSemanticVersion, int criterionNid, FieldCriterion fieldCriterion) {
+        return stampCalculator().getFieldForSemantic(latestSemanticVersion, criterionNid, fieldCriterion);
+    }
+
+    @Override
+    default <T> Latest<Field<T>> getFieldForSemanticWithMeaning(SemanticEntityVersion semanticVersion, int meaningNid) {
+        return stampCalculator().getFieldForSemanticWithMeaning(semanticVersion, meaningNid);
+    }
+
+    @Override
+    default <T> Latest<Field<T>> getFieldForSemantic(int componentNid, int criterionNid, FieldCriterion fieldCriterion) {
+        return stampCalculator().getFieldForSemantic(componentNid, criterionNid, fieldCriterion);
+    }
+
+    @Override
+    default <T> Latest<Field<T>> getFieldForSemanticWithMeaning(int componentNid, int meaningNid) {
+        return stampCalculator().getFieldForSemanticWithMeaning(componentNid, meaningNid);
+    }
+
+    StampCalculator stampCalculator();
 }

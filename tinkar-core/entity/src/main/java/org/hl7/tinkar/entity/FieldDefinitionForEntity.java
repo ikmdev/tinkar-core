@@ -7,12 +7,43 @@ import org.hl7.tinkar.component.FieldDefinition;
 import org.hl7.tinkar.terms.ConceptFacade;
 
 public class FieldDefinitionForEntity
-    implements FieldDefinition {
+        implements FieldDefinition {
 
     protected PatternEntityVersion enclosingVersion;
     protected int dataTypeNid;
     protected int purposeNid;
     protected int meaningNid;
+
+    public static FieldDefinitionForEntity make(PatternEntityVersion enclosingVersion, ByteBuf readBuf) {
+        FieldDefinitionForEntity fieldDefinitionForEntity = new FieldDefinitionForEntity();
+        fieldDefinitionForEntity.fill(enclosingVersion, readBuf);
+        return fieldDefinitionForEntity;
+    }
+
+    /**
+     * TODO interface for write, fill, etc.
+     *
+     * @param readBuf
+     */
+    public void fill(PatternEntityVersion enclosingVersion, ByteBuf readBuf) {
+        this.enclosingVersion = enclosingVersion;
+        dataTypeNid = readBuf.readInt();
+        purposeNid = readBuf.readInt();
+        meaningNid = readBuf.readInt();
+    }
+
+    public static FieldDefinitionForEntity make(PatternEntityVersion enclosingVersion, FieldDefinition fieldDefinition) {
+        FieldDefinitionForEntity fieldDefinitionForEntity = new FieldDefinitionForEntity();
+        fieldDefinitionForEntity.fill(enclosingVersion, fieldDefinition);
+        return fieldDefinitionForEntity;
+    }
+
+    public void fill(PatternEntityVersion enclosingVersion, FieldDefinition fieldDefinition) {
+        this.enclosingVersion = enclosingVersion;
+        dataTypeNid = EntityService.get().nidForComponent(fieldDefinition.dataType());
+        purposeNid = EntityService.get().nidForComponent(fieldDefinition.purpose());
+        meaningNid = EntityService.get().nidForComponent(fieldDefinition.meaning());
+    }
 
     @Override
     public ConceptFacade dataType() {
@@ -29,40 +60,22 @@ public class FieldDefinitionForEntity
         return EntityService.get().getEntityFast(meaningNid);
     }
 
-    /**
-     * TODO interface for write, fill, etc.
-     * @param readBuf
-     */
-    public void fill(PatternEntityVersion enclosingVersion, ByteBuf readBuf) {
-        this.enclosingVersion = enclosingVersion;
-        dataTypeNid = readBuf.readInt();
-        purposeNid = readBuf.readInt();
-        meaningNid = readBuf.readInt();
+    public int dataTypeNid() {
+        return dataTypeNid;
     }
 
-    public void fill(PatternEntityVersion enclosingVersion, FieldDefinition fieldDefinition) {
-        this.enclosingVersion = enclosingVersion;
-        dataTypeNid = EntityService.get().nidForComponent(fieldDefinition.dataType());
-        purposeNid = EntityService.get().nidForComponent(fieldDefinition.purpose());
-        meaningNid = EntityService.get().nidForComponent(fieldDefinition.meaning());
+    public int purposeNid() {
+        return purposeNid;
+    }
+
+    public int meaningNid() {
+        return meaningNid;
     }
 
     public void write(ByteBuf writeBuf) {
         writeBuf.writeInt(dataTypeNid);
         writeBuf.writeInt(purposeNid);
         writeBuf.writeInt(meaningNid);
-    }
-
-    public static FieldDefinitionForEntity make(PatternEntityVersion enclosingVersion, ByteBuf readBuf) {
-        FieldDefinitionForEntity fieldDefinitionForEntity = new FieldDefinitionForEntity();
-        fieldDefinitionForEntity.fill(enclosingVersion, readBuf);
-        return fieldDefinitionForEntity;
-    }
-
-    public static FieldDefinitionForEntity make(PatternEntityVersion enclosingVersion, FieldDefinition fieldDefinition) {
-        FieldDefinitionForEntity fieldDefinitionForEntity = new FieldDefinitionForEntity();
-        fieldDefinitionForEntity.fill(enclosingVersion, fieldDefinition);
-        return fieldDefinitionForEntity;
     }
 
     @Override

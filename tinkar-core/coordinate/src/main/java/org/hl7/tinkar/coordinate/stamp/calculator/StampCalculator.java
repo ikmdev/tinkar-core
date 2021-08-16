@@ -15,7 +15,6 @@ import java.util.OptionalInt;
 import java.util.function.BiConsumer;
 
 public interface StampCalculator {
-
     default boolean isLatestActive(EntityFacade facade) {
         return isLatestActive(facade.nid());
     }
@@ -74,7 +73,6 @@ public interface StampCalculator {
 
     void forEachSemanticVersionForComponentOfPattern(int componentNid, int patternNid, TriConsumer<SemanticEntityVersion, EntityVersion, PatternEntityVersion> procedure);
 
-
     default void forEachSemanticVersionWithFieldsOfPattern(PatternFacade patternFacade,
                                                            TriConsumer<SemanticEntityVersion, ImmutableList<Field>, PatternEntityVersion> procedure) {
         forEachSemanticVersionWithFieldsOfPattern(patternFacade.nid(), procedure);
@@ -107,4 +105,57 @@ public interface StampCalculator {
     OptionalInt getIndexForMeaning(int patternNid, int meaningNid);
 
     OptionalInt getIndexForPurpose(int patternNid, int meaningNid);
+
+    // TODO add methods for getFieldForSemanticWithPurpose
+    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithMeaning(SemanticEntityVersion semanticVersion, EntityFacade meaning) {
+        return getFieldForSemanticWithMeaning(Latest.of(semanticVersion), meaning);
+    }
+
+    // TODO add methods for getFieldForSemanticWithPurpose
+    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithMeaning(Latest<SemanticEntityVersion> latestSemantic, EntityFacade meaning) {
+        return getFieldForSemantic(latestSemantic, meaning.nid(), FieldCriterion.MEANING);
+    }
+
+    <T> Latest<Field<T>> getFieldForSemantic(Latest<SemanticEntityVersion> latestSemanticVersion, int criterionNid, FieldCriterion fieldCriterion);
+
+    // TODO add methods for getFieldForSemanticWithPurpose
+    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithMeaning(SemanticEntityVersion semanticVersion, int meaningNid) {
+        return getFieldForSemantic(Latest.of(semanticVersion), meaningNid, FieldCriterion.MEANING);
+    }
+
+    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithPurpose(Latest<SemanticEntityVersion> latestSemantic, int meaningNid) {
+        return getFieldForSemantic(latestSemantic, meaningNid, FieldCriterion.PURPOSE);
+    }
+
+    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithMeaning(Latest<SemanticEntityVersion> latestSemantic, int meaningNid) {
+        return getFieldForSemantic(latestSemantic, meaningNid, FieldCriterion.MEANING);
+    }
+
+    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithMeaning(int componentNid, EntityFacade meaning) {
+        return getFieldForSemantic(componentNid, meaning.nid(), FieldCriterion.MEANING);
+    }
+
+    <T> Latest<Field<T>> getFieldForSemantic(int componentNid, int criterionNid, FieldCriterion fieldCriterion);
+
+    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithMeaning(EntityFacade component, EntityFacade meaning) {
+        return getFieldForSemantic(component.nid(), meaning.nid(), FieldCriterion.MEANING);
+    }
+
+    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithPurpose(int componentNid, EntityFacade purpose) {
+        return getFieldForSemantic(componentNid, purpose.nid(), FieldCriterion.PURPOSE);
+    }
+
+    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithPurpose(int componentNid, int purposeNid) {
+        return getFieldForSemantic(componentNid, purposeNid, FieldCriterion.PURPOSE);
+    }
+
+    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithPurpose(EntityFacade component, EntityFacade purpose) {
+        return getFieldForSemantic(component.nid(), purpose.nid(), FieldCriterion.PURPOSE);
+    }
+
+    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithMeaning(int componentNid, int meaningNid) {
+        return getFieldForSemantic(componentNid, meaningNid, FieldCriterion.MEANING);
+    }
+
+    enum FieldCriterion {MEANING, PURPOSE}
 }

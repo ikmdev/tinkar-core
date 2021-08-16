@@ -11,7 +11,6 @@ import org.eclipse.collections.api.map.primitive.ImmutableIntIntMap;
 import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
 import org.eclipse.collections.api.map.primitive.MutableIntIntMap;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
-import org.eclipse.collections.api.set.primitive.IntSet;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
@@ -32,24 +31,6 @@ public class DiTreeEntity<V extends EntityVertex> extends DiGraphAbstract<V> imp
         super(vertexMap, successorMap);
         this.root = root;
         this.predecessorMap = predecessorMap;
-    }
-
-    @Override
-    public ImmutableIntIntMap predecessorMap() {
-        return predecessorMap;
-    }
-
-    @Override
-    public V root() {
-        return root;
-    }
-
-    @Override
-    public Optional<V> predecessor(V vertex) {
-        if (this.predecessorMap.containsKey(vertex.vertexIndex())) {
-            return Optional.of(vertex(this.predecessorMap.get(vertex.vertexIndex())));
-        }
-        return Optional.empty();
     }
 
     public static DiTreeEntity make(DiTree<Vertex> tree) {
@@ -77,6 +58,28 @@ public class DiTreeEntity<V extends EntityVertex> extends DiGraphAbstract<V> imp
         return new DiTreeEntity(vertexMap.get(rootVertexIndex), vertexMap,
                 successorMap, predecessorMap.toImmutable());
 
+    }
+
+    public static <V extends EntityVertex> Builder<V> builder() {
+        return new Builder();
+    }
+
+    @Override
+    public V root() {
+        return root;
+    }
+
+    @Override
+    public Optional<V> predecessor(V vertex) {
+        if (this.predecessorMap.containsKey(vertex.vertexIndex())) {
+            return Optional.of(vertex(this.predecessorMap.get(vertex.vertexIndex())));
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public ImmutableIntIntMap predecessorMap() {
+        return predecessorMap;
     }
 
     public final byte[] getBytes() {
@@ -142,9 +145,6 @@ public class DiTreeEntity<V extends EntityVertex> extends DiGraphAbstract<V> imp
         }
     }
 
-    public static <V extends EntityVertex> Builder<V> builder() {
-        return new Builder();
-    }
     public static class Builder<V extends EntityVertex> {
         private final MutableList<V> vertexMap = Lists.mutable.empty();
         private final MutableIntObjectMap<MutableIntList> successorMap = IntObjectMaps.mutable.empty();

@@ -96,6 +96,15 @@ public class SemanticEntityVersion
         return version;
     }
 
+    public int referencedComponentNid() {
+        return this.chronology().referencedComponentNid();
+    }
+
+    public EntityFacade referencedComponent() {
+        return this.chronology().referencedComponent();
+    }
+
+
     @Override
     public FieldDataType dataType() {
         return FieldDataType.SEMANTIC_VERSION;
