@@ -184,6 +184,14 @@ public class SemanticEntityVersion
     }
 
     @Override
+    protected void writeVersionFields(ByteBuf writeBuf) {
+        writeBuf.writeInt(fields.size());
+        for (Object field : fields) {
+            writeField(writeBuf, field);
+        }
+    }
+
+    @Override
     protected int subclassFieldBytesSize() {
         int size = 0;
         for (Object field : fields) {
@@ -215,14 +223,6 @@ public class SemanticEntityVersion
             }
         }
         return size;
-    }
-
-    @Override
-    protected void writeVersionFields(ByteBuf writeBuf) {
-        writeBuf.writeInt(fields.size());
-        for (Object field : fields) {
-            writeField(writeBuf, field);
-        }
     }
 
     @Override
@@ -479,7 +479,8 @@ public class SemanticEntityVersion
         for (int i = 0; i < fieldArray.length; i++) {
             Object value = fields.get(i);
             FieldDefinitionForEntity fieldDef = patternVersion.fieldDefinitions().get(i);
-            fieldArray[i] = new FieldRecord(value, fieldDef.purposeNid, fieldDef.meaningNid, ConceptToDataType.convert(fieldDef.dataType()));
+            fieldArray[i] = new FieldRecord(value, fieldDef.purposeNid, fieldDef.meaningNid, ConceptToDataType.convert(fieldDef.dataType()),
+                    this);
         }
         return Lists.immutable.of(fieldArray);
     }

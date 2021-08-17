@@ -705,38 +705,6 @@ public class StampCalculatorWithCache implements StampCalculator {
         public void reset() {
             SINGLETONS.clear();
         }
-    }    public <T> Latest<Field<T>> getFieldForSemantic(Latest<SemanticEntityVersion> latestSemanticVersion, int criterionNid, FieldCriterion fieldCriterion) {
-        if (latestSemanticVersion.isPresent()) {
-            SemanticEntityVersion semanticVersion = latestSemanticVersion.get();
-            Latest<PatternEntityVersion> latestPattern = latest(semanticVersion.patternNid());
-            PatternEntityVersion patternVersion = latestPattern.get();
-            OptionalInt optionalIndex = switch (fieldCriterion) {
-                case MEANING -> {
-                    yield getIndexForMeaning(semanticVersion.patternNid(), criterionNid);
-                }
-                case PURPOSE -> {
-                    yield getIndexForPurpose(semanticVersion.patternNid(), criterionNid);
-                }
-                default -> {
-                    throw new IllegalStateException("Can't handle FieldCriterion: " + fieldCriterion);
-                }
-            };
-            if (optionalIndex.isPresent()) {
-                int indexForCriterion = optionalIndex.getAsInt();
-                FieldDefinitionForEntity fieldDef = patternVersion.fieldDefinitions().get(indexForCriterion);
-                FieldRecord fieldRecord = new FieldRecord(semanticVersion.fields().get(indexForCriterion), fieldDef.purposeNid(), fieldDef.meaningNid(), ConceptToDataType.convert(fieldDef.dataType()));
-                Latest<Field<T>> latestField = new Latest<>(fieldRecord);
-                for (SemanticEntityVersion semanticVersionContradiction : latestSemanticVersion.contradictions()) {
-                    latestField.contradictions.add(new FieldRecord(semanticVersionContradiction.fields().get(indexForCriterion), fieldDef.purposeNid(), fieldDef.meaningNid(), ConceptToDataType.convert(fieldDef.dataType())));
-                }
-                return latestField;
-            } else {
-                LOG.warning("Field criterion " + PrimitiveData.text(criterionNid) +
-                        " not in pattern: " + patternVersion);
-                return Latest.empty();
-            }
-        }
-        return Latest.empty();
     }
 
     private static class VersionWithDistance<V extends EntityVersion> implements Comparable<VersionWithDistance> {
@@ -828,7 +796,45 @@ public class StampCalculatorWithCache implements StampCalculator {
 
             return false;
         }
+    }    public <T> Latest<Field<T>> getFieldForSemantic(Latest<SemanticEntityVersion> latestSemanticVersion, int criterionNid, FieldCriterion fieldCriterion) {
+        if (latestSemanticVersion.isPresent()) {
+            SemanticEntityVersion semanticVersion = latestSemanticVersion.get();
+            Latest<PatternEntityVersion> latestPattern = latest(semanticVersion.patternNid());
+            PatternEntityVersion patternVersion = latestPattern.get();
+            OptionalInt optionalIndex = switch (fieldCriterion) {
+                case MEANING -> {
+                    yield getIndexForMeaning(semanticVersion.patternNid(), criterionNid);
+                }
+                case PURPOSE -> {
+                    yield getIndexForPurpose(semanticVersion.patternNid(), criterionNid);
+                }
+                default -> {
+                    throw new IllegalStateException("Can't handle FieldCriterion: " + fieldCriterion);
+                }
+            };
+            if (optionalIndex.isPresent()) {
+                int indexForCriterion = optionalIndex.getAsInt();
+                FieldDefinitionForEntity fieldDef = patternVersion.fieldDefinitions().get(indexForCriterion);
+                FieldRecord fieldRecord = new FieldRecord(semanticVersion.fields().get(indexForCriterion),
+                        fieldDef.purposeNid(), fieldDef.meaningNid(),
+                        ConceptToDataType.convert(fieldDef.dataType()), semanticVersion);
+                Latest<Field<T>> latestField = new Latest<>(fieldRecord);
+                for (SemanticEntityVersion semanticVersionContradiction : latestSemanticVersion.contradictions()) {
+                    latestField.contradictions.add(
+                            new FieldRecord(semanticVersionContradiction.fields().get(indexForCriterion),
+                                    fieldDef.purposeNid(), fieldDef.meaningNid(),
+                                    ConceptToDataType.convert(fieldDef.dataType()), semanticVersion));
+                }
+                return latestField;
+            } else {
+                LOG.warning("Field criterion " + PrimitiveData.text(criterionNid) +
+                        " not in pattern: " + patternVersion);
+                return Latest.empty();
+            }
+        }
+        return Latest.empty();
     }
+
 
 
 

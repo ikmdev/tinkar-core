@@ -14,8 +14,11 @@ import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.component.graph.Vertex;
 import org.hl7.tinkar.dto.*;
-import org.hl7.tinkar.entity.*;
-import org.hl7.tinkar.terms.*;
+import org.hl7.tinkar.entity.EntityService;
+import org.hl7.tinkar.entity.SemanticEntityVersion;
+import org.hl7.tinkar.terms.ConceptFacade;
+import org.hl7.tinkar.terms.EntityProxy;
+import org.hl7.tinkar.terms.PatternFacade;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -31,9 +34,117 @@ public class EntityVertex implements Vertex, VertexId {
     protected int vertexIndex;
     protected int meaningNid;
     private ImmutableIntObjectMap<Object> properties;
+    private MutableIntObjectMap<Object> uncommittedProperties;
 
     protected EntityVertex() {
     }
+
+    public static EntityVertex make(Vertex vertex) {
+        EntityVertex entityVertex = new EntityVertex();
+        entityVertex.fill(vertex);
+        return entityVertex;
+    }
+
+    private void fill(Vertex another) {
+        VertexId anotherId = another.vertexId();
+        this.mostSignificantBits = anotherId.mostSignificantBits();
+        this.leastSignificantBits = anotherId.leastSignificantBits();
+        this.vertexIndex = another.vertexIndex();
+        if (another.meaning() instanceof ConceptFacade) {
+            this.meaningNid = ((ConceptFacade) another.meaning()).nid();
+        } else {
+            this.meaningNid = EntityService.get().nidForComponent(another.meaning());
+        }
+        MutableIntObjectMap<Object> mutableProperties = new IntObjectHashMap(another.propertyKeys().size());
+        another.propertyKeys().forEach(concept -> {
+            mutableProperties.put(EntityService.get().nidForComponent(concept), abstractObject(another.propertyFast(concept)));
+        });
+        this.properties = mutableProperties.toImmutable();
+    }
+
+    public static <T extends Object> T abstractObject(Object object) {
+        if (object instanceof Concept concept) {
+            if (object instanceof EntityProxy.Concept) {
+                return (T) object;
+            }
+            int nid = PrimitiveData.get().nidForPublicId(concept.publicId());
+            if (concept instanceof ConceptDTO) {
+                return (T) EntityProxy.Concept.make(nid);
+            }
+            return (T) EntityProxy.Concept.make(nid);
+        } else if (object instanceof Semantic semantic) {
+            if (object instanceof EntityProxy.Semantic) {
+                return (T) object;
+            }
+            int nid = PrimitiveData.get().nidForPublicId(semantic.publicId());
+            if (semantic instanceof SemanticDTO) {
+                return (T) EntityProxy.Semantic.make(nid);
+            }
+            return (T) EntityProxy.Semantic.make(nid);
+        } else if (object instanceof Pattern pattern) {
+            if (object instanceof EntityProxy.Pattern) {
+                return (T) object;
+            }
+            int nid = PrimitiveData.get().nidForPublicId(pattern.publicId());
+            if (pattern instanceof PatternDTO) {
+                return (T) EntityProxy.Pattern.make(nid);
+            }
+            return (T) EntityProxy.Pattern.make(nid);
+        } else if (object instanceof Stamp & !(object instanceof StampDTO)) {
+            Stamp stampValue = (Stamp) object;
+            return (T) StampDTOBuilder.builder()
+                    .publicId(stampValue.publicId())
+                    .statusPublicId(stampValue.state().publicId())
+                    .time(stampValue.time())
+                    .authorPublicId(stampValue.author().publicId())
+                    .modulePublicId(stampValue.module().publicId())
+                    .pathPublicId(stampValue.path().publicId()).build();
+        } else if (object instanceof Double) {
+            object = ((Double) object).floatValue();
+        } else if (object instanceof Integer) {
+            object = ((Integer) object).longValue();
+        } else if (object instanceof byte[] byteArray) {
+            object = new ByteArrayList(byteArray);
+        }
+        return (T) object;
+    }
+
+    public static EntityVertex make() {
+        EntityVertex entityVertex = new EntityVertex();
+        return entityVertex;
+    }
+
+    public static EntityVertex make(ByteBuf readBuf, byte entityFormatVersion) {
+        if (entityFormatVersion == ENTITY_FORMAT_VERSION) {
+            EntityVertex entityVertex = new EntityVertex();
+            entityVertex.fill(readBuf, entityFormatVersion);
+            return entityVertex;
+        } else {
+            throw new UnsupportedOperationException("Unsupported version: " + entityFormatVersion);
+        }
+    }
+
+    private void fill(ByteBuf readBuf, byte formatVersion) {
+        this.mostSignificantBits = readBuf.readLong();
+        this.leastSignificantBits = readBuf.readLong();
+        this.vertexIndex = readBuf.readInt();
+        this.meaningNid = readBuf.readInt();
+        int propertyCount = readBuf.readInt();
+        if (propertyCount > 0) {
+            MutableIntObjectMap<Object> mutableProperties = IntObjectMaps.mutable.ofInitialCapacity(propertyCount);
+            for (int i = 0; i < propertyCount; i++) {
+                int conceptNid = readBuf.readInt();
+                FieldDataType dataType = FieldDataType.fromToken(readBuf.readByte());
+                Object value = SemanticEntityVersion.readDataType(readBuf, dataType, formatVersion);
+                mutableProperties.put(conceptNid, value);
+            }
+            this.properties = mutableProperties.toImmutable();
+        } else {
+            this.properties = IntObjectMaps.immutable.empty();
+        }
+
+    }
+
     public String toGraphFormatString(String prepend, DiGraphAbstract diGraph) {
         StringBuilder sb = new StringBuilder();
         sb.append(prepend);
@@ -45,7 +156,7 @@ public class EntityVertex implements Vertex, VertexId {
         }
         sb.append(" ");
 
-        if (properties.containsKey(meaningNid))  {
+        if (properties.containsKey(meaningNid)) {
             Object property = properties.get(meaningNid);
             sb.append(PrimitiveData.text(meaningNid));
             sb.append(": ");
@@ -98,6 +209,79 @@ public class EntityVertex implements Vertex, VertexId {
         return sb.toString();
     }
 
+    @Override
+    public VertexId vertexId() {
+        return this;
+    }
+
+    @Override
+    public int vertexIndex() {
+        return vertexIndex;
+    }
+
+    @Override
+    public Concept meaning() {
+        return EntityService.get().getEntityFast(meaningNid);
+    }
+
+    @Override
+    public <T> Optional<T> property(Concept propertyConcept) {
+        if (propertyConcept instanceof ConceptFacade) {
+            return property((ConceptFacade) propertyConcept);
+        }
+        return Optional.ofNullable(propertyFast(propertyConcept));
+    }
+
+    @Override
+    public <T> T propertyFast(Concept propertyConcept) {
+        if (propertyConcept instanceof ConceptFacade) {
+            return propertyFast((ConceptFacade) propertyConcept);
+        }
+        return (T) properties.get(EntityService.get().nidForComponent(propertyConcept));
+    }
+
+    @Override
+    public RichIterable<Concept> propertyKeys() {
+        return properties.keySet().collect(nid -> EntityProxy.Concept.make(nid));
+    }
+
+    public <T> Optional<T> property(ConceptFacade conceptFacade) {
+        return Optional.ofNullable(propertyFast(conceptFacade));
+    }
+
+    public <T> T propertyFast(ConceptFacade conceptFacade) {
+        return (T) properties.get(conceptFacade.nid());
+    }
+
+    public <T> Optional<T> property(int propertyConceptNid) {
+        return Optional.ofNullable(propertyFast(propertyConceptNid));
+    }
+
+    public <T> T propertyFast(int propertyConceptNid) {
+        return (T) properties.get(propertyConceptNid);
+    }
+
+    /**
+     * TODO decide how to manage edits, temporary properties, and similar.
+     *
+     * @param propertyConceptNid
+     * @param value
+     */
+    public void putUncommittedProperty(int propertyConceptNid, Object value) {
+        if (this.uncommittedProperties == null) {
+            this.uncommittedProperties = IntObjectMaps.mutable.empty();
+        }
+        this.uncommittedProperties.put(propertyConceptNid, value);
+    }
+
+    public <T> Optional<T> uncommittedProperty(int propertyConceptNid) {
+        if (this.uncommittedProperties == null) {
+            return Optional.empty();
+        }
+        return (Optional<T>) Optional.ofNullable(this.uncommittedProperties.get(propertyConceptNid));
+    }
+
+
     public final byte[] getBytes() {
         int bufSize = DEFAULT_SIZE;
         AtomicReference<ByteBuf> byteBufRef =
@@ -128,103 +312,8 @@ public class EntityVertex implements Vertex, VertexId {
         }
     }
 
-    private void fill(ByteBuf readBuf, byte formatVersion) {
-        this.mostSignificantBits = readBuf.readLong();
-        this.leastSignificantBits = readBuf.readLong();
-        this.vertexIndex = readBuf.readInt();
-        this.meaningNid = readBuf.readInt();
-        int propertyCount = readBuf.readInt();
-        if (propertyCount > 0) {
-            MutableIntObjectMap<Object> mutableProperties = IntObjectMaps.mutable.ofInitialCapacity(propertyCount);
-            for (int i = 0; i < propertyCount; i++) {
-                int conceptNid = readBuf.readInt();
-                FieldDataType dataType = FieldDataType.fromToken(readBuf.readByte());
-                Object value = SemanticEntityVersion.readDataType(readBuf, dataType, formatVersion);
-                mutableProperties.put(conceptNid, value);
-            }
-            this.properties = mutableProperties.toImmutable();
-        } else {
-            this.properties = IntObjectMaps.immutable.empty();
-        }
-
-    }
-
-    public static <T extends Object> T abstractObject(Object object) {
-        if (object instanceof Concept concept) {
-            if (object instanceof EntityProxy.Concept) {
-                return (T) object;
-            }
-            int nid = PrimitiveData.get().nidForPublicId(concept.publicId());
-            if (concept instanceof ConceptDTO) {
-                return (T) EntityProxy.Concept.make(nid);
-            }
-            return (T) EntityProxy.Concept.make(nid);
-        } else if (object instanceof Semantic semantic) {
-            if (object instanceof EntityProxy.Semantic) {
-                return (T) object;
-            }
-            int nid = PrimitiveData.get().nidForPublicId(semantic.publicId());
-            if (semantic instanceof SemanticDTO) {
-                return (T) EntityProxy.Semantic.make(nid);
-            }
-            return (T) EntityProxy.Semantic.make(nid);
-        } else if (object instanceof Pattern pattern) {
-            if (object instanceof EntityProxy.Pattern) {
-                return (T) object;
-            }
-            int nid = PrimitiveData.get().nidForPublicId(pattern.publicId());
-            if (pattern instanceof PatternDTO) {
-                return (T) EntityProxy.Pattern.make(nid);
-            }
-            return (T) EntityProxy.Pattern.make(nid);
-        } else if (object instanceof Stamp & !(object instanceof StampDTO)) {
-            Stamp stampValue = (Stamp) object;
-            return (T) StampDTOBuilder.builder()
-                    .publicId(stampValue.publicId())
-                    .statusPublicId(stampValue.state().publicId())
-                    .time(stampValue.time())
-                    .authorPublicId(stampValue.author().publicId())
-                    .modulePublicId(stampValue.module().publicId())
-                    .pathPublicId(stampValue.path().publicId()).build();
-        } else if (object instanceof Double) {
-            object = ((Double) object).floatValue();
-        } else if (object instanceof Integer) {
-            object = ((Integer) object).longValue();
-        } else if (object instanceof byte[] byteArray) {
-            object = new ByteArrayList(byteArray);
-        }
-        return (T) object;
-    }
-
-    private void fill(Vertex another) {
-        VertexId anotherId = another.vertexId();
-        this.mostSignificantBits = anotherId.mostSignificantBits();
-        this.leastSignificantBits = anotherId.leastSignificantBits();
-        this.vertexIndex = another.vertexIndex();
-        if (another.meaning() instanceof ConceptFacade) {
-            this.meaningNid = ((ConceptFacade) another.meaning()).nid();
-        } else {
-            this.meaningNid = EntityService.get().nidForComponent(another.meaning());
-        }
-        MutableIntObjectMap<Object> mutableProperties = new IntObjectHashMap(another.propertyKeys().size());
-        another.propertyKeys().forEach(concept -> {
-            mutableProperties.put(EntityService.get().nidForComponent(concept), abstractObject(another.propertyFast(concept)));
-        });
-        this.properties = mutableProperties.toImmutable();
-    }
-
-    @Override
-    public VertexId vertexId() {
-        return this;
-    }
-
     protected void setVertexIndex(int vertexIndex) {
         this.vertexIndex = vertexIndex;
-    }
-
-    @Override
-    public int vertexIndex() {
-        return vertexIndex;
     }
 
     @Override
@@ -239,7 +328,7 @@ public class EntityVertex implements Vertex, VertexId {
 
     @Override
     public UUID[] asUuidArray() {
-        return new UUID[] { asUuid() };
+        return new UUID[]{asUuid()};
     }
 
     @Override
@@ -251,61 +340,6 @@ public class EntityVertex implements Vertex, VertexId {
     public void forEach(LongConsumer consumer) {
         consumer.accept(this.mostSignificantBits);
         consumer.accept(this.leastSignificantBits);
-    }
-
-    @Override
-    public Concept meaning() {
-        return EntityService.get().getEntityFast(meaningNid);
-    }
-
-    @Override
-    public <T> Optional<T> property(Concept propertyConcept) {
-        if (propertyConcept instanceof ConceptFacade) {
-            return property((ConceptFacade) propertyConcept);
-        }
-        return Optional.ofNullable(propertyFast(propertyConcept));
-    }
-
-    @Override
-    public <T> T propertyFast(Concept propertyConcept) {
-        if (propertyConcept instanceof ConceptFacade) {
-            return propertyFast((ConceptFacade) propertyConcept);
-        }
-        return (T) properties.get(EntityService.get().nidForComponent(propertyConcept));
-    }
-
-    public <T> T propertyFast(ConceptFacade conceptFacade) {
-        return (T) properties.get(conceptFacade.nid());
-    }
-
-    public <T> Optional<T> property(ConceptFacade conceptFacade) {
-        return Optional.ofNullable(propertyFast(conceptFacade));
-    }
-
-    @Override
-    public RichIterable<Concept> propertyKeys() {
-        return properties.keySet().collect(nid -> EntityProxy.Concept.make(nid));
-    }
-
-    public static EntityVertex make(Vertex vertex) {
-        EntityVertex entityVertex = new EntityVertex();
-        entityVertex.fill(vertex);
-        return entityVertex;
-    }
-
-    public static EntityVertex make() {
-        EntityVertex entityVertex = new EntityVertex();
-        return entityVertex;
-    }
-
-    public static EntityVertex make(ByteBuf readBuf, byte entityFormatVersion) {
-        if (entityFormatVersion == ENTITY_FORMAT_VERSION) {
-            EntityVertex entityVertex = new EntityVertex();
-            entityVertex.fill(readBuf, entityFormatVersion);
-            return entityVertex;
-        } else {
-            throw new UnsupportedOperationException("Unsupported version: " + entityFormatVersion);
-        }
     }
 
     public int getMeaningNid() {

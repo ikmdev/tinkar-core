@@ -16,18 +16,18 @@ import org.hl7.tinkar.terms.TinkarTerm;
 
 import java.util.logging.Logger;
 
-public class Coordinates   {
+public class Coordinates {
 
     private static final Logger LOG = CoordinateUtil.LOG;
-    
+
     //private static ChronologyChangeListener ccl;
 
-    public static class  Edit {
+    public static class Edit {
         public static EditCoordinateImmutable Default() {
             return EditCoordinateImmutable.make(
-            TinkarTerm.USER.nid(), TinkarTerm.SOLOR_OVERLAY_MODULE.nid(),
-                TinkarTerm.DEVELOPMENT_PATH.nid(),
-                TinkarTerm.SOLOR_OVERLAY_MODULE.nid()
+                    TinkarTerm.USER.nid(), TinkarTerm.SOLOR_OVERLAY_MODULE.nid(),
+                    TinkarTerm.DEVELOPMENT_PATH.nid(),
+                    TinkarTerm.SOLOR_OVERLAY_MODULE.nid()
             );
         }
     }
@@ -36,8 +36,8 @@ public class Coordinates   {
         public static LogicCoordinateRecord ElPlusPlus() {
             return LogicCoordinateRecord.make(TinkarTerm.SNOROCKET_CLASSIFIER,
                     TinkarTerm.EL_PLUS_PLUS_PROFILE,
-                    TinkarTerm.EL_PLUS_PLUS_INFERRED_FORM_ASSEMBLAGE,
-                    TinkarTerm.EL_PLUS_PLUS_STATED_FORM_ASSEMBLAGE,
+                    TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN,
+                    TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
                     TinkarTerm.SOLOR_CONCEPT_ASSEMBLAGE,
                     TinkarTerm.STATED_NAVIGATION,
                     TinkarTerm.INFERRED_NAVIGATION,
@@ -50,9 +50,7 @@ public class Coordinates   {
          * A coordinate that completely ignores language - descriptions ranked by this coordinate will only be ranked by
          * description type and module preference.  This coordinate is primarily useful as a fallback coordinate if no
          *
-         *
          * @return the language coordinate
-         *
          */
         public static LanguageCoordinateRecord AnyLanguageRegularName() {
             return LanguageCoordinateRecord.make(
@@ -115,13 +113,13 @@ public class Coordinates   {
          * @return US English language coordinate, preferring regular name, but allowing FQN names is no regular name is found
          */
         public static LanguageCoordinateRecord UsEnglishRegularName() {
-             return LanguageCoordinateRecord.make(
+            return LanguageCoordinateRecord.make(
                     TinkarTerm.ENGLISH_LANGUAGE.nid(),
-                     IntIds.list.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
-                     IntIds.list.of(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
+                    IntIds.list.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
+                    IntIds.list.of(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
                             TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
-                     IntIds.list.of(TinkarTerm.US_DIALECT_PATTERN.nid(), TinkarTerm.GB_DIALECT_PATTERN.nid()),
-                     IntIds.list.of(TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid())
+                    IntIds.list.of(TinkarTerm.US_DIALECT_PATTERN.nid(), TinkarTerm.GB_DIALECT_PATTERN.nid()),
+                    IntIds.list.of(TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid())
             );
         }
 
@@ -134,7 +132,7 @@ public class Coordinates   {
                     IntIds.list.of(TinkarTerm.GB_DIALECT_PATTERN.nid(),
                             TinkarTerm.US_DIALECT_PATTERN.nid()),
                     IntIds.list.of(TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.SOLOR_MODULE.nid())
-             );
+            );
         }
 
         public static LanguageCoordinateRecord GbEnglishPreferredName() {
@@ -203,6 +201,7 @@ public class Coordinates   {
         public static StampPositionRecord LatestOnDevelopment() {
             return StampPositionRecord.make(Long.MAX_VALUE, TinkarTerm.DEVELOPMENT_PATH);
         }
+
         public static StampPositionRecord LatestOnMaster() {
             return StampPositionRecord.make(Long.MAX_VALUE, TinkarTerm.MASTER_PATH);
         }

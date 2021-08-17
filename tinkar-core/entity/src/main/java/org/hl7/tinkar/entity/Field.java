@@ -21,4 +21,6 @@ public interface Field<T> {
     T value();
 
     FieldDataType fieldDataType();
+    
+    SemanticEntityVersion enclosingSemanticVersion();
 }
