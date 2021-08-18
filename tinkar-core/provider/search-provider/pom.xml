@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <build>
+        <plugins>
+
+        </plugins>
+    </build>
+    <parent>
+        <artifactId>provider</artifactId>
+        <groupId>org.hl7.tinkar</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>search-provider</artifactId>
+    <packaging>jar</packaging>
+    <name>TINKAR Provider: Search provider</name>
+    <dependencies>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>entity</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>lucene</artifactId>
+            <version>${tinkar-jpms-deps.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>auto-service</artifactId>
+            <version>${tinkar-jpms-deps.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.smallrye.reactive</groupId>
+            <artifactId>mutiny</artifactId>
+            <version>0.17.0</version>
+        </dependency>
+    </dependencies>
+</project>

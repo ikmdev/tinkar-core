@@ -1,7 +1,7 @@
 package org.hl7.tinkar.entity.util;
 
-import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.common.util.time.Stopwatch;
+import org.hl7.tinkar.component.FieldDataType;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ObjIntConsumer;
@@ -53,7 +53,8 @@ public abstract class EntityProcessor implements ObjIntConsumer<byte[]> {
     public String report() {
         this.stopwatch.end();
         StringBuilder sb = new StringBuilder();
-        sb.append("Duration: ").append(stopwatch.durationString());
+        sb.append("Finished: ").append(this.getClass().getSimpleName());
+        sb.append("\nDuration: ").append(stopwatch.durationString());
         sb.append("\nAverage realization time: ").append(stopwatch.averageDurationForElementString(totalCount.get()));
         if (conceptCount.get() > 0) {
             sb.append("\nConcepts: ").append(conceptCount);
