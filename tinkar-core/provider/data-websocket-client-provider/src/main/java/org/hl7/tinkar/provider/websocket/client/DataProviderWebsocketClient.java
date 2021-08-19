@@ -15,6 +15,7 @@ import io.activej.service.ServiceGraphModule;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
+import org.hl7.tinkar.common.service.SearchResult;
 import org.hl7.tinkar.common.util.uuid.UuidUtil;
 import org.hl7.tinkar.entity.EntityService;
 
@@ -31,20 +32,21 @@ public class DataProviderWebsocketClient
         extends Launcher
         implements PrimitiveDataService {
 
+    private static final Integer wsKey = Integer.valueOf(1);
+    private final URI uri;
     @Inject
     AsyncHttpClient httpClient;
-
     @Inject
     Eventloop eventloop;
-
     ConcurrentHashMap<Integer, WebSocket> wsMap = new ConcurrentHashMap<>();
-
-    private static final Integer wsKey = Integer.valueOf(1);
-
-    private final URI uri;
 
     public DataProviderWebsocketClient(URI uri) {
         this.uri = uri;
+    }
+
+    public static void main(String[] args) throws Exception {
+        DataProviderWebsocketClient client = new DataProviderWebsocketClient(new URI("ws://127.0.0.1:8080/"));
+        client.launch(args);
     }
 
     @Provides
@@ -57,17 +59,46 @@ public class DataProviderWebsocketClient
         return AsyncHttpClient.create(eventloop);
     }
 
-    WebSocket webSocket() {
-        return wsMap.computeIfAbsent(wsKey, (Integer key) ->
-                {
-                    try {
-                        return httpClient.webSocketRequest(HttpRequest.get(uri.toString())).toCompletableFuture().get();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        throw new RuntimeException(e);
-                    }
-                }
-        );
+    @Override
+    protected Module getModule() {
+        return ServiceGraphModule.create();
+    }
+
+    @Override
+    protected void run() throws ExecutionException, InterruptedException {
+        String url = args.length != 0 ? args[0] : "ws://127.0.0.1:8080/";
+        System.out.println("\nWeb Socket request: " + url);
+        CompletableFuture<?> future = eventloop.submit(() -> {
+            getEntity(url, Integer.MIN_VALUE + 1);
+        });
+        future.get();
+        future = eventloop.submit(() -> {
+            getEntity(url, Integer.MIN_VALUE + 2);
+        });
+        future.get();
+    }
+
+    private void getEntity(String url, int nid) {
+        System.out.println("Sending nid: " + nid);
+        ByteBuf buf = ByteBufPool.allocate(32);
+        buf.writeByte(RemoteOperations.GET_BYTES.token);
+        buf.writeInt(nid);
+        httpClient.webSocketRequest(HttpRequest.get(url))
+                .then(webSocket -> webSocket.writeMessage(Message.binary(buf))
+                        .then(webSocket::readMessage)
+                        .whenResult(message -> {
+                            ByteBuf readBuf = message.getBuf();
+                            int length = readBuf.readInt();
+                            byte[] readData = new byte[length];
+                            readBuf.read(readData);
+                            System.out.println("Received: " + EntityService.get().unmarshalChronology(readData));
+                        })
+                        .whenComplete(webSocket::close));
+    }
+
+    @Override
+    public long writeSequence() {
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -76,26 +107,6 @@ public class DataProviderWebsocketClient
         if (ws != null) {
             ws.close();
         }
-    }
-
-    @Override
-    protected Module getModule() {
-        return ServiceGraphModule.create();
-    }
-
-    @Override
-    public void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void forEachSemanticNidForComponent(int componentNid, IntProcedure procedure) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public long writeSequence() {
-        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -116,44 +127,13 @@ public class DataProviderWebsocketClient
         }
     }
 
-    private int nidForLongArray(long[] uuidParts) throws ExecutionException, InterruptedException {
-        ByteBuf buf = ByteBufPool.allocate(32);
-        buf.writeByte(RemoteOperations.NID_FOR_UUIDS.token);
-        buf.writeInt(uuidParts.length);
-        for (long part : uuidParts) {
-            buf.writeLong(part);
-        }
-        AtomicInteger nid = new AtomicInteger();
-        final WebSocket ws = webSocket();
-        CompletableFuture<?> future = eventloop.submit(() -> {
-            ws.writeMessage(Message.binary(buf))
-                    .then(ws::readMessage)
-                    .whenResult(message -> {
-                        ByteBuf readBuf = message.getBuf();
-                        nid.set(readBuf.readInt());
-                    });
-        });
-        future.get();
-        return nid.get();
-    }
-
-    @Override
-    public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value) {
-        throw new UnsupportedOperationException();
-    }
-
     @Override
     public void forEach(ObjIntConsumer<byte[]> action) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void forEachParallel(ObjIntConsumer<byte[]>  action) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void forEachSemanticNidForComponentOfPattern(int componentNid, int patternNid, IntProcedure procedure) {
+    public void forEachParallel(ObjIntConsumer<byte[]> action) {
         throw new UnsupportedOperationException();
     }
 
@@ -191,39 +171,61 @@ public class DataProviderWebsocketClient
     }
 
     @Override
-    protected void run() throws ExecutionException, InterruptedException {
-        String url = args.length != 0 ? args[0] : "ws://127.0.0.1:8080/";
-        System.out.println("\nWeb Socket request: " + url);
-        CompletableFuture<?> future = eventloop.submit(() -> {
-            getEntity(url, Integer.MIN_VALUE + 1);
-        });
-        future.get();
-        future = eventloop.submit(() -> {
-            getEntity(url, Integer.MIN_VALUE + 2);
-        });
-        future.get();
+    public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject) {
+        throw new UnsupportedOperationException();
     }
 
-    private void getEntity(String url, int nid) {
-        System.out.println("Sending nid: " + nid);
+    @Override
+    public SearchResult[] search(String query, int maxResultSize) throws Exception {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void forEachSemanticNidForComponent(int componentNid, IntProcedure procedure) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void forEachSemanticNidForComponentOfPattern(int componentNid, int patternNid, IntProcedure procedure) {
+        throw new UnsupportedOperationException();
+    }
+
+    private int nidForLongArray(long[] uuidParts) throws ExecutionException, InterruptedException {
         ByteBuf buf = ByteBufPool.allocate(32);
-        buf.writeByte(RemoteOperations.GET_BYTES.token);
-        buf.writeInt(nid);
-        httpClient.webSocketRequest(HttpRequest.get(url))
-                .then(webSocket -> webSocket.writeMessage(Message.binary(buf))
-                        .then(webSocket::readMessage)
-                        .whenResult(message -> {
-                            ByteBuf readBuf = message.getBuf();
-                            int length = readBuf.readInt();
-                            byte[] readData = new byte[length];
-                            readBuf.read(readData);
-                            System.out.println("Received: " + EntityService.get().unmarshalChronology(readData));
-                        })
-                        .whenComplete(webSocket::close));
+        buf.writeByte(RemoteOperations.NID_FOR_UUIDS.token);
+        buf.writeInt(uuidParts.length);
+        for (long part : uuidParts) {
+            buf.writeLong(part);
+        }
+        AtomicInteger nid = new AtomicInteger();
+        final WebSocket ws = webSocket();
+        CompletableFuture<?> future = eventloop.submit(() -> {
+            ws.writeMessage(Message.binary(buf))
+                    .then(ws::readMessage)
+                    .whenResult(message -> {
+                        ByteBuf readBuf = message.getBuf();
+                        nid.set(readBuf.readInt());
+                    });
+        });
+        future.get();
+        return nid.get();
     }
 
-    public static void main(String[] args) throws Exception {
-        DataProviderWebsocketClient client = new DataProviderWebsocketClient(new URI("ws://127.0.0.1:8080/"));
-        client.launch(args);
+    WebSocket webSocket() {
+        return wsMap.computeIfAbsent(wsKey, (Integer key) ->
+                {
+                    try {
+                        return httpClient.webSocketRequest(HttpRequest.get(uri.toString())).toCompletableFuture().get();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        throw new RuntimeException(e);
+                    }
+                }
+        );
     }
 }

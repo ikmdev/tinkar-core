@@ -10,6 +10,7 @@ import org.hl7.tinkar.common.validation.ValidationSeverity;
 import org.hl7.tinkar.provider.mvstore.internal.Get;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
@@ -24,40 +25,9 @@ public class MvStoreNewController extends MvStoreController {
     String importDataFileString;
     DataServiceProperty newFolderProperty = new DataServiceProperty("New folder name", false, true);
     MutableMap<DataServiceProperty, String> providerProperties = Maps.mutable.empty();
+
     {
         providerProperties.put(newFolderProperty, null);
-    }
-
-    @Override
-    public void setDataUriOption(DataUriOption option) {
-        try {
-            importDataFileString = option.uri().toURL().getFile();
-         } catch (MalformedURLException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    @Override
-    public void start() {
-        if (MVStoreProvider.singleton == null) {
-            try {
-                File rootFolder = new File(System.getProperty("user.home"), "Solor");
-                File dataDirectory  = new File(rootFolder, providerProperties.get(newFolderProperty));
-                ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, dataDirectory);
-                new MVStoreProvider();
-
-                ServiceLoader<LoadDataFromFileController> controllerFinder = ServiceLoader.load(LoadDataFromFileController.class);
-                LoadDataFromFileController loader = controllerFinder.findFirst().get();
-                Future<Integer> loadFuture = (Future<Integer>) loader.load(new File(importDataFileString));
-                int count = loadFuture.get();
-                Get.singleton.save();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
-
-        }
     }
 
     @Override
@@ -71,8 +41,23 @@ public class MvStoreNewController extends MvStoreController {
     }
 
     @Override
-    public String controllerName() {
-        return CONTROLLER_NAME;
+    public ValidationRecord[] validate(DataServiceProperty dataServiceProperty, Object value, Object target) {
+        if (newFolderProperty.equals(dataServiceProperty)) {
+            File rootFolder = new File(System.getProperty("user.home"), "Solor");
+            if (value instanceof String fileName) {
+                if (fileName.isBlank()) {
+                    return new ValidationRecord[]{new ValidationRecord(ValidationSeverity.ERROR,
+                            "Directory name cannot be blank", target)};
+                } else {
+                    File possibleFile = new File(rootFolder, fileName);
+                    if (possibleFile.exists()) {
+                        return new ValidationRecord[]{new ValidationRecord(ValidationSeverity.ERROR,
+                                "Directory already exists", target)};
+                    }
+                }
+            }
+        }
+        return new ValidationRecord[]{};
     }
 
     public List<DataUriOption> providerOptions() {
@@ -90,27 +75,42 @@ public class MvStoreNewController extends MvStoreController {
     }
 
     @Override
-    public boolean isValidDataLocation(String name) {
-        return name.toLowerCase().endsWith(".zip") && name.toLowerCase().contains("tink");
+    public void setDataUriOption(DataUriOption option) {
+        try {
+            importDataFileString = option.uri().toURL().getFile();
+        } catch (MalformedURLException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     @Override
-    public ValidationRecord[] validate(DataServiceProperty dataServiceProperty, Object value, Object target) {
-        if (newFolderProperty.equals(dataServiceProperty)) {
-            File rootFolder = new File(System.getProperty("user.home"), "Solor");
-            if (value instanceof String fileName)  {
-                if (fileName.isBlank()) {
-                    return new ValidationRecord[] { new ValidationRecord(ValidationSeverity.ERROR,
-                            "Directory name cannot be blank", target)};
-                } else {
-                    File possibleFile = new File(rootFolder, fileName);
-                    if (possibleFile.exists())  {
-                        return new ValidationRecord[] { new ValidationRecord(ValidationSeverity.ERROR,
-                                "Directory already exists", target)};
-                    }
-                }
+    public String controllerName() {
+        return CONTROLLER_NAME;
+    }
+
+    @Override
+    public void start() {
+        if (MVStoreProvider.singleton == null) {
+            try {
+                File rootFolder = new File(System.getProperty("user.home"), "Solor");
+                File dataDirectory = new File(rootFolder, providerProperties.get(newFolderProperty));
+                ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, dataDirectory);
+                new MVStoreProvider();
+
+                ServiceLoader<LoadDataFromFileController> controllerFinder = ServiceLoader.load(LoadDataFromFileController.class);
+                LoadDataFromFileController loader = controllerFinder.findFirst().get();
+                Future<Integer> loadFuture = (Future<Integer>) loader.load(new File(importDataFileString));
+                int count = loadFuture.get();
+                Get.singleton.save();
+            } catch (InterruptedException | ExecutionException | IOException e) {
+                e.printStackTrace();
             }
+
         }
-        return new ValidationRecord[]{};
+    }
+
+    @Override
+    public boolean isValidDataLocation(String name) {
+        return name.toLowerCase().endsWith(".zip") && name.toLowerCase().contains("tink");
     }
 }

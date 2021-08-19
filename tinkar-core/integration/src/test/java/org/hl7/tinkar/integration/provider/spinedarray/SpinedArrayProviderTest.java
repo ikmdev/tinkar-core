@@ -1,6 +1,7 @@
 package org.hl7.tinkar.integration.provider.spinedarray;
 
 import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.common.service.SearchResult;
 import org.hl7.tinkar.common.service.ServiceKeys;
 import org.hl7.tinkar.common.service.ServiceProperties;
 import org.hl7.tinkar.common.util.time.Stopwatch;
@@ -9,13 +10,13 @@ import org.hl7.tinkar.entity.util.EntityCounter;
 import org.hl7.tinkar.entity.util.EntityProcessor;
 import org.hl7.tinkar.entity.util.EntityRealizer;
 import org.hl7.tinkar.integration.TestConstants;
-import org.hl7.tinkar.provider.search.Indexer;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.logging.Logger;
 
 public class SpinedArrayProviderTest {
@@ -55,12 +56,9 @@ public class SpinedArrayProviderTest {
             LOG.info("Reloading in: " + reloadStopwatch.durationString() + "\n\n");
         }
         try {
-            Indexer searchIndexer = new Indexer();
-            PrimitiveData.get().forEach(searchIndexer);
-            searchIndexer.commit();
-            searchIndexer.close();
-            LOG.info("Indexed: \n" + searchIndexer.report() + "\n\n");
-        } catch (IOException e) {
+            SearchResult[] results = PrimitiveData.get().search("occupation", 50);
+            LOG.info("Search results: \n" + Arrays.toString(results) + "\n\n");
+        } catch (Exception e) {
             e.printStackTrace();
         }
 

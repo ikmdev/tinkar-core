@@ -26,95 +26,29 @@ import java.util.function.ObjIntConsumer;
 
 public interface PrimitiveDataService {
 
-    enum RemoteOperations {
-        NID_FOR_UUIDS(1),
-        GET_BYTES(2),
-        MERGE(3);
-
-        public final byte token;
-
-        RemoteOperations(int token) {
-            this.token = (byte) token;
-        }
-
-        public static RemoteOperations fromToken(byte token) {
-            switch (token) {
-                case 1:
-                    return NID_FOR_UUIDS;
-                case 2:
-                    return GET_BYTES;
-                case 3:
-                    return MERGE;
-                default:throw new UnsupportedOperationException("Can't handle token: " + token);
-            }
-        }
-    }
     int MAX_PATTERN_ELEMENT_ARRAY_SIZE = 10240;
     int[] MAX_PATTERN_ELEMENT = new int[]{Integer.MAX_VALUE};
 
-    long writeSequence();
-
-    void close();
-
-    int nidForUuids(UUID... uuids);
-
-    default int nidForPublicId(PublicId publicId) {
-        return nidForUuids(publicId.asUuidArray());
+    static int nidForUuids(ConcurrentMap<UUID, Integer> uuidNidMap, NidGenerator nidGenerator, ImmutableList<UUID> uuidList) {
+        switch (uuidList.size()) {
+            case 0:
+                throw new IllegalStateException("uuidList cannot be empty");
+            case 1: {
+                return valueOrGenerateAndPut(uuidList.get(0), uuidNidMap, nidGenerator);
+            }
+        }
+        return valueOrGenerateForList(uuidList.toSortedList(), uuidNidMap, nidGenerator);
     }
 
-    int nidForUuids(ImmutableList<UUID> uuidList);
-
-    void forEach(ObjIntConsumer<byte[]> action);
-
-    void forEachParallel(ObjIntConsumer<byte[]> action);
-
-    byte[] getBytes(int nid);
-
-    /**
-     * If the specified nid (native identifier -- an int) is not already associated
-     * with a value or is associated with null, associates it with the given non-null value.
-     * Otherwise, replaces the associated value with the results of a remapping function
-     * (remapping function is provided the provider), or removes if the result is {@code null}.
-     * This method may be of use when combining multiple mapped values for a nid.
-     * For example, merging multiple versions of an entity, where each version is represented as a
-     * byte[].
-     *
-     *
-     * @param nid native identifier (an int) with which the resulting value is to be associated
-     * @param patternNid
-     * @param referencedComponentNid if the bytes are for a semantic, the referenced component nid,
-     *                               otherwise Integer.MAX_VALUE.
-     * @param value the non-null value to be merged with the existing value
-     *        associated with the nid or, if no existing value or a null value
-     *        is associated with the nid, to be associated with the nid
-     * @return the new value associated with the specified nid, or null if no
-     *         value is associated with the nid
-     */
-    byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value);
-
-    void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure);
-
-    default int[] entityNidsOfPattern(int patternNid) {
-        MutableIntList intList = IntLists.mutable.empty();
-        forEachSemanticNidOfPattern(patternNid, nid -> intList.add(nid));
-        return intList.toArray();
-    }
-
-    void forEachSemanticNidForComponent(int componentNid, IntProcedure procedure);
-
-    default int[] semanticNidsForComponent(int componentNid) {
-        MutableIntList intList = IntLists.mutable.empty();
-        forEachSemanticNidForComponent(componentNid, nid -> intList.add(nid));
-        return intList.toArray();
-    }
-
-
-    void forEachSemanticNidForComponentOfPattern(int componentNid, int patternNid, IntProcedure procedure);
-
-    default int[] semanticNidsForComponentOfPattern(int componentNid, int patternNid) {
-        MutableIntList intList = IntLists.mutable.empty();
-        forEachSemanticNidForComponentOfPattern(componentNid, patternNid, nid -> intList.add(nid));
-        return intList.toArray();
+    static int valueOrGenerateAndPut(UUID uuid,
+                                     ConcurrentMap<UUID, Integer> uuidNidMap,
+                                     NidGenerator nidGenerator) {
+        Integer nid = uuidNidMap.get(uuid);
+        if (nid != null) {
+            return nid;
+        }
+        nid = uuidNidMap.computeIfAbsent(uuid, uuidKey -> nidGenerator.newNid());
+        return nid;
     }
 
     static int valueOrGenerateForList(ListIterable<UUID> sortedUuidList,
@@ -123,7 +57,7 @@ public interface PrimitiveDataService {
         boolean missingMap = false;
         int foundValue = Integer.MIN_VALUE;
 
-        for (UUID uuid: sortedUuidList) {
+        for (UUID uuid : sortedUuidList) {
             Integer nid = uuidNidMap.get(uuid);
             if (nid == null) {
                 missingMap = true;
@@ -148,32 +82,10 @@ public interface PrimitiveDataService {
         if (foundValue == Integer.MIN_VALUE) {
             foundValue = valueOrGenerateAndPut(sortedUuidList.get(0), uuidNidMap, nidGenerator);
         }
-        for (UUID uuid: sortedUuidList) {
+        for (UUID uuid : sortedUuidList) {
             uuidNidMap.put(uuid, foundValue);
         }
         return foundValue;
-    }
-
-    static int nidForUuids(ConcurrentMap<UUID, Integer> uuidNidMap, NidGenerator nidGenerator, ImmutableList<UUID> uuidList) {
-        switch (uuidList.size()) {
-            case 0:
-                throw new IllegalStateException("uuidList cannot be empty");
-            case 1: {
-                return valueOrGenerateAndPut(uuidList.get(0), uuidNidMap, nidGenerator);
-            }
-        }
-        return valueOrGenerateForList(uuidList.toSortedList(), uuidNidMap, nidGenerator);
-    }
-
-    static int valueOrGenerateAndPut(UUID uuid,
-                                     ConcurrentMap<UUID, Integer> uuidNidMap,
-                                     NidGenerator nidGenerator) {
-        Integer nid = uuidNidMap.get(uuid);
-        if (nid != null) {
-            return nid;
-        }
-        nid = uuidNidMap.computeIfAbsent(uuid, uuidKey -> nidGenerator.newNid());
-        return nid;
     }
 
     static int nidForUuids(ConcurrentMap<UUID, Integer> uuidNidMap, NidGenerator nidGenerator, UUID... uuids) {
@@ -187,12 +99,12 @@ public interface PrimitiveDataService {
         return valueOrGenerateForList(Lists.immutable.of(uuids), uuidNidMap, nidGenerator);
     }
 
-
     /**
      * Merge bytes from concurrently created entities. Method is idempotent.
      * Versions will not be duplicated as a result of calling method multiple times.
-     *
+     * <p>
      * Used for map.merge functions in concurrent maps.
+     *
      * @param bytes1
      * @param bytes2
      * @return
@@ -216,13 +128,24 @@ public interface PrimitiveDataService {
 
             ByteBuf byteBuf = ByteBufPool.allocate(bytes1.length + bytes2.length);
             byteBuf.writeInt(byteArrayList.size());
-            for (byte[] byteArray: byteArrayList) {
+            for (byte[] byteArray : byteArrayList) {
                 byteBuf.writeInt(byteArray.length);
                 byteBuf.put(byteArray);
             }
             return byteBuf.asArray();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
+        }
+    }
+
+    private static void addToSet(byte[] bytes, MutableSet<byte[]> byteArraySet) throws IOException {
+        ByteBuf readBuf = ByteBuf.wrapForReading(bytes);
+        int arrayCount = readBuf.readInt();
+        for (int i = 0; i < arrayCount; i++) {
+            int arraySize = readBuf.readInt();
+            byte[] newArray = new byte[arraySize];
+            readBuf.read(newArray);
+            byteArraySet.add(newArray);
         }
     }
 
@@ -262,14 +185,98 @@ public interface PrimitiveDataService {
         return citationSet.toSortedArray();
     }
 
-    private static void addToSet(byte[] bytes, MutableSet<byte[]> byteArraySet) throws IOException {
-        ByteBuf readBuf = ByteBuf.wrapForReading(bytes);
-        int arrayCount = readBuf.readInt();
-        for (int i = 0; i < arrayCount; i++) {
-            int arraySize = readBuf.readInt();
-            byte[] newArray = new byte[arraySize];
-            readBuf.read(newArray);
-            byteArraySet.add(newArray);
+    long writeSequence();
+
+    void close();
+
+    default int nidForPublicId(PublicId publicId) {
+        return nidForUuids(publicId.asUuidArray());
+    }
+
+    int nidForUuids(UUID... uuids);
+
+    int nidForUuids(ImmutableList<UUID> uuidList);
+
+    void forEach(ObjIntConsumer<byte[]> action);
+
+    void forEachParallel(ObjIntConsumer<byte[]> action);
+
+    byte[] getBytes(int nid);
+
+    /**
+     * If the specified nid (native identifier -- an int) is not already associated
+     * with a value or is associated with null, associates it with the given non-null value.
+     * Otherwise, replaces the associated value with the results of a remapping function
+     * (remapping function is provided the provider), or removes if the result is {@code null}.
+     * This method may be of use when combining multiple mapped values for a nid.
+     * For example, merging multiple versions of an entity, where each version is represented as a
+     * byte[].
+     *
+     * @param nid                    native identifier (an int) with which the resulting value is to be associated
+     * @param patternNid
+     * @param referencedComponentNid if the bytes are for a semantic, the referenced component nid,
+     *                               otherwise Integer.MAX_VALUE.
+     * @param value                  the non-null value to be merged with the existing value
+     *                               associated with the nid or, if no existing value or a null value
+     *                               is associated with the nid, to be associated with the nid
+     * @param sourceObject           object that is the source of the bytes to merge.
+     * @return the new value associated with the specified nid, or null if no
+     * value is associated with the nid
+     */
+    byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject);
+
+    SearchResult[] search(String query, int maxResultSize) throws Exception;
+
+    /**
+     * @param patternNid
+     * @return
+     */
+    default int[] semanticNidsOfPattern(int patternNid) {
+        MutableIntList intList = IntLists.mutable.empty();
+        forEachSemanticNidOfPattern(patternNid, nid -> intList.add(nid));
+        return intList.toArray();
+    }
+
+    void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure);
+
+    default int[] semanticNidsForComponent(int componentNid) {
+        MutableIntList intList = IntLists.mutable.empty();
+        forEachSemanticNidForComponent(componentNid, nid -> intList.add(nid));
+        return intList.toArray();
+    }
+
+    void forEachSemanticNidForComponent(int componentNid, IntProcedure procedure);
+
+    default int[] semanticNidsForComponentOfPattern(int componentNid, int patternNid) {
+        MutableIntList intList = IntLists.mutable.empty();
+        forEachSemanticNidForComponentOfPattern(componentNid, patternNid, nid -> intList.add(nid));
+        return intList.toArray();
+    }
+
+    void forEachSemanticNidForComponentOfPattern(int componentNid, int patternNid, IntProcedure procedure);
+
+    enum RemoteOperations {
+        NID_FOR_UUIDS(1),
+        GET_BYTES(2),
+        MERGE(3);
+
+        public final byte token;
+
+        RemoteOperations(int token) {
+            this.token = (byte) token;
+        }
+
+        public static RemoteOperations fromToken(byte token) {
+            switch (token) {
+                case 1:
+                    return NID_FOR_UUIDS;
+                case 2:
+                    return GET_BYTES;
+                case 3:
+                    return MERGE;
+                default:
+                    throw new UnsupportedOperationException("Can't handle token: " + token);
+            }
         }
     }
 }

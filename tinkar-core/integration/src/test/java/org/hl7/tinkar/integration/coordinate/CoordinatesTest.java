@@ -11,12 +11,12 @@ import org.hl7.tinkar.coordinate.Coordinates;
 import org.hl7.tinkar.coordinate.PathService;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinateRecord;
 import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculatorWithCache;
-import org.hl7.tinkar.coordinate.stamp.StampPositionRecord;
-import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import org.hl7.tinkar.coordinate.stamp.StampCoordinateRecord;
+import org.hl7.tinkar.coordinate.stamp.StampPositionRecord;
+import org.hl7.tinkar.coordinate.stamp.calculator.Latest;
+import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import org.hl7.tinkar.coordinate.view.calculator.ViewCalculator;
 import org.hl7.tinkar.entity.*;
-import org.hl7.tinkar.coordinate.stamp.calculator.Latest;
 import org.hl7.tinkar.integration.TestConstants;
 import org.hl7.tinkar.terms.TinkarTerm;
 import org.testng.Assert;
@@ -42,12 +42,12 @@ class CoordinatesTest {
 
     @Test
     void countPathOrigins() {
-        Assert.assertEquals(PrimitiveData.get().entityNidsOfPattern(PATH_ORIGINS_PATTERN.nid()).length, 3);
+        Assert.assertEquals(PrimitiveData.get().semanticNidsOfPattern(PATH_ORIGINS_PATTERN.nid()).length, 3);
     }
 
     @Test
     void pathOrigins() {
-        for (int pathNid : PrimitiveData.get().entityNidsOfPattern(PATH_ORIGINS_PATTERN.nid())) {
+        for (int pathNid : PrimitiveData.get().semanticNidsOfPattern(PATH_ORIGINS_PATTERN.nid())) {
             SemanticEntity originSemantic = EntityService.get().getEntityFast(pathNid);
             Entity pathEntity = EntityService.get().getEntityFast(originSemantic.referencedComponentNid());
             ImmutableSet<StampPositionRecord> origin = PathService.get().getPathOrigins(originSemantic.referencedComponentNid());
@@ -95,7 +95,7 @@ class CoordinatesTest {
         Optional<String> optionalName = viewCalculator.getRegularDescriptionText(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
         optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(TinkarTerm.DESCRIPTION_ACCEPTABILITY.nid()));
         sb.append("]\nchildren: [");
-        for (int childNid: children.toArray()) {
+        for (int childNid : children.toArray()) {
             optionalName = viewCalculator.getRegularDescriptionText(childNid);
             optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(childNid));
             sb.append(", ");
@@ -103,7 +103,7 @@ class CoordinatesTest {
         sb.delete(sb.length() - 2, sb.length());
         sb.append("]\nparents: [");
         IntIdList parents = viewCalculator.parentsOf(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
-        for (int parentNid: parents.toArray()) {
+        for (int parentNid : parents.toArray()) {
             optionalName = viewCalculator.getRegularDescriptionText(parentNid);
             optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(parentNid));
             sb.append(", ");
@@ -121,7 +121,7 @@ class CoordinatesTest {
         Optional<String> optionalName = viewCalculator.getRegularDescriptionText(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
         optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(TinkarTerm.DESCRIPTION_ACCEPTABILITY.nid()));
         sb.append("]\nsorted children: [");
-        for (int childNid: children.toArray()) {
+        for (int childNid : children.toArray()) {
             optionalName = viewCalculator.getRegularDescriptionText(childNid);
             optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(childNid));
             sb.append(", ");
@@ -129,7 +129,7 @@ class CoordinatesTest {
         sb.delete(sb.length() - 2, sb.length());
         sb.append("]\nsorted parents: [");
         IntIdList parents = viewCalculator.sortedParentsOf(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
-        for (int parentNid: parents.toArray()) {
+        for (int parentNid : parents.toArray()) {
             optionalName = viewCalculator.getRegularDescriptionText(parentNid);
             optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(parentNid));
             sb.append(", ");

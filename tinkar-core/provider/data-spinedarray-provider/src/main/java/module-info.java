@@ -7,16 +7,18 @@
 
 import org.hl7.tinkar.common.service.DataServiceController;
 import org.hl7.tinkar.common.service.LoadDataFromFileController;
-import org.hl7.tinkar.entity.EntityService;
 import org.hl7.tinkar.provider.spinedarray.SpinedArrayNewController;
 import org.hl7.tinkar.provider.spinedarray.SpinedArrayOpenController;
 
-@SuppressWarnings("module") // 7 in HL7 is not a version reference
+@SuppressWarnings("module")
+        // 7 in HL7 is not a version reference
 module org.hl7.tinkar.provider.spinedarray {
+    requires org.hl7.tinkar.collection;
     requires org.hl7.tinkar.common;
     requires org.hl7.tinkar.component;
     requires org.hl7.tinkar.entity;
-    requires org.hl7.tinkar.collection;
+    requires org.hl7.tinkar.lucene;
+    requires org.hl7.tinkar.provider.search;
     requires static org.hl7.tinkar.autoservice;
 
     provides DataServiceController

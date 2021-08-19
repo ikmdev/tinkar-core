@@ -10,8 +10,41 @@
     <artifactId>lucene</artifactId>
     <packaging>jar</packaging>
     <name>TINKAR: Lucene</name>
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-queryparser</artifactId>
+            <version>${lucene.version}</version>
+            <type>jar</type>
+        </dependency>
+    </dependencies>
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <id>unpack</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.apache.lucene</groupId>
+                                    <artifactId>lucene-queryparser</artifactId>
+                                    <version>${lucene.version}</version>
+                                    <type>jar</type>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${project.build.directory}/deps</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.moditect</groupId>
                 <artifactId>moditect-maven-plugin</artifactId>
@@ -66,6 +99,10 @@
                                     <fileset dir="${project.build.directory}/classes/META-INF/versions/9" includes="**/*" />
                                 </copy>
                                 <delete dir="${project.build.directory}/classes/META-INF/versions" />
+                                <copy todir="${project.build.directory}/classes/"
+                                      overwrite="false">
+                                    <fileset dir="${project.build.directory}/deps" includes="**/*" />
+                                </copy>
                             </target>
                         </configuration>
                         <goals>

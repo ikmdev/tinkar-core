@@ -1,13 +1,11 @@
 package org.hl7.tinkar.provider.spinedarray;
 
-import org.hl7.tinkar.common.service.*;
+import org.hl7.tinkar.common.service.DataServiceController;
+import org.hl7.tinkar.common.service.PrimitiveDataService;
+
+import java.io.IOException;
 
 public abstract class SpinedArrayController implements DataServiceController<PrimitiveDataService> {
-
-    @Override
-    public boolean running() {
-        return SpinedArrayProvider.singleton != null;
-    }
 
     @Override
     public Class<? extends PrimitiveDataService> serviceClass() {
@@ -15,8 +13,17 @@ public abstract class SpinedArrayController implements DataServiceController<Pri
     }
 
     @Override
+    public boolean running() {
+        return SpinedArrayProvider.singleton != null;
+    }
+
+    @Override
     public void start() {
-        new SpinedArrayProvider();
+        try {
+            new SpinedArrayProvider();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

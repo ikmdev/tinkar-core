@@ -2,6 +2,7 @@ package org.hl7.tinkar.provider.entity;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.google.auto.service.AutoService;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.operators.multi.processors.BroadcastProcessor;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -14,8 +15,6 @@ import org.hl7.tinkar.component.Chronology;
 import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.entity.*;
-
-import com.google.auto.service.AutoService;
 import org.hl7.tinkar.terms.EntityFacade;
 import org.hl7.tinkar.terms.TinkarTerm;
 import org.reactivestreams.FlowAdapters;
@@ -30,29 +29,16 @@ import static org.hl7.tinkar.terms.TinkarTerm.DESCRIPTION_PATTERN;
 @AutoService({EntityService.class, PublicIdService.class, DefaultDescriptionForNidService.class})
 public class EntityProvider implements EntityService, PublicIdService, DefaultDescriptionForNidService {
 
-    @AutoService(CachingService.class)
-    public static class CacheProvider implements CachingService {
-
-        @Override
-        public void reset() {
-            STRING_CACHE.invalidateAll();
-            ENTITY_CACHE.invalidateAll();
-        }
-    }
-
     protected static final System.Logger LOG = System.getLogger(EntityProvider.class.getName());
-
     private static final Cache<Integer, String> STRING_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
     private static final Cache<Integer, Entity> ENTITY_CACHE = Caffeine.newBuilder().maximumSize(10240).build();
     private static final Cache<Integer, StampEntity> STAMP_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
+    final Multi<Entity<? extends EntityVersion>> entityStream;
 
 
     //Multi<Entity<? extends EntityVersion>> chronologyBroadcaster = BroadcastProcessor.create().toHotStream();
     //  <T extends Entity<? extends EntityVersion>>
-
-    final Multi<Entity<? extends EntityVersion>> entityStream;
     final BroadcastProcessor<Entity<? extends EntityVersion>> processor;
-
 
     /**
      * TODO elegant shutdown of entityStream and others
@@ -66,24 +52,6 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     @Override
     public void subscribe(Flow.Subscriber<? super Entity<? extends EntityVersion>> subscriber) {
         entityStream.subscribe().withSubscriber(FlowAdapters.toSubscriber(subscriber));
-    }
-
-
-    @Override
-    public <T extends Chronology<V>, V extends Version> void putChronology(T chronology) {
-        if (chronology instanceof Entity entity) {
-            ENTITY_CACHE.invalidate(entity.nid());
-            putEntity(entity);
-        } else {
-            putEntity(EntityFactory.make(chronology));
-            for (Version version : chronology.versions()) {
-                Stamp stamp = version.stamp();
-                int nid = PrimitiveData.get().nidForUuids(stamp.publicId().asUuidArray());
-                if (PrimitiveData.get().getBytes(nid) == null) {
-                    putEntity(EntityFactory.make(stamp));
-                }
-            }
-        }
     }
 
     @Override
@@ -123,11 +91,6 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     }
 
     @Override
-    public PublicId publicId(int nid) {
-        return getEntityFast(nid).publicId();
-    }
-
-    @Override
     public <T extends Entity<V>, V extends EntityVersion> T getEntityFast(int nid) {
         return (T) ENTITY_CACHE.get(nid, entityNid -> {
             byte[] bytes = PrimitiveData.get().getBytes(nid);
@@ -158,9 +121,9 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
             PrimitiveData.get().merge(entity.nid(),
                     semanticEntity.patternNid(),
                     semanticEntity.referencedComponentNid(),
-                    entity.getBytes());
+                    entity.getBytes(), entity);
         } else {
-            PrimitiveData.get().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, entity.getBytes());
+            PrimitiveData.get().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, entity.getBytes(), entity);
         }
         processor.onNext(entity);
     }
@@ -168,7 +131,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     @Override
     public void putStamp(StampEntity stampEntity) {
         STAMP_CACHE.invalidate(stampEntity.nid());
-        PrimitiveData.get().merge(stampEntity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, stampEntity.getBytes());
+        PrimitiveData.get().merge(stampEntity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, stampEntity.getBytes(), stampEntity);
     }
 
     @Override
@@ -179,14 +142,6 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     @Override
     public int nidForUuids(UUID... uuids) {
         return PrimitiveData.get().nidForUuids(uuids);
-    }
-
-    @Override
-    public <T extends Chronology<V>, V extends Version> Optional<T> getChronology(PublicId publicId) {
-        if (publicId instanceof EntityFacade entityFacade) {
-            return Optional.ofNullable((T) getEntityFast(entityFacade.nid()));
-        }
-        return Optional.ofNullable((T) getEntityFast(nidForPublicId(publicId)));
     }
 
     @Override
@@ -206,7 +161,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
     @Override
     public int[] entityNidsOfPattern(int patternNid) {
-        return PrimitiveData.get().entityNidsOfPattern(patternNid);
+        return PrimitiveData.get().semanticNidsOfPattern(patternNid);
     }
 
     @Override
@@ -227,5 +182,45 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     @Override
     public int[] semanticNidsForComponentOfPattern(int componentNid, int patternNid) {
         return PrimitiveData.get().semanticNidsForComponentOfPattern(componentNid, patternNid);
+    }
+
+    @Override
+    public PublicId publicId(int nid) {
+        return getEntityFast(nid).publicId();
+    }
+
+    @Override
+    public <T extends Chronology<V>, V extends Version> Optional<T> getChronology(PublicId publicId) {
+        if (publicId instanceof EntityFacade entityFacade) {
+            return Optional.ofNullable((T) getEntityFast(entityFacade.nid()));
+        }
+        return Optional.ofNullable((T) getEntityFast(nidForPublicId(publicId)));
+    }
+
+    @Override
+    public <T extends Chronology<V>, V extends Version> void putChronology(T chronology) {
+        if (chronology instanceof Entity entity) {
+            ENTITY_CACHE.invalidate(entity.nid());
+            putEntity(entity);
+        } else {
+            putEntity(EntityFactory.make(chronology));
+            for (Version version : chronology.versions()) {
+                Stamp stamp = version.stamp();
+                int nid = PrimitiveData.get().nidForUuids(stamp.publicId().asUuidArray());
+                if (PrimitiveData.get().getBytes(nid) == null) {
+                    putEntity(EntityFactory.make(stamp));
+                }
+            }
+        }
+    }
+
+    @AutoService(CachingService.class)
+    public static class CacheProvider implements CachingService {
+
+        @Override
+        public void reset() {
+            STRING_CACHE.invalidateAll();
+            ENTITY_CACHE.invalidateAll();
+        }
     }
 }

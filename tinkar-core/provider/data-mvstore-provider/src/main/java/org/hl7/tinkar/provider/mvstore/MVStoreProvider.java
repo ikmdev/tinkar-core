@@ -5,36 +5,30 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.h2.mvstore.OffHeapStore;
-import org.hl7.tinkar.collection.SpinedIntIntArrayMap;
-import org.hl7.tinkar.collection.SpinedIntLongArrayMap;
-import org.hl7.tinkar.common.service.NidGenerator;
-import org.hl7.tinkar.common.service.ServiceKeys;
-import org.hl7.tinkar.common.service.ServiceProperties;
+import org.hl7.tinkar.common.service.*;
 import org.hl7.tinkar.common.util.ints2long.IntsInLong;
 import org.hl7.tinkar.provider.mvstore.internal.Get;
 import org.hl7.tinkar.provider.mvstore.internal.Put;
-import org.hl7.tinkar.common.service.PrimitiveDataService;
+import org.hl7.tinkar.provider.search.Indexer;
+import org.hl7.tinkar.provider.search.Searcher;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
 
 /**
- *
  * TODO: Maybe also consider making use of: https://blogs.oracle.com/javamagazine/creating-a-java-off-heap-in-memory-database?source=:em:nw:mt:::RC_WWMK200429P00043:NSL400123121
  */
 public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
 
-    protected static MVStoreProvider singleton;
-    protected LongAdder writeSequence = new LongAdder();
-    protected final AtomicInteger nextNid;
     private static final File defaultDataDirectory = new File("target/mvstore/");
     private static final String databaseFileName = "mvstore.dat";
-
     private static final UUID nextNidKey = new UUID(Long.MAX_VALUE, Long.MIN_VALUE);
-
+    protected static MVStoreProvider singleton;
+    protected final AtomicInteger nextNid;
     final OffHeapStore offHeap;
     final MVStore store;
     final MVMap<Integer, byte[]> nidToComponentMap;
@@ -46,8 +40,11 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
      */
     final MVMap<Integer, long[]> nidToCitingComponentsNidMap;
     final MVMap<Integer, int[]> patternToElementNidsMap;
+    final Indexer indexer;
+    final Searcher searcher;
+    protected LongAdder writeSequence = new LongAdder();
 
-   public MVStoreProvider() {
+    public MVStoreProvider() throws IOException {
         this.offHeap = new OffHeapStore();
         File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
         configuredRoot.mkdirs();
@@ -73,6 +70,19 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         Put.singleton = this;
 
         MVStoreProvider.singleton = this;
+        File indexDir = new File(configuredRoot, "lucene");
+        this.indexer = new Indexer(indexDir.toPath());
+        this.searcher = new Searcher();
+    }
+
+    @Override
+    public int newNid() {
+        return nextNid.getAndIncrement();
+    }
+
+    @Override
+    public long writeSequence() {
+        return writeSequence.sum();
     }
 
     public void close() {
@@ -81,14 +91,67 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     }
 
     public void save() {
-        this.uuidToNidMap.put(nextNidKey, nextNid.get());
-        this.store.commit();
-        this.offHeap.sync();
+        try {
+            this.uuidToNidMap.put(nextNidKey, nextNid.get());
+            this.store.commit();
+            this.offHeap.sync();
+            this.indexer.commit();
+            this.indexer.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public int newNid() {
-        return nextNid.getAndIncrement();
+    public int nidForUuids(UUID... uuids) {
+        return PrimitiveDataService.nidForUuids(uuidToNidMap, this, uuids);
+    }
+
+    @Override
+    public int nidForUuids(ImmutableList<UUID> uuidList) {
+        return PrimitiveDataService.nidForUuids(uuidToNidMap, this, uuidList);
+    }
+
+    @Override
+    public void forEach(ObjIntConsumer<byte[]> action) {
+        nidToComponentMap.entrySet().forEach(entry -> action.accept(entry.getValue(), entry.getKey()));
+    }
+
+    @Override
+    public void forEachParallel(ObjIntConsumer<byte[]> action) {
+        nidToComponentMap.entrySet().stream().parallel().forEach(entry -> action.accept(entry.getValue(), entry.getKey()));
+    }
+
+    @Override
+    public byte[] getBytes(int nid) {
+        return this.nidToComponentMap.get(nid);
+    }
+
+    @Override
+    public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject) {
+        if (!nidToPatternNidMap.containsKey(nid)) {
+            this.nidToPatternNidMap.put(nid, patternNid);
+            if (patternNid != Integer.MAX_VALUE) {
+
+                this.nidToPatternNidMap.put(nid, patternNid);
+                if (patternNid != Integer.MAX_VALUE) {
+                    long citationLong = IntsInLong.ints2Long(nid, patternNid);
+                    this.nidToCitingComponentsNidMap.merge(referencedComponentNid, new long[]{citationLong},
+                            PrimitiveDataService::mergeCitations);
+                    this.patternToElementNidsMap.merge(patternNid, new int[]{nid},
+                            PrimitiveDataService::mergePatternElements);
+                }
+            }
+        }
+        byte[] mergedBytes = nidToComponentMap.merge(nid, value, PrimitiveDataService::merge);
+        writeSequence.increment();
+        this.indexer.index(sourceObject);
+        return mergedBytes;
+    }
+
+    @Override
+    public SearchResult[] search(String query, int maxResultSize) throws Exception {
+        return this.searcher.search(query, maxResultSize);
     }
 
     @Override
@@ -123,56 +186,5 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
                 }
             }
         }
-    }
-
-    @Override
-    public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value) {
-       if (!nidToPatternNidMap.containsKey(nid)) {
-           this.nidToPatternNidMap.put(nid, patternNid);
-           if (patternNid != Integer.MAX_VALUE) {
-
-               this.nidToPatternNidMap.put(nid, patternNid);
-               if (patternNid != Integer.MAX_VALUE) {
-                   long citationLong = IntsInLong.ints2Long(nid, patternNid);
-                   this.nidToCitingComponentsNidMap.merge(referencedComponentNid, new long[]{citationLong},
-                           PrimitiveDataService::mergeCitations);
-                   this.patternToElementNidsMap.merge(patternNid, new int[]{nid},
-                           PrimitiveDataService::mergePatternElements);
-               }
-           }
-       }
-       byte[] mergedBytes = nidToComponentMap.merge(nid, value, PrimitiveDataService::merge);
-       writeSequence.increment();
-       return mergedBytes;
-    }
-
-    @Override
-    public long writeSequence() {
-        return writeSequence.sum();
-    }
-
-    @Override
-    public byte[] getBytes(int nid) {
-        return this.nidToComponentMap.get(nid);
-    }
-
-    @Override
-    public int nidForUuids(UUID... uuids) {
-        return PrimitiveDataService.nidForUuids(uuidToNidMap, this, uuids);
-    }
-
-    @Override
-    public int nidForUuids(ImmutableList<UUID> uuidList) {
-        return PrimitiveDataService.nidForUuids(uuidToNidMap, this, uuidList);
-    }
-
-    @Override
-    public void forEach(ObjIntConsumer<byte[]> action) {
-        nidToComponentMap.entrySet().forEach(entry -> action.accept(entry.getValue(), entry.getKey()));
-    }
-
-    @Override
-    public void forEachParallel(ObjIntConsumer<byte[]> action) {
-        nidToComponentMap.entrySet().stream().parallel().forEach(entry -> action.accept(entry.getValue(), entry.getKey()));
     }
 }
