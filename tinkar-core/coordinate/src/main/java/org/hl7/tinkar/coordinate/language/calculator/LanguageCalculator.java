@@ -29,7 +29,7 @@ public interface LanguageCalculator {
     }
 
     /**
-     * Gets all descriptions from the first pattern in the the language coordinate pattern priority list
+     * Gets all descriptions from the first pattern in the language coordinate pattern priority list
      * that contains any descriptions.
      *
      * @param componentNid
@@ -68,6 +68,10 @@ public interface LanguageCalculator {
         if (optionalResult.isPresent()) {
             return optionalResult.get();
         }
+        optionalResult = getSemanticText(nid);
+        if (optionalResult.isPresent()) {
+            return optionalResult.get();
+        }
         return Integer.toString(nid);
     }
 
@@ -76,6 +80,8 @@ public interface LanguageCalculator {
     default Optional<String> getFullyQualifiedNameText(int componentNid) {
         return getDescriptionTextForComponentOfType(componentNid, TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid());
     }
+
+    Optional<String> getSemanticText(int nid);
 
     Optional<String> getDescriptionTextForComponentOfType(int entityNid, int descriptionTypeNid);
 
@@ -247,6 +253,10 @@ public interface LanguageCalculator {
             return optionalResult.get();
         }
         optionalResult = getRegularDescriptionText(nid);
+        if (optionalResult.isPresent()) {
+            return optionalResult.get();
+        }
+        optionalResult = getSemanticText(nid);
         if (optionalResult.isPresent()) {
             return optionalResult.get();
         }

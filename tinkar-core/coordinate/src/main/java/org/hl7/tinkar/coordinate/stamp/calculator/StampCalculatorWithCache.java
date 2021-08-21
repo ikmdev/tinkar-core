@@ -796,7 +796,9 @@ public class StampCalculatorWithCache implements StampCalculator {
 
             return false;
         }
-    }    public <T> Latest<Field<T>> getFieldForSemantic(Latest<SemanticEntityVersion> latestSemanticVersion, int criterionNid, FieldCriterion fieldCriterion) {
+    }
+
+    public <T> Latest<Field<T>> getFieldForSemantic(Latest<SemanticEntityVersion> latestSemanticVersion, int criterionNid, FieldCriterion fieldCriterion) {
         if (latestSemanticVersion.isPresent()) {
             SemanticEntityVersion semanticVersion = latestSemanticVersion.get();
             Latest<PatternEntityVersion> latestPattern = latest(semanticVersion.patternNid());
@@ -836,14 +838,12 @@ public class StampCalculatorWithCache implements StampCalculator {
     }
 
 
-
-
     @Override
     public <T> Latest<Field<T>> getFieldForSemantic(int componentNid, int criterionNid, FieldCriterion fieldCriterion) {
 
-        Latest<SemanticEntityVersion> latestVersion = latest(componentNid);
-        if (latestVersion.isPresent()) {
-            return getFieldForSemantic(latestVersion, criterionNid, fieldCriterion);
+        Latest<? extends EntityVersion> latestVersion = latest(componentNid);
+        if (latestVersion.isPresent() && latestVersion.get() instanceof SemanticEntityVersion) {
+            return getFieldForSemantic((Latest<SemanticEntityVersion>) latestVersion, criterionNid, fieldCriterion);
         }
         return Latest.empty();
     }

@@ -102,18 +102,22 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
     }
 
     public void save() {
-        UUID nextNidKey = new UUID(0, 0);
-        uuidToNidMap.put(nextNidKey, nextNid.get());
-        try (ObjectOutputStream objectOutputStream =
-                     new ObjectOutputStream(new FileOutputStream(uuidNidMapFile))) {
-            uuidToNidMap.writeExternal(objectOutputStream);
+
+        try {
+            UUID nextNidKey = new UUID(0, 0);
+            uuidToNidMap.put(nextNidKey, nextNid.get());
+            try (ObjectOutputStream objectOutputStream =
+                         new ObjectOutputStream(new FileOutputStream(uuidNidMapFile))) {
+                uuidToNidMap.writeExternal(objectOutputStream);
+            }
+            nidToPatternNidMap.write(this.nidToPatternNidMapDirectory);
+            this.entityToBytesMap.write();
+            this.nidToCitingComponentsNidMap.write();
+            this.patternToElementNidsMap.write();
+            this.indexer.commit();
         } catch (IOException e) {
             LOG.log(ERROR, e.getLocalizedMessage(), e);
         }
-        nidToPatternNidMap.write(this.nidToPatternNidMapDirectory);
-        this.entityToBytesMap.write();
-        this.nidToCitingComponentsNidMap.write();
-        this.patternToElementNidsMap.write();
     }
 
     @Override
@@ -192,7 +196,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
     }
 
     @Override
-    public SearchResult[] search(String query, int maxResultSize) throws Exception {
+    public PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception {
         return this.searcher.search(query, maxResultSize);
     }
 

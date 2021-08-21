@@ -14,8 +14,8 @@ import io.activej.launcher.Launcher;
 import io.activej.service.ServiceGraphModule;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.hl7.tinkar.common.service.PrimitiveDataSearchResult;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
-import org.hl7.tinkar.common.service.SearchResult;
 import org.hl7.tinkar.common.util.uuid.UuidUtil;
 import org.hl7.tinkar.entity.EntityService;
 
@@ -176,7 +176,7 @@ public class DataProviderWebsocketClient
     }
 
     @Override
-    public SearchResult[] search(String query, int maxResultSize) throws Exception {
+    public PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception {
         throw new UnsupportedOperationException();
     }
 

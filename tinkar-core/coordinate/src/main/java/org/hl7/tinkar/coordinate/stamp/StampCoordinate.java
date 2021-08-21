@@ -7,7 +7,10 @@ import org.hl7.tinkar.common.id.IntIdSet;
 import org.hl7.tinkar.common.id.IntIds;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.entity.Entity;
-import org.hl7.tinkar.terms.*;
+import org.hl7.tinkar.terms.ConceptFacade;
+import org.hl7.tinkar.terms.EntityFacade;
+import org.hl7.tinkar.terms.EntityProxy;
+import org.hl7.tinkar.terms.State;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,7 +27,7 @@ public interface StampCoordinate
      */
     default UUID getStampFilterUuid() {
         ArrayList<UUID> uuidList = new ArrayList<>();
-        for (State state: allowedStates().toEnumSet()) {
+        for (State state : allowedStates().toEnumSet()) {
             Entity.provider().addSortedUuids(uuidList, state.nid());
         }
         Entity.provider().addSortedUuids(uuidList, stampPosition().getPathForPositionNid());
@@ -36,17 +39,51 @@ public interface StampCoordinate
         return UUID.nameUUIDFromBytes(b.toString().getBytes());
     }
 
-    int pathNidForFilter();
+    /**
+     * Determine what states should be included in results based on this
+     * stamp coordinate. If current—but inactive—versions are desired,
+     * the allowed states must include {@code Status.INACTIVE}
+     *
+     * @return the set of allowed states for results based on this stamp coordinate.
+     */
+    StateSet allowedStates();
+
+    /**
+     * Gets the stamp position.
+     *
+     * @return the position (time on a path) that is used to
+     * compute what stamped objects versions are the latest with respect to this
+     * position.
+     */
+    StampPosition stampPosition();
+
+    /**
+     * An empty array is a wild-card, and should match all modules. If there are
+     * one or more module nids specified, only those modules will be included
+     * in the results.
+     *
+     * @return an unmodifiable set of module nids to include in results based on this
+     * stamp coordinate.
+     */
+    IntIdSet moduleNids();
+
+    /**
+     * Gets the module preference list for versions. Used to adjudicate which component to
+     * return when more than one version is available. For example, if two modules
+     * have versions the same component, which one do you prefer to return?
+     *
+     * @return an unmodifiable module preference list for versions.
+     */
+
+    IntIdList modulePriorityNidList();
 
     StampCoordinate withAllowedStates(StateSet stateSet);
-    StampCoordinate withStampPosition(StampPositionRecord stampPosition);
-    StampCoordinate withModuleNids(IntIdSet moduleNids);
-    StampCoordinate withExcludedModuleNids(IntIdSet excludedModuleNids);
-    StampCoordinate withModulePriorityNidList(IntIdList modulePriorityNidList);
 
     default ConceptFacade pathForFilter() {
         return EntityProxy.Concept.make(pathNidForFilter());
     }
+
+    int pathNidForFilter();
 
     /**
      * Create a new StampFilter identical to the this filter, but with the modules modified.
@@ -57,12 +94,20 @@ public interface StampCoordinate
     default StampCoordinate withModules(Collection<ConceptFacade> modules) {
         return withModuleNids(IntIds.set.of(modules, EntityFacade::toNid));
     }
+
+    StampCoordinate withModuleNids(IntIdSet moduleNids);
+
     default StampCoordinate withExcludedModules(Collection<ConceptFacade> excludedModules) {
         return withExcludedModuleNids(IntIds.set.of(excludedModules, EntityFacade::toNid));
     }
+
+    StampCoordinate withExcludedModuleNids(IntIdSet excludedModuleNids);
+
     default StampCoordinate withModulePriorityNidList(List<ConceptFacade> excludedModules) {
         return withModulePriorityNidList(IntIds.list.of(excludedModules, EntityFacade::toNid));
     }
+
+    StampCoordinate withModulePriorityNidList(IntIdList modulePriorityNidList);
 
     /**
      * Create a new Filter ImmutableCoordinate identical to the this coordinate, but with the path for position replaced.
@@ -72,16 +117,9 @@ public interface StampCoordinate
      */
     default StampCoordinate withPath(ConceptFacade pathForPosition) {
         return withStampPosition(stampPosition().withPathForPositionNid(pathForPosition.nid()).toStampPositionImmutable());
-   }
+    }
 
-    /**
-     * Gets the stamp position.
-     *
-     * @return the position (time on a path) that is used to
-     * compute what stamped objects versions are the latest with respect to this
-     * position.
-     */
-    StampPosition stampPosition();
+    StampCoordinate withStampPosition(StampPositionRecord stampPosition);
 
     /**
      * @return multi-line string output suitable for presentation to user, as opposed to use in debugging.
@@ -123,34 +161,6 @@ public interface StampCoordinate
         return builder.toString();
     }
 
-    default StampCoordinateRecord toStampCoordinateRecord() {
-        return StampCoordinateRecord.make(allowedStates(),
-                stampPosition());
-    }
-
-    default long time() {
-        return stampPosition().time();
-    }
-
-    /**
-     * Determine what states should be included in results based on this
-     * stamp coordinate. If current—but inactive—versions are desired,
-     * the allowed states must include {@code Status.INACTIVE}
-     *
-     * @return the set of allowed states for results based on this stamp coordinate.
-     */
-    StateSet allowedStates();
-
-    /**
-     * An empty array is a wild-card, and should match all modules. If there are
-     * one or more module nids specified, only those modules will be included
-     * in the results.
-     *
-     * @return an unmodifiable set of module nids to include in results based on this
-     * stamp coordinate.
-     */
-    IntIdSet moduleNids();
-
     /**
      * An empty array indicates that no modules should be excluded. If there are
      * one or more module nids specified, only those modules will be excluded
@@ -160,6 +170,15 @@ public interface StampCoordinate
      * stamp filter.
      */
     IntIdSet excludedModuleNids();
+
+    default StampCoordinateRecord toStampCoordinateRecord() {
+        return StampCoordinateRecord.make(allowedStates(),
+                stampPosition());
+    }
+
+    default long time() {
+        return stampPosition().time();
+    }
 
     /**
      * An empty array indicates that no modules should be excluded. If there are
@@ -185,16 +204,6 @@ public interface StampCoordinate
         return moduleNids().map(nid -> Entity.getFast(nid));
 
     }
-
-    /**
-     * Gets the module preference list for versions. Used to adjudicate which component to
-     * return when more than one version is available. For example, if two modules
-     * have versions the same component, which one do you prefer to return?
-     *
-     * @return an unmodifiable module preference list for versions.
-     */
-
-    IntIdList modulePriorityNidList();
 
     /**
      * Gets the module preference list for versions. Used to adjudicate which component to

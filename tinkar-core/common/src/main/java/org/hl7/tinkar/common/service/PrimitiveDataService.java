@@ -225,7 +225,7 @@ public interface PrimitiveDataService {
      */
     byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject);
 
-    SearchResult[] search(String query, int maxResultSize) throws Exception;
+    PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception;
 
     /**
      * @param patternNid

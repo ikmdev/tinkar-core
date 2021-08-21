@@ -3,18 +3,16 @@ package org.hl7.tinkar.coordinate.language.calculator;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.id.IntIdList;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinateRecord;
+import org.hl7.tinkar.coordinate.stamp.calculator.Latest;
 import org.hl7.tinkar.entity.SemanticEntity;
 import org.hl7.tinkar.entity.SemanticEntityVersion;
-import org.hl7.tinkar.coordinate.stamp.calculator.Latest;
 
 import java.util.Optional;
 
 public interface LanguageCalculatorDelegate extends LanguageCalculator {
-    LanguageCalculator languageCalculator();
-
     @Override
-    default Optional<String> getRegularDescriptionText(int entityNid) {
-        return languageCalculator().getRegularDescriptionText(entityNid);
+    default ImmutableList<LanguageCoordinateRecord> languageCoordinateList() {
+        return languageCalculator().languageCoordinateList();
     }
 
     @Override
@@ -28,8 +26,23 @@ public interface LanguageCalculatorDelegate extends LanguageCalculator {
     }
 
     @Override
+    default Optional<String> getRegularDescriptionText(int entityNid) {
+        return languageCalculator().getRegularDescriptionText(entityNid);
+    }
+
+    @Override
+    default Optional<String> getSemanticText(int nid) {
+        return languageCalculator().getSemanticText(nid);
+    }
+
+    @Override
     default Optional<String> getDescriptionTextForComponentOfType(int entityNid, int descriptionTypeNid) {
         return languageCalculator().getDescriptionTextForComponentOfType(entityNid, descriptionTypeNid);
+    }
+
+    @Override
+    default Optional<String> getDescriptionText(int componentNid) {
+        return languageCalculator().getDescriptionText(componentNid);
     }
 
     @Override
@@ -43,8 +56,8 @@ public interface LanguageCalculatorDelegate extends LanguageCalculator {
     }
 
     @Override
-    default Optional<String> getDescriptionText(int componentNid) {
-        return languageCalculator().getDescriptionText(componentNid);
+    default Latest<SemanticEntityVersion> getSpecifiedDescription(ImmutableList<SemanticEntity> descriptionList) {
+        return languageCalculator().getSpecifiedDescription(descriptionList);
     }
 
     @Override
@@ -53,12 +66,9 @@ public interface LanguageCalculatorDelegate extends LanguageCalculator {
     }
 
     @Override
-    default Latest<SemanticEntityVersion> getSpecifiedDescription(ImmutableList<SemanticEntity> descriptionList) {
-        return languageCalculator().getSpecifiedDescription(descriptionList);
-    }
-
-    @Override
     default Latest<SemanticEntityVersion> getSpecifiedDescription(ImmutableList<SemanticEntity> descriptionList, IntIdList descriptionTypePriority) {
         return languageCalculator().getSpecifiedDescription(descriptionList, descriptionTypePriority);
     }
+
+    LanguageCalculator languageCalculator();
 }

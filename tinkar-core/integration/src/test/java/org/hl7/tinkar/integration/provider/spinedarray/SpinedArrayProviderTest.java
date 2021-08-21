@@ -1,7 +1,7 @@
 package org.hl7.tinkar.integration.provider.spinedarray;
 
 import org.hl7.tinkar.common.service.PrimitiveData;
-import org.hl7.tinkar.common.service.SearchResult;
+import org.hl7.tinkar.common.service.PrimitiveDataSearchResult;
 import org.hl7.tinkar.common.service.ServiceKeys;
 import org.hl7.tinkar.common.service.ServiceProperties;
 import org.hl7.tinkar.common.util.time.Stopwatch;
@@ -56,7 +56,7 @@ public class SpinedArrayProviderTest {
             LOG.info("Reloading in: " + reloadStopwatch.durationString() + "\n\n");
         }
         try {
-            SearchResult[] results = PrimitiveData.get().search("occupation", 50);
+            PrimitiveDataSearchResult[] results = PrimitiveData.get().search("occupation", 50);
             LOG.info("Search results: \n" + Arrays.toString(results) + "\n\n");
         } catch (Exception e) {
             e.printStackTrace();

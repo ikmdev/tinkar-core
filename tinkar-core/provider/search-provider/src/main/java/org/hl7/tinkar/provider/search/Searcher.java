@@ -8,7 +8,7 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
-import org.hl7.tinkar.common.service.SearchResult;
+import org.hl7.tinkar.common.service.PrimitiveDataSearchResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,16 +26,16 @@ public class Searcher {
         this.parser = new QueryParser("text", Indexer.analyzer());
     }
 
-    public SearchResult[] search(String queryString, int maxResultSize) throws ParseException, IOException {
+    public PrimitiveDataSearchResult[] search(String queryString, int maxResultSize) throws ParseException, IOException {
         Query query = parser.parse(queryString);
         ScoreDoc[] hits = isearcher.search(query, maxResultSize).scoreDocs;
-        SearchResult[] results = new SearchResult[hits.length];
+        PrimitiveDataSearchResult[] results = new PrimitiveDataSearchResult[hits.length];
         for (int i = 0; i < hits.length; i++) {
             Document hitDoc = isearcher.doc(hits[i].doc);
             StoredField nidField = (StoredField) hitDoc.getField(Indexer.NID);
             StoredField patternNidField = (StoredField) hitDoc.getField(Indexer.PATTERN_NID);
             StoredField rcNidField = (StoredField) hitDoc.getField(Indexer.RC_NID);
-            results[i] = new SearchResult(nidField.numericValue().intValue(), rcNidField.numericValue().intValue(),
+            results[i] = new PrimitiveDataSearchResult(nidField.numericValue().intValue(), rcNidField.numericValue().intValue(),
                     patternNidField.numericValue().intValue(), hits[i].score);
         }
         return results;

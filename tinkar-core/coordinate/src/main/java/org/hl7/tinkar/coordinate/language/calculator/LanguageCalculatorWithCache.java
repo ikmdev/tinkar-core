@@ -27,23 +27,31 @@ import java.util.OptionalInt;
 import java.util.logging.Logger;
 
 public class LanguageCalculatorWithCache implements LanguageCalculator {
-    /** The Constant LOG. */
+    /**
+     * The Constant LOG.
+     */
     private static final Logger LOG = CoordinateUtil.LOG;
-
-    private static record StampLangRecord(StampCoordinateRecord stampFilter,
-                                          ImmutableList<LanguageCoordinateRecord> languageCoordinateList){}
-
     private static final ConcurrentReferenceHashMap<StampLangRecord, LanguageCalculatorWithCache> SINGLETONS =
             new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
                     ConcurrentReferenceHashMap.ReferenceType.WEAK);
+    final StampCalculator stampCalculator;
+    final ImmutableList<LanguageCoordinateRecord> languageCoordinateList;
+    private final Cache<Integer, String> preferredCache =
+            Caffeine.newBuilder().maximumSize(10240).build();
+    private final Cache<Integer, String> fqnCache =
+            Caffeine.newBuilder().maximumSize(10240).build();
+    private final Cache<Integer, String> descriptionCache =
+            Caffeine.newBuilder().maximumSize(10240).build();
+    private final Cache<Integer, String> definitionCache =
+            Caffeine.newBuilder().maximumSize(1024).build();
+    private final Cache<Integer, ImmutableList<SemanticEntity>> descriptionsForComponentCache =
+            Caffeine.newBuilder().maximumSize(1024).build();
 
-    @AutoService(CachingService.class)
-    public static class CacheProvider implements CachingService {
-        @Override
-        public void reset() {
-            SINGLETONS.clear();
-        }
+    public LanguageCalculatorWithCache(StampCoordinateRecord stampFilter, ImmutableList<LanguageCoordinateRecord> languageCoordinateList) {
+        this.stampCalculator = StampCalculatorWithCache.getCalculator(stampFilter);
+        this.languageCoordinateList = languageCoordinateList;
     }
+
     /**
      * Gets the stampCoordinateRecord.
      *
@@ -54,27 +62,21 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
         return SINGLETONS.computeIfAbsent(new StampLangRecord(stampFilter, languageCoordinateList),
                 filterKey -> new LanguageCalculatorWithCache(stampFilter, languageCoordinateList));
     }
-    final StampCalculator stampCalculator;
-    final ImmutableList<LanguageCoordinateRecord> languageCoordinateList;
 
-    private final Cache<Integer, String> preferredCache =
-            Caffeine.newBuilder().maximumSize(10240).build();
+    private Latest<PatternEntityVersion> getPattern(int patternNid) {
+        return stampCalculator.latestPatternEntityVersion(patternNid);
+    }
 
-    private final Cache<Integer, String> fqnCache =
-            Caffeine.newBuilder().maximumSize(10240).build();
+    private static record StampLangRecord(StampCoordinateRecord stampFilter,
+                                          ImmutableList<LanguageCoordinateRecord> languageCoordinateList) {
+    }
 
-    private final Cache<Integer, String> descriptionCache =
-            Caffeine.newBuilder().maximumSize(10240).build();
-
-    private final Cache<Integer, String> definitionCache =
-            Caffeine.newBuilder().maximumSize(1024).build();
-
-    private final Cache<Integer, ImmutableList<SemanticEntity>> descriptionsForComponentCache =
-            Caffeine.newBuilder().maximumSize(1024).build();
-
-    public LanguageCalculatorWithCache(StampCoordinateRecord stampFilter, ImmutableList<LanguageCoordinateRecord> languageCoordinateList) {
-        this.stampCalculator = StampCalculatorWithCache.getCalculator(stampFilter);
-        this.languageCoordinateList = languageCoordinateList;
+    @AutoService(CachingService.class)
+    public static class CacheProvider implements CachingService {
+        @Override
+        public void reset() {
+            SINGLETONS.clear();
+        }
     }
 
     @Override
@@ -88,9 +90,6 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
         throw new UnsupportedOperationException();
     }
 
-    private Latest<PatternEntityVersion> getPattern(int patternNid) {
-        return stampCalculator.latestPatternEntityVersion(patternNid);
-    }
 
     public Optional<String> getTextFromSemanticVersion(SemanticEntityVersion semanticEntityVersion) {
         OptionalInt optionalIndexForText = stampCalculator.getIndexForMeaning(semanticEntityVersion.patternNid(),
@@ -350,5 +349,16 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
             }
             return null;
         }));
+    }
+
+    @Override
+    public Optional<String> getSemanticText(int nid) {
+        Latest<Field<String>> textField = stampCalculator.getFieldForSemantic(nid,
+                TinkarTerm.TEXT_FOR_DESCRIPTION.nid(),
+                StampCalculator.FieldCriterion.MEANING);
+        if (textField.isPresent()) {
+            return Optional.ofNullable(textField.get().value());
+        }
+        return Optional.empty();
     }
 }

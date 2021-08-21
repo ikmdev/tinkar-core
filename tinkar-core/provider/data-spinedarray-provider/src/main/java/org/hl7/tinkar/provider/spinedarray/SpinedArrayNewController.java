@@ -110,7 +110,6 @@ public class SpinedArrayNewController extends SpinedArrayController {
             } catch (InterruptedException | IOException | ExecutionException e) {
                 e.printStackTrace();
             }
-
         }
     }
 }

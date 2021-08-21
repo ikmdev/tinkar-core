@@ -8,8 +8,8 @@ import org.hl7.tinkar.collection.KeyType;
 import org.hl7.tinkar.collection.SpinedIntIntMapAtomic;
 import org.hl7.tinkar.common.service.Executor;
 import org.hl7.tinkar.common.service.NidGenerator;
+import org.hl7.tinkar.common.service.PrimitiveDataSearchResult;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
-import org.hl7.tinkar.common.service.SearchResult;
 import org.hl7.tinkar.common.util.ints2long.IntsInLong;
 import org.hl7.tinkar.provider.search.Indexer;
 import org.hl7.tinkar.provider.search.Searcher;
@@ -139,7 +139,7 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     }
 
     @Override
-    public SearchResult[] search(String query, int maxResultSize) throws Exception {
+    public PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception {
         return this.searcher.search(query, maxResultSize);
     }
 

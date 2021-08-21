@@ -86,8 +86,13 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     }
 
     public void close() {
-        save();
-        this.store.close();
+        try {
+            save();
+            this.indexer.close();
+            this.store.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void save() {
@@ -96,7 +101,6 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
             this.store.commit();
             this.offHeap.sync();
             this.indexer.commit();
-            this.indexer.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -150,7 +154,7 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     }
 
     @Override
-    public SearchResult[] search(String query, int maxResultSize) throws Exception {
+    public PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception {
         return this.searcher.search(query, maxResultSize);
     }
 

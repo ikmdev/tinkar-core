@@ -1,6 +1,10 @@
 package org.hl7.tinkar.coordinate.stamp.calculator;
 
+import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.MutableList;
+import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.common.service.PrimitiveDataSearchResult;
 import org.hl7.tinkar.common.util.functional.QuadConsumer;
 import org.hl7.tinkar.common.util.functional.TriConsumer;
 import org.hl7.tinkar.component.graph.DiTree;
@@ -156,6 +160,17 @@ public interface StampCalculator {
     default <T extends Object> Latest<Field<T>> getFieldForSemanticWithMeaning(int componentNid, int meaningNid) {
         return getFieldForSemantic(componentNid, meaningNid, FieldCriterion.MEANING);
     }
+    
+    default ImmutableList<LatestVersionSearchResult> search(String query, int maxResultSize) throws Exception {
+        PrimitiveDataSearchResult[] primitiveResults = PrimitiveData.get().search(query, maxResultSize);
+        MutableList<LatestVersionSearchResult> latestResults = Lists.mutable.withInitialCapacity(primitiveResults.length);
+        for (PrimitiveDataSearchResult primitiveResult : primitiveResults) {
+            Latest<SemanticEntityVersion> latestVersion = latest(primitiveResult.nid());
+            latestVersion.ifPresent(semanticVersion -> latestResults.add(new LatestVersionSearchResult(latestVersion, primitiveResult.score())));
+        }
+        return latestResults.toImmutable();
+    }
+
 
     enum FieldCriterion {MEANING, PURPOSE}
 }
