@@ -12,21 +12,21 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */package org.hl7.tinkar.component;
+ */
+package org.hl7.tinkar.component;
 
 import org.eclipse.collections.api.list.ImmutableList;
 
 /**
- *
  * @author kec
  */
 public interface PatternVersion<F extends FieldDefinition> extends Version, Pattern {
 
     ImmutableList<F> fieldDefinitions();
 
-    Concept referencedComponentPurpose();
+    Concept semanticPurpose();
 
-    Concept referencedComponentMeaning();
+    Concept semanticMeaning();
 
 
 }

@@ -26,14 +26,13 @@ import org.hl7.tinkar.component.PatternVersion;
 import org.hl7.tinkar.dto.binary.*;
 
 /**
- *
  * @author kec
  */
 
 public record PatternVersionDTO(PublicId publicId,
                                 StampDTO stamp,
-                                PublicId referencedComponentPurposePublicId,
-                                PublicId referencedComponentMeaningPublicId,
+                                PublicId semanticPurposePublicId,
+                                PublicId semanticMeaningPublicId,
                                 ImmutableList<FieldDefinitionDTO> fieldDefinitionDTOS)
         implements PatternVersion<FieldDefinitionDTO>, Marshalable {
 
@@ -50,27 +49,14 @@ public record PatternVersionDTO(PublicId publicId,
         return new PatternVersionDTO(
                 patternVersion.publicId(),
                 StampDTO.make(patternVersion.stamp()),
-                patternVersion.referencedComponentPurpose().publicId(),
-                patternVersion.referencedComponentMeaning().publicId(),
+                patternVersion.semanticPurpose().publicId(),
+                patternVersion.semanticMeaning().publicId(),
                 fields.toImmutable());
-    }
-    @Override
-    public Concept referencedComponentPurpose() {
-        return new ConceptDTO(referencedComponentPurposePublicId);
-    }
-
-    @Override
-    public Concept referencedComponentMeaning() {
-        return new ConceptDTO(referencedComponentMeaningPublicId);
-    }
-
-    @Override
-    public ImmutableList<FieldDefinitionDTO> fieldDefinitions() {
-        return fieldDefinitionDTOS.collect(fieldDefinitionDTO -> fieldDefinitionDTO);
     }
 
     /**
      * Unmarshal method for PatternVersionDTO
+     *
      * @param in
      * @param componentPublicId
      * @return
@@ -88,16 +74,32 @@ public record PatternVersionDTO(PublicId publicId,
         }
     }
 
+    @Override
+    public ImmutableList<FieldDefinitionDTO> fieldDefinitions() {
+        return fieldDefinitionDTOS.collect(fieldDefinitionDTO -> fieldDefinitionDTO);
+    }
+
+    @Override
+    public Concept semanticPurpose() {
+        return new ConceptDTO(semanticPurposePublicId);
+    }
+
+    @Override
+    public Concept semanticMeaning() {
+        return new ConceptDTO(semanticMeaningPublicId);
+    }
+
     /**
      * Marshal method for PatternVersionDTO
+     *
      * @param out
      */
     @Override
     @Marshaler
     public void marshal(TinkarOutput out) {
         stamp.marshal(out);
-        out.putPublicId(referencedComponentPurposePublicId);
-        out.putPublicId(referencedComponentMeaningPublicId);
+        out.putPublicId(semanticPurposePublicId);
+        out.putPublicId(semanticMeaningPublicId);
         out.writeFieldDefinitionList(fieldDefinitionDTOS);
     }
 }

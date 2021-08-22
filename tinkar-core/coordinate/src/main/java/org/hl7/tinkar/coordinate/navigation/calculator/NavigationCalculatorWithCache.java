@@ -36,23 +36,24 @@ import java.util.logging.Logger;
  * TODO: Sort based on patterns in addition to natural order
  */
 public class NavigationCalculatorWithCache implements NavigationCalculator {
-    /** The Constant LOG. */
+    /**
+     * The Constant LOG.
+     */
     private static final Logger LOG = CoordinateUtil.LOG;
-
-    private static record StampLangNavRecord(StampCoordinateRecord stampFilter,
-                                             ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
-                                             NavigationCoordinateRecord navigationCoordinate){}
-
     private static final ConcurrentReferenceHashMap<StampLangNavRecord, NavigationCalculatorWithCache> SINGLETONS =
             new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
                     ConcurrentReferenceHashMap.ReferenceType.WEAK);
-
-    @AutoService(CachingService.class)
-    public static class CacheProvider implements CachingService {
-        @Override
-        public void reset() {
-            SINGLETONS.clear();
-        }
+    private final StampCalculatorWithCache stampCalculator;
+    private final StampCalculatorWithCache vertexStampCalculator;
+    private final LanguageCalculatorWithCache languageCalculator;
+    private final NavigationCoordinateRecord navigationCoordinate;
+    public NavigationCalculatorWithCache(StampCoordinateRecord stampFilter,
+                                         ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
+                                         NavigationCoordinateRecord navigationCoordinate) {
+        this.stampCalculator = StampCalculatorWithCache.getCalculator(stampFilter);
+        this.languageCalculator = LanguageCalculatorWithCache.getCalculator(stampFilter, languageCoordinateList);
+        this.navigationCoordinate = navigationCoordinate;
+        this.vertexStampCalculator = StampCalculatorWithCache.getCalculator(stampFilter.withAllowedStates(navigationCoordinate.vertexStates()));
     }
 
     /**
@@ -68,30 +69,14 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
                         languageCoordinateList, navigationCoordinate));
     }
 
-    private final StampCalculatorWithCache stampCalculator;
-    private final StampCalculatorWithCache vertexStampCalculator;
-    private final LanguageCalculatorWithCache  languageCalculator;
-    private final NavigationCoordinateRecord navigationCoordinate;
-
-    public NavigationCalculatorWithCache(StampCoordinateRecord stampFilter,
-                                         ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
-                                         NavigationCoordinateRecord navigationCoordinate) {
-        this.stampCalculator = StampCalculatorWithCache.getCalculator(stampFilter);
-        this.languageCalculator = LanguageCalculatorWithCache.getCalculator(stampFilter, languageCoordinateList);
-        this.navigationCoordinate = navigationCoordinate;
-        this.vertexStampCalculator = StampCalculatorWithCache.getCalculator(stampFilter.withAllowedStates(navigationCoordinate.vertexStates()));
-    }
-
     @Override
     public ImmutableList<LanguageCoordinateRecord> languageCoordinateList() {
         return languageCalculator.languageCoordinateList();
     }
 
     @Override
-    public IntIdSet descendentsOf(int conceptNid) {
-        MutableIntSet nidSet = IntSets.mutable.empty();
-        addDescendents(conceptNid, nidSet);
-        return IntIds.set.of(nidSet.toArray());
+    public LanguageCalculator languageCalculator() {
+        return languageCalculator;
     }
 
     private void addDescendents(int conceptNid, MutableIntSet nidSet) {
@@ -101,13 +86,6 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
                 nidSet.add(childNid);
             });
         }
-    }
-
-    @Override
-    public IntIdSet ancestorsOf(int conceptNid) {
-        MutableIntSet nidSet = IntSets.mutable.empty();
-        addAncestors(conceptNid, nidSet);
-        return IntIds.set.of(nidSet.toArray());
     }
 
     private void addAncestors(int conceptNid, MutableIntSet nidSet) {
@@ -120,9 +98,8 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
     }
 
     @Override
-    public IntIdList toSortedList(IntIdList inputList) {
-        // TODO add pattern sort...
-        return IntIds.list.of(VertexSortNaturalOrder.SINGLETON.sortVertexes(inputList.toArray(), this));
+    public StampCalculatorWithCache vertexStampCalculator() {
+        return this.vertexStampCalculator;
     }
 
     @Override
@@ -131,23 +108,13 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
     }
 
     @Override
-    public StampCalculatorWithCache vertexStampCalculator() {
-        return this.vertexStampCalculator;
-    }
-
-    @Override
     public boolean sortVertices() {
         return navigationCoordinate.sortVertices();
     }
 
     @Override
-    public StampCalculator stampCalculator() {
-        return stampCalculator;
-    }
-
-    @Override
-    public LanguageCalculator languageCalculator() {
-        return languageCalculator;
+    public IntIdList sortedParentsOf(int conceptNid) {
+        return IntIds.list.of(VertexSortNaturalOrder.SINGLETON.sortVertexes(unsortedParentsOf(conceptNid).toArray(), this));
     }
 
     @Override
@@ -156,8 +123,44 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
     }
 
     @Override
-    public IntIdList sortedParentsOf(int conceptNid) {
-        return IntIds.list.of(VertexSortNaturalOrder.SINGLETON.sortVertexes(unsortedParentsOf(conceptNid).toArray(), this));
+    public IntIdSet descendentsOf(int conceptNid) {
+        MutableIntSet nidSet = IntSets.mutable.empty();
+        addDescendents(conceptNid, nidSet);
+        return IntIds.set.of(nidSet.toArray());
+    }
+
+    @Override
+    public IntIdSet ancestorsOf(int conceptNid) {
+        MutableIntSet nidSet = IntSets.mutable.empty();
+        addAncestors(conceptNid, nidSet);
+        return IntIds.set.of(nidSet.toArray());
+    }
+
+    @Override
+    public IntIdSet kindOf(int conceptNid) {
+        MutableIntSet kindOfSet = IntSets.mutable.of(conceptNid);
+        kindOfSet.addAll(descendentsOf(conceptNid).toArray());
+        return IntIds.set.of(kindOfSet.toArray());
+    }
+
+    @Override
+    public ImmutableList<Edge> sortedChildEdges(int conceptNid) {
+        return VertexSortNaturalOrder.SINGLETON.sortEdges(unsortedChildEdges(conceptNid), this);
+    }
+
+    @Override
+    public ImmutableList<Edge> unsortedChildEdges(int conceptNid) {
+        return getEdges(conceptNid, TinkarTerm.RELATIONSHIP_DESTINATION);
+    }
+
+    @Override
+    public ImmutableList<Edge> sortedParentEdges(int conceptNid) {
+        return VertexSortNaturalOrder.SINGLETON.sortEdges(unsortedParentEdges(conceptNid), this);
+    }
+
+    @Override
+    public ImmutableList<Edge> unsortedParentEdges(int conceptNid) {
+        return getEdges(conceptNid, TinkarTerm.RELATIONSHIP_ORIGIN);
     }
 
     @Override
@@ -169,13 +172,10 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         return getIntIdListForMeaning(conceptNid, TinkarTerm.RELATIONSHIP_DESTINATION);
     }
 
-    private IntIdList getIntIdListForMeaning(int referencedComponentNid, EntityProxy.Concept fieldMeaning) {
-        IntIdSet navigationPatternNids = navigationCoordinate.navigationPatternNids();
-        MutableIntSet nidsInList = IntSets.mutable.empty();
-        navigationPatternNids.forEach(navPatternNid -> {
-            IntIdListForMeaningFromPattern(referencedComponentNid, fieldMeaning, navPatternNid, nidsInList, navigationCoordinate.vertexStates());
-        });
-        return IntIds.list.of(nidsInList.toArray());
+    @Override
+    public IntIdList toSortedList(IntIdList inputList) {
+        // TODO add pattern sort...
+        return IntIds.list.of(VertexSortNaturalOrder.SINGLETON.sortVertexes(inputList.toArray(), this));
     }
 
     @Override
@@ -188,10 +188,35 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         return getIntIdListForMeaningFromPattern(conceptNid, TinkarTerm.RELATIONSHIP_ORIGIN, patternNid);
     }
 
-
     private IntIdList getIntIdListForMeaningFromPattern(int referencedComponentNid, EntityProxy.Concept fieldMeaning, int patternNid) {
         MutableIntSet nidsInList = IntSets.mutable.empty();
         IntIdListForMeaningFromPattern(referencedComponentNid, fieldMeaning, patternNid, nidsInList, navigationCoordinate.vertexStates());
+        return IntIds.list.of(nidsInList.toArray());
+    }
+
+    private ImmutableList<Edge> getEdges(int conceptNid, EntityProxy.Concept relationshipDirection) {
+        MutableIntObjectMap<MutableEdge> edges = IntObjectMaps.mutable.empty();
+        for (int patternNid : navigationCoordinate.navigationPatternNids().toArray()) {
+            stampCalculator.latestPatternEntityVersion(patternNid).ifPresent(patternEntityVersion -> {
+                int typeNid = patternEntityVersion.semanticMeaningNid();
+                IntIdList parents = getIntIdListForMeaningFromPattern(conceptNid, relationshipDirection, patternNid);
+                for (int parentNid : parents.toArray()) {
+                    edges.updateValue(parentNid, () -> new MutableEdge(IntSets.mutable.empty(), parentNid), mutableEdge -> {
+                        mutableEdge.types.add(typeNid);
+                        return mutableEdge;
+                    });
+                }
+            });
+        }
+        return Lists.immutable.ofAll(edges.stream().map(mutableEdge -> mutableEdge.toEdge()).toList());
+    }
+
+    private IntIdList getIntIdListForMeaning(int referencedComponentNid, EntityProxy.Concept fieldMeaning) {
+        IntIdSet navigationPatternNids = navigationCoordinate.navigationPatternNids();
+        MutableIntSet nidsInList = IntSets.mutable.empty();
+        navigationPatternNids.forEach(navPatternNid -> {
+            IntIdListForMeaningFromPattern(referencedComponentNid, fieldMeaning, navPatternNid, nidsInList, navigationCoordinate.vertexStates());
+        });
         return IntIds.list.of(nidsInList.toArray());
     }
 
@@ -222,54 +247,33 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
                         });
                     }
                 },
-                () -> {throw new IllegalStateException("No active pattern version. " + latestPatternEntityVersion);});
+                () -> {
+                    throw new IllegalStateException("No active pattern version. " + latestPatternEntityVersion);
+                });
     }
 
     @Override
-    public IntIdSet kindOf(int conceptNid) {
-        MutableIntSet kindOfSet = IntSets.mutable.of(conceptNid);
-        kindOfSet.addAll(descendentsOf(conceptNid).toArray());
-        return IntIds.set.of(kindOfSet.toArray());
+    public StampCalculator stampCalculator() {
+        return stampCalculator;
     }
 
-    @Override
-    public ImmutableList<Edge> sortedParentEdges(int conceptNid) {
-        return VertexSortNaturalOrder.SINGLETON.sortEdges(unsortedParentEdges(conceptNid), this);
+    private static record StampLangNavRecord(StampCoordinateRecord stampFilter,
+                                             ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
+                                             NavigationCoordinateRecord navigationCoordinate) {
     }
 
-    @Override
-    public ImmutableList<Edge> sortedChildEdges(int conceptNid) {
-        return VertexSortNaturalOrder.SINGLETON.sortEdges(unsortedChildEdges(conceptNid), this);
+    @AutoService(CachingService.class)
+    public static class CacheProvider implements CachingService {
+        @Override
+        public void reset() {
+            SINGLETONS.clear();
+        }
     }
+
     record MutableEdge(MutableIntSet types, int destinationNid) {
         EdgeRecord toEdge() {
             return new EdgeRecord(IntIds.set.of(types.toArray()), destinationNid);
         }
-    }
-    @Override
-    public ImmutableList<Edge> unsortedParentEdges(int conceptNid) {
-        return getEdges(conceptNid, TinkarTerm.RELATIONSHIP_ORIGIN);
-    }
-    @Override
-    public ImmutableList<Edge> unsortedChildEdges(int conceptNid) {
-        return getEdges(conceptNid, TinkarTerm.RELATIONSHIP_DESTINATION);
-    }
-
-    private ImmutableList<Edge> getEdges(int conceptNid, EntityProxy.Concept relationshipDirection) {
-        MutableIntObjectMap<MutableEdge> edges = IntObjectMaps.mutable.empty();
-        for (int patternNid: navigationCoordinate.navigationPatternNids().toArray()) {
-            stampCalculator.latestPatternEntityVersion(patternNid).ifPresent(patternEntityVersion -> {
-                int typeNid = patternEntityVersion.referencedComponentMeaningNid();
-                IntIdList parents = getIntIdListForMeaningFromPattern(conceptNid, relationshipDirection, patternNid);
-                for (int parentNid: parents.toArray()) {
-                    edges.updateValue(parentNid, () -> new MutableEdge(IntSets.mutable.empty(), parentNid), mutableEdge -> {
-                        mutableEdge.types.add(typeNid);
-                        return mutableEdge;
-                    });
-                }
-            });
-        }
-        return Lists.immutable.ofAll(edges.stream().map(mutableEdge -> mutableEdge.toEdge()).toList());
     }
 
 }
