@@ -160,13 +160,15 @@ public interface StampCalculator {
     default <T extends Object> Latest<Field<T>> getFieldForSemanticWithMeaning(int componentNid, int meaningNid) {
         return getFieldForSemantic(componentNid, meaningNid, FieldCriterion.MEANING);
     }
-    
+
     default ImmutableList<LatestVersionSearchResult> search(String query, int maxResultSize) throws Exception {
         PrimitiveDataSearchResult[] primitiveResults = PrimitiveData.get().search(query, maxResultSize);
         MutableList<LatestVersionSearchResult> latestResults = Lists.mutable.withInitialCapacity(primitiveResults.length);
         for (PrimitiveDataSearchResult primitiveResult : primitiveResults) {
             Latest<SemanticEntityVersion> latestVersion = latest(primitiveResult.nid());
-            latestVersion.ifPresent(semanticVersion -> latestResults.add(new LatestVersionSearchResult(latestVersion, primitiveResult.score())));
+            latestVersion.ifPresent(semanticVersion -> latestResults.add(
+                    new LatestVersionSearchResult(latestVersion, primitiveResult.fieldIndex(), primitiveResult.score(),
+                            primitiveResult.highlightedString())));
         }
         return latestResults.toImmutable();
     }

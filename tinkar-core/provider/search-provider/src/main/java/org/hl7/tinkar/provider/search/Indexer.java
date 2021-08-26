@@ -9,6 +9,7 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.entity.SemanticEntity;
 import org.hl7.tinkar.entity.SemanticEntityVersion;
 import org.slf4j.Logger;
@@ -23,6 +24,8 @@ public class Indexer {
     public static final String NID = "nid";
     public static final String RC_NID = "rcNid";
     public static final String PATTERN_NID = "patternNid";
+    public static final String FIELD_INDEX = "fieldIndex";
+    public static final String TEXT_FIELD_NAME = "text";
     private static final Logger LOG = LoggerFactory.getLogger(Indexer.class);
     private static final File defaultDataDirectory = new File("target/lucene/");
     private static Directory indexDirectory;
@@ -80,6 +83,7 @@ public class Indexer {
             StoredField nidField = new StoredField(NID, 0);
             StoredField rcNidField = new StoredField(RC_NID, 0);
             StoredField patternNidField = new StoredField(PATTERN_NID, 0);
+            StoredField fieldIndexField = new StoredField(FIELD_INDEX, 0);
 
             Document document = new Document();
             nidPoint.setIntValue(semanticEntity.nid());
@@ -92,9 +96,14 @@ public class Indexer {
             document.add(rcNidField);
             document.add(patternNidField);
             for (SemanticEntityVersion version : semanticEntity.versions()) {
-                for (Object field : version.fields()) {
+                ImmutableList<Object> fields = version.fields();
+                for (int i = 0; i < fields.size(); i++) {
+                    Object field = fields.get(i);
                     if (field instanceof String text) {
-                        document.add(new TextField("text", text, Field.Store.NO));
+                        text = text.strip();
+                        document.add(new TextField(TEXT_FIELD_NAME, text, Field.Store.YES));
+                        fieldIndexField.setIntValue(i);
+                        document.add(fieldIndexField);
                     }
                 }
             }

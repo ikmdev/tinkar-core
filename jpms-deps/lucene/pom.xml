@@ -17,6 +17,12 @@
             <version>${lucene.version}</version>
             <type>jar</type>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.lucene/lucene-highlighter -->
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-highlighter</artifactId>
+            <version>${lucene.version}</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -36,6 +42,12 @@
                                 <artifactItem>
                                     <groupId>org.apache.lucene</groupId>
                                     <artifactId>lucene-queryparser</artifactId>
+                                    <version>${lucene.version}</version>
+                                    <type>jar</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.apache.lucene</groupId>
+                                    <artifactId>lucene-highlighter</artifactId>
                                     <version>${lucene.version}</version>
                                     <type>jar</type>
                                 </artifactItem>
@@ -73,6 +85,7 @@
                                             exports org.apache.lucene.index;
                                             exports org.apache.lucene.queryparser.classic;
                                             exports org.apache.lucene.search;
+                                            exports org.apache.lucene.search.highlight;
                                             exports org.apache.lucene.store;
                                             exports org.apache.lucene.util;
                                         }

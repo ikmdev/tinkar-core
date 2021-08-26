@@ -55,8 +55,8 @@ public class SemanticEntityVersion
                 version.fields.add(obj);
             } else if (obj instanceof Integer) {
                 version.fields.add(obj);
-            } else if (obj instanceof String) {
-                version.fields.add(obj);
+            } else if (obj instanceof String string) {
+                version.fields.add(string.strip());
             } else if (obj instanceof Instant) {
                 version.fields.add(obj);
             } else if (obj instanceof PlanarPoint) {
