@@ -21,44 +21,12 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class LoadEntitiesFromDtoFile extends TrackingCallable<Integer> {
-    private class PutChronology implements Runnable {
-        final Chronology chronology;
-
-        public PutChronology(Chronology chronology) {
-            this.chronology = chronology;
-        }
-
-        @Override
-        public void run() {
-            try {
-                EntityService.get().putChronology(chronology);
-            } catch (Throwable e) {
-                e.printStackTrace();
-                exceptionRecords.add(new ExceptionRecord(chronology, e));
-                System.exit(0);
-            } finally {
-                runningTasks.release();
-            }
-        }
-    }
-
-    private static record ExceptionRecord(Chronology chronology, Throwable t) implements Comparable<ExceptionRecord> {
-        @Override
-        public int compareTo(LoadEntitiesFromDtoFile.ExceptionRecord o) {
-            return chronology.publicId().compareTo(o.chronology().publicId());
-        }
-    }
-
     protected static final Logger LOG = Logger.getLogger(LoadEntitiesFromDtoFile.class.getName());
-
     private static final int MAX_TASK_COUNT = 100;
-
     final File importFile;
     final AtomicInteger importCount = new AtomicInteger();
-
     Semaphore runningTasks = new Semaphore(MAX_TASK_COUNT, false);
     ConcurrentSkipListSet<ExceptionRecord> exceptionRecords = new ConcurrentSkipListSet<>();
-
 
     public LoadEntitiesFromDtoFile(File importFile) {
         super(false, true);
@@ -68,8 +36,7 @@ public class LoadEntitiesFromDtoFile extends TrackingCallable<Integer> {
 
     public Integer compute() throws IOException {
         updateTitle("Loading " + importFile.getName());
-        System.out.println(getTitle());
-        System.out.flush();
+        LOG.info(getTitle());
 
         double sizeForAll = 0;
         try (ZipFile zipFile = new ZipFile(importFile, Charset.forName("UTF-8"))) {
@@ -133,7 +100,35 @@ public class LoadEntitiesFromDtoFile extends TrackingCallable<Integer> {
             PrintWriter pw = new PrintWriter(sw);
             exceptionRecord.t.printStackTrace(pw);
             sb.append(exceptionRecord.t.getLocalizedMessage()).append(" for ").append(exceptionRecord.chronology).append("\n").append(sw.toString()).append("\n");
-         });
+        });
         return sb.toString();
+    }
+
+    private static record ExceptionRecord(Chronology chronology, Throwable t) implements Comparable<ExceptionRecord> {
+        @Override
+        public int compareTo(LoadEntitiesFromDtoFile.ExceptionRecord o) {
+            return chronology.publicId().compareTo(o.chronology().publicId());
+        }
+    }
+
+    private class PutChronology implements Runnable {
+        final Chronology chronology;
+
+        public PutChronology(Chronology chronology) {
+            this.chronology = chronology;
+        }
+
+        @Override
+        public void run() {
+            try {
+                EntityService.get().putChronology(chronology);
+            } catch (Throwable e) {
+                e.printStackTrace();
+                exceptionRecords.add(new ExceptionRecord(chronology, e));
+                System.exit(0);
+            } finally {
+                runningTasks.release();
+            }
+        }
     }
 }

@@ -11,6 +11,8 @@ import org.hl7.tinkar.provider.mvstore.internal.Get;
 import org.hl7.tinkar.provider.mvstore.internal.Put;
 import org.hl7.tinkar.provider.search.Indexer;
 import org.hl7.tinkar.provider.search.Searcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,7 +25,7 @@ import java.util.function.ObjIntConsumer;
  * TODO: Maybe also consider making use of: https://blogs.oracle.com/javamagazine/creating-a-java-off-heap-in-memory-database?source=:em:nw:mt:::RC_WWMK200429P00043:NSL400123121
  */
 public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
-
+    private static final Logger LOG = LoggerFactory.getLogger(MVStoreProvider.class);
     private static final File defaultDataDirectory = new File("target/mvstore/");
     private static final String databaseFileName = "mvstore.dat";
     private static final UUID nextNidKey = new UUID(Long.MAX_VALUE, Long.MIN_VALUE);
@@ -49,7 +51,7 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
         configuredRoot.mkdirs();
         File databaseFile = new File(configuredRoot, databaseFileName);
-        System.out.println("Starting MVStoreProvider from: " + databaseFile.getAbsolutePath());
+        LOG.info("Starting MVStoreProvider from: " + databaseFile.getAbsolutePath());
         this.offHeap.open(databaseFile.getAbsolutePath(), false, null);
         this.store = new MVStore.Builder().fileName(databaseFile.getAbsolutePath()).open();
 

@@ -67,12 +67,12 @@ public class Indexer {
     }
 
     public void commit() throws IOException {
-        System.out.println("Committing lucene index");
+        LOG.info("Committing lucene index");
         this.indexWriter.commit();
     }
 
     public void close() throws IOException {
-        System.out.println("Closing lucene index");
+        LOG.info("Closing lucene index");
         this.indexWriter.close();
     }
 

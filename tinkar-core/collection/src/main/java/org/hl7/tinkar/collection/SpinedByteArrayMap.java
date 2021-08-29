@@ -1,18 +1,16 @@
 package org.hl7.tinkar.collection;
 
 import org.hl7.tinkar.collection.store.ByteArrayStore;
-import org.hl7.tinkar.common.service.PrimitiveDataService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
-import java.util.logging.Logger;
 
 public class SpinedByteArrayMap extends SpinedIntObjectMap<byte[]> {
 
-    private static final Logger LOG = Logger.getLogger(SpinedByteArrayArrayMap.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(SpinedByteArrayMap.class);
     private final ByteArrayStore byteArrayStore;
 
     public SpinedByteArrayMap(ByteArrayStore byteArrayStore) {
@@ -58,4 +56,4 @@ public class SpinedByteArrayMap extends SpinedIntObjectMap<byte[]> {
         }
     }
 
- }
+}

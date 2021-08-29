@@ -1,13 +1,14 @@
 package org.hl7.tinkar.collection;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.Supplier;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
 
 public class ConcurrentSpineList<E extends Object> {
-    private static final Logger LOG = LogManager.getLogManager().getLogger(ConcurrentSpineList.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(ConcurrentSpineList.class);
     private final int incrementSize = 4096;
     private final AtomicReference<AtomicReferenceArray<E>> spineArrayReference = new AtomicReference<>();
     private final Supplier<E> supplier;
@@ -38,6 +39,17 @@ public class ConcurrentSpineList<E extends Object> {
         return getSpine(spineIndex);
     }
 
+    public void setSpine(int spineIndex, E spine) {
+        AtomicReferenceArray<E> spineArray = spineArrayReference.get();
+        if (spineIndex >= spineArray.length()) {
+            LOG.info("Growing for length: " + spineIndex);
+            growArray(spineIndex);
+            spineArray = spineArrayReference.get();
+            LOG.info("new length: " + spineArray.length());
+        }
+        spineArray.set(spineIndex, spine);
+    }
+
     private void growArray(int spineIndex) {
         AtomicReferenceArray<E> spineArray = spineArrayReference.get();
         if (spineIndex >= spineArray.length()) {
@@ -47,17 +59,6 @@ public class ConcurrentSpineList<E extends Object> {
             }
             spineArrayReference.compareAndSet(spineArray, newSpineArray);
         }
-    }
-
-    public void setSpine(int spineIndex, E spine) {
-        AtomicReferenceArray<E> spineArray = spineArrayReference.get();
-        if (spineIndex >= spineArray.length()) {
-            LOG.fine("Growing for length: " + spineIndex);
-            growArray(spineIndex);
-            spineArray = spineArrayReference.get();
-            LOG.fine("new length: " + spineArray.length());
-        }
-        spineArray.set(spineIndex, spine);
     }
 
     public int getSpineCount() {

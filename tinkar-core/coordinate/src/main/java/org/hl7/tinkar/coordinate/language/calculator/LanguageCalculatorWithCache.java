@@ -11,7 +11,6 @@ import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
 import org.hl7.tinkar.common.id.IntIdList;
 import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.common.service.PrimitiveData;
-import org.hl7.tinkar.coordinate.CoordinateUtil;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinate;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinateRecord;
 import org.hl7.tinkar.coordinate.stamp.StampCoordinateRecord;
@@ -21,16 +20,17 @@ import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.terms.EntityFacade;
 import org.hl7.tinkar.terms.TinkarTerm;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.logging.Logger;
 
 public class LanguageCalculatorWithCache implements LanguageCalculator {
     /**
      * The Constant LOG.
      */
-    private static final Logger LOG = CoordinateUtil.LOG;
+    private static final Logger LOG = LoggerFactory.getLogger(LanguageCalculatorWithCache.class);
     private static final ConcurrentReferenceHashMap<StampLangRecord, LanguageCalculatorWithCache> SINGLETONS =
             new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
                     ConcurrentReferenceHashMap.ReferenceType.WEAK);

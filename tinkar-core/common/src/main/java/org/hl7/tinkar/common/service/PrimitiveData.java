@@ -5,25 +5,33 @@ import org.eclipse.collections.api.list.primitive.IntList;
 import org.eclipse.collections.api.set.primitive.IntSet;
 import org.hl7.tinkar.common.id.IntIdCollection;
 import org.hl7.tinkar.common.id.PublicId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.function.ToIntFunction;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 @AutoService(CachingService.class)
 public class PrimitiveData implements CachingService {
-
-    private static Logger LOG = Logger.getLogger(PrimitiveData.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(PrimitiveData.class);
 
     private static DataServiceController<PrimitiveDataService> controllerSingleton;
     private static DefaultDescriptionForNidService defaultDescriptionForNidServiceSingleton;
     private static PublicIdService publicIdServiceSingleton;
     private static PrimitiveData singleton;
+
     static {
         singleton = new PrimitiveData();
+    }
+
+    public PrimitiveData() {
+        ServiceLoader<DefaultDescriptionForNidService> loader = ServiceLoader.load(DefaultDescriptionForNidService.class);
+        PrimitiveData.defaultDescriptionForNidServiceSingleton = loader.findFirst().get();
+        ServiceLoader<PublicIdService> publicIdLoader = ServiceLoader.load(PublicIdService.class);
+        PrimitiveData.publicIdServiceSingleton = publicIdLoader.findFirst().get();
+        LOG.info("Default desc service: " + defaultDescriptionForNidServiceSingleton);
     }
 
     public static void start() {
@@ -36,7 +44,7 @@ public class PrimitiveData implements CachingService {
         try {
             controllerSingleton.stop();
         } catch (Throwable ex) {
-            LOG.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+            LOG.error(ex.getLocalizedMessage(), ex);
         } finally {
             progressTask.finished();
         }
@@ -57,11 +65,19 @@ public class PrimitiveData implements CachingService {
         return controllerSingleton.running();
     }
 
-    public static PrimitiveDataService get() {
-        if (controllerSingleton != null) {
-            return controllerSingleton.provider();
-        }
-        throw new IllegalStateException("No provider. Call Select provider prior to get()");
+    public static List<DataServiceController> getControllerOptions() {
+        final List<DataServiceController> dataServiceControllers = ServiceLoader.load(DataServiceController.class)
+                .stream().map(dataServiceControllerProvider -> dataServiceControllerProvider.get()).toList();
+        return dataServiceControllers;
+    }
+
+    public static void selectControllerByName(String name) {
+        PrimitiveData.selectController((dataServiceController) -> {
+            if (name.equals(dataServiceController.controllerName())) {
+                return 1;
+            }
+            return -1;
+        });
     }
 
     public static void selectController(ToIntFunction<DataServiceController<?>> scorer) {
@@ -86,43 +102,12 @@ public class PrimitiveData implements CachingService {
         }
     }
 
-    public static List<DataServiceController> getControllerOptions() {
-        final List<DataServiceController> dataServiceControllers = ServiceLoader.load(DataServiceController.class)
-                .stream().map(dataServiceControllerProvider -> dataServiceControllerProvider.get()).toList();
-        return dataServiceControllers;
-    }
-
-    public static void selectControllerByName(String name) {
-        PrimitiveData.selectController((dataServiceController) -> {
-            if (name.equals(dataServiceController.controllerName())) {
-                return 1;
-            }
-            return -1;
-        });
-    }
-
     public static DataServiceController getController() {
         return controllerSingleton;
     }
 
     public static void setController(DataServiceController controller) {
         controllerSingleton = controller;
-    }
-
-    public PrimitiveData() {
-        ServiceLoader<DefaultDescriptionForNidService> loader = ServiceLoader.load(DefaultDescriptionForNidService.class);
-        PrimitiveData.defaultDescriptionForNidServiceSingleton = loader.findFirst().get();
-        ServiceLoader<PublicIdService> publicIdLoader = ServiceLoader.load(PublicIdService.class);
-        PrimitiveData.publicIdServiceSingleton = publicIdLoader.findFirst().get();
-        LOG.info("Default desc service: " + defaultDescriptionForNidServiceSingleton);
-    }
-
-    @Override
-    public void reset() {
-        controllerSingleton = null;
-        defaultDescriptionForNidServiceSingleton = null;
-        publicIdServiceSingleton = null;
-        singleton = new PrimitiveData();
     }
 
     public static String textFast(int nid) {
@@ -179,6 +164,21 @@ public class PrimitiveData implements CachingService {
 
     public static int nid(PublicId publicId) {
         return get().nidForPublicId(publicId);
+    }
+
+    public static PrimitiveDataService get() {
+        if (controllerSingleton != null) {
+            return controllerSingleton.provider();
+        }
+        throw new IllegalStateException("No provider. Call Select provider prior to get()");
+    }
+
+    @Override
+    public void reset() {
+        controllerSingleton = null;
+        defaultDescriptionForNidServiceSingleton = null;
+        publicIdServiceSingleton = null;
+        singleton = new PrimitiveData();
     }
 
 }

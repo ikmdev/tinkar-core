@@ -13,10 +13,13 @@ import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.hl7.tinkar.component.graph.DiGraph;
 import org.hl7.tinkar.component.graph.Vertex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicReference;
 
 public class DiGraphEntity<V extends EntityVertex> extends DiGraphAbstract<V> implements DiGraph<V> {
+    private static final Logger LOG = LoggerFactory.getLogger(DiGraphEntity.class);
     final ImmutableList<V> roots;
     final ImmutableIntObjectMap<ImmutableIntList> predecessorMap;
 
@@ -27,30 +30,10 @@ public class DiGraphEntity<V extends EntityVertex> extends DiGraphAbstract<V> im
         this.predecessorMap = predecessorMap;
     }
 
-    @Override
-    public ImmutableList<V> roots() {
-        return roots;
-    }
-
-    @Override
-    public ImmutableList<V> predecessors(V vertex) {
-        ImmutableIntList predecessorlist = predecessorMap.get(vertex.vertexIndex());
-        MutableList<V> predecessors = Lists.mutable.ofInitialCapacity(predecessorlist.size());
-        predecessorlist.forEach(successorIndex -> {
-            predecessors.add(vertex(successorIndex));
-        });
-        return predecessors.toImmutable();
-    }
-
-    @Override
-    public ImmutableIntObjectMap<ImmutableIntList> predecessorMap() {
-        return predecessorMap;
-    }
-
     public static DiGraphEntity make(DiGraph<Vertex> tree) {
         ImmutableList<EntityVertex> vertexMap = getVertexEntities(tree);
-        MutableList<EntityVertex> rootList =  Lists.mutable.ofInitialCapacity(tree.roots().size());
-        for (Vertex vertex: tree.roots()) {
+        MutableList<EntityVertex> rootList = Lists.mutable.ofInitialCapacity(tree.roots().size());
+        for (Vertex vertex : tree.roots()) {
             rootList.add(EntityVertex.make(vertex));
         }
         return new DiGraphEntity(rootList.toImmutable(), vertexMap, tree.successorMap(), tree.predecessorMap());
@@ -75,6 +58,30 @@ public class DiGraphEntity<V extends EntityVertex> extends DiGraphAbstract<V> im
 
     }
 
+    public static <V extends EntityVertex> Builder<V> builder() {
+        return new Builder<>();
+    }
+
+    @Override
+    public ImmutableList<V> roots() {
+        return roots;
+    }
+
+    @Override
+    public ImmutableList<V> predecessors(V vertex) {
+        ImmutableIntList predecessorlist = predecessorMap.get(vertex.vertexIndex());
+        MutableList<V> predecessors = Lists.mutable.ofInitialCapacity(predecessorlist.size());
+        predecessorlist.forEach(successorIndex -> {
+            predecessors.add(vertex(successorIndex));
+        });
+        return predecessors.toImmutable();
+    }
+
+    @Override
+    public ImmutableIntObjectMap<ImmutableIntList> predecessorMap() {
+        return predecessorMap;
+    }
+
     public final byte[] getBytes() {
         int defaultSize = size();
         int bufSize = defaultSize;
@@ -91,7 +98,7 @@ public class DiGraphEntity<V extends EntityVertex> extends DiGraphAbstract<V> im
                 roots.forEach(root -> byteBuf.writeInt(root.vertexIndex()));
                 return byteBuf.asArray();
             } catch (ArrayIndexOutOfBoundsException e) {
-                System.out.println("Tree: " + e.getMessage());
+                LOG.info("Tree: " + e.getMessage());
                 byteBufRef.get().recycle();
                 bufSize = bufSize + defaultSize;
                 byteBufRef.set(ByteBufPool.allocate(bufSize));
@@ -99,34 +106,31 @@ public class DiGraphEntity<V extends EntityVertex> extends DiGraphAbstract<V> im
         }
     }
 
-    public static <V extends EntityVertex> Builder<V> builder() {
-        return new Builder<>();
-    }
-
     public static class Builder<V extends EntityVertex> {
         private final MutableList<V> vertexMap = Lists.mutable.empty();
         private final MutableIntObjectMap<MutableIntList> successorMap = IntObjectMaps.mutable.empty();
-        private final MutableIntObjectMap<MutableIntList> predecessorMap = IntObjectMaps.mutable.empty();;
+        private final MutableIntObjectMap<MutableIntList> predecessorMap = IntObjectMaps.mutable.empty();
+        ;
         private final MutableList<V> roots = Lists.mutable.empty();
 
         protected Builder() {
         }
 
+        public Builder addRoot(V root) {
+            addVertex(root);
+            roots.add(root);
+            return this;
+        }
+
         public Builder addVertex(V vertex) {
             if (vertex.vertexIndex() > 0 &&
-                vertex.vertexIndex() < vertexMap.size() &&
-                vertexMap.get(vertex.vertexIndex()) == vertex) {
+                    vertex.vertexIndex() < vertexMap.size() &&
+                    vertexMap.get(vertex.vertexIndex()) == vertex) {
                 // already in the list.
             } else {
                 vertex.setVertexIndex(vertexMap.size());
                 vertexMap.add(vertex.vertexIndex(), vertex);
             }
-            return this;
-        }
-
-        public Builder addRoot(V root) {
-            addVertex(root);
-            roots.add(root);
             return this;
         }
 

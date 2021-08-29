@@ -50,7 +50,6 @@ import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.functional.TriConsumer;
 import org.hl7.tinkar.common.util.ints2long.IntsInLong;
 import org.hl7.tinkar.component.graph.DiTree;
-import org.hl7.tinkar.coordinate.CoordinateUtil;
 import org.hl7.tinkar.coordinate.stamp.*;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.entity.graph.DiTreeEntity;
@@ -58,6 +57,8 @@ import org.hl7.tinkar.entity.graph.VersionVertex;
 import org.hl7.tinkar.terms.ConceptToDataType;
 import org.hl7.tinkar.terms.State;
 import org.hl7.tinkar.terms.TinkarTerm;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.util.*;
@@ -65,7 +66,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
-import java.util.logging.Logger;
 
 import static org.hl7.tinkar.coordinate.stamp.calculator.RelativePosition.*;
 
@@ -78,7 +78,7 @@ public class StampCalculatorWithCache implements StampCalculator {
     /**
      * The Constant LOG.
      */
-    private static final Logger LOG = CoordinateUtil.LOG;
+    private static final Logger LOG = LoggerFactory.getLogger(StampCalculatorWithCache.class);
 
     private static final ConcurrentReferenceHashMap<StampCoordinateRecord, StampCalculatorWithCache> SINGLETONS =
             new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
@@ -417,7 +417,7 @@ public class StampCalculatorWithCache implements StampCalculator {
         precedingSegments.add(segment.segmentSequence);
         Segment old = pathNidSegmentMap.put(destination.getPathForPositionNid(), segment);
         if (old != null) {
-            LOG.severe("Overwrite segment " + old +
+            LOG.error("Overwrite segment " + old +
                     " with " + segment + " for path " + destination.getPathForPositionConcept());
         }
         destination.getPathOrigins()
@@ -829,7 +829,7 @@ public class StampCalculatorWithCache implements StampCalculator {
                 }
                 return latestField;
             } else {
-                LOG.warning("Field criterion " + PrimitiveData.text(criterionNid) +
+                LOG.warn("Field criterion " + PrimitiveData.text(criterionNid) +
                         " not in pattern: " + patternVersion);
                 return Latest.empty();
             }
@@ -895,7 +895,7 @@ public class StampCalculatorWithCache implements StampCalculator {
                     this.errorCount++;
 
                     if (this.errorCount < 5) {
-                        LOG.warning("EQUAL should never happen. Data is malformed. Stamp: " + part.stamp() +
+                        LOG.warn("EQUAL should never happen. Data is malformed. Stamp: " + part.stamp() +
                                 " Part:\n" + part + " \n  Part to test: \n" + prevPartToTest + "\n");
                     }
 

@@ -2,16 +2,16 @@ package org.hl7.tinkar.provider.spinedarray;
 
 import org.hl7.tinkar.collection.SpineFileUtil;
 import org.hl7.tinkar.collection.store.IntIntArrayStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.Optional;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReferenceArray;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class IntIntArrayFileStore extends SpinedArrayFileStore implements IntIntArrayStore {
-    protected static final Logger LOG = Logger.getLogger(IntIntArrayFileStore.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(IntIntArrayFileStore.class);
 
     public IntIntArrayFileStore(File directory) {
         super(directory);
@@ -43,7 +43,7 @@ public class IntIntArrayFileStore extends SpinedArrayFileStore implements IntInt
             }
             return Optional.of(data);
         } catch (IOException ex) {
-            LOG.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+            LOG.error(ex.getLocalizedMessage(), ex);
             throw new RuntimeException(ex);
         }
     }
@@ -68,7 +68,7 @@ public class IntIntArrayFileStore extends SpinedArrayFileStore implements IntInt
                 }
             }
         } catch (IOException ex) {
-            LOG.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+            LOG.error(ex.getLocalizedMessage(), ex);
             throw new RuntimeException(ex);
         } finally {
             diskSemaphore.release();

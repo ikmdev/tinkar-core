@@ -1,8 +1,10 @@
 package org.hl7.tinkar.coordinate;
 
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CoordinateUtil {
-    public static final Logger LOG = Logger.getLogger(CoordinateUtil.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(CoordinateUtil.class);
 
 }

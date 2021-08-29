@@ -1,17 +1,17 @@
 package org.hl7.tinkar.provider.spinedarray;
 
 import org.hl7.tinkar.collection.SpineFileUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Semaphore;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
 
 import static org.hl7.tinkar.collection.SpineFileUtil.SPINE_PREFIX;
 
 public class SpinedArrayFileStore {
-    protected static final Logger LOG = Logger.getLogger(SpinedArrayFileStore.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayFileStore.class);
     protected final Semaphore diskSemaphore;
 
     protected final File directory;

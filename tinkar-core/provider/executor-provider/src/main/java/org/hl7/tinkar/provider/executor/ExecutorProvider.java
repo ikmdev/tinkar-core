@@ -1,32 +1,30 @@
 package org.hl7.tinkar.provider.executor;
 
-import org.hl7.tinkar.common.service.Executor;
 import org.hl7.tinkar.common.service.ExecutorService;
 import org.hl7.tinkar.common.util.thread.NamedThreadFactory;
-import org.hl7.tinkar.common.util.thread.PausableThreadPoolExecutor;
 import org.hl7.tinkar.common.util.thread.ThreadPoolExecutorFixed;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 import java.util.concurrent.*;
-import java.util.logging.Logger;
 
 /**
- *
  * Generally available thread pools for doing background processing in an ISAAC application.
- *
+ * <p>
  * The {@link #forkJoinThreadPool()} that this provides is identical to the @{link {@link ForkJoinPool#commonPool()}
  * with the exception that it will bottom out at 6 processing threads, rather than 1, to help prevent
  * deadlock situations in common ISAAC usage patterns.  This has an unbounded queue depth, and LIFO behavior.
- *
+ * <p>
  * The {@link #blockingThreadPool()} that this provides is a standard thread pool with (up to) the same number of threads
  * as there are cores present on the computer - with a minimum of 6 threads.  This executor has no queue - internally
  * it uses a {@link SynchronousQueue} - so if no thread is available to accept the task being queued, it will block
  * submission of the task until a thread is available to accept the job.
- *
+ * <p>
  * The {@link #threadPool()} that this provides is a standard thread pool with (up to) the same number of threads
  * as there are cores present on the computer - with a minimum of 6 threads.  This executor has an unbounded queue
  * depth, and FIFO behavior.
- *
+ * <p>
  * The {@link #ioThreadPool()} that this provides is a standard thread pool with 6 threads.  This executor has an unbounded queue
  * depth, and FIFO behavior.  This executor is good for jobs that tend to block on disk IO, where you don't want many running in parallel.
  *
@@ -35,42 +33,52 @@ import java.util.logging.Logger;
 
 public class ExecutorProvider implements ExecutorService {
 
-    private static final Logger LOG = Logger.getLogger(Executor.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(ExecutorProvider.class);
 
-    /** The fork join executor. */
+    /**
+     * The fork join executor.
+     */
     private ForkJoinPool forkJoinExecutor;
 
-    /** The blocking thread pool executor. */
+    /**
+     * The blocking thread pool executor.
+     */
     private ThreadPoolExecutor blockingThreadPoolExecutor;
 
-    /** The thread pool executor. */
+    /**
+     * The thread pool executor.
+     */
     private ThreadPoolExecutor threadPoolExecutor;
 
-    /** The io thread pool executor. */
+    /**
+     * The io thread pool executor.
+     */
     private ThreadPoolExecutor ioThreadPoolExecutor;
 
-    /** The scheduled executor. */
+    /**
+     * The scheduled executor.
+     */
     private ScheduledExecutorService scheduledExecutor;
 
     /**
      * Start me.
      */
-     protected void start() {
+    protected void start() {
         if (forkJoinExecutor == null) {
             LOG.info("Starting the WorkExecutors thread pools");
 
             // The java default ForkJoinPool.commmonPool starts with only 1 thread, on 1 and 2 core systems, which can get us deadlocked pretty easily.
-            final int procCount   = Runtime.getRuntime()
+            final int procCount = Runtime.getRuntime()
                     .availableProcessors();
             final int parallelism = ((procCount - 1) < 6 ? 6
                     : procCount - 1);  // set between 6 and 1 less than proc count (not less than 6)
 
             this.forkJoinExecutor = new ForkJoinPool(parallelism);
 
-            final int      corePoolSize    = 2;
-            final int      maximumPoolSize = parallelism;
-            final int      keepAliveTime   = 60;
-            final TimeUnit timeUnit        = TimeUnit.SECONDS;
+            final int corePoolSize = 2;
+            final int maximumPoolSize = parallelism;
+            final int keepAliveTime = 60;
+            final TimeUnit timeUnit = TimeUnit.SECONDS;
 
             // The blocking executor
             this.blockingThreadPoolExecutor = new ThreadPoolExecutorFixed(corePoolSize,
@@ -114,7 +122,7 @@ public class ExecutorProvider implements ExecutorService {
             threadPool().execute(() -> UUID.randomUUID());
             this.scheduledExecutor = Executors.newScheduledThreadPool(1,
                     new NamedThreadFactory("Tinkar-Scheduled-Thread", true));
-            LOG.fine("WorkExecutors thread pools ready");
+            LOG.info("WorkExecutors thread pools ready");
         }
 
     }
@@ -149,10 +157,32 @@ public class ExecutorProvider implements ExecutorService {
             this.scheduledExecutor.shutdownNow();
             this.scheduledExecutor = null;
         }
-        LOG.fine("Stopped WorkExecutors thread pools");
+        LOG.info("Stopped WorkExecutors thread pools");
     }
 
     //~--- get methods ---------------------------------------------------------
+
+    /**
+     * Gets the fork join pool executor.
+     *
+     * @return the Tinkar common {@link ForkJoinPool} instance - (behavior described in the class docs)
+     * This is backed by an unbounded queue - it won't block / reject submissions because of being full.
+     */
+    @Override
+    public ForkJoinPool forkJoinThreadPool() {
+        return this.forkJoinExecutor;
+    }
+
+    /**
+     * Gets the potentially blocking executor.
+     *
+     * @return The Tinkar common {@link ThreadPoolExecutor} - (behavior described in the class docs).
+     * This is a synchronous queue - if no thread is available to take a job, it will block until a thread
+     * is available to accept the job.
+     */
+    public ThreadPoolExecutor blockingThreadPool() {
+        return this.blockingThreadPoolExecutor;
+    }
 
     /**
      * Gets the executor.
@@ -168,17 +198,6 @@ public class ExecutorProvider implements ExecutorService {
     }
 
     /**
-     * Gets the fork join pool executor.
-     *
-     * @return the Tinkar common {@link ForkJoinPool} instance - (behavior described in the class docs)
-     * This is backed by an unbounded queue - it won't block / reject submissions because of being full.
-     */
-    @Override
-    public ForkJoinPool forkJoinThreadPool() {
-        return this.forkJoinExecutor;
-    }
-
-    /**
      * Gets the IO executor.
      *
      * @return The Tinkar common IO {@link ThreadPoolExecutor} - (behavior described in the class docs).
@@ -189,17 +208,6 @@ public class ExecutorProvider implements ExecutorService {
     @Override
     public ThreadPoolExecutor ioThreadPool() {
         return this.ioThreadPoolExecutor;
-    }
-
-    /**
-     * Gets the potentially blocking executor.
-     *
-     * @return The Tinkar common {@link ThreadPoolExecutor} - (behavior described in the class docs).
-     * This is a synchronous queue - if no thread is available to take a job, it will block until a thread
-     * is available to accept the job.
-     */
-    public ThreadPoolExecutor blockingThreadPool() {
-        return this.blockingThreadPoolExecutor;
     }
 
     /**

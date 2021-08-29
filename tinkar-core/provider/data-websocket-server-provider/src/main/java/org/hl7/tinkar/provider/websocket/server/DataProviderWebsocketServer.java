@@ -8,18 +8,25 @@ import io.activej.http.WebSocket.Message;
 import io.activej.inject.annotation.Provides;
 import io.activej.launchers.http.MultithreadedHttpServerLauncher;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ServiceLoader;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class DataProviderWebsocketServer extends MultithreadedHttpServerLauncher {
-
+    private static final Logger LOG = LoggerFactory.getLogger(DataProviderWebsocketServer.class);
     private final ServiceLoader<PrimitiveDataService> serviceLoader;
     private final PrimitiveDataService dataService;
 
     public DataProviderWebsocketServer() {
         this.serviceLoader = ServiceLoader.load(PrimitiveDataService.class);
         this.dataService = this.serviceLoader.findFirst().get();
+    }
+
+    public static void main(String[] args) throws Exception {
+        DataProviderWebsocketServer server = new DataProviderWebsocketServer();
+        server.launch(args);
     }
 
     @Provides
@@ -31,7 +38,7 @@ public class DataProviderWebsocketServer extends MultithreadedHttpServerLauncher
                             ByteBuf buf = message.getBuf();
                             PrimitiveDataService.RemoteOperations operation = PrimitiveDataService.RemoteOperations.fromToken(buf.readByte());
                             nid.set(buf.readInt());
-                            System.out.println("Received: " + operation + " for: " + nid);
+                            LOG.info("Received: " + operation + " for: " + nid);
                         })
                         .then(() -> {
 
@@ -41,10 +48,5 @@ public class DataProviderWebsocketServer extends MultithreadedHttpServerLauncher
                             buf.write(data);
                             return webSocket.writeMessage(Message.binary(buf));
                         }));
-    }
-
-    public static void main(String[] args) throws Exception {
-        DataProviderWebsocketServer server = new DataProviderWebsocketServer();
-        server.launch(args);
     }
 }

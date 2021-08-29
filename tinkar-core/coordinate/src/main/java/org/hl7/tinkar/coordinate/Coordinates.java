@@ -13,12 +13,13 @@ import org.hl7.tinkar.coordinate.stamp.StampPositionRecord;
 import org.hl7.tinkar.coordinate.stamp.StateSet;
 import org.hl7.tinkar.coordinate.view.ViewCoordinateRecord;
 import org.hl7.tinkar.terms.TinkarTerm;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.logging.Logger;
 
 public class Coordinates {
 
-    private static final Logger LOG = CoordinateUtil.LOG;
+    private static final Logger LOG = LoggerFactory.getLogger(Coordinates.class);
 
     //private static ChronologyChangeListener ccl;
 

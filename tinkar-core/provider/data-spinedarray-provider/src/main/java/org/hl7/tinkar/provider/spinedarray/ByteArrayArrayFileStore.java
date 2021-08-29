@@ -2,18 +2,18 @@ package org.hl7.tinkar.provider.spinedarray;
 
 
 import org.hl7.tinkar.collection.store.ByteArrayArrayStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.Optional;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReferenceArray;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static org.hl7.tinkar.collection.SpineFileUtil.SPINE_PREFIX;
 
 public class ByteArrayArrayFileStore extends SpinedArrayFileStore implements ByteArrayArrayStore {
-    protected static final Logger LOG = Logger.getLogger(ByteArrayArrayFileStore.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(ByteArrayArrayFileStore.class);
 
     public ByteArrayArrayFileStore(File directory) {
         super(directory);
@@ -49,7 +49,7 @@ public class ByteArrayArrayFileStore extends SpinedArrayFileStore implements Byt
                 return Optional.of(spine);
 
             } catch (IOException ex) {
-                LOG.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+                LOG.error(ex.getLocalizedMessage(), ex);
             } finally {
                 diskSemaphore.release();
             }
@@ -77,7 +77,7 @@ public class ByteArrayArrayFileStore extends SpinedArrayFileStore implements Byt
                 }
             }
         } catch (IOException ex) {
-            LOG.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+            LOG.error(ex.getLocalizedMessage(), ex);
         } finally {
             diskSemaphore.release();
         }

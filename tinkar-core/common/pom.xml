@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
@@ -20,6 +20,11 @@
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>activej</artifactId>
             <version>${tinkar-jpms-deps.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.smallrye.reactive</groupId>
+            <artifactId>mutiny</artifactId>
+            <version>${io.smallrye.reactive.version}</version>
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
@@ -46,6 +51,6 @@
                     <argLine>--add-opens org.hl7.tinkar.util/org.hl7.tinkar.util.id=ALL-UNNAMED</argLine>
                 </configuration>
             </plugin>
-         </plugins>
+        </plugins>
     </build>
 </project>

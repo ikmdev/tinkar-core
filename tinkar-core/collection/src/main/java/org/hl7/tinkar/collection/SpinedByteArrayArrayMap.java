@@ -17,6 +17,8 @@
 package org.hl7.tinkar.collection;
 
 import org.hl7.tinkar.collection.store.ByteArrayArrayStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,15 +26,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
-import java.util.logging.Logger;
 
 /**
- *
  * @author kec
  */
 public class SpinedByteArrayArrayMap extends SpinedIntObjectMap<byte[][]> {
 
-    private static final Logger LOG = Logger.getLogger(SpinedByteArrayArrayMap.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(SpinedByteArrayArrayMap.class);
     private final ByteArrayArrayStore byteArrayArrayStore;
 
     public SpinedByteArrayArrayMap(ByteArrayArrayStore byteArrayArrayStore) {
@@ -78,35 +78,6 @@ public class SpinedByteArrayArrayMap extends SpinedIntObjectMap<byte[][]> {
         } finally {
             fileSemaphore.release();
         }
-    }
-
-
-    private static int compare(byte[] one, byte[] another) {
-        boolean oneStartsWithZero = false;
-        boolean anotherStartsWithZero = false;
-
-        if (one[0] == 0 && one[1] == 0 && one[2] == 0 && one[3] == 0) {
-            oneStartsWithZero = true;
-        }
-        if (another[0] == 0 && another[1] == 0 && another[2] == 0 && another[3] == 0) {
-            anotherStartsWithZero = true;
-        }
-        if (oneStartsWithZero && anotherStartsWithZero) {
-            return 0;
-        }
-        if (oneStartsWithZero) {
-            return -1;
-        }
-        if (anotherStartsWithZero) {
-            return 1;
-        }
-        for (int i = 0; i < one.length && i < another.length; i++) {
-            int compare = Byte.compare(one[i], another[i]);
-            if (compare != 0) {
-                return compare;
-            }
-        }
-        return one.length - another.length;
     }
 
     private byte[][] merge(byte[][] currentValue, byte[][] updateValue) {
@@ -156,6 +127,34 @@ public class SpinedByteArrayArrayMap extends SpinedIntObjectMap<byte[][]> {
             }
         }
         return mergedValues.toArray(new byte[mergedValues.size()][]);
+    }
+
+    private static int compare(byte[] one, byte[] another) {
+        boolean oneStartsWithZero = false;
+        boolean anotherStartsWithZero = false;
+
+        if (one[0] == 0 && one[1] == 0 && one[2] == 0 && one[3] == 0) {
+            oneStartsWithZero = true;
+        }
+        if (another[0] == 0 && another[1] == 0 && another[2] == 0 && another[3] == 0) {
+            anotherStartsWithZero = true;
+        }
+        if (oneStartsWithZero && anotherStartsWithZero) {
+            return 0;
+        }
+        if (oneStartsWithZero) {
+            return -1;
+        }
+        if (anotherStartsWithZero) {
+            return 1;
+        }
+        for (int i = 0; i < one.length && i < another.length; i++) {
+            int compare = Byte.compare(one[i], another[i]);
+            if (compare != 0) {
+                return compare;
+            }
+        }
+        return one.length - another.length;
     }
 
     public void put(int elementSequence, List<byte[]> dataList) {

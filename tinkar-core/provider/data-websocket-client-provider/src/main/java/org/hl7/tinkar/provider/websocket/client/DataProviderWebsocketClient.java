@@ -18,6 +18,8 @@ import org.hl7.tinkar.common.service.PrimitiveDataSearchResult;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
 import org.hl7.tinkar.common.util.uuid.UuidUtil;
 import org.hl7.tinkar.entity.EntityService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.UUID;
@@ -31,7 +33,7 @@ import java.util.function.ObjIntConsumer;
 public class DataProviderWebsocketClient
         extends Launcher
         implements PrimitiveDataService {
-
+    private static final Logger LOG = LoggerFactory.getLogger(DataProviderWebsocketClient.class);
     private static final Integer wsKey = Integer.valueOf(1);
     private final URI uri;
     @Inject
@@ -67,7 +69,7 @@ public class DataProviderWebsocketClient
     @Override
     protected void run() throws ExecutionException, InterruptedException {
         String url = args.length != 0 ? args[0] : "ws://127.0.0.1:8080/";
-        System.out.println("\nWeb Socket request: " + url);
+        LOG.info("\nWeb Socket request: " + url);
         CompletableFuture<?> future = eventloop.submit(() -> {
             getEntity(url, Integer.MIN_VALUE + 1);
         });
@@ -79,7 +81,7 @@ public class DataProviderWebsocketClient
     }
 
     private void getEntity(String url, int nid) {
-        System.out.println("Sending nid: " + nid);
+        LOG.info("Sending nid: " + nid);
         ByteBuf buf = ByteBufPool.allocate(32);
         buf.writeByte(RemoteOperations.GET_BYTES.token);
         buf.writeInt(nid);
@@ -91,7 +93,7 @@ public class DataProviderWebsocketClient
                             int length = readBuf.readInt();
                             byte[] readData = new byte[length];
                             readBuf.read(readData);
-                            System.out.println("Received: " + EntityService.get().unmarshalChronology(readData));
+                            LOG.info("Received: " + EntityService.get().unmarshalChronology(readData));
                         })
                         .whenComplete(webSocket::close));
     }
@@ -155,7 +157,7 @@ public class DataProviderWebsocketClient
                         byte[] readData = new byte[length];
                         readBuf.read(readData);
                         readDataReference.set(readData);
-                        System.out.println("Received: " + EntityService.get().unmarshalChronology(readData));
+                        LOG.info("Received: " + EntityService.get().unmarshalChronology(readData));
 
                     });
         });

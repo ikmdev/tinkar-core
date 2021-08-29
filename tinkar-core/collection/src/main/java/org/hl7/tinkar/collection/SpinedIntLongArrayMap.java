@@ -1,15 +1,16 @@
 package org.hl7.tinkar.collection;
 
 import org.hl7.tinkar.collection.store.IntLongArrayStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
-import java.util.logging.Logger;
 
 public class SpinedIntLongArrayMap extends SpinedIntObjectMap<long[]> {
 
-    private static final Logger LOG = Logger.getLogger(SpinedIntLongArrayMap.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(SpinedIntLongArrayMap.class);
     private final IntLongArrayStore intLongArrayStore;
 
     public SpinedIntLongArrayMap(IntLongArrayStore intLongArrayStore) {

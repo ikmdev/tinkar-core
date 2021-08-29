@@ -18,11 +18,14 @@ import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.hl7.tinkar.component.graph.DiTree;
 import org.hl7.tinkar.component.graph.Vertex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class DiTreeEntity<V extends EntityVertex> extends DiGraphAbstract<V> implements DiTree<V> {
+    private static final Logger LOG = LoggerFactory.getLogger(DiTreeEntity.class);
     final V root;
     final ImmutableIntIntMap predecessorMap;
 
@@ -102,7 +105,7 @@ public class DiTreeEntity<V extends EntityVertex> extends DiGraphAbstract<V> imp
                 byteBuf.writeInt(root.vertexIndex());
                 return byteBuf.asArray();
             } catch (ArrayIndexOutOfBoundsException e) {
-                System.out.println("Tree: " + e.getMessage());
+                LOG.info("Tree: " + e.getMessage());
                 byteBufRef.get().recycle();
                 bufSize = bufSize + defaultSize;
                 byteBufRef.set(ByteBufPool.allocate(bufSize));

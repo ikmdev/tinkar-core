@@ -16,6 +16,9 @@
  */
 package org.hl7.tinkar.collection;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.*;
 import java.util.Arrays;
 import java.util.Spliterator;
@@ -27,9 +30,6 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.IntConsumer;
 import java.util.function.IntUnaryOperator;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
@@ -42,30 +42,28 @@ import static org.hl7.tinkar.collection.SpineFileUtil.SPINE_PREFIX;
  */
 public class SpinedNidIntMap {
 
-    private static final Logger LOG = LogManager.getLogManager().getLogger(SpinedNidIntMap.class.getName());;
+    private static final Logger LOG = LoggerFactory.getLogger(SpinedNidIntMap.class);
 
     private static final int DEFAULT_ELEMENTS_PER_SPINE = 1024;
-    private final int elementsPerSpine;
-    private final ConcurrentSpineList<AtomicIntegerArray> spines = new ConcurrentSpineList<>(16884, this::newSpine);
-    private final int INITIALIZATION_VALUE = Integer.MAX_VALUE;
-
-    private final Semaphore diskSemaphore = new Semaphore(1);
     protected final ConcurrentSkipListSet<Integer> changedSpineIndexes = new ConcurrentSkipListSet<>();
+    private final int elementsPerSpine;
+    private final int INITIALIZATION_VALUE = Integer.MAX_VALUE;
+    private final ConcurrentSpineList<AtomicIntegerArray> spines = new ConcurrentSpineList<>(16884, this::newSpine);
+    private final Semaphore diskSemaphore = new Semaphore(1);
 
     public SpinedNidIntMap() {
         this.elementsPerSpine = DEFAULT_ELEMENTS_PER_SPINE;
     }
-    
+
     /**
      * Empty this data structure (does nothing to the disk location it was read from)
      */
     public void clear() {
-       spines.clear();
-       changedSpineIndexes.clear();
+        spines.clear();
+        changedSpineIndexes.clear();
     }
 
     /**
-     *
      * @param directory
      * @return the number of spine files read.
      */
@@ -87,15 +85,19 @@ public class SpinedNidIntMap {
                     }
                     spines.setSpine(spine, new AtomicIntegerArray(spineArray));
                 } catch (IOException ex) {
-                    LOG.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+                    LOG.error(ex.getLocalizedMessage(), ex);
                     throw new RuntimeException(ex);
                 }
             }
-            LOG.fine("Spine count read: " + getSpineCount());
+            LOG.info("Spine count read: " + getSpineCount());
             return spineFilesRead;
         } finally {
             diskSemaphore.release();
         }
+    }
+
+    private int getSpineCount() {
+        return spines.getSpineCount();
     }
 
     public boolean write(File directory) {
@@ -123,7 +125,7 @@ public class SpinedNidIntMap {
                                 dos.writeInt(aSpine.get(i));
                             }
                         } catch (IOException ex) {
-                            LOG.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+                            LOG.error(ex.getLocalizedMessage(), ex);
                             throw new RuntimeException(ex);
                         } finally {
                             diskSemaphore.release();
@@ -132,15 +134,11 @@ public class SpinedNidIntMap {
                 }
             }
         } catch (IOException ex) {
-            LOG.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+            LOG.error(ex.getLocalizedMessage(), ex);
             throw new RuntimeException(ex);
         }
         return wroteAny.get();
     }
-
-    private int getSpineCount() {
-       return spines.getSpineCount();
-     }
 
     public long sizeInBytes() {
         long sizeInBytes = 0;
@@ -224,20 +222,20 @@ public class SpinedNidIntMap {
                 .characteristics(), false);
     }
 
+    /**
+     * Gets the value spliterator.
+     *
+     * @return the supplier<? extends spliterator. of int>
+     */
+    protected Supplier<? extends Spliterator.OfInt> getKeySpliterator() {
+        return new KeySpliteratorSupplier();
+    }
+
     public IntStream valueStream() {
         final Supplier<? extends Spliterator.OfInt> streamSupplier = this.getValueSpliterator();
 
         return StreamSupport.intStream(streamSupplier, streamSupplier.get()
                 .characteristics(), false);
-    }
-
-    public void addSpine(int spineKey, AtomicIntegerArray spineData) {
-        spines.setSpine(spineKey, spineData);
-    }
-
-    public interface Processor {
-
-        public void process(int key, int value);
     }
 
     /**
@@ -249,13 +247,13 @@ public class SpinedNidIntMap {
         return new ValueSpliteratorSupplier();
     }
 
-    /**
-     * Gets the value spliterator.
-     *
-     * @return the supplier<? extends spliterator. of int>
-     */
-    protected Supplier<? extends Spliterator.OfInt> getKeySpliterator() {
-        return new KeySpliteratorSupplier();
+    public void addSpine(int spineKey, AtomicIntegerArray spineData) {
+        spines.setSpine(spineKey, spineData);
+    }
+
+    public interface Processor {
+
+        public void process(int key, int value);
     }
 
     /**

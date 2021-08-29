@@ -17,16 +17,18 @@
 package org.hl7.tinkar.collection;
 
 import org.hl7.tinkar.common.service.Executor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Spliterator;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.*;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -36,16 +38,13 @@ import java.util.stream.StreamSupport;
  */
 public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
 
-    private static final Logger LOG = LogManager.getLogManager().getLogger(SpinedIntObjectMap.class.getName());
-
     public static final int DEFAULT_SPINE_SIZE = 10240;
     public static final int DEFAULT_MAX_SPINE_COUNT = 10240;
-
-    private final Semaphore newSpineSemaphore = new Semaphore(1);
+    private static final Logger LOG = LoggerFactory.getLogger(SpinedIntObjectMap.class);
     protected final Semaphore fileSemaphore = new Semaphore(1);
-
     protected final int maxSpineCount;
     protected final int spineSize;
+    private final Semaphore newSpineSemaphore = new Semaphore(1);
     // TODO: consider growth strategies instead of just a large array expected to be big enough to hold all the spines...
     private final AtomicReferenceArray<AtomicReferenceArray<E>> spines;
     private final AtomicInteger spineCount = new AtomicInteger();
@@ -82,62 +81,12 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
         }
     }
 
-    public boolean forEachChangedSpine(ObjIntConsumer<AtomicReferenceArray<E>> consumer) {
-        boolean foundChange = false;
-        int spineCountNow = spineCount.get();
-        for (int spineIndex = 0; spineIndex < spineCountNow; spineIndex++) {
-            if (changedSpineIndexes[spineIndex]) {
-                foundChange = true;
-                consumer.accept(getSpine(spineIndex), spineIndex);
-                changedSpineIndexes[spineIndex] = false;
-            }
-        }
-        return foundChange;
-    }
-
-
-    public int getSpineCount() {
-        return spineCount.get();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void clear() {
-        for (int i = 0; i < spines.length(); i++) {
-            spines.set(i, null);
-        }
-    }
-
-    public void printToConsole() {
-        if (elementStringConverter != null) {
-            forEach((E value, int key) -> {
-                LOG.info(key + ": " + elementStringConverter.apply(value));
-            });
-        } else {
-            forEach((E value, int key) -> {
-                LOG.info(key + ": " + value);
-            });
-        }
-    }
-
-    private AtomicReferenceArray<E> newSpine(Integer spineKey) {
-        return makeNewSpine(spineKey);
-    }
-
-    public AtomicReferenceArray<E> makeNewSpine(Integer spineKey) {
-        AtomicReferenceArray<E> spine = new AtomicReferenceArray<>(spineSize);
-        this.spineCount.set(Math.max(this.spineCount.get(), spineKey + 1));
-        return spine;
-    }
-
     private AtomicReferenceArray<E> getSpine(int spineIndex) {
         int startSpineCount = spineCount.get();
         if (spineIndex < startSpineCount) {
             AtomicReferenceArray<E> spine = this.spines.get(spineIndex);
             if (spine == null) {
-                try  {
+                try {
                     newSpineSemaphore.acquireUninterruptibly();
                     spine = this.spines.get(spineIndex);
                     if (spine == null) {
@@ -171,6 +120,65 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
         throw new IllegalStateException("Subclass must implement readSpine");
     }
 
+    private AtomicReferenceArray<E> newSpine(Integer spineKey) {
+        return makeNewSpine(spineKey);
+    }
+
+    public AtomicReferenceArray<E> makeNewSpine(Integer spineKey) {
+        AtomicReferenceArray<E> spine = new AtomicReferenceArray<>(spineSize);
+        this.spineCount.set(Math.max(this.spineCount.get(), spineKey + 1));
+        return spine;
+    }
+
+    public boolean forEachChangedSpine(ObjIntConsumer<AtomicReferenceArray<E>> consumer) {
+        boolean foundChange = false;
+        int spineCountNow = spineCount.get();
+        for (int spineIndex = 0; spineIndex < spineCountNow; spineIndex++) {
+            if (changedSpineIndexes[spineIndex]) {
+                foundChange = true;
+                consumer.accept(getSpine(spineIndex), spineIndex);
+                changedSpineIndexes[spineIndex] = false;
+            }
+        }
+        return foundChange;
+    }
+
+    public int getSpineCount() {
+        return spineCount.get();
+    }
+
+    public void printToConsole() {
+        if (elementStringConverter != null) {
+            forEach((E value, int key) -> {
+                LOG.info(key + ": " + elementStringConverter.apply(value));
+            });
+        } else {
+            forEach((E value, int key) -> {
+                LOG.info(key + ": " + value);
+            });
+        }
+    }
+
+    private int forEachOnSpine(ObjIntConsumer<E> consumer, int spineIndex) {
+        AtomicReferenceArray<E> spine = getSpine(spineIndex);
+        int index = spineIndex * spineSize;
+        int processed = 0;
+        for (int indexInSpine = 0; indexInSpine < spineSize; indexInSpine++) {
+            E element = spine.get(indexInSpine);
+            if (element != null) {
+                int nid = Integer.MIN_VALUE + index;
+                consumer.accept((E) element, nid);
+                processed++;
+            }
+            index++;
+        }
+        //if (processed < spineSize) {
+        // TODO where do the null values come from?
+        //LOG.info(spineSize - processed + " null values on spine: " + spineIndex);
+        //}
+        return processed;
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -190,20 +198,6 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
      * {@inheritDoc}
      */
     @Override
-    public final E get(int index) {
-        if (index < 0) {
-            index = Integer.MAX_VALUE + index;
-        }
-        int spineIndex = index / spineSize;
-        int indexInSpine = index % spineSize;
-        return getSpine(spineIndex).get(indexInSpine);
-    }
-
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public final E getAndSet(int index, E element) {
         if (index < 0) {
             index = Integer.MAX_VALUE + index;
@@ -212,6 +206,19 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
         int indexInSpine = index % spineSize;
         this.changedSpineIndexes[spineIndex] = true;
         return getSpine(spineIndex).getAndSet(indexInSpine, element);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public final E get(int index) {
+        if (index < 0) {
+            index = Integer.MAX_VALUE + index;
+        }
+        int spineIndex = index / spineSize;
+        int indexInSpine = index % spineSize;
+        return getSpine(spineIndex).get(indexInSpine);
     }
 
     /**
@@ -259,46 +266,22 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
         return size;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void clear() {
+        for (int i = 0; i < spines.length(); i++) {
+            spines.set(i, null);
+        }
+    }
+
     public final void forEach(ObjIntConsumer<E> consumer) {
         int currentSpineCount = this.spineCount.get();
         for (int spineIndex = 0; spineIndex < currentSpineCount; spineIndex++) {
             forEachOnSpine(consumer, spineIndex);
         }
     }
-
-    public final void forEachParallel(ObjIntConsumer<E> consumer) throws ExecutionException, InterruptedException {
-        int currentSpineCount = this.spineCount.get();
-        ArrayList<Future<?>> futures = new ArrayList<>(currentSpineCount);
-        for (int spineIndex = 0; spineIndex < currentSpineCount; spineIndex++) {
-            final int indexToProcess = spineIndex;
-            Future<?> future = Executor.threadPool().submit(() -> forEachOnSpine(consumer, indexToProcess));
-            futures.add(future);
-        }
-        for (Future<?> future: futures) {
-            Object obj = future.get();
-        }
-    }
-
-    private int forEachOnSpine(ObjIntConsumer<E> consumer, int spineIndex) {
-        AtomicReferenceArray<E> spine = getSpine(spineIndex);
-        int index = spineIndex * spineSize;
-        int processed = 0;
-        for (int indexInSpine = 0; indexInSpine < spineSize; indexInSpine++) {
-            E element = spine.get(indexInSpine);
-            if (element != null) {
-                int nid = Integer.MIN_VALUE + index;
-                consumer.accept((E) element, nid);
-                processed++;
-            }
-            index++;
-        }
-        //if (processed < spineSize) {
-            // TODO where do the null values come from?
-            //System.out.println(spineSize - processed + " null values on spine: " + spineIndex);
-        //}
-        return processed;
-     }
-
 
     /**
      * {@inheritDoc}
@@ -316,6 +299,19 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
 
     }
 
+    public final void forEachParallel(ObjIntConsumer<E> consumer) throws ExecutionException, InterruptedException {
+        int currentSpineCount = this.spineCount.get();
+        ArrayList<Future<?>> futures = new ArrayList<>(currentSpineCount);
+        for (int spineIndex = 0; spineIndex < currentSpineCount; spineIndex++) {
+            final int indexToProcess = spineIndex;
+            Future<?> future = Executor.threadPool().submit(() -> forEachOnSpine(consumer, indexToProcess));
+            futures.add(future);
+        }
+        for (Future<?> future : futures) {
+            Object obj = future.get();
+        }
+    }
+
     public final Stream<E> stream() {
         final Supplier<? extends Spliterator<E>> streamSupplier = this.get();
 
@@ -330,6 +326,10 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
      */
     protected Supplier<? extends Spliterator<E>> get() {
         return new SpliteratorSupplier();
+    }
+
+    public boolean containsSpine(int spineIndex) {
+        return this.spines.get(spineIndex) != null;
     }
 
     /**
@@ -365,15 +365,6 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
         }
 
         @Override
-        public Spliterator<E> trySplit() {
-            int splitEnd = end;
-            int split = end - currentPosition;
-            int half = split / 2;
-            this.end = currentPosition + half;
-            return new SpinedValueSpliterator(currentPosition + half + 1, splitEnd);
-        }
-
-        @Override
         public boolean tryAdvance(Consumer<? super E> action) {
             while (currentPosition < end) {
                 E value = get(currentPosition++);
@@ -383,6 +374,15 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
                 }
             }
             return false;
+        }
+
+        @Override
+        public Spliterator<E> trySplit() {
+            int splitEnd = end;
+            int split = end - currentPosition;
+            int half = split / 2;
+            this.end = currentPosition + half;
+            return new SpinedValueSpliterator(currentPosition + half + 1, splitEnd);
         }
 
         @Override
@@ -396,9 +396,5 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
                     | Spliterator.SIZED;
         }
 
-    }
-
-    public boolean containsSpine(int spineIndex) {
-        return this.spines.get(spineIndex) != null;
     }
 }

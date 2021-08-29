@@ -47,7 +47,7 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     private final AtomicInteger nextNid = new AtomicInteger(Integer.MIN_VALUE + 1);
 
     private ProviderEphemeral() throws IOException {
-        System.out.println("Constructing ProviderEphemeral");
+        LOG.info("Constructing ProviderEphemeral");
         this.indexer = new Indexer();
         this.searcher = new Searcher();
     }

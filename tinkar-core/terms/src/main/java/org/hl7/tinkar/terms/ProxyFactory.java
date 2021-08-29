@@ -2,6 +2,8 @@ package org.hl7.tinkar.terms;
 
 import org.hl7.tinkar.common.util.text.EscapeUtil;
 import org.hl7.tinkar.common.util.uuid.UuidUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -22,7 +24,7 @@ public class ProxyFactory {
     public static final String ENTITY_ELEMENT = "entity";
     public static final String UUIDS_ATTRIBUTE = "uuids";
     public static final String DESCRIPTION_ATTRIBUTE = "desc";
-
+    private static final Logger LOG = LoggerFactory.getLogger(ProxyFactory.class);
     private static ThreadLocal<DocumentBuilder> documentBuilder = ThreadLocal.withInitial(() -> {
         try {
             return DocumentBuilderFactory.newDefaultInstance().newDocumentBuilder();
@@ -51,8 +53,7 @@ public class ProxyFactory {
                 };
                 return (Optional<T>) Optional.ofNullable(proxy);
             } catch (SAXException | IOException e) {
-                System.out.println("Input string: " + xmlString);
-                e.printStackTrace();
+                LOG.error("Input string: " + xmlString, e);
             }
         }
         return Optional.empty();
@@ -95,18 +96,18 @@ public class ProxyFactory {
     static String toXmlFragment(EntityFacade facade) {
         StringBuilder sb = new StringBuilder("<");
         if (facade instanceof org.hl7.tinkar.component.Concept) {
-           sb.append(CONCEPT_ELEMENT).append(" " +
-                   DESCRIPTION_ATTRIBUTE + "=\"");
-       } else if (facade instanceof org.hl7.tinkar.component.Semantic) {
+            sb.append(CONCEPT_ELEMENT).append(" " +
+                    DESCRIPTION_ATTRIBUTE + "=\"");
+        } else if (facade instanceof org.hl7.tinkar.component.Semantic) {
             sb.append(SEMANTIC_ELEMENT).append(" " +
                     DESCRIPTION_ATTRIBUTE + "=\"");
-       } else if (facade instanceof org.hl7.tinkar.component.Pattern) {
+        } else if (facade instanceof org.hl7.tinkar.component.Pattern) {
             sb.append(PATTERN_ELEMENT).append(" " +
                     DESCRIPTION_ATTRIBUTE + "=\"");
-       } else {
+        } else {
             sb.append(ENTITY_ELEMENT).append(" " +
                     DESCRIPTION_ATTRIBUTE + "=\"");
-       }
+        }
         sb.append(EscapeUtil.forXML(facade.description())).append("\" " +
                 UUIDS_ATTRIBUTE + "=\"");
         sb.append(UuidUtil.toString(facade.publicId()));

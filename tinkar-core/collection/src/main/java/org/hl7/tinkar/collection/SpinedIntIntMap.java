@@ -1,5 +1,8 @@
 package org.hl7.tinkar.collection;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.*;
 import java.util.Arrays;
 import java.util.Spliterator;
@@ -13,33 +16,30 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.function.IntConsumer;
 import java.util.function.IntUnaryOperator;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
 public class SpinedIntIntMap {
 
-    protected static final Logger LOG = Logger.getLogger(SpinedIntIntMap.class.getName());
-
     protected static final int DEFAULT_SPINE_SIZE = 10240;
+    ;
+    private static final Logger LOG = LoggerFactory.getLogger(SpinedIntIntMap.class);
     protected final int spineSize;
     protected final ConcurrentMap<Integer, AtomicIntegerArray> spines = new ConcurrentHashMap<>();
     protected final int INITIALIZATION_VALUE = Integer.MAX_VALUE;
-
-    private final Semaphore diskSemaphore = new Semaphore(1);
     protected final AtomicInteger spineCount = new AtomicInteger();
     protected final ConcurrentSkipListSet<Integer> changedSpineIndexes = new ConcurrentSkipListSet<>();
     protected final AtomicInteger nextIndex = new AtomicInteger(0);
+    private final Semaphore diskSemaphore = new Semaphore(1);
     private final KeyType keyType;
-
-    public int nextIndex() {
-        return nextIndex.getAndIncrement();
-    }
 
     public SpinedIntIntMap(KeyType keyType) {
         this.spineSize = DEFAULT_SPINE_SIZE;
         this.keyType = keyType;
+    }
+
+    public int nextIndex() {
+        return nextIndex.getAndIncrement();
     }
 
     public int sizeInBytes() {
@@ -49,7 +49,6 @@ public class SpinedIntIntMap {
     }
 
     /**
-     *
      * @param directory
      * @return the number of spine files read.
      */
@@ -71,7 +70,7 @@ public class SpinedIntIntMap {
                     }
                     spines.put(spine, new AtomicIntegerArray(spineArray));
                 } catch (IOException ex) {
-                    LOG.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+                    LOG.error(ex.getLocalizedMessage(), ex);
                     throw new RuntimeException(ex);
                 }
             }
@@ -100,7 +99,7 @@ public class SpinedIntIntMap {
                             dos.writeInt(spine.get(i));
                         }
                     } catch (IOException ex) {
-                        LOG.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+                        LOG.error(ex.getLocalizedMessage(), ex);
                         throw new RuntimeException(ex);
                     } finally {
                         diskSemaphore.release();
@@ -109,17 +108,10 @@ public class SpinedIntIntMap {
 
             });
         } catch (IOException ex) {
-            LOG.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+            LOG.error(ex.getLocalizedMessage(), ex);
             throw new RuntimeException(ex);
         }
         return wroteAny.get();
-    }
-
-    private AtomicIntegerArray newSpine(Integer spineKey) {
-        int[] spine = new int[spineSize];
-        Arrays.fill(spine, INITIALIZATION_VALUE);
-        this.spineCount.set(Math.max(this.spineCount.get(), spineKey + 1));
-        return new AtomicIntegerArray(spine);
     }
 
     public ConcurrentMap<Integer, AtomicIntegerArray> getSpines() {
@@ -143,6 +135,12 @@ public class SpinedIntIntMap {
         this.spines.computeIfAbsent(spineIndex, this::newSpine).set(indexInSpine, element);
     }
 
+    private AtomicIntegerArray newSpine(Integer spineKey) {
+        int[] spine = new int[spineSize];
+        Arrays.fill(spine, INITIALIZATION_VALUE);
+        this.spineCount.set(Math.max(this.spineCount.get(), spineKey + 1));
+        return new AtomicIntegerArray(spine);
+    }
 
     public int get(int index) {
         if (index < 0) {
@@ -209,6 +207,15 @@ public class SpinedIntIntMap {
                 .characteristics(), true).filter(value -> value != Integer.MAX_VALUE);
     }
 
+    /**
+     * Gets the value spliterator.
+     *
+     * @return the supplier<? extends spliterator. of int>
+     */
+    protected Supplier<? extends Spliterator.OfInt> getValueSpliterator() {
+        return new ValueSpliteratorSupplier();
+    }
+
     public IntStream valueStream() {
         final Supplier<? extends Spliterator.OfInt> streamSupplier = this.getValueSpliterator();
 
@@ -219,15 +226,6 @@ public class SpinedIntIntMap {
     public interface Processor {
 
         public void process(int key, int value);
-    }
-
-    /**
-     * Gets the value spliterator.
-     *
-     * @return the supplier<? extends spliterator. of int>
-     */
-    protected Supplier<? extends Spliterator.OfInt> getValueSpliterator() {
-        return new ValueSpliteratorSupplier();
     }
 
 //    /**
@@ -324,7 +322,7 @@ public class SpinedIntIntMap {
 
         @Override
         public int characteristics() {
-            return split ? Spliterator.DISTINCT | Spliterator.IMMUTABLE | Spliterator.NONNULL | Spliterator.ORDERED | Spliterator.SIZED  | Spliterator.SUBSIZED :
+            return split ? Spliterator.DISTINCT | Spliterator.IMMUTABLE | Spliterator.NONNULL | Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED :
                     Spliterator.DISTINCT | Spliterator.IMMUTABLE | Spliterator.NONNULL | Spliterator.ORDERED | Spliterator.SIZED;
         }
 

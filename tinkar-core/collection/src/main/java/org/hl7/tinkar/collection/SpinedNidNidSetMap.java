@@ -16,6 +16,9 @@
  */
 package org.hl7.tinkar.collection;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.*;
 import java.util.Spliterator;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,39 +30,34 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- *
  * @author kec
  */
 public class SpinedNidNidSetMap {
 
-    private static final Logger LOG = LogManager.getLogManager().getLogger(SpinedNidNidSetMap.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(SpinedNidNidSetMap.class);
     private static final int DEFAULT_SPINE_SIZE = 1024;
     protected final int spineSize;
     protected final ConcurrentMap<Integer, AtomicReferenceArray<int[]>> spines = new ConcurrentHashMap<>();
-//    private Function<int[], String> elementStringConverter;
-
-    private final Semaphore diskSemaphore = new Semaphore(1);
+    //    private Function<int[], String> elementStringConverter;
     protected final AtomicInteger spineCount = new AtomicInteger();
     protected final ConcurrentSkipListSet<Integer> changedSpineIndexes = new ConcurrentSkipListSet<>();
+    private final Semaphore diskSemaphore = new Semaphore(1);
 
     public SpinedNidNidSetMap() {
         this.spineSize = DEFAULT_SPINE_SIZE;
     }
-    
+
     /**
      * Clear this map.  Does nothing to the directory it was read from.
      */
     public void clear() {
-      spines.clear();
-      spineCount.set(0);
-      changedSpineIndexes.clear();
+        spines.clear();
+        spineCount.set(0);
+        changedSpineIndexes.clear();
     }
 
     public int sizeInBytes() {
@@ -77,7 +75,6 @@ public class SpinedNidNidSetMap {
     }
 
     /**
-     *
      * @param directory
      * @return the number of spine files read.
      */
@@ -107,7 +104,7 @@ public class SpinedNidNidSetMap {
                         }
                     }
                 } catch (IOException ex) {
-                    LOG.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+                    LOG.error(ex.getLocalizedMessage(), ex);
                     throw new RuntimeException(ex);
                 }
             }
@@ -117,8 +114,23 @@ public class SpinedNidNidSetMap {
         }
     }
 
+    public void put(int index, int[] element) {
+        if (index < 0) {
+            index = Integer.MAX_VALUE + index;
+        }
+        int spineIndex = index / spineSize;
+        int indexInSpine = index % spineSize;
+        this.changedSpineIndexes.add(spineIndex);
+        this.spines.computeIfAbsent(spineIndex, this::newSpine).accumulateAndGet(indexInSpine, element, MergeIntArray::merge);
+    }
+
+    protected AtomicReferenceArray<int[]> newSpine(Integer spineKey) {
+        AtomicReferenceArray<int[]> spine = new AtomicReferenceArray<>(spineSize);
+        this.spineCount.set(Math.max(this.spineCount.get(), spineKey + 1));
+        return spine;
+    }
+
     /**
-     *
      * @param directory
      * @return true if data spineChangedArray since last write.
      */
@@ -150,7 +162,7 @@ public class SpinedNidNidSetMap {
                             }
                         }
                     } catch (IOException ex) {
-                        LOG.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+                        LOG.error(ex.getLocalizedMessage(), ex);
                         throw new RuntimeException(ex);
                     } finally {
                         diskSemaphore.release();
@@ -159,7 +171,7 @@ public class SpinedNidNidSetMap {
 
             });
         } catch (IOException ex) {
-            LOG.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+            LOG.error(ex.getLocalizedMessage(), ex);
             throw new RuntimeException(ex);
         }
         return wroteAny.get();
@@ -175,26 +187,6 @@ public class SpinedNidNidSetMap {
         int indexInSpine = index % spineSize;
         this.changedSpineIndexes.add(spineIndex);
         this.spines.computeIfAbsent(spineIndex, this::newSpine).accumulateAndGet(indexInSpine, new int[]{element}, MergeIntArray::merge);
-    }
-
-    private int getSpineCount() {
-        return spineCount.get();
-    }
-
-    protected AtomicReferenceArray<int[]> newSpine(Integer spineKey) {
-        AtomicReferenceArray<int[]> spine = new AtomicReferenceArray<>(spineSize);
-        this.spineCount.set(Math.max(this.spineCount.get(), spineKey + 1));
-        return spine;
-    }
-
-    public void put(int index, int[] element) {
-        if (index < 0) {
-            index = Integer.MAX_VALUE + index;
-        }
-        int spineIndex = index / spineSize;
-        int indexInSpine = index % spineSize;
-        this.changedSpineIndexes.add(spineIndex);
-        this.spines.computeIfAbsent(spineIndex, this::newSpine).accumulateAndGet(indexInSpine, element, MergeIntArray::merge);
     }
 
     public int[] get(int index) {
@@ -237,9 +229,8 @@ public class SpinedNidNidSetMap {
         }
     }
 
-    public interface Processor<E> {
-
-        public void process(int key, E value);
+    private int getSpineCount() {
+        return spineCount.get();
     }
 
     public Stream<int[]> stream() {
@@ -256,6 +247,11 @@ public class SpinedNidNidSetMap {
      */
     protected Supplier<? extends Spliterator<int[]>> get() {
         return new SpliteratorSupplier();
+    }
+
+    public interface Processor<E> {
+
+        public void process(int key, E value);
     }
 
     /**
@@ -291,15 +287,6 @@ public class SpinedNidNidSetMap {
         }
 
         @Override
-        public Spliterator<int[]> trySplit() {
-            int splitEnd = end;
-            int split = end - currentPosition;
-            int half = split / 2;
-            this.end = currentPosition + half;
-            return new SpinedValueSpliterator(currentPosition + half + 1, splitEnd);
-        }
-
-        @Override
         public boolean tryAdvance(Consumer<? super int[]> action) {
             while (currentPosition < end) {
                 int[] value = get(currentPosition++);
@@ -309,6 +296,15 @@ public class SpinedNidNidSetMap {
                 }
             }
             return false;
+        }
+
+        @Override
+        public Spliterator<int[]> trySplit() {
+            int splitEnd = end;
+            int split = end - currentPosition;
+            int half = split / 2;
+            this.end = currentPosition + half;
+            return new SpinedValueSpliterator(currentPosition + half + 1, splitEnd);
         }
 
         @Override

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.hl7.tinkar</groupId>
@@ -13,7 +13,8 @@
         <auto-service.version>1.0-rc7</auto-service.version>
         <build-helper-maven-plugin.version>3.2.0</build-helper-maven-plugin.version>
         <eclipse-collections-api.version>11.0.0.M1</eclipse-collections-api.version>
-        <io.smallrye.reactive.version>0.17.0</io.smallrye.reactive.version>
+        <io.smallrye.reactive.version>1.0.0</io.smallrye.reactive.version>
+        <jetty-slf4j-impl.version>11.0.6</jetty-slf4j-impl.version>
         <jgrapht.version>1.5.0</jgrapht.version>
         <junit.version>5.6.3</junit.version>
         <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
@@ -28,11 +29,22 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <record-builder-core.version>1.19</record-builder-core.version>
         <roaringbitmap.version>0.9.8</roaringbitmap.version>
+        <slf4j.version>2.0.0-alpha1</slf4j.version>
         <testng.version>7.4.0</testng.version>
         <tinkar-jpms-deps.version>1.0.1</tinkar-jpms-deps.version>
     </properties>
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-slf4j-impl</artifactId>
+                <version>${jetty-slf4j-impl.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter-engine</artifactId>
@@ -42,6 +54,14 @@
         </dependencies>
     </dependencyManagement>
     <dependencies>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-slf4j-impl</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>auto-service</artifactId>
@@ -100,8 +120,10 @@
                             </annotationProcessorPath>
                         </annotationProcessorPaths>
                         <annotationProcessors>
-                            <annotationProcessor>io.soabase.recordbuilder.processor.RecordBuilderProcessor</annotationProcessor>
-                            <annotationProcessor>com.google.auto.service.processor.AutoServiceProcessor</annotationProcessor>
+                            <annotationProcessor>io.soabase.recordbuilder.processor.RecordBuilderProcessor
+                            </annotationProcessor>
+                            <annotationProcessor>com.google.auto.service.processor.AutoServiceProcessor
+                            </annotationProcessor>
                         </annotationProcessors>
                     </configuration>
                 </plugin>

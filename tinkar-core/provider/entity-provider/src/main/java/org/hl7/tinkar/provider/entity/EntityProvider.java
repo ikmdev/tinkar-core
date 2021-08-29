@@ -18,6 +18,8 @@ import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.terms.EntityFacade;
 import org.hl7.tinkar.terms.TinkarTerm;
 import org.reactivestreams.FlowAdapters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -29,7 +31,7 @@ import static org.hl7.tinkar.terms.TinkarTerm.DESCRIPTION_PATTERN;
 @AutoService({EntityService.class, PublicIdService.class, DefaultDescriptionForNidService.class})
 public class EntityProvider implements EntityService, PublicIdService, DefaultDescriptionForNidService {
 
-    protected static final System.Logger LOG = System.getLogger(EntityProvider.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(EntityProvider.class);
     private static final Cache<Integer, String> STRING_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
     private static final Cache<Integer, Entity> ENTITY_CACHE = Caffeine.newBuilder().maximumSize(10240).build();
     private static final Cache<Integer, StampEntity> STAMP_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
@@ -44,7 +46,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
      * TODO elegant shutdown of entityStream and others
      */
     public EntityProvider() {
-        System.out.println("Constructing EntityProvider");
+        LOG.info("Constructing EntityProvider");
         this.processor = BroadcastProcessor.create();
         this.entityStream = processor.toHotStream();
     }

@@ -17,6 +17,8 @@
 package org.hl7.tinkar.collection;
 
 import org.hl7.tinkar.collection.store.IntIntArrayStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.Spliterator;
@@ -27,8 +29,6 @@ import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -37,38 +37,18 @@ import java.util.stream.StreamSupport;
  */
 public class SpinedIntIntArrayMap implements IntObjectMap<int[]> {
 
-    private static final Logger LOG = LogManager.getLogManager().getLogger(SpinedIntIntArrayMap.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(SpinedIntIntArrayMap.class);
 
     private static final int DEFAULT_ELEMENTS_PER_SPINE = 10240;
 
     protected final IntIntArrayStore intIntArrayStore;
     protected final int elementsPerSpine;
-    private final ConcurrentSpineList<AtomicReferenceArray<int[]>> spines = new ConcurrentSpineList<AtomicReferenceArray<int[]>>(1688, this::newSpine);
     protected final ConcurrentSkipListSet<Integer> changedSpineIndexes = new ConcurrentSkipListSet<>();
+    private final ConcurrentSpineList<AtomicReferenceArray<int[]>> spines = new ConcurrentSpineList<AtomicReferenceArray<int[]>>(1688, this::newSpine);
 
     public SpinedIntIntArrayMap(IntIntArrayStore intIntArrayStore) {
         this.elementsPerSpine = DEFAULT_ELEMENTS_PER_SPINE;
         this.intIntArrayStore = intIntArrayStore;
-    }
-
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int size() {
-        int size = 0;
-        int currentSpineCount = this.spines.getSpineCount();
-        for (int spineIndex = 0; spineIndex < currentSpineCount; spineIndex++) {
-            AtomicReferenceArray<int[]> spine = this.spines.getSpine(spineIndex);
-            for (int indexInSpine = 0; indexInSpine < elementsPerSpine; indexInSpine++) {
-                int[] element = spine.get(indexInSpine);
-                if (element != null) {
-                    size++;
-                }
-            }
-        }
-        return size;
     }
 
     /**
@@ -76,7 +56,7 @@ public class SpinedIntIntArrayMap implements IntObjectMap<int[]> {
      */
     public int read() {
         int spinesInStore = this.intIntArrayStore.getSpineCount();
-       for (int i = 0; i < spinesInStore; i++) {
+        for (int i = 0; i < spinesInStore; i++) {
             Optional<AtomicReferenceArray<int[]>> optionalData = this.intIntArrayStore.get(i);
             if (optionalData.isPresent()) {
                 this.spines.setSpine(i, optionalData.get());
@@ -100,10 +80,6 @@ public class SpinedIntIntArrayMap implements IntObjectMap<int[]> {
         return wroteAny.get();
     }
 
-    public int getSpineCount() {
-        return spines.getSpineCount();
-    }
-
     private AtomicReferenceArray<int[]> newSpine() {
         AtomicReferenceArray<int[]> spine = new AtomicReferenceArray<>(elementsPerSpine);
         return spine;
@@ -121,6 +97,20 @@ public class SpinedIntIntArrayMap implements IntObjectMap<int[]> {
         int indexInSpine = index % elementsPerSpine;
         this.changedSpineIndexes.add(spineIndex);
         return this.spines.getSpine(spineIndex).getAndSet(indexInSpine, element) == null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int[] getAndSet(int index, int[] element) {
+        if (index < 0) {
+            index = Integer.MAX_VALUE + index;
+        }
+        int spineIndex = index / elementsPerSpine;
+        int indexInSpine = index % elementsPerSpine;
+        this.changedSpineIndexes.add(spineIndex);
+        return this.spines.getSpine(spineIndex).getAndSet(indexInSpine, element);
     }
 
     /**
@@ -148,14 +138,32 @@ public class SpinedIntIntArrayMap implements IntObjectMap<int[]> {
      * {@inheritDoc}
      */
     @Override
-    public int[] getAndSet(int index, int[] element) {
+    public boolean containsKey(int index) {
         if (index < 0) {
             index = Integer.MAX_VALUE + index;
         }
         int spineIndex = index / elementsPerSpine;
         int indexInSpine = index % elementsPerSpine;
-        this.changedSpineIndexes.add(spineIndex);
-        return this.spines.getSpine(spineIndex).getAndSet(indexInSpine, element);
+        return this.spines.getSpine(spineIndex).get(indexInSpine) != null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int size() {
+        int size = 0;
+        int currentSpineCount = this.spines.getSpineCount();
+        for (int spineIndex = 0; spineIndex < currentSpineCount; spineIndex++) {
+            AtomicReferenceArray<int[]> spine = this.spines.getSpine(spineIndex);
+            for (int indexInSpine = 0; indexInSpine < elementsPerSpine; indexInSpine++) {
+                int[] element = spine.get(indexInSpine);
+                if (element != null) {
+                    size++;
+                }
+            }
+        }
+        return size;
     }
 
     /**
@@ -164,19 +172,6 @@ public class SpinedIntIntArrayMap implements IntObjectMap<int[]> {
     @Override
     public void clear() {
         this.spines.clear();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean containsKey(int index) {
-        if (index < 0) {
-            index = Integer.MAX_VALUE + index;
-        }
-        int spineIndex = index / elementsPerSpine;
-        int indexInSpine = index % elementsPerSpine;
-        return this.spines.getSpine(spineIndex).get(indexInSpine) != null;
     }
 
     public void forEach(ObjIntConsumer<int[]> consumer) {
@@ -195,6 +190,10 @@ public class SpinedIntIntArrayMap implements IntObjectMap<int[]> {
         }
     }
 
+    public int getSpineCount() {
+        return spines.getSpineCount();
+    }
+
     @Override
     public int[] accumulateAndGet(int index, int[] x, BinaryOperator<int[]> accumulatorFunction) {
         if (index < 0) {
@@ -206,11 +205,6 @@ public class SpinedIntIntArrayMap implements IntObjectMap<int[]> {
         return this.spines.getSpine(spineIndex)
                 .accumulateAndGet(indexInSpine, x, accumulatorFunction);
 
-    }
-
-    public interface Processor<E> {
-
-        public void process(int key, E value);
     }
 
     public Stream<int[]> stream() {
@@ -227,6 +221,11 @@ public class SpinedIntIntArrayMap implements IntObjectMap<int[]> {
      */
     protected Supplier<? extends Spliterator<int[]>> get() {
         return new SpliteratorSupplier();
+    }
+
+    public interface Processor<E> {
+
+        public void process(int key, E value);
     }
 
     /**
@@ -262,15 +261,6 @@ public class SpinedIntIntArrayMap implements IntObjectMap<int[]> {
         }
 
         @Override
-        public Spliterator<int[]> trySplit() {
-            int splitEnd = end;
-            int split = end - currentPosition;
-            int half = split / 2;
-            this.end = currentPosition + half;
-            return new SpinedValueSpliterator(currentPosition + half + 1, splitEnd);
-        }
-
-        @Override
         public boolean tryAdvance(Consumer<? super int[]> action) {
             while (currentPosition < end) {
                 int[] value = get(currentPosition++);
@@ -280,6 +270,15 @@ public class SpinedIntIntArrayMap implements IntObjectMap<int[]> {
                 }
             }
             return false;
+        }
+
+        @Override
+        public Spliterator<int[]> trySplit() {
+            int splitEnd = end;
+            int split = end - currentPosition;
+            int half = split / 2;
+            this.end = currentPosition + half;
+            return new SpinedValueSpliterator(currentPosition + half + 1, splitEnd);
         }
 
         @Override

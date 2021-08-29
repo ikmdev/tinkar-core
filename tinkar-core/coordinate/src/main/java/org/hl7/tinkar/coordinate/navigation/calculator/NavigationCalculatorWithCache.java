@@ -13,7 +13,6 @@ import org.hl7.tinkar.common.id.IntIdSet;
 import org.hl7.tinkar.common.id.IntIds;
 import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.common.service.PrimitiveData;
-import org.hl7.tinkar.coordinate.CoordinateUtil;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinateRecord;
 import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculator;
 import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculatorWithCache;
@@ -28,8 +27,9 @@ import org.hl7.tinkar.entity.PatternEntityVersion;
 import org.hl7.tinkar.entity.SemanticEntityVersion;
 import org.hl7.tinkar.terms.EntityProxy;
 import org.hl7.tinkar.terms.TinkarTerm;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.logging.Logger;
 
 /**
  * TODO: Filter vertex concepts by status values.
@@ -39,7 +39,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
     /**
      * The Constant LOG.
      */
-    private static final Logger LOG = CoordinateUtil.LOG;
+    private static final Logger LOG = LoggerFactory.getLogger(NavigationCalculatorWithCache.class);
     private static final ConcurrentReferenceHashMap<StampLangNavRecord, NavigationCalculatorWithCache> SINGLETONS =
             new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
                     ConcurrentReferenceHashMap.ReferenceType.WEAK);
@@ -47,6 +47,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
     private final StampCalculatorWithCache vertexStampCalculator;
     private final LanguageCalculatorWithCache languageCalculator;
     private final NavigationCoordinateRecord navigationCoordinate;
+
     public NavigationCalculatorWithCache(StampCoordinateRecord stampFilter,
                                          ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
                                          NavigationCoordinateRecord navigationCoordinate) {
@@ -188,12 +189,6 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         return getIntIdListForMeaningFromPattern(conceptNid, TinkarTerm.RELATIONSHIP_ORIGIN, patternNid);
     }
 
-    private IntIdList getIntIdListForMeaningFromPattern(int referencedComponentNid, EntityProxy.Concept fieldMeaning, int patternNid) {
-        MutableIntSet nidsInList = IntSets.mutable.empty();
-        IntIdListForMeaningFromPattern(referencedComponentNid, fieldMeaning, patternNid, nidsInList, navigationCoordinate.vertexStates());
-        return IntIds.list.of(nidsInList.toArray());
-    }
-
     private ImmutableList<Edge> getEdges(int conceptNid, EntityProxy.Concept relationshipDirection) {
         MutableIntObjectMap<MutableEdge> edges = IntObjectMaps.mutable.empty();
         for (int patternNid : navigationCoordinate.navigationPatternNids().toArray()) {
@@ -209,6 +204,12 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
             });
         }
         return Lists.immutable.ofAll(edges.stream().map(mutableEdge -> mutableEdge.toEdge()).toList());
+    }
+
+    private IntIdList getIntIdListForMeaningFromPattern(int referencedComponentNid, EntityProxy.Concept fieldMeaning, int patternNid) {
+        MutableIntSet nidsInList = IntSets.mutable.empty();
+        IntIdListForMeaningFromPattern(referencedComponentNid, fieldMeaning, patternNid, nidsInList, navigationCoordinate.vertexStates());
+        return IntIds.list.of(nidsInList.toArray());
     }
 
     private IntIdList getIntIdListForMeaning(int referencedComponentNid, EntityProxy.Concept fieldMeaning) {

@@ -19,6 +19,8 @@ import org.hl7.tinkar.entity.SemanticEntityVersion;
 import org.hl7.tinkar.terms.ConceptFacade;
 import org.hl7.tinkar.terms.EntityProxy;
 import org.hl7.tinkar.terms.PatternFacade;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -28,6 +30,7 @@ import java.util.function.LongConsumer;
 import static org.hl7.tinkar.entity.Entity.ENTITY_FORMAT_VERSION;
 
 public class EntityVertex implements Vertex, VertexId {
+    private static final Logger LOG = LoggerFactory.getLogger(EntityVertex.class);
     private static final int DEFAULT_SIZE = 64;
     protected long mostSignificantBits;
     protected long leastSignificantBits;
@@ -306,7 +309,7 @@ public class EntityVertex implements Vertex, VertexId {
             } catch (ArrayIndexOutOfBoundsException e) {
                 byteBufRef.get().recycle();
                 bufSize = bufSize + DEFAULT_SIZE;
-                System.out.println("Growing Vertex size: " + bufSize);
+                LOG.info("Growing Vertex size: " + bufSize);
                 byteBufRef.set(ByteBufPool.allocate(bufSize));
             }
         }

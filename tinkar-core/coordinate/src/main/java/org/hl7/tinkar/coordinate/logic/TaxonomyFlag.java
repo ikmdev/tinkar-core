@@ -39,6 +39,9 @@ package org.hl7.tinkar.coordinate.logic;
 
 //~--- JDK imports ------------------------------------------------------------
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.EnumSet;
 
 //~--- non-JDK imports --------------------------------------------------------
@@ -56,6 +59,7 @@ import java.util.EnumSet;
  * @author kec
  */
 public enum TaxonomyFlag {
+
     /**
      * The stated flag.
      */
@@ -96,6 +100,8 @@ public enum TaxonomyFlag {
     // 0000 0100
     RESERVED_FUTURE_USE_1(0x02000000),
 
+    //~--- fields --------------------------------------------------------------
+
     /**
      * Reserved for future use 2.
      */
@@ -103,19 +109,16 @@ public enum TaxonomyFlag {
     // 0000 0010
     RESERVED_FUTURE_USE_2(0x01000000);  // 0000 0001
 
+    //~--- constructors --------------------------------------------------------
     /**
      * The Constant ALL_RELS.
      */
     public static final int ALL_RELS = 0;
-
-    //~--- fields --------------------------------------------------------------
-
+    private static final Logger LOG = LoggerFactory.getLogger(TaxonomyFlag.class);
     /**
      * The bits.
      */
     public final int bits;
-
-    //~--- constructors --------------------------------------------------------
 
     /**
      * Instantiates a new taxonomy flags.
@@ -127,22 +130,6 @@ public enum TaxonomyFlag {
     }
 
     //~--- get methods ---------------------------------------------------------
-
-    /**
-     * Gets the flags.
-     *
-     * @param justFlags the just flags
-     * @return the flags
-     */
-    private static EnumSet<TaxonomyFlag> getFlags(int justFlags) {
-        final EnumSet<TaxonomyFlag> flagSet = EnumSet.noneOf(TaxonomyFlag.class);
-        for (TaxonomyFlag flag : TaxonomyFlag.values()) {
-            if ((justFlags & flag.bits) == flag.bits) {
-                flagSet.add(flag);
-            }
-        }
-        return flagSet;
-    }
 
     /**
      * Gets the flags from taxonomy coordinate.
@@ -178,6 +165,22 @@ public enum TaxonomyFlag {
     }
 
     /**
+     * Gets the flags.
+     *
+     * @param justFlags the just flags
+     * @return the flags
+     */
+    private static EnumSet<TaxonomyFlag> getFlags(int justFlags) {
+        final EnumSet<TaxonomyFlag> flagSet = EnumSet.noneOf(TaxonomyFlag.class);
+        for (TaxonomyFlag flag : TaxonomyFlag.values()) {
+            if ((justFlags & flag.bits) == flag.bits) {
+                flagSet.add(flag);
+            }
+        }
+        return flagSet;
+    }
+
+    /**
      * Gets the taxonomy flags as int.
      *
      * @param flagSet the flag set
@@ -194,15 +197,15 @@ public enum TaxonomyFlag {
     }
 
     public static void main(String[] args) {
-        System.out.println("STATED: " + STATED.bits);
-        System.out.println("INFERRED: " + INFERRED.bits);
-        System.out.println("SEMANTIC: " + SEMANTIC.bits);
-        System.out.println("NON_DL_REL: " + NON_DL_REL.bits);
-        System.out.println("CONCEPT_STATUS: " + CONCEPT_STATUS.bits);
-        System.out.println("RESERVED_FUTURE_USE_1: " + RESERVED_FUTURE_USE_1.bits);
-        System.out.println("RESERVED_FUTURE_USE_2: " + RESERVED_FUTURE_USE_2.bits);
+        LOG.info("STATED: " + STATED.bits);
+        LOG.info("INFERRED: " + INFERRED.bits);
+        LOG.info("SEMANTIC: " + SEMANTIC.bits);
+        LOG.info("NON_DL_REL: " + NON_DL_REL.bits);
+        LOG.info("CONCEPT_STATUS: " + CONCEPT_STATUS.bits);
+        LOG.info("RESERVED_FUTURE_USE_1: " + RESERVED_FUTURE_USE_1.bits);
+        LOG.info("RESERVED_FUTURE_USE_2: " + RESERVED_FUTURE_USE_2.bits);
         int sum = 0;
-        for (TaxonomyFlag taxonomyFlag: values()) {
+        for (TaxonomyFlag taxonomyFlag : values()) {
             sum = sum + taxonomyFlag.bits;
         }
 

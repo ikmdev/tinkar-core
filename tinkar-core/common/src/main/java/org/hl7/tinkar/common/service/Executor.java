@@ -1,7 +1,8 @@
 package org.hl7.tinkar.common.service;
 
 import com.google.auto.service.AutoService;
-import org.hl7.tinkar.common.util.thread.PausableThreadPoolExecutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.ServiceConfigurationError;
@@ -9,25 +10,31 @@ import java.util.ServiceLoader;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.logging.Logger;
 
 @AutoService(CachingService.class)
 public class Executor implements CachingService {
-    private static final Logger LOG = Logger.getLogger(Executor.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(Executor.class);
     private static Executor executor = new Executor();
     private static ExecutorService executorSingleton;
     private static ExecutorController executorController;
 
     ServiceLoader<ExecutorController> loader;
+
     private Executor() {
         this.loader = ServiceLoader.load(ExecutorController.class);
     }
 
-    @Override
-    public void reset() {
-        executorController = null;
+    public static void stop() {
+        executorController.stop();
         executorSingleton = null;
-        executor = null;
+        executorController = null;
+    }
+
+    public static ForkJoinPool forkJoinThreadPool() {
+        if (executorSingleton == null) {
+            start();
+        }
+        return executorSingleton.forkJoinThreadPool();
     }
 
     public static void start() throws ServiceConfigurationError {
@@ -46,20 +53,7 @@ public class Executor implements CachingService {
         }
         if (executorSingleton == null) {
             executorSingleton = executorController.create();
-       }
-    }
-
-    public static void stop() {
-        executorController.stop();
-        executorSingleton = null;
-        executorController = null;
-    }
-
-    public static ForkJoinPool forkJoinThreadPool() {
-        if (executorSingleton == null) {
-            start();
         }
-        return executorSingleton.forkJoinThreadPool();
     }
 
     public static ThreadPoolExecutor blockingThreadPool() {
@@ -88,5 +82,12 @@ public class Executor implements CachingService {
             start();
         }
         return executorSingleton.scheduled();
+    }
+
+    @Override
+    public void reset() {
+        executorController = null;
+        executorSingleton = null;
+        executor = null;
     }
 }
