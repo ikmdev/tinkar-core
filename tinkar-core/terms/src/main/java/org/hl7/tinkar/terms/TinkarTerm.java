@@ -6,9 +6,6 @@ public class TinkarTerm {
     public static final EntityProxy.Pattern DESCRIPTION_PATTERN =
             EntityProxy.Pattern.make("Description pattern", UUID.fromString("a4de0039-2625-5842-8a4c-d1ce6aebf021"));
 
-    public static final EntityProxy.Pattern PATH_ORIGINS_PATTERN =
-            EntityProxy.Pattern.make("Path Origin pattern", UUID.fromString("70f89dd5-2cdb-59bb-bbaa-98527513547c"));
-
     public static final EntityProxy.Pattern GB_DIALECT_PATTERN =
             EntityProxy.Pattern.make("GB English dialect", UUID.fromString("561f817a-130e-5e56-984d-910e9991558c"));
 
@@ -4291,13 +4288,13 @@ public class TinkarTerm {
     public static final EntityProxy.Concept PATH_ORIGINS =
             EntityProxy.Concept.make("Path origins (SOLOR)", UUID.fromString("6e6a112e-7d8c-53c7-aaf1-c46e2d69743c"));
     /**
-     * Java binding for the concept described as <strong><em>Path origins assemblage (SOLOR)</em></strong>;
+     * Java binding for the concept described as <strong><em>Version control path origin pattern</em></strong>;
      * identified by UUID: {@code
-     * <a href="http://localhost:8080/terminology/rest/concept/1239b874-41b4-32a1-981f-88b448829b4b">
-     * 1239b874-41b4-32a1-981f-88b448829b4b</a>}.
+     * <a href="http://localhost:8080/terminology/rest/concept/70f89dd5-2cdb-59bb-bbaa-98527513547c">
+     * 70f89dd5-2cdb-59bb-bbaa-98527513547c</a>}.
      */
-    public static final EntityProxy.Concept PATH_ORIGINS_ASSEMBLAGE =
-            EntityProxy.Concept.make("Path origins assemblage (SOLOR)", UUID.fromString("1239b874-41b4-32a1-981f-88b448829b4b"));
+    public static final EntityProxy.Concept PATH_ORIGINS_PATTERN =
+            EntityProxy.Concept.make("Version control path origin pattern", UUID.fromString("70f89dd5-2cdb-59bb-bbaa-98527513547c"));
     /**
      * Java binding for the concept described as <strong><em>Path origins for stamp path (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -4315,13 +4312,13 @@ public class TinkarTerm {
     public static final EntityProxy.Concept PATH_PRECEDENCE =
             EntityProxy.Concept.make("Path precedence (SOLOR)", UUID.fromString("fba850b7-de84-5df2-ab0b-d1caa6a358ff"));
     /**
-     * Java binding for the concept described as <strong><em>Paths assemblage (SOLOR)</em></strong>;
+     * Java binding for the concept described as <strong><em>Version control path pattern</em></strong>;
      * identified by UUID: {@code
-     * <a href="http://localhost:8080/terminology/rest/concept/fd9d47b7-c0a4-3eea-b3ab-2b5a3f9e888f">
-     * fd9d47b7-c0a4-3eea-b3ab-2b5a3f9e888f</a>}.
+     * <a href="http://localhost:8080/terminology/rest/concept/add1db57-72fe-53c8-a528-1614bda20ec6">
+     * add1db57-72fe-53c8-a528-1614bda20ec6</a>}.
      */
-    public static final EntityProxy.Concept PATHS_ASSEMBLAGE =
-            EntityProxy.Concept.make("Paths assemblage (SOLOR)", UUID.fromString("fd9d47b7-c0a4-3eea-b3ab-2b5a3f9e888f"));
+    public static final EntityProxy.Concept PATHS_PATTERN =
+            EntityProxy.Concept.make("Version control path pattern", UUID.fromString("add1db57-72fe-53c8-a528-1614bda20ec6"));
     /**
      * Java binding for the concept described as <strong><em>Performance circumstance properties (SOLOR)</em></strong>;
      * identified by UUID: {@code

@@ -93,6 +93,16 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     }
 
     @Override
+    public int nidForUuids(UUID... uuids) {
+        return PrimitiveData.get().nidForUuids(uuids);
+    }
+
+    @Override
+    public int nidForPublicId(PublicId publicId) {
+        return PrimitiveData.get().nidForUuids(publicId.asUuidArray());
+    }
+
+    @Override
     public <T extends Entity<V>, V extends EntityVersion> T getEntityFast(int nid) {
         return (T) ENTITY_CACHE.get(nid, entityNid -> {
             byte[] bytes = PrimitiveData.get().getBytes(nid);
@@ -101,6 +111,11 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
             }
             return EntityFactory.make(bytes);
         });
+    }
+
+    @Override
+    public int nidForUuids(ImmutableList<UUID> uuidList) {
+        return PrimitiveData.get().nidForUuids(uuidList);
     }
 
     @Override
@@ -137,32 +152,17 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     }
 
     @Override
-    public int nidForUuids(ImmutableList<UUID> uuidList) {
-        return PrimitiveData.get().nidForUuids(uuidList);
-    }
-
-    @Override
-    public int nidForUuids(UUID... uuids) {
-        return PrimitiveData.get().nidForUuids(uuids);
-    }
-
-    @Override
-    public int nidForPublicId(PublicId publicId) {
-        return PrimitiveData.get().nidForUuids(publicId.asUuidArray());
-    }
-
-    @Override
     public Entity unmarshalChronology(byte[] bytes) {
         return EntityFactory.make(bytes);
     }
 
     @Override
-    public void forEachEntityOfPattern(int patternNid, Consumer<SemanticEntity> procedure) {
+    public void forEachSemanticOfPattern(int patternNid, Consumer<SemanticEntity> procedure) {
         PrimitiveData.get().forEachSemanticNidOfPattern(patternNid, (int nid) -> procedure.accept(getEntityFast(nid)));
     }
 
     @Override
-    public int[] entityNidsOfPattern(int patternNid) {
+    public int[] semanticNidsOfPattern(int patternNid) {
         return PrimitiveData.get().semanticNidsOfPattern(patternNid);
     }
 

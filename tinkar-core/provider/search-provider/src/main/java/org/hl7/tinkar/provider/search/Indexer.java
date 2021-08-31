@@ -10,6 +10,7 @@ import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.hl7.tinkar.common.util.time.Stopwatch;
 import org.hl7.tinkar.entity.SemanticEntity;
 import org.hl7.tinkar.entity.SemanticEntityVersion;
 import org.slf4j.Logger;
@@ -43,6 +44,7 @@ public class Indexer {
     private static IndexWriter getIndexWriter() throws IOException {
         //Create the indexer
         IndexWriterConfig config = new IndexWriterConfig(analyzer());
+        config.setCommitOnClose(true);
         IndexWriter indexWriter = new IndexWriter(indexDirectory(), config);
         return indexWriter;
     }
@@ -56,10 +58,14 @@ public class Indexer {
     }
 
     public Indexer(Path indexPath) throws IOException {
+        Stopwatch stopwatch = new Stopwatch();
+        LOG.info("Opening lucene indexer");
         this.indexPath = indexPath;
         Indexer.indexDirectory = FSDirectory.open(this.indexPath);
         Indexer.analyzer = new StandardAnalyzer();
         this.indexWriter = Indexer.getIndexWriter();
+        stopwatch.stop();
+        LOG.info("Opened lucene index in: " + stopwatch.durationString());
     }
 
     public static DirectoryReader getDirectoryReader() throws IOException {
@@ -67,13 +73,19 @@ public class Indexer {
     }
 
     public void commit() throws IOException {
+        Stopwatch stopwatch = new Stopwatch();
         LOG.info("Committing lucene index");
         this.indexWriter.commit();
+        stopwatch.stop();
+        LOG.info("Committed lucene index in: " + stopwatch.durationString());
     }
 
     public void close() throws IOException {
+        Stopwatch stopwatch = new Stopwatch();
         LOG.info("Closing lucene index");
         this.indexWriter.close();
+        stopwatch.stop();
+        LOG.info("Closed lucene index in: " + stopwatch.durationString());
     }
 
     public void index(Object object) {

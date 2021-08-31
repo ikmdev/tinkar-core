@@ -50,6 +50,7 @@ import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.functional.TriConsumer;
 import org.hl7.tinkar.common.util.ints2long.IntsInLong;
 import org.hl7.tinkar.component.graph.DiTree;
+import org.hl7.tinkar.coordinate.PathService;
 import org.hl7.tinkar.coordinate.stamp.*;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.entity.graph.DiTreeEntity;
@@ -88,8 +89,15 @@ public class StampCalculatorWithCache implements StampCalculator {
      */
     private final StampCoordinateRecord filter;
     private final StateSet allowedStates;
+    private final ConcurrentHashMap<Integer, ImmutableSet<StampBranchRecord>> branchMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, Boolean> stampOnRoute = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, Boolean> stampIsAllowedState = new ConcurrentHashMap<>();
+    /**
+     * Mapping from pathNid to each segment for that pathNid. There is one entry
+     * for each path reachable antecedent to the destination position of the
+     * computer.
+     */
+    private final ConcurrentHashMap<Integer, Segment> pathNidSegmentMap = new ConcurrentHashMap<>();
     Cache<Integer, Latest<PatternEntityVersion>> patternVersionCache =
             Caffeine.newBuilder().maximumSize(512).build();
     Cache<Long, OptionalInt> indexForMeaningCache =
@@ -98,12 +106,6 @@ public class StampCalculatorWithCache implements StampCalculator {
             Caffeine.newBuilder().maximumSize(1024).build();
     Cache<Integer, Latest<EntityVersion>> latestCache =
             Caffeine.newBuilder().maximumSize(10240).build();
-    /**
-     * Mapping from pathNid to each segment for that pathNid. There is one entry
-     * for each path reachable antecedent to the destination position of the
-     * computer.
-     */
-    ConcurrentHashMap<Integer, Segment> pathNidSegmentMap;
     /**
      * The error count.
      */
@@ -117,7 +119,7 @@ public class StampCalculatorWithCache implements StampCalculator {
     private StampCalculatorWithCache(StampCoordinateRecord filter) {
         //For the internal callback to populate the cache
         this.filter = filter;
-        this.pathNidSegmentMap = setupPathNidSegmentMap(filter.stampPosition().toStampPositionImmutable());
+        setupPathNidSegmentMap(filter.stampPosition().toStampPositionImmutable());
         this.allowedStates = filter.allowedStates();
     }
 
@@ -130,63 +132,6 @@ public class StampCalculatorWithCache implements StampCalculator {
     public static StampCalculatorWithCache getCalculator(StampCoordinateRecord filter) {
         return SINGLETONS.computeIfAbsent(filter,
                 filterKey -> new StampCalculatorWithCache(filter));
-    }
-
-    public static <V extends EntityVersion> List<DiTree<VersionVertex<V>>> getVersionGraphList(ImmutableList<V> versionList) {
-        SortedSet<VersionWithDistance<V>> versionWithDistances = new TreeSet<>();
-        versionList.forEach(v -> versionWithDistances.add(new VersionWithDistance<>(v)));
-
-        final List<DiTree<VersionVertex<V>>> results = new ArrayList<>();
-
-        int loopCheck = 0;
-        while (!versionWithDistances.isEmpty()) {
-            loopCheck++;
-            if (loopCheck > 100) {
-                throw new IllegalStateException("loopCheck = " + loopCheck);
-            }
-            DiTreeEntity.Builder<VersionVertex<V>> treeBuilder = DiTreeEntity.builder();
-
-            Set<VersionVertex<V>> leafNodes = new HashSet<>();
-            SortedSet<VersionWithDistance<V>> nodesInTree = new TreeSet<>();
-            for (VersionWithDistance versionWithDistance : versionWithDistances) {
-                if (treeBuilder.getRoot() == null) {
-                    VersionVertex root = VersionVertex.make(versionWithDistance.version);
-                    treeBuilder.setRoot(root);
-                    leafNodes.add(root);
-                    nodesInTree.add(versionWithDistance);
-                } else {
-                    List<VersionVertex> leafList = new ArrayList<>(leafNodes);
-                    for (VersionVertex leafNode : leafList) {
-                        switch (getRelativePosition(versionWithDistance.version, leafNode.version())) {
-                            case AFTER:
-                                VersionVertex newLeaf = VersionVertex.make(versionWithDistance.version);
-                                treeBuilder.addEdge(newLeaf, leafNode);
-                                nodesInTree.add(versionWithDistance);
-                                leafNodes.remove(leafNode);
-                                leafNodes.add(newLeaf);
-                                break;
-                            case EQUAL:
-                                // TODO handle different modules... ?
-                                throw new IllegalStateException("Version can only be in one module at a time. \n"
-                                        + leafNode.version() + "\n" + versionWithDistance.version);
-                            case BEFORE:
-                                throw new IllegalStateException("Sort order error. \n"
-                                        + leafNode.version() + "\n" + versionWithDistance.version);
-                            case UNREACHABLE:
-                                // if not after by any leaf (unreachable from any leaf), then node will be left in set, and possibly added to next graph.
-                                break;
-                            default:
-                                throw new IllegalStateException("Sort order error. Unhandled relative position:\n"
-                                        + leafNode.version() + "\n" + versionWithDistance.version +
-                                        getRelativePosition(leafNode.version(), versionWithDistance.version));
-                        }
-                    }
-                }
-            }
-            results.add(treeBuilder.build());
-            versionWithDistances.removeAll(nodesInTree);
-        }
-        return results;
     }
 
     private static BigInteger getDistance(StampPosition position) {
@@ -252,7 +197,7 @@ public class StampCalculatorWithCache implements StampCalculator {
     }
 
     private static Optional<StampPathImmutable> constructFromSemantics(int stampPathNid) {
-        int[] nids = EntityService.get().semanticNidsForComponentOfPattern(stampPathNid, TinkarTerm.PATHS_ASSEMBLAGE.nid());
+        int[] nids = EntityService.get().semanticNidsForComponentOfPattern(stampPathNid, TinkarTerm.PATHS_PATTERN.nid());
         if (nids.length == 1) {
             int pathId = nids[0];
             assert pathId == stampPathNid :
@@ -265,7 +210,75 @@ public class StampCalculatorWithCache implements StampCalculator {
         }
     }
 
-    public static RelativePosition getRelativePosition(EntityVersion v1, EntityVersion v2) {
+    public static boolean exists(int pathConceptId) {
+        throw new UnsupportedOperationException();
+//        if (this.pathMap.containsKey(pathConceptId)) {
+//            return true;
+//        }
+//
+//        final Optional<StampPathImmutable> stampPath = constructFromSemantics(pathConceptId);
+//
+//        return stampPath.isPresent();
+    }
+
+    public <V extends EntityVersion> List<DiTree<VersionVertex<V>>> getVersionGraphList(ImmutableList<V> versionList) {
+        SortedSet<VersionWithDistance<V>> versionWithDistances = new TreeSet<>();
+        versionList.forEach(v -> versionWithDistances.add(new VersionWithDistance<>(v)));
+
+        final List<DiTree<VersionVertex<V>>> results = new ArrayList<>();
+
+        int loopCheck = 0;
+        while (!versionWithDistances.isEmpty()) {
+            loopCheck++;
+            if (loopCheck > 100) {
+                throw new IllegalStateException("loopCheck = " + loopCheck);
+            }
+            DiTreeEntity.Builder<VersionVertex<V>> treeBuilder = DiTreeEntity.builder();
+
+            Set<VersionVertex<V>> leafNodes = new HashSet<>();
+            SortedSet<VersionWithDistance<V>> nodesInTree = new TreeSet<>();
+            for (VersionWithDistance versionWithDistance : versionWithDistances) {
+                if (treeBuilder.getRoot() == null) {
+                    VersionVertex root = VersionVertex.make(versionWithDistance.version);
+                    treeBuilder.setRoot(root);
+                    leafNodes.add(root);
+                    nodesInTree.add(versionWithDistance);
+                } else {
+                    List<VersionVertex> leafList = new ArrayList<>(leafNodes);
+                    for (VersionVertex leafNode : leafList) {
+                        switch (getRelativePosition(versionWithDistance.version, leafNode.version())) {
+                            case AFTER:
+                                VersionVertex newLeaf = VersionVertex.make(versionWithDistance.version);
+                                treeBuilder.addEdge(newLeaf, leafNode);
+                                nodesInTree.add(versionWithDistance);
+                                leafNodes.remove(leafNode);
+                                leafNodes.add(newLeaf);
+                                break;
+                            case EQUAL:
+                                // TODO handle different modules... ?
+                                throw new IllegalStateException("Version can only be in one module at a time. \n"
+                                        + leafNode.version() + "\n" + versionWithDistance.version);
+                            case BEFORE:
+                                throw new IllegalStateException("Sort order error. \n"
+                                        + leafNode.version() + "\n" + versionWithDistance.version);
+                            case UNREACHABLE:
+                                // if not after by any leaf (unreachable from any leaf), then node will be left in set, and possibly added to next graph.
+                                break;
+                            default:
+                                throw new IllegalStateException("Sort order error. Unhandled relative position:\n"
+                                        + leafNode.version() + "\n" + versionWithDistance.version +
+                                        getRelativePosition(leafNode.version(), versionWithDistance.version));
+                        }
+                    }
+                }
+            }
+            results.add(treeBuilder.build());
+            versionWithDistances.removeAll(nodesInTree);
+        }
+        return results;
+    }
+
+    public RelativePosition getRelativePosition(EntityVersion v1, EntityVersion v2) {
         if (v1.stamp().pathNid() == v2.stamp().pathNid()) {
             if (v1.stamp().time() < v2.stamp().time()) {
                 return RelativePosition.BEFORE;
@@ -281,7 +294,7 @@ public class StampCalculatorWithCache implements StampCalculator {
                 StampPositionRecord.make(v2.stamp().time(), v2.stamp().pathNid()));
     }
 
-    public static RelativePosition getRelativePosition(int stampNid, StampPosition position) {
+    public RelativePosition getRelativePosition(int stampNid, StampPosition position) {
         StampEntity stampEntity = Entity.getStamp(stampNid);
         if (stampEntity.pathNid() == position.getPathForPositionNid()) {
             if (stampEntity.time() < position.time()) {
@@ -305,7 +318,7 @@ public class StampCalculatorWithCache implements StampCalculator {
         return traverseOrigins(stampNid, getStampPath(position.getPathForPositionNid()));
     }
 
-    private static RelativePosition traverseForks(int stampNid, StampPosition position) {
+    private RelativePosition traverseForks(int stampNid, StampPosition position) {
         StampEntity stampEntity = Entity.getStamp(stampNid);
         int stampPathNid = stampEntity.pathNid();
         if (stampPathNid == position.getPathForPositionNid()) {
@@ -323,7 +336,7 @@ public class StampCalculatorWithCache implements StampCalculator {
         return RelativePosition.UNREACHABLE;
     }
 
-    private static RelativePosition traverseForks(int stampPathNid, StampBranchRecord stampBranchRecord) {
+    private RelativePosition traverseForks(int stampPathNid, StampBranchRecord stampBranchRecord) {
         int pathOfBranchNid = stampBranchRecord.getPathOfBranchNid();
         if (pathOfBranchNid == stampPathNid) {
             return RelativePosition.AFTER;
@@ -337,20 +350,8 @@ public class StampCalculatorWithCache implements StampCalculator {
         return RelativePosition.UNREACHABLE;
     }
 
-    public static ImmutableSet<StampBranchRecord> getBranches(int pathConceptNid) {
-        throw new UnsupportedOperationException();
-        //return branchMap.computeIfAbsent(pathConceptNid, (pathNid) -> Sets.immutable.empty());
-    }
-
-    public static boolean exists(int pathConceptId) {
-        throw new UnsupportedOperationException();
-//        if (this.pathMap.containsKey(pathConceptId)) {
-//            return true;
-//        }
-//
-//        final Optional<StampPathImmutable> stampPath = constructFromSemantics(pathConceptId);
-//
-//        return stampPath.isPresent();
+    public ImmutableSet<StampBranchRecord> getBranches(int pathConceptNid) {
+        return branchMap.computeIfAbsent(pathConceptNid, (pathNid) -> PathService.get().getPathBranches(pathConceptNid));
     }
 
     public StampCoordinateRecord filter() {
@@ -397,14 +398,12 @@ public class StampCalculatorWithCache implements StampCalculator {
      * Adds the origins to path nid segment map.
      *
      * @param destination       the destination
-     * @param pathNidSegmentMap the path nid segment map
      * @param segmentSequence   the segment sequence
      * @param precedingSegments the preceding segments
      */
 
     // recursively called method
     private void addOriginsToPathNidSegmentMap(StampPositionRecord destination,
-                                               ConcurrentHashMap<Integer, Segment> pathNidSegmentMap,
                                                AtomicInteger segmentSequence,
                                                ConcurrentSkipListSet<Integer> precedingSegments) {
         final Segment segment = new Segment(
@@ -426,7 +425,6 @@ public class StampCalculatorWithCache implements StampCalculator {
                         // Recursive call
                         addOriginsToPathNidSegmentMap(
                                 origin,
-                                pathNidSegmentMap,
                                 segmentSequence,
                                 precedingSegments)
                 );
@@ -438,8 +436,7 @@ public class StampCalculatorWithCache implements StampCalculator {
      * @param destination the destination
      * @return the open int object hash map
      */
-    private ConcurrentHashMap<Integer, Segment> setupPathNidSegmentMap(StampPositionRecord destination) {
-        final ConcurrentHashMap<Integer, Segment> pathNidSegmentMapToSetup = new ConcurrentHashMap<>();
+    private void setupPathNidSegmentMap(StampPositionRecord destination) {
         final AtomicInteger segmentSequence = new AtomicInteger(0);
 
         // the sequence of the preceding segments is set in the recursive
@@ -448,10 +445,8 @@ public class StampCalculatorWithCache implements StampCalculator {
 
         // call to recursive method...
         addOriginsToPathNidSegmentMap(destination,
-                pathNidSegmentMapToSetup,
                 segmentSequence,
                 precedingSegments);
-        return pathNidSegmentMapToSetup;
     }
 
     /**

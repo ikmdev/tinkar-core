@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
@@ -48,13 +48,7 @@
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>search-provider</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.hl7.tinkar</groupId>
-            <artifactId>search-provider</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${project.parent.version}</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
@@ -66,7 +60,7 @@
                 <version>${maven-surefire-plugin.version}</version>
                 <configuration>
                     <!-- <argLine>-Dchronicle.values.dumpCode=true ... -->
-<!--                    <argLine>&#45;&#45;illegal-access=permit &#45;&#45;add-exports java.base/jdk.internal.ref=ALL-UNNAMED</argLine> -->
+                    <!--                    <argLine>&#45;&#45;illegal-access=permit &#45;&#45;add-exports java.base/jdk.internal.ref=ALL-UNNAMED</argLine> -->
                     <argLine>--add-exports java.base/jdk.internal.ref=ALL-UNNAMED</argLine>
                 </configuration>
             </plugin>

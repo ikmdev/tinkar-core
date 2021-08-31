@@ -1,33 +1,22 @@
 package org.hl7.tinkar.coordinate.stamp;
 
-import java.util.Objects;
-
-import com.google.auto.service.AutoService;
 import io.soabase.recordbuilder.core.RecordBuilder;
-import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
 import org.hl7.tinkar.common.binary.Decoder;
 import org.hl7.tinkar.common.binary.DecoderInput;
 import org.hl7.tinkar.common.binary.Encoder;
 import org.hl7.tinkar.common.binary.EncoderOutput;
-import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.common.util.time.DateTimeUtil;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 
-//This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
+import java.time.Instant;
+import java.util.Objects;
+
 @RecordBuilder
 public record StampBranchRecord(int branchConceptNid, long branchOriginTime)
         implements StampBranch, ImmutableCoordinate, StampBranchRecordBuilder.With {
 
     private static final int marshalVersion = 1;
-
-    public static StampBranchRecord make(int pathConceptNid, long branchOriginTime) {
-        return new StampBranchRecord(pathConceptNid, branchOriginTime);
-    }
-
-    @Override
-    public long getBranchOriginTime() {
-        return branchOriginTime;
-    }
 
     @Decoder
     public static StampBranchRecord decode(DecoderInput in) {
@@ -40,6 +29,14 @@ public record StampBranchRecord(int branchConceptNid, long branchOriginTime)
         }
     }
 
+    public static StampBranchRecord make(int pathConceptNid, long branchOriginTime) {
+        return new StampBranchRecord(pathConceptNid, branchOriginTime);
+    }
+
+    public static StampBranchRecord make(int pathConceptNid, Instant branchOriginInstant) {
+        return new StampBranchRecord(pathConceptNid, DateTimeUtil.instantToEpochMs(branchOriginInstant));
+    }
+
     @Override
     @Encoder
     public void encode(EncoderOutput out) {
@@ -48,8 +45,16 @@ public record StampBranchRecord(int branchConceptNid, long branchOriginTime)
     }
 
     @Override
-    public StampBranchRecord toStampBranchRecord() {
-        return this;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof StampBranch that)) return false;
+        return getPathOfBranchNid() == that.getPathOfBranchNid() &&
+                getBranchOriginTime() == that.getBranchOriginTime();
+    }
+
+    @Override
+    public long getBranchOriginTime() {
+        return branchOriginTime;
     }
 
     public int getPathOfBranchNid() {
@@ -57,11 +62,25 @@ public record StampBranchRecord(int branchConceptNid, long branchOriginTime)
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof StampBranch that)) return false;
-        return getPathOfBranchNid() == that.getPathOfBranchNid() &&
-                getBranchOriginTime() == that.getBranchOriginTime();
+    public StampBranchRecord toStampBranchRecord() {
+        return this;
+    }
+
+    public String toUserString() {
+        final StringBuilder sb = new StringBuilder("At date/time ");
+
+        if (this.branchOriginTime == Long.MAX_VALUE) {
+            sb.append("latest");
+        } else if (this.branchOriginTime == Long.MIN_VALUE) {
+            sb.append("CANCELED");
+        } else {
+            sb.append(getTimeAsInstant());
+        }
+
+        sb.append(" start branch for '")
+                .append(PrimitiveData.text(this.branchConceptNid))
+                .append("'}");
+        return sb.toString();
     }
 
     @Override
@@ -79,23 +98,6 @@ public record StampBranchRecord(int branchConceptNid, long branchOriginTime)
         final StringBuilder sb = new StringBuilder();
 
         sb.append("StampBranchImmutable:{ At date/time ");
-
-        if (this.branchOriginTime == Long.MAX_VALUE) {
-            sb.append("latest");
-        } else if (this.branchOriginTime == Long.MIN_VALUE) {
-            sb.append("CANCELED");
-        } else {
-            sb.append(getTimeAsInstant());
-        }
-
-        sb.append(" start branch for '")
-                .append(PrimitiveData.text(this.branchConceptNid))
-                .append("'}");
-        return sb.toString();
-    }
-
-    public String toUserString() {
-        final StringBuilder sb = new StringBuilder("At date/time ");
 
         if (this.branchOriginTime == Long.MAX_VALUE) {
             sb.append("latest");

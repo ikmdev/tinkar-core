@@ -9,6 +9,8 @@ import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.entity.util.EntityProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -16,13 +18,23 @@ import java.util.concurrent.Flow;
 
 /**
  * TODO elegant shutdown of entityStream and others
- *
+ * <p>
  * TODO startup to wait for processing complete.
+ * <p>
+ * Encountered this error:
+ * <p>
+ * https://github.com/h2database/h2database/issues/2590
+ * <p>
+ * at org.hl7.tinkar.provider.mvstore.MVStoreProvider.forEachParallel(MVStoreProvider.java:144)
+ * at org.hl7.tinkar.provider.entity.StampProvider.<init>(StampProvider.java:38)
+ * at java.base/jdk.internal.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+ * at java.base/jdk.internal.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:78)
+ * at java.base/jdk.internal.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
  */
 
 @AutoService({StampService.class})
 public class StampProvider extends EntityProcessor implements StampService, Flow.Subscriber<Entity<? extends EntityVersion>> {
-    protected static final System.Logger LOG = System.getLogger(StampProvider.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(StampProvider.class);
 
     final ConcurrentHashMap<Integer, StampEntity> stamps = new ConcurrentHashMap<>();
     final ConcurrentSkipListSet<Long> times = new ConcurrentSkipListSet<>();
@@ -79,7 +91,7 @@ public class StampProvider extends EntityProcessor implements StampService, Flow
 
     @Override
     public void onSubscribe(Flow.Subscription s) {
-        LOG.log(System.Logger.Level.INFO, "Subscribed to Entity Stream");
+        LOG.info("Subscribed to Entity Stream");
     }
 
     @Override
@@ -96,11 +108,11 @@ public class StampProvider extends EntityProcessor implements StampService, Flow
 
     @Override
     public void onError(Throwable t) {
-        LOG.log(System.Logger.Level.ERROR, t);
+        LOG.error(t.getLocalizedMessage(), t);
     }
 
     @Override
     public void onComplete() {
-        LOG.log(System.Logger.Level.INFO, "Entity Stream complete");
+        LOG.info("Entity Stream complete");
     }
 }

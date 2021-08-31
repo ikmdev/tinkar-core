@@ -32,6 +32,19 @@ public class Stopwatch {
         this.endTime = Instant.now();
     }
 
+    public boolean updateIntervalElapsed() {
+        Instant now = Instant.now();
+        if (this.updateInterval.compareTo(Duration.between(this.lastUpdate, now)) < 0) {
+            this.lastUpdate = now;
+            return true;
+        }
+        return false;
+    }
+
+    public String durationString() {
+        return DurationUtil.format(duration());
+    }
+
     public Duration duration() {
         Instant endForDuration = endTime;
         if (endForDuration == null) {
@@ -40,32 +53,20 @@ public class Stopwatch {
         return Duration.between(startTime, endForDuration);
     }
 
-    public boolean updateIntervalElapsed() {
-        Instant now = Instant.now();
-        if (this.updateInterval.compareTo(Duration.between(this.lastUpdate, now))  < 0) {
-            this.lastUpdate = now;
-            return true;
-        }
-        return false;
+    public String averageDurationForElementString(int count) {
+        return DurationUtil.format(averageDurationForElement(count));
     }
 
-    public String durationString () {
-        return DurationUtil.format(duration());
-    }
-
-
-    public Duration averageDurationForElement (int count) {
+    public Duration averageDurationForElement(int count) {
         Instant endForDuration = endTime;
         if (endForDuration == null) {
             endForDuration = Instant.now();
         }
         Duration entireDuration = Duration.between(this.startTime, endForDuration);
-        Duration average = entireDuration.dividedBy(count);
-
+        Duration average = entireDuration;
+        if (count > 0) {
+            average = entireDuration.dividedBy(count);
+        }
         return average;
-    }
-
-    public String averageDurationForElementString (int count) {
-        return DurationUtil.format(averageDurationForElement (count));
     }
 }

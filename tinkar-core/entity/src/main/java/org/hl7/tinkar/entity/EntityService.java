@@ -22,32 +22,43 @@ public interface EntityService extends ChronologyService, Flow.Publisher<Entity<
     }
 
     @Override
-    default <T extends Chronology<V>, V extends Version> Optional<T> getChronology(Component component) {
-        return getChronology(nidForPublicId(component.publicId()));
-    }
-
-    @Override
     default <T extends Chronology<V>, V extends Version> Optional<T> getChronology(UUID... uuids) {
         return getChronology(nidForUuids(uuids));
     }
 
+    @Override
+    default <T extends Chronology<V>, V extends Version> Optional<T> getChronology(Component component) {
+        return getChronology(nidForPublicId(component.publicId()));
+    }
+
     <T extends Chronology<V>, V extends Version> Optional<T> getChronology(int nid);
 
+    default int nidForUuids(UUID... uuids) {
+        return nidForPublicId(PublicIds.of(uuids));
+    }
+
+    int nidForPublicId(PublicId publicId);
 
     default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(Component component) {
         return getEntity(nidForPublicId(component.publicId()));
     }
 
+    default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(int nid) {
+        return Optional.ofNullable(getEntityFast(nid));
+    }
+
+    <T extends Entity<V>, V extends EntityVersion> T getEntityFast(int nid);
+
     default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(ImmutableList<UUID> uuidList) {
         return getEntity(nidForUuids(uuidList));
     }
 
-    default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(UUID... uuids) {
-        return getEntity(nidForUuids(uuids));
+    default int nidForUuids(ImmutableList<UUID> uuidList) {
+        return nidForPublicId(PublicIds.of(uuidList.toArray(new UUID[uuidList.size()])));
     }
 
-    default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(int nid) {
-        return Optional.ofNullable(getEntityFast(nid));
+    default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(UUID... uuids) {
+        return getEntity(nidForUuids(uuids));
     }
 
     default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(EntityFacade entityFacade) {
@@ -62,8 +73,6 @@ public interface EntityService extends ChronologyService, Flow.Publisher<Entity<
         return getEntityFast(nidForUuids(uuids));
     }
 
-    <T extends Entity<V>, V extends EntityVersion> T getEntityFast(int nid);
-
     default <T extends Entity<V>, V extends EntityVersion> T getEntityFast(EntityFacade entityFacade) {
         return getEntityFast(entityFacade.nid());
     }
@@ -71,6 +80,12 @@ public interface EntityService extends ChronologyService, Flow.Publisher<Entity<
     default Optional<StampEntity> getStamp(Component component) {
         return getStamp(nidForPublicId(component.publicId()));
     }
+
+    default Optional<StampEntity> getStamp(int nid) {
+        return Optional.ofNullable(getStampFast(nid));
+    }
+
+    StampEntity getStampFast(int nid);
 
     default Optional<StampEntity> getStamp(ImmutableList<UUID> uuidList) {
         return getStamp(nidForUuids(uuidList));
@@ -80,10 +95,6 @@ public interface EntityService extends ChronologyService, Flow.Publisher<Entity<
         return getStamp(nidForUuids(uuids));
     }
 
-    default Optional<StampEntity> getStamp(int nid) {
-        return Optional.ofNullable(getStampFast(nid));
-    }
-
     default StampEntity getStampFast(ImmutableList<UUID> uuidList) {
         return getStampFast(nidForUuids(uuidList));
     }
@@ -91,8 +102,6 @@ public interface EntityService extends ChronologyService, Flow.Publisher<Entity<
     default StampEntity getStampFast(UUID... uuids) {
         return getStampFast(nidForUuids(uuids));
     }
-
-    StampEntity getStampFast(int nid);
 
     void putEntity(Entity entity);
 
@@ -105,18 +114,11 @@ public interface EntityService extends ChronologyService, Flow.Publisher<Entity<
         return nidForPublicId(component.publicId());
     }
 
-    default int nidForUuids(ImmutableList<UUID> uuidList) {
-        return nidForPublicId(PublicIds.of(uuidList.toArray(new UUID[uuidList.size()])));
-    }
-
-    default int nidForUuids(UUID... uuids) {
-        return nidForPublicId(PublicIds.of(uuids));
-    }
-
-    int nidForPublicId(PublicId publicId);
-
     <T extends Chronology<V>, V extends Version> T unmarshalChronology(byte[] bytes);
 
+    default void addSortedUuids(List<UUID> uuidList, IntIdList idList) throws NoSuchElementException {
+        addSortedUuids(uuidList, idList.toArray());
+    }
 
     /**
      * Note, this method does not sort the provided uuidList,
@@ -136,13 +138,10 @@ public interface EntityService extends ChronologyService, Flow.Publisher<Entity<
             }
         }
     }
-    default void addSortedUuids(List<UUID> uuidList, IntIdList idList) throws NoSuchElementException {
-        addSortedUuids(uuidList, idList.toArray());
-    }
 
-    void forEachEntityOfPattern(int patternNid, Consumer<SemanticEntity> procedure);
+    void forEachSemanticOfPattern(int patternNid, Consumer<SemanticEntity> procedure);
 
-    int[] entityNidsOfPattern(int patternNid);
+    int[] semanticNidsOfPattern(int patternNid);
 
     void forEachSemanticForComponent(int componentNid, Consumer<SemanticEntity> procedure);
 

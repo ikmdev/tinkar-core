@@ -7,6 +7,7 @@ import org.h2.mvstore.MVStore;
 import org.h2.mvstore.OffHeapStore;
 import org.hl7.tinkar.common.service.*;
 import org.hl7.tinkar.common.util.ints2long.IntsInLong;
+import org.hl7.tinkar.common.util.time.Stopwatch;
 import org.hl7.tinkar.provider.mvstore.internal.Get;
 import org.hl7.tinkar.provider.mvstore.internal.Put;
 import org.hl7.tinkar.provider.search.Indexer;
@@ -47,6 +48,8 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     protected LongAdder writeSequence = new LongAdder();
 
     public MVStoreProvider() throws IOException {
+        Stopwatch stopwatch = new Stopwatch();
+        LOG.info("Opening MVStoreProvider");
         this.offHeap = new OffHeapStore();
         File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
         configuredRoot.mkdirs();
@@ -72,6 +75,9 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         Put.singleton = this;
 
         MVStoreProvider.singleton = this;
+        stopwatch.stop();
+        LOG.info("Opened MVStoreProvider in: " + stopwatch.durationString());
+
         File indexDir = new File(configuredRoot, "lucene");
         this.indexer = new Indexer(indexDir.toPath());
         this.searcher = new Searcher();
@@ -88,16 +94,23 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     }
 
     public void close() {
+        Stopwatch stopwatch = new Stopwatch();
+        LOG.info("Closing MVStoreProvider");
         try {
             save();
             this.indexer.close();
             this.store.close();
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            stopwatch.stop();
+            LOG.info("Closed MVStoreProvider in: " + stopwatch.durationString());
         }
     }
 
     public void save() {
+        Stopwatch stopwatch = new Stopwatch();
+        LOG.info("Saving MVStoreProvider");
         try {
             this.uuidToNidMap.put(nextNidKey, nextNid.get());
             this.store.commit();
@@ -105,6 +118,9 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
             this.indexer.commit();
         } catch (IOException e) {
             throw new RuntimeException(e);
+        } finally {
+            stopwatch.stop();
+            LOG.info("Saved MVStoreProvider in: " + stopwatch.durationString());
         }
     }
 

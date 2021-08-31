@@ -10,6 +10,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.highlight.*;
 import org.hl7.tinkar.common.service.PrimitiveDataSearchResult;
+import org.hl7.tinkar.common.util.time.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,9 +23,13 @@ public class Searcher {
     QueryParser parser;
 
     public Searcher() throws IOException {
+        Stopwatch stopwatch = new Stopwatch();
+        LOG.info("Opening lucene searcher");
         this.ireader = Indexer.getDirectoryReader();
         this.isearcher = new IndexSearcher(ireader);
         this.parser = new QueryParser("text", Indexer.analyzer());
+        stopwatch.stop();
+        LOG.info("Opened lucene searcher in: " + stopwatch.durationString());
     }
 
 

@@ -5,29 +5,41 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.collection.*;
 import org.hl7.tinkar.common.service.*;
 import org.hl7.tinkar.common.util.ints2long.IntsInLong;
+import org.hl7.tinkar.common.util.time.Stopwatch;
 import org.hl7.tinkar.provider.search.Indexer;
 import org.hl7.tinkar.provider.search.Searcher;
 import org.hl7.tinkar.provider.spinedarray.internal.Get;
 import org.hl7.tinkar.provider.spinedarray.internal.Put;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
 
-import static java.lang.System.Logger.Level.ERROR;
-
+/**
+ * Maybe a hybrid of SpinedArrayProvider and MVStoreProvider is worth considering.
+ * <p>
+ * SpinedArrayProvider is performing horribly becuase of dependency on ConcurrentUuidIntHashMap serilization.
+ * <p>
+ * MVStore performs worse when iterating over entities.
+ */
 public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
-    protected static final System.Logger LOG = System.getLogger(SpinedArrayProvider.class.getName());
-
     protected static final File defaultDataDirectory = new File("target/spinedarrays/");
+    private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayProvider.class);
     protected static SpinedArrayProvider singleton;
     protected static LongAdder writeSequence = new LongAdder();
+    protected final CountDownLatch uuidsLoadedLatch = new CountDownLatch(1);
     final AtomicInteger nextNid = new AtomicInteger(Integer.MIN_VALUE + 1);
 
-    final ConcurrentUuidIntHashMap uuidToNidMap = new ConcurrentUuidIntHashMap();
+    final ConcurrentHashMap<UUID, Integer> uuidToNidMap = new ConcurrentHashMap<>();
     final SpinedByteArrayMap entityToBytesMap;
     final SpinedIntIntMap nidToPatternNidMap;
     /**
@@ -36,22 +48,23 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
     final SpinedIntLongArrayMap nidToCitingComponentsNidMap;
     final SpinedIntIntArrayMap patternToElementNidsMap;
 
-    final File uuidNidMapFile;
     final File nidToPatternNidMapDirectory;
     final File nidToByteArrayMapDirectory;
     final File nidToCitingComponentNidMapDirectory;
     final File patternToElementNidsMapDirectory;
+    final File nextNidKeyFile;
     final Indexer indexer;
     final Searcher searcher;
 
     public SpinedArrayProvider() throws IOException {
+        Stopwatch stopwatch = new Stopwatch();
+        LOG.info("Opening SpinedArrayProvider");
         File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
         configuredRoot.mkdirs();
         SpinedArrayProvider.singleton = this;
         Get.singleton = this;
         Put.singleton = this;
 
-        this.uuidNidMapFile = new File(configuredRoot, "uuidNidMap");
         this.nidToPatternNidMapDirectory = new File(configuredRoot, "nidToPatternNidMap");
         this.nidToPatternNidMapDirectory.mkdirs();
         this.nidToByteArrayMapDirectory = new File(configuredRoot, "nidToByteArrayMap");
@@ -60,6 +73,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
         this.nidToCitingComponentNidMapDirectory.mkdirs();
         this.patternToElementNidsMapDirectory = new File(configuredRoot, "patternToElementNidsMap");
         this.patternToElementNidsMapDirectory.mkdirs();
+        this.nextNidKeyFile = new File(configuredRoot, "nextNidKeyFile");
 
         this.entityToBytesMap = new SpinedByteArrayMap(new ByteArrayFileStore(nidToByteArrayMapDirectory));
         this.nidToPatternNidMap = new SpinedIntIntMap(KeyType.NID_KEY);
@@ -67,16 +81,29 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
         this.nidToCitingComponentsNidMap = new SpinedIntLongArrayMap(new IntLongArrayFileStore(nidToCitingComponentNidMapDirectory));
         this.patternToElementNidsMap = new SpinedIntIntArrayMap(new IntIntArrayFileStore(patternToElementNidsMapDirectory));
 
-        if (uuidNidMapFile.exists()) {
-            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(uuidNidMapFile))) {
-                uuidToNidMap.readExternal(ois);
-                UUID nextNidKey = new UUID(0, 0);
-                nextNid.set(uuidToNidMap.get(nextNidKey));
-            } catch (IOException | ClassNotFoundException e) {
-                LOG.log(ERROR, e.getLocalizedMessage(), e);
-                throw new RuntimeException(e);
-            }
+        if (nextNidKeyFile.exists()) {
+            String nextNidString = Files.readString(this.nextNidKeyFile.toPath());
+            nextNid.set(Integer.valueOf(nextNidString));
         }
+        Executor.threadPool().execute(() -> {
+            Stopwatch uuidNidMapFromEntitiesStopwatch = new Stopwatch();
+            LOG.info("Starting UUID strategy 2");
+            UuidNidCollector uuidNidCollector = new UuidNidCollector(uuidToNidMap);
+            try {
+                this.entityToBytesMap.forEachParallel(uuidNidCollector);
+                this.uuidsLoadedLatch.countDown();
+            } catch (ExecutionException | InterruptedException e) {
+                LOG.error(e.getLocalizedMessage(), e);
+            } finally {
+                uuidNidMapFromEntitiesStopwatch.stop();
+                LOG.info("Finished UUID strategy 2 in: " + uuidNidMapFromEntitiesStopwatch.durationString());
+                LOG.info(uuidNidCollector.report());
+            }
+        });
+
+        stopwatch.stop();
+        LOG.info("Opened SpinedArrayProvider in: " + stopwatch.durationString());
+
         File indexDir = new File(configuredRoot, "lucene");
         this.indexer = new Indexer(indexDir.toPath());
         this.searcher = new Searcher();
@@ -89,51 +116,60 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
 
     @Override
     public void close() {
+        Stopwatch stopwatch = new Stopwatch();
+        LOG.info("Closing SpinedArrayProvider");
         try {
             save();
             entityToBytesMap.close();
             SpinedArrayProvider.singleton = null;
-            this.indexer.commit();
             this.indexer.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
+        } finally {
+            stopwatch.stop();
+            LOG.info("Closed SpinedArrayProvider in: " + stopwatch.durationString());
         }
 
     }
 
     public void save() {
-
+        Stopwatch stopwatch = new Stopwatch();
+        LOG.info("Saving SpinedArrayProvider");
         try {
-            UUID nextNidKey = new UUID(0, 0);
-            uuidToNidMap.put(nextNidKey, nextNid.get());
-            try (ObjectOutputStream objectOutputStream =
-                         new ObjectOutputStream(new FileOutputStream(uuidNidMapFile))) {
-                uuidToNidMap.writeExternal(objectOutputStream);
-            }
+            Files.writeString(this.nextNidKeyFile.toPath(), Integer.toString(nextNid.get()));
             nidToPatternNidMap.write(this.nidToPatternNidMapDirectory);
             this.entityToBytesMap.write();
             this.nidToCitingComponentsNidMap.write();
             this.patternToElementNidsMap.write();
             this.indexer.commit();
         } catch (IOException e) {
-            LOG.log(ERROR, e.getLocalizedMessage(), e);
+            LOG.error(e.getLocalizedMessage(), e);
+        } finally {
+            stopwatch.stop();
+            LOG.info("Save SpinedArrayProvider in: " + stopwatch.durationString());
         }
     }
 
     @Override
     public int nidForUuids(UUID... uuids) {
-        if (uuids.length == 1) {
-            return uuidToNidMap.getIfAbsentPut(uuids[0], () -> newNid());
-        }
-        int nid = Integer.MAX_VALUE;
-        for (UUID uuid : uuids) {
-            if (nid == Integer.MAX_VALUE) {
-                nid = uuidToNidMap.getIfAbsentPut(uuids[0], () -> newNid());
-            } else {
-                uuidToNidMap.put(uuid, nid);
+        try {
+            this.uuidsLoadedLatch.await();
+            if (uuids.length == 1) {
+                return uuidToNidMap.computeIfAbsent(uuids[0], uuidKey -> newNid());
             }
+            int nid = Integer.MAX_VALUE;
+            for (UUID uuid : uuids) {
+                if (nid == Integer.MAX_VALUE) {
+                    nid = uuidToNidMap.computeIfAbsent(uuids[0], uuidKey -> newNid());
+                } else {
+                    uuidToNidMap.put(uuid, nid);
+                }
+            }
+            return nid;
+        } catch (InterruptedException e) {
+            LOG.error(e.getLocalizedMessage(), e);
+            throw new RuntimeException(e);
         }
-        return nid;
     }
 
     @Override
@@ -143,18 +179,24 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
 
     @Override
     public int nidForUuids(ImmutableList<UUID> uuidList) {
-        if (uuidList.size() == 1) {
-            return uuidToNidMap.getIfAbsentPut(uuidList.get(0), () -> newNid());
-        }
-        int nid = Integer.MAX_VALUE;
-        for (UUID uuid : uuidList) {
-            if (nid == Integer.MAX_VALUE) {
-                nid = uuidToNidMap.getIfAbsentPut(uuid, () -> newNid());
-            } else {
-                uuidToNidMap.put(uuid, nid);
+        try {
+            this.uuidsLoadedLatch.await();
+            if (uuidList.size() == 1) {
+                return uuidToNidMap.computeIfAbsent(uuidList.get(0), uuidKey -> newNid());
             }
+            int nid = Integer.MAX_VALUE;
+            for (UUID uuid : uuidList) {
+                if (nid == Integer.MAX_VALUE) {
+                    nid = uuidToNidMap.computeIfAbsent(uuid, uuidKey -> newNid());
+                } else {
+                    uuidToNidMap.put(uuid, nid);
+                }
+            }
+            return nid;
+        } catch (InterruptedException e) {
+            LOG.error(e.getLocalizedMessage(), e);
+            throw new RuntimeException(e);
         }
-        return nid;
     }
 
     @Override

@@ -75,13 +75,17 @@ public class SemanticEntity
 
     @Override
     public String toString() {
-        return "SemanticEntity{" +
-                "type: " + PrimitiveData.text(patternNid) +
+        return "SemanticEntity{<" +
+                nid +
+                "> " + Arrays.toString(publicId().asUuidArray()) + " of pattern: «" + PrimitiveData.text(patternNid) +
                 " <" +
                 nid +
-                "> " + Arrays.toString(publicId().asUuidArray()) +
-                ", rc: " + PrimitiveData.text(referencedComponentNid) +
-                ", v: " + versions +
+                "> " + Entity.getFast(patternNid).publicId().asUuidList() +
+                "», rc: «" + PrimitiveData.text(referencedComponentNid) +
+                " <" +
+                referencedComponentNid +
+                "> " + Entity.getFast(referencedComponentNid).publicId().asUuidList() +
+                "», v: " + versions +
                 '}';
     }
 
