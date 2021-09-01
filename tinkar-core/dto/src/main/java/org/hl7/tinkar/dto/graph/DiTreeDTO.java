@@ -13,8 +13,8 @@ import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
-import org.hl7.tinkar.dto.binary.*;
 import org.hl7.tinkar.component.graph.DiTree;
+import org.hl7.tinkar.dto.binary.*;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -26,11 +26,6 @@ public record DiTreeDTO(VertexDTO root,
                         ImmutableIntObjectMap<ImmutableIntList> successorMap)
         implements DiTree<VertexDTO>, GraphDefaults, Marshalable {
 
-
-    @Override
-    public Optional<VertexDTO> predecessor(VertexDTO vertex) {
-        return Optional.ofNullable(vertexMap().get(predecessorMap.get(vertex.vertexIndex())));
-    }
 
     @Unmarshaler
     public static DiTreeDTO make(TinkarInput in) {
@@ -53,6 +48,15 @@ public record DiTreeDTO(VertexDTO root,
         }
     }
 
+    public static Builder builder(VertexDTO root) {
+        return new Builder(root);
+    }
+
+    @Override
+    public Optional<VertexDTO> predecessor(VertexDTO vertex) {
+        return Optional.ofNullable(vertexMap().get(predecessorMap.get(vertex.vertexIndex())));
+    }
+
     @Override
     @Marshaler
     public void marshal(TinkarOutput out) {
@@ -66,14 +70,12 @@ public record DiTreeDTO(VertexDTO root,
             out.putInt(predecessor);
         });
     }
-    public static Builder builder(VertexDTO root) {
-         return new Builder(root);
-    }
+
     public static class Builder {
-         private final MutableList<VertexDTO> vertexMap = Lists.mutable.empty();
-         private final MutableIntObjectMap<MutableIntList> successorMap = IntObjectMaps.mutable.empty();
-         private final MutableIntIntMap predecessorMap = IntIntMaps.mutable.empty();
-         private final VertexDTO root;
+        private final MutableList<VertexDTO> vertexMap = Lists.mutable.empty();
+        private final MutableIntObjectMap<MutableIntList> successorMap = IntObjectMaps.mutable.empty();
+        private final MutableIntIntMap predecessorMap = IntIntMaps.mutable.empty();
+        private final VertexDTO root;
 
         private Builder(VertexDTO root) {
             this.root = root;
@@ -82,7 +84,10 @@ public record DiTreeDTO(VertexDTO root,
 
         public Builder add(VertexDTO child, VertexDTO parent) {
             vertexMap.add(child.vertexIndex(), child);
-            successorMap.getIfAbsent(parent.vertexIndex(), () -> IntLists.mutable.empty()).add(child.vertexIndex());
+            if (!successorMap.containsKey(parent.vertexIndex())) {
+                successorMap.put(parent.vertexIndex(), IntLists.mutable.empty());
+            }
+            successorMap.get(parent.vertexIndex()).add(child.vertexIndex());
             predecessorMap.put(child.vertexIndex(), parent.vertexIndex());
             return this;
         }

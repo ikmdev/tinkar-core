@@ -180,8 +180,14 @@ public class DiTreeEntity<V extends EntityVertex> extends DiGraphAbstract<V> imp
         }
 
         public Builder<V> addEdge(V child, V parent) {
+            if (child.vertexIndex() < 1) {
+                addVertex(child);
+            }
             vertexMap.add(child.vertexIndex(), child);
-            successorMap.getIfAbsent(parent.vertexIndex(), () -> IntLists.mutable.empty()).add(child.vertexIndex());
+            if (!successorMap.containsKey(parent.vertexIndex())) {
+                successorMap.put(parent.vertexIndex(), IntLists.mutable.empty());
+            }
+            successorMap.get(parent.vertexIndex()).add(child.vertexIndex());
             predecessorMap.put(child.vertexIndex(), parent.vertexIndex());
             return this;
         }

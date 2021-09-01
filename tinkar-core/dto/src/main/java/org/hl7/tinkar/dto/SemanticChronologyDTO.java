@@ -24,17 +24,20 @@ import org.hl7.tinkar.component.Pattern;
 import org.hl7.tinkar.component.SemanticChronology;
 import org.hl7.tinkar.component.SemanticVersion;
 import org.hl7.tinkar.dto.binary.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.UUID;
 
 /**
- *
  * @author kec
  */
 public record SemanticChronologyDTO(PublicId publicId,
                                     PublicId patternPublicId,
                                     PublicId referencedComponentPublicId,
                                     ImmutableList<SemanticVersionDTO> semanticVersions)
-    implements SemanticChronology<SemanticVersionDTO>, DTO, Marshalable {
-
+        implements SemanticChronology<SemanticVersionDTO>, DTO, Marshalable {
+    private static final Logger LOG = LoggerFactory.getLogger(SemanticChronologyDTO.class);
     private static final int localMarshalVersion = 3;
 
     public SemanticChronologyDTO(PublicId componentUuids,
@@ -58,20 +61,13 @@ public record SemanticChronologyDTO(PublicId publicId,
                 changeSetVersions.toImmutable());
     }
 
-    @Override
-    public Component referencedComponent() {
-        return new ComponentDTO(referencedComponentPublicId);
-    }
-
-    @Override
-    public Pattern pattern() {
-        return new PatternDTO(patternPublicId);
-    }
-
     @Unmarshaler
     public static SemanticChronologyDTO make(TinkarInput in) {
         if (localMarshalVersion == in.getTinkerFormatVersion()) {
             PublicId componentUuids = in.getPublicId();
+            if (componentUuids.asUuidArray()[0].equals(UUID.fromString("f0199384-fbd0-351c-ad9b-4ca8d56ce4b6"))) {
+                LOG.info("Found: Clinical disease or syndrome present");
+            }
             PublicId patternUuids = in.getPublicId();
             PublicId referencedComponentUuids = in.getPublicId();
             return new SemanticChronologyDTO(
@@ -83,17 +79,27 @@ public record SemanticChronologyDTO(PublicId publicId,
     }
 
     @Override
+    public Component referencedComponent() {
+        return new ComponentDTO(referencedComponentPublicId);
+    }
+
+    @Override
+    public Pattern pattern() {
+        return new PatternDTO(patternPublicId);
+    }
+
+    @Override
+    public ImmutableList<SemanticVersionDTO> versions() {
+        return semanticVersions.collect(semanticVersionDTO -> semanticVersionDTO);
+    }
+
+    @Override
     @Marshaler
     public void marshal(TinkarOutput out) {
         out.putPublicId(publicId());
         out.putPublicId(patternPublicId);
         out.putPublicId(referencedComponentPublicId);
         out.writeSemanticVersionList(semanticVersions);
-    }
-
-    @Override
-    public ImmutableList<SemanticVersionDTO> versions() {
-        return semanticVersions.collect(semanticVersionDTO ->  semanticVersionDTO);
     }
 }
 

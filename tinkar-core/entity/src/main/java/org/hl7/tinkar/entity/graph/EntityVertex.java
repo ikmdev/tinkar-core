@@ -34,7 +34,7 @@ public class EntityVertex implements Vertex, VertexId {
     private static final int DEFAULT_SIZE = 64;
     protected long mostSignificantBits;
     protected long leastSignificantBits;
-    protected int vertexIndex;
+    protected int vertexIndex = -1;
     protected int meaningNid;
     private ImmutableIntObjectMap<Object> properties;
     private MutableIntObjectMap<Object> uncommittedProperties;
