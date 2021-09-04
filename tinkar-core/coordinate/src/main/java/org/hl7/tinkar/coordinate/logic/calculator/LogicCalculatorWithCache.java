@@ -12,6 +12,7 @@ import org.hl7.tinkar.coordinate.stamp.StampCoordinateRecord;
 import org.hl7.tinkar.coordinate.stamp.calculator.Latest;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculator;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
+import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.entity.Field;
 import org.hl7.tinkar.entity.SemanticEntityVersion;
 import org.hl7.tinkar.entity.graph.DiTreeEntity;
@@ -95,7 +96,7 @@ public class LogicCalculatorWithCache implements LogicCalculator {
                 return false;
             default:
                 // TODO Raise an alert...
-                throw new IllegalStateException("More than one set of axioms for concept. ");
+                throw new IllegalStateException("More than one set of axioms for concept: " + Entity.getFast(nid));
         }
     }
 

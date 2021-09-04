@@ -4,15 +4,22 @@ import org.hl7.tinkar.common.util.time.Stopwatch;
 import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.entity.EntityFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ObjIntConsumer;
 
 public class UuidNidCollector implements ObjIntConsumer<byte[]> {
-
+    private static final Logger LOG = LoggerFactory.getLogger(UuidNidCollector.class);
     final ConcurrentHashMap<UUID, Integer> uuidToNidMap;
+    final ConcurrentSkipListSet<Integer> patternNids;
+    final ConcurrentSkipListSet<Integer> conceptNids;
+    final ConcurrentSkipListSet<Integer> semanticNids;
+    final ConcurrentSkipListSet<Integer> stampNids;
 
     AtomicInteger totalCount = new AtomicInteger();
     AtomicInteger conceptCount = new AtomicInteger();
@@ -22,35 +29,50 @@ public class UuidNidCollector implements ObjIntConsumer<byte[]> {
     AtomicInteger other = new AtomicInteger();
     Stopwatch stopwatch = new Stopwatch();
 
-    public UuidNidCollector(ConcurrentHashMap<UUID, Integer> uuidToNidMap) {
+    public UuidNidCollector(ConcurrentHashMap<UUID, Integer> uuidToNidMap,
+                            ConcurrentSkipListSet<Integer> patternNids,
+                            ConcurrentSkipListSet<Integer> conceptNids,
+                            ConcurrentSkipListSet<Integer> semanticNids,
+                            ConcurrentSkipListSet<Integer> stampNids) {
         this.uuidToNidMap = uuidToNidMap;
+        this.patternNids = patternNids;
+        this.conceptNids = conceptNids;
+        this.semanticNids = semanticNids;
+        this.stampNids = stampNids;
     }
 
     @Override
     public void accept(byte[] bytes, int value) {
         // bytes starts with number of arrays (int = 4 bytes), then size of first array (int = 4 bytes), then entity format version then type token, -1 since index starts at 0...
         FieldDataType componentType = FieldDataType.fromToken(bytes[9]);
+        if (value == Integer.MIN_VALUE) {
+            LOG.error("value of Integer.MIN_VALUE should not happen. ");
+        }
         boolean typeToProcess = false;
         switch (componentType) {
             case PATTERN_CHRONOLOGY:
                 patternCount.incrementAndGet();
                 totalCount.incrementAndGet();
                 typeToProcess = true;
+                this.patternNids.add(value);
                 break;
             case CONCEPT_CHRONOLOGY:
                 conceptCount.incrementAndGet();
                 totalCount.incrementAndGet();
+                this.conceptNids.add(value);
                 typeToProcess = true;
                 break;
             case SEMANTIC_CHRONOLOGY:
                 semanticCount.incrementAndGet();
                 totalCount.incrementAndGet();
                 typeToProcess = true;
+                semanticNids.add(value);
                 break;
             case STAMP:
                 stampCount.incrementAndGet();
                 totalCount.incrementAndGet();
                 typeToProcess = true;
+                stampNids.add(value);
                 break;
             default:
                 other.incrementAndGet();

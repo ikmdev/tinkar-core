@@ -359,6 +359,22 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
         if (textField.isPresent()) {
             return Optional.ofNullable(textField.get().value());
         }
+        Entity entity = Entity.getFast(nid);
+        if (entity instanceof SemanticEntity semanticEntity) {
+            Latest<PatternEntityVersion> latestPatternVersion = stampCalculator.latestPatternEntityVersion(semanticEntity.patternNid());
+            if (latestPatternVersion.isPresent()) {
+                PatternEntityVersion patternVersion = latestPatternVersion.get();
+                StringBuilder sb = new StringBuilder("[");
+                sb.append(getPreferredDescriptionTextWithFallbackOrNid(patternVersion.semanticMeaningNid()));
+                sb.append("] attachment to [");
+                sb.append(getPreferredDescriptionTextWithFallbackOrNid(semanticEntity.referencedComponentNid()));
+                sb.append("] for [");
+                sb.append(getPreferredDescriptionTextWithFallbackOrNid(patternVersion.semanticPurposeNid()));
+                sb.append("]");
+                return Optional.of(sb.toString());
+            }
+        }
+
         return Optional.empty();
     }
 }

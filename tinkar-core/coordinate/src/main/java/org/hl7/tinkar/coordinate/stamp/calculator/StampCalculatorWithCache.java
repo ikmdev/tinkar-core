@@ -824,8 +824,6 @@ public class StampCalculatorWithCache implements StampCalculator {
                 }
                 return latestField;
             } else {
-                LOG.warn("Field criterion " + PrimitiveData.text(criterionNid) +
-                        " not in pattern: " + patternVersion);
                 return Latest.empty();
             }
         }

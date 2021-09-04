@@ -26,6 +26,9 @@ import java.util.function.ObjIntConsumer;
 
 public interface PrimitiveDataService {
 
+    int FIRST_NID = Integer.MIN_VALUE + 1;
+
+
     int MAX_PATTERN_ELEMENT_ARRAY_SIZE = 10240;
     int[] MAX_PATTERN_ELEMENT = new int[]{Integer.MAX_VALUE};
 
@@ -238,6 +241,14 @@ public interface PrimitiveDataService {
     }
 
     void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure);
+
+    void forEachPatternNid(IntProcedure procedure);
+
+    void forEachConceptNid(IntProcedure procedure);
+
+    void forEachStampNid(IntProcedure procedure);
+
+    void forEachSemanticNid(IntProcedure procedure);
 
     default int[] semanticNidsForComponent(int componentNid) {
         MutableIntList intList = IntLists.mutable.empty();

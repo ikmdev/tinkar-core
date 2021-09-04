@@ -44,7 +44,7 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
 
     private final ConcurrentHashMap<Integer, byte[]> nidComponentMap = ConcurrentHashMap.newMap();
     private final ConcurrentHashMap<UUID, Integer> uuidNidMap = new ConcurrentHashMap<>();
-    private final AtomicInteger nextNid = new AtomicInteger(Integer.MIN_VALUE + 1);
+    private final AtomicInteger nextNid = new AtomicInteger(PrimitiveDataService.FIRST_NID);
 
     private ProviderEphemeral() throws IOException {
         LOG.info("Constructing ProviderEphemeral");
@@ -150,6 +150,26 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
                 procedure.accept(nid);
             }
         });
+    }
+
+    @Override
+    public void forEachPatternNid(IntProcedure procedure) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void forEachConceptNid(IntProcedure procedure) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void forEachStampNid(IntProcedure procedure) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void forEachSemanticNid(IntProcedure procedure) {
+        throw new UnsupportedOperationException();
     }
 
     @Override

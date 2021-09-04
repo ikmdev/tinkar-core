@@ -1,5 +1,6 @@
 package org.hl7.tinkar.collection;
 
+import org.hl7.tinkar.common.service.PrimitiveDataService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -174,7 +175,7 @@ public class SpinedIntIntMap {
         int currentSpineCount = getSpineCount();
         int key = 0;
         if (this.keyType == KeyType.NID_KEY) {
-            key = Integer.MIN_VALUE + 1;
+            key = PrimitiveDataService.FIRST_NID;
         }
         for (int spineIndex = 0; spineIndex < currentSpineCount; spineIndex++) {
             AtomicIntegerArray spine = this.spines.computeIfAbsent(spineIndex, this::newSpine);

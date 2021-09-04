@@ -6,6 +6,10 @@ import org.hl7.tinkar.collection.*;
 import org.hl7.tinkar.common.service.*;
 import org.hl7.tinkar.common.util.ints2long.IntsInLong;
 import org.hl7.tinkar.common.util.time.Stopwatch;
+import org.hl7.tinkar.entity.ConceptEntity;
+import org.hl7.tinkar.entity.PatternEntity;
+import org.hl7.tinkar.entity.SemanticEntity;
+import org.hl7.tinkar.entity.StampEntity;
 import org.hl7.tinkar.provider.search.Indexer;
 import org.hl7.tinkar.provider.search.Searcher;
 import org.hl7.tinkar.provider.spinedarray.internal.Get;
@@ -18,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,9 +42,14 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
     protected static SpinedArrayProvider singleton;
     protected static LongAdder writeSequence = new LongAdder();
     protected final CountDownLatch uuidsLoadedLatch = new CountDownLatch(1);
-    final AtomicInteger nextNid = new AtomicInteger(Integer.MIN_VALUE + 1);
+    final AtomicInteger nextNid = new AtomicInteger(PrimitiveDataService.FIRST_NID);
 
     final ConcurrentHashMap<UUID, Integer> uuidToNidMap = new ConcurrentHashMap<>();
+    final ConcurrentSkipListSet<Integer> patternNids = new ConcurrentSkipListSet<>();
+    final ConcurrentSkipListSet<Integer> conceptNids = new ConcurrentSkipListSet<>();
+    final ConcurrentSkipListSet<Integer> semanticNids = new ConcurrentSkipListSet<>();
+    final ConcurrentSkipListSet<Integer> stampNids = new ConcurrentSkipListSet<>();
+
     final SpinedByteArrayMap entityToBytesMap;
     final SpinedIntIntMap nidToPatternNidMap;
     /**
@@ -88,7 +98,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
         Executor.threadPool().execute(() -> {
             Stopwatch uuidNidMapFromEntitiesStopwatch = new Stopwatch();
             LOG.info("Starting UUID strategy 2");
-            UuidNidCollector uuidNidCollector = new UuidNidCollector(uuidToNidMap);
+            UuidNidCollector uuidNidCollector = new UuidNidCollector(uuidToNidMap,
+                    patternNids, conceptNids, semanticNids, stampNids);
             try {
                 this.entityToBytesMap.forEachParallel(uuidNidCollector);
                 this.uuidsLoadedLatch.countDown();
@@ -165,6 +176,9 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
                     uuidToNidMap.put(uuid, nid);
                 }
             }
+            if (nid == Integer.MIN_VALUE) {
+                throw new IllegalStateException("nid cannot be Integer.MIN_VALUE");
+            }
             return nid;
         } catch (InterruptedException e) {
             LOG.error(e.getLocalizedMessage(), e);
@@ -191,6 +205,9 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
                 } else {
                     uuidToNidMap.put(uuid, nid);
                 }
+            }
+            if (nid == Integer.MIN_VALUE) {
+                throw new IllegalStateException("nid cannot be Integer.MIN_VALUE");
             }
             return nid;
         } catch (InterruptedException e) {
@@ -220,8 +237,11 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
 
     @Override
     public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject) {
+        if (nid == Integer.MIN_VALUE) {
+            LOG.error("NID should not be Integer.MIN_VALUE");
+            throw new IllegalStateException("NID should not be Integer.MIN_VALUE");
+        }
         if (!this.entityToBytesMap.containsKey(nid)) {
-
             this.nidToPatternNidMap.put(nid, patternNid);
             if (patternNid != Integer.MAX_VALUE) {
                 long citationLong = IntsInLong.ints2Long(nid, patternNid);
@@ -229,6 +249,15 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
                         PrimitiveDataService::mergeCitations);
                 this.patternToElementNidsMap.accumulateAndGet(patternNid, new int[]{nid},
                         PrimitiveDataService::mergePatternElements);
+            }
+            if (sourceObject instanceof ConceptEntity concept) {
+                this.conceptNids.add(concept.nid());
+            } else if (sourceObject instanceof SemanticEntity semanticEntity) {
+                this.semanticNids.add(semanticEntity.nid());
+            } else if (sourceObject instanceof PatternEntity patternEntity) {
+                this.patternNids.add(patternEntity.nid());
+            } else if (sourceObject instanceof StampEntity stampEntity) {
+                this.stampNids.add(stampEntity.nid());
             }
         }
         byte[] mergedBytes = this.entityToBytesMap.accumulateAndGet(nid, value, PrimitiveDataService::merge);
@@ -259,6 +288,50 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
     }
 
     @Override
+    public void forEachPatternNid(IntProcedure procedure) {
+        try {
+            this.uuidsLoadedLatch.await();
+            this.patternNids.forEach(patternNid -> procedure.accept(patternNid));
+        } catch (InterruptedException e) {
+            LOG.error(e.getLocalizedMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void forEachConceptNid(IntProcedure procedure) {
+        try {
+            this.uuidsLoadedLatch.await();
+            this.conceptNids.forEach(conceptNid -> procedure.accept(conceptNid));
+        } catch (InterruptedException e) {
+            LOG.error(e.getLocalizedMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void forEachStampNid(IntProcedure procedure) {
+        try {
+            this.uuidsLoadedLatch.await();
+            this.stampNids.forEach(stampNid -> procedure.accept(stampNid));
+        } catch (InterruptedException e) {
+            LOG.error(e.getLocalizedMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void forEachSemanticNid(IntProcedure procedure) {
+        try {
+            this.uuidsLoadedLatch.await();
+            this.semanticNids.forEach(semanticNid -> procedure.accept(semanticNid));
+        } catch (InterruptedException e) {
+            LOG.error(e.getLocalizedMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public void forEachSemanticNidForComponent(int componentNid, IntProcedure procedure) {
         long[] citationLongs = this.nidToCitingComponentsNidMap.get(componentNid);
         if (citationLongs != null) {
@@ -282,5 +355,4 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
             }
         }
     }
-
 }

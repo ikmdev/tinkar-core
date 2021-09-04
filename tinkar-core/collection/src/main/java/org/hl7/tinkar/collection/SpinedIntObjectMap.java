@@ -17,6 +17,7 @@
 package org.hl7.tinkar.collection;
 
 import org.hl7.tinkar.common.service.Executor;
+import org.hl7.tinkar.common.service.PrimitiveDataService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -166,8 +167,8 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
         for (int indexInSpine = 0; indexInSpine < spineSize; indexInSpine++) {
             E element = spine.get(indexInSpine);
             if (element != null) {
-                int nid = Integer.MIN_VALUE + index;
-                consumer.accept((E) element, nid);
+                int nid = PrimitiveDataService.FIRST_NID + index;
+                consumer.accept(element, nid);
                 processed++;
             }
             index++;

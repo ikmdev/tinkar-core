@@ -27,8 +27,6 @@ import org.hl7.tinkar.dto.binary.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.UUID;
-
 /**
  * @author kec
  */
@@ -65,9 +63,6 @@ public record SemanticChronologyDTO(PublicId publicId,
     public static SemanticChronologyDTO make(TinkarInput in) {
         if (localMarshalVersion == in.getTinkerFormatVersion()) {
             PublicId componentUuids = in.getPublicId();
-            if (componentUuids.asUuidArray()[0].equals(UUID.fromString("f0199384-fbd0-351c-ad9b-4ca8d56ce4b6"))) {
-                LOG.info("Found: Clinical disease or syndrome present");
-            }
             PublicId patternUuids = in.getPublicId();
             PublicId referencedComponentUuids = in.getPublicId();
             return new SemanticChronologyDTO(

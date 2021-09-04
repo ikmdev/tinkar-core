@@ -71,11 +71,11 @@ public class DataProviderWebsocketClient
         String url = args.length != 0 ? args[0] : "ws://127.0.0.1:8080/";
         LOG.info("\nWeb Socket request: " + url);
         CompletableFuture<?> future = eventloop.submit(() -> {
-            getEntity(url, Integer.MIN_VALUE + 1);
+            getEntity(url, PrimitiveDataService.FIRST_NID);
         });
         future.get();
         future = eventloop.submit(() -> {
-            getEntity(url, Integer.MIN_VALUE + 2);
+            getEntity(url, PrimitiveDataService.FIRST_NID + 1);
         });
         future.get();
     }
@@ -184,6 +184,26 @@ public class DataProviderWebsocketClient
 
     @Override
     public void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void forEachPatternNid(IntProcedure procedure) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void forEachConceptNid(IntProcedure procedure) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void forEachStampNid(IntProcedure procedure) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void forEachSemanticNid(IntProcedure procedure) {
         throw new UnsupportedOperationException();
     }
 

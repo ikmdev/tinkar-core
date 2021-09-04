@@ -68,7 +68,7 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         if (this.uuidToNidMap.containsKey(nextNidKey)) {
             this.nextNid = new AtomicInteger(this.uuidToNidMap.get(nextNidKey));
         } else {
-            this.nextNid = new AtomicInteger(Integer.MIN_VALUE + 1);
+            this.nextNid = new AtomicInteger(PrimitiveDataService.FIRST_NID);
         }
 
         Get.singleton = this;
@@ -183,6 +183,26 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
                 procedure.accept(nid);
             }
         });
+    }
+
+    @Override
+    public void forEachPatternNid(IntProcedure procedure) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void forEachConceptNid(IntProcedure procedure) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void forEachStampNid(IntProcedure procedure) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void forEachSemanticNid(IntProcedure procedure) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
