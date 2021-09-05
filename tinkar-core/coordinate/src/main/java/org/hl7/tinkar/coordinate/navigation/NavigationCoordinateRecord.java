@@ -1,14 +1,14 @@
 package org.hl7.tinkar.coordinate.navigation;
 
 
-import java.util.Objects;
-
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.hl7.tinkar.common.binary.Decoder;
 import org.hl7.tinkar.common.binary.DecoderInput;
 import org.hl7.tinkar.common.binary.Encoder;
 import org.hl7.tinkar.common.binary.EncoderOutput;
-import org.hl7.tinkar.common.id.*;
+import org.hl7.tinkar.common.id.IntIdList;
+import org.hl7.tinkar.common.id.IntIdSet;
+import org.hl7.tinkar.common.id.IntIds;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.coordinate.Coordinates;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
@@ -16,6 +16,8 @@ import org.hl7.tinkar.coordinate.logic.LogicCoordinate;
 import org.hl7.tinkar.coordinate.logic.PremiseType;
 import org.hl7.tinkar.coordinate.stamp.StateSet;
 import org.hl7.tinkar.terms.TinkarTerm;
+
+import java.util.Objects;
 
 @RecordBuilder
 public record NavigationCoordinateRecord(IntIdSet navigationPatternNids,
@@ -26,16 +28,6 @@ public record NavigationCoordinateRecord(IntIdSet navigationPatternNids,
 
     private static final int marshalVersion = 5;
 
-    @Override
-    public IntIdList verticesSortPatternNidList() {
-        return this.verticesSortPatternNidList;
-    }
-
-    @Override
-    public boolean sortVertices() {
-        return this.sortVertices;
-    }
-
     public static NavigationCoordinateRecord make(IntIdSet navigationPatternNids) {
         return new NavigationCoordinateRecord(navigationPatternNids, StateSet.ACTIVE, true, IntIds.list.empty());
     }
@@ -45,47 +37,38 @@ public record NavigationCoordinateRecord(IntIdSet navigationPatternNids,
                                                   boolean sortVertices,
                                                   IntIdList verticesSortPatternNidList) {
         return new NavigationCoordinateRecord(navigationPatternNids, vertexStates,
-                                              sortVertices, verticesSortPatternNidList);
+                sortVertices, verticesSortPatternNidList);
     }
 
     public static NavigationCoordinateRecord makeInferred() {
         return new NavigationCoordinateRecord(
                 IntIds.set.of(TinkarTerm.INFERRED_NAVIGATION_PATTERN.nid()),
-                StateSet.ACTIVE, true, IntIds.list.empty());
+                StateSet.ACTIVE_AND_INACTIVE, true, IntIds.list.empty());
     }
 
     public static NavigationCoordinateRecord makeStated() {
         return new NavigationCoordinateRecord(
                 IntIds.set.of(TinkarTerm.STATED_NAVIGATION_PATTERN.nid()),
-                StateSet.ACTIVE, true, IntIds.list.empty());
-    }
-
-    public static NavigationCoordinateRecord makeInferred(LogicCoordinate logicCoordinate) {
-        return new NavigationCoordinateRecord(
-                IntIds.set.of(logicCoordinate.inferredAxiomsPatternNid()),
-                StateSet.ACTIVE, true, IntIds.list.empty());
-    }
-
-    public static NavigationCoordinateRecord makeStated(LogicCoordinate logicCoordinate) {
-        return new NavigationCoordinateRecord(
-                IntIds.set.of(logicCoordinate.statedAxiomsPatternNid()),
-                StateSet.ACTIVE, true, IntIds.list.empty());
+                StateSet.ACTIVE_AND_INACTIVE, true, IntIds.list.empty());
     }
 
     public static NavigationCoordinateRecord make(PremiseType premiseType) {
         if (premiseType == PremiseType.INFERRED) {
             return makeInferred(Coordinates.Logic.ElPlusPlus());
         }
-         return makeStated(Coordinates.Logic.ElPlusPlus());
-     }
+        return makeStated(Coordinates.Logic.ElPlusPlus());
+    }
 
-    @Override
-    @Encoder
-    public void encode(EncoderOutput out) {
-        out.writeNidArray(this.navigationPatternNids.toArray());
-        vertexStates.encode(out);
-        out.writeBoolean(this.sortVertices);
-        out.writeNidArray(this.verticesSortPatternNidList.toArray());
+    public static NavigationCoordinateRecord makeInferred(LogicCoordinate logicCoordinate) {
+        return new NavigationCoordinateRecord(
+                IntIds.set.of(logicCoordinate.inferredAxiomsPatternNid()),
+                StateSet.ACTIVE_AND_INACTIVE, true, IntIds.list.empty());
+    }
+
+    public static NavigationCoordinateRecord makeStated(LogicCoordinate logicCoordinate) {
+        return new NavigationCoordinateRecord(
+                IntIds.set.of(logicCoordinate.statedAxiomsPatternNid()),
+                StateSet.ACTIVE_AND_INACTIVE, true, IntIds.list.empty());
     }
 
     @Decoder
@@ -102,8 +85,27 @@ public record NavigationCoordinateRecord(IntIdSet navigationPatternNids,
     }
 
     @Override
+    public boolean sortVertices() {
+        return this.sortVertices;
+    }
+
+    @Override
+    public IntIdList verticesSortPatternNidList() {
+        return this.verticesSortPatternNidList;
+    }
+
+    @Override
     public NavigationCoordinateRecord toNavigationCoordinateRecord() {
         return this;
+    }
+
+    @Override
+    @Encoder
+    public void encode(EncoderOutput out) {
+        out.writeNidArray(this.navigationPatternNids.toArray());
+        vertexStates.encode(out);
+        out.writeBoolean(this.sortVertices);
+        out.writeNidArray(this.verticesSortPatternNidList.toArray());
     }
 
     @Override
@@ -129,21 +131,21 @@ public record NavigationCoordinateRecord(IntIdSet navigationPatternNids,
         StringBuilder sb = new StringBuilder("NavigationCoordinateRecord{");
 
         sb.append("navigationConcepts=[");
-        for (int nid: navigationPatternNids.toArray()) {
+        for (int nid : navigationPatternNids.toArray()) {
             sb.append(PrimitiveData.text(nid));
             sb.append(", ");
         }
-        sb.delete(sb.length()-2, sb.length()-1);
+        sb.delete(sb.length() - 2, sb.length() - 1);
         sb.append("], ");
         sb.append("vertexStates=").append(vertexStates);
         sb.append(", sortVertices=").append(sortVertices);
         sb.append(", verticesSortPatternList=[");
-        for (int nid: verticesSortPatternNidList.toArray()) {
+        for (int nid : verticesSortPatternNidList.toArray()) {
             sb.append(PrimitiveData.text(nid));
             sb.append(", ");
         }
         if (verticesSortPatternNidList.notEmpty()) {
-            sb.delete(sb.length()-2, sb.length()-1);
+            sb.delete(sb.length() - 2, sb.length() - 1);
         }
         sb.append("]}");
 

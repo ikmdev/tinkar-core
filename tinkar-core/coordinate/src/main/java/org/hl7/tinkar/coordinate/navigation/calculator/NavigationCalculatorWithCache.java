@@ -208,7 +208,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
 
     private IntIdList getIntIdListForMeaningFromPattern(int referencedComponentNid, EntityProxy.Concept fieldMeaning, int patternNid) {
         MutableIntSet nidsInList = IntSets.mutable.empty();
-        IntIdListForMeaningFromPattern(referencedComponentNid, fieldMeaning, patternNid, nidsInList, navigationCoordinate.vertexStates());
+        intIdListForMeaningFromPattern(referencedComponentNid, fieldMeaning, patternNid, nidsInList, navigationCoordinate.vertexStates());
         return IntIds.list.of(nidsInList.toArray());
     }
 
@@ -216,12 +216,12 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         IntIdSet navigationPatternNids = navigationCoordinate.navigationPatternNids();
         MutableIntSet nidsInList = IntSets.mutable.empty();
         navigationPatternNids.forEach(navPatternNid -> {
-            IntIdListForMeaningFromPattern(referencedComponentNid, fieldMeaning, navPatternNid, nidsInList, navigationCoordinate.vertexStates());
+            intIdListForMeaningFromPattern(referencedComponentNid, fieldMeaning, navPatternNid, nidsInList, navigationCoordinate.vertexStates());
         });
         return IntIds.list.of(nidsInList.toArray());
     }
 
-    private void IntIdListForMeaningFromPattern(int referencedComponentNid, EntityProxy.Concept fieldMeaning, int patternNid, MutableIntSet nidsInList, StateSet states) {
+    private void intIdListForMeaningFromPattern(int referencedComponentNid, EntityProxy.Concept fieldMeaning, int patternNid, MutableIntSet nidsInList, StateSet states) {
         Latest<PatternEntityVersion> latestPatternEntityVersion = stampCalculator().latest(patternNid);
         latestPatternEntityVersion.ifPresentOrElse(
                 (patternEntityVersion) -> {
