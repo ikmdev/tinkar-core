@@ -18,16 +18,17 @@ package org.hl7.tinkar.component;
 import org.eclipse.collections.api.list.ImmutableList;
 
 /**
+ * [Meaning] of <referenced component> for [purpose] in [pattern]
  *
  * @author kec
  */
 public interface SemanticChronology<T extends SemanticVersion> extends Chronology<T>, Semantic {
 
-     Component referencedComponent();
+    Component referencedComponent();
 
-     Pattern pattern();
+    Pattern pattern();
 
-     @Override
-     ImmutableList<T> versions();
+    @Override
+    ImmutableList<T> versions();
 
 }

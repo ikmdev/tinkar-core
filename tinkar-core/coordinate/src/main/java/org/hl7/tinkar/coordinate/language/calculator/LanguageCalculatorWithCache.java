@@ -366,9 +366,9 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
                 PatternEntityVersion patternVersion = latestPatternVersion.get();
                 StringBuilder sb = new StringBuilder("[");
                 sb.append(getPreferredDescriptionTextWithFallbackOrNid(patternVersion.semanticMeaningNid()));
-                sb.append("] attachment to [");
+                sb.append("] of <");
                 sb.append(getPreferredDescriptionTextWithFallbackOrNid(semanticEntity.referencedComponentNid()));
-                sb.append("] for [");
+                sb.append("> for [");
                 sb.append(getPreferredDescriptionTextWithFallbackOrNid(patternVersion.semanticPurposeNid()));
                 sb.append("]");
                 return Optional.of(sb.toString());

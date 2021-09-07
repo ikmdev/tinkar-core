@@ -95,7 +95,7 @@ public class SemanticEntity
     }
 
     @Override
-    public Pattern pattern() {
+    public PatternEntity pattern() {
         return EntityService.get().getEntityFast(patternNid);
     }
 

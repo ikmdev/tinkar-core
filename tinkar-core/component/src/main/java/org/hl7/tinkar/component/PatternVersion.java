@@ -18,6 +18,8 @@ package org.hl7.tinkar.component;
 import org.eclipse.collections.api.list.ImmutableList;
 
 /**
+ * [Meaning] of <referenced component> for [purpose] in [pattern]
+ *
  * @author kec
  */
 public interface PatternVersion<F extends FieldDefinition> extends Version, Pattern {

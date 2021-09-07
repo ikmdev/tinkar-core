@@ -52,6 +52,4 @@ public interface FieldDefinition {
      * @return Concept designating the meaning (symbolic value) of this field.
      */
     Concept meaning();
-
-
 }

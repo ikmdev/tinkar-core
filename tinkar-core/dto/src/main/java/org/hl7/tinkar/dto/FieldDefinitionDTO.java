@@ -31,6 +31,18 @@ public record FieldDefinitionDTO(PublicId dataTypePublicId, PublicId purposePubl
                 fieldDefinition.purpose().publicId(), fieldDefinition.meaning().publicId());
     }
 
+    @Unmarshaler
+    public static FieldDefinitionDTO make(TinkarInput in) {
+        if (localMarshalVersion == in.getTinkerFormatVersion()) {
+            return new FieldDefinitionDTO(
+                    in.getPublicId(),
+                    in.getPublicId(),
+                    in.getPublicId());
+        } else {
+            throw new UnsupportedOperationException("Unsupported version: " + in.getTinkerFormatVersion());
+        }
+    }
+
     @Override
     public Concept dataType() {
         return new ConceptDTO(dataTypePublicId);
@@ -44,18 +56,6 @@ public record FieldDefinitionDTO(PublicId dataTypePublicId, PublicId purposePubl
     @Override
     public Concept meaning() {
         return new ConceptDTO(meaningPublicId);
-    }
-
-    @Unmarshaler
-    public static FieldDefinitionDTO make(TinkarInput in) {
-        if (localMarshalVersion == in.getTinkerFormatVersion()) {
-            return new FieldDefinitionDTO(
-                    in.getPublicId(),
-                    in.getPublicId(),
-                    in.getPublicId());
-        } else {
-            throw new UnsupportedOperationException("Unsupported version: " + in.getTinkerFormatVersion());
-        }
     }
 
     @Override

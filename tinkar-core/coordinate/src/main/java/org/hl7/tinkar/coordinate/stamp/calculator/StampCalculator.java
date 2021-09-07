@@ -104,6 +104,10 @@ public interface StampCalculator {
     void forEachSemanticVersionWithFieldsForComponent(int componentNid,
                                                       TriConsumer<SemanticEntityVersion, ImmutableList<Field>, EntityVersion> procedure);
 
+    default Latest<PatternEntityVersion> latestPatternEntityVersion(PatternFacade patternFacade) {
+        return latestPatternEntityVersion(patternFacade.nid());
+    }
+
     Latest<PatternEntityVersion> latestPatternEntityVersion(int patternNid);
 
     OptionalInt getIndexForMeaning(int patternNid, int meaningNid);

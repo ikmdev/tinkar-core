@@ -65,9 +65,6 @@ public class ByteArrayFileStore extends SpinedArrayFileStore implements ByteArra
                 if (value == null) {
                     dos.writeInt(0);
                 } else {
-                    if (spineIndex == 0 && i == 0) {
-                        throw new IllegalStateException("Spine 0 index 0 is not null: " + value);
-                    }
                     dos.writeInt(value.length);
                     dos.write(value);
                 }
