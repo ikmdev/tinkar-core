@@ -8,7 +8,10 @@ import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -25,24 +28,50 @@ public class PBTest {
             ZipEntry exportPBCountEntry = zipFile.getEntry("count");
             DataInputStream pbStream = new DataInputStream(zipFile.getInputStream(exportPBEntry));
             DataInputStream countStream = new DataInputStream(zipFile.getInputStream(exportPBCountEntry));
-
             long pbCount = countStream.readLong();
-            LOG.info("Protobuf PBTinkarMsg Count: " + pbCount);
 
-            StringBuilder stringBuilder = new StringBuilder();
-            for(int i = 1; i <= pbCount; i++){
-                stringBuilder.setLength(0);
-                int pbMessageLength = pbStream.readInt();
+            ByteBuffer byteBuffer;
+            LocalDateTime startTime = LocalDateTime.now();
+            int pbMessageLength;
+            int bytesReadCount;
+            int pbMessageCount = 0;
+
+            LOG.info("Started PB read at " + startTime);
+            while(pbStream.available() > 0){
+                bytesReadCount = 0;
+                pbMessageLength = pbStream.readInt();
+
                 if(pbMessageLength == -1){
-                    LOG.info("reached EOF");
                     break;
                 }
-                byte[] bytes = new byte[pbMessageLength];
-                pbStream.read(bytes, 0, pbMessageLength);
-                stringBuilder.append("PBTinkarMsg # " + i + "\n");
-                stringBuilder.append(PBTinkarMsg.parseFrom(bytes).toString());
-                LOG.info(stringBuilder.toString());
+                byteBuffer = ByteBuffer.allocate(pbMessageLength);
+
+                while(bytesReadCount < pbMessageLength){
+                    int sourceIndex = bytesReadCount;
+                    byte[] bytesRead;
+
+                    if(bytesReadCount == 0){
+                       bytesRead = new byte[pbMessageLength];
+                       bytesReadCount = pbStream.read(bytesRead, 0, pbMessageLength);
+                    }else {
+                        int lengthLeftToRead = pbMessageLength - bytesReadCount;
+                        bytesRead = new byte[lengthLeftToRead];
+                        bytesReadCount += pbStream.read(bytesRead, 0, lengthLeftToRead);
+                    }
+
+                    byteBuffer.put(sourceIndex, bytesRead);
+                }
+
+                PBTinkarMsg.parseFrom(byteBuffer.array());
+                pbMessageCount++;
             }
+            LocalDateTime finishTime = LocalDateTime.now();
+
+            LOG.info("Finished PB read at " + finishTime);
+            LOG.info("Read " + pbMessageCount + " PBTinkMsg objects");
+            LOG.info("Missing PBTinkarMsg: " + (pbCount - pbMessageCount));
+            LOG.info("Total PB read time (sec) " + Duration.between(startTime, finishTime).toSeconds());
+
 
         } catch (EOFException exception) {
         }
