@@ -1,7 +1,16 @@
 package org.hl7.tinkar.integration.provider.ephemeral;
 
+import org.hl7.tinkar.common.service.DataUriOption;
+import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.common.service.ServiceProperties;
+import org.hl7.tinkar.entity.load.LoadEntitiesFromPBFile;
+import org.hl7.tinkar.entity.util.EntityCounter;
+import org.hl7.tinkar.entity.util.EntityProcessor;
+import org.hl7.tinkar.entity.util.EntityRealizer;
 import org.hl7.tinkar.integration.TestConstants;
 import org.hl7.tinkar.protobuf.PBTinkarMsg;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import java.io.DataInputStream;
@@ -21,7 +30,24 @@ public class PBTest {
     private static Logger LOG = Logger.getLogger(PBTest.class.getName());
     private final File pbBinaryFile = TestConstants.PB_TEST_FILE;
 
-    @Test(testName = "Read Protocol Buffer Binary File", enabled = true)
+//    @BeforeSuite
+//    public void setupSuite(){
+//        LOG.info("setupSuite: " + this.getClass().getSimpleName());
+//        LOG.info(ServiceProperties.jvmUuid());
+//        PrimitiveData.selectControllerByName(TestConstants.EPHEMERAL_STORE_NAME);
+//        PrimitiveData.getController().setDataUriOption(
+//                new DataUriOption(TestConstants.PB_TEST_FILE.getName(), TestConstants.PB_TEST_FILE.toURI()));
+//        PrimitiveData.start();
+//    }
+//
+//    @AfterSuite
+//    public void teardownSuite() {
+//        LOG.info("teardownSuite");
+//        PrimitiveData.stop();
+//    }
+
+
+    @Test(testName = "Read Protocol Buffer Binary File")
     public void readPBFile() throws IOException {
         try (ZipFile zipFile = new ZipFile(pbBinaryFile, StandardCharsets.UTF_8)) {
             ZipEntry exportPBEntry = zipFile.getEntry("export.pb");
@@ -62,30 +88,52 @@ public class PBTest {
                     byteBuffer.put(sourceIndex, bytesRead);
                 }
 
-                PBTinkarMsg.parseFrom(byteBuffer.array());
+                PBTinkarMsg pbTinkarMsg = PBTinkarMsg.parseFrom(byteBuffer.array());
                 pbMessageCount++;
             }
             LocalDateTime finishTime = LocalDateTime.now();
 
-            LOG.info("Finished PB read at " + finishTime);
-            LOG.info("Read " + pbMessageCount + " PBTinkMsg objects");
-            LOG.info("Missing PBTinkarMsg: " + (pbCount - pbMessageCount));
-            LOG.info("Total PB read time (sec) " + Duration.between(startTime, finishTime).toSeconds());
-
+            LOG.info("Finished PB read at " + finishTime + "\n"
+            + "Read " + pbMessageCount + " PBTinkMsg objects" + "\n"
+            + "Missing PBTinkarMsg: " + (pbCount - pbMessageCount) + "\n"
+            + "Total PB read time (sec) " + Duration.between(startTime, finishTime).toSeconds());
 
         } catch (EOFException exception) {
         }
-
     }
 
     @Test(testName = "Load Protocol Buffer Binary File", enabled = false)
     public void loadPBFile() throws IOException {
-
+        LoadEntitiesFromPBFile loadPB = new LoadEntitiesFromPBFile(pbBinaryFile);
+        int count = loadPB.compute();
+        LOG.info("File Loaded. " + loadPB.report() + "\n\n");
     }
 
     @Test(testName = "Export to Protocol Buffer Binary File", enabled = false)
     public void exportPBFile() throws IOException {
 
+    }
+
+    @Test(dependsOnMethods = { "loadPBFile" }, enabled = false)
+    public void count() {
+        EntityProcessor processor = new EntityCounter();
+        PrimitiveData.get().forEach(processor);
+        LOG.info("EPH Sequential count: \n" + processor.report() + "\n\n");
+        processor = new EntityCounter();
+        PrimitiveData.get().forEachParallel(processor);
+        LOG.info("EPH Parallel count: \n" + processor.report()+ "\n\n");
+        processor = new EntityRealizer();
+        PrimitiveData.get().forEach(processor);
+        LOG.info("EPH Sequential realization: \n" + processor.report() + "\n\n");
+        processor = new EntityRealizer();
+        PrimitiveData.get().forEachParallel(processor);
+        LOG.info("EPH Parallel realization: \n" + processor.report()+ "\n\n");
+        processor = new EntityRealizer();
+        PrimitiveData.get().forEach(processor);
+        LOG.info("EPH Sequential realization: \n" + processor.report() + "\n\n");
+        processor = new EntityRealizer();
+        PrimitiveData.get().forEachParallel(processor);
+        LOG.info("EPH Parallel realization: \n" + processor.report()+ "\n\n");
     }
 
 }

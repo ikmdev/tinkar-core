@@ -10,9 +10,15 @@ import org.hl7.tinkar.dto.PatternChronologyDTO;
 import org.hl7.tinkar.dto.SemanticChronologyDTO;
 import org.hl7.tinkar.dto.binary.TinkarInput;
 import org.hl7.tinkar.entity.EntityService;
+import org.hl7.tinkar.protobuf.PBConcept;
+import org.hl7.tinkar.protobuf.PBConceptChronology;
+import org.hl7.tinkar.protobuf.PBTinkarMsg;
 
 import java.io.*;
-import java.nio.charset.Charset;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,55 +44,73 @@ public class LoadEntitiesFromPBFile extends TrackingCallable<Integer> {
         updateTitle("Loading " + importFile.getName());
         LOG.info(getTitle());
 
-        double sizeForAll = 0;
-        try (ZipFile zipFile = new ZipFile(importFile, Charset.forName("UTF-8"))) {
-            ZipEntry tinkZipEntry = zipFile.getEntry("export.tink");
-            double totalSize = tinkZipEntry.getSize();
-            sizeForAll += totalSize;
-            CountingInputStream countingInputStream = new CountingInputStream(zipFile.getInputStream(tinkZipEntry));
-            TinkarInput tinkIn = new TinkarInput(countingInputStream);
+        try (ZipFile zipFile = new ZipFile(importFile, StandardCharsets.UTF_8)) {
+            ZipEntry exportPBEntry = zipFile.getEntry("export.pb");
+            DataInputStream pbStream = new DataInputStream(zipFile.getInputStream(exportPBEntry));
             LOG.info(":LoadEntitiesFromDTO: begin processing");
 
-            while (!isCancelled()) {
-                if (updateIntervalElapsed()) {
-                    updateTitle("Loading " + importFile.getName());
-                    updateProgress(countingInputStream.getBytesRead(), totalSize);
-                    updateMessage(String.format("Count: %,d   " + estimateTimeRemainingString(), importCount.get()));
+            ByteBuffer byteBuffer;
+            int pbMessageLength;
+            int bytesReadCount;
+
+            while(pbStream.available() > 0){
+                bytesReadCount = 0;
+                pbMessageLength = pbStream.readInt();
+
+                if(pbMessageLength == -1){
+                    break;
+                }
+                byteBuffer = ByteBuffer.allocate(pbMessageLength);
+
+                while(bytesReadCount < pbMessageLength){
+                    int sourceIndex = bytesReadCount;
+                    byte[] bytesRead;
+
+                    if(bytesReadCount == 0){
+                        bytesRead = new byte[pbMessageLength];
+                        bytesReadCount = pbStream.read(bytesRead, 0, pbMessageLength);
+                    }else {
+                        int lengthLeftToRead = pbMessageLength - bytesReadCount;
+                        bytesRead = new byte[lengthLeftToRead];
+                        bytesReadCount += pbStream.read(bytesRead, 0, lengthLeftToRead);
+                    }
+                    byteBuffer.put(sourceIndex, bytesRead);
                 }
 
-                FieldDataType fieldDataType = FieldDataType.fromToken(tinkIn.readByte());
-                runningTasks.acquireUninterruptibly();
-                switch (fieldDataType) {
-                    case CONCEPT_CHRONOLOGY: {
-                        Executor.threadPool().execute(new PutChronology(ConceptChronologyDTO.make(tinkIn)));
-                        importCount.incrementAndGet();
-                    }
-                    break;
-                    case SEMANTIC_CHRONOLOGY: {
-                        Executor.threadPool().execute(new PutChronology(SemanticChronologyDTO.make(tinkIn)));
-                        importCount.incrementAndGet();
-                    }
-                    break;
-                    case PATTERN_CHRONOLOGY: {
-                        Executor.threadPool().execute(new PutChronology(PatternChronologyDTO.make(tinkIn)));
-                        importCount.incrementAndGet();
-                    }
-                    break;
+                PBTinkarMsg pbTinkarMsg = PBTinkarMsg.parseFrom(byteBuffer.array());
 
+                switch (pbTinkarMsg.getValueCase().getNumber()){
+                    case 10: //PBConcept ConceptValue = 10;
+                        PBConcept pbConcept = pbTinkarMsg.getConceptValue();
+
+
+                        break;
+                    case 11: //PBConceptChronology ConceptChronologyValue = 11;
+                        PBConceptChronology pbConceptChronology = pbTinkarMsg.getConceptChronologyValue();
+                        break;
+                    case 12: //PBConceptVersion ConceptVersionValue = 12;
+                        break;
+                    case 20: //PBSemantic SemanticValue = 20;
+                        break;
+                    case 21: //PBSemanticChronology SemanticChronologyValue = 21;
+                        break;
+                    case 22: //PBSemanticVersion SemanticVersionValue = 22;
+                        break;
+                    case 23: //PBPattern PatternValue = 23;
+                        break;
+                    case 24: //PBPatternChronology PatternChronologyValue = 24;
+                        break;
+                    case 25: //PBPatternVersion PatternVersionValue = 25;
+                        break;
                     default:
-                        throw new UnsupportedOperationException("Can't handle fieldDataType: " + fieldDataType);
-
+                        break;
                 }
             }
-
-        } catch (EOFException eof) {
-            // continue, will autoclose.
+        } catch (EOFException exception) {
         }
+
         runningTasks.acquireUninterruptibly(MAX_TASK_COUNT);
         LOG.info(report());
-        updateProgress(sizeForAll, sizeForAll);
-        updateMessage(String.format("Imported %,d items in " + durationString(), importCount.get()));
-        updateTitle("Loaded from " + importFile.getName());
 
         return importCount.get();
     }
