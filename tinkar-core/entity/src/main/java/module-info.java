@@ -23,6 +23,7 @@ module org.hl7.tinkar.entity {
     requires static java.compiler;
     requires transitive org.hl7.tinkar.terms;
     requires java.xml;
+    requires org.hl7.tinkar.protobuf;
 
     exports org.hl7.tinkar.entity;
     exports org.hl7.tinkar.entity.graph;
