@@ -9,10 +9,8 @@ import org.hl7.tinkar.common.binary.Encoder;
 import org.hl7.tinkar.common.binary.EncoderOutput;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.time.DateTimeUtil;
-import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 import org.hl7.tinkar.coordinate.PathService;
-import org.hl7.tinkar.coordinate.stamp.calculator.PathProvider;
 import org.hl7.tinkar.terms.ConceptFacade;
 import org.hl7.tinkar.entity.Entity;
 

@@ -3,7 +3,7 @@ package org.hl7.tinkar.provider.spinedarray;
 import org.hl7.tinkar.common.util.time.Stopwatch;
 import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.entity.Entity;
-import org.hl7.tinkar.entity.EntityFactory;
+import org.hl7.tinkar.entity.EntityRecordFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,7 +79,7 @@ public class UuidNidCollector implements ObjIntConsumer<byte[]> {
                 totalCount.incrementAndGet();
         }
         if (typeToProcess == true) {
-            Entity<?> entity = EntityFactory.make(bytes);
+            Entity<?> entity = EntityRecordFactory.make(bytes);
             for (UUID uuid : entity.asUuidArray()) {
                 uuidToNidMap.put(uuid, entity.nid());
             }

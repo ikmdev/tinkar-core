@@ -1,9 +1,10 @@
 package org.hl7.tinkar.terms;
 
+import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.component.FieldDataType;
 
 public class ConceptToDataType {
-    public static FieldDataType convert(ConceptFacade dataTypeConcept) {
+    public static FieldDataType convert(Concept dataTypeConcept) {
         if (TinkarTerm.STRING.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.STRING;
         }

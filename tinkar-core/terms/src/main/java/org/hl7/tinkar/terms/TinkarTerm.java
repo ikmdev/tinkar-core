@@ -389,8 +389,8 @@ public class TinkarTerm {
      * <a href="http://localhost:8080/terminology/rest/concept/5a68c86b-35d5-579b-95c0-a2e7a93b7bdd">
      * 5a68c86b-35d5-579b-95c0-a2e7a93b7bdd</a>}.
      */
-    public static final EntityProxy.Concept AXIOM_ATTACHMENT_ORDER_OPTIONS_ASSEMBLAGE =
-            EntityProxy.Concept.make("Axiom attachment order options assemblage (SOLOR)", UUID.fromString("5a68c86b-35d5-579b-95c0-a2e7a93b7bdd"));
+    public static final EntityProxy.Pattern AXIOM_ATTACHMENT_ORDER_OPTIONS_PATTERN =
+            EntityProxy.Pattern.make("Axiom attachment order options assemblage (SOLOR)", UUID.fromString("5a68c86b-35d5-579b-95c0-a2e7a93b7bdd"));
     /**
      * Java binding for the concept described as <strong><em>Axiom focus (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -405,8 +405,8 @@ public class TinkarTerm {
      * <a href="http://localhost:8080/terminology/rest/concept/927563ae-cfb7-5a49-9424-1b81bf52f607">
      * 927563ae-cfb7-5a49-9424-1b81bf52f607</a>}.
      */
-    public static final EntityProxy.Concept AXIOM_ORDER_OPTIONS_ASSEMBLAGE =
-            EntityProxy.Concept.make("Axiom order options assemblage (SOLOR)", UUID.fromString("927563ae-cfb7-5a49-9424-1b81bf52f607"));
+    public static final EntityProxy.Pattern AXIOM_ORDER_OPTIONS_PATTERN =
+            EntityProxy.Pattern.make("Axiom order options assemblage (SOLOR)", UUID.fromString("927563ae-cfb7-5a49-9424-1b81bf52f607"));
     /**
      * Java binding for the concept described as <strong><em>Axiom origin (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -981,8 +981,8 @@ public class TinkarTerm {
      * <a href="http://localhost:8080/terminology/rest/concept/f4c488eb-5ecc-50af-ac25-31d5f99c09a7">
      * f4c488eb-5ecc-50af-ac25-31d5f99c09a7</a>}.
      */
-    public static final EntityProxy.Concept CONCEPT_ATTACHMENT_ORDER_OPTIONS_ASSEMBLAGE =
-            EntityProxy.Concept.make("Concept attachment order options assemblage (SOLOR)", UUID.fromString("f4c488eb-5ecc-50af-ac25-31d5f99c09a7"));
+    public static final EntityProxy.Pattern CONCEPT_ATTACHMENT_ORDER_OPTIONS_PATTERN =
+            EntityProxy.Pattern.make("Concept attachment order options assemblage (SOLOR)", UUID.fromString("f4c488eb-5ecc-50af-ac25-31d5f99c09a7"));
     /**
      * Java binding for the concept described as <strong><em>Concept builder panel (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -1469,8 +1469,8 @@ public class TinkarTerm {
      * <a href="http://localhost:8080/terminology/rest/concept/8d436a25-0ebf-59a8-bc8b-ad70c86d7f6a">
      * 8d436a25-0ebf-59a8-bc8b-ad70c86d7f6a</a>}.
      */
-    public static final EntityProxy.Concept DESCRIPTION_ATTACHMENT_ORDER_OPTIONS_ASSEMBLAGE =
-            EntityProxy.Concept.make("Description attachment order options assemblage (SOLOR)", UUID.fromString("8d436a25-0ebf-59a8-bc8b-ad70c86d7f6a"));
+    public static final EntityProxy.Pattern DESCRIPTION_ATTACHMENT_ORDER_OPTIONS_PATTERN =
+            EntityProxy.Pattern.make("Description attachment order options assemblage (SOLOR)", UUID.fromString("8d436a25-0ebf-59a8-bc8b-ad70c86d7f6a"));
     /**
      * Java binding for the concept described as <strong><em>Description case sensitive (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -1589,8 +1589,8 @@ public class TinkarTerm {
      * <a href="http://localhost:8080/terminology/rest/concept/4b734c90-7b11-506b-9bc6-d24bf4f8255a">
      * 4b734c90-7b11-506b-9bc6-d24bf4f8255a</a>}.
      */
-    public static final EntityProxy.Concept DESCRIPTION_TYPE_ORDER_OPTIONS_ASSEMBLAGE =
-            EntityProxy.Concept.make("Description type order options assemblage (SOLOR)", UUID.fromString("4b734c90-7b11-506b-9bc6-d24bf4f8255a"));
+    public static final EntityProxy.Pattern DESCRIPTION_TYPE_ORDER_OPTIONS_PATTERN =
+            EntityProxy.Pattern.make("Description type order options assemblage (SOLOR)", UUID.fromString("4b734c90-7b11-506b-9bc6-d24bf4f8255a"));
     /**
      * Java binding for the concept described as <strong><em>Description type preference list for language coordinate (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -1669,8 +1669,8 @@ public class TinkarTerm {
      * <a href="http://localhost:8080/terminology/rest/concept/58a80695-42ed-5409-92c5-9703fde8916f">
      * 58a80695-42ed-5409-92c5-9703fde8916f</a>}.
      */
-    public static final EntityProxy.Concept DETAIL_ORDER_OPTIONS_ASSEMBLAGE =
-            EntityProxy.Concept.make("Detail order options assemblage (SOLOR)", UUID.fromString("58a80695-42ed-5409-92c5-9703fde8916f"));
+    public static final EntityProxy.Pattern DETAIL_ORDER_OPTIONS_PATTERN =
+            EntityProxy.Pattern.make("Detail order options assemblage (SOLOR)", UUID.fromString("58a80695-42ed-5409-92c5-9703fde8916f"));
     /**
      * Java binding for the concept described as <strong><em>Detail pane axiom order (SOLOR)</em></strong>;
      * identified by UUID: {@code

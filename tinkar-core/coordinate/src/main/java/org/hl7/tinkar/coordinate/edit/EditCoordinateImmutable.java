@@ -1,7 +1,5 @@
 package org.hl7.tinkar.coordinate.edit;
 
-import java.util.Objects;
-
 import com.google.auto.service.AutoService;
 import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
 import org.hl7.tinkar.common.binary.Decoder;
@@ -9,10 +7,11 @@ import org.hl7.tinkar.common.binary.DecoderInput;
 import org.hl7.tinkar.common.binary.Encoder;
 import org.hl7.tinkar.common.binary.EncoderOutput;
 import org.hl7.tinkar.common.service.CachingService;
-import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.terms.ConceptFacade;
+
+import java.util.Objects;
 
 
 //This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
@@ -38,11 +37,6 @@ public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordin
         this.destinationModuleNid = Integer.MAX_VALUE;
     }
 
-    @Override
-    public void reset() {
-        SINGLETONS.clear();
-    }
-
     private EditCoordinateImmutable(int authorNid, int defaultModuleNid, int promotionPathNid, int destinationModuleNid) {
         this.authorNid = authorNid;
         this.defaultModuleNid = defaultModuleNid;
@@ -51,22 +45,8 @@ public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordin
     }
 
     /**
-     * 
      * @param authorNid
-     * @param defaultModuleNid The default module is the module for new content when developing.
-     * @param promotionPathNid
-     * @param destinationModuleNid The destination module is the module that existing content is moved to when Modularizing
-     * @return
-     */
-    public static EditCoordinateImmutable make(int authorNid, int defaultModuleNid, int promotionPathNid, int destinationModuleNid) {
-        return SINGLETONS.computeIfAbsent(new EditCoordinateImmutable(authorNid, defaultModuleNid, promotionPathNid, destinationModuleNid),
-                editCoordinateImmutable -> editCoordinateImmutable);
-    }
-    
-    /**
-     * 
-     * @param authorNid
-     * @param moduleNid Used for both developing. and modularizing activities
+     * @param moduleNid        Used for both developing. and modularizing activities
      * @param promotionPathNid
      * @return
      */
@@ -77,7 +57,7 @@ public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordin
 
     /**
      * @param author
-     * @param defaultModule The default module is the module for new content when developing.
+     * @param defaultModule     The default module is the module for new content when developing.
      * @param promotionPath
      * @param destinationModule The destination module is the module that existing content is moved to when Modularizing
      * @return
@@ -85,6 +65,18 @@ public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordin
     public static EditCoordinateImmutable make(ConceptFacade author, ConceptFacade defaultModule, ConceptFacade promotionPath,
                                                ConceptFacade destinationModule) {
         return make(Entity.nid(author), Entity.nid(defaultModule), Entity.nid(promotionPath), Entity.nid(destinationModule));
+    }
+
+    /**
+     * @param authorNid
+     * @param defaultModuleNid     The default module is the module for new content when developing.
+     * @param promotionPathNid
+     * @param destinationModuleNid The destination module is the module that existing content is moved to when Modularizing
+     * @return
+     */
+    public static EditCoordinateImmutable make(int authorNid, int defaultModuleNid, int promotionPathNid, int destinationModuleNid) {
+        return SINGLETONS.computeIfAbsent(new EditCoordinateImmutable(authorNid, defaultModuleNid, promotionPathNid, destinationModuleNid),
+                editCoordinateImmutable -> editCoordinateImmutable);
     }
 
     @Decoder
@@ -100,6 +92,11 @@ public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordin
     }
 
     @Override
+    public void reset() {
+        SINGLETONS.clear();
+    }
+
+    @Override
     @Encoder
     public void encode(EncoderOutput out) {
         out.writeNid(this.authorNid);
@@ -109,28 +106,8 @@ public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordin
     }
 
     @Override
-    public int getAuthorNidForChanges() {
-        return this.authorNid;
-    }
-
-    @Override
-    public int getDefaultModuleNid() {
-        return this.defaultModuleNid;
-    }
-
-    @Override
-    public int getPromotionPathNid() {
-        return this.promotionPathNid;
-    }
-
-    @Override
-    public int getDestinationModuleNid() {
-        return this.destinationModuleNid;
-    }
-
-    @Override
-    public EditCoordinateImmutable toEditCoordinateImmutable() {
-        return this;
+    public int hashCode() {
+        return Objects.hash(getAuthorNidForChanges(), getDefaultModuleNid(), getPromotionPathNid(), getDestinationModuleNid());
     }
 
     @Override
@@ -144,8 +121,28 @@ public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordin
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(getAuthorNidForChanges(), getDefaultModuleNid(), getPromotionPathNid(), getDestinationModuleNid());
+    public int getAuthorNidForChanges() {
+        return this.authorNid;
+    }
+
+    @Override
+    public int getDefaultModuleNid() {
+        return this.defaultModuleNid;
+    }
+
+    @Override
+    public int getDestinationModuleNid() {
+        return this.destinationModuleNid;
+    }
+
+    @Override
+    public int getPromotionPathNid() {
+        return this.promotionPathNid;
+    }
+
+    @Override
+    public EditCoordinateImmutable toEditCoordinateImmutable() {
+        return this;
     }
 
     @Override

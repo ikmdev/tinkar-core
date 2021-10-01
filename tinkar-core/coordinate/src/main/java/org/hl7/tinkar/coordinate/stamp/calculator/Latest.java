@@ -37,21 +37,25 @@ package org.hl7.tinkar.coordinate.stamp.calculator;
  */
 
 
-
 //~--- JDK imports ------------------------------------------------------------
 
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.factory.Sets;
+import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.MutableList;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
+import org.eclipse.collections.api.set.ImmutableSet;
+import org.eclipse.collections.api.set.MutableSet;
+import org.eclipse.collections.impl.factory.primitive.IntLists;
+import org.hl7.tinkar.common.id.IntIdSet;
+import org.hl7.tinkar.common.id.IntIds;
 import org.hl7.tinkar.entity.EntityVersion;
 import org.hl7.tinkar.terms.State;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -63,28 +67,34 @@ import java.util.stream.Stream;
 /**
  * The Class LatestVersion.
  *
- * @author kec
  * @param <V> the value type
- * TODO [KEC] search for all get() methods to make sure test for isPresent() is completed.
+ *                                                                                                                                                                                                                                                                                               TODO [KEC] search for all get() methods to make sure test for isPresent() is completed.
+ * @author kec
  */
 public final class Latest<V> {
 
     private static final Latest<?> EMPTY = new Latest<>();
-    /** The value. */
+    /**
+     * The value.
+     */
     V value;
 
-    /** The contradictions. */
-    Set<V> contradictions;
+    /**
+     * The contradictions.
+     */
+    ImmutableSet<V> contradictions;
 
     //~--- constructors --------------------------------------------------------
-    public Latest() {}
+    public Latest() {
+    }
 
     /**
      * Instantiates a new latest version.
      *
      * @param versionType the version type
      */
-    public Latest(Class<V> versionType) {}
+    public Latest(Class<V> versionType) {
+    }
 
     /**
      * Instantiates a new latest version.
@@ -97,7 +107,7 @@ public final class Latest<V> {
         if (versions.size() < 2) {
             this.contradictions = null;
         } else {
-            this.contradictions = new HashSet<>(versions.subList(1, versions.size()));
+            this.contradictions = Sets.immutable.ofAll(versions.subList(1, versions.size()));
         }
     }
 
@@ -107,14 +117,14 @@ public final class Latest<V> {
      * @param latest the latest
      */
     public Latest(V latest) {
-        this.value          = Objects.requireNonNull(latest, "latest version cannot be null");
+        this.value = Objects.requireNonNull(latest, "latest version cannot be null");
         this.contradictions = null;
     }
 
     /**
      * Instantiates a new latest version.
      *
-     * @param latest the latest
+     * @param latest         the latest
      * @param contradictions the contradictions
      */
     public Latest(V latest, Collection<V> contradictions) {
@@ -123,11 +133,25 @@ public final class Latest<V> {
         if (contradictions == null) {
             this.contradictions = null;
         } else {
-            this.contradictions = new HashSet<>(contradictions);
+            this.contradictions = Sets.immutable.ofAll(contradictions);
         }
     }
 
     //~--- methods -------------------------------------------------------------
+
+    public static <T> Latest<T> ofNullable(T value) {
+        return value == null ? empty() : of(value);
+    }
+
+    public static <T> Latest<T> empty() {
+        @SuppressWarnings("unchecked")
+        Latest<T> t = (Latest<T>) EMPTY;
+        return t;
+    }
+
+    public static <T> Latest<T> of(T value) {
+        return new Latest<>(value);
+    }
 
     /**
      * Adds the latest.
@@ -139,15 +163,16 @@ public final class Latest<V> {
             this.value = value;
         } else {
             if (this.contradictions == null) {
-                this.contradictions = new HashSet<>();
+                this.contradictions = Sets.immutable.of(value);
+            } else {
+                MutableSet<V> tempContradictions = Sets.mutable.ofAll(this.contradictions);
+                tempContradictions.add(value);
+                this.contradictions = tempContradictions.toImmutable();
             }
-
-            this.contradictions.add(value);
         }
     }
 
     /**
-     *
      * @param consumer the consumer to process the value if it is present.
      * @return the latest version unmodified for use in a fluent API manner.
      */
@@ -157,6 +182,7 @@ public final class Latest<V> {
         }
         return this;
     }
+
     public void ifPresentOrElse(Consumer<? super V> action, Runnable emptyAction) {
         if (value != null) {
             action.accept(value);
@@ -164,8 +190,17 @@ public final class Latest<V> {
             emptyAction.run();
         }
     }
+
+    public <R extends Object> R ifAbsentOrFunction(Supplier<R> ifAbsent, Function<V, R> ifPresent) {
+        if (isPresent()) {
+            return ifPresent.apply(value);
+        }
+        return ifAbsent.get();
+    }
+
     /**
      * Return true if there is a value present, otherwise false.
+     *
      * @return true if there is a value present, otherwise false.
      */
     public boolean isPresent() {
@@ -174,20 +209,21 @@ public final class Latest<V> {
 
     /**
      * Return false if there is no value present, otherwise, passes the value into the supplied customCheck, and returns that response.
+     *
      * @param customCheck The test to run, if the value is present.
      * @return true if present and customCheck returns true, otherwise, false.
      */
     public boolean isPresentAnd(Predicate<V> customCheck) {
         if (value == null) {
             return false;
-        }
-        else {
+        } else {
             return customCheck.test(value);
         }
     }
 
     /**
      * Return true if there is a value absent, otherwise false.
+     *
      * @return true if the value absent, otherwise false.
      */
     public boolean isAbsent() {
@@ -196,6 +232,7 @@ public final class Latest<V> {
 
     /**
      * Return the value if present, otherwise return other.
+     *
      * @param other
      * @return the value if present, otherwise return other.
      */
@@ -208,6 +245,7 @@ public final class Latest<V> {
 
     /**
      * Return the value if present, otherwise invoke other and return the result of that invocation.
+     *
      * @param other
      * @return the value if present, otherwise invoke other and return the result of that invocation.
      */
@@ -217,8 +255,10 @@ public final class Latest<V> {
         }
         return other.get();
     }
+
     /**
      * Execute the runnable to execute if the value is present.
+     *
      * @param runnable the runnable to execute if the value is present
      * @return the latest version unmodified for use in a fluent API manner.
      */
@@ -231,7 +271,8 @@ public final class Latest<V> {
 
     /**
      * Return the contained value, if present, otherwise throw an exception to be created by the provided supplier.
-     * @param <X> Type of the exception to be thrown
+     *
+     * @param <X>               Type of the exception to be thrown
      * @param exceptionSupplier The supplier which will return the exception to be thrown
      * @return the present value
      * @throws X if there is no value present
@@ -242,17 +283,6 @@ public final class Latest<V> {
             return this.value;
         }
         throw exceptionSupplier.get();
-    }
-    /**
-     * Read-only set of contradictions.
-     *
-     * @return the optional
-     */
-    public Set<V> contradictions() {
-        if (this.contradictions == null) {
-            return Collections.emptySet();
-        }
-        return this.contradictions;
     }
 
     /**
@@ -265,15 +295,28 @@ public final class Latest<V> {
         return "LatestVersion«" + this.value + ", contradictions: " + contradictions() + '»';
     }
 
+    /**
+     * Read-only set of contradictions.
+     *
+     * @return the contradictions
+     */
+    public ImmutableSet<V> contradictions() {
+        if (this.contradictions == null) {
+            return Sets.immutable.empty();
+        }
+        return this.contradictions;
+    }
+
     public String toStringOr(Function<V, String> toStringFunction, String ifMissing) {
         return isPresent() ? toStringFunction.apply(value) : ifMissing;
     }
 
     /**
      * The latest version value
+     *
      * @return the latest version
      * @throws NoSuchElementException - if there is no value present
-     * @see isPresent()
+     * @see this.isPresent()
      */
     public V get() {
         if (this.value == null) {
@@ -284,6 +327,7 @@ public final class Latest<V> {
 
     /**
      * If a value is present, and the value matches the given predicate, return an Optional describing the value, otherwise return an empty Optional.
+     *
      * @param predicate a predicate to apply to the value, if present
      * @return an Optional describing the value of this Optional if a value is present and the value matches the given predicate, otherwise an empty Optional
      */
@@ -297,11 +341,12 @@ public final class Latest<V> {
     /**
      * If a value is present, apply the provided mapping function to it, and if the result is non-null,
      * return an Optional describing the result. Otherwise return an empty Optional.
-     * @param <U> The type of the result of the mapping function
+     *
+     * @param <U>    The type of the result of the mapping function
      * @param mapper a mapping function to apply to the value, if present
      * @return an Optional describing the result of applying a mapping function to the value of this Optional, if a value is present, otherwise an empty Optional
      */
-    public <U> Latest<U> map(Function<? super Latest<V>,? extends Latest<U>> mapper) {
+    public <U> Latest<U> map(Function<? super Latest<V>, ? extends Latest<U>> mapper) {
         return mapper.apply(this);
     }
 
@@ -330,17 +375,17 @@ public final class Latest<V> {
         return builder.build();
     }
 
-    public List<V> versionList() {
+    public ImmutableList<V> versionList() {
         if (this.value == null) {
-            return Collections.emptyList();
+            return Lists.immutable.empty();
         }
         if (this.contradictions == null) {
-            return Arrays.asList(this.value);
+            return Lists.immutable.of(this.value);
         }
-        ArrayList<V> versions = new ArrayList<>(this.contradictions.size() + 1);
+        MutableList versions = Lists.mutable.ofInitialCapacity(this.contradictions.size() + 1);
         versions.add(value);
-        versions.addAll(this.contradictions);
-        return versions;
+        versions.addAll(this.contradictions.castToSet());
+        return versions.toImmutable();
     }
 
     public boolean isContradicted() {
@@ -349,36 +394,48 @@ public final class Latest<V> {
         }
         return !this.contradictions.isEmpty();
     }
-    public static <T> Latest<T> of(T value) {
-        return new Latest<>(value);
-    }
-
-    public static <T> Latest<T> ofNullable(T value) {
-        return value == null ? empty() : of(value);
-    }
-
-    public static<T> Latest<T> empty() {
-        @SuppressWarnings("unchecked")
-        Latest<T> t = (Latest<T>) EMPTY;
-        return t;
-    }
 
     public void sortByState() {
         if (value != null && value instanceof EntityVersion entityVersion) {
             if (entityVersion.stamp().state() != State.ACTIVE) {
                 //See if we have an active one to swap it with.
-                if  (contradictions != null)
-                for (V c : contradictions) {
-                    if (entityVersion.stamp().state() == State.ACTIVE) {
-                        contradictions.remove(c);
-                        contradictions.add(value);
-                        value = c;
-                        break;
+                if (contradictions != null) {
+                    MutableSet<V> mutableContradictions = Sets.mutable.ofAll(contradictions);
+                    for (V c : contradictions) {
+                        if (entityVersion.stamp().state() == State.ACTIVE) {
+                            mutableContradictions.remove(c);
+                            mutableContradictions.add(value);
+                            value = c;
+                            break;
+                        }
                     }
+                    this.contradictions = mutableContradictions.toImmutable();
                 }
             }
         }
     }
 
+    public IntIdSet stampNids() {
+        if (contradictions == null) {
+            if (value instanceof EntityVersion EntityVersion) {
+                return IntIds.set.of(EntityVersion.stampNid());
+            }
+            throw new IllegalStateException("value not instanceof EntityVersion: " + value);
+        }
+        MutableIntList intList = IntLists.mutable.withInitialCapacity(contradictions.size() + 1);
+        if (value instanceof EntityVersion entityVersion) {
+            intList.add(entityVersion.stampNid());
+        } else {
+            throw new IllegalStateException("value not instanceof EntityVersion: " + value);
+        }
+        for (V version : contradictions) {
+            if (version instanceof EntityVersion contradictionVersion) {
+                intList.add(contradictionVersion.stampNid());
+            } else {
+                throw new IllegalStateException("value not instanceof EntityVersion: " + version);
+            }
+        }
+        return IntIds.set.of(intList.toArray());
+    }
 }
 

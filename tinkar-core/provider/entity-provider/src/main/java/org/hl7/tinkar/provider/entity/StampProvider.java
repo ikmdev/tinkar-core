@@ -51,7 +51,7 @@ public class StampProvider extends EntityProcessor implements StampService, Flow
     @Override
     public void processBytesForType(FieldDataType componentType, byte[] bytes) {
         if (componentType == FieldDataType.STAMP) {
-            StampEntity stampEntity = EntityFactory.make(bytes);
+            StampEntity stampEntity = EntityRecordFactory.make(bytes);
             stamps.put(stampEntity.nid(), stampEntity);
             times.add(stampEntity.time());
             authors.add(stampEntity.authorNid());

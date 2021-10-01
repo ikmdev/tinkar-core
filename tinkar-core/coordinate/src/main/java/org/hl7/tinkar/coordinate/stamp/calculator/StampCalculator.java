@@ -17,8 +17,44 @@ import org.hl7.tinkar.terms.PatternFacade;
 import java.util.List;
 import java.util.OptionalInt;
 import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 
 public interface StampCalculator {
+    default Stream<Latest<SemanticEntityVersion>> streamLatestVersionForPattern(PatternFacade patternFacade) {
+        return streamLatestVersionForPattern(patternFacade.nid());
+    }
+
+    Stream<Latest<SemanticEntityVersion>> streamLatestVersionForPattern(int patternNid);
+
+    default Stream<SemanticEntityVersion> streamLatestActiveVersionForPattern(PatternFacade patternFacade) {
+        return streamLatestActiveVersionForPattern(patternFacade.nid());
+    }
+
+    default Stream<SemanticEntityVersion> streamLatestActiveVersionForPattern(int patternNid) {
+        return streamLatestVersionForPattern(patternNid)
+                .filter(latestVersion -> latestVersion.ifAbsentOrFunction(() -> false, latest -> latest.isActive()))
+                .map(semanticEntityVersionLatest -> semanticEntityVersionLatest.get());
+    }
+
+    default Stream<Entity> streamReferencedComponentIfSemanticActiveForPattern(PatternFacade patternFacade) {
+        return streamReferencedComponentIfSemanticActiveForPattern(patternFacade.nid());
+    }
+
+    default Stream<Entity> streamReferencedComponentIfSemanticActiveForPattern(int patternNid) {
+        return streamLatestActiveVersionForPattern(patternNid)
+                .map(semanticEntityVersion -> Entity.getFast(semanticEntityVersion.referencedComponentNid()));
+    }
+
+    default List<ConceptEntity> referencedConceptsIfSemanticActiveForPattern(PatternFacade patternFacade) {
+        return referencedConceptsIfSemanticActiveForPattern(patternFacade.nid());
+    }
+
+    default List<ConceptEntity> referencedConceptsIfSemanticActiveForPattern(int patternNid) {
+        return streamReferencedComponentIfSemanticActiveForPattern(patternNid)
+                .filter(entity -> entity instanceof ConceptEntity)
+                .map(entity -> (ConceptEntity) entity).toList();
+    }
+
     default boolean isLatestActive(EntityFacade facade) {
         return isLatestActive(facade.nid());
     }

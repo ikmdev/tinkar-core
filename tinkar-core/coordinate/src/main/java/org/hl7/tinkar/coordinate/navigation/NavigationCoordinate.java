@@ -22,19 +22,10 @@ import java.util.UUID;
  * In mathematics, and more specifically in graph theory, a directed graph (or digraph)
  * is a graph that is made up of a set of vertices connected by edges, where the edges
  * have a direction associated with them.
- *
+ * <p>
  * TODO change Graph NODE to Vertex everywhere since node is overloaded with JavaFx Node (which means something else)...
  */
 public interface NavigationCoordinate {
-
-    static UUID getNavigationCoordinateUuid(NavigationCoordinate navigationCoordinate) {
-        ArrayList<UUID> uuidList = new ArrayList<>();
-        for (int nid: navigationCoordinate.navigationPatternNids().toArray()) {
-            Entity.provider().addSortedUuids(uuidList, nid);
-        }
-        return UUID.nameUUIDFromBytes(uuidList.toString().getBytes());
-    }
-
 
     static IntIdSet defaultNavigationConceptIdentifierNids() {
         return IntIds.set.of(TinkarTerm.INFERRED_NAVIGATION.nid());
@@ -44,37 +35,36 @@ public interface NavigationCoordinate {
         return getNavigationCoordinateUuid(this);
     }
 
+    static UUID getNavigationCoordinateUuid(NavigationCoordinate navigationCoordinate) {
+        ArrayList<UUID> uuidList = new ArrayList<>();
+        for (int nid : navigationCoordinate.navigationPatternNids().toArray()) {
+            Entity.provider().addSortedUuids(uuidList, nid);
+        }
+        return UUID.nameUUIDFromBytes(uuidList.toString().getBytes());
+    }
+
     //---------------------------
 
     IntIdSet navigationPatternNids();
 
-
-    StateSet vertexStates();
-
-    /**
-     * Sort occurs first by the vertices sort pattern list, and then by the natural order of the concept description
-     * as defined by the language coordinate. If the sort pattern list is empty, then the natural order
-     * of the concept description as defined by the language coordinate.
-     * @return true if vertices will be sorted.
-     */
-    boolean sortVertices();
-
     /**
      * Priority list of patterns used to sort vertices. If empty, and sortVertices() is true,
      * then the natural order of the concept description as defined by the language coordinate is used.
-     * @return the priority list of patterns to use to sort the vertices.
-     */
-    IntIdList verticesSortPatternNidList();
-
-    /**
-     * Priority list of patterns used to sort vertices. If empty, and sortVertices() is true,
-     * then the natural order of the concept description as defined by the language coordinate is used.
+     *
      * @return the priority list of patterns to use to sort the vertices.
      */
     default ImmutableList<PatternFacade> verticesSortPatternList() {
         return Lists.immutable.of(verticesSortPatternNidList().intStream()
                 .mapToObj(nid -> (PatternFacade) EntityProxy.Pattern.make(nid)).toArray(PatternFacade[]::new));
     }
+
+    /**
+     * Priority list of patterns used to sort vertices. If empty, and sortVertices() is true,
+     * then the natural order of the concept description as defined by the language coordinate is used.
+     *
+     * @return the priority list of patterns to use to sort the vertices.
+     */
+    IntIdList verticesSortPatternNidList();
 
     default ImmutableSet<Concept> getNavigationIdentifierConcepts() {
         return IntSets.immutable.of(navigationPatternNids().toArray()).collect(nid -> Entity.getFast(nid));
@@ -84,13 +74,13 @@ public interface NavigationCoordinate {
 
     default String toUserString() {
         StringBuilder sb = new StringBuilder("Navigators: ");
-        for (int nid: navigationPatternNids().toArray()) {
+        for (int nid : navigationPatternNids().toArray()) {
             sb.append("\n     ").append(PrimitiveData.text(nid));
         }
         sb.append("\n\nVertex states:\n").append(vertexStates());
         if (sortVertices()) {
             sb.append("\n\nSort: \n");
-            for (int patternNid: verticesSortPatternNidList().toArray()) {
+            for (int patternNid : verticesSortPatternNidList().toArray()) {
                 sb.append("  ");
                 sb.append(PrimitiveData.text(patternNid));
                 sb.append("\n");
@@ -101,5 +91,16 @@ public interface NavigationCoordinate {
         }
         return sb.toString();
     }
+
+    StateSet vertexStates();
+
+    /**
+     * Sort occurs first by the vertices sort pattern list, and then by the natural order of the concept description
+     * as defined by the language coordinate. If the sort pattern list is empty, then the natural order
+     * of the concept description as defined by the language coordinate.
+     *
+     * @return true if vertices will be sorted.
+     */
+    boolean sortVertices();
 
 }

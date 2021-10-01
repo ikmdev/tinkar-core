@@ -78,15 +78,12 @@ public interface LanguageCoordinate {
      */
     IntIdList descriptionPatternPreferenceNidList();
 
-    PatternFacade[] descriptionPatternPreferenceArray();
-
     /**
      * Gets the description type preference nid array.
      *
      * @return the description type preference nid array
      */
     IntIdList descriptionTypePreferenceNidList();
-    ImmutableList<ConceptFacade> descriptionTypePreferenceList();
 
     /**
      * Gets the dialect assemblage preference nid array.
@@ -94,7 +91,13 @@ public interface LanguageCoordinate {
      * @return the dialect pattern preference nid array
      */
     IntIdList dialectPatternPreferenceNidList();
-    ImmutableList<PatternFacade> dialectPatternPreferenceList();
+
+    /**
+     * Gets the language concept nid.
+     *
+     * @return the language concept nid
+     */
+    int languageConceptNid();
 
     /**
      * Gets the module preference nid array. Used to adjudicate which component to
@@ -105,15 +108,14 @@ public interface LanguageCoordinate {
      * name in the multiple case is unspecified.
      */
     IntIdList modulePreferenceNidListForLanguage();
+
+    PatternFacade[] descriptionPatternPreferenceArray();
+
+    ImmutableList<ConceptFacade> descriptionTypePreferenceList();
+
+    ImmutableList<PatternFacade> dialectPatternPreferenceList();
+
     ImmutableList<ConceptFacade> modulePreferenceListForLanguage();
-
-
-    /**
-     * Gets the language concept nid.
-     *
-     * @return the language concept nid
-     */
-    int languageConceptNid();
 
     /**
      * @return

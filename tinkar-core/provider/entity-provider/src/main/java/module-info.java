@@ -22,6 +22,7 @@ module org.hl7.tinkar.provider.entity {
     requires transitive org.hl7.tinkar.dto;
     requires static org.hl7.tinkar.autoservice;
     requires transitive org.hl7.tinkar.terms;
+    requires io.smallrye.mutiny;
 
     provides EntityService
             with EntityProvider;

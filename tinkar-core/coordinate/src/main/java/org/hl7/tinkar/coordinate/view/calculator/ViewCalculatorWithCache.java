@@ -36,6 +36,7 @@ public class ViewCalculatorWithCache implements ViewCalculator, StampCalculatorD
     private final NavigationCalculator navigationCalculator;
     private final LogicCalculator logicCalculator;
     private final ViewCoordinateRecord viewCoordinateRecord;
+
     public ViewCalculatorWithCache(ViewCoordinateRecord viewCoordinateRecord) {
         this.stampCalculator = StampCalculatorWithCache.getCalculator(viewCoordinateRecord.stampCoordinate());
         this.languageCalculator = LanguageCalculatorWithCache.getCalculator(viewCoordinateRecord.stampCoordinate(),

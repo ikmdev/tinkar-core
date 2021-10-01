@@ -64,7 +64,7 @@ public class VersionProxyFactory {
                     DESCRIPTION_ATTRIBUTE + "=\"");
         }
         if (version instanceof EntityVersion entityVersion) {
-            sb.append(EscapeUtil.forXML(entityVersion.chronology.description()));
+            sb.append(EscapeUtil.forXML(entityVersion.chronology().description()));
         } else {
             sb.append("No description");
         }

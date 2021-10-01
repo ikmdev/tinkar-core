@@ -9,7 +9,6 @@
     <packaging>pom</packaging>
     <name>TINKAR: (MMP)</name>
     <properties>
-        <activej.version>4.0-rc1</activej.version>
         <auto-service.version>1.0-rc7</auto-service.version>
         <build-helper-maven-plugin.version>3.2.0</build-helper-maven-plugin.version>
         <eclipse-collections-api.version>11.0.0.M1</eclipse-collections-api.version>
@@ -24,14 +23,14 @@
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
         <maven-source-plugin.version>3.2.0</maven-source-plugin.version>
         <maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>
-        <maven.compiler.source>16</maven.compiler.source>
-        <maven.compiler.target>16</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <record-builder-core.version>1.19</record-builder-core.version>
         <roaringbitmap.version>0.9.8</roaringbitmap.version>
         <slf4j.version>2.0.0-alpha1</slf4j.version>
         <testng.version>7.4.0</testng.version>
-        <tinkar-jpms-deps.version>1.0.1</tinkar-jpms-deps.version>
+        <tinkar-jpms-deps.version>1.0.2</tinkar-jpms-deps.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -93,11 +92,17 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${maven-surefire-plugin.version}</version>
+                    <configuration>
+                        <argLine>--enable-preview</argLine>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-failsafe-plugin</artifactId>
                     <version>${maven-failsafe-plugin.version}</version>
+                    <configuration>
+                        <argLine>--enable-preview</argLine>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -107,6 +112,9 @@
                         <source>${maven.compiler.source}</source>
                         <target>${maven.compiler.target}</target>
                         <fork>true</fork>
+                        <compilerArgs>
+                            --enable-preview
+                        </compilerArgs>
                         <annotationProcessorPaths>
                             <annotationProcessorPath>
                                 <groupId>io.soabase.record-builder</groupId>

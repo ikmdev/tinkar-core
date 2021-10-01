@@ -1,121 +1,49 @@
 package org.hl7.tinkar.entity;
 
-import io.activej.bytebuf.ByteBuf;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.hl7.tinkar.common.service.PrimitiveData;
-import org.hl7.tinkar.component.*;
+import org.hl7.tinkar.component.FieldDataType;
+import org.hl7.tinkar.component.SemanticChronology;
 import org.hl7.tinkar.terms.SemanticFacade;
 
-import java.util.Arrays;
-
-public class SemanticEntity
-        extends Entity<SemanticEntityVersion>
-        implements SemanticFacade, SemanticChronology<SemanticEntityVersion> {
-
-    protected int referencedComponentNid;
-
-    protected int patternNid;
-
-    public static SemanticEntity make(ByteBuf readBuf, byte entityFormatVersion) {
-        SemanticEntity semanticEntity = new SemanticEntity();
-        semanticEntity.fill(readBuf, entityFormatVersion);
-        return semanticEntity;
-    }
-
-    public static SemanticEntity make(SemanticChronology other) {
-        SemanticEntity semanticEntity = new SemanticEntity();
-        semanticEntity.fill(other);
-        return semanticEntity;
-    }
+public interface SemanticEntity<T extends SemanticEntityVersion> extends Entity<T>,
+        SemanticFacade, SemanticChronology<T> {
 
     @Override
-    protected void finishEntityRead(ByteBuf readBuf, byte formatVersion) {
-        this.referencedComponentNid = readBuf.readInt();
-        this.patternNid = readBuf.readInt();
-    }
+    ImmutableList<T> versions();
 
     @Override
-    protected SemanticEntityVersion makeVersion(ByteBuf readBuf, byte formatVersion) {
-        return SemanticEntityVersion.make(this, readBuf, formatVersion);
-    }
-
-    @Override
-    protected void finishEntityRead(Chronology chronology) {
-        if (chronology instanceof SemanticChronology semanticChronology) {
-            referencedComponentNid = EntityService.get().nidForComponent(semanticChronology.referencedComponent());
-            patternNid = EntityService.get().nidForComponent(semanticChronology.pattern());
-        }
-    }
-
-    @Override
-    protected SemanticEntityVersion makeVersion(Version version) {
-        return SemanticEntityVersion.make(this, (SemanticVersion) version);
-    }
-
-    @Override
-    public FieldDataType dataType() {
+    default FieldDataType entityDataType() {
         return FieldDataType.SEMANTIC_CHRONOLOGY;
     }
 
     @Override
-    protected void finishEntityWrite(ByteBuf byteBuf) {
-        byteBuf.writeInt(referencedComponentNid);
-        byteBuf.writeInt(patternNid);
+    default FieldDataType versionDataType() {
+        return FieldDataType.SEMANTIC_VERSION;
     }
 
     @Override
-    protected int subclassFieldBytesSize() {
-        return 4; // referenced component
+    default Entity referencedComponent() {
+        return Entity.provider().getEntityFast(referencedComponentNid());
     }
+
+    int referencedComponentNid();
 
     @Override
-    public ImmutableList<SemanticEntityVersion> versions() {
-        return super.versions();
+    default PatternEntity pattern() {
+        return Entity.provider().getEntityFast(patternNid());
     }
 
-    @Override
-    public String toString() {
-        return "SemanticEntity{<" +
-                nid +
-                "> " + Arrays.toString(publicId().asUuidArray()) + " of pattern: «" + PrimitiveData.text(patternNid) +
-                " <" +
-                nid +
-                "> " + Entity.getFast(patternNid).publicId().asUuidList() +
-                "», rc: «" + PrimitiveData.text(referencedComponentNid) +
-                " <" +
-                referencedComponentNid +
-                "> " + Entity.getFast(referencedComponentNid).publicId().asUuidList() +
-                "», v: " + versions +
-                '}';
-    }
+    int patternNid();
 
-    @Override
-    public Entity referencedComponent() {
-        return EntityService.get().getEntityFast(this.referencedComponentNid);
-    }
-
-    @Override
-    public PatternEntity pattern() {
-        return EntityService.get().getEntityFast(patternNid);
-    }
-
-    public int referencedComponentNid() {
-        return this.referencedComponentNid;
-    }
-
-    public int topEnclosingComponentNid() {
+    default int topEnclosingComponentNid() {
         return topEnclosingComponent().nid();
     }
 
-    public Entity<? extends EntityVersion> topEnclosingComponent() {
-        Entity<? extends EntityVersion> referencedComponent = Entity.getFast(this.referencedComponentNid);
+    default Entity<? extends EntityVersion> topEnclosingComponent() {
+        Entity<? extends EntityVersion> referencedComponent = Entity.getFast(referencedComponentNid());
         while (referencedComponent instanceof SemanticEntity parentSemantic) {
-            referencedComponent = Entity.getFast(parentSemantic.referencedComponentNid);
+            referencedComponent = Entity.getFast(parentSemantic.referencedComponentNid());
         }
         return referencedComponent;
-    }
-
-    public int patternNid() {
-        return this.patternNid;
     }
 }

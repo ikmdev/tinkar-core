@@ -20,9 +20,10 @@ import org.eclipse.collections.api.list.ImmutableList;
  *
  * @author kec
  */
-public interface ConceptChronology<T extends ConceptVersion> extends Chronology<T>, Concept {
+public interface ConceptChronology<V extends ConceptVersion>
+        extends Chronology<V>, Concept {
     
      @Override
-     ImmutableList<T> versions();
+     ImmutableList<V> versions();
 
 }

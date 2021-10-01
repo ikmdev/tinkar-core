@@ -1,50 +1,43 @@
 package org.hl7.tinkar.entity;
 
-import io.activej.bytebuf.ByteBuf;
-import io.activej.bytebuf.ByteBufPool;
-import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.MutableList;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
+import org.eclipse.collections.impl.factory.primitive.IntLists;
+import org.hl7.tinkar.common.id.IntIdSet;
+import org.hl7.tinkar.common.id.IntIds;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.Chronology;
 import org.hl7.tinkar.component.Component;
 import org.hl7.tinkar.component.FieldDataType;
-import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.terms.EntityFacade;
 import org.hl7.tinkar.terms.SemanticFacade;
 
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.UUID;
 
-public abstract class Entity<T extends EntityVersion> extends PublicIdForEntity
-        implements Chronology<T>, EntityFacade {
+public interface Entity<T extends EntityVersion>
+        extends Chronology<T>,
+        EntityFacade,
+        IdentifierData {
 
-    public static final byte ENTITY_FORMAT_VERSION = 1;
-    protected final MutableList<T> versions = Lists.mutable.empty();
-    protected int nid;
-
-    protected Entity() {
-    }
-
-    public static EntityService provider() {
+    static EntityService provider() {
         return EntityService.get();
     }
 
-    public static int nid(Component component) {
+    static int nid(Component component) {
         return EntityService.get().nidForComponent(component);
     }
 
-    public static Optional<ConceptEntity> getConceptForSemantic(SemanticFacade semanticFacade) {
+    static Optional<ConceptEntity> getConceptForSemantic(SemanticFacade semanticFacade) {
         return getConceptForSemantic(semanticFacade.nid());
     }
 
-    public static Optional<ConceptEntity> getConceptForSemantic(int semanticNid) {
+    static Optional<ConceptEntity> getConceptForSemantic(int semanticNid) {
         Optional<? extends Entity<? extends EntityVersion>> optionalEntity = get(semanticNid);
         if (optionalEntity.isPresent()) {
             if (optionalEntity.get() instanceof SemanticEntity semanticEntity) {
-                Entity<?> referencedEntity = Entity.getFast(semanticEntity.referencedComponentNid);
+                Entity<?> referencedEntity = Entity.getFast(semanticEntity.referencedComponentNid());
                 if (referencedEntity instanceof ConceptEntity conceptEntity) {
                     return Optional.of(conceptEntity);
                 } else if (referencedEntity instanceof SemanticEntity referencedSemantic) {
@@ -55,195 +48,75 @@ public abstract class Entity<T extends EntityVersion> extends PublicIdForEntity
         return Optional.empty();
     }
 
-    public static <T extends Entity<V>, V extends EntityVersion> Optional<T> get(int nid) {
+    static <T extends Entity<V>, V extends EntityVersion> Optional<T> get(int nid) {
         return EntityService.get().getEntity(nid);
     }
 
-    public static <T extends Entity<V>, V extends EntityVersion> Optional<T> get(EntityFacade facade) {
+    static <T extends Entity<V>, V extends EntityVersion> Optional<T> get(EntityFacade facade) {
         return EntityService.get().getEntity(facade.nid());
     }
 
-    public static <T extends Entity<V>, V extends EntityVersion> T getFast(int nid) {
+    static <T extends Entity<V>, V extends EntityVersion> T getFast(int nid) {
         return EntityService.get().getEntityFast(nid);
     }
 
-    public static <T extends Entity<V>, V extends EntityVersion> T getFast(EntityFacade facade) {
+    static <T extends Entity<V>, V extends EntityVersion> T getFast(EntityFacade facade) {
         return EntityService.get().getEntityFast(facade.nid());
     }
 
-    public static StampEntity getStamp(int nid) {
+    static <T extends StampEntity<? extends StampEntityVersion>> T getStamp(int nid) {
         return EntityService.get().getStampFast(nid);
     }
 
-    protected final void fill(ByteBuf readBuf, byte entityFormatVersion) {
-        if (entityFormatVersion != ENTITY_FORMAT_VERSION) {
-            throw new IllegalStateException("Unsupported entity format version: " + entityFormatVersion);
+    default IntIdSet stampNids() {
+        MutableIntList stampNids = IntLists.mutable.withInitialCapacity(versions().size());
+        for (EntityVersion version : versions()) {
+            stampNids.add(version.stampNid());
         }
-        this.nid = readBuf.readInt();
-        this.mostSignificantBits = readBuf.readLong();
-        this.leastSignificantBits = readBuf.readLong();
-
-        int additionalUuidLongCount = readBuf.readByte();
-        if (additionalUuidLongCount > 0) {
-            this.additionalUuidLongs = new long[additionalUuidLongCount];
-            for (int i = 0; i < this.additionalUuidLongs.length; i++) {
-                this.additionalUuidLongs[i] = readBuf.readLong();
-            }
-        } else {
-            this.additionalUuidLongs = null;
-        }
-
-        finishEntityRead(readBuf, entityFormatVersion);
-        versions.clear();
-        int versionCount = readBuf.readInt();
-        for (int i = 0; i < versionCount; i++) {
-            versions.add(makeVersion(readBuf, entityFormatVersion));
-        }
+        return IntIds.set.of(stampNids.toArray());
     }
 
-    protected abstract void finishEntityRead(ByteBuf readBuf, byte formatVersion);
-
-    protected abstract T makeVersion(ByteBuf readBuf, byte formatVersion);
-
-    protected final void fill(Chronology<Version> chronology) {
-        this.nid = EntityService.get().nidForPublicId(chronology.publicId());
-        ImmutableList<UUID> componentUuids = chronology.publicId().asUuidList();
-        UUID firstUuid = componentUuids.get(0);
-
-        this.mostSignificantBits = firstUuid.getMostSignificantBits();
-        this.leastSignificantBits = firstUuid.getLeastSignificantBits();
-        if (componentUuids.size() > 1) {
-            this.additionalUuidLongs = new long[(componentUuids.size() - 1) * 2];
-            for (int listIndex = 1; listIndex < componentUuids.size(); listIndex++) {
-                int additionalUuidIndex = listIndex - 1;
-                this.additionalUuidLongs[additionalUuidIndex * 2] = componentUuids.get(listIndex).getMostSignificantBits();
-                this.additionalUuidLongs[additionalUuidIndex * 2 + 1] = componentUuids.get(listIndex).getLeastSignificantBits();
-                // TODO remove debug check...
-                if (this.additionalUuidLongs[additionalUuidIndex * 2] == this.mostSignificantBits ||
-                        this.additionalUuidLongs[additionalUuidIndex * 2 + 1] == this.leastSignificantBits) {
-                    throw new IllegalStateException("UUID error in: " + chronology);
-                }
-            }
-        }
-        finishEntityRead(chronology);
-        versions.clear();
-        for (Version version : chronology.versions()) {
-            versions.add(makeVersion(version));
-        }
-    }
-
-    protected abstract void finishEntityRead(Chronology<Version> chronology);
-
-    protected abstract T makeVersion(Version version);
-
-    public final byte[] getBytes() {
-
-        ByteBuf byteBuf = ByteBufPool.allocate(entitySize() + 1); // one byte for version...
-        byteBuf.writeByte(ENTITY_FORMAT_VERSION);
-        byteBuf.writeByte(dataType().token); //ensure that the chronicle byte array sorts first.
-        byteBuf.writeInt(nid);
-        byteBuf.writeLong(mostSignificantBits);
-        byteBuf.writeLong(leastSignificantBits);
-        if (this.additionalUuidLongs == null) {
-            byteBuf.writeByte((byte) 0);
-        } else {
-            byteBuf.writeByte((byte) this.additionalUuidLongs.length);
-            for (int i = 0; i < this.additionalUuidLongs.length; i++) {
-                byteBuf.writeLong(this.additionalUuidLongs[i]);
-            }
-        }
-        finishEntityWrite(byteBuf);
-        byteBuf.writeInt(versions.size());
-        int chronicleArrayCount = versions.size() + 1;
-        int chronicleFieldIndex = 0;
-        byte[][] entityArray = new byte[chronicleArrayCount][];
-        entityArray[chronicleFieldIndex++] = byteBuf.asArray();
-        for (EntityVersion version : versions) {
-            entityArray[chronicleFieldIndex++] = version.getBytes();
-        }
-        int totalSize = 0;
-        totalSize += 4; // Integer for the number of arrays
-        for (byte[] arrayBytes : entityArray) {
-            totalSize += 4; // integer for size of array
-            totalSize += arrayBytes.length;
-        }
-        ByteBuf finalByteBuf = ByteBufPool.allocate(totalSize);
-        finalByteBuf.writeInt(entityArray.length);
-        for (byte[] arrayBytes : entityArray) {
-            finalByteBuf.writeInt(arrayBytes.length);
-            finalByteBuf.write(arrayBytes);
-        }
-        return finalByteBuf.asArray();
-    }
-
-    protected int entitySize() {
-        int size = 12 + subclassFieldBytesSize();
-        size += 4 + 16; //4 = UUID count, 16 = primordial uuid bytes.
-        if (additionalUuidLongs != null) {
-            size += 8 * additionalUuidLongs.length;
-        }
-        for (T version : versions) {
-            size += version.versionSize();
-        }
-        return size + 32; // extra 32 to make it less brittle.
-    }
-
-    public abstract FieldDataType dataType();
-
-    protected abstract void finishEntityWrite(ByteBuf byteBuf);
-
-    protected abstract int subclassFieldBytesSize();
+    ;
 
     @Override
-    public ImmutableList<T> versions() {
-        return versions.toImmutable();
-    }
+    ImmutableList<T> versions();
 
-    protected MutableList<T> mutableVersions() {
-        return versions;
-    }
+    byte[] getBytes();
 
-    public int nid() {
-        return nid;
-    }
+    FieldDataType entityDataType();
 
-    @Override
-    public String toString() {
+    FieldDataType versionDataType();
+
+    default String entityToString() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName());
         sb.append("{");
-        Optional<String> stringOptional = PrimitiveData.textOptional(this.nid);
+        Optional<String> stringOptional = PrimitiveData.textOptional(this.nid());
         if (stringOptional.isPresent()) {
             sb.append(stringOptional.get());
             sb.append(' ');
         }
         sb.append("<");
-        sb.append(nid);
+        sb.append(nid());
         sb.append("> ");
         sb.append(Arrays.toString(publicId().asUuidArray()));
-        sb.append(", v: ");
-        sb.append(versions);
+        sb.append(", ");
+        sb.append(entityToStringExtras());
+        sb.append("v: ");
+        sb.append(versions());
         sb.append('}');
         return sb.toString();
     }
 
-    @Override
-    public PublicId publicId() {
-        return this;
-    }
+    int nid();
 
     @Override
-    public int hashCode() {
-        return Integer.hashCode(nid);
+    default PublicId publicId() {
+        return IdentifierData.super.publicId();
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null) return false;
-        if (o instanceof EntityFacade entityFacade) {
-            return nid == entityFacade.nid();
-        }
-        return false;
+    default String entityToStringExtras() {
+        return "";
     }
+
 }

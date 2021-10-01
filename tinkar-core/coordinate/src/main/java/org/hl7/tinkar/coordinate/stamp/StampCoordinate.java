@@ -7,6 +7,7 @@ import org.hl7.tinkar.common.id.IntIdSet;
 import org.hl7.tinkar.common.id.IntIds;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.entity.Entity;
+import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.terms.ConceptFacade;
 import org.hl7.tinkar.terms.EntityFacade;
 import org.hl7.tinkar.terms.EntityProxy;

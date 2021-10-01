@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
+import java.util.UUID;
 import java.util.function.ToIntFunction;
 
 @AutoService(CachingService.class)
@@ -171,6 +172,10 @@ public class PrimitiveData implements CachingService {
             return controllerSingleton.provider();
         }
         throw new IllegalStateException("No provider. Call Select provider prior to get()");
+    }
+
+    public static int nid(UUID uuids) {
+        return get().nidForUuids(uuids);
     }
 
     @Override

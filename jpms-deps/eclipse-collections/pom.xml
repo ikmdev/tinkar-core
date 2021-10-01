@@ -5,7 +5,7 @@
     <parent>
         <artifactId>tinkar-jpms-deps</artifactId>
         <groupId>org.hl7.tinkar</groupId>
-        <version>1.0.1</version>
+        <version>1.0.2</version>
     </parent>
     <artifactId>eclipse-collections</artifactId>
     <packaging>jar</packaging>
@@ -40,6 +40,7 @@
                                         exports org.eclipse.collections.api.block.function;
                                         exports org.eclipse.collections.api.block.function.primitive;
                                         exports org.eclipse.collections.api.block.predicate;
+                                        exports org.eclipse.collections.api.block.predicate.primitive;
                                         exports org.eclipse.collections.api.block.procedure;
                                         exports org.eclipse.collections.api.block.procedure.primitive;
                                         exports org.eclipse.collections.api.collection;

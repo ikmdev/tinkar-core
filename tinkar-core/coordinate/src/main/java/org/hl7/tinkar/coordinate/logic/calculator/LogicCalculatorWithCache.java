@@ -156,7 +156,7 @@ public class LogicCalculatorWithCache implements LogicCalculator {
             Latest<DiTreeEntity<EntityVertex>> latestAxioms = new Latest<>(latestAxiomField.get().value());
             if (latestAxiomField.isContradicted()) {
                 for (Field<DiTreeEntity<EntityVertex>> contradictedField : latestAxiomField.contradictions()) {
-                    latestAxioms.contradictions().add(contradictedField.value());
+                    latestAxioms.addLatest(contradictedField.value());
                 }
             }
             return latestAxioms;

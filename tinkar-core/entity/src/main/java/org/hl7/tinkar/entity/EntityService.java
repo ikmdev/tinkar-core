@@ -77,29 +77,29 @@ public interface EntityService extends ChronologyService, Flow.Publisher<Entity<
         return getEntityFast(entityFacade.nid());
     }
 
-    default Optional<StampEntity> getStamp(Component component) {
+    default Optional<StampEntity<StampEntityVersion>> getStamp(Component component) {
         return getStamp(nidForPublicId(component.publicId()));
     }
 
-    default Optional<StampEntity> getStamp(int nid) {
+    default Optional<StampEntity<StampEntityVersion>> getStamp(int nid) {
         return Optional.ofNullable(getStampFast(nid));
     }
 
-    StampEntity getStampFast(int nid);
+    <T extends StampEntity<? extends StampEntityVersion>> T getStampFast(int nid);
 
-    default Optional<StampEntity> getStamp(ImmutableList<UUID> uuidList) {
+    default Optional<StampEntity<StampEntityVersion>> getStamp(ImmutableList<UUID> uuidList) {
         return getStamp(nidForUuids(uuidList));
     }
 
-    default Optional<StampEntity> getStamp(UUID... uuids) {
+    default Optional<StampEntity<StampEntityVersion>> getStamp(UUID... uuids) {
         return getStamp(nidForUuids(uuids));
     }
 
-    default StampEntity getStampFast(ImmutableList<UUID> uuidList) {
+    default StampEntity<StampEntityVersion> getStampFast(ImmutableList<UUID> uuidList) {
         return getStampFast(nidForUuids(uuidList));
     }
 
-    default StampEntity getStampFast(UUID... uuids) {
+    default StampEntity<StampEntityVersion> getStampFast(UUID... uuids) {
         return getStampFast(nidForUuids(uuids));
     }
 
@@ -139,15 +139,15 @@ public interface EntityService extends ChronologyService, Flow.Publisher<Entity<
         }
     }
 
-    void forEachSemanticOfPattern(int patternNid, Consumer<SemanticEntity> procedure);
+    void forEachSemanticOfPattern(int patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure);
 
     int[] semanticNidsOfPattern(int patternNid);
 
-    void forEachSemanticForComponent(int componentNid, Consumer<SemanticEntity> procedure);
+    void forEachSemanticForComponent(int componentNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure);
 
     int[] semanticNidsForComponent(int componentNid);
 
-    void forEachSemanticForComponentOfPattern(int componentNid, int patternNid, Consumer<SemanticEntity> procedure);
+    void forEachSemanticForComponentOfPattern(int componentNid, int patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure);
 
     int[] semanticNidsForComponentOfPattern(int componentNid, int patternNid);
 }

@@ -40,9 +40,11 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
+import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
 import org.hl7.tinkar.common.service.CachingService;
@@ -55,7 +57,6 @@ import org.hl7.tinkar.coordinate.stamp.*;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.entity.graph.DiTreeEntity;
 import org.hl7.tinkar.entity.graph.VersionVertex;
-import org.hl7.tinkar.terms.ConceptToDataType;
 import org.hl7.tinkar.terms.State;
 import org.hl7.tinkar.terms.TinkarTerm;
 import org.slf4j.Logger;
@@ -67,6 +68,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 
 import static org.hl7.tinkar.coordinate.stamp.calculator.RelativePosition.*;
 
@@ -221,6 +223,394 @@ public class StampCalculatorWithCache implements StampCalculator {
 //        return stampPath.isPresent();
     }
 
+    @Override
+    public Stream<Latest<SemanticEntityVersion>> streamLatestVersionForPattern(int patternNid) {
+        int[] semanticNids = PrimitiveData.get().semanticNidsOfPattern(patternNid);
+        ImmutableIntList nidsAsList = IntLists.immutable.of(semanticNids);
+        return nidsAsList.primitiveStream().mapToObj(nid -> latest(nid));
+    }
+
+    @Override
+    public <V extends EntityVersion> Latest<V> latest(int nid) {
+        return (Latest<V>) latestCache.get(nid, latestNid -> this.latest(Entity.getFast(latestNid)));
+    }
+
+    public <V extends EntityVersion> List<DiTree<VersionVertex<V>>> getVersionGraphList(Entity<V> chronicle) {
+        return getVersionGraphList(chronicle.versions());
+    }
+
+    /**
+     * Gets the latest EntityVersion.
+     *
+     * @param chronicle the chronicle
+     * @return the latest version
+     */
+    public <V extends EntityVersion> Latest<V> latest(Entity<V> chronicle) {
+        final HashSet<EntityVersion> latestVersionSet = new HashSet<>();
+
+        chronicle.versions()
+                .stream()
+                .filter((newVersionToTest) -> (newVersionToTest.stamp().time() > Long.MIN_VALUE))
+                .filter((newVersionToTest) -> (onRoute(newVersionToTest.stamp())))
+                .forEach(
+                        (newVersionToTest) -> {
+                            if (latestVersionSet.isEmpty()) {
+                                latestVersionSet.add((V) newVersionToTest);
+                            } else {
+                                handlePart(latestVersionSet, newVersionToTest);
+                            }
+                        });
+
+        if (this.filter.allowedStates().isActiveOnly()) {
+            final HashSet<EntityVersion> inactiveVersions = new HashSet<>();
+
+            latestVersionSet.stream()
+                    .forEach((version) -> {
+                        if (State.fromConceptNid(version.stamp().stateNid()) != State.ACTIVE) {
+                            inactiveVersions.add(version);
+                        }
+                    });
+            latestVersionSet.removeAll(inactiveVersions);
+        }
+
+        final List<EntityVersion> latestVersionList = new ArrayList<>(latestVersionSet);
+
+        if (latestVersionList.isEmpty()) {
+            return new Latest<>();
+        }
+
+        if (latestVersionList.size() == 1) {
+            return (Latest<V>) new Latest<>(latestVersionList.get(0));
+        }
+
+        return (Latest<V>) new Latest<>(latestVersionList.get(0), latestVersionList.subList(1, latestVersionList.size()));
+    }
+
+    @Override
+    public StateSet allowedStates() {
+        return allowedStates;
+    }
+
+    /**
+     * Relative position.
+     *
+     * @param stampNid the stamp sequence 1
+     * @param stampNid the stamp sequence 2
+     * @return the relative position
+     */
+    public RelativePosition relativePosition(int stampNid, int stampNid2) {
+        if (!(onRoute(stampNid) && onRoute(stampNid2))) {
+            return RelativePosition.UNREACHABLE;
+        }
+
+        return fastRelativePosition(stampNid, stampNid2);
+    }
+
+    @Override
+    public void forEachSemanticVersionOfPattern(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
+        Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
+        latestPatternVersion.ifPresent(patternEntityVersion -> PrimitiveData.get().forEachSemanticNidOfPattern(patternNid, semanticNid -> {
+            Latest<SemanticEntityVersion> latestSemanticVersion = this.latestIfPattern(semanticNid, patternNid);
+            latestSemanticVersion.ifPresent(semanticEntityVersion -> procedure.accept(semanticEntityVersion, patternEntityVersion));
+        }));
+    }
+
+    @Override
+    public void forEachSemanticVersionForComponent(int componentNid,
+                                                   BiConsumer<SemanticEntityVersion, EntityVersion> procedure) {
+        Latest<EntityVersion> latestEntityVersion = this.latest(componentNid);
+        latestEntityVersion.ifPresent(entityVersion -> PrimitiveData.get().forEachSemanticNidForComponent(componentNid, semanticNid -> {
+            Latest<SemanticEntityVersion> latestSemanticVersion = this.latest(semanticNid);
+            latestSemanticVersion.ifPresent(semanticEntityVersion -> procedure.accept(semanticEntityVersion, entityVersion));
+        }));
+    }
+
+    @Override
+    public void forEachSemanticVersionForComponentOfPattern(int componentNid, int patternNid,
+                                                            TriConsumer<SemanticEntityVersion, EntityVersion, PatternEntityVersion> procedure) {
+        Latest<EntityVersion> latestComponentVersion = this.latest(componentNid);
+        latestComponentVersion.ifPresent(entityVersion -> {
+            Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
+            latestPatternVersion.ifPresent(patternEntityVersion ->
+                    PrimitiveData.get().forEachSemanticNidForComponentOfPattern(componentNid, patternNid, semanticNid -> {
+                        Latest<SemanticEntityVersion> latestSemanticVersion = this.latest(semanticNid);
+                        latestSemanticVersion.ifPresent(semanticEntityVersion -> procedure.accept(semanticEntityVersion, entityVersion, patternEntityVersion));
+                    }));
+        });
+    }
+
+    public void forEachSemanticVersionWithFieldsForComponent(int componentNid,
+                                                             TriConsumer<SemanticEntityVersion, ImmutableList<Field>, EntityVersion> procedure) {
+        forEachSemanticVersionForComponent(componentNid,
+                (semanticEntityVersion, entityVersion) -> {
+                    Latest<PatternEntityVersion> latestPatternEntityVersion = latestPatternEntityVersion(semanticEntityVersion.patternNid());
+                    latestPatternEntityVersion.ifPresent(patternEntityVersion -> {
+                        procedure.accept(semanticEntityVersion, semanticEntityVersion.fields(patternEntityVersion), entityVersion);
+                    });
+                });
+    }
+
+    public Latest<PatternEntityVersion> latestPatternEntityVersion(int patternNid) {
+        return patternVersionCache.get(patternNid, nid -> latest(patternNid));
+    }
+
+    public OptionalInt getIndexForMeaning(int patternNid, int meaningNid) {
+        long patternMeaningKey = IntsInLong.ints2Long(patternNid, meaningNid);
+        return indexForMeaningCache.get(patternMeaningKey, key -> {
+            Latest<PatternEntityVersion> latestPatternVersion = latestPatternEntityVersion(patternNid);
+            if (latestPatternVersion.isPresent()) {
+                OptionalInt optionalIndexForMeaning;
+                int indexForMeaning = latestPatternVersion.get().indexForMeaning(meaningNid);
+                if (indexForMeaning < 0) {
+                    optionalIndexForMeaning = OptionalInt.empty();
+                } else {
+                    optionalIndexForMeaning = OptionalInt.of(indexForMeaning);
+                }
+                return optionalIndexForMeaning;
+            }
+            return OptionalInt.empty();
+        });
+    }
+
+    public OptionalInt getIndexForPurpose(int patternNid, int purposeNid) {
+        long patternMeaningKey = IntsInLong.ints2Long(patternNid, purposeNid);
+        return indexForPurposeCache.get(patternMeaningKey, key -> {
+            Latest<PatternEntityVersion> latestPatternVersion = latestPatternEntityVersion(patternNid);
+            if (latestPatternVersion.isPresent()) {
+                OptionalInt optionalIndexForMeaning;
+                int indexForPurpose = latestPatternVersion.get().indexForPurpose(purposeNid);
+                if (indexForPurpose < 0) {
+                    optionalIndexForMeaning = OptionalInt.empty();
+                } else {
+                    optionalIndexForMeaning = OptionalInt.of(indexForPurpose);
+                }
+                return optionalIndexForMeaning;
+            }
+            return OptionalInt.empty();
+        });
+    }
+
+    public <T> Latest<Field<T>> getFieldForSemantic(Latest<SemanticEntityVersion> latestSemanticVersion, int criterionNid, FieldCriterion fieldCriterion) {
+        if (latestSemanticVersion.isPresent()) {
+            SemanticEntityVersion semanticVersion = latestSemanticVersion.get();
+            Latest<PatternEntityVersion> latestPattern = latest(semanticVersion.patternNid());
+            PatternEntityVersion patternVersion = latestPattern.get();
+            OptionalInt optionalIndex = switch (fieldCriterion) {
+                case MEANING -> {
+                    yield getIndexForMeaning(semanticVersion.patternNid(), criterionNid);
+                }
+                case PURPOSE -> {
+                    yield getIndexForPurpose(semanticVersion.patternNid(), criterionNid);
+                }
+                default -> {
+                    throw new IllegalStateException("Can't handle FieldCriterion: " + fieldCriterion);
+                }
+            };
+            if (optionalIndex.isPresent()) {
+                int indexForCriterion = optionalIndex.getAsInt();
+                FieldDefinitionForEntity fieldDef = patternVersion.fieldDefinitions().get(indexForCriterion);
+                String narrative = null;
+                if (fieldDef.narrativeOptional().isPresent()) {
+                    narrative = fieldDef.narrativeOptional().get();
+                }
+                FieldRecord fieldRecord = new FieldRecord(semanticVersion.fields().get(indexForCriterion),
+                        narrative, fieldDef.dataTypeNid(), fieldDef.purposeNid(), fieldDef.meaningNid(),
+                        semanticVersion);
+                Latest<Field<T>> latestField = new Latest<>(fieldRecord);
+                for (SemanticEntityVersion semanticVersionContradiction : latestSemanticVersion.contradictions()) {
+                    latestField.addLatest(
+                            new FieldRecord(semanticVersionContradiction.fields().get(indexForCriterion),
+                                    narrative, fieldDef.dataTypeNid(), fieldDef.purposeNid(), fieldDef.meaningNid(),
+                                    semanticVersion));
+                }
+                return latestField;
+            } else {
+                return Latest.empty();
+            }
+        }
+        return Latest.empty();
+    }
+
+    @Override
+    public <T> Latest<Field<T>> getFieldForSemantic(int componentNid, int criterionNid, FieldCriterion fieldCriterion) {
+
+        Latest<? extends EntityVersion> latestVersion = latest(componentNid);
+        if (latestVersion.isPresent() && latestVersion.get() instanceof SemanticEntityVersion) {
+            return getFieldForSemantic((Latest<SemanticEntityVersion>) latestVersion, criterionNid, fieldCriterion);
+        }
+        return Latest.empty();
+    }
+
+    /**
+     * On route.
+     *
+     * @param stampNid the stamp sequence
+     * @return true, if successful
+     */
+    public boolean onRoute(int stampNid) {
+        if (stampOnRoute.containsKey(stampNid)) {
+            return stampOnRoute.get(stampNid);
+        }
+        StampEntity stamp = Entity.getStamp(stampNid);
+        return onRoute(stamp);
+    }
+
+    /**
+     * Fast relative position.
+     *
+     * @param stampNid1 a stamp nid
+     * @param stampNid2 a stamp nid
+     * @return the relative position
+     */
+    public RelativePosition fastRelativePosition(int stampNid1,
+                                                 int stampNid2) {
+        StampEntity stamp1 = Entity.getStamp(stampNid1);
+        StampEntity stamp2 = Entity.getStamp(stampNid2);
+
+        return getRelativePosition(stamp1, stamp2);
+    }
+
+    public boolean onRoute(StampEntity stamp) {
+        if (stampOnRoute.containsKey(stamp.nid())) {
+            return stampOnRoute.get(stamp.nid());
+        }
+        final Segment seg = this.pathNidSegmentMap.get(stamp.pathNid());
+        boolean returnValue = false;
+        if (seg != null) {
+            returnValue = seg.containsPosition(
+                    stamp.pathNid(),
+                    stamp.moduleNid(),
+                    stamp.time());
+        }
+        stampOnRoute.put(stamp.pathNid(), returnValue);
+        return returnValue;
+    }
+
+    /**
+     * Handle part.
+     *
+     * @param partsForPosition the parts for position
+     * @param part             the part
+     */
+    private void handlePart(HashSet<EntityVersion> partsForPosition, EntityVersion part) {
+        // create a list of values so we don't have any
+        // concurrent modification issues with removing/adding
+        // items to the partsForPosition.
+        final List<EntityVersion> partsToCompare = new ArrayList<>(partsForPosition);
+
+        for (final EntityVersion prevPartToTest : partsToCompare) {
+            switch (fastRelativePosition(part, prevPartToTest)) {
+                case AFTER:
+                    partsForPosition.remove(prevPartToTest);
+                    partsForPosition.add(part);
+                    break;
+
+                case BEFORE:
+                    break;
+
+                case CONTRADICTION:
+                    partsForPosition.add(part);
+                    break;
+
+                case EQUAL:
+
+                    // Can only have one part per time/path
+                    // combination.
+                    if (prevPartToTest.equals(part)) {
+                        // part already added from another position.
+                        // No need to add again.
+                        break;
+                    }
+
+                    // Duplicate values encountered.
+                    this.errorCount++;
+
+                    if (this.errorCount < 5) {
+                        LOG.warn("EQUAL should never happen. Data is malformed. Stamp: " + part.stamp() +
+                                " Part:\n" + part + " \n  Part to test: \n" + prevPartToTest + "\n");
+                    }
+
+                    break;
+
+                case UNREACHABLE:
+
+                    // Should have failed mapper.onRoute(part)
+                    // above.
+                    throw new RuntimeException(RelativePosition.UNREACHABLE + " should never happen.");
+            }
+        }
+    }
+
+    /**
+     * Fast relative position.
+     *
+     * @param v1 the v 1
+     * @param v2 the v 2
+     * @return the relative position
+     */
+    public RelativePosition fastRelativePosition(EntityVersion v1,
+                                                 EntityVersion v2) {
+        StampEntity v1Stamp = v1.stamp();
+        StampEntity v2Stamp = v2.stamp();
+        return getRelativePosition(v1Stamp, v2Stamp);
+    }
+
+    public RelativePosition getRelativePosition(StampEntity stamp1, StampEntity stamp2) {
+        final long ss1Time = stamp1.time();
+        final int ss1ModuleNid = stamp1.moduleNid();
+        final int ss1PathNid = stamp1.pathNid();
+        final long ss2Time = stamp2.time();
+        final int ss2ModuleNid = stamp2.moduleNid();
+        final int ss2PathNid = stamp2.pathNid();
+
+        if (ss1PathNid == ss2PathNid) {
+            final Segment seg = this.pathNidSegmentMap.get(ss1PathNid);
+
+            if (seg == null) {
+                throw new IllegalStateException("Segment cannot be null.");
+            }
+
+            if (seg.containsPosition(ss1PathNid, ss1ModuleNid, ss1Time) &&
+                    seg.containsPosition(ss2PathNid, ss2ModuleNid, ss2Time)) {
+                if (ss1Time < ss2Time) {
+                    return BEFORE;
+                }
+
+                if (ss1Time > ss2Time) {
+                    return AFTER;
+                }
+
+                if (ss1Time == ss2Time) {
+                    return EQUAL;
+                }
+            }
+
+            return RelativePosition.UNREACHABLE;
+        }
+
+        final Segment seg1 = this.pathNidSegmentMap.get(ss1PathNid);
+        final Segment seg2 = this.pathNidSegmentMap.get(ss2PathNid);
+
+        if ((seg1 == null) || (seg2 == null)) {
+            return RelativePosition.UNREACHABLE;
+        }
+
+        if (!(seg1.containsPosition(ss1PathNid, ss1ModuleNid, ss1Time) &&
+                seg2.containsPosition(ss2PathNid, ss2ModuleNid, ss2Time))) {
+            return RelativePosition.UNREACHABLE;
+        }
+
+        if (seg1.precedingSegments.contains(seg2.segmentSequence)) {
+            return BEFORE;
+        }
+
+        if (seg2.precedingSegments.contains(seg1.segmentSequence)) {
+            return AFTER;
+        }
+
+        return RelativePosition.CONTRADICTION;
+    }
+
     public <V extends EntityVersion> List<DiTree<VersionVertex<V>>> getVersionGraphList(ImmutableList<V> versionList) {
         SortedSet<VersionWithDistance<V>> versionWithDistances = new TreeSet<>();
         versionList.forEach(v -> versionWithDistances.add(new VersionWithDistance<>(v)));
@@ -366,22 +756,6 @@ public class StampCalculatorWithCache implements StampCalculator {
      */
     public boolean onRoute(EntityVersion version) {
         return onRoute(version.stamp());
-    }
-
-    public boolean onRoute(StampEntity stamp) {
-        if (stampOnRoute.containsKey(stamp.nid())) {
-            return stampOnRoute.get(stamp.nid());
-        }
-        final Segment seg = this.pathNidSegmentMap.get(stamp.pathNid());
-        boolean returnValue = false;
-        if (seg != null) {
-            returnValue = seg.containsPosition(
-                    stamp.pathNid(),
-                    stamp.moduleNid(),
-                    stamp.time());
-        }
-        stampOnRoute.put(stamp.pathNid(), returnValue);
-        return returnValue;
     }
 
     /**
@@ -573,35 +947,6 @@ public class StampCalculatorWithCache implements StampCalculator {
         return resultList.toArray();
     }
 
-    /**
-     * On route.
-     *
-     * @param stampNid the stamp sequence
-     * @return true, if successful
-     */
-    public boolean onRoute(int stampNid) {
-        if (stampOnRoute.containsKey(stampNid)) {
-            return stampOnRoute.get(stampNid);
-        }
-        StampEntity stamp = Entity.getStamp(stampNid);
-        return onRoute(stamp);
-    }
-
-    /**
-     * Fast relative position.
-     *
-     * @param stampNid1 a stamp nid
-     * @param stampNid2 a stamp nid
-     * @return the relative position
-     */
-    public RelativePosition fastRelativePosition(int stampNid1,
-                                                 int stampNid2) {
-        StampEntity stamp1 = Entity.getStamp(stampNid1);
-        StampEntity stamp2 = Entity.getStamp(stampNid2);
-
-        return getRelativePosition(stamp1, stamp2);
-    }
-
     private boolean isAllowedState(int stampNid) {
         if (stampIsAllowedState.containsKey(stampNid)) {
             return stampIsAllowedState.get(stampNid);
@@ -610,62 +955,6 @@ public class StampCalculatorWithCache implements StampCalculator {
         boolean allowed = this.allowedStates.contains(State.fromConceptNid(stamp.stateNid()));
         stampIsAllowedState.put(stampNid, allowed);
         return allowed;
-    }
-
-    public RelativePosition getRelativePosition(StampEntity stamp1, StampEntity stamp2) {
-        final long ss1Time = stamp1.time();
-        final int ss1ModuleNid = stamp1.moduleNid();
-        final int ss1PathNid = stamp1.pathNid();
-        final long ss2Time = stamp2.time();
-        final int ss2ModuleNid = stamp2.moduleNid();
-        final int ss2PathNid = stamp2.pathNid();
-
-        if (ss1PathNid == ss2PathNid) {
-            final Segment seg = this.pathNidSegmentMap.get(ss1PathNid);
-
-            if (seg == null) {
-                throw new IllegalStateException("Segment cannot be null.");
-            }
-
-            if (seg.containsPosition(ss1PathNid, ss1ModuleNid, ss1Time) &&
-                    seg.containsPosition(ss2PathNid, ss2ModuleNid, ss2Time)) {
-                if (ss1Time < ss2Time) {
-                    return BEFORE;
-                }
-
-                if (ss1Time > ss2Time) {
-                    return AFTER;
-                }
-
-                if (ss1Time == ss2Time) {
-                    return EQUAL;
-                }
-            }
-
-            return RelativePosition.UNREACHABLE;
-        }
-
-        final Segment seg1 = this.pathNidSegmentMap.get(ss1PathNid);
-        final Segment seg2 = this.pathNidSegmentMap.get(ss2PathNid);
-
-        if ((seg1 == null) || (seg2 == null)) {
-            return RelativePosition.UNREACHABLE;
-        }
-
-        if (!(seg1.containsPosition(ss1PathNid, ss1ModuleNid, ss1Time) &&
-                seg2.containsPosition(ss2PathNid, ss2ModuleNid, ss2Time))) {
-            return RelativePosition.UNREACHABLE;
-        }
-
-        if (seg1.precedingSegments.contains(seg2.segmentSequence)) {
-            return BEFORE;
-        }
-
-        if (seg2.precedingSegments.contains(seg1.segmentSequence)) {
-            return AFTER;
-        }
-
-        return RelativePosition.CONTRADICTION;
     }
 
     /**
@@ -791,288 +1080,6 @@ public class StampCalculatorWithCache implements StampCalculator {
 
             return false;
         }
-    }
-
-    public <T> Latest<Field<T>> getFieldForSemantic(Latest<SemanticEntityVersion> latestSemanticVersion, int criterionNid, FieldCriterion fieldCriterion) {
-        if (latestSemanticVersion.isPresent()) {
-            SemanticEntityVersion semanticVersion = latestSemanticVersion.get();
-            Latest<PatternEntityVersion> latestPattern = latest(semanticVersion.patternNid());
-            PatternEntityVersion patternVersion = latestPattern.get();
-            OptionalInt optionalIndex = switch (fieldCriterion) {
-                case MEANING -> {
-                    yield getIndexForMeaning(semanticVersion.patternNid(), criterionNid);
-                }
-                case PURPOSE -> {
-                    yield getIndexForPurpose(semanticVersion.patternNid(), criterionNid);
-                }
-                default -> {
-                    throw new IllegalStateException("Can't handle FieldCriterion: " + fieldCriterion);
-                }
-            };
-            if (optionalIndex.isPresent()) {
-                int indexForCriterion = optionalIndex.getAsInt();
-                FieldDefinitionForEntity fieldDef = patternVersion.fieldDefinitions().get(indexForCriterion);
-                FieldRecord fieldRecord = new FieldRecord(semanticVersion.fields().get(indexForCriterion),
-                        fieldDef.purposeNid(), fieldDef.meaningNid(),
-                        ConceptToDataType.convert(fieldDef.dataType()), semanticVersion);
-                Latest<Field<T>> latestField = new Latest<>(fieldRecord);
-                for (SemanticEntityVersion semanticVersionContradiction : latestSemanticVersion.contradictions()) {
-                    latestField.contradictions.add(
-                            new FieldRecord(semanticVersionContradiction.fields().get(indexForCriterion),
-                                    fieldDef.purposeNid(), fieldDef.meaningNid(),
-                                    ConceptToDataType.convert(fieldDef.dataType()), semanticVersion));
-                }
-                return latestField;
-            } else {
-                return Latest.empty();
-            }
-        }
-        return Latest.empty();
-    }
-
-
-    @Override
-    public <T> Latest<Field<T>> getFieldForSemantic(int componentNid, int criterionNid, FieldCriterion fieldCriterion) {
-
-        Latest<? extends EntityVersion> latestVersion = latest(componentNid);
-        if (latestVersion.isPresent() && latestVersion.get() instanceof SemanticEntityVersion) {
-            return getFieldForSemantic((Latest<SemanticEntityVersion>) latestVersion, criterionNid, fieldCriterion);
-        }
-        return Latest.empty();
-    }
-
-
-    @Override
-    public <V extends EntityVersion> Latest<V> latest(int nid) {
-        return (Latest<V>) latestCache.get(nid, latestNid -> this.latest(Entity.getFast(latestNid)));
-    }
-
-
-    /**
-     * Handle part.
-     *
-     * @param partsForPosition the parts for position
-     * @param part             the part
-     */
-    private void handlePart(HashSet<EntityVersion> partsForPosition, EntityVersion part) {
-        // create a list of values so we don't have any
-        // concurrent modification issues with removing/adding
-        // items to the partsForPosition.
-        final List<EntityVersion> partsToCompare = new ArrayList<>(partsForPosition);
-
-        for (final EntityVersion prevPartToTest : partsToCompare) {
-            switch (fastRelativePosition(part, prevPartToTest)) {
-                case AFTER:
-                    partsForPosition.remove(prevPartToTest);
-                    partsForPosition.add(part);
-                    break;
-
-                case BEFORE:
-                    break;
-
-                case CONTRADICTION:
-                    partsForPosition.add(part);
-                    break;
-
-                case EQUAL:
-
-                    // Can only have one part per time/path
-                    // combination.
-                    if (prevPartToTest.equals(part)) {
-                        // part already added from another position.
-                        // No need to add again.
-                        break;
-                    }
-
-                    // Duplicate values encountered.
-                    this.errorCount++;
-
-                    if (this.errorCount < 5) {
-                        LOG.warn("EQUAL should never happen. Data is malformed. Stamp: " + part.stamp() +
-                                " Part:\n" + part + " \n  Part to test: \n" + prevPartToTest + "\n");
-                    }
-
-                    break;
-
-                case UNREACHABLE:
-
-                    // Should have failed mapper.onRoute(part)
-                    // above.
-                    throw new RuntimeException(RelativePosition.UNREACHABLE + " should never happen.");
-            }
-        }
-    }
-
-
-    /**
-     * Fast relative position.
-     *
-     * @param v1 the v 1
-     * @param v2 the v 2
-     * @return the relative position
-     */
-    public RelativePosition fastRelativePosition(EntityVersion v1,
-                                                 EntityVersion v2) {
-        StampEntity v1Stamp = v1.stamp();
-        StampEntity v2Stamp = v2.stamp();
-        return getRelativePosition(v1Stamp, v2Stamp);
-    }
-
-
-    public <V extends EntityVersion> List<DiTree<VersionVertex<V>>> getVersionGraphList(Entity<V> chronicle) {
-        return getVersionGraphList(chronicle.versions());
-    }
-
-
-    /**
-     * Gets the latest EntityVersion.
-     *
-     * @param chronicle the chronicle
-     * @return the latest version
-     */
-    public <V extends EntityVersion> Latest<V> latest(Entity<V> chronicle) {
-        final HashSet<EntityVersion> latestVersionSet = new HashSet<>();
-
-        chronicle.versions()
-                .stream()
-                .filter((newVersionToTest) -> (newVersionToTest.stamp().time() > Long.MIN_VALUE))
-                .filter((newVersionToTest) -> (onRoute(newVersionToTest.stamp())))
-                .forEach(
-                        (newVersionToTest) -> {
-                            if (latestVersionSet.isEmpty()) {
-                                latestVersionSet.add((V) newVersionToTest);
-                            } else {
-                                handlePart(latestVersionSet, newVersionToTest);
-                            }
-                        });
-
-        if (this.filter.allowedStates().isActiveOnly()) {
-            final HashSet<EntityVersion> inactiveVersions = new HashSet<>();
-
-            latestVersionSet.stream()
-                    .forEach((version) -> {
-                        if (State.fromConceptNid(version.stamp().stateNid()) != State.ACTIVE) {
-                            inactiveVersions.add(version);
-                        }
-                    });
-            latestVersionSet.removeAll(inactiveVersions);
-        }
-
-        final List<EntityVersion> latestVersionList = new ArrayList<>(latestVersionSet);
-
-        if (latestVersionList.isEmpty()) {
-            return new Latest<>();
-        }
-
-        if (latestVersionList.size() == 1) {
-            return (Latest<V>) new Latest<>(latestVersionList.get(0));
-        }
-
-        return (Latest<V>) new Latest<>(latestVersionList.get(0), latestVersionList.subList(1, latestVersionList.size()));
-    }
-
-    @Override
-    public StateSet allowedStates() {
-        return allowedStates;
-    }
-
-    /**
-     * Relative position.
-     *
-     * @param stampNid the stamp sequence 1
-     * @param stampNid the stamp sequence 2
-     * @return the relative position
-     */
-    public RelativePosition relativePosition(int stampNid, int stampNid2) {
-        if (!(onRoute(stampNid) && onRoute(stampNid2))) {
-            return RelativePosition.UNREACHABLE;
-        }
-
-        return fastRelativePosition(stampNid, stampNid2);
-    }
-
-    @Override
-    public void forEachSemanticVersionOfPattern(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
-        Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
-        latestPatternVersion.ifPresent(patternEntityVersion -> PrimitiveData.get().forEachSemanticNidOfPattern(patternNid, semanticNid -> {
-            Latest<SemanticEntityVersion> latestSemanticVersion = this.latestIfPattern(semanticNid, patternNid);
-            latestSemanticVersion.ifPresent(semanticEntityVersion -> procedure.accept(semanticEntityVersion, patternEntityVersion));
-        }));
-    }
-
-    @Override
-    public void forEachSemanticVersionForComponent(int componentNid,
-                                                   BiConsumer<SemanticEntityVersion, EntityVersion> procedure) {
-        Latest<EntityVersion> latestEntityVersion = this.latest(componentNid);
-        latestEntityVersion.ifPresent(entityVersion -> PrimitiveData.get().forEachSemanticNidForComponent(componentNid, semanticNid -> {
-            Latest<SemanticEntityVersion> latestSemanticVersion = this.latest(semanticNid);
-            latestSemanticVersion.ifPresent(semanticEntityVersion -> procedure.accept(semanticEntityVersion, entityVersion));
-        }));
-    }
-
-    @Override
-    public void forEachSemanticVersionForComponentOfPattern(int componentNid, int patternNid,
-                                                            TriConsumer<SemanticEntityVersion, EntityVersion, PatternEntityVersion> procedure) {
-        Latest<EntityVersion> latestComponentVersion = this.latest(componentNid);
-        latestComponentVersion.ifPresent(entityVersion -> {
-            Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
-            latestPatternVersion.ifPresent(patternEntityVersion ->
-                    PrimitiveData.get().forEachSemanticNidForComponentOfPattern(componentNid, patternNid, semanticNid -> {
-                        Latest<SemanticEntityVersion> latestSemanticVersion = this.latest(semanticNid);
-                        latestSemanticVersion.ifPresent(semanticEntityVersion -> procedure.accept(semanticEntityVersion, entityVersion, patternEntityVersion));
-                    }));
-        });
-    }
-
-    public void forEachSemanticVersionWithFieldsForComponent(int componentNid,
-                                                             TriConsumer<SemanticEntityVersion, ImmutableList<Field>, EntityVersion> procedure) {
-        forEachSemanticVersionForComponent(componentNid,
-                (semanticEntityVersion, entityVersion) -> {
-                    Latest<PatternEntityVersion> latestPatternEntityVersion = latestPatternEntityVersion(semanticEntityVersion.patternNid());
-                    latestPatternEntityVersion.ifPresent(patternEntityVersion -> {
-                        procedure.accept(semanticEntityVersion, semanticEntityVersion.fields(patternEntityVersion), entityVersion);
-                    });
-                });
-    }
-
-    public Latest<PatternEntityVersion> latestPatternEntityVersion(int patternNid) {
-        return patternVersionCache.get(patternNid, nid -> latest(patternNid));
-    }
-
-    public OptionalInt getIndexForMeaning(int patternNid, int meaningNid) {
-        long patternMeaningKey = IntsInLong.ints2Long(patternNid, meaningNid);
-        return indexForMeaningCache.get(patternMeaningKey, key -> {
-            Latest<PatternEntityVersion> latestPatternVersion = latestPatternEntityVersion(patternNid);
-            if (latestPatternVersion.isPresent()) {
-                OptionalInt optionalIndexForMeaning;
-                int indexForMeaning = latestPatternVersion.get().indexForMeaning(meaningNid);
-                if (indexForMeaning < 0) {
-                    optionalIndexForMeaning = OptionalInt.empty();
-                } else {
-                    optionalIndexForMeaning = OptionalInt.of(indexForMeaning);
-                }
-                return optionalIndexForMeaning;
-            }
-            return OptionalInt.empty();
-        });
-    }
-
-    public OptionalInt getIndexForPurpose(int patternNid, int purposeNid) {
-        long patternMeaningKey = IntsInLong.ints2Long(patternNid, purposeNid);
-        return indexForPurposeCache.get(patternMeaningKey, key -> {
-            Latest<PatternEntityVersion> latestPatternVersion = latestPatternEntityVersion(patternNid);
-            if (latestPatternVersion.isPresent()) {
-                OptionalInt optionalIndexForMeaning;
-                int indexForPurpose = latestPatternVersion.get().indexForPurpose(purposeNid);
-                if (indexForPurpose < 0) {
-                    optionalIndexForMeaning = OptionalInt.empty();
-                } else {
-                    optionalIndexForMeaning = OptionalInt.of(indexForPurpose);
-                }
-                return optionalIndexForMeaning;
-            }
-            return OptionalInt.empty();
-        });
     }
 
 }

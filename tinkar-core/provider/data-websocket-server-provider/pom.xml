@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
     <build>
@@ -14,12 +15,15 @@
     <artifactId>data-websocket-server-provider</artifactId>
     <packaging>jar</packaging>
     <name>TINKAR Provider: Data - Websocket server</name>
+    <properties>
+        <activej.version>4.3</activej.version>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>entity-provider</artifactId>
             <version>${project.parent.version}</version>
-<!--            <scope>test</scope>-->
+            <!--            <scope>test</scope>-->
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
@@ -31,7 +35,7 @@
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>component</artifactId>
             <version>${project.parent.version}</version>
-       </dependency>
+        </dependency>
         <dependency>
             <groupId>io.activej</groupId>
             <artifactId>activej-launchers-http</artifactId>
@@ -43,4 +47,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
- </project>
+</project>

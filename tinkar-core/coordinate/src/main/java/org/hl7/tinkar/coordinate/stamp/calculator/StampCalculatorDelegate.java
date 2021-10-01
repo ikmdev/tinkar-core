@@ -11,8 +11,14 @@ import org.hl7.tinkar.terms.EntityFacade;
 import java.util.List;
 import java.util.OptionalInt;
 import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 
 public interface StampCalculatorDelegate extends StampCalculator {
+    @Override
+    default Stream<Latest<SemanticEntityVersion>> streamLatestVersionForPattern(int patternNid) {
+        return stampCalculator().streamLatestVersionForPattern(patternNid);
+    }
+
     @Override
     default <V extends EntityVersion> Latest<V> latest(int nid) {
         return stampCalculator().latest(nid);

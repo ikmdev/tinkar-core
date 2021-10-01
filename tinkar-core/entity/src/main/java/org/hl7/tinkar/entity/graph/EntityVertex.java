@@ -14,8 +14,8 @@ import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.component.graph.Vertex;
 import org.hl7.tinkar.dto.*;
+import org.hl7.tinkar.entity.EntityRecordFactory;
 import org.hl7.tinkar.entity.EntityService;
-import org.hl7.tinkar.entity.SemanticEntityVersion;
 import org.hl7.tinkar.terms.ConceptFacade;
 import org.hl7.tinkar.terms.EntityProxy;
 import org.hl7.tinkar.terms.PatternFacade;
@@ -27,7 +27,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.LongConsumer;
 
-import static org.hl7.tinkar.entity.Entity.ENTITY_FORMAT_VERSION;
+import static org.hl7.tinkar.entity.EntityRecordFactory.ENTITY_FORMAT_VERSION;
 
 public class EntityVertex implements Vertex, VertexId {
     private static final Logger LOG = LoggerFactory.getLogger(EntityVertex.class);
@@ -138,7 +138,7 @@ public class EntityVertex implements Vertex, VertexId {
             for (int i = 0; i < propertyCount; i++) {
                 int conceptNid = readBuf.readInt();
                 FieldDataType dataType = FieldDataType.fromToken(readBuf.readByte());
-                Object value = SemanticEntityVersion.readDataType(readBuf, dataType, formatVersion);
+                Object value = EntityRecordFactory.readDataType(readBuf, dataType, formatVersion);
                 mutableProperties.put(conceptNid, value);
             }
             this.properties = mutableProperties.toImmutable();
@@ -302,7 +302,7 @@ public class EntityVertex implements Vertex, VertexId {
                     byteBuf.writeInt(properties.size());
                     properties.forEachKeyValue((nid, value) -> {
                         byteBuf.writeInt(nid);
-                        SemanticEntityVersion.writeField(byteBuf, value);
+                        EntityRecordFactory.writeField(byteBuf, value);
                     });
                 }
                 return byteBuf.asArray();

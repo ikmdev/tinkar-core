@@ -107,7 +107,7 @@ public class Indexer {
             document.add(nidField);
             document.add(rcNidField);
             document.add(patternNidField);
-            for (SemanticEntityVersion version : semanticEntity.versions()) {
+            for (SemanticEntityVersion version : ((SemanticEntity<SemanticEntityVersion>) semanticEntity).versions()) {
                 ImmutableList<Object> fields = version.fields();
                 for (int i = 0; i < fields.size(); i++) {
                     Object field = fields.get(i);

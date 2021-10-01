@@ -5,7 +5,7 @@ import org.eclipse.collections.impl.factory.primitive.LongLists;
 import org.hl7.tinkar.common.id.IntIdSet;
 import org.hl7.tinkar.common.id.IntIds;
 import org.hl7.tinkar.component.FieldDataType;
-import org.hl7.tinkar.entity.EntityFactory;
+import org.hl7.tinkar.entity.EntityRecordFactory;
 import org.hl7.tinkar.entity.StampEntity;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,10 +19,11 @@ public class StampRealizer extends EntityProcessor {
     ConcurrentSkipListSet<Integer> modules = new ConcurrentSkipListSet<>();
     ConcurrentSkipListSet<Integer> paths = new ConcurrentSkipListSet<>();
     ConcurrentSkipListSet<Integer> stampNids = new ConcurrentSkipListSet<>();
+
     @Override
     public void processBytesForType(FieldDataType componentType, byte[] bytes) {
         if (componentType == FieldDataType.STAMP) {
-            StampEntity stampEntity = EntityFactory.make(bytes);
+            StampEntity stampEntity = EntityRecordFactory.make(bytes);
             stamps.put(stampEntity.nid(), stampEntity);
             times.add(stampEntity.time());
             authors.add(stampEntity.authorNid());

@@ -57,9 +57,9 @@ public final record LanguageCoordinateRecord(int languageConceptNid,
                                                 IntIdList dialectAssemblagePreferenceList,
                                                 IntIdList modulePreferenceListForLanguage) {
         return new LanguageCoordinateRecord(languageConcept.nid(),
-                        descriptionPatternList,
-                        descriptionTypePreferenceList, dialectAssemblagePreferenceList,
-                        modulePreferenceListForLanguage);
+                descriptionPatternList,
+                descriptionTypePreferenceList, dialectAssemblagePreferenceList,
+                modulePreferenceListForLanguage);
     }
 
     public static LanguageCoordinateRecord make(ConceptFacade languageConcept,
@@ -68,9 +68,9 @@ public final record LanguageCoordinateRecord(int languageConceptNid,
                                                 IntIdList dialectAssemblagePreferenceList,
                                                 IntIdList modulePreferenceListForLanguage) {
         return new LanguageCoordinateRecord(languageConcept.nid(),
-                        IntIds.list.of(patternFacade.nid()),
-                        descriptionTypePreferenceList, dialectAssemblagePreferenceList,
-                        modulePreferenceListForLanguage);
+                IntIds.list.of(patternFacade.nid()),
+                descriptionTypePreferenceList, dialectAssemblagePreferenceList,
+                modulePreferenceListForLanguage);
     }
 
     /**
@@ -88,10 +88,10 @@ public final record LanguageCoordinateRecord(int languageConceptNid,
                                                 IntIdList modulePreferenceNidListForLanguage) {
 
         return new LanguageCoordinateRecord(languageConceptNid,
-                        descriptionPatternNidList,
-                        descriptionTypePreferenceNidList,
-                        dialectPatternPreferenceNidList,
-                        modulePreferenceNidListForLanguage);
+                descriptionPatternNidList,
+                descriptionTypePreferenceNidList,
+                dialectPatternPreferenceNidList,
+                modulePreferenceNidListForLanguage);
     }
 
     @Override

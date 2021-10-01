@@ -125,7 +125,6 @@ public class LoadEntitiesFromDtoFile extends TrackingCallable<Integer> {
             } catch (Throwable e) {
                 e.printStackTrace();
                 exceptionRecords.add(new ExceptionRecord(chronology, e));
-                System.exit(0);
             } finally {
                 runningTasks.release();
             }

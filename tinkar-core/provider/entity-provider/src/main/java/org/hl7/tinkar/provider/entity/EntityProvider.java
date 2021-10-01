@@ -64,8 +64,8 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
             String anyString = null;
             String fqnString = null;
             for (int semanticNid : semanticNids) {
-                SemanticEntity descriptionSemantic = Entity.getFast(semanticNid);
-                PatternEntity patternEntity = Entity.getFast(descriptionSemantic.patternNid());
+                SemanticEntity<SemanticEntityVersion> descriptionSemantic = Entity.getFast(semanticNid);
+                PatternEntity<PatternEntityVersion> patternEntity = Entity.getFast(descriptionSemantic.patternNid());
                 // TODO: use version computer to get version
                 PatternEntityVersion patternEntityVersion = patternEntity.versions().get(0);
                 SemanticEntityVersion version = descriptionSemantic.versions().get(0);
@@ -102,14 +102,13 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         return PrimitiveData.get().nidForUuids(publicId.asUuidArray());
     }
 
-    @Override
     public <T extends Entity<V>, V extends EntityVersion> T getEntityFast(int nid) {
         return (T) ENTITY_CACHE.get(nid, entityNid -> {
             byte[] bytes = PrimitiveData.get().getBytes(nid);
             if (bytes == null) {
                 return null;
             }
-            return EntityFactory.make(bytes);
+            return EntityRecordFactory.make(bytes);
         });
     }
 
@@ -125,7 +124,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                     if (bytes == null) {
                         return null;
                     }
-                    return EntityFactory.make(bytes);
+                    return EntityRecordFactory.make(bytes);
                 }
         );
     }
@@ -153,11 +152,11 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
     @Override
     public Entity unmarshalChronology(byte[] bytes) {
-        return EntityFactory.make(bytes);
+        return EntityRecordFactory.make(bytes);
     }
 
     @Override
-    public void forEachSemanticOfPattern(int patternNid, Consumer<SemanticEntity> procedure) {
+    public void forEachSemanticOfPattern(int patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure) {
         PrimitiveData.get().forEachSemanticNidOfPattern(patternNid, (int nid) -> procedure.accept(getEntityFast(nid)));
     }
 
@@ -167,7 +166,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     }
 
     @Override
-    public void forEachSemanticForComponent(int componentNid, Consumer<SemanticEntity> procedure) {
+    public void forEachSemanticForComponent(int componentNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure) {
         PrimitiveData.get().forEachSemanticNidForComponent(componentNid, (int nid) -> procedure.accept(getEntityFast(nid)));
     }
 
@@ -177,7 +176,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     }
 
     @Override
-    public void forEachSemanticForComponentOfPattern(int componentNid, int patternNid, Consumer<SemanticEntity> procedure) {
+    public void forEachSemanticForComponentOfPattern(int componentNid, int patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure) {
         PrimitiveData.get().forEachSemanticNidForComponentOfPattern(componentNid, patternNid, (int nid) -> procedure.accept(getEntityFast(nid)));
     }
 
@@ -205,12 +204,12 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
             ENTITY_CACHE.invalidate(entity.nid());
             putEntity(entity);
         } else {
-            putEntity(EntityFactory.make(chronology));
+            putEntity(EntityRecordFactory.make((Chronology<Version>) chronology));
             for (Version version : chronology.versions()) {
                 Stamp stamp = version.stamp();
                 int nid = PrimitiveData.get().nidForUuids(stamp.publicId().asUuidArray());
                 if (PrimitiveData.get().getBytes(nid) == null) {
-                    putEntity(EntityFactory.make(stamp));
+                    putEntity(EntityRecordFactory.make(stamp));
                 }
             }
         }

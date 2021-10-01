@@ -43,14 +43,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <build>
-        <plugins>
-            <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <argLine>--add-opens org.hl7.tinkar.util/org.hl7.tinkar.util.id=ALL-UNNAMED</argLine>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 </project>

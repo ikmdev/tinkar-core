@@ -9,9 +9,7 @@ import org.hl7.tinkar.common.binary.DecoderInput;
 import org.hl7.tinkar.common.binary.Encoder;
 import org.hl7.tinkar.common.binary.EncoderOutput;
 import org.hl7.tinkar.common.service.PrimitiveData;
-import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
-import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.terms.ConceptFacade;
 import org.hl7.tinkar.terms.PatternFacade;
 

@@ -61,6 +61,35 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <id>copy</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <artifactItems>
+                        <artifactItem>
+                            <groupId>org.hl7.tinkar</groupId>
+                            <artifactId>tinkar-test-dto</artifactId>
+                            <version>1.0.0</version>
+                            <type>zip</type>
+                            <overWrite>false</overWrite>
+                            <outputDirectory>${project.build.directory}/data</outputDirectory>
+                        </artifactItem>
+                    </artifactItems>
+                    <outputDirectory>${project.build.directory}/data</outputDirectory>
+                    <overWriteReleases>false</overWriteReleases>
+                    <overWriteSnapshots>true</overWriteSnapshots>
+                </configuration>
+            </plugin>
+            <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <skipTests>true</skipTests>
@@ -76,6 +105,7 @@
                             <goal>verify</goal>
                         </goals>
                         <configuration>
+                            <argLine>--enable-preview</argLine>
                             <skipTests>false</skipTests>
                             <trimStackTrace>false</trimStackTrace>
                             <suiteXmlFiles>
@@ -90,6 +120,7 @@
                             <goal>verify</goal>
                         </goals>
                         <configuration>
+                            <argLine>--enable-preview</argLine>
                             <skipTests>false</skipTests>
                             <trimStackTrace>false</trimStackTrace>
                             <suiteXmlFiles>
@@ -104,6 +135,7 @@
                             <goal>verify</goal>
                         </goals>
                         <configuration>
+                            <argLine>--enable-preview</argLine>
                             <skipTests>false</skipTests>
                             <trimStackTrace>false</trimStackTrace>
                             <suiteXmlFiles>
@@ -118,6 +150,7 @@
                             <goal>verify</goal>
                         </goals>
                         <configuration>
+                            <argLine>--enable-preview</argLine>
                             <trimStackTrace>false</trimStackTrace>
                             <suiteXmlFiles>
                                 <suiteXmlFile>src/test/resources/coordinate-testng.xml</suiteXmlFile>

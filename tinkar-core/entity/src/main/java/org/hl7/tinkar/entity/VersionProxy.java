@@ -4,7 +4,10 @@ import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.component.Version;
-import org.hl7.tinkar.terms.*;
+import org.hl7.tinkar.terms.ConceptFacade;
+import org.hl7.tinkar.terms.EntityProxy;
+import org.hl7.tinkar.terms.PatternFacade;
+import org.hl7.tinkar.terms.SemanticFacade;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -45,6 +48,13 @@ public class VersionProxy extends EntityProxy implements Version {
         return Entity.getStamp(stampNid());
     }
 
+    public final int stampNid() {
+        if (cachedStampNid == 0) {
+            cachedStampNid = PrimitiveData.get().nidForUuids(stampUuids);
+        }
+        return cachedStampNid;
+    }
+
     @Override
     public final boolean equals(Object o) {
         if (this == o) return true;
@@ -59,17 +69,6 @@ public class VersionProxy extends EntityProxy implements Version {
         return false;
     }
 
-    public final int stampNid() {
-        if (cachedStampNid == 0) {
-            cachedStampNid = PrimitiveData.get().nidForUuids(stampUuids);
-        }
-        return cachedStampNid;
-    }
-
-    public String toXmlFragment() {
-        return VersionProxyFactory.toXmlFragment(this);
-    }
-
     @Override
     public final String toString() {
         StringBuilder sb = new StringBuilder(super.toString());
@@ -79,6 +78,10 @@ public class VersionProxy extends EntityProxy implements Version {
         sb.append(stampEntity.describe());
         sb.append("}");
         return sb.toString();
+    }
+
+    public String toXmlFragment() {
+        return VersionProxyFactory.toXmlFragment(this);
     }
 
     public static class Concept extends VersionProxy implements ConceptFacade {

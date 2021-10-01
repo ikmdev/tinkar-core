@@ -21,7 +21,7 @@ public class PBTest {
     private static Logger LOG = Logger.getLogger(PBTest.class.getName());
     private final File pbBinaryFile = TestConstants.PB_TEST_FILE;
 
-    @Test(testName = "Read Protocol Buffer Binary File", enabled = true)
+    @Test(testName = "Read Protocol Buffer Binary File", enabled = false)
     public void readPBFile() throws IOException {
         try (ZipFile zipFile = new ZipFile(pbBinaryFile, StandardCharsets.UTF_8)) {
             ZipEntry exportPBEntry = zipFile.getEntry("export.pb");
@@ -37,23 +37,23 @@ public class PBTest {
             int pbMessageCount = 0;
 
             LOG.info("Started PB read at " + startTime);
-            while(pbStream.available() > 0){
+            while (pbStream.available() > 0) {
                 bytesReadCount = 0;
                 pbMessageLength = pbStream.readInt();
 
-                if(pbMessageLength == -1){
+                if (pbMessageLength == -1) {
                     break;
                 }
                 byteBuffer = ByteBuffer.allocate(pbMessageLength);
 
-                while(bytesReadCount < pbMessageLength){
+                while (bytesReadCount < pbMessageLength) {
                     int sourceIndex = bytesReadCount;
                     byte[] bytesRead;
 
-                    if(bytesReadCount == 0){
-                       bytesRead = new byte[pbMessageLength];
-                       bytesReadCount = pbStream.read(bytesRead, 0, pbMessageLength);
-                    }else {
+                    if (bytesReadCount == 0) {
+                        bytesRead = new byte[pbMessageLength];
+                        bytesReadCount = pbStream.read(bytesRead, 0, pbMessageLength);
+                    } else {
                         int lengthLeftToRead = pbMessageLength - bytesReadCount;
                         bytesRead = new byte[lengthLeftToRead];
                         bytesReadCount += pbStream.read(bytesRead, 0, lengthLeftToRead);

@@ -5,7 +5,7 @@
     <parent>
         <artifactId>tinkar-jpms-deps</artifactId>
         <groupId>org.hl7.tinkar</groupId>
-        <version>1.0.1</version>
+        <version>1.0.2</version>
     </parent>
     <artifactId>auto-service</artifactId>
     <packaging>jar</packaging>

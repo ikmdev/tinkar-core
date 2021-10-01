@@ -271,6 +271,10 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
         return this.searcher.search(query, maxResultSize);
     }
 
+    public int[] semanticNidsOfPattern(int patternNid) {
+        return this.patternToElementNidsMap.get(patternNid);
+    }
+
     @Override
     public void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure) {
         int[] elementNids = this.patternToElementNidsMap.get(patternNid);

@@ -1,7 +1,6 @@
 package org.hl7.tinkar.coordinate.stamp;
 
 import org.hl7.tinkar.common.service.PrimitiveData;
-import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.terms.ConceptFacade;
 

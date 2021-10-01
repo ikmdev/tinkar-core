@@ -2,25 +2,27 @@ package org.hl7.tinkar.entity;
 
 import io.activej.bytebuf.ByteBuf;
 import org.hl7.tinkar.component.*;
-import org.hl7.tinkar.component.PatternChronology;
 import org.hl7.tinkar.dto.StampDTO;
+import org.hl7.tinkar.entity.forremoval.EntityClass;
+import org.hl7.tinkar.entity.forremoval.PatternEntityClass;
+import org.hl7.tinkar.entity.forremoval.SemanticEntityClass;
 
 public class EntityFactory {
 
     public static Entity make(Chronology chronology) {
         if (chronology instanceof ConceptChronology conceptChronology) {
-            return ConceptEntity.make(conceptChronology);
+            return EntityRecordFactory.make(conceptChronology);
         } else if (chronology instanceof SemanticChronology semanticChronology) {
-            return SemanticEntity.make(semanticChronology);
+            return EntityRecordFactory.make(semanticChronology);
         } else if (chronology instanceof PatternChronology patternChronology) {
-            return PatternEntity.make(patternChronology);
+            return EntityRecordFactory.make(patternChronology);
         } else if (chronology instanceof Stamp stamp) {
-            return StampEntity.make(stamp);
+            return EntityRecordFactory.make(stamp);
         }
         throw new UnsupportedOperationException("Can't convert: " + chronology);
     }
 
-    public static <T extends Entity<V>, V extends EntityVersion> T make(byte[] data) {
+    public static <T extends EntityClass<V>, V extends EntityVersion> T make(byte[] data) {
         // TODO change to use DecoderInput instead of ByteBuf directly.
         // TODO remove the parts where it computes size.
         ByteBuf buf = ByteBuf.wrapForReading(data);
@@ -36,16 +38,16 @@ public class EntityFactory {
         FieldDataType fieldDataType = FieldDataType.fromToken(readBuf.readByte());
         switch (fieldDataType) {
             case CONCEPT_CHRONOLOGY:
-                return (T) ConceptEntity.make(readBuf, entityFormatVersion);
+                return (T) EntityRecordFactory.make(readBuf, entityFormatVersion, fieldDataType);
 
             case SEMANTIC_CHRONOLOGY:
-                return (T) SemanticEntity.make(readBuf, entityFormatVersion);
+                return (T) SemanticEntityClass.make(readBuf, entityFormatVersion);
 
             case PATTERN_CHRONOLOGY:
-                return (T) PatternEntity.make(readBuf, entityFormatVersion);
+                return (T) PatternEntityClass.make(readBuf, entityFormatVersion);
 
             case STAMP:
-                return (T) StampEntity.make(readBuf, entityFormatVersion);
+                //return (T) StampEntity.make(readBuf, entityFormatVersion);
 
             default:
                 throw new UnsupportedOperationException("Can't handle fieldDataType: " + fieldDataType);
@@ -64,14 +66,16 @@ public class EntityFactory {
         FieldDataType fieldDataType = FieldDataType.fromToken(readBuf.readByte());
         switch (fieldDataType) {
             case STAMP:
-                return StampEntity.make(readBuf, entityFormatVersion);
+                //return StampEntity.make(readBuf, entityFormatVersion);
 
             default:
                 throw new UnsupportedOperationException("Can't handle fieldDataType: " + fieldDataType);
 
         }
     }
+
     public static StampEntity makeStamp(StampDTO stampDTO) {
-        return StampEntity.make(stampDTO);
+        throw new UnsupportedOperationException("Can't makeStamp: " + stampDTO);
+        //return StampEntity.make(stampDTO);
     }
 }
