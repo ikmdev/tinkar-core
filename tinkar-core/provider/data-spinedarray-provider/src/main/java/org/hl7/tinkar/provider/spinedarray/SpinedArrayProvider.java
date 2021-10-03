@@ -2,14 +2,19 @@ package org.hl7.tinkar.provider.spinedarray;
 
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.hl7.tinkar.collection.*;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
+import org.eclipse.collections.api.set.primitive.IntSet;
+import org.eclipse.collections.impl.factory.primitive.IntLists;
+import org.eclipse.collections.impl.factory.primitive.IntSets;
+import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
+import org.hl7.tinkar.collection.KeyType;
+import org.hl7.tinkar.collection.SpinedByteArrayMap;
+import org.hl7.tinkar.collection.SpinedIntIntMap;
+import org.hl7.tinkar.collection.SpinedIntLongArrayMap;
 import org.hl7.tinkar.common.service.*;
 import org.hl7.tinkar.common.util.ints2long.IntsInLong;
 import org.hl7.tinkar.common.util.time.Stopwatch;
-import org.hl7.tinkar.entity.ConceptEntity;
-import org.hl7.tinkar.entity.PatternEntity;
-import org.hl7.tinkar.entity.SemanticEntity;
-import org.hl7.tinkar.entity.StampEntity;
+import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.provider.search.Indexer;
 import org.hl7.tinkar.provider.search.Searcher;
 import org.hl7.tinkar.provider.spinedarray.internal.Get;
@@ -21,8 +26,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -44,11 +47,12 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
     protected final CountDownLatch uuidsLoadedLatch = new CountDownLatch(1);
     final AtomicInteger nextNid = new AtomicInteger(PrimitiveDataService.FIRST_NID);
 
-    final ConcurrentHashMap<UUID, Integer> uuidToNidMap = new ConcurrentHashMap<>();
-    final ConcurrentSkipListSet<Integer> patternNids = new ConcurrentSkipListSet<>();
-    final ConcurrentSkipListSet<Integer> conceptNids = new ConcurrentSkipListSet<>();
-    final ConcurrentSkipListSet<Integer> semanticNids = new ConcurrentSkipListSet<>();
-    final ConcurrentSkipListSet<Integer> stampNids = new ConcurrentSkipListSet<>();
+    final ConcurrentHashMap<UUID, Integer> uuidToNidMap = ConcurrentHashMap.newMap();
+    final ConcurrentIntegerHashSet patternNids = new ConcurrentIntegerHashSet();
+    final ConcurrentIntegerHashSet conceptNids = new ConcurrentIntegerHashSet();
+    final ConcurrentIntegerHashSet semanticNids = new ConcurrentIntegerHashSet();
+    final ConcurrentIntegerHashSet stampNids = new ConcurrentIntegerHashSet();
+    final ConcurrentHashMap<Integer, ConcurrentIntegerHashSet> patternElementNidsMap = ConcurrentHashMap.newMap();
 
     final SpinedByteArrayMap entityToBytesMap;
     final SpinedIntIntMap nidToPatternNidMap;
@@ -56,12 +60,10 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
      * Using "citing" instead of "referencing" to make the field names more distinct.
      */
     final SpinedIntLongArrayMap nidToCitingComponentsNidMap;
-    final SpinedIntIntArrayMap patternToElementNidsMap;
 
     final File nidToPatternNidMapDirectory;
     final File nidToByteArrayMapDirectory;
     final File nidToCitingComponentNidMapDirectory;
-    final File patternToElementNidsMapDirectory;
     final File nextNidKeyFile;
     final Indexer indexer;
     final Searcher searcher;
@@ -81,15 +83,12 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
         this.nidToByteArrayMapDirectory.mkdirs();
         this.nidToCitingComponentNidMapDirectory = new File(configuredRoot, "nidToCitingComponentNidMap");
         this.nidToCitingComponentNidMapDirectory.mkdirs();
-        this.patternToElementNidsMapDirectory = new File(configuredRoot, "patternToElementNidsMap");
-        this.patternToElementNidsMapDirectory.mkdirs();
         this.nextNidKeyFile = new File(configuredRoot, "nextNidKeyFile");
 
         this.entityToBytesMap = new SpinedByteArrayMap(new ByteArrayFileStore(nidToByteArrayMapDirectory));
         this.nidToPatternNidMap = new SpinedIntIntMap(KeyType.NID_KEY);
         this.nidToPatternNidMap.read(this.nidToPatternNidMapDirectory);
         this.nidToCitingComponentsNidMap = new SpinedIntLongArrayMap(new IntLongArrayFileStore(nidToCitingComponentNidMapDirectory));
-        this.patternToElementNidsMap = new SpinedIntIntArrayMap(new IntIntArrayFileStore(patternToElementNidsMapDirectory));
 
         if (nextNidKeyFile.exists()) {
             String nextNidString = Files.readString(this.nextNidKeyFile.toPath());
@@ -99,7 +98,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
             Stopwatch uuidNidMapFromEntitiesStopwatch = new Stopwatch();
             LOG.info("Starting UUID strategy 2");
             UuidNidCollector uuidNidCollector = new UuidNidCollector(uuidToNidMap,
-                    patternNids, conceptNids, semanticNids, stampNids);
+                    patternNids, conceptNids, semanticNids, stampNids, patternElementNidsMap);
             try {
                 this.entityToBytesMap.forEachParallel(uuidNidCollector);
                 this.uuidsLoadedLatch.countDown();
@@ -151,7 +150,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
             nidToPatternNidMap.write(this.nidToPatternNidMapDirectory);
             this.entityToBytesMap.write();
             this.nidToCitingComponentsNidMap.write();
-            this.patternToElementNidsMap.write();
             this.indexer.commit();
         } catch (IOException e) {
             LOG.error(e.getLocalizedMessage(), e);
@@ -247,8 +245,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
                 long citationLong = IntsInLong.ints2Long(nid, patternNid);
                 this.nidToCitingComponentsNidMap.accumulateAndGet(referencedComponentNid, new long[]{citationLong},
                         PrimitiveDataService::mergeCitations);
-                this.patternToElementNidsMap.accumulateAndGet(patternNid, new int[]{nid},
-                        PrimitiveDataService::mergePatternElements);
+                addToPatternElementSet(patternNid, nid);
             }
             if (sourceObject instanceof ConceptEntity concept) {
                 this.conceptNids.add(concept.nid());
@@ -266,28 +263,45 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
         return mergedBytes;
     }
 
+    public boolean addToPatternElementSet(int patternNid, int elementNid) {
+
+        return patternElementNidsMap.getIfAbsentPut(patternNid, integer -> new ConcurrentIntegerHashSet())
+                .add(elementNid);
+    }
+
     @Override
     public PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception {
         return this.searcher.search(query, maxResultSize);
     }
 
     public int[] semanticNidsOfPattern(int patternNid) {
-        return this.patternToElementNidsMap.get(patternNid);
+        IntSet elementNids = getElementNidsForPatternNid(patternNid);
+        if (elementNids.notEmpty()) {
+            MutableIntList elementNidList = IntLists.mutable.withInitialCapacity(elementNids.size());
+            elementNids.forEach(integer -> elementNidList.add(integer));
+            return elementNidList.toArray();
+        }
+        return new int[0];
+    }
+
+    public IntSet getElementNidsForPatternNid(int patternNid) {
+        if (patternElementNidsMap.containsKey(patternNid)) {
+            return IntSets.immutable.ofAll(patternElementNidsMap.get(patternNid).stream().mapToInt(value -> (int) value));
+        }
+        return IntSets.immutable.empty();
     }
 
     @Override
     public void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure) {
-        int[] elementNids = this.patternToElementNidsMap.get(patternNid);
-        if (elementNids != null && elementNids.length > 0 && elementNids[0] != Integer.MAX_VALUE) {
-            for (int elementNid : elementNids) {
-                procedure.accept(elementNid);
-            }
+        IntSet elementNids = getElementNidsForPatternNid(patternNid);
+        if (elementNids.notEmpty()) {
+            elementNids.forEach(procedure);
         } else {
-            nidToPatternNidMap.forEach((nid, defNidForNid) -> {
-                if (defNidForNid == patternNid) {
-                    procedure.accept(nid);
-                }
-            });
+            Entity entity = Entity.getFast(patternNid);
+            if (entity instanceof PatternEntity == false) {
+                throw new IllegalStateException("Trying to iterate elements for entity that is not a pattern: " + entity);
+            }
+
         }
     }
 

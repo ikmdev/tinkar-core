@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
@@ -38,7 +39,7 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
      * Using "citing" instead of "referencing" to make the field names more distinct.
      */
     final ConcurrentHashMap<Integer, long[]> nidToCitingComponentsNidMap = ConcurrentHashMap.newMap();
-    final ConcurrentHashMap<Integer, int[]> patternToElementNidsMap = ConcurrentHashMap.newMap();
+    final ConcurrentHashMap<Integer, ConcurrentSkipListSet<Integer>> patternToElementNidsMap = ConcurrentHashMap.newMap();
     final Indexer indexer;
     final Searcher searcher;
 
@@ -127,8 +128,7 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
                     long citationLong = IntsInLong.ints2Long(nid, patternNid);
                     this.nidToCitingComponentsNidMap.merge(referencedComponentNid, new long[]{citationLong},
                             PrimitiveDataService::mergeCitations);
-                    this.patternToElementNidsMap.merge(patternNid, new int[]{nid},
-                            PrimitiveDataService::mergePatternElements);
+                    this.patternToElementNidsMap.getIfAbsentPut(nid, () -> new ConcurrentSkipListSet<>()).add(nid);
                 }
             }
         }

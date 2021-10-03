@@ -2,12 +2,16 @@ package org.hl7.tinkar.provider.mvstore;
 
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.tuple.Pair;
+import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.h2.mvstore.OffHeapStore;
 import org.hl7.tinkar.common.service.*;
 import org.hl7.tinkar.common.util.ints2long.IntsInLong;
 import org.hl7.tinkar.common.util.time.Stopwatch;
+import org.hl7.tinkar.entity.Entity;
+import org.hl7.tinkar.entity.PatternEntity;
 import org.hl7.tinkar.provider.mvstore.internal.Get;
 import org.hl7.tinkar.provider.mvstore.internal.Put;
 import org.hl7.tinkar.provider.search.Indexer;
@@ -17,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
@@ -46,6 +51,8 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     final Indexer indexer;
     final Searcher searcher;
     protected LongAdder writeSequence = new LongAdder();
+    ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Integer>> patternElementNidsMap = ConcurrentHashMap.newMap();
+
 
     public MVStoreProvider() throws IOException {
         Stopwatch stopwatch = new Stopwatch();
@@ -64,6 +71,12 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         this.nidToPatternNidMap = store.openMap("nidToPatternNidMap");
         this.nidToCitingComponentsNidMap = store.openMap("nidToCitingComponentsNidMap");
         this.patternToElementNidsMap = store.openMap("patternToElementNidsMap");
+        for (int patternNid : patternToElementNidsMap.keySet()) {
+            int[] elementNids = patternToElementNidsMap.get(patternNid);
+            for (int elementNid : elementNids) {
+                addToElementSet(patternNid, elementNid);
+            }
+        }
 
         if (this.uuidToNidMap.containsKey(nextNidKey)) {
             this.nextNid = new AtomicInteger(this.uuidToNidMap.get(nextNidKey));
@@ -81,6 +94,11 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         File indexDir = new File(configuredRoot, "lucene");
         this.indexer = new Indexer(indexDir.toPath());
         this.searcher = new Searcher();
+    }
+
+    public boolean addToElementSet(int patternNid, int elementNid) {
+        return null == patternElementNidsMap.getIfAbsentPut(patternNid, integer -> new ConcurrentHashMap<>())
+                .put(elementNid, elementNid);
     }
 
     @Override
@@ -113,6 +131,10 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         LOG.info("Saving MVStoreProvider");
         try {
             this.uuidToNidMap.put(nextNidKey, nextNid.get());
+            for (Pair<Integer, ConcurrentHashMap<Integer, Integer>> keyValue : patternElementNidsMap.keyValuesView()) {
+                patternToElementNidsMap.put(keyValue.getOne(), keyValue.getTwo().keySet()
+                        .stream().mapToInt(value -> (int) value).toArray());
+            }
             this.store.commit();
             this.offHeap.sync();
             this.indexer.commit();
@@ -160,8 +182,8 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
                     long citationLong = IntsInLong.ints2Long(nid, patternNid);
                     this.nidToCitingComponentsNidMap.merge(referencedComponentNid, new long[]{citationLong},
                             PrimitiveDataService::mergeCitations);
-                    this.patternToElementNidsMap.merge(patternNid, new int[]{nid},
-                            PrimitiveDataService::mergePatternElements);
+                    // TODO this will be slow merge for large sets. Consider alternatives.
+                    this.addToElementSet(patternNid, nid);
                 }
             }
         }
@@ -178,11 +200,25 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
 
     @Override
     public void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure) {
-        this.nidToPatternNidMap.forEach((nid, defForNid) -> {
-            if (defForNid == patternNid) {
-                procedure.accept(nid);
+        Set<Integer> elementNids = getElementNidsForPatternNid(patternNid);
+        if (elementNids != null && elementNids.size() > 0) {
+            for (int elementNid : elementNids) {
+                procedure.accept(elementNid);
             }
-        });
+        } else {
+            Entity entity = Entity.getFast(patternNid);
+            if (entity instanceof PatternEntity == false) {
+                throw new IllegalStateException("Trying to iterate elements for entity that is not a pattern: " + entity);
+            }
+
+        }
+    }
+
+    public Set<Integer> getElementNidsForPatternNid(int patternNid) {
+        if (patternElementNidsMap.containsKey(patternNid)) {
+            return patternElementNidsMap.get(patternNid).keySet();
+        }
+        return Set.of();
     }
 
     @Override

@@ -33,6 +33,8 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
+ * Used to map patterns to the elements of the pattern...
+ *
  * @author kec
  */
 public class SpinedIntIntArrayMap implements IntObjectMap<int[]> {
@@ -44,7 +46,7 @@ public class SpinedIntIntArrayMap implements IntObjectMap<int[]> {
     protected final IntIntArrayStore intIntArrayStore;
     protected final int elementsPerSpine;
     protected final ConcurrentSkipListSet<Integer> changedSpineIndexes = new ConcurrentSkipListSet<>();
-    private final ConcurrentSpineList<AtomicReferenceArray<int[]>> spines = new ConcurrentSpineList<AtomicReferenceArray<int[]>>(1688, this::newSpine);
+    private final ConcurrentSpineList<AtomicReferenceArray<int[]>> spines = new ConcurrentSpineList<>(1, this::newSpine);
 
     public SpinedIntIntArrayMap(IntIntArrayStore intIntArrayStore) {
         this.elementsPerSpine = DEFAULT_ELEMENTS_PER_SPINE;

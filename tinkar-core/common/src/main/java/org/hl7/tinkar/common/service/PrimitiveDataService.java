@@ -28,10 +28,6 @@ public interface PrimitiveDataService {
 
     int FIRST_NID = Integer.MIN_VALUE + 1;
 
-
-    int MAX_PATTERN_ELEMENT_ARRAY_SIZE = 10240;
-    int[] MAX_PATTERN_ELEMENT = new int[]{Integer.MAX_VALUE};
-
     static int nidForUuids(ConcurrentMap<UUID, Integer> uuidNidMap, NidGenerator nidGenerator, ImmutableList<UUID> uuidList) {
         switch (uuidList.size()) {
             case 0:
@@ -176,9 +172,6 @@ public interface PrimitiveDataService {
         }
         if (elements2 == null) {
             return elements1;
-        }
-        if (elements1.length + elements2.length > MAX_PATTERN_ELEMENT_ARRAY_SIZE) {
-            return MAX_PATTERN_ELEMENT;
         }
         if (Arrays.equals(elements1, elements2)) {
             return elements1;
