@@ -102,7 +102,7 @@ public class PBTest {
     public void loadPBFile() throws IOException {
         LoadEntitiesFromPBFile loadPB = new LoadEntitiesFromPBFile(pbBinaryFile);
         int count = loadPB.compute();
-        LOG.info("File Loaded. " + loadPB.report() + "\n\n");
+//        LOG.info("File Loaded. " + loadPB.report() + "\n\n");
     }
 
     @Test(testName = "Export to Protocol Buffer Binary File", enabled = false)
