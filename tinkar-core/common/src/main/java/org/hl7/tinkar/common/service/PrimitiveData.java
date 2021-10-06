@@ -174,7 +174,7 @@ public class PrimitiveData implements CachingService {
         throw new IllegalStateException("No provider. Call Select provider prior to get()");
     }
 
-    public static int nid(UUID uuids) {
+    public static int nid(UUID... uuids) {
         return get().nidForUuids(uuids);
     }
 
