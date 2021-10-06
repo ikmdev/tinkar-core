@@ -2,23 +2,12 @@ package org.hl7.tinkar.entity.load;
 
 import org.hl7.tinkar.common.service.Executor;
 import org.hl7.tinkar.common.service.TrackingCallable;
-import org.hl7.tinkar.common.util.io.CountingInputStream;
-import org.hl7.tinkar.component.Chronology;
-import org.hl7.tinkar.component.FieldDataType;
-import org.hl7.tinkar.dto.ConceptChronologyDTO;
-import org.hl7.tinkar.dto.PatternChronologyDTO;
-import org.hl7.tinkar.dto.SemanticChronologyDTO;
-import org.hl7.tinkar.dto.binary.TinkarInput;
 import org.hl7.tinkar.entity.EntityService;
-import org.hl7.tinkar.protobuf.PBConcept;
-import org.hl7.tinkar.protobuf.PBConceptChronology;
 import org.hl7.tinkar.protobuf.PBTinkarMsg;
 
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -31,8 +20,8 @@ public class LoadEntitiesFromPBFile extends TrackingCallable<Integer> {
     private static final int MAX_TASK_COUNT = 100;
     final File importFile;
     final AtomicInteger importCount = new AtomicInteger();
-    Semaphore runningTasks = new Semaphore(MAX_TASK_COUNT, false);
-    ConcurrentSkipListSet<ExceptionRecord> exceptionRecords = new ConcurrentSkipListSet<>();
+    final Semaphore runningTasks = new Semaphore(MAX_TASK_COUNT, false);
+    final AtomicInteger exceptionCount = new AtomicInteger();
 
     public LoadEntitiesFromPBFile(File importFile) {
         super(false, true);
@@ -44,10 +33,13 @@ public class LoadEntitiesFromPBFile extends TrackingCallable<Integer> {
         updateTitle("Loading " + importFile.getName());
         LOG.info(getTitle());
 
+        double sizeForAll = 0;
         try (ZipFile zipFile = new ZipFile(importFile, StandardCharsets.UTF_8)) {
             ZipEntry exportPBEntry = zipFile.getEntry("export.pb");
+            double totalSize = exportPBEntry.getSize();
+            sizeForAll += totalSize;
             DataInputStream pbStream = new DataInputStream(zipFile.getInputStream(exportPBEntry));
-            LOG.info(":LoadEntitiesFromDTO: begin processing");
+            LOG.info("LoadEntitiesFromPBFile: begin processing");
 
             ByteBuffer byteBuffer;
             int pbMessageLength;
@@ -77,82 +69,34 @@ public class LoadEntitiesFromPBFile extends TrackingCallable<Integer> {
                     byteBuffer.put(sourceIndex, bytesRead);
                 }
 
-                PBTinkarMsg pbTinkarMsg = PBTinkarMsg.parseFrom(byteBuffer.array());
+                final byte[] pbBytes = byteBuffer.array();
+                Executor.threadPool().execute(() -> {
+                    try {
+                        EntityService.get().putEntity(PBEntityFactory.make(PBTinkarMsg.parseFrom(pbBytes)));
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                        exceptionCount.incrementAndGet();
+                        System.exit(0);
+                    } finally {
+                        runningTasks.release();
+                    }
+                });
+                importCount.incrementAndGet();
 
-                switch (pbTinkarMsg.getValueCase().getNumber()){
-                    case 10: //PBConcept ConceptValue = 10;
-                        PBConcept pbConcept = pbTinkarMsg.getConceptValue();
-
-
-                        break;
-                    case 11: //PBConceptChronology ConceptChronologyValue = 11;
-                        PBConceptChronology pbConceptChronology = pbTinkarMsg.getConceptChronologyValue();
-                        break;
-                    case 12: //PBConceptVersion ConceptVersionValue = 12;
-                        break;
-                    case 20: //PBSemantic SemanticValue = 20;
-                        break;
-                    case 21: //PBSemanticChronology SemanticChronologyValue = 21;
-                        break;
-                    case 22: //PBSemanticVersion SemanticVersionValue = 22;
-                        break;
-                    case 23: //PBPattern PatternValue = 23;
-                        break;
-                    case 24: //PBPatternChronology PatternChronologyValue = 24;
-                        break;
-                    case 25: //PBPatternVersion PatternVersionValue = 25;
-                        break;
-                    default:
-                        break;
-                }
             }
         } catch (EOFException exception) {
+            exception.printStackTrace();
         }
 
         runningTasks.acquireUninterruptibly(MAX_TASK_COUNT);
-        LOG.info(report());
+        LOG.info("Imported: " + importCount + " items in: " + durationString() + " with "
+                + exceptionCount.get()
+                + " exceptions."
+                + "\n");
+        updateProgress(sizeForAll, sizeForAll);
+        updateMessage(String.format("Imported %,d items in " + durationString(), importCount.get()));
+        updateTitle("Loaded from " + importFile.getName());
 
         return importCount.get();
-    }
-
-    public String report() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Imported: " + importCount + " items in: " + durationString() + " with " + exceptionRecords.size() + " exceptions.");
-        sb.append("\n");
-        exceptionRecords.forEach(exceptionRecord -> {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            exceptionRecord.t.printStackTrace(pw);
-            sb.append(exceptionRecord.t.getLocalizedMessage()).append(" for ").append(exceptionRecord.chronology).append("\n").append(sw.toString()).append("\n");
-        });
-        return sb.toString();
-    }
-
-    private static record ExceptionRecord(Chronology chronology, Throwable t) implements Comparable<ExceptionRecord> {
-        @Override
-        public int compareTo(LoadEntitiesFromPBFile.ExceptionRecord o) {
-            return chronology.publicId().compareTo(o.chronology().publicId());
-        }
-    }
-
-    private class PutChronology implements Runnable {
-        final Chronology chronology;
-
-        public PutChronology(Chronology chronology) {
-            this.chronology = chronology;
-        }
-
-        @Override
-        public void run() {
-            try {
-                EntityService.get().putChronology(chronology);
-            } catch (Throwable e) {
-                e.printStackTrace();
-                exceptionRecords.add(new ExceptionRecord(chronology, e));
-                System.exit(0);
-            } finally {
-                runningTasks.release();
-            }
-        }
     }
 }
