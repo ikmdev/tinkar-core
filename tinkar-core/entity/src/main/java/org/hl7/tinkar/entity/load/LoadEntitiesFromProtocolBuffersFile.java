@@ -8,22 +8,21 @@ import org.hl7.tinkar.protobuf.PBTinkarMsg;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class LoadEntitiesFromPBFile extends TrackingCallable<Integer> {
-    protected static final Logger LOG = Logger.getLogger(LoadEntitiesFromPBFile.class.getName());
+public class LoadEntitiesFromProtocolBuffersFile extends TrackingCallable<Integer> {
+    protected static final Logger LOG = Logger.getLogger(LoadEntitiesFromProtocolBuffersFile.class.getName());
     private static final int MAX_TASK_COUNT = 100;
     final File importFile;
     final AtomicInteger importCount = new AtomicInteger();
     final Semaphore runningTasks = new Semaphore(MAX_TASK_COUNT, false);
     final AtomicInteger exceptionCount = new AtomicInteger();
 
-    public LoadEntitiesFromPBFile(File importFile) {
+    public LoadEntitiesFromProtocolBuffersFile(File importFile) {
         super(false, true);
         this.importFile = importFile;
         LOG.info("Loading entities from: " + importFile.getAbsolutePath());
@@ -72,7 +71,7 @@ public class LoadEntitiesFromPBFile extends TrackingCallable<Integer> {
                 final byte[] pbBytes = byteBuffer.array();
                 Executor.threadPool().execute(() -> {
                     try {
-                        EntityService.get().putEntity(PBEntityFactory.make(PBTinkarMsg.parseFrom(pbBytes)));
+//                        EntityService.get().putEntity(ProtocolBuffersEntityFactory.make(PBTinkarMsg.parseFrom(pbBytes)));
                     } catch (Throwable e) {
                         e.printStackTrace();
                         exceptionCount.incrementAndGet();
