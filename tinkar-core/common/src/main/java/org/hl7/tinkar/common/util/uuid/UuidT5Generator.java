@@ -80,6 +80,10 @@ public class UuidT5Generator {
 
     //~--- get methods ---------------------------------------------------------
 
+    public static UUID singleSemanticUuid(PublicId patternId, PublicId referencedComponentId) {
+        return singleSemanticUuid(patternId.asUuidArray(), referencedComponentId.asUuidArray());
+    }
+
     /**
      * Generate a UUID for a semantic set that has one semantic per referenced component.
      * Sorts the pattern uuids and the referenced component uuids (separately) to ensure that order of

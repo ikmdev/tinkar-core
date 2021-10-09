@@ -50,6 +50,7 @@ public enum FieldDataType {
     COMPONENT_ID_SET((byte) 22, IdSet.class),
     PLANAR_POINT((byte) 23, PlanarPoint.class),
     SPATIAL_POINT((byte) 24, SpatialPoint.class),
+    STAMP_VERSION((byte) 25, Stamp.class),
 
 
     // Identified thing needs to go last...
@@ -115,6 +116,8 @@ public enum FieldDataType {
                 return PLANAR_POINT;
             case 24:
                 return SPATIAL_POINT;
+            case 25:
+                return STAMP_VERSION;
 
             // Identified thing needs to go last...
             case Byte.MAX_VALUE:

@@ -8,12 +8,12 @@ import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.ListIterable;
 import org.eclipse.collections.api.list.MutableList;
+import org.eclipse.collections.api.list.primitive.ByteList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.set.MutableSet;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.api.set.primitive.MutableLongSet;
+import org.eclipse.collections.impl.factory.primitive.ByteLists;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
-import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.eclipse.collections.impl.factory.primitive.LongSets;
 import org.hl7.tinkar.common.id.PublicId;
 
@@ -119,17 +119,35 @@ public interface PrimitiveDataService {
             return bytes1;
         }
         try {
-            MutableSet<byte[]> byteArraySet = Sets.mutable.empty();
+            MutableSet<ByteList> byteArraySet = Sets.mutable.empty();
             addToSet(bytes1, byteArraySet);
             addToSet(bytes2, byteArraySet);
-            MutableList<byte[]> byteArrayList = byteArraySet.toList();
-            byteArrayList.sort(Arrays::compare);
+            MutableList<ByteList> byteArrayList = byteArraySet.toList();
+
+            byteArrayList.sort((o1, o2) -> {
+                int minSize = Math.min(o1.size(), o2.size());
+                for (int i = 0; i < minSize; i++) {
+                    if (o1.get(i) != o2.get(i)) {
+                        return Integer.compare(o1.get(i), o2.get(i));
+                    }
+                }
+                return Integer.compare(o1.size(), o2.size());
+            });
 
             ByteBuf byteBuf = ByteBufPool.allocate(bytes1.length + bytes2.length);
             byteBuf.writeInt(byteArrayList.size());
-            for (byte[] byteArray : byteArrayList) {
-                byteBuf.writeInt(byteArray.length);
-                byteBuf.put(byteArray);
+            boolean first = true;
+            for (ByteList byteArray : byteArrayList) {
+                byteBuf.writeInt(byteArray.size());
+                byteArray.forEach(b -> {
+                    byteBuf.put(b);
+                });
+                if (first) {
+                    first = false;
+                    // write the number of versions...
+                    byteBuf.writeInt(byteArrayList.size() - 1);
+                }
+
             }
             return byteBuf.asArray();
         } catch (IOException e) {
@@ -137,14 +155,26 @@ public interface PrimitiveDataService {
         }
     }
 
-    private static void addToSet(byte[] bytes, MutableSet<byte[]> byteArraySet) throws IOException {
+    private static void addToSet(byte[] bytes, MutableSet<ByteList> byteArraySet) throws IOException {
         ByteBuf readBuf = ByteBuf.wrapForReading(bytes);
         int arrayCount = readBuf.readInt();
         for (int i = 0; i < arrayCount; i++) {
             int arraySize = readBuf.readInt();
-            byte[] newArray = new byte[arraySize];
-            readBuf.read(newArray);
-            byteArraySet.add(newArray);
+            if (i == 0) {
+                // The first array is the chronicle, and has a field for the number of versions...
+                byte[] newArray = new byte[arraySize - 4];
+                readBuf.read(newArray);
+                byteArraySet.add(ByteLists.immutable.of(newArray));
+                int versionCount = readBuf.readInt();
+                if (versionCount != arrayCount - 1) {
+                    throw new IllegalStateException("Malformed data. versionCount: " +
+                            versionCount + " arrayCount: " + arrayCount);
+                }
+            } else {
+                byte[] newArray = new byte[arraySize];
+                readBuf.read(newArray);
+                byteArraySet.add(ByteLists.immutable.of(newArray));
+            }
         }
     }
 
@@ -160,24 +190,6 @@ public interface PrimitiveDataService {
         }
         MutableLongSet citationSet = LongSets.mutable.of(citation1);
         citationSet.addAll(citation2);
-        return citationSet.toSortedArray();
-    }
-
-    static int[] mergePatternElements(int[] elements1, int[] elements2) {
-        if (elements1 == null || elements1.length == 0) {
-            return elements2;
-        }
-        if (elements1.length == 1 && elements1[0] == Integer.MAX_VALUE) {
-            return elements1;
-        }
-        if (elements2 == null) {
-            return elements1;
-        }
-        if (Arrays.equals(elements1, elements2)) {
-            return elements1;
-        }
-        MutableIntSet citationSet = IntSets.mutable.of(elements1);
-        citationSet.addAll(elements2);
         return citationSet.toSortedArray();
     }
 

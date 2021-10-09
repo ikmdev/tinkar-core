@@ -10,6 +10,8 @@ import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.terms.State;
 
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.UUID;
 
 @RecordBuilder
@@ -35,19 +37,44 @@ public record StampRecord(
         return stampEntity;
     }
 
+    public boolean deepEquals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        StampRecord that = (StampRecord) o;
+        return mostSignificantBits == that.mostSignificantBits && leastSignificantBits == that.leastSignificantBits && nid == that.nid && Arrays.equals(additionalUuidLongs, that.additionalUuidLongs) && versionRecords.equals(that.versionRecords);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null) return false;
+        if (o instanceof PublicId publicId) {
+            return PublicId.equals(this.publicId(), publicId);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(nid);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("StampRecord{");
+        sb.append("<").append(nid);
+        sb.append("> ").append(publicId().asUuidList()).append(" ");
+        for (StampEntityVersion version : versionRecords) {
+            sb.append(version.describe());
+        }
+        sb.append('}');
+        return sb.toString();
+    }
+
     @Override
     public byte[] getBytes() {
         return EntityRecordFactory.getBytes(this);
-    }
-
-    @Override
-    public FieldDataType entityDataType() {
-        return FieldDataType.STAMP;
-    }
-
-    @Override
-    public FieldDataType versionDataType() {
-        return FieldDataType.STAMP;
     }
 
     @Override
@@ -60,20 +87,21 @@ public record StampRecord(
         return versionRecords.toImmutable();
     }
 
+    @Override
+    public FieldDataType entityDataType() {
+        return FieldDataType.STAMP;
+    }
+
+    @Override
+    public FieldDataType versionDataType() {
+        return FieldDataType.STAMP_VERSION;
+    }
+
     public StampVersionRecord addVersion(State state, long time, int authorNid, int moduleNid, int pathNid) {
         StampVersionRecord stampVersionRecord = new StampVersionRecord(this, state.nid(), time, authorNid,
                 moduleNid, pathNid);
         versionRecords.add(stampVersionRecord);
         return stampVersionRecord;
-    }
-
-    @Override
-    public String toString() {
-        return "StampEntity{" +
-                "<" + nid +
-                "> , " + publicId().asUuidList() + " "
-                + describe() +
-                '}';
     }
 
 }

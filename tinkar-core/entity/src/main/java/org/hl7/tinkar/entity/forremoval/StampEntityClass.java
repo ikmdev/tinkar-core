@@ -60,16 +60,6 @@ public class StampEntityClass<T extends StampEntityVersion> extends EntityClass<
         return stampEntity;
     }
 
-    @Override
-    public FieldDataType entityDataType() {
-        return STAMP;
-    }
-
-    @Override
-    public FieldDataType versionDataType() {
-        return STAMP;
-    }
-
     public StampEntityVersion addVersion(State state, long time, int authorNid, int moduleNid, int pathNid) {
         StampEntityVersionClass entityVersion = StampEntityVersionClass.make(this, state.nid(), time, authorNid, moduleNid, pathNid);
         this.versions.add((T) entityVersion);
@@ -107,13 +97,8 @@ public class StampEntityClass<T extends StampEntityVersion> extends EntityClass<
     }
 
     @Override
-    public int stateNid() {
-        return lastVersion().stateNid();
-    }
-
-    @Override
-    public int authorNid() {
-        return lastVersion().authorNid();
+    public int pathNid() {
+        return lastVersion().pathNid();
     }
 
     @Override
@@ -122,8 +107,8 @@ public class StampEntityClass<T extends StampEntityVersion> extends EntityClass<
     }
 
     @Override
-    public int pathNid() {
-        return lastVersion().pathNid();
+    public int authorNid() {
+        return lastVersion().authorNid();
     }
 
     @Override
@@ -141,6 +126,11 @@ public class StampEntityClass<T extends StampEntityVersion> extends EntityClass<
             }
         }
         return latest;
+    }
+
+    @Override
+    public int stateNid() {
+        return lastVersion().stateNid();
     }
 
     @Override

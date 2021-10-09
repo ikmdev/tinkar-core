@@ -1,9 +1,15 @@
 package org.hl7.tinkar.entity;
 
 import io.soabase.recordbuilder.core.RecordBuilder;
+import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
+import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.terms.PatternFacade;
+
+import java.util.Arrays;
+import java.util.Objects;
 
 @RecordBuilder
 public record SemanticRecord(
@@ -11,6 +17,18 @@ public record SemanticRecord(
         long[] additionalUuidLongs, int nid, int patternNid, int referencedComponentNid,
         MutableList<SemanticEntityVersion> versionRecords)
         implements SemanticEntity<SemanticEntityVersion>, SemanticRecordBuilder.With {
+
+    public static SemanticRecord makeNew(PublicId publicId, PatternFacade patternFacade, int referencedComponentNid) {
+        return makeNew(publicId, patternFacade.nid(), referencedComponentNid);
+    }
+
+    public static SemanticRecord makeNew(PublicId publicId, int patternNid, int referencedComponentNid) {
+        PublicIdentifierRecord publicIdRecord = PublicIdentifierRecord.make(publicId);
+        int nid = PrimitiveData.nid(publicId);
+        return new SemanticRecord(publicIdRecord.mostSignificantBits(), publicIdRecord.leastSignificantBits(),
+                publicIdRecord.additionalUuidLongs(), nid, patternNid, referencedComponentNid,
+                Lists.mutable.ofInitialCapacity(1));
+    }
 
     @Override
     public byte[] getBytes() {
@@ -28,6 +46,28 @@ public record SemanticRecord(
                 referencedComponentNid +
                 "> " + Entity.getFast(referencedComponentNid).publicId().asUuidList() +
                 "»,";
+    }
+
+    public boolean deepEquals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SemanticRecord that = (SemanticRecord) o;
+        return mostSignificantBits == that.mostSignificantBits && leastSignificantBits == that.leastSignificantBits && nid == that.nid && patternNid == that.patternNid && referencedComponentNid == that.referencedComponentNid && Arrays.equals(additionalUuidLongs, that.additionalUuidLongs) && versionRecords.equals(that.versionRecords);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null) return false;
+        if (o instanceof PublicId publicId) {
+            return PublicId.equals(this.publicId(), publicId);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(nid);
     }
 
     @Override

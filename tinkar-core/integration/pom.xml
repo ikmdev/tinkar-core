@@ -78,7 +78,7 @@
                         <artifactItem>
                             <groupId>org.hl7.tinkar</groupId>
                             <artifactId>tinkar-test-dto</artifactId>
-                            <version>1.0.0</version>
+                            <version>1.1.0</version>
                             <type>zip</type>
                             <overWrite>false</overWrite>
                             <outputDirectory>${project.build.directory}/data</outputDirectory>

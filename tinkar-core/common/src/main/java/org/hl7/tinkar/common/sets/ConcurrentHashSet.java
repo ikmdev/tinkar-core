@@ -1,19 +1,20 @@
-package org.hl7.tinkar.provider.spinedarray;
+package org.hl7.tinkar.common.sets;
 
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
 
-public class ConcurrentIntegerHashSet implements Set<Integer> {
-    final ConcurrentHashMap<Integer, Integer> hashMap;
+public class ConcurrentHashSet<T extends Object> implements Set<T> {
+    final ConcurrentHashMap<T, T> hashMap;
 
-    public ConcurrentIntegerHashSet(int initialSize) {
+    public ConcurrentHashSet(int initialSize) {
         this.hashMap = ConcurrentHashMap.newMap(initialSize);
     }
 
-    public ConcurrentIntegerHashSet() {
+    public ConcurrentHashSet() {
         this.hashMap = ConcurrentHashMap.newMap();
     }
 
@@ -33,7 +34,7 @@ public class ConcurrentIntegerHashSet implements Set<Integer> {
     }
 
     @Override
-    public Iterator<Integer> iterator() {
+    public Iterator<T> iterator() {
         return hashMap.iterator();
     }
 
@@ -48,13 +49,14 @@ public class ConcurrentIntegerHashSet implements Set<Integer> {
     }
 
     @Override
-    public boolean add(Integer integer) {
-        return null == hashMap.put(integer, integer);
+    public boolean add(T value) {
+        return null == hashMap.put(value, value);
     }
 
     @Override
     public boolean remove(Object o) {
-        return o == hashMap.remove(o);
+        Object existingObject = hashMap.remove(o);
+        return Objects.equals(o, existingObject);
     }
 
     @Override
@@ -63,10 +65,10 @@ public class ConcurrentIntegerHashSet implements Set<Integer> {
     }
 
     @Override
-    public boolean addAll(Collection<? extends Integer> c) {
+    public boolean addAll(Collection<? extends T> c) {
         boolean changed = false;
-        for (Integer integer : c) {
-            if (hashMap.put(integer, integer) == null) {
+        for (T value : c) {
+            if (hashMap.put(value, value) == null) {
                 changed = true;
             }
         }

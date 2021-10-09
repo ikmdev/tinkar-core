@@ -27,10 +27,17 @@ public record PatternVersionRecord(PatternEntity<PatternEntityVersion> chronolog
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PatternVersionRecord that = (PatternVersionRecord) o;
+        return stampNid == that.stampNid && semanticPurposeNid == that.semanticPurposeNid && semanticMeaningNid == that.semanticMeaningNid && fieldDefinitions.equals(that.fieldDefinitions);
+    }
+
+    @Override
     public int hashCode() {
         return Integer.hashCode(stampNid);
     }
-
 
     @Override
     public String toString() {

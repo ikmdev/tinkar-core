@@ -1,7 +1,11 @@
 package org.hl7.tinkar.common.id;
 
 import org.eclipse.collections.api.list.ImmutableList;
-import org.hl7.tinkar.common.id.impl.*;
+import org.hl7.tinkar.common.id.impl.PublicId1;
+import org.hl7.tinkar.common.id.impl.PublicId2;
+import org.hl7.tinkar.common.id.impl.PublicId3;
+import org.hl7.tinkar.common.id.impl.PublicIdN;
+import org.hl7.tinkar.common.util.uuid.UuidT5Generator;
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,21 +22,19 @@ public class PublicIds {
     public static final PublicId of(long msb, long lsb) {
         return new PublicId1(msb, lsb);
     }
+
     public static final PublicId of(long msb, long lsb, long msb2, long lsb2) {
         return new PublicId2(msb, lsb, msb2, lsb2);
     }
+
     public static final PublicId of(long msb, long lsb, long msb2, long lsb2, long msb3, long lsb3) {
         return new PublicId3(msb, lsb, msb2, lsb2, msb3, lsb3);
     }
-    public static final PublicId of(List<UUID> list) {
-        return of(list.toArray(new UUID[list.size()]));
-    }
+
     public static final PublicId of(ImmutableList<UUID> list) {
         return of(list.toArray(new UUID[list.size()]));
     }
-    public static final PublicId of(String... uuidStrings) {
-        return of(Arrays.stream(uuidStrings).map(s -> UUID.fromString(s)).toList());
-    }
+
     public static final PublicId of(UUID... uuids) {
         if (uuids.length == 1) {
             return new PublicId1(uuids[0]);
@@ -45,6 +47,15 @@ public class PublicIds {
         }
         return new PublicIdN(uuids);
     }
+
+    public static final PublicId of(String... uuidStrings) {
+        return of(Arrays.stream(uuidStrings).map(s -> UUID.fromString(s)).toList());
+    }
+
+    public static final PublicId of(List<UUID> list) {
+        return of(list.toArray(new UUID[list.size()]));
+    }
+
     public static final PublicId of(long... uuidParts) {
         if (uuidParts.length == 2) {
             return new PublicId1(uuidParts[0], uuidParts[1]);
@@ -56,5 +67,9 @@ public class PublicIds {
             return new PublicId3(uuidParts[0], uuidParts[1], uuidParts[2], uuidParts[3], uuidParts[4], uuidParts[5]);
         }
         return new PublicIdN(uuidParts);
+    }
+
+    public static final PublicId singleSemanticId(PublicId patternId, PublicId referencedComponentId) {
+        return PublicIds.of(UuidT5Generator.singleSemanticUuid(patternId.asUuidArray(), referencedComponentId.asUuidArray()));
     }
 }

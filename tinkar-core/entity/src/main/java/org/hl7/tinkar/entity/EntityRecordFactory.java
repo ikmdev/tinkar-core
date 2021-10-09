@@ -416,7 +416,9 @@ public class EntityRecordFactory {
         int bytesInVersion = readBuf.readInt();
         byte token = readBuf.readByte();
         if (entity.versionDataType().token != token) {
-            throw new IllegalStateException("Wrong token for type: " + token + " processing " + entity);
+            throw new IllegalStateException("Wrong token for type: " + token + " expecting " + entity.versionDataType() +
+                    " " + entity.versionDataType().token +
+                    " processing " + entity.getClass().getSimpleName() + " " + entity.publicId());
         }
         int stampNid = readBuf.readInt();
         return switch (entity) {

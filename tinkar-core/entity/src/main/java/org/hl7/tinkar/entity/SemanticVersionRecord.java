@@ -23,6 +23,14 @@ public record SemanticVersionRecord(SemanticEntity<SemanticEntityVersion> chrono
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SemanticVersionRecord that = (SemanticVersionRecord) o;
+        return stampNid == that.stampNid && fields.equals(that.fields);
+    }
+
+    @Override
     public int hashCode() {
         return Integer.hashCode(stampNid);
     }

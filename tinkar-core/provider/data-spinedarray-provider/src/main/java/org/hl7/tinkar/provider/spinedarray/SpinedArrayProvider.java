@@ -12,6 +12,7 @@ import org.hl7.tinkar.collection.SpinedByteArrayMap;
 import org.hl7.tinkar.collection.SpinedIntIntMap;
 import org.hl7.tinkar.collection.SpinedIntLongArrayMap;
 import org.hl7.tinkar.common.service.*;
+import org.hl7.tinkar.common.sets.ConcurrentHashSet;
 import org.hl7.tinkar.common.util.ints2long.IntsInLong;
 import org.hl7.tinkar.common.util.time.Stopwatch;
 import org.hl7.tinkar.entity.*;
@@ -48,11 +49,11 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
     final AtomicInteger nextNid = new AtomicInteger(PrimitiveDataService.FIRST_NID);
 
     final ConcurrentHashMap<UUID, Integer> uuidToNidMap = ConcurrentHashMap.newMap();
-    final ConcurrentIntegerHashSet patternNids = new ConcurrentIntegerHashSet();
-    final ConcurrentIntegerHashSet conceptNids = new ConcurrentIntegerHashSet();
-    final ConcurrentIntegerHashSet semanticNids = new ConcurrentIntegerHashSet();
-    final ConcurrentIntegerHashSet stampNids = new ConcurrentIntegerHashSet();
-    final ConcurrentHashMap<Integer, ConcurrentIntegerHashSet> patternElementNidsMap = ConcurrentHashMap.newMap();
+    final ConcurrentHashSet<Integer> patternNids = new ConcurrentHashSet();
+    final ConcurrentHashSet<Integer> conceptNids = new ConcurrentHashSet();
+    final ConcurrentHashSet<Integer> semanticNids = new ConcurrentHashSet();
+    final ConcurrentHashSet<Integer> stampNids = new ConcurrentHashSet();
+    final ConcurrentHashMap<Integer, ConcurrentHashSet<Integer>> patternElementNidsMap = ConcurrentHashMap.newMap();
 
     final SpinedByteArrayMap entityToBytesMap;
     final SpinedIntIntMap nidToPatternNidMap;
@@ -265,7 +266,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
 
     public boolean addToPatternElementSet(int patternNid, int elementNid) {
 
-        return patternElementNidsMap.getIfAbsentPut(patternNid, integer -> new ConcurrentIntegerHashSet())
+        return patternElementNidsMap.getIfAbsentPut(patternNid, integer -> new ConcurrentHashSet())
                 .add(elementNid);
     }
 

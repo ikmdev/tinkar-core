@@ -34,7 +34,6 @@ public record StampVersionRecord(StampEntity<StampEntityVersion> chronology,
                 EntityService.get().nidForComponent(version.path()));
     }
 
-
     @Override
     public StampEntity<StampEntityVersion> entity() {
         return chronology;
@@ -45,10 +44,12 @@ public record StampVersionRecord(StampEntity<StampEntityVersion> chronology,
         return chronology.nid();
     }
 
-
     @Override
-    public StampEntity stamp() {
-        return chronology;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        StampVersionRecord that = (StampVersionRecord) o;
+        return stateNid == that.stateNid && time == that.time && authorNid == that.authorNid && moduleNid == that.moduleNid && pathNid == that.pathNid;
     }
 
     @Override
@@ -67,6 +68,11 @@ public record StampVersionRecord(StampEntity<StampEntityVersion> chronology,
                 " a:" + PrimitiveData.text(authorNid()) +
                 " m:" + PrimitiveData.text(moduleNid()) +
                 " p:" + PrimitiveData.text(pathNid());
+    }
+
+    @Override
+    public StampEntity stamp() {
+        return chronology;
     }
 
 }

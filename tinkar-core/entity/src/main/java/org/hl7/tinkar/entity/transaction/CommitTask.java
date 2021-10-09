@@ -21,7 +21,7 @@ public class CommitTask extends TrackingCallable<Void> {
     }
 
     protected String getTitleString() {
-        return "Canceling transaction: ";
+        return "Committing transaction: ";
     }
 
     @Override

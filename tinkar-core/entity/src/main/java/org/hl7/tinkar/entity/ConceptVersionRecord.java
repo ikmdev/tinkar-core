@@ -17,6 +17,14 @@ public record ConceptVersionRecord(ConceptEntity chronology, int stampNid)
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ConceptVersionRecord that = (ConceptVersionRecord) o;
+        return stampNid == that.stampNid;
+    }
+
+    @Override
     public int hashCode() {
         return Integer.hashCode(stampNid);
     }

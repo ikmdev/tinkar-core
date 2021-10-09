@@ -2,6 +2,7 @@ package org.hl7.tinkar.entity.transaction;
 
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.common.sets.ConcurrentHashSet;
 import org.hl7.tinkar.common.util.uuid.UuidT5Generator;
 import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.entity.Entity;
@@ -12,18 +13,17 @@ import org.hl7.tinkar.terms.State;
 
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.Consumer;
 
 /**
  *
  */
-public class Transaction {
-    private static ConcurrentSkipListSet<Transaction> activeTransactions = new ConcurrentSkipListSet<>();
+public class Transaction implements Comparable<Transaction> {
+    private static ConcurrentHashSet<Transaction> activeTransactions = new ConcurrentHashSet<>();
     private final UUID transactionUuid = UUID.randomUUID();
     private final String transactionName;
-    ConcurrentSkipListSet<UUID> stampsInTransaction = new ConcurrentSkipListSet<>();
-    ConcurrentSkipListSet<PublicId> componentsInTransaction = new ConcurrentSkipListSet<>();
+    ConcurrentHashSet<UUID> stampsInTransaction = new ConcurrentHashSet<>();
+    ConcurrentHashSet<PublicId> componentsInTransaction = new ConcurrentHashSet<>();
 
     public Transaction(String transactionName) {
         this.transactionName = transactionName;
@@ -64,6 +64,11 @@ public class Transaction {
 
     public static Transaction make(String transactionName) {
         return new Transaction(transactionName);
+    }
+
+    @Override
+    public int compareTo(Transaction o) {
+        return this.transactionUuid.compareTo(o.transactionUuid);
     }
 
     public void addComponent(PublicId componentId) {

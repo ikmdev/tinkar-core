@@ -4,6 +4,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.time.DateTimeUtil;
 import org.hl7.tinkar.component.Component;
+import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.terms.ConceptFacade;
@@ -60,7 +61,13 @@ public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
             if (version.time() == Long.MIN_VALUE) {
                 // if canceled (Long.MIN_VALUE), latest is canceled.
                 return version;
-            } else if (latest == null || latest.time() < version.time()) {
+            } else if (latest == null) {
+                latest = version;
+            } else if (latest.time() == Long.MAX_VALUE) {
+                latest = version;
+            } else if (version.time() == Long.MAX_VALUE) {
+                // ignore uncommitted version;
+            } else if (latest.time() < version.time()) {
                 latest = version;
             }
         }
@@ -69,6 +76,14 @@ public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
 
     @Override
     ImmutableList<V> versions();
+
+    default FieldDataType entityDataType() {
+        return FieldDataType.STAMP;
+    }
+
+    default FieldDataType versionDataType() {
+        return FieldDataType.STAMP_VERSION;
+    }
 
     default int stateNid() {
         return lastVersion().stateNid();

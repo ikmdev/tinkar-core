@@ -1,6 +1,7 @@
 package org.hl7.tinkar.provider.spinedarray;
 
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
+import org.hl7.tinkar.common.sets.ConcurrentHashSet;
 import org.hl7.tinkar.common.util.time.Stopwatch;
 import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.entity.Entity;
@@ -16,11 +17,11 @@ import java.util.function.ObjIntConsumer;
 public class UuidNidCollector implements ObjIntConsumer<byte[]> {
     private static final Logger LOG = LoggerFactory.getLogger(UuidNidCollector.class);
     final ConcurrentHashMap<UUID, Integer> uuidToNidMap;
-    final ConcurrentIntegerHashSet patternNids;
-    final ConcurrentIntegerHashSet conceptNids;
-    final ConcurrentIntegerHashSet semanticNids;
-    final ConcurrentIntegerHashSet stampNids;
-    final ConcurrentHashMap<Integer, ConcurrentIntegerHashSet> patternElementNidsMap;
+    final ConcurrentHashSet<Integer> patternNids;
+    final ConcurrentHashSet<Integer> conceptNids;
+    final ConcurrentHashSet<Integer> semanticNids;
+    final ConcurrentHashSet<Integer> stampNids;
+    final ConcurrentHashMap<Integer, ConcurrentHashSet<Integer>> patternElementNidsMap;
 
 
     AtomicInteger totalCount = new AtomicInteger();
@@ -32,11 +33,11 @@ public class UuidNidCollector implements ObjIntConsumer<byte[]> {
     Stopwatch stopwatch = new Stopwatch();
 
     public UuidNidCollector(ConcurrentHashMap<UUID, Integer> uuidToNidMap,
-                            ConcurrentIntegerHashSet patternNids,
-                            ConcurrentIntegerHashSet conceptNids,
-                            ConcurrentIntegerHashSet semanticNids,
-                            ConcurrentIntegerHashSet stampNids,
-                            ConcurrentHashMap<Integer, ConcurrentIntegerHashSet> patternElementNidsMap) {
+                            ConcurrentHashSet<Integer> patternNids,
+                            ConcurrentHashSet<Integer> conceptNids,
+                            ConcurrentHashSet<Integer> semanticNids,
+                            ConcurrentHashSet<Integer> stampNids,
+                            ConcurrentHashMap<Integer, ConcurrentHashSet<Integer>> patternElementNidsMap) {
         this.uuidToNidMap = uuidToNidMap;
         this.patternNids = patternNids;
         this.conceptNids = conceptNids;
@@ -85,7 +86,7 @@ public class UuidNidCollector implements ObjIntConsumer<byte[]> {
         if (typeToProcess == true) {
             Entity<?> entity = EntityRecordFactory.make(bytes);
             if (entity instanceof SemanticEntity semanticEntity) {
-                patternElementNidsMap.getIfAbsentPut(semanticEntity.patternNid(), integer -> new ConcurrentIntegerHashSet())
+                patternElementNidsMap.getIfAbsentPut(semanticEntity.patternNid(), integer -> new ConcurrentHashSet())
                         .add(semanticEntity.nid());
             }
             for (UUID uuid : entity.asUuidArray()) {

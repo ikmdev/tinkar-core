@@ -5,6 +5,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.auto.service.AutoService;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.operators.multi.processors.BroadcastProcessor;
+import io.smallrye.mutiny.subscription.BackPressureFailure;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.service.CachingService;
@@ -141,7 +142,11 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         } else {
             PrimitiveData.get().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, entity.getBytes(), entity);
         }
-        processor.onNext(entity);
+        try {
+            processor.onNext(entity);
+        } catch (BackPressureFailure e) {
+            LOG.warn(e.getLocalizedMessage());
+        }
     }
 
     @Override

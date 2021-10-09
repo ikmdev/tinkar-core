@@ -23,6 +23,13 @@ public class TinkarTerm {
 
     public static final EntityProxy.Pattern EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN =
             EntityProxy.Pattern.make("EL ++ Inferred form pattern", UUID.fromString("9f011812-15c9-5b1b-85f8-bb262bc1b2a2"));
+
+    public static final EntityProxy.Pattern TINKAR_BASE_MODEL_COMPONENT_PATTERN =
+            EntityProxy.Pattern.make("Tinkar base model component pattern", UUID.fromString("6070f6f5-893d-5144-adce-7d305c391cf9"));
+    public static final EntityProxy.Pattern KOMET_BASE_MODEL_COMPONENT_PATTERN =
+            EntityProxy.Pattern.make("Komet base model component pattern", UUID.fromString("bbbbf1fe-00f0-55e0-a19c-6300dbaab9b2"));
+    public static final EntityProxy.Pattern COMMENT_PATTERN =
+            EntityProxy.Pattern.make("Comment pattern", UUID.fromString("3734fb0a-4c14-5831-9a61-4743af609e7a"));
     /**
      * Java binding for the concept described as <strong><em>Acceptable (SOLOR)</em></strong>;
      * identified by UUID: {@code

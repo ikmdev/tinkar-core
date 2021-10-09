@@ -48,6 +48,10 @@ public interface VersionData extends Version, Stamp<StampEntityVersion> {
         return stamp().pathNid();
     }
 
+    default boolean isInactive() {
+        return !isActive();
+    }
+
     default boolean isActive() {
         return stamp().state().nid() == State.ACTIVE.nid();
     }
