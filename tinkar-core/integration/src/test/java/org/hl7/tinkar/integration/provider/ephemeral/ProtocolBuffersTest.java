@@ -1,7 +1,7 @@
 package org.hl7.tinkar.integration.provider.ephemeral;
 
 import org.hl7.tinkar.common.service.PrimitiveData;
-import org.hl7.tinkar.entity.load.LoadEntitiesFromPBFile;
+import org.hl7.tinkar.entity.load.LoadEntitiesFromProtocolBuffersFile;
 import org.hl7.tinkar.entity.util.EntityCounter;
 import org.hl7.tinkar.entity.util.EntityProcessor;
 import org.hl7.tinkar.entity.util.EntityRealizer;
@@ -17,13 +17,16 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class PBTest {
+public class ProtocolBuffersTest {
 
-    private static Logger LOG = Logger.getLogger(PBTest.class.getName());
+    private static Logger LOG = Logger.getLogger(ProtocolBuffersTest.class.getName());
     private final File pbBinaryFile = TestConstants.PB_TEST_FILE;
 
 //    @BeforeSuite
@@ -51,6 +54,7 @@ public class PBTest {
             DataInputStream pbStream = new DataInputStream(zipFile.getInputStream(exportPBEntry));
             DataInputStream countStream = new DataInputStream(zipFile.getInputStream(exportPBCountEntry));
             long pbCount = countStream.readLong();
+            Map<PBTinkarMsg.ValueCase, AtomicInteger> pbMessageBreakdown = new HashMap<>();
 
             ByteBuffer byteBuffer;
             LocalDateTime startTime = LocalDateTime.now();
@@ -85,6 +89,11 @@ public class PBTest {
                 }
 
                 PBTinkarMsg pbTinkarMsg = PBTinkarMsg.parseFrom(byteBuffer.array());
+                if(pbMessageBreakdown.containsKey(pbTinkarMsg.getValueCase())){
+                    pbMessageBreakdown.get(pbTinkarMsg.getValueCase()).incrementAndGet();
+                } else{
+                    pbMessageBreakdown.put(pbTinkarMsg.getValueCase(), new AtomicInteger(0));
+                }
                 pbMessageCount++;
             }
             LocalDateTime finishTime = LocalDateTime.now();
@@ -100,7 +109,7 @@ public class PBTest {
 
     @Test(testName = "Load Protocol Buffer Binary File", enabled = false)
     public void loadPBFile() throws IOException {
-        LoadEntitiesFromPBFile loadPB = new LoadEntitiesFromPBFile(pbBinaryFile);
+        LoadEntitiesFromProtocolBuffersFile loadPB = new LoadEntitiesFromProtocolBuffersFile(pbBinaryFile);
         int count = loadPB.compute();
 //        LOG.info("File Loaded. " + loadPB.report() + "\n\n");
     }
