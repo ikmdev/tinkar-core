@@ -18,6 +18,7 @@ module org.hl7.tinkar.provider.ephemeral {
     requires org.hl7.tinkar.lucene;
     requires org.hl7.tinkar.provider.search;
     requires org.slf4j;
+    requires java.logging;
     provides DataServiceController
             with ProviderEphemeralNewController;
 

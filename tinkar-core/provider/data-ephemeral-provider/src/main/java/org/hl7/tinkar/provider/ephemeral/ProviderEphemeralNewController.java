@@ -9,10 +9,12 @@ import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.logging.Logger;
 
 @AutoService(DataServiceController.class)
 public class ProviderEphemeralNewController implements DataServiceController<PrimitiveDataService> {
 
+    private static Logger LOG = Logger.getLogger(ProviderEphemeralNewController.class.getName());
     public static String CONTROLLER_NAME = "Load Ephemeral Store";
 
     private DataUriOption dataUriOption;
@@ -60,6 +62,7 @@ public class ProviderEphemeralNewController implements DataServiceController<Pri
             LoadDataFromFileController loader = controllerFinder.findFirst().get();
             Future<Integer> loadFuture = (Future<Integer>) loader.load(file);
             int count = loadFuture.get();
+
         } catch (InterruptedException|ExecutionException e) {
             throw new RuntimeException(e);
         }

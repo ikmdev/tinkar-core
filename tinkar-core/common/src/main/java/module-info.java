@@ -32,6 +32,7 @@ module org.hl7.tinkar.common {
     exports org.hl7.tinkar.common.util.uuid;
     exports org.hl7.tinkar.common.validation;
     exports org.hl7.tinkar.common.sets;
+    exports org.hl7.tinkar.common.id.impl;
 
     provides CachingService with ServiceProperties, PrimitiveData;
 

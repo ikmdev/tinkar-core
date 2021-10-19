@@ -2,10 +2,13 @@ package org.hl7.tinkar.entity.load;
 
 import org.hl7.tinkar.common.service.Executor;
 import org.hl7.tinkar.common.service.TrackingCallable;
+import org.hl7.tinkar.component.Chronology;
 import org.hl7.tinkar.entity.EntityService;
-import org.hl7.tinkar.protobuf.PBTinkarMsg;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.EOFException;
+import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Semaphore;
@@ -35,16 +38,20 @@ public class LoadEntitiesFromProtocolBuffersFile extends TrackingCallable<Intege
         double sizeForAll = 0;
         try (ZipFile zipFile = new ZipFile(importFile, StandardCharsets.UTF_8)) {
             ZipEntry exportPBEntry = zipFile.getEntry("export.pb");
+            ZipEntry pbMessageCountEntry = zipFile.getEntry("count");
             double totalSize = exportPBEntry.getSize();
             sizeForAll += totalSize;
             DataInputStream pbStream = new DataInputStream(zipFile.getInputStream(exportPBEntry));
-            LOG.info("LoadEntitiesFromPBFile: begin processing");
+            DataInputStream pbMessageCountStream = new DataInputStream(zipFile.getInputStream(pbMessageCountEntry));
+            LOG.info("LoadEntitiesFromPBFile: begin processing " + pbMessageCountStream.readLong() + " protocol buffer messages");
 
             ByteBuffer byteBuffer;
             int pbMessageLength;
             int bytesReadCount;
 
             while(pbStream.available() > 0){
+                runningTasks.acquireUninterruptibly();
+
                 bytesReadCount = 0;
                 pbMessageLength = pbStream.readInt();
 
@@ -67,21 +74,8 @@ public class LoadEntitiesFromProtocolBuffersFile extends TrackingCallable<Intege
                     }
                     byteBuffer.put(sourceIndex, bytesRead);
                 }
-
-                final byte[] pbBytes = byteBuffer.array();
-                Executor.threadPool().execute(() -> {
-                    try {
-//                        EntityService.get().putEntity(ProtocolBuffersEntityFactory.make(PBTinkarMsg.parseFrom(pbBytes)));
-                    } catch (Throwable e) {
-                        e.printStackTrace();
-                        exceptionCount.incrementAndGet();
-                        System.exit(0);
-                    } finally {
-                        runningTasks.release();
-                    }
-                });
+                Executor.threadPool().execute(new PutChronology(ProtocolBuffersEntityFactory.make(byteBuffer)));
                 importCount.incrementAndGet();
-
             }
         } catch (EOFException exception) {
             exception.printStackTrace();
@@ -97,5 +91,24 @@ public class LoadEntitiesFromProtocolBuffersFile extends TrackingCallable<Intege
         updateTitle("Loaded from " + importFile.getName());
 
         return importCount.get();
+    }
+
+    private class PutChronology implements Runnable {
+        final Chronology chronology;
+
+        public PutChronology(Chronology chronology) {
+            this.chronology = chronology;
+        }
+
+        @Override
+        public void run() {
+            try {
+                EntityService.get().putChronology(chronology);
+            } catch (Throwable e) {
+                e.printStackTrace();
+            } finally {
+                runningTasks.release();
+            }
+        }
     }
 }
