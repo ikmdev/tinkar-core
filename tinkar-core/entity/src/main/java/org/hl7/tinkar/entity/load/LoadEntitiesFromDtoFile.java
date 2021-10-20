@@ -9,6 +9,7 @@ import org.hl7.tinkar.dto.ConceptChronologyDTO;
 import org.hl7.tinkar.dto.PatternChronologyDTO;
 import org.hl7.tinkar.dto.SemanticChronologyDTO;
 import org.hl7.tinkar.dto.binary.TinkarInput;
+import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.entity.EntityService;
 
 import java.io.*;

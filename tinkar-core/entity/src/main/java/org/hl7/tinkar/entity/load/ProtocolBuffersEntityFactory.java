@@ -37,12 +37,23 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public final class ProtocolBuffersEntityFactory {
+    protected static final Logger LOG = Logger.getLogger(ProtocolBuffersEntityFactory.class.getName());
 
     public static Entity make(ByteBuffer byteBuffer) throws InvalidProtocolBufferException {
         PBTinkarMsg pbTinkarMsg = PBTinkarMsg.parseFrom(byteBuffer);
+        return switch (pbTinkarMsg.getValueCase()) {
+            case CONCEPTCHRONOLOGYVALUE -> make(pbTinkarMsg.getConceptChronologyValue());
+            case SEMANTICCHRONOLOGYVALUE -> make(pbTinkarMsg.getSemanticChronologyValue());
+            case PATTERNCHRONOLOGYVALUE -> make(pbTinkarMsg.getPatternChronologyValue());
+            default -> throw new IllegalStateException("not expecting " + pbTinkarMsg.getValueCase());
+        };
+    }
+
+    public static Entity make(PBTinkarMsg pbTinkarMsg) throws InvalidProtocolBufferException {
         return switch (pbTinkarMsg.getValueCase()) {
             case CONCEPTCHRONOLOGYVALUE -> make(pbTinkarMsg.getConceptChronologyValue());
             case SEMANTICCHRONOLOGYVALUE -> make(pbTinkarMsg.getSemanticChronologyValue());

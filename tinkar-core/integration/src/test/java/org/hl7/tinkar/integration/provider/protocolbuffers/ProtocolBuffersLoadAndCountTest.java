@@ -1,46 +1,37 @@
-package org.hl7.tinkar.integration.provider.ephemeral;
+package org.hl7.tinkar.integration.provider.protocolbuffers;
 
 import org.hl7.tinkar.common.service.DataUriOption;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.service.ServiceProperties;
-import org.hl7.tinkar.entity.load.LoadEntitiesFromDtoFile;
-import org.hl7.tinkar.entity.load.LoadEntitiesFromProtocolBuffersFile;
 import org.hl7.tinkar.entity.util.EntityCounter;
 import org.hl7.tinkar.entity.util.EntityProcessor;
 import org.hl7.tinkar.entity.util.EntityRealizer;
 import org.hl7.tinkar.integration.TestConstants;
-import org.hl7.tinkar.protobuf.PBTinkarMsg;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import java.io.DataInputStream;
-import java.io.EOFException;
-import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
-public class ProtocolBuffersTest {
+@Test
+public class ProtocolBuffersLoadAndCountTest{
 
-    private static Logger LOG = Logger.getLogger(ProtocolBuffersTest.class.getName());
+    private static Logger LOG = Logger.getLogger(ProtocolBuffersLoadAndCountTest.class.getName());
 
-//    @AfterSuite()
-//    public void teardownSuite() {
-//        LOG.info("teardownSuite");
-//        PrimitiveData.stop();
-//    }
+    @BeforeTest
+    public void beforeTest(){
+        LOG.info("Before Test: " + this.getClass().getSimpleName());
+    }
 
-    @Test(testName = "Load Protocol Buffer Binary File", enabled = false)
-    public void loadPBFile() throws IOException {
+    @AfterTest
+    public void afterTest() {
+        LOG.info("After Test: " + this.getClass().getSimpleName());
+        PrimitiveData.stop();
+    }
+
+    @Test
+    public void loadProtocolBuffersFile() throws IOException {
         LOG.info(ServiceProperties.jvmUuid());
         PrimitiveData.selectControllerByName(TestConstants.EPHEMERAL_STORE_NAME);
         PrimitiveData.getController().setDataUriOption(
@@ -48,8 +39,8 @@ public class ProtocolBuffersTest {
         PrimitiveData.start();
     }
 
-    @Test(dependsOnMethods = {"loadPBFile"}, enabled = false)
-    public void count() {
+    @Test(dependsOnMethods = {"loadProtocolBuffersFile"})
+    public void countProtocolBufferEntities() {
         EntityProcessor processor = new EntityCounter();
         PrimitiveData.get().forEach(processor);
         LOG.info("EPH Sequential count: \n" + processor.report() + "\n\n");

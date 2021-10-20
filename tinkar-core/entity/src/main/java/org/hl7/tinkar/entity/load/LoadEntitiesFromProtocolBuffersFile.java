@@ -2,7 +2,7 @@ package org.hl7.tinkar.entity.load;
 
 import org.hl7.tinkar.common.service.Executor;
 import org.hl7.tinkar.common.service.TrackingCallable;
-import org.hl7.tinkar.component.Chronology;
+import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.entity.EntityService;
 
 import java.io.DataInputStream;
@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
@@ -19,11 +20,13 @@ import java.util.zip.ZipFile;
 
 public class LoadEntitiesFromProtocolBuffersFile extends TrackingCallable<Integer> {
     protected static final Logger LOG = Logger.getLogger(LoadEntitiesFromProtocolBuffersFile.class.getName());
-    private static final int MAX_TASK_COUNT = 100;
+    private static final int MAX_TASK_COUNT = Runtime.getRuntime().availableProcessors() * 2;
     final File importFile;
     final AtomicInteger importCount = new AtomicInteger();
-    final Semaphore runningTasks = new Semaphore(MAX_TASK_COUNT, false);
+    final Semaphore taskSemaphore = new Semaphore(MAX_TASK_COUNT, false);
     final AtomicInteger exceptionCount = new AtomicInteger();
+    ConcurrentSkipListSet<ExceptionRecord> exceptionRecords = new ConcurrentSkipListSet<>();
+
 
     public LoadEntitiesFromProtocolBuffersFile(File importFile) {
         super(false, true);
@@ -43,21 +46,21 @@ public class LoadEntitiesFromProtocolBuffersFile extends TrackingCallable<Intege
             sizeForAll += totalSize;
             DataInputStream pbStream = new DataInputStream(zipFile.getInputStream(exportPBEntry));
             DataInputStream pbMessageCountStream = new DataInputStream(zipFile.getInputStream(pbMessageCountEntry));
-            LOG.info("LoadEntitiesFromPBFile: begin processing " + pbMessageCountStream.readLong() + " protocol buffer messages");
+            LOG.info(this.getClass().getSimpleName() + ": begin processing " + pbMessageCountStream.readLong() + " protocol buffers messages");
 
             ByteBuffer byteBuffer;
             int pbMessageLength;
             int bytesReadCount;
 
             while(pbStream.available() > 0){
-                runningTasks.acquireUninterruptibly();
-
                 bytesReadCount = 0;
                 pbMessageLength = pbStream.readInt();
 
                 if(pbMessageLength == -1){
-                    break;
+                    break; //EOF
                 }
+                taskSemaphore.acquireUninterruptibly();
+
                 byteBuffer = ByteBuffer.allocate(pbMessageLength);
 
                 while(bytesReadCount < pbMessageLength){
@@ -74,40 +77,55 @@ public class LoadEntitiesFromProtocolBuffersFile extends TrackingCallable<Intege
                     }
                     byteBuffer.put(sourceIndex, bytesRead);
                 }
-                Executor.threadPool().execute(new PutChronology(ProtocolBuffersEntityFactory.make(byteBuffer)));
+                Executor.threadPool().execute(new PutEntity(ProtocolBuffersEntityFactory.make(byteBuffer)));
                 importCount.incrementAndGet();
             }
         } catch (EOFException exception) {
             exception.printStackTrace();
         }
 
-        runningTasks.acquireUninterruptibly(MAX_TASK_COUNT);
-        LOG.info("Imported: " + importCount + " items in: " + durationString() + " with "
-                + exceptionCount.get()
-                + " exceptions."
-                + "\n");
+        taskSemaphore.acquireUninterruptibly(MAX_TASK_COUNT);
+        StringBuilder logOutput = new StringBuilder()
+                .append("Imported: ")
+                .append(importCount)
+                .append(" entities in: ")
+                .append(durationString())
+                .append(" with ")
+                .append(exceptionCount.get())
+                .append(" exceptions.")
+                .append("\n");
+
+        LOG.info(logOutput.toString());
         updateProgress(sizeForAll, sizeForAll);
-        updateMessage(String.format("Imported %,d items in " + durationString(), importCount.get()));
+        updateMessage(logOutput.toString());
         updateTitle("Loaded from " + importFile.getName());
 
         return importCount.get();
     }
 
-    private class PutChronology implements Runnable {
-        final Chronology chronology;
+    private static record ExceptionRecord(Entity entity, Throwable t) implements Comparable<ExceptionRecord> {
+        @Override
+        public int compareTo(ExceptionRecord o) {
+            return entity.publicId().compareTo(o.entity().publicId());
+        }
+    }
 
-        public PutChronology(Chronology chronology) {
-            this.chronology = chronology;
+    private class PutEntity implements Runnable {
+        final Entity entity;
+
+        public PutEntity(Entity entity) {
+            this.entity = entity;
         }
 
         @Override
         public void run() {
             try {
-                EntityService.get().putChronology(chronology);
+                EntityService.get().putEntity(entity);
             } catch (Throwable e) {
                 e.printStackTrace();
+                exceptionRecords.add(new ExceptionRecord(entity, e));
             } finally {
-                runningTasks.release();
+                taskSemaphore.release();
             }
         }
     }

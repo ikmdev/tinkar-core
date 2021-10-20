@@ -163,6 +163,21 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>protocol-buffers-suite</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                        <configuration>
+                            <argLine>--enable-preview -Xmx8G</argLine>
+                            <skipTests>false</skipTests>
+                            <trimStackTrace>false</trimStackTrace>
+                            <suiteXmlFiles>
+                                <suiteXmlFile>src/test/resources/protocolbuffers-testng.xml</suiteXmlFile>
+                            </suiteXmlFiles>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>coordinate-suite</id>
                         <goals>
                             <goal>integration-test</goal>
