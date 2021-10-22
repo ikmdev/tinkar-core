@@ -1,9 +1,14 @@
 package org.hl7.tinkar.entity.load;
 
+import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.service.Executor;
 import org.hl7.tinkar.common.service.TrackingCallable;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.entity.EntityService;
+import org.hl7.tinkar.entity.transfom.EntityTransform;
+import org.hl7.tinkar.entity.transfom.EntityTransformFactory;
+import org.hl7.tinkar.entity.transfom.TransformDataType;
+import org.hl7.tinkar.protobuf.PBTinkarMsg;
 
 import java.io.DataInputStream;
 import java.io.EOFException;
@@ -25,8 +30,7 @@ public class LoadEntitiesFromProtocolBuffersFile extends TrackingCallable<Intege
     final AtomicInteger importCount = new AtomicInteger();
     final Semaphore taskSemaphore = new Semaphore(MAX_TASK_COUNT, false);
     final AtomicInteger exceptionCount = new AtomicInteger();
-    ConcurrentSkipListSet<ExceptionRecord> exceptionRecords = new ConcurrentSkipListSet<>();
-
+    ConcurrentSkipListSet<PublicId> exceptionRecords = new ConcurrentSkipListSet<>();
 
     public LoadEntitiesFromProtocolBuffersFile(File importFile) {
         super(false, true);
@@ -77,7 +81,21 @@ public class LoadEntitiesFromProtocolBuffersFile extends TrackingCallable<Intege
                     }
                     byteBuffer.put(sourceIndex, bytesRead);
                 }
-                Executor.threadPool().execute(new PutEntity(ProtocolBuffersEntityFactory.make(byteBuffer)));
+                EntityTransform<PBTinkarMsg, Entity> entityTransform =
+                        EntityTransformFactory.getTransform(TransformDataType.PROTOCOL_BUFFERS, TransformDataType.ENTITY);
+                final Entity entity = entityTransform.transform(PBTinkarMsg.parseFrom(byteBuffer));
+
+                Executor.threadPool().execute(() -> {
+                    try {
+                        EntityService.get().putEntity(entity);
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                        exceptionRecords.add(entity.publicId());
+                    } finally {
+                        taskSemaphore.release();
+                    }
+                });
+
                 importCount.incrementAndGet();
             }
         } catch (EOFException exception) {
@@ -101,32 +119,5 @@ public class LoadEntitiesFromProtocolBuffersFile extends TrackingCallable<Intege
         updateTitle("Loaded from " + importFile.getName());
 
         return importCount.get();
-    }
-
-    private static record ExceptionRecord(Entity entity, Throwable t) implements Comparable<ExceptionRecord> {
-        @Override
-        public int compareTo(ExceptionRecord o) {
-            return entity.publicId().compareTo(o.entity().publicId());
-        }
-    }
-
-    private class PutEntity implements Runnable {
-        final Entity entity;
-
-        public PutEntity(Entity entity) {
-            this.entity = entity;
-        }
-
-        @Override
-        public void run() {
-            try {
-                EntityService.get().putEntity(entity);
-            } catch (Throwable e) {
-                e.printStackTrace();
-                exceptionRecords.add(new ExceptionRecord(entity, e));
-            } finally {
-                taskSemaphore.release();
-            }
-        }
     }
 }

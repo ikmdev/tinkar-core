@@ -1,7 +1,6 @@
-package org.hl7.tinkar.entity.load;
+package org.hl7.tinkar.entity.transfom;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -40,29 +39,19 @@ import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public final class ProtocolBuffersEntityFactory {
-    protected static final Logger LOG = Logger.getLogger(ProtocolBuffersEntityFactory.class.getName());
+public class ProtocolBuffersToEntityTransform implements EntityTransform<PBTinkarMsg, Entity> {
+    protected static final Logger LOG = Logger.getLogger(ProtocolBuffersToEntityTransform.class.getName());
 
-    public static Entity make(ByteBuffer byteBuffer) throws InvalidProtocolBufferException {
-        PBTinkarMsg pbTinkarMsg = PBTinkarMsg.parseFrom(byteBuffer);
+    public Entity transform(PBTinkarMsg pbTinkarMsg){
         return switch (pbTinkarMsg.getValueCase()) {
-            case CONCEPTCHRONOLOGYVALUE -> make(pbTinkarMsg.getConceptChronologyValue());
-            case SEMANTICCHRONOLOGYVALUE -> make(pbTinkarMsg.getSemanticChronologyValue());
-            case PATTERNCHRONOLOGYVALUE -> make(pbTinkarMsg.getPatternChronologyValue());
+            case CONCEPTCHRONOLOGYVALUE -> makeConceptChronology(pbTinkarMsg.getConceptChronologyValue());
+            case SEMANTICCHRONOLOGYVALUE -> makeSemanticChronology(pbTinkarMsg.getSemanticChronologyValue());
+            case PATTERNCHRONOLOGYVALUE -> makePatternChronology(pbTinkarMsg.getPatternChronologyValue());
             default -> throw new IllegalStateException("not expecting " + pbTinkarMsg.getValueCase());
         };
     }
 
-    public static Entity make(PBTinkarMsg pbTinkarMsg) throws InvalidProtocolBufferException {
-        return switch (pbTinkarMsg.getValueCase()) {
-            case CONCEPTCHRONOLOGYVALUE -> make(pbTinkarMsg.getConceptChronologyValue());
-            case SEMANTICCHRONOLOGYVALUE -> make(pbTinkarMsg.getSemanticChronologyValue());
-            case PATTERNCHRONOLOGYVALUE -> make(pbTinkarMsg.getPatternChronologyValue());
-            default -> throw new IllegalStateException("not expecting " + pbTinkarMsg.getValueCase());
-        };
-    }
-
-    private static ConceptEntity<ConceptEntityVersion> make(PBConceptChronology pbConceptChronology){
+    public ConceptEntity<ConceptEntityVersion> makeConceptChronology(PBConceptChronology pbConceptChronology){
         ConceptEntity<ConceptEntityVersion> conceptEntity = createConceptEntity(pbConceptChronology.getPublicId());
         MutableList<ConceptEntityVersion> conceptEntityVersions = Lists.mutable
                 .ofInitialCapacity(pbConceptChronology.getConceptVersionsCount());
@@ -70,7 +59,7 @@ public final class ProtocolBuffersEntityFactory {
         return ConceptRecordBuilder.builder((ConceptRecord) conceptEntity).versionRecords(conceptEntityVersions).build();
     }
 
-    private static SemanticEntity<SemanticEntityVersion> make(PBSemanticChronology pbSemanticChronology){
+    public SemanticEntity<SemanticEntityVersion> makeSemanticChronology(PBSemanticChronology pbSemanticChronology){
         SemanticEntity<SemanticEntityVersion> semanticEntity = createSemanticEntity(pbSemanticChronology);
         MutableList<SemanticEntityVersion> semanticEntityVersions = Lists.mutable
                 .ofInitialCapacity(pbSemanticChronology.getVersionsCount());
@@ -78,7 +67,7 @@ public final class ProtocolBuffersEntityFactory {
         return SemanticRecordBuilder.builder((SemanticRecord) semanticEntity).versionRecords(semanticEntityVersions).build();
     }
 
-    private static PatternEntity<PatternEntityVersion> make(PBPatternChronology pbPatternChronology){
+    public PatternEntity<PatternEntityVersion> makePatternChronology(PBPatternChronology pbPatternChronology){
         PatternEntity<PatternEntityVersion> patternEntity = createPatternEntity(pbPatternChronology);
         MutableList<PatternEntityVersion> patternEntityVersions = Lists.mutable
                 .ofInitialCapacity(pbPatternChronology.getVersionsCount());
@@ -86,14 +75,15 @@ public final class ProtocolBuffersEntityFactory {
         return PatternRecordBuilder.builder((PatternRecord) patternEntity).versionRecords(patternEntityVersions).build();
     }
 
-    private static PublicId createPublicId(PBPublicId pbPublicId){
+    public PublicId createPublicId(PBPublicId pbPublicId){
         return PublicIds.of(pbPublicId.getIdList().stream()
                 .map(ByteString::toByteArray)
-                .map(UUID::nameUUIDFromBytes)
+                .map(ByteBuffer::wrap)
+                .map(byteBuffer -> new UUID(byteBuffer.getLong(), byteBuffer.getLong()))
                 .collect(Collectors.toList()));
     }
 
-    private static IntIdList createPublicIDHashList(List<PBPublicId> pbPublicIdList){
+    public IntIdList createPublicIDHashList(List<PBPublicId> pbPublicIdList){
         int[] hashArray = new int[pbPublicIdList.size()];
         for(int i = 0; i < pbPublicIdList.size(); i++){
             hashArray[i] = createPublicId(pbPublicIdList.get(i)).hashCode();
@@ -101,23 +91,23 @@ public final class ProtocolBuffersEntityFactory {
         return new IntIdListArray(hashArray);
     }
 
-    private static PublicIdList createPublicIdList(List<PBPublicId> pbPublicIdList){
-        final PublicId[] publicIds = new PublicId[pbPublicIdList.size()];
-        for(int i = 0; i < pbPublicIdList.size();i++){
-            publicIds[i] = createPublicId(pbPublicIdList.get(i));
+    public PublicIdList createPublicIdList(PBPublicIdList pbPublicIdList){
+        final PublicId[] publicIds = new PublicId[pbPublicIdList.getPublicIdsCount()];
+        for(int i = 0; i < pbPublicIdList.getPublicIdsCount();i++){
+            publicIds[i] = createPublicId(pbPublicIdList.getPublicIds(i));
         }
         return PublicIds.list.of(publicIds);
     }
 
-    private static PublicId1 processPBVertexID(PBVertexId pbVertexId){
+    public PublicId1 processPBVertexID(PBVertexId pbVertexId){
         return new PublicId1(UUID.nameUUIDFromBytes(pbVertexId.getId().toByteArray()));
     }
 
-    private static ConceptEntity<ConceptEntityVersion> createConceptEntity(PBConcept pbConcept){
+    public ConceptEntity<ConceptEntityVersion> createConceptEntity(PBConcept pbConcept){
         return createConceptEntity(pbConcept.getPublicId());
     }
 
-    private static ConceptEntity<ConceptEntityVersion> createConceptEntity(PBPublicId pbPublicId) throws IllegalStateException{
+    public ConceptEntity<ConceptEntityVersion> createConceptEntity(PBPublicId pbPublicId) throws IllegalStateException{
         PublicId conceptPublicId = createPublicId(pbPublicId);
         if(conceptPublicId.uuidCount() > 0) {
             int conceptNid = EntityService.get().nidForPublicId(conceptPublicId);
@@ -141,7 +131,7 @@ public final class ProtocolBuffersEntityFactory {
         }
     }
 
-    private static SemanticEntity<SemanticEntityVersion> createSemanticEntity(PBSemanticChronology pbSemanticChronology){
+    public SemanticEntity<SemanticEntityVersion> createSemanticEntity(PBSemanticChronology pbSemanticChronology){
         PublicId semanticPublicId = createPublicId(pbSemanticChronology.getPublicId());
         PublicId patternPublicId = createPublicId(pbSemanticChronology.getPatternForSemantic());
         PublicId referencedComponentPublicId = createPublicId(pbSemanticChronology.getReferencedComponent());
@@ -173,7 +163,7 @@ public final class ProtocolBuffersEntityFactory {
         }
     }
 
-    private static PatternEntity<PatternEntityVersion> createPatternEntity(PBPatternChronology pbPatternChronology){
+    public PatternEntity<PatternEntityVersion> createPatternEntity(PBPatternChronology pbPatternChronology){
         PublicId patternPublicId = createPublicId(pbPatternChronology.getPublicId());
         int patternNid = EntityService.get().nidForPublicId(patternPublicId);
         if(patternPublicId.uuidCount() > 0) {
@@ -197,7 +187,7 @@ public final class ProtocolBuffersEntityFactory {
         }
     }
 
-    private static StampEntity<StampEntityVersion> createStampEntity(PBStamp pbStamp){
+    public StampEntity<StampEntityVersion> createStampEntity(PBStamp pbStamp){
         PublicId stampPublicId = createPublicId(pbStamp.getPublicId());
         if(stampPublicId.uuidCount() > 0) {
             int stampNid = EntityService.get().nidForPublicId(stampPublicId);
@@ -221,7 +211,7 @@ public final class ProtocolBuffersEntityFactory {
         }
     }
 
-    private static void createVersionEntities(PBConceptChronology pbConceptChronology,
+    public void createVersionEntities(PBConceptChronology pbConceptChronology,
                                               ConceptEntity<ConceptEntityVersion> conceptEntity,
                                               MutableList<ConceptEntityVersion> versions) {
         for (PBConceptVersion pbConceptVersion : pbConceptChronology.getConceptVersionsList()) {
@@ -229,7 +219,7 @@ public final class ProtocolBuffersEntityFactory {
         }
     }
 
-    private static void createVersionEntities(PBSemanticChronology pbSemanticChronology,
+    public void createVersionEntities(PBSemanticChronology pbSemanticChronology,
                                                                             SemanticEntity<SemanticEntityVersion> semanticEntity,
                                                                             MutableList<SemanticEntityVersion> versions) {
         for (PBSemanticVersion pbSemanticVersion : pbSemanticChronology.getVersionsList()) {
@@ -237,7 +227,7 @@ public final class ProtocolBuffersEntityFactory {
         }
     }
 
-    private static void createVersionEntities(PBPatternChronology pbPatternChronology,
+    public void createVersionEntities(PBPatternChronology pbPatternChronology,
                                                                            PatternEntity<PatternEntityVersion> patternEntity,
                                                                            MutableList<PatternEntityVersion> versions) {
         for (PBPatternVersion pbPatternVersion : pbPatternChronology.getVersionsList()) {
@@ -245,7 +235,7 @@ public final class ProtocolBuffersEntityFactory {
         }
     }
 
-    private static ConceptEntityVersion createConceptVersionEntity(PBConceptVersion pbConceptVersion,
+    public ConceptEntityVersion createConceptVersionEntity(PBConceptVersion pbConceptVersion,
                                                                    ConceptEntity<ConceptEntityVersion> conceptRecord){
         StampEntityVersion stampEntityVersion = createStampEntityVersion(pbConceptVersion.getStamp());
         return ConceptVersionRecordBuilder.builder()
@@ -254,7 +244,7 @@ public final class ProtocolBuffersEntityFactory {
                 .build();
     }
 
-    private static SemanticEntityVersion createSemanticVersionEntity(PBSemanticVersion pbSemanticVersion,
+    public SemanticEntityVersion createSemanticVersionEntity(PBSemanticVersion pbSemanticVersion,
                                                                      SemanticEntity<SemanticEntityVersion> semanticEntity){
         StampEntityVersion stampEntityVersion = createStampEntityVersion(pbSemanticVersion.getStamp());
         MutableList<Object> fields = Lists.mutable.ofInitialCapacity(pbSemanticVersion.getFieldValuesCount());
@@ -270,7 +260,7 @@ public final class ProtocolBuffersEntityFactory {
                 .build();
     }
 
-    private static PatternEntityVersion createPatternVersionEntity(PBPatternVersion pbPatternVersion,
+    public PatternEntityVersion createPatternVersionEntity(PBPatternVersion pbPatternVersion,
                                                                    PatternEntity<PatternEntityVersion> patternEntity){
         StampEntityVersion stampEntityVersion = createStampEntityVersion(pbPatternVersion.getStamp());
         int semanticPurposeNid = EntityService.get()
@@ -291,7 +281,7 @@ public final class ProtocolBuffersEntityFactory {
                 .build();
     }
 
-    private static StampEntityVersion createStampEntityVersion(PBStamp pbStamp){
+    public StampEntityVersion createStampEntityVersion(PBStamp pbStamp){
         StampEntity<StampEntityVersion> stampEntity = createStampEntity(pbStamp);
         int stateNid = EntityService.get().nidForPublicId(createPublicId(pbStamp.getStatus().getPublicId()));
         long time = Instant.ofEpochSecond(pbStamp.getTime().getSeconds(), pbStamp.getTime().getNanos()).getEpochSecond();
@@ -308,7 +298,7 @@ public final class ProtocolBuffersEntityFactory {
                 .build();
     }
 
-    private static void createFieldDefinitionEntity(List<PBFieldDefinition> pbFieldDefinitions,
+    public void createFieldDefinitionEntity(List<PBFieldDefinition> pbFieldDefinitions,
                                                                         MutableList<FieldDefinitionForEntity> fieldDefinitionForEntityMutableList){
         for(PBFieldDefinition pbFieldDefinition : pbFieldDefinitions){
             int meaningNid = EntityService.get().nidForPublicId(createPublicId(pbFieldDefinition.getMeaning()));
@@ -323,7 +313,7 @@ public final class ProtocolBuffersEntityFactory {
         }
     }
 
-    private static Object createFieldObject(PBField pbField){
+    public Object createFieldObject(PBField pbField){
         return switch (pbField.getValueCase()){
             case BYTESVALUE -> pbField.getBytesValue();
             case INTVALUE -> pbField.getIntValue();
@@ -338,7 +328,7 @@ public final class ProtocolBuffersEntityFactory {
 //            case GRAPHVALUE -> createGraphDTO(pbField.getGraphValue());
             case VERTEXIDVALUE -> processPBVertexID(pbField.getVertexIdValue());
             case DITREEVALUE -> createDiTreeEntity(pbField.getDiTreeValue());
-            case PUBLICIDLISTVALUE -> createPublicIdList(pbField.getPublicIdListValue().getPublicIdsList());
+            case PUBLICIDLISTVALUE -> createPublicIdList(pbField.getPublicIdListValue());
             case VERTEXVALUE -> createVertexDTO(pbField.getVertexValue());
             case PUBLICIDHASHVALUE -> createPublicIDHashList(pbField.getPublicIdListValue().getPublicIdsList());
             case null -> throw new IllegalStateException("PBField value set to null");
@@ -363,7 +353,7 @@ public final class ProtocolBuffersEntityFactory {
 //                parsePredecessorAndSuccessorMaps(pbGraph.getSuccessorMapList(), pbGraph.getSuccessorMapCount()));
 //    }
 
-    private static DiTreeEntity<EntityVertex> createDiTreeEntity(PBDiTree pbDiTree){
+    public DiTreeEntity<EntityVertex> createDiTreeEntity(PBDiTree pbDiTree){
         return new DiTreeEntity<>(
                 EntityVertex.make(createVertexDTO(pbDiTree.getRoot())),
                 parseVertices(pbDiTree.getVertexMapList(), pbDiTree.getVertexMapCount()),
@@ -371,13 +361,13 @@ public final class ProtocolBuffersEntityFactory {
                 parsePredecessors(pbDiTree.getPredecesorMapList()));
     }
 
-    private static ImmutableIntList parseRootSequences(PBDiGraph pbDiGraph){
+    public ImmutableIntList parseRootSequences(PBDiGraph pbDiGraph){
         MutableIntList rootSequences = new IntArrayList(pbDiGraph.getRootSequenceCount());
         pbDiGraph.getRootSequenceList().forEach(rootSequences::add);
         return rootSequences.toImmutable();
     }
 
-    private static ImmutableIntObjectMap<ImmutableIntList> parseSuccessors(List<PBIntToMultipleIntMap> successorMapList){
+    public ImmutableIntObjectMap<ImmutableIntList> parseSuccessors(List<PBIntToMultipleIntMap> successorMapList){
         MutableIntObjectMap<ImmutableIntList> mutableIntObjectMap = new IntObjectHashMap<>();
         successorMapList.forEach(pbIntToMultipleIntMap -> {
             MutableIntList mutableIntList = new IntArrayList();
@@ -387,19 +377,19 @@ public final class ProtocolBuffersEntityFactory {
         return mutableIntObjectMap.toImmutable();
     }
 
-    private static ImmutableIntIntMap parsePredecessors(List<PBIntToIntMap> predecesorMapList) {
+    public ImmutableIntIntMap parsePredecessors(List<PBIntToIntMap> predecesorMapList) {
         MutableIntIntMap mutableIntIntMap = new IntIntHashMap();
         predecesorMapList.forEach(pbIntToIntMap -> mutableIntIntMap.put(pbIntToIntMap.getSource(), pbIntToIntMap.getTarget()));
         return mutableIntIntMap.toImmutable();
     }
 
-    private static ImmutableList<EntityVertex> parseVertices(List<PBVertex> pbVertices, int pbVertexCount){
+    public ImmutableList<EntityVertex> parseVertices(List<PBVertex> pbVertices, int pbVertexCount){
         MutableList<EntityVertex> vertexMap = Lists.mutable.ofInitialCapacity(pbVertexCount);
         pbVertices.forEach(pbVertex -> vertexMap.add(EntityVertex.make(createVertexDTO(pbVertex))));
         return vertexMap.toImmutable();
     }
 
-    private static VertexDTO createVertexDTO(PBVertex pbVertex){
+    public VertexDTO createVertexDTO(PBVertex pbVertex){
         PublicId1 vertexID = processPBVertexID(pbVertex.getVertexId());
         MutableMap<ConceptDTO, Object> properties = Maps.mutable.ofInitialCapacity(pbVertex.getPropertiesCount());
         pbVertex.getPropertiesList().forEach(property -> properties.put(

@@ -10,7 +10,12 @@ import org.hl7.tinkar.common.service.Executor;
 import org.hl7.tinkar.common.service.NidGenerator;
 import org.hl7.tinkar.common.service.PrimitiveDataSearchResult;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
+import org.hl7.tinkar.common.sets.ConcurrentHashSet;
 import org.hl7.tinkar.common.util.ints2long.IntsInLong;
+import org.hl7.tinkar.entity.ConceptEntity;
+import org.hl7.tinkar.entity.PatternEntity;
+import org.hl7.tinkar.entity.SemanticEntity;
+import org.hl7.tinkar.entity.StampEntity;
 import org.hl7.tinkar.provider.search.Indexer;
 import org.hl7.tinkar.provider.search.Searcher;
 import org.slf4j.Logger;
@@ -44,6 +49,10 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     final Searcher searcher;
 
     private final ConcurrentHashMap<Integer, byte[]> nidComponentMap = ConcurrentHashMap.newMap();
+    final ConcurrentHashSet<Integer> patternNids = new ConcurrentHashSet();
+    final ConcurrentHashSet<Integer> conceptNids = new ConcurrentHashSet();
+    final ConcurrentHashSet<Integer> semanticNids = new ConcurrentHashSet();
+    final ConcurrentHashSet<Integer> stampNids = new ConcurrentHashSet();
     private final ConcurrentHashMap<UUID, Integer> uuidNidMap = new ConcurrentHashMap<>();
     private final AtomicInteger nextNid = new AtomicInteger(PrimitiveDataService.FIRST_NID);
 
@@ -132,6 +141,15 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
                 }
             }
         }
+        if (sourceObject instanceof ConceptEntity concept) {
+            this.conceptNids.add(concept.nid());
+        } else if (sourceObject instanceof SemanticEntity semanticEntity) {
+            this.semanticNids.add(semanticEntity.nid());
+        } else if (sourceObject instanceof PatternEntity patternEntity) {
+            this.patternNids.add(patternEntity.nid());
+        } else if (sourceObject instanceof StampEntity stampEntity) {
+            this.stampNids.add(stampEntity.nid());
+        }
         byte[] mergedBytes = nidComponentMap.merge(nid, value, PrimitiveDataService::merge);
         writeSequence.increment();
         indexer.index(sourceObject);
@@ -154,22 +172,22 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
 
     @Override
     public void forEachPatternNid(IntProcedure procedure) {
-        throw new UnsupportedOperationException();
+        this.patternNids.forEach(procedure::accept);
     }
 
     @Override
     public void forEachConceptNid(IntProcedure procedure) {
-        throw new UnsupportedOperationException();
+        this.conceptNids.forEach(procedure::accept);
     }
 
     @Override
     public void forEachStampNid(IntProcedure procedure) {
-        throw new UnsupportedOperationException();
+        this.stampNids.forEach(procedure::accept);
     }
 
     @Override
     public void forEachSemanticNid(IntProcedure procedure) {
-        throw new UnsupportedOperationException();
+        this.semanticNids.forEach(procedure::accept);
     }
 
     @Override

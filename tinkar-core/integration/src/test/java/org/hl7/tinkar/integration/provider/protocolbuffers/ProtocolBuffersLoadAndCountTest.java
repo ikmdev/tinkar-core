@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 @Test
-public class ProtocolBuffersLoadAndCountTest{
+public class ProtocolBuffersLoadAndCountTest {
 
     private static Logger LOG = Logger.getLogger(ProtocolBuffersLoadAndCountTest.class.getName());
 
