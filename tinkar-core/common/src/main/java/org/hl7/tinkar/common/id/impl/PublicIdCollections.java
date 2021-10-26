@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -423,17 +424,13 @@ public class PublicIdCollections {
         public static final PublicIdList EMPTY_LIST = new PublicIdCollections.ListN<>();
 
         
-        private final E[] elements;
+//        private final E[] elements;
+        private final List<E> elements;
 
         @SafeVarargs
         public ListN(E... input) {
-            // copy and check manually to avoid TOCTOU
-            @SuppressWarnings("unchecked")
-            E[] tmp = (E[])new Object[input.length]; // implicit nullcheck of input
-            for (int i = 0; i < input.length; i++) {
-                tmp[i] = Objects.requireNonNull(input[i]);
-            }
-            elements = tmp;
+            elements = new ArrayList<>(input.length);
+            elements.addAll(Arrays.asList(input));
         }
 
         @Override
@@ -443,12 +440,12 @@ public class PublicIdCollections {
 
         @Override
         public int size() {
-            return elements.length;
+            return elements.size();
         }
 
         @Override
         public E get(int index) {
-            return elements[index];
+            return elements.get(index);
         }
 
                 @Override
@@ -462,7 +459,7 @@ public class PublicIdCollections {
 
                 @Override
                 public PublicId[] toIdArray() {
-                    return elements;
+                    return elements.toArray(new PublicId[0]);
                 }
 
                 @Override
