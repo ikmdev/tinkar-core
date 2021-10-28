@@ -131,6 +131,38 @@ public class ProtocolBuffersToEntityTransform implements EntityTransform<PBTinka
         }
     }
 
+    public SemanticEntity<SemanticEntityVersion> createSemanticEntity(PBSemantic pbSemantic){
+        PublicId semanticPublicId = createPublicId(pbSemantic.getPublicId());
+        PublicId patternPublicId = createPublicId(pbSemantic.getPatternForSemantic());
+        PublicId referencedComponentPublicId = createPublicId(pbSemantic.getReferencedComponent());
+        int patternNid = EntityService.get().nidForPublicId(patternPublicId);
+        int referencedComponentNid = EntityService.get().nidForPublicId(referencedComponentPublicId);
+        if(semanticPublicId.uuidCount() > 0) {
+            int semanticNid = EntityService.get().nidForPublicId(semanticPublicId);
+            if (semanticPublicId.uuidCount() > 1) {
+                return SemanticRecordBuilder.builder()
+                        .leastSignificantBits(semanticPublicId.asUuidArray()[0].getLeastSignificantBits())
+                        .mostSignificantBits(semanticPublicId.asUuidArray()[0].getMostSignificantBits())
+                        .additionalUuidLongs(UuidUtil.asArray(Arrays.copyOfRange(semanticPublicId.asUuidArray(),
+                                1, semanticPublicId.uuidCount())))
+                        .nid(semanticNid)
+                        .patternNid(patternNid)
+                        .referencedComponentNid(referencedComponentNid)
+                        .build();
+            } else {
+                return SemanticRecordBuilder.builder()
+                        .leastSignificantBits(semanticPublicId.asUuidArray()[0].getLeastSignificantBits())
+                        .mostSignificantBits(semanticPublicId.asUuidArray()[0].getMostSignificantBits())
+                        .nid(semanticNid)
+                        .patternNid(patternNid)
+                        .referencedComponentNid(referencedComponentNid)
+                        .build();
+            }
+        }else {
+            throw new IllegalStateException("missing primordial UUID");
+        }
+    }
+
     public SemanticEntity<SemanticEntityVersion> createSemanticEntity(PBSemanticChronology pbSemanticChronology){
         PublicId semanticPublicId = createPublicId(pbSemanticChronology.getPublicId());
         PublicId patternPublicId = createPublicId(pbSemanticChronology.getPatternForSemantic());
@@ -156,6 +188,30 @@ public class ProtocolBuffersToEntityTransform implements EntityTransform<PBTinka
                         .nid(semanticNid)
                         .patternNid(patternNid)
                         .referencedComponentNid(referencedComponentNid)
+                        .build();
+            }
+        }else {
+            throw new IllegalStateException("missing primordial UUID");
+        }
+    }
+
+    public PatternEntity<PatternEntityVersion> createPatternEntity(PBPattern pbPattern){
+        PublicId patternPublicId = createPublicId(pbPattern.getPublicId());
+        int patternNid = EntityService.get().nidForPublicId(patternPublicId);
+        if(patternPublicId.uuidCount() > 0) {
+            if (patternPublicId.uuidCount() > 1) {
+                return PatternRecordBuilder.builder()
+                        .leastSignificantBits(patternPublicId.asUuidArray()[0].getLeastSignificantBits())
+                        .mostSignificantBits(patternPublicId.asUuidArray()[0].getMostSignificantBits())
+                        .nid(patternNid)
+                        .additionalUuidLongs(UuidUtil.asArray(Arrays.copyOfRange(patternPublicId.asUuidArray(),
+                                1, patternPublicId.uuidCount())))
+                        .build();
+            } else {
+                return PatternRecordBuilder.builder()
+                        .leastSignificantBits(patternPublicId.asUuidArray()[0].getLeastSignificantBits())
+                        .mostSignificantBits(patternPublicId.asUuidArray()[0].getMostSignificantBits())
+                        .nid(patternNid)
                         .build();
             }
         }else {

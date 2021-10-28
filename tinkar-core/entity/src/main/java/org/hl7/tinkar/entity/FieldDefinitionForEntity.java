@@ -91,4 +91,12 @@ public class FieldDefinitionForEntity
                 PrimitiveData.text(meaningNid) +
                 '}';
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        FieldDefinitionForEntity that = (FieldDefinitionForEntity) o;
+        return dataTypeNid == that.dataTypeNid && meaningNid == that.meaningNid && purposeNid == that.purposeNid;
+    }
 }

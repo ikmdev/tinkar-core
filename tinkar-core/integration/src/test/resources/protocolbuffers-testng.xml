@@ -3,7 +3,7 @@
     <test name="Load and Count">
         <classes>
             <class name="org.hl7.tinkar.integration.provider.protocolbuffers.ProtocolBuffersLoadAndCountTest"/>
-<!--            <class name="org.hl7.tinkar.integration.provider.protocolbuffers.ProtocolBuffersExportTest"></class>-->
+            <class name="org.hl7.tinkar.integration.provider.protocolbuffers.ProtocolBuffersExportTest"></class>
         </classes>
     </test>
 </suite>
