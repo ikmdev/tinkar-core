@@ -1,8 +1,8 @@
-package org.hl7.tinkar.integration.provider.ephemeral;
+package org.hl7.tinkar.integration.provider.protocolbuffers;
 
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.service.ServiceProperties;
-import org.hl7.tinkar.entity.load.LoadEntitiesFromDtoFile;
+import org.hl7.tinkar.entity.load.LoadEntitiesFromProtocolBuffersFile;
 import org.hl7.tinkar.entity.util.EntityCounter;
 import org.hl7.tinkar.entity.util.EntityProcessor;
 import org.hl7.tinkar.entity.util.EntityRealizer;
@@ -16,16 +16,17 @@ import java.io.IOException;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class TestEphemeralProvider {
-    private static final Logger LOG = LoggerFactory.getLogger(TestEphemeralProvider.class);
+class TestProtocolBuffersLoadAndCount {
+
+    private static final Logger LOG = LoggerFactory.getLogger(TestProtocolBuffersLoadAndCount.class);
 
     @BeforeAll
     static void setupSuite() {
-        LOG.info("Setup Ephemeral Suite: " + LOG.getName());
+        LOG.info("Setup: " + LOG.getName());
         LOG.info(ServiceProperties.jvmUuid());
         PrimitiveData.selectControllerByName(TestConstants.EPHEMERAL_STORE_NAME);
         /*
-         Loaded during loadChronologies() test part... Add back in if you want automatic load during setup.
+         Loaded during loadProtocolBuffersFile() test part... Add back in if you want automatic load during setup.
 
          PrimitiveData.getController().setDataUriOption(
                 new DataUriOption(TestConstants.TINK_TEST_FILE.getName(), TestConstants.TINK_TEST_FILE.toURI()));
@@ -35,39 +36,49 @@ class TestEphemeralProvider {
 
     @AfterAll
     static void teardownSuite() {
-        LOG.info("Teardown Suite: " + LOG.getName());
+        LOG.info("Teardown: " + LOG.getName());
         PrimitiveData.stop();
+    }
+
+    @BeforeEach
+    public void beforeTest() {
+        LOG.info("Before Test: " + this.getClass().getSimpleName());
+    }
+
+    @AfterEach
+    public void afterTest() {
+        LOG.info("After Test: " + this.getClass().getSimpleName());
     }
 
     @Test
     @Order(1)
-    public void loadChronologies() throws IOException {
-        File file = TestConstants.TINK_TEST_FILE;
-        LoadEntitiesFromDtoFile loadTink = new LoadEntitiesFromDtoFile(file);
+    public void loadProtocolBuffersFile() throws IOException {
+        LOG.info(ServiceProperties.jvmUuid());
+        File file = TestConstants.PB_TEST_FILE;
+        LoadEntitiesFromProtocolBuffersFile loadTink = new LoadEntitiesFromProtocolBuffersFile(file);
         int count = loadTink.compute();
-        LOG.info(count + " entitles loaded from file: " + loadTink.report() + "\n\n");
+        LOG.info(count + " entitles loaded from file \n\n");
     }
 
     @Test
-    @Order(2)
-    public void count() {
+    public void countProtocolBufferEntities() {
         EntityProcessor processor = new EntityCounter();
         PrimitiveData.get().forEach(processor);
-        LOG.info("EPH Sequential count: \n" + processor.report() + "\n\n");
+        LOG.info("EPH PB Sequential count: \n" + processor.report() + "\n\n");
         processor = new EntityCounter();
         PrimitiveData.get().forEachParallel(processor);
-        LOG.info("EPH Parallel count: \n" + processor.report() + "\n\n");
+        LOG.info("EPH PB Parallel count: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
         PrimitiveData.get().forEach(processor);
-        LOG.info("EPH Sequential realization: \n" + processor.report() + "\n\n");
+        LOG.info("EPH PB Sequential realization: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
         PrimitiveData.get().forEachParallel(processor);
-        LOG.info("EPH Parallel realization: \n" + processor.report() + "\n\n");
+        LOG.info("EPH PB Parallel realization: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
         PrimitiveData.get().forEach(processor);
-        LOG.info("EPH Sequential realization: \n" + processor.report() + "\n\n");
+        LOG.info("EPH PB Sequential realization: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
         PrimitiveData.get().forEachParallel(processor);
-        LOG.info("EPH Parallel realization: \n" + processor.report() + "\n\n");
+        LOG.info("EPH PB Parallel realization: \n" + processor.report() + "\n\n");
     }
 }

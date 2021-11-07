@@ -27,6 +27,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TestProtocolBuffers {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestProtocolBuffers.class);
@@ -123,7 +124,7 @@ public class TestProtocolBuffers {
     }
 
     @Test
-    @Order(2)
+    @Order(3)
     public void count() {
         EntityProcessor processor = new EntityCounter();
         PrimitiveData.get().forEach(processor);
@@ -143,12 +144,6 @@ public class TestProtocolBuffers {
         processor = new EntityRealizer();
         PrimitiveData.get().forEachParallel(processor);
         LOG.info("EPH PB Parallel realization: \n" + processor.report() + "\n\n");
-    }
-
-    @Test
-    @Disabled
-    public void exportPBFile() throws IOException {
-
     }
 
 }

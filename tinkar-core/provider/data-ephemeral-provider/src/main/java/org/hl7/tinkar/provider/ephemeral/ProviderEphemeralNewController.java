@@ -12,12 +12,13 @@ import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.logging.Logger;
 
 @AutoService(DataServiceController.class)
 public class ProviderEphemeralNewController implements DataServiceController<PrimitiveDataService> {
 
     public static String CONTROLLER_NAME = "Load Ephemeral Store";
-
+    private static Logger LOG = Logger.getLogger(ProviderEphemeralNewController.class.getName());
     private DataUriOption dataUriOption;
 
     public List<DataUriOption> providerOptions() {
