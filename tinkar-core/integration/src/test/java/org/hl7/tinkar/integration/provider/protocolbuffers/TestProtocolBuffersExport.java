@@ -3,7 +3,7 @@ package org.hl7.tinkar.integration.provider.protocolbuffers;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.service.ServiceProperties;
 import org.hl7.tinkar.entity.export.ExportEntitiesToProtocolBuffers;
-import org.hl7.tinkar.entity.load.LoadEntitiesFromDtoFile;
+import org.hl7.tinkar.entity.load.LoadEntitiesFromProtocolBuffersFile;
 import org.hl7.tinkar.integration.TestConstants;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
@@ -28,7 +28,7 @@ class TestProtocolBuffersExport {
          Loaded during loadEntities() test part... Add back in if you want automatic load during setup.
 
          PrimitiveData.getController().setDataUriOption(
-                new DataUriOption(TestConstants.TINK_TEST_FILE.getName(), TestConstants.TINK_TEST_FILE.toURI()));
+                new DataUriOption(TestConstants.PB_TEST_FILE.getName(), TestConstants.PB_TEST_FILE.toURI()));
          */
         PrimitiveData.start();
     }
@@ -40,26 +40,27 @@ class TestProtocolBuffersExport {
     }
 
     @BeforeEach
-    private void beforeTest() {
+    public void beforeTest() {
         LOG.info("Before Test: " + this.getClass().getSimpleName());
     }
 
     @AfterEach
-    private void afterTest() {
+    public void afterTest() {
         LOG.info("After Test: " + this.getClass().getSimpleName());
     }
 
     @Test
     @Order(1)
-    private void loadEntities() throws IOException {
+    public void loadEntities() throws IOException {
         File file = TestConstants.PB_TEST_FILE;
-        LoadEntitiesFromDtoFile loadTink = new LoadEntitiesFromDtoFile(file);
+        LoadEntitiesFromProtocolBuffersFile loadTink = new LoadEntitiesFromProtocolBuffersFile(file);
         int count = loadTink.compute();
-        LOG.info(count + "entities loaded from file. " + loadTink.report() + "\n\n");
+        LOG.info(count + "entities loaded from file. \n\n");
     }
 
     @Test
-    private void exportEntities() throws IOException {
+    @Order(2)
+    public void exportEntities() throws IOException {
         ExportEntitiesToProtocolBuffers exportEntities =
                 new ExportEntitiesToProtocolBuffers(Path.of(TestConstants.PB_EXPORT_TEST_FILE.toURI()));
         exportEntities.compute();

@@ -29,7 +29,7 @@ class TestProtocolBuffersLoadAndCount {
          Loaded during loadProtocolBuffersFile() test part... Add back in if you want automatic load during setup.
 
          PrimitiveData.getController().setDataUriOption(
-                new DataUriOption(TestConstants.TINK_TEST_FILE.getName(), TestConstants.TINK_TEST_FILE.toURI()));
+                new DataUriOption(TestConstants.PB_TEST_FILE.getName(), TestConstants.PB_TEST_FILE.toURI()));
          */
         PrimitiveData.start();
     }
