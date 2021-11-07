@@ -117,6 +117,14 @@ public class Transaction implements Comparable<Transaction> {
         return optionalStamp.get();
     }
 
+    public StampEntity getStamp(State state, ConceptFacade author, ConceptFacade module, ConceptFacade path) {
+        return getStamp(state, Long.MAX_VALUE, author.publicId(), module.publicId(), path.publicId());
+    }
+
+    public StampEntity getStamp(State state, int authorNid, int moduleNid, int pathNid) {
+        return getStamp(state, Long.MAX_VALUE, authorNid, moduleNid, pathNid);
+    }
+
     /**
      * Time can be Long.MAX_VALUE, and will be set at commit time, or Time can be a
      * time in the past, and on commit, time is preserved. This strategy allows transactions to

@@ -8,7 +8,7 @@ import org.hl7.tinkar.component.Chronology;
 import org.hl7.tinkar.component.ChronologyService;
 import org.hl7.tinkar.component.Component;
 import org.hl7.tinkar.component.Version;
-import org.hl7.tinkar.entity.internal.EntityServiceGetter;
+import org.hl7.tinkar.entity.internal.EntityServiceFinder;
 import org.hl7.tinkar.terms.ComponentWithNid;
 import org.hl7.tinkar.terms.EntityFacade;
 
@@ -18,7 +18,7 @@ import java.util.function.Consumer;
 
 public interface EntityService extends ChronologyService, Flow.Publisher<Entity<? extends EntityVersion>> {
     static EntityService get() {
-        return EntityServiceGetter.INSTANCE.get();
+        return EntityServiceFinder.INSTANCE.get();
     }
 
     @Override

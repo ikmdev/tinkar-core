@@ -10,36 +10,36 @@ import org.hl7.tinkar.entity.util.EntityCounter;
 import org.hl7.tinkar.entity.util.EntityProcessor;
 import org.hl7.tinkar.entity.util.EntityRealizer;
 import org.hl7.tinkar.integration.TestConstants;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.logging.Logger;
 
-public class SpinedArrayProviderTest {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+class TestSpinedArrayProvider {
+    private static final Logger LOG = LoggerFactory.getLogger(TestSpinedArrayProvider.class);
 
-    private static Logger LOG = Logger.getLogger(SpinedArrayProviderTest.class.getName());
-
-    @BeforeSuite
-    public void setupSuite() {
-        LOG.info("setupSuite: " + this.getClass().getSimpleName());
+    @BeforeAll
+    static void setupSuite() {
+        LOG.info("Setup Suite: " + LOG.getName());
         LOG.info(ServiceProperties.jvmUuid());
         ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, TestConstants.SAP_ROOT);
         PrimitiveData.selectControllerByName(TestConstants.SA_STORE_OPEN_NAME);
         PrimitiveData.start();
     }
 
-
-    @AfterSuite
-    public void teardownSuite() {
-        LOG.info("teardownSuite");
+    @AfterAll
+    static void teardownSuite() {
+        LOG.info("Teardown Suite: " + LOG.getName());
         PrimitiveData.stop();
     }
 
     @Test
+    @Order(1)
     public void loadChronologies() throws IOException {
         File file = TestConstants.TINK_TEST_FILE;
         LoadEntitiesFromDtoFile loadTink = new LoadEntitiesFromDtoFile(file);
@@ -47,7 +47,7 @@ public class SpinedArrayProviderTest {
         LOG.info("Loaded. " + loadTink.report());
     }
 
-    @Test(dependsOnMethods = {"loadChronologies"})
+    @Test
     public void count() {
         if (!PrimitiveData.running()) {
             LOG.info("Reloading SAPtoreProvider");
@@ -82,7 +82,7 @@ public class SpinedArrayProviderTest {
         LOG.info("SAP Parallel realization: \n" + processor.report() + "\n\n");
     }
 
-    @Test(dependsOnMethods = {"loadChronologies"})
+    @Test
     public void openAndClose() {
         if (PrimitiveData.running()) {
             Stopwatch closingStopwatch = new Stopwatch();
@@ -114,4 +114,5 @@ public class SpinedArrayProviderTest {
         LOG.info("SAP Parallel realization: \n" + processor.report() + "\n\n");
         PrimitiveData.get().close();
     }
+
 }

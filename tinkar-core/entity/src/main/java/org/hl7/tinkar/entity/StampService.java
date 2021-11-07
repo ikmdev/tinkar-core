@@ -6,7 +6,7 @@ import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.MutableSet;
 import org.hl7.tinkar.common.id.IntIdSet;
 import org.hl7.tinkar.common.service.PrimitiveData;
-import org.hl7.tinkar.entity.internal.StampServiceGetter;
+import org.hl7.tinkar.entity.internal.StampServiceFinder;
 import org.hl7.tinkar.entity.util.StampRealizer;
 import org.hl7.tinkar.terms.ConceptFacade;
 import org.hl7.tinkar.terms.EntityProxy;
@@ -14,10 +14,12 @@ import org.hl7.tinkar.terms.EntityProxy;
 public interface StampService {
 
     static StampService get() {
-        return StampServiceGetter.INSTANCE.get();
+        return StampServiceFinder.INSTANCE.get();
     }
+
     /**
      * Very inefficient. Please override.
+     *
      * @return IntIdSet of the stamp nids.
      */
     default IntIdSet getStampNids() {
@@ -26,35 +28,35 @@ public interface StampService {
         return stampRealizer.stampNids();
     }
 
-    IntIdSet getAuthorNidsInUse();
-
     default ImmutableSet<ConceptFacade> getAuthorsInUse() {
         MutableSet<ConceptFacade> authors = Sets.mutable.empty();
-        for (int authorNid: getAuthorNidsInUse().toArray()) {
+        for (int authorNid : getAuthorNidsInUse().toArray()) {
             authors.add(EntityProxy.Concept.make(authorNid));
         }
         return authors.toImmutable();
     }
 
-    IntIdSet getModuleNidsInUse();
+    IntIdSet getAuthorNidsInUse();
 
     default ImmutableSet<ConceptFacade> getModulesInUse() {
         MutableSet<ConceptFacade> modules = Sets.mutable.empty();
-        for (int moduleNid: getModuleNidsInUse().toArray()) {
+        for (int moduleNid : getModuleNidsInUse().toArray()) {
             modules.add(EntityProxy.Concept.make(moduleNid));
         }
         return modules.toImmutable();
     }
 
-    IntIdSet getPathNidsInUse();
+    IntIdSet getModuleNidsInUse();
 
     default ImmutableSet<ConceptFacade> getPathsInUse() {
         MutableSet<ConceptFacade> paths = Sets.mutable.empty();
-        for (int pathNid: getPathNidsInUse().toArray()) {
+        for (int pathNid : getPathNidsInUse().toArray()) {
             paths.add(EntityProxy.Concept.make(pathNid));
         }
         return paths.toImmutable();
     }
+
+    IntIdSet getPathNidsInUse();
 
     ImmutableLongList getTimesInUse();
 

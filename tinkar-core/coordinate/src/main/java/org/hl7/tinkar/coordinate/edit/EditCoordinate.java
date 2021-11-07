@@ -65,6 +65,7 @@ public interface EditCoordinate {
         Entity.provider().addSortedUuids(uuidList, getAuthorNidForChanges());
         Entity.provider().addSortedUuids(uuidList, getDefaultModuleNid());
         Entity.provider().addSortedUuids(uuidList, getDestinationModuleNid());
+        Entity.provider().addSortedUuids(uuidList, getDefaultPathNid());
         Entity.provider().addSortedUuids(uuidList, getPromotionPathNid());
         StringBuilder b = new StringBuilder();
         b.append(uuidList.toString());
@@ -92,6 +93,13 @@ public interface EditCoordinate {
      * @return the nid of the destination module concept
      */
     int getDestinationModuleNid();
+
+    /**
+     * The path that new content is created on
+     *
+     * @return the nid of the promotion concept
+     */
+    int getDefaultPathNid();
 
     /**
      * The promotion path is the path that existing content is moved to when Promoting
@@ -126,6 +134,15 @@ public interface EditCoordinate {
     EditCoordinateImmutable toEditCoordinateImmutable();
 
     /**
+     * The path that new content is created on
+     *
+     * @return the promotion concept
+     */
+    default ConceptFacade getDefaultPath() {
+        return Entity.getFast(getDefaultPathNid());
+    }
+
+    /**
      * The promotion path is the path that existing content is moved to when Promoting
      *
      * @return the promotion concept
@@ -139,6 +156,7 @@ public interface EditCoordinate {
         sb.append("author: ").append(PrimitiveData.text(getAuthorNidForChanges())).append("\n");
         sb.append("default module: ").append(PrimitiveData.text(getDefaultModuleNid())).append("\n");
         sb.append("destination module: ").append(PrimitiveData.text(getDestinationModuleNid())).append("\n");
+        sb.append("default path: ").append(PrimitiveData.text(getDefaultPathNid())).append("\n");
         sb.append("promotion path: ").append(PrimitiveData.text(getPromotionPathNid())).append("\n");
         return sb.toString();
     }

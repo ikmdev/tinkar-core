@@ -42,14 +42,14 @@ public record PatternVersionRecord(PatternEntity<PatternEntityVersion> chronolog
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("{");
+        sb.append("≤");
         sb.append(Entity.getStamp(stampNid).describe());
 
         sb.append(" rcp: ");
         sb.append(PrimitiveData.text(semanticPurposeNid));
         sb.append(" rcm: ");
         sb.append(PrimitiveData.text(semanticMeaningNid));
-        sb.append(" f: [");
+        sb.append(" f: [‹]");
         // TODO get proper version after relative position computer available.
         // Maybe put stamp coordinate on thread, or relative position computer on thread
         for (int i = 0; i < fieldDefinitions().size(); i++) {
@@ -61,7 +61,7 @@ public record PatternVersionRecord(PatternEntity<PatternEntityVersion> chronolog
             FieldDefinitionForEntity fieldDefinitionForEntity = fieldDefinitions().get(i);
             sb.append(fieldDefinitionForEntity);
         }
-        sb.append("]}");
+        sb.append("]≥");
 
         return sb.toString();
     }

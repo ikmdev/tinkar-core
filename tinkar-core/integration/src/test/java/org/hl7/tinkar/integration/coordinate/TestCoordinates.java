@@ -19,21 +19,22 @@ import org.hl7.tinkar.coordinate.view.calculator.ViewCalculator;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.integration.TestConstants;
 import org.hl7.tinkar.terms.TinkarTerm;
-import org.testng.Assert;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
-import java.util.logging.Logger;
 
 import static org.hl7.tinkar.terms.TinkarTerm.PATH_ORIGINS_PATTERN;
 
-class CoordinatesTest {
-    private static Logger LOG = Logger.getLogger(CoordinatesTest.class.getName());
+class TestCoordinates {
+    private static final Logger LOG = LoggerFactory.getLogger(TestCoordinates.class);
 
-    @BeforeSuite
-    public void setupSuite() {
-        LOG.info("setupSuite: " + this.getClass().getSimpleName());
+    @BeforeAll
+    static void setupSuite() {
+        LOG.info("Setup Suite: " + LOG.getName());
         LOG.info(ServiceProperties.jvmUuid());
         ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, TestConstants.MVSTORE_ROOT);
         PrimitiveData.selectControllerByName(TestConstants.MV_STORE_OPEN_NAME);
@@ -42,7 +43,7 @@ class CoordinatesTest {
 
     @Test
     void countPathOrigins() {
-        Assert.assertEquals(PrimitiveData.get().semanticNidsOfPattern(PATH_ORIGINS_PATTERN.nid()).length, 3);
+        Assertions.assertEquals(PrimitiveData.get().semanticNidsOfPattern(PATH_ORIGINS_PATTERN.nid()).length, 3);
     }
 
     @Test
@@ -138,5 +139,4 @@ class CoordinatesTest {
         sb.append("]\n");
         LOG.info(sb.toString());
     }
-
 }

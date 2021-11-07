@@ -4,6 +4,7 @@
  * and open the template in the editor.
  */
 
+import org.hl7.tinkar.common.alert.AlertReportingService;
 import org.hl7.tinkar.common.service.*;
 
 @SuppressWarnings("module")
@@ -32,9 +33,11 @@ module org.hl7.tinkar.common {
     exports org.hl7.tinkar.common.util.uuid;
     exports org.hl7.tinkar.common.validation;
     exports org.hl7.tinkar.common.sets;
+    exports org.hl7.tinkar.common.flow;
 
     provides CachingService with ServiceProperties, PrimitiveData;
 
+    uses AlertReportingService;
     uses CachingService;
     uses DataServiceController;
     uses DefaultDescriptionForNidService;

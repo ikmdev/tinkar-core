@@ -1,6 +1,5 @@
 package org.hl7.tinkar.common.alert;
 
-import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.operators.multi.processors.BroadcastProcessor;
 import org.reactivestreams.FlowAdapters;
 
@@ -22,17 +21,15 @@ import java.util.concurrent.Flow;
  * Each node has a set of resolvers that can be automatically or manually applied.
  */
 public class AlertStream implements Flow.Processor<AlertObject, AlertObject> {
-    final Multi<AlertObject> alertStream;
     final BroadcastProcessor<AlertObject> processor;
 
     public AlertStream() {
         this.processor = BroadcastProcessor.create();
-        this.alertStream = processor.toHotStream();
     }
 
     @Override
     public void subscribe(Flow.Subscriber<? super AlertObject> subscriber) {
-        alertStream.subscribe().withSubscriber(FlowAdapters.toSubscriber(subscriber));
+        this.processor.subscribe().withSubscriber(FlowAdapters.toSubscriber(subscriber));
     }
 
     public void dispatch(AlertObject alertObject) {

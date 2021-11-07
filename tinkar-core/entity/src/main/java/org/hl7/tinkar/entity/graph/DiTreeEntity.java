@@ -168,10 +168,16 @@ public class DiTreeEntity<V extends EntityVertex> extends DiGraphAbstract<V> imp
         }
 
         public Builder<V> addVertex(V vertex) {
-            if (vertex.vertexIndex() > 0 &&
-                    vertex.vertexIndex() < vertexMap.size() &&
-                    vertexMap.get(vertex.vertexIndex()) == vertex) {
-                // already in the list.
+            if (vertex.vertexIndex() > -1) {
+                if (vertex.vertexIndex() < vertexMap.size() &&
+                        vertex == vertexMap.get(vertex.vertexIndex())) {
+                    // already in the list.
+                } else {
+                    while (vertexMap.size() <= vertex.vertexIndex()) {
+                        vertexMap.add(null);
+                    }
+                    vertexMap.set(vertex.vertexIndex(), vertex);
+                }
             } else {
                 vertex.setVertexIndex(vertexMap.size());
                 vertexMap.add(vertex.vertexIndex(), vertex);
@@ -180,10 +186,8 @@ public class DiTreeEntity<V extends EntityVertex> extends DiGraphAbstract<V> imp
         }
 
         public Builder<V> addEdge(V child, V parent) {
-            if (child.vertexIndex() < 1) {
-                addVertex(child);
-            }
-            vertexMap.add(child.vertexIndex(), child);
+            addVertex(child);
+            addVertex(parent);
             if (!successorMap.containsKey(parent.vertexIndex())) {
                 successorMap.put(parent.vertexIndex(), IntLists.mutable.empty());
             }

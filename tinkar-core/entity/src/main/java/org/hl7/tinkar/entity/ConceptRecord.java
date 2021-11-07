@@ -1,12 +1,15 @@
 package org.hl7.tinkar.entity;
 
 import io.soabase.recordbuilder.core.RecordBuilder;
+import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.common.id.PublicId;
+import org.hl7.tinkar.common.service.PrimitiveData;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.UUID;
 
 @RecordBuilder
 public record ConceptRecord(
@@ -14,6 +17,17 @@ public record ConceptRecord(
         long[] additionalUuidLongs, int nid,
         MutableList<ConceptEntityVersion> versionRecords)
         implements ConceptEntity<ConceptEntityVersion>, ConceptRecordBuilder.With {
+
+    public static ConceptRecord build(UUID conceptUuid, StampEntityVersion stampVersion) {
+        MutableList<ConceptEntityVersion> versionRecords = Lists.mutable.withInitialCapacity(1);
+        ConceptRecord conceptRecord = ConceptRecordBuilder.builder()
+                .leastSignificantBits(conceptUuid.getLeastSignificantBits())
+                .mostSignificantBits(conceptUuid.getMostSignificantBits())
+                .nid(PrimitiveData.nid(conceptUuid))
+                .versionRecords(versionRecords).build();
+        versionRecords.add(new ConceptVersionRecord(conceptRecord, stampVersion.stampNid()));
+        return conceptRecord;
+    }
 
     @Override
     public byte[] getBytes() {

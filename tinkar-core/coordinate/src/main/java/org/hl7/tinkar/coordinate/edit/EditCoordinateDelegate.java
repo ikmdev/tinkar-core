@@ -2,12 +2,12 @@ package org.hl7.tinkar.coordinate.edit;
 
 public interface EditCoordinateDelegate extends EditCoordinate {
 
-    EditCoordinate getEditCoordinate();
-
     @Override
     default int getAuthorNidForChanges() {
         return getEditCoordinate().getAuthorNidForChanges();
     }
+
+    EditCoordinate getEditCoordinate();
 
     @Override
     default int getDefaultModuleNid() {
@@ -20,12 +20,17 @@ public interface EditCoordinateDelegate extends EditCoordinate {
     }
 
     @Override
-    default EditCoordinateImmutable toEditCoordinateImmutable() {
-        return getEditCoordinate().toEditCoordinateImmutable();
+    default int getDefaultPathNid() {
+        return getEditCoordinate().getDefaultPathNid();
     }
 
     @Override
     default int getPromotionPathNid() {
         return getEditCoordinate().getPromotionPathNid();
+    }
+
+    @Override
+    default EditCoordinateImmutable toEditCoordinateImmutable() {
+        return getEditCoordinate().toEditCoordinateImmutable();
     }
 }

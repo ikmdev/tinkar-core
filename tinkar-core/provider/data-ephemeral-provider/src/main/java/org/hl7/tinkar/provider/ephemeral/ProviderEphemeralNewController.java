@@ -1,7 +1,10 @@
 package org.hl7.tinkar.provider.ephemeral;
 
 import com.google.auto.service.AutoService;
-import org.hl7.tinkar.common.service.*;
+import org.hl7.tinkar.common.service.DataServiceController;
+import org.hl7.tinkar.common.service.DataUriOption;
+import org.hl7.tinkar.common.service.LoadDataFromFileController;
+import org.hl7.tinkar.common.service.PrimitiveDataService;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -16,11 +19,6 @@ public class ProviderEphemeralNewController implements DataServiceController<Pri
     public static String CONTROLLER_NAME = "Load Ephemeral Store";
 
     private DataUriOption dataUriOption;
-
-    @Override
-    public String controllerName() {
-        return CONTROLLER_NAME;
-    }
 
     public List<DataUriOption> providerOptions() {
         List<DataUriOption> dataUriOptions = new ArrayList<>();
@@ -47,27 +45,13 @@ public class ProviderEphemeralNewController implements DataServiceController<Pri
     }
 
     @Override
+    public String controllerName() {
+        return CONTROLLER_NAME;
+    }
+
+    @Override
     public Class<? extends PrimitiveDataService> serviceClass() {
         return PrimitiveDataService.class;
-    }
-
-    @Override
-    public void start() {
-        try {
-            ProviderEphemeral.provider();
-            File file = new File(this.dataUriOption.uri());
-            ServiceLoader<LoadDataFromFileController> controllerFinder = ServiceLoader.load(LoadDataFromFileController.class);
-            LoadDataFromFileController loader = controllerFinder.findFirst().get();
-            Future<Integer> loadFuture = (Future<Integer>) loader.load(file);
-            int count = loadFuture.get();
-        } catch (InterruptedException|ExecutionException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public void stop() {
-        ProviderEphemeral.provider().close();
     }
 
     public boolean running() {
@@ -75,6 +59,27 @@ public class ProviderEphemeralNewController implements DataServiceController<Pri
             return false;
         }
         return true;
+    }
+
+    @Override
+    public void start() {
+        try {
+            ProviderEphemeral.provider();
+            if (this.dataUriOption != null) {
+                File file = new File(this.dataUriOption.uri());
+                ServiceLoader<LoadDataFromFileController> controllerFinder = ServiceLoader.load(LoadDataFromFileController.class);
+                LoadDataFromFileController loader = controllerFinder.findFirst().get();
+                Future<Integer> loadFuture = (Future<Integer>) loader.load(file);
+                int count = loadFuture.get();
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void stop() {
+        ProviderEphemeral.provider().close();
     }
 
     @Override

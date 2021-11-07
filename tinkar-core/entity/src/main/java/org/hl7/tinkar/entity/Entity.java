@@ -102,8 +102,10 @@ public interface Entity<T extends EntityVersion>
         sb.append(Arrays.toString(publicId().asUuidArray()));
         sb.append(", ");
         sb.append(entityToStringExtras());
-        sb.append("v: ");
-        sb.append(versions());
+        for (EntityVersion version : versions()) {
+            sb.append("\nv: ").append(version).append(",");
+        }
+        sb.deleteCharAt(sb.length() - 1);
         sb.append('}');
         return sb.toString();
     }

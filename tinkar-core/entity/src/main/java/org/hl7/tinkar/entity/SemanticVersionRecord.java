@@ -38,7 +38,7 @@ public record SemanticVersionRecord(SemanticEntity<SemanticEntityVersion> chrono
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("{");
+        sb.append("≤");
         sb.append(Entity.getStamp(stampNid).describe());
         PatternEntity pattern = Entity.getFast(this.chronology().patternNid());
         if (pattern instanceof PatternRecord patternEntity) {
@@ -49,7 +49,7 @@ public record SemanticVersionRecord(SemanticEntity<SemanticEntityVersion> chrono
             for (int i = 0; i < fields.size(); i++) {
                 sb.append("Field ");
                 sb.append((i + 1));
-                sb.append(": [");
+                sb.append(": ‹");
                 StringBuilder fieldStringBuilder = new StringBuilder();
 
                 Object field = fields.get(i);
@@ -99,7 +99,7 @@ public record SemanticVersionRecord(SemanticEntity<SemanticEntityVersion> chrono
                 } else {
                     sb.append(fieldString);
                 }
-                sb.append("]\n");
+                sb.append("›\n");
 
             }
         } else {
@@ -158,7 +158,7 @@ public record SemanticVersionRecord(SemanticEntity<SemanticEntityVersion> chrono
             }
         }
 
-        sb.append("]}");
+        sb.append("≥");
 
         return sb.toString();
     }

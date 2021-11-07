@@ -3,10 +3,10 @@ package org.hl7.tinkar.provider.entity;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.auto.service.AutoService;
-import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.operators.multi.processors.BroadcastProcessor;
 import io.smallrye.mutiny.subscription.BackPressureFailure;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.hl7.tinkar.common.flow.NoopFlowSubscriber;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.common.service.DefaultDescriptionForNidService;
@@ -29,14 +29,15 @@ import java.util.function.Consumer;
 
 import static org.hl7.tinkar.terms.TinkarTerm.DESCRIPTION_PATTERN;
 
-@AutoService({EntityService.class, PublicIdService.class, DefaultDescriptionForNidService.class})
+//@AutoService({EntityService.class, PublicIdService.class, DefaultDescriptionForNidService.class})
 public class EntityProvider implements EntityService, PublicIdService, DefaultDescriptionForNidService {
 
     private static final Logger LOG = LoggerFactory.getLogger(EntityProvider.class);
     private static final Cache<Integer, String> STRING_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
     private static final Cache<Integer, Entity> ENTITY_CACHE = Caffeine.newBuilder().maximumSize(10240).build();
     private static final Cache<Integer, StampEntity> STAMP_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
-    final Multi<Entity<? extends EntityVersion>> entityStream;
+    // Added to prevent this error if no subscribers: BackPressureFailure: Could not emit item downstream due to lack of requests
+    final NoopFlowSubscriber noopFlowSubscriber;
 
 
     //Multi<Entity<? extends EntityVersion>> chronologyBroadcaster = BroadcastProcessor.create().toHotStream();
@@ -46,15 +47,17 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     /**
      * TODO elegant shutdown of entityStream and others
      */
-    public EntityProvider() {
+    protected EntityProvider() {
         LOG.info("Constructing EntityProvider");
         this.processor = BroadcastProcessor.create();
-        this.entityStream = processor.toHotStream();
+        this.noopFlowSubscriber = new NoopFlowSubscriber();
+        this.subscribe(this.noopFlowSubscriber);
+        this.noopFlowSubscriber.subscription().request(1);
     }
 
     @Override
     public void subscribe(Flow.Subscriber<? super Entity<? extends EntityVersion>> subscriber) {
-        entityStream.subscribe().withSubscriber(FlowAdapters.toSubscriber(subscriber));
+        this.processor.subscribe().withSubscriber(FlowAdapters.toSubscriber(subscriber));
     }
 
     @Override

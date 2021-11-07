@@ -59,7 +59,7 @@ public record StampVersionRecord(StampEntity<StampEntityVersion> chronology,
 
     @Override
     public String toString() {
-        return "sv{" + describe() + "}";
+        return "sv: ≤" + describe() + "≥";
     }
 
     public String describe() {

@@ -42,6 +42,7 @@ public class StampProvider extends EntityProcessor implements StampService, Flow
     final ConcurrentSkipListSet<Integer> modules = new ConcurrentSkipListSet<>();
     final ConcurrentSkipListSet<Integer> paths = new ConcurrentSkipListSet<>();
     final ConcurrentSkipListSet<Integer> stampNids = new ConcurrentSkipListSet<>();
+    Flow.Subscription subscription;
 
     public StampProvider() {
         EntityService.get().subscribe(this);
@@ -92,10 +93,13 @@ public class StampProvider extends EntityProcessor implements StampService, Flow
     @Override
     public void onSubscribe(Flow.Subscription s) {
         LOG.info("Subscribed to Entity Stream");
+        this.subscription = s;
+        this.subscription.request(1);
     }
 
     @Override
     public void onNext(Entity<? extends EntityVersion> entity) {
+        this.subscription.request(1);
         if (entity instanceof StampEntity stampEntity) {
             stamps.put(stampEntity.nid(), stampEntity);
             times.add(stampEntity.time());

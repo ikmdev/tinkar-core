@@ -41,7 +41,7 @@
         <dependency>
             <groupId>io.smallrye.reactive</groupId>
             <artifactId>mutiny</artifactId>
-            <version>0.17.0</version>
+            <version>${io.smallrye.reactive.version}</version>
         </dependency>
     </dependencies>
 </project>

@@ -27,8 +27,7 @@ public class Coordinates {
         public static EditCoordinateImmutable Default() {
             return EditCoordinateImmutable.make(
                     TinkarTerm.USER.nid(), TinkarTerm.SOLOR_OVERLAY_MODULE.nid(),
-                    TinkarTerm.DEVELOPMENT_PATH.nid(),
-                    TinkarTerm.SOLOR_OVERLAY_MODULE.nid()
+                    TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.DEVELOPMENT_PATH.nid(), TinkarTerm.DEVELOPMENT_PATH.nid()
             );
         }
     }

@@ -26,6 +26,7 @@ public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordin
     private final int authorNid;
     private final int defaultModuleNid;
     private final int promotionPathNid;
+    private final int defaultPathNid;
     private final int destinationModuleNid;
 
     private EditCoordinateImmutable() {
@@ -34,48 +35,50 @@ public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordin
         this.authorNid = Integer.MAX_VALUE;
         this.defaultModuleNid = Integer.MAX_VALUE;
         this.promotionPathNid = Integer.MAX_VALUE;
+        this.defaultPathNid = Integer.MAX_VALUE;
         this.destinationModuleNid = Integer.MAX_VALUE;
     }
 
-    private EditCoordinateImmutable(int authorNid, int defaultModuleNid, int promotionPathNid, int destinationModuleNid) {
+    private EditCoordinateImmutable(int authorNid, int defaultModuleNid, int destinationModuleNid, int defaultPathNid, int promotionPathNid) {
         this.authorNid = authorNid;
         this.defaultModuleNid = defaultModuleNid;
-        this.promotionPathNid = promotionPathNid;
         this.destinationModuleNid = destinationModuleNid;
+        this.defaultPathNid = defaultPathNid;
+        this.promotionPathNid = promotionPathNid;
     }
 
     /**
      * @param authorNid
-     * @param moduleNid        Used for both developing. and modularizing activities
-     * @param promotionPathNid
+     * @param moduleNid Used for both developing. and modularizing activities
+     * @param pathNid
      * @return
      */
-    public static EditCoordinateImmutable make(int authorNid, int moduleNid, int promotionPathNid) {
-        return SINGLETONS.computeIfAbsent(new EditCoordinateImmutable(authorNid, moduleNid, promotionPathNid, moduleNid),
+    public static EditCoordinateImmutable make(int authorNid, int moduleNid, int pathNid) {
+        return SINGLETONS.computeIfAbsent(new EditCoordinateImmutable(authorNid, moduleNid, moduleNid, pathNid, pathNid),
                 editCoordinateImmutable -> editCoordinateImmutable);
     }
 
     /**
      * @param author
      * @param defaultModule     The default module is the module for new content when developing.
-     * @param promotionPath
      * @param destinationModule The destination module is the module that existing content is moved to when Modularizing
+     * @param promotionPath
      * @return
      */
-    public static EditCoordinateImmutable make(ConceptFacade author, ConceptFacade defaultModule, ConceptFacade promotionPath,
-                                               ConceptFacade destinationModule) {
-        return make(Entity.nid(author), Entity.nid(defaultModule), Entity.nid(promotionPath), Entity.nid(destinationModule));
+    public static EditCoordinateImmutable make(ConceptFacade author, ConceptFacade defaultModule, ConceptFacade destinationModule,
+                                               ConceptFacade defaultPath, ConceptFacade promotionPath) {
+        return make(Entity.nid(author), Entity.nid(defaultModule), Entity.nid(destinationModule), Entity.nid(defaultPath), Entity.nid(promotionPath));
     }
 
     /**
      * @param authorNid
      * @param defaultModuleNid     The default module is the module for new content when developing.
-     * @param promotionPathNid
      * @param destinationModuleNid The destination module is the module that existing content is moved to when Modularizing
+     * @param promotionPathNid
      * @return
      */
-    public static EditCoordinateImmutable make(int authorNid, int defaultModuleNid, int promotionPathNid, int destinationModuleNid) {
-        return SINGLETONS.computeIfAbsent(new EditCoordinateImmutable(authorNid, defaultModuleNid, promotionPathNid, destinationModuleNid),
+    public static EditCoordinateImmutable make(int authorNid, int defaultModuleNid, int destinationModuleNid, int defaultPathNid, int promotionPathNid) {
+        return SINGLETONS.computeIfAbsent(new EditCoordinateImmutable(authorNid, defaultModuleNid, destinationModuleNid, defaultPathNid, promotionPathNid),
                 editCoordinateImmutable -> editCoordinateImmutable);
     }
 
@@ -84,7 +87,7 @@ public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordin
         int objectMarshalVersion = in.encodingFormatVersion();
         switch (objectMarshalVersion) {
             case marshalVersion:
-                return SINGLETONS.computeIfAbsent(new EditCoordinateImmutable(in.readNid(), in.readNid(), in.readNid(), in.readNid()),
+                return SINGLETONS.computeIfAbsent(new EditCoordinateImmutable(in.readNid(), in.readNid(), in.readNid(), in.readNid(), in.readNid()),
                         editCoordinateImmutable -> editCoordinateImmutable);
             default:
                 throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
@@ -101,8 +104,9 @@ public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordin
     public void encode(EncoderOutput out) {
         out.writeNid(this.authorNid);
         out.writeNid(this.defaultModuleNid);
-        out.writeNid(this.promotionPathNid);
         out.writeNid(this.destinationModuleNid);
+        out.writeNid(this.defaultPathNid);
+        out.writeNid(this.promotionPathNid);
     }
 
     @Override
@@ -116,8 +120,16 @@ public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordin
         if (!(o instanceof EditCoordinateImmutable that)) return false;
         return getAuthorNidForChanges() == that.getAuthorNidForChanges() &&
                 getDefaultModuleNid() == that.getDefaultModuleNid() &&
-                getPromotionPathNid() == that.getPromotionPathNid() &&
-                getDestinationModuleNid() == that.getDestinationModuleNid();
+                getDestinationModuleNid() == that.getDestinationModuleNid() &&
+                getDefaultPathNid() == that.getDefaultPathNid() &&
+                getPromotionPathNid() == that.getPromotionPathNid();
+    }
+
+    @Override
+    public String toString() {
+        return "EditCoordinateImmutable{" +
+                toUserString() +
+                '}';
     }
 
     @Override
@@ -136,6 +148,11 @@ public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordin
     }
 
     @Override
+    public int getDefaultPathNid() {
+        return this.defaultPathNid;
+    }
+
+    @Override
     public int getPromotionPathNid() {
         return this.promotionPathNid;
     }
@@ -143,12 +160,5 @@ public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordin
     @Override
     public EditCoordinateImmutable toEditCoordinateImmutable() {
         return this;
-    }
-
-    @Override
-    public String toString() {
-        return "EditCoordinateImmutable{" +
-                toUserString() +
-                '}';
     }
 }

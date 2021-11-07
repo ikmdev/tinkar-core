@@ -1,13 +1,16 @@
 package org.hl7.tinkar.integration.provider.ephemeral;
 
 import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.common.service.ServiceProperties;
 import org.hl7.tinkar.entity.load.LoadEntitiesFromProtocolBuffersFile;
 import org.hl7.tinkar.entity.util.EntityCounter;
 import org.hl7.tinkar.entity.util.EntityProcessor;
 import org.hl7.tinkar.entity.util.EntityRealizer;
 import org.hl7.tinkar.integration.TestConstants;
 import org.hl7.tinkar.protobuf.PBTinkarMsg;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.DataInputStream;
 import java.io.EOFException;
@@ -20,33 +23,37 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class ProtocolBuffersTest {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+public class TestProtocolBuffers {
 
-    private static Logger LOG = Logger.getLogger(ProtocolBuffersTest.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(TestProtocolBuffers.class);
     private final File pbBinaryFile = TestConstants.PB_TEST_FILE;
 
-//    @BeforeSuite
-//    public void setupSuite(){
-//        LOG.info("setupSuite: " + this.getClass().getSimpleName());
-//        LOG.info(ServiceProperties.jvmUuid());
-//        PrimitiveData.selectControllerByName(TestConstants.EPHEMERAL_STORE_NAME);
-//        PrimitiveData.getController().setDataUriOption(
-//                new DataUriOption(TestConstants.PB_TEST_FILE.getName(), TestConstants.PB_TEST_FILE.toURI()));
-//        PrimitiveData.start();
-//    }
-//
-//    @AfterSuite
-//    public void teardownSuite() {
-//        LOG.info("teardownSuite");
-//        PrimitiveData.stop();
-//    }
+    @BeforeAll
+    static void setupSuite() {
+        LOG.info("SetupPB Suite: " + LOG.getName());
+        LOG.info(ServiceProperties.jvmUuid());
+        PrimitiveData.selectControllerByName(TestConstants.EPHEMERAL_STORE_NAME);
+        /*
+         Loaded during loadChronologies() test part... Add back in if you want automatic load during setup.
 
+         PrimitiveData.getController().setDataUriOption(
+                new DataUriOption(TestConstants.TINK_TEST_FILE.getName(), TestConstants.TINK_TEST_FILE.toURI()));
+         */
+        PrimitiveData.start();
+    }
 
-    @Test(testName = "Read Protocol Buffer Binary File", enabled = false)
+    @AfterAll
+    static void teardownSuite() {
+        LOG.info("Teardown PB Suite");
+        PrimitiveData.stop();
+    }
+
+    @Test
+    @Order(1)
     public void readPBFile() throws IOException {
         try (ZipFile zipFile = new ZipFile(pbBinaryFile, StandardCharsets.UTF_8)) {
             ZipEntry exportPBEntry = zipFile.getEntry("export.pb");
@@ -89,9 +96,9 @@ public class ProtocolBuffersTest {
                 }
 
                 PBTinkarMsg pbTinkarMsg = PBTinkarMsg.parseFrom(byteBuffer.array());
-                if(pbMessageBreakdown.containsKey(pbTinkarMsg.getValueCase())){
+                if (pbMessageBreakdown.containsKey(pbTinkarMsg.getValueCase())) {
                     pbMessageBreakdown.get(pbTinkarMsg.getValueCase()).incrementAndGet();
-                } else{
+                } else {
                     pbMessageBreakdown.put(pbTinkarMsg.getValueCase(), new AtomicInteger(0));
                 }
                 pbMessageCount++;
@@ -107,38 +114,41 @@ public class ProtocolBuffersTest {
         }
     }
 
-    @Test(testName = "Load Protocol Buffer Binary File", enabled = false)
+    @Test
+    @Order(2)
     public void loadPBFile() throws IOException {
         LoadEntitiesFromProtocolBuffersFile loadPB = new LoadEntitiesFromProtocolBuffersFile(pbBinaryFile);
         int count = loadPB.compute();
 //        LOG.info("File Loaded. " + loadPB.report() + "\n\n");
     }
 
-    @Test(testName = "Export to Protocol Buffer Binary File", enabled = false)
-    public void exportPBFile() throws IOException {
-
-    }
-
-    @Test(dependsOnMethods = {"loadPBFile"}, enabled = false)
+    @Test
+    @Order(2)
     public void count() {
         EntityProcessor processor = new EntityCounter();
         PrimitiveData.get().forEach(processor);
-        LOG.info("EPH Sequential count: \n" + processor.report() + "\n\n");
+        LOG.info("EPH PB Sequential count: \n" + processor.report() + "\n\n");
         processor = new EntityCounter();
         PrimitiveData.get().forEachParallel(processor);
-        LOG.info("EPH Parallel count: \n" + processor.report() + "\n\n");
+        LOG.info("EPH PB Parallel count: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
         PrimitiveData.get().forEach(processor);
-        LOG.info("EPH Sequential realization: \n" + processor.report() + "\n\n");
+        LOG.info("EPH PB Sequential realization: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
         PrimitiveData.get().forEachParallel(processor);
-        LOG.info("EPH Parallel realization: \n" + processor.report() + "\n\n");
+        LOG.info("EPH PB Parallel realization: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
         PrimitiveData.get().forEach(processor);
-        LOG.info("EPH Sequential realization: \n" + processor.report() + "\n\n");
+        LOG.info("EPH PB Sequential realization: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
         PrimitiveData.get().forEachParallel(processor);
-        LOG.info("EPH Parallel realization: \n" + processor.report() + "\n\n");
+        LOG.info("EPH PB Parallel realization: \n" + processor.report() + "\n\n");
+    }
+
+    @Test
+    @Disabled
+    public void exportPBFile() throws IOException {
+
     }
 
 }

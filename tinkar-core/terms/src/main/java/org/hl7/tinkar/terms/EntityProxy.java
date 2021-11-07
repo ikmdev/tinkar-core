@@ -60,12 +60,6 @@ public class EntityProxy implements EntityFacade, PublicId {
     @Override
     public int hashCode() {
         return Integer.hashCode(nid());
-    }    @Override
-    public UUID[] asUuidArray() {
-        if (this.uuids == null) {
-            this.uuids = PrimitiveData.publicId(nid()).asUuidArray();
-        }
-        return this.uuids;
     }
 
     @Override
@@ -95,9 +89,6 @@ public class EntityProxy implements EntityFacade, PublicId {
                 " " + Arrays.toString(asUuidArray()) +
                 "<" + cachedNid +
                 ">}";
-    }    @Override
-    public int uuidCount() {
-        return asUuidArray().length;
     }
 
     public final String description() {
@@ -108,18 +99,33 @@ public class EntityProxy implements EntityFacade, PublicId {
     }
 
     @Override
-    public final int nid() {
-        if (cachedNid == 0) {
-            cachedNid = PrimitiveData.get().nidForUuids(uuids);
+    public UUID[] asUuidArray() {
+        if (this.uuids == null) {
+            this.uuids = PrimitiveData.publicId(nid()).asUuidArray();
         }
-        return cachedNid;
-    }    @Override
+        return this.uuids;
+    }
+
+    @Override
+    public int uuidCount() {
+        return asUuidArray().length;
+    }
+
+    @Override
     public void forEach(LongConsumer consumer) {
         for (UUID uuid : asUuidArray()) {
             consumer.accept(uuid.getMostSignificantBits());
             consumer.accept(uuid.getLeastSignificantBits());
         }
 
+    }
+
+    @Override
+    public final int nid() {
+        if (cachedNid == 0) {
+            cachedNid = PrimitiveData.get().nidForUuids(uuids);
+        }
+        return cachedNid;
     }
 
     public static class Concept extends EntityProxy implements ConceptFacade, PublicId {
@@ -149,6 +155,11 @@ public class EntityProxy implements EntityFacade, PublicId {
             return new Concept(nid);
         }
 
+
+        public static Concept make(PublicId publicId) {
+            return new Concept(null, publicId);
+        }
+
         public static Concept make(String name, UUID... uuids) {
             return new Concept(name, uuids);
         }
@@ -172,6 +183,10 @@ public class EntityProxy implements EntityFacade, PublicId {
 
         public static Pattern make(String name, PublicId publicId) {
             return new Pattern(name, publicId);
+        }
+
+        public static Pattern make(PublicId publicId) {
+            return new Pattern(null, publicId);
         }
 
         public static Pattern make(int nid) {
@@ -203,6 +218,10 @@ public class EntityProxy implements EntityFacade, PublicId {
             return new Semantic(name, publicId);
         }
 
+        public static Semantic make(PublicId publicId) {
+            return new Semantic(null, publicId);
+        }
+
         public static Semantic make(int nid) {
             return new Semantic(nid);
         }
@@ -211,12 +230,6 @@ public class EntityProxy implements EntityFacade, PublicId {
             return new Semantic(name, uuids);
         }
     }
-
-
-
-
-
-
 
 
 }

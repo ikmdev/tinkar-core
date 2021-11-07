@@ -13,7 +13,8 @@ import org.hl7.tinkar.common.id.VertexId;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.component.graph.Vertex;
-import org.hl7.tinkar.dto.*;
+import org.hl7.tinkar.dto.StampDTO;
+import org.hl7.tinkar.dto.StampDTOBuilder;
 import org.hl7.tinkar.entity.EntityRecordFactory;
 import org.hl7.tinkar.entity.EntityService;
 import org.hl7.tinkar.terms.ConceptFacade;
@@ -70,29 +71,17 @@ public class EntityVertex implements Vertex, VertexId {
             if (object instanceof EntityProxy.Concept) {
                 return (T) object;
             }
-            int nid = PrimitiveData.get().nidForPublicId(concept.publicId());
-            if (concept instanceof ConceptDTO) {
-                return (T) EntityProxy.Concept.make(nid);
-            }
-            return (T) EntityProxy.Concept.make(nid);
+            return (T) EntityProxy.Concept.make(concept.publicId());
         } else if (object instanceof Semantic semantic) {
             if (object instanceof EntityProxy.Semantic) {
                 return (T) object;
             }
-            int nid = PrimitiveData.get().nidForPublicId(semantic.publicId());
-            if (semantic instanceof SemanticDTO) {
-                return (T) EntityProxy.Semantic.make(nid);
-            }
-            return (T) EntityProxy.Semantic.make(nid);
+            return (T) EntityProxy.Semantic.make(semantic.publicId());
         } else if (object instanceof Pattern pattern) {
             if (object instanceof EntityProxy.Pattern) {
                 return (T) object;
             }
-            int nid = PrimitiveData.get().nidForPublicId(pattern.publicId());
-            if (pattern instanceof PatternDTO) {
-                return (T) EntityProxy.Pattern.make(nid);
-            }
-            return (T) EntityProxy.Pattern.make(nid);
+            return (T) EntityProxy.Pattern.make(pattern.publicId());
         } else if (object instanceof Stamp & !(object instanceof StampDTO)) {
             Stamp stampValue = (Stamp) object;
             return (T) StampDTOBuilder.builder()

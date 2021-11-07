@@ -9,7 +9,9 @@ import org.hl7.tinkar.common.service.PrimitiveDataService;
 import org.hl7.tinkar.common.service.PublicIdService;
 import org.hl7.tinkar.entity.EntityService;
 import org.hl7.tinkar.entity.StampService;
-import org.hl7.tinkar.provider.entity.EntityProvider;
+import org.hl7.tinkar.provider.entity.DefaultDescriptionForNidServiceFactory;
+import org.hl7.tinkar.provider.entity.EntityServiceFactory;
+import org.hl7.tinkar.provider.entity.PublicIdServiceFactory;
 import org.hl7.tinkar.provider.entity.StampProvider;
 
 @SuppressWarnings("module")
@@ -25,11 +27,11 @@ module org.hl7.tinkar.provider.entity {
     requires io.smallrye.mutiny;
 
     provides EntityService
-            with EntityProvider;
+            with EntityServiceFactory;
     provides PublicIdService
-            with EntityProvider;
+            with PublicIdServiceFactory;
     provides DefaultDescriptionForNidService
-            with EntityProvider;
+            with DefaultDescriptionForNidServiceFactory;
     provides StampService
             with StampProvider;
 

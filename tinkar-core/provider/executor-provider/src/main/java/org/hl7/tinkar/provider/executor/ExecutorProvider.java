@@ -53,12 +53,12 @@ public class ExecutorProvider implements ExecutorService {
     /**
      * The io thread pool executor.
      */
-    private ThreadPoolExecutor ioThreadPoolExecutor;
+    private TinkarThreadPoolExecutor ioThreadPoolExecutor;
 
     /**
      * The scheduled executor.
      */
-    private ScheduledExecutorService scheduledExecutor;
+    private TinkarScheduledExecutor scheduledExecutor;
 
     /**
      * Start me.
@@ -108,7 +108,7 @@ public class ExecutorProvider implements ExecutorService {
 
             // The IO non-blocking executor - set core threads equal to max - otherwise, it will never increase the thread count
             // with an unbounded queue.
-            this.ioThreadPoolExecutor = new ThreadPoolExecutorFixed(6,
+            this.ioThreadPoolExecutor = new TinkarThreadPoolExecutor(6,
                     6,
                     keepAliveTime,
                     timeUnit,
@@ -120,7 +120,7 @@ public class ExecutorProvider implements ExecutorService {
             // init of secure random can block on many systems that don't have enough entropy occuring.  The DB load process
             // should provide enough entropy to get it initialized, so it doesn't pause things later when someone requests a random UUID.
             threadPool().execute(() -> UUID.randomUUID());
-            this.scheduledExecutor = Executors.newScheduledThreadPool(1,
+            this.scheduledExecutor = new TinkarScheduledExecutor(1,
                     new NamedThreadFactory("Tinkar-Scheduled-Thread", true));
             LOG.info("WorkExecutors thread pools ready");
         }

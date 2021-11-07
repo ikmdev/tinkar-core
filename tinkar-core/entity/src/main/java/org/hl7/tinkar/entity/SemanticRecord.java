@@ -10,6 +10,7 @@ import org.hl7.tinkar.terms.PatternFacade;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.UUID;
 
 @RecordBuilder
 public record SemanticRecord(
@@ -28,6 +29,23 @@ public record SemanticRecord(
         return new SemanticRecord(publicIdRecord.mostSignificantBits(), publicIdRecord.leastSignificantBits(),
                 publicIdRecord.additionalUuidLongs(), nid, patternNid, referencedComponentNid,
                 Lists.mutable.ofInitialCapacity(1));
+    }
+
+    public static SemanticRecord build(UUID semanticUuid,
+                                       int patternNid,
+                                       int referencedComponentNid,
+                                       StampEntityVersion stampVersion,
+                                       ImmutableList<Object> fields) {
+        MutableList<SemanticEntityVersion> versionRecords = Lists.mutable.withInitialCapacity(1);
+        SemanticRecord semanticRecord = SemanticRecordBuilder.builder()
+                .leastSignificantBits(semanticUuid.getLeastSignificantBits())
+                .mostSignificantBits(semanticUuid.getMostSignificantBits())
+                .nid(PrimitiveData.nid(semanticUuid))
+                .patternNid(patternNid)
+                .referencedComponentNid(referencedComponentNid)
+                .versionRecords(versionRecords).build();
+        versionRecords.add(new SemanticVersionRecord(semanticRecord, stampVersion.stampNid(), fields));
+        return semanticRecord;
     }
 
     @Override
