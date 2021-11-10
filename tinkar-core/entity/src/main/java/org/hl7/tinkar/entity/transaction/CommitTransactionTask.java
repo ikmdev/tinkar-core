@@ -10,11 +10,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
-public class CommitTask extends TrackingCallable<Void> {
-    private static final Logger LOG = LoggerFactory.getLogger(CancelTask.class);
+public class CommitTransactionTask extends TrackingCallable<Void> {
+    private static final Logger LOG = LoggerFactory.getLogger(CancelTransactionTask.class);
     final Transaction transaction;
 
-    public CommitTask(Transaction transaction) {
+    public CommitTransactionTask(Transaction transaction) {
         updateTitle(getTitleString() + transaction.transactionUuid());
         this.transaction = transaction;
         addToTotalWork(transaction.stampsInTransactionCount());

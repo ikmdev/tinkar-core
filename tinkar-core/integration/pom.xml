@@ -10,7 +10,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>integration</artifactId>
-
+    <properties>
+        <skipSurefireReport>true</skipSurefireReport>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
@@ -119,9 +121,6 @@
                             <goal>integration-test</goal>
                             <goal>verify</goal>
                         </goals>
-                        <!--                        <configuration>-->
-                        <!--                            <test>org.hl7.tinkar.integration.provider.ephemeral.TestEphemeralProvider</test>-->
-                        <!--                        </configuration>-->
                         <configuration>
                             <includes>**/Test*.java</includes>
                         </configuration>
@@ -130,4 +129,23 @@
             </plugin>
         </plugins>
     </build>
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>${maven-project-info-reports-plugin.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>${maven-failsafe-plugin.version}</version>
+                <configuration>
+                    <reportsDirectories>
+                        <reportsDirectory>${basedir}/target/failsafe-reports</reportsDirectory>
+                    </reportsDirectories>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
 </project>

@@ -11,11 +11,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
-public abstract class CancelTask extends TrackingCallable<Void> {
-    private static final Logger LOG = LoggerFactory.getLogger(CancelTask.class);
+public class CancelTransactionTask extends TrackingCallable<Void> {
+    private static final Logger LOG = LoggerFactory.getLogger(CancelTransactionTask.class);
     final Transaction transaction;
 
-    public CancelTask(Transaction transaction) {
+    public CancelTransactionTask(Transaction transaction) {
         updateTitle(getTitleString() + transaction.transactionUuid());
         this.transaction = transaction;
         addToTotalWork(transaction.stampsInTransactionCount());

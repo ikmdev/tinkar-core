@@ -8,12 +8,12 @@ import org.hl7.tinkar.component.FieldDefinition;
 import org.hl7.tinkar.component.PatternVersion;
 
 @RecordBuilder
-public record PatternVersionRecord(PatternEntity<PatternEntityVersion> chronology, int stampNid,
+public record PatternVersionRecord(PatternRecord chronology, int stampNid,
                                    int semanticPurposeNid, int semanticMeaningNid,
                                    ImmutableList<FieldDefinitionForEntity> fieldDefinitions)
         implements PatternEntityVersion, PatternVersionRecordBuilder.With {
 
-    public PatternVersionRecord(PatternEntity<PatternEntityVersion> chronology, PatternVersion<FieldDefinition> patternVersion) {
+    public PatternVersionRecord(PatternRecord chronology, PatternVersion<FieldDefinition> patternVersion) {
         this(chronology,
                 EntityService.get().nidForComponent(patternVersion.stamp()),
                 EntityService.get().nidForComponent(patternVersion.semanticPurpose()),

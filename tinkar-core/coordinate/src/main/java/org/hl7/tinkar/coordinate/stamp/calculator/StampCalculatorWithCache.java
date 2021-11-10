@@ -1072,8 +1072,8 @@ public class StampCalculatorWithCache implements StampCalculator {
                     StampCalculatorWithCache.this.filter.moduleNids().contains(moduleConceptNid)) {
                 if (StampCalculatorWithCache.this.filter.excludedModuleNids().isEmpty() ||
                         !StampCalculatorWithCache.this.filter.excludedModuleNids().contains(moduleConceptNid)) {
-                    if ((this.pathConceptNid == pathConceptNid) && (time != Long.MIN_VALUE)) {
-                        return time < this.endTime;
+                    if ((this.pathConceptNid == pathConceptNid)) {
+                        return time <= this.endTime;
                     }
                 }
             }

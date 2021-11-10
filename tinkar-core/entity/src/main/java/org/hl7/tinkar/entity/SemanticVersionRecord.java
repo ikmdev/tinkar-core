@@ -13,10 +13,10 @@ import org.hl7.tinkar.terms.EntityFacade;
 import java.time.Instant;
 
 @RecordBuilder
-public record SemanticVersionRecord(SemanticEntity<SemanticEntityVersion> chronology, int stampNid,
+public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
                                     ImmutableList<Object> fields)
         implements SemanticEntityVersion, SemanticVersionRecordBuilder.With {
-    public SemanticVersionRecord(SemanticEntity<SemanticEntityVersion> chronology, SemanticVersion version) {
+    public SemanticVersionRecord(SemanticRecord chronology, SemanticVersion version) {
         this(chronology,
                 EntityService.get().nidForComponent(version.stamp()),
                 Lists.immutable.fromStream(version.fields().stream().map(o -> EntityRecordFactory.externalToInternalObject(o))));

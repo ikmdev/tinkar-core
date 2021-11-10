@@ -312,9 +312,9 @@ public class EntityRecordFactory {
 
     private static <V extends EntityVersion> V makeVersion(Version version, Entity<? extends EntityVersion> entity) {
         return (V) switch (version) {
-            case ConceptVersion conceptVersion -> new ConceptVersionRecord((ConceptEntity) entity, conceptVersion);
-            case PatternVersion patternVersion -> new PatternVersionRecord((PatternEntity<PatternEntityVersion>) entity, patternVersion);
-            case SemanticVersion semanticVersion -> new SemanticVersionRecord((SemanticEntity<SemanticEntityVersion>) entity, semanticVersion);
+            case ConceptVersion conceptVersion -> new ConceptVersionRecord((ConceptRecord) entity, conceptVersion);
+            case PatternVersion patternVersion -> new PatternVersionRecord((PatternRecord) entity, patternVersion);
+            case SemanticVersion semanticVersion -> new SemanticVersionRecord((SemanticRecord) entity, semanticVersion);
             case Stamp stamp -> new StampVersionRecord((StampEntity<StampEntityVersion>) entity, stamp);
 
             default -> throw new IllegalStateException("Unexpected value: " + version);
@@ -422,17 +422,17 @@ public class EntityRecordFactory {
         }
         int stampNid = readBuf.readInt();
         return switch (entity) {
-            case ConceptEntity conceptEntity -> new ConceptVersionRecord(conceptEntity, stampNid);
-            case SemanticEntity semanticEntity -> {
+            case ConceptRecord conceptRecord -> new ConceptVersionRecord(conceptRecord, stampNid);
+            case SemanticRecord semanticRecord -> {
                 int fieldCount = readBuf.readInt();
                 MutableList<Object> fields = Lists.mutable.ofInitialCapacity(fieldCount);
                 for (int i = 0; i < fieldCount; i++) {
                     FieldDataType dataType = FieldDataType.fromToken(readBuf.readByte());
                     fields.add(readDataType(readBuf, dataType, formatVersion));
                 }
-                yield new SemanticVersionRecord(semanticEntity, stampNid, fields.toImmutable());
+                yield new SemanticVersionRecord(semanticRecord, stampNid, fields.toImmutable());
             }
-            case PatternEntity patternEntity -> {
+            case PatternRecord patternRecord -> {
                 int semanticPurposeNid = readBuf.readInt();
                 int semanticMeaningNid = readBuf.readInt();
                 int fieldCount = readBuf.readInt();
@@ -440,7 +440,7 @@ public class EntityRecordFactory {
                 for (int i = 0; i < fieldCount; i++) {
                     fieldDefinitionForEntities.add(FieldDefinitionForEntity.make(readBuf));
                 }
-                yield new PatternVersionRecord(patternEntity, stampNid,
+                yield new PatternVersionRecord(patternRecord, stampNid,
                         semanticPurposeNid, semanticMeaningNid, fieldDefinitionForEntities.toImmutable());
             }
             case StampEntity stampEntity -> {

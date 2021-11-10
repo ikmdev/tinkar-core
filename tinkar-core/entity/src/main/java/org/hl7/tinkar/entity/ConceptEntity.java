@@ -7,9 +7,12 @@ import org.hl7.tinkar.terms.ConceptFacade;
 
 public interface ConceptEntity<V extends ConceptEntityVersion>
         extends Entity<V>,
-                ConceptChronology<V>,
-                ConceptFacade,
-                IdentifierData {
+        ConceptChronology<V>,
+        ConceptFacade,
+        IdentifierData {
+
+    @Override
+    ImmutableList<V> versions();
 
     default FieldDataType entityDataType() {
         return FieldDataType.CONCEPT_CHRONOLOGY;
@@ -18,7 +21,4 @@ public interface ConceptEntity<V extends ConceptEntityVersion>
     default FieldDataType versionDataType() {
         return FieldDataType.CONCEPT_VERSION;
     }
-
-    @Override
-    ImmutableList<V> versions();
 }

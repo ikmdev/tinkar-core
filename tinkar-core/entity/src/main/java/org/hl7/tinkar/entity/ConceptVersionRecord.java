@@ -4,15 +4,15 @@ import io.soabase.recordbuilder.core.RecordBuilder;
 import org.hl7.tinkar.component.ConceptVersion;
 
 @RecordBuilder
-public record ConceptVersionRecord(ConceptEntity chronology, int stampNid)
+public record ConceptVersionRecord(ConceptRecord chronology, int stampNid)
         implements ConceptEntityVersion, ConceptVersionRecordBuilder.With {
 
-    public ConceptVersionRecord(ConceptEntity chronology, ConceptVersion version) {
+    public ConceptVersionRecord(ConceptRecord chronology, ConceptVersion version) {
         this(chronology, EntityService.get().nidForComponent(version.stamp()));
     }
 
     @Override
-    public ConceptEntity entity() {
+    public ConceptRecord entity() {
         return chronology();
     }
 

@@ -4,8 +4,8 @@ import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.sets.ConcurrentHashSet;
 import org.hl7.tinkar.common.util.uuid.UuidT5Generator;
-import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.entity.Entity;
+import org.hl7.tinkar.entity.EntityVersion;
 import org.hl7.tinkar.entity.StampEntity;
 import org.hl7.tinkar.entity.StampRecord;
 import org.hl7.tinkar.terms.ConceptFacade;
@@ -51,11 +51,13 @@ public class Transaction implements Comparable<Transaction> {
         return Optional.empty();
     }
 
-    public static Optional<Transaction> forVersion(Version version) {
-        if (version.publicId().asUuidArray().length > 1) {
+    public static Optional<Transaction> forVersion(EntityVersion version) {
+        StampEntity stamp = version.stamp();
+        UUID[] stampUuids = stamp.asUuidArray();
+        if (stampUuids.length > 1) {
             throw new IllegalStateException("Can only handle one UUID for stamp. Found: " + version);
         }
-        return forStamp(version.publicId().asUuidArray()[0]);
+        return forStamp(stampUuids[0]);
     }
 
     public static Transaction make() {
@@ -73,6 +75,10 @@ public class Transaction implements Comparable<Transaction> {
 
     public void addComponent(PublicId componentId) {
         componentsInTransaction.add(componentId);
+    }
+
+    public void removeComponent(PublicId componentId) {
+        componentsInTransaction.remove(componentId);
     }
 
     public UUID transactionUuid() {
