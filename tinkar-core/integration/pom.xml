@@ -122,6 +122,7 @@
                             <goal>verify</goal>
                         </goals>
                         <configuration>
+                            <trimStackTrace>false</trimStackTrace>
                             <includes>**/Test*.java</includes>
                         </configuration>
                     </execution>

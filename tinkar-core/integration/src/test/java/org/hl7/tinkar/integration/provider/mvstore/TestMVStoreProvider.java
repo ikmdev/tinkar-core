@@ -43,7 +43,7 @@ class TestMVStoreProvider {
 
     @BeforeAll
     static void setupSuite() {
-        LOG.info("Setup Ephemeral Suite: " + LOG.getName());
+        LOG.info("Setup suite: " + LOG.getName());
         LOG.info(ServiceProperties.jvmUuid());
         ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, TestConstants.MVSTORE_ROOT);
         PrimitiveData.selectControllerByName(TestConstants.MV_STORE_OPEN_NAME);
@@ -53,7 +53,7 @@ class TestMVStoreProvider {
 
     @AfterAll
     static void teardownSuite() {
-        LOG.info("teardownSuite");
+        LOG.info("Teardown suite: " + LOG.getName());
         PrimitiveData.stop();
     }
 

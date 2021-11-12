@@ -26,6 +26,7 @@ import java.util.UUID;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@Disabled
 class TestProtobufToEntityTransform {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestProtobufToEntityTransform.class);

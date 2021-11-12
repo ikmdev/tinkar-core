@@ -6,7 +6,6 @@ import com.google.auto.service.AutoService;
 import io.smallrye.mutiny.operators.multi.processors.BroadcastProcessor;
 import io.smallrye.mutiny.subscription.BackPressureFailure;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.hl7.tinkar.common.flow.NoopFlowSubscriber;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.common.service.DefaultDescriptionForNidService;
@@ -16,6 +15,7 @@ import org.hl7.tinkar.component.Chronology;
 import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.entity.*;
+import org.hl7.tinkar.entity.transaction.Transaction;
 import org.hl7.tinkar.terms.EntityFacade;
 import org.hl7.tinkar.terms.TinkarTerm;
 import org.reactivestreams.FlowAdapters;
@@ -36,13 +36,11 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     private static final Cache<Integer, String> STRING_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
     private static final Cache<Integer, Entity> ENTITY_CACHE = Caffeine.newBuilder().maximumSize(10240).build();
     private static final Cache<Integer, StampEntity> STAMP_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
-    // Added to prevent this error if no subscribers: BackPressureFailure: Could not emit item downstream due to lack of requests
-    final NoopFlowSubscriber noopFlowSubscriber;
 
 
     //Multi<Entity<? extends EntityVersion>> chronologyBroadcaster = BroadcastProcessor.create().toHotStream();
     //  <T extends Entity<? extends EntityVersion>>
-    final BroadcastProcessor<Entity<? extends EntityVersion>> processor;
+    final BroadcastProcessor<Integer> processor;
 
     /**
      * TODO elegant shutdown of entityStream and others
@@ -50,13 +48,10 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     protected EntityProvider() {
         LOG.info("Constructing EntityProvider");
         this.processor = BroadcastProcessor.create();
-        this.noopFlowSubscriber = new NoopFlowSubscriber();
-        this.subscribe(this.noopFlowSubscriber);
-        this.noopFlowSubscriber.subscription().request(1);
     }
 
     @Override
-    public void subscribe(Flow.Subscriber<? super Entity<? extends EntityVersion>> subscriber) {
+    public void subscribe(Flow.Subscriber<? super Integer> subscriber) {
         this.processor.subscribe().withSubscriber(FlowAdapters.toSubscriber(subscriber));
     }
 
@@ -93,7 +88,11 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
     @Override
     public <T extends Chronology<V>, V extends Version> Optional<T> getChronology(int nid) {
-        return Optional.ofNullable((T) getEntityFast(nid));
+        Entity entity = getEntityFast(nid);
+        if (entity == null || entity.canceled()) {
+            return Optional.empty();
+        }
+        return Optional.of((T) entity);
     }
 
     @Override
@@ -135,8 +134,11 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
     @Override
     public void putEntity(Entity entity) {
-        ENTITY_CACHE.invalidate(entity.nid());
-        STAMP_CACHE.invalidate(entity.nid());
+        invalidateCaches(entity);
+        ENTITY_CACHE.put(entity.nid(), entity);
+        if (entity instanceof StampEntity stampEntity) {
+            STAMP_CACHE.put(stampEntity.nid(), stampEntity);
+        }
         if (entity instanceof SemanticEntity semanticEntity) {
             PrimitiveData.get().merge(entity.nid(),
                     semanticEntity.patternNid(),
@@ -146,7 +148,10 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
             PrimitiveData.get().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, entity.getBytes(), entity);
         }
         try {
-            processor.onNext(entity);
+            processor.onNext(entity.nid());
+            if (entity instanceof SemanticEntity semanticEntity) {
+                processor.onNext(semanticEntity.referencedComponentNid());
+            }
         } catch (BackPressureFailure e) {
             LOG.warn(e.getLocalizedMessage());
         }
@@ -154,8 +159,38 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
     @Override
     public void putStamp(StampEntity stampEntity) {
-        STAMP_CACHE.invalidate(stampEntity.nid());
+        invalidateCaches(stampEntity);
         PrimitiveData.get().merge(stampEntity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, stampEntity.getBytes(), stampEntity);
+        processor.onNext(stampEntity.nid());
+    }
+
+    private void invalidateCaches(Entity entity) {
+        STRING_CACHE.invalidate(entity.nid());
+        ENTITY_CACHE.invalidate(entity.nid());
+        STAMP_CACHE.invalidate(entity.nid());
+        if (entity instanceof SemanticEntity semanticEntity) {
+            STRING_CACHE.invalidate(semanticEntity.referencedComponentNid());
+            Entity parent = getEntityFast(semanticEntity.referencedComponentNid());
+            while (parent != null) {
+                switch (parent) {
+                    case ConceptEntity conceptEntity -> {
+                        parent = null;
+                        STRING_CACHE.invalidate(conceptEntity.nid());
+                    }
+                    case PatternEntity patternEntity -> {
+                        parent = null;
+                        STRING_CACHE.invalidate(patternEntity.nid());
+                    }
+                    case SemanticEntity semantic -> {
+                        // If semantic is a dialect, might invalidate preferred description,
+                        // so need to go up to concept or pattern to invalidate strings in cache.
+                        parent = getEntityFast(semantic.referencedComponentNid());
+                        STRING_CACHE.invalidate(semantic.nid());
+                    }
+                    default -> throw new IllegalStateException("Unexpected value: " + parent);
+                }
+            }
+        }
     }
 
     @Override
@@ -194,22 +229,32 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     }
 
     @Override
+    public void notifyRefreshRequired(Transaction transaction) {
+        transaction.forEachComponentInTransaction(nid -> this.processor.onNext(nid));
+    }
+
+    @Override
     public PublicId publicId(int nid) {
         return getEntityFast(nid).publicId();
     }
 
     @Override
     public <T extends Chronology<V>, V extends Version> Optional<T> getChronology(PublicId publicId) {
+        Entity entity;
         if (publicId instanceof EntityFacade entityFacade) {
-            return Optional.ofNullable((T) getEntityFast(entityFacade.nid()));
+            entity = getEntityFast(entityFacade.nid());
+        } else {
+            entity = getEntityFast(nidForPublicId(publicId));
         }
-        return Optional.ofNullable((T) getEntityFast(nidForPublicId(publicId)));
+        if (entity == null || entity.canceled()) {
+            return Optional.empty();
+        }
+        return Optional.of((T) entity);
     }
 
     @Override
     public <T extends Chronology<V>, V extends Version> void putChronology(T chronology) {
         if (chronology instanceof Entity entity) {
-            ENTITY_CACHE.invalidate(entity.nid());
             putEntity(entity);
         } else {
             putEntity(EntityRecordFactory.make((Chronology<Version>) chronology));

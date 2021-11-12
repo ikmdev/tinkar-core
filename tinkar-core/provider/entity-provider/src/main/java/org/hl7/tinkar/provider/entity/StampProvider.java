@@ -33,7 +33,7 @@ import java.util.concurrent.Flow;
  */
 
 @AutoService({StampService.class})
-public class StampProvider extends EntityProcessor implements StampService, Flow.Subscriber<Entity<? extends EntityVersion>> {
+public class StampProvider extends EntityProcessor implements StampService, Flow.Subscriber<Integer> {
     private static final Logger LOG = LoggerFactory.getLogger(StampProvider.class);
 
     final ConcurrentHashMap<Integer, StampEntity> stamps = new ConcurrentHashMap<>();
@@ -98,8 +98,9 @@ public class StampProvider extends EntityProcessor implements StampService, Flow
     }
 
     @Override
-    public void onNext(Entity<? extends EntityVersion> entity) {
+    public void onNext(Integer nid) {
         this.subscription.request(1);
+        Entity entity = Entity.provider().getEntityFast(nid);
         if (entity instanceof StampEntity stampEntity) {
             stamps.put(stampEntity.nid(), stampEntity);
             times.add(stampEntity.time());

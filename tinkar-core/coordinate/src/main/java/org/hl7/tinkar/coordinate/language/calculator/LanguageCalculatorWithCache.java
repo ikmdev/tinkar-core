@@ -47,9 +47,14 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
     private final Cache<Integer, ImmutableList<SemanticEntity>> descriptionsForComponentCache =
             Caffeine.newBuilder().maximumSize(1024).build();
 
+    private final CacheInvalidationSubscriber cacheInvalidationSubscriber = new CacheInvalidationSubscriber();
+
     public LanguageCalculatorWithCache(StampCoordinateRecord stampFilter, ImmutableList<LanguageCoordinateRecord> languageCoordinateList) {
         this.stampCalculator = StampCalculatorWithCache.getCalculator(stampFilter);
         this.languageCoordinateList = languageCoordinateList;
+        this.cacheInvalidationSubscriber.addCaches(preferredCache, fqnCache, descriptionCache, definitionCache, descriptionsForComponentCache);
+        Entity.provider().subscribe(this.cacheInvalidationSubscriber);
+        this.cacheInvalidationSubscriber.subscription().request(1);
     }
 
     /**

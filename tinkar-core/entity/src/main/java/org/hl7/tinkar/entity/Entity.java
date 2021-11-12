@@ -121,4 +121,16 @@ public interface Entity<T extends EntityVersion>
         return "";
     }
 
+    /**
+     * @return true if all versions of entity are canceled.
+     */
+    default boolean canceled() {
+        for (EntityVersion v : versions()) {
+            if (!v.canceled()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

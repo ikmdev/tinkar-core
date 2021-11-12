@@ -34,6 +34,8 @@ public class LogicCalculatorWithCache implements LogicCalculator {
     private final StampCoordinateRecord stampCoordinateRecord;
     private final StampCalculator stampCalculator;
 
+    // TODO: add cache of axiom trees, sufficient sets, and similar.
+
     public LogicCalculatorWithCache(LogicCoordinate logicCoordinate, StampCoordinate stampCoordinate) {
         this.logicCoordinateRecord = logicCoordinate.toLogicCoordinateRecord();
         this.stampCoordinateRecord = stampCoordinate.toStampCoordinateRecord();

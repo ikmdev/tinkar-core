@@ -48,13 +48,18 @@ public interface VersionData extends Version, Stamp<StampEntityVersion> {
         return stamp().pathNid();
     }
 
-    default boolean isInactive() {
-        return !isActive();
+    default boolean inactive() {
+        return !active();
     }
 
-    default boolean isActive() {
+    default boolean active() {
         return stamp().state().nid() == State.ACTIVE.nid();
     }
+
+    default boolean canceled() {
+        return stamp().state().nid() == State.CANCELED.nid();
+    }
+
 
     default boolean committed() {
         return !uncommitted();
@@ -64,6 +69,9 @@ public interface VersionData extends Version, Stamp<StampEntityVersion> {
         StampEntity stamp = stamp();
         if (stamp.time() == Long.MAX_VALUE) {
             return true;
+        }
+        if (stamp().state().nid() == State.CANCELED.nid()) {
+            return false;
         }
         if (Transaction.forStamp(stamp).isPresent()) {
             // Participating in an active transaction...

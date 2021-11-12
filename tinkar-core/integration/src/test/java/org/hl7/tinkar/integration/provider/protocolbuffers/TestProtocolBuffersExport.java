@@ -15,6 +15,7 @@ import java.nio.file.Path;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@Disabled
 class TestProtocolBuffersExport {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestProtocolBuffersExport.class);

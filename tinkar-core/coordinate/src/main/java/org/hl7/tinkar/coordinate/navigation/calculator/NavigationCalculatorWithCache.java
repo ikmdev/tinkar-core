@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 /**
  * TODO: Filter vertex concepts by status values.
  * TODO: Sort based on patterns in addition to natural order
+ *  TODO: add cache of descendents, ancestors, and similar.
  */
 public class NavigationCalculatorWithCache implements NavigationCalculator {
     /**

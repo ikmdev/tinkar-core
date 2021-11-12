@@ -100,14 +100,12 @@ public class StampCalculatorWithCache implements StampCalculator {
      * computer.
      */
     private final ConcurrentHashMap<Integer, Segment> pathNidSegmentMap = new ConcurrentHashMap<>();
-    Cache<Integer, Latest<PatternEntityVersion>> patternVersionCache =
-            Caffeine.newBuilder().maximumSize(512).build();
-    Cache<Long, OptionalInt> indexForMeaningCache =
-            Caffeine.newBuilder().maximumSize(1024).build();
-    Cache<Long, OptionalInt> indexForPurposeCache =
-            Caffeine.newBuilder().maximumSize(1024).build();
-    Cache<Integer, Latest<EntityVersion>> latestCache =
-            Caffeine.newBuilder().maximumSize(10240).build();
+    private final Cache<Integer, Latest<PatternEntityVersion>> patternVersionCache = Caffeine.newBuilder().maximumSize(512).build();
+    private final Cache<Long, OptionalInt> indexForMeaningCache = Caffeine.newBuilder().maximumSize(1024).build();
+    private final Cache<Long, OptionalInt> indexForPurposeCache = Caffeine.newBuilder().maximumSize(1024).build();
+    private final Cache<Integer, Latest<EntityVersion>> latestCache = Caffeine.newBuilder().maximumSize(10240).build();
+    private final CacheInvalidationSubscriber cacheInvalidationSubscriber = new CacheInvalidationSubscriber();
+    private final CacheInvalidationIfPatternSubscriber cacheInvalidationIfPatternSubscriber = new CacheInvalidationIfPatternSubscriber();
     /**
      * The error count.
      */
@@ -123,6 +121,12 @@ public class StampCalculatorWithCache implements StampCalculator {
         this.filter = filter;
         setupPathNidSegmentMap(filter.stampPosition().toStampPositionImmutable());
         this.allowedStates = filter.allowedStates();
+        this.cacheInvalidationSubscriber.addCaches(patternVersionCache, latestCache);
+        Entity.provider().subscribe(this.cacheInvalidationSubscriber);
+        this.cacheInvalidationSubscriber.subscription().request(1);
+        this.cacheInvalidationIfPatternSubscriber.addCaches(indexForMeaningCache, indexForPurposeCache);
+        Entity.provider().subscribe(this.cacheInvalidationIfPatternSubscriber);
+        this.cacheInvalidationIfPatternSubscriber.subscription().request(1);
     }
 
     /**
@@ -356,6 +360,7 @@ public class StampCalculatorWithCache implements StampCalculator {
 
     public OptionalInt getIndexForMeaning(int patternNid, int meaningNid) {
         long patternMeaningKey = IntsInLong.ints2Long(patternNid, meaningNid);
+        indexForMeaningCache.invalidateAll();
         return indexForMeaningCache.get(patternMeaningKey, key -> {
             Latest<PatternEntityVersion> latestPatternVersion = latestPatternEntityVersion(patternNid);
             if (latestPatternVersion.isPresent()) {

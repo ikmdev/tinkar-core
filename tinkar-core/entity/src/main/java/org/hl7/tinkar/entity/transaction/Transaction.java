@@ -4,15 +4,13 @@ import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.sets.ConcurrentHashSet;
 import org.hl7.tinkar.common.util.uuid.UuidT5Generator;
-import org.hl7.tinkar.entity.Entity;
-import org.hl7.tinkar.entity.EntityVersion;
-import org.hl7.tinkar.entity.StampEntity;
-import org.hl7.tinkar.entity.StampRecord;
+import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.terms.ConceptFacade;
 import org.hl7.tinkar.terms.State;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 /**
@@ -23,7 +21,7 @@ public class Transaction implements Comparable<Transaction> {
     private final UUID transactionUuid = UUID.randomUUID();
     private final String transactionName;
     ConcurrentHashSet<UUID> stampsInTransaction = new ConcurrentHashSet<>();
-    ConcurrentHashSet<PublicId> componentsInTransaction = new ConcurrentHashSet<>();
+    ConcurrentHashSet<Integer> componentsInTransaction = new ConcurrentHashSet<>();
 
     public Transaction(String transactionName) {
         this.transactionName = transactionName;
@@ -73,12 +71,12 @@ public class Transaction implements Comparable<Transaction> {
         return this.transactionUuid.compareTo(o.transactionUuid);
     }
 
-    public void addComponent(PublicId componentId) {
-        componentsInTransaction.add(componentId);
+    public void addComponent(Entity entity) {
+        componentsInTransaction.add(entity.nid());
     }
 
-    public void removeComponent(PublicId componentId) {
-        componentsInTransaction.remove(componentId);
+    public void removeComponent(Entity entity) {
+        componentsInTransaction.remove(entity.nid());
     }
 
     public UUID transactionUuid() {
@@ -91,10 +89,6 @@ public class Transaction implements Comparable<Transaction> {
 
     public int componentsInTransactionCount() {
         return componentsInTransaction.size();
-    }
-
-    public void forEachStampInTransaction(Consumer<? super UUID> action) {
-        stampsInTransaction.forEach(action);
     }
 
     public StampEntity getStamp(State state, long time, ConceptFacade author, ConceptFacade module, ConceptFacade path) {
@@ -150,5 +144,66 @@ public class Transaction implements Comparable<Transaction> {
         if (moduleNid == 0) throw new IllegalStateException("Module cannot be zero...");
         if (pathNid == 0) throw new IllegalStateException("Path cannot be zero...");
         return getStamp(state, time, PrimitiveData.publicId(authorNid), PrimitiveData.publicId(moduleNid), PrimitiveData.publicId(pathNid));
+    }
+
+    /**
+     * @return count of stamps committed.
+     */
+    public int commit() {
+        AtomicInteger stampCount = new AtomicInteger();
+        Long commitTime = System.currentTimeMillis();
+        forEachStampInTransaction(stampUuid -> {
+            commitStamp(stampUuid, commitTime);
+            stampCount.incrementAndGet();
+        });
+        activeTransactions.remove(this);
+        Entity.provider().notifyRefreshRequired(this);
+        return stampCount.get();
+    }
+
+    public void forEachStampInTransaction(Consumer<? super UUID> action) {
+        stampsInTransaction.forEach(action);
+    }
+
+    private void commitStamp(UUID stampUuid, Long commitTime) {
+        StampRecord stampEntity = Entity.getStamp(PrimitiveData.nid(stampUuid));
+        StampEntityVersion stampVersion = stampEntity.lastVersion();
+        if (stampVersion.time() == Long.MAX_VALUE) {
+            StampEntityVersion committedVersion = stampEntity.addVersion(stampVersion.state(),
+                    commitTime, stampVersion.authorNid(), stampVersion.moduleNid(), stampVersion.pathNid());
+            Entity.provider().putStamp(stampEntity);
+        }
+        //TODO support nested transactions
+//        for (TransactionImpl childTransaction : transaction.getChildren()) {
+//            processTransaction(uncommittedStamp, stampSequence, childTransaction);
+//        }
+    }
+
+    public void forEachComponentInTransaction(Consumer<? super Integer> action) {
+        componentsInTransaction.forEach(action);
+    }
+
+    public int cancel() {
+        AtomicInteger stampCount = new AtomicInteger();
+        forEachStampInTransaction(stampUuid -> {
+            StampRecord stampRecord = Entity.getStamp(PrimitiveData.nid(stampUuid));
+            StampEntityVersion stampVersion = stampRecord.lastVersion();
+            if (stampVersion.time() == Long.MIN_VALUE) {
+                // already canceled.
+            } else {
+                StampEntityVersion canceledVersion = stampRecord.addVersion(State.CANCELED,
+                        Long.MIN_VALUE, stampVersion.authorNid(), stampVersion.moduleNid(), stampVersion.pathNid());
+
+                Entity.provider().putStamp(stampRecord);
+            }
+            stampCount.incrementAndGet();
+        });
+        //TODO support nested transactions
+//        for (TransactionImpl childTransaction : transaction.getChildren()) {
+//            processTransaction(uncommittedStamp, stampSequence, childTransaction);
+//        }
+        activeTransactions.remove(this);
+        Entity.provider().notifyRefreshRequired(this);
+        return stampCount.get();
     }
 }

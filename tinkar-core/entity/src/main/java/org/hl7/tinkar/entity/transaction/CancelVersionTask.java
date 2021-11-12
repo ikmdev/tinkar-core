@@ -2,14 +2,11 @@ package org.hl7.tinkar.entity.transaction;
 
 import org.hl7.tinkar.common.alert.AlertObject;
 import org.hl7.tinkar.common.alert.AlertStreams;
-import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.service.TrackingCallable;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.terms.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.UUID;
 
 public class CancelVersionTask extends TrackingCallable<Void> {
     private static final Logger LOG = LoggerFactory.getLogger(CancelTransactionTask.class);
@@ -28,20 +25,17 @@ public class CancelVersionTask extends TrackingCallable<Void> {
     @Override
     public Void compute() throws Exception {
         try {
-            Long commitTime = System.currentTimeMillis();
             Transaction.forVersion(version).ifPresentOrElse(transaction -> {
                 if (transaction.componentsInTransaction.size() == 1) {
-                    transaction.forEachStampInTransaction(stampUuid -> {
-                        processTransaction(stampUuid);
-                    });
+                    transaction.cancel();
                 } else {
                     // remove from transaction, add to new transaction.
                     Transaction transactionForVersion = Transaction.make();
                     StampEntity oldStamp = version.stamp();
                     StampEntity newStamp = transactionForVersion.getStamp(oldStamp.state(), oldStamp.time(), oldStamp.authorNid(), oldStamp.moduleNid(), oldStamp.pathNid());
 
-                    transaction.removeComponent(version.publicId());
-                    transactionForVersion.addComponent(version.publicId());
+                    transaction.removeComponent(version.entity());
+                    transactionForVersion.addComponent(version.entity());
 
                     switch (version) {
                         case ConceptVersionRecord conceptVersionRecord -> {
@@ -64,35 +58,17 @@ public class CancelVersionTask extends TrackingCallable<Void> {
                         }
                         default -> throw new IllegalStateException("Unexpected value: " + version);
                     }
-                    processTransaction(newStamp.asUuidArray()[0]);
+                    transactionForVersion.cancel();
+                    Entity.provider().notifyRefreshRequired(transaction);
                 }
             }, () -> {
                 AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("No transaction for version: " + version)));
             });
-
             return null;
         } catch (Throwable t) {
             LOG.error(t.getLocalizedMessage(), t);
             throw t;
         }
-    }
-
-    private void processTransaction(UUID stampUuid) {
-        StampRecord stampRecord = Entity.getStamp(PrimitiveData.nid(stampUuid));
-        StampEntityVersion stampVersion = stampRecord.lastVersion();
-        if (stampVersion.time() == Long.MIN_VALUE) {
-            // already canceled.
-        } else {
-            StampEntityVersion canceledVersion = stampRecord.addVersion(State.CANCELED,
-                    Long.MIN_VALUE, stampVersion.authorNid(), stampVersion.moduleNid(), stampVersion.pathNid());
-
-            Entity.provider().putStamp(stampRecord);
-        }
-        completedUnitOfWork();
-        //TODO support nested transactions
-//        for (TransactionImpl childTransaction : transaction.getChildren()) {
-//            processTransaction(uncommittedStamp, stampSequence, childTransaction);
-//        }
     }
 
     protected long getTime() {

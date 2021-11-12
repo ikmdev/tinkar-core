@@ -186,6 +186,7 @@
                 <version>${maven-failsafe-plugin.version}</version>
                 <configuration>
                     <reportsDirectories>
+                        <trimStackTrace>false</trimStackTrace>
                         <reportsDirectory>${basedir}/target/failsafe-reports</reportsDirectory>
                     </reportsDirectories>
                 </configuration>

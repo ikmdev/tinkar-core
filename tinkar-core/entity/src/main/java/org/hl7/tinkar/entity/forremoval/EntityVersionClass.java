@@ -34,13 +34,13 @@ public abstract class EntityVersionClass
     }
 
     @Override
-    public Entity chronology() {
-        return chronology;
+    public int stampNid() {
+        return stampNid;
     }
 
     @Override
-    public int stampNid() {
-        return stampNid;
+    public Entity chronology() {
+        return chronology;
     }
 
     @Override
@@ -102,15 +102,14 @@ public abstract class EntityVersionClass
     }
 
     @Override
-    public StampEntity stamp() {
-        return EntityService.get().getStampFast(stampNid);
-    }
-
-    @Override
     public State state() {
         return stamp().state();
     }
 
+    @Override
+    public StampEntity stamp() {
+        return EntityService.get().getStampFast(stampNid);
+    }
 
     @Override
     public long time() {
@@ -149,7 +148,7 @@ public abstract class EntityVersionClass
     }
 
     @Override
-    public boolean isActive() {
+    public boolean active() {
         return stamp().state().nid() == State.ACTIVE.nid();
     }
 

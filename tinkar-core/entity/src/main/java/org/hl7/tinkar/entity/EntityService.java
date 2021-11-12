@@ -9,6 +9,7 @@ import org.hl7.tinkar.component.ChronologyService;
 import org.hl7.tinkar.component.Component;
 import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.entity.internal.EntityServiceFinder;
+import org.hl7.tinkar.entity.transaction.Transaction;
 import org.hl7.tinkar.terms.ComponentWithNid;
 import org.hl7.tinkar.terms.EntityFacade;
 
@@ -16,7 +17,7 @@ import java.util.*;
 import java.util.concurrent.Flow;
 import java.util.function.Consumer;
 
-public interface EntityService extends ChronologyService, Flow.Publisher<Entity<? extends EntityVersion>> {
+public interface EntityService extends ChronologyService, Flow.Publisher<Integer> {
     static EntityService get() {
         return EntityServiceFinder.INSTANCE.get();
     }
@@ -44,7 +45,11 @@ public interface EntityService extends ChronologyService, Flow.Publisher<Entity<
     }
 
     default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(int nid) {
-        return Optional.ofNullable(getEntityFast(nid));
+        T entity = getEntityFast(nid);
+        if (entity == null || entity.canceled()) {
+            return Optional.empty();
+        }
+        return Optional.of(entity);
     }
 
     <T extends Entity<V>, V extends EntityVersion> T getEntityFast(int nid);
@@ -62,7 +67,7 @@ public interface EntityService extends ChronologyService, Flow.Publisher<Entity<
     }
 
     default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(EntityFacade entityFacade) {
-        return Optional.ofNullable(getEntityFast(entityFacade.nid()));
+        return getEntity(entityFacade.nid());
     }
 
     default <T extends Entity<V>, V extends EntityVersion> T getEntityFast(ImmutableList<UUID> uuidList) {
@@ -82,10 +87,12 @@ public interface EntityService extends ChronologyService, Flow.Publisher<Entity<
     }
 
     default Optional<StampEntity<StampEntityVersion>> getStamp(int nid) {
-        return Optional.ofNullable(getStampFast(nid));
+        StampEntity entity = getEntityFast(nid);
+        if (entity == null || entity.canceled()) {
+            return Optional.empty();
+        }
+        return Optional.of(entity);
     }
-
-    <T extends StampEntity<? extends StampEntityVersion>> T getStampFast(int nid);
 
     default Optional<StampEntity<StampEntityVersion>> getStamp(ImmutableList<UUID> uuidList) {
         return getStamp(nidForUuids(uuidList));
@@ -98,6 +105,8 @@ public interface EntityService extends ChronologyService, Flow.Publisher<Entity<
     default StampEntity<StampEntityVersion> getStampFast(ImmutableList<UUID> uuidList) {
         return getStampFast(nidForUuids(uuidList));
     }
+
+    <T extends StampEntity<? extends StampEntityVersion>> T getStampFast(int nid);
 
     default StampEntity<StampEntityVersion> getStampFast(UUID... uuids) {
         return getStampFast(nidForUuids(uuids));
@@ -150,4 +159,6 @@ public interface EntityService extends ChronologyService, Flow.Publisher<Entity<
     void forEachSemanticForComponentOfPattern(int componentNid, int patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure);
 
     int[] semanticNidsForComponentOfPattern(int componentNid, int patternNid);
+
+    void notifyRefreshRequired(Transaction transaction);
 }

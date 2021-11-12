@@ -32,7 +32,7 @@ public interface StampCalculator {
 
     default Stream<SemanticEntityVersion> streamLatestActiveVersionForPattern(int patternNid) {
         return streamLatestVersionForPattern(patternNid)
-                .filter(latestVersion -> latestVersion.ifAbsentOrFunction(() -> false, latest -> latest.isActive()))
+                .filter(latestVersion -> latestVersion.ifAbsentOrFunction(() -> false, latest -> latest.active()))
                 .map(semanticEntityVersionLatest -> semanticEntityVersionLatest.get());
     }
 
