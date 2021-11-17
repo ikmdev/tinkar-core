@@ -16,12 +16,13 @@ public interface IntIdList extends IdList, IntIdCollection {
         return list.toImmutable();
     }
 
-    int get(int index);    boolean isEmpty();
+    int get(int index);
 
     default boolean notEmpty() {
         return !this.isEmpty();
     }
 
+    boolean isEmpty();
 
 
 }

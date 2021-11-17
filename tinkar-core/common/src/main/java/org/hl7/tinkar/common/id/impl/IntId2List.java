@@ -2,6 +2,8 @@ package org.hl7.tinkar.common.id.impl;
 
 import org.hl7.tinkar.common.id.IntIdList;
 
+import java.util.Arrays;
+
 public class IntId2List extends IntId2 implements IntIdList {
     public IntId2List(int element, int element2) {
         super(element, element2);
@@ -20,6 +22,19 @@ public class IntId2List extends IntId2 implements IntIdList {
 
     @Override
     public boolean isEmpty() {
+        return false;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj instanceof IntIdList intIdList) {
+            if (intIdList.size() == 2 && Arrays.equals(this.toArray(), intIdList.toArray())) {
+                return true;
+            }
+        }
         return false;
     }
 }

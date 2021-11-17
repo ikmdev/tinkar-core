@@ -6,6 +6,8 @@ import com.google.auto.service.AutoService;
 import io.smallrye.mutiny.operators.multi.processors.BroadcastProcessor;
 import io.smallrye.mutiny.subscription.BackPressureFailure;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.hl7.tinkar.common.alert.AlertObject;
+import org.hl7.tinkar.common.alert.AlertStreams;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.common.service.DefaultDescriptionForNidService;
@@ -22,6 +24,7 @@ import org.reactivestreams.FlowAdapters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Flow;
@@ -63,21 +66,36 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
             String anyString = null;
             String fqnString = null;
             for (int semanticNid : semanticNids) {
-                SemanticEntity<SemanticEntityVersion> descriptionSemantic = Entity.getFast(semanticNid);
-                PatternEntity<PatternEntityVersion> patternEntity = Entity.getFast(descriptionSemantic.patternNid());
-                // TODO: use version computer to get version
-                PatternEntityVersion patternEntityVersion = patternEntity.versions().get(0);
-                SemanticEntityVersion version = descriptionSemantic.versions().get(0);
-                int indexForMeaning = patternEntityVersion.indexForMeaning(TinkarTerm.DESCRIPTION_TYPE);
-                int indexForText = patternEntityVersion.indexForMeaning(TinkarTerm.TEXT_FOR_DESCRIPTION);
-                if (version.fields().get(indexForMeaning).equals(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE)) {
-                    return (String) version.fields().get(indexForText);
-                }
-                if (version.fields().get(indexForMeaning).equals(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE)) {
-                    fqnString = (String) version.fields().get(indexForText);
-                }
-                anyString = (String) version.fields().get(indexForText);
+                Entity descriptionSemanticEntity = Entity.getFast(semanticNid);
+                if (descriptionSemanticEntity instanceof SemanticEntity descriptionSemantic) {
+                    Entity entity = Entity.getFast(descriptionSemantic.patternNid());
+                    if (entity instanceof PatternEntity pattern) {
+                        // TODO: use version computer to get version
+                        PatternEntityVersion patternEntityVersion = (PatternEntityVersion) pattern.versions().get(0);
+                        SemanticEntityVersion version = (SemanticEntityVersion) descriptionSemantic.versions().get(0);
+                        int indexForMeaning = patternEntityVersion.indexForMeaning(TinkarTerm.DESCRIPTION_TYPE);
+                        int indexForText = patternEntityVersion.indexForMeaning(TinkarTerm.TEXT_FOR_DESCRIPTION);
+                        if (version.fields().get(indexForMeaning).equals(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE)) {
+                            return (String) version.fields().get(indexForText);
+                        }
+                        if (version.fields().get(indexForMeaning).equals(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE)) {
+                            fqnString = (String) version.fields().get(indexForText);
+                        }
+                        anyString = (String) version.fields().get(indexForText);
+                    } else {
+                        anyString = " <" + entity.nid() + ">" + entity.asUuidList().toString();
+                        // Added in case entity.toString() itself throws an exception, at least get a UUID for the problem.
+                        AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a pattern entity. Found entity with id:  " + anyString)));
+                        AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a pattern entity. Found: " + entity)));
+                    }
+                } else {
+                    anyString = " <" + descriptionSemanticEntity.nid() + ">" + descriptionSemanticEntity.asUuidList().toString();
 
+                    // Added in case entity.toString() itself throws an exception, at least get a UUID for the problem.
+                    AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a description semantic entity from list: " +
+                            Arrays.toString(semanticNids) + "\n Found entity with id:  " + anyString)));
+                    AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a description semantic. Found: " + descriptionSemanticEntity)));
+                }
             }
             if (fqnString != null) {
                 return fqnString;
@@ -275,6 +293,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         public void reset() {
             STRING_CACHE.invalidateAll();
             ENTITY_CACHE.invalidateAll();
+            STAMP_CACHE.invalidateAll();
         }
     }
 }

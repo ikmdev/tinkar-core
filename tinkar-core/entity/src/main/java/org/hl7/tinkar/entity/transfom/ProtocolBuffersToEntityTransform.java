@@ -289,7 +289,7 @@ public class ProtocolBuffersToEntityTransform implements EntityTransform<PBTinka
     }
 
     public StampEntityVersion createStampEntityVersion(PBStamp pbStamp) {
-        StampEntity<StampEntityVersion> stampEntity = createStampEntity(pbStamp);
+        StampRecord stampEntity = createStampEntity(pbStamp);
         int stateNid = EntityService.get().nidForPublicId(createPublicId(pbStamp.getStatus().getPublicId()));
         long time = Instant.ofEpochSecond(pbStamp.getTime().getSeconds(), pbStamp.getTime().getNanos()).getEpochSecond();
         int authorNid = EntityService.get().nidForPublicId(createPublicId(pbStamp.getAuthor().getPublicId()));
@@ -320,7 +320,7 @@ public class ProtocolBuffersToEntityTransform implements EntityTransform<PBTinka
         }
     }
 
-    public StampEntity<StampEntityVersion> createStampEntity(PBStamp pbStamp) {
+    public StampRecord createStampEntity(PBStamp pbStamp) {
         PublicId stampPublicId = createPublicId(pbStamp.getPublicId());
         if (stampPublicId.uuidCount() > 0) {
             int stampNid = EntityService.get().nidForPublicId(stampPublicId);

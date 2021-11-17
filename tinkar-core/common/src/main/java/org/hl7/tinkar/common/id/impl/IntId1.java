@@ -3,8 +3,8 @@ package org.hl7.tinkar.common.id.impl;
 import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 
-public class IntId1  {
-    private final int element;
+public class IntId1 {
+    protected final int element;
 
     public IntId1(int element) {
         this.element = element;
@@ -23,7 +23,7 @@ public class IntId1  {
     }
 
     public int[] toArray() {
-        return new int[] { element };
+        return new int[]{element};
     }
 
     public boolean contains(int value) {

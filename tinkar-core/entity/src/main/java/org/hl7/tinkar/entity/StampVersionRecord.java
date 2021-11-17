@@ -9,12 +9,12 @@ import org.hl7.tinkar.component.Stamp;
  * Maybe handle commit by listening to commit reactive stream, and if version is committed, add it to the chronology?
  */
 @RecordBuilder
-public record StampVersionRecord(StampEntity<StampEntityVersion> chronology,
+public record StampVersionRecord(StampRecord chronology,
                                  int stateNid, long time, int authorNid,
                                  int moduleNid,
                                  int pathNid) implements StampEntityVersion, StampVersionRecordBuilder.With {
 
-    public StampVersionRecord(StampEntity<StampEntityVersion> chronology,
+    public StampVersionRecord(StampRecord chronology,
                               StampVersion version) {
         this(chronology,
                 EntityService.get().nidForComponent(version.state()),
@@ -24,7 +24,7 @@ public record StampVersionRecord(StampEntity<StampEntityVersion> chronology,
                 EntityService.get().nidForComponent(version.path()));
     }
 
-    public StampVersionRecord(StampEntity<StampEntityVersion> chronology,
+    public StampVersionRecord(StampRecord chronology,
                               Stamp version) {
         this(chronology,
                 EntityService.get().nidForComponent(version.state()),
@@ -35,7 +35,7 @@ public record StampVersionRecord(StampEntity<StampEntityVersion> chronology,
     }
 
     @Override
-    public StampEntity<StampEntityVersion> entity() {
+    public StampRecord entity() {
         return chronology;
     }
 

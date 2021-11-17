@@ -18,15 +18,15 @@ import java.util.UUID;
 public record StampRecord(
         long mostSignificantBits, long leastSignificantBits,
         long[] additionalUuidLongs, int nid,
-        MutableList<StampEntityVersion> versionRecords)
-        implements StampEntity<StampEntityVersion>, StampRecordBuilder.With {
+        MutableList<StampVersionRecord> versionRecords)
+        implements StampEntity<StampVersionRecord>, StampRecordBuilder.With {
 
     public static StampRecord make(UUID stampUuid, State state, long time, PublicId authorId, PublicId moduleId, PublicId pathId) {
         int initialCapacity = 1;
         if (time == Long.MAX_VALUE) {
             initialCapacity = 2;
         }
-        MutableList<StampEntityVersion> versionRecords = Lists.mutable.withInitialCapacity(initialCapacity);
+        MutableList<StampVersionRecord> versionRecords = Lists.mutable.withInitialCapacity(initialCapacity);
         StampRecord stampEntity = new StampRecord(stampUuid.getMostSignificantBits(),
                 stampUuid.getLeastSignificantBits(), null, PrimitiveData.nid(stampUuid),
                 versionRecords);
@@ -83,7 +83,12 @@ public record StampRecord(
     }
 
     @Override
-    public ImmutableList<StampEntityVersion> versions() {
+    public StampVersionRecord lastVersion() {
+        return (StampVersionRecord) StampEntity.super.lastVersion();
+    }
+
+    @Override
+    public ImmutableList<StampVersionRecord> versions() {
         return versionRecords.toImmutable();
     }
 

@@ -11,4 +11,17 @@ public class IntId1List extends IntId1 implements IntIdList {
     public boolean isEmpty() {
         return false;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj instanceof IntIdList intIdList) {
+            if (intIdList.size() == 1 && intIdList.get(0) == element) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

@@ -36,8 +36,8 @@ class TestCoordinates {
     static void setupSuite() {
         LOG.info("Setup Suite: " + LOG.getName());
         LOG.info(ServiceProperties.jvmUuid());
-        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, TestConstants.MVSTORE_ROOT);
-        PrimitiveData.selectControllerByName(TestConstants.MV_STORE_OPEN_NAME);
+        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, TestConstants.SAP_ROOT);
+        PrimitiveData.selectControllerByName(TestConstants.SA_STORE_OPEN_NAME);
         PrimitiveData.start();
     }
 

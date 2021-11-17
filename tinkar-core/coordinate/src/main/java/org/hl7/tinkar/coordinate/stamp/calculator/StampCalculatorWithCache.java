@@ -519,19 +519,25 @@ public class StampCalculatorWithCache implements StampCalculator {
 
                 case EQUAL:
 
-                    // Can only have one part per time/path
-                    // combination.
                     if (prevPartToTest.equals(part)) {
                         // part already added from another position.
                         // No need to add again.
                         break;
                     }
 
+                    if (prevPartToTest.uncommitted() && part.uncommitted()) {
+                        // Uncommitted parts should be treated as CONTRADICTION.
+                        partsForPosition.add(part);
+                        break;
+                    }
+                    // Can only have one part per time/path
+                    // combination.
+
                     // Duplicate values encountered.
                     this.errorCount++;
 
                     if (this.errorCount < 5) {
-                        LOG.warn("EQUAL should never happen. Data is malformed. Stamp: " + part.stamp() +
+                        LOG.warn("EQUAL indicates that data is malformed. Stamp: " + part.stamp() +
                                 " Part:\n" + part + " \n  Part to test: \n" + prevPartToTest + "\n");
                     }
 

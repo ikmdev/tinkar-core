@@ -287,7 +287,7 @@ public class EntityRecordFactory {
                     (MutableList<SemanticEntityVersion>) versions);
 
             case Stamp stamp -> new StampRecord(mostSignificantBits, leastSignificantBits,
-                    additionalUuidLongs, nid, (MutableList<StampEntityVersion>) versions);
+                    additionalUuidLongs, nid, (MutableList<StampVersionRecord>) versions);
 
             default -> throw new IllegalStateException("Unexpected value: " + chronology);
         };
@@ -315,7 +315,7 @@ public class EntityRecordFactory {
             case ConceptVersion conceptVersion -> new ConceptVersionRecord((ConceptRecord) entity, conceptVersion);
             case PatternVersion patternVersion -> new PatternVersionRecord((PatternRecord) entity, patternVersion);
             case SemanticVersion semanticVersion -> new SemanticVersionRecord((SemanticRecord) entity, semanticVersion);
-            case Stamp stamp -> new StampVersionRecord((StampEntity<StampEntityVersion>) entity, stamp);
+            case Stamp stamp -> new StampVersionRecord((StampRecord) entity, stamp);
 
             default -> throw new IllegalStateException("Unexpected value: " + version);
         };
@@ -397,11 +397,11 @@ public class EntityRecordFactory {
             case STAMP -> {
                 // no additional fields for stamp
                 versionCount = readBuf.readInt();
-                MutableList<StampEntityVersion> versions = Lists.mutable.ofInitialCapacity(versionCount);
+                MutableList<StampVersionRecord> versions = Lists.mutable.ofInitialCapacity(versionCount);
                 StampRecord stampRecord = new StampRecord(mostSignificantBits, leastSignificantBits,
                         additionalUuidLongs, nid, versions);
                 for (int i = 0; i < versionCount; i++) {
-                    versions.add((StampEntityVersion) makeVersion(readBuf, entityFormatVersion, stampRecord));
+                    versions.add((StampVersionRecord) makeVersion(readBuf, entityFormatVersion, stampRecord));
                 }
                 yield (T) stampRecord;
             }
@@ -443,13 +443,13 @@ public class EntityRecordFactory {
                 yield new PatternVersionRecord(patternRecord, stampNid,
                         semanticPurposeNid, semanticMeaningNid, fieldDefinitionForEntities.toImmutable());
             }
-            case StampEntity stampEntity -> {
+            case StampRecord stampRecord -> {
                 int stateNid = readBuf.readInt();
                 long time = readBuf.readLong();
                 int authorNid = readBuf.readInt();
                 int moduleNid = readBuf.readInt();
                 int pathNid = readBuf.readInt();
-                yield new StampVersionRecord(stampEntity, stateNid, time, authorNid, moduleNid, pathNid);
+                yield new StampVersionRecord(stampRecord, stateNid, time, authorNid, moduleNid, pathNid);
             }
             default -> throw new IllegalStateException("Unexpected value: " + entity);
         };
