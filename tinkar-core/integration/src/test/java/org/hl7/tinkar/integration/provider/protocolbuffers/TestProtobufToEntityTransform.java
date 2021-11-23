@@ -7,6 +7,7 @@ import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.id.PublicIdList;
 import org.hl7.tinkar.common.id.PublicIds;
+import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.common.service.DataUriOption;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.service.ServiceProperties;
@@ -34,6 +35,8 @@ class TestProtobufToEntityTransform {
 
     @BeforeAll
     static void setupSuite() {
+        LOG.info("Clear caches");
+        CachingService.clearAll();
         LOG.info("Setup: " + LOG.getName());
         LOG.info(ServiceProperties.jvmUuid());
         PrimitiveData.selectControllerByName(TestConstants.EPHEMERAL_STORE_NAME);
@@ -236,7 +239,7 @@ class TestProtobufToEntityTransform {
         versions.add(SemanticVersionRecordBuilder.builder()
                 .chronology(semanticChronology)
                 .stampNid(EntityService.get().nidForUuids(stampUUID))
-                .fields(fieldsList.toImmutable())
+                .fieldValues(fieldsList.toImmutable())
                 .build());
 
         SemanticRecord semanticChronologyOne = SemanticRecordBuilder.builder(semanticChronology).versionRecords(versions).build();
@@ -302,25 +305,25 @@ class TestProtobufToEntityTransform {
                 .nid(EntityService.get().nidForUuids(patternUUID))
                 .build();
 
-        MutableList<FieldDefinitionForEntity> fieldDefinitionList = Lists.mutable.ofInitialCapacity(1);
-        fieldDefinitionList.add(new FieldDefinitionForEntity(FieldRecordBuilder.builder()
-                .meaningNid(EntityService.get().nidForUuids(fieldMeaningUUID))
-                .purposeNid(EntityService.get().nidForUuids(fieldPurposeUUID))
-                .dataTypeNid(EntityService.get().nidForUuids(fieldDataType))
-                .build()));
-
-        MutableList<PatternEntityVersion> versions = Lists.mutable.ofInitialCapacity(1);
+        MutableList<FieldDefinitionRecord> fieldDefinitionList = Lists.mutable.ofInitialCapacity(1);
+        MutableList<PatternVersionRecord> versions = Lists.mutable.ofInitialCapacity(1);
         versions.add(PatternVersionRecordBuilder.builder()
                 .chronology(patternChronology)
                 .semanticMeaningNid(EntityService.get().nidForUuids(meaningUUID))
                 .semanticPurposeNid(EntityService.get().nidForUuids(purposeUUID))
                 .stampNid(EntityService.get().nidForUuids(stampUUID))
-                .fieldDefinitions(fieldDefinitionList.toImmutable())
+                .fieldDefinitionMutableList(fieldDefinitionList)
                 .build());
+
+        fieldDefinitionList.add(FieldDefinitionRecordBuilder.builder()
+                .meaningNid(EntityService.get().nidForUuids(fieldMeaningUUID))
+                .purposeNid(EntityService.get().nidForUuids(fieldPurposeUUID))
+                .dataTypeNid(EntityService.get().nidForUuids(fieldDataType))
+                .patternVersionStampNid(EntityService.get().nidForUuids(stampUUID)).build());
 
         PatternRecord patternOne = PatternRecordBuilder.builder(patternChronology).versionRecords(versions).build();
 
-        PatternEntity<PatternEntityVersion> patternTwo = transformer.makePatternChronology(pbPatternChronology);
+        PatternRecord patternTwo = transformer.makePatternChronology(pbPatternChronology);
         assert patternOne.deepEquals(patternTwo);
     }
 }

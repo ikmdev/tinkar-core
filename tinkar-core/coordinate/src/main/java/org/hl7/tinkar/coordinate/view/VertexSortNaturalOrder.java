@@ -38,7 +38,7 @@ public class VertexSortNaturalOrder implements VertexSort, Encodable {
         }
 
         return IntLists.immutable.of(vertexConceptNids).primitiveStream().mapToObj(vertexConceptNid ->
-                new VertexItem(vertexConceptNid, navigationCalculator.getDescriptionTextOrNid(vertexConceptNid)))
+                        new VertexItem(vertexConceptNid, navigationCalculator.getDescriptionTextOrNid(vertexConceptNid)))
                 .sorted().mapToInt(value -> value.nid).toArray();
     }
 
@@ -119,6 +119,6 @@ public class VertexSortNaturalOrder implements VertexSort, Encodable {
     @Override
     @Encoder
     public void encode(EncoderOutput out) {
-        // No fields...
+        // No fieldValues...
     }
 }

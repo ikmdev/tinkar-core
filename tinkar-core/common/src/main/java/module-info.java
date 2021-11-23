@@ -36,7 +36,10 @@ module org.hl7.tinkar.common {
     exports org.hl7.tinkar.common.flow;
     exports org.hl7.tinkar.common.id.impl;
 
-    provides CachingService with ServiceProperties, PrimitiveData;
+    provides CachingService with
+            Executor.CacheProvider,
+            ServiceProperties.CacheProvider,
+            PrimitiveData.CacheProvider;
 
     uses AlertReportingService;
     uses CachingService;

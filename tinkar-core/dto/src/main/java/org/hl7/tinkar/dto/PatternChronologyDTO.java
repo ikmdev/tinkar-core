@@ -15,6 +15,7 @@
  */
 package org.hl7.tinkar.dto;
 
+import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -24,9 +25,9 @@ import org.hl7.tinkar.component.PatternVersion;
 import org.hl7.tinkar.dto.binary.*;
 
 /**
- *
  * @author kec
  */
+@RecordBuilder
 public record PatternChronologyDTO(PublicId publicId,
                                    ImmutableList<PatternVersionDTO> patternVersions)
         implements PatternChronology<PatternVersionDTO>, DTO, Marshalable {
@@ -42,11 +43,6 @@ public record PatternChronologyDTO(PublicId publicId,
                 versions.toImmutable());
     }
 
-    @Override
-    public ImmutableList<PatternVersionDTO> versions() {
-        return patternVersions.collect(patternVersionDTO -> patternVersionDTO);
-    }
-
     @Unmarshaler
     public static PatternChronologyDTO make(TinkarInput in) {
         if (localMarshalVersion == in.getTinkerFormatVersion()) {
@@ -56,6 +52,11 @@ public record PatternChronologyDTO(PublicId publicId,
         } else {
             throw new UnsupportedOperationException("Unsupported version: " + in.getTinkerFormatVersion());
         }
+    }
+
+    @Override
+    public ImmutableList<PatternVersionDTO> versions() {
+        return patternVersions.collect(patternVersionDTO -> patternVersionDTO);
     }
 
     @Override

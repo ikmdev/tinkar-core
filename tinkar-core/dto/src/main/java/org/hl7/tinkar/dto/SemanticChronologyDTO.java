@@ -15,6 +15,7 @@
  */
 package org.hl7.tinkar.dto;
 
+import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -30,6 +31,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @author kec
  */
+@RecordBuilder
 public record SemanticChronologyDTO(PublicId publicId,
                                     PublicId patternPublicId,
                                     PublicId referencedComponentPublicId,

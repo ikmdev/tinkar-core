@@ -3,22 +3,25 @@ package org.hl7.tinkar.entity;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.common.service.PrimitiveData;
-import org.hl7.tinkar.component.FieldDefinition;
 import org.hl7.tinkar.component.PatternVersion;
 
 @RecordBuilder
 public record PatternVersionRecord(PatternRecord chronology, int stampNid,
                                    int semanticPurposeNid, int semanticMeaningNid,
-                                   ImmutableList<FieldDefinitionForEntity> fieldDefinitions)
+                                   MutableList<FieldDefinitionRecord> fieldDefinitionMutableList)
         implements PatternEntityVersion, PatternVersionRecordBuilder.With {
 
-    public PatternVersionRecord(PatternRecord chronology, PatternVersion<FieldDefinition> patternVersion) {
+    public PatternVersionRecord(PatternRecord chronology, PatternVersion patternVersion) {
         this(chronology,
                 EntityService.get().nidForComponent(patternVersion.stamp()),
                 EntityService.get().nidForComponent(patternVersion.semanticPurpose()),
                 EntityService.get().nidForComponent(patternVersion.semanticMeaning()),
-                Lists.immutable.fromStream(patternVersion.fieldDefinitions().stream().map(fieldDefinition -> new FieldDefinitionForEntity(fieldDefinition))));
+                Lists.mutable.withInitialCapacity(patternVersion.fieldDefinitions().size()));
+
+        patternVersion.fieldDefinitions().forEach(fieldDefinition -> fieldDefinitionMutableList.add(new FieldDefinitionRecord(fieldDefinition,
+                this)));
     }
 
     @Override
@@ -31,7 +34,7 @@ public record PatternVersionRecord(PatternRecord chronology, int stampNid,
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PatternVersionRecord that = (PatternVersionRecord) o;
-        return stampNid == that.stampNid && semanticPurposeNid == that.semanticPurposeNid && semanticMeaningNid == that.semanticMeaningNid && fieldDefinitions.equals(that.fieldDefinitions);
+        return stampNid == that.stampNid && semanticPurposeNid == that.semanticPurposeNid && semanticMeaningNid == that.semanticMeaningNid && fieldDefinitionMutableList.equals(that.fieldDefinitionMutableList);
     }
 
     @Override
@@ -58,11 +61,15 @@ public record PatternVersionRecord(PatternRecord chronology, int stampNid,
             }
             sb.append(i);
             sb.append(": ");
-            FieldDefinitionForEntity fieldDefinitionForEntity = fieldDefinitions().get(i);
-            sb.append(fieldDefinitionForEntity);
+            FieldDefinitionRecord fieldDefinition = fieldDefinitions().get(i);
+            sb.append(fieldDefinition);
         }
         sb.append("]≥");
 
         return sb.toString();
+    }
+
+    public ImmutableList<FieldDefinitionRecord> fieldDefinitions() {
+        return fieldDefinitionMutableList.toImmutable();
     }
 }

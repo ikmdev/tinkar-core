@@ -3,6 +3,7 @@ package org.hl7.tinkar.integration.coordinate;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.hl7.tinkar.common.id.IntIdList;
+import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.service.ServiceKeys;
 import org.hl7.tinkar.common.service.ServiceProperties;
@@ -34,6 +35,8 @@ class TestCoordinates {
 
     @BeforeAll
     static void setupSuite() {
+        LOG.info("Clear caches");
+        CachingService.clearAll();
         LOG.info("Setup Suite: " + LOG.getName());
         LOG.info(ServiceProperties.jvmUuid());
         ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, TestConstants.SAP_ROOT);

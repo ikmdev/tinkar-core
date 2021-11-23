@@ -1,102 +1,50 @@
 package org.hl7.tinkar.entity;
 
-
-import io.activej.bytebuf.ByteBuf;
-import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.FieldDefinition;
-import org.hl7.tinkar.terms.ConceptFacade;
-// TODO convert to record
-public class FieldDefinitionForEntity
-        implements FieldDefinition {
-    public FieldDefinitionForEntity() {
-    }
 
-    public FieldDefinitionForEntity(FieldDefinition fieldDefinition) {
-        dataTypeNid = EntityService.get().nidForComponent(fieldDefinition.dataType());
-        purposeNid = EntityService.get().nidForComponent(fieldDefinition.purpose());
-        meaningNid = EntityService.get().nidForComponent(fieldDefinition.meaning());
-    }
-
-    protected int dataTypeNid;
-    protected int purposeNid;
-    protected int meaningNid;
-
-    public static FieldDefinitionForEntity make(ByteBuf readBuf) {
-        FieldDefinitionForEntity fieldDefinitionForEntity = new FieldDefinitionForEntity();
-        fieldDefinitionForEntity.fill(readBuf);
-        return fieldDefinitionForEntity;
-    }
+public interface FieldDefinitionForEntity extends FieldDefinition {
 
     /**
-     * TODO interface for write, fill, etc.
+     * Underlying object type such as String or Integer.
      *
-     * @param readBuf
+     * @return Concept designating the data type of the defined field.
      */
-    public void fill(ByteBuf readBuf) {
-        dataTypeNid = readBuf.readInt();
-        purposeNid = readBuf.readInt();
-        meaningNid = readBuf.readInt();
+    default ConceptEntity dataType() {
+        return Entity.getFast(dataTypeNid());
     }
 
-    public static FieldDefinitionForEntity make(PatternEntityVersion enclosingVersion, FieldDefinition fieldDefinition) {
-        FieldDefinitionForEntity fieldDefinitionForEntity = new FieldDefinitionForEntity();
-        fieldDefinitionForEntity.fill(fieldDefinition);
-        return fieldDefinitionForEntity;
+    int dataTypeNid();
+
+    /**
+     * How this field is intended to be used. The objective to be reached; a target; an aim; a goal.
+     * e.g. The purpose of an identifier may be "globally unique identification"
+     * <br/>
+     * Meaning is the symbolic value of something while purpose is an objective to be reached;
+     * a target; an aim; a goal.
+     * <br/>
+     *
+     * @return Concept designating the purpose of the defined field.
+     */
+    default ConceptEntity purpose() {
+        return Entity.getFast(purposeNid());
     }
 
-    public void fill(FieldDefinition fieldDefinition) {
-        dataTypeNid = EntityService.get().nidForComponent(fieldDefinition.dataType());
-        purposeNid = EntityService.get().nidForComponent(fieldDefinition.purpose());
-        meaningNid = EntityService.get().nidForComponent(fieldDefinition.meaning());
+    int purposeNid();
+
+    /**
+     * The meaning of this field. Maybe it is the "SNOMED code" in a mapping.
+     * This concept should be used to present to the user what this field "means" so they
+     * can interpret what this field represents in user interfaces and similar.
+     * <br/>
+     * Meaning is the symbolic value of something while purpose is an objective to be reached;
+     * a target; an aim; a goal.
+     * <br/>
+     *
+     * @return Concept designating the meaning (symbolic value) of this field.
+     */
+    default ConceptEntity meaning() {
+        return Entity.getFast(meaningNid());
     }
 
-    @Override
-    public ConceptFacade dataType() {
-        return EntityService.get().getEntityFast(dataTypeNid);
-    }
-
-    @Override
-    public ConceptFacade purpose() {
-        return EntityService.get().getEntityFast(purposeNid);
-    }
-
-    @Override
-    public ConceptFacade meaning() {
-        return EntityService.get().getEntityFast(meaningNid);
-    }
-
-    public int dataTypeNid() {
-        return dataTypeNid;
-    }
-
-    public int purposeNid() {
-        return purposeNid;
-    }
-
-    public int meaningNid() {
-        return meaningNid;
-    }
-
-    public void write(ByteBuf writeBuf) {
-        writeBuf.writeInt(dataTypeNid);
-        writeBuf.writeInt(purposeNid);
-        writeBuf.writeInt(meaningNid);
-    }
-
-    @Override
-    public String toString() {
-        return "FieldDef{t: " +
-                PrimitiveData.text(dataTypeNid) + " p: " +
-                PrimitiveData.text(purposeNid) + " m: " +
-                PrimitiveData.text(meaningNid) +
-                '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        FieldDefinitionForEntity that = (FieldDefinitionForEntity) o;
-        return dataTypeNid == that.dataTypeNid && meaningNid == that.meaningNid && purposeNid == that.purposeNid;
-    }
+    int meaningNid();
 }

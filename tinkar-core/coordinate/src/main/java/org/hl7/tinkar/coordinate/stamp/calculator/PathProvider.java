@@ -30,11 +30,11 @@ public class PathProvider implements PathService {
             // Referenced component = path for which this is an origin
             // Field 0 = path from which the origin is derived
             // Field 1 = instant of the origin
-            // Get versions, get fields.
+            // Get versions, get fieldValues.
             // TODO assumption 1... Only one version.
             if (semanticEntity.versions().size() == 1) {
                 SemanticEntityVersion originVersion = semanticEntity.versions().get(0);
-                ImmutableList<Object> fields = originVersion.fields();
+                ImmutableList<Object> fields = originVersion.fieldValues();
                 ConceptFacade pathFromWhichOriginDerived = EntityProxy.Concept.make(((EntityFacade) fields.get(0)).nid());
                 if (pathFromWhichOriginDerived.nid() == pathNid) {
                     Instant originTime = (Instant) fields.get(1);
@@ -64,11 +64,11 @@ public class PathProvider implements PathService {
     public ImmutableSet<StampPositionRecord> getPathOrigins(int pathNid) {
         MutableSet<StampPositionRecord> originSet = Sets.mutable.empty();
         EntityService.get().forEachSemanticForComponentOfPattern(pathNid, TinkarTerm.PATH_ORIGINS_PATTERN.nid(), semanticEntity -> {
-            // Get versions, get fields.
+            // Get versions, get fieldValues.
             // TODO assumption 1... Only one version.
             if (semanticEntity.versions().size() == 1) {
                 SemanticEntityVersion originVersion = semanticEntity.versions().get(0);
-                ImmutableList<Object> fields = originVersion.fields();
+                ImmutableList<Object> fields = originVersion.fieldValues();
                 ConceptFacade pathConcept;
                 if (fields.get(0) instanceof ConceptFacade conceptFacade) {
                     pathConcept = conceptFacade;

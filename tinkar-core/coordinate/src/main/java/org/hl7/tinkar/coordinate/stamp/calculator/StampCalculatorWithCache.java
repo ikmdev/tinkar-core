@@ -343,21 +343,24 @@ public class StampCalculatorWithCache implements StampCalculator {
         });
     }
 
+    @Override
     public void forEachSemanticVersionWithFieldsForComponent(int componentNid,
-                                                             TriConsumer<SemanticEntityVersion, ImmutableList<Field>, EntityVersion> procedure) {
+                                                             TriConsumer<SemanticEntityVersion, ImmutableList<? extends Field>, EntityVersion> procedure) {
         forEachSemanticVersionForComponent(componentNid,
                 (semanticEntityVersion, entityVersion) -> {
                     Latest<PatternEntityVersion> latestPatternEntityVersion = latestPatternEntityVersion(semanticEntityVersion.patternNid());
                     latestPatternEntityVersion.ifPresent(patternEntityVersion -> {
-                        procedure.accept(semanticEntityVersion, semanticEntityVersion.fields(patternEntityVersion), entityVersion);
+                        procedure.accept(semanticEntityVersion, semanticEntityVersion.fields((PatternVersionRecord) patternEntityVersion), entityVersion);
                     });
                 });
     }
 
+    @Override
     public Latest<PatternEntityVersion> latestPatternEntityVersion(int patternNid) {
         return patternVersionCache.get(patternNid, nid -> latest(patternNid));
     }
 
+    @Override
     public OptionalInt getIndexForMeaning(int patternNid, int meaningNid) {
         long patternMeaningKey = IntsInLong.ints2Long(patternNid, meaningNid);
         indexForMeaningCache.invalidateAll();
@@ -377,6 +380,7 @@ public class StampCalculatorWithCache implements StampCalculator {
         });
     }
 
+    @Override
     public OptionalInt getIndexForPurpose(int patternNid, int purposeNid) {
         long patternMeaningKey = IntsInLong.ints2Long(patternNid, purposeNid);
         return indexForPurposeCache.get(patternMeaningKey, key -> {
@@ -395,9 +399,10 @@ public class StampCalculatorWithCache implements StampCalculator {
         });
     }
 
+    @Override
     public <T> Latest<Field<T>> getFieldForSemantic(Latest<SemanticEntityVersion> latestSemanticVersion, int criterionNid, FieldCriterion fieldCriterion) {
         if (latestSemanticVersion.isPresent()) {
-            SemanticEntityVersion semanticVersion = latestSemanticVersion.get();
+            SemanticVersionRecord semanticVersion = (SemanticVersionRecord) latestSemanticVersion.get();
             Latest<PatternEntityVersion> latestPattern = latest(semanticVersion.patternNid());
             PatternEntityVersion patternVersion = latestPattern.get();
             OptionalInt optionalIndex = switch (fieldCriterion) {
@@ -413,20 +418,12 @@ public class StampCalculatorWithCache implements StampCalculator {
             };
             if (optionalIndex.isPresent()) {
                 int indexForCriterion = optionalIndex.getAsInt();
-                FieldDefinitionForEntity fieldDef = patternVersion.fieldDefinitions().get(indexForCriterion);
-                String narrative = null;
-                if (fieldDef.narrativeOptional().isPresent()) {
-                    narrative = fieldDef.narrativeOptional().get();
-                }
-                FieldRecord fieldRecord = new FieldRecord(semanticVersion.fields().get(indexForCriterion),
-                        narrative, fieldDef.dataTypeNid(), fieldDef.purposeNid(), fieldDef.meaningNid(),
-                        semanticVersion);
+                FieldDefinitionRecord fieldDef = (FieldDefinitionRecord) patternVersion.fieldDefinitions().get(indexForCriterion);
+                FieldRecord fieldRecord = new FieldRecord(semanticVersion.fieldValues().get(indexForCriterion), semanticVersion.stampNid(), fieldDef);
                 Latest<Field<T>> latestField = new Latest<>(fieldRecord);
                 for (SemanticEntityVersion semanticVersionContradiction : latestSemanticVersion.contradictions()) {
                     latestField.addLatest(
-                            new FieldRecord(semanticVersionContradiction.fields().get(indexForCriterion),
-                                    narrative, fieldDef.dataTypeNid(), fieldDef.purposeNid(), fieldDef.meaningNid(),
-                                    semanticVersion));
+                            new FieldRecord(semanticVersionContradiction.fieldValues().get(indexForCriterion), semanticVersionContradiction.stampNid(), fieldDef));
                 }
                 return latestField;
             } else {

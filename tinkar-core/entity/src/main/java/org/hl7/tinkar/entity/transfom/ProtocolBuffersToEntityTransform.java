@@ -67,9 +67,9 @@ public class ProtocolBuffersToEntityTransform implements EntityTransform<PBTinka
         return SemanticRecordBuilder.builder((SemanticRecord) semanticEntity).versionRecords(semanticEntityVersions).build();
     }
 
-    public PatternEntity<PatternEntityVersion> makePatternChronology(PBPatternChronology pbPatternChronology) {
+    public PatternRecord makePatternChronology(PBPatternChronology pbPatternChronology) {
         PatternRecord patternRecord = createPatternEntity(pbPatternChronology);
-        MutableList<PatternEntityVersion> patternEntityVersions = Lists.mutable
+        MutableList<PatternVersionRecord> patternEntityVersions = Lists.mutable
                 .ofInitialCapacity(pbPatternChronology.getVersionsCount());
         createVersionEntities(pbPatternChronology, patternRecord, patternEntityVersions);
         return PatternRecordBuilder.builder((PatternRecord) patternRecord).versionRecords(patternEntityVersions).build();
@@ -195,7 +195,7 @@ public class ProtocolBuffersToEntityTransform implements EntityTransform<PBTinka
         }
     }
 
-    public PatternEntity<PatternEntityVersion> createPatternEntity(PBPattern pbPattern) {
+    public PatternEntity<PatternVersionRecord> createPatternEntity(PBPattern pbPattern) {
         PublicId patternPublicId = createPublicId(pbPattern.getPublicId());
         int patternNid = EntityService.get().nidForPublicId(patternPublicId);
         if (patternPublicId.uuidCount() > 0) {
@@ -261,13 +261,13 @@ public class ProtocolBuffersToEntityTransform implements EntityTransform<PBTinka
 
     public void createVersionEntities(PBPatternChronology pbPatternChronology,
                                       PatternRecord patternRecord,
-                                      MutableList<PatternEntityVersion> versions) {
+                                      MutableList<PatternVersionRecord> versions) {
         for (PBPatternVersion pbPatternVersion : pbPatternChronology.getVersionsList()) {
             versions.add(createPatternVersionEntity(pbPatternVersion, patternRecord));
         }
     }
 
-    public PatternEntityVersion createPatternVersionEntity(PBPatternVersion pbPatternVersion,
+    public PatternVersionRecord createPatternVersionEntity(PBPatternVersion pbPatternVersion,
                                                            PatternRecord patternRecord) {
         StampEntityVersion stampEntityVersion = createStampEntityVersion(pbPatternVersion.getStamp());
         int semanticPurposeNid = EntityService.get()
@@ -275,17 +275,19 @@ public class ProtocolBuffersToEntityTransform implements EntityTransform<PBTinka
         int semanticMeaningNid = EntityService.get()
                 .nidForPublicId(createPublicId(pbPatternVersion.getReferencedComponentMeaning()));
 
-        MutableList<FieldDefinitionForEntity> fieldDefinitionForEntities = Lists.mutable
+        MutableList<FieldDefinitionRecord> fieldDefinitionForEntities = Lists.mutable
                 .ofInitialCapacity(pbPatternVersion.getFieldDefinitionsCount());
-        createFieldDefinitionEntity(pbPatternVersion.getFieldDefinitionsList(), fieldDefinitionForEntities);
-
-        return PatternVersionRecordBuilder.builder()
+        PatternVersionRecord patternVersionRecord = PatternVersionRecordBuilder.builder()
                 .chronology(patternRecord)
                 .stampNid(stampEntityVersion.stampNid())
                 .semanticPurposeNid(semanticPurposeNid)
                 .semanticMeaningNid(semanticMeaningNid)
-                .fieldDefinitions(fieldDefinitionForEntities.toImmutable())
+                .fieldDefinitionMutableList(fieldDefinitionForEntities)
                 .build();
+
+        createFieldDefinitionEntity(patternVersionRecord, pbPatternVersion.getFieldDefinitionsList(), fieldDefinitionForEntities);
+
+        return patternVersionRecord;
     }
 
     public StampEntityVersion createStampEntityVersion(PBStamp pbStamp) {
@@ -305,18 +307,21 @@ public class ProtocolBuffersToEntityTransform implements EntityTransform<PBTinka
                 .build();
     }
 
-    public void createFieldDefinitionEntity(List<PBFieldDefinition> pbFieldDefinitions,
-                                            MutableList<FieldDefinitionForEntity> fieldDefinitionForEntityMutableList) {
+    public void createFieldDefinitionEntity(PatternVersionRecord patternVersionRecord, List<PBFieldDefinition> pbFieldDefinitions,
+                                            MutableList<FieldDefinitionRecord> fieldDefinitionForEntityMutableList) {
         for (PBFieldDefinition pbFieldDefinition : pbFieldDefinitions) {
             int meaningNid = EntityService.get().nidForPublicId(createPublicId(pbFieldDefinition.getMeaning()));
             int purposeNid = EntityService.get().nidForPublicId(createPublicId(pbFieldDefinition.getPurpose()));
             int dataTypeNid = EntityService.get().nidForPublicId(createPublicId(pbFieldDefinition.getDataType()));
-            fieldDefinitionForEntityMutableList.add(new FieldDefinitionForEntity(
-                    FieldRecordBuilder.builder()
-                            .meaningNid(meaningNid)
-                            .purposeNid(purposeNid)
-                            .dataTypeNid(dataTypeNid)
-                            .build()));
+
+            FieldDefinitionRecord fieldDefinitionRecord = FieldDefinitionRecordBuilder.builder()
+                    .meaningNid(meaningNid)
+                    .purposeNid(purposeNid)
+                    .dataTypeNid(dataTypeNid)
+                    .patternVersionStampNid(patternVersionRecord.stampNid())
+                    .build();
+
+            fieldDefinitionForEntityMutableList.add(fieldDefinitionRecord);
         }
     }
 
@@ -356,16 +361,16 @@ public class ProtocolBuffersToEntityTransform implements EntityTransform<PBTinka
     public SemanticEntityVersion createSemanticVersionEntity(PBSemanticVersion pbSemanticVersion,
                                                              SemanticRecord semanticEntity) {
         StampEntityVersion stampEntityVersion = createStampEntityVersion(pbSemanticVersion.getStamp());
-        MutableList<Object> fields = Lists.mutable.ofInitialCapacity(pbSemanticVersion.getFieldValuesCount());
+        MutableList<Object> fieldValues = Lists.mutable.ofInitialCapacity(pbSemanticVersion.getFieldValuesCount());
         for (PBField pbField : pbSemanticVersion.getFieldValuesList()) {
 
             Object o = createFieldObject(pbField);
-            fields.add(o);
+            fieldValues.add(o);
         }
         return SemanticVersionRecordBuilder.builder()
                 .chronology(semanticEntity)
                 .stampNid(stampEntityVersion.stampNid())
-                .fields(fields.toImmutable())
+                .fieldValues(fieldValues.toImmutable())
                 .build();
     }
 

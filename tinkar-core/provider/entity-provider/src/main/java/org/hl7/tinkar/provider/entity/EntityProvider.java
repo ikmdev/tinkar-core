@@ -75,13 +75,13 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                         SemanticEntityVersion version = (SemanticEntityVersion) descriptionSemantic.versions().get(0);
                         int indexForMeaning = patternEntityVersion.indexForMeaning(TinkarTerm.DESCRIPTION_TYPE);
                         int indexForText = patternEntityVersion.indexForMeaning(TinkarTerm.TEXT_FOR_DESCRIPTION);
-                        if (version.fields().get(indexForMeaning).equals(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE)) {
-                            return (String) version.fields().get(indexForText);
+                        if (version.fieldValues().get(indexForMeaning).equals(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE)) {
+                            return (String) version.fieldValues().get(indexForText);
                         }
-                        if (version.fields().get(indexForMeaning).equals(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE)) {
-                            fqnString = (String) version.fields().get(indexForText);
+                        if (version.fieldValues().get(indexForMeaning).equals(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE)) {
+                            fqnString = (String) version.fieldValues().get(indexForText);
                         }
-                        anyString = (String) version.fields().get(indexForText);
+                        anyString = (String) version.fieldValues().get(indexForText);
                     } else {
                         anyString = " <" + entity.nid() + ">" + entity.asUuidList().toString();
                         // Added in case entity.toString() itself throws an exception, at least get a UUID for the problem.
@@ -89,7 +89,13 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                         AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a pattern entity. Found: " + entity)));
                     }
                 } else {
-                    anyString = " <" + descriptionSemanticEntity.nid() + ">" + descriptionSemanticEntity.asUuidList().toString();
+                    anyString = " <" + descriptionSemanticEntity.nid() + "> " + descriptionSemanticEntity.asUuidList().toString();
+                    LOG.error("ERROR getting string for nid: " + anyString);
+                    LOG.error("ERROR Nid - 2: <" + (nid - 2) + "> " + getChronology(nid - 2));
+                    LOG.error("ERROR Nid - 1: <" + (nid - 1) + "> " + getChronology(nid - 1));
+                    LOG.error("ERROR Nid: <" + nid + "> " + getChronology(nid - 1));
+                    LOG.error("ERROR Nid + 1: <" + (nid + 1) + "> " + getChronology(nid + 1));
+                    LOG.error("ERROR Nid + 2: <" + (nid + 2) + "> " + getChronology(nid + 2));
 
                     // Added in case entity.toString() itself throws an exception, at least get a UUID for the problem.
                     AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a description semantic entity from list: " +
@@ -291,6 +297,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
         @Override
         public void reset() {
+            LOG.info("Resetting Entity Caches");
             STRING_CACHE.invalidateAll();
             ENTITY_CACHE.invalidateAll();
             STAMP_CACHE.invalidateAll();

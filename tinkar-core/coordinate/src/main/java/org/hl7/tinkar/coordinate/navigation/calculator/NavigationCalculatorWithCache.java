@@ -237,7 +237,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
                         Latest<SemanticEntityVersion> latestNavigationSemantic = stampCalculator().latest(semantics[0]);
                         latestNavigationSemantic.ifPresent(semanticEntityVersion -> {
                             SemanticEntityVersion navigationSemantic = latestNavigationSemantic.get();
-                            IntIdSet intIdSet = (IntIdSet) navigationSemantic.fields().get(indexForMeaning);
+                            IntIdSet intIdSet = (IntIdSet) navigationSemantic.fieldValues().get(indexForMeaning);
                             // Filter here by allowed vertex state...
                             if (states == StateSet.ACTIVE_INACTIVE_AND_WITHDRAWN) {
                                 nidsInList.addAll(intIdSet.toArray());
@@ -259,17 +259,18 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         return stampCalculator;
     }
 
-    private static record StampLangNavRecord(StampCoordinateRecord stampFilter,
-                                             ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
-                                             NavigationCoordinateRecord navigationCoordinate) {
-    }
-
     @AutoService(CachingService.class)
     public static class CacheProvider implements CachingService {
+        // TODO: this has implicit assumption that no one will hold on to a calculator... Should we be defensive?
         @Override
         public void reset() {
             SINGLETONS.clear();
         }
+    }
+
+    private static record StampLangNavRecord(StampCoordinateRecord stampFilter,
+                                             ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
+                                             NavigationCoordinateRecord navigationCoordinate) {
     }
 
     record MutableEdge(MutableIntSet types, int destinationNid) {

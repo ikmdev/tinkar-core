@@ -1,7 +1,13 @@
 import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.coordinate.PathService;
+import org.hl7.tinkar.coordinate.edit.EditCoordinateImmutable;
+import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculatorWithCache;
+import org.hl7.tinkar.coordinate.logic.calculator.LogicCalculatorWithCache;
+import org.hl7.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
+import org.hl7.tinkar.coordinate.stamp.StampPathImmutable;
 import org.hl7.tinkar.coordinate.stamp.calculator.PathProvider;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
+import org.hl7.tinkar.coordinate.view.calculator.ViewCalculatorWithCache;
 
 
 /*
@@ -31,7 +37,13 @@ module org.hl7.tinkar.coordinate {
     requires org.slf4j;
 
     provides CachingService with
-            StampCalculatorWithCache.CacheProvider;
+            LanguageCalculatorWithCache.CacheProvider,
+            LogicCalculatorWithCache.CacheProvider,
+            NavigationCalculatorWithCache.CacheProvider,
+            StampCalculatorWithCache.CacheProvider,
+            ViewCalculatorWithCache.CacheProvider,
+            EditCoordinateImmutable.CacheProvider,
+            StampPathImmutable.CachingProvider;
 
     provides PathService with PathProvider;
 

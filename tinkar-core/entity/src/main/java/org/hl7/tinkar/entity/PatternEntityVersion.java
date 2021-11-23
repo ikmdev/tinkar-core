@@ -4,9 +4,9 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.component.PatternVersion;
 import org.hl7.tinkar.terms.ConceptFacade;
 
-public interface PatternEntityVersion extends EntityVersion, PatternVersion<FieldDefinitionForEntity> {
+public interface PatternEntityVersion extends EntityVersion, PatternVersion {
     default <T> T getFieldWithMeaning(ConceptFacade fieldMeaning, SemanticEntityVersion version) {
-        return (T) version.fields().get(indexForMeaning(fieldMeaning));
+        return (T) version.fieldValues().get(indexForMeaning(fieldMeaning));
     }
 
     default int indexForMeaning(ConceptFacade meaning) {
@@ -17,7 +17,7 @@ public interface PatternEntityVersion extends EntityVersion, PatternVersion<Fiel
     // TODO: Note the stamp calculator caches these indexes. Consider how to optimize, and eliminate unoptimized calls?
     default int indexForMeaning(int meaningNid) {
         for (int i = 0; i < fieldDefinitions().size(); i++) {
-            if (fieldDefinitions().get(i).meaningNid == meaningNid) {
+            if (fieldDefinitions().get(i).meaningNid() == meaningNid) {
                 return i;
             }
         }
@@ -25,7 +25,7 @@ public interface PatternEntityVersion extends EntityVersion, PatternVersion<Fiel
     }
 
     @Override
-    ImmutableList<FieldDefinitionForEntity> fieldDefinitions();
+    ImmutableList<? extends FieldDefinitionForEntity> fieldDefinitions();
 
     @Override
     default ConceptEntity semanticPurpose() {
@@ -42,7 +42,7 @@ public interface PatternEntityVersion extends EntityVersion, PatternVersion<Fiel
     int semanticMeaningNid();
 
     default <T> T getFieldWithPurpose(ConceptFacade fieldPurpose, SemanticEntityVersion version) {
-        return (T) version.fields().get(indexForPurpose(fieldPurpose));
+        return (T) version.fieldValues().get(indexForPurpose(fieldPurpose));
     }
 
     default int indexForPurpose(ConceptFacade purpose) {
@@ -53,7 +53,7 @@ public interface PatternEntityVersion extends EntityVersion, PatternVersion<Fiel
     // TODO: Note the stamp calculator caches these indexes. Consider how to optimize, and eliminate unoptimized calls?
     default int indexForPurpose(int purposeNid) {
         for (int i = 0; i < fieldDefinitions().size(); i++) {
-            if (fieldDefinitions().get(i).purposeNid == purposeNid) {
+            if (fieldDefinitions().get(i).purposeNid() == purposeNid) {
                 return i;
             }
         }

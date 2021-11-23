@@ -14,8 +14,7 @@ import java.util.ServiceLoader;
 import java.util.UUID;
 import java.util.function.ToIntFunction;
 
-@AutoService(CachingService.class)
-public class PrimitiveData implements CachingService {
+public class PrimitiveData {
     private static final Logger LOG = LoggerFactory.getLogger(PrimitiveData.class);
 
     private static DataServiceController<PrimitiveDataService> controllerSingleton;
@@ -178,12 +177,17 @@ public class PrimitiveData implements CachingService {
         return get().nidForUuids(uuids);
     }
 
-    @Override
-    public void reset() {
-        controllerSingleton = null;
-        defaultDescriptionForNidServiceSingleton = null;
-        publicIdServiceSingleton = null;
-        singleton = new PrimitiveData();
+
+    @AutoService(CachingService.class)
+    public static class CacheProvider implements CachingService {
+
+        @Override
+        public void reset() {
+            controllerSingleton = null;
+            defaultDescriptionForNidServiceSingleton = null;
+            publicIdServiceSingleton = null;
+            singleton = new PrimitiveData();
+        }
     }
 
 }

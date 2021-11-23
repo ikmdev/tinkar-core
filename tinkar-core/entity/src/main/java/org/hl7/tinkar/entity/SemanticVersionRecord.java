@@ -14,12 +14,12 @@ import java.time.Instant;
 
 @RecordBuilder
 public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
-                                    ImmutableList<Object> fields)
+                                    ImmutableList<Object> fieldValues)
         implements SemanticEntityVersion, SemanticVersionRecordBuilder.With {
     public SemanticVersionRecord(SemanticRecord chronology, SemanticVersion version) {
         this(chronology,
                 EntityService.get().nidForComponent(version.stamp()),
-                Lists.immutable.fromStream(version.fields().stream().map(o -> EntityRecordFactory.externalToInternalObject(o))));
+                Lists.immutable.fromStream(version.fieldValues().stream().map(o -> EntityRecordFactory.externalToInternalObject(o))));
     }
 
     @Override
@@ -27,7 +27,7 @@ public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         SemanticVersionRecord that = (SemanticVersionRecord) o;
-        return stampNid == that.stampNid && fields.equals(that.fields);
+        return stampNid == that.stampNid && fieldValues.equals(that.fieldValues);
     }
 
     @Override
@@ -40,22 +40,22 @@ public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
         StringBuilder sb = new StringBuilder();
         sb.append("≤");
         sb.append(Entity.getStamp(stampNid).describe());
-        PatternEntity pattern = Entity.getFast(this.chronology().patternNid());
+        Entity pattern = Entity.getFast(this.chronology().patternNid());
         if (pattern instanceof PatternRecord patternEntity) {
             // TODO get proper version after relative position computer available.
             // Maybe put stamp coordinate on thread, or relative position computer on thread
-            PatternEntityVersion patternEntityVersion = patternEntity.versions().get(0);
+            PatternVersionRecord patternEntityVersion = patternEntity.versions().get(0);
             sb.append("\n");
-            for (int i = 0; i < fields.size(); i++) {
+            for (int i = 0; i < fieldValues.size(); i++) {
                 sb.append("Field ");
                 sb.append((i + 1));
                 sb.append(": ‹");
                 StringBuilder fieldStringBuilder = new StringBuilder();
 
-                Object field = fields.get(i);
+                Object field = fieldValues.get(i);
                 if (i < patternEntityVersion.fieldDefinitions().size()) {
-                    FieldDefinitionForEntity fieldDefinition = patternEntityVersion.fieldDefinitions().get(i);
-                    fieldStringBuilder.append(PrimitiveData.text(fieldDefinition.meaningNid));
+                    FieldDefinitionRecord fieldDefinition = patternEntityVersion.fieldDefinitions().get(i);
+                    fieldStringBuilder.append(PrimitiveData.text(fieldDefinition.meaningNid()));
                 } else {
                     fieldStringBuilder.append("Size error @ " + i);
                 }
@@ -106,8 +106,8 @@ public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
             sb.append("Bad pattern: ");
             sb.append(PrimitiveData.text(pattern.nid()));
             sb.append("; ");
-            for (int i = 0; i < fields.size(); i++) {
-                Object field = fields.get(i);
+            for (int i = 0; i < fieldValues.size(); i++) {
+                Object field = fieldValues.get(i);
                 if (i > 0) {
                     sb.append("; ");
                 }
@@ -161,6 +161,31 @@ public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
         sb.append("≥");
 
         return sb.toString();
+    }
+
+    @Override
+    public ImmutableList<FieldRecord> fields(PatternEntityVersion patternVersion) {
+        switch (patternVersion) {
+            case PatternVersionRecord patternVersionRecord -> {
+                FieldRecord[] fieldArray = new FieldRecord[fieldValues().size()];
+                for (int i = 0; i < fieldArray.length; i++) {
+                    Object value = fieldValues().get(i);
+                    FieldDefinitionRecord fieldDef = patternVersionRecord.fieldDefinitions().get(i);
+                    fieldArray[i] = new FieldRecord(value, patternVersion.stampNid(), fieldDef);
+                }
+                return Lists.immutable.of(fieldArray);
+            }
+            default -> {
+                PatternRecord patternRecord = Entity.getFast(patternVersion.nid());
+                for (PatternVersionRecord patternVersionRecord : patternRecord.versionRecords()) {
+                    if (patternVersionRecord.stampNid() == patternVersion.stampNid()) {
+                        return fields(patternVersionRecord);
+                    }
+                }
+                throw new IllegalStateException("Can't find pattern version: " + patternVersion +
+                        "\n in pattern: " + patternRecord);
+            }
+        }
     }
 
 }

@@ -15,11 +15,13 @@
  */
 package org.hl7.tinkar.dto;
 
+import io.soabase.recordbuilder.core.RecordBuilder;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.ConceptVersion;
 import org.hl7.tinkar.dto.binary.*;
 
 
+@RecordBuilder
 public record ConceptVersionDTO(PublicId publicId, StampDTO stamp)
         implements ConceptVersion, DTO, Marshalable {
 
@@ -32,6 +34,7 @@ public record ConceptVersionDTO(PublicId publicId, StampDTO stamp)
 
     /**
      * Version unmarshaler for ConceptVersionDTO.
+     *
      * @param in
      * @param publicId
      * @return new instance of ConceptVersionDTO created from the input.
@@ -47,6 +50,7 @@ public record ConceptVersionDTO(PublicId publicId, StampDTO stamp)
 
     /**
      * Version marshaler for ConceptVersionDTO
+     *
      * @param out
      */
     @Override

@@ -8,8 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-@AutoService(CachingService.class)
-public class ServiceProperties implements CachingService {
+public class ServiceProperties {
     private static final Logger LOG = LoggerFactory.getLogger(ServiceProperties.class);
     private static final ConcurrentHashMap<Enum, Object> propertyMap = new ConcurrentHashMap<>();
 
@@ -53,12 +52,18 @@ public class ServiceProperties implements CachingService {
         return Optional.ofNullable((T) propertyMap.get(enumKey));
     }
 
-    @Override
-    public void reset() {
-        UUID currentUuid = (UUID) propertyMap.get(ServiceKeys.JVM_UUID);
-        LOG.info("Resetting ServiceProperties for: " + currentUuid);
-        propertyMap.clear();
-        propertyMap.put(ServiceKeys.JVM_UUID, currentUuid);
-        propertyMap.putIfAbsent(ServiceKeys.CACHE_PERIOD_UUID, UUID.randomUUID());
+
+    @AutoService(CachingService.class)
+    public static class CacheProvider implements CachingService {
+
+        @Override
+        public void reset() {
+            UUID currentUuid = (UUID) propertyMap.get(ServiceKeys.JVM_UUID);
+            LOG.info("Resetting ServiceProperties for: " + currentUuid);
+            propertyMap.clear();
+            propertyMap.put(ServiceKeys.JVM_UUID, currentUuid);
+            propertyMap.putIfAbsent(ServiceKeys.CACHE_PERIOD_UUID, UUID.randomUUID());
+        }
     }
+
 }

@@ -16,6 +16,7 @@
 package org.hl7.tinkar.dto;
 
 
+import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -29,17 +30,18 @@ import org.hl7.tinkar.dto.binary.*;
  * @author kec
  */
 
+@RecordBuilder
 public record PatternVersionDTO(PublicId publicId,
                                 StampDTO stamp,
                                 PublicId semanticPurposePublicId,
                                 PublicId semanticMeaningPublicId,
                                 ImmutableList<FieldDefinitionDTO> fieldDefinitionDTOS)
-        implements PatternVersion<FieldDefinitionDTO>, Marshalable {
+        implements PatternVersion, Marshalable {
 
     private static final int localMarshalVersion = 3;
 
 
-    public static PatternVersionDTO make(PatternVersion<? extends FieldDefinition> patternVersion) {
+    public static PatternVersionDTO make(PatternVersion patternVersion) {
 
         MutableList<FieldDefinitionDTO> fields = Lists.mutable.ofInitialCapacity(patternVersion.fieldDefinitions().size());
         for (FieldDefinition fieldDefinition : patternVersion.fieldDefinitions()) {

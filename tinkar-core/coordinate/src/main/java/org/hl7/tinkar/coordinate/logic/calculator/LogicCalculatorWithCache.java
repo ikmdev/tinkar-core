@@ -86,7 +86,7 @@ public class LogicCalculatorWithCache implements LogicCalculator {
                     OptionalInt optionalIndexForMeaning = stampCalculator.getIndexForMeaning(axiomsPatternNid, TinkarTerm.EL_PLUS_PLUS_STATED_TERMINOLOGICAL_AXIOMS.nid());
                     if (optionalIndexForMeaning.isPresent()) {
                         DiTreeEntity<? extends EntityVertex> axiomsField =
-                                (DiTreeEntity<? extends EntityVertex>) axioms.fields().get(optionalIndexForMeaning.getAsInt());
+                                (DiTreeEntity<? extends EntityVertex>) axioms.fieldValues().get(optionalIndexForMeaning.getAsInt());
                         for (EntityVertex vertex : axiomsField.vertexMap()) {
                             if (vertex.getMeaningNid() == TinkarTerm.SUFFICIENT_SET.nid()) {
                                 return true;

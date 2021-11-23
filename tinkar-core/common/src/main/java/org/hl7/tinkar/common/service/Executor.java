@@ -11,8 +11,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 
-@AutoService(CachingService.class)
-public class Executor implements CachingService {
+public class Executor {
     private static final Logger LOG = LoggerFactory.getLogger(Executor.class);
     private static Executor executor = new Executor();
     private static ExecutorService executorSingleton;
@@ -84,10 +83,16 @@ public class Executor implements CachingService {
         return executorSingleton.scheduled();
     }
 
-    @Override
-    public void reset() {
-        executorController = null;
-        executorSingleton = null;
-        executor = null;
+
+    @AutoService(CachingService.class)
+    public static class CacheProvider implements CachingService {
+
+        @Override
+        public void reset() {
+            executorController = null;
+            executorSingleton = null;
+            executor = null;
+        }
     }
+
 }

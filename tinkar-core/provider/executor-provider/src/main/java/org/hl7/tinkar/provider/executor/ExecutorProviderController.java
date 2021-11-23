@@ -8,15 +8,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-@AutoService({ExecutorController.class, CachingService.class})
-public class ExecutorProviderController implements ExecutorController, CachingService {
+@AutoService({ExecutorController.class})
+public class ExecutorProviderController implements ExecutorController {
     private static final Logger LOG = LoggerFactory.getLogger(ExecutorProviderController.class);
-    private AtomicReference<ExecutorProvider> providerReference = new AtomicReference<>();
-
-    @Override
-    public void reset() {
-        stop();
-    }
+    private static AtomicReference<ExecutorProvider> providerReference = new AtomicReference<>();
 
     @Override
     public ExecutorProvider create() {
@@ -41,4 +36,19 @@ public class ExecutorProviderController implements ExecutorController, CachingSe
             return null;
         });
     }
+
+
+    @AutoService(CachingService.class)
+    public static class CacheProvider implements CachingService {
+        @Override
+        public void reset() {
+            providerReference.updateAndGet(executorProvider -> {
+                if (executorProvider != null) {
+                    executorProvider.stop();
+                }
+                return null;
+            });
+        }
+    }
+
 }

@@ -12,6 +12,8 @@ import org.hl7.tinkar.component.Component;
 import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.terms.EntityFacade;
 import org.hl7.tinkar.terms.SemanticFacade;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -20,6 +22,8 @@ public interface Entity<T extends EntityVersion>
         extends Chronology<T>,
         EntityFacade,
         IdentifierData {
+
+    static final Logger LOG = LoggerFactory.getLogger(Entity.class);
 
     static EntityService provider() {
         return EntityService.get();
@@ -103,7 +107,12 @@ public interface Entity<T extends EntityVersion>
         sb.append(", ");
         sb.append(entityToStringExtras());
         for (EntityVersion version : versions()) {
-            sb.append("\nv: ").append(version).append(",");
+            try {
+                sb.append("\nv: ").append(version).append(",");
+            } catch (Throwable e) {
+                LOG.error("Error creating string for <" + version.nid() + ">", e);
+                sb.append("<").append(version.nid()).append(">,");
+            }
         }
         sb.deleteCharAt(sb.length() - 1);
         sb.append('}');

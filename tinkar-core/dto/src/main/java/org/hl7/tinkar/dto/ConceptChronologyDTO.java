@@ -15,6 +15,7 @@
  */
 package org.hl7.tinkar.dto;
 
+import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -24,9 +25,9 @@ import org.hl7.tinkar.component.ConceptVersion;
 import org.hl7.tinkar.dto.binary.*;
 
 /**
- *
  * @author kec
  */
+@RecordBuilder
 public record ConceptChronologyDTO(PublicId publicId,
                                    ImmutableList<ConceptVersionDTO> versions)
         implements Marshalable, ConceptChronology<ConceptVersionDTO>, DTO {

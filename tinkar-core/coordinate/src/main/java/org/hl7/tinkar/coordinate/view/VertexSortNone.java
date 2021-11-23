@@ -66,6 +66,6 @@ public class VertexSortNone implements VertexSort, Encodable {
     @Override
     @Encoder
     public void encode(EncoderOutput out) {
-        // No fields...
+        // No fieldValues...
     }
 }

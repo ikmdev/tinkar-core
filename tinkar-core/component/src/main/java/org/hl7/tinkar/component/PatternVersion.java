@@ -24,9 +24,9 @@ import java.util.Optional;
  *
  * @author kec
  */
-public interface PatternVersion<F extends FieldDefinition> extends Version, Pattern {
+public interface PatternVersion extends Version, Pattern {
 
-    ImmutableList<F> fieldDefinitions();
+    ImmutableList<? extends FieldDefinition> fieldDefinitions();
 
     Concept semanticPurpose();
 

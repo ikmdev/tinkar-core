@@ -100,7 +100,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
         OptionalInt optionalIndexForText = stampCalculator.getIndexForMeaning(semanticEntityVersion.patternNid(),
                 TinkarTerm.TEXT_FOR_DESCRIPTION.nid());
         if (optionalIndexForText.isPresent()) {
-            String text = (String) semanticEntityVersion.fields().get(optionalIndexForText.getAsInt());
+            String text = (String) semanticEntityVersion.fieldValues().get(optionalIndexForText.getAsInt());
             return Optional.of(text);
         }
         return Optional.empty();
@@ -159,7 +159,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
                                 Latest<SemanticEntityVersion> latestDescriptionVersion =
                                         stampCalculator.latest(descriptionSemantic);
                                 latestDescriptionVersion.ifPresent(descriptionVersion -> {
-                                    Object fieldValue = descriptionVersion.fields().get(optionalTypeIndex.getAsInt());
+                                    Object fieldValue = descriptionVersion.fieldValues().get(optionalTypeIndex.getAsInt());
                                     if (fieldValue instanceof EntityFacade entityFacade) {
                                         if (entityFacade.nid() == descriptionTypeNid) {
                                             descriptionList.add(descriptionVersion);
@@ -218,9 +218,9 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
                         PatternEntity<PatternEntityVersion> patternEntity = descriptionVersion.pattern();
                         PatternEntityVersion patternEntityVersion = stampCalculator.latest(patternEntity).get();
                         int languageIndex = patternEntityVersion.indexForMeaning(TinkarTerm.LANGUAGE_CONCEPT_NID_FOR_DESCRIPTION);
-                        Object languageObject = descriptionVersion.fields().get(languageIndex);
+                        Object languageObject = descriptionVersion.fieldValues().get(languageIndex);
                         int descriptionTypeIndex = patternEntityVersion.indexForMeaning(TinkarTerm.DESCRIPTION_TYPE);
-                        Object descriptionTypeObject = descriptionVersion.fields().get(descriptionTypeIndex);
+                        Object descriptionTypeObject = descriptionVersion.fieldValues().get(descriptionTypeIndex);
                         if (languageObject instanceof EntityFacade languageFacade &&
                                 descriptionTypeObject instanceof EntityFacade descriptionTypeFacade) {
                             if ((languageFacade.nid() == languageCoordinate.languageConceptNid() ||
@@ -258,7 +258,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
                             for (SemanticEntityVersion description : descriptionsForLanguageOfType) {
                                 stampCalculator.forEachSemanticVersionForComponentOfPattern(description.nid(), dialectPatternNid,
                                         (semanticEntityVersion, entityVersion, patternVersion) -> {
-                                            if (semanticEntityVersion.fields().get(acceptabilityIndex) instanceof EntityFacade accceptabilityFacade) {
+                                            if (semanticEntityVersion.fieldValues().get(acceptabilityIndex) instanceof EntityFacade accceptabilityFacade) {
                                                 if (accceptabilityFacade.nid() == TinkarTerm.PREFERRED.nid()) {
                                                     preferredForDialect.addLatest(description);
                                                 }
@@ -328,7 +328,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
         SemanticEntityVersion descriptionVersion = latestDescription.get();
         PatternEntity<PatternEntityVersion> pattern = descriptionVersion.pattern();
         PatternEntityVersion patternVersion = stampCalculator.latest(pattern).get();
-        String descriptionText = (String) descriptionVersion.fields().get(patternVersion.indexForMeaning(TinkarTerm.TEXT_FOR_DESCRIPTION));
+        String descriptionText = (String) descriptionVersion.fieldValues().get(patternVersion.indexForMeaning(TinkarTerm.TEXT_FOR_DESCRIPTION));
         return descriptionText;
     }
 

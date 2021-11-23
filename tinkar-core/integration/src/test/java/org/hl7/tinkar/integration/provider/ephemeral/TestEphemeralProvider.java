@@ -1,5 +1,6 @@
 package org.hl7.tinkar.integration.provider.ephemeral;
 
+import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.service.ServiceProperties;
 import org.hl7.tinkar.entity.load.LoadEntitiesFromDtoFile;
@@ -21,6 +22,8 @@ class TestEphemeralProvider {
 
     @BeforeAll
     static void setupSuite() {
+        LOG.info("Clear caches");
+        CachingService.clearAll();
         LOG.info("Setup Ephemeral Suite: " + LOG.getName());
         LOG.info(ServiceProperties.jvmUuid());
         PrimitiveData.selectControllerByName(TestConstants.EPHEMERAL_STORE_NAME);

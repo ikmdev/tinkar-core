@@ -114,31 +114,31 @@ public interface StampCalculator {
     void forEachSemanticVersionForComponentOfPattern(int componentNid, int patternNid, TriConsumer<SemanticEntityVersion, EntityVersion, PatternEntityVersion> procedure);
 
     default void forEachSemanticVersionWithFieldsOfPattern(PatternFacade patternFacade,
-                                                           TriConsumer<SemanticEntityVersion, ImmutableList<Field>, PatternEntityVersion> procedure) {
+                                                           TriConsumer<SemanticEntityVersion, ImmutableList<? extends Field>, PatternEntityVersion> procedure) {
         forEachSemanticVersionWithFieldsOfPattern(patternFacade.nid(), procedure);
     }
 
-    default void forEachSemanticVersionWithFieldsOfPattern(int patternNid, TriConsumer<SemanticEntityVersion, ImmutableList<Field>, PatternEntityVersion> procedure) {
+    default void forEachSemanticVersionWithFieldsOfPattern(int patternNid, TriConsumer<SemanticEntityVersion, ImmutableList<? extends Field>, PatternEntityVersion> procedure) {
         forEachSemanticVersionOfPattern(patternNid, (semanticEntityVersion, patternVersion) -> procedure.accept(semanticEntityVersion, semanticEntityVersion.fields(patternVersion), patternVersion));
     }
 
     default void forEachSemanticVersionWithFieldsForComponentOfPattern(EntityFacade component,
                                                                        PatternFacade patternFacade,
-                                                                       QuadConsumer<SemanticEntityVersion, ImmutableList<Field>, EntityVersion, PatternEntityVersion> procedure) {
+                                                                       QuadConsumer<SemanticEntityVersion, ImmutableList<? extends Field>, EntityVersion, PatternEntityVersion> procedure) {
         forEachSemanticVersionWithFieldsForComponentOfPattern(component.nid(), patternFacade.nid(), procedure);
     }
 
-    default void forEachSemanticVersionWithFieldsForComponentOfPattern(int componentNid, int patternNid, QuadConsumer<SemanticEntityVersion, ImmutableList<Field>, EntityVersion, PatternEntityVersion> procedure) {
+    default void forEachSemanticVersionWithFieldsForComponentOfPattern(int componentNid, int patternNid, QuadConsumer<SemanticEntityVersion, ImmutableList<? extends Field>, EntityVersion, PatternEntityVersion> procedure) {
         forEachSemanticVersionForComponentOfPattern(componentNid, patternNid, (semanticEntityVersion, entityVersion, patternEntityVersion) -> procedure.accept(semanticEntityVersion, semanticEntityVersion.fields(patternEntityVersion), entityVersion, patternEntityVersion));
     }
 
     default void forEachSemanticVersionWithFieldsForComponent(EntityFacade component,
-                                                              TriConsumer<SemanticEntityVersion, ImmutableList<Field>, EntityVersion> procedure) {
+                                                              TriConsumer<SemanticEntityVersion, ImmutableList<? extends Field>, EntityVersion> procedure) {
         forEachSemanticVersionWithFieldsForComponent(component.nid(), procedure);
     }
 
     void forEachSemanticVersionWithFieldsForComponent(int componentNid,
-                                                      TriConsumer<SemanticEntityVersion, ImmutableList<Field>, EntityVersion> procedure);
+                                                      TriConsumer<SemanticEntityVersion, ImmutableList<? extends Field>, EntityVersion> procedure);
 
     default Latest<PatternEntityVersion> latestPatternEntityVersion(PatternFacade patternFacade) {
         return latestPatternEntityVersion(patternFacade.nid());

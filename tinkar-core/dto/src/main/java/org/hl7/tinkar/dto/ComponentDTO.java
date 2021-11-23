@@ -15,12 +15,13 @@
  */
 package org.hl7.tinkar.dto;
 
+import io.soabase.recordbuilder.core.RecordBuilder;
 import org.hl7.tinkar.common.id.PublicId;
 
 /**
- *
  * @author kec
  */
+@RecordBuilder
 public record ComponentDTO(PublicId publicId)
         implements DTO {
 }

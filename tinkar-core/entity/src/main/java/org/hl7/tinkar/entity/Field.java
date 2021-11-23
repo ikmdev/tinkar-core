@@ -32,5 +32,4 @@ public interface Field<T> extends FieldDefinition {
 
     int dataTypeNid();
 
-    SemanticEntityVersion enclosingSemanticVersion();
 }

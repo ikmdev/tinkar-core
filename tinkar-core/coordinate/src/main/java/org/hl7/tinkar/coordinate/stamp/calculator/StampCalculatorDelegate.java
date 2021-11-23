@@ -60,7 +60,7 @@ public interface StampCalculatorDelegate extends StampCalculator {
     }
 
     @Override
-    default void forEachSemanticVersionWithFieldsForComponent(int componentNid, TriConsumer<SemanticEntityVersion, ImmutableList<Field>, EntityVersion> procedure) {
+    default void forEachSemanticVersionWithFieldsForComponent(int componentNid, TriConsumer<SemanticEntityVersion, ImmutableList<? extends Field>, EntityVersion> procedure) {
         stampCalculator().forEachSemanticVersionWithFieldsForComponent(componentNid, procedure);
     }
 

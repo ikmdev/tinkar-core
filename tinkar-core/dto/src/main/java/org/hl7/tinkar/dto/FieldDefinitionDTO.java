@@ -15,12 +15,14 @@
  */
 package org.hl7.tinkar.dto;
 
+import io.soabase.recordbuilder.core.RecordBuilder;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.component.Concept;
 import org.hl7.tinkar.component.FieldDefinition;
 import org.hl7.tinkar.dto.binary.*;
 
 
+@RecordBuilder
 public record FieldDefinitionDTO(PublicId dataTypePublicId, PublicId purposePublicId, PublicId meaningPublicId)
         implements FieldDefinition, Marshalable {
 

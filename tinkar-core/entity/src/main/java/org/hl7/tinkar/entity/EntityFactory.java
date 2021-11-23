@@ -3,9 +3,6 @@ package org.hl7.tinkar.entity;
 import io.activej.bytebuf.ByteBuf;
 import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.dto.StampDTO;
-import org.hl7.tinkar.entity.forremoval.EntityClass;
-import org.hl7.tinkar.entity.forremoval.PatternEntityClass;
-import org.hl7.tinkar.entity.forremoval.SemanticEntityClass;
 
 public class EntityFactory {
 
@@ -22,7 +19,7 @@ public class EntityFactory {
         throw new UnsupportedOperationException("Can't convert: " + chronology);
     }
 
-    public static <T extends EntityClass<V>, V extends EntityVersion> T make(byte[] data) {
+    public static <T extends Entity<V>, V extends EntityVersion> T make(byte[] data) {
         // TODO change to use DecoderInput instead of ByteBuf directly.
         // TODO remove the parts where it computes size.
         ByteBuf buf = ByteBuf.wrapForReading(data);
@@ -41,13 +38,13 @@ public class EntityFactory {
                 return (T) EntityRecordFactory.make(readBuf, entityFormatVersion, fieldDataType);
 
             case SEMANTIC_CHRONOLOGY:
-                return (T) SemanticEntityClass.make(readBuf, entityFormatVersion);
+                return (T) EntityRecordFactory.make(readBuf, entityFormatVersion, fieldDataType);
 
             case PATTERN_CHRONOLOGY:
-                return (T) PatternEntityClass.make(readBuf, entityFormatVersion);
+                return (T) EntityRecordFactory.make(readBuf, entityFormatVersion, fieldDataType);
 
             case STAMP:
-                //return (T) StampEntity.make(readBuf, entityFormatVersion);
+                return (T) EntityRecordFactory.make(readBuf, entityFormatVersion, fieldDataType);
 
             default:
                 throw new UnsupportedOperationException("Can't handle fieldDataType: " + fieldDataType);

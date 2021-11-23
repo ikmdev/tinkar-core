@@ -16,19 +16,10 @@
 package org.hl7.tinkar.component;
 
 
-import java.util.Optional;
-
 /**
  * @author kec
  */
 public interface FieldDefinition {
-
-    /**
-     * Narrative description of this field.
-     */
-    default Optional<String> narrativeOptional() {
-        return Optional.empty();
-    }
 
     /**
      * Underlying object type such as String or Integer.

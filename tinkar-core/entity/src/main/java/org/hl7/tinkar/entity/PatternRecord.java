@@ -12,11 +12,11 @@ import java.util.Objects;
 public record PatternRecord(
         long mostSignificantBits, long leastSignificantBits,
         long[] additionalUuidLongs, int nid,
-        MutableList<PatternEntityVersion> versionRecords)
-        implements PatternEntity<PatternEntityVersion>, PatternRecordBuilder.With {
+        MutableList<PatternVersionRecord> versionRecords)
+        implements PatternEntity<PatternVersionRecord>, PatternRecordBuilder.With {
 
     @Override
-    public ImmutableList<PatternEntityVersion> versions() {
+    public ImmutableList<PatternVersionRecord> versions() {
         return versionRecords.toImmutable();
     }
 

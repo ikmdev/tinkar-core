@@ -14,9 +14,7 @@ import org.hl7.tinkar.terms.ConceptFacade;
 import java.util.Objects;
 
 
-//This class is not treated as a service, however, it needs the annotation, so that the reset() gets fired at appropriate times.
-@AutoService(CachingService.class)
-public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordinate, CachingService {
+public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordinate {
     private static final int marshalVersion = 2;
 
     private static final ConcurrentReferenceHashMap<EditCoordinateImmutable, EditCoordinateImmutable> SINGLETONS =
@@ -95,11 +93,6 @@ public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordin
     }
 
     @Override
-    public void reset() {
-        SINGLETONS.clear();
-    }
-
-    @Override
     @Encoder
     public void encode(EncoderOutput out) {
         out.writeNid(this.authorNid);
@@ -160,5 +153,14 @@ public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordin
     @Override
     public EditCoordinateImmutable toEditCoordinateImmutable() {
         return this;
+    }
+
+    @AutoService(CachingService.class)
+    public static class CacheProvider implements CachingService {
+        // TODO: this has implicit assumption that no one will hold on to a calculator... Should we be defensive?
+        @Override
+        public void reset() {
+            SINGLETONS.clear();
+        }
     }
 }

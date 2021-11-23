@@ -1,5 +1,6 @@
 package org.hl7.tinkar.integration.provider.protocolbuffers;
 
+import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.service.ServiceProperties;
 import org.hl7.tinkar.entity.export.ExportEntitiesToProtocolBuffers;
@@ -22,6 +23,8 @@ class TestProtocolBuffersExport {
 
     @BeforeAll
     static void setupSuite() {
+        LOG.info("Clear caches");
+        CachingService.clearAll();
         LOG.info("Setup: " + LOG.getName());
         LOG.info(ServiceProperties.jvmUuid());
         PrimitiveData.selectControllerByName(TestConstants.EPHEMERAL_STORE_NAME);

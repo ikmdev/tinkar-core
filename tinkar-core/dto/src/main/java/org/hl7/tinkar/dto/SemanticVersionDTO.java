@@ -15,22 +15,23 @@
  */
 package org.hl7.tinkar.dto;
 
+import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.common.id.PublicId;
-import org.hl7.tinkar.dto.binary.*;
 import org.hl7.tinkar.component.*;
+import org.hl7.tinkar.dto.binary.*;
 
 import java.time.Instant;
 
 /**
- *
  * @author kec
  */
+@RecordBuilder
 public record SemanticVersionDTO(PublicId publicId,
-                                StampDTO stamp,
-                                ImmutableList<Object> fields)
+                                 StampDTO stamp,
+                                 ImmutableList<Object> fieldValues)
         implements SemanticVersion, Marshalable {
 
     private static final int localMarshalVersion = 3;
@@ -40,13 +41,13 @@ public record SemanticVersionDTO(PublicId publicId,
                               Stamp stamp,
                               ImmutableList<Object> fields) {
         this(publicId,
-             StampDTO.make(stamp),
-             fields);
+                StampDTO.make(stamp),
+                fields);
     }
 
     public static SemanticVersionDTO make(SemanticVersion semanticVersion) {
         MutableList<Object> convertedFields = Lists.mutable.empty();
-        semanticVersion.fields().forEach(objectToConvert -> {
+        semanticVersion.fieldValues().forEach(objectToConvert -> {
             if (objectToConvert instanceof Concept concept) {
                 convertedFields.add(new ConceptDTO(concept.publicId()));
             } else if (objectToConvert instanceof Pattern pattern) {
@@ -91,6 +92,6 @@ public record SemanticVersionDTO(PublicId publicId,
     @Marshaler
     public void marshal(TinkarOutput out) {
         stamp.marshal(out);
-        out.writeObjectList(fields);
+        out.writeObjectList(fieldValues);
     }
 }
