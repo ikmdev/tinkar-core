@@ -52,9 +52,11 @@ public enum FieldDataType {
     SPATIAL_POINT((byte) 24, SpatialPoint.class),
     STAMP_VERSION((byte) 25, Stamp.class),
 
+    FIELD_DEFINITION((byte) 26, FieldDefinition.class),
 
     // Identified thing needs to go last...
     IDENTIFIED_THING(Byte.MAX_VALUE, Component.class);
+
 
     public final byte token;
     public final Class<? extends Object> clazz;
@@ -118,6 +120,8 @@ public enum FieldDataType {
                 return SPATIAL_POINT;
             case 25:
                 return STAMP_VERSION;
+            case 26:
+                return FIELD_DEFINITION;
 
             // Identified thing needs to go last...
             case Byte.MAX_VALUE:

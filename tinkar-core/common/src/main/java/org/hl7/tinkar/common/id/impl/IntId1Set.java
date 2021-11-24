@@ -2,12 +2,13 @@ package org.hl7.tinkar.common.id.impl;
 
 
 import org.hl7.tinkar.common.id.IntIdSet;
+import org.hl7.tinkar.common.service.PrimitiveData;
 
 public class IntId1Set extends IntId1 implements IntIdSet {
     public IntId1Set(int element) {
         super(element);
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -19,6 +20,11 @@ public class IntId1Set extends IntId1 implements IntIdSet {
             }
         }
         return false;
+    }
+
+    @Override
+    public String toString() {
+        return "IntIdSet[" + PrimitiveData.textWithNid(element) + "]";
     }
 
 }

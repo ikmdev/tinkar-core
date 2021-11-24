@@ -1,6 +1,7 @@
 package org.hl7.tinkar.common.id.impl;
 
 import org.hl7.tinkar.common.id.IntIdList;
+import org.hl7.tinkar.common.service.PrimitiveData;
 
 public class IntId1List extends IntId1 implements IntIdList {
     public IntId1List(int element) {
@@ -23,5 +24,10 @@ public class IntId1List extends IntId1 implements IntIdList {
             }
         }
         return false;
+    }
+
+    @Override
+    public String toString() {
+        return "IntIdList[" + PrimitiveData.textWithNid(element) + "]";
     }
 }

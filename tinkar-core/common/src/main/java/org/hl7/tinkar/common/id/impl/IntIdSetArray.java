@@ -1,6 +1,7 @@
 package org.hl7.tinkar.common.id.impl;
 
 import org.hl7.tinkar.common.id.IntIdSet;
+import org.hl7.tinkar.common.service.PrimitiveData;
 
 import java.util.Arrays;
 import java.util.function.IntConsumer;
@@ -95,5 +96,19 @@ public class IntIdSetArray
             }
         }
         return false;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("IntIdSet[");
+        for (int i = 0; i < elements.length && i <= TO_STRING_LIMIT; i++) {
+            sb.append(PrimitiveData.textWithNid(elements[i])).append(", ");
+            if (i == TO_STRING_LIMIT) {
+                sb.append("..., ");
+            }
+        }
+        sb.deleteCharAt(sb.length() - 1);
+        sb.setCharAt(sb.length() - 1, ']');
+        return sb.toString();
     }
 }

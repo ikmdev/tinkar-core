@@ -17,4 +17,10 @@ public class IntId0List extends IntId0 implements IntIdList {
         }
         return false;
     }
+
+    @Override
+    public String toString() {
+        return "IntIdList[]";
+    }
+
 }

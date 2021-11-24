@@ -126,6 +126,13 @@ public class PrimitiveData {
         return defaultDescriptionForNidServiceSingleton.textOptional(nid);
     }
 
+    public static String textWithNid(int nid) {
+        StringBuilder sb = new StringBuilder();
+        textOptional(nid).ifPresent(s -> sb.append(s).append(" "));
+        sb.append("<").append(nid).append(">");
+        return sb.toString();
+    }
+
     public static List<Optional<String>> optionalTextList(int... nids) {
         return defaultDescriptionForNidServiceSingleton.optionalTextList(nids);
     }

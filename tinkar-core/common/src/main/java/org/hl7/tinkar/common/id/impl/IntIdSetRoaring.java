@@ -1,6 +1,7 @@
 package org.hl7.tinkar.common.id.impl;
 
 import org.hl7.tinkar.common.id.IntIdSet;
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.roaringbitmap.RoaringBitmap;
 
 import java.util.Arrays;
@@ -22,21 +23,6 @@ public class IntIdSetRoaring extends RoaringBitmap implements IntIdSet {
         IntIdSetRoaring roaring = new IntIdSetRoaring();
         roaring.add(newElements);
         return roaring;
-    }
-
-    @Override
-    public int size() {
-        return this.getCardinality();
-    }
-
-    @Override
-    public IntStream intStream() {
-        return stream();
-    }
-
-    @Override
-    public void forEach(IntConsumer consumer) {
-        forEach(new ConsumerAdaptor(consumer));
     }
 
     @Override
@@ -62,6 +48,37 @@ public class IntIdSetRoaring extends RoaringBitmap implements IntIdSet {
         return false;
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("IntIdSet[");
+        boolean limited = size() > TO_STRING_LIMIT;
+
+        intStream().limit(TO_STRING_LIMIT).forEach(nid -> {
+            sb.append(PrimitiveData.textWithNid(nid)).append(", ");
+        });
+        if (limited) {
+            sb.append("..., ");
+        }
+        sb.deleteCharAt(sb.length() - 1);
+        sb.setCharAt(sb.length() - 1, ']');
+        return sb.toString();
+    }
+
+    @Override
+    public int size() {
+        return this.getCardinality();
+    }
+
+    @Override
+    public IntStream intStream() {
+        return stream();
+    }
+
+    @Override
+    public void forEach(IntConsumer consumer) {
+        forEach(new ConsumerAdaptor(consumer));
+    }
+
     private static class ConsumerAdaptor implements org.roaringbitmap.IntConsumer {
         java.util.function.IntConsumer adaptee;
 
@@ -74,4 +91,5 @@ public class IntIdSetRoaring extends RoaringBitmap implements IntIdSet {
             this.adaptee.accept(value);
         }
     }
+
 }

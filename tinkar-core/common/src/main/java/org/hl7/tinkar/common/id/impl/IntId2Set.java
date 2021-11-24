@@ -1,6 +1,7 @@
 package org.hl7.tinkar.common.id.impl;
 
 import org.hl7.tinkar.common.id.IntIdSet;
+import org.hl7.tinkar.common.service.PrimitiveData;
 
 import java.util.Arrays;
 
@@ -28,5 +29,10 @@ public class IntId2Set extends IntId2 implements IntIdSet {
             }
         }
         return false;
+    }
+
+    @Override
+    public String toString() {
+        return "IntIdSet[" + PrimitiveData.textWithNid(element) + ", " + PrimitiveData.textWithNid(element2) + "]";
     }
 }

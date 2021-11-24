@@ -1,6 +1,7 @@
 package org.hl7.tinkar.common.id.impl;
 
 import org.hl7.tinkar.common.id.IntIdList;
+import org.hl7.tinkar.common.service.PrimitiveData;
 
 import java.util.Arrays;
 
@@ -36,5 +37,10 @@ public class IntId2List extends IntId2 implements IntIdList {
             }
         }
         return false;
+    }
+
+    @Override
+    public String toString() {
+        return "IntIdList[" + PrimitiveData.textWithNid(element) + ", " + PrimitiveData.textWithNid(element2) + "]";
     }
 }

@@ -19,4 +19,9 @@ public class IntId0Set extends IntId0 implements IntIdSet {
         return false;
     }
 
+    @Override
+    public String toString() {
+        return "IntIdSet[]";
+    }
+
 }

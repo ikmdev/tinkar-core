@@ -6,12 +6,10 @@ import java.util.stream.IntStream;
 /**
  * IntId0 is an optimization for IntList or IntSet of size 0.
  */
-public abstract class IntId0
-{
+public abstract class IntId0 {
     public static final int[] elements = new int[0];
 
-    public int get(int index)
-    {
+    public int get(int index) {
         throw new IndexOutOfBoundsException("Index: " + index + ", Size: 0");
     }
 

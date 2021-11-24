@@ -26,4 +26,15 @@ public record FieldRecord<T>(T value, int semanticVersionStampNid,
     public int dataTypeNid() {
         return fieldDefinition.dataTypeNid();
     }
+
+
+    @Override
+    public String toString() {
+        return "FieldRecord{" +
+                "value: " + value +
+                ", for semantic version: " + Entity.getStamp(semanticVersionStampNid).lastVersion().describe() +
+                ", with " + fieldDefinition +
+                '}';
+    }
+
 }

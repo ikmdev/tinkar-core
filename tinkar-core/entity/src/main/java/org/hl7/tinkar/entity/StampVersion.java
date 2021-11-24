@@ -7,7 +7,7 @@ import org.hl7.tinkar.terms.ConceptFacade;
 import org.hl7.tinkar.terms.EntityProxy;
 import org.hl7.tinkar.terms.State;
 
-public interface StampVersion extends Stamp<StampEntityVersion> {
+public interface StampVersion extends Stamp<StampEntityVersion>, VersionData {
     default String describe() {
         return "s:" + PrimitiveData.text(stateNid()) +
                 " t:" + DateTimeUtil.format(time()) +

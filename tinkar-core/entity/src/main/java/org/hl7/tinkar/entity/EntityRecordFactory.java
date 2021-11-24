@@ -443,7 +443,7 @@ public class EntityRecordFactory {
                         semanticPurposeNid, semanticMeaningNid, fieldDefinitionForEntities);
                 for (int i = 0; i < fieldCount; i++) {
                     fieldDefinitionForEntities.add(new FieldDefinitionRecord(readBuf.readInt(),
-                            readBuf.readInt(), readBuf.readInt(), patternVersionRecord.stampNid()));
+                            readBuf.readInt(), readBuf.readInt(), patternVersionRecord.stampNid(), patternVersionRecord.nid()));
                 }
                 // make field definition list mutable in the record?
                 yield patternVersionRecord;
