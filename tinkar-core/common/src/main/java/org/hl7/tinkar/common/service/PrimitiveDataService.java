@@ -1,5 +1,6 @@
 package org.hl7.tinkar.common.service;
 
+import com.google.auto.service.AutoService;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
@@ -16,6 +17,7 @@ import org.eclipse.collections.impl.factory.primitive.ByteLists;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.LongSets;
 import org.hl7.tinkar.common.id.PublicId;
+import org.hl7.tinkar.common.sets.ConcurrentHashSet;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -27,6 +29,8 @@ import java.util.function.ObjIntConsumer;
 public interface PrimitiveDataService {
 
     int FIRST_NID = Integer.MIN_VALUE + 1;
+
+    static ConcurrentHashSet<Integer> canceledStampNids = new ConcurrentHashSet<>();
 
     static int nidForUuids(ConcurrentMap<UUID, Integer> uuidNidMap, NidGenerator nidGenerator, ImmutableList<UUID> uuidList) {
         switch (uuidList.size()) {
@@ -133,21 +137,54 @@ public interface PrimitiveDataService {
                 }
                 return Integer.compare(o1.size(), o2.size());
             });
+            // Remove canceled versions here?
+            if (byteArrayList.size() > 2) {
+                MutableIntList indexesToRemove = IntLists.mutable.empty();
+                for (int i = 1; i < byteArrayList.size(); i++) {
+                    ByteList versionBytes = byteArrayList.get(i);
+                    byte versionToken = versionBytes.get(0);
+                    switch (versionToken) {
+                        /*
+                            CONCEPT_VERSION((byte) 4, ConceptVersion.class),
+                            PATTERN_VERSION((byte) 5, PatternVersion.class),
+                            SEMANTIC_VERSION((byte) 6, SemanticVersion.class),
+                         */
+                        case 4:
+                        case 5:
+                        case 6:
+                            int stampNid = ((versionBytes.get(1) & 0xFF) << 24) |
+                                    ((versionBytes.get(2) & 0xFF) << 16) |
+                                    ((versionBytes.get(3) & 0xFF) << 8) |
+                                    ((versionBytes.get(4) & 0xFF) << 0);
+                            if (PrimitiveData.get().isCanceledStampNid(stampNid)) {
+                                indexesToRemove.add(i);
+                            }
+                        default:
+                            // Leave all versions. Need to retain canceled version for stamps.
+                    }
+                }
+                indexesToRemove.reverseThis().forEach(index -> byteArrayList.remove(index));
+            }
 
             ByteBuf byteBuf = ByteBufPool.allocate(bytes1.length + bytes2.length);
             byteBuf.writeInt(byteArrayList.size());
             boolean first = true;
             for (ByteList byteArray : byteArrayList) {
-                byteBuf.writeInt(byteArray.size());
-                byteArray.forEach(b -> {
-                    byteBuf.put(b);
-                });
                 if (first) {
-                    first = false;
+                    // Add 4 to have room for the number of versions.
+                    byteBuf.writeInt(byteArray.size() + 4);
+                    byteArray.forEach(b -> {
+                        byteBuf.put(b);
+                    });
                     // write the number of versions...
                     byteBuf.writeInt(byteArrayList.size() - 1);
+                    first = false;
+                } else {
+                    byteBuf.writeInt(byteArray.size());
+                    byteArray.forEach(b -> {
+                        byteBuf.put(b);
+                    });
                 }
-
             }
             return byteBuf.asArray();
         } catch (IOException e) {
@@ -170,12 +207,18 @@ public interface PrimitiveDataService {
                     throw new IllegalStateException("Malformed data. versionCount: " +
                             versionCount + " arrayCount: " + arrayCount);
                 }
+                // Version count is not included as the version count may change as a result of merge.
+                // It must be added back in after sorting unique versions.
             } else {
                 byte[] newArray = new byte[arraySize];
                 readBuf.read(newArray);
                 byteArraySet.add(ByteLists.immutable.of(newArray));
             }
         }
+    }
+
+    default boolean isCanceledStampNid(int stampNid) {
+        return canceledStampNids.contains(stampNid);
     }
 
     static long[] mergeCitations(long[] citation1, long[] citation2) {
@@ -271,6 +314,10 @@ public interface PrimitiveDataService {
 
     void forEachSemanticNidForComponentOfPattern(int componentNid, int patternNid, IntProcedure procedure);
 
+    default void addCanceledStampNid(int stampNid) {
+        canceledStampNids.add(stampNid);
+    }
+
     enum RemoteOperations {
         NID_FOR_UUIDS(1),
         GET_BYTES(2),
@@ -295,4 +342,15 @@ public interface PrimitiveDataService {
             }
         }
     }
+
+
+    @AutoService(CachingService.class)
+    class CacheProvider implements CachingService {
+
+        @Override
+        public void reset() {
+            canceledStampNids.clear();
+        }
+    }
+
 }

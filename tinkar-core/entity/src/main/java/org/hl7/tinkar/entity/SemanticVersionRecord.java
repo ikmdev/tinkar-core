@@ -171,7 +171,7 @@ public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
                 for (int i = 0; i < fieldArray.length; i++) {
                     Object value = fieldValues().get(i);
                     FieldDefinitionRecord fieldDef = patternVersionRecord.fieldDefinitions().get(i);
-                    fieldArray[i] = new FieldRecord(value, patternVersion.stampNid(), fieldDef);
+                    fieldArray[i] = new FieldRecord(value, patternVersion.nid(), patternVersion.stampNid(), i, fieldDef);
                 }
                 return Lists.immutable.of(fieldArray);
             }

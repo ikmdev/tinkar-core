@@ -23,7 +23,7 @@ public interface Entity<T extends EntityVersion>
         EntityFacade,
         IdentifierData {
 
-    static final Logger LOG = LoggerFactory.getLogger(Entity.class);
+    Logger LOG = LoggerFactory.getLogger(Entity.class);
 
     static EntityService provider() {
         return EntityService.get();
@@ -36,6 +36,25 @@ public interface Entity<T extends EntityVersion>
     static Optional<ConceptEntity> getConceptForSemantic(SemanticFacade semanticFacade) {
         return getConceptForSemantic(semanticFacade.nid());
     }
+
+    static <V extends EntityVersion> Optional<V> getVersion(int nid, int stampNid) {
+        return Optional.ofNullable(getVersionFast(nid, stampNid));
+    }
+
+    static <V extends EntityVersion> V getVersionFast(int nid, int stampNid) {
+        Entity<EntityVersion> entity = EntityService.get().getEntityFast(nid);
+        if (entity != null) {
+            for (EntityVersion version : entity.versions()) {
+                if (version.stampNid() == stampNid) {
+                    return (V) version;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    ImmutableList<T> versions();
 
     static Optional<ConceptEntity> getConceptForSemantic(int semanticNid) {
         Optional<? extends Entity<? extends EntityVersion>> optionalEntity = get(semanticNid);
@@ -72,6 +91,19 @@ public interface Entity<T extends EntityVersion>
         return EntityService.get().getStampFast(nid);
     }
 
+    default Optional<T> getVersion(int stampNid) {
+        return Optional.ofNullable(getVersionFast(stampNid));
+    }
+
+    default T getVersionFast(int stampNid) {
+        for (T version : versions()) {
+            if (version.stampNid() == stampNid) {
+                return version;
+            }
+        }
+        return null;
+    }
+
     default IntIdSet stampNids() {
         MutableIntList stampNids = IntLists.mutable.withInitialCapacity(versions().size());
         for (EntityVersion version : versions()) {
@@ -79,11 +111,6 @@ public interface Entity<T extends EntityVersion>
         }
         return IntIds.set.of(stampNids.toArray());
     }
-
-    ;
-
-    @Override
-    ImmutableList<T> versions();
 
     byte[] getBytes();
 

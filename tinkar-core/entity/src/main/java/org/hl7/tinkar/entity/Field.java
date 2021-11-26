@@ -32,4 +32,6 @@ public interface Field<T> extends FieldDefinition {
 
     int dataTypeNid();
 
+    int fieldIndex();
+
 }

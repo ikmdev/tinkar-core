@@ -16,10 +16,12 @@ import org.hl7.tinkar.common.sets.ConcurrentHashSet;
 import org.hl7.tinkar.common.util.ints2long.IntsInLong;
 import org.hl7.tinkar.common.util.time.Stopwatch;
 import org.hl7.tinkar.entity.*;
+import org.hl7.tinkar.entity.transaction.Transaction;
 import org.hl7.tinkar.provider.search.Indexer;
 import org.hl7.tinkar.provider.search.Searcher;
 import org.hl7.tinkar.provider.spinedarray.internal.Get;
 import org.hl7.tinkar.provider.spinedarray.internal.Put;
+import org.hl7.tinkar.terms.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,6 +105,23 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
             try {
                 this.entityToBytesMap.forEachParallel(uuidNidCollector);
                 this.uuidsLoadedLatch.countDown();
+                LOG.info("Searching for canceled stamps. ");
+                for (int stampNid : stampNids) {
+                    StampRecord stamp = Entity.getStamp(stampNid);
+                    if (stamp.time() == Long.MAX_VALUE && Transaction.forStamp(stamp).isEmpty()) {
+                        // Uncommmitted stamp outside of a transaction on restart. Set to canceled.
+                        LOG.warn("Canceling uncommitted stamp: " + stamp.publicId().asUuidList());
+                        StampVersionRecord lastVersion = stamp.lastVersion();
+                        StampVersionRecord canceledVersion = lastVersion.with().time(Long.MIN_VALUE).stateNid(State.CANCELED.nid()).build();
+                        stamp.versionRecords().clear();
+                        stamp.versionRecords().add(canceledVersion);
+                        byte[] stampBytes = stamp.getBytes();
+                        this.entityToBytesMap.put(stampNid, stampBytes);
+                    }
+                    if (stamp.lastVersion().stateNid() == State.CANCELED.nid()) {
+                        PrimitiveData.get().addCanceledStampNid(stampNid);
+                    }
+                }
             } catch (ExecutionException | InterruptedException e) {
                 LOG.error(e.getLocalizedMessage(), e);
             } finally {

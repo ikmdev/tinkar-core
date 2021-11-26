@@ -12,14 +12,30 @@ public class CancelVersionTask extends TrackingCallable<Void> {
     private static final Logger LOG = LoggerFactory.getLogger(CancelTransactionTask.class);
     final EntityVersion version;
 
-    public CancelVersionTask(EntityVersion version) {
-        updateTitle(getTitleString() + version.getClass().getSimpleName());
+    public CancelVersionTask(ConceptVersionRecord version) {
+        this((EntityVersion) version);
+    }
+
+    private CancelVersionTask(EntityVersion version) {
         this.version = version;
+        updateTitle(getTitleString() + version.getClass().getSimpleName());
         addToTotalWork(1);
     }
 
     protected String getTitleString() {
         return "Canceling transaction: ";
+    }
+
+    public CancelVersionTask(PatternVersionRecord version) {
+        this((EntityVersion) version);
+    }
+
+    public CancelVersionTask(SemanticVersionRecord version) {
+        this((EntityVersion) version);
+    }
+
+    public CancelVersionTask(StampVersionRecord version) {
+        this((EntityVersion) version);
     }
 
     @Override
@@ -36,7 +52,6 @@ public class CancelVersionTask extends TrackingCallable<Void> {
 
                     transaction.removeComponent(version.entity());
                     transactionForVersion.addComponent(version.entity());
-
                     switch (version) {
                         case ConceptVersionRecord conceptVersionRecord -> {
                             conceptVersionRecord.chronology().versionRecords().remove(version);

@@ -4,8 +4,9 @@ import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.hl7.tinkar.common.sets.ConcurrentHashSet;
 import org.hl7.tinkar.common.util.time.Stopwatch;
 import org.hl7.tinkar.component.FieldDataType;
-import org.hl7.tinkar.entity.*;
-import org.hl7.tinkar.entity.transaction.Transaction;
+import org.hl7.tinkar.entity.Entity;
+import org.hl7.tinkar.entity.EntityRecordFactory;
+import org.hl7.tinkar.entity.SemanticEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,17 +88,6 @@ public class UuidNidCollector implements ObjIntConsumer<byte[]> {
             if (entity instanceof SemanticEntity semanticEntity) {
                 patternElementNidsMap.getIfAbsentPut(semanticEntity.patternNid(), integer -> new ConcurrentHashSet())
                         .add(semanticEntity.nid());
-            }
-            if (entity instanceof StampRecord stampRecord) {
-                if (stampRecord.time() == Long.MAX_VALUE && Transaction.forStamp(stampRecord).isEmpty()) {
-                    // Uncommmitted stamp outside of a transaction on restart. Set to canceled.
-                    LOG.warn("Canceling uncommitted stamp: " + stampRecord.publicId().asUuidList());
-                    StampVersionRecord lastVersion = stampRecord.lastVersion();
-                    StampVersionRecord canceledVersion = lastVersion.withTime(Long.MIN_VALUE);
-                    stampRecord.versionRecords().clear();
-                    stampRecord.versionRecords().add(canceledVersion);
-                    Entity.provider().putStamp(stampRecord);
-                }
             }
             for (UUID uuid : entity.asUuidArray()) {
                 uuidToNidMap.put(uuid, entity.nid());

@@ -419,11 +419,13 @@ public class StampCalculatorWithCache implements StampCalculator {
             if (optionalIndex.isPresent()) {
                 int indexForCriterion = optionalIndex.getAsInt();
                 FieldDefinitionRecord fieldDef = (FieldDefinitionRecord) patternVersion.fieldDefinitions().get(indexForCriterion);
-                FieldRecord fieldRecord = new FieldRecord(semanticVersion.fieldValues().get(indexForCriterion), semanticVersion.stampNid(), fieldDef);
+                FieldRecord fieldRecord = new FieldRecord(semanticVersion.fieldValues().get(indexForCriterion),
+                        semanticVersion.nid(), semanticVersion.stampNid(), indexForCriterion, fieldDef);
                 Latest<Field<T>> latestField = new Latest<>(fieldRecord);
                 for (SemanticEntityVersion semanticVersionContradiction : latestSemanticVersion.contradictions()) {
                     latestField.addLatest(
-                            new FieldRecord(semanticVersionContradiction.fieldValues().get(indexForCriterion), semanticVersionContradiction.stampNid(), fieldDef));
+                            new FieldRecord(semanticVersionContradiction.fieldValues().get(indexForCriterion),
+                                    semanticVersionContradiction.nid(), semanticVersionContradiction.stampNid(), indexForCriterion, fieldDef));
                 }
                 return latestField;
             } else {

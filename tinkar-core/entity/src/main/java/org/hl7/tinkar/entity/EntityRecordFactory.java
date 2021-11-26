@@ -327,7 +327,7 @@ public class EntityRecordFactory {
         // TODO change to use DecoderInput instead of ByteBuf directly.
         // TODO remove the parts where it computes size.
         ByteBuf buf = ByteBuf.wrapForReading(data);
-        // bytes starts with number of arrays (int = 4 bytes), then size of first array (int = 4 bytes), then type token, -1 since index starts at 0...
+        // bytes starts with number of arrays (int = 4 bytes), then size of first array (int = 4 bytes), then type token
         int numberOfArrays = buf.readInt();
         int sizeOfFirstArray = buf.readInt();
         byte formatVersion = buf.readByte();
@@ -365,7 +365,10 @@ public class EntityRecordFactory {
                 ConceptRecord conceptRecord = new ConceptRecord(mostSignificantBits, leastSignificantBits,
                         additionalUuidLongs, nid, versions);
                 for (int i = 0; i < versionCount; i++) {
-                    versions.add((ConceptEntityVersion) makeVersion(readBuf, entityFormatVersion, conceptRecord));
+                    ConceptEntityVersion version = (ConceptEntityVersion) makeVersion(readBuf, entityFormatVersion, conceptRecord);
+                    if (!PrimitiveData.get().isCanceledStampNid(version.stampNid())) {
+                        versions.add(version);
+                    }
                 }
                 yield (T) conceptRecord;
             }
@@ -379,7 +382,10 @@ public class EntityRecordFactory {
                         additionalUuidLongs, nid, patternNid, referencedComponentNid,
                         versions);
                 for (int i = 0; i < versionCount; i++) {
-                    versions.add((SemanticEntityVersion) makeVersion(readBuf, entityFormatVersion, semanticRecord));
+                    SemanticEntityVersion version = (SemanticEntityVersion) makeVersion(readBuf, entityFormatVersion, semanticRecord);
+                    if (!PrimitiveData.get().isCanceledStampNid(version.stampNid())) {
+                        versions.add(version);
+                    }
                 }
                 yield (T) semanticRecord;
             }
@@ -391,7 +397,10 @@ public class EntityRecordFactory {
                 PatternRecord patternRecord = new PatternRecord(mostSignificantBits, leastSignificantBits,
                         additionalUuidLongs, nid, versions);
                 for (int i = 0; i < versionCount; i++) {
-                    versions.add((PatternVersionRecord) makeVersion(readBuf, entityFormatVersion, patternRecord));
+                    PatternVersionRecord version = (PatternVersionRecord) makeVersion(readBuf, entityFormatVersion, patternRecord);
+                    if (!PrimitiveData.get().isCanceledStampNid(version.stampNid())) {
+                        versions.add(version);
+                    }
                 }
                 yield (T) patternRecord;
             }

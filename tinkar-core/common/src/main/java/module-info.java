@@ -39,7 +39,8 @@ module org.hl7.tinkar.common {
     provides CachingService with
             Executor.CacheProvider,
             ServiceProperties.CacheProvider,
-            PrimitiveData.CacheProvider;
+            PrimitiveData.CacheProvider,
+            PrimitiveDataService.CacheProvider;
 
     uses AlertReportingService;
     uses CachingService;

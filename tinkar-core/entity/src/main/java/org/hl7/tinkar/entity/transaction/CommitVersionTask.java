@@ -11,7 +11,11 @@ public class CommitVersionTask extends TrackingCallable<Void> {
     private static final Logger LOG = LoggerFactory.getLogger(CommitVersionTask.class);
     final EntityVersion version;
 
-    public CommitVersionTask(EntityVersion version) {
+    public CommitVersionTask(ConceptVersionRecord version) {
+        this((EntityVersion) version);
+    }
+
+    private CommitVersionTask(EntityVersion version) {
         this.version = version;
         updateTitle(getTitleString() + version.getClass().getSimpleName());
         addToTotalWork(1);
@@ -19,6 +23,18 @@ public class CommitVersionTask extends TrackingCallable<Void> {
 
     protected String getTitleString() {
         return "Committing version for: ";
+    }
+
+    public CommitVersionTask(PatternVersionRecord version) {
+        this((EntityVersion) version);
+    }
+
+    public CommitVersionTask(SemanticVersionRecord version) {
+        this((EntityVersion) version);
+    }
+
+    public CommitVersionTask(StampVersionRecord version) {
+        this((EntityVersion) version);
     }
 
     @Override

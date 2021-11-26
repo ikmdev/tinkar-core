@@ -1,6 +1,7 @@
 package org.hl7.tinkar.entity;
 
 import io.soabase.recordbuilder.core.RecordBuilder;
+import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.FieldDefinition;
 
 /**
@@ -9,7 +10,7 @@ import org.hl7.tinkar.component.FieldDefinition;
  * @param <T>
  */
 @RecordBuilder
-public record FieldRecord<T>(T value, int semanticVersionStampNid,
+public record FieldRecord<T>(T value, int semanticNid, int semanticVersionStampNid, int fieldIndex,
                              FieldDefinitionRecord fieldDefinition) implements FieldDefinition, Field<T>, FieldRecordBuilder.With {
 
     @Override
@@ -30,10 +31,11 @@ public record FieldRecord<T>(T value, int semanticVersionStampNid,
 
     @Override
     public String toString() {
-        return "FieldRecord{" +
-                "value: " + value +
-                ", for semantic version: " + Entity.getStamp(semanticVersionStampNid).lastVersion().describe() +
-                ", with " + fieldDefinition +
+        return "FieldRecord{value: " + value +
+                ", for semantic entity: " + PrimitiveData.textWithNid(semanticNid) +
+                " of version: " + Entity.getStamp(semanticVersionStampNid).lastVersion().describe() +
+                " with index: " + fieldIndex +
+                ", defined as " + fieldDefinition +
                 '}';
     }
 

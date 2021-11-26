@@ -83,9 +83,9 @@ public class ProxyFactory {
             Attr desc = element.getAttributeNode(DESCRIPTION_ATTRIBUTE);
             return (T) switch (element.getTagName()) {
                 case ENTITY_ELEMENT -> EntityProxy.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
-                case PATTERN_ELEMENT -> EntityProxy.Pattern.make(desc.getName(), UuidUtil.fromString(uuids.getValue()));
-                case SEMANTIC_ELEMENT -> EntityProxy.Semantic.make(desc.getName(), UuidUtil.fromString(uuids.getValue()));
-                case CONCEPT_ELEMENT -> EntityProxy.Concept.make(desc.getName(), UuidUtil.fromString(uuids.getValue()));
+                case PATTERN_ELEMENT -> EntityProxy.Pattern.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
+                case SEMANTIC_ELEMENT -> EntityProxy.Semantic.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
+                case CONCEPT_ELEMENT -> EntityProxy.Concept.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
                 default -> throw new IllegalStateException("Unexpected value: " + element.getTagName());
             };
         } catch (SAXException | IOException e) {

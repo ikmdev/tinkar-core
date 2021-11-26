@@ -19,6 +19,7 @@ import org.hl7.tinkar.component.Version;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.entity.transaction.Transaction;
 import org.hl7.tinkar.terms.EntityFacade;
+import org.hl7.tinkar.terms.State;
 import org.hl7.tinkar.terms.TinkarTerm;
 import org.reactivestreams.FlowAdapters;
 import org.slf4j.Logger;
@@ -162,6 +163,9 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         ENTITY_CACHE.put(entity.nid(), entity);
         if (entity instanceof StampEntity stampEntity) {
             STAMP_CACHE.put(stampEntity.nid(), stampEntity);
+            if (stampEntity.lastVersion().stateNid() == State.CANCELED.nid()) {
+                PrimitiveData.get().addCanceledStampNid(stampEntity.nid());
+            }
         }
         if (entity instanceof SemanticEntity semanticEntity) {
             PrimitiveData.get().merge(entity.nid(),
@@ -183,9 +187,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
     @Override
     public void putStamp(StampEntity stampEntity) {
-        invalidateCaches(stampEntity);
-        PrimitiveData.get().merge(stampEntity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, stampEntity.getBytes(), stampEntity);
-        processor.onNext(stampEntity.nid());
+        putEntity(stampEntity);
     }
 
     private void invalidateCaches(Entity entity) {
@@ -254,7 +256,10 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
     @Override
     public void notifyRefreshRequired(Transaction transaction) {
-        transaction.forEachComponentInTransaction(nid -> this.processor.onNext(nid));
+        transaction.forEachComponentInTransaction(nid -> {
+            Entity.get(nid).ifPresent(entity -> invalidateCaches(entity));
+            this.processor.onNext(nid);
+        });
     }
 
     @Override

@@ -6,6 +6,7 @@ import org.hl7.tinkar.common.sets.ConcurrentHashSet;
 import org.hl7.tinkar.common.util.uuid.UuidT5Generator;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.terms.ConceptFacade;
+import org.hl7.tinkar.terms.EntityFacade;
 import org.hl7.tinkar.terms.State;
 
 import java.util.Optional;
@@ -71,10 +72,6 @@ public class Transaction implements Comparable<Transaction> {
         return this.transactionUuid.compareTo(o.transactionUuid);
     }
 
-    public void addComponent(Entity entity) {
-        componentsInTransaction.add(entity.nid());
-    }
-
     public void removeComponent(Entity entity) {
         componentsInTransaction.remove(entity.nid());
     }
@@ -91,6 +88,14 @@ public class Transaction implements Comparable<Transaction> {
         return componentsInTransaction.size();
     }
 
+    /**
+     * @param state
+     * @param time
+     * @param author
+     * @param module
+     * @param path
+     * @return StampEntity that is written to the entity store.
+     */
     public StampEntity getStamp(State state, long time, ConceptFacade author, ConceptFacade module, ConceptFacade path) {
         checkState(state, time, author == null, module == null, path == null);
         return getStamp(state, time, author.publicId(), module.publicId(), path.publicId());
@@ -104,6 +109,14 @@ public class Transaction implements Comparable<Transaction> {
         if (pathNull) throw new IllegalStateException("Path cannot be null...");
     }
 
+    /**
+     * @param state
+     * @param time
+     * @param authorId
+     * @param moduleId
+     * @param pathId
+     * @return StampEntity that is written to the entity store.
+     */
     public StampEntity getStamp(State state, long time, PublicId authorId, PublicId moduleId, PublicId pathId) {
         checkState(state, time, authorId == null, moduleId == null, pathId == null);
         UUID stampUuid = UuidT5Generator.forTransaction(transactionUuid, state.publicId(), time, authorId, moduleId, pathId);
@@ -117,10 +130,24 @@ public class Transaction implements Comparable<Transaction> {
         return optionalStamp.get();
     }
 
+    /**
+     * @param state
+     * @param author
+     * @param module
+     * @param path
+     * @return StampEntity that is written to the entity store.
+     */
     public StampEntity getStamp(State state, ConceptFacade author, ConceptFacade module, ConceptFacade path) {
         return getStamp(state, Long.MAX_VALUE, author.publicId(), module.publicId(), path.publicId());
     }
 
+    /**
+     * @param state
+     * @param authorNid
+     * @param moduleNid
+     * @param pathNid
+     * @return StampEntity that is written to the entity store.
+     */
     public StampEntity getStamp(State state, int authorNid, int moduleNid, int pathNid) {
         return getStamp(state, Long.MAX_VALUE, authorNid, moduleNid, pathNid);
     }
@@ -135,7 +162,7 @@ public class Transaction implements Comparable<Transaction> {
      * @param authorNid
      * @param moduleNid
      * @param pathNid
-     * @return
+     * @return StampEntity that is written to the entity store.
      */
     public StampEntity getStamp(State state, long time, int authorNid, int moduleNid, int pathNid) {
         if (state == null) throw new IllegalStateException("State cannot be null...");
@@ -144,6 +171,19 @@ public class Transaction implements Comparable<Transaction> {
         if (moduleNid == 0) throw new IllegalStateException("Module cannot be zero...");
         if (pathNid == 0) throw new IllegalStateException("Path cannot be zero...");
         return getStamp(state, time, PrimitiveData.publicId(authorNid), PrimitiveData.publicId(moduleNid), PrimitiveData.publicId(pathNid));
+    }
+
+    public StampEntity getStampForEntities(State state, int authorNid, int moduleNid, int pathNid, EntityFacade firstEntity, EntityFacade... extraEntities) {
+        StampEntity stampEntity = getStamp(state, Long.MAX_VALUE, authorNid, moduleNid, pathNid);
+        addComponent(firstEntity);
+        for (EntityFacade entityFacade : extraEntities) {
+            addComponent(entityFacade);
+        }
+        return stampEntity;
+    }
+
+    public void addComponent(EntityFacade entity) {
+        componentsInTransaction.add(entity.nid());
     }
 
     /**
