@@ -1,13 +1,10 @@
 package org.hl7.tinkar.entity;
 
 import io.soabase.recordbuilder.core.RecordBuilder;
-import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.component.FieldDataType;
-import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.terms.State;
 
 import java.util.Arrays;
@@ -18,15 +15,11 @@ import java.util.UUID;
 public record StampRecord(
         long mostSignificantBits, long leastSignificantBits,
         long[] additionalUuidLongs, int nid,
-        MutableList<StampVersionRecord> versionRecords)
+        ImmutableList<StampVersionRecord> versions)
         implements StampEntity<StampVersionRecord>, StampRecordBuilder.With {
 
     public static StampRecord make(UUID stampUuid, State state, long time, PublicId authorId, PublicId moduleId, PublicId pathId) {
-        int initialCapacity = 1;
-        if (time == Long.MAX_VALUE) {
-            initialCapacity = 2;
-        }
-        MutableList<StampVersionRecord> versionRecords = Lists.mutable.withInitialCapacity(initialCapacity);
+        RecordListBuilder<StampVersionRecord> versionRecords = RecordListBuilder.make();
         StampRecord stampEntity = new StampRecord(stampUuid.getMostSignificantBits(),
                 stampUuid.getLeastSignificantBits(), null, PrimitiveData.nid(stampUuid),
                 versionRecords);
@@ -34,6 +27,7 @@ public record StampRecord(
         StampVersionRecord stampVersion = new StampVersionRecord(stampEntity, state.nid(), time, PrimitiveData.nid(authorId),
                 PrimitiveData.nid(moduleId), PrimitiveData.nid(pathId));
         versionRecords.add(stampVersion);
+        versionRecords.build();
         return stampEntity;
     }
 
@@ -41,7 +35,11 @@ public record StampRecord(
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         StampRecord that = (StampRecord) o;
-        return mostSignificantBits == that.mostSignificantBits && leastSignificantBits == that.leastSignificantBits && nid == that.nid && Arrays.equals(additionalUuidLongs, that.additionalUuidLongs) && versionRecords.equals(that.versionRecords);
+        return mostSignificantBits == that.mostSignificantBits &&
+                leastSignificantBits == that.leastSignificantBits &&
+                nid == that.nid &&
+                Arrays.equals(additionalUuidLongs, that.additionalUuidLongs) &&
+                versions.equals(that.versions);
     }
 
     @Override
@@ -65,7 +63,7 @@ public record StampRecord(
         sb.append("StampRecord{");
         sb.append("<").append(nid);
         sb.append("> ").append(publicId().asUuidList()).append(" ");
-        for (StampEntityVersion version : versionRecords) {
+        for (StampEntityVersion version : versions) {
             sb.append(version.describe());
         }
         sb.append('}');
@@ -78,21 +76,6 @@ public record StampRecord(
     }
 
     @Override
-    public Stamp stamp() {
-        return this;
-    }
-
-    @Override
-    public StampVersionRecord lastVersion() {
-        return (StampVersionRecord) StampEntity.super.lastVersion();
-    }
-
-    @Override
-    public ImmutableList<StampVersionRecord> versions() {
-        return versionRecords.toImmutable();
-    }
-
-    @Override
     public FieldDataType entityDataType() {
         return FieldDataType.STAMP;
     }
@@ -102,11 +85,31 @@ public record StampRecord(
         return FieldDataType.STAMP_VERSION;
     }
 
-    public StampVersionRecord addVersion(State state, long time, int authorNid, int moduleNid, int pathNid) {
-        StampVersionRecord stampVersionRecord = new StampVersionRecord(this, state.nid(), time, authorNid,
-                moduleNid, pathNid);
-        versionRecords.add(stampVersionRecord);
-        return stampVersionRecord;
+    @Override
+    public StampEntity<StampVersionRecord> stamp() {
+        return this;
     }
 
+    @Override
+    public StampVersionRecord lastVersion() {
+        return (StampVersionRecord) StampEntity.super.lastVersion();
+    }
+
+    public StampAnalogueBuilder with(StampVersionRecord versionRecord) {
+        return analogueBuilder().with(versionRecord);
+    }
+
+    public StampAnalogueBuilder analogueBuilder() {
+        RecordListBuilder<StampVersionRecord> versionRecords = RecordListBuilder.make();
+        StampRecord analogueStampRecord = new StampRecord(mostSignificantBits, leastSignificantBits, additionalUuidLongs, nid, versionRecords);
+        for (StampVersionRecord version : versions) {
+            versionRecords.add(new StampVersionRecord(analogueStampRecord, version.stateNid(), version.time(), version.authorNid(),
+                    version.moduleNid(), version.pathNid()));
+        }
+        return new StampAnalogueBuilder(analogueStampRecord, versionRecords);
+    }
+
+    public StampAnalogueBuilder without(StampVersionRecord versionRecord) {
+        return analogueBuilder().without(versionRecord);
+    }
 }

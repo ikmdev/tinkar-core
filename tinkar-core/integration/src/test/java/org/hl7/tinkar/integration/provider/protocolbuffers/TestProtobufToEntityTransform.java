@@ -171,14 +171,14 @@ class TestProtobufToEntityTransform {
                 .nid(EntityService.get().nidForUuids(conceptUUID))
                 .build();
 
-        MutableList<ConceptEntityVersion> versions = Lists.mutable.ofInitialCapacity(1);
+        RecordListBuilder<ConceptVersionRecord> versions = RecordListBuilder.make();
         versions.add(ConceptVersionRecordBuilder.builder()
                 .chronology(conceptChronology)
                 .stampNid(EntityService.get().nidForUuids(stampUUID))
                 .build());
-        ConceptRecord conceptChronologyOne = ConceptRecordBuilder.builder(conceptChronology).versionRecords(versions).build();
+        ConceptRecord conceptChronologyOne = ConceptRecordBuilder.builder(conceptChronology).versions(versions).build();
 
-        ConceptEntity<ConceptEntityVersion> conceptChronologyTwo = transformer.makeConceptChronology(pbConceptChronology);
+        ConceptRecord conceptChronologyTwo = transformer.makeConceptChronology(pbConceptChronology);
         assert conceptChronologyOne.deepEquals(conceptChronologyTwo);
     }
 
@@ -235,16 +235,16 @@ class TestProtobufToEntityTransform {
                 .referencedComponentNid(EntityService.get().nidForUuids(referenceUUID))
                 .patternNid(EntityService.get().nidForUuids(patternUUID))
                 .build();
-        MutableList<SemanticEntityVersion> versions = Lists.mutable.ofInitialCapacity(1);
+        RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
         versions.add(SemanticVersionRecordBuilder.builder()
                 .chronology(semanticChronology)
                 .stampNid(EntityService.get().nidForUuids(stampUUID))
                 .fieldValues(fieldsList.toImmutable())
                 .build());
 
-        SemanticRecord semanticChronologyOne = SemanticRecordBuilder.builder(semanticChronology).versionRecords(versions).build();
+        SemanticRecord semanticChronologyOne = SemanticRecordBuilder.builder(semanticChronology).versions(versions).build();
 
-        SemanticEntity<SemanticEntityVersion> semanticTwo = transformer.makeSemanticChronology(pbSemanticChronology);
+        SemanticEntity<SemanticVersionRecord> semanticTwo = transformer.makeSemanticChronology(pbSemanticChronology);
         assert semanticChronologyOne.deepEquals(semanticTwo);
     }
 
@@ -306,14 +306,6 @@ class TestProtobufToEntityTransform {
                 .build();
 
         MutableList<FieldDefinitionRecord> fieldDefinitionList = Lists.mutable.ofInitialCapacity(1);
-        MutableList<PatternVersionRecord> versions = Lists.mutable.ofInitialCapacity(1);
-        versions.add(PatternVersionRecordBuilder.builder()
-                .chronology(patternChronology)
-                .semanticMeaningNid(EntityService.get().nidForUuids(meaningUUID))
-                .semanticPurposeNid(EntityService.get().nidForUuids(purposeUUID))
-                .stampNid(EntityService.get().nidForUuids(stampUUID))
-                .fieldDefinitionMutableList(fieldDefinitionList)
-                .build());
 
         fieldDefinitionList.add(FieldDefinitionRecordBuilder.builder()
                 .meaningNid(EntityService.get().nidForUuids(fieldMeaningUUID))
@@ -321,7 +313,16 @@ class TestProtobufToEntityTransform {
                 .dataTypeNid(EntityService.get().nidForUuids(fieldDataType))
                 .patternVersionStampNid(EntityService.get().nidForUuids(stampUUID)).build());
 
-        PatternRecord patternOne = PatternRecordBuilder.builder(patternChronology).versionRecords(versions).build();
+        RecordListBuilder<PatternVersionRecord> versions = RecordListBuilder.make();
+        versions.add(PatternVersionRecordBuilder.builder()
+                .chronology(patternChronology)
+                .semanticMeaningNid(EntityService.get().nidForUuids(meaningUUID))
+                .semanticPurposeNid(EntityService.get().nidForUuids(purposeUUID))
+                .stampNid(EntityService.get().nidForUuids(stampUUID))
+                .fieldDefinitions(fieldDefinitionList.toImmutable())
+                .build());
+
+        PatternRecord patternOne = PatternRecordBuilder.builder(patternChronology).versions(versions).build();
 
         PatternRecord patternTwo = transformer.makePatternChronology(pbPatternChronology);
         assert patternOne.deepEquals(patternTwo);

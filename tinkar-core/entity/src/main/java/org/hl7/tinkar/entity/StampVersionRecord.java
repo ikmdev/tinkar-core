@@ -17,21 +17,21 @@ public record StampVersionRecord(StampRecord chronology,
     public StampVersionRecord(StampRecord chronology,
                               StampVersion version) {
         this(chronology,
-                EntityService.get().nidForComponent(version.state()),
+                Entity.nid(version.state()),
                 version.time(),
-                EntityService.get().nidForComponent(version.author()),
-                EntityService.get().nidForComponent(version.module()),
-                EntityService.get().nidForComponent(version.path()));
+                Entity.nid(version.author()),
+                Entity.nid(version.module()),
+                Entity.nid(version.path()));
     }
 
     public StampVersionRecord(StampRecord chronology,
                               Stamp version) {
         this(chronology,
-                EntityService.get().nidForComponent(version.state()),
+                Entity.nid(version.state()),
                 version.time(),
-                EntityService.get().nidForComponent(version.author()),
-                EntityService.get().nidForComponent(version.module()),
-                EntityService.get().nidForComponent(version.path()));
+                Entity.nid(version.author()),
+                Entity.nid(version.module()),
+                Entity.nid(version.path()));
     }
 
     @Override

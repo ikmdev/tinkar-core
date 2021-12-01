@@ -25,12 +25,16 @@ public interface Entity<T extends EntityVersion>
 
     Logger LOG = LoggerFactory.getLogger(Entity.class);
 
+    static int nid(Component component) {
+        return provider().nidForComponent(component);
+    }
+
     static EntityService provider() {
         return EntityService.get();
     }
 
-    static int nid(Component component) {
-        return EntityService.get().nidForComponent(component);
+    static int nid(PublicId publicId) {
+        return provider().nidForPublicId(publicId);
     }
 
     static Optional<ConceptEntity> getConceptForSemantic(SemanticFacade semanticFacade) {

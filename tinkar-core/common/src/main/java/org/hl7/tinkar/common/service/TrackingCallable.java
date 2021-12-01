@@ -7,19 +7,17 @@ import java.time.Duration;
 import java.util.concurrent.Callable;
 
 public abstract class TrackingCallable<V> implements Callable<V> {
+    final boolean allowUserCancel;
+    final boolean retainWhenComplete;
     Stopwatch stopwatch = new Stopwatch();
     TrackingListener listener;
     double workDone;
     double maxWork;
     double updateThreshold = 0.005;
-
     String title;
     String message;
     V value;
     boolean isCancelled = false;
-
-    final boolean allowUserCancel;
-    final boolean retainWhenComplete;
 
     public TrackingCallable() {
         this.allowUserCancel = true;
@@ -81,7 +79,7 @@ public abstract class TrackingCallable<V> implements Callable<V> {
             this.listener.updateValue(this.value);
             this.listener.updateMessage(this.message);
             this.listener.updateTitle(this.title);
-            this.listener.updateProgress(this.workDone,  this.maxWork);
+            this.listener.updateProgress(this.workDone, this.maxWork);
         } else {
             throw new IllegalStateException("Listener already set");
         }
@@ -95,6 +93,10 @@ public abstract class TrackingCallable<V> implements Callable<V> {
         return message;
     }
 
+    public String estimateTimeRemainingString() {
+        return "About " + DurationUtil.format(estimateTimeRemaining()) + " remaining.";
+    }
+
     public Duration estimateTimeRemaining() {
         if (maxWork == 0) {
             return Duration.ofDays(365);
@@ -105,12 +107,8 @@ public abstract class TrackingCallable<V> implements Callable<V> {
         }
         //(TimeTaken / linesProcessed) * linesLeft = timeLeft
         double secondsDuration = duration().getSeconds();
-        double secondsRemaining = secondsDuration/workDone * (maxWork - workDone);
+        double secondsRemaining = secondsDuration / workDone * (maxWork - workDone);
         return Duration.ofSeconds((long) secondsRemaining);
-    }
-
-    public String estimateTimeRemainingString() {
-        return "About " + DurationUtil.format(estimateTimeRemaining())  + " remaining.";
     }
 
     public Duration duration() {
@@ -157,11 +155,8 @@ public abstract class TrackingCallable<V> implements Callable<V> {
         }
     }
 
-    protected void addToTotalWork(long ammountToAdd) {
-        updateProgress(workDone, this.maxWork + ammountToAdd);
-    }
-    protected void updateProgress(long workDone, long maxWork) {
-        updateProgress((double)workDone, (double)maxWork);
+    protected void addToTotalWork(long amountToAdd) {
+        updateProgress(workDone, this.maxWork + amountToAdd);
     }
 
     protected void updateProgress(double workDone, double maxWork) {
@@ -173,7 +168,7 @@ public abstract class TrackingCallable<V> implements Callable<V> {
             update = true;
         } else {
             double difference = workDone - this.workDone;
-            double percentDifference = difference/maxWork;
+            double percentDifference = difference / maxWork;
             if (percentDifference > updateThreshold) {
                 update = true;
                 this.workDone = workDone;
@@ -183,5 +178,9 @@ public abstract class TrackingCallable<V> implements Callable<V> {
         if (listener != null && update) {
             listener.updateProgress(workDone, maxWork);
         }
+    }
+
+    protected void updateProgress(long workDone, long maxWork) {
+        updateProgress((double) workDone, (double) maxWork);
     }
 }

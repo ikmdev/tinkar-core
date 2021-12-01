@@ -15,6 +15,7 @@ import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.component.graph.Vertex;
 import org.hl7.tinkar.dto.StampDTO;
 import org.hl7.tinkar.dto.StampDTOBuilder;
+import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.entity.EntityRecordFactory;
 import org.hl7.tinkar.entity.EntityService;
 import org.hl7.tinkar.terms.ConceptFacade;
@@ -57,11 +58,11 @@ public class EntityVertex implements Vertex, VertexId {
         if (another.meaning() instanceof ConceptFacade) {
             this.meaningNid = ((ConceptFacade) another.meaning()).nid();
         } else {
-            this.meaningNid = EntityService.get().nidForComponent(another.meaning());
+            this.meaningNid = Entity.nid(another.meaning());
         }
         MutableIntObjectMap<Object> mutableProperties = new IntObjectHashMap(another.propertyKeys().size());
         another.propertyKeys().forEach(concept -> {
-            mutableProperties.put(EntityService.get().nidForComponent(concept), abstractObject(another.propertyFast(concept)));
+            mutableProperties.put(Entity.nid(concept), abstractObject(another.propertyFast(concept)));
         });
         this.properties = mutableProperties.toImmutable();
     }
@@ -229,7 +230,7 @@ public class EntityVertex implements Vertex, VertexId {
         if (propertyConcept instanceof ConceptFacade) {
             return propertyFast((ConceptFacade) propertyConcept);
         }
-        return (T) properties.get(EntityService.get().nidForComponent(propertyConcept));
+        return (T) properties.get(Entity.nid(propertyConcept));
     }
 
     @Override

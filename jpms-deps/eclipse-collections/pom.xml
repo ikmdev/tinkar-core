@@ -5,7 +5,7 @@
     <parent>
         <artifactId>tinkar-jpms-deps</artifactId>
         <groupId>org.hl7.tinkar</groupId>
-        <version>1.0.3</version>
+        <version>1.0.4</version>
     </parent>
     <artifactId>eclipse-collections</artifactId>
     <packaging>jar</packaging>
@@ -35,8 +35,11 @@
                                     <moduleInfoSource>
                                         open module org.hl7.tinkar.eclipse.collections {
                                         exports org.eclipse.collections.api;
+                                        exports org.eclipse.collections.api.annotation;
                                         exports org.eclipse.collections.api.bag;
                                         exports org.eclipse.collections.api.bag.sorted;
+                                        exports org.eclipse.collections.api.bimap;
+                                        exports org.eclipse.collections.api.block;
                                         exports org.eclipse.collections.api.block.comparator.primitive;
                                         exports org.eclipse.collections.api.block.function;
                                         exports org.eclipse.collections.api.block.function.primitive;
@@ -69,7 +72,10 @@
                                         exports org.eclipse.collections.api.multimap.set;
                                         exports org.eclipse.collections.api.multimap.sortedbag;
                                         exports org.eclipse.collections.api.multimap.sortedset;
+                                        exports org.eclipse.collections.api.ordered;
                                         exports org.eclipse.collections.api.partition;
+                                        exports org.eclipse.collections.api.partition.list;
+                                        exports org.eclipse.collections.api.stack;
                                         exports org.eclipse.collections.api.tuple;
                                         exports org.eclipse.collections.impl;
                                         exports org.eclipse.collections.impl.bag;

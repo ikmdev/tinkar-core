@@ -10,7 +10,7 @@ import org.hl7.tinkar.component.FieldDefinition;
  * @param <T>
  */
 @RecordBuilder
-public record FieldRecord<T>(T value, int semanticNid, int semanticVersionStampNid, int fieldIndex,
+public record FieldRecord<T>(T value, int semanticNid, int semanticVersionStampNid,
                              FieldDefinitionRecord fieldDefinition) implements FieldDefinition, Field<T>, FieldRecordBuilder.With {
 
     @Override
@@ -28,13 +28,16 @@ public record FieldRecord<T>(T value, int semanticNid, int semanticVersionStampN
         return fieldDefinition.dataTypeNid();
     }
 
+    public int fieldIndex() {
+        return fieldDefinition.indexInPattern();
+    }
 
     @Override
     public String toString() {
         return "FieldRecord{value: " + value +
                 ", for semantic entity: " + PrimitiveData.textWithNid(semanticNid) +
                 " of version: " + Entity.getStamp(semanticVersionStampNid).lastVersion().describe() +
-                " with index: " + fieldIndex +
+                " with index: " + fieldIndex() +
                 ", defined as " + fieldDefinition +
                 '}';
     }

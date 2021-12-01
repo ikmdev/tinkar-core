@@ -191,7 +191,7 @@ public class EntityRecordFactory {
                 if (field instanceof ComponentWithNid) {
                     writeBuf.writeInt(((ComponentWithNid) field).nid());
                 } else {
-                    writeBuf.writeInt(EntityService.get().nidForComponent(conceptField));
+                    writeBuf.writeInt(Entity.nid(conceptField));
                 }
             }
             case Semantic semanticField -> {
@@ -199,7 +199,7 @@ public class EntityRecordFactory {
                 if (field instanceof ComponentWithNid) {
                     writeBuf.writeInt(((ComponentWithNid) field).nid());
                 } else {
-                    writeBuf.writeInt(EntityService.get().nidForComponent(semanticField));
+                    writeBuf.writeInt(Entity.nid(semanticField));
                 }
             }
             case Pattern patternField -> {
@@ -207,7 +207,7 @@ public class EntityRecordFactory {
                 if (field instanceof ComponentWithNid) {
                     writeBuf.writeInt(((ComponentWithNid) field).nid());
                 } else {
-                    writeBuf.writeInt(EntityService.get().nidForComponent(patternField));
+                    writeBuf.writeInt(Entity.nid(patternField));
                 }
             }
             case EntityFacade entityField -> {
@@ -216,7 +216,7 @@ public class EntityRecordFactory {
             }
             case Component componentField -> {
                 writeBuf.writeByte(FieldDataType.IDENTIFIED_THING.token);
-                writeBuf.writeInt(EntityService.get().nidForComponent(componentField));
+                writeBuf.writeInt(Entity.nid(componentField));
             }
             case DiTreeEntity diTreeEntityField -> {
                 writeBuf.writeByte(FieldDataType.DITREE.token);
@@ -267,35 +267,36 @@ public class EntityRecordFactory {
     }
 
     public static <T extends Entity<V>, V extends EntityVersion> T make(Chronology<Version> chronology) {
-        int nid = EntityService.get().nidForPublicId(chronology.publicId());
+        int nid = Entity.nid(chronology.publicId());
         ImmutableList<UUID> componentUuids = chronology.publicId().asUuidList();
         UUID firstUuid = componentUuids.get(0);
 
         long mostSignificantBits = firstUuid.getMostSignificantBits();
         long leastSignificantBits = firstUuid.getLeastSignificantBits();
         long[] additionalUuidLongs = processAdditionalUuids(componentUuids);
-        MutableList<? extends EntityVersion> versions = Lists.mutable.ofInitialCapacity(chronology.versions().size());
+        RecordListBuilder<? extends EntityVersion> versions = RecordListBuilder.make();
         Entity<? extends EntityVersion> entity = switch (chronology) {
             case ConceptChronology conceptChronology -> new ConceptRecord(mostSignificantBits, leastSignificantBits,
-                    additionalUuidLongs, nid, (MutableList<ConceptEntityVersion>) versions);
+                    additionalUuidLongs, nid, (ImmutableList<ConceptVersionRecord>) versions);
 
             case PatternChronology patternChronology -> new PatternRecord(mostSignificantBits, leastSignificantBits,
-                    additionalUuidLongs, nid, (MutableList<PatternVersionRecord>) versions);
+                    additionalUuidLongs, nid, (ImmutableList<PatternVersionRecord>) versions);
 
             case SemanticChronology semanticChronology -> new SemanticRecord(mostSignificantBits, leastSignificantBits,
                     additionalUuidLongs, nid,
                     PrimitiveData.nid(semanticChronology.pattern().publicId()),
                     PrimitiveData.nid(semanticChronology.referencedComponent().publicId()),
-                    (MutableList<SemanticEntityVersion>) versions);
+                    (ImmutableList<SemanticVersionRecord>) versions);
 
             case Stamp stamp -> new StampRecord(mostSignificantBits, leastSignificantBits,
-                    additionalUuidLongs, nid, (MutableList<StampVersionRecord>) versions);
+                    additionalUuidLongs, nid, (ImmutableList<StampVersionRecord>) versions);
 
             default -> throw new IllegalStateException("Unexpected value: " + chronology);
         };
         for (Version version : chronology.versions()) {
             versions.add(makeVersion(version, entity));
         }
+        versions.build();
         return (T) entity;
     }
 
@@ -315,7 +316,7 @@ public class EntityRecordFactory {
     private static <V extends EntityVersion> V makeVersion(Version version, Entity<? extends EntityVersion> entity) {
         return (V) switch (version) {
             case ConceptVersion conceptVersion -> new ConceptVersionRecord((ConceptRecord) entity, conceptVersion);
-            case PatternVersion patternVersion -> new PatternVersionRecord((PatternRecord) entity, patternVersion);
+            case PatternVersion patternVersion -> PatternVersionRecord.make((PatternRecord) entity, patternVersion);
             case SemanticVersion semanticVersion -> new SemanticVersionRecord((SemanticRecord) entity, semanticVersion);
             case Stamp stamp -> new StampVersionRecord((StampRecord) entity, stamp);
 
@@ -361,11 +362,11 @@ public class EntityRecordFactory {
         return switch (fieldDataType) {
             case CONCEPT_CHRONOLOGY -> {
                 versionCount = readBuf.readInt();
-                MutableList<ConceptEntityVersion> versions = Lists.mutable.ofInitialCapacity(versionCount);
+                RecordListBuilder<ConceptVersionRecord> versions = RecordListBuilder.make();
                 ConceptRecord conceptRecord = new ConceptRecord(mostSignificantBits, leastSignificantBits,
                         additionalUuidLongs, nid, versions);
                 for (int i = 0; i < versionCount; i++) {
-                    ConceptEntityVersion version = (ConceptEntityVersion) makeVersion(readBuf, entityFormatVersion, conceptRecord);
+                    ConceptVersionRecord version = (ConceptVersionRecord) makeVersion(readBuf, entityFormatVersion, conceptRecord);
                     if (!PrimitiveData.get().isCanceledStampNid(version.stampNid())) {
                         versions.add(version);
                     }
@@ -377,23 +378,24 @@ public class EntityRecordFactory {
                 int referencedComponentNid = readBuf.readInt();
                 int patternNid = readBuf.readInt();
                 versionCount = readBuf.readInt();
-                MutableList<SemanticEntityVersion> versions = Lists.mutable.ofInitialCapacity(versionCount);
+                RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
                 SemanticRecord semanticRecord = new SemanticRecord(mostSignificantBits, leastSignificantBits,
                         additionalUuidLongs, nid, patternNid, referencedComponentNid,
                         versions);
                 for (int i = 0; i < versionCount; i++) {
-                    SemanticEntityVersion version = (SemanticEntityVersion) makeVersion(readBuf, entityFormatVersion, semanticRecord);
+                    SemanticVersionRecord version = (SemanticVersionRecord) makeVersion(readBuf, entityFormatVersion, semanticRecord);
                     if (!PrimitiveData.get().isCanceledStampNid(version.stampNid())) {
                         versions.add(version);
                     }
                 }
+                versions.build();
                 yield (T) semanticRecord;
             }
 
             case PATTERN_CHRONOLOGY -> {
                 // no additional fieldValues for pattern.
                 versionCount = readBuf.readInt();
-                MutableList<PatternVersionRecord> versions = Lists.mutable.ofInitialCapacity(versionCount);
+                RecordListBuilder<PatternVersionRecord> versions = RecordListBuilder.make();
                 PatternRecord patternRecord = new PatternRecord(mostSignificantBits, leastSignificantBits,
                         additionalUuidLongs, nid, versions);
                 for (int i = 0; i < versionCount; i++) {
@@ -402,18 +404,20 @@ public class EntityRecordFactory {
                         versions.add(version);
                     }
                 }
+                versions.build();
                 yield (T) patternRecord;
             }
 
             case STAMP -> {
                 // no additional fieldValues for stamp
                 versionCount = readBuf.readInt();
-                MutableList<StampVersionRecord> versions = Lists.mutable.ofInitialCapacity(versionCount);
+                RecordListBuilder<StampVersionRecord> versions = RecordListBuilder.make();
                 StampRecord stampRecord = new StampRecord(mostSignificantBits, leastSignificantBits,
                         additionalUuidLongs, nid, versions);
                 for (int i = 0; i < versionCount; i++) {
                     versions.add((StampVersionRecord) makeVersion(readBuf, entityFormatVersion, stampRecord));
                 }
+                versions.build();
                 yield (T) stampRecord;
             }
 
@@ -436,24 +440,26 @@ public class EntityRecordFactory {
             case ConceptRecord conceptRecord -> new ConceptVersionRecord(conceptRecord, stampNid);
             case SemanticRecord semanticRecord -> {
                 int fieldCount = readBuf.readInt();
-                MutableList<Object> fields = Lists.mutable.ofInitialCapacity(fieldCount);
+                RecordListBuilder<Object> fields = RecordListBuilder.make();
                 for (int i = 0; i < fieldCount; i++) {
                     FieldDataType dataType = FieldDataType.fromToken(readBuf.readByte());
                     fields.add(readDataType(readBuf, dataType, formatVersion));
                 }
-                yield new SemanticVersionRecord(semanticRecord, stampNid, fields.toImmutable());
+                fields.build();
+                yield new SemanticVersionRecord(semanticRecord, stampNid, fields);
             }
             case PatternRecord patternRecord -> {
                 int semanticPurposeNid = readBuf.readInt();
                 int semanticMeaningNid = readBuf.readInt();
                 int fieldCount = readBuf.readInt();
                 MutableList<FieldDefinitionRecord> fieldDefinitionForEntities = Lists.mutable.ofInitialCapacity(fieldCount);
-                PatternVersionRecord patternVersionRecord = new PatternVersionRecord(patternRecord, stampNid,
-                        semanticPurposeNid, semanticMeaningNid, fieldDefinitionForEntities);
-                for (int i = 0; i < fieldCount; i++) {
+                for (int fieldIndex = 0; fieldIndex < fieldCount; fieldIndex++) {
                     fieldDefinitionForEntities.add(new FieldDefinitionRecord(readBuf.readInt(),
-                            readBuf.readInt(), readBuf.readInt(), patternVersionRecord.stampNid(), patternVersionRecord.nid()));
+                            readBuf.readInt(), readBuf.readInt(), stampNid, patternRecord.nid(), fieldIndex));
                 }
+
+                PatternVersionRecord patternVersionRecord = new PatternVersionRecord(patternRecord, stampNid,
+                        semanticPurposeNid, semanticMeaningNid, fieldDefinitionForEntities.toImmutable());
                 // make field definition list mutable in the record?
                 yield patternVersionRecord;
             }
@@ -520,10 +526,10 @@ public class EntityRecordFactory {
             case PlanarPoint planarPointField -> planarPointField;
             case SpatialPoint spatialPointField -> spatialPointField;
             // conversions
-            case Concept conceptField -> EntityProxy.Concept.make(EntityService.get().nidForComponent(conceptField));
-            case Semantic semanticField -> EntityProxy.Semantic.make(EntityService.get().nidForComponent(semanticField));
-            case Pattern patternField -> EntityProxy.Pattern.make(EntityService.get().nidForComponent(patternField));
-            case Component componentField -> EntityProxy.make(EntityService.get().nidForComponent(componentField));
+            case Concept conceptField -> EntityProxy.Concept.make(Entity.nid(conceptField));
+            case Semantic semanticField -> EntityProxy.Semantic.make(Entity.nid(semanticField));
+            case Pattern patternField -> EntityProxy.Pattern.make(Entity.nid(patternField));
+            case Component componentField -> EntityProxy.make(Entity.nid(componentField));
             case DiTree diTreeField -> DiTreeEntity.make(diTreeField);
             case DiGraph diGraphField -> DiGraphEntity.make(diGraphField);
             case PublicIdSet publicIdSetField -> {
@@ -532,14 +538,14 @@ public class EntityRecordFactory {
                     if (publicId == null) {
                         throw new IllegalStateException("PublicId cannot be null");
                     }
-                    idSet.add(EntityService.get().nidForPublicId((PublicId) publicId));
+                    idSet.add(Entity.nid((PublicId) publicId));
                 });
                 yield IntIds.set.ofAlreadySorted(idSet.toSortedArray());
             }
             case PublicIdList publicIdListField -> {
                 MutableIntList idList = IntLists.mutable.withInitialCapacity(publicIdListField.size());
                 publicIdListField.forEach(publicId -> {
-                    idList.add(EntityService.get().nidForPublicId((PublicId) publicId));
+                    idList.add(Entity.nid((PublicId) publicId));
                 });
                 yield IntIds.list.of(idList.toArray());
             }

@@ -8,7 +8,7 @@ public record ConceptVersionRecord(ConceptRecord chronology, int stampNid)
         implements ConceptEntityVersion, ConceptVersionRecordBuilder.With {
 
     public ConceptVersionRecord(ConceptRecord chronology, ConceptVersion version) {
-        this(chronology, EntityService.get().nidForComponent(version.stamp()));
+        this(chronology, Entity.nid(version.stamp()));
     }
 
     @Override

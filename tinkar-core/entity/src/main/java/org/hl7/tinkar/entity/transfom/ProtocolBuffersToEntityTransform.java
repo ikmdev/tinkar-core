@@ -51,28 +51,212 @@ public class ProtocolBuffersToEntityTransform implements EntityTransform<PBTinka
         };
     }
 
-    public ConceptEntity<ConceptEntityVersion> makeConceptChronology(PBConceptChronology pbConceptChronology) {
-        ConceptEntity<ConceptEntityVersion> conceptEntity = createConceptEntity(pbConceptChronology.getPublicId());
-        MutableList<ConceptEntityVersion> conceptEntityVersions = Lists.mutable
-                .ofInitialCapacity(pbConceptChronology.getConceptVersionsCount());
+    public ConceptRecord makeConceptChronology(PBConceptChronology pbConceptChronology) {
+        ConceptRecord conceptEntity = createConceptEntity(pbConceptChronology.getPublicId());
+        RecordListBuilder<ConceptVersionRecord> conceptEntityVersions = RecordListBuilder.make();
         createVersionEntities(pbConceptChronology, conceptEntity, conceptEntityVersions);
-        return ConceptRecordBuilder.builder((ConceptRecord) conceptEntity).versionRecords(conceptEntityVersions).build();
+        return ConceptRecordBuilder.builder((ConceptRecord) conceptEntity).versions(conceptEntityVersions).build();
     }
 
     public SemanticRecord makeSemanticChronology(PBSemanticChronology pbSemanticChronology) {
         SemanticRecord semanticEntity = createSemanticEntity(pbSemanticChronology);
-        MutableList<SemanticEntityVersion> semanticEntityVersions = Lists.mutable
-                .ofInitialCapacity(pbSemanticChronology.getVersionsCount());
+        RecordListBuilder<SemanticVersionRecord> semanticEntityVersions = RecordListBuilder.make();
         createVersionEntities(pbSemanticChronology, semanticEntity, semanticEntityVersions);
-        return SemanticRecordBuilder.builder((SemanticRecord) semanticEntity).versionRecords(semanticEntityVersions).build();
+        return SemanticRecordBuilder.builder((SemanticRecord) semanticEntity).versions(semanticEntityVersions).build();
     }
 
     public PatternRecord makePatternChronology(PBPatternChronology pbPatternChronology) {
         PatternRecord patternRecord = createPatternEntity(pbPatternChronology);
-        MutableList<PatternVersionRecord> patternEntityVersions = Lists.mutable
-                .ofInitialCapacity(pbPatternChronology.getVersionsCount());
+        RecordListBuilder<PatternVersionRecord> patternEntityVersions = RecordListBuilder.make();
         createVersionEntities(pbPatternChronology, patternRecord, patternEntityVersions);
-        return PatternRecordBuilder.builder((PatternRecord) patternRecord).versionRecords(patternEntityVersions).build();
+        return PatternRecordBuilder.builder((PatternRecord) patternRecord).versions(patternEntityVersions).build();
+    }
+
+    public ConceptRecord createConceptEntity(PBPublicId pbPublicId) throws IllegalStateException {
+        PublicId conceptPublicId = createPublicId(pbPublicId);
+        if (conceptPublicId.uuidCount() > 0) {
+            int conceptNid = Entity.nid(conceptPublicId);
+            if (conceptPublicId.uuidCount() > 1) {
+                return ConceptRecordBuilder.builder()
+                        .leastSignificantBits(conceptPublicId.asUuidArray()[0].getLeastSignificantBits())
+                        .mostSignificantBits(conceptPublicId.asUuidArray()[0].getMostSignificantBits())
+                        .additionalUuidLongs(UuidUtil.asArray(Arrays.copyOfRange(conceptPublicId.asUuidArray(),
+                                1, conceptPublicId.uuidCount())))
+                        .nid(conceptNid)
+                        .build();
+            } else {
+                return ConceptRecordBuilder.builder()
+                        .leastSignificantBits(conceptPublicId.asUuidArray()[0].getLeastSignificantBits())
+                        .mostSignificantBits(conceptPublicId.asUuidArray()[0].getMostSignificantBits())
+                        .nid(conceptNid)
+                        .build();
+            }
+        } else {
+            throw new IllegalStateException("missing primordial UUID");
+        }
+    }
+
+    public void createVersionEntities(PBConceptChronology pbConceptChronology,
+                                      ConceptRecord conceptEntity,
+                                      RecordListBuilder<ConceptVersionRecord> versions) {
+        for (PBConceptVersion pbConceptVersion : pbConceptChronology.getConceptVersionsList()) {
+            versions.add(createConceptVersionEntity(pbConceptVersion, conceptEntity));
+        }
+        versions.build();
+    }
+
+    public ConceptVersionRecord createConceptVersionEntity(PBConceptVersion pbConceptVersion,
+                                                           ConceptRecord conceptRecord) {
+        StampEntityVersion stampEntityVersion = createStampEntityVersion(pbConceptVersion.getStamp());
+        return ConceptVersionRecordBuilder.builder()
+                .chronology((ConceptRecord) conceptRecord)
+                .stampNid(stampEntityVersion.stampNid())
+                .build();
+    }
+
+    public StampEntityVersion createStampEntityVersion(PBStamp pbStamp) {
+        StampRecord stampEntity = createStampEntity(pbStamp);
+        int stateNid = Entity.nid(createPublicId(pbStamp.getStatus().getPublicId()));
+        long time = Instant.ofEpochSecond(pbStamp.getTime().getSeconds(), pbStamp.getTime().getNanos()).getEpochSecond();
+        int authorNid = Entity.nid(createPublicId(pbStamp.getAuthor().getPublicId()));
+        int moduleNid = Entity.nid(createPublicId(pbStamp.getModule().getPublicId()));
+        int pathNid = Entity.nid(createPublicId(pbStamp.getPath().getPublicId()));
+        return StampVersionRecordBuilder.builder()
+                .stateNid(stateNid)
+                .time(time)
+                .authorNid(authorNid)
+                .moduleNid(moduleNid)
+                .pathNid(pathNid)
+                .chronology(stampEntity)
+                .build();
+    }
+
+    public StampRecord createStampEntity(PBStamp pbStamp) {
+        PublicId stampPublicId = createPublicId(pbStamp.getPublicId());
+        if (stampPublicId.uuidCount() > 0) {
+            int stampNid = Entity.nid(stampPublicId);
+            if (stampPublicId.uuidCount() > 1) {
+                return StampRecordBuilder.builder()
+                        .leastSignificantBits(stampPublicId.asUuidArray()[0].getLeastSignificantBits())
+                        .mostSignificantBits(stampPublicId.asUuidArray()[0].getMostSignificantBits())
+                        .nid(stampNid)
+                        .additionalUuidLongs(UuidUtil.asArray(Arrays.copyOfRange(stampPublicId.asUuidArray(),
+                                1, stampPublicId.uuidCount())))
+                        .build();
+            } else {
+                return StampRecordBuilder.builder()
+                        .leastSignificantBits(stampPublicId.asUuidArray()[0].getLeastSignificantBits())
+                        .mostSignificantBits(stampPublicId.asUuidArray()[0].getMostSignificantBits())
+                        .nid(stampNid)
+                        .build();
+            }
+        } else {
+            throw new IllegalStateException("missing primordial UUID");
+        }
+    }
+
+    public SemanticRecord createSemanticEntity(PBSemanticChronology pbSemanticChronology) {
+        PublicId semanticPublicId = createPublicId(pbSemanticChronology.getPublicId());
+        PublicId patternPublicId = createPublicId(pbSemanticChronology.getPatternForSemantic());
+        PublicId referencedComponentPublicId = createPublicId(pbSemanticChronology.getReferencedComponent());
+        int patternNid = Entity.nid(patternPublicId);
+        int referencedComponentNid = Entity.nid(referencedComponentPublicId);
+        if (semanticPublicId.uuidCount() > 0) {
+            int semanticNid = Entity.nid(semanticPublicId);
+            if (semanticPublicId.uuidCount() > 1) {
+                return SemanticRecordBuilder.builder()
+                        .leastSignificantBits(semanticPublicId.asUuidArray()[0].getLeastSignificantBits())
+                        .mostSignificantBits(semanticPublicId.asUuidArray()[0].getMostSignificantBits())
+                        .additionalUuidLongs(UuidUtil.asArray(Arrays.copyOfRange(semanticPublicId.asUuidArray(),
+                                1, semanticPublicId.uuidCount())))
+                        .nid(semanticNid)
+                        .patternNid(patternNid)
+                        .referencedComponentNid(referencedComponentNid)
+                        .build();
+            } else {
+                return SemanticRecordBuilder.builder()
+                        .leastSignificantBits(semanticPublicId.asUuidArray()[0].getLeastSignificantBits())
+                        .mostSignificantBits(semanticPublicId.asUuidArray()[0].getMostSignificantBits())
+                        .nid(semanticNid)
+                        .patternNid(patternNid)
+                        .referencedComponentNid(referencedComponentNid)
+                        .build();
+            }
+        } else {
+            throw new IllegalStateException("missing primordial UUID");
+        }
+    }
+
+    public PatternRecord createPatternEntity(PBPatternChronology pbPatternChronology) {
+        PublicId patternPublicId = createPublicId(pbPatternChronology.getPublicId());
+        int patternNid = Entity.nid(patternPublicId);
+        if (patternPublicId.uuidCount() > 0) {
+            if (patternPublicId.uuidCount() > 1) {
+                return PatternRecordBuilder.builder()
+                        .leastSignificantBits(patternPublicId.asUuidArray()[0].getLeastSignificantBits())
+                        .mostSignificantBits(patternPublicId.asUuidArray()[0].getMostSignificantBits())
+                        .nid(patternNid)
+                        .additionalUuidLongs(UuidUtil.asArray(Arrays.copyOfRange(patternPublicId.asUuidArray(),
+                                1, patternPublicId.uuidCount())))
+                        .build();
+            } else {
+                return PatternRecordBuilder.builder()
+                        .leastSignificantBits(patternPublicId.asUuidArray()[0].getLeastSignificantBits())
+                        .mostSignificantBits(patternPublicId.asUuidArray()[0].getMostSignificantBits())
+                        .nid(patternNid)
+                        .build();
+            }
+        } else {
+            throw new IllegalStateException("missing primordial UUID");
+        }
+    }
+
+    public void createVersionEntities(PBPatternChronology pbPatternChronology,
+                                      PatternRecord patternRecord,
+                                      RecordListBuilder<PatternVersionRecord> versions) {
+        for (PBPatternVersion pbPatternVersion : pbPatternChronology.getVersionsList()) {
+            versions.add(createPatternVersionEntity(pbPatternVersion, patternRecord));
+        }
+        versions.build();
+    }
+
+    public PatternVersionRecord createPatternVersionEntity(PBPatternVersion pbPatternVersion,
+                                                           PatternRecord patternRecord) {
+        StampEntityVersion stampEntityVersion = createStampEntityVersion(pbPatternVersion.getStamp());
+        int semanticPurposeNid = Entity.nid(createPublicId(pbPatternVersion.getReferencedComponentPurpose()));
+        int semanticMeaningNid = Entity.nid(createPublicId(pbPatternVersion.getReferencedComponentMeaning()));
+
+        MutableList<FieldDefinitionRecord> fieldDefinitionForEntities = Lists.mutable
+                .ofInitialCapacity(pbPatternVersion.getFieldDefinitionsCount());
+        createFieldDefinitionEntity(stampEntityVersion.stampNid(), pbPatternVersion.getFieldDefinitionsList(), fieldDefinitionForEntities);
+
+        PatternVersionRecord patternVersionRecord = PatternVersionRecordBuilder.builder()
+                .chronology(patternRecord)
+                .stampNid(stampEntityVersion.stampNid())
+                .semanticPurposeNid(semanticPurposeNid)
+                .semanticMeaningNid(semanticMeaningNid)
+                .fieldDefinitions(fieldDefinitionForEntities.toImmutable())
+                .build();
+
+        return patternVersionRecord;
+    }
+
+    public void createFieldDefinitionEntity(int versionStampNid, List<PBFieldDefinition> pbFieldDefinitions,
+                                            MutableList<FieldDefinitionRecord> fieldDefinitionForEntityMutableList) {
+        for (PBFieldDefinition pbFieldDefinition : pbFieldDefinitions) {
+            int meaningNid = Entity.nid(createPublicId(pbFieldDefinition.getMeaning()));
+            int purposeNid = Entity.nid(createPublicId(pbFieldDefinition.getPurpose()));
+            int dataTypeNid = Entity.nid(createPublicId(pbFieldDefinition.getDataType()));
+
+            FieldDefinitionRecord fieldDefinitionRecord = FieldDefinitionRecordBuilder.builder()
+                    .meaningNid(meaningNid)
+                    .purposeNid(purposeNid)
+                    .dataTypeNid(dataTypeNid)
+                    .patternVersionStampNid(versionStampNid)
+                    .build();
+
+            fieldDefinitionForEntityMutableList.add(fieldDefinitionRecord);
+        }
     }
 
     public IntIdList createPublicIDHashList(List<PBPublicId> pbPublicIdList) {
@@ -95,42 +279,18 @@ public class ProtocolBuffersToEntityTransform implements EntityTransform<PBTinka
         return new PublicId1(UUID.nameUUIDFromBytes(pbVertexId.getId().toByteArray()));
     }
 
-    public ConceptEntity<ConceptEntityVersion> createConceptEntity(PBConcept pbConcept) {
+    public ConceptRecord createConceptEntity(PBConcept pbConcept) {
         return createConceptEntity(pbConcept.getPublicId());
     }
 
-    public ConceptEntity<ConceptEntityVersion> createConceptEntity(PBPublicId pbPublicId) throws IllegalStateException {
-        PublicId conceptPublicId = createPublicId(pbPublicId);
-        if (conceptPublicId.uuidCount() > 0) {
-            int conceptNid = EntityService.get().nidForPublicId(conceptPublicId);
-            if (conceptPublicId.uuidCount() > 1) {
-                return ConceptRecordBuilder.builder()
-                        .leastSignificantBits(conceptPublicId.asUuidArray()[0].getLeastSignificantBits())
-                        .mostSignificantBits(conceptPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .additionalUuidLongs(UuidUtil.asArray(Arrays.copyOfRange(conceptPublicId.asUuidArray(),
-                                1, conceptPublicId.uuidCount())))
-                        .nid(conceptNid)
-                        .build();
-            } else {
-                return ConceptRecordBuilder.builder()
-                        .leastSignificantBits(conceptPublicId.asUuidArray()[0].getLeastSignificantBits())
-                        .mostSignificantBits(conceptPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .nid(conceptNid)
-                        .build();
-            }
-        } else {
-            throw new IllegalStateException("missing primordial UUID");
-        }
-    }
-
-    public SemanticEntity<SemanticEntityVersion> createSemanticEntity(PBSemantic pbSemantic) {
+    public SemanticEntity<SemanticVersionRecord> createSemanticEntity(PBSemantic pbSemantic) {
         PublicId semanticPublicId = createPublicId(pbSemantic.getPublicId());
         PublicId patternPublicId = createPublicId(pbSemantic.getPatternForSemantic());
         PublicId referencedComponentPublicId = createPublicId(pbSemantic.getReferencedComponent());
-        int patternNid = EntityService.get().nidForPublicId(patternPublicId);
-        int referencedComponentNid = EntityService.get().nidForPublicId(referencedComponentPublicId);
+        int patternNid = Entity.nid(patternPublicId);
+        int referencedComponentNid = Entity.nid(referencedComponentPublicId);
         if (semanticPublicId.uuidCount() > 0) {
-            int semanticNid = EntityService.get().nidForPublicId(semanticPublicId);
+            int semanticNid = Entity.nid(semanticPublicId);
             if (semanticPublicId.uuidCount() > 1) {
                 return SemanticRecordBuilder.builder()
                         .leastSignificantBits(semanticPublicId.asUuidArray()[0].getLeastSignificantBits())
@@ -163,41 +323,9 @@ public class ProtocolBuffersToEntityTransform implements EntityTransform<PBTinka
                 .collect(Collectors.toList()));
     }
 
-    public SemanticRecord createSemanticEntity(PBSemanticChronology pbSemanticChronology) {
-        PublicId semanticPublicId = createPublicId(pbSemanticChronology.getPublicId());
-        PublicId patternPublicId = createPublicId(pbSemanticChronology.getPatternForSemantic());
-        PublicId referencedComponentPublicId = createPublicId(pbSemanticChronology.getReferencedComponent());
-        int patternNid = EntityService.get().nidForPublicId(patternPublicId);
-        int referencedComponentNid = EntityService.get().nidForPublicId(referencedComponentPublicId);
-        if (semanticPublicId.uuidCount() > 0) {
-            int semanticNid = EntityService.get().nidForPublicId(semanticPublicId);
-            if (semanticPublicId.uuidCount() > 1) {
-                return SemanticRecordBuilder.builder()
-                        .leastSignificantBits(semanticPublicId.asUuidArray()[0].getLeastSignificantBits())
-                        .mostSignificantBits(semanticPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .additionalUuidLongs(UuidUtil.asArray(Arrays.copyOfRange(semanticPublicId.asUuidArray(),
-                                1, semanticPublicId.uuidCount())))
-                        .nid(semanticNid)
-                        .patternNid(patternNid)
-                        .referencedComponentNid(referencedComponentNid)
-                        .build();
-            } else {
-                return SemanticRecordBuilder.builder()
-                        .leastSignificantBits(semanticPublicId.asUuidArray()[0].getLeastSignificantBits())
-                        .mostSignificantBits(semanticPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .nid(semanticNid)
-                        .patternNid(patternNid)
-                        .referencedComponentNid(referencedComponentNid)
-                        .build();
-            }
-        } else {
-            throw new IllegalStateException("missing primordial UUID");
-        }
-    }
-
     public PatternEntity<PatternVersionRecord> createPatternEntity(PBPattern pbPattern) {
         PublicId patternPublicId = createPublicId(pbPattern.getPublicId());
-        int patternNid = EntityService.get().nidForPublicId(patternPublicId);
+        int patternNid = Entity.nid(patternPublicId);
         if (patternPublicId.uuidCount() > 0) {
             if (patternPublicId.uuidCount() > 1) {
                 return PatternRecordBuilder.builder()
@@ -216,149 +344,19 @@ public class ProtocolBuffersToEntityTransform implements EntityTransform<PBTinka
             }
         } else {
             throw new IllegalStateException("missing primordial UUID");
-        }
-    }
-
-    public PatternRecord createPatternEntity(PBPatternChronology pbPatternChronology) {
-        PublicId patternPublicId = createPublicId(pbPatternChronology.getPublicId());
-        int patternNid = EntityService.get().nidForPublicId(patternPublicId);
-        if (patternPublicId.uuidCount() > 0) {
-            if (patternPublicId.uuidCount() > 1) {
-                return PatternRecordBuilder.builder()
-                        .leastSignificantBits(patternPublicId.asUuidArray()[0].getLeastSignificantBits())
-                        .mostSignificantBits(patternPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .nid(patternNid)
-                        .additionalUuidLongs(UuidUtil.asArray(Arrays.copyOfRange(patternPublicId.asUuidArray(),
-                                1, patternPublicId.uuidCount())))
-                        .build();
-            } else {
-                return PatternRecordBuilder.builder()
-                        .leastSignificantBits(patternPublicId.asUuidArray()[0].getLeastSignificantBits())
-                        .mostSignificantBits(patternPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .nid(patternNid)
-                        .build();
-            }
-        } else {
-            throw new IllegalStateException("missing primordial UUID");
-        }
-    }
-
-    public void createVersionEntities(PBConceptChronology pbConceptChronology,
-                                      ConceptEntity<ConceptEntityVersion> conceptEntity,
-                                      MutableList<ConceptEntityVersion> versions) {
-        for (PBConceptVersion pbConceptVersion : pbConceptChronology.getConceptVersionsList()) {
-            versions.add(createConceptVersionEntity(pbConceptVersion, conceptEntity));
         }
     }
 
     public void createVersionEntities(PBSemanticChronology pbSemanticChronology,
                                       SemanticRecord semanticRecord,
-                                      MutableList<SemanticEntityVersion> versions) {
+                                      RecordListBuilder<SemanticVersionRecord> versions) {
         for (PBSemanticVersion pbSemanticVersion : pbSemanticChronology.getVersionsList()) {
             versions.add(createSemanticVersionEntity(pbSemanticVersion, semanticRecord));
         }
+        RecordListBuilder.make();
     }
 
-    public void createVersionEntities(PBPatternChronology pbPatternChronology,
-                                      PatternRecord patternRecord,
-                                      MutableList<PatternVersionRecord> versions) {
-        for (PBPatternVersion pbPatternVersion : pbPatternChronology.getVersionsList()) {
-            versions.add(createPatternVersionEntity(pbPatternVersion, patternRecord));
-        }
-    }
-
-    public PatternVersionRecord createPatternVersionEntity(PBPatternVersion pbPatternVersion,
-                                                           PatternRecord patternRecord) {
-        StampEntityVersion stampEntityVersion = createStampEntityVersion(pbPatternVersion.getStamp());
-        int semanticPurposeNid = EntityService.get()
-                .nidForPublicId(createPublicId(pbPatternVersion.getReferencedComponentPurpose()));
-        int semanticMeaningNid = EntityService.get()
-                .nidForPublicId(createPublicId(pbPatternVersion.getReferencedComponentMeaning()));
-
-        MutableList<FieldDefinitionRecord> fieldDefinitionForEntities = Lists.mutable
-                .ofInitialCapacity(pbPatternVersion.getFieldDefinitionsCount());
-        PatternVersionRecord patternVersionRecord = PatternVersionRecordBuilder.builder()
-                .chronology(patternRecord)
-                .stampNid(stampEntityVersion.stampNid())
-                .semanticPurposeNid(semanticPurposeNid)
-                .semanticMeaningNid(semanticMeaningNid)
-                .fieldDefinitionMutableList(fieldDefinitionForEntities)
-                .build();
-
-        createFieldDefinitionEntity(patternVersionRecord, pbPatternVersion.getFieldDefinitionsList(), fieldDefinitionForEntities);
-
-        return patternVersionRecord;
-    }
-
-    public StampEntityVersion createStampEntityVersion(PBStamp pbStamp) {
-        StampRecord stampEntity = createStampEntity(pbStamp);
-        int stateNid = EntityService.get().nidForPublicId(createPublicId(pbStamp.getStatus().getPublicId()));
-        long time = Instant.ofEpochSecond(pbStamp.getTime().getSeconds(), pbStamp.getTime().getNanos()).getEpochSecond();
-        int authorNid = EntityService.get().nidForPublicId(createPublicId(pbStamp.getAuthor().getPublicId()));
-        int moduleNid = EntityService.get().nidForPublicId(createPublicId(pbStamp.getModule().getPublicId()));
-        int pathNid = EntityService.get().nidForPublicId(createPublicId(pbStamp.getPath().getPublicId()));
-        return StampVersionRecordBuilder.builder()
-                .stateNid(stateNid)
-                .time(time)
-                .authorNid(authorNid)
-                .moduleNid(moduleNid)
-                .pathNid(pathNid)
-                .chronology(stampEntity)
-                .build();
-    }
-
-    public void createFieldDefinitionEntity(PatternVersionRecord patternVersionRecord, List<PBFieldDefinition> pbFieldDefinitions,
-                                            MutableList<FieldDefinitionRecord> fieldDefinitionForEntityMutableList) {
-        for (PBFieldDefinition pbFieldDefinition : pbFieldDefinitions) {
-            int meaningNid = EntityService.get().nidForPublicId(createPublicId(pbFieldDefinition.getMeaning()));
-            int purposeNid = EntityService.get().nidForPublicId(createPublicId(pbFieldDefinition.getPurpose()));
-            int dataTypeNid = EntityService.get().nidForPublicId(createPublicId(pbFieldDefinition.getDataType()));
-
-            FieldDefinitionRecord fieldDefinitionRecord = FieldDefinitionRecordBuilder.builder()
-                    .meaningNid(meaningNid)
-                    .purposeNid(purposeNid)
-                    .dataTypeNid(dataTypeNid)
-                    .patternVersionStampNid(patternVersionRecord.stampNid())
-                    .build();
-
-            fieldDefinitionForEntityMutableList.add(fieldDefinitionRecord);
-        }
-    }
-
-    public StampRecord createStampEntity(PBStamp pbStamp) {
-        PublicId stampPublicId = createPublicId(pbStamp.getPublicId());
-        if (stampPublicId.uuidCount() > 0) {
-            int stampNid = EntityService.get().nidForPublicId(stampPublicId);
-            if (stampPublicId.uuidCount() > 1) {
-                return StampRecordBuilder.builder()
-                        .leastSignificantBits(stampPublicId.asUuidArray()[0].getLeastSignificantBits())
-                        .mostSignificantBits(stampPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .nid(stampNid)
-                        .additionalUuidLongs(UuidUtil.asArray(Arrays.copyOfRange(stampPublicId.asUuidArray(),
-                                1, stampPublicId.uuidCount())))
-                        .build();
-            } else {
-                return StampRecordBuilder.builder()
-                        .leastSignificantBits(stampPublicId.asUuidArray()[0].getLeastSignificantBits())
-                        .mostSignificantBits(stampPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .nid(stampNid)
-                        .build();
-            }
-        } else {
-            throw new IllegalStateException("missing primordial UUID");
-        }
-    }
-
-    public ConceptEntityVersion createConceptVersionEntity(PBConceptVersion pbConceptVersion,
-                                                           ConceptEntity<ConceptEntityVersion> conceptRecord) {
-        StampEntityVersion stampEntityVersion = createStampEntityVersion(pbConceptVersion.getStamp());
-        return ConceptVersionRecordBuilder.builder()
-                .chronology((ConceptRecord) conceptRecord)
-                .stampNid(stampEntityVersion.stampNid())
-                .build();
-    }
-
-    public SemanticEntityVersion createSemanticVersionEntity(PBSemanticVersion pbSemanticVersion,
+    public SemanticVersionRecord createSemanticVersionEntity(PBSemanticVersion pbSemanticVersion,
                                                              SemanticRecord semanticEntity) {
         StampEntityVersion stampEntityVersion = createStampEntityVersion(pbSemanticVersion.getStamp());
         MutableList<Object> fieldValues = Lists.mutable.ofInitialCapacity(pbSemanticVersion.getFieldValuesCount());

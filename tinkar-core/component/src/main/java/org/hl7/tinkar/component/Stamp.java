@@ -44,7 +44,7 @@ public interface Stamp<T extends Stamp> extends Chronology<T>, Component, Versio
     Concept path();
 
     @Override
-    default Stamp stamp() {
+    default Stamp<T> stamp() {
         return this;
     }
 

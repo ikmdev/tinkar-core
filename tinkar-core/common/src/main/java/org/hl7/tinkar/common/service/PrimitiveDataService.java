@@ -108,24 +108,25 @@ public interface PrimitiveDataService {
      * <p>
      * Used for map.merge functions in concurrent maps.
      *
-     * @param bytes1
-     * @param bytes2
+     * @param oldBytes
+     * @param newBytes
      * @return
      */
-    static byte[] merge(byte[] bytes1, byte[] bytes2) {
-        if (bytes1 == null) {
-            return bytes2;
+    static byte[] merge(byte[] oldBytes, byte[] newBytes) {
+        if (oldBytes == null) {
+            return newBytes;
         }
-        if (bytes2 == null) {
-            return bytes1;
+        if (newBytes == null) {
+            return oldBytes;
         }
-        if (Arrays.equals(bytes1, bytes2)) {
-            return bytes1;
+        if (Arrays.equals(oldBytes, newBytes)) {
+            return oldBytes;
         }
         try {
             MutableSet<ByteList> byteArraySet = Sets.mutable.empty();
-            addToSet(bytes1, byteArraySet);
-            addToSet(bytes2, byteArraySet);
+            MutableIntList stampList = IntLists.mutable.withInitialCapacity(16);
+            addToSet(newBytes, byteArraySet, stampList);
+            addToSet(oldBytes, byteArraySet, stampList);
             MutableList<ByteList> byteArrayList = byteArraySet.toList();
 
             byteArrayList.sort((o1, o2) -> {
@@ -137,7 +138,7 @@ public interface PrimitiveDataService {
                 }
                 return Integer.compare(o1.size(), o2.size());
             });
-            // Remove canceled versions here?
+            // Remove canceled versions here
             if (byteArrayList.size() > 2) {
                 MutableIntList indexesToRemove = IntLists.mutable.empty();
                 for (int i = 1; i < byteArrayList.size(); i++) {
@@ -166,7 +167,7 @@ public interface PrimitiveDataService {
                 indexesToRemove.reverseThis().forEach(index -> byteArrayList.remove(index));
             }
 
-            ByteBuf byteBuf = ByteBufPool.allocate(bytes1.length + bytes2.length);
+            ByteBuf byteBuf = ByteBufPool.allocate(oldBytes.length + newBytes.length);
             byteBuf.writeInt(byteArrayList.size());
             boolean first = true;
             for (ByteList byteArray : byteArrayList) {
@@ -192,7 +193,15 @@ public interface PrimitiveDataService {
         }
     }
 
-    private static void addToSet(byte[] bytes, MutableSet<ByteList> byteArraySet) throws IOException {
+    /**
+     * @param bytes
+     * @param byteArraySet
+     * @param stampsInSet  represents the stamps already added to the set. If two versions with the same stamp are being merged,
+     *                     the newer version must be the merged version, as it represents a newer edit. There is an assumption that
+     *                     the edits of a single version under a single stamp value are sequential, not concurrent.
+     * @throws IOException
+     */
+    private static void addToSet(byte[] bytes, MutableSet<ByteList> byteArraySet, MutableIntList stampsInSet) throws IOException {
         ByteBuf readBuf = ByteBuf.wrapForReading(bytes);
         int arrayCount = readBuf.readInt();
         for (int i = 0; i < arrayCount; i++) {
@@ -212,7 +221,17 @@ public interface PrimitiveDataService {
             } else {
                 byte[] newArray = new byte[arraySize];
                 readBuf.read(newArray);
-                byteArraySet.add(ByteLists.immutable.of(newArray));
+                int stampNid = ((newArray[1] & 0xFF) << 24) |
+                        ((newArray[2] & 0xFF) << 16) |
+                        ((newArray[3] & 0xFF) << 8) |
+                        ((newArray[4] & 0xFF) << 0);
+                if (stampsInSet.contains(stampNid)) {
+                    // Don't add, a newer version already exists (assuming addToSet is called in order of newest to oldest bytearray)
+                    // There should be no concurrent editing on versions with the same stamp.
+                } else {
+                    byteArraySet.add(ByteLists.immutable.of(newArray));
+                    stampsInSet.add(stampNid);
+                }
             }
         }
     }

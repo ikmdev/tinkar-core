@@ -2,7 +2,6 @@ package org.hl7.tinkar.entity;
 
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.common.id.PublicId;
 
 import java.util.Arrays;
@@ -12,13 +11,8 @@ import java.util.Objects;
 public record PatternRecord(
         long mostSignificantBits, long leastSignificantBits,
         long[] additionalUuidLongs, int nid,
-        MutableList<PatternVersionRecord> versionRecords)
+        ImmutableList<PatternVersionRecord> versions)
         implements PatternEntity<PatternVersionRecord>, PatternRecordBuilder.With {
-
-    @Override
-    public ImmutableList<PatternVersionRecord> versions() {
-        return versionRecords.toImmutable();
-    }
 
     @Override
     public byte[] getBytes() {
@@ -49,6 +43,36 @@ public record PatternRecord(
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PatternRecord that = (PatternRecord) o;
-        return mostSignificantBits == that.mostSignificantBits && leastSignificantBits == that.leastSignificantBits && nid == that.nid && Arrays.equals(additionalUuidLongs, that.additionalUuidLongs) && versionRecords.equals(that.versionRecords);
+        return mostSignificantBits == that.mostSignificantBits &&
+                leastSignificantBits == that.leastSignificantBits &&
+                nid == that.nid && Arrays.equals(additionalUuidLongs, that.additionalUuidLongs) &&
+                versions.equals(that.versions);
+    }
+
+    /**
+     * If there is a version with the same stamp as versionToAdd, it will be removed prior to adding the
+     * new version so you don't get duplicate versions with the same stamp.
+     *
+     * @param versionToAdd
+     * @return PatternAnalogueBuilder
+     */
+
+    public PatternAnalogueBuilder with(PatternEntityVersion versionToAdd) {
+        return analogueBuilder().add(versionToAdd);
+    }
+
+    public PatternAnalogueBuilder analogueBuilder() {
+        RecordListBuilder<PatternVersionRecord> versionRecords = RecordListBuilder.make();
+        PatternRecord patternRecord = new PatternRecord(mostSignificantBits, leastSignificantBits, additionalUuidLongs,
+                nid, versionRecords);
+        for (PatternVersionRecord version : versions) {
+            versionRecords.add(new PatternVersionRecord(patternRecord, version.stampNid(),
+                    version.semanticPurposeNid(), version.semanticMeaningNid(), version.fieldDefinitions()));
+        }
+        return new PatternAnalogueBuilder(patternRecord, versionRecords);
+    }
+
+    public PatternAnalogueBuilder without(PatternEntityVersion versionToAdd) {
+        return analogueBuilder().remove(versionToAdd);
     }
 }

@@ -112,6 +112,13 @@ public interface EntityService extends ChronologyService, Flow.Publisher<Integer
         return getStampFast(nidForUuids(uuids));
     }
 
+    /**
+     * Each time an entity is put via this method, each Flow.Subscriber
+     * is notified that the entity may have changed by publishing the
+     * nid of the entity.
+     *
+     * @param entity
+     */
     void putEntity(Entity entity);
 
     /**

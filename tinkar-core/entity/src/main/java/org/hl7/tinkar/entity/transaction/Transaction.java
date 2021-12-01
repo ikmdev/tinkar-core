@@ -124,7 +124,7 @@ public class Transaction implements Comparable<Transaction> {
         Optional<StampEntity> optionalStamp = Entity.get(PrimitiveData.nid(stampUuid));
         if (optionalStamp.isEmpty()) {
             StampEntity stamp = StampRecord.make(stampUuid, state, time, authorId, moduleId, pathId);
-            Entity.provider().putStamp(stamp);
+            Entity.provider().putEntity(stamp);
             return stamp;
         }
         return optionalStamp.get();
@@ -209,9 +209,14 @@ public class Transaction implements Comparable<Transaction> {
         StampRecord stampEntity = Entity.getStamp(PrimitiveData.nid(stampUuid));
         StampEntityVersion stampVersion = stampEntity.lastVersion();
         if (stampVersion.time() == Long.MAX_VALUE) {
-            StampEntityVersion committedVersion = stampEntity.addVersion(stampVersion.state(),
-                    commitTime, stampVersion.authorNid(), stampVersion.moduleNid(), stampVersion.pathNid());
-            Entity.provider().putStamp(stampEntity);
+            StampAnalogueBuilder newStampBuilder = stampEntity.analogueBuilder();
+            newStampBuilder.add(new StampVersionRecord(newStampBuilder.analogue(),
+                    stampVersion.stateNid(),
+                    commitTime, stampVersion.authorNid(), stampVersion.moduleNid(), stampVersion.pathNid()));
+            StampRecord newStamp = newStampBuilder.build();
+            Entity.provider().putEntity(newStamp);
+        } else {
+            // Transaction will retain current time of stamp. Used when importing with existing time.
         }
         //TODO support nested transactions
 //        for (TransactionImpl childTransaction : transaction.getChildren()) {
@@ -231,10 +236,12 @@ public class Transaction implements Comparable<Transaction> {
             if (stampVersion.time() == Long.MIN_VALUE) {
                 // already canceled.
             } else {
-                StampEntityVersion canceledVersion = stampRecord.addVersion(State.CANCELED,
-                        Long.MIN_VALUE, stampVersion.authorNid(), stampVersion.moduleNid(), stampVersion.pathNid());
-
-                Entity.provider().putStamp(stampRecord);
+                StampAnalogueBuilder newStampBuilder = stampRecord.analogueBuilder();
+                newStampBuilder.add(new StampVersionRecord(newStampBuilder.analogue(),
+                        State.CANCELED.nid(),
+                        Long.MIN_VALUE, stampVersion.authorNid(), stampVersion.moduleNid(), stampVersion.pathNid()));
+                StampRecord newStamp = newStampBuilder.build();
+                Entity.provider().putEntity(newStamp);
             }
             stampCount.incrementAndGet();
         });

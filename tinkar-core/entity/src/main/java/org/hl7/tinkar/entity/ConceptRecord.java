@@ -1,9 +1,7 @@
 package org.hl7.tinkar.entity;
 
 import io.soabase.recordbuilder.core.RecordBuilder;
-import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.service.PrimitiveData;
 
@@ -15,28 +13,23 @@ import java.util.UUID;
 public record ConceptRecord(
         long mostSignificantBits, long leastSignificantBits,
         long[] additionalUuidLongs, int nid,
-        MutableList<ConceptEntityVersion> versionRecords)
-        implements ConceptEntity<ConceptEntityVersion>, ConceptRecordBuilder.With {
+        ImmutableList<ConceptVersionRecord> versions)
+        implements ConceptEntity<ConceptVersionRecord>, ConceptRecordBuilder.With {
 
     public static ConceptRecord build(UUID conceptUuid, StampEntityVersion stampVersion) {
-        MutableList<ConceptEntityVersion> versionRecords = Lists.mutable.withInitialCapacity(1);
+        RecordListBuilder<ConceptVersionRecord> versionRecords = RecordListBuilder.make();
         ConceptRecord conceptRecord = ConceptRecordBuilder.builder()
                 .leastSignificantBits(conceptUuid.getLeastSignificantBits())
                 .mostSignificantBits(conceptUuid.getMostSignificantBits())
                 .nid(PrimitiveData.nid(conceptUuid))
-                .versionRecords(versionRecords).build();
-        versionRecords.add(new ConceptVersionRecord(conceptRecord, stampVersion.stampNid()));
+                .versions(versionRecords).build();
+        versionRecords.addAndBuild(new ConceptVersionRecord(conceptRecord, stampVersion.stampNid()));
         return conceptRecord;
     }
 
     @Override
     public byte[] getBytes() {
         return EntityRecordFactory.getBytes(this);
-    }
-
-    @Override
-    public ImmutableList<ConceptEntityVersion> versions() {
-        return versionRecords.toImmutable();
     }
 
     @Override
@@ -63,6 +56,26 @@ public record ConceptRecord(
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ConceptRecord that = (ConceptRecord) o;
-        return mostSignificantBits == that.mostSignificantBits && leastSignificantBits == that.leastSignificantBits && nid == that.nid && Arrays.equals(additionalUuidLongs, that.additionalUuidLongs) && versionRecords.equals(that.versionRecords);
+        return mostSignificantBits == that.mostSignificantBits && leastSignificantBits == that.leastSignificantBits &&
+                nid == that.nid && Arrays.equals(additionalUuidLongs, that.additionalUuidLongs) &&
+                versions.equals(that.versions);
     }
+
+    public ConceptAnalogueBuilder with(ConceptVersionRecord versionToAdd) {
+        return analogueBuilder().add(versionToAdd);
+    }
+
+    public ConceptAnalogueBuilder analogueBuilder() {
+        RecordListBuilder<ConceptVersionRecord> versionRecords = RecordListBuilder.make();
+        ConceptRecord conceptRecord = new ConceptRecord(mostSignificantBits, leastSignificantBits, additionalUuidLongs, nid, versionRecords);
+        for (ConceptVersionRecord version : versions) {
+            versionRecords.add(new ConceptVersionRecord(conceptRecord, version.stampNid()));
+        }
+        return new ConceptAnalogueBuilder(conceptRecord, versionRecords);
+    }
+
+    public ConceptAnalogueBuilder without(ConceptVersionRecord versionToAdd) {
+        return analogueBuilder().remove(versionToAdd);
+    }
+
 }

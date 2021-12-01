@@ -22,7 +22,7 @@ public interface VertexSort extends Encodable {
     String getVertexSortName();
 
     default String getVertexLabel(Concept vertexConcept, LanguageCalculator languageCalculator) {
-        return getVertexLabel(Entity.provider().nidForComponent(vertexConcept), languageCalculator);
+        return getVertexLabel(Entity.nid(vertexConcept), languageCalculator);
     }
 
     String getVertexLabel(int vertexConceptNid, LanguageCalculator languageCalculator);

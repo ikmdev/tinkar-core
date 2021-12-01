@@ -6,23 +6,25 @@ import org.hl7.tinkar.component.FieldDefinition;
 
 @RecordBuilder
 public record FieldDefinitionRecord(int dataTypeNid, int purposeNid, int meaningNid, int patternVersionStampNid,
-                                    int patternNid)
+                                    int patternNid, int indexInPattern)
         implements FieldDefinitionForEntity, FieldDefinitionRecordBuilder.With {
-    public FieldDefinitionRecord(FieldDefinition fieldDefinition, PatternEntityVersion patternVersion) {
-        this(EntityService.get().nidForComponent(fieldDefinition.dataType()),
-                EntityService.get().nidForComponent(fieldDefinition.purpose()),
-                EntityService.get().nidForComponent(fieldDefinition.meaning()),
+    public FieldDefinitionRecord(FieldDefinition fieldDefinition, PatternEntityVersion patternVersion, int indexInPattern) {
+        this(Entity.nid(fieldDefinition.dataType()),
+                Entity.nid(fieldDefinition.purpose()),
+                Entity.nid(fieldDefinition.meaning()),
                 patternVersion.stampNid(),
-                patternVersion.nid()
+                patternVersion.nid(),
+                indexInPattern
         );
     }
 
-    public FieldDefinitionRecord(FieldDefinition fieldDefinition, int patternVersionStampNid, int patternNid) {
-        this(EntityService.get().nidForComponent(fieldDefinition.dataType()),
-                EntityService.get().nidForComponent(fieldDefinition.purpose()),
-                EntityService.get().nidForComponent(fieldDefinition.meaning()),
+    public FieldDefinitionRecord(FieldDefinition fieldDefinition, int patternVersionStampNid, int patternNid, int indexInPattern) {
+        this(Entity.nid(fieldDefinition.dataType()),
+                Entity.nid(fieldDefinition.purpose()),
+                Entity.nid(fieldDefinition.meaning()),
                 patternVersionStampNid,
-                patternNid
+                patternNid,
+                indexInPattern
         );
     }
 
@@ -33,7 +35,7 @@ public record FieldDefinitionRecord(int dataTypeNid, int purposeNid, int meaning
                 ", purpose: " + PrimitiveData.text(purposeNid) +
                 ", meaning: " + PrimitiveData.text(meaningNid) +
                 ", for pattern version: " + Entity.getStamp(patternVersionStampNid).lastVersion().describe() +
-                ", for pattern: " + PrimitiveData.text(patternNid) +
-                '}';
+                ", for pattern: " + PrimitiveData.text(patternNid) + " [" + indexInPattern +
+                "]}";
     }
 }

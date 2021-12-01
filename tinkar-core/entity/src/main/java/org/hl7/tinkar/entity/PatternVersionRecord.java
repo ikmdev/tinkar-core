@@ -5,23 +5,27 @@ import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.component.FieldDefinition;
 import org.hl7.tinkar.component.PatternVersion;
 
 @RecordBuilder
 public record PatternVersionRecord(PatternRecord chronology, int stampNid,
                                    int semanticPurposeNid, int semanticMeaningNid,
-                                   MutableList<FieldDefinitionRecord> fieldDefinitionMutableList)
+                                   ImmutableList<FieldDefinitionRecord> fieldDefinitions)
         implements PatternEntityVersion, PatternVersionRecordBuilder.With {
 
-    public PatternVersionRecord(PatternRecord chronology, PatternVersion patternVersion) {
-        this(chronology,
-                EntityService.get().nidForComponent(patternVersion.stamp()),
-                EntityService.get().nidForComponent(patternVersion.semanticPurpose()),
-                EntityService.get().nidForComponent(patternVersion.semanticMeaning()),
-                Lists.mutable.withInitialCapacity(patternVersion.fieldDefinitions().size()));
-
-        patternVersion.fieldDefinitions().forEach(fieldDefinition -> fieldDefinitionMutableList.add(new FieldDefinitionRecord(fieldDefinition,
-                this)));
+    public static PatternVersionRecord make(PatternRecord chronology, PatternVersion patternVersion) {
+        int stampNid = Entity.nid(patternVersion.stamp());
+        int semanticPurposeNid = Entity.nid(patternVersion.semanticPurpose());
+        int semanticMeaningNid = Entity.nid(patternVersion.semanticMeaning());
+        MutableList<FieldDefinitionRecord> fieldDefinitions = Lists.mutable.ofInitialCapacity(patternVersion.fieldDefinitions().size());
+        for (int index = 0; index < patternVersion.fieldDefinitions().size(); index++) {
+            FieldDefinition field = patternVersion.fieldDefinitions().get(index);
+            fieldDefinitions.add(new FieldDefinitionRecord(Entity.nid(field.dataType()), Entity.nid(field.purpose()), Entity.nid(field.meaning()),
+                    stampNid,
+                    chronology.nid(), index));
+        }
+        return new PatternVersionRecord(chronology, stampNid, semanticPurposeNid, semanticMeaningNid, fieldDefinitions.toImmutable());
     }
 
     @Override
@@ -34,7 +38,9 @@ public record PatternVersionRecord(PatternRecord chronology, int stampNid,
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PatternVersionRecord that = (PatternVersionRecord) o;
-        return stampNid == that.stampNid && semanticPurposeNid == that.semanticPurposeNid && semanticMeaningNid == that.semanticMeaningNid && fieldDefinitionMutableList.equals(that.fieldDefinitionMutableList);
+        return stampNid == that.stampNid && semanticPurposeNid == that.semanticPurposeNid &&
+                semanticMeaningNid == that.semanticMeaningNid &&
+                fieldDefinitions.equals(that.fieldDefinitions);
     }
 
     @Override
@@ -67,9 +73,5 @@ public record PatternVersionRecord(PatternRecord chronology, int stampNid,
         sb.append("]≥");
 
         return sb.toString();
-    }
-
-    public ImmutableList<FieldDefinitionRecord> fieldDefinitions() {
-        return fieldDefinitionMutableList.toImmutable();
     }
 }

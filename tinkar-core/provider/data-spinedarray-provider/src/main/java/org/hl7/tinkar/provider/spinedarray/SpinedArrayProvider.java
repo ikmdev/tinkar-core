@@ -113,9 +113,10 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
                         LOG.warn("Canceling uncommitted stamp: " + stamp.publicId().asUuidList());
                         StampVersionRecord lastVersion = stamp.lastVersion();
                         StampVersionRecord canceledVersion = lastVersion.with().time(Long.MIN_VALUE).stateNid(State.CANCELED.nid()).build();
-                        stamp.versionRecords().clear();
-                        stamp.versionRecords().add(canceledVersion);
-                        byte[] stampBytes = stamp.getBytes();
+                        byte[] stampBytes = stamp
+                                .without(lastVersion)
+                                .with(canceledVersion)
+                                .build().getBytes();
                         this.entityToBytesMap.put(stampNid, stampBytes);
                     }
                     if (stamp.lastVersion().stateNid() == State.CANCELED.nid()) {

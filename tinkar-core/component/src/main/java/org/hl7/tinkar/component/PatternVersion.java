@@ -17,8 +17,6 @@ package org.hl7.tinkar.component;
 
 import org.eclipse.collections.api.list.ImmutableList;
 
-import java.util.Optional;
-
 /**
  * [Meaning] of <referenced component> for [purpose] in [pattern]
  *
@@ -31,10 +29,5 @@ public interface PatternVersion extends Version, Pattern {
     Concept semanticPurpose();
 
     Concept semanticMeaning();
-
-    default Optional<String> semanticNarrative() {
-        return Optional.empty();
-    }
-
 
 }

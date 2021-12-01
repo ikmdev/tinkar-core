@@ -18,7 +18,7 @@ public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
         implements SemanticEntityVersion, SemanticVersionRecordBuilder.With {
     public SemanticVersionRecord(SemanticRecord chronology, SemanticVersion version) {
         this(chronology,
-                EntityService.get().nidForComponent(version.stamp()),
+                Entity.nid(version.stamp()),
                 Lists.immutable.fromStream(version.fieldValues().stream().map(o -> EntityRecordFactory.externalToInternalObject(o))));
     }
 
@@ -171,13 +171,13 @@ public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
                 for (int i = 0; i < fieldArray.length; i++) {
                     Object value = fieldValues().get(i);
                     FieldDefinitionRecord fieldDef = patternVersionRecord.fieldDefinitions().get(i);
-                    fieldArray[i] = new FieldRecord(value, patternVersion.nid(), patternVersion.stampNid(), i, fieldDef);
+                    fieldArray[i] = new FieldRecord(value, patternVersion.nid(), patternVersion.stampNid(), fieldDef);
                 }
                 return Lists.immutable.of(fieldArray);
             }
             default -> {
                 PatternRecord patternRecord = Entity.getFast(patternVersion.nid());
-                for (PatternVersionRecord patternVersionRecord : patternRecord.versionRecords()) {
+                for (PatternVersionRecord patternVersionRecord : patternRecord.versions()) {
                     if (patternVersionRecord.stampNid() == patternVersion.stampNid()) {
                         return fields(patternVersionRecord);
                     }
