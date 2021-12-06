@@ -109,6 +109,10 @@ public record StampRecord(
         return new StampAnalogueBuilder(analogueStampRecord, versionRecords);
     }
 
+    public StampRecord withAndBuild(StampVersionRecord versionRecord) {
+        return analogueBuilder().with(versionRecord).build();
+    }
+
     public StampAnalogueBuilder without(StampVersionRecord versionRecord) {
         return analogueBuilder().without(versionRecord);
     }

@@ -3,6 +3,8 @@ package org.hl7.tinkar.common.service;
 import com.google.auto.service.AutoService;
 import org.eclipse.collections.api.list.primitive.IntList;
 import org.eclipse.collections.api.set.primitive.IntSet;
+import org.hl7.tinkar.common.alert.AlertObject;
+import org.hl7.tinkar.common.alert.AlertStreams;
 import org.hl7.tinkar.common.id.IntIdCollection;
 import org.hl7.tinkar.common.id.PublicId;
 import org.slf4j.Logger;
@@ -12,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.ToIntFunction;
 
 public class PrimitiveData {
@@ -21,6 +24,7 @@ public class PrimitiveData {
     private static DefaultDescriptionForNidService defaultDescriptionForNidServiceSingleton;
     private static PublicIdService publicIdServiceSingleton;
     private static PrimitiveData singleton;
+    private static CopyOnWriteArrayList<SaveState> statesToSave = new CopyOnWriteArrayList<>();
 
     static {
         singleton = new PrimitiveData();
@@ -42,6 +46,7 @@ public class PrimitiveData {
         SimpleIndeterminateTracker progressTask = new SimpleIndeterminateTracker("Stop primitive data provider");
         Executor.threadPool().submit(progressTask);
         try {
+            save();
             controllerSingleton.stop();
         } catch (Throwable ex) {
             LOG.error(ex.getLocalizedMessage(), ex);
@@ -51,7 +56,20 @@ public class PrimitiveData {
     }
 
     public static void save() {
-        controllerSingleton.save();
+        if (controllerSingleton != null) {
+            controllerSingleton.save();
+        }
+        for (SaveState state : statesToSave) {
+            try {
+                state.save();
+            } catch (Exception e) {
+                AlertStreams.getRoot().dispatch(AlertObject.makeError(e));
+            }
+        }
+    }
+
+    public static CopyOnWriteArrayList<SaveState> getStatesToSave() {
+        return statesToSave;
     }
 
     public static void reload() {
@@ -193,6 +211,7 @@ public class PrimitiveData {
             controllerSingleton = null;
             defaultDescriptionForNidServiceSingleton = null;
             publicIdServiceSingleton = null;
+            statesToSave.clear();
             singleton = new PrimitiveData();
         }
     }

@@ -80,7 +80,11 @@ public abstract class TransactionVersionTask extends TrackingCallable<Void> {
                     Entity.provider().notifyRefreshRequired(transaction);
                 }
             }, () -> {
-                AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("No transaction for version: " + version)));
+                AlertStreams.getRoot().dispatch(AlertObject.makeError("No transaction found. ", "Canceling Stamp",
+                        new IllegalStateException("No transaction for version: " + version)));
+                StampRecord stampRecord = (StampRecord) version.stamp();
+                StampRecord canceledStamp = stampRecord.withAndBuild(stampRecord.lastVersion().with().stateNid(State.CANCELED.nid()).time(Long.MIN_VALUE).build());
+                Entity.provider().putEntity(canceledStamp);
             });
 
             return null;

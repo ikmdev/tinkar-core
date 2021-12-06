@@ -36,7 +36,9 @@ public abstract class SpinedArrayController implements DataServiceController<Pri
 
     @Override
     public void save() {
-        SpinedArrayProvider.singleton.save();
+        if (SpinedArrayProvider.singleton != null) {
+            SpinedArrayProvider.singleton.save();
+        }
     }
 
     @Override
