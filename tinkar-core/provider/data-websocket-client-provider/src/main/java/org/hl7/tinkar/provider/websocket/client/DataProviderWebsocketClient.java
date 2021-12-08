@@ -217,6 +217,11 @@ public class DataProviderWebsocketClient
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public String name() {
+        return uri.toString();
+    }
+
     private int nidForLongArray(long[] uuidParts) throws ExecutionException, InterruptedException {
         ByteBuf buf = ByteBufPool.allocate(32);
         buf.writeByte(RemoteOperations.NID_FOR_UUIDS.token);

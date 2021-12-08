@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed under the Apache License, Version 2.0 (the "License");
  *
  * You may not use this file except in compliance with the License.
@@ -14,20 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Contributions from 2013-2017 where performed either by US government 
- * employees, or under US Veterans Health Administration contracts. 
+ * Contributions from 2013-2017 where performed either by US government
+ * employees, or under US Veterans Health Administration contracts.
  *
  * US Veterans Health Administration contributions by government employees
  * are work of the U.S. Government and are not subject to copyright
- * protection in the United States. Portions contributed by government 
- * employees are USGovWork (17USC §105). Not subject to copyright. 
- * 
+ * protection in the United States. Portions contributed by government
+ * employees are USGovWork (17USC §105). Not subject to copyright.
+ *
  * Contribution by contractors to the US Veterans Health Administration
  * during this period are contractually contributed under the
  * Apache License, Version 2.0.
  *
  * See: https://www.usa.gov/government-works
- * 
+ *
  * Contributions prior to 2013:
  *
  * Copyright (C) International Health Terminology Standards Development Organisation.
@@ -36,21 +36,22 @@
  */
 
 
-
 package org.hl7.tinkar.coordinate.stamp;
-
-import java.util.Collection;
-import java.util.Set;
 
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.hl7.tinkar.common.binary.Decoder;
 import org.hl7.tinkar.common.binary.DecoderInput;
 import org.hl7.tinkar.common.binary.Encoder;
 import org.hl7.tinkar.common.binary.EncoderOutput;
-import org.hl7.tinkar.common.id.*;
+import org.hl7.tinkar.common.id.IntIdList;
+import org.hl7.tinkar.common.id.IntIdSet;
+import org.hl7.tinkar.common.id.IntIds;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import org.hl7.tinkar.terms.ConceptFacade;
+
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * A filter that operates in coordinate with path coordinate and the version computer. After the version computer computes the
@@ -61,13 +62,12 @@ import org.hl7.tinkar.terms.ConceptFacade;
  * <p\>
  * q: How does the stamp coordinate relate to a Stamp?
  * <p\>
- a: A Stamp is a unique combination of Status, Time, Author, Module, and Path...
- A stamp coordinate specifies a position on a  path, with a particular set of modules, and allowed state values.
- Author constraints are not handled by the stamp filter. If necessary, results can be post-processed.
-
- <p\>
+ * a: A Stamp is a unique combination of Status, Time, Author, Module, and Path...
+ * A stamp coordinate specifies a position on a  path, with a particular set of modules, and allowed state values.
+ * Author constraints are not handled by the stamp filter. If necessary, results can be post-processed.
+ * <p>
+ * <p\>
  * Created by kec on 2/16/15.
- *
  */
 
 @RecordBuilder
@@ -76,19 +76,9 @@ public record StampCoordinateRecord(StateSet allowedStates, StampPositionRecord 
         implements StampCoordinate, ImmutableCoordinate, StampCoordinateRecordBuilder.With {
     private static final int marshalVersion = 1;
 
-    @Override
-    @Encoder
-    public void encode(EncoderOutput out) {
-        this.allowedStates.encode(out);
-        this.stampPosition.encode(out);
-        out.writeNidArray(moduleNids.toArray());
-        out.writeNidArray(excludedModuleNids.toArray());
-        out.writeNidArray(modulePriorityNidList.toArray());
-    }
-
     @Decoder
     public static StampCoordinateRecord decode(DecoderInput in) {
-        int objectMarshalVersion = in.encodingFormatVersion();
+        int objectMarshalVersion = in.readInt();
         switch (objectMarshalVersion) {
             case marshalVersion:
                 return new StampCoordinateRecord(StateSet.decode(in),
@@ -100,28 +90,11 @@ public record StampCoordinateRecord(StateSet allowedStates, StampPositionRecord 
                 throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
         }
     }
-    public static StampCoordinateRecord make(StateSet allowedStates,
-                                             StampPosition stampPosition,
-                                             IntIdSet moduleNids,
-                                             IntIdSet excludedModuleNids,
-                                             IntIdList modulePreferenceOrder) {
-        return new StampCoordinateRecord(allowedStates, stampPosition.toStampPositionImmutable(),
-                moduleNids, excludedModuleNids, modulePreferenceOrder);
-    }
-
-    public static StampCoordinateRecord make(StateSet allowedStates,
-                                             StampPosition stampPosition,
-                                             IntIdSet moduleNids,
-                                             IntIdList modulePreferenceOrder) {
-        return new StampCoordinateRecord(allowedStates, stampPosition.toStampPositionImmutable(),
-                moduleNids, IntIds.set.empty(), modulePreferenceOrder);
-    }
 
     /**
-     * 
      * @param allowedStates
      * @param stampPosition
-     * @param moduleNids - null is treated as an empty set, which allows any module
+     * @param moduleNids    - null is treated as an empty set, which allows any module
      * @return
      */
     public static StampCoordinateRecord make(StateSet allowedStates,
@@ -159,6 +132,17 @@ public record StampCoordinateRecord(StateSet allowedStates, StampPositionRecord 
     }
 
     @Override
+    @Encoder
+    public void encode(EncoderOutput out) {
+        out.writeInt(marshalVersion);
+        this.allowedStates.encode(out);
+        this.stampPosition.encode(out);
+        out.writeNidArray(moduleNids.toArray());
+        out.writeNidArray(excludedModuleNids.toArray());
+        out.writeNidArray(modulePriorityNidList.toArray());
+    }
+
+    @Override
     public String toString() {
         return "StampFilterRecord{" + toUserString() + "}";
     }
@@ -174,31 +158,12 @@ public record StampCoordinateRecord(StateSet allowedStates, StampPositionRecord 
                 this.moduleNids, this.modulePriorityNidList);
     }
 
-    public StampCoordinateRecord toStampCoordinateRecord() {
-        return this;
-    }
-
-
-    @Override
-    public int pathNidForFilter() {
-        return this.stampPosition.getPathForPositionNid();
-    }
-
-
-    @Override
-    public StampCoordinateRecord withModules(Collection<ConceptFacade> modules) {
-        IntIdSet mis = modules == null ? IntIds.set.empty() :
-                IntIds.set.of(modules.stream().mapToInt(concept -> concept.nid()).toArray());
-         return make(this.allowedStates,
-                this.stampPosition,
-                mis, this.excludedModuleNids, IntIds.list.empty());
-    }
-
-    @Override
-    public StampCoordinateRecord withPath(ConceptFacade pathForPosition) {
-        return make(this.allowedStates,
-                StampPositionRecord.make(this.stampPosition.time(), pathForPosition.nid()),
-                this.moduleNids, this.excludedModuleNids, this.modulePriorityNidList);
+    public static StampCoordinateRecord make(StateSet allowedStates,
+                                             StampPosition stampPosition,
+                                             IntIdSet moduleNids,
+                                             IntIdList modulePreferenceOrder) {
+        return new StampCoordinateRecord(allowedStates, stampPosition.toStampPositionImmutable(),
+                moduleNids, IntIds.set.empty(), modulePreferenceOrder);
     }
 
     @Override
@@ -207,8 +172,26 @@ public record StampCoordinateRecord(StateSet allowedStates, StampPositionRecord 
     }
 
     @Override
-    public StampCoordinateRecord withStampPosition(StampPositionRecord stampPosition) {
-        return StampCoordinateRecordBuilder.With.super.withStampPosition(stampPosition);
+    public int pathNidForFilter() {
+        return this.stampPosition.getPathForPositionNid();
+    }
+
+    @Override
+    public StampCoordinateRecord withModules(Collection<ConceptFacade> modules) {
+        IntIdSet mis = modules == null ? IntIds.set.empty() :
+                IntIds.set.of(modules.stream().mapToInt(concept -> concept.nid()).toArray());
+        return make(this.allowedStates,
+                this.stampPosition,
+                mis, this.excludedModuleNids, IntIds.list.empty());
+    }
+
+    public static StampCoordinateRecord make(StateSet allowedStates,
+                                             StampPosition stampPosition,
+                                             IntIdSet moduleNids,
+                                             IntIdSet excludedModuleNids,
+                                             IntIdList modulePreferenceOrder) {
+        return new StampCoordinateRecord(allowedStates, stampPosition.toStampPositionImmutable(),
+                moduleNids, excludedModuleNids, modulePreferenceOrder);
     }
 
     @Override
@@ -224,6 +207,22 @@ public record StampCoordinateRecord(StateSet allowedStates, StampPositionRecord 
     @Override
     public StampCoordinateRecord withModulePriorityNidList(IntIdList modulePriorityNidList) {
         return StampCoordinateRecordBuilder.With.super.withModulePriorityNidList(modulePriorityNidList);
+    }
+
+    @Override
+    public StampCoordinateRecord withPath(ConceptFacade pathForPosition) {
+        return make(this.allowedStates,
+                StampPositionRecord.make(this.stampPosition.time(), pathForPosition.nid()),
+                this.moduleNids, this.excludedModuleNids, this.modulePriorityNidList);
+    }
+
+    @Override
+    public StampCoordinateRecord withStampPosition(StampPositionRecord stampPosition) {
+        return StampCoordinateRecordBuilder.With.super.withStampPosition(stampPosition);
+    }
+
+    public StampCoordinateRecord toStampCoordinateRecord() {
+        return this;
     }
 }
 

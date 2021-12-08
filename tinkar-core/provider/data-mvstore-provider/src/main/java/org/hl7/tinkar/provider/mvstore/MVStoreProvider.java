@@ -50,6 +50,7 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     final MVMap<Integer, int[]> patternToElementNidsMap;
     final Indexer indexer;
     final Searcher searcher;
+    final String name;
     protected LongAdder writeSequence = new LongAdder();
     ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Integer>> patternElementNidsMap = ConcurrentHashMap.newMap();
 
@@ -60,6 +61,7 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         this.offHeap = new OffHeapStore();
         File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
         configuredRoot.mkdirs();
+        this.name = configuredRoot.getName();
         File databaseFile = new File(configuredRoot, databaseFileName);
         LOG.info("Starting MVStoreProvider from: " + databaseFile.getAbsolutePath());
         this.offHeap.open(databaseFile.getAbsolutePath(), false, null);
@@ -264,5 +266,10 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
                 }
             }
         }
+    }
+
+    @Override
+    public String name() {
+        return name;
     }
 }

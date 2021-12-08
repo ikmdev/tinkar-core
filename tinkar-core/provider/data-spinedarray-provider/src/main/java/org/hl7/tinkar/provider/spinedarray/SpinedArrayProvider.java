@@ -43,8 +43,8 @@ import java.util.function.ObjIntConsumer;
  * MVStore performs worse when iterating over entities.
  */
 public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
-    protected static final File defaultDataDirectory = new File("target/spinedarrays/");
     private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayProvider.class);
+    protected static final File defaultDataDirectory = new File("target/spinedarrays/");
     protected static SpinedArrayProvider singleton;
     protected static LongAdder writeSequence = new LongAdder();
     protected final CountDownLatch uuidsLoadedLatch = new CountDownLatch(1);
@@ -70,11 +70,13 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
     final File nextNidKeyFile;
     final Indexer indexer;
     final Searcher searcher;
+    final String name;
 
     public SpinedArrayProvider() throws IOException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening SpinedArrayProvider");
         File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
+        name = configuredRoot.getName();
         configuredRoot.mkdirs();
         SpinedArrayProvider.singleton = this;
         Get.singleton = this;
@@ -109,7 +111,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
                 for (int stampNid : stampNids) {
                     StampRecord stamp = Entity.getStamp(stampNid);
                     if (stamp.time() == Long.MAX_VALUE && Transaction.forStamp(stamp).isEmpty()) {
-                        // Uncommmitted stamp outside of a transaction on restart. Set to canceled.
+                        // Uncommmitted stamp found outside a transaction on restart. Set to canceled.
                         LOG.warn("Canceling uncommitted stamp: " + stamp.publicId().asUuidList());
                         StampVersionRecord lastVersion = stamp.lastVersion();
                         StampVersionRecord canceledVersion = lastVersion.with().time(Long.MIN_VALUE).stateNid(State.CANCELED.nid()).build();
@@ -160,7 +162,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
             stopwatch.stop();
             LOG.info("Closed SpinedArrayProvider in: " + stopwatch.durationString());
         }
-
     }
 
     public void save() {
@@ -393,5 +394,10 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
                 }
             }
         }
+    }
+
+    @Override
+    public String name() {
+        return name;
     }
 }

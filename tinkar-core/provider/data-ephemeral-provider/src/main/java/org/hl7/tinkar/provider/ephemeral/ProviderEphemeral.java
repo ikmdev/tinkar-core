@@ -47,12 +47,11 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     final ConcurrentHashMap<Integer, ConcurrentSkipListSet<Integer>> patternToElementNidsMap = ConcurrentHashMap.newMap();
     final Indexer indexer;
     final Searcher searcher;
-
-    private final ConcurrentHashMap<Integer, byte[]> nidComponentMap = ConcurrentHashMap.newMap();
     final ConcurrentHashSet<Integer> patternNids = new ConcurrentHashSet();
     final ConcurrentHashSet<Integer> conceptNids = new ConcurrentHashSet();
     final ConcurrentHashSet<Integer> semanticNids = new ConcurrentHashSet();
     final ConcurrentHashSet<Integer> stampNids = new ConcurrentHashSet();
+    private final ConcurrentHashMap<Integer, byte[]> nidComponentMap = ConcurrentHashMap.newMap();
     private final ConcurrentHashMap<UUID, Integer> uuidNidMap = new ConcurrentHashMap<>();
     private final AtomicInteger nextNid = new AtomicInteger(PrimitiveDataService.FIRST_NID);
 
@@ -213,6 +212,11 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
                 }
             }
         }
+    }
+
+    @Override
+    public String name() {
+        return "Ephemeral data";
     }
 
     @Override

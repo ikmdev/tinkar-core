@@ -337,6 +337,11 @@ public interface PrimitiveDataService {
         canceledStampNids.add(stampNid);
     }
 
+    /**
+     * @return user-friendly name for this data service
+     */
+    String name();
+
     enum RemoteOperations {
         NID_FOR_UUIDS(1),
         GET_BYTES(2),

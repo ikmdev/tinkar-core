@@ -73,7 +73,7 @@ public record NavigationCoordinateRecord(IntIdSet navigationPatternNids,
 
     @Decoder
     public static NavigationCoordinateRecord decode(DecoderInput in) {
-        int objectMarshalVersion = in.encodingFormatVersion();
+        int objectMarshalVersion = in.readInt();
         switch (objectMarshalVersion) {
             case marshalVersion:
                 return new NavigationCoordinateRecord(IntIds.set.of(in.readNidArray()),
@@ -82,11 +82,6 @@ public record NavigationCoordinateRecord(IntIdSet navigationPatternNids,
             default:
                 throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
         }
-    }
-
-    @Override
-    public boolean sortVertices() {
-        return this.sortVertices;
     }
 
     @Override
@@ -100,8 +95,14 @@ public record NavigationCoordinateRecord(IntIdSet navigationPatternNids,
     }
 
     @Override
+    public boolean sortVertices() {
+        return this.sortVertices;
+    }
+
+    @Override
     @Encoder
     public void encode(EncoderOutput out) {
+        out.writeInt(marshalVersion);
         out.writeNidArray(this.navigationPatternNids.toArray());
         vertexStates.encode(out);
         out.writeBoolean(this.sortVertices);
