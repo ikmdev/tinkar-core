@@ -25,21 +25,21 @@ public final record LanguageCoordinateRecord(int languageConceptNid,
                                              IntIdList modulePreferenceNidListForLanguage)
         implements LanguageCoordinate, ImmutableCoordinate, LanguageCoordinateRecordBuilder.With {
 
-    private static final int marshalVersion = 1;
-
     private LanguageCoordinateRecord(DecoderInput in) {
-        this(in.readNid(), IntIds.list.of(in.readNidArray()), IntIds.list.of(in.readNidArray()), IntIds.list.of(in.readNidArray()),
+        this(in.readNid(),
+                IntIds.list.of(in.readNidArray()),
+                IntIds.list.of(in.readNidArray()),
+                IntIds.list.of(in.readNidArray()),
                 IntIds.list.of(in.readNidArray()));
     }
 
     @Decoder
     public static LanguageCoordinateRecord decode(DecoderInput in) {
-        int objectMarshalVersion = in.readInt();
-        switch (objectMarshalVersion) {
-            case marshalVersion:
+        switch (in.encodingFormatVersion()) {
+            case MARSHAL_VERSION:
                 return new LanguageCoordinateRecord(in);
             default:
-                throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
+                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
         }
     }
 
@@ -89,8 +89,8 @@ public final record LanguageCoordinateRecord(int languageConceptNid,
     @Override
     @Encoder
     public void encode(EncoderOutput out) {
-        out.writeInt(marshalVersion);
         out.writeNid(this.languageConceptNid);
+        out.writeNidArray(this.descriptionPatternNidList.toArray());
         out.writeNidArray(this.descriptionTypePreferenceNidList.toArray());
         out.writeNidArray(this.dialectPatternPreferenceNidList.toArray());
         out.writeNidArray(this.modulePreferenceNidListForLanguage.toArray());

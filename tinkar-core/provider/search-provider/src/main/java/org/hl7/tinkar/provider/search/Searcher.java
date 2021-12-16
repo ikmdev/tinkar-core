@@ -34,27 +34,30 @@ public class Searcher {
 
 
     public PrimitiveDataSearchResult[] search(String queryString, int maxResultSize) throws ParseException, IOException, InvalidTokenOffsetsException {
-        Query query = parser.parse(queryString);
-        Formatter formatter = new SimpleHTMLFormatter();
-        QueryScorer scorer = new QueryScorer(query);
-        Highlighter highlighter = new Highlighter(formatter, scorer);
-        highlighter.setTextFragmenter(new NullFragmenter());
+        if (queryString != null & !queryString.isEmpty()) {
+            Query query = parser.parse(queryString);
+            Formatter formatter = new SimpleHTMLFormatter();
+            QueryScorer scorer = new QueryScorer(query);
+            Highlighter highlighter = new Highlighter(formatter, scorer);
+            highlighter.setTextFragmenter(new NullFragmenter());
 
-        ScoreDoc[] hits = isearcher.search(query, maxResultSize).scoreDocs;
-        PrimitiveDataSearchResult[] results = new PrimitiveDataSearchResult[hits.length];
-        for (int i = 0; i < hits.length; i++) {
-            Document hitDoc = isearcher.doc(hits[i].doc);
-            StoredField nidField = (StoredField) hitDoc.getField(Indexer.NID);
-            StoredField patternNidField = (StoredField) hitDoc.getField(Indexer.PATTERN_NID);
-            StoredField rcNidField = (StoredField) hitDoc.getField(Indexer.RC_NID);
-            StoredField fieldIndexField = (StoredField) hitDoc.getField(Indexer.FIELD_INDEX);
-            StoredField textField = (StoredField) hitDoc.getField(Indexer.TEXT_FIELD_NAME);
-            String highlightedString = highlighter.getBestFragment(Indexer.analyzer(), Indexer.TEXT_FIELD_NAME, textField.stringValue());
+            ScoreDoc[] hits = isearcher.search(query, maxResultSize).scoreDocs;
+            PrimitiveDataSearchResult[] results = new PrimitiveDataSearchResult[hits.length];
+            for (int i = 0; i < hits.length; i++) {
+                Document hitDoc = isearcher.doc(hits[i].doc);
+                StoredField nidField = (StoredField) hitDoc.getField(Indexer.NID);
+                StoredField patternNidField = (StoredField) hitDoc.getField(Indexer.PATTERN_NID);
+                StoredField rcNidField = (StoredField) hitDoc.getField(Indexer.RC_NID);
+                StoredField fieldIndexField = (StoredField) hitDoc.getField(Indexer.FIELD_INDEX);
+                StoredField textField = (StoredField) hitDoc.getField(Indexer.TEXT_FIELD_NAME);
+                String highlightedString = highlighter.getBestFragment(Indexer.analyzer(), Indexer.TEXT_FIELD_NAME, textField.stringValue());
 
-            results[i] = new PrimitiveDataSearchResult(nidField.numericValue().intValue(), rcNidField.numericValue().intValue(),
-                    patternNidField.numericValue().intValue(), fieldIndexField.numericValue().intValue(), hits[i].score, highlightedString);
+                results[i] = new PrimitiveDataSearchResult(nidField.numericValue().intValue(), rcNidField.numericValue().intValue(),
+                        patternNidField.numericValue().intValue(), fieldIndexField.numericValue().intValue(), hits[i].score, highlightedString);
+            }
+            return results;
         }
-        return results;
+        return new PrimitiveDataSearchResult[0];
     }
 
 }

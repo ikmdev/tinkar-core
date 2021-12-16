@@ -11,16 +11,14 @@ import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.time.DateTimeUtil;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 import org.hl7.tinkar.coordinate.PathService;
-import org.hl7.tinkar.terms.ConceptFacade;
 import org.hl7.tinkar.entity.Entity;
+import org.hl7.tinkar.terms.ConceptFacade;
 
 import java.time.Instant;
 
 @RecordBuilder
 public record StampPositionRecord(long time, int pathForPositionNid)
         implements StampPosition, Comparable<StampPosition>, ImmutableCoordinate, StampPositionRecordBuilder.With {
-
-    public static final int marshalVersion = 1;
 
     public static StampPositionRecord make(Instant time, ConceptFacade pathForPosition) {
         return new StampPositionRecord(DateTimeUtil.instantToEpochMs(time), pathForPosition.nid());
@@ -38,23 +36,21 @@ public record StampPositionRecord(long time, int pathForPositionNid)
         return new StampPositionRecord(time, pathForPosition.nid());
     }
 
+    @Decoder
+    public static StampPositionRecord decode(DecoderInput in) {
+        switch (in.encodingFormatVersion()) {
+            case MARSHAL_VERSION:
+                return new StampPositionRecord(in.readLong(), in.readInt());
+            default:
+                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
+        }
+    }
+
     @Override
     @Encoder
     public void encode(EncoderOutput out) {
-        out.writeInt(marshalVersion);
         out.writeLong(this.time);
         out.writeInt(this.pathForPositionNid);
-    }
-
-    @Decoder
-    public static StampPositionRecord decode(DecoderInput in) {
-        int objectMarshalVersion = in.readInt();
-        switch (objectMarshalVersion) {
-            case marshalVersion:
-                return new StampPositionRecord(in.readLong(), in.readInt());
-            default:
-                throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
-        }
     }
 
     /**
@@ -65,11 +61,6 @@ public record StampPositionRecord(long time, int pathForPositionNid)
     @Override
     public long time() {
         return this.time;
-    }
-
-    @Override
-    public StampPositionRecord toStampPositionImmutable() {
-        return this;
     }
 
     /**
@@ -88,7 +79,6 @@ public record StampPositionRecord(long time, int pathForPositionNid)
 
         return Integer.compare(this.pathForPositionNid, o.getPathForPositionNid());
     }
-
 
     @Override
     public int getPathForPositionNid() {
@@ -112,6 +102,11 @@ public record StampPositionRecord(long time, int pathForPositionNid)
     @Override
     public StampPositionRecord withPathForPositionNid(int pathForPositionNid) {
         return StampPositionRecordBuilder.With.super.withPathForPositionNid(pathForPositionNid);
+    }
+
+    @Override
+    public StampPositionRecord toStampPositionImmutable() {
+        return this;
     }
 
     /**

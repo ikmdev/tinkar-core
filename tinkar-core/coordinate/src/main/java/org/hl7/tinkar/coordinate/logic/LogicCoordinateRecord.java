@@ -24,9 +24,6 @@ public record LogicCoordinateRecord(int classifierNid,
                                     int rootNid)
         implements LogicCoordinate, ImmutableCoordinate, LogicCoordinateRecordBuilder.With {
 
-
-    private static final int marshalVersion = 2;
-
     public static LogicCoordinateRecord make(int classifierNid,
                                              int descriptionLogicProfileNid,
                                              int inferredAxiomsPatternNid,
@@ -55,21 +52,19 @@ public record LogicCoordinateRecord(int classifierNid,
 
     @Decoder
     public static LogicCoordinateRecord decode(DecoderInput in) {
-        int objectMarshalVersion = in.readInt();
-        switch (objectMarshalVersion) {
+        switch (in.encodingFormatVersion()) {
             case 1:
-            case marshalVersion:
+            case MARSHAL_VERSION:
                 return new LogicCoordinateRecord(in.readNid(), in.readNid(), in.readNid(), in.readNid(),
                         in.readNid(), in.readNid(), in.readNid(), in.readNid());
             default:
-                throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
+                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
         }
     }
 
     @Override
     @Encoder
     public void encode(EncoderOutput out) {
-        out.writeInt(marshalVersion);
         out.writeNid(this.classifierNid);
         out.writeNid(this.descriptionLogicProfileNid);
         out.writeNid(this.inferredAxiomsPatternNid);

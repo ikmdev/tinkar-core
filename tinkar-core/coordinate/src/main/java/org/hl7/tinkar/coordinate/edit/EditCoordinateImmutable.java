@@ -15,7 +15,6 @@ import java.util.Objects;
 
 
 public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordinate {
-    private static final int marshalVersion = 2;
 
     private static final ConcurrentReferenceHashMap<EditCoordinateImmutable, EditCoordinateImmutable> SINGLETONS =
             new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
@@ -82,13 +81,12 @@ public class EditCoordinateImmutable implements EditCoordinate, ImmutableCoordin
 
     @Decoder
     public static EditCoordinateImmutable decode(DecoderInput in) {
-        int objectMarshalVersion = in.encodingFormatVersion();
-        switch (objectMarshalVersion) {
-            case marshalVersion:
+        switch (in.encodingFormatVersion()) {
+            case MARSHAL_VERSION:
                 return SINGLETONS.computeIfAbsent(new EditCoordinateImmutable(in.readNid(), in.readNid(), in.readNid(), in.readNid(), in.readNid()),
                         editCoordinateImmutable -> editCoordinateImmutable);
             default:
-                throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
+                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
         }
     }
 

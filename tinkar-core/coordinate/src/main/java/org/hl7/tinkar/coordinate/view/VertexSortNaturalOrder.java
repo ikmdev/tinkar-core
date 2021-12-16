@@ -16,18 +16,39 @@ import org.hl7.tinkar.coordinate.navigation.calculator.NavigationCalculator;
 import java.util.UUID;
 
 public class VertexSortNaturalOrder implements VertexSort, Encodable {
-    private static final int marshalVersion = 1;
-
+    public static final VertexSortNaturalOrder SINGLETON = new VertexSortNaturalOrder();
     private static final UUID VERTEX_SORT_UUID = UUID.fromString("035a8679-0f77-4a2c-80c2-2495a8e2bf14");
 
-    public static final VertexSortNaturalOrder SINGLETON = new VertexSortNaturalOrder();
-
     private VertexSortNaturalOrder() {
+    }
+
+    @Decoder
+    public static VertexSortNaturalOrder decode(DecoderInput in) {
+        switch (in.encodingFormatVersion()) {
+            case MARSHAL_VERSION:
+                // Using a static method rather than a constructor eliminates the need for
+                // a readResolve method, but allows the implementation to decide how
+                // to handle special cases. This is the equivalent of readresolve, since it
+                // returns an existing object always.
+                return SINGLETON;
+            default:
+                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
+        }
     }
 
     @Override
     public UUID getVertexSortUUID() {
         return VERTEX_SORT_UUID;
+    }
+
+    @Override
+    public String getVertexSortName() {
+        return "Natural sort order";
+    }
+
+    @Override
+    public String getVertexLabel(int vertexConceptNid, LanguageCalculator languageCalculator) {
+        return languageCalculator.getDescriptionText(vertexConceptNid).orElse(PrimitiveData.text(vertexConceptNid));
     }
 
     @Override
@@ -57,22 +78,6 @@ public class VertexSortNaturalOrder implements VertexSort, Encodable {
         return edgesToSort.toImmutable();
     }
 
-
-    private static class VertexItem implements Comparable<VertexItem> {
-        private final int nid;
-        private final String description;
-
-        public VertexItem(int nid, String description) {
-            this.nid = nid;
-            this.description = description;
-        }
-
-        @Override
-        public int compareTo(VertexItem o) {
-            return NaturalOrder.compareStrings(this.description, o.description);
-        }
-    }
-
     @Override
     public int hashCode() {
         return this.getClass().getName().hashCode();
@@ -92,33 +97,23 @@ public class VertexSortNaturalOrder implements VertexSort, Encodable {
     }
 
     @Override
-    public String getVertexSortName() {
-        return "Natural sort order";
-    }
-
-    @Override
-    public String getVertexLabel(int vertexConceptNid, LanguageCalculator languageCalculator) {
-        return languageCalculator.getDescriptionText(vertexConceptNid).orElse(PrimitiveData.text(vertexConceptNid));
-    }
-
-    @Decoder
-    public static VertexSortNaturalOrder decode(DecoderInput in) {
-        int objectMarshalVersion = in.encodingFormatVersion();
-        switch (objectMarshalVersion) {
-            case marshalVersion:
-                // Using a static method rather than a constructor eliminates the need for
-                // a readResolve method, but allows the implementation to decide how
-                // to handle special cases. This is the equivalent of readresolve, since it
-                // returns an existing object always.
-                return SINGLETON;
-            default:
-                throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
-        }
-    }
-
-    @Override
     @Encoder
     public void encode(EncoderOutput out) {
         // No fieldValues...
+    }
+
+    private static class VertexItem implements Comparable<VertexItem> {
+        private final int nid;
+        private final String description;
+
+        public VertexItem(int nid, String description) {
+            this.nid = nid;
+            this.description = description;
+        }
+
+        @Override
+        public int compareTo(VertexItem o) {
+            return NaturalOrder.compareStrings(this.description, o.description);
+        }
     }
 }

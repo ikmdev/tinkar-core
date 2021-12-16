@@ -8,15 +8,14 @@ import org.hl7.tinkar.common.util.text.NaturalOrder;
  * Used when developer wants to have a key with a unique public identifier, but want to
  * have a potentially changeable string associated with that key for user comprehension
  * of intended objects associated with the key.
- *
+ * <p>
  * https://www.honeybadger.io/blog/uuids-and-ulids/
- *
+ * <p>
  * https://www.getuniqueid.com/cuid
- *
+ * <p>
  * T is the class this is a key for, to help code comprehension
  */
 public class PublicIdStringKey<T> implements Comparable<PublicIdStringKey>, Encodable {
-    public static final int marshalVersion = 1;
 
     final PublicId publicId;
     String string;
@@ -26,17 +25,18 @@ public class PublicIdStringKey<T> implements Comparable<PublicIdStringKey>, Enco
         this.string = string;
     }
 
+    @Decoder
+    public static PublicIdStringKey decode(DecoderInput in) {
+        if (in.encodingFormatVersion() == MARSHAL_VERSION) {
+            return new PublicIdStringKey(PublicIds.of(in.readUuidArray()), in.readString());
+        }
+        throw EncodingExceptionUnchecked.makeWrongVersionException(MARSHAL_VERSION, in);
+    }
+
     @Override
     public void encode(EncoderOutput out) {
         out.writeUuidArray(this.publicId.asUuidArray());
         out.writeString(this.string);
-    }
-    @Decoder
-    public static PublicIdStringKey decode(DecoderInput in) {
-        if (in.encodingFormatVersion() == marshalVersion) {
-            return new PublicIdStringKey(PublicIds.of(in.readUuidArray()), in.readString());
-        }
-        throw EncodingExceptionUnchecked.makeWrongVersionException(marshalVersion, in);
     }
 
     @Override
@@ -46,6 +46,14 @@ public class PublicIdStringKey<T> implements Comparable<PublicIdStringKey>, Enco
             return comparison;
         }
         return publicId.compareTo(o.getPublicId());
+    }
+
+    public String getString() {
+        return string;
+    }
+
+    public PublicId getPublicId() {
+        return publicId;
     }
 
     @Override
@@ -61,14 +69,6 @@ public class PublicIdStringKey<T> implements Comparable<PublicIdStringKey>, Enco
         return publicId.equals(that.getPublicId());
     }
 
-    public PublicId getPublicId() {
-        return publicId;
-    }
-
-    public String getString() {
-        return string;
-    }
-
     @Override
     public String toString() {
         return string;
@@ -77,4 +77,6 @@ public class PublicIdStringKey<T> implements Comparable<PublicIdStringKey>, Enco
     public void updateString(String string) {
         this.string = string;
     }
+
+
 }

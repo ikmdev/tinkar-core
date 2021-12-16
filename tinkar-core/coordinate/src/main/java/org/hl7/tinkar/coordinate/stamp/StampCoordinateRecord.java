@@ -74,20 +74,18 @@ import java.util.Set;
 public record StampCoordinateRecord(StateSet allowedStates, StampPositionRecord stampPosition, IntIdSet moduleNids,
                                     IntIdSet excludedModuleNids, IntIdList modulePriorityNidList)
         implements StampCoordinate, ImmutableCoordinate, StampCoordinateRecordBuilder.With {
-    private static final int marshalVersion = 1;
 
     @Decoder
     public static StampCoordinateRecord decode(DecoderInput in) {
-        int objectMarshalVersion = in.readInt();
-        switch (objectMarshalVersion) {
-            case marshalVersion:
+        switch (in.encodingFormatVersion()) {
+            case MARSHAL_VERSION:
                 return new StampCoordinateRecord(StateSet.decode(in),
                         StampPositionRecord.decode(in),
                         IntIds.set.of(in.readNidArray()),
                         IntIds.set.of(in.readNidArray()),
                         IntIds.list.of(in.readNidArray()));
             default:
-                throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
+                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
         }
     }
 
@@ -134,7 +132,6 @@ public record StampCoordinateRecord(StateSet allowedStates, StampPositionRecord 
     @Override
     @Encoder
     public void encode(EncoderOutput out) {
-        out.writeInt(marshalVersion);
         this.allowedStates.encode(out);
         this.stampPosition.encode(out);
         out.writeNidArray(moduleNids.toArray());

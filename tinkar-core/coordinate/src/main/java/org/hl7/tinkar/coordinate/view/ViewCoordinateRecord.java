@@ -25,7 +25,6 @@ public record ViewCoordinateRecord(StampCoordinateRecord stampCoordinate,
                                    LogicCoordinateRecord logicCoordinate,
                                    NavigationCoordinateRecord navigationCoordinate)
         implements ViewCoordinate, ImmutableCoordinate, ViewCoordinateRecordBuilder.With {
-    private static final int marshalVersion = 1;
 
     public static ViewCoordinateRecord make(StampCoordinateRecord viewStampFilter,
                                             LanguageCoordinate languageCoordinate,
@@ -52,9 +51,8 @@ public record ViewCoordinateRecord(StampCoordinateRecord stampCoordinate,
 
     @Decoder
     public static ViewCoordinateRecord decode(DecoderInput in) {
-        int objectMarshalVersion = in.readInt();
-        switch (objectMarshalVersion) {
-            case marshalVersion:
+        switch (in.encodingFormatVersion()) {
+            case MARSHAL_VERSION:
                 StampCoordinateRecord stampCoordinateRecord = StampCoordinateRecord.decode(in);
                 int languageCoordinateCount = in.readInt();
                 MutableList<LanguageCoordinateRecord> languageCoordinateRecords = Lists.mutable.ofInitialCapacity(languageCoordinateCount);
@@ -68,7 +66,7 @@ public record ViewCoordinateRecord(StampCoordinateRecord stampCoordinate,
                         logicCoordinateRecord,
                         navigationCoordinateRecord);
             default:
-                throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
+                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
         }
     }
 
@@ -85,7 +83,6 @@ public record ViewCoordinateRecord(StampCoordinateRecord stampCoordinate,
     @Override
     @Encoder
     public void encode(EncoderOutput out) {
-        out.writeInt(marshalVersion);
         stampCoordinate.encode(out);
         out.writeInt(languageCoordinateList.size());
         for (LanguageCoordinateRecord languageCoordinateRecord : languageCoordinateList) {

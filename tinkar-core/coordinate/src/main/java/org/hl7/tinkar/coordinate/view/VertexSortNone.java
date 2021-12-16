@@ -14,13 +14,24 @@ import java.util.UUID;
 
 public class VertexSortNone implements VertexSort, Encodable {
 
-    private static final int marshalVersion = 1;
-
+    public static final VertexSortNone SINGLETON = new VertexSortNone();
     private static final UUID VERTEX_SORT_UUID = UUID.fromString("9e21329f-da07-4a15-8664-7a08ebdad987");
 
-    public static final VertexSortNone SINGLETON = new VertexSortNone();
-
     private VertexSortNone() {
+    }
+
+    @Decoder
+    public static VertexSortNone decode(DecoderInput in) {
+        switch (in.encodingFormatVersion()) {
+            case MARSHAL_VERSION:
+                // Using a static method rather than a constructor eliminates the need for
+                // a readResolve method, but allows the implementation to decide how
+                // to handle special cases. This is the equivalent of readresolve, since it
+                // returns an existing object always.
+                return SINGLETON;
+            default:
+                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
+        }
     }
 
     @Override
@@ -41,21 +52,6 @@ public class VertexSortNone implements VertexSort, Encodable {
     @Override
     public int[] sortVertexes(int[] vertexConceptNids, NavigationCalculator navigationCalculator) {
         return vertexConceptNids;
-    }
-
-    @Decoder
-    public static VertexSortNone decode(DecoderInput in) {
-        int objectMarshalVersion = in.encodingFormatVersion();
-        switch (objectMarshalVersion) {
-            case marshalVersion:
-                // Using a static method rather than a constructor eliminates the need for
-                // a readResolve method, but allows the implementation to decide how
-                // to handle special cases. This is the equivalent of readresolve, since it
-                // returns an existing object always.
-                return SINGLETON;
-            default:
-                throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
-        }
     }
 
     @Override

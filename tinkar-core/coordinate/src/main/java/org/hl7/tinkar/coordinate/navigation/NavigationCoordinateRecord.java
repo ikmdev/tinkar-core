@@ -26,8 +26,6 @@ public record NavigationCoordinateRecord(IntIdSet navigationPatternNids,
                                          IntIdList verticesSortPatternNidList)
         implements NavigationCoordinate, ImmutableCoordinate, NavigationCoordinateRecordBuilder.With {
 
-    private static final int marshalVersion = 5;
-
     public static NavigationCoordinateRecord make(IntIdSet navigationPatternNids) {
         return new NavigationCoordinateRecord(navigationPatternNids, StateSet.ACTIVE, true, IntIds.list.empty());
     }
@@ -73,14 +71,13 @@ public record NavigationCoordinateRecord(IntIdSet navigationPatternNids,
 
     @Decoder
     public static NavigationCoordinateRecord decode(DecoderInput in) {
-        int objectMarshalVersion = in.readInt();
-        switch (objectMarshalVersion) {
-            case marshalVersion:
+        switch (in.encodingFormatVersion()) {
+            case MARSHAL_VERSION:
                 return new NavigationCoordinateRecord(IntIds.set.of(in.readNidArray()),
                         StateSet.decode(in),
                         in.readBoolean(), IntIds.list.of(in.readNidArray()));
             default:
-                throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
+                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
         }
     }
 
@@ -102,7 +99,6 @@ public record NavigationCoordinateRecord(IntIdSet navigationPatternNids,
     @Override
     @Encoder
     public void encode(EncoderOutput out) {
-        out.writeInt(marshalVersion);
         out.writeNidArray(this.navigationPatternNids.toArray());
         vertexStates.encode(out);
         out.writeBoolean(this.sortVertices);

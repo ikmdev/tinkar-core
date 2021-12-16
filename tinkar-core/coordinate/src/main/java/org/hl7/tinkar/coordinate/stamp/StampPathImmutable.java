@@ -14,7 +14,6 @@ import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 import org.hl7.tinkar.coordinate.PathService;
-import org.hl7.tinkar.coordinate.stamp.calculator.PathProvider;
 import org.hl7.tinkar.terms.ConceptFacade;
 import org.hl7.tinkar.terms.TinkarTerm;
 
@@ -25,20 +24,7 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
     private static final ConcurrentReferenceHashMap<Integer, StampPathImmutable> SINGLETONS =
             new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.STRONG,
                     ConcurrentReferenceHashMap.ReferenceType.WEAK);
-
-    @AutoService(CachingService.class)
-    public static class CachingProvider implements CachingService {
-
-        @Override
-        public void reset() {
-            SINGLETONS.clear();
-        }
-    }
-
-    private static final int marshalVersion = 1;
-
     private final int pathConceptNid;
-
     private final ImmutableSet<StampPositionRecord> pathOrigins;
 
     private StampPathImmutable(ConceptFacade pathConcept, ImmutableSet<StampPositionRecord> pathOrigins) {
@@ -46,11 +32,11 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
         this.pathOrigins = pathOrigins;
     }
 
-
     private StampPathImmutable(int pathConceptNid, ImmutableSet<StampPositionRecord> pathOrigins) {
         this.pathConceptNid = pathConceptNid;
         this.pathOrigins = pathOrigins;
     }
+
 
     private StampPathImmutable(DecoderInput in) {
         this.pathConceptNid = in.readNid();
@@ -74,10 +60,10 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
                 pathNid -> new StampPathImmutable(pathConceptNid, pathOrigins));
     }
 
-
     public static StampPathImmutable make(ConceptFacade pathConcept) {
         return make(pathConcept.nid());
     }
+
     public static StampPathImmutable make(int pathConceptNid) {
         if (pathConceptNid == TinkarTerm.UNINITIALIZED_COMPONENT.nid()) {
             return new StampPathImmutable(pathConceptNid, Sets.immutable.empty());
@@ -91,9 +77,8 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
 
     @Decoder
     public static StampPathImmutable make(DecoderInput in) {
-        int objectMarshalVersion = in.encodingFormatVersion();
-        switch (objectMarshalVersion) {
-            case marshalVersion:
+        switch (in.encodingFormatVersion()) {
+            case MARSHAL_VERSION:
                 StampPathImmutable stampPath = new StampPathImmutable(in);
                 if (stampPath.pathConceptNid == TinkarTerm.UNINITIALIZED_COMPONENT.nid()) {
                     return stampPath;
@@ -101,22 +86,8 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
                 return SINGLETONS.computeIfAbsent(stampPath.pathConceptNid(),
                         pathNid -> stampPath);
             default:
-                throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
+                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
         }
-    }
-
-    @Override
-    @Encoder
-    public void encode(EncoderOutput out) {
-        out.writeInt(this.pathConceptNid);
-        out.writeVarInt(this.pathOrigins.size());
-        for (StampPositionRecord stampPosition: this.pathOrigins) {
-            stampPosition.encode(out);
-        }
-    }
-
-    public StampPathImmutable toStampPathImmutable() {
-        return this;
     }
 
     @Override
@@ -129,6 +100,31 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
         return this.pathOrigins;
     }
 
+    public StampPathImmutable toStampPathImmutable() {
+        return this;
+    }
+
+    public static final StampCoordinateRecord getStampFilter(StampPath stampPath) {
+        return StampCoordinateRecord.make(StateSet.ACTIVE_AND_INACTIVE,
+                StampPositionRecord.make(Long.MAX_VALUE, stampPath.pathConceptNid()),
+                IntIds.set.empty());
+    }
+
+    @Override
+    @Encoder
+    public void encode(EncoderOutput out) {
+        out.writeInt(this.pathConceptNid);
+        out.writeVarInt(this.pathOrigins.size());
+        for (StampPositionRecord stampPosition : this.pathOrigins) {
+            stampPosition.encode(out);
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(pathConceptNid(), getPathOrigins());
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -138,24 +134,21 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(pathConceptNid(), getPathOrigins());
-    }
-
-
-    public static final StampCoordinateRecord getStampFilter(StampPath stampPath) {
-        return StampCoordinateRecord.make(StateSet.ACTIVE_AND_INACTIVE,
-                StampPositionRecord.make(Long.MAX_VALUE, stampPath.pathConceptNid()),
-                IntIds.set.empty());
-    }
-
-    @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         sb.append("StampPathImmutable:{");
         sb.append(PrimitiveData.text(this.pathConceptNid));
         sb.append(" Origins: ").append(this.pathOrigins).append("}");
         return sb.toString();
+    }
+
+    @AutoService(CachingService.class)
+    public static class CachingProvider implements CachingService {
+
+        @Override
+        public void reset() {
+            SINGLETONS.clear();
+        }
     }
 
 }

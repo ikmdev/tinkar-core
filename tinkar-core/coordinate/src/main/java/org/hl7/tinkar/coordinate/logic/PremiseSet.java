@@ -20,7 +20,6 @@ public class PremiseSet implements ImmutableCoordinate {
     public static final PremiseSet STATED_ONLY = make(PremiseType.STATED);
     public static final PremiseSet STATED_AND_INFERRED = make(PremiseType.INFERRED, PremiseType.STATED);
 
-    private static final int marshalVersion = 1;
 
     private int[] flags;
     private long bits = 0;
@@ -47,9 +46,8 @@ public class PremiseSet implements ImmutableCoordinate {
 
     @Decoder
     public static Object decode(DecoderInput in) {
-        int objectMarshalVersion = in.encodingFormatVersion();
-        switch (objectMarshalVersion) {
-            case marshalVersion:
+        switch (in.encodingFormatVersion()) {
+            case MARSHAL_VERSION:
                 int size = in.readVarInt();
                 List<PremiseType> values = new ArrayList<>(size);
                 for (int i = 0; i < size; i++) {
@@ -57,22 +55,8 @@ public class PremiseSet implements ImmutableCoordinate {
                 }
                 return SINGLETONS.computeIfAbsent(new PremiseSet(values), statusSet -> statusSet);
             default:
-                throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
+                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
         }
-    }
-
-    @Override
-    @Encoder
-    public void encode(EncoderOutput out) {
-        EnumSet<PremiseType> premiseSet = toEnumSet();
-        out.writeVarInt(premiseSet.size());
-        for (PremiseType premise: premiseSet) {
-            out.writeString(premise.name());
-        }
-    }
-
-    public int[] getFlags() {
-        return flags;
     }
 
     public static PremiseSet of(PremiseType... premises) {
@@ -83,25 +67,27 @@ public class PremiseSet implements ImmutableCoordinate {
         return SINGLETONS.computeIfAbsent(new PremiseSet(premises), premiseSet -> premiseSet);
     }
 
-    public static PremiseSet make(Collection<? extends PremiseType> premises) {
-        return SINGLETONS.computeIfAbsent(new PremiseSet(premises), premiseSet -> premiseSet);
-    }
-
     public static PremiseSet of(Collection<? extends PremiseType> premises) {
         return make(premises);
     }
 
-    public boolean contains(PremiseType status) {
-        return (bits & (1L << status.ordinal())) != 0;
+    public static PremiseSet make(Collection<? extends PremiseType> premises) {
+        return SINGLETONS.computeIfAbsent(new PremiseSet(premises), premiseSet -> premiseSet);
     }
 
-    public PremiseType[] toArray() {
-        EnumSet<PremiseType> statusSet = toEnumSet();
-        return statusSet.toArray(new PremiseType[statusSet.size()]);
+    @Override
+    @Encoder
+    public void encode(EncoderOutput out) {
+        EnumSet<PremiseType> premiseSet = toEnumSet();
+        out.writeVarInt(premiseSet.size());
+        for (PremiseType premise : premiseSet) {
+            out.writeString(premise.name());
+        }
     }
+
     public EnumSet<PremiseType> toEnumSet() {
         EnumSet<PremiseType> result = EnumSet.noneOf(PremiseType.class);
-        for (PremiseType premise: PremiseType.values()) {
+        for (PremiseType premise : PremiseType.values()) {
             if (contains(premise)) {
                 result.add(premise);
             }
@@ -109,8 +95,21 @@ public class PremiseSet implements ImmutableCoordinate {
         return result;
     }
 
+    public boolean contains(PremiseType status) {
+        return (bits & (1L << status.ordinal())) != 0;
+    }
+
+    public int[] getFlags() {
+        return flags;
+    }
+
+    public PremiseType[] toArray() {
+        EnumSet<PremiseType> statusSet = toEnumSet();
+        return statusSet.toArray(new PremiseType[statusSet.size()]);
+    }
+
     public boolean containsAll(Collection<PremiseType> c) {
-        for (PremiseType premise: c) {
+        for (PremiseType premise : c) {
             if (!contains(premise)) {
                 return false;
             }
@@ -119,12 +118,17 @@ public class PremiseSet implements ImmutableCoordinate {
     }
 
     public boolean containsAny(Collection<PremiseType> c) {
-        for (PremiseType premise: c) {
+        for (PremiseType premise : c) {
             if (contains(premise)) {
                 return true;
             }
         }
         return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(bits);
     }
 
     @Override
@@ -136,16 +140,12 @@ public class PremiseSet implements ImmutableCoordinate {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(bits);
-    }
-
-    @Override
     public String toString() {
         return "PremiseSet{" +
                 toEnumSet() +
                 '}';
     }
+
     public String toUserString() {
         StringBuilder sb = new StringBuilder();
         AtomicInteger count = new AtomicInteger();

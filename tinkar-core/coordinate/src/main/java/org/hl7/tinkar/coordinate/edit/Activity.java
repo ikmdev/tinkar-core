@@ -10,16 +10,20 @@ public enum Activity implements Encodable {
     PROMOTING("Promoting"),
     MODULARIZING("Modularizing");
 
-    private static final int marshalVersion = 1;
-
     private String userString;
 
     Activity(String userString) {
         this.userString = userString;
     }
 
-    public String toUserString() {
-        return this.userString;
+    @Decoder
+    public static Activity decode(DecoderInput in) {
+        switch (in.encodingFormatVersion()) {
+            case MARSHAL_VERSION:
+                return Activity.valueOf(in.readString());
+            default:
+                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
+        }
     }
 
 
@@ -27,22 +31,13 @@ public enum Activity implements Encodable {
     // a readResolve method, but allows the implementation to decide how
     // to handle special cases.
 
-    @Decoder
-    public static Activity decode(DecoderInput in) {
-        int objectMarshalVersion = in.readInt();
-        switch (objectMarshalVersion) {
-            case marshalVersion:
-                return Activity.valueOf(in.readString());
-            default:
-                throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
-        }
+    public String toUserString() {
+        return this.userString;
     }
 
     @Override
     @Encoder
     public void encode(EncoderOutput out) {
-        out.writeInt(marshalVersion);
         out.writeString(name());
     }
-
 }

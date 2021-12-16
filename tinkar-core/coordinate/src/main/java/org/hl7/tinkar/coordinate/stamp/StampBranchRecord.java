@@ -16,16 +16,13 @@ import java.util.Objects;
 public record StampBranchRecord(int branchConceptNid, long branchOriginTime)
         implements StampBranch, ImmutableCoordinate, StampBranchRecordBuilder.With {
 
-    private static final int marshalVersion = 1;
-
     @Decoder
     public static StampBranchRecord decode(DecoderInput in) {
-        int objectMarshalVersion = in.encodingFormatVersion();
-        switch (objectMarshalVersion) {
-            case marshalVersion:
+        switch (in.encodingFormatVersion()) {
+            case MARSHAL_VERSION:
                 return make(in.readNid(), in.readLong());
             default:
-                throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
+                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
         }
     }
 
