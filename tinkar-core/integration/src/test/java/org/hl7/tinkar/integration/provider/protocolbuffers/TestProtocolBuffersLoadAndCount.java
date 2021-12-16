@@ -17,6 +17,7 @@ import java.io.IOException;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@Disabled
 class TestProtocolBuffersLoadAndCount {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestProtocolBuffersLoadAndCount.class);
