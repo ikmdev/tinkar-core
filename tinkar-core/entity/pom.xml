@@ -49,7 +49,7 @@
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>protobuf</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.2.2</version>
         </dependency>
     </dependencies>
 </project>
