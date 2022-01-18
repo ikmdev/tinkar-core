@@ -54,6 +54,12 @@ class TestCoordinates {
         LOG.info("Loaded. " + loadTink.report());
     }
 
+    @AfterAll
+    static void teardownSuite() {
+        LOG.info("Teardown Suite: " + LOG.getName());
+        PrimitiveData.stop();
+    }
+
     @Test
     @Order(2)
     void countPathOrigins() {
