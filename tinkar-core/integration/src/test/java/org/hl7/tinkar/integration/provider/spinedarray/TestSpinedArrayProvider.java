@@ -47,9 +47,11 @@ class TestSpinedArrayProvider {
     }
 
     @Test
+    @Order(2)
     public void count() {
+        LOG.info("Starting count. ");
         if (!PrimitiveData.running()) {
-            LOG.info("Reloading SAPtoreProvider");
+            LOG.info("Reloading Spined Array Provider");
             Stopwatch reloadStopwatch = new Stopwatch();
             PrimitiveData.start();
             LOG.info("Reloading in: " + reloadStopwatch.durationString() + "\n\n");
@@ -82,14 +84,16 @@ class TestSpinedArrayProvider {
     }
 
     @Test
+    @Order(3)
     public void openAndClose() {
+        LOG.info("Starting open and close. ");
         if (PrimitiveData.running()) {
             Stopwatch closingStopwatch = new Stopwatch();
             PrimitiveData.stop();
             closingStopwatch.end();
             LOG.info("SAP Closed in: " + closingStopwatch.durationString() + "\n\n");
         }
-        LOG.info("Reloading SAPtoreProvider");
+        LOG.info("Reloading Spined Array Provider");
         Stopwatch reloadStopwatch = new Stopwatch();
         PrimitiveData.start();
         LOG.info("SAP Reloading in: " + reloadStopwatch.durationString() + "\n\n");

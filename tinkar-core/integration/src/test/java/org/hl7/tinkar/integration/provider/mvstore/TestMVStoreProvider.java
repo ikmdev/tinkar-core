@@ -69,6 +69,7 @@ class TestMVStoreProvider {
     }
 
     @Test
+    @Order(2)
     public void count() {
         if (!PrimitiveData.running()) {
             LOG.info("Reloading MVStoreProvider");
@@ -97,6 +98,7 @@ class TestMVStoreProvider {
     }
 
     @Test
+    @Order(3)
     public void openAndClose() {
         if (PrimitiveData.running()) {
             Stopwatch closingStopwatch = new Stopwatch();
