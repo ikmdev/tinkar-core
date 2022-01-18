@@ -32,7 +32,7 @@
         <roaringbitmap.version>0.9.8</roaringbitmap.version>
         <slf4j.version>2.0.0-alpha1</slf4j.version>
         <testng.version>7.4.0</testng.version>
-        <tinkar-jpms-deps.version>1.0.4</tinkar-jpms-deps.version>
+        <tinkar-jpms-deps.version>1.0.5</tinkar-jpms-deps.version>
     </properties>
     <dependencyManagement>
         <dependencies>

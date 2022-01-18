@@ -5,14 +5,14 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.hl7.tinkar</groupId>
     <artifactId>tinkar-jpms-deps</artifactId>
-    <version>1.0.4</version>
+    <version>1.0.5</version>
     <packaging>pom</packaging>
     <name>TINKAR JPMS Deps: (MMP)</name>
     <properties>
         <auto-service.version>1.0-rc7</auto-service.version>
         <activej.version>4.3</activej.version>
         <build-helper-maven-plugin.version>3.2.0</build-helper-maven-plugin.version>
-        <caffeine.version>3.0.2</caffeine.version>
+        <caffeine.version>3.0.5</caffeine.version>
         <eclipse-collections-api.version>11.0.0.M1</eclipse-collections-api.version>
         <h2-mvstore.version>1.4.200</h2-mvstore.version>
         <lucene.version>8.9.0</lucene.version>

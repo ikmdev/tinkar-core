@@ -1,6 +1,7 @@
 package org.hl7.tinkar.integration.provider.spinedarray;
 
 import org.hl7.tinkar.common.service.*;
+import org.hl7.tinkar.common.util.io.FileUtil;
 import org.hl7.tinkar.common.util.time.Stopwatch;
 import org.hl7.tinkar.entity.load.LoadEntitiesFromDtoFile;
 import org.hl7.tinkar.entity.util.EntityCounter;
@@ -27,6 +28,7 @@ class TestSpinedArrayProvider {
         LOG.info("Setup Suite: " + LOG.getName());
         LOG.info(ServiceProperties.jvmUuid());
         ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, TestConstants.SAP_ROOT);
+        FileUtil.recursiveDelete(TestConstants.SAP_ROOT);
         PrimitiveData.selectControllerByName(TestConstants.SA_STORE_OPEN_NAME);
         PrimitiveData.start();
     }

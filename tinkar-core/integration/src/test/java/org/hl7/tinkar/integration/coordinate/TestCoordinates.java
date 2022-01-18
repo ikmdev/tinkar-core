@@ -7,6 +7,7 @@ import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.service.ServiceKeys;
 import org.hl7.tinkar.common.service.ServiceProperties;
+import org.hl7.tinkar.common.util.io.FileUtil;
 import org.hl7.tinkar.coordinate.Calculators;
 import org.hl7.tinkar.coordinate.Coordinates;
 import org.hl7.tinkar.coordinate.PathService;
@@ -18,38 +19,49 @@ import org.hl7.tinkar.coordinate.stamp.calculator.Latest;
 import org.hl7.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import org.hl7.tinkar.coordinate.view.calculator.ViewCalculator;
 import org.hl7.tinkar.entity.*;
+import org.hl7.tinkar.entity.load.LoadEntitiesFromDtoFile;
 import org.hl7.tinkar.integration.TestConstants;
 import org.hl7.tinkar.terms.TinkarTerm;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Optional;
 
 import static org.hl7.tinkar.terms.TinkarTerm.PATH_ORIGINS_PATTERN;
 
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class TestCoordinates {
     private static final Logger LOG = LoggerFactory.getLogger(TestCoordinates.class);
 
     @BeforeAll
-    static void setupSuite() {
+    static void setupSuite() throws IOException {
         LOG.info("Clear caches");
         CachingService.clearAll();
         LOG.info("Setup Suite: " + LOG.getName());
         LOG.info(ServiceProperties.jvmUuid());
         ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, TestConstants.SAP_ROOT);
+        FileUtil.recursiveDelete(TestConstants.SAP_ROOT);
         PrimitiveData.selectControllerByName(TestConstants.SA_STORE_OPEN_NAME);
         PrimitiveData.start();
+        File file = TestConstants.TINK_TEST_FILE;
+        LoadEntitiesFromDtoFile loadTink = new LoadEntitiesFromDtoFile(file);
+        int count = loadTink.compute();
+        LOG.info("Loaded. " + loadTink.report());
     }
 
     @Test
+    @Order(2)
     void countPathOrigins() {
         Assertions.assertEquals(PrimitiveData.get().semanticNidsOfPattern(PATH_ORIGINS_PATTERN.nid()).length, 3);
     }
 
     @Test
+    @Order(3)
     void pathOrigins() {
         for (int pathNid : PrimitiveData.get().semanticNidsOfPattern(PATH_ORIGINS_PATTERN.nid())) {
             SemanticEntity originSemantic = EntityService.get().getEntityFast(pathNid);
@@ -60,7 +72,10 @@ class TestCoordinates {
     }
 
     @Test
+    @Order(4)
     void computeLatest() {
+        LOG.info("computeLatest()");
+
         StampCoordinateRecord developmentLatestFilter = Coordinates.Stamp.DevelopmentLatest();
         LOG.info("development latest filter '" + developmentLatestFilter);
         ConceptEntity englishLanguage = Entity.getFast(TinkarTerm.ENGLISH_LANGUAGE);
@@ -83,7 +98,9 @@ class TestCoordinates {
     }
 
     @Test
+    @Order(5)
     void names() {
+        LOG.info("names()");
         LanguageCoordinateRecord usFqn = Coordinates.Language.UsEnglishFullyQualifiedName();
         LanguageCalculatorWithCache usFqnCalc = LanguageCalculatorWithCache.getCalculator(Coordinates.Stamp.DevelopmentLatest(), Lists.immutable.of(usFqn));
         LOG.info("fqn: " + usFqnCalc.getDescriptionText(TinkarTerm.NECESSARY_SET) + "\n");
@@ -92,7 +109,9 @@ class TestCoordinates {
     }
 
     @Test
+    @Order(6)
     void navigate() {
+        LOG.info("navigate()");
         ViewCalculator viewCalculator = Calculators.View.Default();
         IntIdList children = viewCalculator.childrenOf(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
         StringBuilder sb = new StringBuilder("Focus: [");
@@ -118,7 +137,9 @@ class TestCoordinates {
     }
 
     @Test
+    @Order(7)
     void sortedNavigate() {
+        LOG.info("sortedNavigate()");
         ViewCalculator viewCalculator = Calculators.View.Default();
         IntIdList children = viewCalculator.sortedChildrenOf(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
         StringBuilder sb = new StringBuilder("Focus: [");
