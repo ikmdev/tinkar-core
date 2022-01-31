@@ -46,4 +46,7 @@ public interface IntIdCollection extends IdCollection {
         return set;
     }
 
+    IntIdCollection with(int... valuesToAdd);
+
+
 }

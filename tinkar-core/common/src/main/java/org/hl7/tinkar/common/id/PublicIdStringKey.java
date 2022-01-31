@@ -25,6 +25,10 @@ public class PublicIdStringKey<T> implements Comparable<PublicIdStringKey>, Enco
         this.string = string;
     }
 
+    public static PublicIdStringKey make(String string) {
+        return new PublicIdStringKey(PublicIds.newRandom(), string);
+    }
+
     @Decoder
     public static PublicIdStringKey decode(DecoderInput in) {
         if (in.encodingFormatVersion() == MARSHAL_VERSION) {

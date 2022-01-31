@@ -307,6 +307,17 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
             if (latestDescription.isPresent()) {
                 return extractText(latestDescription);
             }
+            Latest<? extends EntityVersion> latestEntity = stampCalculator.latest(nid);
+            if (latestEntity.isPresent()) {
+                EntityVersion ev = latestEntity.get();
+                if (ev instanceof SemanticVersionRecord semanticVersionRecord) {
+                    Optional<String> text = getTextFromSemanticVersion(semanticVersionRecord);
+                    if (text.isPresent()) {
+                        return text.get();
+                    }
+                }
+                return null;
+            }
             return null;
         }));
     }

@@ -12,10 +12,12 @@ public interface IntIdListFactory {
 
     IntIdList of(int one, int two);
 
-    IntIdList of(int... elements);
+    IntIdList of(IntIdList list, int... elements);
 
     default <T> IntIdList of(Collection<T> components, ToIntFunction<T> function) {
         return of(components.stream().mapToInt(component -> function.applyAsInt(component)).toArray());
     }
+
+    IntIdList of(int... elements);
 
 }

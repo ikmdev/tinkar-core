@@ -8,9 +8,6 @@ public class IntId2 {
     protected final int element2;
 
     public IntId2(int element, int element2) {
-        if (element == element2) {
-            throw new IllegalStateException("Duplicate values in set: " + element);
-        }
         this.element = element;
         this.element2 = element2;
     }
@@ -29,7 +26,7 @@ public class IntId2 {
     }
 
     public int[] toArray() {
-        return new int[] { element, element2 };
+        return new int[]{element, element2};
     }
 
     public boolean contains(int value) {

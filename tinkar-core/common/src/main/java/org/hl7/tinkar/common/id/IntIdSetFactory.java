@@ -12,11 +12,13 @@ public interface IntIdSetFactory {
 
     IntIdSet of(int one, int two);
 
-    IntIdSet of(int... elements);
-
     IntIdSet ofAlreadySorted(int... elements);
+
+    IntIdSet of(IntIdSet ids, int... elements);
 
     default <T> IntIdSet of(Collection<T> components, ToIntFunction<T> function) {
         return of(components.stream().mapToInt(component -> function.applyAsInt(component)).toArray());
     }
+
+    IntIdSet of(int... elements);
 }

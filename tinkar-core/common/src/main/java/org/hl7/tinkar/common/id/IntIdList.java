@@ -24,5 +24,9 @@ public interface IntIdList extends IdList, IntIdCollection {
 
     boolean isEmpty();
 
+    default IntIdList with(int... valuesToAdd) {
+        return IntIds.list.of(this, valuesToAdd);
+    }
+
 
 }

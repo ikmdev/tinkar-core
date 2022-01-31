@@ -1,5 +1,6 @@
 package org.hl7.tinkar.terms;
 
+import org.hl7.tinkar.common.alert.AlertStreams;
 import org.hl7.tinkar.common.util.text.EscapeUtil;
 import org.hl7.tinkar.common.util.uuid.UuidUtil;
 import org.slf4j.Logger;
@@ -18,13 +19,13 @@ import java.io.StringReader;
 import java.util.Optional;
 
 public class ProxyFactory {
+    private static final Logger LOG = LoggerFactory.getLogger(ProxyFactory.class);
     public static final String CONCEPT_ELEMENT = "concept";
     public static final String SEMANTIC_ELEMENT = "semantic";
     public static final String PATTERN_ELEMENT = "pattern";
     public static final String ENTITY_ELEMENT = "entity";
     public static final String UUIDS_ATTRIBUTE = "uuids";
     public static final String DESCRIPTION_ATTRIBUTE = "desc";
-    private static final Logger LOG = LoggerFactory.getLogger(ProxyFactory.class);
     private static ThreadLocal<DocumentBuilder> documentBuilder = ThreadLocal.withInitial(() -> {
         try {
             return DocumentBuilderFactory.newDefaultInstance().newDocumentBuilder();
@@ -47,13 +48,13 @@ public class ProxyFactory {
                     case CONCEPT_ELEMENT -> EntityProxy.Concept.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
                     default -> {
                         IllegalStateException ex = new IllegalStateException("Unexpected value: " + element.getTagName());
-                        ex.printStackTrace();
+                        AlertStreams.dispatchToRoot(ex);
                         yield null;
                     }
                 };
                 return (Optional<T>) Optional.ofNullable(proxy);
             } catch (SAXException | IOException e) {
-                LOG.error("Input string: " + xmlString, e);
+                AlertStreams.dispatchToRoot(new Exception("Input string: " + xmlString, e));
             }
         }
         return Optional.empty();

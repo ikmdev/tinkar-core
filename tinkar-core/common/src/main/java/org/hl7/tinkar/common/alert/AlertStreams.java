@@ -11,6 +11,10 @@ public class AlertStreams {
             new PublicIdStringKey(PublicIds.of("d2733c61-fef3-4051-bc96-137819a18d0a"), "root alert stream");
     private static ConcurrentHashMap<PublicIdStringKey<AlertStream>, AlertStream> alertStreamMap = new ConcurrentHashMap<>();
 
+    public static void dispatchToRoot(Throwable e) {
+        getRoot().dispatch(AlertObject.makeError(e));
+    }
+
     public static AlertStream getRoot() {
         return get(ROOT_ALERT_STREAM_KEY);
     }
@@ -24,6 +28,4 @@ public class AlertStreams {
             return rootAlertStream;
         });
     }
-
-
 }

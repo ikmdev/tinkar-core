@@ -11,10 +11,14 @@ public interface IntIdSet extends IdSet, IntIdCollection {
 
     default <T extends Object> ImmutableSet<T> map(IntFunction<T> function) {
         MutableSet<T> set = Sets.mutable.ofInitialCapacity(size());
-        for (int nid: toArray()) {
+        for (int nid : toArray()) {
             set.add(function.apply(nid));
         }
         return set.toImmutable();
+    }
+
+    default IntIdSet with(int... valuesToAdd) {
+        return IntIds.set.of(this, valuesToAdd);
     }
 
 }
