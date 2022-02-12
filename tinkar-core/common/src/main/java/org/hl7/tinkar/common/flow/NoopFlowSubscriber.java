@@ -15,7 +15,7 @@ public class NoopFlowSubscriber implements Flow.Subscriber<Object> {
     @Override
     public void onSubscribe(Flow.Subscription subscription) {
         this.subscription = subscription;
-        this.subscription.request(1);
+        this.subscription.request(Long.MAX_VALUE);
     }
 
     @Override

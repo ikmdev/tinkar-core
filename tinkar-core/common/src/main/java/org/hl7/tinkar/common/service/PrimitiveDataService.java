@@ -10,6 +10,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.ListIterable;
 import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.list.primitive.ByteList;
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.set.MutableSet;
 import org.eclipse.collections.api.set.primitive.MutableLongSet;
@@ -270,6 +271,8 @@ public interface PrimitiveDataService {
     void forEach(ObjIntConsumer<byte[]> action);
 
     void forEachParallel(ObjIntConsumer<byte[]> action);
+
+    void forEachParallel(ImmutableIntList nids, ObjIntConsumer<byte[]> action);
 
     byte[] getBytes(int nid);
 

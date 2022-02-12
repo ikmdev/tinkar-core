@@ -2,6 +2,7 @@ package org.hl7.tinkar.provider.spinedarray;
 
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.set.primitive.IntSet;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
@@ -11,6 +12,7 @@ import org.hl7.tinkar.collection.KeyType;
 import org.hl7.tinkar.collection.SpinedByteArrayMap;
 import org.hl7.tinkar.collection.SpinedIntIntMap;
 import org.hl7.tinkar.collection.SpinedIntLongArrayMap;
+import org.hl7.tinkar.common.alert.AlertStreams;
 import org.hl7.tinkar.common.service.*;
 import org.hl7.tinkar.common.sets.ConcurrentHashSet;
 import org.hl7.tinkar.common.util.ints2long.IntsInLong;
@@ -99,7 +101,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
             String nextNidString = Files.readString(this.nextNidKeyFile.toPath());
             nextNid.set(Integer.valueOf(nextNidString));
         }
-        Executor.threadPool().execute(() -> {
+        TinkExecutor.threadPool().execute(() -> {
             Stopwatch uuidNidMapFromEntitiesStopwatch = new Stopwatch();
             LOG.info("Starting UUID strategy 2");
             UuidNidCollector uuidNidCollector = new UuidNidCollector(uuidToNidMap,
@@ -111,7 +113,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
                 for (int stampNid : stampNids) {
                     StampRecord stamp = Entity.getStamp(stampNid);
                     if (stamp.time() == Long.MAX_VALUE && Transaction.forStamp(stamp).isEmpty()) {
-                        // Uncommmitted stamp found outside a transaction on restart. Set to canceled.
+                        // Uncommitted stamp found outside a transaction on restart. Set to canceled.
                         LOG.warn("Canceling uncommitted stamp: " + stamp.publicId().asUuidList());
                         StampVersionRecord lastVersion = stamp.lastVersion();
                         StampVersionRecord canceledVersion = lastVersion.with().time(Long.MIN_VALUE).stateNid(State.CANCELED.nid()).build();
@@ -251,6 +253,15 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
     }
 
     @Override
+    public void forEachParallel(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
+        try {
+            this.entityToBytesMap.forEachParallel(nids, action);
+        } catch (ExecutionException | InterruptedException e) {
+            AlertStreams.dispatchToRoot(e);
+        }
+    }
+
+    @Override
     public byte[] getBytes(int nid) {
         return this.entityToBytesMap.get(nid);
     }
@@ -315,7 +326,10 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
 
     @Override
     public void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure) {
+        Stopwatch sw = new Stopwatch();
         IntSet elementNids = getElementNidsForPatternNid(patternNid);
+        LOG.info("getElementNidsForPatternNid " + PrimitiveData.text(patternNid) +
+                " time: " + sw.durationString());
         if (elementNids.notEmpty()) {
             elementNids.forEach(procedure);
         } else {

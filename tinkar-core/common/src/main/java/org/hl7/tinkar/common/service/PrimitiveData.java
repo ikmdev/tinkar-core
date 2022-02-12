@@ -44,7 +44,7 @@ public class PrimitiveData {
 
     public static void stop() {
         SimpleIndeterminateTracker progressTask = new SimpleIndeterminateTracker("Stop primitive data provider");
-        Executor.threadPool().submit(progressTask);
+        TinkExecutor.threadPool().submit(progressTask);
         try {
             save();
             controllerSingleton.stop();

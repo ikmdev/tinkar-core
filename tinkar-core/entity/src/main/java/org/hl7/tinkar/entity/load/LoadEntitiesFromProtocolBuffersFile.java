@@ -1,7 +1,7 @@
 package org.hl7.tinkar.entity.load;
 
 import org.hl7.tinkar.common.id.PublicId;
-import org.hl7.tinkar.common.service.Executor;
+import org.hl7.tinkar.common.service.TinkExecutor;
 import org.hl7.tinkar.common.service.TrackingCallable;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.entity.EntityService;
@@ -56,25 +56,25 @@ public class LoadEntitiesFromProtocolBuffersFile extends TrackingCallable<Intege
             int pbMessageLength;
             int bytesReadCount;
 
-            while(pbStream.available() > 0){
+            while (pbStream.available() > 0) {
                 bytesReadCount = 0;
                 pbMessageLength = pbStream.readInt();
 
-                if(pbMessageLength == -1){
+                if (pbMessageLength == -1) {
                     break; //EOF
                 }
                 taskSemaphore.acquireUninterruptibly();
 
                 byteBuffer = ByteBuffer.allocate(pbMessageLength);
 
-                while(bytesReadCount < pbMessageLength){
+                while (bytesReadCount < pbMessageLength) {
                     int sourceIndex = bytesReadCount;
                     byte[] bytesRead;
 
-                    if(bytesReadCount == 0){
+                    if (bytesReadCount == 0) {
                         bytesRead = new byte[pbMessageLength];
                         bytesReadCount = pbStream.read(bytesRead, 0, pbMessageLength);
-                    }else {
+                    } else {
                         int lengthLeftToRead = pbMessageLength - bytesReadCount;
                         bytesRead = new byte[lengthLeftToRead];
                         bytesReadCount += pbStream.read(bytesRead, 0, lengthLeftToRead);
@@ -85,7 +85,7 @@ public class LoadEntitiesFromProtocolBuffersFile extends TrackingCallable<Intege
                         EntityTransformFactory.getTransform(TransformDataType.PROTOCOL_BUFFERS, TransformDataType.ENTITY);
                 final Entity entity = entityTransform.transform(PBTinkarMsg.parseFrom(byteBuffer));
 
-                Executor.threadPool().execute(() -> {
+                TinkExecutor.threadPool().execute(() -> {
                     try {
                         EntityService.get().putEntity(entity);
                     } catch (Throwable e) {

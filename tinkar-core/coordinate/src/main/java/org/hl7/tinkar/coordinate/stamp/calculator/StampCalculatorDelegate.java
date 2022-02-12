@@ -50,6 +50,11 @@ public interface StampCalculatorDelegate extends StampCalculator {
     }
 
     @Override
+    default void forEachSemanticVersionOfPatternParallel(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
+        stampCalculator().forEachSemanticVersionOfPatternParallel(patternNid, procedure);
+    }
+
+    @Override
     default void forEachSemanticVersionForComponent(int componentNid, BiConsumer<SemanticEntityVersion, EntityVersion> procedure) {
         stampCalculator().forEachSemanticVersionForComponent(componentNid, procedure);
     }

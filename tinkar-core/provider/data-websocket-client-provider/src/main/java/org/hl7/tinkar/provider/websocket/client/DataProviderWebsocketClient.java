@@ -14,6 +14,7 @@ import io.activej.launcher.Launcher;
 import io.activej.service.ServiceGraphModule;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.hl7.tinkar.common.service.PrimitiveDataSearchResult;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
 import org.hl7.tinkar.common.util.uuid.UuidUtil;
@@ -136,6 +137,11 @@ public class DataProviderWebsocketClient
 
     @Override
     public void forEachParallel(ObjIntConsumer<byte[]> action) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void forEachParallel(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
         throw new UnsupportedOperationException();
     }
 

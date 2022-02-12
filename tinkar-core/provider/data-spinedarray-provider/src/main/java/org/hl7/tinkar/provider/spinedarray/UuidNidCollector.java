@@ -47,10 +47,10 @@ public class UuidNidCollector implements ObjIntConsumer<byte[]> {
     }
 
     @Override
-    public void accept(byte[] bytes, int value) {
+    public void accept(byte[] bytes, int nid) {
         // bytes starts with number of arrays (int = 4 bytes), then size of first array (int = 4 bytes), then entity format version then type token, -1 since index starts at 0...
         FieldDataType componentType = FieldDataType.fromToken(bytes[9]);
-        if (value == Integer.MIN_VALUE) {
+        if (nid == Integer.MIN_VALUE) {
             LOG.error("value of Integer.MIN_VALUE should not happen. ");
         }
         boolean typeToProcess = false;
@@ -59,25 +59,25 @@ public class UuidNidCollector implements ObjIntConsumer<byte[]> {
                 patternCount.incrementAndGet();
                 totalCount.incrementAndGet();
                 typeToProcess = true;
-                this.patternNids.add(value);
+                this.patternNids.add(nid);
                 break;
             case CONCEPT_CHRONOLOGY:
                 conceptCount.incrementAndGet();
                 totalCount.incrementAndGet();
-                this.conceptNids.add(value);
+                this.conceptNids.add(nid);
                 typeToProcess = true;
                 break;
             case SEMANTIC_CHRONOLOGY:
                 semanticCount.incrementAndGet();
                 totalCount.incrementAndGet();
                 typeToProcess = true;
-                semanticNids.add(value);
+                semanticNids.add(nid);
                 break;
             case STAMP:
                 stampCount.incrementAndGet();
                 totalCount.incrementAndGet();
                 typeToProcess = true;
-                stampNids.add(value);
+                stampNids.add(nid);
                 break;
             default:
                 other.incrementAndGet();

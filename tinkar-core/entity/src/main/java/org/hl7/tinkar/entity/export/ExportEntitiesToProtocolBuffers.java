@@ -31,14 +31,14 @@ public class ExportEntitiesToProtocolBuffers extends TrackingCallable<Void> {
         final FileOutputStream fileOutputStream = new FileOutputStream(exportPath.toFile());
 
         threadSemaphore.acquireUninterruptibly();
-        Executor.threadPool().execute(() -> {
+        TinkExecutor.threadPool().execute(() -> {
             PrimitiveData.get().forEachConceptNid(conceptNid -> {
             });
             threadSemaphore.release();
         });
 
         threadSemaphore.acquireUninterruptibly();
-        Executor.threadPool().execute(() -> {
+        TinkExecutor.threadPool().execute(() -> {
             PrimitiveData.get().forEachSemanticNid(semanticNid -> {
 
             });
@@ -46,7 +46,7 @@ public class ExportEntitiesToProtocolBuffers extends TrackingCallable<Void> {
         });
 
         threadSemaphore.acquireUninterruptibly();
-        Executor.threadPool().execute(() -> {
+        TinkExecutor.threadPool().execute(() -> {
             PrimitiveData.get().forEachPatternNid(patternNid -> {
 
             });

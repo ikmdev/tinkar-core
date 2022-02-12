@@ -2,6 +2,7 @@ package org.hl7.tinkar.provider.mvstore;
 
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.tuple.Pair;
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.h2.mvstore.MVMap;
@@ -166,6 +167,11 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     @Override
     public void forEachParallel(ObjIntConsumer<byte[]> action) {
         nidToComponentMap.entrySet().stream().parallel().forEach(entry -> action.accept(entry.getValue(), entry.getKey()));
+    }
+
+    @Override
+    public void forEachParallel(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
+        throw new UnsupportedOperationException();
     }
 
     @Override

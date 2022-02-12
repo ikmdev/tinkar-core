@@ -10,12 +10,11 @@ import org.hl7.tinkar.common.service.*;
 @SuppressWarnings("module")
         // 7 in HL7 is not a version reference
 module org.hl7.tinkar.common {
-    requires transitive io.smallrye.mutiny;
     requires transitive java.prefs;
     requires transitive org.hl7.tinkar.activej;
     requires transitive org.hl7.tinkar.eclipse.collections;
     requires transitive org.hl7.tinkar.roaring;
-    requires transitive org.reactivestreams;
+    requires transitive org.hl7.tinkar.mutiny;
     requires transitive org.slf4j;
     requires transitive static org.hl7.tinkar.autoservice;
 
@@ -37,7 +36,7 @@ module org.hl7.tinkar.common {
     exports org.hl7.tinkar.common.id.impl;
 
     provides CachingService with
-            Executor.CacheProvider,
+            TinkExecutor.CacheProvider,
             ServiceProperties.CacheProvider,
             PrimitiveData.CacheProvider,
             PrimitiveDataService.CacheProvider;

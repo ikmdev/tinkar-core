@@ -16,12 +16,16 @@
  */
 package org.hl7.tinkar.collection;
 
-import org.hl7.tinkar.common.service.Executor;
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.hl7.tinkar.common.alert.AlertStreams;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
+import org.hl7.tinkar.common.service.TinkExecutor;
+import org.hl7.tinkar.common.util.time.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.Spliterator;
 import java.util.concurrent.ExecutionException;
@@ -39,9 +43,9 @@ import java.util.stream.StreamSupport;
  */
 public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(SpinedIntObjectMap.class);
     public static final int DEFAULT_SPINE_SIZE = 10240;
     public static final int DEFAULT_MAX_SPINE_COUNT = 10240;
-    private static final Logger LOG = LoggerFactory.getLogger(SpinedIntObjectMap.class);
     protected final Semaphore fileSemaphore = new Semaphore(1);
     protected final int maxSpineCount;
     protected final int spineSize;
@@ -50,9 +54,20 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
     private final AtomicReferenceArray<AtomicReferenceArray<E>> spines;
     private final AtomicInteger spineCount = new AtomicInteger();
     private final boolean[] changedSpineIndexes;
+    private final boolean ephemoral;
     private Function<E, String> elementStringConverter;
 
+    public SpinedIntObjectMap() {
+        this.ephemoral = true;
+        this.maxSpineCount = DEFAULT_MAX_SPINE_COUNT;
+        this.spineSize = DEFAULT_SPINE_SIZE;
+        this.spines = new AtomicReferenceArray(this.maxSpineCount);
+        this.changedSpineIndexes = new boolean[this.maxSpineCount * this.spineSize];
+        this.spineCount.set(0);
+    }
+
     public SpinedIntObjectMap(int spineCount) {
+        this.ephemoral = false;
         this.maxSpineCount = DEFAULT_MAX_SPINE_COUNT;
         this.spineSize = DEFAULT_SPINE_SIZE;
         this.spines = new AtomicReferenceArray(this.maxSpineCount);
@@ -98,34 +113,57 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
                     newSpineSemaphore.release();
                 }
             }
+            if (spine == null) {
+                AlertStreams.dispatchToRoot(new IllegalStateException("(1) getSpine is returning null for index:" +
+                        spineIndex + "..."));
+            }
             return spine;
         }
         try {
             newSpineSemaphore.acquireUninterruptibly();
             if (spineIndex < spineCount.get()) {
-                return this.spines.get(spineIndex);
+                AtomicReferenceArray<E> spine = this.spines.updateAndGet(spineIndex, eAtomicReferenceArray -> {
+                    if (eAtomicReferenceArray == null) {
+                        eAtomicReferenceArray = readSpine(spineIndex);
+                        spineCount.compareAndSet(startSpineCount, startSpineCount + 1);
+                    }
+                    return eAtomicReferenceArray;
+                });
+                if (spine == null) {
+                    AlertStreams.dispatchToRoot(new IllegalStateException("(2) getSpine is returning null for index:" +
+                            spineIndex + "..."));
+                }
+                return spine;
             }
-            return this.spines.updateAndGet(spineIndex, eAtomicReferenceArray -> {
+            AtomicReferenceArray<E> spine = this.spines.updateAndGet(spineIndex, eAtomicReferenceArray -> {
                 if (eAtomicReferenceArray == null) {
                     eAtomicReferenceArray = newSpine(spineIndex);
                     spineCount.compareAndSet(startSpineCount, startSpineCount + 1);
                 }
                 return eAtomicReferenceArray;
             });
+            if (spine == null) {
+                AlertStreams.dispatchToRoot(new IllegalStateException("(3) getSpine is returning null for index:" +
+                        spineIndex + "..."));
+            }
+            return spine;
         } finally {
             newSpineSemaphore.release();
         }
     }
 
     protected AtomicReferenceArray<E> readSpine(int spineIndex) {
+        if (ephemoral) {
+            return newSpine(spineIndex);
+        }
         throw new IllegalStateException("Subclass must implement readSpine");
     }
 
-    private AtomicReferenceArray<E> newSpine(Integer spineKey) {
+    private AtomicReferenceArray<E> newSpine(int spineKey) {
         return makeNewSpine(spineKey);
     }
 
-    public AtomicReferenceArray<E> makeNewSpine(Integer spineKey) {
+    public AtomicReferenceArray<E> makeNewSpine(int spineKey) {
         AtomicReferenceArray<E> spine = new AtomicReferenceArray<>(spineSize);
         this.spineCount.set(Math.max(this.spineCount.get(), spineKey + 1));
         return spine;
@@ -178,6 +216,16 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
         //LOG.info(spineSize - processed + " null values on spine: " + spineIndex);
         //}
         return processed;
+    }
+
+    public final boolean compareAndSet(int index, E expectedValue, E newValue) {
+        if (index < 0) {
+            index = Integer.MAX_VALUE + index;
+        }
+        int spineIndex = index / spineSize;
+        int indexInSpine = index % spineSize;
+        this.changedSpineIndexes[spineIndex] = true;
+        return getSpine(spineIndex).compareAndSet(indexInSpine, expectedValue, newValue);
     }
 
     /**
@@ -305,11 +353,85 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
         ArrayList<Future<?>> futures = new ArrayList<>(currentSpineCount);
         for (int spineIndex = 0; spineIndex < currentSpineCount; spineIndex++) {
             final int indexToProcess = spineIndex;
-            Future<?> future = Executor.threadPool().submit(() -> forEachOnSpine(consumer, indexToProcess));
+            Future<?> future = TinkExecutor.threadPool().submit(() -> forEachOnSpine(consumer, indexToProcess));
             futures.add(future);
         }
         for (Future<?> future : futures) {
             Object obj = future.get();
+        }
+    }
+
+    public final void forEachParallel(ImmutableIntList nids, ObjIntConsumer<E> consumer) throws ExecutionException, InterruptedException {
+        Stopwatch sw = new Stopwatch();
+        int[][] nidLists = splitIntoArrayOfArrays(nids);
+        sw.stop();
+        LOG.info("Split and sort nid list time: " + sw.durationString());
+        sw = new Stopwatch();
+        doParallelWork(consumer, nidLists);
+        LOG.info("doParallelWork2 time: " + sw.durationString());
+    }
+
+    private int[][] splitIntoArrayOfArrays(ImmutableIntList nids) {
+        int[] nidsArray = nids
+                .toSet().toArray();
+        Arrays.parallelSort(nidsArray);
+        final int setSize = 10240;
+        final int setCount = (nids.size() / setSize) + 1;
+        int[][] nidLists = new int[setCount][];
+        int nidsSize = nids.size();
+        int nidIndex = 0;
+        for (int setIndex = 0; setIndex < setCount; setIndex++) {
+            nidLists[setIndex] = new int[setSize];
+            Arrays.fill(nidLists[setIndex], Integer.MIN_VALUE);
+            for (int indexInSet = 0; indexInSet < setSize; indexInSet++) {
+                if (nidIndex < nidsSize) {
+                    nidLists[setIndex][indexInSet] = nidsArray[nidIndex];
+                    nidIndex++;
+                }
+            }
+        }
+        return nidLists;
+    }
+
+    private void doParallelWork(ObjIntConsumer<E> consumer, int[][] nidLists) {
+        final int permitCount = TinkExecutor.defaultParallelBatchSize();
+        Semaphore permits = new Semaphore(permitCount);
+        for (int[] nidList : nidLists) {
+            try {
+                permits.acquire();
+                TinkExecutor.threadPool().execute(() -> {
+                    try {
+
+                        int nidListIndex = 0;
+                        int nid = nidList[nidListIndex];
+                        while (nid != Integer.MIN_VALUE) {
+                            int spineIndex = (nid + Integer.MAX_VALUE) / spineSize;
+                            AtomicReferenceArray<E> spine = getSpine(spineIndex);
+                            while (nid != Integer.MIN_VALUE &&
+                                    (nid + Integer.MAX_VALUE) / spineSize == spineIndex) {
+                                int indexInSpine = (nid + Integer.MAX_VALUE) % spineSize;
+                                consumer.accept(spine.get(indexInSpine), nid);
+                                nidListIndex++;
+                                if (nidListIndex < nidList.length) {
+                                    nid = nidList[nidListIndex];
+                                } else {
+                                    nid = Integer.MIN_VALUE;
+                                }
+                            }
+                        }
+                    } finally {
+                        permits.release();
+                    }
+                });
+            } catch (Throwable ex) {
+                AlertStreams.dispatchToRoot(ex);
+            }
+        }
+
+        try {
+            permits.acquire(permitCount);
+        } catch (InterruptedException e) {
+            AlertStreams.dispatchToRoot(e);
         }
     }
 

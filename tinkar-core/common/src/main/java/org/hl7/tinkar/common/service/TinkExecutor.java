@@ -11,16 +11,22 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 
-public class Executor {
-    private static final Logger LOG = LoggerFactory.getLogger(Executor.class);
-    private static Executor executor = new Executor();
+public class TinkExecutor {
+    private static final Logger LOG = LoggerFactory.getLogger(TinkExecutor.class);
+    private static TinkExecutor executor = new TinkExecutor();
     private static ExecutorService executorSingleton;
     private static ExecutorController executorController;
 
     ServiceLoader<ExecutorController> loader;
 
-    private Executor() {
+    private TinkExecutor() {
         this.loader = ServiceLoader.load(ExecutorController.class);
+    }
+
+    private static final int defaultParallelBatchSize = Runtime.getRuntime().availableProcessors() * 4;
+
+    public static int defaultParallelBatchSize() {
+        return defaultParallelBatchSize;
     }
 
     public static void stop() {
@@ -38,7 +44,7 @@ public class Executor {
 
     public static void start() throws ServiceConfigurationError {
         if (executor == null) {
-            executor = new Executor();
+            executor = new TinkExecutor();
         }
         if (executorController == null) {
             List<ServiceLoader.Provider<ExecutorController>> controllers = executor.loader.stream().toList();

@@ -103,7 +103,7 @@ public class StampCalculatorWithCache implements StampCalculator {
     private final Cache<Integer, Latest<PatternEntityVersion>> patternVersionCache = Caffeine.newBuilder().maximumSize(512).build();
     private final Cache<Long, OptionalInt> indexForMeaningCache = Caffeine.newBuilder().maximumSize(1024).build();
     private final Cache<Long, OptionalInt> indexForPurposeCache = Caffeine.newBuilder().maximumSize(1024).build();
-    private final Cache<Integer, Latest<EntityVersion>> latestCache = Caffeine.newBuilder().maximumSize(10240).build();
+    private final Cache<Integer, Latest<EntityVersion>> latestCache = Caffeine.newBuilder().maximumSize(10_240).build();
     private final CacheInvalidationSubscriber cacheInvalidationSubscriber = new CacheInvalidationSubscriber();
     private final CacheInvalidationIfPatternSubscriber cacheInvalidationIfPatternSubscriber = new CacheInvalidationIfPatternSubscriber();
     /**
@@ -320,6 +320,23 @@ public class StampCalculatorWithCache implements StampCalculator {
     }
 
     @Override
+    public void forEachSemanticVersionOfPatternParallel(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
+        Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
+        latestPatternVersion.ifPresent(patternEntityVersion -> {
+            int[] semanticNidsOfPattern = PrimitiveData.get().semanticNidsOfPattern(patternNid);
+            PrimitiveData.get().forEachParallel(IntLists.immutable.of(semanticNidsOfPattern), (byte[] bytes, int nid) -> {
+
+                Latest<? extends EntityVersion> latestSemanticVersion =
+                        latestCache.get(nid, integer -> {
+                            Entity<EntityVersion> semanticRecord = EntityFactory.make(bytes);
+                            return latest(semanticRecord);
+                        });
+                latestSemanticVersion.ifPresent(semanticVersionRecord -> procedure.accept((SemanticEntityVersion) semanticVersionRecord, patternEntityVersion));
+            });
+        });
+    }
+
+    @Override
     public void forEachSemanticVersionForComponent(int componentNid,
                                                    BiConsumer<SemanticEntityVersion, EntityVersion> procedure) {
         Latest<EntityVersion> latestEntityVersion = this.latest(componentNid);
@@ -400,7 +417,8 @@ public class StampCalculatorWithCache implements StampCalculator {
     }
 
     @Override
-    public <T> Latest<Field<T>> getFieldForSemantic(Latest<SemanticEntityVersion> latestSemanticVersion, int criterionNid, FieldCriterion fieldCriterion) {
+    public <T> Latest<Field<T>> getFieldForSemantic(Latest<SemanticEntityVersion> latestSemanticVersion,
+                                                    int criterionNid, FieldCriterion fieldCriterion) {
         if (latestSemanticVersion.isPresent()) {
             SemanticVersionRecord semanticVersion = (SemanticVersionRecord) latestSemanticVersion.get();
             Latest<PatternEntityVersion> latestPattern = latest(semanticVersion.patternNid());
@@ -436,7 +454,8 @@ public class StampCalculatorWithCache implements StampCalculator {
     }
 
     @Override
-    public <T> Latest<Field<T>> getFieldForSemantic(int componentNid, int criterionNid, FieldCriterion fieldCriterion) {
+    public <T> Latest<Field<T>> getFieldForSemantic(int componentNid, int criterionNid, FieldCriterion
+            fieldCriterion) {
 
         Latest<? extends EntityVersion> latestVersion = latest(componentNid);
         if (latestVersion.isPresent() && latestVersion.get() instanceof SemanticEntityVersion) {
@@ -621,7 +640,8 @@ public class StampCalculatorWithCache implements StampCalculator {
         return RelativePosition.CONTRADICTION;
     }
 
-    public <V extends EntityVersion> List<DiTree<VersionVertex<V>>> getVersionGraphList(ImmutableList<V> versionList) {
+    public <V extends
+            EntityVersion> List<DiTree<VersionVertex<V>>> getVersionGraphList(ImmutableList<V> versionList) {
         SortedSet<VersionWithDistance<V>> versionWithDistances = new TreeSet<>();
         versionList.forEach(v -> versionWithDistances.add(new VersionWithDistance<>(v)));
 

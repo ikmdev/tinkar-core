@@ -3,13 +3,14 @@ package org.hl7.tinkar.provider.ephemeral;
 import org.eclipse.collections.api.block.procedure.Procedure2;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.hl7.tinkar.collection.KeyType;
 import org.hl7.tinkar.collection.SpinedIntIntMapAtomic;
-import org.hl7.tinkar.common.service.Executor;
 import org.hl7.tinkar.common.service.NidGenerator;
 import org.hl7.tinkar.common.service.PrimitiveDataSearchResult;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
+import org.hl7.tinkar.common.service.TinkExecutor;
 import org.hl7.tinkar.common.sets.ConcurrentHashSet;
 import org.hl7.tinkar.common.util.ints2long.IntsInLong;
 import org.hl7.tinkar.entity.ConceptEntity;
@@ -112,12 +113,17 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
 
     @Override
     public void forEachParallel(ObjIntConsumer<byte[]> action) {
-        int threadCount = Executor.threadPool().getMaximumPoolSize();
+        int threadCount = TinkExecutor.threadPool().getMaximumPoolSize();
         List<Procedure2<Integer, byte[]>> blocks = new ArrayList<>(threadCount);
         for (int i = 0; i < threadCount; i++) {
             blocks.add((Procedure2<Integer, byte[]>) (integer, bytes) -> action.accept(bytes, integer));
         }
-        nidComponentMap.parallelForEachKeyValue(blocks, Executor.threadPool());
+        nidComponentMap.parallelForEachKeyValue(blocks, TinkExecutor.threadPool());
+    }
+
+    @Override
+    public void forEachParallel(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
+        throw new UnsupportedOperationException();
     }
 
     @Override

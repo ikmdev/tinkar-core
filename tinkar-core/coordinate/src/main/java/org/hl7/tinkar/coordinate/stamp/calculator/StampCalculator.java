@@ -97,6 +97,8 @@ public interface StampCalculator {
 
     void forEachSemanticVersionOfPattern(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure);
 
+    void forEachSemanticVersionOfPatternParallel(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure);
+
     default void forEachSemanticVersionForComponent(EntityFacade component,
                                                     BiConsumer<SemanticEntityVersion, EntityVersion> procedure) {
         forEachSemanticVersionForComponent(component.nid(), procedure);

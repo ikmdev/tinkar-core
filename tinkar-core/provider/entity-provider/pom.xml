@@ -44,9 +44,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.smallrye.reactive</groupId>
+            <groupId>org.hl7.tinkar</groupId>
             <artifactId>mutiny</artifactId>
-            <version>${io.smallrye.reactive.version}</version>
+            <version>${tinkar-jpms-deps.version}</version>
         </dependency>
     </dependencies>
 </project>

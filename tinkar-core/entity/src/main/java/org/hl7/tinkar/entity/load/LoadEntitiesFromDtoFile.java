@@ -1,6 +1,6 @@
 package org.hl7.tinkar.entity.load;
 
-import org.hl7.tinkar.common.service.Executor;
+import org.hl7.tinkar.common.service.TinkExecutor;
 import org.hl7.tinkar.common.service.TrackingCallable;
 import org.hl7.tinkar.common.util.io.CountingInputStream;
 import org.hl7.tinkar.component.Chronology;
@@ -9,7 +9,6 @@ import org.hl7.tinkar.dto.ConceptChronologyDTO;
 import org.hl7.tinkar.dto.PatternChronologyDTO;
 import org.hl7.tinkar.dto.SemanticChronologyDTO;
 import org.hl7.tinkar.dto.binary.TinkarInput;
-import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.entity.EntityService;
 
 import java.io.*;
@@ -59,17 +58,17 @@ public class LoadEntitiesFromDtoFile extends TrackingCallable<Integer> {
                 runningTasks.acquireUninterruptibly();
                 switch (fieldDataType) {
                     case CONCEPT_CHRONOLOGY: {
-                        Executor.threadPool().execute(new PutChronology(ConceptChronologyDTO.make(tinkIn)));
+                        TinkExecutor.threadPool().execute(new PutChronology(ConceptChronologyDTO.make(tinkIn)));
                         importCount.incrementAndGet();
                     }
                     break;
                     case SEMANTIC_CHRONOLOGY: {
-                        Executor.threadPool().execute(new PutChronology(SemanticChronologyDTO.make(tinkIn)));
+                        TinkExecutor.threadPool().execute(new PutChronology(SemanticChronologyDTO.make(tinkIn)));
                         importCount.incrementAndGet();
                     }
                     break;
                     case PATTERN_CHRONOLOGY: {
-                        Executor.threadPool().execute(new PutChronology(PatternChronologyDTO.make(tinkIn)));
+                        TinkExecutor.threadPool().execute(new PutChronology(PatternChronologyDTO.make(tinkIn)));
                         importCount.incrementAndGet();
                     }
                     break;

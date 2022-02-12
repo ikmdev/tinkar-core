@@ -2,6 +2,8 @@ package org.hl7.tinkar.common.alert;
 
 import io.smallrye.mutiny.operators.multi.processors.BroadcastProcessor;
 import org.reactivestreams.FlowAdapters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Flow;
 
@@ -21,6 +23,7 @@ import java.util.concurrent.Flow;
  * Each node has a set of resolvers that can be automatically or manually applied.
  */
 public class AlertStream implements Flow.Processor<AlertObject, AlertObject> {
+    private static final Logger LOG = LoggerFactory.getLogger(AlertStream.class);
     final BroadcastProcessor<AlertObject> processor;
 
     public AlertStream() {
@@ -29,6 +32,7 @@ public class AlertStream implements Flow.Processor<AlertObject, AlertObject> {
 
     @Override
     public void subscribe(Flow.Subscriber<? super AlertObject> subscriber) {
+        LOG.info(subscriber + " subscribing to " + this);
         this.processor.subscribe().withSubscriber(FlowAdapters.toSubscriber(subscriber));
     }
 
