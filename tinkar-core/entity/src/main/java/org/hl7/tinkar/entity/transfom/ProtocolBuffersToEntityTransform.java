@@ -1,5 +1,5 @@
 package org.hl7.tinkar.entity.transfom;
-
+/*
 import com.google.protobuf.ByteString;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Maps;
@@ -39,6 +39,12 @@ import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+ */
+
+public class ProtocolBuffersToEntityTransform {
+
+}
+/*
 public class ProtocolBuffersToEntityTransform implements EntityTransform<PBTinkarMsg, Entity> {
     protected static final Logger LOG = Logger.getLogger(ProtocolBuffersToEntityTransform.class.getName());
 
@@ -465,4 +471,6 @@ public class ProtocolBuffersToEntityTransform implements EntityTransform<PBTinka
                 .properties(properties.toImmutable())
                 .build();
     }
-}
+    }
+ */
+

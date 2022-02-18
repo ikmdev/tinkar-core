@@ -5,14 +5,15 @@ import org.hl7.tinkar.common.util.time.Stopwatch;
 
 import java.time.Duration;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.DoubleAdder;
 
 public abstract class TrackingCallable<V> implements Callable<V> {
     final boolean allowUserCancel;
     final boolean retainWhenComplete;
     Stopwatch stopwatch = new Stopwatch();
     TrackingListener listener;
-    double workDone;
-    double maxWork;
+    DoubleAdder workDone = new DoubleAdder();
+    DoubleAdder maxWork = new DoubleAdder();
     double updateThreshold = 0.005;
     String title;
     String message;
@@ -79,7 +80,7 @@ public abstract class TrackingCallable<V> implements Callable<V> {
             this.listener.updateValue(this.value);
             this.listener.updateMessage(this.message);
             this.listener.updateTitle(this.title);
-            this.listener.updateProgress(this.workDone, this.maxWork);
+            this.listener.updateProgress(this.workDone.sum(), this.maxWork.sum());
         } else {
             throw new IllegalStateException("Listener already set");
         }
@@ -98,16 +99,16 @@ public abstract class TrackingCallable<V> implements Callable<V> {
     }
 
     public Duration estimateTimeRemaining() {
-        if (maxWork == 0) {
+        if (maxWork.sum() == 0) {
             return Duration.ofDays(365);
         }
-        double percentDone = workDone / maxWork;
+        double percentDone = workDone.sum() / maxWork.sum();
         if (percentDone < 0.00001) {
             return Duration.ofDays(365);
         }
         //(TimeTaken / linesProcessed) * linesLeft = timeLeft
         double secondsDuration = duration().getSeconds();
-        double secondsRemaining = secondsDuration / workDone * (maxWork - workDone);
+        double secondsRemaining = secondsDuration / workDone.sum() * (maxWork.sum() - workDone.sum());
         return Duration.ofSeconds((long) secondsRemaining);
     }
 
@@ -116,7 +117,10 @@ public abstract class TrackingCallable<V> implements Callable<V> {
     }
 
     public void completedUnitOfWork() {
-        workDone++;
+        workDone.add(1);
+        if (listener != null && workDone.sum() % 128 == 0) {
+            listener.updateProgress(workDone.sum(), maxWork.sum());
+        }
     }
 
     public String durationString() {
@@ -131,13 +135,13 @@ public abstract class TrackingCallable<V> implements Callable<V> {
         return stopwatch.averageDurationForElementString(count);
     }
 
-    protected void updateValue(V result) {
+    public void updateValue(V result) {
         if (listener != null) {
             listener.updateValue(result);
         }
     }
 
-    protected void updateMessage(String message) {
+    public void updateMessage(String message) {
         if (message != null && this.message == null) {
             if (listener != null) {
                 listener.updateMessage(message);
@@ -148,30 +152,34 @@ public abstract class TrackingCallable<V> implements Callable<V> {
         this.message = message;
     }
 
-    protected void updateTitle(String title) {
+    public void updateTitle(String title) {
         this.title = title;
         if (listener != null) {
             listener.updateTitle(title);
         }
     }
 
-    protected void addToTotalWork(long amountToAdd) {
-        updateProgress(workDone, this.maxWork + amountToAdd);
+    public void addToTotalWork(long amountToAdd) {
+        this.maxWork.add(amountToAdd);
+        updateProgress(workDone.sum(), this.maxWork.sum());
     }
 
-    protected void updateProgress(double workDone, double maxWork) {
+    public void updateProgress(double workDone, double maxWork) {
         boolean update = false;
 
-        if (this.maxWork != maxWork) {
-            this.maxWork = maxWork;
-            this.workDone = workDone;
+        if (this.maxWork.sum() != maxWork) {
+            this.maxWork.reset();
+            this.maxWork.add(maxWork);
+            this.workDone.reset();
+            this.workDone.add(workDone);
             update = true;
         } else {
-            double difference = workDone - this.workDone;
+            double difference = workDone - this.workDone.sum();
             double percentDifference = difference / maxWork;
             if (percentDifference > updateThreshold) {
                 update = true;
-                this.workDone = workDone;
+                this.workDone.reset();
+                this.workDone.add(workDone);
             }
         }
 
@@ -180,7 +188,7 @@ public abstract class TrackingCallable<V> implements Callable<V> {
         }
     }
 
-    protected void updateProgress(long workDone, long maxWork) {
+    public void updateProgress(long workDone, long maxWork) {
         updateProgress((double) workDone, (double) maxWork);
     }
 }

@@ -47,7 +47,9 @@ public class PrimitiveData {
         TinkExecutor.threadPool().submit(progressTask);
         try {
             save();
-            controllerSingleton.stop();
+            if (controllerSingleton != null) {
+                controllerSingleton.stop();
+            }
         } catch (Throwable ex) {
             LOG.error(ex.getLocalizedMessage(), ex);
         } finally {

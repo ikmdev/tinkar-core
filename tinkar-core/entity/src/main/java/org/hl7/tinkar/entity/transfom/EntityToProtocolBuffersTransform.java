@@ -1,5 +1,6 @@
 package org.hl7.tinkar.entity.transfom;
 
+/*
 import com.google.protobuf.ByteString;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.util.uuid.UuidUtil;
@@ -10,7 +11,16 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+ */
+
+import org.hl7.tinkar.entity.Entity;
+
 public class EntityToProtocolBuffersTransform implements EntityTransform<Entity, byte[]> {
+    @Override
+    public byte[] transform(Entity data) {
+        throw new UnsupportedOperationException();
+    }
+    /*
 
     Logger LOG = Logger.getLogger(EntityToProtocolBuffersTransform.class.getName());
 
@@ -87,4 +97,6 @@ public class EntityToProtocolBuffersTransform implements EntityTransform<Entity,
 
         return null;
     }
+
+     */
 }

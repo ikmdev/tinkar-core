@@ -1,8 +1,8 @@
 package org.hl7.tinkar.entity.load;
 
 import com.google.auto.service.AutoService;
-import org.hl7.tinkar.common.service.TinkExecutor;
 import org.hl7.tinkar.common.service.LoadDataFromFileController;
+import org.hl7.tinkar.common.service.TinkExecutor;
 
 import java.io.File;
 import java.util.concurrent.Future;
@@ -14,6 +14,7 @@ public class LoadEntitiesFromFileController implements LoadDataFromFileControlle
         if (!file.getName().toLowerCase().contains("pb"))
             return TinkExecutor.ioThreadPool().submit(new LoadEntitiesFromDtoFile(file));
         else
-            return TinkExecutor.ioThreadPool().submit(new LoadEntitiesFromProtocolBuffersFile(file));
+            throw new UnsupportedOperationException();
+        //return TinkExecutor.ioThreadPool().submit(new LoadEntitiesFromProtocolBuffersFile(file));
     }
 }

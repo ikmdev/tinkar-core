@@ -1,5 +1,8 @@
 package org.hl7.tinkar.entity.load;
 
+import org.hl7.tinkar.common.service.TrackingCallable;
+
+/*
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.service.TinkExecutor;
 import org.hl7.tinkar.common.service.TrackingCallable;
@@ -22,8 +25,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
+*/
 public class LoadEntitiesFromProtocolBuffersFile extends TrackingCallable<Integer> {
+    @Override
+    protected Integer compute() throws Exception {
+        throw new UnsupportedOperationException();
+    }
+    /*
     protected static final Logger LOG = Logger.getLogger(LoadEntitiesFromProtocolBuffersFile.class.getName());
     private static final int MAX_TASK_COUNT = Runtime.getRuntime().availableProcessors() * 2;
     final File importFile;
@@ -120,4 +128,6 @@ public class LoadEntitiesFromProtocolBuffersFile extends TrackingCallable<Intege
 
         return importCount.get();
     }
+
+     */
 }
