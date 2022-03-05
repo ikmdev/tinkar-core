@@ -1,34 +1,14 @@
 package org.hl7.tinkar.entity.load;
 
 import org.hl7.tinkar.common.service.TrackingCallable;
-
-/*
-import org.hl7.tinkar.common.id.PublicId;
-import org.hl7.tinkar.common.service.TinkExecutor;
-import org.hl7.tinkar.common.service.TrackingCallable;
-import org.hl7.tinkar.entity.Entity;
-import org.hl7.tinkar.entity.EntityService;
-import org.hl7.tinkar.entity.transfom.EntityTransform;
-import org.hl7.tinkar.entity.transfom.EntityTransformFactory;
-import org.hl7.tinkar.entity.transfom.TransformDataType;
 import org.hl7.tinkar.protobuf.PBTinkarMsg;
 
-import java.io.DataInputStream;
-import java.io.EOFException;
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-*/
 public class LoadEntitiesFromProtocolBuffersFile extends TrackingCallable<Integer> {
     @Override
     protected Integer compute() throws Exception {
+
+        PBTinkarMsg.newBuilder();
+
         throw new UnsupportedOperationException();
     }
     /*

@@ -13,7 +13,7 @@ import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.service.ServiceProperties;
 import org.hl7.tinkar.common.util.uuid.UuidUtil;
 import org.hl7.tinkar.entity.*;
-import org.hl7.tinkar.entity.transfom.ProtocolBuffersToEntityTransform;
+import org.hl7.tinkar.entity.transfom.ProtobufTransform;
 import org.hl7.tinkar.integration.TestConstants;
 import org.hl7.tinkar.protobuf.*;
 import org.junit.jupiter.api.*;
