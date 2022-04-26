@@ -207,5 +207,4 @@ public class DiTreeEntity<V extends EntityVertex> extends DiGraphAbstract<V> imp
                     predecessorMap.toImmutable());
         }
     }
-
 }

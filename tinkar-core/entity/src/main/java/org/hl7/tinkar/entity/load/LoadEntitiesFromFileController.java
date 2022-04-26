@@ -14,7 +14,6 @@ public class LoadEntitiesFromFileController implements LoadDataFromFileControlle
         if (!file.getName().toLowerCase().contains("pb"))
             return TinkExecutor.ioThreadPool().submit(new LoadEntitiesFromDtoFile(file));
         else
-            throw new UnsupportedOperationException();
-        //return TinkExecutor.ioThreadPool().submit(new LoadEntitiesFromProtocolBuffersFile(file));
+            return TinkExecutor.ioThreadPool().submit(new LoadEntitiesFromProtobufFile(file));
     }
 }

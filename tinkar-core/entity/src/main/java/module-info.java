@@ -30,9 +30,9 @@ module org.hl7.tinkar.entity {
     exports org.hl7.tinkar.entity.graph;
     exports org.hl7.tinkar.entity.util;
     exports org.hl7.tinkar.entity.load;
+    exports org.hl7.tinkar.entity.export;
     exports org.hl7.tinkar.entity.transaction;
     exports org.hl7.tinkar.entity.transfom;
-    exports org.hl7.tinkar.entity.export;
 
     provides LoadDataFromFileController
             with LoadEntitiesFromFileController;

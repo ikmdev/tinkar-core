@@ -281,6 +281,10 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         return Optional.of((T) entity);
     }
 
+    //TODO-aks8m:
+    // This seems to be counter intuitive when implementing protobuf transforms, or at least not straightforward when
+    // implementing. Suggest we refactor to just use Entity. The use of chronology seems to not be well conveyed, but
+    // only understood because I've been working with other versions of this code.
     @Override
     public <T extends Chronology<V>, V extends Version> void putChronology(T chronology) {
         if (chronology instanceof Entity entity) {
