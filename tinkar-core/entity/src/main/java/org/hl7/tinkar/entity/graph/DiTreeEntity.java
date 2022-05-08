@@ -17,11 +17,14 @@ import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.hl7.tinkar.component.graph.DiTree;
+import org.hl7.tinkar.component.graph.GraphAdaptorFactory;
 import org.hl7.tinkar.component.graph.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class DiTreeEntity<V extends EntityVertex> extends DiGraphAbstract<V> implements DiTree<V> {
@@ -148,13 +151,63 @@ public class DiTreeEntity<V extends EntityVertex> extends DiGraphAbstract<V> imp
         }
     }
 
-    public static class Builder<V extends EntityVertex> {
+    public static class Builder<V extends EntityVertex> implements DiTree<V> {
         private final MutableList<V> vertexMap = Lists.mutable.empty();
         private final MutableIntObjectMap<MutableIntList> successorMap = IntObjectMaps.mutable.empty();
         private final MutableIntIntMap predecessorMap = IntIntMaps.mutable.empty();
         private V root;
 
         private Builder() {
+        }
+
+        /**
+         * @param adaptorFactory
+         * @param <A>
+         * @return
+         */
+        @Override
+        public <A> A adapt(GraphAdaptorFactory<A> adaptorFactory) {
+            throw new UnsupportedOperationException("Builder does not adapt... ");
+        }
+
+        @Override
+        public V vertex(UUID vertexId) {
+            for (V vertexEntity : this.vertexMap) {
+                if (vertexEntity.vertexId().asUuid().equals(vertexId)) {
+                    return vertexEntity;
+                }
+            }
+            throw new NoSuchElementException("VertexId: " + vertexId);
+        }
+
+        @Override
+        public V vertex(int vertexIndex) {
+            return vertexMap.get(vertexIndex);
+        }
+
+        @Override
+        public ImmutableList<V> vertexMap() {
+            return vertexMap.toImmutable();
+        }
+
+        @Override
+        public ImmutableIntObjectMap<ImmutableIntList> successorMap() {
+            MutableIntObjectMap<ImmutableIntList> tempMap = IntObjectMaps.mutable.ofInitialCapacity(successorMap.size());
+            successorMap.forEachKeyValue((i, mutableIntList) -> tempMap.put(i, mutableIntList.toImmutable()));
+            return tempMap.toImmutable();
+        }
+
+        @Override
+        public ImmutableList<V> successors(V vertex) {
+            MutableIntList successorList = successorMap.get(vertex.vertexIndex());
+            if (successorList != null) {
+                MutableList<V> successors = Lists.mutable.ofInitialCapacity(successorList.size());
+                successorList.forEach(successorIndex -> {
+                    successors.add(vertex(successorIndex));
+                });
+                return successors.toImmutable();
+            }
+            return Lists.immutable.empty();
         }
 
         public V getRoot() {
@@ -196,6 +249,18 @@ public class DiTreeEntity<V extends EntityVertex> extends DiGraphAbstract<V> imp
             return this;
         }
 
+        public Builder<V> addEdge(int childIndex, int parentIndex) {
+            if (vertexMap.get(childIndex) == null || vertexMap.get(parentIndex) == null) {
+                throw new IllegalStateException("Child Vertex or Parent Vertex is null. Add to vertex map before adding edge. ");
+            }
+            if (!successorMap.containsKey(parentIndex)) {
+                successorMap.put(parentIndex, IntLists.mutable.empty());
+            }
+            successorMap.get(parentIndex).add(childIndex);
+            predecessorMap.put(childIndex, parentIndex);
+            return this;
+        }
+
         public DiTreeEntity<V> build() {
 
             MutableIntObjectMap<ImmutableIntList> intermediateSuccessorMap = IntObjectMaps.mutable.ofInitialCapacity(successorMap.size());
@@ -205,6 +270,29 @@ public class DiTreeEntity<V extends EntityVertex> extends DiGraphAbstract<V> imp
                     vertexMap.toImmutable(),
                     intermediateSuccessorMap.toImmutable(),
                     predecessorMap.toImmutable());
+        }
+
+        @Override
+        public V root() {
+            return root;
+        }
+
+        @Override
+        public Optional<V> predecessor(V vertex) {
+            if (this.predecessorMap.containsKey(vertex.vertexIndex())) {
+                return Optional.of(vertex(this.predecessorMap.get(vertex.vertexIndex())));
+            }
+            return Optional.empty();
+        }
+
+        @Override
+        public ImmutableIntIntMap predecessorMap() {
+            return predecessorMap.toImmutable();
+        }
+
+        @Override
+        public ImmutableIntList successors(int vertexIndex) {
+            return successorMap.get(vertexIndex).toImmutable();
         }
     }
 

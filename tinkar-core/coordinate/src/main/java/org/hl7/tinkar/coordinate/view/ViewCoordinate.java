@@ -2,6 +2,7 @@ package org.hl7.tinkar.coordinate.view;
 
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
+import org.hl7.tinkar.coordinate.edit.EditCoordinateDelegate;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinate;
 import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculator;
 import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculatorDelegate;
@@ -14,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public interface ViewCoordinate extends LanguageCalculatorDelegate {
+public interface ViewCoordinate extends LanguageCalculatorDelegate, EditCoordinateDelegate {
 
     static UUID getViewUuid(ViewCoordinate viewCalculator) {
         throw new UnsupportedOperationException();
@@ -40,8 +41,6 @@ public interface ViewCoordinate extends LanguageCalculatorDelegate {
 
     StampCoordinate stampCoordinate();
 
-    <T extends LanguageCoordinate> Iterable<T> languageCoordinateIterable();
-
     default <T extends LanguageCoordinate> List<T> languageCoordinates() {
         Iterable<T> languageCoordinateIterable = languageCoordinateIterable();
         if (languageCoordinateIterable instanceof ImmutableList<T> immutableList) {
@@ -58,20 +57,22 @@ public interface ViewCoordinate extends LanguageCalculatorDelegate {
         return newList;
     }
 
-    LogicCoordinate logicCoordinate();
-
-    NavigationCoordinate navigationCoordinate();
+    <T extends LanguageCoordinate> Iterable<T> languageCoordinateIterable();
 
     default String toUserString() {
         StringBuilder sb = new StringBuilder("View: ");
         sb.append("\n").append(navigationCoordinate().toUserString());
         sb.append("\n\nView filter:\n").append(stampCoordinate().toUserString());
         sb.append("\n\nLanguage coordinates:\n");
-        for (LanguageCoordinate languageCoordinate: languageCoordinateIterable()) {
+        for (LanguageCoordinate languageCoordinate : languageCoordinateIterable()) {
             sb.append("  ").append(languageCoordinate.toUserString()).append("\n");
         }
         sb.append("\n\nLogic:\n").append(logicCoordinate().toUserString());
         return sb.toString();
     }
+
+    NavigationCoordinate navigationCoordinate();
+
+    LogicCoordinate logicCoordinate();
 
 }

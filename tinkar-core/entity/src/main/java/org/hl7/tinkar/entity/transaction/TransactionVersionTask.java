@@ -8,6 +8,10 @@ import org.hl7.tinkar.terms.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Parent class of CancelVersionTask and CommitVersionTask. Used for operating on a single version,
+ * not for a batch of edits.
+ */
 public abstract class TransactionVersionTask extends TrackingCallable<Void> {
     protected static final Logger LOG = LoggerFactory.getLogger(TransactionVersionTask.class);
     final EntityVersion version;

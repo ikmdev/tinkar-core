@@ -23,6 +23,7 @@ public class Transaction implements Comparable<Transaction> {
     private final String transactionName;
     ConcurrentHashSet<UUID> stampsInTransaction = new ConcurrentHashSet<>();
     ConcurrentHashSet<Integer> componentsInTransaction = new ConcurrentHashSet<>();
+    private long commitTime = Long.MAX_VALUE;
 
     public Transaction(String transactionName) {
         this.transactionName = transactionName;
@@ -115,7 +116,7 @@ public class Transaction implements Comparable<Transaction> {
      * @param authorId
      * @param moduleId
      * @param pathId
-     * @return StampEntity that is written to the entity store.
+     * @return StampEntity that is already written to the entity store.
      */
     public StampEntity getStamp(State state, long time, PublicId authorId, PublicId moduleId, PublicId pathId) {
         checkState(state, time, authorId == null, moduleId == null, pathId == null);
@@ -135,7 +136,7 @@ public class Transaction implements Comparable<Transaction> {
      * @param author
      * @param module
      * @param path
-     * @return StampEntity that is written to the entity store.
+     * @return StampEntity that is already written to the entity store.
      */
     public StampEntity getStamp(State state, ConceptFacade author, ConceptFacade module, ConceptFacade path) {
         return getStamp(state, Long.MAX_VALUE, author.publicId(), module.publicId(), path.publicId());
@@ -146,7 +147,7 @@ public class Transaction implements Comparable<Transaction> {
      * @param authorNid
      * @param moduleNid
      * @param pathNid
-     * @return StampEntity that is written to the entity store.
+     * @return StampEntity that is already written to the entity store.
      */
     public StampEntity getStamp(State state, int authorNid, int moduleNid, int pathNid) {
         return getStamp(state, Long.MAX_VALUE, authorNid, moduleNid, pathNid);
@@ -162,7 +163,7 @@ public class Transaction implements Comparable<Transaction> {
      * @param authorNid
      * @param moduleNid
      * @param pathNid
-     * @return StampEntity that is written to the entity store.
+     * @return StampEntity that is already written to the entity store.
      */
     public StampEntity getStamp(State state, long time, int authorNid, int moduleNid, int pathNid) {
         if (state == null) throw new IllegalStateException("State cannot be null...");
@@ -186,14 +187,18 @@ public class Transaction implements Comparable<Transaction> {
         componentsInTransaction.add(entity.nid());
     }
 
+    public long commitTime() {
+        return this.commitTime;
+    }
+
     /**
      * @return count of stamps committed.
      */
     public int commit() {
         AtomicInteger stampCount = new AtomicInteger();
-        Long commitTime = System.currentTimeMillis();
+        this.commitTime = System.currentTimeMillis();
         forEachStampInTransaction(stampUuid -> {
-            commitStamp(stampUuid, commitTime);
+            commitStamp(stampUuid, this.commitTime);
             stampCount.incrementAndGet();
         });
         activeTransactions.remove(this);
@@ -205,7 +210,7 @@ public class Transaction implements Comparable<Transaction> {
         stampsInTransaction.forEach(action);
     }
 
-    private void commitStamp(UUID stampUuid, Long commitTime) {
+    private void commitStamp(UUID stampUuid, long commitTime) {
         StampRecord stampEntity = Entity.getStamp(PrimitiveData.nid(stampUuid));
         StampEntityVersion stampVersion = stampEntity.lastVersion();
         if (stampVersion.time() == Long.MAX_VALUE) {

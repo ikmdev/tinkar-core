@@ -1,6 +1,6 @@
 import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.coordinate.PathService;
-import org.hl7.tinkar.coordinate.edit.EditCoordinateImmutable;
+import org.hl7.tinkar.coordinate.edit.EditCoordinateRecord;
 import org.hl7.tinkar.coordinate.language.calculator.LanguageCalculatorWithCache;
 import org.hl7.tinkar.coordinate.logic.calculator.LogicCalculatorWithCache;
 import org.hl7.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
@@ -42,7 +42,7 @@ module org.hl7.tinkar.coordinate {
             NavigationCalculatorWithCache.CacheProvider,
             StampCalculatorWithCache.CacheProvider,
             ViewCalculatorWithCache.CacheProvider,
-            EditCoordinateImmutable.CacheProvider,
+            EditCoordinateRecord.CacheProvider,
             StampPathImmutable.CachingProvider;
 
     provides PathService with PathProvider;

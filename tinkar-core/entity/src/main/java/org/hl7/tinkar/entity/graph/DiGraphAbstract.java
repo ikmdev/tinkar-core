@@ -10,19 +10,23 @@ import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
+import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.hl7.tinkar.component.graph.Graph;
+import org.hl7.tinkar.component.graph.GraphAdaptorFactory;
 import org.hl7.tinkar.component.graph.Vertex;
 import org.hl7.tinkar.terms.EntityFacade;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class DiGraphAbstract<V extends EntityVertex> {
     public static final byte ENTITY_FORMAT_VERSION = 1;
 
     final ImmutableList<V> vertexMap;
     final ImmutableIntObjectMap<ImmutableIntList> successorMap;
+    AtomicReference<ConcurrentHashMap<GraphAdaptorFactory, Object>> adaptorsReference = new AtomicReference<>();
 
     public DiGraphAbstract(ImmutableList<V> vertexMap,
                            ImmutableIntObjectMap<ImmutableIntList> successorMap) {
@@ -63,6 +67,21 @@ public abstract class DiGraphAbstract<V extends EntityVertex> {
         return successorMap.toImmutable();
     }
 
+    /**
+     * @param adaptorFactory
+     * @param <A>
+     * @return
+     */
+    public <A> A adapt(GraphAdaptorFactory<A> adaptorFactory) {
+        adaptorsReference.accumulateAndGet(null, (prev, x) -> {
+            if (x == null) {
+                return new ConcurrentHashMap(4);
+            }
+            return x;
+        });
+        return (A) adaptorsReference.get().getIfAbsentPut(adaptorFactory, () -> adaptorFactory.adapt((Graph) this));
+    }
+
     public ImmutableList<V> vertexMap() {
         return vertexMap;
     }
@@ -91,6 +110,14 @@ public abstract class DiGraphAbstract<V extends EntityVertex> {
             }
         }
         throw new NoSuchElementException("VertexId: " + vertexId);
+    }
+
+    public ImmutableIntList successors(int vertexIndex) {
+        ImmutableIntList successorList = successorMap.get(vertexIndex);
+        if (successorList != null) {
+            return successorList;
+        }
+        return IntLists.immutable.empty();
     }
 
     public ImmutableList<V> successors(V vertex) {

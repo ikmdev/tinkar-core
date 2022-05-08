@@ -15,6 +15,7 @@ import org.hl7.tinkar.terms.EntityFacade;
 import org.hl7.tinkar.terms.PatternFacade;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
@@ -71,7 +72,41 @@ public interface StampCalculator {
 
     <V extends EntityVersion> List<DiTree<VersionVertex<V>>> getVersionGraphList(Entity<V> chronicle);
 
+    /**
+     * @param semanticNid identifier of the semantic to test its latest version against the provided fields.
+     * @param fields      Fields of the current state, which will be used to create a new version if necessary.
+     * @param stampNid    stampNid of the new version that will contain the changed fields.
+     * @return Optional new semantic record containing new version. Caller is responsible to write to entity store
+     * and manage associated transaction.
+     */
+    default Optional<SemanticRecord> updateIfFieldsChanged(int semanticNid, ImmutableList<Object> fields, int stampNid) {
+        return updateIfFieldsChanged(Entity.getFast(semanticNid), fields, stampNid);
+    }
+
+    /**
+     * @param chronicle
+     * @param fields
+     * @param stampNid
+     * @return a new SemanticRecord with the new SemanticVersionRecord added. It is the responsibility of the caller
+     * to write to the store, and manage transactions.
+     */
+    default Optional<SemanticRecord> updateIfFieldsChanged(SemanticRecord chronicle, ImmutableList<Object> fields, int stampNid) {
+        Latest<SemanticVersionRecord> latest = latest(chronicle);
+        if (latest.isPresent()) {
+            for (SemanticVersionRecord version : latest.getWithContradictions()) {
+                if (version.fieldValues().equals(fields)) {
+                    return Optional.empty();
+                }
+            }
+        }
+        return Optional.of(chronicle.with(new SemanticVersionRecord(chronicle, stampNid, fields)).build());
+    }
+
     <V extends EntityVersion> Latest<V> latest(Entity<V> chronicle);
+
+    default Optional<SemanticRecord> updateIfFieldsChanged(int semanticNid, ImmutableList<Object> fields, StampEntity stampEntity) {
+        return updateIfFieldsChanged(Entity.getFast(semanticNid), fields, stampEntity.nid());
+    }
 
     StateSet allowedStates();
 

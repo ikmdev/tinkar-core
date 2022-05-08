@@ -44,6 +44,12 @@ public class EntityVertex implements Vertex, VertexId {
     protected EntityVertex() {
     }
 
+    protected EntityVertex(UUID uuid, int meaningNid) {
+        this.mostSignificantBits = uuid.getMostSignificantBits();
+        this.leastSignificantBits = uuid.getLeastSignificantBits();
+        this.meaningNid = meaningNid;
+    }
+
     public static EntityVertex make(Vertex vertex) {
         EntityVertex entityVertex = new EntityVertex();
         entityVertex.fill(vertex);
@@ -102,8 +108,12 @@ public class EntityVertex implements Vertex, VertexId {
         return (T) object;
     }
 
-    public static EntityVertex make() {
-        EntityVertex entityVertex = new EntityVertex();
+    public static EntityVertex make(ConceptFacade conceptFacade) {
+        return EntityVertex.make(conceptFacade.nid());
+    }
+
+    public static EntityVertex make(int meaningNid) {
+        EntityVertex entityVertex = new EntityVertex(UUID.randomUUID(), meaningNid);
         return entityVertex;
     }
 
@@ -191,12 +201,31 @@ public class EntityVertex implements Vertex, VertexId {
         }
     }
 
+
+    /**
+     * TODO: Not thread safe...
+     */
+    public void commitProperties() {
+        if (uncommittedProperties != null & !uncommittedProperties.isEmpty()) {
+            for (int key : this.properties.keySet().toArray()) {
+                if (!this.uncommittedProperties.containsKey(key)) {
+                    this.uncommittedProperties.put(key, this.properties.get(key));
+                }
+            }
+            this.properties = this.uncommittedProperties.toImmutable();
+            this.uncommittedProperties = null;
+        }
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("EntityVertex{").append(vertexId().asUuid());
         sb.append(", index: ").append(vertexIndex);
         sb.append(", meaning: ").append(PrimitiveData.text(meaningNid));
+        if (uncommittedProperties != null & !uncommittedProperties.isEmpty()) {
+            sb.append(", uncommitted properties=").append(uncommittedProperties);
+        }
         sb.append(", properties=").append(properties).append('}');
 
         return sb.toString();
@@ -337,5 +366,9 @@ public class EntityVertex implements Vertex, VertexId {
 
     public int getMeaningNid() {
         return meaningNid;
+    }
+
+    public MutableIntObjectMap<Object> uncommittedProperties() {
+        return uncommittedProperties;
     }
 }

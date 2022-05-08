@@ -1,7 +1,6 @@
 package org.hl7.tinkar.dto.graph;
 
 
-
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -11,16 +10,57 @@ import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
-import org.hl7.tinkar.dto.binary.*;
 import org.hl7.tinkar.component.graph.DiGraph;
+import org.hl7.tinkar.component.graph.GraphAdaptorFactory;
+import org.hl7.tinkar.dto.binary.*;
 
-public  record DiGraphDTO(ImmutableIntList rootSequences,
-                          ImmutableIntObjectMap<ImmutableIntList> predecessorMap,
-                          ImmutableList<VertexDTO> vertexMap,
-                          ImmutableIntObjectMap<ImmutableIntList> successorMap)
+public record DiGraphDTO(ImmutableIntList rootSequences,
+                         ImmutableIntObjectMap<ImmutableIntList> predecessorMap,
+                         ImmutableList<VertexDTO> vertexMap,
+                         ImmutableIntObjectMap<ImmutableIntList> successorMap)
         implements DiGraph<VertexDTO>, GraphDefaults, Marshalable {
 
     private static final int LOCAL_MARSHAL_VERSION = 3;
+
+    @Unmarshaler
+    public static DiGraphDTO make(TinkarInput in) {
+        if (LOCAL_MARSHAL_VERSION == in.getTinkerFormatVersion()) {
+            ImmutableList<VertexDTO> vertexMap = GraphDefaults.unmarshalVertexMap(in);
+            ImmutableIntObjectMap<ImmutableIntList> successorMap = GraphDefaults.unmarshalSuccessorMap(in, vertexMap);
+
+            int rootCount = in.getInt();
+            MutableIntList roots = IntLists.mutable.empty();
+            for (int i = 0; i < rootCount; i++) {
+                roots.add(in.getInt());
+            }
+            int predecessorMapSize = in.getInt();
+            MutableIntObjectMap<ImmutableIntList> predecessorMap = IntObjectMaps.mutable.ofInitialCapacity(predecessorMapSize);
+            for (int i = 0; i < predecessorMapSize; i++) {
+                int vertexIndex = in.getInt();
+                int predecessorCount = in.getInt();
+                MutableIntList predecessorList = IntLists.mutable.empty();
+                for (int j = 0; j < predecessorCount; j++) {
+                    predecessorList.add(in.getInt());
+                }
+                predecessorMap.put(vertexIndex, predecessorList.toImmutable());
+            }
+            return new DiGraphDTO(roots.toImmutable(),
+                    predecessorMap.toImmutable(),
+                    vertexMap,
+                    successorMap);
+        } else {
+            throw new UnsupportedOperationException("Unsupported version: " + marshalVersion);
+        }
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    @Override
+    public <A> A adapt(GraphAdaptorFactory<A> adaptorFactory) {
+        throw new UnsupportedOperationException("Adaptors are ephemeral, and are not transfer objects");
+    }
 
     @Override
     public ImmutableList<VertexDTO> roots() {
@@ -40,37 +80,6 @@ public  record DiGraphDTO(ImmutableIntList rootSequences,
         return predecessorList.toImmutable();
     }
 
-    @Unmarshaler
-    public static DiGraphDTO make(TinkarInput in) {
-        if (LOCAL_MARSHAL_VERSION == in.getTinkerFormatVersion()) {
-            ImmutableList<VertexDTO> vertexMap = GraphDefaults.unmarshalVertexMap(in);
-            ImmutableIntObjectMap<ImmutableIntList> successorMap = GraphDefaults.unmarshalSuccessorMap(in, vertexMap);
-
-            int rootCount = in.getInt();
-            MutableIntList roots = IntLists.mutable.empty();
-            for (int i = 0; i < rootCount; i++) {
-                roots.add(in.getInt());
-            }
-            int predecessorMapSize = in.getInt();
-            MutableIntObjectMap<ImmutableIntList> predecessorMap = IntObjectMaps.mutable.ofInitialCapacity(predecessorMapSize);
-            for (int i = 0; i < predecessorMapSize; i++) {
-                int vertexSequence = in.getInt();
-                int predecessorCount = in.getInt();
-                MutableIntList predecessorList = IntLists.mutable.empty();
-                for (int j = 0; j < predecessorCount; j++) {
-                    predecessorList.add(in.getInt());
-                }
-                predecessorMap.put(vertexSequence, predecessorList.toImmutable());
-            }
-            return new DiGraphDTO(roots.toImmutable(),
-                    predecessorMap.toImmutable(),
-                    vertexMap,
-                    successorMap);
-        } else {
-            throw new UnsupportedOperationException("Unsupported version: " + marshalVersion);
-        }
-    }
-
     @Override
     @Marshaler
     public void marshal(TinkarOutput out) {
@@ -87,14 +96,11 @@ public  record DiGraphDTO(ImmutableIntList rootSequences,
         });
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
     public static class Builder {
         private final MutableList<VertexDTO> vertexMap = Lists.mutable.empty();
         private final MutableIntObjectMap<MutableIntList> successorMap = IntObjectMaps.mutable.empty();
-        private final MutableIntObjectMap<MutableIntList> predecessorMap = IntObjectMaps.mutable.empty();;
+        private final MutableIntObjectMap<MutableIntList> predecessorMap = IntObjectMaps.mutable.empty();
+        ;
         private final MutableIntList roots = IntLists.mutable.empty();
 
         protected Builder() {
@@ -127,5 +133,4 @@ public  record DiGraphDTO(ImmutableIntList rootSequences,
                     intermediateSuccessorMap.toImmutable());
         }
     }
-
 }

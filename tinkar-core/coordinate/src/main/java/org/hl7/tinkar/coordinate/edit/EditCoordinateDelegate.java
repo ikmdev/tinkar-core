@@ -4,33 +4,33 @@ public interface EditCoordinateDelegate extends EditCoordinate {
 
     @Override
     default int getAuthorNidForChanges() {
-        return getEditCoordinate().getAuthorNidForChanges();
+        return editCoordinate().getAuthorNidForChanges();
     }
 
-    EditCoordinate getEditCoordinate();
+    EditCoordinate editCoordinate();
 
     @Override
     default int getDefaultModuleNid() {
-        return getEditCoordinate().getDefaultModuleNid();
+        return editCoordinate().getDefaultModuleNid();
     }
 
     @Override
     default int getDestinationModuleNid() {
-        return getEditCoordinate().getDestinationModuleNid();
+        return editCoordinate().getDestinationModuleNid();
     }
 
     @Override
     default int getDefaultPathNid() {
-        return getEditCoordinate().getDefaultPathNid();
+        return editCoordinate().getDefaultPathNid();
     }
 
     @Override
     default int getPromotionPathNid() {
-        return getEditCoordinate().getPromotionPathNid();
+        return editCoordinate().getPromotionPathNid();
     }
 
     @Override
-    default EditCoordinateImmutable toEditCoordinateImmutable() {
-        return getEditCoordinate().toEditCoordinateImmutable();
+    default EditCoordinateRecord toEditCoordinateRecord() {
+        return editCoordinate().toEditCoordinateRecord();
     }
 }

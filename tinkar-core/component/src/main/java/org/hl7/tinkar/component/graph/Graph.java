@@ -10,13 +10,15 @@ import java.util.UUID;
 
 public interface Graph<V extends Vertex> {
 
+    <A> A adapt(GraphAdaptorFactory<A> adaptorFactory);
+
     /**
      * @param vertexId a universally unique identifier for a vertex
      * @return the vertex associated with the identifier
      */
     V vertex(UUID vertexId);
 
-    V vertex(int vertexSequence);
+    V vertex(int vertexIndex);
 
     ImmutableList<V> vertexMap();
 
@@ -41,5 +43,8 @@ public interface Graph<V extends Vertex> {
      * @return the successors for the provided vertex
      */
     ImmutableList<V> successors(V vertex);
+
+    ImmutableIntList successors(int vertexIndex);
+
 
 }

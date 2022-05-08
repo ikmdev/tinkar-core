@@ -3,6 +3,10 @@ package org.hl7.tinkar.entity.transaction;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.terms.State;
 
+/**
+ * For canceling a single version. If the version is part of a shared transaction, then
+ * it will be removed from that transaction, and added to a new single version transaction.
+ */
 public class CommitVersionTask extends TransactionVersionTask {
     public CommitVersionTask(ConceptVersionRecord version) {
         super(version);

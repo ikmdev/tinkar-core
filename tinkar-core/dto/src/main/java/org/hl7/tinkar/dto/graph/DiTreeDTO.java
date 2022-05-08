@@ -14,6 +14,7 @@ import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.hl7.tinkar.component.graph.DiTree;
+import org.hl7.tinkar.component.graph.GraphAdaptorFactory;
 import org.hl7.tinkar.dto.binary.*;
 
 import java.io.IOException;
@@ -25,7 +26,6 @@ public record DiTreeDTO(VertexDTO root,
                         ImmutableList<VertexDTO> vertexMap,
                         ImmutableIntObjectMap<ImmutableIntList> successorMap)
         implements DiTree<VertexDTO>, GraphDefaults, Marshalable {
-
 
     @Unmarshaler
     public static DiTreeDTO make(TinkarInput in) {
@@ -50,6 +50,11 @@ public record DiTreeDTO(VertexDTO root,
 
     public static Builder builder(VertexDTO root) {
         return new Builder(root);
+    }
+
+    @Override
+    public <A> A adapt(GraphAdaptorFactory<A> adaptorFactory) {
+        throw new UnsupportedOperationException("Adaptors are ephemeral, and are not transfer objects");
     }
 
     @Override

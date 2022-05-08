@@ -20,31 +20,6 @@ import java.util.UUID;
 
 public interface GraphDefaults extends Graph<VertexDTO> {
     static final int LOCAL_MARSHAL_VERSION = 3;
-    @Override
-    default VertexDTO vertex(UUID vertexId) {
-        for (VertexDTO vertexDTO: vertexMap()) {
-            if (vertexDTO.vertexId().asUuid().equals(vertexId)) {
-                return vertexDTO;
-            }
-        }
-        throw new NoSuchElementException("No vertex for: " + vertexId);
-    }
-
-    @Override
-    default ImmutableList<VertexDTO> successors(VertexDTO vertex) {
-        ImmutableIntList successorIntList = successorMap().getIfAbsent(vertex.vertexIndex(), () -> IntLists.immutable.empty());
-        if (successorIntList.isEmpty()) {
-            return Lists.immutable.empty();
-        }
-        MutableList<VertexDTO> successorList = Lists.mutable.ofInitialCapacity(successorIntList.size());
-        successorIntList.forEach(vertexSequence -> successorList.add(vertexMap().get(vertexSequence)));
-        return successorList.toImmutable();
-    }
-
-    @Override
-    default VertexDTO vertex(int vertexSequence) {
-        return vertexMap().get(vertexSequence);
-    }
 
     static ImmutableList<VertexDTO> unmarshalVertexMap(TinkarInput in) {
         if (LOCAL_MARSHAL_VERSION == in.getTinkerFormatVersion()) {
@@ -57,17 +32,6 @@ public interface GraphDefaults extends Graph<VertexDTO> {
             return vertexMap.toImmutable();
         } else {
             throw new UnsupportedOperationException("Unsupported version: " + in.getTinkerFormatVersion());
-        }
-    }
-
-    default void marshalVertexMap(TinkarOutput out) {
-        try {
-            out.writeInt(vertexMap().size());
-            for (VertexDTO vertexDTO: vertexMap()) {
-                vertexDTO.marshal(out);
-            }
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
         }
     }
 
@@ -87,6 +51,43 @@ public interface GraphDefaults extends Graph<VertexDTO> {
             return successorMap.toImmutable();
         } else {
             throw new UnsupportedOperationException("Unsupported version: " + in.getTinkerFormatVersion());
+        }
+    }
+
+    @Override
+    default VertexDTO vertex(UUID vertexId) {
+        for (VertexDTO vertexDTO : vertexMap()) {
+            if (vertexDTO.vertexId().asUuid().equals(vertexId)) {
+                return vertexDTO;
+            }
+        }
+        throw new NoSuchElementException("No vertex for: " + vertexId);
+    }
+
+    @Override
+    default VertexDTO vertex(int vertexIndex) {
+        return vertexMap().get(vertexIndex);
+    }
+
+    @Override
+    default ImmutableList<VertexDTO> successors(VertexDTO vertex) {
+        ImmutableIntList successorIntList = successorMap().getIfAbsent(vertex.vertexIndex(), () -> IntLists.immutable.empty());
+        if (successorIntList.isEmpty()) {
+            return Lists.immutable.empty();
+        }
+        MutableList<VertexDTO> successorList = Lists.mutable.ofInitialCapacity(successorIntList.size());
+        successorIntList.forEach(vertexSequence -> successorList.add(vertexMap().get(vertexSequence)));
+        return successorList.toImmutable();
+    }
+
+    default void marshalVertexMap(TinkarOutput out) {
+        try {
+            out.writeInt(vertexMap().size());
+            for (VertexDTO vertexDTO : vertexMap()) {
+                vertexDTO.marshal(out);
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 

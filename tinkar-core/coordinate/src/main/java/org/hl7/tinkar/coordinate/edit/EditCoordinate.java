@@ -131,7 +131,7 @@ public interface EditCoordinate {
         return Entity.getFast(getDestinationModuleNid());
     }
 
-    EditCoordinateImmutable toEditCoordinateImmutable();
+    EditCoordinateRecord toEditCoordinateRecord();
 
     /**
      * The path that new content is created on

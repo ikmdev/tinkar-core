@@ -2,7 +2,7 @@ package org.hl7.tinkar.coordinate;
 
 import org.eclipse.collections.api.factory.Sets;
 import org.hl7.tinkar.common.id.IntIds;
-import org.hl7.tinkar.coordinate.edit.EditCoordinateImmutable;
+import org.hl7.tinkar.coordinate.edit.EditCoordinateRecord;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinateRecord;
 import org.hl7.tinkar.coordinate.logic.LogicCoordinateRecord;
 import org.hl7.tinkar.coordinate.navigation.NavigationCoordinate;
@@ -24,8 +24,8 @@ public class Coordinates {
     //private static ChronologyChangeListener ccl;
 
     public static class Edit {
-        public static EditCoordinateImmutable Default() {
-            return EditCoordinateImmutable.make(
+        public static EditCoordinateRecord Default() {
+            return EditCoordinateRecord.make(
                     TinkarTerm.USER.nid(), TinkarTerm.SOLOR_OVERLAY_MODULE.nid(),
                     TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.DEVELOPMENT_PATH.nid(), TinkarTerm.DEVELOPMENT_PATH.nid()
             );
@@ -234,7 +234,8 @@ public class Coordinates {
             return ViewCoordinateRecord.make(Stamp.DevelopmentLatest(),
                     Language.UsEnglishRegularName(),
                     Logic.ElPlusPlus(),
-                    Navigation.inferred());
+                    Navigation.inferred(),
+                    Edit.Default());
         }
     }
 }

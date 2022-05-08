@@ -68,7 +68,7 @@ import java.util.stream.Stream;
  * The Class LatestVersion.
  *
  * @param <V> the value type
- *                                                                                                                                                                                                                                                                                               TODO [KEC] search for all get() methods to make sure test for isPresent() is completed.
+ *                                                                                                                                                                                                                                                                                                                                TODO [KEC] search for all get() methods to make sure test for isPresent() is completed.
  * @author kec
  */
 public final class Latest<V> {
@@ -323,6 +323,21 @@ public final class Latest<V> {
             throw new NoSuchElementException();
         }
         return this.value;
+    }
+
+    /**
+     * @return all latest versions, including the contradictions.
+     */
+    public ImmutableList<V> getWithContradictions() {
+        if (this.value == null) {
+            throw new NoSuchElementException();
+        }
+        if (contradictions != null) {
+            MutableList tempList = Lists.mutable.withAll(contradictions);
+            tempList.add(this.value);
+            return tempList.toImmutable();
+        }
+        return Lists.immutable.with(this.value);
     }
 
     /**

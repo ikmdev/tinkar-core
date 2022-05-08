@@ -9,6 +9,8 @@ import org.hl7.tinkar.common.binary.DecoderInput;
 import org.hl7.tinkar.common.binary.Encoder;
 import org.hl7.tinkar.common.binary.EncoderOutput;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
+import org.hl7.tinkar.coordinate.edit.EditCoordinate;
+import org.hl7.tinkar.coordinate.edit.EditCoordinateRecord;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinate;
 import org.hl7.tinkar.coordinate.language.LanguageCoordinateRecord;
 import org.hl7.tinkar.coordinate.logic.LogicCoordinate;
@@ -23,30 +25,35 @@ import java.util.List;
 public record ViewCoordinateRecord(StampCoordinateRecord stampCoordinate,
                                    ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
                                    LogicCoordinateRecord logicCoordinate,
-                                   NavigationCoordinateRecord navigationCoordinate)
+                                   NavigationCoordinateRecord navigationCoordinate,
+                                   EditCoordinateRecord editCoordinate)
         implements ViewCoordinate, ImmutableCoordinate, ViewCoordinateRecordBuilder.With {
 
     public static ViewCoordinateRecord make(StampCoordinateRecord viewStampFilter,
                                             LanguageCoordinate languageCoordinate,
                                             LogicCoordinate logicCoordinate,
-                                            NavigationCoordinate navigationCoordinate) {
+                                            NavigationCoordinate navigationCoordinate,
+                                            EditCoordinate editCoordinate) {
 
         return new ViewCoordinateRecord(viewStampFilter,
                 Lists.immutable.of(languageCoordinate.toLanguageCoordinateRecord()),
                 logicCoordinate.toLogicCoordinateRecord(),
-                navigationCoordinate.toNavigationCoordinateRecord());
+                navigationCoordinate.toNavigationCoordinateRecord(),
+                editCoordinate.toEditCoordinateRecord());
     }
 
     public static ViewCoordinateRecord make(StampCoordinateRecord viewStampFilter,
                                             List<? extends LanguageCoordinate> languageCoordinates,
                                             LogicCoordinate logicCoordinate,
-                                            NavigationCoordinate navigationCoordinate) {
+                                            NavigationCoordinate navigationCoordinate,
+                                            EditCoordinate editCoordinate) {
         MutableList<LanguageCoordinateRecord> languageCoordinateRecords = Lists.mutable.empty();
         languageCoordinates.forEach(languageCoordinate -> languageCoordinateRecords.add(languageCoordinate.toLanguageCoordinateRecord()));
         return new ViewCoordinateRecord(viewStampFilter,
                 languageCoordinateRecords.toImmutable(),
                 logicCoordinate.toLogicCoordinateRecord(),
-                navigationCoordinate.toNavigationCoordinateRecord());
+                navigationCoordinate.toNavigationCoordinateRecord(),
+                editCoordinate.toEditCoordinateRecord());
     }
 
     @Decoder
@@ -61,10 +68,12 @@ public record ViewCoordinateRecord(StampCoordinateRecord stampCoordinate,
                 }
                 LogicCoordinateRecord logicCoordinateRecord = LogicCoordinateRecord.decode(in);
                 NavigationCoordinateRecord navigationCoordinateRecord = NavigationCoordinateRecord.decode(in);
+                EditCoordinateRecord editCoordinateRecord = EditCoordinateRecord.decode(in);
                 return new ViewCoordinateRecord(stampCoordinateRecord,
                         languageCoordinateRecords.toImmutable(),
                         logicCoordinateRecord,
-                        navigationCoordinateRecord);
+                        navigationCoordinateRecord,
+                        editCoordinateRecord);
             default:
                 throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
         }
@@ -90,5 +99,6 @@ public record ViewCoordinateRecord(StampCoordinateRecord stampCoordinate,
         }
         logicCoordinate.encode(out);
         navigationCoordinate.encode(out);
+        editCoordinate.encode(out);
     }
 }
