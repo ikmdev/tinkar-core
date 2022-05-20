@@ -9,10 +9,7 @@ import org.hl7.tinkar.entity.EntityVersion;
 import org.hl7.tinkar.entity.transfom.EntityTransformer;
 import org.hl7.tinkar.protobuf.PBTinkarMsg;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,7 +45,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<Void> {
                 try {
                     Entity<? extends EntityVersion> conceptEntity = EntityService.get().getEntityFast(conceptNid);
                     writePBTinkarMsg(entityTransformer.transform(conceptEntity));
-                }catch (IllegalStateException | IOException exception){
+                }catch (UnsupportedOperationException | IllegalStateException | IOException exception){
                     exception.printStackTrace();
                 }
             });
@@ -62,7 +59,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<Void> {
                 try {
                     Entity<? extends EntityVersion> conceptEntity = EntityService.get().getEntityFast(semanticNid);
                     writePBTinkarMsg(entityTransformer.transform(semanticEntity));
-                }catch (IllegalStateException | IOException exception){
+                }catch (UnsupportedOperationException | IllegalStateException | IOException exception){
                     exception.printStackTrace();
                 }
             });
@@ -76,7 +73,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<Void> {
                 try {
                     Entity<? extends EntityVersion> conceptEntity = EntityService.get().getEntityFast(patternNid);
                     writePBTinkarMsg(entityTransformer.transform(patternEntity));
-                }catch (IllegalStateException | IOException exception){
+                }catch (UnsupportedOperationException | IllegalStateException | IOException exception){
                     exception.printStackTrace();
                 }
             });

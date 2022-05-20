@@ -235,7 +235,6 @@ public class EntityTransformer{
         diGraph.vertexMap().forEach(vertex -> pbVertices.add(createPBVertex(vertex)));
         //Int Root Sequences TODO-aks8m: Is this a list of root Vertex's (then need to change protobuf)
         ArrayList<Integer> roots = new ArrayList<>();
-//        diGraph.roots().forEach(vertex -> roots.add(vertex.));
         //Multiple Int map Successor
         //Multiple Int map Predecessor
 
@@ -271,15 +270,17 @@ public class EntityTransformer{
     }
 
     private PBPlanarPoint createPBPlanaPoint(PlanarPoint planarPoint){
-        //int x
-        //int y
-        throw new UnsupportedOperationException("createPBPlanaPoint not implemented");
+        return PBPlanarPoint.newBuilder()
+                .setX(planarPoint.x())
+                .setY(planarPoint.y())
+                .build();
     }
 
     private PBSpatialPoint createPBSpatialPoint(SpatialPoint spatialPoint){
-        //int x
-        //int y
-        //int z
-        throw new UnsupportedOperationException("createPBSpatialPoint not implemented");
+        return PBSpatialPoint.newBuilder()
+                .setX(spatialPoint.x())
+                .setY(spatialPoint.y())
+                .setZ(spatialPoint.z())
+                .build();
     }
 }
