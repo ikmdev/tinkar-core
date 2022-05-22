@@ -23,16 +23,16 @@ module org.hl7.tinkar.entity {
     requires static java.compiler;
     requires transitive org.hl7.tinkar.terms;
     requires java.xml;
-    //requires org.hl7.tinkar.protobuf;
-    //requires transitive com.google.protobuf;
+    requires org.hl7.tinkar.protobuf;
+    requires com.google.protobuf;
 
     exports org.hl7.tinkar.entity;
     exports org.hl7.tinkar.entity.graph;
     exports org.hl7.tinkar.entity.util;
     exports org.hl7.tinkar.entity.load;
+    exports org.hl7.tinkar.entity.export;
     exports org.hl7.tinkar.entity.transaction;
     exports org.hl7.tinkar.entity.transfom;
-    exports org.hl7.tinkar.entity.export;
 
     provides LoadDataFromFileController
             with LoadEntitiesFromFileController;

@@ -1,17 +1,15 @@
 package org.hl7.tinkar.entity.load;
 
-import org.hl7.tinkar.common.service.TrackingCallable;
-
-/*
-import org.hl7.tinkar.common.id.PublicId;
+import com.google.protobuf.InvalidProtocolBufferException;
 import org.hl7.tinkar.common.service.TinkExecutor;
 import org.hl7.tinkar.common.service.TrackingCallable;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.entity.EntityService;
-import org.hl7.tinkar.entity.transfom.EntityTransform;
-import org.hl7.tinkar.entity.transfom.EntityTransformFactory;
-import org.hl7.tinkar.entity.transfom.TransformDataType;
+import org.hl7.tinkar.entity.EntityVersion;
+import org.hl7.tinkar.entity.transfom.ProtobufTransformer;
 import org.hl7.tinkar.protobuf.PBTinkarMsg;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.DataInputStream;
 import java.io.EOFException;
@@ -19,28 +17,21 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-*/
-public class LoadEntitiesFromProtocolBuffersFile extends TrackingCallable<Integer> {
-    @Override
-    protected Integer compute() throws Exception {
-        throw new UnsupportedOperationException();
-    }
-    /*
-    protected static final Logger LOG = Logger.getLogger(LoadEntitiesFromProtocolBuffersFile.class.getName());
+
+public class LoadEntitiesFromProtobufFile extends TrackingCallable<Integer> {
+
+    protected static final Logger LOG = LoggerFactory.getLogger(LoadEntitiesFromProtobufFile.class.getName());
     private static final int MAX_TASK_COUNT = Runtime.getRuntime().availableProcessors() * 2;
     final File importFile;
     final AtomicInteger importCount = new AtomicInteger();
     final Semaphore taskSemaphore = new Semaphore(MAX_TASK_COUNT, false);
     final AtomicInteger exceptionCount = new AtomicInteger();
-    ConcurrentSkipListSet<PublicId> exceptionRecords = new ConcurrentSkipListSet<>();
 
-    public LoadEntitiesFromProtocolBuffersFile(File importFile) {
+    public LoadEntitiesFromProtobufFile(File importFile) {
         super(false, true);
         this.importFile = importFile;
         LOG.info("Loading entities from: " + importFile.getAbsolutePath());
@@ -58,7 +49,8 @@ public class LoadEntitiesFromProtocolBuffersFile extends TrackingCallable<Intege
             sizeForAll += totalSize;
             DataInputStream pbStream = new DataInputStream(zipFile.getInputStream(exportPBEntry));
             DataInputStream pbMessageCountStream = new DataInputStream(zipFile.getInputStream(pbMessageCountEntry));
-            LOG.info(this.getClass().getSimpleName() + ": begin processing " + pbMessageCountStream.readLong() + " protocol buffers messages");
+            LOG.info(this.getClass().getSimpleName() + ": begin processing "
+                    + pbMessageCountStream.readLong() + " protocol buffers messages");
 
             ByteBuffer byteBuffer;
             int pbMessageLength;
@@ -71,7 +63,6 @@ public class LoadEntitiesFromProtocolBuffersFile extends TrackingCallable<Intege
                 if (pbMessageLength == -1) {
                     break; //EOF
                 }
-                taskSemaphore.acquireUninterruptibly();
 
                 byteBuffer = ByteBuffer.allocate(pbMessageLength);
 
@@ -89,16 +80,20 @@ public class LoadEntitiesFromProtocolBuffersFile extends TrackingCallable<Intege
                     }
                     byteBuffer.put(sourceIndex, bytesRead);
                 }
-                EntityTransform<PBTinkarMsg, Entity> entityTransform =
-                        EntityTransformFactory.getTransform(TransformDataType.PROTOCOL_BUFFERS, TransformDataType.ENTITY);
-                final Entity entity = entityTransform.transform(PBTinkarMsg.parseFrom(byteBuffer));
 
+                final byte[] pbBytes = byteBuffer.array();
+
+                taskSemaphore.acquireUninterruptibly();
                 TinkExecutor.threadPool().execute(() -> {
                     try {
+                        ProtobufTransformer transformer = new ProtobufTransformer();
+                        Entity<? extends EntityVersion> entity = transformer.transform(PBTinkarMsg.parseFrom(pbBytes));
                         EntityService.get().putEntity(entity);
-                    } catch (Throwable e) {
+                        transformer.getStampEntities()
+                                .forEach(stampEntity -> EntityService.get().putEntity(stampEntity));
+                    } catch (IllegalStateException | InvalidProtocolBufferException e) {
                         e.printStackTrace();
-                        exceptionRecords.add(entity.publicId());
+                        exceptionCount.incrementAndGet();
                     } finally {
                         taskSemaphore.release();
                     }
@@ -111,23 +106,22 @@ public class LoadEntitiesFromProtocolBuffersFile extends TrackingCallable<Intege
         }
 
         taskSemaphore.acquireUninterruptibly(MAX_TASK_COUNT);
-        StringBuilder logOutput = new StringBuilder()
-                .append("Imported: ")
-                .append(importCount)
-                .append(" entities in: ")
-                .append(durationString())
-                .append(" with ")
-                .append(exceptionCount.get())
-                .append(" exceptions.")
-                .append("\n");
 
-        LOG.info(logOutput.toString());
         updateProgress(sizeForAll, sizeForAll);
-        updateMessage(logOutput.toString());
         updateTitle("Loaded from " + importFile.getName());
 
         return importCount.get();
     }
 
-     */
+    public String report(){
+        return "Imported: " +
+                importCount +
+                " entities in: " +
+                durationString() +
+                " with " +
+                exceptionCount.get() +
+                " exceptions." +
+                "\n";
+    }
+
 }

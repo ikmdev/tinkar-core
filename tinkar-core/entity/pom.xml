@@ -25,6 +25,16 @@
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
+            <artifactId>common</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>component</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
             <artifactId>caffeine</artifactId>
             <version>${tinkar-jpms-deps.version}</version>
         </dependency>
@@ -46,10 +56,10 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
-        <!--        <dependency>-->
-        <!--            <groupId>org.hl7.tinkar</groupId>-->
-        <!--            <artifactId>protobuf</artifactId>-->
-        <!--            <version>1.2.2</version>-->
-        <!--        </dependency>-->
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>protobuf</artifactId>
+            <version>${tinkar.protobuf.version}</version>
+        </dependency>
     </dependencies>
 </project>

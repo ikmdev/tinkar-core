@@ -8,6 +8,7 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
+    <name>TINKAR: Integration</name>
 
     <artifactId>integration</artifactId>
     <properties>
@@ -50,11 +51,6 @@
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.hl7.tinkar</groupId>
-            <artifactId>protobuf</artifactId>
-            <version>1.2.2</version>
-        </dependency>
-        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
         </dependency>
@@ -93,14 +89,14 @@
                             <overWrite>false</overWrite>
                             <outputDirectory>${project.build.directory}/data</outputDirectory>
                         </artifactItem>
-                        <!--                        <artifactItem>-->
-                        <!--                            <groupId>org.hl7.tinkar</groupId>-->
-                        <!--                            <artifactId>tinkar-solor-us-export.pb</artifactId>-->
-                        <!--                            <version>1.1</version>-->
-                        <!--                            <type>zip</type>-->
-                        <!--                            <overWrite>false</overWrite>-->
-                        <!--                            <outputDirectory>${project.build.directory}/data</outputDirectory>-->
-                        <!--                        </artifactItem>-->
+                        <artifactItem>
+                            <groupId>org.hl7.tinkar</groupId>
+                            <artifactId>tinkar-solor-us-export.pb</artifactId>
+                            <version>1.4</version>
+                            <type>.zip</type> <!-- TODO-aks8m: Need to remove extra '.' in file name -->
+                            <overWrite>false</overWrite>
+                            <outputDirectory>${project.build.directory}/data</outputDirectory>
+                        </artifactItem>
                     </artifactItems>
                     <outputDirectory>${project.build.directory}/data</outputDirectory>
                     <overWriteReleases>false</overWriteReleases>
@@ -124,6 +120,9 @@
                         <configuration>
                             <trimStackTrace>false</trimStackTrace>
                             <includes>**/Test*.java</includes>
+                            <excludes>
+                                <exclude>TestEphemeralProtobufLoad.java</exclude>
+                            </excludes>
                         </configuration>
                     </execution>
                 </executions>
