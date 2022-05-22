@@ -3,8 +3,6 @@ package org.hl7.tinkar.provider.entity;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.auto.service.AutoService;
-import io.smallrye.mutiny.operators.multi.processors.BroadcastProcessor;
-import io.smallrye.mutiny.subscription.BackPressureFailure;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.alert.AlertObject;
 import org.hl7.tinkar.common.alert.AlertStreams;
@@ -13,6 +11,9 @@ import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.common.service.DefaultDescriptionForNidService;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.service.PublicIdService;
+import org.hl7.tinkar.common.util.broadcast.Broadcaster;
+import org.hl7.tinkar.common.util.broadcast.SimpleBroadcaster;
+import org.hl7.tinkar.common.util.broadcast.Subscriber;
 import org.hl7.tinkar.component.Chronology;
 import org.hl7.tinkar.component.Stamp;
 import org.hl7.tinkar.component.Version;
@@ -21,14 +22,12 @@ import org.hl7.tinkar.entity.transaction.Transaction;
 import org.hl7.tinkar.terms.EntityFacade;
 import org.hl7.tinkar.terms.State;
 import org.hl7.tinkar.terms.TinkarTerm;
-import org.reactivestreams.FlowAdapters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.Flow;
 import java.util.function.Consumer;
 
 import static org.hl7.tinkar.terms.TinkarTerm.DESCRIPTION_PATTERN;
@@ -44,23 +43,23 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
     //Multi<Entity<? extends EntityVersion>> chronologyBroadcaster = BroadcastProcessor.create().toHotStream();
     //  <T extends Entity<? extends EntityVersion>>
-    final BroadcastProcessor<Integer> processor;
+    final Broadcaster<Integer> processor;
 
     /**
      * TODO elegant shutdown of entityStream and others
      */
     protected EntityProvider() {
         LOG.info("Constructing EntityProvider");
-        this.processor = BroadcastProcessor.create();
+        this.processor = new SimpleBroadcaster<>();
     }
 
-    @Override
-    public void subscribe(Flow.Subscriber<? super Integer> subscriber) {
-        this.processor.subscribe().withSubscriber(FlowAdapters.toSubscriber(subscriber));
+    public void addSubscriberWithWeakReference(Subscriber<Integer> subscriber) {
+        this.processor.addSubscriberWithWeakReference(subscriber);
     }
 
     @Override
     public String textFast(int nid) {
+
         // TODO use a default language coordinate instead of this hardcode routine.
         return STRING_CACHE.get(nid, integer -> {
             int[] semanticNids = PrimitiveData.get().semanticNidsForComponentOfPattern(nid, DESCRIPTION_PATTERN.nid());
@@ -109,6 +108,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
             }
             return anyString;
         });
+
     }
 
     @Override
@@ -159,6 +159,9 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
     @Override
     public void putEntity(Entity entity) {
+        if (entity.contains(UUID.fromString("f88e125b-b054-566f-bd72-a150df58e1d9"))) {
+            System.out.println("Found watch... ");
+        }
         invalidateCaches(entity);
         ENTITY_CACHE.put(entity.nid(), entity);
         if (entity instanceof StampEntity stampEntity) {
@@ -175,14 +178,10 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         } else {
             PrimitiveData.get().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, entity.getBytes(), entity);
         }
-        try {
-            processor.onNext(entity.nid());
+            processor.dispatch(entity.nid());
             if (entity instanceof SemanticEntity semanticEntity) {
-                processor.onNext(semanticEntity.referencedComponentNid());
+                processor.dispatch(semanticEntity.referencedComponentNid());
             }
-        } catch (BackPressureFailure e) {
-            LOG.warn(e.getLocalizedMessage());
-        }
     }
 
     @Override
@@ -258,7 +257,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     public void notifyRefreshRequired(Transaction transaction) {
         transaction.forEachComponentInTransaction(nid -> {
             Entity.get(nid).ifPresent(entity -> invalidateCaches(entity));
-            this.processor.onNext(nid);
+            this.processor.dispatch(nid);
         });
     }
 
@@ -307,5 +306,15 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
             ENTITY_CACHE.invalidateAll();
             STAMP_CACHE.invalidateAll();
         }
+    }
+
+    @Override
+    public void dispatch(Integer item) {
+        this.processor.dispatch(item);
+    }
+
+    @Override
+    public void removeSubscriber(Subscriber<Integer> subscriber) {
+        this.processor.removeSubscriber(subscriber);
     }
 }

@@ -5,10 +5,7 @@ import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.MutableSet;
 import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
-import org.hl7.tinkar.common.binary.Decoder;
-import org.hl7.tinkar.common.binary.DecoderInput;
-import org.hl7.tinkar.common.binary.Encoder;
-import org.hl7.tinkar.common.binary.EncoderOutput;
+import org.hl7.tinkar.common.binary.*;
 import org.hl7.tinkar.common.id.IntIds;
 import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.common.service.PrimitiveData;
@@ -77,16 +74,14 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
 
     @Decoder
     public static StampPathImmutable make(DecoderInput in) {
-        switch (in.encodingFormatVersion()) {
-            case MARSHAL_VERSION:
+        switch (Encodable.checkVersion(in)) {
+            default:
                 StampPathImmutable stampPath = new StampPathImmutable(in);
                 if (stampPath.pathConceptNid == TinkarTerm.UNINITIALIZED_COMPONENT.nid()) {
                     return stampPath;
                 }
                 return SINGLETONS.computeIfAbsent(stampPath.pathConceptNid(),
                         pathNid -> stampPath);
-            default:
-                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
         }
     }
 

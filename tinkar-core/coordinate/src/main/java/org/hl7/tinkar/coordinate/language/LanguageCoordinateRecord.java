@@ -2,10 +2,7 @@ package org.hl7.tinkar.coordinate.language;
 
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.hl7.tinkar.common.binary.Decoder;
-import org.hl7.tinkar.common.binary.DecoderInput;
-import org.hl7.tinkar.common.binary.Encoder;
-import org.hl7.tinkar.common.binary.EncoderOutput;
+import org.hl7.tinkar.common.binary.*;
 import org.hl7.tinkar.common.id.IntIdList;
 import org.hl7.tinkar.common.id.IntIds;
 import org.hl7.tinkar.common.service.PrimitiveData;
@@ -35,11 +32,9 @@ public final record LanguageCoordinateRecord(int languageConceptNid,
 
     @Decoder
     public static LanguageCoordinateRecord decode(DecoderInput in) {
-        switch (in.encodingFormatVersion()) {
-            case MARSHAL_VERSION:
-                return new LanguageCoordinateRecord(in);
+        switch (Encodable.checkVersion(in)) {
             default:
-                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
+                return new LanguageCoordinateRecord(in);
         }
     }
 

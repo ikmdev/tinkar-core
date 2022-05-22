@@ -30,9 +30,11 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
@@ -186,22 +188,24 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
     @Override
     public int nidForUuids(UUID... uuids) {
         try {
-            this.uuidsLoadedLatch.await();
-            if (uuids.length == 1) {
-                return uuidToNidMap.computeIfAbsent(uuids[0], uuidKey -> newNid());
-            }
-            int nid = Integer.MAX_VALUE;
-            for (UUID uuid : uuids) {
-                if (nid == Integer.MAX_VALUE) {
-                    nid = uuidToNidMap.computeIfAbsent(uuids[0], uuidKey -> newNid());
-                } else {
-                    uuidToNidMap.put(uuid, nid);
+            if (this.uuidsLoadedLatch.await(15, TimeUnit.SECONDS)) {
+                if (uuids.length == 1) {
+                    return uuidToNidMap.computeIfAbsent(uuids[0], uuidKey -> newNid());
                 }
+                int nid = Integer.MAX_VALUE;
+                for (UUID uuid : uuids) {
+                    if (nid == Integer.MAX_VALUE) {
+                        nid = uuidToNidMap.computeIfAbsent(uuids[0], uuidKey -> newNid());
+                    } else {
+                        uuidToNidMap.put(uuid, nid);
+                    }
+                }
+                if (nid == Integer.MIN_VALUE) {
+                    throw new IllegalStateException("nid cannot be Integer.MIN_VALUE");
+                }
+                return nid;
             }
-            if (nid == Integer.MIN_VALUE) {
-                throw new IllegalStateException("nid cannot be Integer.MIN_VALUE");
-            }
-            return nid;
+            throw new RuntimeException("UUID to nid map not loaded. Searching for nid to: " + Arrays.toString(uuids));
         } catch (InterruptedException e) {
             LOG.error(e.getLocalizedMessage(), e);
             throw new RuntimeException(e);

@@ -27,11 +27,15 @@ public interface PublicId extends Comparable<PublicId> {
 
     UUID[] asUuidArray();
 
+    int uuidCount();
+
+    default boolean contains(UUID uuid) {
+        return (asUuidList().contains(uuid));
+    }
+
     default ImmutableList<UUID> asUuidList() {
         return Lists.immutable.of(asUuidArray());
     }
-
-    int uuidCount();
 
     /**
      * Presents ordered list of longs, from the UUIDs in the order: msb, lsb, msb, lsb, ...

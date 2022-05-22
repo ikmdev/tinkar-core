@@ -4,9 +4,7 @@ import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.hl7.tinkar.common.sets.ConcurrentHashSet;
 import org.hl7.tinkar.common.util.time.Stopwatch;
 import org.hl7.tinkar.component.FieldDataType;
-import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.entity.EntityRecordFactory;
-import org.hl7.tinkar.entity.SemanticEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,6 +82,8 @@ public class UuidNidCollector implements ObjIntConsumer<byte[]> {
                 totalCount.incrementAndGet();
         }
         if (typeToProcess == true) {
+            EntityRecordFactory.collectUuids(bytes, patternElementNidsMap, uuidToNidMap);
+            /*
             Entity<?> entity = EntityRecordFactory.make(bytes);
             if (entity instanceof SemanticEntity semanticEntity) {
                 patternElementNidsMap.getIfAbsentPut(semanticEntity.patternNid(), integer -> new ConcurrentHashSet())
@@ -92,6 +92,8 @@ public class UuidNidCollector implements ObjIntConsumer<byte[]> {
             for (UUID uuid : entity.asUuidArray()) {
                 uuidToNidMap.put(uuid, entity.nid());
             }
+
+             */
         }
     }
 

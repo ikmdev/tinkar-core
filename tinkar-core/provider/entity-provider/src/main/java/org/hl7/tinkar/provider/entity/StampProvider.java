@@ -6,6 +6,7 @@ import org.eclipse.collections.impl.factory.primitive.LongLists;
 import org.hl7.tinkar.common.id.IntIdSet;
 import org.hl7.tinkar.common.id.IntIds;
 import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.common.util.broadcast.Subscriber;
 import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.entity.util.EntityProcessor;
@@ -33,7 +34,7 @@ import java.util.concurrent.Flow;
  */
 
 @AutoService({StampService.class})
-public class StampProvider extends EntityProcessor implements StampService, Flow.Subscriber<Integer> {
+public class StampProvider extends EntityProcessor implements StampService, Subscriber<Integer> {
     private static final Logger LOG = LoggerFactory.getLogger(StampProvider.class);
 
     final ConcurrentHashMap<Integer, StampEntity> stamps = new ConcurrentHashMap<>();
@@ -42,10 +43,9 @@ public class StampProvider extends EntityProcessor implements StampService, Flow
     final ConcurrentSkipListSet<Integer> modules = new ConcurrentSkipListSet<>();
     final ConcurrentSkipListSet<Integer> paths = new ConcurrentSkipListSet<>();
     final ConcurrentSkipListSet<Integer> stampNids = new ConcurrentSkipListSet<>();
-    Flow.Subscription subscription;
 
     public StampProvider() {
-        EntityService.get().subscribe(this);
+        EntityService.get().addSubscriberWithWeakReference(this);
         PrimitiveData.get().forEachParallel(this);
     }
 
@@ -90,16 +90,10 @@ public class StampProvider extends EntityProcessor implements StampService, Flow
         return LongLists.immutable.ofAll(times);
     }
 
-    @Override
-    public void onSubscribe(Flow.Subscription s) {
-        LOG.info("Subscribed to Entity Stream");
-        this.subscription = s;
-        this.subscription.request(1);
-    }
+
 
     @Override
     public void onNext(Integer nid) {
-        this.subscription.request(1);
         Entity entity = Entity.provider().getEntityFast(nid);
         if (entity instanceof StampEntity stampEntity) {
             stamps.put(stampEntity.nid(), stampEntity);
@@ -109,15 +103,5 @@ public class StampProvider extends EntityProcessor implements StampService, Flow
             paths.add(stampEntity.pathNid());
             stampNids.add(stampEntity.nid());
         }
-    }
-
-    @Override
-    public void onError(Throwable t) {
-        LOG.error(t.getLocalizedMessage(), t);
-    }
-
-    @Override
-    public void onComplete() {
-        LOG.info("Entity Stream complete");
     }
 }

@@ -2,10 +2,7 @@ package org.hl7.tinkar.coordinate.navigation;
 
 
 import io.soabase.recordbuilder.core.RecordBuilder;
-import org.hl7.tinkar.common.binary.Decoder;
-import org.hl7.tinkar.common.binary.DecoderInput;
-import org.hl7.tinkar.common.binary.Encoder;
-import org.hl7.tinkar.common.binary.EncoderOutput;
+import org.hl7.tinkar.common.binary.*;
 import org.hl7.tinkar.common.id.IntIdList;
 import org.hl7.tinkar.common.id.IntIdSet;
 import org.hl7.tinkar.common.id.IntIds;
@@ -71,13 +68,11 @@ public record NavigationCoordinateRecord(IntIdSet navigationPatternNids,
 
     @Decoder
     public static NavigationCoordinateRecord decode(DecoderInput in) {
-        switch (in.encodingFormatVersion()) {
-            case MARSHAL_VERSION:
+        switch (Encodable.checkVersion(in)) {
+            default:
                 return new NavigationCoordinateRecord(IntIds.set.of(in.readNidArray()),
                         StateSet.decode(in),
                         in.readBoolean(), IntIds.list.of(in.readNidArray()));
-            default:
-                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
         }
     }
 

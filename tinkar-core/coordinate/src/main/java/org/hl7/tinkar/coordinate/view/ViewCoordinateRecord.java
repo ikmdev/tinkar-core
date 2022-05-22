@@ -4,10 +4,8 @@ import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
-import org.hl7.tinkar.common.binary.Decoder;
-import org.hl7.tinkar.common.binary.DecoderInput;
-import org.hl7.tinkar.common.binary.Encoder;
-import org.hl7.tinkar.common.binary.EncoderOutput;
+import org.hl7.tinkar.common.binary.*;
+import org.hl7.tinkar.coordinate.Coordinates;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 import org.hl7.tinkar.coordinate.edit.EditCoordinate;
 import org.hl7.tinkar.coordinate.edit.EditCoordinateRecord;
@@ -58,8 +56,8 @@ public record ViewCoordinateRecord(StampCoordinateRecord stampCoordinate,
 
     @Decoder
     public static ViewCoordinateRecord decode(DecoderInput in) {
-        switch (in.encodingFormatVersion()) {
-            case MARSHAL_VERSION:
+        switch (Encodable.checkVersion(in)) {
+            default:
                 StampCoordinateRecord stampCoordinateRecord = StampCoordinateRecord.decode(in);
                 int languageCoordinateCount = in.readInt();
                 MutableList<LanguageCoordinateRecord> languageCoordinateRecords = Lists.mutable.ofInitialCapacity(languageCoordinateCount);
@@ -68,14 +66,19 @@ public record ViewCoordinateRecord(StampCoordinateRecord stampCoordinate,
                 }
                 LogicCoordinateRecord logicCoordinateRecord = LogicCoordinateRecord.decode(in);
                 NavigationCoordinateRecord navigationCoordinateRecord = NavigationCoordinateRecord.decode(in);
-                EditCoordinateRecord editCoordinateRecord = EditCoordinateRecord.decode(in);
+                if (in.encodingFormatVersion() > FIRST_VERSION) {
+                    EditCoordinateRecord editCoordinateRecord = EditCoordinateRecord.decode(in);
+                    return new ViewCoordinateRecord(stampCoordinateRecord,
+                            languageCoordinateRecords.toImmutable(),
+                            logicCoordinateRecord,
+                            navigationCoordinateRecord,
+                            editCoordinateRecord);
+                }
                 return new ViewCoordinateRecord(stampCoordinateRecord,
                         languageCoordinateRecords.toImmutable(),
                         logicCoordinateRecord,
                         navigationCoordinateRecord,
-                        editCoordinateRecord);
-            default:
-                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
+                        Coordinates.Edit.Default());
         }
     }
 

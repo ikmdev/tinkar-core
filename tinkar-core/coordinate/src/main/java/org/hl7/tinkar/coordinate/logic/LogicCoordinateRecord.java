@@ -2,10 +2,7 @@ package org.hl7.tinkar.coordinate.logic;
 
 
 import io.soabase.recordbuilder.core.RecordBuilder;
-import org.hl7.tinkar.common.binary.Decoder;
-import org.hl7.tinkar.common.binary.DecoderInput;
-import org.hl7.tinkar.common.binary.Encoder;
-import org.hl7.tinkar.common.binary.EncoderOutput;
+import org.hl7.tinkar.common.binary.*;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 import org.hl7.tinkar.terms.ConceptFacade;
@@ -52,13 +49,10 @@ public record LogicCoordinateRecord(int classifierNid,
 
     @Decoder
     public static LogicCoordinateRecord decode(DecoderInput in) {
-        switch (in.encodingFormatVersion()) {
-            case 1:
-            case MARSHAL_VERSION:
+        switch (Encodable.checkVersion(in)) {
+            default:
                 return new LogicCoordinateRecord(in.readNid(), in.readNid(), in.readNid(), in.readNid(),
                         in.readNid(), in.readNid(), in.readNid(), in.readNid());
-            default:
-                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
         }
     }
 

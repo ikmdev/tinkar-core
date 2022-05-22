@@ -2,10 +2,7 @@ package org.hl7.tinkar.common.sets;
 
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public class ConcurrentHashSet<T extends Object> implements Set<T> {
     final ConcurrentHashMap<T, T> hashMap;
@@ -16,6 +13,14 @@ public class ConcurrentHashSet<T extends Object> implements Set<T> {
 
     public ConcurrentHashSet() {
         this.hashMap = ConcurrentHashMap.newMap();
+    }
+
+    public ConcurrentHashSet(Enumeration<T> keys) {
+        this.hashMap = ConcurrentHashMap.newMap();
+        while (keys.hasMoreElements()) {
+            T value = keys.nextElement();
+            hashMap.put(value, value);
+        }
     }
 
     @Override

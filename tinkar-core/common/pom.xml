@@ -23,11 +23,6 @@
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
-            <artifactId>mutiny</artifactId>
-            <version>${tinkar-jpms-deps.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.hl7.tinkar</groupId>
             <artifactId>eclipse-collections</artifactId>
             <version>${tinkar-jpms-deps.version}</version>
         </dependency>

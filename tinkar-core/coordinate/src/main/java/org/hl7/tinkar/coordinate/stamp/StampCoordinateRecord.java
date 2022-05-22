@@ -39,10 +39,7 @@
 package org.hl7.tinkar.coordinate.stamp;
 
 import io.soabase.recordbuilder.core.RecordBuilder;
-import org.hl7.tinkar.common.binary.Decoder;
-import org.hl7.tinkar.common.binary.DecoderInput;
-import org.hl7.tinkar.common.binary.Encoder;
-import org.hl7.tinkar.common.binary.EncoderOutput;
+import org.hl7.tinkar.common.binary.*;
 import org.hl7.tinkar.common.id.IntIdList;
 import org.hl7.tinkar.common.id.IntIdSet;
 import org.hl7.tinkar.common.id.IntIds;
@@ -77,15 +74,13 @@ public record StampCoordinateRecord(StateSet allowedStates, StampPositionRecord 
 
     @Decoder
     public static StampCoordinateRecord decode(DecoderInput in) {
-        switch (in.encodingFormatVersion()) {
-            case MARSHAL_VERSION:
+        switch (Encodable.checkVersion(in)) {
+            default:
                 return new StampCoordinateRecord(StateSet.decode(in),
                         StampPositionRecord.decode(in),
                         IntIds.set.of(in.readNidArray()),
                         IntIds.set.of(in.readNidArray()),
                         IntIds.list.of(in.readNidArray()));
-            default:
-                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
         }
     }
 

@@ -122,11 +122,9 @@ public class StampCalculatorWithCache implements StampCalculator {
         setupPathNidSegmentMap(filter.stampPosition().toStampPositionImmutable());
         this.allowedStates = filter.allowedStates();
         this.cacheInvalidationSubscriber.addCaches(patternVersionCache, latestCache);
-        Entity.provider().subscribe(this.cacheInvalidationSubscriber);
-        this.cacheInvalidationSubscriber.subscription().request(1);
+        Entity.provider().addSubscriberWithWeakReference(this.cacheInvalidationSubscriber);
         this.cacheInvalidationIfPatternSubscriber.addCaches(indexForMeaningCache, indexForPurposeCache);
-        Entity.provider().subscribe(this.cacheInvalidationIfPatternSubscriber);
-        this.cacheInvalidationIfPatternSubscriber.subscription().request(1);
+        Entity.provider().addSubscriberWithWeakReference(this.cacheInvalidationIfPatternSubscriber);
     }
 
     /**

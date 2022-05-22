@@ -1,10 +1,7 @@
 package org.hl7.tinkar.coordinate.stamp;
 
 import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
-import org.hl7.tinkar.common.binary.Decoder;
-import org.hl7.tinkar.common.binary.DecoderInput;
-import org.hl7.tinkar.common.binary.Encoder;
-import org.hl7.tinkar.common.binary.EncoderOutput;
+import org.hl7.tinkar.common.binary.*;
 import org.hl7.tinkar.common.util.uuid.UuidT5Generator;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 import org.hl7.tinkar.terms.State;
@@ -45,16 +42,14 @@ public class StateSet implements ImmutableCoordinate, Iterable<State> {
 
     @Decoder
     public static StateSet decode(DecoderInput in) {
-        switch (in.encodingFormatVersion()) {
-            case MARSHAL_VERSION:
+        switch (Encodable.checkVersion(in)) {
+            default:
                 int size = in.readVarInt();
                 List<State> values = new ArrayList<>(size);
                 for (int i = 0; i < size; i++) {
                     values.add(State.valueOf(in.readString()));
                 }
                 return SINGLETONS.computeIfAbsent(new StateSet(values), StateSet -> StateSet);
-            default:
-                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
         }
     }
 

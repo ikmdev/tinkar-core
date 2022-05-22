@@ -48,7 +48,15 @@ public interface Encodable {
      * If a component or version encoding format changes, bump the encoding version for the entire
      * set of marshalable objects.
      */
-    int MARSHAL_VERSION = 10;
+    int FIRST_VERSION = 10;
+    int LATEST_VERSION = 11;
+
+    static int checkVersion(DecoderInput in) {
+        if (in.encodingFormatVersion < FIRST_VERSION || in.encodingFormatVersion > LATEST_VERSION) {
+            EncodingExceptionUnchecked.makeWrongVersionException(FIRST_VERSION, LATEST_VERSION, in);
+        }
+        return in.encodingFormatVersion;
+    }
 
     static <T> T decode(byte[] bytes) {
         try {
@@ -127,7 +135,7 @@ public interface Encodable {
 
     default EncoderOutput encode() {
         EncoderOutput encoderOutput = new EncoderOutput();
-        encoderOutput.writeInt(MARSHAL_VERSION);
+        encoderOutput.writeInt(FIRST_VERSION);
         encoderOutput.writeString(this.getClass().getName());
         encode(encoderOutput);
         return encoderOutput;

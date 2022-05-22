@@ -24,15 +24,13 @@ public class VertexSortNaturalOrder implements VertexSort, Encodable {
 
     @Decoder
     public static VertexSortNaturalOrder decode(DecoderInput in) {
-        switch (in.encodingFormatVersion()) {
-            case MARSHAL_VERSION:
+        switch (Encodable.checkVersion(in)) {
+            default:
                 // Using a static method rather than a constructor eliminates the need for
                 // a readResolve method, but allows the implementation to decide how
                 // to handle special cases. This is the equivalent of readresolve, since it
                 // returns an existing object always.
                 return SINGLETON;
-            default:
-                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
         }
     }
 

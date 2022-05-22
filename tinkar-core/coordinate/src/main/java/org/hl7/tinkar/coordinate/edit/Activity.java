@@ -18,11 +18,9 @@ public enum Activity implements Encodable {
 
     @Decoder
     public static Activity decode(DecoderInput in) {
-        switch (in.encodingFormatVersion()) {
-            case MARSHAL_VERSION:
-                return Activity.valueOf(in.readString());
+        switch (Encodable.checkVersion(in)) {
             default:
-                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
+                return Activity.valueOf(in.readString());
         }
     }
 

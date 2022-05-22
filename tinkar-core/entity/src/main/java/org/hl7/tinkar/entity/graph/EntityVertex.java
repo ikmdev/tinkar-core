@@ -207,9 +207,11 @@ public class EntityVertex implements Vertex, VertexId {
      */
     public void commitProperties() {
         if (uncommittedProperties != null & !uncommittedProperties.isEmpty()) {
-            for (int key : this.properties.keySet().toArray()) {
-                if (!this.uncommittedProperties.containsKey(key)) {
-                    this.uncommittedProperties.put(key, this.properties.get(key));
+            if (this.properties != null) {
+                for (int key : this.properties.keySet().toArray()) {
+                    if (!this.uncommittedProperties.containsKey(key)) {
+                        this.uncommittedProperties.put(key, this.properties.get(key));
+                    }
                 }
             }
             this.properties = this.uncommittedProperties.toImmutable();

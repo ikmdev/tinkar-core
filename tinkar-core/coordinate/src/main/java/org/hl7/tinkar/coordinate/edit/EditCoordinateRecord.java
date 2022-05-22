@@ -2,10 +2,7 @@ package org.hl7.tinkar.coordinate.edit;
 
 import com.google.auto.service.AutoService;
 import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
-import org.hl7.tinkar.common.binary.Decoder;
-import org.hl7.tinkar.common.binary.DecoderInput;
-import org.hl7.tinkar.common.binary.Encoder;
-import org.hl7.tinkar.common.binary.EncoderOutput;
+import org.hl7.tinkar.common.binary.*;
 import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 import org.hl7.tinkar.entity.Entity;
@@ -59,12 +56,10 @@ public record EditCoordinateRecord(int authorNid, int defaultModuleNid, int prom
 
     @Decoder
     public static EditCoordinateRecord decode(DecoderInput in) {
-        switch (in.encodingFormatVersion()) {
-            case MARSHAL_VERSION:
+        switch (Encodable.checkVersion(in)) {
+            default:
                 return SINGLETONS.computeIfAbsent(new EditCoordinateRecord(in.readNid(), in.readNid(), in.readNid(), in.readNid(), in.readNid()),
                         editCoordinateImmutable -> editCoordinateImmutable);
-            default:
-                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
         }
     }
 

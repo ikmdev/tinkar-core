@@ -1,10 +1,7 @@
 package org.hl7.tinkar.coordinate.stamp;
 
 import io.soabase.recordbuilder.core.RecordBuilder;
-import org.hl7.tinkar.common.binary.Decoder;
-import org.hl7.tinkar.common.binary.DecoderInput;
-import org.hl7.tinkar.common.binary.Encoder;
-import org.hl7.tinkar.common.binary.EncoderOutput;
+import org.hl7.tinkar.common.binary.*;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.time.DateTimeUtil;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
@@ -18,11 +15,9 @@ public record StampBranchRecord(int branchConceptNid, long branchOriginTime)
 
     @Decoder
     public static StampBranchRecord decode(DecoderInput in) {
-        switch (in.encodingFormatVersion()) {
-            case MARSHAL_VERSION:
-                return make(in.readNid(), in.readLong());
+        switch (Encodable.checkVersion(in)) {
             default:
-                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
+                return make(in.readNid(), in.readLong());
         }
     }
 

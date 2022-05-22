@@ -3,6 +3,7 @@ package org.hl7.tinkar.entity;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
+import org.hl7.tinkar.common.alert.AlertStreams;
 import org.hl7.tinkar.common.id.IntIdSet;
 import org.hl7.tinkar.common.id.IntIds;
 import org.hl7.tinkar.common.id.PublicId;
@@ -126,10 +127,14 @@ public interface Entity<T extends EntityVersion>
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName());
         sb.append("{");
-        Optional<String> stringOptional = PrimitiveData.textOptional(this.nid());
-        if (stringOptional.isPresent()) {
-            sb.append(stringOptional.get());
-            sb.append(' ');
+        try {
+            Optional<String> stringOptional = PrimitiveData.textOptional(this.nid());
+            if (stringOptional.isPresent()) {
+                sb.append(stringOptional.get());
+                sb.append(' ');
+            }
+        } catch (Throwable t) {
+            AlertStreams.dispatchToRoot(t);
         }
         sb.append("<");
         sb.append(nid());

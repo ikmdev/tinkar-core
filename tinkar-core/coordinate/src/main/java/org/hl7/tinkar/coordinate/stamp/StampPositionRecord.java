@@ -3,10 +3,7 @@ package org.hl7.tinkar.coordinate.stamp;
 
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.set.ImmutableSet;
-import org.hl7.tinkar.common.binary.Decoder;
-import org.hl7.tinkar.common.binary.DecoderInput;
-import org.hl7.tinkar.common.binary.Encoder;
-import org.hl7.tinkar.common.binary.EncoderOutput;
+import org.hl7.tinkar.common.binary.*;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.time.DateTimeUtil;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
@@ -38,11 +35,9 @@ public record StampPositionRecord(long time, int pathForPositionNid)
 
     @Decoder
     public static StampPositionRecord decode(DecoderInput in) {
-        switch (in.encodingFormatVersion()) {
-            case MARSHAL_VERSION:
-                return new StampPositionRecord(in.readLong(), in.readInt());
+        switch (Encodable.checkVersion(in)) {
             default:
-                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
+                return new StampPositionRecord(in.readLong(), in.readInt());
         }
     }
 

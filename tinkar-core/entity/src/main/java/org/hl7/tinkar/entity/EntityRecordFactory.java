@@ -9,8 +9,10 @@ import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
+import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.hl7.tinkar.common.id.*;
 import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.common.sets.ConcurrentHashSet;
 import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.component.graph.DiGraph;
 import org.hl7.tinkar.component.graph.DiTree;
@@ -28,12 +30,13 @@ import java.time.Instant;
 import java.util.UUID;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hl7.tinkar.component.FieldDataType.SEMANTIC_CHRONOLOGY;
 
 public class EntityRecordFactory {
+    private static final Logger LOG = LoggerFactory.getLogger(EntityRecordFactory.class);
     public static final byte ENTITY_FORMAT_VERSION = 1;
     public static final int DEFAULT_ENTITY_SIZE = 32767;
     public static final int DEFAULT_VERSION_SIZE = 16384;
-    private static final Logger LOG = LoggerFactory.getLogger(EntityRecordFactory.class);
     public static int MAX_ENTITY_SIZE = DEFAULT_ENTITY_SIZE;
     public static int MAX_VERSION_SIZE = DEFAULT_VERSION_SIZE;
 
@@ -318,10 +321,52 @@ public class EntityRecordFactory {
             case ConceptVersion conceptVersion -> new ConceptVersionRecord((ConceptRecord) entity, conceptVersion);
             case PatternVersion patternVersion -> PatternVersionRecord.make((PatternRecord) entity, patternVersion);
             case SemanticVersion semanticVersion -> new SemanticVersionRecord((SemanticRecord) entity, semanticVersion);
-            case Stamp stamp -> new StampVersionRecord((StampRecord) entity, stamp);
+            case Stamp stamp -> {
+                if (entity instanceof StampRecord stampRecord) {
+                    yield new StampVersionRecord(stampRecord, stamp);
+                }
+                throw new IllegalStateException("Stamp version for an entity of type: " + entity.getClass().getName());
+            }
 
             default -> throw new IllegalStateException("Unexpected value: " + version);
         };
+    }
+
+    public static void collectUuids(byte[] data, ConcurrentHashMap<Integer, ConcurrentHashSet<Integer>> patternElementNidsMap,
+                                    ConcurrentHashMap<UUID, Integer> uuidToNidMap) {
+        ByteBuf buf = ByteBuf.wrapForReading(data);
+        // bytes starts with number of arrays (int = 4 bytes), then size of first array (int = 4 bytes), then type token
+        int numberOfArrays = buf.readInt();
+        int sizeOfFirstArray = buf.readInt();
+        byte formatVersion = buf.readByte();
+        FieldDataType fieldDataType = FieldDataType.fromToken(buf.readByte());
+        if (formatVersion != ENTITY_FORMAT_VERSION) {
+            throw new IllegalStateException("Unsupported entity format version: " + formatVersion);
+        }
+        int nid = buf.readInt();
+        long mostSignificantBits = buf.readLong();
+        long leastSignificantBits = buf.readLong();
+        uuidToNidMap.put(new UUID(mostSignificantBits, leastSignificantBits), nid);
+        int additionalUuidLongCount = buf.readByte();
+        long[] additionalUuidLongs = null;
+
+        if (additionalUuidLongCount > 0) {
+            additionalUuidLongs = new long[additionalUuidLongCount];
+            for (int i = 0; i < additionalUuidLongs.length; i++) {
+                additionalUuidLongs[i] = buf.readLong();
+            }
+            for (int i = 0; i < additionalUuidLongCount; i += 2) {
+                uuidToNidMap.put(new UUID(additionalUuidLongs[i], additionalUuidLongs[i + 1]), nid);
+            }
+        }
+
+        if (fieldDataType == SEMANTIC_CHRONOLOGY) {
+            int referencedComponentNid = buf.readInt();
+            int patternNid = buf.readInt();
+            int versionCount = buf.readInt();
+            patternElementNidsMap.getIfAbsentPut(patternNid, integer -> new ConcurrentHashSet())
+                    .add(nid);
+        }
     }
 
     public static <T extends Entity<V>, V extends EntityVersion> T make(byte[] data) {
@@ -430,12 +475,42 @@ public class EntityRecordFactory {
         // but is used for merge functions for concurrent write of versions using CAS...
         int bytesInVersion = readBuf.readInt();
         byte token = readBuf.readByte();
-        if (entity.versionDataType().token != token) {
-            throw new IllegalStateException("Wrong token for type: " + token + " expecting " + entity.versionDataType() +
-                    " " + entity.versionDataType().token +
-                    " processing " + entity.getClass().getSimpleName() + " " + entity.publicId());
-        }
         int stampNid = readBuf.readInt();
+        if (entity.versionDataType().token != token) {
+            // f88e125b-b054-566f-bd72-a150df58e1d9 = Tinkar base model component pattern
+            // It is the description for the membership pattern for "path"
+            StringBuilder sb = new StringBuilder("Processing: " + entity.entityToString());
+            sb = sb.append(" Wrong token for type: ");
+            sb.append(FieldDataType.fromToken(token));
+            sb.append(" ");
+            sb.append(token);
+            sb.append(" expecting ");
+            sb.append(entity.versionDataType());
+            sb.append(" ");
+            sb.append(entity.versionDataType().token);
+            sb.append(" processing ");
+            sb.append(entity.getClass().getSimpleName());
+            sb.append(" ");
+            sb.append(entity.publicId());
+            if (entity.versionDataType().token == 6) {
+
+//                int fieldCount = readBuf.readInt();
+//                RecordListBuilder<Object> fields = RecordListBuilder.make();
+//                for (int i = 0; i < fieldCount; i++) {
+//                    FieldDataType dataType = FieldDataType.fromToken(readBuf.readByte());
+//                    fields.add(readDataType(readBuf, dataType, formatVersion));
+//                }
+//                fields.build();
+//
+//
+//                sb.append(new SemanticVersionRecord(null, stampNid, fields));
+            }
+
+            String exceptionMessage = sb.toString();
+            System.err.println(exceptionMessage);
+            throw new IllegalStateException(exceptionMessage);
+        }
+
         return switch (entity) {
             case ConceptRecord conceptRecord -> new ConceptVersionRecord(conceptRecord, stampNid);
             case SemanticRecord semanticRecord -> {

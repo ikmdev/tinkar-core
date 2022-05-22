@@ -14,7 +14,6 @@ module org.hl7.tinkar.common {
     requires transitive org.hl7.tinkar.activej;
     requires transitive org.hl7.tinkar.eclipse.collections;
     requires transitive org.hl7.tinkar.roaring;
-    requires transitive org.hl7.tinkar.mutiny;
     requires transitive org.slf4j;
     requires transitive static org.hl7.tinkar.autoservice;
 
@@ -34,6 +33,7 @@ module org.hl7.tinkar.common {
     exports org.hl7.tinkar.common.sets;
     exports org.hl7.tinkar.common.flow;
     exports org.hl7.tinkar.common.id.impl;
+    exports org.hl7.tinkar.common.util.broadcast;
 
     provides CachingService with
             TinkExecutor.CacheProvider,

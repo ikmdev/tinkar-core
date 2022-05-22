@@ -1,7 +1,10 @@
 package org.hl7.tinkar.common.id;
 
 
-import org.hl7.tinkar.common.binary.*;
+import org.hl7.tinkar.common.binary.Decoder;
+import org.hl7.tinkar.common.binary.DecoderInput;
+import org.hl7.tinkar.common.binary.Encodable;
+import org.hl7.tinkar.common.binary.EncoderOutput;
 import org.hl7.tinkar.common.util.text.NaturalOrder;
 
 /**
@@ -31,10 +34,10 @@ public class PublicIdStringKey<T> implements Comparable<PublicIdStringKey>, Enco
 
     @Decoder
     public static PublicIdStringKey decode(DecoderInput in) {
-        if (in.encodingFormatVersion() == MARSHAL_VERSION) {
-            return new PublicIdStringKey(PublicIds.of(in.readUuidArray()), in.readString());
+        switch (Encodable.checkVersion(in)) {
+            default:
+                return new PublicIdStringKey(PublicIds.of(in.readUuidArray()), in.readString());
         }
-        throw EncodingExceptionUnchecked.makeWrongVersionException(MARSHAL_VERSION, in);
     }
 
     @Override

@@ -1,10 +1,7 @@
 package org.hl7.tinkar.coordinate.logic;
 
 import org.hl7.tinkar.collection.ConcurrentReferenceHashMap;
-import org.hl7.tinkar.common.binary.Decoder;
-import org.hl7.tinkar.common.binary.DecoderInput;
-import org.hl7.tinkar.common.binary.Encoder;
-import org.hl7.tinkar.common.binary.EncoderOutput;
+import org.hl7.tinkar.common.binary.*;
 import org.hl7.tinkar.coordinate.ImmutableCoordinate;
 
 import java.util.*;
@@ -46,16 +43,14 @@ public class PremiseSet implements ImmutableCoordinate {
 
     @Decoder
     public static Object decode(DecoderInput in) {
-        switch (in.encodingFormatVersion()) {
-            case MARSHAL_VERSION:
+        switch (Encodable.checkVersion(in)) {
+            default:
                 int size = in.readVarInt();
                 List<PremiseType> values = new ArrayList<>(size);
                 for (int i = 0; i < size; i++) {
                     values.add(PremiseType.valueOf(in.readString()));
                 }
                 return SINGLETONS.computeIfAbsent(new PremiseSet(values), statusSet -> statusSet);
-            default:
-                throw new UnsupportedOperationException("Unsupported version: " + in.encodingFormatVersion());
         }
     }
 

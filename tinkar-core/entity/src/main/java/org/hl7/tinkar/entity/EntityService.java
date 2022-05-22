@@ -4,6 +4,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.id.IntIdList;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.id.PublicIds;
+import org.hl7.tinkar.common.util.broadcast.Broadcaster;
 import org.hl7.tinkar.component.Chronology;
 import org.hl7.tinkar.component.ChronologyService;
 import org.hl7.tinkar.component.Component;
@@ -17,7 +18,7 @@ import java.util.*;
 import java.util.concurrent.Flow;
 import java.util.function.Consumer;
 
-public interface EntityService extends ChronologyService, Flow.Publisher<Integer> {
+public interface EntityService extends ChronologyService, Broadcaster<Integer> {
     static EntityService get() {
         return EntityServiceFinder.INSTANCE.get();
     }

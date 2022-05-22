@@ -53,8 +53,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
         this.stampCalculator = StampCalculatorWithCache.getCalculator(stampFilter);
         this.languageCoordinateList = languageCoordinateList;
         this.cacheInvalidationSubscriber.addCaches(preferredCache, fqnCache, descriptionCache, definitionCache, descriptionsForComponentCache);
-        Entity.provider().subscribe(this.cacheInvalidationSubscriber);
-        this.cacheInvalidationSubscriber.subscription().request(1);
+        Entity.provider().addSubscriberWithWeakReference(this.cacheInvalidationSubscriber);
     }
 
     /**

@@ -143,7 +143,12 @@ public class PrimitiveData {
     }
 
     public static Optional<String> textOptional(int nid) {
-        return defaultDescriptionForNidServiceSingleton.textOptional(nid);
+        try {
+            return defaultDescriptionForNidServiceSingleton.textOptional(nid);
+        } catch (RuntimeException ex) {
+            AlertStreams.dispatchToRoot(ex);
+            return Optional.empty();
+        }
     }
 
     public static String textWithNid(int nid) {
