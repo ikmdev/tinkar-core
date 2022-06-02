@@ -2,8 +2,11 @@ package org.hl7.tinkar.entity;
 
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.common.util.Validator;
 import org.hl7.tinkar.common.util.time.DateTimeUtil;
 import org.hl7.tinkar.component.Stamp;
+
+import java.util.Objects;
 
 /**
  * Maybe handle commit by listening to commit reactive stream, and if version is committed, add it to the chronology?
@@ -13,6 +16,15 @@ public record StampVersionRecord(StampRecord chronology,
                                  int stateNid, long time, int authorNid,
                                  int moduleNid,
                                  int pathNid) implements StampEntityVersion, StampVersionRecordBuilder.With {
+
+
+    public StampVersionRecord {
+        Validator.notZero(stateNid);
+        Validator.notZero(time);
+        Validator.notZero(authorNid);
+        Validator.notZero(moduleNid);
+        Validator.notZero(pathNid);
+    }
 
     public StampVersionRecord(StampRecord chronology,
                               StampVersion version) {

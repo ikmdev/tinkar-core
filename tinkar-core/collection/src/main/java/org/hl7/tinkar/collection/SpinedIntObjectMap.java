@@ -83,13 +83,6 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
         this.elementStringConverter = elementStringConverter;
     }
 
-    protected final int indexToSpineIndex(int index) {
-        if (index < 0) {
-            index = Integer.MAX_VALUE + index;
-        }
-        return index;
-    }
-
     public void forEachSpine(ObjIntConsumer<AtomicReferenceArray<E>> consumer) {
         int spineCountNow = spineCount.get();
         for (int spineIndex = 0; spineIndex < spineCountNow; spineIndex++) {
@@ -219,13 +212,9 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
     }
 
     public final boolean compareAndSet(int index, E expectedValue, E newValue) {
-        if (index < 0) {
-            index = Integer.MAX_VALUE + index;
-        }
-        int spineIndex = index / spineSize;
-        int indexInSpine = index % spineSize;
+        int spineIndex = toSpineIndex(index);
         this.changedSpineIndexes[spineIndex] = true;
-        return getSpine(spineIndex).compareAndSet(indexInSpine, expectedValue, newValue);
+        return getSpine(spineIndex).compareAndSet(toIndexInSpine(index), expectedValue, newValue);
     }
 
     /**
@@ -233,13 +222,9 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
      */
     @Override
     public final boolean put(int index, E element) {
-        if (index < 0) {
-            index = Integer.MAX_VALUE + index;
-        }
-        int spineIndex = index / spineSize;
-        int indexInSpine = index % spineSize;
+        int spineIndex = toSpineIndex(index);
         this.changedSpineIndexes[spineIndex] = true;
-        return getSpine(spineIndex).getAndSet(indexInSpine, element) == null;
+        return getSpine(spineIndex).getAndSet(toIndexInSpine(index), element) == null;
 
     }
 
@@ -248,26 +233,35 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
      */
     @Override
     public final E getAndSet(int index, E element) {
+        int spineIndex = toSpineIndex(index);
+        this.changedSpineIndexes[spineIndex] = true;
+        return getSpine(spineIndex).getAndSet(toIndexInSpine(index), element);
+    }
+    private final int toSpineIndex(int index) {
+        if (index == 0) {
+            throw new IllegalStateException("Index cannot be 0...");
+        }
         if (index < 0) {
             index = Integer.MAX_VALUE + index;
         }
-        int spineIndex = index / spineSize;
-        int indexInSpine = index % spineSize;
-        this.changedSpineIndexes[spineIndex] = true;
-        return getSpine(spineIndex).getAndSet(indexInSpine, element);
+        return index / spineSize;
     }
 
+    private final int toIndexInSpine(int index) {
+        if (index == 0) {
+            throw new IllegalStateException("Index cannot be 0...");
+        }
+        if (index < 0) {
+            index = Integer.MAX_VALUE + index;
+        }
+        return index % spineSize;
+    }
     /**
      * {@inheritDoc}
      */
     @Override
     public final E get(int index) {
-        if (index < 0) {
-            index = Integer.MAX_VALUE + index;
-        }
-        int spineIndex = index / spineSize;
-        int indexInSpine = index % spineSize;
-        return getSpine(spineIndex).get(indexInSpine);
+        return getSpine(toSpineIndex(index)).get(toIndexInSpine(index));
     }
 
     /**
@@ -275,12 +269,7 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
      */
     @Override
     public final Optional<E> getOptional(int index) {
-        if (index < 0) {
-            index = Integer.MAX_VALUE + index;
-        }
-        int spineIndex = index / spineSize;
-        int indexInSpine = index % spineSize;
-        return Optional.ofNullable(getSpine(spineIndex).get(indexInSpine));
+        return Optional.ofNullable(get(index));
     }
 
     /**
@@ -288,12 +277,7 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
      */
     @Override
     public final boolean containsKey(int index) {
-        if (index < 0) {
-            index = Integer.MAX_VALUE + index;
-        }
-        int spineIndex = index / spineSize;
-        int indexInSpine = index % spineSize;
-        return getSpine(spineIndex).get(indexInSpine) != null;
+        return get(index) != null;
     }
 
     /**
@@ -337,14 +321,10 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
      */
     @Override
     public final E accumulateAndGet(int index, E x, BinaryOperator<E> accumulatorFunction) {
-        if (index < 0) {
-            index = Integer.MAX_VALUE + index;
-        }
-        int spineIndex = index / spineSize;
-        int indexInSpine = index % spineSize;
+        int spineIndex = toSpineIndex(index);
         this.changedSpineIndexes[spineIndex] = true;
-        return getSpine(spineIndex)
-                .accumulateAndGet(indexInSpine, x, accumulatorFunction);
+        return getSpine(toSpineIndex(index))
+                .accumulateAndGet(toIndexInSpine(index), x, accumulatorFunction);
 
     }
 

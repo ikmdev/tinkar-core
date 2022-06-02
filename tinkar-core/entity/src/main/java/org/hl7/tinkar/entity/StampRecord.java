@@ -4,6 +4,7 @@ import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.common.util.Validator;
 import org.hl7.tinkar.component.FieldDataType;
 import org.hl7.tinkar.terms.State;
 
@@ -18,6 +19,13 @@ public record StampRecord(
         ImmutableList<StampVersionRecord> versions)
         implements StampEntity<StampVersionRecord>, StampRecordBuilder.With {
 
+
+    public StampRecord {
+        Validator.notZero(mostSignificantBits);
+        Validator.notZero(leastSignificantBits);
+        Validator.notZero(nid);
+        Objects.requireNonNull(versions);
+    }
     public static StampRecord make(UUID stampUuid, State state, long time, PublicId authorId, PublicId moduleId, PublicId pathId) {
         RecordListBuilder<StampVersionRecord> versionRecords = RecordListBuilder.make();
         StampRecord stampEntity = new StampRecord(stampUuid.getMostSignificantBits(),

@@ -4,6 +4,7 @@ import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.common.util.Validator;
 import org.hl7.tinkar.terms.PatternFacade;
 
 import java.util.Arrays;
@@ -16,6 +17,15 @@ public record SemanticRecord(
         long[] additionalUuidLongs, int nid, int patternNid, int referencedComponentNid,
         ImmutableList<SemanticVersionRecord> versions)
         implements SemanticEntity<SemanticVersionRecord>, SemanticRecordBuilder.With {
+
+        public SemanticRecord {
+            Validator.notZero(mostSignificantBits);
+            Validator.notZero(leastSignificantBits);
+            Validator.notZero(nid);
+            Validator.notZero(patternNid);
+            Validator.notZero(referencedComponentNid);
+            Objects.requireNonNull(versions);
+        }
 
     public static SemanticRecord makeNew(PublicId publicId, PatternFacade patternFacade, int referencedComponentNid,
                                          RecordListBuilder versionListBuilder) {

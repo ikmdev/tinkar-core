@@ -58,4 +58,12 @@ public interface DataServiceController<T> {
     void reload();
     T provider();
 
+    /**
+     *
+     * @return true if loading new database from file.
+     */
+    default boolean loading() {
+        return false;
+    }
+
 }

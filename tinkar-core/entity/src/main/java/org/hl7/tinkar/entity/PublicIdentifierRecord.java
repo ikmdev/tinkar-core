@@ -1,8 +1,10 @@
 package org.hl7.tinkar.entity;
 
 import org.hl7.tinkar.common.id.PublicId;
+import org.hl7.tinkar.common.util.Validator;
 import org.hl7.tinkar.common.util.uuid.UuidUtil;
 
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -11,6 +13,11 @@ import java.util.UUID;
 public record PublicIdentifierRecord(long mostSignificantBits,
                                      long leastSignificantBits,
                                      long[] additionalUuidLongs) {
+
+    public PublicIdentifierRecord {
+        Validator.notZero(mostSignificantBits);
+        Validator.notZero(leastSignificantBits);
+    }
     public static PublicIdentifierRecord make(PublicId publicId) {
         UUID[] uuids = publicId.asUuidArray();
 

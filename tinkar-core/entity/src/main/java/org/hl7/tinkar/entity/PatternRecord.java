@@ -3,6 +3,7 @@ package org.hl7.tinkar.entity;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.id.PublicId;
+import org.hl7.tinkar.common.util.Validator;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -13,6 +14,13 @@ public record PatternRecord(
         long[] additionalUuidLongs, int nid,
         ImmutableList<PatternVersionRecord> versions)
         implements PatternEntity<PatternVersionRecord>, PatternRecordBuilder.With {
+
+    public PatternRecord {
+        Validator.notZero(mostSignificantBits);
+        Validator.notZero(leastSignificantBits);
+        Validator.notZero(nid);
+        Objects.requireNonNull(versions);
+    }
 
     @Override
     public byte[] getBytes() {

@@ -6,16 +6,24 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.id.IntIdList;
 import org.hl7.tinkar.common.id.IntIdSet;
 import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.common.util.Validator;
 import org.hl7.tinkar.common.util.time.DateTimeUtil;
 import org.hl7.tinkar.component.SemanticVersion;
 import org.hl7.tinkar.terms.EntityFacade;
 
 import java.time.Instant;
+import java.util.Objects;
 
 @RecordBuilder
 public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
                                     ImmutableList<Object> fieldValues)
         implements SemanticEntityVersion, SemanticVersionRecordBuilder.With {
+
+    public SemanticVersionRecord {
+        Validator.notZero(stampNid);
+        Objects.requireNonNull(chronology);
+        Objects.requireNonNull(fieldValues);
+    }
     public SemanticVersionRecord(SemanticRecord chronology, SemanticVersion version) {
         this(chronology,
                 Entity.nid(version.stamp()),

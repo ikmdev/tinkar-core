@@ -2,7 +2,10 @@ package org.hl7.tinkar.entity;
 
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.common.util.Validator;
 import org.hl7.tinkar.component.FieldDefinition;
+
+import java.util.Objects;
 
 /**
  * TODO, create an entity data type that combines concept and FieldDataType like the Status enum?
@@ -13,6 +16,12 @@ import org.hl7.tinkar.component.FieldDefinition;
 public record FieldRecord<T>(T value, int semanticNid, int semanticVersionStampNid,
                              FieldDefinitionRecord fieldDefinition) implements FieldDefinition, Field<T>, FieldRecordBuilder.With {
 
+
+    public FieldRecord {
+        Validator.notZero(semanticNid);
+        Validator.notZero(semanticVersionStampNid);
+        Objects.requireNonNull(fieldDefinition);
+    }
     @Override
     public int meaningNid() {
         return fieldDefinition.meaningNid();

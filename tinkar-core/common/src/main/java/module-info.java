@@ -34,6 +34,7 @@ module org.hl7.tinkar.common {
     exports org.hl7.tinkar.common.flow;
     exports org.hl7.tinkar.common.id.impl;
     exports org.hl7.tinkar.common.util.broadcast;
+    exports org.hl7.tinkar.common.util;
 
     provides CachingService with
             TinkExecutor.CacheProvider,

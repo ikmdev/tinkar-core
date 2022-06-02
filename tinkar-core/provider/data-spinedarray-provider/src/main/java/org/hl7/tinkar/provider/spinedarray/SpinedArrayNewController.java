@@ -21,6 +21,8 @@ import java.util.concurrent.Future;
 
 @AutoService(DataServiceController.class)
 public class SpinedArrayNewController extends SpinedArrayController {
+
+    public static boolean loading = false;
     public static String CONTROLLER_NAME = "New Spined Array Store";
     String importDataFileString;
     DataServiceProperty newFolderProperty = new DataServiceProperty("New folder name", false, true);
@@ -96,6 +98,7 @@ public class SpinedArrayNewController extends SpinedArrayController {
     @Override
     public void start() {
         if (SpinedArrayProvider.singleton == null) {
+            SpinedArrayNewController.loading = true;
             try {
                 File rootFolder = new File(System.getProperty("user.home"), "Solor");
                 File dataDirectory = new File(rootFolder, providerProperties.get(newFolderProperty));
@@ -110,6 +113,12 @@ public class SpinedArrayNewController extends SpinedArrayController {
             } catch (InterruptedException | IOException | ExecutionException e) {
                 e.printStackTrace();
             }
+            SpinedArrayNewController.loading = false;
         }
+    }
+
+    @Override
+    public boolean loading() {
+        return SpinedArrayNewController.loading;
     }
 }

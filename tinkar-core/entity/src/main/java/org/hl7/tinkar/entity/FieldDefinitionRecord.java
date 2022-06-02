@@ -2,12 +2,23 @@ package org.hl7.tinkar.entity;
 
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.common.util.Validator;
 import org.hl7.tinkar.component.FieldDefinition;
+
+import java.util.Objects;
 
 @RecordBuilder
 public record FieldDefinitionRecord(int dataTypeNid, int purposeNid, int meaningNid, int patternVersionStampNid,
                                     int patternNid, int indexInPattern)
         implements FieldDefinitionForEntity, FieldDefinitionRecordBuilder.With {
+
+    public FieldDefinitionRecord {
+        Validator.notZero(dataTypeNid);
+        Validator.notZero(purposeNid);
+        Validator.notZero(meaningNid);
+        Validator.notZero(patternVersionStampNid);
+        Validator.notZero(patternNid);
+    }
     public FieldDefinitionRecord(FieldDefinition fieldDefinition, PatternEntityVersion patternVersion, int indexInPattern) {
         this(Entity.nid(fieldDefinition.dataType()),
                 Entity.nid(fieldDefinition.purpose()),

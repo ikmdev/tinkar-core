@@ -4,6 +4,7 @@ import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.tinkar.common.id.PublicId;
 import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.common.util.Validator;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -15,6 +16,14 @@ public record ConceptRecord(
         long[] additionalUuidLongs, int nid,
         ImmutableList<ConceptVersionRecord> versions)
         implements ConceptEntity<ConceptVersionRecord>, ConceptRecordBuilder.With {
+
+
+    public ConceptRecord {
+        Validator.notZero(mostSignificantBits);
+        Validator.notZero(leastSignificantBits);
+        Validator.notZero(nid);
+        Objects.requireNonNull(versions);
+    }
 
     public static ConceptRecord build(UUID conceptUuid, StampEntityVersion stampVersion) {
         RecordListBuilder<ConceptVersionRecord> versionRecords = RecordListBuilder.make();

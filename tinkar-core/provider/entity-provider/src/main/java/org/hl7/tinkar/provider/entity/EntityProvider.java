@@ -157,9 +157,17 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         );
     }
 
+    // TODO remove after debug...
+    int watchNid = Integer.MAX_VALUE;
+
     @Override
     public void putEntity(Entity entity) {
-        if (entity.contains(UUID.fromString("f88e125b-b054-566f-bd72-a150df58e1d9"))) {
+        if (!PrimitiveData.getController().loading()) {
+            if (watchNid == Integer.MAX_VALUE) {
+                watchNid = PrimitiveData.nid(UUID.fromString("f88e125b-b054-566f-bd72-a150df58e1d9"));
+            }
+        }
+        if (entity.nid() == watchNid) {
             System.out.println("Found watch... ");
         }
         invalidateCaches(entity);
@@ -178,10 +186,16 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         } else {
             PrimitiveData.get().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, entity.getBytes(), entity);
         }
-            processor.dispatch(entity.nid());
-            if (entity instanceof SemanticEntity semanticEntity) {
-                processor.dispatch(semanticEntity.referencedComponentNid());
+        if (entity.nid() == watchNid) {
+            Entity reconstitutedEntity = getEntityFast(entity.nid());
+            if (!reconstitutedEntity.equals(entity)) {
+                LOG.error("Reconstituted entity not equal 2: \n " + entity + "\n " + reconstitutedEntity);
             }
+        }
+        processor.dispatch(entity.nid());
+        if (entity instanceof SemanticEntity semanticEntity) {
+            processor.dispatch(semanticEntity.referencedComponentNid());
+        }
     }
 
     @Override

@@ -5,14 +5,25 @@ import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.hl7.tinkar.common.service.PrimitiveData;
+import org.hl7.tinkar.common.util.Validator;
 import org.hl7.tinkar.component.FieldDefinition;
 import org.hl7.tinkar.component.PatternVersion;
+
+import java.util.Objects;
 
 @RecordBuilder
 public record PatternVersionRecord(PatternRecord chronology, int stampNid,
                                    int semanticPurposeNid, int semanticMeaningNid,
                                    ImmutableList<FieldDefinitionRecord> fieldDefinitions)
         implements PatternEntityVersion, PatternVersionRecordBuilder.With {
+
+    public PatternVersionRecord {
+        Validator.notZero(stampNid);
+        Validator.notZero(semanticPurposeNid);
+        Validator.notZero(semanticMeaningNid);
+        Objects.requireNonNull(chronology);
+        Objects.requireNonNull(fieldDefinitions);
+    }
 
     public static PatternVersionRecord make(PatternRecord chronology, PatternVersion patternVersion) {
         int stampNid = Entity.nid(patternVersion.stamp());
@@ -58,7 +69,7 @@ public record PatternVersionRecord(PatternRecord chronology, int stampNid,
         sb.append(PrimitiveData.text(semanticPurposeNid));
         sb.append(" rcm: ");
         sb.append(PrimitiveData.text(semanticMeaningNid));
-        sb.append(" f: [‹]");
+        sb.append(" f: [");
         // TODO get proper version after relative position computer available.
         // Maybe put stamp coordinate on thread, or relative position computer on thread
         for (int i = 0; i < fieldDefinitions().size(); i++) {

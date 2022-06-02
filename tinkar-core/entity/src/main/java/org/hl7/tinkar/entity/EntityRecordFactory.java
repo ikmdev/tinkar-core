@@ -480,7 +480,7 @@ public class EntityRecordFactory {
             // f88e125b-b054-566f-bd72-a150df58e1d9 = Tinkar base model component pattern
             // It is the description for the membership pattern for "path"
             StringBuilder sb = new StringBuilder("Processing: " + entity.entityToString());
-            sb = sb.append(" Wrong token for type: ");
+            sb = sb.append(" Wrong token type: ");
             sb.append(FieldDataType.fromToken(token));
             sb.append(" ");
             sb.append(token);

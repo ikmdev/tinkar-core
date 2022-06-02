@@ -225,7 +225,7 @@ public class EntityVertex implements Vertex, VertexId {
         sb.append("EntityVertex{").append(vertexId().asUuid());
         sb.append(", index: ").append(vertexIndex);
         sb.append(", meaning: ").append(PrimitiveData.text(meaningNid));
-        if (uncommittedProperties != null & !uncommittedProperties.isEmpty()) {
+        if (uncommittedProperties != null && uncommittedProperties.isEmpty() == false) {
             sb.append(", uncommitted properties=").append(uncommittedProperties);
         }
         sb.append(", properties=").append(properties).append('}');

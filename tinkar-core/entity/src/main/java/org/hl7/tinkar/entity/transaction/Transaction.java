@@ -184,6 +184,9 @@ public class Transaction implements Comparable<Transaction> {
     }
 
     public void addComponent(EntityFacade entity) {
+        if (entity.nid() == 0) {
+            throw new IllegalStateException("Entity nid cannot = 0: " + entity);
+        }
         componentsInTransaction.add(entity.nid());
     }
 
