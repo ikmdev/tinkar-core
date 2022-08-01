@@ -3,9 +3,12 @@ package org.hl7.tinkar.entity.graph;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.RichIterable;
+import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
+import org.eclipse.collections.api.map.primitive.IntObjectMap;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.impl.list.mutable.primitive.ByteArrayList;
 import org.eclipse.collections.impl.map.mutable.primitive.IntObjectHashMap;
@@ -15,6 +18,7 @@ import org.hl7.tinkar.component.*;
 import org.hl7.tinkar.component.graph.Vertex;
 import org.hl7.tinkar.dto.StampDTO;
 import org.hl7.tinkar.dto.StampDTOBuilder;
+import org.hl7.tinkar.entity.ConceptEntity;
 import org.hl7.tinkar.entity.Entity;
 import org.hl7.tinkar.entity.EntityRecordFactory;
 import org.hl7.tinkar.entity.EntityService;
@@ -24,8 +28,10 @@ import org.hl7.tinkar.terms.PatternFacade;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.LongConsumer;
 
@@ -50,10 +56,32 @@ public class EntityVertex implements Vertex, VertexId {
         this.meaningNid = meaningNid;
     }
 
+    /**
+     * A copy constructor
+     * @param another the vertex to copy
+     * @return a copy of this vertex .
+     */
+    public EntityVertex(EntityVertex another) {
+        fill(another);
+    }
+
+    public EntityVertex copyWithUnassignedIndex() {
+        EntityVertex  newVertex = new EntityVertex(this);
+        newVertex.vertexIndex = -1;
+        return newVertex;
+    }
+
     public static EntityVertex make(Vertex vertex) {
         EntityVertex entityVertex = new EntityVertex();
         entityVertex.fill(vertex);
         return entityVertex;
+    }
+
+    public ImmutableIntObjectMap<Object> properties() {
+        if (properties == null) {
+            return IntObjectMaps.immutable.empty();
+        }
+        return properties;
     }
 
     private void fill(Vertex another) {
@@ -112,8 +140,17 @@ public class EntityVertex implements Vertex, VertexId {
         return EntityVertex.make(conceptFacade.nid());
     }
 
+    public static EntityVertex make(UUID vertexUuid, ConceptFacade conceptFacade) {
+        return EntityVertex.make(vertexUuid, conceptFacade.nid());
+    }
+
     public static EntityVertex make(int meaningNid) {
         EntityVertex entityVertex = new EntityVertex(UUID.randomUUID(), meaningNid);
+        return entityVertex;
+    }
+
+    public static EntityVertex make(UUID vertexUuid, int meaningNid) {
+        EntityVertex entityVertex = new EntityVertex(vertexUuid, meaningNid);
         return entityVertex;
     }
 
@@ -148,18 +185,20 @@ public class EntityVertex implements Vertex, VertexId {
 
     }
 
-    public String toGraphFormatString(String prepend, DiGraphAbstract diGraph) {
+    public String toGraphFormatString(String prepend, String idSuffix, DiGraphAbstract diGraph) {
         StringBuilder sb = new StringBuilder();
         sb.append(prepend);
-        sb.append(" [").append(vertexIndex).append("]");
+        sb.append(" [").append(vertexIndex).append(idSuffix).append("]");
         Optional<ImmutableIntList> optionalSuccessorNids = diGraph.successorNids(this.vertexIndex);
-        if (optionalSuccessorNids.isPresent()) {
-            sb.append("➞");
-            sb.append(optionalSuccessorNids.get().toString().replace(" ", ""));
-        }
+        optionalSuccessorNids.ifPresent(successorNids -> {
+            sb.append("➞[");
+            successorNids.forEach(successorNid -> sb.append(successorNid).append(idSuffix).append(","));
+            sb.deleteCharAt(sb.length() - 1);
+            sb.append("]");
+        });
         sb.append(" ");
 
-        if (properties.containsKey(meaningNid)) {
+        if (properties != null && properties.containsKey(meaningNid)) {
             Object property = properties.get(meaningNid);
             sb.append(PrimitiveData.text(meaningNid));
             sb.append(": ");
@@ -170,21 +209,23 @@ public class EntityVertex implements Vertex, VertexId {
         }
 
         sb.append("\n");
-        int[] propertyKeys = properties.keySet().toArray();
-        for (int i = 0; i < propertyKeys.length; i++) {
-            if (propertyKeys[i] != meaningNid) {
-                sb.append(prepend);
-                sb.append("    •").append(PrimitiveData.text(propertyKeys[i]));
-                sb.append(": ");
-                Object value = properties.get(propertyKeys[i]);
-                if (value instanceof org.hl7.tinkar.terms.ConceptFacade conceptFacade) {
-                    sb.append(PrimitiveData.text(conceptFacade.nid()));
-                } else if (value instanceof PatternFacade patternFacade) {
-                    sb.append(PrimitiveData.text(patternFacade.nid()));
-                } else {
-                    sb.append(value.toString());
+        if (properties != null) {
+            int[] propertyKeys = properties.keySet().toArray();
+            for (int i = 0; i < propertyKeys.length; i++) {
+                if (propertyKeys[i] != meaningNid) {
+                    sb.append(prepend);
+                    sb.append("    •").append(PrimitiveData.text(propertyKeys[i]));
+                    sb.append(": ");
+                    Object value = properties.get(propertyKeys[i]);
+                    if (value instanceof org.hl7.tinkar.terms.ConceptFacade conceptFacade) {
+                        sb.append(PrimitiveData.text(conceptFacade.nid()));
+                    } else if (value instanceof PatternFacade patternFacade) {
+                        sb.append(PrimitiveData.text(patternFacade.nid()));
+                    } else {
+                        sb.append(value.toString());
+                    }
+                    sb.append("\n");
                 }
-                sb.append("\n");
             }
         }
 
@@ -219,20 +260,52 @@ public class EntityVertex implements Vertex, VertexId {
         }
     }
 
-    @Override
-    public String toString() {
+    public String toString(String nodeIdSuffix) {
         StringBuilder sb = new StringBuilder();
-        sb.append("EntityVertex{").append(vertexId().asUuid());
-        sb.append(", index: ").append(vertexIndex);
-        sb.append(", meaning: ").append(PrimitiveData.text(meaningNid));
-        if (uncommittedProperties != null && uncommittedProperties.isEmpty() == false) {
-            sb.append(", uncommitted properties=").append(uncommittedProperties);
+        sb.append(PrimitiveData.text(meaningNid));
+        sb.append("[").append(vertexIndex).append(nodeIdSuffix).append("]");
+
+        int uncommittedPropertyCount = uncommittedProperties == null ? 0 : uncommittedProperties.size();
+        int totalPropertyCount = properties == null ? 0: properties.size() + uncommittedPropertyCount;
+        AtomicInteger builtPropertyCount = new AtomicInteger();
+
+        if (totalPropertyCount > 0) {
+            sb.append(", properties={");
+
+            if (properties != null) {
+                properties.forEachKeyValue((keyNid, value) -> {
+                    builtPropertyCount.getAndIncrement();
+                    appendProperty(keyNid, value, "", sb, builtPropertyCount.get() < totalPropertyCount);
+                });
+            }
+
+            if (uncommittedProperties != null) {
+                uncommittedProperties.forEachKeyValue((keyNid, value) -> {
+                    builtPropertyCount.getAndIncrement();
+                    appendProperty(keyNid, value, "~", sb, builtPropertyCount.get() < totalPropertyCount);
+                });
+            }
+            sb.append("}");
         }
-        sb.append(", properties=").append(properties).append('}');
 
         return sb.toString();
     }
 
+    private void appendProperty(int keyNid, Object value, String prefix, StringBuilder sb, boolean addSeparator) {
+        sb.append(prefix).append(PrimitiveData.text(keyNid)).append("=");
+        switch (value) {
+            case ConceptFacade conceptFacade -> sb.append(PrimitiveData.text(conceptFacade.nid()));
+            default -> sb.append(value.toString());
+        }
+        if (addSeparator) {
+            sb.append(", ");
+        }
+    }
+
+    @Override
+    public String toString() {
+        return toString("");
+    }
     @Override
     public VertexId vertexId() {
         return this;
@@ -266,7 +339,10 @@ public class EntityVertex implements Vertex, VertexId {
 
     @Override
     public RichIterable<Concept> propertyKeys() {
-        return properties.keySet().collect(nid -> EntityProxy.Concept.make(nid));
+        if (properties != null) {
+            return properties.keySet().collect(nid -> EntityProxy.Concept.make(nid));
+        }
+        return Lists.immutable.empty();
     }
 
     public <T> Optional<T> property(ConceptFacade conceptFacade) {
@@ -274,7 +350,7 @@ public class EntityVertex implements Vertex, VertexId {
     }
 
     public <T> T propertyFast(ConceptFacade conceptFacade) {
-        return (T) properties.get(conceptFacade.nid());
+        return properties != null ?  (T) properties.get(conceptFacade.nid()): null;
     }
 
     public <T> Optional<T> property(int propertyConceptNid) {
@@ -282,7 +358,7 @@ public class EntityVertex implements Vertex, VertexId {
     }
 
     public <T> T propertyFast(int propertyConceptNid) {
-        return (T) properties.get(propertyConceptNid);
+        return properties != null ?  (T) properties.get(propertyConceptNid): null;
     }
 
     /**
@@ -373,4 +449,87 @@ public class EntityVertex implements Vertex, VertexId {
     public MutableIntObjectMap<Object> uncommittedProperties() {
         return uncommittedProperties;
     }
+
+    @Override
+    public int hashCode() {
+        int result = (int) (mostSignificantBits ^ (mostSignificantBits >>> 32));
+        result = 31 * result + (int) (leastSignificantBits ^ (leastSignificantBits >>> 32));
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof EntityVertex that) {
+            if (this.leastSignificantBits != that.leastSignificantBits) {
+                return false;
+            }
+            if (this.mostSignificantBits != that.mostSignificantBits) {
+                return false;
+            }
+            if (this.meaningNid != that.meaningNid) {
+                return false;
+            }
+            if (compareProperties(this.uncommittedProperties, that.uncommittedProperties) == false) {
+                return false;
+            }
+            return compareProperties(this.properties, that.properties);
+        }
+        return false;
+    }
+    public boolean equivalent(EntityVertex that) {
+        if (this.uncommittedProperties != null || that.uncommittedProperties != null) {
+            throw new IllegalStateException("Cannot test for equivalence with uncommitted properties");
+        }
+        if (this.meaningNid != that.meaningNid) {
+            return false;
+        }
+        return compareProperties(this.properties, that.properties);
+    }
+
+    private static boolean compareProperties(IntObjectMap theseProperties, IntObjectMap thoseProperties) {
+        if (theseProperties == null || theseProperties.isEmpty()) {
+            if (thoseProperties != null && thoseProperties.isEmpty() == false) {
+                return false;
+            }
+            return true;
+        } else {
+            if (thoseProperties == null || thoseProperties.isEmpty()) {
+                return false;
+            }
+            if (theseProperties.size() != thoseProperties.size()) {
+                return false;
+            }
+            if (!theseProperties.keySet().equals(thoseProperties.keySet())) {
+                return false;
+            }
+            for (int key : theseProperties.keySet().toArray()) {
+                if (!Objects.equals(theseProperties.get(key),
+                        thoseProperties.get(key))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+
+    /**
+     * Only considers meaning and committed property keys and values that are kinds of concept.
+     * @param conceptNidSet
+     */
+    public void addConceptsReferencedByVertex(MutableIntSet conceptNidSet) {
+        conceptNidSet.add(meaningNid);
+        if (this.properties != null) {
+            this.properties.keySet().forEach(keyNid -> conceptNidSet.add(keyNid));
+            this.properties.values().forEach(propertyValue -> {
+                switch (propertyValue) {
+                    case ConceptEntity concept -> conceptNidSet.add(concept.nid());
+                    case ConceptFacade conceptFacade -> conceptNidSet.add(conceptFacade.nid());
+                    default -> { /* not a concept, so ignore */ }
+                }
+            });
+        }
+    }
+
+
 }

@@ -83,7 +83,7 @@ public class DiGraphEntity<V extends EntityVertex> extends DiGraphAbstract<V> im
     }
 
     public final byte[] getBytes() {
-        int defaultSize = size();
+        int defaultSize = estimatedBytes();
         int bufSize = defaultSize;
         AtomicReference<ByteBuf> byteBufRef =
                 new AtomicReference<>(ByteBufPool.allocate(bufSize));

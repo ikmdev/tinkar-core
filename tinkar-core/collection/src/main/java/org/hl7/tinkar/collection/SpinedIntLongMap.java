@@ -16,6 +16,8 @@
  */
 package org.hl7.tinkar.collection;
 
+import org.hl7.tinkar.common.util.ArrayUtil;
+
 import java.util.Arrays;
 import java.util.Spliterator;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,9 +59,7 @@ public class SpinedIntLongMap {
    
    
    private AtomicLongArray newSpine(Integer spineKey) {
-      long[] spine = new long[spineSize];
-      Arrays.fill(spine, INITIAL_VALUE);
-      return new AtomicLongArray(spine);
+      return new AtomicLongArray(ArrayUtil.createAndFill(spineSize, INITIAL_VALUE));
    }
 
    public void put(int index, long element) {

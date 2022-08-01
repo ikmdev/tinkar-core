@@ -10,6 +10,7 @@ import org.hl7.tinkar.common.util.functional.TriConsumer;
 import org.hl7.tinkar.component.graph.DiTree;
 import org.hl7.tinkar.coordinate.stamp.StateSet;
 import org.hl7.tinkar.entity.*;
+import org.hl7.tinkar.entity.graph.DiTreeVersion;
 import org.hl7.tinkar.entity.graph.VersionVertex;
 import org.hl7.tinkar.terms.EntityFacade;
 import org.hl7.tinkar.terms.PatternFacade;
@@ -70,7 +71,7 @@ public interface StampCalculator {
 
     <V extends EntityVersion> Latest<V> latest(int nid);
 
-    <V extends EntityVersion> List<DiTree<VersionVertex<V>>> getVersionGraphList(Entity<V> chronicle);
+    <V extends EntityVersion> List<DiTreeVersion<V>> getVersionGraphList(Entity<V> chronicle);
 
     /**
      * @param semanticNid identifier of the semantic to test its latest version against the provided fields.
@@ -100,6 +101,14 @@ public interface StampCalculator {
             }
         }
         return Optional.of(chronicle.with(new SemanticVersionRecord(chronicle, stampNid, fields)).build());
+    }
+
+    default SemanticRecord updateFields(int semanticNid, ImmutableList<Object> fields, int stampNid) {
+        return updateFields(Entity.getFast(semanticNid), fields, stampNid);
+    }
+
+    default SemanticRecord updateFields(SemanticRecord chronicle, ImmutableList<Object> fields, int stampNid) {
+        return chronicle.with(new SemanticVersionRecord(chronicle, stampNid, fields)).build();
     }
 
     <V extends EntityVersion> Latest<V> latest(Entity<V> chronicle);
@@ -249,6 +258,23 @@ public interface StampCalculator {
         }
         return latestResults.toImmutable();
     }
+
+    default boolean latestIsActive(Entity entity) {
+        Latest<EntityVersion> latest = latest(entity);
+        if (latest.isPresent()) {
+            return latest.get().active();
+        }
+        return false;
+    }
+
+    default boolean latestIsActive(int nid) {
+        Latest<EntityVersion> latest = latest(nid);
+        if (latest.isPresent()) {
+            return latest.get().active();
+        }
+        return false;
+    }
+
 
 
     enum FieldCriterion {MEANING, PURPOSE}

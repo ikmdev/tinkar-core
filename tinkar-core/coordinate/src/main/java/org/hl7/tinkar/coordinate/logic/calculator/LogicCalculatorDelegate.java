@@ -22,7 +22,7 @@ public interface LogicCalculatorDelegate extends LogicCalculator, StampCalculato
     }
 
     @Override
-    default Latest<DiTreeEntity<EntityVertex>> getAxiomTreeForEntity(int entityNid, StampCalculator stampCalculator, PremiseType premiseType) {
+    default Latest<DiTreeEntity> getAxiomTreeForEntity(int entityNid, StampCalculator stampCalculator, PremiseType premiseType) {
         return logicCalculator().getAxiomTreeForEntity(entityNid, stampCalculator, premiseType);
     }
 
@@ -57,27 +57,27 @@ public interface LogicCalculatorDelegate extends LogicCalculator, StampCalculato
     }
 
 
-    default Latest<DiTreeEntity<EntityVertex>> getAxiomTreeForEntity(int entityNid, PremiseType premiseType) {
+    default Latest<DiTreeEntity> getAxiomTreeForEntity(int entityNid, PremiseType premiseType) {
         return logicCalculator().getAxiomTreeForEntity(entityNid, stampCalculator(), premiseType);
     }
 
-    default Latest<DiTreeEntity<EntityVertex>> getStatedAxiomTreeForEntity(int entityNid) {
+    default Latest<DiTreeEntity> getStatedAxiomTreeForEntity(int entityNid) {
         return logicCalculator().getAxiomTreeForEntity(entityNid, stampCalculator(), PremiseType.STATED);
     }
 
-    default Latest<DiTreeEntity<EntityVertex>> getInferredAxiomTreeForEntity(int entityNid) {
+    default Latest<DiTreeEntity> getInferredAxiomTreeForEntity(int entityNid) {
         return logicCalculator().getAxiomTreeForEntity(entityNid, stampCalculator(), PremiseType.INFERRED);
     }
 
-    default Latest<DiTreeEntity<EntityVertex>> getAxiomTreeForEntity(EntityFacade entity, PremiseType premiseType) {
+    default Latest<DiTreeEntity> getAxiomTreeForEntity(EntityFacade entity, PremiseType premiseType) {
         return logicCalculator().getAxiomTreeForEntity(entity.nid(), stampCalculator(), premiseType);
     }
 
-    default Latest<DiTreeEntity<EntityVertex>> getStatedAxiomTreeForEntity(EntityFacade entity) {
+    default Latest<DiTreeEntity> getStatedAxiomTreeForEntity(EntityFacade entity) {
         return logicCalculator().getAxiomTreeForEntity(entity.nid(), stampCalculator(), PremiseType.STATED);
     }
 
-    default Latest<DiTreeEntity<EntityVertex>> getInferredAxiomTreeForEntity(EntityFacade entity) {
+    default Latest<DiTreeEntity> getInferredAxiomTreeForEntity(EntityFacade entity) {
         return logicCalculator().getAxiomTreeForEntity(entity.nid(), stampCalculator(), PremiseType.INFERRED);
     }
 

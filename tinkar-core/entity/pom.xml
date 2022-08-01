@@ -61,5 +61,21 @@
             <artifactId>protobuf</artifactId>
             <version>${tinkar.protobuf.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.jgrapht</groupId>
+            <artifactId>jgrapht-core</artifactId>
+            <version>1.5.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.jheaps</groupId>
+                    <artifactId>jheaps</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>jheaps</artifactId>
+            <version>${tinkar-jpms-deps.version}</version>
+        </dependency>
     </dependencies>
 </project>

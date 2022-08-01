@@ -48,7 +48,29 @@ import java.util.Comparator;
  *
  * @author kec
  */
-public class NaturalOrder implements Comparator<Object> {
+public class NaturalOrder<T extends Object> implements Comparator<T> {
+
+   private static class StringNaturalOrder implements Comparator<String> {
+
+      @Override
+      public int compare(String s1, String s2) {
+         return compareStrings(s1, s2);
+      }
+   }
+
+   private NaturalOrder() {
+   }
+
+   private static final Comparator<Object> objectNaturalOrder = new NaturalOrder<>();
+   private static final Comparator<String> stringNaturalOrder = new StringNaturalOrder();
+
+   public static final Comparator<Object> getObjectComparator() {
+      return objectNaturalOrder;
+   }
+
+   public static final Comparator<String> getStringComparator() {
+      return stringNaturalOrder;
+   }
 
    /**
     * From stack overflow...

@@ -85,8 +85,8 @@ public class LogicCalculatorWithCache implements LogicCalculator {
                     SemanticEntityVersion axioms = latestAxioms.get();
                     OptionalInt optionalIndexForMeaning = stampCalculator.getIndexForMeaning(axiomsPatternNid, TinkarTerm.EL_PLUS_PLUS_STATED_TERMINOLOGICAL_AXIOMS.nid());
                     if (optionalIndexForMeaning.isPresent()) {
-                        DiTreeEntity<? extends EntityVertex> axiomsField =
-                                (DiTreeEntity<? extends EntityVertex>) axioms.fieldValues().get(optionalIndexForMeaning.getAsInt());
+                        DiTreeEntity axiomsField =
+                                (DiTreeEntity) axioms.fieldValues().get(optionalIndexForMeaning.getAsInt());
                         for (EntityVertex vertex : axiomsField.vertexMap()) {
                             if (vertex.getMeaningNid() == TinkarTerm.SUFFICIENT_SET.nid()) {
                                 return true;
@@ -126,7 +126,7 @@ public class LogicCalculatorWithCache implements LogicCalculator {
     }
 
     @Override
-    public Latest<DiTreeEntity<EntityVertex>> getAxiomTreeForEntity(int entityNid, StampCalculator stampCalculator, PremiseType premiseType) {
+    public Latest<DiTreeEntity> getAxiomTreeForEntity(int entityNid, StampCalculator stampCalculator, PremiseType premiseType) {
         int[] semanticNids = switch (premiseType) {
             case STATED -> {
                 yield PrimitiveData.get().semanticNidsForComponentOfPattern(entityNid, logicCoordinateRecord().statedAxiomsPatternNid());
@@ -146,7 +146,7 @@ public class LogicCalculatorWithCache implements LogicCalculator {
                     " logical expression for " + PrimitiveData.text(entityNid));
         }
 
-        Latest<Field<DiTreeEntity<EntityVertex>>> latestAxiomField = switch (premiseType) {
+        Latest<Field<DiTreeEntity>> latestAxiomField = switch (premiseType) {
             case INFERRED -> {
                 yield stampCalculator.getFieldForSemanticWithMeaning(semanticNids[0], TinkarTerm.EL_PLUS_PLUS_INFERRED_TERMINOLOGICAL_AXIOMS);
             }
@@ -155,9 +155,9 @@ public class LogicCalculatorWithCache implements LogicCalculator {
             }
         };
         if (latestAxiomField.isPresent()) {
-            Latest<DiTreeEntity<EntityVertex>> latestAxioms = new Latest<>(latestAxiomField.get().value());
+            Latest<DiTreeEntity> latestAxioms = new Latest<>(latestAxiomField.get().value());
             if (latestAxiomField.isContradicted()) {
-                for (Field<DiTreeEntity<EntityVertex>> contradictedField : latestAxiomField.contradictions()) {
+                for (Field<DiTreeEntity> contradictedField : latestAxiomField.contradictions()) {
                     latestAxioms.addLatest(contradictedField.value());
                 }
             }

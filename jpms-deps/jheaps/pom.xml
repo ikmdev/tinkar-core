@@ -7,9 +7,9 @@
         <groupId>org.hl7.tinkar</groupId>
         <version>1.0.11</version>
     </parent>
-    <artifactId>activej</artifactId>
+    <artifactId>jheaps</artifactId>
     <packaging>jar</packaging>
-    <name>TINKAR: Activej</name>
+    <name>TINKAR: JHeaps</name>
     <build>
         <plugins>
             <plugin>
@@ -28,27 +28,20 @@
                             <modules>
                                 <module>
                                     <artifact>
-                                        <groupId>io.activej</groupId>
-                                        <artifactId>activej-bytebuf</artifactId>
-                                        <version>${activej.version}</version>
-                                     </artifact>
-                                    <moduleInfoSource>
-                                        open module org.hl7.tinkar.activej {
-                                            exports io.activej.bytebuf;
-                                        }
-                                    </moduleInfoSource>
-                                </module>
-                                <module>
-                                    <artifact>
-                                        <groupId>io.activej</groupId>
-                                        <artifactId>activej-common</artifactId>
-                                        <version>${activej.version}</version>
+                                        <groupId>org.jheaps</groupId>
+                                        <artifactId>jheaps</artifactId>
+                                        <version>${jheaps.version}</version>
                                     </artifact>
                                     <moduleInfoSource>
-                                        open module org.hl7.tinkar.activej {
-                                            exports io.activej.bytebuf;
+                                        module org.jheaps {
+                                            exports org.jheaps;
+                                            exports org.jheaps.annotations;
+                                            exports org.jheaps.array;
+                                            exports org.jheaps.dag;
+                                            exports org.jheaps.monotone;
+                                            exports org.jheaps.tree;
                                         }
-                                     </moduleInfoSource>
+                                    </moduleInfoSource>
                                 </module>
                             </modules>
                         </configuration>
@@ -63,10 +56,8 @@
                         <phase>prepare-package</phase>
                         <configuration>
                             <target>
-                                <echo message="unzipping files" />
-                                <unzip src="${project.build.directory}/moditect/activej-bytebuf-${activej.version}.jar"
-                                       dest="${project.build.directory}/classes/" />
-                                <unzip src="${project.build.directory}/moditect/activej-common-${activej.version}.jar"
+                                <echo message="unzipping file" />
+                                <unzip src="${project.build.directory}/moditect/jheaps-${jheaps.version}.jar"
                                        dest="${project.build.directory}/classes/" />
                             </target>
                         </configuration>

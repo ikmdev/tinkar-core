@@ -19,27 +19,27 @@ public interface LogicCalculator {
 
     boolean hasSufficientSet(int nid);
 
-    default Latest<DiTreeEntity<EntityVertex>> getStatedLogicalExpressionForEntity(EntityFacade entity, StampCalculator stampCalculator) {
+    default Latest<DiTreeEntity> getStatedLogicalExpressionForEntity(EntityFacade entity, StampCalculator stampCalculator) {
         return getAxiomTreeForEntity(entity.nid(), stampCalculator, PremiseType.STATED);
     }
 
-    Latest<DiTreeEntity<EntityVertex>> getAxiomTreeForEntity(int entityNid, StampCalculator stampCalculator, PremiseType premiseType);
+    Latest<DiTreeEntity> getAxiomTreeForEntity(int entityNid, StampCalculator stampCalculator, PremiseType premiseType);
 
     Latest<SemanticEntityVersion> getAxiomSemanticForEntity(int entityNid, StampCalculator stampCalculator, PremiseType premiseType);
 
-    default Latest<DiTreeEntity<EntityVertex>> getAxiomTreeForEntity(EntityFacade entity, StampCalculator stampCalculator, PremiseType premiseType) {
+    default Latest<DiTreeEntity> getAxiomTreeForEntity(EntityFacade entity, StampCalculator stampCalculator, PremiseType premiseType) {
         return getAxiomTreeForEntity(entity.nid(), stampCalculator, premiseType);
     }
 
-    default Latest<DiTreeEntity<EntityVertex>> getStatedLogicalExpressionForEntity(int entityNid, StampCalculator stampCalculator) {
+    default Latest<DiTreeEntity> getStatedLogicalExpressionForEntity(int entityNid, StampCalculator stampCalculator) {
         return getAxiomTreeForEntity(entityNid, stampCalculator, PremiseType.STATED);
     }
 
-    default Latest<DiTreeEntity<EntityVertex>> getInferredLogicalExpressionForEntity(EntityFacade entity, StampCalculator stampCalculator) {
+    default Latest<DiTreeEntity> getInferredLogicalExpressionForEntity(EntityFacade entity, StampCalculator stampCalculator) {
         return getAxiomTreeForEntity(entity.nid(), stampCalculator, PremiseType.INFERRED);
     }
 
-    default Latest<DiTreeEntity<EntityVertex>> getInferredLogicalExpressionForEntity(int entityNid, StampCalculator stampCalculator) {
+    default Latest<DiTreeEntity> getInferredLogicalExpressionForEntity(int entityNid, StampCalculator stampCalculator) {
         return getAxiomTreeForEntity(entityNid, stampCalculator, PremiseType.INFERRED);
     }
 

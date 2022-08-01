@@ -5,6 +5,7 @@ import org.hl7.tinkar.common.util.functional.TriConsumer;
 import org.hl7.tinkar.component.graph.DiTree;
 import org.hl7.tinkar.coordinate.stamp.StateSet;
 import org.hl7.tinkar.entity.*;
+import org.hl7.tinkar.entity.graph.DiTreeVersion;
 import org.hl7.tinkar.entity.graph.VersionVertex;
 import org.hl7.tinkar.terms.EntityFacade;
 
@@ -25,7 +26,7 @@ public interface StampCalculatorDelegate extends StampCalculator {
     }
 
     @Override
-    default <V extends EntityVersion> List<DiTree<VersionVertex<V>>> getVersionGraphList(Entity<V> chronicle) {
+    default <V extends EntityVersion> List<DiTreeVersion<V>> getVersionGraphList(Entity<V> chronicle) {
         return stampCalculator().getVersionGraphList(chronicle);
     }
 

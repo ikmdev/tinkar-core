@@ -319,7 +319,7 @@ public class ProtobufTransformer {
                 parsePredecessorAndSuccessorMaps(pbGraph.getSuccessorMapList(), pbGraph.getSuccessorMapCount()));
     }
 
-    private DiTreeEntity<EntityVertex> createDiTreeEntity(PBDiTree pbDiTree) {
+    private DiTreeEntity createDiTreeEntity(PBDiTree pbDiTree) {
         return new DiTreeEntity<>(
                 EntityVertex.make(createVertexDTO(pbDiTree.getRoot())),
                 parseVertices(pbDiTree.getVertexMapList(), pbDiTree.getVertexMapCount()),

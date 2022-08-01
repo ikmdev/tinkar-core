@@ -5,6 +5,7 @@ import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
 
 public interface DiGraph<V extends Vertex> extends Graph<V> {
+    enum VertexType {LEAF, PREDECESSOR};
 
     /**
      * A graph can have multiple roots.
@@ -22,6 +23,8 @@ public interface DiGraph<V extends Vertex> extends Graph<V> {
     ImmutableList<V> predecessors(V vertex);
 
     ImmutableIntObjectMap<ImmutableIntList> predecessorMap();
+
+    VertexType vertexType(V vertex);
 
 
     @Override

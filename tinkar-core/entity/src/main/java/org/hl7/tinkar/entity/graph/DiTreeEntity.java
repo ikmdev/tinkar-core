@@ -1,42 +1,100 @@
 package org.hl7.tinkar.entity.graph;
 
 import io.activej.bytebuf.ByteBuf;
-import io.activej.bytebuf.ByteBufPool;
-import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
-import org.eclipse.collections.api.map.primitive.ImmutableIntIntMap;
-import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
-import org.eclipse.collections.api.map.primitive.MutableIntIntMap;
-import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
+import org.eclipse.collections.api.map.primitive.*;
 import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
-import org.eclipse.collections.impl.factory.primitive.IntSets;
+import org.hl7.tinkar.common.alert.AlertStreams;
 import org.hl7.tinkar.component.graph.DiTree;
-import org.hl7.tinkar.component.graph.GraphAdaptorFactory;
 import org.hl7.tinkar.component.graph.Vertex;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.hl7.tinkar.entity.graph.isomorphic.IsomorphicResults;
+import org.hl7.tinkar.entity.graph.isomorphic.IsomorphicResultsLeafHash;
 
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
+public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
 
-public class DiTreeEntity<V extends EntityVertex> extends DiGraphAbstract<V> implements DiTree<V> {
-    private static final Logger LOG = LoggerFactory.getLogger(DiTreeEntity.class);
-    final V root;
-    final ImmutableIntIntMap predecessorMap;
 
-    public DiTreeEntity(V root, ImmutableList<V> vertexMap,
-                        ImmutableIntObjectMap<ImmutableIntList> successorMap, ImmutableIntIntMap predecessorMap) {
-        super(vertexMap, successorMap);
-        this.root = root;
-        this.predecessorMap = predecessorMap;
+    public DiTreeEntity(EntityVertex root,
+                        ImmutableList<EntityVertex> vertexMap,
+                        ImmutableIntObjectMap<ImmutableIntList> successorMap,
+                        ImmutableIntIntMap predecessorMap) {
+        super(root, vertexMap, successorMap, predecessorMap);
+    }
+
+    /**
+     * Make a correlated tree, where the vertex ids of this tree will be preserved when the ids are
+     * correlated by an isomorphic analysis.
+     *
+     * @param that The tree that is considered secondary with respect to preserving vertex ids.
+     * @return a copy of that which is updated with correlated vertex ids based on isomorphic analysis.
+     */
+    public DiTreeEntity makeCorrelatedTree(DiTreeEntity that, int referencedConceptNid) {
+
+        // A special case for correlation when this and that are equal and vertexes are indexed the same.
+        if (this.vertexMap.size() == that.vertexMap.size()) {
+            boolean maybeEqual = true;
+            for (int index = 0; index < this.vertexMap.size(); index++) {
+                if (this.vertexMap.get(index) == null || that.vertexMap.get(index) == null) {
+                    if (this.vertexMap.get(index) != that.vertexMap.get(index)) {
+                        maybeEqual = false;
+                        break;
+                    }
+                }
+                if (!this.vertexMap.get(index).equivalent(that.vertexMap.get(index))) {
+                    maybeEqual = false;
+                    break;
+                }
+                if (this.predecessorMap.containsKey(index) != that.predecessorMap.containsKey(index)) {
+                    maybeEqual = false;
+                    break;
+                }
+                if (this.predecessorMap.containsKey(index) && that.predecessorMap.containsKey(index)) {
+                    if (this.predecessorMap.get(index) != that.predecessorMap.get(index)) {
+                        maybeEqual = false;
+                        break;
+                    }
+                }
+            }
+            if (maybeEqual) {
+                // return this as the correlated tree
+                return this;
+            }
+        }
+        try {
+            IsomorphicResultsLeafHash isomorphicResult = new IsomorphicResultsLeafHash(this, that, referencedConceptNid);
+            IsomorphicResults results = isomorphicResult.call();
+            return results.getIsomorphicTree();
+        } catch (Exception e) {
+            AlertStreams.dispatchToRoot(e);
+        }
+        throw new IllegalStateException("No result");
+    }
+
+    public final VertexVisitData breadthFirstProcess() {
+        VertexVisitData vertexVisitData = new VertexVisitData(this.vertexMap.size());
+        breadthFirstProcess(this.root.vertexIndex, vertexVisitData);
+        return vertexVisitData;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof DiTreeEntity another) {
+            return isomorphic(another);
+        }
+        return super.equals(obj);
+    }
+
+    // TODO Consider using JGraphT Isomorphic package here, and compare performance.
+    // TODO: Note implementation assumes no null values in vertex map.
+    public boolean isomorphic(DiTreeEntity another) {
+        if (this.vertexMap.size() != another.vertexMap.size()) {
+            return false;
+        }
+        //TODO implement
+        throw new UnsupportedOperationException();
     }
 
     public static DiTreeEntity make(DiTree<Vertex> tree) {
@@ -66,202 +124,47 @@ public class DiTreeEntity<V extends EntityVertex> extends DiGraphAbstract<V> imp
 
     }
 
-    public static <V extends EntityVertex> Builder<V> builder() {
-        return new Builder();
+    public static DiTreeEntity.Builder builder() {
+        return new DiTreeEntity.Builder();
     }
 
-    @Override
-    public V root() {
-        return root;
+    /**
+     * Called to generate an isomorphicExpression and a mergedExpression.
+     *
+     * @param another  the existing DiTreeEntity to add nodes from.
+     * @param solution an array mapping from the vertexIndexes in another to the vertexIndexes
+     *                 in this expression. If the value of the solution element == -1, that node
+     *                 is not added to this tree, otherwise the value of the
+     *                 solution element is used for the vertexIndex in this tree.
+     */
+    public static DiTreeEntity.Builder addVertexesFromSolution(DiTreeEntity another, ImmutableIntList solution) {
+        Builder builder = new Builder();
+        builder.addVertexesWithMap(another, solution.toArray(), new int[another.vertexCount()], another.root.vertexIndex);
+        return builder;
     }
 
-    @Override
-    public Optional<V> predecessor(V vertex) {
-        if (this.predecessorMap.containsKey(vertex.vertexIndex())) {
-            return Optional.of(vertex(this.predecessorMap.get(vertex.vertexIndex())));
-        }
-        return Optional.empty();
+    /**
+     * Called to generate an isomorphicExpression and a mergedExpression.
+     *
+     * @param another                     the logical expression to add nodes from.
+     * @param solution                    an array mapping from the nodeId in another to the nodeId
+     *                                    in this expression. If the value of the solution element == -1, that node
+     *                                    is not added to this logical expression, otherwise the value of the
+     *                                    solution element is used for the nodeId in this logical expression.
+     * @param anotherToThisVertexIndexMap contains a mapping from nodeId in another
+     *                                    to nodeId in this constructed tree.
+     */
+    public static DiTreeEntity.Builder addVertexesFromSolution(DiTreeEntity another, ImmutableIntList solution, int[] anotherToThisVertexIndexMap) {
+        Builder builder = new Builder();
+        builder.addVertexesWithMap(another, solution.toArray(), anotherToThisVertexIndexMap, another.root.vertexIndex);
+        return builder;
     }
 
-    @Override
-    public ImmutableIntIntMap predecessorMap() {
-        return predecessorMap;
-    }
-
-    public final byte[] getBytes() {
-        int defaultSize = size();
-        int bufSize = defaultSize;
-        AtomicReference<ByteBuf> byteBufRef =
-                new AtomicReference<>(ByteBufPool.allocate(bufSize));
-        while (true) {
-            try {
-                ByteBuf byteBuf = byteBufRef.get();
-                writeVertexMap(byteBuf);
-                writeIntIntListMap(byteBuf, successorMap());
-
-                byteBuf.writeInt(predecessorMap.size());
-                predecessorMap.forEachKeyValue((vertex, predecessor) -> {
-                    byteBuf.writeInt(vertex);
-                    byteBuf.writeInt(predecessor);
-                });
-
-                byteBuf.writeInt(root.vertexIndex());
-                return byteBuf.asArray();
-            } catch (ArrayIndexOutOfBoundsException e) {
-                LOG.info("Tree: " + e.getMessage());
-                byteBufRef.get().recycle();
-                bufSize = bufSize + defaultSize;
-                byteBufRef.set(ByteBufPool.allocate(bufSize));
-            }
-        }
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(this.getClass().getSimpleName()).append("{\n");
-
-        MutableIntSet coveredIndexes = IntSets.mutable.empty();
-        int nextIndex = root.vertexIndex;
-        while (nextIndex > -1) {
-            dfsProcess(root().vertexIndex, sb, 1, coveredIndexes);
-            if (coveredIndexes.size() < vertexMap.size()) {
-                for (int i = 0; i < vertexMap.size(); i++) {
-                    if (!coveredIndexes.contains(i)) {
-                        nextIndex = i;
-                        break;
-                    }
-                }
-            } else {
-                nextIndex = -1;
-            }
-        }
-        sb.append('}');
-
-        return sb.toString();
-    }
-
-    private void dfsProcess(int start, StringBuilder sb, int depth, MutableIntSet coveredIndexes) {
-        V vertex = vertexMap.get(start);
-        coveredIndexes.add(start);
-        sb.append(vertex.toGraphFormatString("  ".repeat(depth), this));
-        Optional<ImmutableIntList> optionalSuccessors = successorNids(start);
-        if (optionalSuccessors.isPresent()) {
-            optionalSuccessors.get().forEach(i -> dfsProcess(i, sb, depth + 1, coveredIndexes));
-        }
-    }
-
-    public static class Builder<V extends EntityVertex> implements DiTree<V> {
-        private final MutableList<V> vertexMap = Lists.mutable.empty();
-        private final MutableIntObjectMap<MutableIntList> successorMap = IntObjectMaps.mutable.empty();
-        private final MutableIntIntMap predecessorMap = IntIntMaps.mutable.empty();
-        private V root;
-
-        private Builder() {
+    public static class Builder extends DiTreeAbstract.Builder<EntityVertex> {
+        protected Builder() {
         }
 
-        /**
-         * @param adaptorFactory
-         * @param <A>
-         * @return
-         */
-        @Override
-        public <A> A adapt(GraphAdaptorFactory<A> adaptorFactory) {
-            throw new UnsupportedOperationException("Builder does not adapt... ");
-        }
-
-        @Override
-        public V vertex(UUID vertexId) {
-            for (V vertexEntity : this.vertexMap) {
-                if (vertexEntity.vertexId().asUuid().equals(vertexId)) {
-                    return vertexEntity;
-                }
-            }
-            throw new NoSuchElementException("VertexId: " + vertexId);
-        }
-
-        @Override
-        public V vertex(int vertexIndex) {
-            return vertexMap.get(vertexIndex);
-        }
-
-        @Override
-        public ImmutableList<V> vertexMap() {
-            return vertexMap.toImmutable();
-        }
-
-        @Override
-        public ImmutableIntObjectMap<ImmutableIntList> successorMap() {
-            MutableIntObjectMap<ImmutableIntList> tempMap = IntObjectMaps.mutable.ofInitialCapacity(successorMap.size());
-            successorMap.forEachKeyValue((i, mutableIntList) -> tempMap.put(i, mutableIntList.toImmutable()));
-            return tempMap.toImmutable();
-        }
-
-        @Override
-        public ImmutableList<V> successors(V vertex) {
-            MutableIntList successorList = successorMap.get(vertex.vertexIndex());
-            if (successorList != null) {
-                MutableList<V> successors = Lists.mutable.ofInitialCapacity(successorList.size());
-                successorList.forEach(successorIndex -> {
-                    successors.add(vertex(successorIndex));
-                });
-                return successors.toImmutable();
-            }
-            return Lists.immutable.empty();
-        }
-
-        public V getRoot() {
-            return root;
-        }
-
-        public Builder<V> setRoot(V root) {
-            addVertex(root);
-            this.root = root;
-            return this;
-        }
-
-        public Builder<V> addVertex(V vertex) {
-            if (vertex.vertexIndex() > -1) {
-                if (vertex.vertexIndex() < vertexMap.size() &&
-                        vertex == vertexMap.get(vertex.vertexIndex())) {
-                    // already in the list.
-                } else {
-                    while (vertexMap.size() <= vertex.vertexIndex()) {
-                        vertexMap.add(null);
-                    }
-                    vertexMap.set(vertex.vertexIndex(), vertex);
-                }
-            } else {
-                vertex.setVertexIndex(vertexMap.size());
-                vertexMap.add(vertex.vertexIndex(), vertex);
-            }
-            return this;
-        }
-
-        public Builder<V> addEdge(V child, V parent) {
-            addVertex(child);
-            addVertex(parent);
-            if (!successorMap.containsKey(parent.vertexIndex())) {
-                successorMap.put(parent.vertexIndex(), IntLists.mutable.empty());
-            }
-            successorMap.get(parent.vertexIndex()).add(child.vertexIndex());
-            predecessorMap.put(child.vertexIndex(), parent.vertexIndex());
-            return this;
-        }
-
-        public Builder<V> addEdge(int childIndex, int parentIndex) {
-            if (vertexMap.get(childIndex) == null || vertexMap.get(parentIndex) == null) {
-                throw new IllegalStateException("Child Vertex or Parent Vertex is null. Add to vertex map before adding edge. ");
-            }
-            if (!successorMap.containsKey(parentIndex)) {
-                successorMap.put(parentIndex, IntLists.mutable.empty());
-            }
-            successorMap.get(parentIndex).add(childIndex);
-            predecessorMap.put(childIndex, parentIndex);
-            return this;
-        }
-
-        public DiTreeEntity<V> build() {
+        public DiTreeEntity build() {
 
             MutableIntObjectMap<ImmutableIntList> intermediateSuccessorMap = IntObjectMaps.mutable.ofInitialCapacity(successorMap.size());
             successorMap.forEachKeyValue((vertex, successorList) -> intermediateSuccessorMap.put(vertex, successorList.toImmutable()));
@@ -272,27 +175,90 @@ public class DiTreeEntity<V extends EntityVertex> extends DiGraphAbstract<V> imp
                     predecessorMap.toImmutable());
         }
 
-        @Override
-        public V root() {
-            return root;
+        public int vertexCount() {
+            return this.vertexMap.size();
         }
 
-        @Override
-        public Optional<V> predecessor(V vertex) {
-            if (this.predecessorMap.containsKey(vertex.vertexIndex())) {
-                return Optional.of(vertex(this.predecessorMap.get(vertex.vertexIndex())));
+        /**
+         * Adds the nodes with map.
+         *
+         * @param anotherTree                 the tree to add nodes from.
+         * @param solution                    an array mapping from the vertexIndex in anotherTree to the vertexIndex
+         *                                    in this tree. If the value of the solution element == -1, that vertex
+         *                                    is not added to this tree, otherwise the value of the
+         *                                    solution element is used for the vertexIndex in this directed tree.
+         * @param vertexIndexesToAddFromAnother   the list of vertexIndexes in anotherTree
+         *                                    to add to this tree on this invocation. Note that
+         *                                    children of the nodes indicated by vertexIndexesToAddFromAnother may be added by recursive calls
+         *                                    to this method, if the vertexIndexesToAddFromAnother index in the solution array is >= 0.
+         * @return the EntityVertex elements added as a result of this instance of the
+         * call, not including any children EntityVertexes added by recursive
+         * calls. Those children EntityVertex elements can be retrieved by recursively
+         * traversing the children of these returned EntityVertexes.
+         */
+        public EntityVertex[] addVertexesWithMap(DiTreeEntity anotherTree,
+                                                 int[] solution,
+                                                 int... vertexIndexesToAddFromAnother) {
+            return addVertexesWithMap(anotherTree, solution, null, vertexIndexesToAddFromAnother);
+        }
+
+        /**
+         * Adds the nodes with map.
+         *
+         * @param anotherTree                 the tree to add nodes from.
+         * @param solution                    an array mapping from the vertexIndex in anotherTree to the vertexIndex
+         *                                    in this tree. If the value of the solution element == -1, that vertex
+         *                                    is not added to this tree, otherwise the value of the
+         *                                    solution element is used for the vertexIndex in this directed tree.
+         * @param anotherToThisVertexIndexMap if not null, contains a mapping from vertexIndex in anotherTree
+         *                                    to vertexIndex in this constructed expression. The mapping is populated by this routine, it
+         *                                    is an output parameter.
+         * @param anotherVertexIndexesToAdd   the list of vertexIndexes in anotherTree
+         *                                    to add to this tree on this invocation. Note that
+         *                                    children of the nodes indicated by anotherVertexIndexesToAdd may be added by recursive calls
+         *                                    to this method, if the anotherVertexIndexesToAdd index in the solution array is >= 0.
+         * @return the EntityVertex elements added as a result of this instance of the
+         * call, not including any children EntityVertexes added by recursive
+         * calls. Those children EntityVertex elements can be retrieved by recursively
+         * traversing the children of these returned EntityVertexes.
+         */
+        public EntityVertex[] addVertexesWithMap(DiTreeEntity anotherTree,
+                                                 int[] solution,
+                                                 int[] anotherToThisVertexIndexMap,
+                                                 int... anotherVertexIndexesToAdd) {
+            final EntityVertex[] results = new EntityVertex[anotherVertexIndexesToAdd.length];
+
+            for (int i = 0; i < anotherVertexIndexesToAdd.length; i++) {
+                final EntityVertex oldVertex = anotherTree.vertex(anotherVertexIndexesToAdd[i]);
+                EntityVertex newVertex = oldVertex.copyWithUnassignedIndex();
+                this.addVertex(newVertex);
+                if (oldVertex.vertexIndex == anotherTree.root.vertexIndex) {
+                    this.setRoot(newVertex);
+                }
+                results[i] = newVertex;
+                //  filter successor vertex indexes not in solution, then recursive call to add filtered children...
+                int[] filteredSuccessorVertexIndexes = anotherTree.successors(oldVertex.vertexIndex)
+                        .primitiveStream().filter(oldVertexIndex -> solution[oldVertexIndex] >= 0).toArray();
+
+                if (filteredSuccessorVertexIndexes.length > 0) {
+                    EntityVertex[] successorVertexes = addVertexesWithMap(anotherTree,
+                            solution,
+                            anotherToThisVertexIndexMap,
+                            filteredSuccessorVertexIndexes);
+
+                    // Add filtered successors to builder
+                    for (EntityVertex successorVertex: successorVertexes) {
+                        addEdge(successorVertex.vertexIndex, newVertex.vertexIndex);
+                    }
+                }
+
+                // update anotherToThisVertexIndexMap...
+                if (anotherToThisVertexIndexMap != null) {
+                    anotherToThisVertexIndexMap[oldVertex.vertexIndex] = results[i].vertexIndex;
+                }
             }
-            return Optional.empty();
-        }
-
-        @Override
-        public ImmutableIntIntMap predecessorMap() {
-            return predecessorMap.toImmutable();
-        }
-
-        @Override
-        public ImmutableIntList successors(int vertexIndex) {
-            return successorMap.get(vertexIndex).toImmutable();
+            return results;
         }
     }
+
 }

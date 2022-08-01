@@ -22,7 +22,7 @@ public interface ViewCalculator extends StampCalculatorDelegate, LanguageCalcula
     }
 
     default boolean isDefined(int conceptNid) {
-        Latest<DiTreeEntity<EntityVertex>> conceptExpression = getAxiomTreeForEntity(conceptNid, PremiseType.STATED);
+        Latest<DiTreeEntity> conceptExpression = getAxiomTreeForEntity(conceptNid, PremiseType.STATED);
         if (!conceptExpression.isPresent()) {
             conceptExpression = getAxiomTreeForEntity(conceptNid, PremiseType.INFERRED);
         }

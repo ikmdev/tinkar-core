@@ -1,6 +1,7 @@
 package org.hl7.tinkar.collection;
 
 import org.hl7.tinkar.common.service.PrimitiveDataService;
+import org.hl7.tinkar.common.util.ArrayUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -137,8 +138,7 @@ public class SpinedIntIntMap {
     }
 
     private AtomicIntegerArray newSpine(Integer spineKey) {
-        int[] spine = new int[spineSize];
-        Arrays.fill(spine, INITIALIZATION_VALUE);
+        int[] spine = ArrayUtil.createAndFill(spineSize, INITIALIZATION_VALUE);
         this.spineCount.set(Math.max(this.spineCount.get(), spineKey + 1));
         return new AtomicIntegerArray(spine);
     }

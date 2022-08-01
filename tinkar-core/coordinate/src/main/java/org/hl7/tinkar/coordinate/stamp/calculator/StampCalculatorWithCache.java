@@ -56,6 +56,7 @@ import org.hl7.tinkar.coordinate.PathService;
 import org.hl7.tinkar.coordinate.stamp.*;
 import org.hl7.tinkar.entity.*;
 import org.hl7.tinkar.entity.graph.DiTreeEntity;
+import org.hl7.tinkar.entity.graph.DiTreeVersion;
 import org.hl7.tinkar.entity.graph.VersionVertex;
 import org.hl7.tinkar.terms.State;
 import org.hl7.tinkar.terms.TinkarTerm;
@@ -237,7 +238,7 @@ public class StampCalculatorWithCache implements StampCalculator {
         return (Latest<V>) latestCache.get(nid, latestNid -> this.latest(Entity.getFast(latestNid)));
     }
 
-    public <V extends EntityVersion> List<DiTree<VersionVertex<V>>> getVersionGraphList(Entity<V> chronicle) {
+    public <V extends EntityVersion> List<DiTreeVersion<V>> getVersionGraphList(Entity<V> chronicle) {
         return getVersionGraphList(chronicle.versions());
     }
 
@@ -639,11 +640,11 @@ public class StampCalculatorWithCache implements StampCalculator {
     }
 
     public <V extends
-            EntityVersion> List<DiTree<VersionVertex<V>>> getVersionGraphList(ImmutableList<V> versionList) {
+            EntityVersion> List<DiTreeVersion<V>> getVersionGraphList(ImmutableList<V> versionList) {
         SortedSet<VersionWithDistance<V>> versionWithDistances = new TreeSet<>();
         versionList.forEach(v -> versionWithDistances.add(new VersionWithDistance<>(v)));
 
-        final List<DiTree<VersionVertex<V>>> results = new ArrayList<>();
+        final List<DiTreeVersion<V>> results = new ArrayList<>();
 
         int loopCheck = 0;
         while (!versionWithDistances.isEmpty()) {
@@ -651,7 +652,7 @@ public class StampCalculatorWithCache implements StampCalculator {
             if (loopCheck > 100) {
                 throw new IllegalStateException("loopCheck = " + loopCheck);
             }
-            DiTreeEntity.Builder<VersionVertex<V>> treeBuilder = DiTreeEntity.builder();
+            DiTreeVersion.Builder treeBuilder = DiTreeVersion.builder();
 
             Set<VersionVertex<V>> leafNodes = new HashSet<>();
             SortedSet<VersionWithDistance<V>> nodesInTree = new TreeSet<>();

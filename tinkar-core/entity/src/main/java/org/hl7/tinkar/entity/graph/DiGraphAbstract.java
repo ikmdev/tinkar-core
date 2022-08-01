@@ -11,17 +11,18 @@ import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
+import org.hl7.tinkar.component.graph.DiGraph;
 import org.hl7.tinkar.component.graph.Graph;
 import org.hl7.tinkar.component.graph.GraphAdaptorFactory;
 import org.hl7.tinkar.component.graph.Vertex;
 import org.hl7.tinkar.terms.EntityFacade;
 
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class DiGraphAbstract<V extends EntityVertex> {
+public abstract class DiGraphAbstract<V extends EntityVertex>  {
+
+
     public static final byte ENTITY_FORMAT_VERSION = 1;
 
     final ImmutableList<V> vertexMap;
@@ -32,6 +33,19 @@ public abstract class DiGraphAbstract<V extends EntityVertex> {
                            ImmutableIntObjectMap<ImmutableIntList> successorMap) {
         this.vertexMap = vertexMap;
         this.successorMap = successorMap;
+    }
+
+    public DiGraph.VertexType vertexType(V vertex) {
+        if (successorMap.get(vertex.vertexIndex) == null || successorMap.get(vertex.vertexIndex).isEmpty()) {
+            return DiGraph.VertexType.LEAF;
+        }
+        return DiGraph.VertexType.PREDECESSOR;
+    }
+    public DiGraph.VertexType vertexType(int vertexIndex) {
+        if (successorMap.get(vertexIndex) == null || successorMap.get(vertexIndex).isEmpty()) {
+            return DiGraph.VertexType.LEAF;
+        }
+        return DiGraph.VertexType.PREDECESSOR;
     }
 
     protected static ImmutableList<EntityVertex> getVertexEntities(Graph<Vertex> tree) {
@@ -136,7 +150,7 @@ public abstract class DiGraphAbstract<V extends EntityVertex> {
         return vertexMap.get(vertexIndex);
     }
 
-    public int size() {
+    public int estimatedBytes() {
         // Empty vertex is 34 bytes
         return vertexMap.size() * 64;
     }
@@ -161,5 +175,83 @@ public abstract class DiGraphAbstract<V extends EntityVertex> {
         });
     }
 
+    public final void breadthFirstProcess(int startNid, VertexVisitData vertexVisitData) {
+        final Queue<Integer> bfsQueue      = new LinkedList<>();
+
+        vertexVisitData.startVertexVisit(startNid, 0);
+        bfsQueue.add(startNid);
+
+        while (!bfsQueue.isEmpty()) {
+            final int   currentIndex      = bfsQueue.remove();
+            final int   currentDistance = vertexVisitData.distance(currentIndex);
+            final EntityVertex currentVertex = vertex(currentIndex);
+            final ImmutableIntList childIndexes       = successorMap.get(currentIndex);
+
+            if (childIndexes.isEmpty()) {
+                vertexVisitData.setLeafVertex(currentIndex);
+            }
+
+            vertexVisitData.vertexStartProcess(currentVertex, (DiGraphAbstract<EntityVertex>) this);
+
+            childIndexes.forEach(childIndex -> {
+                if (vertexVisitData.vertexStatus(childIndex) == VertexStatus.UNDISCOVERED) {
+                    vertexVisitData.startVertexVisit(childIndex, currentDistance + 1);
+                    vertexVisitData.setPredecessorIndex(childIndex, currentIndex);
+                    bfsQueue.add(childIndex);
+                } else {
+                    // second path to node. Could be multi-parent or cycle...
+                    // TODO decide if to put in generic cycle detection using this circumstance.
+                }
+            });
+
+            vertexVisitData.vertexEndProcess(currentVertex, (DiGraphAbstract<EntityVertex>) this);
+            vertexVisitData.endVertexVisit(currentIndex);
+        }
+    }
+    public final void depthFirstProcess(int startNid, VertexVisitData vertexVisitData) {
+        dfsVisit(startNid, vertexVisitData, 0);
+    }
+    private void dfsVisit(int index,
+                          VertexVisitData vertexVisitData,
+                          int depth) {
+        if (depth > 100) {
+            // toString depends on this method, so we can't include this.toString() in the exception...
+            throw new RuntimeException("Depth limit exceeded: " + depth);  // + " in graph: " + this);
+        }
+        // Change to NodeStatus.PROCESSING
+        vertexVisitData.startVertexVisit(index, depth);
+
+        final ImmutableIntList childIndexes = successorMap.getIfAbsent(index, () -> IntLists.immutable.empty());
+
+        if (childIndexes.isEmpty()) {
+            vertexVisitData.setLeafVertex(index);
+        }
+        EntityVertex vertex = vertex(index);
+        vertexVisitData.vertexStartProcess(vertex, (DiGraphAbstract<EntityVertex>) this);
+
+        childIndexes.forEach(childIndex -> {
+            if (vertexVisitData.vertexStatus(childIndex) == VertexStatus.UNDISCOVERED) {
+                vertexVisitData.setPredecessorIndex(childIndex, index);
+                dfsVisit(childIndex, vertexVisitData, depth + 1);
+            } else {
+                // second path to node. Could be multi-parent or cycle...
+                // TODO decide if to put in generic cycle detection using this circumstance.
+            }
+        });
+
+        vertexVisitData.vertexEndProcess(vertex, (DiGraphAbstract<EntityVertex>) this);
+
+        // Change to NodeStatus.FINISHED
+        vertexVisitData.endVertexVisit(index);
+    }
+
+
+    public boolean equivalentVertexes(int thisIndex, EntityVertex thatVertex) {
+        return this.vertexMap.get(thisIndex).equivalent(thatVertex);
+    }
+
+    public int vertexCount() {
+        return this.vertexMap.size();
+    }
 
 }

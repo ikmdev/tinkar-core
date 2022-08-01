@@ -1,5 +1,6 @@
 package org.hl7.tinkar.provider.executor;
 
+import org.hl7.tinkar.common.alert.UncaughtExceptionAlertStreamer;
 import org.hl7.tinkar.common.service.ExecutorService;
 import org.hl7.tinkar.common.util.thread.NamedThreadFactory;
 import org.hl7.tinkar.common.util.thread.ThreadPoolExecutorFixed;
@@ -35,6 +36,7 @@ public class ExecutorProvider implements ExecutorService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExecutorProvider.class);
 
+    private static final UncaughtExceptionAlertStreamer exceptionAlertStreamer = new UncaughtExceptionAlertStreamer();
     /**
      * The fork join executor.
      */

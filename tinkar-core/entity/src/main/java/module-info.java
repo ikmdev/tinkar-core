@@ -25,6 +25,7 @@ module org.hl7.tinkar.entity {
     requires java.xml;
     requires org.hl7.tinkar.protobuf;
     requires com.google.protobuf;
+    requires org.jgrapht.core;
 
     exports org.hl7.tinkar.entity;
     exports org.hl7.tinkar.entity.graph;
@@ -33,6 +34,7 @@ module org.hl7.tinkar.entity {
     exports org.hl7.tinkar.entity.export;
     exports org.hl7.tinkar.entity.transaction;
     exports org.hl7.tinkar.entity.transfom;
+    exports org.hl7.tinkar.entity.graph.isomorphic;
 
     provides LoadDataFromFileController
             with LoadEntitiesFromFileController;

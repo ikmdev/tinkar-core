@@ -20,6 +20,7 @@ import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.hl7.tinkar.common.alert.AlertStreams;
 import org.hl7.tinkar.common.service.PrimitiveDataService;
 import org.hl7.tinkar.common.service.TinkExecutor;
+import org.hl7.tinkar.common.util.ArrayUtil;
 import org.hl7.tinkar.common.util.time.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -361,8 +362,7 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
         int nidsSize = nids.size();
         int nidIndex = 0;
         for (int setIndex = 0; setIndex < setCount; setIndex++) {
-            nidLists[setIndex] = new int[setSize];
-            Arrays.fill(nidLists[setIndex], Integer.MIN_VALUE);
+            nidLists[setIndex] = ArrayUtil.createAndFill(setSize, Integer.MIN_VALUE);
             for (int indexInSet = 0; indexInSet < setSize; indexInSet++) {
                 if (nidIndex < nidsSize) {
                     nidLists[setIndex][indexInSet] = nidsArray[nidIndex];

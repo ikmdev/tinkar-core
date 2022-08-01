@@ -16,6 +16,7 @@
  */
 package org.hl7.tinkar.collection;
 
+import org.hl7.tinkar.common.util.ArrayUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -148,9 +149,7 @@ public class SpinedNidIntMap {
     }
 
     private AtomicIntegerArray newSpine() {
-        int[] spine = new int[elementsPerSpine];
-        Arrays.fill(spine, INITIALIZATION_VALUE);
-        return new AtomicIntegerArray(spine);
+        return new AtomicIntegerArray(ArrayUtil.createAndFill(elementsPerSpine, INITIALIZATION_VALUE));
     }
 
     public ConcurrentSpineList<AtomicIntegerArray> getSpines() {

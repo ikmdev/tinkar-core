@@ -22,6 +22,11 @@ public record DiGraphDTO(ImmutableIntList rootSequences,
 
     private static final int LOCAL_MARSHAL_VERSION = 3;
 
+    @Override
+    public VertexType vertexType(VertexDTO vertex) {
+        throw new UnsupportedOperationException();
+    }
+
     @Unmarshaler
     public static DiGraphDTO make(TinkarInput in) {
         if (LOCAL_MARSHAL_VERSION == in.getTinkerFormatVersion()) {
