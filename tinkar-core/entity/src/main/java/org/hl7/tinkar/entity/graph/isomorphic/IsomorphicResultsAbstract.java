@@ -4,6 +4,7 @@ import org.eclipse.collections.api.map.primitive.MutableObjectIntMap;
 import org.eclipse.collections.impl.factory.primitive.ObjectIntMaps;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.ArrayUtil;
+import org.hl7.tinkar.common.util.time.MultipleEndpointTimer;
 import org.hl7.tinkar.entity.graph.*;
 
 import java.util.*;
@@ -68,7 +69,9 @@ public abstract class IsomorphicResultsAbstract<VVD extends VertexVisitData>
      */
     protected final int[] comparisonToReferenceIndexMap;
 
-    public IsomorphicResultsAbstract(DiTreeEntity referenceTree, DiTreeEntity comparisonTree, int referencedConceptNid) {
+    protected final MultipleEndpointTimer.Stopwatch stopwatch;
+
+    public IsomorphicResultsAbstract(DiTreeEntity referenceTree, DiTreeEntity comparisonTree, int referencedConceptNid, MultipleEndpointTimer.Stopwatch stopwatch) {
         this.referenceTree = referenceTree;
         this.comparisonTree = comparisonTree;
         this.referenceVisitData = makeVertexVisitData(referenceTree.vertexCount(), this::vertexStartProcessor, this::vertexEndProcessor);
@@ -79,6 +82,7 @@ public abstract class IsomorphicResultsAbstract<VVD extends VertexVisitData>
         this.referencedConceptNid = referencedConceptNid;
         this.comparisonDeletionRoots = new BitSet(this.comparisonTree.vertexCount());
         this.referenceAdditionRoots = new BitSet(this.referenceTree.vertexCount());
+        this.stopwatch = stopwatch;
     }
 
 

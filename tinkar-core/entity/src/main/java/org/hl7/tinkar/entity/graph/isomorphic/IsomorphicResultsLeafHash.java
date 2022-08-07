@@ -11,6 +11,7 @@ import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.util.ArrayUtil;
+import org.hl7.tinkar.common.util.time.MultipleEndpointTimer;
 import org.hl7.tinkar.entity.graph.*;
 import org.hl7.tinkar.terms.ConceptFacade;
 import org.slf4j.Logger;
@@ -18,6 +19,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.hl7.tinkar.entity.graph.isomorphic.IsomorphicResults.EndPoints.FULL_COMPARISON;
 
 //~--- classes ----------------------------------------------------------------
 
@@ -72,6 +75,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> extends IsomorphicResultsAbstract<VVD> {
 
     private static final Logger LOG = LoggerFactory.getLogger(IsomorphicResultsLeafHash.class);
+
+
     /**
      * Will not allow a hash value of -1. And vertexes where not unique if another and was below them, and there was an
      * And vertex above...
@@ -120,8 +125,8 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
      * @param referenceTree  the reference tree
      * @param comparisonTree the comparison tree
      */
-    public IsomorphicResultsLeafHash(DiTreeEntity referenceTree, DiTreeEntity comparisonTree, int referencedConceptNid) {
-        super(referenceTree, comparisonTree, referencedConceptNid);
+    public IsomorphicResultsLeafHash(DiTreeEntity referenceTree, DiTreeEntity comparisonTree, int referencedConceptNid, MultipleEndpointTimer.Stopwatch stopwatch) {
+        super(referenceTree, comparisonTree, referencedConceptNid, stopwatch);
     }
 
     @Override
@@ -469,7 +474,7 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
             });
             this.mergedTree = treeBuilder.build();
         }
-
+        stopwatch.end(FULL_COMPARISON);
         return this;
     }
 

@@ -14,6 +14,9 @@ import java.util.List;
  * @author kec
  */
 public interface IsomorphicResults {
+    public enum EndPoints {
+        INDEXES_EQUAL, FULL_COMPARISON
+    }
     /**
      * Gets the added relationship roots.
      *

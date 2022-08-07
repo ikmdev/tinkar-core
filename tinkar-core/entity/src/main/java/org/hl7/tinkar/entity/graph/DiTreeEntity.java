@@ -3,12 +3,11 @@ package org.hl7.tinkar.entity.graph;
 import io.activej.bytebuf.ByteBuf;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
-import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.map.primitive.*;
 import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
-import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.hl7.tinkar.common.alert.AlertStreams;
+import org.hl7.tinkar.common.util.time.MultipleEndpointTimer;
 import org.hl7.tinkar.component.graph.DiTree;
 import org.hl7.tinkar.component.graph.Vertex;
 import org.hl7.tinkar.entity.graph.isomorphic.IsomorphicResults;
@@ -31,7 +30,7 @@ public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
      * @param that The tree that is considered secondary with respect to preserving vertex ids.
      * @return a copy of that which is updated with correlated vertex ids based on isomorphic analysis.
      */
-    public DiTreeEntity makeCorrelatedTree(DiTreeEntity that, int referencedConceptNid) {
+    public DiTreeEntity makeCorrelatedTree(DiTreeEntity that, int referencedConceptNid, MultipleEndpointTimer.Stopwatch stopwatch) {
 
         // A special case for correlation when this and that are equal and vertexes are indexed the same.
         if (this.vertexMap.size() == that.vertexMap.size()) {
@@ -60,11 +59,12 @@ public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
             }
             if (maybeEqual) {
                 // return this as the correlated tree
+                stopwatch.end(IsomorphicResults.EndPoints.INDEXES_EQUAL);
                 return this;
             }
         }
         try {
-            IsomorphicResultsLeafHash isomorphicResult = new IsomorphicResultsLeafHash(this, that, referencedConceptNid);
+            IsomorphicResultsLeafHash isomorphicResult = new IsomorphicResultsLeafHash(this, that, referencedConceptNid, stopwatch);
             IsomorphicResults results = isomorphicResult.call();
             return results.getIsomorphicTree();
         } catch (Exception e) {
