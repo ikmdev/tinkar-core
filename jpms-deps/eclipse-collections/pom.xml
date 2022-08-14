@@ -5,7 +5,7 @@
     <parent>
         <artifactId>tinkar-jpms-deps</artifactId>
         <groupId>org.hl7.tinkar</groupId>
-        <version>1.0.11</version>
+        <version>1.0.12</version>
     </parent>
     <artifactId>eclipse-collections</artifactId>
     <packaging>jar</packaging>
@@ -116,22 +116,56 @@
                                         exports org.eclipse.collections.impl.utility;
                                         exports org.eclipse.collections.impl.utility.internal;
 
+                                        uses org.eclipse.collections.api.factory.Lists;
                                         uses org.eclipse.collections.api.factory.bag.ImmutableBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.MultiReaderBagFactory;
                                         uses org.eclipse.collections.api.factory.bag.MutableBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.ImmutableBooleanBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.ImmutableByteBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.ImmutableCharBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.ImmutableDoubleBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.ImmutableFloatBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.ImmutableIntBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.ImmutableLongBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.ImmutableShortBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.MutableBooleanBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.MutableByteBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.MutableCharBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.MutableDoubleBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.MutableFloatBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.MutableIntBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.MutableLongBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.MutableShortBagFactory;
                                         uses org.eclipse.collections.api.factory.bag.sorted.ImmutableSortedBagFactory;
                                         uses org.eclipse.collections.api.factory.bag.sorted.MutableSortedBagFactory;
                                         uses org.eclipse.collections.api.factory.bimap.ImmutableBiMapFactory;
                                         uses org.eclipse.collections.api.factory.bimap.MutableBiMapFactory;
                                         uses org.eclipse.collections.api.factory.list.FixedSizeListFactory;
                                         uses org.eclipse.collections.api.factory.list.ImmutableListFactory;
+                                        uses org.eclipse.collections.api.factory.list.MultiReaderListFactory;
                                         uses org.eclipse.collections.api.factory.list.MutableListFactory;
+                                        uses org.eclipse.collections.api.factory.list.primitive.ImmutableCharListFactory;
+                                        uses org.eclipse.collections.api.factory.list.primitive.ImmutableIntListFactory;
+                                        uses org.eclipse.collections.api.factory.list.primitive.MutableCharListFactory;
+                                        uses org.eclipse.collections.api.factory.list.primitive.MutableIntListFactory;
                                         uses org.eclipse.collections.api.factory.map.FixedSizeMapFactory;
                                         uses org.eclipse.collections.api.factory.map.ImmutableMapFactory;
                                         uses org.eclipse.collections.api.factory.map.MutableMapFactory;
+                                        uses org.eclipse.collections.api.factory.map.primitive.ImmutableIntIntMapFactory;
+                                        uses org.eclipse.collections.api.factory.map.primitive.ImmutableIntObjectMapFactory;
+                                        uses org.eclipse.collections.api.factory.map.primitive.ImmutableObjectDoubleMapFactory;
+                                        uses org.eclipse.collections.api.factory.map.primitive.ImmutableObjectIntMapFactory;
+                                        uses org.eclipse.collections.api.factory.map.primitive.ImmutableObjectLongMapFactory;
+                                        uses org.eclipse.collections.api.factory.map.primitive.MutableIntIntMapFactory;
+                                        uses org.eclipse.collections.api.factory.map.primitive.MutableIntObjectMapFactory;
+                                        uses org.eclipse.collections.api.factory.map.primitive.MutableObjectDoubleMapFactory;
+                                        uses org.eclipse.collections.api.factory.map.primitive.MutableObjectIntMapFactory;
+                                        uses org.eclipse.collections.api.factory.map.primitive.MutableObjectLongMapFactory;
                                         uses org.eclipse.collections.api.factory.map.sorted.ImmutableSortedMapFactory;
                                         uses org.eclipse.collections.api.factory.map.sorted.MutableSortedMapFactory;
                                         uses org.eclipse.collections.api.factory.set.FixedSizeSetFactory;
                                         uses org.eclipse.collections.api.factory.set.ImmutableSetFactory;
+                                        uses org.eclipse.collections.api.factory.set.MultiReaderSetFactory;
                                         uses org.eclipse.collections.api.factory.set.MutableSetFactory;
                                         uses org.eclipse.collections.api.factory.set.sorted.ImmutableSortedSetFactory;
                                         uses org.eclipse.collections.api.factory.set.sorted.MutableSortedSetFactory;
@@ -266,22 +300,56 @@
                                         exports org.eclipse.collections.impl.utility;
                                         exports org.eclipse.collections.impl.utility.internal;
 
+                                        uses org.eclipse.collections.api.factory.Lists;
                                         uses org.eclipse.collections.api.factory.bag.ImmutableBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.MultiReaderBagFactory;
                                         uses org.eclipse.collections.api.factory.bag.MutableBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.ImmutableBooleanBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.ImmutableByteBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.ImmutableCharBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.ImmutableDoubleBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.ImmutableFloatBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.ImmutableIntBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.ImmutableLongBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.ImmutableShortBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.MutableBooleanBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.MutableByteBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.MutableCharBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.MutableDoubleBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.MutableFloatBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.MutableIntBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.MutableLongBagFactory;
+                                        uses org.eclipse.collections.api.factory.bag.primitive.MutableShortBagFactory;
                                         uses org.eclipse.collections.api.factory.bag.sorted.ImmutableSortedBagFactory;
                                         uses org.eclipse.collections.api.factory.bag.sorted.MutableSortedBagFactory;
                                         uses org.eclipse.collections.api.factory.bimap.ImmutableBiMapFactory;
                                         uses org.eclipse.collections.api.factory.bimap.MutableBiMapFactory;
                                         uses org.eclipse.collections.api.factory.list.FixedSizeListFactory;
                                         uses org.eclipse.collections.api.factory.list.ImmutableListFactory;
+                                        uses org.eclipse.collections.api.factory.list.MultiReaderListFactory;
                                         uses org.eclipse.collections.api.factory.list.MutableListFactory;
+                                        uses org.eclipse.collections.api.factory.list.primitive.ImmutableCharListFactory;
+                                        uses org.eclipse.collections.api.factory.list.primitive.ImmutableIntListFactory;
+                                        uses org.eclipse.collections.api.factory.list.primitive.MutableCharListFactory;
+                                        uses org.eclipse.collections.api.factory.list.primitive.MutableIntListFactory;
                                         uses org.eclipse.collections.api.factory.map.FixedSizeMapFactory;
                                         uses org.eclipse.collections.api.factory.map.ImmutableMapFactory;
                                         uses org.eclipse.collections.api.factory.map.MutableMapFactory;
+                                        uses org.eclipse.collections.api.factory.map.primitive.ImmutableIntIntMapFactory;
+                                        uses org.eclipse.collections.api.factory.map.primitive.ImmutableIntObjectMapFactory;
+                                        uses org.eclipse.collections.api.factory.map.primitive.ImmutableObjectDoubleMapFactory;
+                                        uses org.eclipse.collections.api.factory.map.primitive.ImmutableObjectIntMapFactory;
+                                        uses org.eclipse.collections.api.factory.map.primitive.ImmutableObjectLongMapFactory;
+                                        uses org.eclipse.collections.api.factory.map.primitive.MutableIntIntMapFactory;
+                                        uses org.eclipse.collections.api.factory.map.primitive.MutableIntObjectMapFactory;
+                                        uses org.eclipse.collections.api.factory.map.primitive.MutableObjectDoubleMapFactory;
+                                        uses org.eclipse.collections.api.factory.map.primitive.MutableObjectIntMapFactory;
+                                        uses org.eclipse.collections.api.factory.map.primitive.MutableObjectLongMapFactory;
                                         uses org.eclipse.collections.api.factory.map.sorted.ImmutableSortedMapFactory;
                                         uses org.eclipse.collections.api.factory.map.sorted.MutableSortedMapFactory;
                                         uses org.eclipse.collections.api.factory.set.FixedSizeSetFactory;
                                         uses org.eclipse.collections.api.factory.set.ImmutableSetFactory;
+                                        uses org.eclipse.collections.api.factory.set.MultiReaderSetFactory;
                                         uses org.eclipse.collections.api.factory.set.MutableSetFactory;
                                         uses org.eclipse.collections.api.factory.set.sorted.ImmutableSortedSetFactory;
                                         uses org.eclipse.collections.api.factory.set.sorted.MutableSortedSetFactory;
