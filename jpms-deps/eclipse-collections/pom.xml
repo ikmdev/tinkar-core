@@ -5,7 +5,7 @@
     <parent>
         <artifactId>tinkar-jpms-deps</artifactId>
         <groupId>org.hl7.tinkar</groupId>
-        <version>1.0.12</version>
+        <version>1.0.15</version>
     </parent>
     <artifactId>eclipse-collections</artifactId>
     <packaging>jar</packaging>
@@ -51,6 +51,7 @@
                                         exports org.eclipse.collections.api.collection.primitive;
                                         exports org.eclipse.collections.api.factory;
                                         exports org.eclipse.collections.api.factory.bag;
+                                        exports org.eclipse.collections.api.factory.bimap;
                                         exports org.eclipse.collections.api.factory.list;
                                         exports org.eclipse.collections.api.factory.list.primitive;
                                         exports org.eclipse.collections.api.factory.set;
@@ -86,6 +87,9 @@
                                         exports org.eclipse.collections.impl.bag.immutable.primitive;
                                         exports org.eclipse.collections.impl.bag.sorted.immutable;
                                         exports org.eclipse.collections.impl.bag.sorted.mutable;
+                                        exports org.eclipse.collections.impl.bimap;
+                                        exports org.eclipse.collections.impl.bimap.immutable;
+                                        exports org.eclipse.collections.impl.bimap.mutable;
                                         exports org.eclipse.collections.impl.block.factory;
                                         exports org.eclipse.collections.impl.block.function;
                                         exports org.eclipse.collections.impl.block.procedure;
@@ -238,6 +242,7 @@
                                         exports org.eclipse.collections.api.collection.primitive;
                                         exports org.eclipse.collections.api.factory;
                                         exports org.eclipse.collections.api.factory.bag;
+                                        exports org.eclipse.collections.api.factory.bimap;
                                         exports org.eclipse.collections.api.factory.list;
                                         exports org.eclipse.collections.api.factory.list.primitive;
                                         exports org.eclipse.collections.api.factory.set;
@@ -270,6 +275,9 @@
                                         exports org.eclipse.collections.impl.bag.immutable.primitive;
                                         exports org.eclipse.collections.impl.bag.sorted.immutable;
                                         exports org.eclipse.collections.impl.bag.sorted.mutable;
+                                        exports org.eclipse.collections.impl.bimap;
+                                        exports org.eclipse.collections.impl.bimap.immutable;
+                                        exports org.eclipse.collections.impl.bimap.mutable;
                                         exports org.eclipse.collections.impl.block.factory;
                                         exports org.eclipse.collections.impl.block.function;
                                         exports org.eclipse.collections.impl.block.procedure;
