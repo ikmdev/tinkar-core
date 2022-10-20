@@ -81,6 +81,52 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <id>copy</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                    </execution>
+                    <!--
+                    <execution>
+                        <id>unpack</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                    </execution>
+                    -->
+                </executions>
+                <configuration>
+                    <artifactItems>
+                        <artifactItem>
+                            <groupId>org.hl7.tinkar</groupId>
+                            <artifactId>tinkar-test-dto</artifactId>
+                            <version>1.1.0</version>
+                            <type>zip</type>
+                            <overWrite>false</overWrite>
+                            <outputDirectory>${project.build.directory}/data</outputDirectory>
+                        </artifactItem>
+<!--                        <artifactItem>-->
+<!--                            <groupId>org.hl7.tinkar</groupId>-->
+<!--                            <artifactId>tinkar-solor-us-export.pb</artifactId>-->
+<!--                            <version>1.4</version>-->
+<!--                            <type>.zip</type> &lt;!&ndash; TODO-aks8m: Need to remove extra '.' in file name &ndash;&gt;-->
+<!--                            <overWrite>false</overWrite>-->
+<!--                            <outputDirectory>${project.build.directory}/data</outputDirectory>-->
+<!--                        </artifactItem>-->
+                    </artifactItems>
+                    <outputDirectory>${project.build.directory}/data</outputDirectory>
+                    <overWriteReleases>false</overWriteReleases>
+                    <overWriteSnapshots>true</overWriteSnapshots>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
     <reporting>
@@ -102,59 +148,4 @@
             </plugin>
         </plugins>
     </reporting>
-    <profiles>
-        <profile>
-            <id>Use Remote Integration Test Data</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-dependency-plugin</artifactId>
-                        <version>3.2.0</version>
-                        <executions>
-                            <execution>
-                                <id>copy</id>
-                                <phase>process-test-resources</phase>
-                                <goals>
-                                    <goal>copy</goal>
-                                </goals>
-                            </execution>
-                            <!--
-                            <execution>
-                                <id>unpack</id>
-                                <phase>process-test-resources</phase>
-                                <goals>
-                                    <goal>unpack</goal>
-                                </goals>
-                            </execution>
-                            -->
-                        </executions>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.hl7.tinkar</groupId>
-                                    <artifactId>tinkar-test-dto</artifactId>
-                                    <version>1.1.0</version>
-                                    <type>zip</type>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${project.build.directory}/data</outputDirectory>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.hl7.tinkar</groupId>
-                                    <artifactId>tinkar-solor-us-export.pb</artifactId>
-                                    <version>1.4</version>
-                                    <type>.zip</type> <!-- TODO-aks8m: Need to remove extra '.' in file name -->
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${project.build.directory}/data</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                            <outputDirectory>${project.build.directory}/data</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>true</overWriteSnapshots>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>

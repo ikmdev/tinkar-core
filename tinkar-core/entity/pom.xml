@@ -77,5 +77,10 @@
             <artifactId>jheaps</artifactId>
             <version>${tinkar-jpms-deps.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>protobuf</artifactId>
+            <version>${tinkar.protobuf.version}</version>
+        </dependency>
     </dependencies>
 </project>

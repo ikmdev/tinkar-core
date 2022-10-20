@@ -64,6 +64,7 @@
                                 </artifactItem>
                             </artifactItems>
                             <outputDirectory>${project.build.directory}/deps</outputDirectory>
+                            <overwriteExistingFiles>true</overwriteExistingFiles>
                         </configuration>
                     </execution>
                 </executions>
@@ -81,6 +82,7 @@
                         </goals>
                         <configuration>
                             <outputDirectory>${project.build.directory}/moditect</outputDirectory>
+                            <overwriteExistingFiles>true</overwriteExistingFiles>
                             <modules>
                                 <module>
                                     <artifact>
