@@ -8,6 +8,16 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>TINKAR: (MMP)</name>
+    <organization>
+        <name>HL7</name>
+        <url>https://www.hl7.org</url>
+    </organization>
+    <licenses>
+        <license>
+            <name>APACHE LICENSE, VERSION 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+        </license>
+    </licenses>
     <properties>
         <auto-service.version>1.0-rc7</auto-service.version>
         <build-helper-maven-plugin.version>3.2.0</build-helper-maven-plugin.version>
@@ -193,6 +203,15 @@
             </plugin>
         </plugins>
     </reporting>
+    <distributionManagement>
+        <site>
+            <id>tinkar.hl7.org</id>
+            <url>file:////opt/dev-websites/tinkar</url>
+            <!-- chflags nohidden /System/Volumes/Data/opt should unhide the /opt folder on macOS
+                The use of /opt for add-on software is a well-established practice in the UNIX community.
+            -->
+        </site>
+    </distributionManagement>
     <modules>
         <module>collection</module>
         <module>common</module>
