@@ -20,7 +20,6 @@
     </licenses>
     <properties>
         <auto-service.version>1.0-rc7</auto-service.version>
-        <build-helper-maven-plugin.version>3.2.0</build-helper-maven-plugin.version>
         <eclipse-collections-api.version>11.0.0.M1</eclipse-collections-api.version>
         <jetty-slf4j-impl.version>11.0.7</jetty-slf4j-impl.version>
         <jgrapht.version>1.5.0</jgrapht.version>
@@ -87,11 +86,6 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
                     <version>${maven-assembly-plugin.version}</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>build-helper-maven-plugin</artifactId>
-                    <version>${build-helper-maven-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>com.mycila</groupId>
