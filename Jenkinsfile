@@ -20,13 +20,16 @@ pipeline {
 
         stage("deploy"){
 
-            when {
-              expression {
-                currentBuild.result == null || currentBuild.result == 'SUCCESS' 
-              }
-            }
+            /*when {
+                expression {
+                    currentBuild.result == null || currentBuild.result == 'SUCCESS' 
+                }
+            }*/
+            
             steps {
-                echo 'test deploying application'
+                sh '''#!/bin/bash
+                    echo "hello world" 
+                '''
             }
         }
 
