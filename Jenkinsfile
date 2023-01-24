@@ -27,8 +27,11 @@ pipeline {
             }*/
             
             steps {
+
+                
+
                 sh '''#!/bin/bash
-                    echo "hello world" 
+                    mvn deploy:deploy -Durl=https://nexus.build.tinkarbuild.com/repository/maven-releases/ -DartifactId=activej -DrepositoryId=maven-releases
                 '''
             }
         }
