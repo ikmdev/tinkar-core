@@ -1,4 +1,3 @@
-
 def pipelineContainerName() {
     "titan-maven"
 }
@@ -281,6 +280,6 @@ podTemplate(
                     //TODO archive code quality checks?
                 }
         )
-
+    }
 
 }
