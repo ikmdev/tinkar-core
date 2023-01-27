@@ -25,7 +25,7 @@ pipeline {
             }
         }
 
-        stage('Upload to Nexus'){
+        stage("Upload to Nexus"){
             steps{
                 echo 'Uploading to Nexus..."
                 withCredentials([usernamePassword(credentialsId: 'NEXUS_CREDS', passwordVariable: 'NEXUS_PASSWORD', 
