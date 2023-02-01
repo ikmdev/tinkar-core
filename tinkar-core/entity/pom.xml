@@ -59,11 +59,12 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
+        <!--
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>protobuf</artifactId>
             <version>${tinkar.protobuf.version}</version>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>org.jgrapht</groupId>
             <artifactId>jgrapht-core</artifactId>
