@@ -3,14 +3,17 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <artifactId>provider</artifactId>
         <groupId>org.hl7.tinkar</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
+
     <artifactId>data-spinedarray-provider</artifactId>
     <packaging>jar</packaging>
     <name>TINKAR Provider: Data - Spined array</name>
+    
     <dependencies>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
