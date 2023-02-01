@@ -24,7 +24,7 @@ module org.hl7.tinkar.entity {
     requires transitive org.hl7.tinkar.terms;
     requires java.xml;
     //requires org.hl7.tinkar.protobuf;
-    requires com.google.protobuf;
+    //requires com.google.protobuf;
     requires org.jgrapht.core;
 
     exports org.hl7.tinkar.entity;
