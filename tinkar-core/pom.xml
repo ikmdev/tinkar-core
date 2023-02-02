@@ -78,11 +78,6 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.hl7.tinkar</groupId>
-            <artifactId>tinkar-jpms-deps</artifactId>
-            <version>1.0.15</version>
-        </dependency>
-        <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-slf4j-impl</artifactId>
         </dependency>
@@ -92,6 +87,7 @@
             <version>${tinkar-jpms-deps.version}</version>
             <scope>provided</scope>
         </dependency>
+        
     </dependencies>
     <build>
         <pluginManagement>
@@ -211,15 +207,7 @@
             </plugin>
         </plugins>
     </reporting>
-    <distributionManagement>
-        <site>
-            <id>tinkar.hl7.org</id>
-            <url>file:////opt/dev-websites/tinkar</url>
-            <!-- chflags nohidden /System/Volumes/Data/opt should unhide the /opt folder on macOS
-                The use of /opt for add-on software is a well-established practice in the UNIX community.
-            -->
-        </site>
-    </distributionManagement>
+
     <modules>
         <module>collection</module>
         <module>common</module>

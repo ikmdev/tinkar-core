@@ -11,8 +11,8 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>tinkar</module>
-        <module>tinkar-jpms-deps</module>        
+        <module>jpms-deps</module>
+        <module>tinkar-core</module>
     </modules>
 
 </project>
