@@ -51,6 +51,15 @@
         <tinkar-jpms-deps.version>1.0.15</tinkar-jpms-deps.version>
         <tinkar.protobuf.version>1.5.0</tinkar.protobuf.version>
     </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>tinkar-jpms-deps</artifactId>
+            <version>1.0.15</version>
+        </dependency>
+    </dependencies>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
