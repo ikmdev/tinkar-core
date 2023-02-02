@@ -12,6 +12,7 @@
 
     <modules>
         <module>tinkar</module>
+        <module>tinkar-jpms-deps</module>        
     </modules>
 
 </project>
