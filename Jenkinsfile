@@ -34,6 +34,7 @@ pipeline {
         stage('Maven Build') {
             agent {
                 docker {
+                    alwaysPull true  
                     image "amazoncorretto:19-alpine3.17"
                     args '-u root:root'
                 }
