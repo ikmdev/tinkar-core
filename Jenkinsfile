@@ -35,8 +35,8 @@ pipeline {
             agent {
                 docker {
                     
-                    image "registry.hub.docker.com/library/openjdk:20"
-                    //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
+                    //image "registry.hub.docker.com/library/openjdk:20"
+                    image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
                     //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/openjdk:20"
                     args '-u root:root'
                 }
@@ -47,7 +47,7 @@ pipeline {
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
 
                         sh """
-                            apk update && apk add --no-cache procps
+                            apk update && apk add  --no-cache openjdk19~=19.0 
                         """
 
                         sh """
@@ -72,8 +72,8 @@ pipeline {
         stage('SonarQube Scan') {
             agent { 
                 docker {
-                    image "registry.hub.docker.com/library/openjdk:20"
-                    //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
+                    //image "registry.hub.docker.com/library/openjdk:20"
+                    image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
                     //image "openjdk:19-jdk-alpine"
                     args "-u root:root"
                 }
@@ -85,7 +85,7 @@ pipeline {
                     // This expands the evironment variables SONAR_CONFIG_NAME, SONAR_HOST_URL, SONAR_AUTH_TOKEN that can be used by any script.
 
                     sh """
-                        apk update && apk add --no-cache procps
+                        apk update && apk add  --no-cache openjdk19~=19.0 
                     """
 
                     sh """
@@ -105,8 +105,8 @@ pipeline {
 
             agent { 
                  docker {
-                    image "registry.hub.docker.com/library/openjdk:20"
-            //         //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
+                    //image "registry.hub.docker.com/library/openjdk:20"
+                    image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
             //         image "openjdk:19-jdk-alpine"
                     args '-u root:root'
                  }
@@ -132,7 +132,7 @@ pipeline {
                 configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) { 
 
                     sh """
-                        apk update && apk add --no-cache procps
+                        apk update && apk add  --no-cache openjdk19~=19.0  
                     """
 
                     sh """
