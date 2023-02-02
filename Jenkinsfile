@@ -47,7 +47,7 @@ pipeline {
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
 
                         sh """
-                            apk update && apk add  --no-cache openjdk20 
+                            apk update && apk add  --no-cache openjdk20~=20.0 
                         """
 
                         sh """
@@ -85,7 +85,7 @@ pipeline {
                     // This expands the evironment variables SONAR_CONFIG_NAME, SONAR_HOST_URL, SONAR_AUTH_TOKEN that can be used by any script.
 
                     sh """
-                        apk update && apk add  --no-cache openjdk20 
+                        apk update && apk add  --no-cache openjdk20~=20.0 
                     """
 
                     sh """
@@ -132,7 +132,7 @@ pipeline {
                 configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) { 
 
                     sh """
-                        apk update && apk add  --no-cache openjdk20  
+                        apk update && apk add  --no-cache openjdk20~=20.0  
                     """
 
                     sh """
