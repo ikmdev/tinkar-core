@@ -34,10 +34,7 @@ pipeline {
         stage('Maven Build') {
             agent {
                 docker {
-                    
-                    //image "registry.hub.docker.com/library/openjdk:20"
-                    image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
-                    //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/openjdk:20"
+                    image "amazoncorretto:19-alpine3.17"
                     args '-u root:root'
                 }
             }
@@ -45,11 +42,7 @@ pipeline {
             steps {
                 script{
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
-
-                        sh """
-                            apk update && apk add  --no-cache openjdk20~=20.0 
-                        """
-
+                        
                         sh """
                         mvn clean install -s '${MAVEN_SETTINGS}' -f ./tinkar-core/pom.xml \
                             --batch-mode \
@@ -72,9 +65,7 @@ pipeline {
         stage('SonarQube Scan') {
             agent { 
                 docker {
-                    //image "registry.hub.docker.com/library/openjdk:20"
-                    image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
-                    //image "openjdk:19-jdk-alpine"
+                    image "amazoncorretto:19-alpine3.17"
                     args "-u root:root"
                 }
             }
@@ -83,11 +74,7 @@ pipeline {
                 unstash 'tinkar-origin-test-artifacts'
                 withSonarQubeEnv(installationName: 'EKS SonarQube', envOnly: true) {
                     // This expands the evironment variables SONAR_CONFIG_NAME, SONAR_HOST_URL, SONAR_AUTH_TOKEN that can be used by any script.
-
-                    sh """
-                        apk update && apk add  --no-cache openjdk20~=20.0 
-                    """
-
+                    
                     sh """
                         mvn  -f ./tinkar-core/pom.xml sonar:sonar -Dsonar.login=${SONAR_AUTH_TOKEN} --batch-mode
                     """
@@ -105,9 +92,7 @@ pipeline {
 
             agent { 
                  docker {
-                    //image "registry.hub.docker.com/library/openjdk:20"
-                    image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
-            //         image "openjdk:19-jdk-alpine"
+                    image "amazoncorretto:19-alpine3.17"
                     args '-u root:root'
                  }
              }
@@ -130,11 +115,7 @@ pipeline {
                 }
              
                 configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) { 
-
-                    sh """
-                        apk update && apk add  --no-cache openjdk20~=20.0  
-                    """
-
+                    
                     sh """
                         mvn deploy \
                         -f ./tinkar-core/pom.xml \
