@@ -32,14 +32,15 @@ pipeline {
     stages {
         
         stage('Maven Build') {
-            agent { dockerfile true }
-            //     docker {
+            agent {
+                docker {
                     
-            //         //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
-            //         //image "openjdk:19-jdk-alpine"
-            //         //args '-u root:root'
-            //     }
-            // }
+                    image "registry.hub.docker.com/library/openjdk:20-slim-buster"
+                    //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
+                    //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/openjdk:20-slim-buster"
+                    //args '-u root:root'
+                }
+            }
 
             steps {
                 script{
@@ -64,13 +65,14 @@ pipeline {
         }
 
         stage('SonarQube Scan') {
-            agent { dockerfile true }
-            //     docker {
-            //         //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
-            //         //image "openjdk:19-jdk-alpine"
-            //         //args "-u root:root"
-            //     }
-            // }
+            agent { 
+                docker {
+                    image "registry.hub.docker.com/library/openjdk:20-slim-buster"
+                    //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
+                    //image "openjdk:19-jdk-alpine"
+                    //args "-u root:root"
+                }
+            }
             
             steps{
                 unstash 'tinkar-origin-test-artifacts'
@@ -92,13 +94,14 @@ pipeline {
         
         stage("Publish to Nexus Repository Manager") {
 
-            agent { dockerfile true }
-            //     docker {
+            agent { 
+                 docker {
+                    image "registry.hub.docker.com/library/openjdk:20-slim-buster"
             //         //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
             //         image "openjdk:19-jdk-alpine"
             //         args '-u root:root'
-            //     }
-            // }
+                 }
+             }
 
             steps {
 
