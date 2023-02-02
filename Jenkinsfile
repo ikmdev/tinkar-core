@@ -35,10 +35,10 @@ pipeline {
             agent {
                 docker {
                     
-                    image "registry.hub.docker.com/library/openjdk:20-slim-buster"
+                    image "registry.hub.docker.com/library/openjdk:20"
                     //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
-                    //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/openjdk:20-slim-buster"
-                    //args '-u root:root'
+                    //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/openjdk:20"
+                    args '-u root:root'
                 }
             }
 
@@ -67,10 +67,10 @@ pipeline {
         stage('SonarQube Scan') {
             agent { 
                 docker {
-                    image "registry.hub.docker.com/library/openjdk:20-slim-buster"
+                    image "registry.hub.docker.com/library/openjdk:20"
                     //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
                     //image "openjdk:19-jdk-alpine"
-                    //args "-u root:root"
+                    args "-u root:root"
                 }
             }
             
@@ -96,10 +96,10 @@ pipeline {
 
             agent { 
                  docker {
-                    image "registry.hub.docker.com/library/openjdk:20-slim-buster"
+                    image "registry.hub.docker.com/library/openjdk:20"
             //         //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
             //         image "openjdk:19-jdk-alpine"
-            //         args '-u root:root'
+                    args '-u root:root'
                  }
              }
 
