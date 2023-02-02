@@ -45,6 +45,11 @@ pipeline {
             steps {
                 script{
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
+
+                        sh """
+                            apk update && apk add --no-cache procps
+                        """
+
                         sh """
                         mvn clean install -s '${MAVEN_SETTINGS}' -f ./tinkar-core/pom.xml \
                             --batch-mode \
@@ -78,6 +83,10 @@ pipeline {
                 unstash 'tinkar-origin-test-artifacts'
                 withSonarQubeEnv(installationName: 'EKS SonarQube', envOnly: true) {
                     // This expands the evironment variables SONAR_CONFIG_NAME, SONAR_HOST_URL, SONAR_AUTH_TOKEN that can be used by any script.
+
+                    sh """
+                        apk update && apk add --no-cache procps
+                    """
 
                     sh """
                         mvn  -f ./tinkar-core/pom.xml sonar:sonar -Dsonar.login=${SONAR_AUTH_TOKEN} --batch-mode
@@ -121,6 +130,10 @@ pipeline {
                 }
              
                 configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) { 
+
+                    sh """
+                        apk update && apk add --no-cache procps
+                    """
 
                     sh """
                         mvn deploy \
