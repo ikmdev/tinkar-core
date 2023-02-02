@@ -34,7 +34,8 @@ pipeline {
         stage('Maven Build') {
             agent {
                 docker {
-                    image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
+                    //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
+                    image "openjdk:19-jdk-alpine"
                     args '-u root:root'
                 }
             }
@@ -64,7 +65,8 @@ pipeline {
         stage('SonarQube Scan') {
             agent {
                 docker { 
-                    image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
+                    //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
+                    image "openjdk:19-jdk-alpine"
                     args "-u root:root"
                 }
             }
@@ -91,7 +93,8 @@ pipeline {
 
             agent {
                 docker {
-                    image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
+                    //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
+                    image "openjdk:19-jdk-alpine"
                     args '-u root:root'
                 }
             }
