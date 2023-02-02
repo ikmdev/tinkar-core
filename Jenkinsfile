@@ -35,7 +35,7 @@ pipeline {
             agent {
                 docker {
                     alwaysPull true  
-                    image "amazoncorretto:19-alpine3.17"
+                    image "maven:3.8.7-amazoncorretto-19"
                     args '-u root:root'
                 }
             }
@@ -66,7 +66,7 @@ pipeline {
         stage('SonarQube Scan') {
             agent { 
                 docker {
-                    image "amazoncorretto:19-alpine3.17"
+                    image "maven:3.8.7-amazoncorretto-19"
                     args "-u root:root"
                 }
             }
@@ -93,7 +93,7 @@ pipeline {
 
             agent { 
                  docker {
-                    image "amazoncorretto:19-alpine3.17"
+                    image "maven:3.8.7-amazoncorretto-19"
                     args '-u root:root'
                  }
              }
