@@ -32,13 +32,14 @@ pipeline {
     stages {
         
         stage('Maven Build') {
-            agent {
-                docker {
-                    //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
-                    image "openjdk:19-jdk-alpine"
-                    args '-u root:root'
-                }
-            }
+            agent { dockerfile true }
+            //     docker {
+                    
+            //         //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
+            //         //image "openjdk:19-jdk-alpine"
+            //         //args '-u root:root'
+            //     }
+            // }
 
             steps {
                 script{
@@ -63,13 +64,13 @@ pipeline {
         }
 
         stage('SonarQube Scan') {
-            agent {
-                docker { 
-                    //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
-                    image "openjdk:19-jdk-alpine"
-                    args "-u root:root"
-                }
-            }
+            agent { dockerfile true }
+            //     docker {
+            //         //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
+            //         //image "openjdk:19-jdk-alpine"
+            //         //args "-u root:root"
+            //     }
+            // }
             
             steps{
                 unstash 'tinkar-origin-test-artifacts'
@@ -91,13 +92,13 @@ pipeline {
         
         stage("Publish to Nexus Repository Manager") {
 
-            agent {
-                docker {
-                    //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
-                    image "openjdk:19-jdk-alpine"
-                    args '-u root:root'
-                }
-            }
+            agent { dockerfile true }
+            //     docker {
+            //         //image "${GLOBAL_NEXUS_SERVER_URL}/${GLOBAL_NEXUS_REPO_NAME}/java:17.0.2"
+            //         image "openjdk:19-jdk-alpine"
+            //         args '-u root:root'
+            //     }
+            // }
 
             steps {
 
