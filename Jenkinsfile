@@ -34,8 +34,7 @@ pipeline {
         stage('Maven Build') {
             agent {
                 docker {
-                    alwaysPull true  
-                    image "maven:3.8.7-amazoncorretto-19"
+                    image "maven:3.8.7-eclipse-temurin-19-focal"
                     args '-u root:root'
                 }
             }
@@ -66,7 +65,7 @@ pipeline {
         stage('SonarQube Scan') {
             agent { 
                 docker {
-                    image "maven:3.8.7-amazoncorretto-19"
+                    image "maven:3.8.7-eclipse-temurin-19-focal"
                     args "-u root:root"
                 }
             }
@@ -93,7 +92,7 @@ pipeline {
 
             agent { 
                  docker {
-                    image "maven:3.8.7-amazoncorretto-19"
+                    image "maven:3.8.7-eclipse-temurin-19-focal"
                     args '-u root:root'
                  }
              }
