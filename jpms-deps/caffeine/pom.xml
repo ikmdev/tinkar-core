@@ -5,7 +5,7 @@
     <parent>
         <artifactId>tinkar-jpms-deps</artifactId>
         <groupId>org.hl7.tinkar</groupId>
-        <version>1.0.15-SNAPSHOT</version>
+        <version>1.0-SNAPSHOT</version>
     </parent>
     <artifactId>caffeine</artifactId>
     <packaging>jar</packaging>
