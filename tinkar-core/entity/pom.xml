@@ -65,6 +65,12 @@
             <version>${tinkar.protobuf.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>tinkar-proto-parent</artifactId>
+            <version>${tinkar.protobuf.version}</version>
+            <packaging>pom</packaging>
+        </dependency>
+        <dependency>
             <groupId>org.jgrapht</groupId>
             <artifactId>jgrapht-core</artifactId>
             <version>1.5.1</version>
