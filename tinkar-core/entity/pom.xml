@@ -68,7 +68,6 @@
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>tinkar-proto-parent</artifactId>
             <version>${tinkar.protobuf.version}</version>
-            <packaging>pom</packaging>
         </dependency>
         <dependency>
             <groupId>org.jgrapht</groupId>
