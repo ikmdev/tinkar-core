@@ -66,6 +66,7 @@
             <type>pom</type>
             <scope>import</scope>
         </dependency>
+        
         <dependency>
             <groupId>org.jgrapht</groupId>
             <artifactId>jgrapht-core</artifactId>
