@@ -44,7 +44,7 @@ pipeline {
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
                         
                         sh """
-                        mvn clean install -s '${MAVEN_SETTINGS}' \
+                        mvn -U clean install -s '${MAVEN_SETTINGS}' \
                             --batch-mode \
                             -e \
                             -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
