@@ -61,7 +61,7 @@
         </dependency>        
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
-            <artifactId>tinkar-proto-parent</artifactId>
+            <artifactId>protobuf</artifactId>
             <version>${tinkar.protobuf.version}</version>
             <type>pom</type>
             <scope>import</scope>
