@@ -336,18 +336,17 @@ public class ProtobufTransformer {
         return new PublicId1(UUID.nameUUIDFromBytes(pbVertexId.getId().toByteArray()));
     }
 
-//
-//    private DiGraphEntity<EntityVertex> createDigraphDTO(PBDiGraph pbDiGraph){
-//        //pbDiGraph.get
-//        List<PBIntToMultipleIntMap> PredecessorMapList = pbDiGraph.getPredecesorMapList();
-//        List<PBIntToMultipleIntMap> SuccessorMapList = pbDiGraph.getPredecesorMapList();
-//
-//        return new DiGraphDTO(
-//                parseRootSequences(pbDiGraph),
-//                parsePredecessorAndSuccessorMaps(PredecessorMapList, pbDiGraph.getPredecesorMapCount()),
-//                parseVertices(pbDiGraph.getVertexMapList(), pbDiGraph.getVertexMapCount()),
-//                parsePredecessorAndSuccessorMaps(SuccessorMapList, pbDiGraph.getSuccessorMapCount()));
-//    }
+    private DiGraphEntity<EntityVertex> createDigraphDTO(PBDiGraph pbDiGraph){
+        //pbDiGraph.get
+        List<PBIntToMultipleIntMap> PredecessorMapList = pbDiGraph.getPredecesorMapList();
+        List<PBIntToMultipleIntMap> SuccessorMapList = pbDiGraph.getPredecesorMapList();
+
+        return new DiGraphEntity<EntityVertex>(
+                (ImmutableList<EntityVertex>) parseRootSequences(pbDiGraph),
+                parseVertices(pbDiGraph.getVertexMapList(), pbDiGraph.getVertexMapCount()),
+                parsePredecessorAndSuccessorMaps(SuccessorMapList, pbDiGraph.getSuccessorMapCount()),
+                parsePredecessorAndSuccessorMaps(PredecessorMapList, pbDiGraph.getPredecesorMapCount()));
+    }
 
     //TODO: Created and need to get more context to finish. This the same as Successor parse atm.
     private ImmutableIntObjectMap<ImmutableIntList> parsePredecessorAndSuccessorMaps(List<PBIntToMultipleIntMap> predecessorSuccessorMapList, int predecesorSuccessorMapCount) {
@@ -360,6 +359,7 @@ public class ProtobufTransformer {
         return mutableIntObjectMap.toImmutable();
     }
 
+    //TODO: What is the purpose of this function/is it still needed? Do we have a undirected graph entity?
 //    private GraphDTO createGraphDTO(PBGraph pbGraph){
 //        return new GraphDTO(
 //                parseVertices(pbGraph.getVertexMapList(), pbGraph.getVertexMapCount()),
