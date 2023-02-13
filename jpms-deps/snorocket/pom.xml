@@ -12,8 +12,8 @@
     <artifactId>snorocket</artifactId>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>19</maven.compiler.source>
+        <maven.compiler.target>19</maven.compiler.target>
         <snorocket.version>4.0.1</snorocket.version>
     </properties>
     <name>TINKAR: Snorocket</name>

@@ -30,8 +30,8 @@
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
         <maven-source-plugin.version>3.2.0</maven-source-plugin.version>
         <maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>
-        <maven.compiler.source>16</maven.compiler.source>
-        <maven.compiler.target>16</maven.compiler.target>
+        <maven.compiler.source>19</maven.compiler.source>
+        <maven.compiler.target>19</maven.compiler.target>
         <org.reactivestreams.version>1.0.3</org.reactivestreams.version>
         <record-builder-core.version>34</record-builder-core.version>
         <roaringbitmap.version>0.9.31</roaringbitmap.version>
