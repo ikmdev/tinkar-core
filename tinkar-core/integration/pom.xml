@@ -8,11 +8,11 @@
     <parent>
         <groupId>org.hl7.tinkar</groupId>
         <artifactId>tinkar</artifactId>
-        <version>1.0</version>
+        <version>1.0.0</version>
     </parent>
 
     <name>TINKAR: Integration</name>
-
+    <version>1.0.0</version>
     <artifactId>integration</artifactId>
 
     <properties>

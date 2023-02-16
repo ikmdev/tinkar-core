@@ -5,10 +5,11 @@
     <parent>
         <groupId>org.hl7.tinkar</groupId>
         <artifactId>tinkar</artifactId>
-        <version>1.0</version>
+        <version>1.0.0</version>
     </parent>
 
     <artifactId>collection</artifactId>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
     <name>TINKAR: Collections</name>
 
