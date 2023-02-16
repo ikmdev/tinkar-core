@@ -6,7 +6,7 @@
 
     <groupId>org.hl7.tinkar</groupId>
     <artifactId>tinkar-parent</artifactId>
-    <version>1.0</version>
+    <version>1.0.0</version>
 
     <packaging>pom</packaging>
 
@@ -20,7 +20,6 @@
     <properties>
         <maven.compiler.source>19</maven.compiler.source>
         <maven.compiler.target>19</maven.compiler.target>
-        <project-version>1.0.0</project-version>
     </properties>
 
     <build>
