@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.hl7.tinkar</groupId>
         <artifactId>tinkar</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0</version>
     </parent>
 
     <artifactId>entity</artifactId>
@@ -39,18 +39,18 @@
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>caffeine</artifactId>
-            <version>${tinkar-jpms-deps.version}</version>
+            <version>${caffeine.version}</version>
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>record-builder-core</artifactId>
             <scope>provided</scope>
-            <version>${tinkar-jpms-deps.version}</version>
+            <version>${record-builder-core.version}</version>
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>auto-service</artifactId>
-            <version>${tinkar-jpms-deps.version}</version>
+            <version>${auto-service.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -62,12 +62,12 @@
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>protobuf</artifactId>
-            <version>1.5.0-SNAPSHOT</version>
+            <version>${protobuf.version}</version>
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>protobuf-java</artifactId>
-            <version>1.5.0-SNAPSHOT</version>
+            <version>${protobuf-java.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jgrapht</groupId>
@@ -83,7 +83,7 @@
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>jheaps</artifactId>
-            <version>${tinkar-jpms-deps.version}</version>
+            <version>${jheaps.version}</version>
         </dependency>
     </dependencies>
 </project>

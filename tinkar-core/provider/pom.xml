@@ -6,11 +6,13 @@
     <parent>
         <artifactId>tinkar</artifactId>
         <groupId>org.hl7.tinkar</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0</version>
     </parent>
 
     <artifactId>provider</artifactId>
     <packaging>pom</packaging>
+    <version>1.0</version>
+
     <name>TINKAR Providers</name>
 
     <modules>

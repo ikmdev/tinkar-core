@@ -6,12 +6,14 @@
 
     <groupId>org.hl7.tinkar</groupId>
     <artifactId>tinkar-parent</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
 
     <packaging>pom</packaging>
 
     <modules>
+        <!-- this module is now part of Jpms-deps project
         <module>jpms-deps</module>
+        -->
         <module>tinkar-core</module>
     </modules>
 
@@ -19,6 +21,7 @@
         <maven.compiler.source>19</maven.compiler.source>
         <maven.compiler.target>19</maven.compiler.target>
         <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
+        <project-version>1.0-SNAPSHOT</project-version>
     </properties>
 
     <build>
@@ -44,5 +47,44 @@
         </plugins>
 
     </build>
+
+
+
+    <repositories>
+        <repository>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+                <checksumPolicy>warn</checksumPolicy>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+                <checksumPolicy>fail</checksumPolicy>
+            </snapshots>
+            <name>tinkar-nexus</name>
+            <id>tinkar-nexus</id>
+            <url>https://nexus.build.tinkarbuild.com/repository/maven-public</url>
+            <layout>default</layout>
+        </repository>
+    </repositories>
+
+    <distributionManagement>
+        <repository>
+            <uniqueVersion>false</uniqueVersion>
+            <id>tinkar-nexus-release</id>
+            <name>tinkar-nexus-release</name>
+            <url>https://nexus.build.tinkarbuild.com/repository/maven-releases/</url>
+            <layout>default</layout>
+        </repository>
+        <snapshotRepository>
+            <uniqueVersion>true</uniqueVersion>
+            <id>tinkar-nexus-snap</id>
+            <name>tinkar-nexus-snap</name>
+            <url>https://nexus.build.tinkarbuild.com/repository/maven-snapshots/</url>
+            <layout>default</layout>
+        </snapshotRepository>
+    </distributionManagement>
+
 
 </project>

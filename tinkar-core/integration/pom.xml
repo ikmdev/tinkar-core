@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.hl7.tinkar</groupId>
         <artifactId>tinkar</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0</version>
     </parent>
 
     <name>TINKAR: Integration</name>
@@ -139,13 +139,8 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>${maven-project-info-reports-plugin.version}</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>${maven-failsafe-plugin.version}</version>
+                <version>${maven-surefire-plugin.version}</version>
                 <configuration>
                     <reportsDirectories>
                         <reportsDirectory>${basedir}/target/failsafe-reports</reportsDirectory>

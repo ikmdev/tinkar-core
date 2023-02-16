@@ -5,7 +5,7 @@
     <parent>
         <artifactId>provider</artifactId>
         <groupId>org.hl7.tinkar</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0</version>
     </parent>
 
     <artifactId>executor-provider</artifactId>
@@ -16,13 +16,13 @@
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>common</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${project.parent.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>auto-service</artifactId>
-            <version>${tinkar-jpms-deps.version}</version>
+            <version>${auto-service.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
