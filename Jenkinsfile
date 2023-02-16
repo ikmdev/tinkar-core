@@ -45,7 +45,7 @@ pipeline {
                         
                         sh """
                         mvn -U clean install -s '${MAVEN_SETTINGS}' \
-                            --batch-mode \
+                            --batch-mode -DuniqueVersion=false \
                             -e \
                             -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
                         """
@@ -66,7 +66,7 @@ pipeline {
                 script{
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
                         withSonarQubeEnv(installationName: 'EKS SonarQube', envOnly: true) {
-                            // This expands the evironment variables SONAR_CONFIG_NAME, SONAR_HOST_URL, SONAR_AUTH_TOKEN that can be used by any script.
+                            // This expands the environment variables SONAR_CONFIG_NAME, SONAR_HOST_URL, SONAR_AUTH_TOKEN that can be used by any script.
 
                             sh """
                                 mvn sonar:sonar -Dsonar.login=${SONAR_AUTH_TOKEN}  -s '${MAVEN_SETTINGS}' --batch-mode
@@ -116,6 +116,7 @@ pipeline {
                         -DskipITs \
                         -Dmaven.main.skip \
                         -Dmaven.test.skip \
+						-DuniqueVersion=false \
                         -s '${MAVEN_SETTINGS}' \
                         -P inject-application-properties \
                         -DrepositoryId='${repositoryId}'
