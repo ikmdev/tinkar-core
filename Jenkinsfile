@@ -63,12 +63,14 @@ pipeline {
             }
             
             steps{
-                withSonarQubeEnv(installationName: 'EKS SonarQube', envOnly: true) {
-                    // This expands the evironment variables SONAR_CONFIG_NAME, SONAR_HOST_URL, SONAR_AUTH_TOKEN that can be used by any script.
-                    
-                    sh """
-                        mvn sonar:sonar -Dsonar.login=${SONAR_AUTH_TOKEN} --batch-mode
-                    """
+                configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
+                    withSonarQubeEnv(installationName: 'EKS SonarQube', envOnly: true) {
+                        // This expands the evironment variables SONAR_CONFIG_NAME, SONAR_HOST_URL, SONAR_AUTH_TOKEN that can be used by any script.
+
+                        sh """
+                            mvn sonar:sonar -Dsonar.login=${SONAR_AUTH_TOKEN}  -s '${MAVEN_SETTINGS}' --batch-mode
+                        """
+                    }
                 }
             }
                
