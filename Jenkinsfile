@@ -87,8 +87,7 @@ pipeline {
 
             agent { 
                  docker {
-                    //image "maven:3.8.7-eclipse-temurin-19-alpine"
-                    image "maven:3.8.7-eclipse-temurin-19-focal"
+                    image "maven:3.8.7-eclipse-temurin-19-alpine"
                     args '-u root:root'
                  }
              }
