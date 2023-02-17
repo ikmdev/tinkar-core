@@ -13,7 +13,7 @@
     <artifactId>component</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-    <name>TINKAR: Component</name>
+    <name>TINKAR Component</name>
 
     <properties>
         <jacoco.version>0.8.6</jacoco.version>

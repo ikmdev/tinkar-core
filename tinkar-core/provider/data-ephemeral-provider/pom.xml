@@ -13,7 +13,7 @@
     <artifactId>data-ephemeral-provider</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-    <name>TINKAR Provider: Data - Ephemeral</name>
+    <name>TINKAR Provider Data - Ephemeral</name>
 
     <dependencies>
         <dependency>

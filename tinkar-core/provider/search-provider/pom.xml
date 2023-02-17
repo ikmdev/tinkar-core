@@ -12,7 +12,7 @@
     <artifactId>search-provider</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-    <name>TINKAR Provider: Search provider</name>
+    <name>TINKAR Provider Search provider</name>
 
     <dependencies>
         <dependency>

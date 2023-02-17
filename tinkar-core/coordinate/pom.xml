@@ -11,7 +11,7 @@
     <artifactId>coordinate</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-    <name>TINKAR: Coordinate</name>
+    <name>TINKAR Coordinate</name>
     
     <dependencies>
         <dependency>

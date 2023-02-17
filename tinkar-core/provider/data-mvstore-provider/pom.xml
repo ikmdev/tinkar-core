@@ -13,7 +13,7 @@
     <artifactId>data-mvstore-provider</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-    <name>TINKAR Provider: Data - MVStore</name>
+    <name>TINKAR Provider Data - MVStore</name>
     
     <dependencies>
         <dependency>

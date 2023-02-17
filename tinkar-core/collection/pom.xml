@@ -11,7 +11,7 @@
     <artifactId>collection</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-    <name>TINKAR: Collections</name>
+    <name>TINKAR Collections</name>
 
     <dependencies>
         <dependency>

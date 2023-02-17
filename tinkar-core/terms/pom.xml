@@ -9,7 +9,7 @@
     <artifactId>terms</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-    <name>TINKAR: Terms</name>
+    <name>TINKAR Terms</name>
     <dependencies>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>

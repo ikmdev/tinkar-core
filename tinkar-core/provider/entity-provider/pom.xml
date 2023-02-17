@@ -12,7 +12,7 @@
     <artifactId>entity-provider</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-    <name>TINKAR Provider: Entity provider</name>
+    <name>TINKAR Provider Entity provider</name>
 
     <dependencies>
         <dependency>

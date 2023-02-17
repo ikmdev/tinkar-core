@@ -13,7 +13,7 @@
     <artifactId>data-websocket-server-provider</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-    <name>TINKAR Provider: Data - Websocket server</name>
+    <name>TINKAR Provider Data - Websocket server</name>
 
     <properties>
         <activej.version>4.3</activej.version>

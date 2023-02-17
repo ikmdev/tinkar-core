@@ -12,7 +12,7 @@
     <artifactId>common</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-    <name>TINKAR: Common</name>
+    <name>TINKAR Common</name>
     
     <dependencies>
         <dependency>

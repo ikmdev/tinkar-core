@@ -13,7 +13,7 @@
     <artifactId>data-spinedarray-provider</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-    <name>TINKAR Provider: Data - Spined array</name>
+    <name>TINKAR Provider Data - Spined array</name>
     
     <dependencies>
         <dependency>

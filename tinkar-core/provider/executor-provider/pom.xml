@@ -11,7 +11,7 @@
     <artifactId>executor-provider</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-    <name>TINKAR Provider: Executor provider</name>
+    <name>TINKAR Provider Executor provider</name>
 
     <dependencies>
         <dependency>

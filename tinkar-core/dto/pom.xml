@@ -12,7 +12,7 @@
     <artifactId>dto</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-    <name>TINKAR: Data Transfer Objects</name>
+    <name>TINKAR Data Transfer Objects</name>
     
     <dependencies>
         <dependency>
