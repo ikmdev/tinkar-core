@@ -66,6 +66,11 @@
                     <!-- <argLine>-Dchronicle.values.dumpCode=true ... -->
                     <!--                    <argLine>&#45;&#45;illegal-access=permit &#45;&#45;add-exports java.base/jdk.internal.ref=ALL-UNNAMED</argLine> -->
                     <argLine>--add-exports java.base/jdk.internal.ref=ALL-UNNAMED</argLine>
+
+                    <dependenciesToScan>
+                        <dependency>org.hl7.tinkar:component:test-jar:tests</dependency>
+                    </dependenciesToScan>
+
                 </configuration>
             </plugin>
         </plugins>
