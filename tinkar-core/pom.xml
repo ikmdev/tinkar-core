@@ -226,7 +226,7 @@
         <module>dto</module>
         <module>terms</module>
         <module>provider</module>
-<!--        <module>integration</module>-->
+        <module>integration</module>
         <module>code-coverage-aggregator</module>
     </modules>
 </project>

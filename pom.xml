@@ -29,6 +29,8 @@
         <junit-platform-launcher.version>1.7.0</junit-platform-launcher.version>
         <surefire-api.version>3.0.0-M9</surefire-api.version>
         <common-java5.version>3.0.0-M9</common-java5.version>
+        <maven-surefire-report-plugin.version>3.0.0-M9</maven-surefire-report-plugin.version>
+        <maven-site-plugin.version>3.7.1</maven-site-plugin.version>
         <sonar.coverage.jacoco.xmlReportPaths>
             ${project.basedir}/code-coverage-aggregator/target/site/jacoco-aggregate/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
@@ -110,6 +112,9 @@
                     <configuration>
                         <source>${maven.compiler.source}</source>
                         <target>${maven.compiler.target}</target>
+                        <compilerArgs>
+                            <arg>--enable-preview</arg>
+                        </compilerArgs>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -124,6 +129,9 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-failsafe-plugin</artifactId>
                     <version>${maven-failsafe-plugin.version}</version>
+                    <configuration>
+                        <argLine>--enable-preview</argLine>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.jacoco</groupId>
@@ -139,37 +147,17 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <argLine>${argLine}</argLine>
-                    <useSystemClassLoader>false</useSystemClassLoader>
+                    <argLine>${surefire.jacoco.args}</argLine>
                 </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.junit.platform</groupId>
-                        <artifactId>junit-platform-surefire-provider</artifactId>
-                        <version>${junit-platform-surefire-provider.version}</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.junit.jupiter</groupId>
-                        <artifactId>junit-jupiter-engine</artifactId>
-                        <version>${junit-jupiter-engine.version}</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.apache.maven.surefire</groupId>
-                        <artifactId>surefire-api</artifactId>
-                        <version>${surefire-api.version}</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.junit.platform</groupId>
-                        <artifactId>junit-platform-commons</artifactId>
-                        <version>${junit-platform-commons.version}</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.junit.platform</groupId>
-                        <artifactId>junit-platform-launcher</artifactId>
-                        <version>${junit-platform-launcher.version}</version>
-                    </dependency>
-                </dependencies>
             </plugin>
+
+            <!-- for site generation -->
+<!--            <plugin>-->
+<!--                <groupId>org.apache.maven.plugins</groupId>-->
+<!--                <artifactId>maven-site-plugin</artifactId>-->
+<!--                <version>${maven-site-plugin.version}</version>-->
+<!--            </plugin>-->
+
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -178,13 +166,16 @@
                     <execution>
                         <id>default-prepare-agent</id>
                         <phase>initialize</phase>
+                        <configuration>
+                            <propertyName>surefire.jacoco.args</propertyName>
+                        </configuration>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
                     </execution>
                     <execution>
                         <id>default-report</id>
-                        <phase>verify</phase>
+                        <phase>test</phase>
                         <goals>
                             <goal>report</goal>
                         </goals>
@@ -193,5 +184,17 @@
             </plugin>
         </plugins>
     </build>
+
+        <!-- for site generation -->
+<!--    <reporting>-->
+<!--        <plugins>-->
+<!--            <plugin>-->
+<!--                <groupId>org.apache.maven.plugins</groupId>-->
+<!--                <artifactId>maven-surefire-report-plugin</artifactId>-->
+<!--                <version>${maven-surefire-report-plugin.version}</version>-->
+<!--            </plugin>-->
+<!--        </plugins>-->
+<!--    </reporting>-->
+
 
 </project>
