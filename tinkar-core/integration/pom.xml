@@ -65,9 +65,6 @@
             </plugin>
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <configuration>
-                    <argLine>--enable-preview ${failsafe.jacoco.args}</argLine>
-                </configuration>
                 <executions>
                     <execution>
                         <goals>
@@ -75,11 +72,14 @@
                             <goal>verify</goal>
                         </goals>
                         <configuration>
+                            <skipTests>${skip.integration.tests}</skipTests>
                             <trimStackTrace>false</trimStackTrace>
                             <includes>**/Test*.java</includes>
+                            <argLine>--enable-preview ${failsafe.jacoco.args}</argLine>
                             <excludes>
                                 <exclude>TestEphemeralProtobufLoad.java</exclude>
                             </excludes>
+                            <reuseForks>true</reuseForks>
                         </configuration>
                     </execution>
                 </executions>
@@ -159,11 +159,11 @@
             </plugin>
 
             <!-- for site generation -->
-<!--            <plugin>-->
-<!--                <groupId>org.apache.maven.plugins</groupId>-->
-<!--                <artifactId>maven-site-plugin</artifactId>-->
-<!--                <version>${maven-site-plugin.version}</version>-->
-<!--            </plugin>-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>${maven-site-plugin.version}</version>
+            </plugin>
 
 
         </plugins>
