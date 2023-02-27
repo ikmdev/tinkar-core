@@ -3,7 +3,8 @@
 //run the build at 03:10 on every day-of-week from Monday through Friday but only on the main branch
 String cron_string = BRANCH_NAME == "main" ? "10 3 * * 1-5" : ""
 
-properties([parameters([choice(choices: ['SNAPSHOT', 'Minor', 'Major'], description: 'Please select the release type', name: 'releaseType'), choice(choices: ['Unit', 'IntegrationTest ', 'TestAll'], description: 'Please select tests to run', name: 'testType')]), pipelineTriggers([cron('')])])
+
+properties([parameters([choice(choices: ['SNAPSHOT', 'Minor', 'Major'], description: 'Please select the release type', name: 'releaseType'), choice(choices: ['Unit', 'IntegrationTest ', 'TestAll'], description: 'Please select tests to run', name: 'testType')])])
 
 pipeline {
     agent any
