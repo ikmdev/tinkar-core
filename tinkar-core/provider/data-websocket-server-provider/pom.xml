@@ -6,11 +6,11 @@
     <parent>
         <artifactId>provider</artifactId>
         <groupId>org.hl7.tinkar</groupId>
-        <version>1.0.2-SNAPSHOT</version>
+        <version>1.0.2</version>
     </parent>
 
     <artifactId>data-websocket-server-provider</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.2</version>
     <packaging>jar</packaging>
     <name>TINKAR Provider Data - Websocket server</name>
 

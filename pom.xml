@@ -4,7 +4,7 @@
 
     <groupId>org.hl7.tinkar</groupId>
     <artifactId>tinkar-parent</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.2</version>
 
     <packaging>pom</packaging>
 
@@ -18,7 +18,7 @@
     <scm>
         <url>https://gitlab.tinkarbuild.com/fda-shield/tinkar-java.git</url>
         <connection>scm:git:https://gitlab.tinkarbuild.com/fda-shield/tinkar-java.git </connection>
-        <tag>@{project.version}</tag>
+        <tag>1.0.2</tag>
     </scm>
 
     <properties>

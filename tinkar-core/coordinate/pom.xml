@@ -5,11 +5,11 @@
     <parent>
         <artifactId>tinkar</artifactId>
         <groupId>org.hl7.tinkar</groupId>
-        <version>1.0.2-SNAPSHOT</version>
+        <version>1.0.2</version>
     </parent>
     
     <artifactId>coordinate</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.2</version>
     <packaging>jar</packaging>
     <name>TINKAR Coordinate</name>
     
