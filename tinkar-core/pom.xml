@@ -3,12 +3,12 @@
     <modelVersion>4.0.0</modelVersion>
     
     <artifactId>tinkar</artifactId>
-    <version>1.0.3-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
 
     <parent>
         <groupId>org.hl7.tinkar</groupId>
         <artifactId>tinkar-parent</artifactId>
-        <version>1.0.3-SNAPSHOT</version>
+        <version>1.0.0-SNAPSHOT</version>
     </parent>
 
     <packaging>pom</packaging>

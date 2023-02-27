@@ -5,11 +5,10 @@
     <parent>
         <artifactId>tinkar</artifactId>
         <groupId>org.hl7.tinkar</groupId>
-        <version>1.0.3-SNAPSHOT</version>
+        <version>1.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>dto</artifactId>
-    <version>1.0.3-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>TINKAR Data Transfer Objects</name>
     
