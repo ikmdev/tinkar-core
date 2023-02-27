@@ -51,7 +51,7 @@ pipeline {
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
                         
                         sh """
-                        mvn -U clean install -s '${MAVEN_SETTINGS}'  -P ${params.testType} \
+                        mvn clean install  -P ${params.testType} \
                             --batch-mode -DuniqueVersion=false \
                             -e \
                             -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
@@ -160,7 +160,7 @@ pipeline {
                         sh """
                         mvn --batch-mode release:clean release:prepare release:perform \
                         -Darguments='-Dmaven.javadoc.skip=true -Dmaven.test.skipTests=true -Dmaven.test.skip=true'
-                        -e \
+                        -e  -s '${MAVEN_SETTINGS}' \
                         -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
                         """
                     }
@@ -187,7 +187,7 @@ pipeline {
                         sh """
                         mvn --batch-mode build-helper:parse-version versions:set \
                         -DnewVersion=${parsedVersion.majorVersion}.${parsedVersion.nextMinorVersion}.0-SNAPSHOT \
-                        -e \
+                        -e  -s '${MAVEN_SETTINGS}' \
                         -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
                         versions:commit
                         """
@@ -215,7 +215,7 @@ pipeline {
                         sh """
                         mvn --batch-mode build-helper:parse-version versions:set \
                         -DnewVersion=${parsedVersion.nextMajorVersion}.${parsedVersion.minorVersion}.0-SNAPSHOT \
-                        -e \
+                        -e  -s '${MAVEN_SETTINGS}' \
                         -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
                         versions:commit
                         """
