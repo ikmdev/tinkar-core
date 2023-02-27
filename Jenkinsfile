@@ -160,8 +160,17 @@ pipeline {
                 script{
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
 
+                        wrap([$class: 'BuildUser']) {
+                          script {
+                             USER_ID = "${BUILD_USER_ID}"
+                             USER_EMAIL = "${BUILD_USER_EMAIL}"
+                          }
+                        }
+
                         sh """
                         apk update && apk add git
+                        git config --global user.name "${USER_ID}"
+                        git config --global user.email "${USER_EMAIL}"
                         """
 
                         sh """
@@ -223,8 +232,17 @@ pipeline {
                 script{
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
 
+                        wrap([$class: 'BuildUser']) {
+                          script {
+                             USER_ID = "${BUILD_USER_ID}"
+                             USER_EMAIL = "${BUILD_USER_EMAIL}"
+                          }
+                        }
+
                         sh """
                         apk update && apk add git
+                        git config --global user.name "${USER_ID}"
+                        git config --global user.email "${USER_EMAIL}"
                         """
 
                         sh """
