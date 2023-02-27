@@ -31,6 +31,7 @@
         <common-java5.version>3.0.0-M9</common-java5.version>
         <maven-surefire-report-plugin.version>3.0.0-M9</maven-surefire-report-plugin.version>
         <maven-site-plugin.version>3.7.1</maven-site-plugin.version>
+        <maven-jxr-plugin.version>3.3.0</maven-jxr-plugin.version>
         <surefire.jacoco.args></surefire.jacoco.args>
         <failsafe.jacoco.args></failsafe.jacoco.args>
         <skip.unit.tests></skip.unit.tests>
@@ -197,11 +198,49 @@
     <!-- for site generation -->
     <reporting>
         <plugins>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
                 <version>${maven-surefire-report-plugin.version}</version>
+                <reportSets>
+                    <reportSet>
+                        <id>unit-tests</id>
+                        <reports>
+                            <report>report</report>
+                        </reports>
+                    </reportSet>
+
+<!--                    <reportSet>-->
+<!--                        <id>integration-tests</id>-->
+<!--                        <reports>-->
+<!--                            <report>failsafe-report-only</report>-->
+<!--                        </reports>-->
+<!--                    </reportSet>-->
+                </reportSets>
             </plugin>
+
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco-maven-plugin.version}</version>
+                <reportSets>
+                    <reportSet>
+                        <id>jacoco-report</id>
+                        <reports>
+                            <report>report</report>
+                            <report>report-integration</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jxr-plugin</artifactId>
+                <version>${maven-jxr-plugin.version}</version>
+            </plugin>
+
         </plugins>
     </reporting>
 

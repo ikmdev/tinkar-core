@@ -3,6 +3,8 @@
 //run the build at 03:10 on every day-of-week from Monday through Friday but only on the main branch
 String cron_string = BRANCH_NAME == "main" ? "10 3 * * 1-5" : ""
 
+properties([parameters([choice(choices: ['unit', 'it', 'testAll'], description: 'Select tests to run', name: 'testType')])])
+
 pipeline {
     agent any
     
@@ -44,7 +46,7 @@ pipeline {
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
                         
                         sh """
-                        mvn -U clean install -s '${MAVEN_SETTINGS}' \
+                        mvn -U clean install -s '${MAVEN_SETTINGS}'  -P ${testType} \
                             --batch-mode -DuniqueVersion=false \
                             -e \
                             -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
@@ -108,7 +110,7 @@ pipeline {
                 configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) { 
                     
                     sh """
-                        mvn deploy \
+                        mvn deploy  -P ${testType}  \
                         --batch-mode \
                         -e \
                         -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
