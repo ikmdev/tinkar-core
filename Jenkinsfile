@@ -149,20 +149,20 @@ pipeline {
                 expression { params.releaseType == 'SNAPSHOT'  }
             }
 
-            /*
             agent {
                 docker {
                     image "maven:3.8.7-eclipse-temurin-19-alpine"
                     args '-u root:root'
                 }
             }
-            */
-
-            agent any
 
             steps {
                 script{
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
+
+                        sh """
+                        apk update && apk add git -y
+                        """
 
                         sh """
                         mvn --batch-mode release:clean release:prepare release:perform \
@@ -192,6 +192,10 @@ pipeline {
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
 
                         sh """
+                        apk update && apk add git -y
+                        """
+
+                        sh """
                         mvn --batch-mode build-helper:parse-version versions:set \
                         -DnewVersion=${parsedVersion.majorVersion}.${parsedVersion.nextMinorVersion}.0-SNAPSHOT \
                         -e  -s '${MAVEN_SETTINGS}' \
@@ -218,6 +222,10 @@ pipeline {
             steps {
                 script{
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
+
+                        sh """
+                        apk update && apk add git -y
+                        """
 
                         sh """
                         mvn --batch-mode build-helper:parse-version versions:set \
