@@ -3,7 +3,7 @@
 //run the build at 03:10 on every day-of-week from Monday through Friday but only on the main branch
 String cron_string = BRANCH_NAME == "main" ? "10 3 * * 1-5" : ""
 
-properties([parameters([choice(choices: ['unit', 'it', 'testAll'], description: 'Select tests to run', name: 'testType')])])
+properties([parameters([choice(choices: ['SNAPSHOT', 'Minor', 'Major'], description: 'Please select the release type', name: 'releaseType'), choice(choices: ['Unit', 'IntegrationTest ', 'TestAll'], description: 'Please select tests to run', name: 'testType')]), pipelineTriggers([cron('')])])
 
 pipeline {
     agent any
@@ -32,7 +32,11 @@ pipeline {
     }
         
     stages {
-        
+
+        when {
+            expression { params.releaseType == ''  }
+        }
+
         stage('Maven Build') {
             agent {
                 docker {
@@ -57,6 +61,11 @@ pipeline {
         }
 
         stage('SonarQube Scan') {
+
+            when {
+                expression { params.releaseType == ''  }
+            }
+
             agent { 
                 docker {
                     image "maven:3.8.7-eclipse-temurin-19-alpine"
@@ -86,6 +95,10 @@ pipeline {
         }
         
         stage("Publish to Nexus Repository Manager") {
+
+            when {
+                expression { params.releaseType == ''  }
+            }
 
             agent { 
                  docker {
@@ -123,6 +136,89 @@ pipeline {
                         -P inject-application-properties \
                         -DrepositoryId='${repositoryId}'
                     """              
+                }
+            }
+        }
+
+        stage('Maven Release SNAPSHOT') {
+            when {
+                expression { params.releaseType == 'SNAPSHOT'  }
+            }
+
+            agent {
+                docker {
+                    image "maven:3.8.7-eclipse-temurin-19-alpine"
+                    args '-u root:root'
+                }
+            }
+
+            steps {
+                script{
+                    configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
+
+                        sh """
+                        mvn --batch-mode release:clean release:prepare release:perform \
+                        -Darguments='-Dmaven.javadoc.skip=true -Dmaven.test.skipTests=true -Dmaven.test.skip=true'
+                        -e \
+                        -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Maven Release Minor') {
+            when {
+                expression { params.releaseType == 'Minor'  }
+            }
+
+            agent {
+                docker {
+                    image "maven:3.8.7-eclipse-temurin-19-alpine"
+                    args '-u root:root'
+                }
+            }
+
+            steps {
+                script{
+                    configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
+
+                        sh """
+                        mvn --batch-mode build-helper:parse-version versions:set \
+                        -DnewVersion=${parsedVersion.majorVersion}.${parsedVersion.nextMinorVersion}.0-SNAPSHOT \
+                        -e \
+                        -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
+                        versions:commit
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Maven Release Major') {
+            when {
+                expression { params.releaseType == 'Major'  }
+            }
+
+            agent {
+                docker {
+                    image "maven:3.8.7-eclipse-temurin-19-alpine"
+                    args '-u root:root'
+                }
+            }
+
+            steps {
+                script{
+                    configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
+
+                        sh """
+                        mvn --batch-mode build-helper:parse-version versions:set \
+                        -DnewVersion=${parsedVersion.nextMajorVersion}.${parsedVersion.minorVersion}.0-SNAPSHOT \
+                        -e \
+                        -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
+                        versions:commit
+                        """
+                    }
                 }
             }
         }
