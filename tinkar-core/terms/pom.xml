@@ -4,10 +4,10 @@
     <parent>
         <artifactId>tinkar</artifactId>
         <groupId>org.hl7.tinkar</groupId>
-        <version>1.0.2</version>
+        <version>1.0.3-SNAPSHOT</version>
     </parent>
     <artifactId>terms</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>TINKAR Terms</name>
     <dependencies>
