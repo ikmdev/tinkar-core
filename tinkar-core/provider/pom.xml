@@ -5,12 +5,12 @@
     <parent>
         <artifactId>tinkar</artifactId>
         <groupId>org.hl7.tinkar</groupId>
-        <version>1.0.1</version>
+        <version>1.0.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>provider</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.1</version>
+    <version>1.0.2-SNAPSHOT</version>
 
     <name>TINKAR Providers</name>
 
