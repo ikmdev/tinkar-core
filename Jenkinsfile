@@ -161,7 +161,7 @@ pipeline {
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
 
                         sh """
-                        apk update && apk add git -y
+                        apk update && apk add git
                         """
 
                         sh """
@@ -192,7 +192,7 @@ pipeline {
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
 
                         sh """
-                        apk update && apk add git -y
+                        apk update && apk add git
                         """
 
                         sh """
@@ -224,7 +224,7 @@ pipeline {
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
 
                         sh """
-                        apk update && apk add git -y
+                        apk update && apk add git
                         """
 
                         sh """
