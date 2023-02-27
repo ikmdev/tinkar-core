@@ -15,11 +15,13 @@
         <module>tinkar-core</module>
     </modules>
 
+    <!--
     <scm>
         <url>https://gitlab.tinkarbuild.com/fda-shield/tinkar-java.git</url>
         <connection>scm:git:https://gitlab.tinkarbuild.com/fda-shield/tinkar-java.git </connection>
         <tag>feature/FDAA-2450-Set-Up-Pipelines-to-Build-Maven-Code-for-tinkar-java</tag>
     </scm>
+    -->
 
     <properties>
         <maven.compiler.source>19</maven.compiler.source>
