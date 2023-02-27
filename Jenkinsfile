@@ -149,12 +149,16 @@ pipeline {
                 expression { params.releaseType == 'SNAPSHOT'  }
             }
 
+            /*
             agent {
                 docker {
                     image "maven:3.8.7-eclipse-temurin-19-alpine"
                     args '-u root:root'
                 }
             }
+            */
+
+            agent any
 
             steps {
                 script{
