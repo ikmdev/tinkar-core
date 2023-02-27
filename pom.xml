@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.hl7.tinkar</groupId>
@@ -16,6 +14,12 @@
         -->
         <module>tinkar-core</module>
     </modules>
+
+    <scm>
+        <url>https://gitlab.tinkarbuild.com/fda-shield/tinkar-java.git</url>
+        <connection>scm:git:https://gitlab.tinkarbuild.com/fda-shield/tinkar-java.git </connection>
+        <tag>1.0.0</tag>
+    </scm>
 
     <properties>
         <maven.compiler.source>19</maven.compiler.source>
@@ -32,10 +36,10 @@
         <maven-surefire-report-plugin.version>3.0.0-M9</maven-surefire-report-plugin.version>
         <maven-site-plugin.version>3.7.1</maven-site-plugin.version>
         <maven-jxr-plugin.version>3.3.0</maven-jxr-plugin.version>
-        <surefire.jacoco.args></surefire.jacoco.args>
-        <failsafe.jacoco.args></failsafe.jacoco.args>
-        <skip.unit.tests></skip.unit.tests>
-        <skip.integration.tests></skip.integration.tests>
+        <surefire.jacoco.args />
+        <failsafe.jacoco.args />
+        <skip.unit.tests />
+        <skip.integration.tests />
         <sonar.coverage.jacoco.xmlReportPaths>
             ${project.basedir}/code-coverage-aggregator/target/site/jacoco-aggregate/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
@@ -273,6 +277,34 @@
                 <skip.unit.tests>false</skip.unit.tests>
                 <skip.integration.tests>false</skip.integration.tests>
             </properties>
+        </profile>
+
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-release-plugin</artifactId>
+                        <version>2.5.3</version>
+                        <configuration>
+                            <tagNameFormat>@{project.version}</tagNameFormat>
+                            <checkModificationExcludes>
+                                <checkModificationExclude>pom.xml</checkModificationExclude>
+                            </checkModificationExcludes>
+                        </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.codehaus.mojo</groupId>
+                                <artifactId>build-helper-maven-plugin</artifactId>
+                                <version>3.3.0</version>
+                                <type>maven-plugin</type>
+                            </dependency>
+                        </dependencies>
+
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 
