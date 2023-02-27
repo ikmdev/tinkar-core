@@ -33,11 +33,12 @@ pipeline {
         
     stages {
 
-        when {
-            expression { params.releaseType == ''  }
-        }
-
         stage('Maven Build') {
+
+            when {
+                expression { params.releaseType == ''  }
+            }
+
             agent {
                 docker {
                     image "maven:3.8.7-eclipse-temurin-19-alpine"
