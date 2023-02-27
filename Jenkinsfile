@@ -162,8 +162,8 @@ pipeline {
 
                         sh """
                         apk update && apk add git
-                        git config --global user.name "${BUILD_USER}"
-                        git config --global user.email "${BUILD_USER_EMAIL}"
+                        git config --global user.name "Mahesh Parasnis"
+                        git config --global user.email "mparasnis@tinkarbuild.com"
                         """
 
                         sh """
@@ -195,8 +195,8 @@ pipeline {
 
                         sh """
                         apk update && apk add git
-                        git config --global user.name "${BUILD_USER}"
-                        git config --global user.email "${BUILD_USER_EMAIL}"
+                        git config --global user.name "Mahesh Parasnis"
+                        git config --global user.email "mparasnis@tinkarbuild.com"
                         """
 
                         sh """
@@ -229,8 +229,8 @@ pipeline {
 
                         sh """
                         apk update && apk add git
-                        git config --global user.name "${BUILD_USER}"
-                        git config --global user.email "${BUILD_USER_EMAIL}"
+                        git config --global user.name "Mahesh Parasnis"
+                        git config --global user.email "mparasnis@tinkarbuild.com"
                         """
 
                         sh """
