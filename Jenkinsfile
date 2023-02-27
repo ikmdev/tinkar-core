@@ -162,7 +162,7 @@ pipeline {
 
                         sh """
                         mvn --batch-mode release:clean release:prepare release:perform \
-                        -Darguments='-Dmaven.javadoc.skip=true -Dmaven.test.skipTests=true -Dmaven.test.skip=true'
+                        -Darguments='-Dmaven.javadoc.skip=true -Dmaven.test.skipTests=true -Dmaven.test.skip=true' \
                         -e  -s '${MAVEN_SETTINGS}' \
                         -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
                         """
