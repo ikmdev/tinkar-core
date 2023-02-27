@@ -18,7 +18,7 @@
     <scm>
         <url>https://gitlab.tinkarbuild.com/fda-shield/tinkar-java.git</url>
         <connection>scm:git:https://gitlab.tinkarbuild.com/fda-shield/tinkar-java.git </connection>
-        <tag>@{project.version}</tag>
+        <tag>feature/FDAA-2450-Set-Up-Pipelines-to-Build-Maven-Code-for-tinkar-java</tag>
     </scm>
 
     <properties>
