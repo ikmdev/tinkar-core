@@ -52,7 +52,7 @@ pipeline {
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
                         
                         sh """
-                        mvn clean install -s '${MAVEN_SETTINGS}'   -P ${params.testType} \
+                        mvn clean install -s '${MAVEN_SETTINGS}'   \
                             --batch-mode -DuniqueVersion=false \
                             -e \
                             -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
@@ -125,7 +125,7 @@ pipeline {
                 configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) { 
                     
                     sh """
-                        mvn deploy  -P ${params.testType}  \
+                        mvn deploy   \
                         --batch-mode \
                         -e \
                         -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
@@ -143,9 +143,9 @@ pipeline {
         }
 
         stage('Maven Release SNAPSHOT') {
-            when {
-                expression { params.releaseType == 'SNAPSHOT'  }
-            }
+//             when {
+//                 expression { params.releaseType == 'SNAPSHOT'  }
+//             }
 
             agent {
                 docker {
@@ -176,9 +176,9 @@ pipeline {
         }
 
         stage('Maven Release Minor') {
-            when {
-                expression { params.releaseType == 'Minor'  }
-            }
+//             when {
+//                 expression { params.releaseType == 'Minor'  }
+//             }
 
             agent {
                 docker {
@@ -210,9 +210,9 @@ pipeline {
         }
 
         stage('Maven Release Major') {
-            when {
-                expression { params.releaseType == 'Major'  }
-            }
+//             when {
+//                 expression { params.releaseType == 'Major'  }
+//             }
 
             agent {
                 docker {
