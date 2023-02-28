@@ -40,8 +40,6 @@
         <maven-jxr-plugin.version>3.3.0</maven-jxr-plugin.version>
         <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
         <build-helper-maven-plugin.version>3.3.0</build-helper-maven-plugin.version>
-        <surefire.jacoco.args />
-        <failsafe.jacoco.args />
         <skip.unit.tests />
         <skip.integration.tests />
         <sonar.coverage.jacoco.xmlReportPaths>
@@ -256,9 +254,6 @@
         <!-- profile for unit tests only-->
         <profile>
             <id>unit</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
                 <skip.unit.tests>false</skip.unit.tests>
                 <skip.integration.tests>true</skip.integration.tests>
@@ -277,6 +272,9 @@
         <!-- both unit and Integration tests are combined -->
         <profile>
             <id>testAll</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <properties>
                 <skip.unit.tests>false</skip.unit.tests>
                 <skip.integration.tests>false</skip.integration.tests>

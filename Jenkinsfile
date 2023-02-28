@@ -4,7 +4,7 @@
 String cron_string = BRANCH_NAME == "main" ? "10 3 * * 1-5" : ""
 
 properties([parameters([
-choice(choices: ['unit', 'it', 'testAll'], description: 'Please select test type from the list below', name: 'testType')
+choice(choices: ['testAll', 'unit', 'it'], description: 'Please select test type from the list below', name: 'testType')
 //,choice(choices: ['', 'SNAPSHOT', 'Minor', 'Major'], description: 'Please select the release type', name: 'releaseType')
 ])])
 
