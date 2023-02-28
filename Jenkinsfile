@@ -36,9 +36,9 @@ pipeline {
 
         stage('Maven Build') {
 
-            when {
-                expression { params.releaseType == ''  }
-            }
+//             when {
+//                 expression { params.releaseType == ''  }
+//             }
 
             agent {
                 docker {
@@ -64,9 +64,9 @@ pipeline {
 
         stage('SonarQube Scan') {
 
-            when {
-                expression { params.releaseType == ''  }
-            }
+//             when {
+//                 expression { params.releaseType == ''  }
+//             }
 
             agent { 
                 docker {
@@ -98,9 +98,9 @@ pipeline {
         
         stage("Publish to Nexus Repository Manager") {
 
-            when {
-                expression { params.releaseType == ''  }
-            }
+//             when {
+//                 expression { params.releaseType == ''  }
+//             }
 
             agent { 
                  docker {
