@@ -3,15 +3,13 @@
 //run the build at 03:10 on every day-of-week from Monday through Friday but only on the main branch
 String cron_string = BRANCH_NAME == "main" ? "10 3 * * 1-5" : ""
 
-environment {
-    releaseType = ''
-    testType    = 'testAll'
-}
-
 pipeline {
     agent any
     
     environment {
+
+        releaseType = ""
+        testType    = "testAll"
 
         SONAR_AUTH_TOKEN    = credentials('sonarqube_pac_token')
         SONARQUBE_URL       = "${GLOBAL_SONARQUBE_URL}"
