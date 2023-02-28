@@ -32,8 +32,6 @@
         <maven-jxr-plugin.version>3.3.0</maven-jxr-plugin.version>
         <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
         <build-helper-maven-plugin.version>3.3.0</build-helper-maven-plugin.version>
-        <skip.unit.tests />
-        <skip.integration.tests />
         <sonar.coverage.jacoco.xmlReportPaths>
             ${project.basedir}/code-coverage-aggregator/target/site/jacoco-aggregate/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
@@ -142,6 +140,12 @@
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-report-plugin</artifactId>
+                    <version>${maven-surefire-report-plugin.version}</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-failsafe-plugin</artifactId>
                     <version>${maven-failsafe-plugin.version}</version>
                 </plugin>
@@ -160,11 +164,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <skipTests>${skip.unit.tests}</skipTests>
                     <argLine>--enable-preview ${surefire.jacoco.args}</argLine>
-                    <excludes>
-                        <exclude>**/Test*.java</exclude>
-                    </excludes>
                     <forkCount>1</forkCount>
                 </configuration>
             </plugin>
@@ -210,22 +210,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>${maven-surefire-report-plugin.version}</version>
-                <reportSets>
-                    <reportSet>
-                        <id>unit-tests</id>
-                        <reports>
-                            <report>report</report>
-                        </reports>
-                    </reportSet>
 
-<!--                    <reportSet>-->
-<!--                        <id>integration-tests</id>-->
-<!--                        <reports>-->
-<!--                            <report>failsafe-report-only</report>-->
-<!--                        </reports>-->
-<!--                    </reportSet>-->
-                </reportSets>
             </plugin>
 
             <plugin>
