@@ -8,9 +8,6 @@ pipeline {
     
     environment {
 
-        releaseType = ""
-        testType    = "testAll"
-
         SONAR_AUTH_TOKEN    = credentials('sonarqube_pac_token')
         SONARQUBE_URL       = "${GLOBAL_SONARQUBE_URL}"
         SONAR_HOST_URL      = "${GLOBAL_SONARQUBE_URL}"
@@ -36,10 +33,6 @@ pipeline {
 
         stage('Maven Build') {
 
-//             when {
-//                 expression { params.releaseType == ''  }
-//             }
-
             agent {
                 docker {
                     image "maven:3.8.7-eclipse-temurin-19-alpine"
@@ -63,10 +56,6 @@ pipeline {
         }
 
         stage('SonarQube Scan') {
-
-//             when {
-//                 expression { params.releaseType == ''  }
-//             }
 
             agent { 
                 docker {
@@ -98,11 +87,7 @@ pipeline {
         
         stage("Publish to Nexus Repository Manager") {
 
-//             when {
-//                 expression { params.releaseType == ''  }
-//             }
-
-            agent { 
+            agent {
                  docker {
                     image "maven:3.8.7-eclipse-temurin-19-alpine"
                     args '-u root:root'
@@ -138,107 +123,6 @@ pipeline {
                         -P inject-application-properties \
                         -DrepositoryId='${repositoryId}'
                     """              
-                }
-            }
-        }
-
-        stage('Maven Release SNAPSHOT') {
-//             when {
-//                 expression { params.releaseType == 'SNAPSHOT'  }
-//             }
-
-            agent {
-                docker {
-                    image "maven:3.8.7-eclipse-temurin-19-alpine"
-                    args '-u root:root'
-                }
-            }
-
-            steps {
-                script{
-                    configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
-
-                        sh """
-                        apk update && apk add git
-                        git config --global user.name "Mahesh Parasnis"
-                        git config --global user.email "mparasnis@tinkarbuild.com"
-                        """
-
-                        sh """
-                        mvn --batch-mode release:clean release:prepare release:perform \
-                        -Darguments='-Dmaven.javadoc.skip=true -Dmaven.test.skipTests=true -Dmaven.test.skip=true' \
-                        -e  -s '${MAVEN_SETTINGS}' \
-                        -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('Maven Release Minor') {
-//             when {
-//                 expression { params.releaseType == 'Minor'  }
-//             }
-
-            agent {
-                docker {
-                    image "maven:3.8.7-eclipse-temurin-19-alpine"
-                    args '-u root:root'
-                }
-            }
-
-            steps {
-                script{
-                    configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
-
-                        sh """
-                        apk update && apk add git
-                        git config --global user.name "Mahesh Parasnis"
-                        git config --global user.email "mparasnis@tinkarbuild.com"
-                        """
-
-                        sh """
-                        mvn --batch-mode build-helper:parse-version versions:set \
-                        -DnewVersion=${parsedVersion.majorVersion}.${parsedVersion.nextMinorVersion}.0-SNAPSHOT \
-                        -e  -s '${MAVEN_SETTINGS}' \
-                        -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
-                        versions:commit
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('Maven Release Major') {
-//             when {
-//                 expression { params.releaseType == 'Major'  }
-//             }
-
-            agent {
-                docker {
-                    image "maven:3.8.7-eclipse-temurin-19-alpine"
-                    args '-u root:root'
-                }
-            }
-
-            steps {
-                script{
-                    configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
-
-                        sh """
-                        apk update && apk add git
-                        git config --global user.name "Mahesh Parasnis"
-                        git config --global user.email "mparasnis@tinkarbuild.com"
-                        """
-
-                        sh """
-                        mvn --batch-mode build-helper:parse-version versions:set \
-                        -DnewVersion=${parsedVersion.nextMajorVersion}.${parsedVersion.minorVersion}.0-SNAPSHOT \
-                        -e  -s '${MAVEN_SETTINGS}' \
-                        -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
-                        versions:commit
-                        """
-                    }
                 }
             }
         }

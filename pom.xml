@@ -15,14 +15,6 @@
         <module>tinkar-core</module>
     </modules>
 
-    <!--
-    <scm>
-        <url>https://gitlab.tinkarbuild.com/fda-shield/tinkar-java.git</url>
-        <connection>scm:git:https://gitlab.tinkarbuild.com/fda-shield/tinkar-java.git </connection>
-        <tag>feature/FDAA-2450-Set-Up-Pipelines-to-Build-Maven-Code-for-tinkar-java</tag>
-    </scm>
-    -->
-
     <properties>
         <maven.compiler.source>19</maven.compiler.source>
         <maven.compiler.target>19</maven.compiler.target>
@@ -48,24 +40,28 @@
     </properties>
 
     <dependencies>
+
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
             <version>${junit-jupiter-engine.version}</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-commons</artifactId>
             <version>${junit-platform-commons.version}</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-launcher</artifactId>
             <version>${junit-platform-launcher.version}</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.apache.maven.surefire</groupId>
             <artifactId>common-java5</artifactId>
@@ -77,46 +73,55 @@
     <build>
         <pluginManagement>
             <plugins>
+
                 <plugin>
                     <groupId>org.sonarsource.scanner.maven</groupId>
                     <artifactId>sonar-maven-plugin</artifactId>
                     <version>3.7.0.1746</version>
                 </plugin>
+
                 <plugin>
                     <groupId>external.atlassian.jgitflow</groupId>
                     <artifactId>jgitflow-maven-plugin</artifactId>
                     <version>1.0-m5.1</version>
                 </plugin>
+
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
                     <version>3.0.0</version>
                 </plugin>
+
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
                     <version>3.4.2</version>
                 </plugin>
+
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>2.4</version>
                 </plugin>
+
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>build-helper-maven-plugin</artifactId>
                     <version>3.3.0</version>
                 </plugin>
+
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>versions-maven-plugin</artifactId>
                     <version>2.13.0</version>
                 </plugin>
+
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
                     <version>3.0.0</version>
                 </plugin>
+
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
@@ -128,22 +133,19 @@
                         </compilerArgs>
                     </configuration>
                 </plugin>
+
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${maven-surefire-plugin.version}</version>
-                    <configuration>
-<!--                        <argLine>&#45;&#45;enable-preview</argLine>-->
-                    </configuration>
                 </plugin>
+
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-failsafe-plugin</artifactId>
                     <version>${maven-failsafe-plugin.version}</version>
-                    <configuration>
-<!--                        <argLine>&#45;&#45;enable-preview</argLine>-->
-                    </configuration>
                 </plugin>
+
                 <plugin>
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
@@ -249,65 +251,5 @@
 
         </plugins>
     </reporting>
-
-<!--    <profiles>-->
-<!--        &lt;!&ndash; profile for unit tests only&ndash;&gt;-->
-<!--        <profile>-->
-<!--            <id>unit</id>-->
-<!--            <properties>-->
-<!--                <skip.unit.tests>false</skip.unit.tests>-->
-<!--                <skip.integration.tests>true</skip.integration.tests>-->
-<!--            </properties>-->
-<!--        </profile>-->
-
-<!--        &lt;!&ndash; profile for Integration tests only&ndash;&gt;-->
-<!--        <profile>-->
-<!--            <id>it</id>-->
-<!--            <properties>-->
-<!--                <skip.unit.tests>true</skip.unit.tests>-->
-<!--                <skip.integration.tests>false</skip.integration.tests>-->
-<!--            </properties>-->
-<!--        </profile>-->
-
-<!--        &lt;!&ndash; both unit and Integration tests are combined &ndash;&gt;-->
-<!--        <profile>-->
-<!--            <id>testAll</id>-->
-<!--&lt;!&ndash;            <activation>&ndash;&gt;-->
-<!--&lt;!&ndash;                <activeByDefault>true</activeByDefault>&ndash;&gt;-->
-<!--&lt;!&ndash;            </activation>&ndash;&gt;-->
-<!--            <properties>-->
-<!--                <skip.unit.tests>false</skip.unit.tests>-->
-<!--                <skip.integration.tests>false</skip.integration.tests>-->
-<!--            </properties>-->
-<!--        </profile>-->
-
-<!--        <profile>-->
-<!--            <id>release</id>-->
-<!--            <build>-->
-<!--                <plugins>-->
-<!--                    <plugin>-->
-<!--                        <groupId>org.apache.maven.plugins</groupId>-->
-<!--                        <artifactId>maven-release-plugin</artifactId>-->
-<!--                        <version>${maven-release-plugin.version}</version>-->
-<!--                        <configuration>-->
-<!--                            <tagNameFormat>@{project.version}</tagNameFormat>-->
-<!--                            <checkModificationExcludes>-->
-<!--                                <checkModificationExclude>pom.xml</checkModificationExclude>-->
-<!--                            </checkModificationExcludes>-->
-<!--                        </configuration>-->
-<!--                        <dependencies>-->
-<!--                            <dependency>-->
-<!--                                <groupId>org.codehaus.mojo</groupId>-->
-<!--                                <artifactId>build-helper-maven-plugin</artifactId>-->
-<!--                                <version>${build-helper-maven-plugin.version}</version>-->
-<!--                                <type>maven-plugin</type>-->
-<!--                            </dependency>-->
-<!--                        </dependencies>-->
-
-<!--                    </plugin>-->
-<!--                </plugins>-->
-<!--            </build>-->
-<!--        </profile>-->
-<!--    </profiles>-->
 
 </project>
