@@ -72,7 +72,6 @@ pipeline {
 
                             sh """
                                 mvn clean verify -Dsonar.login=${SONAR_AUTH_TOKEN}  -s '${MAVEN_SETTINGS}' --batch-mode
-                                find / -name jacoco.xml
                                 mvn sonar:sonar -Dsonar.login=${SONAR_AUTH_TOKEN}  -s '${MAVEN_SETTINGS}' --batch-mode
                             """
                         }
