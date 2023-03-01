@@ -71,7 +71,7 @@ pipeline {
                             // This expands the environment variables SONAR_CONFIG_NAME, SONAR_HOST_URL, SONAR_AUTH_TOKEN that can be used by any script.
 
                             sh """
-                                mvn sonar:sonar -Dsonar.login=${SONAR_AUTH_TOKEN}  -s '${MAVEN_SETTINGS}' --batch-mode
+                                mvn -X clean verify sonar:sonar -Dsonar.login=${SONAR_AUTH_TOKEN}  -s '${MAVEN_SETTINGS}' --batch-mode
                             """
                         }
                     }
@@ -108,21 +108,25 @@ pipeline {
                 }
              
                 configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) { 
-                    
+
                     sh """
-                        mvn deploy   \
-                        --batch-mode \
-                        -e \
-                        -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
-                        -DskipTests \
-                        -DskipITs \
-                        -Dmaven.main.skip \
-                        -Dmaven.test.skip \
-						-DuniqueVersion=false \
-                        -s '${MAVEN_SETTINGS}' \
-                        -P inject-application-properties \
-                        -DrepositoryId='${repositoryId}'
-                    """              
+                    mvn -version
+                    """
+
+//                     sh """
+//                         mvn deploy   \
+//                         --batch-mode \
+//                         -e \
+//                         -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
+//                         -DskipTests \
+//                         -DskipITs \
+//                         -Dmaven.main.skip \
+//                         -Dmaven.test.skip \
+// 						-DuniqueVersion=false \
+//                         -s '${MAVEN_SETTINGS}' \
+//                         -P inject-application-properties \
+//                         -DrepositoryId='${repositoryId}'
+//                     """
                 }
             }
         }
