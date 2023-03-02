@@ -32,15 +32,9 @@
         <maven-jxr-plugin.version>3.3.0</maven-jxr-plugin.version>
         <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
         <build-helper-maven-plugin.version>3.3.0</build-helper-maven-plugin.version>
-        <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
-        <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
-        <sonar.language>java</sonar.language>
-
-        <jacoco.destFile>../../target/jacoco.exec</jacoco.destFile>
-        <jacoco.dataFile>../../target/jacoco.exec</jacoco.dataFile>
         <sonar-version>3.7.0.1746</sonar-version>
-        <sonar.skip>true</sonar.skip>
-<!--        <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>-->
+        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/tinkar-core/code-coverage-aggregator/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+
     </properties>
 
     <dependencies>
@@ -192,8 +186,6 @@
                         <phase>initialize</phase>
                         <configuration>
                             <propertyName>surefire.jacoco.args</propertyName>
-                            <append>true</append>
-                            <destFile>${jacoco.destFile}</destFile>
                         </configuration>
                         <goals>
                             <goal>prepare-agent</goal>
@@ -205,16 +197,8 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
-                        <configuration>
-                            <dataFile>${jacoco.dataFile}</dataFile>
-                        </configuration>
                     </execution>
                 </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.sonarsource.scanner.maven</groupId>
-                <artifactId>sonar-maven-plugin</artifactId>
             </plugin>
 
         </plugins>
