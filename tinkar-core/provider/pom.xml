@@ -14,7 +14,7 @@
     <name>TINKAR Providers</name>
 
     <properties>
-        <sonar.skip>true</sonar.skip>
+        <sonar.skip>false</sonar.skip>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/tinkar-core/code-coverage-aggregator/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
