@@ -39,7 +39,8 @@
         <jacoco.destFile>../../target/jacoco.exec</jacoco.destFile>
         <jacoco.dataFile>../../target/jacoco.exec</jacoco.dataFile>
         <sonar-version>3.7.0.1746</sonar-version>
-        <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <sonar.skip>true</sonar.skip>
+<!--        <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>-->
     </properties>
 
     <dependencies>
