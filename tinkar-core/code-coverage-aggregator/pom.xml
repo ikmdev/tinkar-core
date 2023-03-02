@@ -113,17 +113,17 @@
                         </goals>
                     </execution>
                 </executions>
-                <configuration>
-                    <title>JaCoCo</title>
-                    <footer>Code Coverage Report for ${project.name}</footer>
-                    <includes>
-                        <!-- Analyze class files only to exclude shaded agent JAR from report -->
-                        <include>**/*.class</include>
-                    </includes>
-                    <excludes>
-                        <exclude>**/HelpMojo.class</exclude>
-                    </excludes>
-                </configuration>
+<!--                <configuration>-->
+<!--                    <title>JaCoCo</title>-->
+<!--                    <footer>Code Coverage Report for ${project.name}</footer>-->
+<!--                    <includes>-->
+<!--                        &lt;!&ndash; Analyze class files only to exclude shaded agent JAR from report &ndash;&gt;-->
+<!--                        <include>**/*.class</include>-->
+<!--                    </includes>-->
+<!--                    <excludes>-->
+<!--                        <exclude>**/HelpMojo.class</exclude>-->
+<!--                    </excludes>-->
+<!--                </configuration>-->
             </plugin>
 
             <plugin>
