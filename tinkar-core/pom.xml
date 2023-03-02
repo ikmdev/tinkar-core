@@ -63,7 +63,7 @@
         <protobuf-java.version>3.21.3</protobuf-java.version>
         <protobuf.version>1.5.0</protobuf.version>
         <sonar.skip>false</sonar.skip>
-        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/tinkar-core/code-coverage-aggregator/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/tinkar-core/component/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 
     </properties>
 
