@@ -13,6 +13,11 @@
 
     <name>TINKAR Providers</name>
 
+    <properties>
+        <sonar.skip>true</sonar.skip>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/tinkar-core/code-coverage-aggregator/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+    </properties>
+
     <modules>
         <module>data-ephemeral-provider</module>
         <module>data-mvstore-provider</module>

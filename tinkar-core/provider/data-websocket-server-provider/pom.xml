@@ -15,7 +15,10 @@
 
     <properties>
         <activej.version>4.3</activej.version>
+        <sonar.skip>false</sonar.skip>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/tinkar-core/code-coverage-aggregator/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
