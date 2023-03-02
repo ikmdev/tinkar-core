@@ -11,7 +11,7 @@
     <name>code coverage aggregator</name>
 
     <properties>
-        <sonar.skip>true</sonar.skip>
+        <sonar.skip>false</sonar.skip>
         <maven.deploy.skip>true</maven.deploy.skip>
         <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
