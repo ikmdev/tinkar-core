@@ -9,6 +9,7 @@
 
     <artifactId>code-coverage-aggregator</artifactId>
     <name>code coverage aggregator</name>
+    <packaging>pom</packaging>
 
     <properties>
         <sonar.skip>false</sonar.skip>
