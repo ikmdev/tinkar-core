@@ -84,7 +84,13 @@ pipeline {
                 }
             }            
         }
-        
+
+        stage("SonarQube Quality Gate") {
+            steps {
+                sonarQubeQualityGate()
+            }
+        }
+
         stage("Publish to Nexus Repository Manager") {
 
             agent {
