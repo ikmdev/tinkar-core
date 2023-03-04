@@ -72,7 +72,7 @@ pipeline {
 
                             dir(env.WORKSPACE) {
                                 sh """
-                                    mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:3.7.0.1746:sonar  -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode
+                                mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:3.7.0.1746:sonar  -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode
                                 """
 
                                 def qualitygate = waitForQualityGate()
