@@ -73,6 +73,8 @@ pipeline {
                             dir(env.WORKSPACE) {
                                 sh """
                                 mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:3.7.0.1746:sonar  -X -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode
+                                pwd
+                                cp /var/lib/jenkins/workspace/Build-Maven-Code-for-tinkar-java@2/target/sonar/report-task.txt .
                                 """
 
                                 def qualitygate = waitForQualityGate()
