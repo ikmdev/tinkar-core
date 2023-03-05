@@ -70,32 +70,20 @@ pipeline {
                         withSonarQubeEnv(installationName: 'EKS SonarQube', envOnly: true) {
                             // This expands the environment variables SONAR_CONFIG_NAME, SONAR_HOST_URL, SONAR_AUTH_TOKEN that can be used by any script.
 
-//                             dir(env.WORKSPACE) {
-                                sh """
-                                mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:3.7.0.1746:sonar  -X -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode
-                                pwd
-                                cp /var/lib/jenkins/workspace/Build-Maven-Code-for-tinkar-java@2/target/sonar/report-task.txt .
-                                cat report-task.txt
-                                """
+                            sh """
+                                mvn clean verify sonar:sonar  -X -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode
+                            """
 
-                                sh """
-                                ls -l /var/lib/jenkins/workspace/Build-Maven-Code-for-tinkar-java@2/target/sonar
-                                """
-                                //timeout (time: 1, unit: ‘HOURS’) {
-                                //def qualitygate = waitForQualityGate()
+                            sh """
+                                timeout (time: 1, unit: ‘HOURS’) {
+                                    def qualitygate = waitForQualityGate()
+                                    waitForQualityGate abortPipeline: true, credentialsId: ${SONAR_AUTH_TOKEN}
 
-                                waitForQualityGate abortPipeline: true, credentialsId: ${SONAR_AUTH_TOKEN}
-
-                                sh """
-                                ls -l /var/lib/jenkins/workspace/Build-Maven-Code-for-tinkar-java@2/target/sonar
-                                """
-
-//                                 if (qualitygate.status != "OK") {
-//                                     error "Pipeline aborted due to quality gate coverage failure: ${qualitygate.status}"
-//                                 }
-                                //}
-
-//                             }
+                                    if (qualitygate.status != "OK") {
+                                        error "Pipeline aborted due to quality gate coverage failure: ${qualitygate.status}"
+                                    }
+                                }
+                            """
                         }
                     }
                 }
@@ -107,14 +95,6 @@ pipeline {
                 }
             }            
         }
-//
-//         stage("SonarQube Quality Gate") {
-//             steps {
-//                 timeout(time: 1, unit: 'HOURS') {
-//                     waitForQualityGate abortPipeline: true
-//                 }
-//             }
-//         }
 
         stage("Publish to Nexus Repository Manager") {
 
@@ -122,6 +102,7 @@ pipeline {
                  docker {
                     image "maven:3.8.7-eclipse-temurin-19-alpine"
                     args '-u root:root'
+                 }
                  }
              }
 
