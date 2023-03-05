@@ -75,22 +75,23 @@ pipeline {
                                 mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:3.7.0.1746:sonar  -X -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode
                                 pwd
                                 cp /var/lib/jenkins/workspace/Build-Maven-Code-for-tinkar-java@2/target/sonar/report-task.txt .
+                                cat report-task.txt
                                 """
 
                                 sh """
                                 ls -l /var/lib/jenkins/workspace/Build-Maven-Code-for-tinkar-java@2/target/sonar
                                 """
-                                timeout (time: 1, unit: ‘HOURS’) {
-                                    def qualitygate = waitForQualityGate()
+                                //timeout (time: 1, unit: ‘HOURS’) {
+                                def qualitygate = waitForQualityGate()
 
-                                    sh """
-                                    ls -l /var/lib/jenkins/workspace/Build-Maven-Code-for-tinkar-java@2/target/sonar
-                                    """
+                                sh """
+                                ls -l /var/lib/jenkins/workspace/Build-Maven-Code-for-tinkar-java@2/target/sonar
+                                """
 
-                                    if (qualitygate.status != "OK") {
-                                        error "Pipeline aborted due to quality gate coverage failure: ${qualitygate.status}"
-                                    }
+                                if (qualitygate.status != "OK") {
+                                    error "Pipeline aborted due to quality gate coverage failure: ${qualitygate.status}"
                                 }
+                                //}
 
 //                             }
                         }
