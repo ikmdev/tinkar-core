@@ -73,17 +73,6 @@ pipeline {
                             sh """
                                 mvn clean verify sonar:sonar  -X -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode
                             """
-
-//                             sh """
-                                timeout (time: 1, unit: ‘HOURS’) {
-                                    def qualitygate = waitForQualityGate()
-                                    waitForQualityGate abortPipeline: true, credentialsId: ${SONAR_AUTH_TOKEN}
-
-                                    if (qualitygate.status != "OK") {
-                                        error "Pipeline aborted due to quality gate coverage failure: ${qualitygate.status}"
-                                    }
-                                }
-//                             """
                         }
                     }
                 }
@@ -94,6 +83,15 @@ pipeline {
                     echo "post always SonarQube Scan"
                 }
             }            
+        }
+
+        stage("Quality Gate"){
+            timeout(time: 1, unit: 'HOURS') {
+                def qg = waitForQualityGate()
+                if (qg.status != 'OK') {
+                    error "Pipeline aborted due to quality gate failure: ${qg.status}"
+                }
+            }
         }
 
         stage("Publish to Nexus Repository Manager") {
