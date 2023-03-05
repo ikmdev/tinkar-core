@@ -82,15 +82,17 @@ pipeline {
                                 ls -l /var/lib/jenkins/workspace/Build-Maven-Code-for-tinkar-java@2/target/sonar
                                 """
                                 //timeout (time: 1, unit: ‘HOURS’) {
-                                def qualitygate = waitForQualityGate()
+                                //def qualitygate = waitForQualityGate()
+
+                                waitForQualityGate abortPipeline: true, credentialsId: ${SONAR_AUTH_TOKEN}
 
                                 sh """
                                 ls -l /var/lib/jenkins/workspace/Build-Maven-Code-for-tinkar-java@2/target/sonar
                                 """
 
-                                if (qualitygate.status != "OK") {
-                                    error "Pipeline aborted due to quality gate coverage failure: ${qualitygate.status}"
-                                }
+//                                 if (qualitygate.status != "OK") {
+//                                     error "Pipeline aborted due to quality gate coverage failure: ${qualitygate.status}"
+//                                 }
                                 //}
 
 //                             }
