@@ -77,7 +77,15 @@ pipeline {
                                 cp /var/lib/jenkins/workspace/Build-Maven-Code-for-tinkar-java@2/target/sonar/report-task.txt .
                                 """
 
+                                sh """
+                                ls -l /var/lib/jenkins/workspace/Build-Maven-Code-for-tinkar-java@2/target/sonar
+                                """
+
                                 def qualitygate = waitForQualityGate()
+                                sh """
+                                ls -l /var/lib/jenkins/workspace/Build-Maven-Code-for-tinkar-java@2/target/sonar
+                                """
+
                                 if (qualitygate.status != "OK") {
                                     error "Pipeline aborted due to quality gate coverage failure: ${qualitygate.status}"
                                 }
