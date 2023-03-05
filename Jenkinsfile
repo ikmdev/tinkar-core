@@ -70,7 +70,7 @@ pipeline {
                         withSonarQubeEnv(installationName: 'EKS SonarQube', envOnly: true) {
                             // This expands the environment variables SONAR_CONFIG_NAME, SONAR_HOST_URL, SONAR_AUTH_TOKEN that can be used by any script.
 
-                            dir(env.WORKSPACE) {
+//                             dir(env.WORKSPACE) {
                                 sh """
                                 mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:3.7.0.1746:sonar  -X -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode
                                 pwd
@@ -81,7 +81,7 @@ pipeline {
                                 if (qualitygate.status != "OK") {
                                     error "Pipeline aborted due to quality gate coverage failure: ${qualitygate.status}"
                                 }
-                            }
+//                             }
                         }
                     }
                 }
