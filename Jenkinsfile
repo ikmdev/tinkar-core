@@ -103,7 +103,6 @@ pipeline {
                     image "maven:3.8.7-eclipse-temurin-19-alpine"
                     args '-u root:root'
                  }
-                 }
              }
 
             steps {
