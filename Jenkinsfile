@@ -74,7 +74,7 @@ pipeline {
                                 mvn clean verify sonar:sonar  -X -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode
                             """
 
-                            sh """
+//                             sh """
                                 timeout (time: 1, unit: ‘HOURS’) {
                                     def qualitygate = waitForQualityGate()
                                     waitForQualityGate abortPipeline: true, credentialsId: ${SONAR_AUTH_TOKEN}
@@ -83,7 +83,7 @@ pipeline {
                                         error "Pipeline aborted due to quality gate coverage failure: ${qualitygate.status}"
                                     }
                                 }
-                            """
+//                             """
                         }
                     }
                 }
