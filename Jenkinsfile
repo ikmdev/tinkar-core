@@ -71,8 +71,8 @@ pipeline {
                             // This expands the environment variables SONAR_CONFIG_NAME, SONAR_HOST_URL, SONAR_AUTH_TOKEN that can be used by any script.
 
                             sh """
-                                mvn clean install
-                                mvn sonar:sonar  -X -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode"
+                                mvn clean install -X -s '${MAVEN_SETTINGS}'  --batch-mode
+                                mvn sonar:sonar  -X -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode
                             """
                         }
                     }
