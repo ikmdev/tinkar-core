@@ -65,7 +65,7 @@ pipeline {
             }
             
             steps{
-                script{
+                //script{
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
                         withSonarQubeEnv(installationName: 'EKS SonarQube', envOnly: true) {
                             // This expands the environment variables SONAR_CONFIG_NAME, SONAR_HOST_URL, SONAR_AUTH_TOKEN that can be used by any script.
@@ -75,7 +75,7 @@ pipeline {
                             """
                         }
                     }
-                }
+                //}
             }
                
             post {
@@ -87,18 +87,15 @@ pipeline {
 
         stage("Quality Gate"){
             steps{
-                script{
+                //script{
                     sh """
                     ls /var/lib/jenkins/workspace/Build-Maven-Code-for-tinkar-java@2/target/sonar/
                     """
 
                     timeout(time: 1, unit: 'HOURS') {
-                        def qg = waitForQualityGate()
-                        if (qg.status != 'OK') {
-                            error "Pipeline aborted due to quality gate failure: ${qg.status}"
-                        }
+                        waitForQualityGate abortPipeline: true
                     }
-                }
+                //}
             }
         }
 
