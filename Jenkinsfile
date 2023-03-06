@@ -70,9 +70,10 @@ pipeline {
                         withSonarQubeEnv(installationName: 'EKS SonarQube', envOnly: true) {
                             // This expands the environment variables SONAR_CONFIG_NAME, SONAR_HOST_URL, SONAR_AUTH_TOKEN that can be used by any script.
 
-//                             sh """
-                            sh "mvn clean verify sonar:sonar  -X -Dsonar.login=${SONAR_AUTH_TOKEN} -Dsonar.organization=org.hl7.tinkar -Dsonar.projectKey=tinkar-java-456 -Dsonar.projectName=tinkar-java-789 -Dsonar.projectVersion=1.0.0-SNAPSHOT -s '${MAVEN_SETTINGS}' --batch-mode"
-//                             """
+                            sh """
+                                mvn clean install
+                                mvn sonar:sonar  -X -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode"
+                            """
                         }
                     }
                 //}
@@ -87,15 +88,9 @@ pipeline {
 
         stage("Quality Gate"){
             steps{
-                //script{
-                    sh """
-                    ls /var/lib/jenkins/workspace/Build-Maven-Code-for-tinkar-java@2/target/sonar/
-                    """
-
-                    timeout(time: 1, unit: 'HOURS') {
-                        waitForQualityGate abortPipeline: true
-                    }
-                //}
+                timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
 
