@@ -71,7 +71,7 @@ pipeline {
                             // This expands the environment variables SONAR_CONFIG_NAME, SONAR_HOST_URL, SONAR_AUTH_TOKEN that can be used by any script.
 
 //                             sh """
-                            sh "mvn clean verify sonar:sonar  -X -Dsonar.login=${SONAR_AUTH_TOKEN} -Dsonar.host.url=tinkar-java-123  -Dsonar.organization=org.hl7.tinkar -Dsonar.projectKey=tinkar-java-456 -Dsonar.projectName=tinkar-java-789 -Dsonar.projectVersion=1.0.0-SNAPSHOT -s '${MAVEN_SETTINGS}' --batch-mode"
+                            sh "mvn clean verify sonar:sonar  -X -Dsonar.login=${SONAR_AUTH_TOKEN} -Dsonar.organization=org.hl7.tinkar -Dsonar.projectKey=tinkar-java-456 -Dsonar.projectName=tinkar-java-789 -Dsonar.projectVersion=1.0.0-SNAPSHOT -s '${MAVEN_SETTINGS}' --batch-mode"
 //                             """
                         }
                     }
