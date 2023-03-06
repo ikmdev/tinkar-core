@@ -88,6 +88,10 @@ pipeline {
         stage("Quality Gate"){
             steps{
                 script{
+                    sh """
+                    ls /var/lib/jenkins/workspace/Build-Maven-Code-for-tinkar-java@2/target/sonar/
+                    """
+
                     timeout(time: 1, unit: 'HOURS') {
                         def qg = waitForQualityGate()
                         if (qg.status != 'OK') {
