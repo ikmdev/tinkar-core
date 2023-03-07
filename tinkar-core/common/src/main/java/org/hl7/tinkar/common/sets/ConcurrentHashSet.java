@@ -1,83 +1,75 @@
 package org.hl7.tinkar.common.sets;
 
-import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
-
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ConcurrentHashSet<T extends Object> implements Set<T> {
-    final ConcurrentHashMap<T, T> hashMap;
+     final ConcurrentHashMap.KeySetView<T,Boolean> keySet;
 
     public ConcurrentHashSet(int initialSize) {
-        this.hashMap = ConcurrentHashMap.newMap(initialSize);
+        this.keySet = ConcurrentHashMap.newKeySet(initialSize);
     }
 
     public ConcurrentHashSet() {
-        this.hashMap = ConcurrentHashMap.newMap();
+        this.keySet = ConcurrentHashMap.newKeySet();
     }
 
     public ConcurrentHashSet(Enumeration<T> keys) {
-        this.hashMap = ConcurrentHashMap.newMap();
+        this.keySet = ConcurrentHashMap.newKeySet();
         while (keys.hasMoreElements()) {
             T value = keys.nextElement();
-            hashMap.put(value, value);
+            keySet.add(value);
         }
     }
 
     @Override
     public int size() {
-        return hashMap.size();
+        return keySet.size();
     }
 
     @Override
     public boolean isEmpty() {
-        return hashMap.isEmpty();
+        return keySet.isEmpty();
     }
 
     @Override
     public boolean contains(Object o) {
-        return hashMap.containsKey(o);
+        return keySet.contains(o);
     }
 
     @Override
     public Iterator<T> iterator() {
-        return hashMap.iterator();
+        return keySet.iterator();
     }
 
     @Override
     public Integer[] toArray() {
-        return hashMap.toArray(new Integer[hashMap.size()]);
+        return keySet.toArray(new Integer[keySet.size()]);
     }
 
     @Override
     public <T> T[] toArray(T[] a) {
-        return hashMap.toArray(a);
+        return keySet.toArray(a);
     }
 
     @Override
     public boolean add(T value) {
-        return null == hashMap.put(value, value);
+        return keySet.add(value);
     }
 
     @Override
     public boolean remove(Object o) {
-        Object existingObject = hashMap.remove(o);
-        return Objects.equals(o, existingObject);
+        return keySet.remove(o);
     }
 
     @Override
     public boolean containsAll(Collection<?> c) {
-        return hashMap.containsAll(c);
+        return keySet.containsAll(c);
     }
 
     @Override
     public boolean addAll(Collection<? extends T> c) {
-        boolean changed = false;
-        for (T value : c) {
-            if (hashMap.put(value, value) == null) {
-                changed = true;
-            }
-        }
-        return changed;
+        return keySet.addAll(c);
     }
 
     @Override
@@ -92,6 +84,6 @@ public class ConcurrentHashSet<T extends Object> implements Set<T> {
 
     @Override
     public void clear() {
-        hashMap.clear();
+        keySet.clear();
     }
 }
