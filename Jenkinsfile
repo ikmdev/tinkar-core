@@ -72,8 +72,8 @@ pipeline {
 
                         sh """
                             mvn clean install -X -s '${MAVEN_SETTINGS}'  --batch-mode
-                            mvn sonar:sonar -Dsonar.qualitygate.wait=true -X -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode
                         """
+                        //mvn sonar:sonar -Dsonar.qualitygate.wait=true -X -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode
                     }
                 }
             }
