@@ -14,17 +14,17 @@
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>roaring</artifactId>
-            <version>${tinkar-jpms-deps.version}</version>
+            <version>${roaringbitmap.version}</version>
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>activej</artifactId>
-            <version>${tinkar-jpms-deps.version}</version>
+            <version>${activej.version}</version>
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>eclipse-collections</artifactId>
-            <version>${tinkar-jpms-deps.version}</version>
+            <version>${eclipse-collections-api.version}</version>
         </dependency>
         <dependency>
             <groupId>io.github.udaychandra.susel</groupId>
