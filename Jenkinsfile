@@ -84,6 +84,7 @@ pipeline {
                 }
             }
         }
+    }
 
 
     post {
@@ -107,5 +108,4 @@ pipeline {
             ])
         }
     }
-}
 }
