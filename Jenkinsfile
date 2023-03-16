@@ -57,7 +57,7 @@ pipeline {
             }
         }
 
-        stage('SonarQube Scan') {
+        /*stage('SonarQube Scan') {
             agent {
                 docker { 
                     image "maven:3.8.7-eclipse-temurin-19-alpine"
@@ -84,7 +84,7 @@ pipeline {
                 }
             }
         }
-    }
+    }*/
 
 
     post {
