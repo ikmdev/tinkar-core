@@ -55,7 +55,7 @@
         <testng.version>7.4.0</testng.version>
         <tinkar-jpms-deps.version>1.0.15</tinkar-jpms-deps.version>
         <protobuf-java.version>3.21.3</protobuf-java.version>
-        <tinkar.protobuf.version>1.5.0</protobuf.version>
+        <tinkar.protobuf.version>1.5.0</tinkar.protobuf.version>
         <sonar.skip>false</sonar.skip>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <sonar.core.codeCoveragePlugin>jacoco</sonar.core.codeCoveragePlugin>
