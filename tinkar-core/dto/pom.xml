@@ -24,12 +24,12 @@
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>activej</artifactId>
-            <version>${tinkar-jpms-deps.version}</version>
+            <version>${activej.version}</version>
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>record-builder-core</artifactId>
-            <version>${tinkar-jpms-deps.version}</version>
+            <version>${record-builder-core.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
