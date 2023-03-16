@@ -31,7 +31,7 @@
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>auto-service</artifactId>
-            <version>${tinkar-jpms-deps.version}</version>
+            <version>${auto-service.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
