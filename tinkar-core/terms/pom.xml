@@ -4,17 +4,11 @@
     <parent>
         <artifactId>tinkar</artifactId>
         <groupId>org.hl7.tinkar</groupId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0-SNAPSHOT</version>
     </parent>
     <artifactId>terms</artifactId>
     <packaging>jar</packaging>
-    <name>TINKAR Terms</name>
-
-    <properties>
-        <sonar.skip>false</sonar.skip>
-        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-    </properties>
-
+    <name>TINKAR: Terms</name>
     <dependencies>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
