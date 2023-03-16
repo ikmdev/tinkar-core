@@ -83,8 +83,8 @@ pipeline {
                     echo "post always SonarQube Scan"
                 }
             }
-        }
-    }*/
+        }*/
+    }
 
 
     post {
