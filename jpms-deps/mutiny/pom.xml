@@ -11,6 +11,7 @@
 
     <artifactId>mutiny</artifactId>
     <name>TINKAR: Mutiny</name>
+    <version>${io.smallrye.reactive.version}</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

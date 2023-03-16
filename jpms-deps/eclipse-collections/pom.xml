@@ -10,6 +10,7 @@
     <artifactId>eclipse-collections</artifactId>
     <packaging>jar</packaging>
     <name>TINKAR: Eclipse collections</name>
+    <version>${eclipse-collections-api.version}</version>
     <build>
         <plugins>
             <plugin>
