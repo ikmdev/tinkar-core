@@ -1,22 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    
+    <build>
+        <plugins>
+
+        </plugins>
+    </build>
     <parent>
         <artifactId>provider</artifactId>
         <groupId>org.hl7.tinkar</groupId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0-SNAPSHOT</version>
     </parent>
-
     <artifactId>entity-provider</artifactId>
     <packaging>jar</packaging>
-    <name>TINKAR Provider Entity provider</name>
-
-    <properties>
-        <sonar.skip>false</sonar.skip>
-        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-    </properties>
-
+    <name>TINKAR Provider: Entity provider</name>
     <dependencies>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
@@ -31,13 +29,13 @@
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>common</artifactId>
-            <version>${project.parent.version}</version>
+            <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>auto-service</artifactId>
-            <version>${auto-service.version}</version>
+            <version>${tinkar-jpms-deps.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

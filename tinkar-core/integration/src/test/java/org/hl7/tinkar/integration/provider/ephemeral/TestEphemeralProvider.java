@@ -3,7 +3,11 @@ package org.hl7.tinkar.integration.provider.ephemeral;
 import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.service.ServiceProperties;
+import org.hl7.tinkar.entity.export.ExportEntitiesController;
+import org.hl7.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import org.hl7.tinkar.entity.load.LoadEntitiesFromDtoFile;
+import org.hl7.tinkar.entity.load.LoadEntitiesFromFileController;
+import org.hl7.tinkar.entity.transfom.EntityTransformer;
 import org.hl7.tinkar.entity.util.EntityCounter;
 import org.hl7.tinkar.entity.util.EntityProcessor;
 import org.hl7.tinkar.entity.util.EntityRealizer;
@@ -73,4 +77,50 @@ class TestEphemeralProvider {
         PrimitiveData.get().forEachParallel(processor);
         LOG.info("EPH Parallel realization: \n" + processor.report() + "\n\n");
     }
+
+    @Test
+    @Order(4)
+    public void exportEntitiesToProtobuf() throws IOException {
+        File file = TestConstants.PB_EXPORT_TEST_FILE;
+        try {
+            ExportEntitiesController exportEntitiesController = new ExportEntitiesController();
+            exportEntitiesController.export(file);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    @Order(5)
+    public void countExport() {
+        EntityProcessor processor = new EntityCounter();
+        PrimitiveData.get().forEach(processor);
+        LOG.info("POST EPH Sequential count: \n" + processor.report() + "\n\n");
+        processor = new EntityCounter();
+        PrimitiveData.get().forEachParallel(processor);
+        LOG.info("POST EPH Parallel count: \n" + processor.report() + "\n\n");
+        processor = new EntityRealizer();
+        PrimitiveData.get().forEach(processor);
+        LOG.info("POST EPH Sequential realization: \n" + processor.report() + "\n\n");
+        processor = new EntityRealizer();
+        PrimitiveData.get().forEachParallel(processor);
+        LOG.info("POST EPH Parallel realization: \n" + processor.report() + "\n\n");
+        processor = new EntityRealizer();
+        PrimitiveData.get().forEach(processor);
+        LOG.info("POST EPH Sequential realization: \n" + processor.report() + "\n\n");
+        processor = new EntityRealizer();
+        PrimitiveData.get().forEachParallel(processor);
+        LOG.info("POST EPH Parallel realization: \n" + processor.report() + "\n\n");
+    }
+
+//    @Test
+//    @Order(5)
+//    public void howManyEntities() throws IOException {
+//        File file = TestConstants.PB_EXPORT_TEST_FILE;
+//        EntityTransformer entityTransformer = new EntityTransformer();
+//            ExportEntitiesToProtobufFile exportEntitiesToProtobufFile = new ExportEntitiesToProtobufFile(file);
+//            exportEntitiesToProtobufFile.compute();
+////        System.out.println("Current concept count: " + entityTransformer.transform());
+//    }
 }
