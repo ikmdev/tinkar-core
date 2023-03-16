@@ -1,18 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    
+    <modelVersion>4.0.0</modelVersion>
+    
     <parent>
         <groupId>org.hl7.tinkar</groupId>
         <artifactId>tinkar</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0.0-SNAPSHOT</version>
     </parent>
-    <modelVersion>4.0.0</modelVersion>
-    <name>TINKAR: Integration</name>
 
+    <name>TINKAR Integration</name>
     <artifactId>integration</artifactId>
+
     <properties>
         <skipSurefireReport>true</skipSurefireReport>
+        <sonar.skip>false</sonar.skip>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
     <dependencies>
         <dependency>
@@ -50,10 +53,6 @@
             <artifactId>search-provider</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -72,8 +71,10 @@
                             <goal>verify</goal>
                         </goals>
                         <configuration>
+                            <skipTests>${skip.integration.tests}</skipTests>
                             <trimStackTrace>false</trimStackTrace>
                             <includes>**/Test*.java</includes>
+                            <argLine>--enable-preview ${failsafe.jacoco.args}</argLine>
                             <excludes>
                                 <exclude>TestEphemeralProtobufLoad.java</exclude>
                             </excludes>
@@ -93,7 +94,7 @@
                             <goal>copy</goal>
                         </goals>
                     </execution>
-                    <!--
+                    
                     <execution>
                         <id>unpack</id>
                         <phase>process-test-resources</phase>
@@ -101,10 +102,11 @@
                             <goal>unpack</goal>
                         </goals>
                     </execution>
-                    -->
+                    
                 </executions>
                 <configuration>
-                    <artifactItems>
+                    <artifactItems> 
+                    
                         <artifactItem>
                             <groupId>org.hl7.tinkar</groupId>
                             <artifactId>tinkar-test-dto</artifactId>
@@ -113,6 +115,7 @@
                             <overWrite>false</overWrite>
                             <outputDirectory>${project.build.directory}/data</outputDirectory>
                         </artifactItem>
+
 <!--                        <artifactItem>-->
 <!--                            <groupId>org.hl7.tinkar</groupId>-->
 <!--                            <artifactId>tinkar-solor-us-export.pb</artifactId>-->
@@ -121,30 +124,62 @@
 <!--                            <overWrite>false</overWrite>-->
 <!--                            <outputDirectory>${project.build.directory}/data</outputDirectory>-->
 <!--                        </artifactItem>-->
-                    </artifactItems>
+                    </artifactItems> 
                     <outputDirectory>${project.build.directory}/data</outputDirectory>
                     <overWriteReleases>false</overWriteReleases>
                     <overWriteSnapshots>true</overWriteSnapshots>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>before-integration-test-execution</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>prepare-agent-integration</goal>
+                        </goals>
+                        <configuration>
+                            <propertyName>failsafe.jacoco.args</propertyName>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>after-integration-test-execution</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- for site generation -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>${maven-site-plugin.version}</version>
+            </plugin>
+
+
         </plugins>
     </build>
     <reporting>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>${maven-project-info-reports-plugin.version}</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>${maven-failsafe-plugin.version}</version>
-                <configuration>
-                    <reportsDirectories>
-                        <reportsDirectory>${basedir}/target/failsafe-reports</reportsDirectory>
-                    </reportsDirectories>
-                </configuration>
+                <version>3.0.0-M9</version>
+                <reportSets>
+                    <reportSet>
+                        <id>integration-tests</id>
+                        <reports>
+                            <report>failsafe-report-only</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
             </plugin>
         </plugins>
     </reporting>

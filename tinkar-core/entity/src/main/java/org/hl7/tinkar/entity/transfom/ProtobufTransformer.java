@@ -425,6 +425,7 @@ public class ProtobufTransformer {
     }
     //TODO: Created and need to get more context to finish. This is just creating a new vertex.
     private PublicId1 processPBVertexID(PBVertexId vertexId) {
-        return new PublicId1(UUID.nameUUIDFromBytes(vertexId.toByteArray()));
+        //return new PublicId1(UUID.nameUUIDFromBytes(vertexId.toByteArray()));
+        return null;
     }
 }

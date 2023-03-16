@@ -3,11 +3,17 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.hl7.tinkar</groupId>
+    
     <artifactId>tinkar-jpms-deps</artifactId>
-    <version>1.0.15</version>
     <packaging>pom</packaging>
-    <name>TINKAR JPMS Deps: (MMP)</name>
+    <name>TINKAR JPMS Deps</name>
+    
+    <parent>
+        <groupId>org.hl7.tinkar</groupId>
+        <artifactId>tinkar-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
     <properties>
         <auto-service.version>1.0.1</auto-service.version>
         <activej.version>4.3</activej.version>
@@ -24,8 +30,8 @@
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
         <maven-source-plugin.version>3.2.0</maven-source-plugin.version>
         <maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>
-        <maven.compiler.source>16</maven.compiler.source>
-        <maven.compiler.target>16</maven.compiler.target>
+        <maven.compiler.source>19</maven.compiler.source>
+        <maven.compiler.target>19</maven.compiler.target>
         <org.reactivestreams.version>1.0.3</org.reactivestreams.version>
         <record-builder-core.version>34</record-builder-core.version>
         <roaringbitmap.version>0.9.31</roaringbitmap.version>
