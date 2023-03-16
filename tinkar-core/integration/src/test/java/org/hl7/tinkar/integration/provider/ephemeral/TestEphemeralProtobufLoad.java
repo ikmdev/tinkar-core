@@ -3,7 +3,6 @@ package org.hl7.tinkar.integration.provider.ephemeral;
 import org.hl7.tinkar.common.service.CachingService;
 import org.hl7.tinkar.common.service.PrimitiveData;
 import org.hl7.tinkar.common.service.ServiceProperties;
-import org.hl7.tinkar.entity.export.ExportEntitiesController;
 import org.hl7.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import org.hl7.tinkar.entity.load.LoadEntitiesFromDtoFile;
 import org.hl7.tinkar.entity.load.LoadEntitiesFromProtobufFile;
@@ -21,9 +20,9 @@ import java.io.IOException;
 @Disabled
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class TestEphemeralProtobuf {
+public class TestEphemeralProtobufLoad {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TestEphemeralProtobuf.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TestEphemeralProtobufLoad.class);
 
     @BeforeAll
     public void setupSuite() {
@@ -43,16 +42,18 @@ public class TestEphemeralProtobuf {
 
     @Test
     @Order(1)
-    public void loadDTOFile() throws IOException {
-        File file = TestConstants.TINK_TEST_FILE;
-        LoadEntitiesFromDtoFile loadDTO = new LoadEntitiesFromDtoFile(file);
-        int count = loadDTO.compute();
-        LOG.info(count + " entitles loaded from file: " + loadDTO.report() + "\n\n");
+    @Disabled
+    public void loadProtobufFile() throws IOException {
+        File file = TestConstants.PB_TEST_FILE;
+        LoadEntitiesFromProtobufFile loadProtobuf = new LoadEntitiesFromProtobufFile(file);
+        int count = loadProtobuf.compute();
+        LOG.info(count + " entitles loaded from file: " + loadProtobuf.report() + "\n\n");
     }
+
     @Test
     @Order(2)
     @Disabled
-    public void countDTO(){
+    public void count(){
         EntityProcessor processor = new EntityCounter();
         PrimitiveData.get().forEach(processor);
         LOG.info("EPH Sequential count: \n" + processor.report() + "\n\n");
@@ -72,15 +73,21 @@ public class TestEphemeralProtobuf {
         PrimitiveData.get().forEachParallel(processor);
         LOG.info("EPH Parallel realization: \n" + processor.report() + "\n\n");
     }
+
     @Test
-    @Order(3)
-    @Disabled
-    public void exportEntitiesToProtobuf() throws IOException {
-        File file = TestConstants.PB_EXPORT_TEST_FILE;
-        ExportEntitiesToProtobufFile exportEntitiesToProtobufFile = new ExportEntitiesToProtobufFile(file);
-        exportEntitiesToProtobufFile.compute();
-//        ExportEntitiesController exportEntitiesController = new ExportEntitiesController();
-//        exportEntitiesController.export(file);
+    @Order(2)
+    public void loadTinkFile() throws IOException {
+        File file = TestConstants.TINK_TEST_FILE;
+        LoadEntitiesFromDtoFile loadDTO = new LoadEntitiesFromDtoFile(file);
+        int count = loadDTO.compute();
+        LOG.info(count + " entitles loaded from file: " + loadDTO.report() + "\n\n");
     }
 
+    @Test
+    @Order(3)
+    public void exportEntitiesToProtobuf() throws IOException {
+        ExportEntitiesToProtobufFile exportEntitiesToProtobufFile =
+                new ExportEntitiesToProtobufFile(TestConstants.PB_EXPORT_TEST_FILE);
+        exportEntitiesToProtobufFile.compute();
+    }
 }

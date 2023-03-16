@@ -1,0 +1,184 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.hl7.tinkar</groupId>
+        <artifactId>tinkar</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>code-coverage-aggregator</artifactId>
+    <name>code coverage aggregator</name>
+    <packaging>pom</packaging>
+
+    <properties>
+        <sonar.skip>false</sonar.skip>
+        <maven.deploy.skip>true</maven.deploy.skip>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>collection</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>component</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>coordinate</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>entity</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>dto</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>terms</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>data-ephemeral-provider</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>data-mvstore-provider</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>data-spinedarray-provider</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>data-websocket-client-provider</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>data-websocket-server-provider</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>entity-provider</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>executor-provider</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>search-provider</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hl7.tinkar</groupId>
+            <artifactId>integration</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>report-aggregate</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report-aggregate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+<!--                <configuration>-->
+<!--                    <title>JaCoCo</title>-->
+<!--                    <footer>Code Coverage Report for ${project.name}</footer>-->
+<!--                    <includes>-->
+<!--                        &lt;!&ndash; Analyze class files only to exclude shaded agent JAR from report &ndash;&gt;-->
+<!--                        <include>**/*.class</include>-->
+<!--                    </includes>-->
+<!--                    <excludes>-->
+<!--                        <exclude>**/HelpMojo.class</exclude>-->
+<!--                    </excludes>-->
+<!--                </configuration>-->
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>${maven-surefire-report-plugin.version}</version>
+                <reportSets>
+                    <reportSet>
+                        <!-- defines aggregate unit test report -->
+                        <id>unit-tests-aggregate</id>
+                        <inherited>false</inherited>
+                        <reports>
+                            <report>report</report>
+                        </reports>
+                        <configuration>
+                            <aggregate>true</aggregate>
+                        </configuration>
+                    </reportSet>
+
+                    <reportSet>
+                        <!-- defines aggregate integration test report -->
+                        <id>integration-tests-aggregate</id>
+                        <inherited>false</inherited>
+                        <reports>
+                            <report>failsafe-report-only</report>
+                        </reports>
+                        <configuration>
+                            <aggregate>true</aggregate>
+                        </configuration>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+        </plugins>
+    </reporting>
+
+</project>
+
