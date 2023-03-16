@@ -36,18 +36,18 @@
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>caffeine</artifactId>
-            <version>${tinkar-jpms-deps.version}</version>
+            <version>${caffeine.version}</version>
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>record-builder-core</artifactId>
             <scope>provided</scope>
-            <version>${tinkar-jpms-deps.version}</version>
+            <version>${record-builder-core.version}</version>
         </dependency>
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>auto-service</artifactId>
-            <version>${tinkar-jpms-deps.version}</version>
+            <version>${auto-service.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -75,7 +75,7 @@
         <dependency>
             <groupId>org.hl7.tinkar</groupId>
             <artifactId>jheaps</artifactId>
-            <version>${tinkar-jpms-deps.version}</version>
+            <version>${jheaps.version}</version>
         </dependency>
     </dependencies>
 </project>
