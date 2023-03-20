@@ -76,9 +76,21 @@ pipeline {
                             mvn com.github.spotbugs:spotbugs-maven-plugin:4.7.3.2:spotbugs -s '${MAVEN_SETTINGS}'  --batch-mode
                             mvn sonar:sonar -Dsonar.qualitygate.wait=true -X -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode
                         """
-                        publishIssues issues:([publishAllIssues : true])
+                        
                     }
                 }
+                script{
+                    configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
+                        
+                        sh """
+                        mvn pmd:pmd -s '${MAVEN_SETTINGS}'  --batch-mode
+                        """
+                        def pmd = scanForIssues tool: [$class: 'Pmd'], pattern: '**/target/pmd.xml'
+                        publishIssues issues: [pmd]
+                    }
+                }
+                
+                
             }
 
             post {
