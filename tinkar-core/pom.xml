@@ -74,7 +74,7 @@
         <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
         <build-helper-maven-plugin.version>3.3.0</build-helper-maven-plugin.version>
         <sonar-maven-plugin.version>3.9.1.2184</sonar-maven-plugin.version>
-        <!-- <sonar-version>3.7.0.1746</sonar-version> -->
+        <sonar-version>3.7.0.1746</sonar-version>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 
     </properties>
