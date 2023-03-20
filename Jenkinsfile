@@ -96,7 +96,7 @@ pipeline {
 
             steps{
                 sh "mvn pmd:pmd -s '${MAVEN_SETTINGS}'  --batch-mode"
-                publishIssues issues([scanForIssues tool: [$class: 'Pmd'], pattern: '**/target/pmd.xml'])
+                publishIssues([publishAllIssues : true])
             }
             
         }
