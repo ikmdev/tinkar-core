@@ -71,9 +71,9 @@ pipeline {
                         // This expands the environment variables SONAR_CONFIG_NAME, SONAR_HOST_URL, SONAR_AUTH_TOKEN that can be used by any script.
 
                         sh """
-                            mvn clean install -X -s '${MAVEN_SETTINGS}'  --batch-mode
-                            mvn pmd:pmd -X -s '${MAVEN_SETTINGS}'  --batch-mode
-                            mvn com.github.spotbugs:spotbugs-maven-plugin:4.7.3.2:spotbugs -X -s '${MAVEN_SETTINGS}'  --batch-mode
+                            mvn clean install -s '${MAVEN_SETTINGS}'  --batch-mode
+                            mvn pmd:pmd -s '${MAVEN_SETTINGS}'  --batch-mode
+                            mvn com.github.spotbugs:spotbugs-maven-plugin:4.7.3.2:spotbugs -s '${MAVEN_SETTINGS}'  --batch-mode
                             mvn sonar:sonar -Dsonar.qualitygate.wait=true -X -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode
                         """
                     }
