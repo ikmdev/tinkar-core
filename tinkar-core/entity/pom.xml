@@ -85,9 +85,8 @@
                 <artifactId>maven-pmd-plugin</artifactId>
                 <version>3.20.0</version>
                 <configuration>
-                    <excludes>
-                        <exclude>**/**</exclude>
-                    </excludes>
+                    <argLine>--enable-preview </argLine>
+                    <typeResolution>false</typeResolution>
                 </configuration>
             </plugin>
         </plugins>
