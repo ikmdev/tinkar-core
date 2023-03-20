@@ -161,6 +161,11 @@
                     <artifactId>spotbugs-maven-plugin</artifactId>
                     <version>4.7.3.2</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-pmd-plugin</artifactId>
+                    <version>3.20.0</version>
+                </plugin>
 
             </plugins>
         </pluginManagement>
@@ -246,6 +251,11 @@
                     <!-- Optional directory to put spotbugs xdoc xml report -->
                     <xmlOutputDirectory>target/site</xmlOutputDirectory>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>3.20.0</version>
             </plugin>
         </plugins>
     </reporting>
