@@ -86,16 +86,27 @@ pipeline {
                 }
             }
         }
-        stage ('Analysis') {
-            def mvnHome = tool 'mvn-default'
+        stage('Analysis') {
+            agent {
+                docker { 
+                    image "maven:3.8.7-eclipse-temurin-19-alpine"
+                    args "-u root:root"
+                }
+            }
 
-            sh "${mvnHome}/bin/mvn -batch-mode -V -U -e pmd:pmd spotbugs:spotbugs"
+            steps{
+                def mvnHome = tool 'mvn-default'
 
-            def pmd = scanForIssues tool: [$class: 'Pmd'], pattern: '**/target/pmd.xml'
-            publishIssues issues:[pmd]
+                sh "${mvnHome}/bin/mvn -batch-mode -V -U -e pmd:pmd spotbugs:spotbugs"
 
-            def spotbugs = scanForIssues tool: [$class: 'SpotBugs'], pattern: '**/target/spotbugsXml.xml'
-            publishIssues issues:[spotbugs]
+                def pmd = scanForIssues tool: [$class: 'Pmd'], pattern: '**/target/pmd.xml'
+                publishIssues issues:[pmd]
+
+                def spotbugs = scanForIssues tool: [$class: 'SpotBugs'], pattern: '**/target/spotbugsXml.xml'
+                publishIssues issues:[spotbugs]
+
+            }
+            
         }
     }
 
