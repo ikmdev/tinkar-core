@@ -95,9 +95,7 @@ pipeline {
             }
 
             steps{
-                def mvnHome = tool 'mvn-default'
-
-                sh "${mvnHome}/bin/mvn -batch-mode -V -U -e pmd:pmd spotbugs:spotbugs"
+                sh "mvn pmd:pmd -s '${MAVEN_SETTINGS}'  --batch-mode"
 
                 def pmd = scanForIssues tool: [$class: 'Pmd'], pattern: '**/target/pmd.xml'
                 publishIssues issues:[pmd]
