@@ -96,13 +96,7 @@ pipeline {
 
             steps{
                 sh "mvn pmd:pmd -s '${MAVEN_SETTINGS}'  --batch-mode"
-
-                def pmd = scanForIssues tool: [$class: 'Pmd'], pattern: '**/target/pmd.xml'
-                publishIssues issues:[pmd]
-
-                def spotbugs = scanForIssues tool: [$class: 'SpotBugs'], pattern: '**/target/spotbugsXml.xml'
-                publishIssues issues:[spotbugs]
-
+                publishIssues issues:[scanForIssues tool: [$class: 'Pmd'], pattern: '**/target/pmd.xml']
             }
             
         }
