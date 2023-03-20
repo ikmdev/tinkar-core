@@ -76,6 +76,7 @@ pipeline {
                             mvn com.github.spotbugs:spotbugs-maven-plugin:4.7.3.2:spotbugs -s '${MAVEN_SETTINGS}'  --batch-mode
                             mvn sonar:sonar -Dsonar.qualitygate.wait=true -X -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode
                         """
+                        publishIssues issues([publishAllIssues : true])
                     }
                 }
             }
@@ -85,20 +86,6 @@ pipeline {
                     echo "post always SonarQube Scan"
                 }
             }
-        }
-        stage('Analysis') {
-            agent {
-                docker { 
-                    image "maven:3.8.7-eclipse-temurin-19-alpine"
-                    args "-u root:root"
-                }
-            }
-
-            steps{
-                sh "mvn pmd:pmd -s '${MAVEN_SETTINGS}'  --batch-mode"
-                publishIssues issues([publishAllIssues : true])
-            }
-            
         }
     }
 
