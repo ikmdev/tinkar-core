@@ -82,18 +82,8 @@ pipeline {
 
             post {
                 always {
-                    steps{
-                        echo "post always SonarQube Scan"
-                    def pmd = scanForIssues tool: pmdParser(pattern: '**/target/pmd.xml')
-                    publishIssues issues: [pmd]
-
-                    publishIssues id: 'analysis', name: 'All Issues', 
-                    issues: [pmd], 
-                    filters: [includePackage('io.jenkins.plugins.analysis.*')]
-                    }
-                    
+                    echo "post always SonarQube Scan"
                 }
-                
             }
         }
     }
