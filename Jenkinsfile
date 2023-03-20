@@ -86,6 +86,17 @@ pipeline {
                 }
             }
         }
+        stage ('Analysis') {
+            def mvnHome = tool 'mvn-default'
+
+            sh "${mvnHome}/bin/mvn -batch-mode -V -U -e pmd:pmd spotbugs:spotbugs"
+
+            def pmd = scanForIssues tool: [$class: 'Pmd'], pattern: '**/target/pmd.xml'
+            publishIssues issues:[pmd]
+
+            def spotbugs = scanForIssues tool: [$class: 'SpotBugs'], pattern: '**/target/spotbugsXml.xml'
+            publishIssues issues:[spotbugs]
+        }
     }
 
 
