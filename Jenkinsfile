@@ -84,7 +84,7 @@ pipeline {
                         
                         sh """
                         mvn pmd:pmd -s '${MAVEN_SETTINGS}'  --batch-mode
-                        mvn spotbugs:spotbugs -s '${MAVEN_SETTINGS}'  --batch-mode
+                        mvn com.github.spotbugs:spotbugs-maven-plugin:4.7.3.2:spotbugs -s '${MAVEN_SETTINGS}'  --batch-mode
                         """
                         def pmd = scanForIssues tool: [$class: 'Pmd'], pattern: '**/target/pmd.xml'
                         publishIssues issues: [pmd]
