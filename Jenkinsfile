@@ -91,6 +91,10 @@ pipeline {
 
                         def spotbugs = scanForIssues tool: [$class: 'SpotBugs'], pattern: '**/target/spotbugsXml.xml'
                         publishIssues issues:[spotbugs]
+
+                        publishIssues id: 'analysis', name: 'All Issues',
+                            issues: [pmd, cpd, spotbugs],
+                            filters: [includePackage('io.jenkins.plugins.analysis.*')]
                     }
                 }
                 
