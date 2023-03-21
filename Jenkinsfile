@@ -93,7 +93,7 @@ pipeline {
                         publishIssues issues:[spotbugs]
 
                         publishIssues id: 'analysis', name: 'All Issues',
-                            issues: [pmd, cpd, spotbugs],
+                            issues: [pmd, spotbugs],
                             filters: [includePackage('io.jenkins.plugins.analysis.*')]
                     }
                 }
