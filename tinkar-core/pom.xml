@@ -38,7 +38,7 @@
         <jheaps.version>0.14</jheaps.version>
         <lucene.version>8.9.0</lucene.version>
         <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
-        <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
+        <maven-assembly-plugin.version>3.5.0</maven-assembly-plugin.version>
         <maven-dependency-plugin.version>3.1.2</maven-dependency-plugin.version>
         <maven-source-plugin.version>3.2.0</maven-source-plugin.version>
         <maven-failsafe-plugin.version>3.0.0-M9</maven-failsafe-plugin.version>
@@ -61,11 +61,28 @@
         <testng.version>7.4.0</testng.version>
         <tinkar-jpms-deps.version>1.0.15</tinkar-jpms-deps.version>
         <protobuf-java.version>3.21.3</protobuf-java.version>
-        <protobuf.version>1.5.0</protobuf.version>
+        <tinkar.protobuf.version>1.5.0</tinkar.protobuf.version>
         <sonar.skip>false</sonar.skip>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <sonar.core.codeCoveragePlugin>jacoco</sonar.core.codeCoveragePlugin>
         <sonar.language>java</sonar.language>
+
+        <maven.compiler.source>19</maven.compiler.source>
+        <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
+        <junit-jupiter-engine.version>5.7.0</junit-jupiter-engine.version>
+        <junit-platform-surefire-provider.version>1.3.0</junit-platform-surefire-provider.version>
+        <junit-platform-commons.version>1.7.0</junit-platform-commons.version>
+        <junit-platform-launcher.version>1.7.0</junit-platform-launcher.version>
+        <surefire-api.version>3.0.0-M9</surefire-api.version>
+        <common-java5.version>3.0.0-M9</common-java5.version>
+        <maven-surefire-report-plugin.version>3.0.0-M9</maven-surefire-report-plugin.version>
+        <maven-jxr-plugin.version>3.3.0</maven-jxr-plugin.version>
+        <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
+        <build-helper-maven-plugin.version>3.3.0</build-helper-maven-plugin.version>
+        <sonar-maven-plugin.version>3.9.1.2184</sonar-maven-plugin.version>
+        <sonar-version>3.7.0.1746</sonar-version>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+
     </properties>
 
     <dependencyManagement>
@@ -214,6 +231,15 @@
                         <trimStackTrace>false</trimStackTrace>
                         <reportsDirectory>${basedir}/target/failsafe-reports</reportsDirectory>
                     </reportsDirectories>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>4.7.3.2</version>
+                <configuration>
+                    <xmlOutput>true</xmlOutput>
+                    <!-- Optional directory to put spotbugs xdoc xml report -->
                 </configuration>
             </plugin>
         </plugins>

@@ -16,7 +16,8 @@ pipeline {
     }
 
     triggers {
-        cron(cron_string)
+        //cron(cron_string)
+        gitlab(triggerOnPush: true, triggerOnMergeRequest: true, branchFilterType: 'All')
     }
 
     options {
@@ -27,12 +28,13 @@ pipeline {
         // Console debug options
         timestamps()
         ansiColor('xterm')
+
+        gitLabConnection('gitlab-komet-connection')
     }
         
     stages {
-
+        
         stage('Maven Build') {
-
             agent {
                 docker {
                     image "maven:3.8.7-eclipse-temurin-19-alpine"
@@ -41,12 +43,12 @@ pipeline {
             }
 
             steps {
+                updateGitlabCommitStatus name: 'build', state: 'running'
                 script{
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
-                        
                         sh """
-                        mvn clean install -s '${MAVEN_SETTINGS}'   \
-                            --batch-mode -DuniqueVersion=false \
+                        mvn clean install -s '${MAVEN_SETTINGS}' \
+                            --batch-mode \
                             -e \
                             -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
                         """
@@ -56,42 +58,52 @@ pipeline {
         }
 
         stage('SonarQube Scan') {
-
-            agent { 
-                docker {
+            agent {
+                docker { 
                     image "maven:3.8.7-eclipse-temurin-19-alpine"
                     args "-u root:root"
                 }
             }
-            
-            steps{
-                //script{
-                    configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
-                        withSonarQubeEnv(installationName: 'EKS SonarQube', envOnly: true) {
-                            // This expands the environment variables SONAR_CONFIG_NAME, SONAR_HOST_URL, SONAR_AUTH_TOKEN that can be used by any script.
 
-                            sh """
-                                cat /var/lib/jenkins/workspace/Build-Maven-Code-for-tinkar-java@2/sonar.properties
-                                find /var/lib/jenkins/workspace/Build-Maven-Code-for-tinkar-java@2 -name report-task.txt
-                                mvn clean install -X -s '${MAVEN_SETTINGS}'  --batch-mode
-                                mvn sonar:sonar  -X -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode
-                            """
-                        }
+            steps{
+                configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
+                    withSonarQubeEnv(installationName: 'EKS SonarQube', envOnly: true) {
+                        // This expands the environment variables SONAR_CONFIG_NAME, SONAR_HOST_URL, SONAR_AUTH_TOKEN that can be used by any script.
+
+                        sh """
+                            mvn clean install -s '${MAVEN_SETTINGS}'  --batch-mode
+                            mvn pmd:pmd -s '${MAVEN_SETTINGS}'  --batch-mode
+                            mvn com.github.spotbugs:spotbugs-maven-plugin:4.7.3.2:spotbugs -s '${MAVEN_SETTINGS}'  --batch-mode
+                            mvn sonar:sonar -Dsonar.qualitygate.wait=true -X -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode
+                        """
+                        
                     }
-                //}
+                }
+                script{
+                    configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
+                        
+                        sh """
+                        mvn pmd:pmd -s '${MAVEN_SETTINGS}'  --batch-mode
+                        mvn com.github.spotbugs:spotbugs-maven-plugin:4.7.3.2:spotbugs -s '${MAVEN_SETTINGS}'  --batch-mode
+                        """
+                        def pmd = scanForIssues tool: [$class: 'Pmd'], pattern: '**/target/pmd.xml'
+                        publishIssues issues: [pmd]
+
+                        def spotbugs = scanForIssues tool: [$class: 'SpotBugs'], pattern: '**/target/spotbugsXml.xml'
+                        publishIssues issues:[spotbugs]
+
+                        publishIssues id: 'analysis', name: 'All Issues',
+                            issues: [pmd, spotbugs],
+                            filters: [includePackage('io.jenkins.plugins.analysis.*')]
+                    }
+                }
+                
+                
             }
-               
+
             post {
                 always {
                     echo "post always SonarQube Scan"
-                }
-            }            
-        }
-
-        stage("Quality Gate"){
-            steps{
-                timeout(time: 1, unit: 'HOURS') {
-                    waitForQualityGate abortPipeline: true
                 }
             }
         }
@@ -99,11 +111,11 @@ pipeline {
         stage("Publish to Nexus Repository Manager") {
 
             agent {
-                 docker {
-                    image "maven:3.8.7-eclipse-temurin-19-alpine"
+                docker {
+                    image "maven:3.8.7-eclipse-temurin-19-focal"
                     args '-u root:root'
-                 }
-             }
+                }
+            }
 
             steps {
 
@@ -116,28 +128,24 @@ pipeline {
                     if (isSnapshot) {
                         repositoryId = 'maven-snapshots'
                     } 
-                }
+                
              
-                configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) { 
+                    configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) { 
 
-                    sh """
-                    mvn -version
-                    """
-
-//                     sh """
-//                         mvn deploy   \
-//                         --batch-mode \
-//                         -e \
-//                         -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
-//                         -DskipTests \
-//                         -DskipITs \
-//                         -Dmaven.main.skip \
-//                         -Dmaven.test.skip \
-// 						-DuniqueVersion=false \
-//                         -s '${MAVEN_SETTINGS}' \
-//                         -P inject-application-properties \
-//                         -DrepositoryId='${repositoryId}'
-//                     """
+                        sh """
+                            mvn deploy \
+                            --batch-mode \
+                            -e \
+                            -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
+                            -DskipTests \
+                            -DskipITs \
+                            -Dmaven.main.skip \
+                            -Dmaven.test.skip \
+                            -s '${MAVEN_SETTINGS}' \
+                            -P inject-application-properties \
+                            -DrepositoryId='${repositoryId}'
+                        """              
+                    }
                 }
             }
         }
@@ -145,6 +153,15 @@ pipeline {
 
 
     post {
+        failure {
+            updateGitlabCommitStatus name: 'build', state: 'failed'
+        }
+        success {
+            updateGitlabCommitStatus name: 'build', state: 'success'
+        }
+        aborted {
+            updateGitlabCommitStatus name: 'build', state: 'canceled'
+        }
         always {
             // Clean the workspace after build
             cleanWs(cleanWhenNotBuilt: false,

@@ -89,4 +89,18 @@
             <version>${jheaps.version}</version>
         </dependency>
     </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>3.20.0</version>
+                <configuration>
+                    <argLine>--enable-preview </argLine>
+                    <typeResolution>false</typeResolution>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>

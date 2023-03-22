@@ -10,6 +10,7 @@
     <artifactId>jheaps</artifactId>
     <packaging>jar</packaging>
     <name>TINKAR: JHeaps</name>
+    <version>${jheaps.version}</version>
     <build>
         <plugins>
             <plugin>

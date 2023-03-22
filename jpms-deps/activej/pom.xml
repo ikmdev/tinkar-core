@@ -10,6 +10,7 @@
     <artifactId>activej</artifactId>
     <packaging>jar</packaging>
     <name>TINKAR: Activej</name>
+    <version>${activej.version}</version>
     <build>
         <plugins>
             <plugin>

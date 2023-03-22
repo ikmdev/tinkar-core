@@ -10,6 +10,7 @@
     <artifactId>caffeine</artifactId>
     <packaging>jar</packaging>
     <name>TINKAR: Caffeine</name>
+    <version>${caffeine.version}</version>
     <build>
         <plugins>
             <plugin>
