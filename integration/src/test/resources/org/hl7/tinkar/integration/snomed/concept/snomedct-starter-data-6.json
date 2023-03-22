@@ -1,0 +1,60 @@
+{
+	"namespace": "48b004d4-6457-4648-8d58-e3287126d96b",
+	"STAMP":
+	{
+		"status": "Active",
+		"time": "1678570411808",
+		"author": "Deloitte User",
+		"module": "SNOMED CT Starter Data Module",
+		"path": "Development Path"
+	},
+    "concepts":
+    [
+        {
+        	"description": "Deloitte User",
+        	"origins": ["User"],
+            "destinations": []
+        },
+        {
+            "description": "SNOMED CT Starter Data Module",
+            "origins": ["Starter data module"],
+            "destinations": []
+        },
+        {
+            "description": "SNOMED CT Author",
+            "origins": ["User"],
+            "destinations": []
+        },
+        {
+          "description": "Definition Status Semantic",
+          "origins": ["Concept Definition Status"],
+          "destinations": []
+        },
+        {
+          "description": "Definition Status",
+          "origins": ["Concept Definition Status"],
+          "destinations": []
+        },
+        {
+          "description": "Concept Definition Status",
+          "origins": ["Model Concept"],
+          "destinations": []
+        }
+    ],
+   "patterns":
+   [
+   	{
+        "description": "Definition Status Pattern",
+   		"meaning": "Definition Status Semantic",
+   		"purpose": "Definition Status Semantic",
+   		"field-description": [
+   			{
+   				"meaning": "Definition Status",
+   				"purpose": "Definition Status",
+   				"datatype": "Concept",
+   				"index": 0
+   			}
+   		]
+   	}
+   ]
+}       
