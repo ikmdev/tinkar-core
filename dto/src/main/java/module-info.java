@@ -5,14 +5,15 @@
  */
 
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
-module org.hl7.tinkar.dto {
+module dev.ikm.tinkar.dto {
     requires java.base;
-    requires org.hl7.tinkar.common;
-    requires org.hl7.tinkar.component;
-    requires static org.hl7.tinkar.record.builder;
+    requires dev.ikm.tinkar.common;
+    requires dev.ikm.tinkar.component;
+    requires static dev.ikm.tinkar.record.builder;
+    requires transitive static dev.ikm.tinkar.autoservice;
     requires java.compiler;
-    exports org.hl7.tinkar.dto.binary;
-    exports org.hl7.tinkar.dto.changeset;
-    exports org.hl7.tinkar.dto;
-    exports org.hl7.tinkar.dto.graph;
+    exports dev.ikm.tinkar.dto.binary;
+    exports dev.ikm.tinkar.dto.changeset;
+    exports dev.ikm.tinkar.dto;
+    exports dev.ikm.tinkar.dto.graph;
 }

@@ -4,8 +4,8 @@
     <modelVersion>4.0.0</modelVersion>
     
     <parent>
-        <groupId>org.hl7.tinkar</groupId>
-        <artifactId>tinkar</artifactId>
+        <groupId>dev.ikm.tinkar</groupId>
+        <artifactId>tinkar-core</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
@@ -19,37 +19,37 @@
     </properties>
     <dependencies>
         <dependency>
-            <groupId>org.hl7.tinkar</groupId>
+            <groupId>dev.ikm.tinkar</groupId>
             <artifactId>coordinate</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.hl7.tinkar</groupId>
+            <groupId>dev.ikm.tinkar</groupId>
             <artifactId>data-spinedarray-provider</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.hl7.tinkar</groupId>
+            <groupId>dev.ikm.tinkar</groupId>
             <artifactId>data-ephemeral-provider</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.hl7.tinkar</groupId>
+            <groupId>dev.ikm.tinkar</groupId>
             <artifactId>data-mvstore-provider</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.hl7.tinkar</groupId>
+            <groupId>dev.ikm.tinkar</groupId>
             <artifactId>entity-provider</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.hl7.tinkar</groupId>
+            <groupId>dev.ikm.tinkar</groupId>
             <artifactId>executor-provider</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.hl7.tinkar</groupId>
+            <groupId>dev.ikm.tinkar</groupId>
             <artifactId>search-provider</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
@@ -108,7 +108,7 @@
                     <artifactItems> 
                     
                         <artifactItem>
-                            <groupId>org.hl7.tinkar</groupId>
+                            <groupId>dev.ikm.build</groupId>
                             <artifactId>tinkar-test-dto</artifactId>
                             <version>1.1.0</version>
                             <type>zip</type>
@@ -117,7 +117,7 @@
                         </artifactItem>
 
 <!--                        <artifactItem>-->
-<!--                            <groupId>org.hl7.tinkar</groupId>-->
+<!--                            <groupId>dev.ikm.build</groupId>-->
 <!--                            <artifactId>tinkar-solor-us-export.pb</artifactId>-->
 <!--                            <version>1.4</version>-->
 <!--                            <type>.zip</type> &lt;!&ndash; TODO-aks8m: Need to remove extra '.' in file name &ndash;&gt;-->
@@ -133,7 +133,6 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>${jacoco-maven-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>before-integration-test-execution</id>
@@ -160,7 +159,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
-                <version>${maven-site-plugin.version}</version>
             </plugin>
 
 

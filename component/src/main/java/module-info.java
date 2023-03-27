@@ -16,10 +16,10 @@
 
 @SuppressWarnings("module")
 // 7 in HL7 is not a version reference
-module org.hl7.tinkar.component {
+module dev.ikm.tinkar.component {
     requires java.base;
-    requires org.hl7.tinkar.common;
-    exports org.hl7.tinkar.component;
-    exports org.hl7.tinkar.component.graph;
-    exports org.hl7.tinkar.component.location;
+    requires dev.ikm.tinkar.common;
+    exports dev.ikm.tinkar.component;
+    exports dev.ikm.tinkar.component.graph;
+    exports dev.ikm.tinkar.component.location;
 }

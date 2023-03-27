@@ -4,12 +4,12 @@
  * and open the template in the editor.
  */
 
-import org.hl7.tinkar.common.service.DataServiceController;
-import org.hl7.tinkar.entity.EntityService;
-import org.hl7.tinkar.provider.websocket.client.WebsocketServiceController;
+import dev.ikm.tinkar.common.service.DataServiceController;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.provider.websocket.client.WebsocketServiceController;
 
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
-module org.hl7.tinkar.provider.websocket.client {
+module dev.ikm.tinkar.provider.websocket.client {
     requires io.activej.eventloop;
     requires io.activej.http;
     requires io.activej.inject;
@@ -17,15 +17,15 @@ module org.hl7.tinkar.provider.websocket.client {
     requires io.activej.promise;
     requires io.activej.service;
     requires java.base;
-    requires org.hl7.tinkar.common;
-    requires org.hl7.tinkar.component;
+    requires dev.ikm.tinkar.common;
+    requires dev.ikm.tinkar.component;
     requires java.net.http;
-    requires org.hl7.tinkar.entity;
+    requires dev.ikm.tinkar.entity;
 
     provides DataServiceController
             with WebsocketServiceController;
 
     uses EntityService;
-    opens org.hl7.tinkar.provider.websocket.client
+    opens dev.ikm.tinkar.provider.websocket.client
             to io.activej.inject;
 }

@@ -1,6 +1,6 @@
-module org.hl7.tinkar.provider.search {
-    requires org.hl7.tinkar.lucene;
+module dev.ikm.tinkar.provider.search {
+    requires dev.ikm.jpms.lucene;
     requires org.slf4j;
-    requires org.hl7.tinkar.entity;
-    exports org.hl7.tinkar.provider.search;
+    requires dev.ikm.tinkar.entity;
+    exports dev.ikm.tinkar.provider.search;
 }

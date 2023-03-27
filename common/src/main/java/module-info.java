@@ -4,37 +4,37 @@
  * and open the template in the editor.
  */
 
-import org.hl7.tinkar.common.alert.AlertReportingService;
-import org.hl7.tinkar.common.service.*;
+import dev.ikm.tinkar.common.alert.AlertReportingService;
+import dev.ikm.tinkar.common.service.*;
 
 @SuppressWarnings("module")
         // 7 in HL7 is not a version reference
-module org.hl7.tinkar.common {
+module dev.ikm.tinkar.common {
     requires transitive java.prefs;
-    requires transitive org.hl7.tinkar.activej;
-    requires transitive org.hl7.tinkar.eclipse.collections;
-    requires transitive org.hl7.tinkar.roaring;
+    requires transitive dev.ikm.tinkar.activej;
+    requires transitive dev.ikm.tinkar.eclipse.collections;
+    requires transitive dev.ikm.tinkar.roaring;
     requires transitive org.slf4j;
-    requires transitive static org.hl7.tinkar.autoservice;
+    requires transitive static dev.ikm.tinkar.autoservice;
 
 
-    exports org.hl7.tinkar.common.alert;
-    exports org.hl7.tinkar.common.binary;
-    exports org.hl7.tinkar.common.id;
-    exports org.hl7.tinkar.common.service;
-    exports org.hl7.tinkar.common.util.functional;
-    exports org.hl7.tinkar.common.util.ints2long;
-    exports org.hl7.tinkar.common.util.io;
-    exports org.hl7.tinkar.common.util.text;
-    exports org.hl7.tinkar.common.util.thread;
-    exports org.hl7.tinkar.common.util.time;
-    exports org.hl7.tinkar.common.util.uuid;
-    exports org.hl7.tinkar.common.validation;
-    exports org.hl7.tinkar.common.sets;
-    exports org.hl7.tinkar.common.flow;
-    exports org.hl7.tinkar.common.id.impl;
-    exports org.hl7.tinkar.common.util.broadcast;
-    exports org.hl7.tinkar.common.util;
+    exports dev.ikm.tinkar.common.alert;
+    exports dev.ikm.tinkar.common.binary;
+    exports dev.ikm.tinkar.common.id;
+    exports dev.ikm.tinkar.common.service;
+    exports dev.ikm.tinkar.common.util.functional;
+    exports dev.ikm.tinkar.common.util.ints2long;
+    exports dev.ikm.tinkar.common.util.io;
+    exports dev.ikm.tinkar.common.util.text;
+    exports dev.ikm.tinkar.common.util.thread;
+    exports dev.ikm.tinkar.common.util.time;
+    exports dev.ikm.tinkar.common.util.uuid;
+    exports dev.ikm.tinkar.common.validation;
+    exports dev.ikm.tinkar.common.sets;
+    exports dev.ikm.tinkar.common.flow;
+    exports dev.ikm.tinkar.common.id.impl;
+    exports dev.ikm.tinkar.common.util.broadcast;
+    exports dev.ikm.tinkar.common.util;
 
     provides CachingService with
             TinkExecutor.CacheProvider,

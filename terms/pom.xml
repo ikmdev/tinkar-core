@@ -2,8 +2,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <artifactId>tinkar</artifactId>
-        <groupId>org.hl7.tinkar</groupId>
+        <groupId>dev.ikm.tinkar</groupId>
+        <artifactId>tinkar-core</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
     <artifactId>terms</artifactId>
@@ -15,18 +15,79 @@
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>dev.ikm.jpms</groupId>
+                <artifactId>eclipse-collections</artifactId>
+                <version>${eclipse-collections-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>auto-service</artifactId>
+                <version>${auto-service.version}</version>
+            </dependency>
+
+<!--            <dependency>-->
+<!--                <groupId>dev.ikm.jpms</groupId>-->
+<!--                <artifactId>autoservice</artifactId>-->
+<!--                <version>${auto-service.version}</version>-->
+<!--            </dependency>-->
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
-        <dependency>
-            <groupId>org.hl7.tinkar</groupId>
-            <artifactId>component</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
+
         <dependency>
             <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.version}</version>
+            <artifactId>junit-jupiter-api</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>auto-service</artifactId>
+        </dependency>
+
+
+
+
+<!--        <dependency>-->
+<!--            <groupId>dev.ikm.jpms</groupId>-->
+<!--            <artifactId>autoservice</artifactId>-->
+<!--        </dependency>-->
+
+        <dependency>
+            <groupId>dev.ikm.tinkar</groupId>
+            <artifactId>common</artifactId>
+            <!--            <version>${project.parent.version}</version>-->
+        </dependency>
+
+        <dependency>
+            <groupId>dev.ikm.jpms</groupId>
+            <artifactId>eclipse-collections</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>dev.ikm.tinkar</groupId>
+            <artifactId>component</artifactId>
+<!--            <version>${project.parent.version}</version>-->
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>dev.ikm.tinkar</groupId>-->
+<!--            <artifactId>autoservice</artifactId>-->
+<!--            <version>${project.parent.version}</version>-->
+<!--        </dependency>-->
+
+<!--        <dependency>-->
+<!--            <groupId>org.junit.jupiter</groupId>-->
+<!--            <artifactId>junit-jupiter-engine</artifactId>-->
+<!--            <version>${junit.version}</version>-->
+<!--            <scope>test</scope>-->
+<!--        </dependency>-->
     </dependencies>
     <build>
         <plugins>
@@ -35,7 +96,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <argLine>
-                        --add-opens org.hl7.tinkar.terms/org.hl7.tinkar.terms=ALL-UNNAMED
+                        --add-opens dev.ikm.build.terms/dev.ikm.build.terms=ALL-UNNAMED
                     </argLine>
                  </configuration>
             </plugin>

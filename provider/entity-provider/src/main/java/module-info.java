@@ -4,24 +4,24 @@
  * and open the template in the editor.
  */
 
-import org.hl7.tinkar.common.service.CachingService;
-import org.hl7.tinkar.common.service.DefaultDescriptionForNidService;
-import org.hl7.tinkar.common.service.PrimitiveDataService;
-import org.hl7.tinkar.common.service.PublicIdService;
-import org.hl7.tinkar.entity.EntityService;
-import org.hl7.tinkar.entity.StampService;
-import org.hl7.tinkar.provider.entity.*;
+import dev.ikm.tinkar.provider.entity.*;
+import dev.ikm.tinkar.common.service.CachingService;
+import dev.ikm.tinkar.common.service.DefaultDescriptionForNidService;
+import dev.ikm.tinkar.common.service.PrimitiveDataService;
+import dev.ikm.tinkar.common.service.PublicIdService;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.StampService;
 
 @SuppressWarnings("module")
         // 7 in HL7 is not a version reference
-module org.hl7.tinkar.provider.entity {
+module dev.ikm.tinkar.provider.entity {
     requires java.base;
-    requires transitive org.hl7.tinkar.component;
-    requires transitive org.hl7.tinkar.common;
-    requires transitive org.hl7.tinkar.entity;
-    requires transitive org.hl7.tinkar.dto;
-    requires static org.hl7.tinkar.autoservice;
-    requires transitive org.hl7.tinkar.terms;
+    requires transitive dev.ikm.tinkar.component;
+    requires transitive dev.ikm.tinkar.common;
+    requires transitive dev.ikm.tinkar.entity;
+    requires transitive dev.ikm.tinkar.dto;
+    //requires static dev.ikm.tinkar.autoservice;
+    requires transitive dev.ikm.tinkar.terms;
 
     provides EntityService
             with EntityServiceFactory;

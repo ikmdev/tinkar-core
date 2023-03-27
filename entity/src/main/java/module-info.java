@@ -4,37 +4,37 @@
  * and open the template in the editor.
  */
 
-import org.hl7.tinkar.common.service.CachingService;
-import org.hl7.tinkar.common.service.LoadDataFromFileController;
-import org.hl7.tinkar.entity.EntityService;
-import org.hl7.tinkar.entity.StampService;
-import org.hl7.tinkar.entity.load.LoadEntitiesFromFileController;
+import dev.ikm.tinkar.common.service.CachingService;
+import dev.ikm.tinkar.common.service.LoadDataFromFileController;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.StampService;
+import dev.ikm.tinkar.entity.load.LoadEntitiesFromFileController;
 
 @SuppressWarnings("module")
         // 7 in HL7 is not a version reference
-module org.hl7.tinkar.entity {
-    requires transitive org.hl7.tinkar.component;
-    requires org.hl7.tinkar.dto;
+module dev.ikm.tinkar.entity {
+    requires transitive dev.ikm.tinkar.component;
+    requires dev.ikm.tinkar.dto;
     requires java.logging;
-    requires transitive org.hl7.tinkar.common;
-    requires transitive org.hl7.tinkar.caffeine;
-    requires static org.hl7.tinkar.autoservice;
-    requires static org.hl7.tinkar.record.builder;
+    requires transitive dev.ikm.tinkar.common;
+    requires transitive dev.ikm.tinkar.caffeine;
+    //requires static dev.ikm.tinkar.autoservice;
+    requires static dev.ikm.tinkar.record.builder;
     requires static java.compiler;
-    requires transitive org.hl7.tinkar.terms;
+    requires transitive dev.ikm.tinkar.terms;
     requires java.xml;
-    requires org.hl7.tinkar.protobuf;
+    requires dev.ikm.tinkar.protobuf;
     requires com.google.protobuf;
     requires org.jgrapht.core;
 
-    exports org.hl7.tinkar.entity;
-    exports org.hl7.tinkar.entity.graph;
-    exports org.hl7.tinkar.entity.util;
-    exports org.hl7.tinkar.entity.load;
-    exports org.hl7.tinkar.entity.export;
-    exports org.hl7.tinkar.entity.transaction;
-    exports org.hl7.tinkar.entity.transfom;
-    exports org.hl7.tinkar.entity.graph.isomorphic;
+    exports dev.ikm.tinkar.entity;
+    exports dev.ikm.tinkar.entity.graph;
+    exports dev.ikm.tinkar.entity.util;
+    exports dev.ikm.tinkar.entity.load;
+    exports dev.ikm.tinkar.entity.export;
+    exports dev.ikm.tinkar.entity.transaction;
+    exports dev.ikm.tinkar.entity.transfom;
+    exports dev.ikm.tinkar.entity.graph.isomorphic;
 
     provides LoadDataFromFileController
             with LoadEntitiesFromFileController;

@@ -3,9 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-module org.hl7.tinkar.terms {
-    requires transitive org.hl7.tinkar.component;
-    requires org.hl7.tinkar.common;
+module dev.ikm.tinkar.terms {
+    requires transitive dev.ikm.tinkar.component;
+    requires dev.ikm.tinkar.common;
     requires java.xml;
-    exports org.hl7.tinkar.terms;
+    requires transitive static dev.ikm.tinkar.autoservice;
+    exports dev.ikm.tinkar.terms;
 }

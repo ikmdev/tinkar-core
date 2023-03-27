@@ -5,10 +5,11 @@
  */
 
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
-module org.hl7.tinkar.collection {
+module dev.ikm.tinkar.collection {
     requires java.base;
-    requires transitive org.hl7.tinkar.common;
-    exports org.hl7.tinkar.collection;
-    exports org.hl7.tinkar.collection.store;
+    requires transitive dev.ikm.tinkar.common;
+    /*requires transitive static dev.ikm.tinkar.autoservice;*/
+    exports dev.ikm.tinkar.collection;
+    exports dev.ikm.tinkar.collection.store;
 }
 

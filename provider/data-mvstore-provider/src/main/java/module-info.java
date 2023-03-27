@@ -5,22 +5,22 @@
  */
 
 
-import org.hl7.tinkar.common.service.DataServiceController;
-import org.hl7.tinkar.common.service.LoadDataFromFileController;
-import org.hl7.tinkar.provider.mvstore.MvStoreNewController;
-import org.hl7.tinkar.provider.mvstore.MvStoreOpenController;
+import dev.ikm.tinkar.common.service.DataServiceController;
+import dev.ikm.tinkar.common.service.LoadDataFromFileController;
+import dev.ikm.tinkar.provider.mvstore.MvStoreNewController;
+import dev.ikm.tinkar.provider.mvstore.MvStoreOpenController;
 
 @SuppressWarnings("module")
         // 7 in HL7 is not a version reference
-module org.hl7.tinkar.provider.mvstore {
+module dev.ikm.tinkar.provider.mvstore {
     requires java.base;
-    requires org.hl7.tinkar.collection;
-    requires org.hl7.tinkar.common;
-    requires org.hl7.tinkar.component;
-    requires org.hl7.tinkar.entity;
-    requires org.hl7.tinkar.dto;
-    requires org.hl7.tinkar.mvstore;
-    requires org.hl7.tinkar.provider.search;
+    requires dev.ikm.tinkar.collection;
+    requires dev.ikm.tinkar.common;
+    requires dev.ikm.tinkar.component;
+    requires dev.ikm.tinkar.entity;
+    requires dev.ikm.tinkar.dto;
+    requires dev.ikm.tinkar.mvstore;
+    requires dev.ikm.tinkar.provider.search;
 
     uses LoadDataFromFileController;
 

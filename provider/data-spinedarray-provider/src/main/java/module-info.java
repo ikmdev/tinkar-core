@@ -5,21 +5,21 @@
  */
 
 
-import org.hl7.tinkar.common.service.DataServiceController;
-import org.hl7.tinkar.common.service.LoadDataFromFileController;
-import org.hl7.tinkar.provider.spinedarray.SpinedArrayNewController;
-import org.hl7.tinkar.provider.spinedarray.SpinedArrayOpenController;
+import dev.ikm.tinkar.common.service.DataServiceController;
+import dev.ikm.tinkar.common.service.LoadDataFromFileController;
+import dev.ikm.tinkar.provider.spinedarray.SpinedArrayNewController;
+import dev.ikm.tinkar.provider.spinedarray.SpinedArrayOpenController;
 
 @SuppressWarnings("module")
         // 7 in HL7 is not a version reference
-module org.hl7.tinkar.provider.spinedarray {
-    requires org.hl7.tinkar.collection;
-    requires org.hl7.tinkar.common;
-    requires org.hl7.tinkar.component;
-    requires org.hl7.tinkar.entity;
-    requires org.hl7.tinkar.lucene;
-    requires org.hl7.tinkar.provider.search;
-    requires static org.hl7.tinkar.autoservice;
+module dev.ikm.tinkar.provider.spinedarray {
+    requires dev.ikm.tinkar.collection;
+    requires dev.ikm.tinkar.common;
+    requires dev.ikm.tinkar.component;
+    requires dev.ikm.tinkar.entity;
+    requires dev.ikm.build.lucene;
+    requires dev.ikm.tinkar.provider.search;
+    //requires static dev.ikm.tinkar.autoservice;
 
     provides DataServiceController
             with SpinedArrayOpenController, SpinedArrayNewController;

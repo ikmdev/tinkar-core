@@ -4,8 +4,8 @@
     <modelVersion>4.0.0</modelVersion>
     
     <parent>
-        <groupId>org.hl7.tinkar</groupId>
-        <artifactId>tinkar</artifactId>
+        <groupId>dev.ikm.tinkar</groupId>
+        <artifactId>tinkar-core</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
@@ -18,64 +18,109 @@
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.jgrapht</groupId>
+                <artifactId>jgrapht-core</artifactId>
+                <version>${jgrapht.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>terms</artifactId>
+                <version>${project.parent.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>dto</artifactId>
+                <version>${project.parent.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>common</artifactId>
+                <version>${project.parent.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>component</artifactId>
+                <version>${project.parent.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.jpms</groupId>
+                <artifactId>caffeine</artifactId>
+                <version>${caffeine.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.jpms</groupId>
+                <artifactId>record-builder-core</artifactId>
+                <version>${record-builder-core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.jpms</groupId>
+                <artifactId>auto-service</artifactId>
+                <version>${auto-service.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-engine</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>protobuf</artifactId>
+                <version>${protobuf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.jpms</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${protobuf-java.version}</version>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
         <dependency>
-            <groupId>org.hl7.tinkar</groupId>
+            <groupId>dev.ikm.tinkar</groupId>
             <artifactId>terms</artifactId>
-            <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.hl7.tinkar</groupId>
+            <groupId>dev.ikm.tinkar</groupId>
             <artifactId>dto</artifactId>
-            <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.hl7.tinkar</groupId>
+            <groupId>dev.ikm.tinkar</groupId>
             <artifactId>common</artifactId>
-            <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.hl7.tinkar</groupId>
+            <groupId>dev.ikm.tinkar</groupId>
             <artifactId>component</artifactId>
-            <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.hl7.tinkar</groupId>
+            <groupId>dev.ikm.jpms</groupId>
             <artifactId>caffeine</artifactId>
-            <version>${caffeine.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.hl7.tinkar</groupId>
+            <groupId>dev.ikm.jpms</groupId>
             <artifactId>record-builder-core</artifactId>
             <scope>provided</scope>
-            <version>${record-builder-core.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.hl7.tinkar</groupId>
-            <artifactId>auto-service</artifactId>
-            <version>${auto-service.version}</version>
-            <scope>provided</scope>
-        </dependency>
+
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>        
         <dependency>
-            <groupId>org.hl7.tinkar</groupId>
+            <groupId>dev.ikm.tinkar</groupId>
             <artifactId>protobuf</artifactId>
-            <version>${protobuf.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.hl7.tinkar</groupId>
+            <groupId>dev.ikm.jpms</groupId>
             <artifactId>protobuf-java</artifactId>
-            <version>${protobuf-java.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jgrapht</groupId>
             <artifactId>jgrapht-core</artifactId>
-            <version>1.5.1</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.jheaps</groupId>
@@ -84,20 +129,38 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.hl7.tinkar</groupId>
+            <groupId>dev.ikm.jpms</groupId>
             <artifactId>jheaps</artifactId>
-            <version>${jheaps.version}</version>
         </dependency>
     </dependencies>
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-pmd-plugin</artifactId>
+                    <version>${maven-pmd-plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.20.0</version>
                 <configuration>
                     <argLine>--enable-preview </argLine>
                     <typeResolution>false</typeResolution>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>19</source>
+                    <target>19</target>
+                    <compilerArgs>
+                        <arg>--enable-preview</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
         </plugins>
