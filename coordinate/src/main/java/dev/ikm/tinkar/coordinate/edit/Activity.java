@@ -1,5 +1,7 @@
 package dev.ikm.tinkar.coordinate.edit;
 
+import dev.ikm.tinkar.common.binary.*;
+
 public enum Activity implements Encodable {
 
     // @TODO probably should have concepts with descriptions rather than depending on the user strings here...

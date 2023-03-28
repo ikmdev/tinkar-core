@@ -38,6 +38,7 @@
 
 package dev.ikm.tinkar.coordinate.stamp;
 
+import dev.ikm.tinkar.common.binary.*;
 import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import dev.ikm.tinkar.common.id.IntIdList;

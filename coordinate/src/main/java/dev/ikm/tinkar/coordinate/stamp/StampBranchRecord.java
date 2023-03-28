@@ -1,9 +1,10 @@
 package dev.ikm.tinkar.coordinate.stamp;
 
-import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
-import io.soabase.recordbuilder.core.RecordBuilder;
+import dev.ikm.tinkar.common.binary.*;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
+import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
+import io.soabase.recordbuilder.core.RecordBuilder;
 
 import java.time.Instant;
 import java.util.Objects;

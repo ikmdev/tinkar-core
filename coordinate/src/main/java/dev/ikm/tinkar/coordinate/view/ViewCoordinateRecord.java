@@ -1,5 +1,6 @@
 package dev.ikm.tinkar.coordinate.view;
 
+import dev.ikm.tinkar.common.binary.*;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
 import dev.ikm.tinkar.coordinate.edit.EditCoordinate;

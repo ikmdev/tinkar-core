@@ -6,12 +6,14 @@
 
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
 module dev.ikm.tinkar.dto {
-    requires java.base;
+    requires org.slf4j;
     requires dev.ikm.tinkar.common;
     requires dev.ikm.tinkar.component;
     requires static io.soabase.recordbuilder.core;
     requires transitive static com.google.auto.service;
     requires java.compiler;
+    requires org.eclipse.collections.api;
+    requires org.eclipse.collections;
     exports dev.ikm.tinkar.dto.binary;
     exports dev.ikm.tinkar.dto.changeset;
     exports dev.ikm.tinkar.dto;

@@ -1,6 +1,9 @@
 package dev.ikm.tinkar.provider.mvstore;
 
-public abstract class MvStoreController implements DataServiceController<PrimitiveDataService>  {
+import dev.ikm.tinkar.common.service.DataServiceController;
+import dev.ikm.tinkar.common.service.PrimitiveDataService;
+
+public abstract class MvStoreController implements DataServiceController<PrimitiveDataService> {
     @Override
     public boolean isValidDataLocation(String name) {
         return name.equals("mvstore.dat");

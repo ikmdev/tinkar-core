@@ -1,6 +1,7 @@
 package dev.ikm.tinkar.coordinate.stamp;
 
 import com.google.auto.service.AutoService;
+import dev.ikm.tinkar.common.binary.*;
 import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
 import dev.ikm.tinkar.coordinate.PathService;
 import org.eclipse.collections.api.factory.Sets;

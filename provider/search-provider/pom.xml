@@ -25,18 +25,22 @@
 
         <dependency>
             <groupId>${tinkar-jpms-deps.groupId}</groupId>
-            <artifactId>lucene-core</artifactId>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>eclipse-collections-api</artifactId>
         </dependency>
 
         <dependency>
             <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>lucene-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>lucene-queryparser</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>lucene-highlighter</artifactId>
         </dependency>
 
         <dependency>

@@ -1,6 +1,7 @@
 package dev.ikm.tinkar.coordinate.view;
 
 
+import dev.ikm.tinkar.common.binary.*;
 import org.eclipse.collections.api.collection.ImmutableCollection;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;

@@ -21,6 +21,10 @@ module dev.ikm.tinkar.provider.mvstore {
     requires dev.ikm.tinkar.dto;
     requires dev.ikm.tinkar.mvstore;
     requires dev.ikm.tinkar.provider.search;
+    requires org.eclipse.collections.api;
+    requires org.eclipse.collections;
+    requires org.h2.mvstore;
+    requires org.slf4j;
 
     uses LoadDataFromFileController;
 
