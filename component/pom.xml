@@ -32,18 +32,10 @@
         <dependency>
             <groupId>dev.ikm.tinkar</groupId>
             <artifactId>common</artifactId>
-<!--            <version>${project.parent.version}</version>-->
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.junit.jupiter</groupId>-->
-<!--            <artifactId>junit-jupiter-engine</artifactId>-->
-<!--            <version>${junit.version}</version>-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>dev.ikm.jpms</groupId>
             <artifactId>eclipse-collections</artifactId>
-<!--            <version>${eclipse-collections-api.version}</version>-->
         </dependency>
     </dependencies>
     <build>

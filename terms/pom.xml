@@ -11,30 +11,9 @@
     <name>TINKAR Terms</name>
 
     <properties>
-        <sonar.skip>false</sonar.skip>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>dev.ikm.jpms</groupId>
-                <artifactId>eclipse-collections</artifactId>
-                <version>${eclipse-collections-api.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${tinkar-jpms-deps.groupId}</groupId>
-                <artifactId>auto-service</artifactId>
-                <version>${auto-service.version}</version>
-            </dependency>
-
-<!--            <dependency>-->
-<!--                <groupId>dev.ikm.jpms</groupId>-->
-<!--                <artifactId>autoservice</artifactId>-->
-<!--                <version>${auto-service.version}</version>-->
-<!--            </dependency>-->
-        </dependencies>
-    </dependencyManagement>
     <dependencies>
 
         <dependency>
@@ -46,52 +25,40 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+            <scope>compile</scope>
         </dependency>
+
         <dependency>
             <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>auto-service</artifactId>
+            <scope>compile</scope>
         </dependency>
 
-
-
-
-<!--        <dependency>-->
-<!--            <groupId>dev.ikm.jpms</groupId>-->
-<!--            <artifactId>autoservice</artifactId>-->
-<!--        </dependency>-->
-
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>common</artifactId>
-            <!--            <version>${project.parent.version}</version>-->
         </dependency>
 
         <dependency>
-            <groupId>dev.ikm.jpms</groupId>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>eclipse-collections-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>eclipse-collections</artifactId>
         </dependency>
 
         <dependency>
             <groupId>dev.ikm.tinkar</groupId>
             <artifactId>component</artifactId>
-<!--            <version>${project.parent.version}</version>-->
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>dev.ikm.tinkar</groupId>-->
-<!--            <artifactId>autoservice</artifactId>-->
-<!--            <version>${project.parent.version}</version>-->
-<!--        </dependency>-->
-
-<!--        <dependency>-->
-<!--            <groupId>org.junit.jupiter</groupId>-->
-<!--            <artifactId>junit-jupiter-engine</artifactId>-->
-<!--            <version>${junit.version}</version>-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
     </dependencies>
+
     <build>
         <plugins>
             <plugin>
+                <!-- TODO move to classpath and remove -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>

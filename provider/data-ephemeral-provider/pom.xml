@@ -20,26 +20,42 @@
 
     <dependencies>
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>entity-provider</artifactId>
-            <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>search-provider</artifactId>
-            <version>${project.parent.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>collection</artifactId>
-            <version>${project.parent.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>component</artifactId>
-            <version>${project.parent.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>eclipse-collections</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>eclipse-collections-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>auto-service</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>

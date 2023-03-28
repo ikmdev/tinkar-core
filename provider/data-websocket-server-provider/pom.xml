@@ -21,31 +21,40 @@
 
     <dependencies>
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>entity-provider</artifactId>
-            <version>${project.parent.version}</version>
-            <!--            <scope>test</scope>-->
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>data-ephemeral-provider</artifactId>
-            <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>component</artifactId>
-            <version>${project.parent.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>activej-bytebuf</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>io.activej</groupId>
             <artifactId>activej-launchers-http</artifactId>
-            <version>${activej.version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
         </dependency>
     </dependencies>
 </project>

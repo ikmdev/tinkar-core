@@ -17,49 +17,41 @@
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-api</artifactId>
-                <version>${junit-jupiter-engine.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>dev.ikm.tinkar</groupId>
-                <artifactId>common</artifactId>
-
-            </dependency>
-
-            <dependency>
-                <groupId>dev.ikm.jpms</groupId>
-                <artifactId>eclipse-collections</artifactId>
-                <version>${eclipse-collections-api.version}</version>
-            </dependency>
-
-        </dependencies>
-    </dependencyManagement>
     <dependencies>
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>component</artifactId>
-<!--            <version>${project.parent.version}</version>-->
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.jpms</groupId>
-            <artifactId>activej</artifactId>
-<!--            <version>${activej.version}</version>-->
+            <groupId>${project.groupId}</groupId>
+            <artifactId>common</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.jpms</groupId>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>eclipse-collections</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>activej-bytebuf</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>activej-common</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>record-builder-core</artifactId>
-<!--            <version>${record-builder-core.version}</version>-->
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
+
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-<!--            <version>${junit.version}</version>-->
             <scope>test</scope>
         </dependency>
 
@@ -67,16 +59,6 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
             <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
-            <artifactId>common</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>dev.ikm.jpms</groupId>
-            <artifactId>eclipse-collections</artifactId>
         </dependency>
 
     </dependencies>

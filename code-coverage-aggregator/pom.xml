@@ -19,84 +19,83 @@
 
     <dependencies>
         <dependency>
-            <groupId>dev.ikm.build</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>collection</artifactId>
-            <version>${project.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.build</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>common</artifactId>
-            <version>${project.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.build</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>component</artifactId>
-            <version>${project.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.build</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>coordinate</artifactId>
-            <version>${project.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.build</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>entity</artifactId>
-            <version>${project.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.build</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>dto</artifactId>
-            <version>${project.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.build</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>terms</artifactId>
-            <version>${project.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.build</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>data-ephemeral-provider</artifactId>
-            <version>${project.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.build</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>data-mvstore-provider</artifactId>
-            <version>${project.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.build</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>data-spinedarray-provider</artifactId>
-            <version>${project.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.build</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>data-websocket-client-provider</artifactId>
-            <version>${project.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.build</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>data-websocket-server-provider</artifactId>
-            <version>${project.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.build</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>entity-provider</artifactId>
-            <version>${project.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.build</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>executor-provider</artifactId>
-            <version>${project.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.build</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>search-provider</artifactId>
-            <version>${project.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.build</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>integration</artifactId>
-            <version>${project.version}</version>
         </dependency>
     </dependencies>
 
@@ -114,17 +113,6 @@
                         </goals>
                     </execution>
                 </executions>
-<!--                <configuration>-->
-<!--                    <title>JaCoCo</title>-->
-<!--                    <footer>Code Coverage Report for ${project.name}</footer>-->
-<!--                    <includes>-->
-<!--                        &lt;!&ndash; Analyze class files only to exclude shaded agent JAR from report &ndash;&gt;-->
-<!--                        <include>**/*.class</include>-->
-<!--                    </includes>-->
-<!--                    <excludes>-->
-<!--                        <exclude>**/HelpMojo.class</exclude>-->
-<!--                    </excludes>-->
-<!--                </configuration>-->
             </plugin>
 
             <plugin>

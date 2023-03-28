@@ -18,89 +18,39 @@
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.jgrapht</groupId>
-                <artifactId>jgrapht-core</artifactId>
-                <version>${jgrapht.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.ikm.tinkar</groupId>
-                <artifactId>terms</artifactId>
-                <version>${project.parent.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.ikm.tinkar</groupId>
-                <artifactId>dto</artifactId>
-                <version>${project.parent.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.ikm.tinkar</groupId>
-                <artifactId>common</artifactId>
-                <version>${project.parent.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.ikm.tinkar</groupId>
-                <artifactId>component</artifactId>
-                <version>${project.parent.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.ikm.jpms</groupId>
-                <artifactId>caffeine</artifactId>
-                <version>${caffeine.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.ikm.jpms</groupId>
-                <artifactId>record-builder-core</artifactId>
-                <version>${record-builder-core.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.ikm.jpms</groupId>
-                <artifactId>auto-service</artifactId>
-                <version>${auto-service.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-engine</artifactId>
-                <version>${junit.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.ikm.tinkar</groupId>
-                <artifactId>protobuf</artifactId>
-                <version>${protobuf.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.ikm.jpms</groupId>
-                <artifactId>protobuf-java</artifactId>
-                <version>${protobuf-java.version}</version>
-            </dependency>
-
-        </dependencies>
-    </dependencyManagement>
     <dependencies>
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>terms</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>dto</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>common</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>component</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.jpms</groupId>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>tinkar-schema</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>caffeine</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.jpms</groupId>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>record-builder-core</artifactId>
             <scope>provided</scope>
         </dependency>
@@ -109,15 +59,13 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
             <scope>test</scope>
-        </dependency>        
-        <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
-            <artifactId>protobuf</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.jpms</groupId>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>protobuf-java</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.jgrapht</groupId>
             <artifactId>jgrapht-core</artifactId>
@@ -128,42 +76,11 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.jpms</groupId>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>jheaps</artifactId>
         </dependency>
     </dependencies>
-    <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-pmd-plugin</artifactId>
-                    <version>${maven-pmd-plugin.version}</version>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-pmd-plugin</artifactId>
-                <configuration>
-                    <argLine>--enable-preview </argLine>
-                    <typeResolution>false</typeResolution>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>19</source>
-                    <target>19</target>
-                    <compilerArgs>
-                        <arg>--enable-preview</arg>
-                    </compilerArgs>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 
 </project>

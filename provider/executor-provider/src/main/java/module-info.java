@@ -13,6 +13,8 @@ import dev.ikm.tinkar.provider.executor.ExecutorProviderController;
 @SuppressWarnings("module")
         // 7 in HL7 is not a version reference
 module dev.ikm.tinkar.provider.executor {
+    requires org.slf4j;
+    requires static transitive com.google.auto.service;
     
     provides AlertReportingService with AlertLogSubscriber;
     provides CachingService with ExecutorProviderController.CacheProvider;

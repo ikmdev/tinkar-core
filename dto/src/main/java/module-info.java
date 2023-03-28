@@ -9,8 +9,8 @@ module dev.ikm.tinkar.dto {
     requires java.base;
     requires dev.ikm.tinkar.common;
     requires dev.ikm.tinkar.component;
-    requires static dev.ikm.tinkar.record.builder;
-    requires transitive static dev.ikm.tinkar.autoservice;
+    requires static io.soabase.recordbuilder.core;
+    requires transitive static com.google.auto.service;
     requires java.compiler;
     exports dev.ikm.tinkar.dto.binary;
     exports dev.ikm.tinkar.dto.changeset;

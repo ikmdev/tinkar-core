@@ -1,2 +1,3 @@
-# tinkar-java
-#  This file is changed now
+# tinkar-core
+
+Tinkar core is a project from

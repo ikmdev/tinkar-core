@@ -19,22 +19,32 @@
 
     <dependencies>
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>entity</artifactId>
-            <version>${project.parent.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
-            <artifactId>lucene</artifactId>
-            <version>${lucene.version}</version>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>lucene-core</artifactId>
             <scope>compile</scope>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.jpms</groupId>
-            <artifactId>auto-service</artifactId>
-            <version>${auto-service.version}</version>
-            <scope>provided</scope>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>eclipse-collections-api</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>lucene-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>auto-service</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>

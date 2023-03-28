@@ -9,6 +9,8 @@ import dev.ikm.tinkar.common.service.PrimitiveDataService;
 
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
 module dev.ikm.tinkar.provider.websocket.server {
+    requires org.slf4j;
+    requires io.activej.bytebuf;
     requires io.activej.http;
     requires io.activej.inject;
     requires io.activej.launchers.http;

@@ -17,73 +17,11 @@
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
-
-            <dependency>
-                <groupId>${tinkar-jpms-deps.groupId}</groupId>
-                <artifactId>eclipse-collections</artifactId>
-                <version>${eclipse-collections-api.version}</version>
-            </dependency>
-
-<!--            <dependency>-->
-<!--                <groupId>${tinkar-jpms-deps.groupId}</groupId>-->
-<!--                <artifactId>auto-service</artifactId>-->
-<!--                <version>${auto-service.version}</version>-->
-<!--            </dependency>-->
-
-<!--            <dependency>-->
-<!--                <groupId>com.google.auto.service</groupId>-->
-<!--                <artifactId>auto-service</artifactId>-->
-<!--                <version>${auto-service.version}</version>-->
-<!--            </dependency>-->
-
-
-<!--            <dependency>-->
-<!--                <groupId>${tinkar-jpms-deps.groupId}</groupId>-->
-<!--                <artifactId>auto-service</artifactId>-->
-<!--                <version>${auto-service.version}</version>-->
-<!--            </dependency>-->
-
-
-<!--            <dependency>-->
-<!--                <groupId>dev.ikm.build</groupId>-->
-<!--                <artifactId>common</artifactId>-->
-<!--                <version>${project.parent.version}</version>-->
-<!--            </dependency>-->
-
-<!--            <dependency>-->
-<!--                <groupId>org.junit.jupiter</groupId>-->
-<!--                <artifactId>junit-jupiter-engine</artifactId>-->
-<!--                <version>${junit.version}</version>-->
-<!--            </dependency>-->
-
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
-
         <dependency>
             <groupId>dev.ikm.tinkar</groupId>
             <artifactId>common</artifactId>
         </dependency>
-
-<!--        <dependency>-->
-<!--            <groupId>${tinkar-jpms-deps.groupId}</groupId>-->
-<!--            <artifactId>auto-service</artifactId>-->
-<!--            <scope>provided</scope>-->
-<!--        </dependency>-->
-
-
-        <!--        <dependency>-->
-<!--            <groupId>com.google.auto.service</groupId>-->
-<!--            <artifactId>auto-service</artifactId>-->
-<!--        </dependency>-->
-
-<!--        <dependency>-->
-<!--            <groupId>dev.ikm.jpms</groupId>-->
-<!--            <artifactId>auto-service</artifactId>-->
-<!--        </dependency>-->
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -96,29 +34,10 @@
             <artifactId>eclipse-collections</artifactId>
         </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>${tinkar-jpms-deps.groupId}</groupId>-->
-<!--            <artifactId>auto-service</artifactId>-->
-<!--            <scope>compile</scope>-->
-<!--            <optional>true</optional>-->
-<!--        </dependency>-->
-
-<!--        <dependency>-->
-<!--            <groupId>org.junit.jupiter</groupId>-->
-<!--            <artifactId>junit-jupiter-engine</artifactId>-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
-
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
-
-<!--        <dependency>-->
-<!--            <groupId>${tinkar-jpms-deps.groupId}</groupId>-->
-<!--            <artifactId>auto-service</artifactId>-->
-<!--            <scope>provided</scope>-->
-<!--        </dependency>-->
 
     </dependencies>
  </project>

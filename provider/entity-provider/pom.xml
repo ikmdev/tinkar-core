@@ -19,27 +19,27 @@
 
     <dependencies>
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>entity</artifactId>
-            <version>${project.parent.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>search-provider</artifactId>
-            <version>${project.parent.version}</version>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>common</artifactId>
-            <version>${project.parent.version}</version>
             <scope>compile</scope>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.jpms</groupId>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>auto-service</artifactId>
-            <version>${auto-service.version}</version>
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
+
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>

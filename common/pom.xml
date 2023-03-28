@@ -17,83 +17,38 @@
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>dev.ikm.jpms</groupId>
-                <artifactId>roaring</artifactId>
-                <version>${roaringbitmap.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>${tinkar-jpms-deps.groupId}</groupId>
-                <artifactId>auto-service</artifactId>
-                <version>${auto-service.version}</version>
-            </dependency>
-
-<!--            <dependency>-->
-<!--                <groupId>com.google.auto.service</groupId>-->
-<!--                <artifactId>auto-service</artifactId>-->
-<!--                <version>${auto-service.version}</version>-->
-<!--            </dependency>-->
-<!--            <dependency>-->
-<!--                <groupId>dev.ikm.jpms</groupId>-->
-<!--                <artifactId>activej</artifactId>-->
-<!--                <version>${activej.version}</version>-->
-<!--            </dependency>-->
-            <dependency>
-                <groupId>dev.ikm.jpms</groupId>
-                <artifactId>eclipse-collections</artifactId>
-                <version>${eclipse-collections-api.version}</version>
-            </dependency>
-<!--            <dependency>-->
-<!--                <groupId>io.github.udaychandra.susel</groupId>-->
-<!--                <artifactId>susel</artifactId>-->
-<!--                <version>${udaychandra-susel.version}</version>-->
-<!--            </dependency>-->
-<!--            <dependency>-->
-<!--                <groupId>${tinkar-jpms-deps.groupId}</groupId>-->
-<!--                <artifactId>auto-service</artifactId>-->
-<!--                <version>${auto-service.version}</version>-->
-<!--            </dependency>-->
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
         <dependency>
-            <groupId>dev.ikm.jpms</groupId>
-            <artifactId>roaring</artifactId>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>roaringbitmap</artifactId>
         </dependency>
+
         <dependency>
             <groupId>${tinkar-jpms-deps.groupId}</groupId>
-            <artifactId>activej</artifactId>
+            <artifactId>activej-bytebuf</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.jpms</groupId>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>activej-common</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>eclipse-collections</artifactId>
         </dependency>
 
         <dependency>
             <groupId>${tinkar-jpms-deps.groupId}</groupId>
-            <artifactId>auto-service</artifactId>
-            <scope>provided</scope>
+            <artifactId>eclipse-collections-api</artifactId>
         </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>${tinkar-jpms-deps.groupId}</groupId>-->
-<!--            <artifactId>auto-service</artifactId>-->
-<!--&lt;!&ndash;            <scope>compile</scope>&ndash;&gt;-->
-<!--            <optional>true</optional>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>auto-service</artifactId>
+            <scope>compile</scope>
+        </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>io.github.udaychandra.susel</groupId>-->
-<!--            <artifactId>susel</artifactId>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>org.junit.jupiter</groupId>-->
-<!--            <artifactId>junit-jupiter-engine</artifactId>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -104,11 +59,6 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
-
-<!--        <dependency>-->
-<!--            <groupId>com.google.auto.service</groupId>-->
-<!--            <artifactId>auto-service</artifactId>-->
-<!--        </dependency>-->
 
     </dependencies>
 

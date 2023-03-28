@@ -13,13 +13,13 @@ import dev.ikm.tinkar.provider.spinedarray.SpinedArrayOpenController;
 @SuppressWarnings("module")
         // 7 in HL7 is not a version reference
 module dev.ikm.tinkar.provider.spinedarray {
+    requires org.slf4j;
     requires dev.ikm.tinkar.collection;
     requires dev.ikm.tinkar.common;
     requires dev.ikm.tinkar.component;
     requires dev.ikm.tinkar.entity;
-    requires dev.ikm.build.lucene;
     requires dev.ikm.tinkar.provider.search;
-    //requires static dev.ikm.tinkar.autoservice;
+    requires static com.google.auto.service;
 
     provides DataServiceController
             with SpinedArrayOpenController, SpinedArrayNewController;
