@@ -8,7 +8,11 @@
 module dev.ikm.tinkar.collection {
     requires java.base;
     requires transitive dev.ikm.tinkar.common;
-    /*requires transitive static dev.ikm.tinkar.autoservice;*/
+    requires org.eclipse.collections.api;
+    requires org.slf4j;
+    requires transitive static com.google.auto.service;
+    requires org.eclipse.collections;
+
     exports dev.ikm.tinkar.collection;
     exports dev.ikm.tinkar.collection.store;
 }

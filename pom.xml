@@ -75,7 +75,6 @@
         <sonar.language>java</sonar.language>
         <susel.version>0.1.2</susel.version>
 
-        <maven.compiler.source>19</maven.compiler.source>
         <junit-jupiter-engine.version>5.7.0</junit-jupiter-engine.version>
         <junit-platform-surefire-provider.version>1.3.0</junit-platform-surefire-provider.version>
         <junit-platform-commons.version>1.7.0</junit-platform-commons.version>
@@ -434,31 +433,6 @@
                     <version>${maven-license-plugin.version}</version>
                     <configuration>
                         <header>${basedir}/license.txt</header>
-                    </configuration>
-                </plugin>
-
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <configuration>
-                        <annotationProcessorPaths>
-                            <annotationProcessorPath>
-                                <groupId>io.soabase.record-builder</groupId>
-                                <artifactId>record-builder-processor</artifactId>
-                                <version>${record-builder-core.version}</version>
-                            </annotationProcessorPath>
-                            <annotationProcessorPath>
-                                <groupId>com.google.auto.service</groupId>
-                                <artifactId>auto-service</artifactId>
-                                <version>${auto-service.version}</version>
-                            </annotationProcessorPath>
-                        </annotationProcessorPaths>
-                        <annotationProcessors>
-                            <annotationProcessor>io.soabase.recordbuilder.processor.RecordBuilderProcessor
-                            </annotationProcessor>
-                            <annotationProcessor>com.google.auto.service.processor.AutoServiceProcessor
-                            </annotationProcessor>
-                        </annotationProcessors>
                     </configuration>
                 </plugin>
 
