@@ -37,7 +37,6 @@
         <dependency>
             <groupId>io.activej</groupId>
             <artifactId>activej-launchers-http</artifactId>
-            <version>${activej.version}</version>
         </dependency>
 
         <dependency>

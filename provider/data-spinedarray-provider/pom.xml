@@ -20,7 +20,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>search-provider</artifactId>
         </dependency>
 
@@ -29,20 +29,21 @@
             <artifactId>junit-jupiter-engine</artifactId>
             <scope>test</scope>
         </dependency>
+
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>collection</artifactId>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
-            <groupId>dev.ikm.jpms</groupId>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>auto-service</artifactId>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>entity-provider</artifactId>
             <scope>test</scope>
         </dependency>
