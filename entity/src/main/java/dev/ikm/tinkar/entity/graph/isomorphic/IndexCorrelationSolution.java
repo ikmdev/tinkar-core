@@ -1,8 +1,8 @@
 package dev.ikm.tinkar.entity.graph.isomorphic;
 
+import dev.ikm.tinkar.common.util.Symbols;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
-import dev.ikm.tinkar.common.util.Symbols;
 
 import java.util.Objects;
 

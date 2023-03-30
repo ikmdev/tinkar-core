@@ -1,10 +1,10 @@
 package dev.ikm.tinkar.terms;
 
 
+import dev.ikm.tinkar.common.id.PublicId;
 import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
-import dev.ikm.tinkar.common.id.PublicId;
 
 public enum State implements dev.ikm.tinkar.component.Concept, ComponentWithNid {
     ACTIVE(TinkarTerm.ACTIVE_STATE),

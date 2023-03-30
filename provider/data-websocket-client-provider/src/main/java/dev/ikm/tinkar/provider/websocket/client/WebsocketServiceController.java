@@ -1,15 +1,15 @@
 package dev.ikm.tinkar.provider.websocket.client;
 
 import com.google.auto.service.AutoService;
+import dev.ikm.tinkar.common.service.DataServiceController;
+import dev.ikm.tinkar.common.service.DataServiceProperty;
+import dev.ikm.tinkar.common.service.DataUriOption;
+import dev.ikm.tinkar.common.service.PrimitiveDataService;
+import dev.ikm.tinkar.common.validation.ValidationRecord;
+import dev.ikm.tinkar.common.validation.ValidationSeverity;
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.api.map.MutableMap;
-import dev.ikm.tinkar.common.service.DataServiceController;
-import dev.ikm.tinkar.common.service.DataServiceProperty;
-import dev.ikm.tinkar.common.service.PrimitiveDataService;
-import dev.ikm.tinkar.common.service.DataUriOption;
-import dev.ikm.tinkar.common.validation.ValidationRecord;
-import dev.ikm.tinkar.common.validation.ValidationSeverity;
 
 import java.net.URI;
 import java.net.URISyntaxException;
