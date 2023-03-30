@@ -1,7 +1,19 @@
 package dev.ikm.tinkar.entity;
 
+import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.PublicIdList;
+import dev.ikm.tinkar.common.id.PublicIdSet;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
+import dev.ikm.tinkar.component.*;
+import dev.ikm.tinkar.component.graph.DiGraph;
+import dev.ikm.tinkar.component.graph.DiTree;
+import dev.ikm.tinkar.component.location.PlanarPoint;
+import dev.ikm.tinkar.component.location.SpatialPoint;
 import dev.ikm.tinkar.entity.graph.DiGraphEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.terms.EntityProxy;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.factory.Lists;
@@ -12,25 +24,14 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
-import dev.ikm.tinkar.common.id.*;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
-import dev.ikm.tinkar.component.*;
-import dev.ikm.tinkar.component.graph.DiGraph;
-import dev.ikm.tinkar.component.graph.DiTree;
-import dev.ikm.tinkar.component.location.PlanarPoint;
-import dev.ikm.tinkar.component.location.SpatialPoint;
-import dev.ikm.tinkar.terms.ComponentWithNid;
-import dev.ikm.tinkar.terms.EntityFacade;
-import dev.ikm.tinkar.terms.EntityProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.UUID;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static dev.ikm.tinkar.component.FieldDataType.SEMANTIC_CHRONOLOGY;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class EntityRecordFactory {
     private static final Logger LOG = LoggerFactory.getLogger(EntityRecordFactory.class);

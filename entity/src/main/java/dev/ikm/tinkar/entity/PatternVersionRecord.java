@@ -1,13 +1,13 @@
 package dev.ikm.tinkar.entity;
 
-import io.soabase.recordbuilder.core.RecordBuilder;
-import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.MutableList;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
 import dev.ikm.tinkar.component.FieldDefinition;
 import dev.ikm.tinkar.component.PatternVersion;
+import io.soabase.recordbuilder.core.RecordBuilder;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.MutableList;
 
 import java.util.Objects;
 

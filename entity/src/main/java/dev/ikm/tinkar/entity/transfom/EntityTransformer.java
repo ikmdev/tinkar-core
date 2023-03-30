@@ -1,34 +1,9 @@
 package dev.ikm.tinkar.entity.transfom;
 
-import com.google.protobuf.ByteString;
-import com.google.protobuf.Timestamp;
-import dev.ikm.tinkar.entity.*;
-import dev.ikm.tinkar.entity.graph.DiGraphEntity;
-import dev.ikm.tinkar.entity.graph.DiTreeEntity;
-import dev.ikm.tinkar.entity.graph.EntityVertex;
-import org.eclipse.collections.api.RichIterable;
-import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.primitive.ImmutableIntList;
-import org.eclipse.collections.api.map.primitive.ImmutableIntIntMap;
-import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
-import dev.ikm.tinkar.common.util.uuid.UuidUtil;
-import dev.ikm.tinkar.component.*;
-import dev.ikm.tinkar.component.graph.DiGraph;
-import dev.ikm.tinkar.component.graph.DiTree;
-import dev.ikm.tinkar.component.graph.Vertex;
-import dev.ikm.tinkar.component.location.PlanarPoint;
-import dev.ikm.tinkar.component.location.SpatialPoint;
-import dev.ikm.tinkar.entity.*;
-import dev.ikm.tinkar.protobuf.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 
 public class EntityTransformer{

@@ -1,8 +1,5 @@
 package dev.ikm.tinkar.entity;
 
-import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.primitive.MutableIntList;
-import org.eclipse.collections.impl.factory.primitive.IntLists;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
@@ -13,6 +10,9 @@ import dev.ikm.tinkar.component.Component;
 import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.SemanticFacade;
+import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
+import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

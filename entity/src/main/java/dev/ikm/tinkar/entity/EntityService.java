@@ -1,6 +1,5 @@
 package dev.ikm.tinkar.entity;
 
-import org.eclipse.collections.api.list.ImmutableList;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
@@ -13,6 +12,7 @@ import dev.ikm.tinkar.entity.internal.EntityServiceFinder;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.ComponentWithNid;
 import dev.ikm.tinkar.terms.EntityFacade;
+import org.eclipse.collections.api.list.ImmutableList;
 
 import java.util.*;
 import java.util.function.Consumer;

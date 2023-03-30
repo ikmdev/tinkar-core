@@ -1,10 +1,10 @@
 package dev.ikm.tinkar.entity;
 
-import io.soabase.recordbuilder.core.RecordBuilder;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.component.Stamp;
+import io.soabase.recordbuilder.core.RecordBuilder;
 
 /**
  * Maybe handle commit by listening to commit reactive stream, and if version is committed, add it to the chronology?

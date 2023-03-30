@@ -1,13 +1,12 @@
 package dev.ikm.tinkar.entity.graph.isomorphic;
 
+import dev.ikm.tinkar.common.util.ArrayUtil;
 import dev.ikm.tinkar.entity.graph.VertexVisitData;
 import dev.ikm.tinkar.entity.graph.VisitProcessor;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
-import org.eclipse.collections.api.set.primitive.IntSet;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
-import dev.ikm.tinkar.common.util.ArrayUtil;
 
 import java.util.BitSet;
 

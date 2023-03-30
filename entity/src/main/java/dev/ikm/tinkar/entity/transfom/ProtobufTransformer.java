@@ -5,6 +5,7 @@ import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.graph.DiGraphEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
+import dev.ikm.tinkar.schema.*;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -32,7 +33,7 @@ import dev.ikm.tinkar.dto.graph.GraphDTO;
 import dev.ikm.tinkar.dto.graph.VertexDTO;
 import dev.ikm.tinkar.dto.graph.VertexDTOBuilder;
 import dev.ikm.tinkar.entity.*;
-import dev.ikm.tinkar.protobuf.*;
+
 
 import java.nio.ByteBuffer;
 import java.time.Instant;

@@ -1,8 +1,8 @@
 package dev.ikm.tinkar.entity;
 
+import dev.ikm.tinkar.component.FieldDefinition;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.MutableList;
-import dev.ikm.tinkar.component.FieldDefinition;
 
 public record PatternAnalogueBuilder(PatternRecord analogue,
                                      RecordListBuilder<PatternVersionRecord> analogVersions) {

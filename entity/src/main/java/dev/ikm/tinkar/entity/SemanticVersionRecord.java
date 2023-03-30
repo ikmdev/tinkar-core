@@ -1,8 +1,5 @@
 package dev.ikm.tinkar.entity;
 
-import io.soabase.recordbuilder.core.RecordBuilder;
-import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.list.ImmutableList;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -10,6 +7,9 @@ import dev.ikm.tinkar.common.util.Validator;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.component.SemanticVersion;
 import dev.ikm.tinkar.terms.EntityFacade;
+import io.soabase.recordbuilder.core.RecordBuilder;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ImmutableList;
 
 import java.time.Instant;
 import java.util.Objects;

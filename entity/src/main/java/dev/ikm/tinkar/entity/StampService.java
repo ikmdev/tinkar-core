@@ -1,15 +1,15 @@
 package dev.ikm.tinkar.entity;
 
-import org.eclipse.collections.api.factory.Sets;
-import org.eclipse.collections.api.list.primitive.ImmutableLongList;
-import org.eclipse.collections.api.set.ImmutableSet;
-import org.eclipse.collections.api.set.MutableSet;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.internal.StampServiceFinder;
 import dev.ikm.tinkar.entity.util.StampRealizer;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
+import org.eclipse.collections.api.factory.Sets;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+import org.eclipse.collections.api.set.ImmutableSet;
+import org.eclipse.collections.api.set.MutableSet;
 
 public interface StampService {
 

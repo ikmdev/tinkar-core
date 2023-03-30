@@ -1,8 +1,8 @@
 package dev.ikm.tinkar.entity;
 
-import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.component.Stamp;
 import dev.ikm.tinkar.component.Version;
+import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.State;
 

@@ -1,12 +1,8 @@
 package dev.ikm.tinkar.entity.export;
 
 import dev.ikm.tinkar.common.service.TrackingCallable;
-import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.transfom.EntityTransformer;
-import dev.ikm.tinkar.component.Concept;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.protobuf.PBTinkarMsg;
+import dev.ikm.tinkar.schema.PBTinkarMsg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

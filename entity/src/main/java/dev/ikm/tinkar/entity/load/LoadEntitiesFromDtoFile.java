@@ -1,6 +1,5 @@
 package dev.ikm.tinkar.entity.load;
 
-import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.common.util.io.CountingInputStream;
@@ -10,6 +9,7 @@ import dev.ikm.tinkar.dto.ConceptChronologyDTO;
 import dev.ikm.tinkar.dto.PatternChronologyDTO;
 import dev.ikm.tinkar.dto.SemanticChronologyDTO;
 import dev.ikm.tinkar.dto.binary.TinkarInput;
+import dev.ikm.tinkar.entity.EntityService;
 
 import java.io.*;
 import java.nio.charset.Charset;

@@ -1,9 +1,9 @@
 package dev.ikm.tinkar.entity;
 
-import org.eclipse.collections.api.list.ImmutableList;
 import dev.ikm.tinkar.component.ConceptChronology;
 import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.terms.ConceptFacade;
+import org.eclipse.collections.api.list.ImmutableList;
 
 public interface ConceptEntity<V extends ConceptEntityVersion>
         extends Entity<V>,

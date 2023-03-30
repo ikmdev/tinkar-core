@@ -1,7 +1,7 @@
 package dev.ikm.tinkar.entity.graph;
 
-import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
+import dev.ikm.tinkar.entity.EntityVersion;
 
 import java.util.UUID;
 
