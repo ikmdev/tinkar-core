@@ -22,6 +22,5 @@ module dev.ikm.tinkar.provider.executor {
 
     requires java.base;
     requires dev.ikm.tinkar.common;
-    //requires static dev.ikm.tinkar.autoservice;
 }
 
