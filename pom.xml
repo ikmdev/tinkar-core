@@ -4,7 +4,7 @@
     <parent>
         <groupId>dev.ikm.build</groupId>
         <artifactId>java-parent</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>0.3.0</version>
         <relativePath></relativePath>
     </parent>
 
@@ -80,17 +80,16 @@
         <junit-platform-surefire-provider.version>1.3.0</junit-platform-surefire-provider.version>
         <junit-platform-commons.version>1.7.0</junit-platform-commons.version>
         <junit-platform-launcher.version>1.7.0</junit-platform-launcher.version>
-        <surefire-api.version>3.0.0-M9</surefire-api.version>
         <common-java5.version>3.0.0-M9</common-java5.version>
         <maven-jxr-plugin.version>3.3.0</maven-jxr-plugin.version>
         <maven-license-plugin.version>4.1</maven-license-plugin.version>
 
-        <tinkar-schema.version>1.5.0</tinkar-schema.version>
+        <tinkar-schema.version>1.6.0</tinkar-schema.version>
         <udaychandra-susel.version>0.1.2</udaychandra-susel.version>
         <junit-platform-commons.version>1.7.0</junit-platform-commons.version>
         <junit-platform-launcher.version>1.7.0</junit-platform-launcher.version>
         <junit-jupiter-api.version>5.6.3</junit-jupiter-api.version>
-        <common-java5.version>3.0.0-M9</common-java5.version>
+        <common-java5.version>3.0.0</common-java5.version>
     </properties>
 
     <!-- All Dependencies and versions used in this project are pre-defined here for use in modules -->

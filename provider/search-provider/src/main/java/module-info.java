@@ -5,6 +5,6 @@ module dev.ikm.tinkar.provider.search {
     requires org.apache.lucene;
     requires org.apache.lucene.queryparser;
     requires org.apache.lucene.search.highlight;
-
+    
     exports dev.ikm.tinkar.provider.search;
 }
