@@ -31,6 +31,7 @@
         <dependency>
             <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>lucene-core</artifactId>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>

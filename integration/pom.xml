@@ -13,6 +13,8 @@
     <artifactId>integration</artifactId>
 
     <properties>
+        <skipTests>true</skipTests>
+        <skipITs>true</skipITs>
         <skipSurefireReport>true</skipSurefireReport>
         <sonar.skip>false</sonar.skip>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>

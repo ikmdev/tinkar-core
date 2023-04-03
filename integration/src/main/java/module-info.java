@@ -10,7 +10,7 @@ open module dev.ikm.tinkar.integration {
     requires dev.ikm.tinkar.provider.entity;
     requires dev.ikm.tinkar.terms;
     requires dev.ikm.tinkar.coordinate;
-    requires dev.ikm.tinkar.protobuf;
+    requires com.google.protobuf;
 
     uses DataServiceController;
     uses DefaultDescriptionForNidService;

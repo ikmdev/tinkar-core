@@ -23,7 +23,7 @@
             <dependency>
                 <groupId>dev.ikm.jpms</groupId>
                 <artifactId>eclipse-collections</artifactId>
-                <version>${eclipse-collections-api.version}</version>
+                <version>${eclipse-collections.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

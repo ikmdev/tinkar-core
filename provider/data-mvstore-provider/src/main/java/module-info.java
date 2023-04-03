@@ -19,7 +19,6 @@ module dev.ikm.tinkar.provider.mvstore {
     requires dev.ikm.tinkar.component;
     requires dev.ikm.tinkar.entity;
     requires dev.ikm.tinkar.dto;
-    requires dev.ikm.tinkar.mvstore;
     requires dev.ikm.tinkar.provider.search;
     requires org.eclipse.collections.api;
     requires org.eclipse.collections;
