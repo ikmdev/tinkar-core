@@ -26,7 +26,7 @@ module dev.ikm.tinkar.entity {
     requires static java.compiler;
     requires transitive dev.ikm.tinkar.terms;
     requires java.xml;
-    requires tinkar.schema;
+    requires dev.ikm.tinkar.schema;
     requires com.google.protobuf;
     requires org.jgrapht.core;
 

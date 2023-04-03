@@ -1,8 +1,8 @@
 package dev.ikm.tinkar.entity;
 
-import io.soabase.recordbuilder.core.RecordBuilder;
 import dev.ikm.tinkar.common.util.Validator;
 import dev.ikm.tinkar.component.ConceptVersion;
+import io.soabase.recordbuilder.core.RecordBuilder;
 
 import java.util.Objects;
 

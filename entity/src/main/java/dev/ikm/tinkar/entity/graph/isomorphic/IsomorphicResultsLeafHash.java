@@ -1,9 +1,13 @@
 package dev.ikm.tinkar.entity.graph.isomorphic;
 
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.util.ArrayUtil;
+import dev.ikm.tinkar.common.util.time.MultipleEndpointTimer;
 import dev.ikm.tinkar.entity.graph.DiGraphAbstract;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.entity.graph.VisitProcessor;
+import dev.ikm.tinkar.terms.ConceptFacade;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -13,11 +17,6 @@ import org.eclipse.collections.api.set.primitive.IntSet;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.util.ArrayUtil;
-import dev.ikm.tinkar.common.util.time.MultipleEndpointTimer;
-import dev.ikm.tinkar.entity.graph.*;
-import dev.ikm.tinkar.terms.ConceptFacade;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

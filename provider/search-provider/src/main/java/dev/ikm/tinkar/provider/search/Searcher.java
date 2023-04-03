@@ -8,9 +8,9 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.highlight.*;
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
+import org.apache.lucene.search.highlight.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

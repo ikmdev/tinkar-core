@@ -1,8 +1,8 @@
 package dev.ikm.tinkar.entity;
 
-import io.activej.bytebuf.ByteBuf;
 import dev.ikm.tinkar.component.*;
 import dev.ikm.tinkar.dto.StampDTO;
+import io.activej.bytebuf.ByteBuf;
 
 public class EntityFactory {
 

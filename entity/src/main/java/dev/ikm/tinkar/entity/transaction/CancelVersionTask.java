@@ -1,7 +1,6 @@
 package dev.ikm.tinkar.entity.transaction;
 
 import dev.ikm.tinkar.entity.*;
-import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.terms.State;
 
 /**

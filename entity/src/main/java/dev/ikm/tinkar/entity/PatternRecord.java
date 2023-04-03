@@ -1,9 +1,9 @@
 package dev.ikm.tinkar.entity;
 
-import io.soabase.recordbuilder.core.RecordBuilder;
-import org.eclipse.collections.api.list.ImmutableList;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.util.Validator;
+import io.soabase.recordbuilder.core.RecordBuilder;
+import org.eclipse.collections.api.list.ImmutableList;
 
 import java.util.Arrays;
 import java.util.Objects;

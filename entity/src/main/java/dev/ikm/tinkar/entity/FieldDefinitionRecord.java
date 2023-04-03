@@ -1,9 +1,9 @@
 package dev.ikm.tinkar.entity;
 
-import io.soabase.recordbuilder.core.RecordBuilder;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
 import dev.ikm.tinkar.component.FieldDefinition;
+import io.soabase.recordbuilder.core.RecordBuilder;
 
 @RecordBuilder
 public record FieldDefinitionRecord(int dataTypeNid, int purposeNid, int meaningNid, int patternVersionStampNid,

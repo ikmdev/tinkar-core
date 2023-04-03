@@ -1,11 +1,11 @@
 package dev.ikm.tinkar.provider.mvstore.internal;
 
-import org.eclipse.collections.api.list.ImmutableList;
 import dev.ikm.tinkar.component.Stamp;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.EntityRecordFactory;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.provider.mvstore.MVStoreProvider;
+import org.eclipse.collections.api.list.ImmutableList;
 
 import java.util.UUID;
 

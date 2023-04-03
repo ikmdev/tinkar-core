@@ -1,6 +1,5 @@
 package dev.ikm.tinkar.entity;
 
-import org.eclipse.collections.api.list.ImmutableList;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.component.Component;
@@ -8,6 +7,7 @@ import dev.ikm.tinkar.component.Stamp;
 import dev.ikm.tinkar.component.Version;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.State;
+import org.eclipse.collections.api.list.ImmutableList;
 
 public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
         Stamp<V>, Component, Version, IdentifierData {

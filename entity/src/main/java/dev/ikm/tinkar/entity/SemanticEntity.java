@@ -1,9 +1,9 @@
 package dev.ikm.tinkar.entity;
 
-import org.eclipse.collections.api.list.ImmutableList;
 import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.component.SemanticChronology;
 import dev.ikm.tinkar.terms.SemanticFacade;
+import org.eclipse.collections.api.list.ImmutableList;
 
 public interface SemanticEntity<T extends SemanticEntityVersion> extends Entity<T>,
         SemanticFacade, SemanticChronology<T> {

@@ -1,5 +1,6 @@
 package dev.ikm.tinkar.provider.websocket.server;
 
+import dev.ikm.tinkar.common.service.PrimitiveDataService;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import io.activej.http.AsyncServlet;
@@ -7,7 +8,6 @@ import io.activej.http.RoutingServlet;
 import io.activej.http.WebSocket.Message;
 import io.activej.inject.annotation.Provides;
 import io.activej.launchers.http.MultithreadedHttpServerLauncher;
-import dev.ikm.tinkar.common.service.PrimitiveDataService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

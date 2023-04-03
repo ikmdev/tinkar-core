@@ -1,8 +1,6 @@
 package dev.ikm.tinkar.provider.entity;
 
 import com.google.auto.service.AutoService;
-import org.eclipse.collections.api.list.primitive.ImmutableLongList;
-import org.eclipse.collections.impl.factory.primitive.LongLists;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -10,6 +8,8 @@ import dev.ikm.tinkar.common.util.broadcast.Subscriber;
 import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.util.EntityProcessor;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+import org.eclipse.collections.impl.factory.primitive.LongLists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

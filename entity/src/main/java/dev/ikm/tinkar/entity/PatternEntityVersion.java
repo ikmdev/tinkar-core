@@ -1,8 +1,8 @@
 package dev.ikm.tinkar.entity;
 
-import org.eclipse.collections.api.list.ImmutableList;
 import dev.ikm.tinkar.component.PatternVersion;
 import dev.ikm.tinkar.terms.ConceptFacade;
+import org.eclipse.collections.api.list.ImmutableList;
 
 public interface PatternEntityVersion extends EntityVersion, PatternVersion {
     default <T> T getFieldWithMeaning(ConceptFacade fieldMeaning, SemanticEntityVersion version) {

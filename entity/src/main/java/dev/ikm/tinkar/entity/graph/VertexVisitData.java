@@ -1,9 +1,9 @@
 package dev.ikm.tinkar.entity.graph;
 
-import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
-import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import dev.ikm.tinkar.common.util.ArrayUtil;
 import dev.ikm.tinkar.terms.TinkarTerm;
+import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
+import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 
 import java.util.BitSet;
 import java.util.OptionalInt;

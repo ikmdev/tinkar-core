@@ -1,6 +1,17 @@
 package dev.ikm.tinkar.entity.graph;
 
+import dev.ikm.tinkar.common.id.VertexId;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.component.*;
+import dev.ikm.tinkar.component.graph.Vertex;
+import dev.ikm.tinkar.dto.StampDTO;
+import dev.ikm.tinkar.dto.StampDTOBuilder;
+import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityRecordFactory;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.PatternFacade;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.RichIterable;
@@ -13,18 +24,6 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.impl.list.mutable.primitive.ByteArrayList;
 import org.eclipse.collections.impl.map.mutable.primitive.IntObjectHashMap;
-import dev.ikm.tinkar.common.id.VertexId;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.component.*;
-import dev.ikm.tinkar.component.graph.Vertex;
-import dev.ikm.tinkar.dto.StampDTO;
-import dev.ikm.tinkar.dto.StampDTOBuilder;
-import dev.ikm.tinkar.entity.ConceptEntity;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityRecordFactory;
-import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.PatternFacade;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,9 +1,9 @@
 package dev.ikm.tinkar.entity;
 
-import org.eclipse.collections.api.list.ImmutableList;
 import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.component.SemanticVersion;
 import dev.ikm.tinkar.terms.EntityFacade;
+import org.eclipse.collections.api.list.ImmutableList;
 
 public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
     /**

@@ -47,6 +47,16 @@
             <artifactId>entity-provider</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>eclipse-collections-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>eclipse-collections</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

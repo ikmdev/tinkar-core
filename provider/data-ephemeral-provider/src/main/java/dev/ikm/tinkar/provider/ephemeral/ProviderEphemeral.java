@@ -1,10 +1,5 @@
 package dev.ikm.tinkar.provider.ephemeral;
 
-import org.eclipse.collections.api.block.procedure.Procedure2;
-import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
-import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.primitive.ImmutableIntList;
-import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import dev.ikm.tinkar.collection.KeyType;
 import dev.ikm.tinkar.collection.SpinedIntIntMapAtomic;
 import dev.ikm.tinkar.common.service.NidGenerator;
@@ -19,6 +14,11 @@ import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.provider.search.Indexer;
 import dev.ikm.tinkar.provider.search.Searcher;
+import org.eclipse.collections.api.block.procedure.Procedure2;
+import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
+import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

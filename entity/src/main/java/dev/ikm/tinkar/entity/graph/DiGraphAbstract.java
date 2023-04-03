@@ -1,5 +1,10 @@
 package dev.ikm.tinkar.entity.graph;
 
+import dev.ikm.tinkar.component.graph.DiGraph;
+import dev.ikm.tinkar.component.graph.Graph;
+import dev.ikm.tinkar.component.graph.GraphAdaptorFactory;
+import dev.ikm.tinkar.component.graph.Vertex;
+import dev.ikm.tinkar.terms.EntityFacade;
 import io.activej.bytebuf.ByteBuf;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -11,11 +16,6 @@ import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
-import dev.ikm.tinkar.component.graph.DiGraph;
-import dev.ikm.tinkar.component.graph.Graph;
-import dev.ikm.tinkar.component.graph.GraphAdaptorFactory;
-import dev.ikm.tinkar.component.graph.Vertex;
-import dev.ikm.tinkar.terms.EntityFacade;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
