@@ -57,6 +57,7 @@
         <caffeine.version>3.1.1-r2</caffeine.version>
         <eclipse-collections.version>11.1.0-r2</eclipse-collections.version>
         <eclipse-collections-api.version>11.1.0-r3</eclipse-collections-api.version>
+        <jackson.version>2.14.2</jackson.version>
         <jetty-slf4j-impl.version>11.0.7</jetty-slf4j-impl.version>
         <jgrapht.version>1.5.0</jgrapht.version>
         <junit.version>5.6.3</junit.version>
@@ -69,6 +70,7 @@
         <lucene-memory.version>8.9.0-r2</lucene-memory.version>
         <lucene-queryparser.version>8.9.0-r2</lucene-queryparser.version>
         <lucene-sandbox.version>8.9.0-r2</lucene-sandbox.version>
+        <mockito.version>5.2.0</mockito.version>
         <org.reactivestreams.version>1.0.3</org.reactivestreams.version>
         <record-builder-core.version>34</record-builder-core.version>
         <roaringbitmap.version>0.9.31-r2</roaringbitmap.version>
