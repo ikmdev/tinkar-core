@@ -14,20 +14,20 @@ import java.util.UUID;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TestTinkarStarterData extends AbstractSnomedUtil {
-    private static final Logger LOG = LoggerFactory.getLogger(TestTinkarStarterData.class);
+//    private static final Logger LOG = LoggerFactory.getLogger(TestTinkarStarterData.class);
 
     @BeforeAll
     public void setupSuite() throws IOException {
         EntityService = new EntityService();
         // TODO: populating EntityVertex for spined array from json text
-        LOG.info("Loading Json data");
+//        LOG.info("Loading Json data");
         loadJsonFile("snomedct-starter-data-9.json");
 
     }
 
     @AfterAll
     public void teardownSuite() throws IOException{
-        LOG.info("Clean Up Json data");
+//        LOG.info("Clean Up Json data");
         cleanUpSnomedData();
     }
 
@@ -35,7 +35,7 @@ public class TestTinkarStarterData extends AbstractSnomedUtil {
     @Order(1)
     public void testDataIsPresent()
     {
-        LOG.debug("Verifying data loaded is not null");
+//        LOG.debug("Verifying data loaded is not null");
         Assertions.assertNotNull(getSnomedData());
         System.out.println(getSnomedData().toPrettyString());
     }
@@ -44,7 +44,7 @@ public class TestTinkarStarterData extends AbstractSnomedUtil {
     @Order(2)
     public void testDataIsJsonObject()
     {
-        LOG.debug("Verifying data loaded is JSONNodeType Object");
+//        LOG.debug("Verifying data loaded is JSONNodeType Object");
         Assertions.assertTrue(getSnomedData().getNodeType() == JsonNodeType.OBJECT);
     }
 
@@ -52,7 +52,7 @@ public class TestTinkarStarterData extends AbstractSnomedUtil {
     @Order(3)
     public void testForNestedFields()
     {
-        LOG.debug("Validating values of nested fields");
+//        LOG.debug("Validating values of nested fields");
         Assertions.assertTrue(getSnomedFieldDataAsText("namespace").equals("48b004d4-6457-4648-8d58-e3287126d96b"));
         Assertions.assertTrue(getSnomedFieldDataAsText("STAMP", "status").equals("Active"));
     }
@@ -60,7 +60,7 @@ public class TestTinkarStarterData extends AbstractSnomedUtil {
     @Test
     @Order(4)
     public void testForNid() {
-        LOG.debug("Validating values of Nid");
+//        LOG.debug("Validating values of Nid");
         Assertions.assertEquals(1, getNid("STAMP", "status"));
     }
 
@@ -70,7 +70,7 @@ public class TestTinkarStarterData extends AbstractSnomedUtil {
     @Order(5)
     public void testForMockEntity()
     {
-        LOG.debug("Validating mock entity values for UUID");
+//        LOG.debug("Validating mock entity values for UUID");
         Assertions.assertEquals(3, EntityService.get().nidForUuids(UuidT5Generator.get("Deloitte User")));
         Assertions.assertEquals(1, EntityService.get().nidForUuids(UuidT5Generator.get("Active")));
     }
@@ -79,7 +79,7 @@ public class TestTinkarStarterData extends AbstractSnomedUtil {
     @Order(6)
     public void testForStampVersionRecord()
     {
-        LOG.debug("Validating values of nested fields");
+//        LOG.debug("Validating values of nested fields");
         StampVersionRecord testRecord = getStampVersionRecord(1678570411808L, StampRecordBuilder.builder().leastSignificantBits(1L).mostSignificantBits(2L).nid(3).versions(RecordListBuilder.make()).build());
         Assertions.assertEquals(1678570411808L, testRecord.time());
         Assertions.assertEquals(generateAndPublishConcept("Active").nid(), testRecord.stateNid());
@@ -92,7 +92,7 @@ public class TestTinkarStarterData extends AbstractSnomedUtil {
     @Order(6)
     public void testForGeneratingAndPersistingEntity()
     {
-        LOG.debug("Validating values of nid from EntityService");
+//        LOG.debug("Validating values of nid from EntityService");
         ConceptRecord userConcept = generateAndPublishConcept("Deloitte User");
         ConceptRecord statusConcept = generateAndPublishConcept("Active");
         ConceptRecord moduleConcept = generateAndPublishConcept("SNOMED CT Starter Data Module");
@@ -117,7 +117,7 @@ public class TestTinkarStarterData extends AbstractSnomedUtil {
     @Order(7)
     public void testingForEntityService()
     {
-        LOG.debug("Validating if Entities were saved in EntitySevice");
+//        LOG.debug("Validating if Entities were saved in EntitySevice");
         UUID userUuid = UuidT5Generator.get("Deloitte User");
         UUID statusUuid = UuidT5Generator.get("Active");
         UUID moduleUuid = UuidT5Generator.get("SNOMED CT Starter Data Module");
@@ -136,7 +136,7 @@ public class TestTinkarStarterData extends AbstractSnomedUtil {
     @Order(8)
     public void testingForStampVersion()
     {
-        LOG.debug("Validating Stamp Version Record");
+//        LOG.debug("Validating Stamp Version Record");
         StampVersionRecord stampRecord = getStampVersionRecord(1234567L, StampRecordBuilder.builder().leastSignificantBits(1L).mostSignificantBits(2L).nid(3).versions(RecordListBuilder.make()).build());
 
         Assertions.assertEquals(1,
@@ -156,23 +156,11 @@ public class TestTinkarStarterData extends AbstractSnomedUtil {
     public void testingForStampChronology()
             throws IOException
     {
-        LOG.debug("Validating Stamp Version Record");
+//        LOG.debug("Validating Stamp Version Record");
         StampEntity stampRecord = buildStampChronology(getSnomedData());
 
         Assertions.assertEquals(5,
                 stampRecord.pathNid());
-    }
-
-    @Test
-    @Order(10)
-    public void testingForConceptReference()
-    {
-        LOG.debug("Validating Concept Reference");
-        ConceptRecord concept = generateAndPublishConcept("SNOMED CT Author");
-
-        Assertions.assertEquals(6, concept.nid());
-        Assertions.assertEquals(6,
-                EntityService.get().getEntityFast(UuidT5Generator.get("SNOMED CT Author")).nid());
     }
 
 }

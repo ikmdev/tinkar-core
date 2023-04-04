@@ -1,8 +1,9 @@
-package org.hl7.tinkar.integration.snomed.description;
+package dev.ikm.tinkar.integration.snomed.description;
 
-import org.hl7.tinkar.common.util.uuid.UuidT5Generator;
-import org.hl7.tinkar.entity.*;
-import org.hl7.tinkar.integration.snomed.core.EntityService;
+import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
+import dev.ikm.tinkar.entity.SemanticRecord;
+import dev.ikm.tinkar.entity.SemanticVersionRecord;
+import dev.ikm.tinkar.integration.snomed.core.EntityService;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +13,8 @@ import java.util.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class TestSnomedToEntityDescriptionFiles extends TestSnomedToEntity {
+public class TestSnomedToEntityDescriptionFiles extends TestSnomedToEntity
+{
 
     private static final Logger LOG = LoggerFactory.getLogger(TestSnomedToEntityDescriptionFiles.class);
 

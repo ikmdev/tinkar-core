@@ -1,9 +1,9 @@
-package org.hl7.tinkar.integration.snomed.description;
+package dev.ikm.tinkar.integration.snomed.description;
 
+import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
+import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.integration.snomed.core.EntityService;
 import org.eclipse.collections.api.factory.Lists;
-import org.hl7.tinkar.common.util.uuid.UuidT5Generator;
-import org.hl7.tinkar.entity.*;
-import org.hl7.tinkar.integration.snomed.core.EntityService;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -27,7 +27,7 @@ public class TestSnomedToEntity {
     public void setupMockEntityService() {
         // TODO
         // This is Mocked Entity Service in test package with proxy data
-        entityService = org.hl7.tinkar.integration.snomed.core.EntityService.get();
+//        entityService = org.hl7.tinkar.integration.snomed.core.EntityService.get();
     }
     public SemanticRecord createDescriptionSemantic(String row) {
 
@@ -106,7 +106,7 @@ public class TestSnomedToEntity {
                 .chronology(record)
                 .stateNid(state)
                 .time(LocalDate.parse(values[1], DateTimeFormatter.ofPattern("yyyyMMdd")).atTime(12,0,0).toInstant(ZoneOffset.UTC).toEpochMilli())
-                .authorNid(entityService.get().nidForUuids()))
+                .authorNid(entityService.get().nidForUuids())
                 .moduleNid(3)
                 .pathNid(4)
                 .build();

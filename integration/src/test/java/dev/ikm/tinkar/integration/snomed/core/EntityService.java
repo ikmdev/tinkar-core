@@ -13,7 +13,7 @@ public class EntityService {
     static Map<Entity, UUID> entityToUuid = new HashMap<>();
     static Map<Long, Entity> lsbToEntity = new HashMap<>();
 
-    EntityService() {
+    public EntityService() {
         final List<String> conceptValues = Arrays.asList(
                 "Active", // nid: 1
                 "Inactive", // nid: 2
@@ -39,19 +39,19 @@ public class EntityService {
         nidToUuidMap.put(5, UUID.fromString("46edbeeb-7ea7-5c08-ae86-0c497c8ac310"));
     }
 
-    static EntityService get() {
+    public static EntityService get() {
         return EntityServiceFinder.INSTANCE.service;
     }
 
-    static <T extends Entity<V>, V extends EntityVersion> T getEntityFast(UUID... uuids) {
+    public static <T extends Entity<V>, V extends EntityVersion> T getEntityFast(UUID... uuids) {
         return (T) lsbToEntity.get(uuids[0].getLeastSignificantBits());
     }
 
-    static int nidForUuids(UUID... uuids) {
+    public static int nidForUuids(UUID... uuids) {
         return uuidToNidMap.getOrDefault(uuids[0], (int) Math.random());
     }
 
-    static void putEntity(Entity entity) {
+    public static void putEntity(Entity entity) {
         int _nid = entity.nid();
         entityToUuid.putIfAbsent(entity, nidToUuidMap.get(_nid));
         nidToEntity.putIfAbsent(_nid, entity);
