@@ -5,6 +5,7 @@ import dev.ikm.tinkar.component.Semantic;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.terms.EntityProxy;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.MockedStatic;
@@ -12,7 +13,6 @@ import org.mockito.Mockito;
 
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -34,6 +34,7 @@ public class TestProtobufToEntitySemanticTransform {
     //TODO - Add unit tests for variations of Semantic Version transformation
 
     @Test
+    @Disabled
     public void semanticChronologyTransformWithZeroVersion(){
 //        // Given a PBSemanticChronology with a no Semantic Versions present
 //        mockedEntityService.when(() -> Entity.nid(testConcept.publicId())).thenReturn(10);
@@ -51,6 +52,7 @@ public class TestProtobufToEntitySemanticTransform {
 //        assertThrows(Throwable.class, () -> ProtobufTransformer.transformSemanticChronology(pbSemanticChronology), "Not allowed to have no stamp versions.");
     }
     @Test
+    @Disabled
     public void semanticChronologyTransformWithOneVersion(){
         try (MockedStatic<Entity> mockedEntityService = Mockito.mockStatic(Entity.class)) {
 
@@ -58,6 +60,7 @@ public class TestProtobufToEntitySemanticTransform {
     }
 
     @Test
+    @Disabled
     public void semanticChronologyTransformWithTwoVersions(){
         try (MockedStatic<Entity> mockedEntityService = Mockito.mockStatic(Entity.class)) {
 

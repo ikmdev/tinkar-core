@@ -1,10 +1,7 @@
 package dev.ikm.tinkar.entity.transfom;
 
-import com.google.protobuf.Timestamp;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.entity.ConceptEntity;
-import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.schema.PBConceptChronology;
 import dev.ikm.tinkar.schema.PBConceptVersion;
 import dev.ikm.tinkar.schema.PBStampChronology;
@@ -12,7 +9,6 @@ import dev.ikm.tinkar.schema.PBStampVersion;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.mockito.MockedStatic;
 
 
 import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.createPBPublicId;
@@ -23,14 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TestProtobufToEntityConceptTransform extends AbstractTestProtobufTransform{
 
-    private Concept testConcept;
-    private Concept statusConcept;
-    private Concept authorConcept;
-    private Concept pathConcept;
-    private Concept moduleConcept;
-    private long expectedTime;
-    private MockedStatic<Entity> mockedEntityService;
-    private ConceptEntity mockConceptEntity;
     @BeforeAll
     public void init() {
         super.init();
@@ -56,7 +44,6 @@ public class TestProtobufToEntityConceptTransform extends AbstractTestProtobufTr
                     .setAuthor(createPBPublicId(authorConcept))
                     .setModule(createPBPublicId(moduleConcept))
                     .setPath(createPBPublicId(pathConcept))
-
                     .build();
 
             PBStampChronology pbStampChronology = PBStampChronology.newBuilder()
@@ -94,7 +81,6 @@ public class TestProtobufToEntityConceptTransform extends AbstractTestProtobufTr
                 .setAuthor(createPBPublicId(authorConcept))
                 .setModule(createPBPublicId(moduleConcept))
                 .setPath(createPBPublicId(pathConcept))
-
                 .build();
 
         PBStampChronology pbStampChronologyTwo = PBStampChronology.newBuilder()
