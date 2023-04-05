@@ -4,25 +4,20 @@ import com.google.protobuf.ByteString;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
-import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.schema.PBPublicId;
-import dev.ikm.tinkar.terms.EntityProxy;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class TestProtobufToEntityPublicIdTransform {
+public class TestProtobufToEntityPublicIdTransform extends AbstractTestProtobufTransform {
 
-    private Concept testConcept;
     @BeforeAll
     public void init() {
-        testConcept = EntityProxy.Concept.make("testConcept", UUID.fromString("e813eb92-7d07-5035-8d43-e81249f5b36e"));
+        super.init();
     }
 
     /**

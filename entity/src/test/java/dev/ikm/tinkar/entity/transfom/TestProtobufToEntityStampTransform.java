@@ -2,55 +2,28 @@ package dev.ikm.tinkar.entity.transfom;
 
 import com.google.protobuf.Timestamp;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.component.Concept;
-import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.entity.StampVersionRecord;
 import dev.ikm.tinkar.schema.PBStampChronology;
 import dev.ikm.tinkar.schema.PBStampVersion;
-import dev.ikm.tinkar.terms.EntityProxy;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 
-import java.time.Instant;
-import java.util.UUID;
 
+import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.createPBPublicId;
+import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.nowTimestamp;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class TestProtobufToEntityStampTransform {
-
-    private Concept testConcept;
-    private Concept statusConcept;
-    private Concept authorConcept;
-    private Concept pathConcept;
-    private Concept moduleConcept;
-    private long expectedTime;
-    private MockedStatic<Entity> mockedEntityService;
+public class TestProtobufToEntityStampTransform extends AbstractTestProtobufTransform {
     private StampRecord mockStampRecord;
 
     @BeforeAll
     public void init() {
-        testConcept = EntityProxy.Concept.make("testConcept", UUID.fromString("e813eb92-7d07-5035-8d43-e81249f5b36e"));
-        moduleConcept = EntityProxy.Concept.make("moduleConcept", UUID.fromString("840928b5-480c-4e8d-af77-7c817e880aed"));
-        pathConcept = EntityProxy.Concept.make("pathConcept", UUID.fromString("4fa15e05-5c48-470a-a6f0-2080e725e6fb"));
-        authorConcept = EntityProxy.Concept.make("authorConcept", UUID.fromString("76fdab49-b0ee-4c83-900e-8064103ef3b0"));
-        statusConcept = EntityProxy.Concept.make("statusConcept", UUID.fromString("d130880f-a8aa-4ac5-8265-483deab701ec"));
-
-        mockedEntityService = Mockito.mockStatic(Entity.class);
-        mockedEntityService.when(() -> Entity.nid(statusConcept.publicId())).thenReturn(10);
-        mockedEntityService.when(() -> Entity.nid(authorConcept.publicId())).thenReturn(20);
-        mockedEntityService.when(() -> Entity.nid(moduleConcept.publicId())).thenReturn(30);
-        mockedEntityService.when(() -> Entity.nid(pathConcept.publicId())).thenReturn(40);
-        mockedEntityService.when(() -> Entity.nid(testConcept.publicId())).thenReturn(50);
-
+        super.init();
         mockStampRecord = mock(StampRecord.class);
-
-        expectedTime = Instant.now().getEpochSecond();
     }
 
     /**
@@ -59,20 +32,22 @@ public class TestProtobufToEntityStampTransform {
     @Test
     public void stampVersionTransformWithStatusTimeAuthorModulePathPresent() {
         // Given a PBStampVersion
+        Timestamp expectedTime = nowTimestamp();
         PBStampVersion pbStampVersion = PBStampVersion.newBuilder()
-                .setStatus(ProtobufToEntityTestHelper.createPBPublicId(statusConcept))
-                .setTime(Timestamp.newBuilder().setSeconds(expectedTime).build())
-                .setAuthor(ProtobufToEntityTestHelper.createPBPublicId(authorConcept))
-                .setModule(ProtobufToEntityTestHelper.createPBPublicId(moduleConcept))
-                .setPath(ProtobufToEntityTestHelper.createPBPublicId(pathConcept))
+                .setStatus(createPBPublicId(statusConcept))
+                .setTime(expectedTime)
+                .setAuthor(createPBPublicId(authorConcept))
+                .setModule(createPBPublicId(moduleConcept))
+                .setPath(createPBPublicId(pathConcept))
                 .build();
+
 
         // When we transform PBStampVersion
         StampVersionRecord actualStampVersionRecord = ProtobufTransformer.transformStampVersion(pbStampVersion, mockStampRecord);
 
         // Then the resulting StampVersionRecord should match the original PBStampVersion
         assertEquals(10, actualStampVersionRecord.stateNid(), "Status Nid did not match");
-        assertEquals(expectedTime, actualStampVersionRecord.time(), "Time did not match");
+        assertEquals(expectedTime.getSeconds(), actualStampVersionRecord.time(), "Time did not match");
         assertEquals(20, actualStampVersionRecord.authorNid(), "Author Nid did not match");
         assertEquals(30, actualStampVersionRecord.moduleNid(), "Module Nid did not match");
         assertEquals(40, actualStampVersionRecord.pathNid(), "Path Nid did not match");
@@ -87,11 +62,11 @@ public class TestProtobufToEntityStampTransform {
     public void stampVersionTransformWithStatusBeingBlankPublicId() {
         // Given a PBStampVersion with a missing Public Id for Status
         PBStampVersion pbStampVersion = PBStampVersion.newBuilder()
-                .setStatus(ProtobufToEntityTestHelper.createPBPublicId())
-                .setTime(Timestamp.newBuilder().setSeconds(expectedTime).build())
-                .setAuthor(ProtobufToEntityTestHelper.createPBPublicId(authorConcept))
-                .setModule(ProtobufToEntityTestHelper.createPBPublicId(moduleConcept))
-                .setPath(ProtobufToEntityTestHelper.createPBPublicId(pathConcept))
+                .setStatus(createPBPublicId())
+                .setTime(nowTimestamp())
+                .setAuthor(createPBPublicId(authorConcept))
+                .setModule(createPBPublicId(moduleConcept))
+                .setPath(createPBPublicId(pathConcept))
                 .build();
 
         // When we transform PBStampVersion
@@ -107,11 +82,11 @@ public class TestProtobufToEntityStampTransform {
     public void stampVersionTransformWithAuthorBeingBlankPublicId() {
         // Given a PBStampVersion with a missing Public Id for Author
         PBStampVersion pbStampVersion = PBStampVersion.newBuilder()
-                .setStatus(ProtobufToEntityTestHelper.createPBPublicId(statusConcept))
-                .setTime(Timestamp.newBuilder().setSeconds(expectedTime).build())
-                .setAuthor(ProtobufToEntityTestHelper.createPBPublicId())
-                .setModule(ProtobufToEntityTestHelper.createPBPublicId(moduleConcept))
-                .setPath(ProtobufToEntityTestHelper.createPBPublicId(pathConcept))
+                .setStatus(createPBPublicId(statusConcept))
+                .setTime(nowTimestamp())
+                .setAuthor(createPBPublicId())
+                .setModule(createPBPublicId(moduleConcept))
+                .setPath(createPBPublicId(pathConcept))
                 .build();
 
         // When we transform PBStampVersion
@@ -127,11 +102,11 @@ public class TestProtobufToEntityStampTransform {
     public void stampVersionTransformWithModuleBeingBlankPublicId() {
         // Given a PBStampVersion with a missing Public Id for Module
         PBStampVersion pbStampVersion = PBStampVersion.newBuilder()
-                .setStatus(ProtobufToEntityTestHelper.createPBPublicId(statusConcept))
-                .setTime(Timestamp.newBuilder().setSeconds(expectedTime).build())
-                .setAuthor(ProtobufToEntityTestHelper.createPBPublicId(authorConcept))
-                .setModule(ProtobufToEntityTestHelper.createPBPublicId())
-                .setPath(ProtobufToEntityTestHelper.createPBPublicId(pathConcept))
+                .setStatus(createPBPublicId(statusConcept))
+                .setTime(nowTimestamp())
+                .setAuthor(createPBPublicId(authorConcept))
+                .setModule(createPBPublicId())
+                .setPath(createPBPublicId(pathConcept))
                 .build();
 
         // When we transform PBStampVersion
@@ -147,11 +122,11 @@ public class TestProtobufToEntityStampTransform {
     public void stampVersionTransformWithPathBeingBlankPublicId() {
         // Given a PBStampVersion with a missing Public Id for Path
         PBStampVersion pbStampVersion = PBStampVersion.newBuilder()
-                .setStatus(ProtobufToEntityTestHelper.createPBPublicId(statusConcept))
-                .setTime(Timestamp.newBuilder().setSeconds(expectedTime).build())
-                .setAuthor(ProtobufToEntityTestHelper.createPBPublicId(authorConcept))
-                .setModule(ProtobufToEntityTestHelper.createPBPublicId(moduleConcept))
-                .setPath(ProtobufToEntityTestHelper.createPBPublicId())
+                .setStatus(createPBPublicId(statusConcept))
+                .setTime(nowTimestamp())
+                .setAuthor(createPBPublicId(authorConcept))
+                .setModule(createPBPublicId(moduleConcept))
+                .setPath(createPBPublicId())
                 .build();
 
         // When we transform PBStampVersion
@@ -168,7 +143,7 @@ public class TestProtobufToEntityStampTransform {
     public void stampChronologyTransformWithZeroVersion(){
         // Given a PBStampChronology with a no Stamp Versions present
         PBStampChronology pbStampChronology = PBStampChronology.newBuilder()
-                .setPublicId(ProtobufToEntityTestHelper.createPBPublicId(testConcept))
+                .setPublicId(createPBPublicId(testConcept))
                 .build();
 
         // When we transform PBStampChronology
@@ -183,16 +158,17 @@ public class TestProtobufToEntityStampTransform {
     @Test
     public void stampChronologyTransformWithOneVersion(){
         // Given a PBStampChronology with a one Stamp Version present
+        Timestamp expectedTime = nowTimestamp();
         PBStampVersion pbStampVersion = PBStampVersion.newBuilder()
-                .setStatus(ProtobufToEntityTestHelper.createPBPublicId(statusConcept))
-                .setTime(Timestamp.newBuilder().setSeconds(expectedTime).build())
-                .setAuthor(ProtobufToEntityTestHelper.createPBPublicId(authorConcept))
-                .setModule(ProtobufToEntityTestHelper.createPBPublicId(moduleConcept))
-                .setPath(ProtobufToEntityTestHelper.createPBPublicId(pathConcept))
+                .setStatus(createPBPublicId(statusConcept))
+                .setTime(expectedTime)
+                .setAuthor(createPBPublicId(authorConcept))
+                .setModule(createPBPublicId(moduleConcept))
+                .setPath(createPBPublicId(pathConcept))
                 .build();
 
         PBStampChronology pbStampChronology = PBStampChronology.newBuilder()
-                .setPublicId(ProtobufToEntityTestHelper.createPBPublicId(testConcept))
+                .setPublicId(createPBPublicId(testConcept))
                 .addStampVersions(pbStampVersion)
                 .build();
 
@@ -204,7 +180,7 @@ public class TestProtobufToEntityStampTransform {
         assertTrue(PublicId.equals(testConcept.publicId(), actualStampChronology.publicId()), "Public Id's of the stamp chronology do not match.");
         assertEquals(1, actualStampChronology.versions().size(), "Versions are empty");
         assertEquals(10, actualStampChronology.versions().get(0).stateNid(), "Status Nid did not match");
-        assertEquals(expectedTime, actualStampChronology.versions().get(0).time(), "Time did not match");
+        assertEquals(expectedTime.getSeconds(), actualStampChronology.versions().get(0).time(), "Time did not match");
         assertEquals(20, actualStampChronology.versions().get(0).authorNid(), "Author Nid did not match");
         assertEquals(30, actualStampChronology.versions().get(0).moduleNid(), "Module Nid did not match");
         assertEquals(40, actualStampChronology.versions().get(0).pathNid(), "Path Nid did not match");
@@ -213,23 +189,26 @@ public class TestProtobufToEntityStampTransform {
     @Test
     public void stampChronologyTransformWithTwoVersions(){
         // Given a PBStampChronology with two Stamp Versions present
+        Timestamp expectedTime1 = nowTimestamp();
+        Timestamp expectedTime2 = nowTimestamp();
+
         PBStampVersion pbStampVersionOne = PBStampVersion.newBuilder()
-                .setStatus(ProtobufToEntityTestHelper.createPBPublicId(statusConcept))
-                .setTime(Timestamp.newBuilder().setSeconds(expectedTime).build())
-                .setAuthor(ProtobufToEntityTestHelper.createPBPublicId(authorConcept))
-                .setModule(ProtobufToEntityTestHelper.createPBPublicId(moduleConcept))
-                .setPath(ProtobufToEntityTestHelper.createPBPublicId(pathConcept))
+                .setStatus(createPBPublicId(statusConcept))
+                .setTime(expectedTime1)
+                .setAuthor(createPBPublicId(authorConcept))
+                .setModule(createPBPublicId(moduleConcept))
+                .setPath(createPBPublicId(pathConcept))
                 .build();
         PBStampVersion pbStampVersionTwo = PBStampVersion.newBuilder()
-                .setStatus(ProtobufToEntityTestHelper.createPBPublicId(statusConcept))
-                .setTime(Timestamp.newBuilder().setSeconds(expectedTime).build())
-                .setAuthor(ProtobufToEntityTestHelper.createPBPublicId(authorConcept))
-                .setModule(ProtobufToEntityTestHelper.createPBPublicId(moduleConcept))
-                .setPath(ProtobufToEntityTestHelper.createPBPublicId(pathConcept))
+                .setStatus(createPBPublicId(statusConcept))
+                .setTime(expectedTime2)
+                .setAuthor(createPBPublicId(authorConcept))
+                .setModule(createPBPublicId(moduleConcept))
+                .setPath(createPBPublicId(pathConcept))
                 .build();
 
         PBStampChronology pbStampChronology = PBStampChronology.newBuilder()
-                .setPublicId(ProtobufToEntityTestHelper.createPBPublicId(testConcept))
+                .setPublicId(createPBPublicId(testConcept))
                 .addStampVersions(pbStampVersionOne)
                 .addStampVersions(pbStampVersionTwo)
                 .build();
@@ -238,16 +217,16 @@ public class TestProtobufToEntityStampTransform {
         StampRecord actualStampChronology = ProtobufTransformer.transformStampChronology(pbStampChronology);
 
         // Then the resulting StampChronology should match the original PBStampChronology
-        assertEquals(50, actualStampChronology.nid(), "Nid's did not match in Stamp Chronology.");
+        assertEquals(nid(testConcept), actualStampChronology.nid(), "Nid's did not match in Stamp Chronology.");
         assertTrue(PublicId.equals(testConcept.publicId(), actualStampChronology.publicId()), "Public Id's of the stamp chronology do not match.");
         assertEquals(2, actualStampChronology.versions().size(), "Versions are empty");
         assertEquals(10, actualStampChronology.versions().get(0).stateNid(), "Status Nid did not match");
-        assertEquals(expectedTime, actualStampChronology.versions().get(0).time(), "Time did not match");
+        assertEquals(expectedTime1.getSeconds(), actualStampChronology.versions().get(0).time(), "Time did not match");
         assertEquals(20, actualStampChronology.versions().get(0).authorNid(), "Author Nid did not match");
         assertEquals(30, actualStampChronology.versions().get(0).moduleNid(), "Module Nid did not match");
         assertEquals(40, actualStampChronology.versions().get(0).pathNid(), "Path Nid did not match");
         assertEquals(10, actualStampChronology.versions().get(1).stateNid(), "Status Nid did not match");
-        assertEquals(expectedTime, actualStampChronology.versions().get(1).time(), "Time did not match");
+        assertEquals(expectedTime2.getSeconds(), actualStampChronology.versions().get(1).time(), "Time did not match");
         assertEquals(20, actualStampChronology.versions().get(1).authorNid(), "Author Nid did not match");
         assertEquals(30, actualStampChronology.versions().get(1).moduleNid(), "Module Nid did not match");
         assertEquals(40, actualStampChronology.versions().get(1).pathNid(), "Path Nid did not match");
