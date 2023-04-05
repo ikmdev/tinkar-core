@@ -1,0 +1,40 @@
+{
+  "concepts":
+  [
+    {
+      "name": "moduleConcept",
+      "description": "Module concept",
+      "uuid": "840928b5-480c-4e8d-af77-7c817e880aed",
+      "origins": [],
+      "destinations": []
+    },
+    {
+      "name": "pathConcept",
+      "description": "Path concept",
+      "uuid": "4fa15e05-5c48-470a-a6f0-2080e725e6fb",
+      "origins": [],
+      "destinations": []
+    },
+    {
+      "name": "authorConcept",
+      "description": "Author concept",
+      "uuid": "76fdab49-b0ee-4c83-900e-8064103ef3b0",
+      "origins": [],
+      "destinations": []
+    },
+    {
+      "name": "statusConcept",
+      "description": "Status concept",
+      "uuid": "d130880f-a8aa-4ac5-8265-483deab701ec",
+      "origins": [],
+      "destinations": []
+    },
+    {
+      "name": "testConcept",
+      "description": "Test concept",
+      "uuid": "e813eb92-7d07-5035-8d43-e81249f5b36e",
+      "origins": [],
+      "destinations": []
+    }
+  ]
+}
