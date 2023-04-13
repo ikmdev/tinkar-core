@@ -51,6 +51,7 @@
         <activej-bytebuf.version>4.3-r3</activej-bytebuf.version>
         <activej-common.version>4.3-r2</activej-common.version>
         <auto-service.version>1.0.1</auto-service.version>
+        <jpms-auto-service.version>1.0.1-r2</jpms-auto-service.version>
         <activej.version>4.3-r3</activej.version>
         <activej-launchers.version>4.3.1</activej-launchers.version>
         <build-helper-maven-plugin.version>3.2.0</build-helper-maven-plugin.version>
@@ -222,7 +223,7 @@
             <dependency>
                 <groupId>${tinkar-jpms-deps.groupId}</groupId>
                 <artifactId>auto-service</artifactId>
-                <version>${auto-service.version}</version>
+                <version>${jpms-auto-service.version}</version>
             </dependency>
 
             <dependency>
@@ -275,32 +276,8 @@
 
             <dependency>
                 <groupId>${tinkar-jpms-deps.groupId}</groupId>
-                <artifactId>lucene-core</artifactId>
+                <artifactId>lucene-uber</artifactId>
                 <version>${lucene-core.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>${tinkar-jpms-deps.groupId}</groupId>
-                <artifactId>lucene-highlighter</artifactId>
-                <version>${lucene-highlighter.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>${tinkar-jpms-deps.groupId}</groupId>
-                <artifactId>lucene-memory</artifactId>
-                <version>${lucene-memory.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>${tinkar-jpms-deps.groupId}</groupId>
-                <artifactId>lucene-queryparser</artifactId>
-                <version>${lucene-queryparser.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>${tinkar-jpms-deps.groupId}</groupId>
-                <artifactId>lucene-sandbox</artifactId>
-                <version>${lucene-sandbox.version}</version>
             </dependency>
 
             <dependency>
