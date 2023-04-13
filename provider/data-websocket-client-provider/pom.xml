@@ -13,10 +13,6 @@
     <packaging>jar</packaging>
     <name>TINKAR Provider Data - Websocket client</name>
 
-    <properties>
-        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>

@@ -12,11 +12,6 @@
     <packaging>jar</packaging>
     <name>TINKAR Provider Search provider</name>
 
-    <properties>
-        <sonar.skip>false</sonar.skip>
-        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/tinkar-core/code-coverage-aggregator/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>

@@ -12,11 +12,6 @@
     <packaging>jar</packaging>
     <name>TINKAR Data Transfer Objects</name>
 
-    <properties>
-        <sonar.skip>false</sonar.skip>
-        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.slf4j</groupId>
