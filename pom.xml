@@ -1,0 +1,478 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>dev.ikm.build</groupId>
+        <artifactId>java-parent</artifactId>
+        <version>0.3.0</version>
+        <relativePath></relativePath>
+    </parent>
+
+    <groupId>dev.ikm.tinkar</groupId>
+    <artifactId>tinkar-core</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>IKM tinkar core</name>
+    <description>
+        Tinkar-core is a java software project that aims to provides a reference implementation
+        for the open-source HL7 Tinkar informational Ballot.
+        Tinkar and its underlining data model serves as a self-describing terminology model
+        that can be used to harmonize other standards based models.
+    </description>
+
+    <organization>
+        <name>IKM</name>
+        <url>https://www.ikm.dev</url>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>APACHE LICENSE, VERSION 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+        </license>
+    </licenses>
+
+    <modules>
+        <module>collection</module>
+        <module>common</module>
+        <module>component</module>
+        <module>coordinate</module>
+        <module>entity</module>
+        <module>dto</module>
+        <module>terms</module>
+        <module>provider</module>
+        <module>integration</module>
+        <module>code-coverage-aggregator</module>
+    </modules>
+	    
+    <properties>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
+        <activej-bytebuf.version>4.3-r3</activej-bytebuf.version>
+        <activej-common.version>4.3-r2</activej-common.version>
+        <auto-service.version>1.0.1</auto-service.version>
+        <jpms-auto-service.version>1.0.1-r2</jpms-auto-service.version>
+        <activej.version>4.3-r3</activej.version>
+        <activej-launchers.version>4.3.1</activej-launchers.version>
+        <build-helper-maven-plugin.version>3.2.0</build-helper-maven-plugin.version>
+        <caffeine.version>3.1.1-r2</caffeine.version>
+        <eclipse-collections.version>11.1.0-r2</eclipse-collections.version>
+        <eclipse-collections-api.version>11.1.0-r3</eclipse-collections-api.version>
+        <jetty-slf4j-impl.version>11.0.7</jetty-slf4j-impl.version>
+        <jgrapht.version>1.5.0</jgrapht.version>
+        <junit.version>5.6.3</junit.version>
+        <mvstore.version>1.4.200-r2</mvstore.version>
+        <io.smallrye.reactive.version>1.3.1</io.smallrye.reactive.version>
+        <jheaps.version>0.14-r2</jheaps.version>
+        <lucene.version>8.9.0</lucene.version>
+        <lucene-core.version>8.9.0-r2</lucene-core.version>
+        <lucene-highlighter.version>8.9.0-r2</lucene-highlighter.version>
+        <lucene-memory.version>8.9.0-r2</lucene-memory.version>
+        <lucene-queryparser.version>8.9.0-r2</lucene-queryparser.version>
+        <lucene-sandbox.version>8.9.0-r2</lucene-sandbox.version>
+        <org.reactivestreams.version>1.0.3</org.reactivestreams.version>
+        <record-builder-core.version>34</record-builder-core.version>
+        <roaringbitmap.version>0.9.31-r2</roaringbitmap.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <slf4j.version>2.0.0-alpha6</slf4j.version>
+        <testng.version>7.4.0</testng.version>
+        <tinkar-jpms-deps.groupId>dev.ikm.jpms</tinkar-jpms-deps.groupId>
+        <tinkar-jpms-deps.version>1.0.15</tinkar-jpms-deps.version>
+        <protobuf-java.version>3.22.0-r2</protobuf-java.version>
+        <sonar.skip>false</sonar.skip>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <sonar.core.codeCoveragePlugin>jacoco</sonar.core.codeCoveragePlugin>
+        <sonar.language>java</sonar.language>
+        <susel.version>0.1.2</susel.version>
+
+        <junit-jupiter-engine.version>5.7.0</junit-jupiter-engine.version>
+        <junit-platform-surefire-provider.version>1.3.0</junit-platform-surefire-provider.version>
+        <junit-platform-commons.version>1.7.0</junit-platform-commons.version>
+        <junit-platform-launcher.version>1.7.0</junit-platform-launcher.version>
+        <surefire-api.version>3.0.0-M9</surefire-api.version>
+        <common-java5.version>3.0.0-M9</common-java5.version>
+        <maven-jxr-plugin.version>3.3.0</maven-jxr-plugin.version>
+        <maven-license-plugin.version>4.1</maven-license-plugin.version>
+
+        <tinkar-schema.version>1.7.0</tinkar-schema.version>
+        <udaychandra-susel.version>0.1.2</udaychandra-susel.version>
+        <junit-platform-commons.version>1.7.0</junit-platform-commons.version>
+        <junit-platform-launcher.version>1.7.0</junit-platform-launcher.version>
+        <junit-jupiter-api.version>5.6.3</junit-jupiter-api.version>
+        <common-java5.version>3.0.0-M9</common-java5.version>
+        <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
+        <maven-dependency-plugin.version>3.5.0</maven-dependency-plugin.version>
+    </properties>
+
+    <!-- All Dependencies and versions used in this project are pre-defined here for use in modules -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- Submodules -->
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>collection</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>component</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>component</artifactId>
+                <classifier>tests</classifier>
+                <type>test-jar</type>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>coordinate</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>entity</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>integration</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>dto</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>data-ephemeral-provider</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>data-mvstore-provider</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>data-spinedarray-provider</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>data-websocket-client-provider</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>data-websocket-server-provider</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>entity-provider</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>executor-provider</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>search-provider</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>terms</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- IKM Dependencies -->
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>tinkar-schema</artifactId>
+                <version>${tinkar-schema.version}</version>
+            </dependency>
+
+            <!-- JPMS Dependencies -->
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>auto-service</artifactId>
+                <version>${jpms-auto-service.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>record-builder-core</artifactId>
+                <version>${record-builder-core.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>jheaps</artifactId>
+                <version>${jheaps.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>activej-bytebuf</artifactId>
+                <version>${activej-bytebuf.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>activej-common</artifactId>
+                <version>${activej-common.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>caffeine</artifactId>
+                <version>${caffeine.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>roaringbitmap</artifactId>
+                <version>${roaringbitmap.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>eclipse-collections</artifactId>
+                <version>${eclipse-collections.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>eclipse-collections-api</artifactId>
+                <version>${eclipse-collections-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>lucene-uber</artifactId>
+                <version>${lucene-core.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${protobuf-java.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>mvstore</artifactId>
+                <version>${mvstore.version}</version>
+            </dependency>
+
+            <!-- Everything else -->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.activej</groupId>
+                <artifactId>activej-launchers-http</artifactId>
+                <version>${activej-launchers.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-slf4j-impl</artifactId>
+                <version>${jetty-slf4j-impl.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-engine</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-api</artifactId>
+                <version>${junit-jupiter-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.udaychandra.susel</groupId>
+                <artifactId>susel</artifactId>
+                <version>${susel.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jgrapht</groupId>
+                <artifactId>jgrapht-core</artifactId>
+                <version>${jgrapht.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.jheaps</groupId>
+                        <artifactId>jheaps</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>org.junit.platform</groupId>
+                <artifactId>junit-platform-commons</artifactId>
+                <version>${junit-platform-commons.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.junit.platform</groupId>
+                <artifactId>junit-platform-launcher</artifactId>
+                <version>${junit-platform-launcher.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.maven.surefire</groupId>
+                <artifactId>common-java5</artifactId>
+                <version>${common-java5.version}</version>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-slf4j-impl</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>auto-service</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-commons</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.maven.surefire</groupId>
+            <artifactId>common-java5</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>${maven-assembly-plugin.version}</version>
+                </plugin>
+
+                <!-- Adds the license headers to the top of each file -->
+                <plugin>
+                    <groupId>com.mycila</groupId>
+                    <artifactId>license-maven-plugin</artifactId>
+                    <version>${maven-license-plugin.version}</version>
+                    <configuration>
+                        <header>${basedir}/license.txt</header>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>${maven-dependency-plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+    </build>
+
+    <!-- for site generation -->
+    <reporting>
+
+        <plugins>
+
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <configuration>
+                    <reportsDirectories>
+                        <trimStackTrace>false</trimStackTrace>
+                        <reportsDirectory>${basedir}/target/failsafe-reports</reportsDirectory>
+                    </reportsDirectories>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+
+            </plugin>
+
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco-maven-plugin.version}</version>
+                <reportSets>
+                    <reportSet>
+                        <id>jacoco-report</id>
+                        <reports>
+                            <report>report</report>
+                            <report>report-integration</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jxr-plugin</artifactId>
+                <version>${maven-jxr-plugin.version}</version>
+            </plugin>
+
+        </plugins>
+    </reporting>
+
+</project>
