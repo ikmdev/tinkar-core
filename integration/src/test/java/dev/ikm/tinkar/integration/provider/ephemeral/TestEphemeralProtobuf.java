@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 
-@Disabled
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TestEphemeralProtobuf {
@@ -51,7 +50,6 @@ public class TestEphemeralProtobuf {
     }
     @Test
     @Order(2)
-    @Disabled
     public void countDTO(){
         EntityProcessor processor = new EntityCounter();
         PrimitiveData.get().forEach(processor);
@@ -74,9 +72,8 @@ public class TestEphemeralProtobuf {
     }
     @Test
     @Order(3)
-    @Disabled
     public void exportEntitiesToProtobuf() throws IOException {
-        File file = TestConstants.PB_EXPORT_TEST_FILE;
+        File file = TestConstants.TINK_TEST_FILE;
         ExportEntitiesToProtobufFile exportEntitiesToProtobufFile = new ExportEntitiesToProtobufFile(file);
         exportEntitiesToProtobufFile.compute();
 //        ExportEntitiesController exportEntitiesController = new ExportEntitiesController();
