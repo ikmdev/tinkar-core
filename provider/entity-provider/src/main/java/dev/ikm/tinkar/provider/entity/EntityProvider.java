@@ -32,7 +32,7 @@ import java.util.function.Consumer;
 
 import static dev.ikm.tinkar.terms.TinkarTerm.DESCRIPTION_PATTERN;
 
-@AutoService({EntityService.class, PublicIdService.class, DefaultDescriptionForNidService.class})
+//@AutoService({EntityService.class, PublicIdService.class, DefaultDescriptionForNidService.class})
 public class EntityProvider implements EntityService, PublicIdService, DefaultDescriptionForNidService {
 
     private static final Logger LOG = LoggerFactory.getLogger(EntityProvider.class);
@@ -159,7 +159,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
     @Override
     public void putEntity(Entity entity) {
-         invalidateCaches(entity);
+        invalidateCaches(entity);
         ENTITY_CACHE.put(entity.nid(), entity);
         if (entity instanceof StampEntity stampEntity) {
             STAMP_CACHE.put(stampEntity.nid(), stampEntity);

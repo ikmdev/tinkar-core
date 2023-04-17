@@ -81,7 +81,7 @@ class TestEphemeralProvider {
     @Test
     @Order(4)
     public void exportEntitiesToProtobuf() throws IOException {
-        File file = TestConstants.PB_EXPORT_TEST_FILE;
+        File file = TestConstants.PB_TEST_FILE;
         try {
             ExportEntitiesController exportEntitiesController = new ExportEntitiesController();
             exportEntitiesController.export(file);

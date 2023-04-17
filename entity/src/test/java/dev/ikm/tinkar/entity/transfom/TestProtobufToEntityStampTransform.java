@@ -1,0 +1,295 @@
+package dev.ikm.tinkar.entity.transfom;
+
+import com.google.protobuf.Timestamp;
+import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.component.Concept;
+import dev.ikm.tinkar.entity.StampRecord;
+import dev.ikm.tinkar.entity.StampVersionRecord;
+import dev.ikm.tinkar.schema.PBStampChronology;
+import dev.ikm.tinkar.schema.PBStampVersion;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+public class TestProtobufToEntityStampTransform {
+    /**
+     * Testing the transformation of a StampVersion Protobuf object to an Entity
+     */
+    @Test
+    @DisplayName("Transform a Stamp Version With All Fields Present")
+    public void stampVersionTransformWithStatusTimeAuthorModulePathPresent() {
+        openSession(this, (mockedEntityService, conceptMap) -> {
+            // Given a PBStampVersion
+            Timestamp expectedTime = nowTimestamp();
+            Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
+            Concept statusConcept = conceptMap.get(STATUS_CONCEPT_NAME);
+            Concept authorConcept = conceptMap.get(AUTHOR_CONCEPT_NAME);
+            Concept moduleConcept = conceptMap.get(MODULE_CONCEPT_NAME);
+            Concept pathConcept = conceptMap.get(PATH_CONCEPT_NAME);
+
+            PBStampVersion pbStampVersion = createPbStampVersion(expectedTime, statusConcept, authorConcept, moduleConcept, pathConcept);
+            StampRecord mockStampRecord = mock(StampRecord.class);
+
+            // When we transform PBStampVersion
+            StampVersionRecord actualStampVersionRecord = ProtobufTransformer.transformStampVersion(pbStampVersion, mockStampRecord);
+
+            // Then the resulting StampVersionRecord should match the original PBStampVersion
+            assertEquals(nid(statusConcept), actualStampVersionRecord.stateNid(), "Status Nid did not match");
+            assertEquals(expectedTime.getSeconds(), actualStampVersionRecord.time(), "Time did not match");
+            assertEquals(nid(authorConcept), actualStampVersionRecord.authorNid(), "Author Nid did not match");
+            assertEquals(nid(moduleConcept), actualStampVersionRecord.moduleNid(), "Module Nid did not match");
+            assertEquals(nid(pathConcept), actualStampVersionRecord.pathNid(), "Path Nid did not match");
+            assertEquals(mockStampRecord, actualStampVersionRecord.chronology(), "Stamp Record did not match");
+        });
+
+    }
+
+    @Test
+    @DisplayName("Transform a Stamp Version With All Fields Present Two")
+    public void stampVersionTransformWithStatusTimeAuthorModulePathPresent2() {
+
+        openSession(this, (mockedEntityService, conceptMap) -> {
+            // Given a PBStampVersion
+            Concept statusConcept = conceptMap.get(STATUS_CONCEPT_NAME);
+            Concept authorConcept = conceptMap.get(AUTHOR_CONCEPT_NAME);
+            Concept moduleConcept = conceptMap.get(MODULE_CONCEPT_NAME);
+            Concept pathConcept = conceptMap.get(PATH_CONCEPT_NAME);
+            Timestamp expectedTime = nowTimestamp();
+
+            PBStampVersion pbStampVersion = createPbStampVersion(conceptMap, expectedTime);
+            StampRecord mockStampRecord = mock(StampRecord.class);
+
+            // When we transform PBStampVersion
+            StampVersionRecord actualStampVersionRecord = ProtobufTransformer.transformStampVersion(pbStampVersion, mockStampRecord);
+
+            // Then the resulting StampVersionRecord should match the original PBStampVersion
+            assertEquals(nid(statusConcept), actualStampVersionRecord.stateNid(), "Status Nid did not match");
+            assertEquals(expectedTime.getSeconds(), actualStampVersionRecord.time(), "Time did not match");
+            assertEquals(nid(authorConcept), actualStampVersionRecord.authorNid(), "Author Nid did not match");
+            assertEquals(nid(moduleConcept), actualStampVersionRecord.moduleNid(), "Module Nid did not match");
+            assertEquals(nid(pathConcept), actualStampVersionRecord.pathNid(), "Path Nid did not match");
+            assertEquals(mockStampRecord, actualStampVersionRecord.chronology(), "Stamp Record did not match");
+        });
+
+    }
+
+    //TODO - Create unit tests testing for runtime exception for each blank UUID/Public ID in STAMP values
+    /**
+     * Testing the transformation of a StampVersion Protobuf object to an Entity with a missing Status.
+     */
+    @Test
+    @DisplayName("Transform a Stamp Version With Status being Blank")
+    public void stampVersionTransformWithStatusBeingBlankPublicId() {
+        openSession(this, (mockedEntityService, conceptMap) -> {
+            StampRecord mockStampRecord = mock(StampRecord.class);
+            // Given a PBStampVersion with a missing Public Id for Status
+            PBStampVersion pbStampVersion = PBStampVersion.newBuilder()
+                    .setStatus(createPBPublicId())
+                    .setTime(nowTimestamp())
+                    .setAuthor(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
+                    .setModule(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
+                    .setPath(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
+                    .build();
+
+            // When we transform PBStampVersion
+
+            // Then we will throw a Runtime exception
+            assertThrows(Throwable.class, () -> ProtobufTransformer.transformStampVersion(pbStampVersion, mockStampRecord), "Not allowed to have empty UUID for status.");
+        });
+    }
+
+    /**
+     * Testing the transformation of a StampVersion Protobuf object to an Entity with a missing Author.
+     */
+    @Test
+    @DisplayName("Transform a Stamp Version With Author being Blank")
+    public void stampVersionTransformWithAuthorBeingBlankPublicId() {
+        openSession(this, (mockedEntityService, conceptMap) -> {
+            // Given a PBStampVersion with a missing Public Id for Author
+            StampRecord mockStampRecord = mock(StampRecord.class);
+            PBStampVersion pbStampVersion = PBStampVersion.newBuilder()
+                    .setStatus(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
+                    .setTime(nowTimestamp())
+                    .setAuthor(createPBPublicId())
+                    .setModule(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
+                    .setPath(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
+                    .build();
+
+            // When we transform PBStampVersion
+
+            // Then we will throw a Runtime exception
+            assertThrows(Throwable.class, () -> ProtobufTransformer.transformStampVersion(pbStampVersion, mockStampRecord), "Not allowed to have empty UUID for author.");
+        });
+    }
+
+    /**
+     * Testing the transformation of a StampVersion Protobuf object to an Entity with a missing Module.
+     */
+    @Test
+    @DisplayName("Transform a Stamp Version With Module being Blank")
+    public void stampVersionTransformWithModuleBeingBlankPublicId() {
+        openSession(this, (mockedEntityService, conceptMap) -> {
+            // Given a PBStampVersion with a missing Public Id for Module
+            StampRecord mockStampRecord = mock(StampRecord.class);
+            PBStampVersion pbStampVersion = PBStampVersion.newBuilder()
+                    .setStatus(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
+                    .setTime(nowTimestamp())
+                    .setAuthor(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
+                    .setModule(createPBPublicId())
+                    .setPath(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
+                    .build();
+
+            // When we transform PBStampVersion
+
+            // Then we will throw a Runtime exception
+            assertThrows(Throwable.class, () -> ProtobufTransformer.transformStampVersion(pbStampVersion, mockStampRecord), "Not allowed to have empty UUID for module.");
+        });
+    }
+
+    /**
+     * Testing the transformation of a StampVersion Protobuf object to an Entity with a missing Path.
+     */
+    @Test
+    @DisplayName("Transform a Stamp Version With Path being Blank")
+    public void stampVersionTransformWithPathBeingBlankPublicId() {
+        openSession(this, (mockedEntityService, conceptMap) -> {
+            // Given a PBStampVersion with a missing Public Id for Path
+            StampRecord mockStampRecord = mock(StampRecord.class);
+            PBStampVersion pbStampVersion = PBStampVersion.newBuilder()
+                    .setStatus(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
+                    .setTime(nowTimestamp())
+                    .setAuthor(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
+                    .setModule(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
+                    .setPath(createPBPublicId())
+                    .build();
+
+            // When we transform PBStampVersion
+
+            // Then we will throw a Runtime exception
+            assertThrows(Throwable.class, () -> ProtobufTransformer.transformStampVersion(pbStampVersion, mockStampRecord), "Not allowed to have empty UUID for path.");
+        });
+    }
+
+    /**
+     * Testing the transformation of a StampChronology Protobuf object to an Entity with no versions present.
+     *  TODO: THis should throw an exception but because we are creating the chonology with an empty list there must be a check in the transform
+     */
+    @Test
+    @DisplayName("Transform a Stamp Chronology With No Versions")
+    public void stampChronologyTransformWithZeroVersion(){
+        openSession(this, (mockedEntityService, conceptMap) -> {
+            // Given a PBStampChronology with a no Stamp Versions present
+            PBStampChronology pbStampChronology = PBStampChronology.newBuilder()
+                    .setPublicId(createPBPublicId())
+                    .build();
+
+            // When we transform PBStampChronology
+
+            // Then we will throw a Runtime exception
+            assertThrows(Throwable.class, () -> ProtobufTransformer.transformStampChronology(pbStampChronology), "Not allowed to have no stamp versions.");
+        });
+    }
+
+    /**
+     * Testing the transformation of a StampChronology Protobuf object to an Entity with one version present.
+     */
+    @Test
+    @DisplayName("Transform a Stamp Chronology With One Version")
+    public void stampChronologyTransformWithOneVersion(){
+        openSession(this, (mockedEntityService, conceptMap) -> {
+            // Given a PBStampChronology with a one Stamp Version present
+            Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
+            Concept statusConcept = conceptMap.get(STATUS_CONCEPT_NAME);
+            Concept authorConcept = conceptMap.get(AUTHOR_CONCEPT_NAME);
+            Concept moduleConcept = conceptMap.get(MODULE_CONCEPT_NAME);
+            Concept pathConcept = conceptMap.get(PATH_CONCEPT_NAME);
+
+            Timestamp expectedTime = nowTimestamp();
+            PBStampVersion pbStampVersion = PBStampVersion.newBuilder()
+                    .setStatus(createPBPublicId(statusConcept))
+                    .setTime(expectedTime)
+                    .setAuthor(createPBPublicId(authorConcept))
+                    .setModule(createPBPublicId(moduleConcept))
+                    .setPath(createPBPublicId(pathConcept))
+                    .build();
+
+            PBStampChronology pbStampChronology = PBStampChronology.newBuilder()
+                    .setPublicId(createPBPublicId(conceptMap.get(TEST_CONCEPT_NAME)))
+                    .addStampVersions(pbStampVersion)
+                    .build();
+
+            // When we transform PBStampChronology
+            StampRecord actualStampChronology = ProtobufTransformer.transformStampChronology(pbStampChronology);
+
+            // Then the resulting StampChronology should match the original PBStampChronology
+            assertEquals(nid(testConcept), actualStampChronology.nid(), "Nid's did not match in Stamp Chronology.");
+            assertTrue(PublicId.equals(testConcept.publicId(), actualStampChronology.publicId()), "Public Id's of the stamp chronology do not match.");
+            assertEquals(1, actualStampChronology.versions().size(), "Versions are empty");
+            assertEquals(nid(statusConcept), actualStampChronology.versions().get(0).stateNid(), "Status Nid did not match");
+            assertEquals(expectedTime.getSeconds(), actualStampChronology.versions().get(0).time(), "Time did not match");
+            assertEquals(nid(authorConcept), actualStampChronology.versions().get(0).authorNid(), "Author Nid did not match");
+            assertEquals(nid(moduleConcept), actualStampChronology.versions().get(0).moduleNid(), "Module Nid did not match");
+            assertEquals(nid(pathConcept), actualStampChronology.versions().get(0).pathNid(), "Path Nid did not match");
+        });
+    }
+
+    @Test
+    @DisplayName("Transform a Stamp Chronology With Two Versions")
+    public void stampChronologyTransformWithTwoVersions(){
+        openSession(this, (mockedEntityService, conceptMap) -> {
+            // Given a PBStampChronology with two Stamp Versions present
+            Timestamp expectedTime1 = nowTimestamp();
+            Timestamp expectedTime2 = nowTimestamp(60);
+            Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
+            Concept statusConcept = conceptMap.get(STATUS_CONCEPT_NAME);
+            Concept authorConcept = conceptMap.get(AUTHOR_CONCEPT_NAME);
+            Concept moduleConcept = conceptMap.get(MODULE_CONCEPT_NAME);
+            Concept pathConcept = conceptMap.get(PATH_CONCEPT_NAME);
+
+            PBStampVersion pbStampVersionOne = PBStampVersion.newBuilder()
+                    .setStatus(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
+                    .setTime(expectedTime1)
+                    .setAuthor(createPBPublicId(authorConcept))
+                    .setModule(createPBPublicId(moduleConcept))
+                    .setPath(createPBPublicId(pathConcept))
+                    .build();
+            PBStampVersion pbStampVersionTwo = PBStampVersion.newBuilder()
+                    .setStatus(createPBPublicId(statusConcept))
+                    .setTime(expectedTime2)
+                    .setAuthor(createPBPublicId(authorConcept))
+                    .setModule(createPBPublicId(moduleConcept))
+                    .setPath(createPBPublicId(pathConcept))
+                    .build();
+
+            PBStampChronology pbStampChronology = PBStampChronology.newBuilder()
+                    .setPublicId(createPBPublicId(testConcept))
+                    .addStampVersions(pbStampVersionOne)
+                    .addStampVersions(pbStampVersionTwo)
+                    .build();
+
+            // When we transform PBStampChronology
+            StampRecord actualStampChronology = ProtobufTransformer.transformStampChronology(pbStampChronology);
+
+            // Then the resulting StampChronology should match the original PBStampChronology
+            assertEquals(nid(testConcept), actualStampChronology.nid(), "Nid's did not match in Stamp Chronology.");
+            assertTrue(PublicId.equals(testConcept.publicId(), actualStampChronology.publicId()), "Public Id's of the stamp chronology do not match.");
+            assertEquals(2, actualStampChronology.versions().size(), "Versions are empty");
+            assertEquals(nid(statusConcept), actualStampChronology.versions().get(0).stateNid(), "Status Nid did not match");
+            assertEquals(expectedTime1.getSeconds(), actualStampChronology.versions().get(0).time(), "Time did not match");
+            assertEquals(nid(authorConcept), actualStampChronology.versions().get(0).authorNid(), "Author Nid did not match");
+            assertEquals(nid(moduleConcept), actualStampChronology.versions().get(0).moduleNid(), "Module Nid did not match");
+            assertEquals(nid(pathConcept), actualStampChronology.versions().get(0).pathNid(), "Path Nid did not match");
+            assertEquals(nid(statusConcept), actualStampChronology.versions().get(1).stateNid(), "Status Nid did not match");
+            assertEquals(expectedTime2.getSeconds(), actualStampChronology.versions().get(1).time(), "Time did not match");
+            assertEquals(nid(authorConcept), actualStampChronology.versions().get(1).authorNid(), "Author Nid did not match");
+            assertEquals(nid(moduleConcept), actualStampChronology.versions().get(1).moduleNid(), "Module Nid did not match");
+            assertEquals(nid(pathConcept), actualStampChronology.versions().get(1).pathNid(), "Path Nid did not match");
+        });
+
+        //TODO: Add test to check if a stamp chronology can be created with two stamp version of the same type (and time).
+    }
+}
