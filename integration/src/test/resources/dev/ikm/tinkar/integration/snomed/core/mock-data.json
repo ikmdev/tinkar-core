@@ -1,0 +1,27 @@
+{
+  "concepts": [
+    "Active",
+    "Inactive",
+    "Deloitte User",
+    "SNOMED CT Starter Data Module",
+    "Development Path",
+    "SNOMED CT Author",
+    "SNOMED CT identifier",
+    "Relationship Modifier Semantic",
+    "Relationship Modifier",
+    "Concept Relationship Modifier",
+    "Relationship Modifier Semantic",
+    "Relationship Modifier",
+    "Concept Relationship Modifier"
+  ],
+  "modules": [
+    "900000000000207008"
+  ],
+  "entityRefs": [
+    "48b004d4-6457-4648-8d58-e3287126d96b",
+    "a733b809-d2f1-5334-96ab-516eed0f3ef7",
+    "a32538ce-e721-5b0d-a253-c69069a89525",
+    "66e9b00d-a7b0-5f38-a2be-cc2791e08e27",
+    "205a0b30-3310-51e3-b350-899c743cfdb8"
+  ]
+}       
