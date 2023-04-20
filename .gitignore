@@ -1,0 +1,12 @@
+*.iml
+.DS_Store
+target
+*/target/
+release.properties
+.idea
+*.settings
+*.project
+*.classpath
+*factorypath
+.vscode/*
+tinkar-core/.vscode/*
