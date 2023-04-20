@@ -15,7 +15,10 @@ open module dev.ikm.tinkar.integration.test {
     requires org.junit.jupiter.api;
     requires dev.ikm.tinkar.integration;
     requires org.slf4j;
+    requires com.fasterxml.jackson.core;
+    requires com.fasterxml.jackson.databind;
     requires org.eclipse.collections.api;
+    requires org.mockito;
 
     uses CachingService;
     uses DataServiceController;
