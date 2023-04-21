@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterDataHelper.*;
-import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterUtil.*;
+import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
