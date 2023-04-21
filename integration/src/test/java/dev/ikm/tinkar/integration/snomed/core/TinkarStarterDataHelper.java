@@ -8,13 +8,10 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.BiConsumer;
 
-import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterUtil.SNOMED_CT_NAMESPACE;
+import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.loadJsonData;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -26,7 +23,7 @@ return when referenced from tests
 public class TinkarStarterDataHelper {
 
     // filenames to load on bootstrap
-    public static final String TEST_SNOMEDCT_MOCK_DATA_JSON ="mock-data.json";
+
     public static final String TEST_SNOMEDCT_STARTER_DATA_JSON ="snomedct-starter-data-9.json";
 
     // to keep count of nids
@@ -37,7 +34,7 @@ public class TinkarStarterDataHelper {
         Concepts: UuidT5Generator.get(this.value);
         EntityRefs: UUID.fromString(this.value);
      */
-    private enum MockDataType {
+    public enum MockDataType {
         CONCEPT("Concept"),
         MODULE("Module"),
         ENTITYREF("EntityRef");
@@ -55,79 +52,17 @@ public class TinkarStarterDataHelper {
             return null;
         }
     }
+
     /*
     This inner class helps create Mock data as we read mock-data.json file.
      */
-    public static class MockEntity {
-        private final String value;
-        private final MockDataType type;
-        private final int nid;
-        private final UUID uuid;
-        private static final Map<UUID, MockEntity> mockDataMap = new HashMap<>();
-
-        MockEntity(String value, MockDataType type, Optional<Integer> nid) {
-
-            this.nid = nid.orElse(nidCount);
-            if (nid.isEmpty()) {
-                nidCount+=1;
-            }
-            this.value = value;
-            switch(type) {
-                case MODULE: {
-                    this.uuid = UuidT5Generator.get(SNOMED_CT_NAMESPACE+this.value);
-                    this.type = MockDataType.MODULE;
-                }
-                break;
-                case CONCEPT: {
-                    this.uuid = UuidT5Generator.get(this.value);
-                    this.type = MockDataType.CONCEPT;
-                }
-                break;
-                case ENTITYREF: {
-                    this.uuid = UUID.fromString(this.value);
-                    this.type = MockDataType.ENTITYREF;
-                }
-                break;
-                default: {
-                    this.uuid = UUID.randomUUID();
-                    this.type = MockDataType.ENTITYREF;
-                };
-                break;
-            }
-        }
-
-        MockEntity(String value, MockDataType type) {
-            this(value,type,Optional.ofNullable(null));
-        }
-
-        static String populateMockData(String value, MockDataType type) {
-            MockEntity entity =  new MockEntity(value, type);
-            mockDataMap.putIfAbsent(entity.uuid, entity);
-            return value;
-        }
-
-        public static int getNid(UUID key) {
-            return mockDataMap.get(key).nid;
-        }
-    }
 
     public static void openSession(BiConsumer<MockedStatic<EntityService>, JsonNode> session) {
         // open session is a biconsumer that makes mockStaticEntityService available
         // in tests to customize and mock more methods or override mock methods.
-        JsonNode primitiveData = loadJsonData(TinkarStarterDataHelper.class, TEST_SNOMEDCT_MOCK_DATA_JSON);
-        Iterator itr = primitiveData.get("data").iterator();
-
         JsonNode starterData = loadStarterData(TEST_SNOMEDCT_STARTER_DATA_JSON);
 
         try (MockedStatic<EntityService> mockStaticEntityService = Mockito.mockStatic(EntityService.class)) {
-            while(itr.hasNext()) {
-                JsonNode mockData = (JsonNode) itr.next();
-                String value = mockData.get("value").asText();
-                MockDataType type = MockDataType.getEnumType(mockData.get("type").asText());
-                MockEntity entity =  new MockEntity(value, type);
-                MockEntity.populateMockData(value, type);
-            }
-
             EntityService entityService = mock(EntityService.class);
             mockStaticEntityService.when(EntityService::get).thenReturn(entityService);
             when(EntityService.get().nidForUuids(any(UUID.class))).thenAnswer((y) -> MockEntity.getNid(y.getArgument(0)));
@@ -140,17 +75,6 @@ public class TinkarStarterDataHelper {
      */
     public static JsonNode loadStarterData(String fileName) {
        return loadJsonData(TinkarStarterDataHelper.class, fileName);
-    }
-
-    private static JsonNode loadJsonData(Class<?> aClass, String fileName) {
-        InputStream inputStream = aClass.getResourceAsStream(fileName);
-        try {
-            String jsonText = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-            ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.readTree(jsonText);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     /*
