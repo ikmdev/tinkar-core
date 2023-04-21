@@ -1,28 +1,21 @@
 package dev.ikm.tinkar.integration.snomed.concept;
 
 import dev.ikm.tinkar.entity.StampRecord;
-import dev.ikm.tinkar.entity.StampVersionRecord;
-import dev.ikm.tinkar.integration.snomed.core.MockEntity;
-import dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil;
 import org.junit.jupiter.api.*;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
-import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.INACTIVE;
+import static dev.ikm.tinkar.integration.snomed.concept.SnomedTextToConcept.createSTAMPChronology;
+import static dev.ikm.tinkar.integration.snomed.concept.SnomedTextToConcept.getStampUUID;
+import static dev.ikm.tinkar.integration.snomed.core.MockEntity.getNid;
+import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.*;
 import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterDataHelper.openSession;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class TestSnomedTextToConcept extends SnomedTextToConcept {
-    List<StampVersionRecord> stampVersionRecordList;
-    @BeforeAll
-    public void setupSuite() {
-        List<String> row = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_1.txt");
-        stampVersionRecordList = new ArrayList<>();
-    }
-
+public class TestSnomedTextToConcept {
     @Test
     @Order(1)
     @DisplayName("Test for one row of inactive stamp data in Concept File")
@@ -40,13 +33,16 @@ public class TestSnomedTextToConcept extends SnomedTextToConcept {
     public void testStampWithActiveTransformResult() {
         openSession((mockStaticEntityService, starterData) -> {
             List<String> row = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_1.txt");
+
             StampRecord record = createSTAMPChronology(row.get(0));
+            UUID testStampUUID = getStampUUID(row.stream().map(SnomedTextToConcept.Concept::new).findFirst().orElse(null));
 
             // Assert that stamp is Active
-            assertEquals(MockEntity.getNid(TinkarStarterConceptUtil.ACTIVE), record.stateNid(), "State is not active");
-            assertEquals(MockEntity.getNid(TinkarStarterConceptUtil.SNOMED_CT_AUTHOR), record.authorNid(), "Author couldn't be referenced");
-            assertEquals(MockEntity.getNid(TinkarStarterConceptUtil.DEVELOPMENT_PATH), record.pathNid(), "Path could not be referenced");
-            assertEquals(MockEntity.getNid(TinkarStarterConceptUtil.SNOMED_TEXT_MODULE_ID), record.moduleNid(), "Module could ot be referenced");
+            assertEquals(getNid(ACTIVE), record.stateNid(), "State is not active");
+            assertEquals(getNid(SNOMED_CT_AUTHOR), record.authorNid(), "Author couldn't be referenced");
+            assertEquals(getNid(DEVELOPMENT_PATH), record.pathNid(), "Path could not be referenced");
+            assertEquals(getNid(SNOMED_TEXT_MODULE_ID), record.moduleNid(), "Module could ot be referenced");
+            assertEquals(getNid(testStampUUID), record.nid(), "Stamp UUID was not populated");
         });
 
     }
@@ -69,12 +65,14 @@ public class TestSnomedTextToConcept extends SnomedTextToConcept {
         openSession((mockStaticEntityService, starterData) -> {
             List<String> row = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_2.txt");
             StampRecord record = createSTAMPChronology(row.get(0));
+            UUID testStampUUID = getStampUUID(row.stream().map(SnomedTextToConcept.Concept::new).findFirst().orElse(null));
 
             // Assert that stamp is Active
-            assertEquals(MockEntity.getNid(INACTIVE), record.stateNid(), "State is active");
-            assertEquals(MockEntity.getNid(TinkarStarterConceptUtil.SNOMED_CT_AUTHOR), record.authorNid(), "Author couldn't be referenced");
-            assertEquals(MockEntity.getNid(TinkarStarterConceptUtil.DEVELOPMENT_PATH), record.pathNid(), "Path could not be referenced");
-            assertEquals(MockEntity.getNid(TinkarStarterConceptUtil.SNOMED_TEXT_MODULE_ID), record.moduleNid(), "Module could ot be referenced");
+            assertEquals(getNid(INACTIVE), record.stateNid(), "State is active");
+            assertEquals(getNid(SNOMED_CT_AUTHOR), record.authorNid(), "Author couldn't be referenced");
+            assertEquals(getNid(DEVELOPMENT_PATH), record.pathNid(), "Path could not be referenced");
+            assertEquals(getNid(SNOMED_TEXT_MODULE_ID), record.moduleNid(), "Module could ot be referenced");
+            assertEquals(getNid(testStampUUID), record.nid(), "Stamp " + testStampUUID + " UUID was not populated");
         });
 
     }

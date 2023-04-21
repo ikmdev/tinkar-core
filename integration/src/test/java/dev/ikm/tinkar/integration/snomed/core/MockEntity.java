@@ -12,7 +12,7 @@ import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.*;
 
 public class MockEntity {
 
-    private static int nidCount = 1;
+    private static int nidCount = 100;
     private static final Map<UUID, Integer> mockDataMap = new HashMap<>();
 
     static {

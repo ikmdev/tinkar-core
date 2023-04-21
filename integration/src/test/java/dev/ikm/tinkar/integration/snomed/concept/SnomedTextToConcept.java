@@ -6,28 +6,23 @@ import dev.ikm.tinkar.integration.snomed.core.MockEntity;
 import dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil;
 import dev.ikm.tinkar.integration.snomed.core.TinkarStarterDataHelper;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.UUID;
 
 import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.*;
 
 public class SnomedTextToConcept {
 
-    final List<Concept> concepts = new LinkedList<>();
-    private static class Concept {
+    protected static class Concept {
         String id;
         long effectiveTime;
         int active;
         String moduleId;
         String definitionStatusId;
 
-        public Concept(String[] row)
+        public Concept(String input)
         {
+            String[] row = input.split(("\t"));
             this.id = row[0];
             this.effectiveTime = Long.parseLong(row[1]);
             this.active = Integer.parseInt(row[2]);
@@ -42,29 +37,9 @@ public class SnomedTextToConcept {
     }
 
     SnomedTextToConcept() {
-        List<String> textConcepts = loadSnomedFile(SnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_1.txt");
-        concepts.addAll(textConcepts
-                .stream()
-                .map((concept) -> concept.split("\t"))
-                .map(Concept::new)
-                .toList());
     }
 
-    public static List<String> loadSnomedFile(Class<?> aClass, String fileName) {
-        List<String> lines = new ArrayList<>();
-        try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(aClass.getResourceAsStream(fileName)));
-            reader.readLine();
-            String line = reader.readLine();
-            while(line!=null){
-                lines.add(line);
-                line = reader.readLine();
-            }
-        } catch (Exception e) {
-            System.out.println("Empty file");
-        }
-        return lines;
-    }
+
 
     public static UUID getStampUUID(Concept textConcept) {
         UUID nameSpaceUUID = TinkarStarterConceptUtil.SNOMED_CT_NAMESPACE;
@@ -76,12 +51,11 @@ public class SnomedTextToConcept {
         UUID stampUUID = UuidT5Generator.get(nameSpaceUUID, status + effectiveTime + module + definitionStatusId);
         MockEntity.populateMockData(stampUUID.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
         return stampUUID;
-
     }
 
 
     public static StampRecord createSTAMPChronology(String row){
-        Concept textConceptEntity = new Concept(row.split("\t"));
+        Concept textConceptEntity = new Concept(row);
 
         UUID stampUUID = getStampUUID(textConceptEntity);
 
@@ -102,7 +76,7 @@ public class SnomedTextToConcept {
                                                            StampRecord record,
                                                            String row)
     {
-        Concept textConceptEntity = new Concept(row.split("\t"));
+        Concept textConceptEntity = new Concept(row);
 
         StampVersionRecordBuilder recordBuilder = StampVersionRecordBuilder.builder();
         if (textConceptEntity.active == 1){

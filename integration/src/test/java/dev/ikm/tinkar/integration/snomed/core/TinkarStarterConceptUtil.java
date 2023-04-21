@@ -4,9 +4,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class TinkarStarterConceptUtil {
@@ -35,5 +39,21 @@ public class TinkarStarterConceptUtil {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static List<String> loadSnomedFile(Class<?> aClass, String fileName) {
+        List<String> lines = new ArrayList<>();
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(aClass.getResourceAsStream(fileName)));
+            reader.readLine();
+            String line = reader.readLine();
+            while(line!=null){
+                lines.add(line);
+                line = reader.readLine();
+            }
+        } catch (Exception e) {
+            System.out.println("Empty file");
+        }
+        return lines;
     }
 }
