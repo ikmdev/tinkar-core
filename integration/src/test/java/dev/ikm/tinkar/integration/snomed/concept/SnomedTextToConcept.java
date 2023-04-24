@@ -39,9 +39,12 @@ public class SnomedTextToConcept {
     SnomedTextToConcept() {
     }
 
+    /*
+    Generating Stamp Chronology for Concepts
+    */
 
-
-    public static UUID getStampUUID(Concept textConcept) {
+    public static UUID getStampUUID(String row) {
+        Concept textConcept = new Concept(row);
         UUID nameSpaceUUID = TinkarStarterConceptUtil.SNOMED_CT_NAMESPACE;
         String status = textConcept.active == 1 ? "Active":"Inactive";
         long effectiveTime = textConcept.effectiveTime;
@@ -55,9 +58,7 @@ public class SnomedTextToConcept {
 
 
     public static StampRecord createSTAMPChronology(String row){
-        Concept textConceptEntity = new Concept(row);
-
-        UUID stampUUID = getStampUUID(textConceptEntity);
+        UUID stampUUID = getStampUUID(row);
 
         StampRecord record = StampRecordBuilder.builder()
                 .mostSignificantBits(stampUUID.getMostSignificantBits())
@@ -92,5 +93,43 @@ public class SnomedTextToConcept {
                 .pathNid(EntityService.get().nidForUuids(DEVELOPMENT_PATH))
                 .build();
 
+    }
+
+    /*
+    Generating Concepts for Concept File
+    */
+
+    public static UUID getConceptUUID(String row) {
+        Concept textConcept = new Concept(row);
+        UUID conceptUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE, textConcept.id);
+        MockEntity.populateMockData(conceptUUID.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
+        return conceptUUID;
+    }
+
+    public static ConceptRecord createConceptChronology(String row) {
+
+        UUID conceptUUID = getConceptUUID(row);
+        ConceptRecord conceptRecord = ConceptRecordBuilder.builder()
+                .versions(RecordListBuilder.make())
+                .leastSignificantBits(conceptUUID.getLeastSignificantBits())
+                .mostSignificantBits(conceptUUID.getMostSignificantBits())
+                .nid(EntityService.get().nidForUuids(conceptUUID))
+                .build();
+
+        ConceptVersionRecord conceptVersionRecord = createConceptVersion(conceptRecord, row);
+
+        return ConceptRecordBuilder
+                .builder(conceptRecord)
+                .versions(RecordListBuilder.make().addAndBuild(conceptVersionRecord))
+                .build();
+    }
+
+    public static ConceptVersionRecord createConceptVersion(ConceptRecord conceptRecord, String row) {
+        StampRecord stampRecord = createSTAMPChronology(row);
+
+        return ConceptVersionRecordBuilder.builder()
+                .chronology(conceptRecord)
+                .stampNid(stampRecord.nid())
+                .build();
     }
 }
