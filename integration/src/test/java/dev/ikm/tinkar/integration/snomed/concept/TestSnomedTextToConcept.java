@@ -14,17 +14,19 @@ import static dev.ikm.tinkar.integration.snomed.core.MockEntity.getNid;
 import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.*;
 import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterDataHelper.openSession;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TestSnomedTextToConcept {
+
     @Test
     @Order(1)
     @DisplayName("Test for one row of inactive stamp data in Concept File")
     public void testStampWithOneActiveRow() {
         openSession((mockStaticEntityService, starterData) -> {
             List<String> row = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_1.txt");
-            StampRecord record = createSTAMPChronology(row.get(0));
+            StampRecord record = createStampChronology(row.get(0));
             assertEquals(1, record.versions().size(), "Has more than one row");
         });
     }
@@ -36,7 +38,7 @@ public class TestSnomedTextToConcept {
         openSession((mockStaticEntityService, starterData) -> {
             List<String> rows = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_1.txt");
 
-            StampRecord record = createSTAMPChronology(rows.get(0));
+            StampRecord record = createStampChronology(rows.get(0));
             UUID testStampUUID = getStampUUID(rows.get(0));
 
             // Assert that stamp is Active
@@ -55,7 +57,7 @@ public class TestSnomedTextToConcept {
     public void testStampWithOneInactiveRow() {
         openSession((mockStaticEntityService, starterData) -> {
             List<String> row = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_2.txt");
-            StampRecord record = createSTAMPChronology(row.get(0));
+            StampRecord record = createStampChronology(row.get(0));
             assertEquals(1, record.versions().size(), "Has more than one row");
         });
     }
@@ -66,7 +68,7 @@ public class TestSnomedTextToConcept {
     public void testStampWithInactiveTransformResult() {
         openSession((mockStaticEntityService, starterData) -> {
             List<String> rows = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_2.txt");
-            StampRecord record = createSTAMPChronology(rows.get(0));
+            StampRecord record = createStampChronology(rows.get(0));
             UUID testStampUUID = getStampUUID(rows.get(0));
 
             // Assert that stamp is Active
@@ -113,6 +115,46 @@ public class TestSnomedTextToConcept {
             assertEquals(getNid(testConceptUuid), conceptRecord.nid(), "Concept " + testConceptUuid + " UUID was not populated");
             assertEquals(getNid(testStampUUID), firstConceptVersionsRecord.stampNid(), "Stamp " + testStampUUID + " is not associated with given concept version");
             assertEquals(conceptRecord, firstConceptVersionsRecord.chronology(), "Concept was not referenced correctly in concept version record.");
+        });
+    }
+
+    @Test
+    @Order(7)
+    @DisplayName("Test for Concept with multiple version concept record")
+    public void testForSingleConceptMultipleVersion() {
+        openSession((mockStaticEntityService, starterData) -> {
+            List<String> rows = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_4.txt");
+            List<ConceptRecord> conceptRecord = createConceptFromMultipleVersions(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_4.txt");
+
+            assertTrue(rows.size() > 1, "File with single or no rows exist");
+            assertTrue(conceptRecord.size() == 1, "File with more than one concept exist");
+        });
+
+    }
+
+    @Test
+    @Order(8)
+    @DisplayName("Test for ConceptVersion to refer to same parent concept")
+    public void testConceptWithMultipleVersionofSameConcept() {
+        openSession((mockStaticEntityService, starterData) -> {
+            List<ConceptRecord> conceptRecord = createConceptFromMultipleVersions(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_4.txt");
+            ConceptRecord singleConcept = conceptRecord.get(0);
+            ImmutableList<ConceptVersionRecord> conceptVersionsRecord = singleConcept.versions();
+
+            assertTrue(conceptVersionsRecord.size() == 2 , "0 or 1  concept version  exist");
+            assertTrue(conceptVersionsRecord.get(0).chronology().equals(conceptVersionsRecord.get(1).chronology())  ,
+                    "Both versions refer to different parent chronologies");
+        });
+
+    }
+
+    @Test
+    @Order(9)
+    @DisplayName("Test for 8th text file to create multiple concepts with multiple version")
+    public void testMultipleConceptsWithMultipleVersion() {
+        openSession((mockStaticEntityService, starterData) -> {
+            List<ConceptRecord> conceptRecord = createConceptFromMultipleVersions(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_8.txt");
+            assertTrue(conceptRecord.size() > 1, "File with one concept exist");
         });
 
     }
