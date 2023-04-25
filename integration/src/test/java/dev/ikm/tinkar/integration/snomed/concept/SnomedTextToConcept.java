@@ -1,5 +1,6 @@
 package dev.ikm.tinkar.integration.snomed.concept;
 
+import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.integration.snomed.core.MockEntity;
@@ -7,12 +8,11 @@ import dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil;
 import dev.ikm.tinkar.integration.snomed.core.TinkarStarterDataHelper;
 
 import java.time.Instant;
-import java.util.UUID;
+import java.util.*;
 
 import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.*;
 
 public class SnomedTextToConcept {
-
     protected static class Concept {
         String id;
         long effectiveTime;
@@ -36,9 +36,6 @@ public class SnomedTextToConcept {
 
     }
 
-    SnomedTextToConcept() {
-    }
-
     /*
     Generating Stamp Chronology for Concepts
     */
@@ -46,18 +43,15 @@ public class SnomedTextToConcept {
     public static UUID getStampUUID(String row) {
         Concept textConcept = new Concept(row);
         UUID nameSpaceUUID = TinkarStarterConceptUtil.SNOMED_CT_NAMESPACE;
-        String status = textConcept.active == 1 ? "Active":"Inactive";
-        long effectiveTime = textConcept.effectiveTime;
-        String module = textConcept.moduleId;
-        String definitionStatusId = textConcept.definitionStatusId;
 
-        UUID stampUUID = UuidT5Generator.get(nameSpaceUUID, status + effectiveTime + module + definitionStatusId);
+        UUID stampUUID = UuidT5Generator.get(nameSpaceUUID, textConcept.toString());
         MockEntity.populateMockData(stampUUID.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
         return stampUUID;
     }
 
 
-    public static StampRecord createSTAMPChronology(String row){
+    public static StampRecord createStampChronology(String row){
+
         UUID stampUUID = getStampUUID(row);
 
         StampRecord record = StampRecordBuilder.builder()
@@ -67,15 +61,13 @@ public class SnomedTextToConcept {
                 .versions(RecordListBuilder.make())
                 .build();
 
-        StampVersionRecord versionsRecord = createSTAMPVersion(stampUUID, record, row);
+        StampVersionRecord versionsRecord = createStampVersion(record, row);
 
         return record.withAndBuild(versionsRecord);
 
     }
 
-   public static StampVersionRecord createSTAMPVersion(UUID stampUUID,
-                                                           StampRecord record,
-                                                           String row)
+   public static StampVersionRecord createStampVersion(StampRecord record, String row)
     {
         Concept textConceptEntity = new Concept(row);
 
@@ -85,6 +77,7 @@ public class SnomedTextToConcept {
         } else {
             recordBuilder.stateNid(EntityService.get().nidForUuids(INACTIVE));
         }
+
         return recordBuilder
                 .chronology(record)
                 .time(Instant.ofEpochSecond(textConceptEntity.effectiveTime).toEpochMilli())
@@ -107,29 +100,55 @@ public class SnomedTextToConcept {
     }
 
     public static ConceptRecord createConceptChronology(String row) {
-
+        // Get ConceptUUID from row
         UUID conceptUUID = getConceptUUID(row);
-        ConceptRecord conceptRecord = ConceptRecordBuilder.builder()
-                .versions(RecordListBuilder.make())
-                .leastSignificantBits(conceptUUID.getLeastSignificantBits())
+        ConceptRecord existingConceptRecord = (ConceptRecord)MockEntity.getEntity(conceptUUID);
+
+        // Create record builder based on conceptUUID (if it exists or else it creates new)
+        ConceptRecordBuilder recordBuilder = existingConceptRecord == null ?
+                ConceptRecordBuilder.builder().versions(RecordListBuilder.make()) :
+                ConceptRecordBuilder.builder(existingConceptRecord).versions(existingConceptRecord.versions());
+
+        recordBuilder.leastSignificantBits(conceptUUID.getLeastSignificantBits())
                 .mostSignificantBits(conceptUUID.getMostSignificantBits())
-                .nid(EntityService.get().nidForUuids(conceptUUID))
+                .nid(EntityService.get().nidForUuids(conceptUUID));
+
+        ConceptVersionRecord conceptVersionRecord = createConceptVersion(recordBuilder.build(), row);
+
+        ConceptRecord newConceptRecord = ConceptRecordBuilder
+                .builder(recordBuilder.build())
+                .versions(recordBuilder.versions().newWith(conceptVersionRecord))
                 .build();
 
-        ConceptVersionRecord conceptVersionRecord = createConceptVersion(conceptRecord, row);
+        MockEntity.putEntity(conceptUUID, newConceptRecord);
 
-        return ConceptRecordBuilder
-                .builder(conceptRecord)
-                .versions(RecordListBuilder.make().addAndBuild(conceptVersionRecord))
-                .build();
+        return newConceptRecord;
     }
 
     public static ConceptVersionRecord createConceptVersion(ConceptRecord conceptRecord, String row) {
-        StampRecord stampRecord = createSTAMPChronology(row);
+        StampRecord stampRecord = createStampChronology(row);
 
         return ConceptVersionRecordBuilder.builder()
                 .chronology(conceptRecord)
                 .stampNid(stampRecord.nid())
                 .build();
     }
+
+    public static List<ConceptRecord> createConceptFromMultipleVersions(Class<?> aClass, String fileName) {
+        Set<PublicId> uniquePublicIds = new HashSet<>();
+        List<ConceptRecord> conceptRecords = new ArrayList<>();
+
+        List<String> rows = loadSnomedFile(aClass, fileName);
+            for(String row: rows) {
+                ConceptRecord conceptRecord = createConceptChronology(row);
+                if (uniquePublicIds.contains(conceptRecord.publicId())) {
+                    conceptRecords.add(conceptRecord);
+                } else {
+                    uniquePublicIds.add(conceptRecord.publicId());
+                }
+            }
+            return conceptRecords;
+
+        }
+
 }

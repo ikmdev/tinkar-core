@@ -14,10 +14,6 @@ import java.util.List;
 import java.util.UUID;
 
 public class TinkarStarterConceptUtil {
-    public static TinkarStarterConceptUtil getInstance() {
-        return TinkarStarterConceptUtil.getInstance();
-    }
-
     public static final String TEST_SNOMEDCT_MOCK_DATA_JSON ="mock-data.json";
     public static final UUID SNOMED_CT_NAMESPACE = UUID.fromString("48b004d4-6457-4648-8d58-e3287126d96b");
     public static final UUID DEVELOPMENT_PATH = UuidT5Generator.get("Development Path");
