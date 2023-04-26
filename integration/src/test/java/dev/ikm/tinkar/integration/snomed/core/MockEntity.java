@@ -67,7 +67,7 @@ public class MockEntity {
     }
 
     public static void putEntity(UUID uuid, Object entity) {
-        entityCache.putIfAbsent(uuid, entity);
+        entityCache.put(uuid, entity);
     }
 
     public static Object getEntity(UUID key) {

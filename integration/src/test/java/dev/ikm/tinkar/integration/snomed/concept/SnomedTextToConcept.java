@@ -63,7 +63,9 @@ public class SnomedTextToConcept {
 
         StampVersionRecord versionsRecord = createStampVersion(record, row);
 
-        return record.withAndBuild(versionsRecord);
+        return StampRecordBuilder.builder(record)
+                .versions(record.versions().newWith(versionsRecord))
+                .build();
 
     }
 
