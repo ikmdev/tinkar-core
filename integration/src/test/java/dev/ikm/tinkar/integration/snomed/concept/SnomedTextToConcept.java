@@ -155,6 +155,8 @@ public class SnomedTextToConcept {
     /*
     Identifier & Definition Status Semantic Chronology and Version
      */
+
+    // creates identifier semantic for concept
     public static SemanticRecord createConceptIdentifierSemantic(String row) {
         UUID patternUUID = getIdentifierPatternUUID();
         UUID semanticUUID = getIdentifierSemanticUUID(row);
@@ -167,6 +169,7 @@ public class SnomedTextToConcept {
                 .build();
     }
 
+    // creates definition status semantic for concept
     public static SemanticRecord createConceptDefinitionStatusSemantic(String row) {
         UUID patternUUID = getDefinitionStatusPatternUUID();
         UUID semanticUUID = getDefinitionStatusSemanticUUID(row);
@@ -179,18 +182,21 @@ public class SnomedTextToConcept {
                 .build();
     }
 
+    // creates identifier semantic version for identifier semantic for concept
     public static SemanticVersionRecord createIdentifierSemanticVersion(SemanticRecord semanticRecord, String row) {
         Concept textConcept = new Concept(row);
         Object[] fields = new Object[] {textConcept.id, SNOMED_CT_IDENTIFIER};
         return createSemanticVersion(fields, row, semanticRecord);
     }
 
+    // creates definition status semantic version for definition status semantic for concept
     public static SemanticVersionRecord createDefinitionStatusSemanticVersion(SemanticRecord semanticRecord, String row) {
         Concept textConcept = new Concept(row);
         Object[] fields = new Object[] {UuidT5Generator.get(SNOMED_CT_NAMESPACE, textConcept.definitionStatusId)};
         return createSemanticVersion(fields, row, semanticRecord);
     }
 
+    // method to create (identifier and definition status) semantic for concept
     private static SemanticRecord createSemantic(UUID patternUUID, UUID semanticUUID, UUID referencedComponentUUID) {
         return SemanticRecordBuilder.builder()
                 .versions(RecordListBuilder.make())
@@ -202,6 +208,7 @@ public class SnomedTextToConcept {
                 .build();
     }
 
+    // method to create (identifier and definition status) semantic version for concept
     private static SemanticVersionRecord createSemanticVersion(Object[] fields, String row, SemanticRecord semanticRecord) {
         StampRecord stampRecord = createStampChronology(row);
         return SemanticVersionRecordBuilder.builder()
@@ -211,6 +218,7 @@ public class SnomedTextToConcept {
                 .build();
     }
 
+    // generate and return identifier semantic UUID
     public static UUID getIdentifierSemanticUUID(String row) {
         Concept textConcept = new Concept(row);
         UUID semanticUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE, IDENTIFIER_PATTERN.toString() + textConcept.id);
@@ -218,16 +226,19 @@ public class SnomedTextToConcept {
         return semanticUUID;
     }
 
+    // generate and return identifier semantic pattern UUID
     public static UUID getIdentifierPatternUUID() {
         MockEntity.populateMockData(IDENTIFIER_PATTERN.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
         return IDENTIFIER_PATTERN;
     }
 
+    // generate and return definition status semantic pattern UUID
     public static UUID getDefinitionStatusPatternUUID() {
         MockEntity.populateMockData(DEFINITION_STATUS_PATTERN.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
         return DEFINITION_STATUS_PATTERN;
     }
 
+    // generate and return reference component UUID
     public static UUID getReferenceComponentUUID(String row) {
         Concept textConcept = new Concept(row);
         UUID referenceComponentUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE, textConcept.id);
@@ -235,14 +246,12 @@ public class SnomedTextToConcept {
         return referenceComponentUUID;
     }
 
+    // generate and return definition status semantic UUID
     public static UUID getDefinitionStatusSemanticUUID(String row) {
         Concept textConcept = new Concept(row);
         UUID definitionStatusSemanticUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE, DEFINITION_STATUS_PATTERN.toString() + textConcept.definitionStatusId + textConcept.id);
         MockEntity.populateMockData(definitionStatusSemanticUUID.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
         return definitionStatusSemanticUUID;
     }
-
-
-
 
 }
