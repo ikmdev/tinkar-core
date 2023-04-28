@@ -6,15 +6,63 @@ import dev.ikm.tinkar.entity.*;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.UUID;
 
 import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.*;
 
 public class SnomedToEntityDescription {
 
+    public static final int ID_INDEX = 0;
     public static final int EFFECTIVE_TIME_INDEX = 1;
     public static final int ACTIVE_INDEX = 2;
     public static final int DEV_PATH_INDEX = 3;
+    public static final int CONCEPT_ID_INDEX = 4;
+    public static final int LANGUAGE_CODE_INDEX = 5;
+    public static final int TYPE_ID_INDEX = 6;
+    public static final int TERM_INDEX = 7;
+    public static final int CASE_SIGNIFICANCE_ID_INDEX = 8;
+
+    public SemanticRecord createDescriptionSemantic(String row) {
+
+        String[] values = splitRow(row);
+
+        UUID patternUUID = DESCRIPTION_PATTERN;
+        UUID semanticUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE,patternUUID.toString()+values[ID_INDEX]);
+        UUID referencedComponentUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE,values[CONCEPT_ID_INDEX]);
+
+        SemanticRecord record = SemanticRecordBuilder.builder()
+                .leastSignificantBits(semanticUUID.getLeastSignificantBits())
+                .mostSignificantBits(semanticUUID.getMostSignificantBits())
+                .nid(EntityService.get().nidForUuids(semanticUUID))
+                .patternNid(EntityService.get().nidForUuids(patternUUID))
+                .referencedComponentNid(EntityService.get().nidForUuids(referencedComponentUUID))
+                .versions(RecordListBuilder.make().build())
+                .build();
+
+        SemanticVersionRecord versionRecord = createSemanticVersion(semanticUUID, record, row);
+
+        return record.withVersions(RecordListBuilder.make().newWith(versionRecord));
+    }
+    SemanticVersionRecord createSemanticVersion(UUID semanticUUID, SemanticRecord record, String row){
+        String[] values = splitRow(row);
+
+        UUID language = null;
+        if (values[LANGUAGE_CODE_INDEX].equals("en")){
+            language = ENGLISH_LANGUAGE;
+        }
+        Object[] fields = {
+                language,
+                values[TERM_INDEX],
+                UuidT5Generator.get(SNOMED_CT_NAMESPACE, values[CASE_SIGNIFICANCE_ID_INDEX]),
+                UuidT5Generator.get(SNOMED_CT_NAMESPACE, values[TYPE_ID_INDEX])};
+
+        return SemanticVersionRecordBuilder.builder()
+                .chronology(record)
+                .stampNid(createSTAMPChronology(row).nid())
+                .fieldValues(RecordListBuilder.make().newWithAll(Arrays.asList(fields)))
+                .build();
+    }
 
     public StampRecord createSTAMPChronology(String row){
 
@@ -53,7 +101,12 @@ public class SnomedToEntityDescription {
     }
 
     private UUID generateStampUuid(String row) {
+        // Concatenating row values to create StampUUID name
         return UuidT5Generator.get(SNOMED_CT_NAMESPACE, row.replaceAll("\t",""));
+    }
+
+    private String[] splitRow(String row) {
+        return row.split("\t");
     }
 
 
