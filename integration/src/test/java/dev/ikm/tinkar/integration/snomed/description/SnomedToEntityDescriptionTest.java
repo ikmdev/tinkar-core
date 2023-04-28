@@ -117,6 +117,50 @@ public class SnomedToEntityDescriptionTest {
     }
 
     @Test
+    @DisplayName("Creating a Stamp Chronology with Inactive State")
+    public void testCreateStampChronologyWithInactiveState(){
+        //Given a row of snomed data
+        openSession((mockStaticEntityService, starterData) -> {
+            UUID namespaceUuid = SNOMED_CT_NAMESPACE;
+            UUID stampUUID = UuidT5Generator.get(namespaceUuid, "157016200707310900000000000207008126869001en900000000000013009Neoplasm of the mesentery900000000000020002");
+
+            MockEntity.populateMockData(stampUUID.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
+
+            StampRecord expectedRecord = StampRecordBuilder.builder()
+                    .leastSignificantBits(stampUUID.getLeastSignificantBits())
+                    .mostSignificantBits(stampUUID.getMostSignificantBits())
+                    .nid(MockEntity.getNid(stampUUID))
+                    .versions(RecordListBuilder.make().build())
+                    .build();
+
+            StampVersionRecord expectedVersionRecord = StampVersionRecordBuilder.builder()
+                    .stateNid(MockEntity.getNid(INACTIVE))
+                    .chronology(expectedRecord)
+                    .time(LocalDate.parse("20070731", DateTimeFormatter.ofPattern("yyyyMMdd")).atTime(12,0,0).toInstant(ZoneOffset.UTC).toEpochMilli())
+                    .authorNid(MockEntity.getNid(SNOMED_CT_AUTHOR))
+                    .moduleNid(MockEntity.getNid(SNOMED_TEXT_MODULE_ID))
+                    .pathNid(MockEntity.getNid(DEVELOPMENT_PATH))
+                    .build();
+
+            expectedRecord = expectedRecord.withVersions(RecordListBuilder.make().newWith(expectedVersionRecord));
+
+            List<String> rows = loadSnomedFile(this.getClass(),"sct2_Description_Full-en_US1000124_20220901_2.txt");
+            Assertions.assertEquals(1, rows.size(),"Read file should only have one row");
+            String testValues = rows.get(0);
+
+            //When creating Stamp Chronology
+            StampRecord actualRecord = createSTAMPChronology(testValues);
+
+            //Then the created Stamp Chronology should match expected values
+            Assertions.assertEquals(expectedRecord.leastSignificantBits(),actualRecord.leastSignificantBits(),"StampRecord leastSignificantBits do not match expected");
+            Assertions.assertEquals(expectedRecord.mostSignificantBits(),actualRecord.mostSignificantBits(), "StampRecord mostSignificantBits do not match expected");
+            Assertions.assertEquals(expectedRecord.nid(),actualRecord.nid(),"StampRecord nid does not match expected");
+            Assertions.assertEquals(expectedRecord.versions(),actualRecord.versions(), "StampRecord versions do not match expected");
+        });
+
+    }
+
+    @Test
     @DisplayName("Building StampRecord without Most Significant Bits throws IllegalStateException")
     public void testExceptionOnEmptyMostSignificantBits(){
         //Given a StampRecord without most significant bits
