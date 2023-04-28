@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import static dev.ikm.tinkar.integration.snomed.core.MockDataType.ENTITYREF;
 import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.*;
 
 public class SnomedToLanguageTransform {
@@ -49,7 +50,7 @@ public class SnomedToLanguageTransform {
         UUID nameSpaceUUID = TinkarStarterConceptUtil.SNOMED_CT_NAMESPACE;
 
         UUID stampUUID = UuidT5Generator.get(nameSpaceUUID, textLanguage.toString());
-        MockEntity.populateMockData(stampUUID.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
+        MockEntity.populateMockData(stampUUID.toString(), ENTITYREF);
         return stampUUID;
     }
 
@@ -164,19 +165,19 @@ public class SnomedToLanguageTransform {
     public static UUID getIdentifierSemanticUUID(String row) {
         Language textLanguage = new Language(row);
         UUID semanticUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE, IDENTIFIER_PATTERN.toString() + textLanguage.id);
-        MockEntity.populateMockData(semanticUUID.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
+        MockEntity.populateMockData(semanticUUID.toString(), ENTITYREF);
         return semanticUUID;
     }
 
     // generate and return identifier semantic pattern UUID
     public static UUID getIdentifierPatternUUID() {
-        MockEntity.populateMockData(IDENTIFIER_PATTERN.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
+        MockEntity.populateMockData(IDENTIFIER_PATTERN.toString(), ENTITYREF);
         return IDENTIFIER_PATTERN;
     }
 
     // generate and return definition status semantic pattern UUID
     public static UUID getLanguageAcceptabilityPatternUUID() {
-        MockEntity.populateMockData(LANGUAGE_ACCEPTABILITY_PATTERN.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
+        MockEntity.populateMockData(LANGUAGE_ACCEPTABILITY_PATTERN.toString(), ENTITYREF);
         return LANGUAGE_ACCEPTABILITY_PATTERN;
     }
 
@@ -184,7 +185,7 @@ public class SnomedToLanguageTransform {
     public static UUID getIdentifierReferenceComponentUUID(String row) {
         Language textLanguage = new Language(row);
         UUID referenceComponentUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE, LANGUAGE_ACCEPTABILITY_PATTERN.toString() +textLanguage.id);
-        MockEntity.populateMockData(referenceComponentUUID.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
+        MockEntity.populateMockData(referenceComponentUUID.toString(), ENTITYREF);
         return referenceComponentUUID;
     }
 
@@ -192,7 +193,7 @@ public class SnomedToLanguageTransform {
     public static UUID getLanguageAcceptabilitySemanticUUID(String row) {
         Language textLanguage = new Language(row);
         UUID definitionStatusSemanticUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE, LANGUAGE_ACCEPTABILITY_PATTERN.toString() + textLanguage.id);
-        MockEntity.populateMockData(definitionStatusSemanticUUID.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
+        MockEntity.populateMockData(definitionStatusSemanticUUID.toString(), ENTITYREF);
         return definitionStatusSemanticUUID;
     }
 
@@ -200,7 +201,7 @@ public class SnomedToLanguageTransform {
     public static UUID getLanguageAcceptabilityReferenceComponentUUID(String row) {
         Language textLanguage = new Language(row);
         UUID referenceComponentUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE, DESCRIPTION_PATTERN.toString() +textLanguage.referencedComponentId);
-        MockEntity.populateMockData(referenceComponentUUID.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
+        MockEntity.populateMockData(referenceComponentUUID.toString(), ENTITYREF);
         return referenceComponentUUID;
     }
 
