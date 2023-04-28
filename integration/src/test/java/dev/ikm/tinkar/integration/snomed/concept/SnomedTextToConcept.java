@@ -5,11 +5,11 @@ import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.integration.snomed.core.MockEntity;
 import dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil;
-import dev.ikm.tinkar.integration.snomed.core.TinkarStarterDataHelper;
 
 import java.time.Instant;
 import java.util.*;
 
+import static dev.ikm.tinkar.integration.snomed.core.MockDataType.ENTITYREF;
 import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.*;
 
 public class SnomedTextToConcept {
@@ -45,7 +45,7 @@ public class SnomedTextToConcept {
         UUID nameSpaceUUID = TinkarStarterConceptUtil.SNOMED_CT_NAMESPACE;
 
         UUID stampUUID = UuidT5Generator.get(nameSpaceUUID, textConcept.toString());
-        MockEntity.populateMockData(stampUUID.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
+        MockEntity.populateMockData(stampUUID.toString(), ENTITYREF);
         return stampUUID;
     }
 
@@ -97,7 +97,7 @@ public class SnomedTextToConcept {
     public static UUID getConceptUUID(String row) {
         Concept textConcept = new Concept(row);
         UUID conceptUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE, textConcept.id);
-        MockEntity.populateMockData(conceptUUID.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
+        MockEntity.populateMockData(conceptUUID.toString(), ENTITYREF);
         return conceptUUID;
     }
 
@@ -222,19 +222,19 @@ public class SnomedTextToConcept {
     public static UUID getIdentifierSemanticUUID(String row) {
         Concept textConcept = new Concept(row);
         UUID semanticUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE, IDENTIFIER_PATTERN.toString() + textConcept.id);
-        MockEntity.populateMockData(semanticUUID.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
+        MockEntity.populateMockData(semanticUUID.toString(), ENTITYREF);
         return semanticUUID;
     }
 
     // generate and return identifier semantic pattern UUID
     public static UUID getIdentifierPatternUUID() {
-        MockEntity.populateMockData(IDENTIFIER_PATTERN.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
+        MockEntity.populateMockData(IDENTIFIER_PATTERN.toString(), ENTITYREF);
         return IDENTIFIER_PATTERN;
     }
 
     // generate and return definition status semantic pattern UUID
     public static UUID getDefinitionStatusPatternUUID() {
-        MockEntity.populateMockData(DEFINITION_STATUS_PATTERN.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
+        MockEntity.populateMockData(DEFINITION_STATUS_PATTERN.toString(), ENTITYREF);
         return DEFINITION_STATUS_PATTERN;
     }
 
@@ -242,7 +242,7 @@ public class SnomedTextToConcept {
     public static UUID getReferenceComponentUUID(String row) {
         Concept textConcept = new Concept(row);
         UUID referenceComponentUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE, textConcept.id);
-        MockEntity.populateMockData(referenceComponentUUID.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
+        MockEntity.populateMockData(referenceComponentUUID.toString(), ENTITYREF);
         return referenceComponentUUID;
     }
 
@@ -250,7 +250,7 @@ public class SnomedTextToConcept {
     public static UUID getDefinitionStatusSemanticUUID(String row) {
         Concept textConcept = new Concept(row);
         UUID definitionStatusSemanticUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE, DEFINITION_STATUS_PATTERN.toString() + textConcept.definitionStatusId + textConcept.id);
-        MockEntity.populateMockData(definitionStatusSemanticUUID.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
+        MockEntity.populateMockData(definitionStatusSemanticUUID.toString(), ENTITYREF);
         return definitionStatusSemanticUUID;
     }
 

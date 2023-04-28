@@ -10,6 +10,9 @@ import java.util.UUID;
 
 import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.*;
 
+/**
+ * MockEntity class to mock the entity service. Loads the cache to store and get the data.
+ * **/
 public class MockEntity {
     private static int nidCount = 100;
     private static final Map<UUID, Integer> mockDataMap = new HashMap<>();
@@ -28,25 +31,25 @@ public class MockEntity {
         while(itr.hasNext()) {
             JsonNode mockData = (JsonNode) itr.next();
             String value = mockData.get("value").asText();
-            TinkarStarterDataHelper.MockDataType type = TinkarStarterDataHelper.MockDataType.getEnumType(mockData.get("type").asText());
+            MockDataType type = MockDataType.getEnumType(mockData.get("type").asText());
             Integer nid = mockData.get("nid").asInt();
             MockEntity.populateMockData(value, type, nid);
         }
     }
 
-    public static void populateMockData(String textValue, TinkarStarterDataHelper.MockDataType type) {
+    public static void populateMockData(String textValue, MockDataType type) {
         populateMockData(textValue, type, nidCount);
         nidCount+=1;
     }
 
-    private static void populateMockData(String textValue, TinkarStarterDataHelper.MockDataType type, int nid) {
+    private static void populateMockData(String textValue, MockDataType type, int nid) {
         UUID value;
         switch(type) {
             case MODULE: {
                 value = UuidT5Generator.get(SNOMED_CT_NAMESPACE, textValue);
             }
             break;
-            case CONCEPT: {
+            case CONCEPT, PATTERN: {
                 value = UuidT5Generator.get(textValue);
             }
             break;
@@ -72,5 +75,9 @@ public class MockEntity {
 
     public static Object getEntity(UUID key) {
         return entityCache.get(key);
+    }
+
+    public static void clearCache(){
+        entityCache.clear();
     }
 }
