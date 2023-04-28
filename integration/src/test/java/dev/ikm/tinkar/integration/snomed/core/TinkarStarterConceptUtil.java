@@ -23,6 +23,7 @@ public class TinkarStarterConceptUtil {
     public static final UUID INACTIVE = UuidT5Generator.get("Inactive");
     public static final UUID DELOITTE_USER = UuidT5Generator.get("Deloitte User");
     public static final UUID IDENTIFIER_PATTERN = UuidT5Generator.get("Identifier Pattern");
+    public static final UUID DEFINITION_STATUS_PATTERN = UuidT5Generator.get("Definition Status Pattern");
     public static final UUID SNOMED_CT_IDENTIFIER = UuidT5Generator.get("SNOMED CT identifier");
     public static final UUID SNOMED_TEXT_MODULE_ID = UuidT5Generator.get(SNOMED_CT_NAMESPACE , "900000000000207008");
 

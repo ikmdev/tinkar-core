@@ -1,8 +1,7 @@
 package dev.ikm.tinkar.integration.snomed.concept;
 
-import dev.ikm.tinkar.entity.ConceptRecord;
-import dev.ikm.tinkar.entity.ConceptVersionRecord;
-import dev.ikm.tinkar.entity.StampRecord;
+import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.integration.snomed.core.MockEntity;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.junit.jupiter.api.*;
 
@@ -155,6 +154,96 @@ public class TestSnomedTextToConcept {
         openSession((mockStaticEntityService, starterData) -> {
             List<ConceptRecord> conceptRecord = createConceptFromMultipleVersions(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_8.txt");
             assertTrue(conceptRecord.size() > 1, "File with one concept exist");
+        });
+
+    }
+
+    @Test
+    @Order(10)
+    @DisplayName("Test concept for identifier semantic")
+    public void testConceptsWithIdentifierSemantic() {
+        openSession((mockStaticEntityService, starterData) -> {
+            List<String> rows = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_5.txt");
+            UUID identifierPatternUUID = getIdentifierPatternUUID();
+            UUID identifierSemanticUUID = getIdentifierSemanticUUID(rows.get(0));
+            UUID referenceComponentUUID = getReferenceComponentUUID(rows.get(0));
+
+            // testing values
+            SemanticRecord testIdentifierSemanticRecord = createConceptIdentifierSemantic(rows.get(0));
+
+            assertTrue(rows.size() == 1, "File with no or more than one concept row exist");
+            assertEquals(MockEntity.getNid(identifierSemanticUUID),testIdentifierSemanticRecord.nid(),  "Identifier Semantic nids doesnt match");
+            assertEquals(MockEntity.getNid(identifierPatternUUID),testIdentifierSemanticRecord.patternNid(),  "Identifier Semantic pattern nids doesnt match");
+            assertEquals(MockEntity.getNid(referenceComponentUUID),testIdentifierSemanticRecord.referencedComponentNid(),  "Identifier Semantic referencecomponent nids doesnt match");
+        });
+    }
+
+    @Test
+    @Order(11)
+    @DisplayName("Test concept for single identifier semantic version")
+    public void testConceptsWithIdentifierSemanticVersion() {
+        openSession((mockStaticEntityService, starterData) -> {
+            List<String> rows = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_5.txt");
+            UUID identifierPatternUUID = getIdentifierPatternUUID();
+            UUID identifierSemanticUUID = getIdentifierSemanticUUID(rows.get(0));
+            UUID referenceComponentUUID = getReferenceComponentUUID(rows.get(0));
+
+            Integer expectedStampRecordNid = createStampChronology(rows.get(0)).nid();
+
+            // testing values
+            SemanticRecord testIdentifierSemanticRecord = createConceptIdentifierSemantic(rows.get(0));
+            ImmutableList<SemanticVersionRecord> testSemanticVersionRecord = testIdentifierSemanticRecord.versions();
+
+            assertTrue(testSemanticVersionRecord.size() == 1,  "No version or more than one version of identifier semantic pattern exist");
+            assertEquals(expectedStampRecordNid,testSemanticVersionRecord.get(0).stampNid(),  "Doesnt point to same stamp entity");
+            assertEquals(MockEntity.getNid(identifierPatternUUID),testSemanticVersionRecord.get(0).patternNid(),  "Do not reference expected parent pattern entity");
+            assertEquals(MockEntity.getNid(identifierSemanticUUID),testSemanticVersionRecord.get(0).nid(),  "Do not reference expected semantic entity");
+            assertEquals(MockEntity.getNid(referenceComponentUUID),testSemanticVersionRecord.get(0).referencedComponentNid(),  "Do not reference expected parent semantic entity");
+        });
+
+    }
+
+    @Test
+    @Order(12)
+    @DisplayName("Test concept for definition status semantic")
+    public void testConceptsWithDefinitionStatusSemantic() {
+        openSession((mockStaticEntityService, starterData) -> {
+            List<String> rows = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_6.txt");
+            UUID defintinitionStatusPatternUUID = getDefinitionStatusPatternUUID();
+            UUID defintinitionStatusSemanticUUID = getDefinitionStatusSemanticUUID(rows.get(0));
+            UUID referenceComponentUUID = getReferenceComponentUUID(rows.get(0));
+
+            // testing values
+            SemanticRecord testDefintinitionStatusSemanticRecord = createConceptDefinitionStatusSemantic(rows.get(0));
+
+            assertTrue(rows.size() == 1, "File with no or more than one concept row exist");
+            assertEquals(getNid(defintinitionStatusSemanticUUID),testDefintinitionStatusSemanticRecord.nid(),  "Definition Status Semantic nids doesnt match");
+            assertEquals(getNid(defintinitionStatusPatternUUID),testDefintinitionStatusSemanticRecord.patternNid(),  "Definition Status Semantic pattern nids doesnt match");
+            assertEquals(getNid(referenceComponentUUID),testDefintinitionStatusSemanticRecord.referencedComponentNid(),  "Definition Status Semantic referencecomponent nids doesnt match");
+        });
+    }
+
+    @Test
+    @Order(13)
+    @DisplayName("Test concept for single definition status semantic version")
+    public void testConceptsWithDefinitionStatusSemanticVersion() {
+        openSession((mockStaticEntityService, starterData) -> {
+            List<String> rows = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_6.txt");
+            UUID defintinitionStatusPatternUUID = getDefinitionStatusPatternUUID();
+            UUID defintinitionStatusSemanticUUID = getDefinitionStatusSemanticUUID(rows.get(0));
+            UUID referenceComponentUUID = getReferenceComponentUUID(rows.get(0));
+
+            Integer expectedStampRecordNid = createStampChronology(rows.get(0)).nid();
+
+            // testing values
+            SemanticRecord testDefintinitionStatusSemanticRecord = createConceptDefinitionStatusSemantic(rows.get(0));
+            ImmutableList<SemanticVersionRecord> testSemanticVersionRecord = testDefintinitionStatusSemanticRecord.versions();
+
+            assertTrue(testSemanticVersionRecord.size() == 1,  "No version or more than one version of identifier semantic pattern exist");
+            assertEquals(expectedStampRecordNid,testSemanticVersionRecord.get(0).stampNid(),  "Doesnt point to same stamp entity");
+            assertEquals(MockEntity.getNid(defintinitionStatusPatternUUID),testSemanticVersionRecord.get(0).patternNid(),  "Do not reference expected parent pattern entity");
+            assertEquals(MockEntity.getNid(defintinitionStatusSemanticUUID),testSemanticVersionRecord.get(0).nid(),  "Do not reference expected semantic entity");
+            assertEquals(MockEntity.getNid(referenceComponentUUID),testSemanticVersionRecord.get(0).referencedComponentNid(),  "Do not reference expected parent semantic entity");
         });
 
     }
