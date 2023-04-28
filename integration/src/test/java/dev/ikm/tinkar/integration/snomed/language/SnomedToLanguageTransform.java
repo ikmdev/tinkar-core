@@ -94,17 +94,53 @@ public class SnomedToLanguageTransform {
 
     }
 
-    // creates identifier semantic for language
+   /*
+    Identifier & Language acceptability Semantic Chronology and Version
+     */
+
+    // creates identifier semantic for concept
     public static SemanticRecord createLanguageIdentifierSemantic(String row) {
         UUID patternUUID = getIdentifierPatternUUID();
         UUID semanticUUID = getIdentifierSemanticUUID(row);
-        UUID referencedComponentUUID = getReferenceComponentUUID(row);
+        UUID referencedComponentUUID = getIdentifierReferenceComponentUUID(row);
+        SemanticRecord identifierSemanticRecord = createSemantic(patternUUID, semanticUUID, referencedComponentUUID);
+        SemanticVersionRecord semanticVersionRecord = createIdentifierSemanticVersion(identifierSemanticRecord, row);
 
+        return SemanticRecordBuilder.builder(identifierSemanticRecord)
+                .versions(identifierSemanticRecord.versions().newWith(semanticVersionRecord))
+                .build();
+    }
+
+    // creates definition status semantic for concept
+    public static SemanticRecord createLanguageAceeptabilitySemantic(String row) {
+        UUID patternUUID = getLanguageAcceptabilityPatternUUID();
+        UUID semanticUUID = getLanguageAcceptabilitySemanticUUID(row);
+        UUID referencedComponentUUID = getLanguageAcceptabilityReferenceComponentUUID(row);
+        SemanticRecord languageAcceptabilitySemanticRecord = createSemantic(patternUUID, semanticUUID, referencedComponentUUID);
+        SemanticVersionRecord semanticVersionRecord = createLanguageAcceptabilitySemanticVersion(languageAcceptabilitySemanticRecord, row);
+
+        return SemanticRecordBuilder.builder(languageAcceptabilitySemanticRecord)
+                .versions(languageAcceptabilitySemanticRecord.versions().newWith(semanticVersionRecord))
+                .build();
+    }
+
+    // creates identifier semantic version for identifier semantic for concept
+    public static SemanticVersionRecord createIdentifierSemanticVersion(SemanticRecord semanticRecord, String row) {
         Language textLanguage = new Language(row);
         Object[] fields = new Object[] {textLanguage.id, SNOMED_CT_IDENTIFIER};
-        StampRecord stampRecord = createStampChronology(row);
+        return createSemanticVersion(fields, row, semanticRecord);
+    }
 
-        SemanticRecord identifierSemanticRecord = SemanticRecordBuilder.builder()
+    // creates definition status semantic version for definition status semantic for concept
+    public static SemanticVersionRecord createLanguageAcceptabilitySemanticVersion(SemanticRecord semanticRecord, String row) {
+        Language textLanguage = new Language(row);
+        Object[] fields = new Object[] {UuidT5Generator.get(SNOMED_CT_NAMESPACE, textLanguage.acceptabilityId)};
+        return createSemanticVersion(fields, row, semanticRecord);
+    }
+
+    // method to create (identifier and definition status) semantic for concept
+    private static SemanticRecord createSemantic(UUID patternUUID, UUID semanticUUID, UUID referencedComponentUUID) {
+        return SemanticRecordBuilder.builder()
                 .versions(RecordListBuilder.make())
                 .nid(EntityService.get().nidForUuids(semanticUUID))
                 .referencedComponentNid(EntityService.get().nidForUuids(referencedComponentUUID))
@@ -112,15 +148,15 @@ public class SnomedToLanguageTransform {
                 .leastSignificantBits(semanticUUID.getLeastSignificantBits())
                 .mostSignificantBits(semanticUUID.getMostSignificantBits())
                 .build();
+    }
 
-        SemanticVersionRecord semanticVersionRecord = SemanticVersionRecordBuilder.builder()
-                .chronology(identifierSemanticRecord)
+    // method to create (identifier and definition status) semantic version for concept
+    private static SemanticVersionRecord createSemanticVersion(Object[] fields, String row, SemanticRecord semanticRecord) {
+        StampRecord stampRecord = createStampChronology(row);
+        return SemanticVersionRecordBuilder.builder()
+                .chronology(semanticRecord)
                 .stampNid(stampRecord.nid())
                 .fieldValues(RecordListBuilder.make().newWithAll(List.of(fields)))
-                .build();
-
-        return SemanticRecordBuilder.builder(identifierSemanticRecord)
-                .versions(identifierSemanticRecord.versions().newWith(semanticVersionRecord))
                 .build();
     }
 
@@ -138,10 +174,32 @@ public class SnomedToLanguageTransform {
         return IDENTIFIER_PATTERN;
     }
 
+    // generate and return definition status semantic pattern UUID
+    public static UUID getLanguageAcceptabilityPatternUUID() {
+        MockEntity.populateMockData(LANGUAGE_ACCEPTABILITY_PATTERN.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
+        return LANGUAGE_ACCEPTABILITY_PATTERN;
+    }
+
     // generate and return reference component UUID
-    public static UUID getReferenceComponentUUID(String row) {
+    public static UUID getIdentifierReferenceComponentUUID(String row) {
         Language textLanguage = new Language(row);
-        UUID referenceComponentUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE, LANGUAGE_ACCEPTABILITY_PATTERN.toString()+textLanguage.id);
+        UUID referenceComponentUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE, LANGUAGE_ACCEPTABILITY_PATTERN.toString() +textLanguage.id);
+        MockEntity.populateMockData(referenceComponentUUID.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
+        return referenceComponentUUID;
+    }
+
+    // generate and return definition status semantic UUID
+    public static UUID getLanguageAcceptabilitySemanticUUID(String row) {
+        Language textLanguage = new Language(row);
+        UUID definitionStatusSemanticUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE, LANGUAGE_ACCEPTABILITY_PATTERN.toString() + textLanguage.id);
+        MockEntity.populateMockData(definitionStatusSemanticUUID.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
+        return definitionStatusSemanticUUID;
+    }
+
+    // generate and return reference component UUID
+    public static UUID getLanguageAcceptabilityReferenceComponentUUID(String row) {
+        Language textLanguage = new Language(row);
+        UUID referenceComponentUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE, DESCRIPTION_PATTERN.toString() +textLanguage.referencedComponentId);
         MockEntity.populateMockData(referenceComponentUUID.toString(), TinkarStarterDataHelper.MockDataType.ENTITYREF);
         return referenceComponentUUID;
     }
