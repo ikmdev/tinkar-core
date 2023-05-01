@@ -2,7 +2,6 @@ package dev.ikm.tinkar.integration.snomed.description;
 
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.entity.*;
-import dev.ikm.tinkar.integration.snomed.core.MockDataType;
 import dev.ikm.tinkar.integration.snomed.core.MockEntity;
 import org.junit.jupiter.api.*;
 
@@ -17,8 +16,8 @@ import java.util.UUID;
 import static dev.ikm.tinkar.integration.snomed.core.MockDataType.ENTITYREF;
 import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.*;
 import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterDataHelper.openSession;
+import static dev.ikm.tinkar.integration.snomed.description.SnomedToEntityDescription.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -75,47 +74,6 @@ public class SnomedToEntityDescriptionTest {
         });
     }
 
-
-    @Test
-    @DisplayName("Creating a Stamp Chronology with Inactive State")
-    public void testCreateStampChronologyWithInactiveState(){
-        openSession((mockStaticEntityService, starterData) -> {
-            UUID namespaceUuid = SNOMED_CT_NAMESPACE;
-            UUID stampUUID = UuidT5Generator.get(namespaceUuid, "157016200707310900000000000207008126869001en900000000000013009Neoplasm of the mesentery900000000000020002");
-            MockEntity.populateMockData(stampUUID.toString(), ENTITYREF);
-
-            StampRecord expectedRecord = StampRecordBuilder.builder()
-                    .leastSignificantBits(stampUUID.getLeastSignificantBits())
-                    .mostSignificantBits(stampUUID.getMostSignificantBits())
-                    .nid(MockEntity.getNid(stampUUID))
-                    .versions(RecordListBuilder.make().build())
-                    .build();
-
-            StampVersionRecord expectedVersionRecord = StampVersionRecordBuilder.builder()
-                    .stateNid(MockEntity.getNid(INACTIVE))
-                    .chronology(expectedRecord)
-                    .time(EXPECTED_DATE)
-                    .authorNid(MockEntity.getNid(SNOMED_CT_AUTHOR))
-                    .moduleNid(MockEntity.getNid(SNOMED_TEXT_MODULE_ID))
-                    .pathNid(MockEntity.getNid(DEVELOPMENT_PATH))
-                    .build();
-
-            expectedRecord = expectedRecord.withVersions(RecordListBuilder.make().newWith(expectedVersionRecord));
-
-            List<String> rows = loadSnomedFile(this.getClass(),"sct2_Description_Full-en_US1000124_20220901_2.txt");
-            assertEquals(1, rows.size(),"Read file should only have one row");
-            String testValues = rows.get(0);
-            StampRecord actualRecord = transformer.createSTAMPChronology(testValues);
-
-
-            assertEquals(expectedRecord.leastSignificantBits(),actualRecord.leastSignificantBits(),"StampRecord leastSignificantBits do not match expected");
-            assertEquals(expectedRecord.mostSignificantBits(),actualRecord.mostSignificantBits(), "StampRecord mostSignificantBits do not match expected");
-            assertEquals(expectedRecord.nid(),actualRecord.nid(),"StampRecord nid does not match expected");
-            assertEquals(expectedRecord.versions(),actualRecord.versions(), "StampRecord versions do not match expected");
-        });
-
-    }
-/*
     @Test
     @DisplayName("Creating a Stamp Chronology with Inactive State")
     public void testCreateStampChronologyWithInactiveState(){
@@ -149,7 +107,7 @@ public class SnomedToEntityDescriptionTest {
             String testValues = rows.get(0);
 
             //When creating Stamp Chronology
-            StampRecord actualRecord = createSTAMPChronology(testValues);
+            StampRecord actualRecord = transformer.createSTAMPChronology(testValues);
 
             //Then the created Stamp Chronology should match expected values
             Assertions.assertEquals(expectedRecord.leastSignificantBits(),actualRecord.leastSignificantBits(),"StampRecord leastSignificantBits do not match expected");
@@ -158,7 +116,7 @@ public class SnomedToEntityDescriptionTest {
             Assertions.assertEquals(expectedRecord.versions(),actualRecord.versions(), "StampRecord versions do not match expected");
         });
 
-    }*/
+    }
 
     @Test
     @DisplayName("Building StampRecord without Most Significant Bits throws IllegalStateException")
@@ -322,13 +280,13 @@ public class SnomedToEntityDescriptionTest {
 
     }
 
-/*    @Test
+    @Test
     @DisplayName("Creating a Description Semantic from test file 4")
     public void testDescriptionFile4() throws IOException {
         List<String> rows = loadSnomedFile(this.getClass(),"sct2_Description_Full-en_US1000124_20220901_4.txt");
         testAndCompareTransformation(rows);
-    }*/
-/*
+    }
+
 
     private void testAndCompareTransformation(List<String> rows) {
         openSession((mockStaticEntityService, starterData) -> {
@@ -379,6 +337,6 @@ public class SnomedToEntityDescriptionTest {
             }
         });
     }
-*/
+
 
 }
