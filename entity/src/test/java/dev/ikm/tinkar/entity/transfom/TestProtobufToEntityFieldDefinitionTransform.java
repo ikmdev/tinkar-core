@@ -18,8 +18,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TestProtobufToEntityFieldDefinitionTransform {
     @Test
-    @DisplayName("Transform a Field Description Transform With All Fields Present")
-    public void testEntityFieldDescriptionTransformWithAllFieldPresent() {
+    @DisplayName("Transform a Field Definition Transform With All Fields Present")
+    public void testEntityFieldDefinitionTransformWithAllFieldPresent() {
         openSession(this, (mockedEntityService, conceptMap) -> {
         // Given a PB Field Description
         Concept statusConcept = conceptMap.get(STATUS_CONCEPT_NAME);
@@ -64,7 +64,7 @@ public class TestProtobufToEntityFieldDefinitionTransform {
                 .addVersions(pbPatternVersionOne)
                 .build();
 
-        PatternEntity actualPatternChronologyOne = ProtobufTransformer.transformPatternChronology(pbPatternChronologyOne);
+        PatternEntity actualPatternChronologyOne = ProtobufTransformer.getInstance().transformPatternChronology(pbPatternChronologyOne);
 
             PBFieldDefinition pbFieldDefinition = PBFieldDefinition.newBuilder()
                     .setMeaning(createPBPublicId(meaningConcept))
@@ -73,7 +73,7 @@ public class TestProtobufToEntityFieldDefinitionTransform {
                     .build();
 
             // When we transform a PBFieldDef
-            FieldDefinitionRecord actualFieldDefinition = ProtobufTransformer.transformFieldDefinitionRecord(pbFieldDefinition, actualPatternChronologyOne.nid(), actualPatternChronologyOne.nid());
+            FieldDefinitionRecord actualFieldDefinition = ProtobufTransformer.getInstance().transformFieldDefinitionRecord(pbFieldDefinition, actualPatternChronologyOne.nid(), actualPatternChronologyOne.nid());
 
             // Then we will create a Field Definition
             assertEquals(nid(dataTypeConcept), actualFieldDefinition.dataTypeNid(), "Nids did not match in Field Definitions Data Type.");
@@ -84,8 +84,8 @@ public class TestProtobufToEntityFieldDefinitionTransform {
     }
 
     @Test
-    @DisplayName("Transform a Field Description Transform With a Missing Data Type")
-    public void testEntityFieldDescriptionTransformWithMissingDataType() {
+    @DisplayName("Transform a Field Definition Transform With a Missing Data Type")
+    public void testEntityFieldDefinitionTransformWithMissingDataType() {
         openSession(this, (mockedEntityService, conceptMap) -> {
             /**
              * Making Concept
@@ -132,7 +132,7 @@ public class TestProtobufToEntityFieldDefinitionTransform {
                     .addVersions(pbPatternVersionOne)
                     .build();
 
-            PatternEntity actualPatternChronologyOne = ProtobufTransformer.transformPatternChronology(pbPatternChronologyOne);
+            PatternEntity actualPatternChronologyOne = ProtobufTransformer.getInstance().transformPatternChronology(pbPatternChronologyOne);
             /*
              * End of making Concept
              */
@@ -145,13 +145,13 @@ public class TestProtobufToEntityFieldDefinitionTransform {
             // When we transform PBFieldDef
 
             // Then we will throw an exception for a missing DataType field
-            assertThrows(Throwable.class, () -> ProtobufTransformer.transformFieldDefinitionRecord(pbFieldDefinition, actualPatternChronologyOne.nid(), actualPatternChronologyOne.nid()), "Not allowed to have a missing DataType in field definitions.");
+            assertThrows(Throwable.class, () -> ProtobufTransformer.getInstance().transformFieldDefinitionRecord(pbFieldDefinition, actualPatternChronologyOne.nid(), actualPatternChronologyOne.nid()), "Not allowed to have a missing DataType in field definitions.");
         });
     }
 
     @Test
-    @DisplayName("Transform a Field Description Transform With a Missing Meaning")
-    public void testEntityFieldDescriptionTransformWithMissingMeaning() {
+    @DisplayName("Transform a Field Definition Transform With a Missing Meaning")
+    public void testEntityFieldDefinitionTransformWithMissingMeaning() {
         openSession(this, (mockedEntityService, conceptMap) -> {
             /**
              * Making Concept
@@ -198,7 +198,7 @@ public class TestProtobufToEntityFieldDefinitionTransform {
                     .addVersions(pbPatternVersionOne)
                     .build();
 
-            PatternEntity actualPatternChronologyOne = ProtobufTransformer.transformPatternChronology(pbPatternChronologyOne);
+            PatternEntity actualPatternChronologyOne = ProtobufTransformer.getInstance().transformPatternChronology(pbPatternChronologyOne);
             /*
              * End of making Concept
              */
@@ -211,13 +211,13 @@ public class TestProtobufToEntityFieldDefinitionTransform {
             // When we transform PBFieldDef
 
             // Then we will throw an exception for a missing meaning field
-            assertThrows(Throwable.class, () -> ProtobufTransformer.transformFieldDefinitionRecord(pbFieldDefinition, actualPatternChronologyOne.nid(), actualPatternChronologyOne.nid()), "Not allowed to have a missing Meaning in field definitions..");
+            assertThrows(Throwable.class, () -> ProtobufTransformer.getInstance().transformFieldDefinitionRecord(pbFieldDefinition, actualPatternChronologyOne.nid(), actualPatternChronologyOne.nid()), "Not allowed to have a missing Meaning in field definitions..");
         });
     }
 
     @Test
-    @DisplayName("Transform a Field Description Transform With a Missing purpose")
-    public void testEntityFieldDescriptionTransformWithMissingPurpose() {
+    @DisplayName("Transform a Field Definition Transform With a Missing purpose")
+    public void testEntityFieldDefinitionTransformWithMissingPurpose() {
         openSession(this, (mockedEntityService, conceptMap) -> {
             /**
              * Making Concept
@@ -264,7 +264,7 @@ public class TestProtobufToEntityFieldDefinitionTransform {
                     .addVersions(pbPatternVersionOne)
                     .build();
 
-            PatternEntity actualPatternChronologyOne = ProtobufTransformer.transformPatternChronology(pbPatternChronologyOne);
+            PatternEntity actualPatternChronologyOne = ProtobufTransformer.getInstance().transformPatternChronology(pbPatternChronologyOne);
             /*
              * End of making Concept
              */
@@ -277,7 +277,7 @@ public class TestProtobufToEntityFieldDefinitionTransform {
             // When we transform PBFieldDef
 
             // Then we will throw an exception for a missing Purpose field
-            assertThrows(Throwable.class, () -> ProtobufTransformer.transformFieldDefinitionRecord(pbFieldDefinition, actualPatternChronologyOne.nid(), actualPatternChronologyOne.nid()), "Not allowed to have a missing Purpose in field definitions..");
+            assertThrows(Throwable.class, () -> ProtobufTransformer.getInstance().transformFieldDefinitionRecord(pbFieldDefinition, actualPatternChronologyOne.nid(), actualPatternChronologyOne.nid()), "Not allowed to have a missing Purpose in field definitions..");
         });
     }
 }

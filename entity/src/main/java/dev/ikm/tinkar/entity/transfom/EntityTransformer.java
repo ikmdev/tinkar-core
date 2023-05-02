@@ -41,6 +41,21 @@ public class EntityTransformer{
     private final AtomicInteger patternCount = new AtomicInteger();
 
     private final Logger LOG = LoggerFactory.getLogger(EntityTransformer.class);
+    private static EntityTransformer INSTANCE;
+
+    private EntityTransformer(){
+    }
+
+    public static EntityTransformer getInstance(){
+        if(INSTANCE == null){
+            synchronized (EntityTransformer.class){
+                if (INSTANCE == null){
+                    INSTANCE = new EntityTransformer();
+                }
+            }
+        }
+        return INSTANCE;
+    }
 
     /**
      * This method takes in an entity and is matched on its entity type based on the type of message. It is then transformed into a PB message.
@@ -56,7 +71,7 @@ public class EntityTransformer{
         };
     }
 
-    protected static PBTinkarMsg createPBConceptChronology(ConceptEntity<ConceptEntityVersion> conceptEntity){
+    protected PBTinkarMsg createPBConceptChronology(ConceptEntity<ConceptEntityVersion> conceptEntity){
         return PBTinkarMsg.newBuilder()
                 .setConceptChronologyValue(PBConceptChronology.newBuilder()
                         .setPublicId(createPBPublicId(conceptEntity.publicId()))
@@ -65,17 +80,21 @@ public class EntityTransformer{
                 .build();
     }
 
-    protected static List<PBConceptVersion> createPBConceptVersions(ImmutableList<ConceptEntityVersion> conceptEntityVersions){
+    protected List<PBConceptVersion> createPBConceptVersions(ImmutableList<ConceptEntityVersion> conceptEntityVersions){
+        if(conceptEntityVersions.size() == 0){
+            throw new RuntimeException("Exception thrown, ImmutableList contains zero Entity Concept Versions");
+        }
         final ArrayList<PBConceptVersion> pbConceptVersions = new ArrayList<>();
         conceptEntityVersions.forEach(conceptEntityVersion -> pbConceptVersions.add(PBConceptVersion.newBuilder()
-                //TODO: setPublicId method no longer exists in PBConceptVersion.class
-//                .setPublicId(createPBPublicId(conceptEntityVersion.publicId()))
                 .setStamp(createPBStampChronology(conceptEntityVersion.stamp()))
                 .build()));
         return pbConceptVersions;
     }
 
-    protected static PBTinkarMsg createPBSemanticChronology(SemanticEntity<SemanticEntityVersion> semanticEntity){
+    protected PBTinkarMsg createPBSemanticChronology(SemanticEntity<SemanticEntityVersion> semanticEntity){
+        if(semanticEntity.versions().size() == 0){
+            throw new RuntimeException("Exception thrown, Semantic Chronology can't contain zero versions");
+        }
         if (semanticEntity.referencedComponent() != null) {
             return PBTinkarMsg.newBuilder()
                     .setSemanticChronologyValue(PBSemanticChronology.newBuilder()
@@ -95,22 +114,21 @@ public class EntityTransformer{
                         .addAllVersions(createPBSemanticVersions(semanticEntity.versions()))
                         .build())
                 .build();
-
     }
 
-    protected static List<PBSemanticVersion> createPBSemanticVersions
-            (ImmutableList<SemanticEntityVersion> semanticEntityVersions){
-        final ArrayList<PBSemanticVersion> pbSemanticVersions = new ArrayList<>();
-        semanticEntityVersions.forEach(semanticEntityVersion -> pbSemanticVersions.add(PBSemanticVersion.newBuilder()
-                //TODO: setPublicId no longer exists in PBSemanticVersion.class
-//                .setPublicId(createPBPublicId(semanticEntityVersion.publicId()))
-                .setStamp(createPBStampChronology(semanticEntityVersion.stamp()))
-                .addAllFieldValues(createPBFields(semanticEntityVersion.fieldValues()))
-                .build()));
-        return  pbSemanticVersions;
+    protected List<PBSemanticVersion> createPBSemanticVersions(ImmutableList<SemanticEntityVersion> semanticEntityVersions) {
+        if(semanticEntityVersions.size() == 0){
+            throw new RuntimeException("Exception thrown, ImmutableList contains zero Entity Semantic Versions");
+        }
+        return semanticEntityVersions.stream()
+                .map(semanticEntityVersion -> PBSemanticVersion.newBuilder()
+                    .setStamp(createPBStampChronology(semanticEntityVersion.stamp()))
+                    .addAllFieldValues(createPBFields(semanticEntityVersion.fieldValues()))
+                    .build())
+                .toList();
     }
 
-    protected static PBTinkarMsg createPBPatternChronology(PatternEntity<PatternEntityVersion> patternEntity){
+    protected PBTinkarMsg createPBPatternChronology(PatternEntity<PatternEntityVersion> patternEntity){
         return PBTinkarMsg.newBuilder()
                 .setPatternChronologyValue(PBPatternChronology.newBuilder()
                         .setPublicId(createPBPublicId(patternEntity.publicId()))
@@ -119,40 +137,42 @@ public class EntityTransformer{
                 .build();
     }
 
-    protected static List<PBPatternVersion> createPBPatternVersions(ImmutableList<PatternEntityVersion> patternEntityVersions){
+    protected List<PBPatternVersion> createPBPatternVersions(ImmutableList<PatternEntityVersion> patternEntityVersions){
+        if(patternEntityVersions.size() == 0){
+            throw new RuntimeException("Exception thrown, ImmutableList contains zero Entity Pattern Versions");
+        }
         final ArrayList<PBPatternVersion> pbPatternVersions = new ArrayList<>();
-        patternEntityVersions.forEach(patternEntityVersion -> pbPatternVersions.add(PBPatternVersion.newBuilder()
-                //TODO: setPublicId no longer exists in PBPatternVersion.class
-//                .setPublicId(createPBPublicId(patternEntityVersion.publicId()))
+        patternEntityVersions.forEach(patternEntityVersion -> pbPatternVersions
+                .add(PBPatternVersion.newBuilder()
                 .setStamp(createPBStampChronology(patternEntityVersion.stamp()))
-                .setReferencedComponentPurpose(createPBPublicId(patternEntityVersion.semanticPurpose()))
-                .setReferencedComponentMeaning(createPBPublicId(patternEntityVersion.semanticMeaning()))
-                .addAllFieldDefinitions(createPBFieldDefinitions(
-                        (ImmutableList<FieldDefinitionRecord>) patternEntityVersion.fieldDefinitions()))
+                .setReferencedComponentPurpose(createPBPublicId(patternEntityVersion.semanticPurpose().publicId()))
+                .setReferencedComponentMeaning(createPBPublicId(patternEntityVersion.semanticMeaning().publicId()))
+                .addAllFieldDefinitions(createPBFieldDefinitions((ImmutableList<FieldDefinitionRecord>) patternEntityVersion.fieldDefinitions()))
                 .build()));
         return pbPatternVersions;
     }
 
-    protected static PBStampChronology createPBStampChronology(StampEntity<StampVersionRecord> stampEntity){
+    protected PBStampChronology createPBStampChronology(StampEntity<StampVersionRecord> stampEntity){
         return PBStampChronology.newBuilder()
                 .setPublicId(createPBPublicId(stampEntity.publicId()))
                 .addAllStampVersions(createPBStampVersions(stampEntity.versions()))
                 .build();
     }
     // TODO: error occurring  here because setStatus method does not exist in PBConceptChronology (ask Andrew).
-    protected static List<PBStampVersion> createPBStampVersions(ImmutableList<StampVersionRecord> stampVersionRecords){
-        final ArrayList<PBStampVersion> pbStampVersions = new ArrayList<>();
-        stampVersionRecords.forEach(stampVersionRecord -> PBStampVersion.newBuilder()
-                .setStatus(createPBPublicId(stampVersionRecord.state().publicId()))
-                .setAuthor(createPBPublicId(stampVersionRecord.author().publicId()))
-                .setModule(createPBPublicId(stampVersionRecord.module().publicId()))
-                .setPath(createPBPublicId(stampVersionRecord.path().publicId()))
-                .setTime(createTimestamp(stampVersionRecord.time()))
-                .build());
-        return pbStampVersions;
+    protected List<PBStampVersion> createPBStampVersions(ImmutableList<StampVersionRecord> stampVersionRecords){
+        return stampVersionRecords
+                .stream()
+                .map(stampVersionRecord -> PBStampVersion.newBuilder()
+                    .setStatus(createPBPublicId(stampVersionRecord.state().publicId()))
+                    .setAuthor(createPBPublicId(stampVersionRecord.author().publicId()))
+                    .setModule(createPBPublicId(stampVersionRecord.module().publicId()))
+                    .setPath(createPBPublicId(stampVersionRecord.path().publicId()))
+                    .setTime(createTimestamp(stampVersionRecord.time()))
+                    .build())
+                .toList();
     }
 
-    protected static PBFieldDefinition createPBFieldDefinition(FieldDefinitionRecord fieldDefinitionRecord){
+    protected PBFieldDefinition createPBFieldDefinition(FieldDefinitionRecord fieldDefinitionRecord){
         return PBFieldDefinition.newBuilder()
                 .setMeaning(createPBPublicId(fieldDefinitionRecord.meaning().publicId()))
                 .setDataType(createPBPublicId(fieldDefinitionRecord.dataType().publicId()))
@@ -160,7 +180,7 @@ public class EntityTransformer{
                 .build();
     }
 
-    protected static List<PBFieldDefinition> createPBFieldDefinitions
+    protected List<PBFieldDefinition> createPBFieldDefinitions
             (ImmutableList<FieldDefinitionRecord> fieldDefinitionRecords){
         final ArrayList<PBFieldDefinition> pbFieldDefinitions = new ArrayList<>();
         fieldDefinitionRecords.forEach(fieldDefinitionRecord -> pbFieldDefinitions
@@ -168,40 +188,82 @@ public class EntityTransformer{
         return pbFieldDefinitions;
     }
 
-    protected static PBField createPBField(Object obj){
+    protected PBField toPBBool(boolean value) {
+        return PBField.newBuilder().setBoolValue(value).build();
+    }
+    protected PBField toPBByte(byte[] value) {
+        return PBField.newBuilder().setBytesValue(ByteString.copyFrom(value)).build();
+    }
+    protected PBField toPBFloat(float value) {
+        return PBField.newBuilder().setFloatValue(value).build();
+    }
+    protected PBField toPBInteger(Integer value) {
+        return PBField.newBuilder().setIntValue(value).build();
+    }
+    protected PBField toPBStamp(Stamp value) {
+        return PBField.newBuilder().setStampValue(createPBStampChronology((StampRecord) value)).build();
+    }
+    protected PBField toPBConcept(Concept value) {
+        return PBField.newBuilder().setPublicIdValue(createPBPublicId(value.publicId())).build();
+    }
+    protected PBField toPBSemantic(Semantic value) {
+        return PBField.newBuilder().setPublicIdValue(createPBPublicId(value.publicId())).build();
+    }
+    protected PBField toPBPattern(Pattern value) {
+        return PBField.newBuilder().setPublicIdValue(createPBPublicId(value.publicId())).build();
+    }
+    protected PBField toPBComponent(Component value) {
+        return PBField.newBuilder().setPublicIdValue(createPBPublicId(value.publicId())).build();
+    }
+    protected PBField toPBPublicId(PublicId value) {
+        return PBField.newBuilder().setPublicIdValue(createPBPublicId(value)).build();
+    }
+    protected PBField toPBPublicIdList(PublicIdList value) {
+        return PBField.newBuilder().setPublicIdListValue(createPBPublicIdList(value)).build();
+    }
+    protected PBField toPBString(String value) {
+        return PBField.newBuilder().setStringValue(value).build();
+    }
+    protected PBField toPBInstant(Instant value) {
+        return PBField.newBuilder().setTimeValue(createTimestamp(value.getEpochSecond())).build();
+    }
+    protected PBField toPBIntIdList(IntIdList value) {
+        return PBField.newBuilder().setPublicIdListValue(createPBPublicIdList(value)).build();
+    }
+    protected PBField toPBIntIdSet(IntIdSet value) {
+        return PBField.newBuilder().setPublicIdListValue(createPBPublicIdList(value)).build();
+    }
+    protected PBField toPBDiTree(DiTree value) {
+        return PBField.newBuilder().setDiTreeValue(createPBDiTree((DiTreeEntity) value)).build();
+    }
+    protected PBField toPBDiGraph(DiGraph value) {
+        return PBField.newBuilder().setDiGraphValue(createPBDiGraph((DiGraphEntity<EntityVertex>) value)).build();
+    }
+
+    //TODO: Add in Planar/Spatial point into the switch statement.
+    protected PBField createPBField(Object obj){
         return switch (obj){
-            case Boolean bool -> PBField.newBuilder().setBoolValue(bool).build();
-            case byte[] bytes -> PBField.newBuilder().setBytesValue(ByteString.copyFrom(bytes)).build();
-//            case ConceptRecord conceptRecord -> PBField.newBuilder()
-//                    .setConceptValue(createPBConcept(conceptRecord.publicId())).build();
-            case Float f -> PBField.newBuilder().setFloatValue(f).build();
-            case Integer i -> PBField.newBuilder().setIntValue(i).build();
-            case Stamp stamp -> PBField.newBuilder()
-                    .setStampValue(createPBStampChronology((StampRecord) stamp)).build();
-            case Concept concept -> PBField.newBuilder().setPublicIdValue(createPBPublicId(concept.publicId())).build();
-            case Semantic semantic -> PBField.newBuilder()
-                    .setPublicIdValue(createPBPublicId(semantic.publicId())).build();
-            case Pattern pattern -> PBField.newBuilder().setPublicIdValue(createPBPublicId(pattern.publicId())).build();
-            case Component component -> PBField.newBuilder()
-                    .setPublicIdValue(createPBPublicId(component.publicId())).build();
-            case PublicId publicId -> PBField.newBuilder().setPublicIdValue(createPBPublicId(publicId)).build();
-            case PublicIdList publicIdList -> PBField.newBuilder()
-                    .setPublicIdListValue(createPBPublicIdList(publicIdList)).build();
-            case String s -> PBField.newBuilder().setStringValue(s).build();
-            case Instant instant -> PBField.newBuilder()
-                    .setTimeValue(createTimestamp(instant.getEpochSecond())).build();
-            case IntIdList intIdList -> PBField.newBuilder()
-                    .setPublicIdListValue(createPBPublicIdList(intIdList)).build();
-            case IntIdSet intIdSet -> PBField.newBuilder()
-                    .setPublicIdListValue(createPBPublicIdList(intIdSet)).build();
-            case DiTree diTree -> PBField.newBuilder().setDiTreeValue(createPBDiTree((DiTreeEntity) diTree)).build();
-            case DiGraph diGraph -> PBField.newBuilder().setDiGraphValue(createPBDiGraph((DiGraphEntity<EntityVertex>) diGraph)).build();
-//            case PlanarPoint planarPoint -> createPBPlanaPoint(planarPoint); TODO-aks8m: need to add to protobuf
-//            case SpatialPoint spatialPoint -> createPBSpatialPoint(spatialPoint); TODO-aks8m: need to add to protobuf
+            case Boolean bool -> toPBBool(bool);
+            case byte[] bytes -> toPBByte(bytes);
+            case Float f -> toPBFloat(f);
+            case Integer i -> toPBInteger(i);
+            case Stamp stamp -> toPBStamp(stamp);
+            case Concept concept -> toPBConcept(concept);
+            case Semantic semantic -> toPBSemantic(semantic);
+            case Pattern pattern -> toPBPattern(pattern);
+            case Component component -> toPBComponent(component);
+            case PublicId publicId -> toPBPublicId(publicId);
+            case PublicIdList publicIdList -> toPBPublicIdList(publicIdList);
+            case String s -> toPBString(s);
+            case Instant instant -> toPBInstant(instant);
+            case IntIdList intIdList -> toPBIntIdList(intIdList);
+            case IntIdSet intIdSet -> toPBIntIdSet(intIdSet);
+            case DiTree diTree -> toPBDiTree(diTree);
+            case DiGraph diGraph -> toPBDiGraph(diGraph);
             case null, default -> throw new IllegalStateException("Unknown or null field object for: " + obj);
         };
     }
-    protected static List<PBField> createPBFields(ImmutableList<Object> objects){
+    protected List<PBField> createPBFields(ImmutableList<Object> objects){
         final ArrayList<PBField> pbFields = new ArrayList<>();
         for(Object obj : objects){
             pbFields.add(createPBField(obj));
@@ -210,19 +272,19 @@ public class EntityTransformer{
     }
 
     //TODO: PBConcept on its own doesnt exist, because PBConcept is its own type of message (like semantic or pattern).
-    protected static PBConceptChronology createPBConcept(PublicId publicId){
+    protected PBConceptChronology createPBConcept(PublicId publicId){
         return PBConceptChronology.newBuilder()
                 .setPublicId(createPBPublicId(publicId))
                 .build();
     }
 
-    protected static Timestamp createTimestamp(long time){
+    protected Timestamp createTimestamp(long time){
         return Timestamp.newBuilder()
                 .setSeconds(time)
                 .build();
     }
 
-    protected static PBPublicId createPBPublicId(PublicId publicId){
+    protected PBPublicId createPBPublicId(PublicId publicId){
         return PBPublicId.newBuilder()
                 .addAllId(publicId.asUuidList().stream()
                         .map(UuidUtil::getRawBytes)
@@ -231,7 +293,7 @@ public class EntityTransformer{
                 .build();
     }
 
-    protected static PBPublicIdList createPBPublicIdList(PublicIdList publicIdList){
+    protected PBPublicIdList createPBPublicIdList(PublicIdList publicIdList){
         ArrayList<PBPublicId> pbPublicIds = new ArrayList<>();
         for(PublicId publicId : publicIdList.toIdArray()){
             pbPublicIds.add(createPBPublicId(publicId));
@@ -241,7 +303,7 @@ public class EntityTransformer{
                 .build();
     }
 
-    protected static PBPublicIdList createPBPublicIdList(IntIdList intIdList){
+    protected PBPublicIdList createPBPublicIdList(IntIdList intIdList){
         ArrayList<PBPublicId> pbPublicIds = new ArrayList<>();
         intIdList.forEach(nid -> pbPublicIds.add(createPBPublicId(EntityService.get().getEntityFast(nid).publicId())));
         return PBPublicIdList.newBuilder()
@@ -249,7 +311,7 @@ public class EntityTransformer{
                 .build();
     }
 
-    protected static PBPublicIdList createPBPublicIdList(IntIdSet intIdSet){
+    protected PBPublicIdList createPBPublicIdList(IntIdSet intIdSet){
         ArrayList<PBPublicId> pbPublicIds = new ArrayList<>();
         intIdSet.forEach(nid -> pbPublicIds.add(createPBPublicId(EntityService.get().getEntityFast(nid).publicId())));
         return PBPublicIdList.newBuilder()
@@ -257,7 +319,7 @@ public class EntityTransformer{
                 .build();
     }
 
-    protected static PBDiGraph createPBDiGraph(DiGraphEntity<EntityVertex> diGraph){
+    protected PBDiGraph createPBDiGraph(DiGraphEntity<EntityVertex> diGraph){
         //List all PBVertex TODO-aks8m: Why is this called a map when it's a list??
         ArrayList<PBVertex> pbVertices = new ArrayList<>();
         diGraph.vertexMap().forEach(vertex -> pbVertices.add(createPBVertex(vertex)));
@@ -276,7 +338,7 @@ public class EntityTransformer{
                 .build();
     }
 
-    protected static PBDiTree createPBDiTree(DiTreeEntity diTree){
+    protected PBDiTree createPBDiTree(DiTreeEntity diTree){
         ArrayList<PBVertex> pbVertices = new ArrayList<>();
         diTree.vertexMap().forEach(vertex -> pbVertices.add(createPBVertex(vertex)));
         Vertex pbVertexRoot = diTree.root();
@@ -292,7 +354,7 @@ public class EntityTransformer{
                 .build();
     }
 
-    protected static PBVertex createPBVertex(EntityVertex vertex){
+    protected PBVertex createPBVertex(EntityVertex vertex){
         int pbVertexIndex = vertex.vertexIndex();
         RichIterable<Concept> vertexKeys = vertex.propertyKeys();
         ArrayList<PBVertex.Property> pbPropertyList = new ArrayList<>();
@@ -308,12 +370,12 @@ public class EntityTransformer{
                 .build();
     }
 
-    protected static PBVertexId createPBVertexId(VertexId vertexId){
+    protected PBVertexId createPBVertexId(VertexId vertexId){
         return PBVertexId.newBuilder()
                 .setId(ByteString.copyFrom(PublicId.idString(vertexId.asUuidArray()), StandardCharsets.UTF_8))
                 .build();
     }
-    protected static List<PBIntToIntMap> createPBIntToIntMaps(ImmutableIntIntMap intToIntMap) {
+    protected List<PBIntToIntMap> createPBIntToIntMaps(ImmutableIntIntMap intToIntMap) {
         ArrayList<PBIntToIntMap> pbIntToIntMaps = new ArrayList<>();
         intToIntMap.forEachKeyValue((source, target) -> pbIntToIntMaps.add(PBIntToIntMap.newBuilder()
                 .setSource(source)
@@ -322,7 +384,7 @@ public class EntityTransformer{
         ));
         return pbIntToIntMaps;
     }
-    protected static List<PBIntToMultipleIntMap> createPBIntToMultipleIntMaps(ImmutableIntObjectMap intToMultipleIntMap){
+    protected List<PBIntToMultipleIntMap> createPBIntToMultipleIntMaps(ImmutableIntObjectMap intToMultipleIntMap){
         List<PBIntToMultipleIntMap> pbIntToMultipleIntMaps = new ArrayList<>();
         intToMultipleIntMap.keySet().forEach(source -> {
             final ArrayList<Integer> targets = new ArrayList<>();
@@ -336,14 +398,14 @@ public class EntityTransformer{
         return  pbIntToMultipleIntMaps;
     }
 
-    protected static PBPlanarPoint createPBPlanaPoint(PlanarPoint planarPoint){
+    protected PBPlanarPoint createPBPlanaPoint(PlanarPoint planarPoint){
         return PBPlanarPoint.newBuilder()
                 .setX(planarPoint.x())
                 .setY(planarPoint.y())
                 .build();
     }
 
-    protected static PBSpatialPoint createPBSpatialPoint(SpatialPoint spatialPoint){
+    protected PBSpatialPoint createPBSpatialPoint(SpatialPoint spatialPoint){
         return PBSpatialPoint.newBuilder()
                 .setX(spatialPoint.x())
                 .setY(spatialPoint.y())

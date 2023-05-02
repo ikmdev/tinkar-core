@@ -27,7 +27,11 @@ public class PrimitiveData {
     private static CopyOnWriteArrayList<SaveState> statesToSave = new CopyOnWriteArrayList<>();
 
     static {
-        singleton = new PrimitiveData();
+        try {
+            singleton = new PrimitiveData();
+        } catch (Throwable throwable) {
+            //throwable.printStackTrace();
+        }
     }
 
     public PrimitiveData() {

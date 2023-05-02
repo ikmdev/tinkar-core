@@ -32,7 +32,7 @@ public class TestProtobufToEntitySemanticTransform {
             // When we transform PBSemanticChronology
 
             // Then we will throw a Runtime exception
-            assertThrows(Throwable.class, () -> ProtobufTransformer.transformSemanticChronology(pbSemanticChronology), "Not allowed to have no semantic versions.");
+            assertThrows(Throwable.class, () -> ProtobufTransformer.getInstance().transformSemanticChronology(pbSemanticChronology), "Not allowed to have no semantic versions.");
         });
     }
     @Test
@@ -73,7 +73,7 @@ public class TestProtobufToEntitySemanticTransform {
                     .build();
 
             // When we transform PBSemanticChronology
-            SemanticEntity actualSemanticChronology = ProtobufTransformer.transformSemanticChronology(pbSemanticChronology);
+            SemanticEntity actualSemanticChronology = ProtobufTransformer.getInstance().transformSemanticChronology(pbSemanticChronology);
 
             // Then we compare the PBSemanticChronology to the expected one
             assertEquals(1, actualSemanticChronology.versions().size(), "Versions are missing from the Semantic Chronology.");
@@ -119,7 +119,7 @@ public class TestProtobufToEntitySemanticTransform {
             // When we transform PBSemanticChronology
 
             // Then we will throw a Runtime exception
-            assertThrows(Throwable.class, () -> ProtobufTransformer.transformSemanticChronology(pbSemanticChronology), "Not allowed to have no semantic versions.");
+            assertThrows(Throwable.class, () -> ProtobufTransformer.getInstance().transformSemanticChronology(pbSemanticChronology), "Not allowed to have no semantic versions.");
             });
     }
 
