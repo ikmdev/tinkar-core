@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ExportEntitiesToProtobufFile extends TrackingCallable<Integer> {
     private static final Logger LOG = LoggerFactory.getLogger(ExportEntitiesToProtobufFile.class);
     private FileOutputStream fileOutputStream;
-    private final EntityTransformer entityTransformer = new EntityTransformer();
+    private final EntityTransformer entityTransformer = EntityTransformer.getInstance();
     final AtomicInteger exportConceptCount = new AtomicInteger();
     final AtomicInteger exportSemanticCount = new AtomicInteger();
     final AtomicInteger exportPatternCount = new AtomicInteger();

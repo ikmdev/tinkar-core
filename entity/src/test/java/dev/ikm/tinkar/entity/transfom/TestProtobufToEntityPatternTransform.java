@@ -34,7 +34,7 @@ public class TestProtobufToEntityPatternTransform {
             // When we transform PBPatternChronology
 
             // Then we will throw a Runtime exception
-            assertThrows(Throwable.class, () -> ProtobufTransformer.transformPatternChronology(pbPatternChronology), "Not allowed to have no pattern versions.");
+            assertThrows(Throwable.class, () -> ProtobufTransformer.getInstance().transformPatternChronology(pbPatternChronology), "Not allowed to have no pattern versions.");
         });
 
     }
@@ -86,7 +86,7 @@ public class TestProtobufToEntityPatternTransform {
                     .build();
 
             // When we transform PBPatternChronology
-            PatternEntity actualPatternChronologyOne = ProtobufTransformer.transformPatternChronology(pbPatternChronologyOne);
+            PatternEntity actualPatternChronologyOne = ProtobufTransformer.getInstance().transformPatternChronology(pbPatternChronologyOne);
 
             // Then the resulting PatternChronology should match the original PBPatternChronology
             assertEquals(nid(testConcept), actualPatternChronologyOne.nid(), "Nid's did not match in Pattern Chronology.");
@@ -173,7 +173,7 @@ public class TestProtobufToEntityPatternTransform {
                     .build();
 
             // When we transform PBPatternChronology
-            PatternEntity actualPatternChronologyOne = ProtobufTransformer.transformPatternChronology(pbPatternChronologyOne);
+            PatternEntity actualPatternChronologyOne = ProtobufTransformer.getInstance().transformPatternChronology(pbPatternChronologyOne);
 
             // Then the resulting PatternChronology should match the original PBPatternChronology
             assertEquals(nid(testConcept), actualPatternChronologyOne.nid(), "Nid's did not match in Pattern Chronology.");

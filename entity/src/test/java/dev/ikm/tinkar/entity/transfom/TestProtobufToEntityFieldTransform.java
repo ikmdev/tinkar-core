@@ -25,7 +25,7 @@ public class TestProtobufToEntityFieldTransform {
                     .build();
 
             // When we transform our String Field value
-            Object actualFieldString = ProtobufTransformer.transformField(pbFieldString);
+            Object actualFieldString = ProtobufTransformer.getInstance().transformField(pbFieldString);
 
             // Then the resulting Object should match the original passed in string value.
             assertEquals(expectedStringValue,actualFieldString.toString(), "The transformed string value does not match the expected.");
@@ -45,7 +45,7 @@ public class TestProtobufToEntityFieldTransform {
                     .build();
 
             // When we transform our Boolean Field value
-            Object actualFieldBool = ProtobufTransformer.transformField(pbFieldBool);
+            Object actualFieldBool = ProtobufTransformer.getInstance().transformField(pbFieldBool);
 
             // Then the resulting Object should match the original passed in boolean value.
             assertEquals(expectedBoolValue, actualFieldBool, "The transformed boolean value does not match the expected.");
@@ -63,7 +63,7 @@ public class TestProtobufToEntityFieldTransform {
                     .build();
 
             // When we transform our Integer Field value
-            Object actualFieldInt = ProtobufTransformer.transformField(pbFieldInt);
+            Object actualFieldInt = ProtobufTransformer.getInstance().transformField(pbFieldInt);
 
             // Then the resulting Object should match the original passed in Integer value.
             assertEquals(expectedIntValue, actualFieldInt, "The transformed integer value does not match the expected.");
@@ -81,7 +81,7 @@ public class TestProtobufToEntityFieldTransform {
                     .build();
 
             // When we transform our Float Field value
-            Object actualFieldFloat = ProtobufTransformer.transformField(pbFieldFloat);
+            Object actualFieldFloat = ProtobufTransformer.getInstance().transformField(pbFieldFloat);
 
             // Then the resulting Object should match the original passed in float value.
             assertEquals(expectedFloatValue, actualFieldFloat, "The transformed float value does not match the expected.");

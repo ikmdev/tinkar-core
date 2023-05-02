@@ -32,11 +32,16 @@ public enum State implements dev.ikm.tinkar.component.Concept, ComponentWithNid 
     private static ImmutableIntObjectMap<State> nidStateMap;
 
     static {
-        MutableIntObjectMap<State> mutableNidStateMap = IntObjectMaps.mutable.ofInitialCapacity(5);
-        for (State state: State.values()) {
-            mutableNidStateMap.put(state.nid(), state);
+        try {
+            MutableIntObjectMap<State> mutableNidStateMap = IntObjectMaps.mutable.ofInitialCapacity(5);
+            for (State state : State.values()) {
+                mutableNidStateMap.put(state.nid(), state);
+            }
+            nidStateMap = mutableNidStateMap.toImmutable();
+        }catch (Throwable exception) {
+            MutableIntObjectMap<State> mutableNidStateMap = IntObjectMaps.mutable.ofInitialCapacity(5);
+            nidStateMap = mutableNidStateMap.toImmutable();
         }
-        nidStateMap = mutableNidStateMap.toImmutable();
     }
 
     public static State fromConceptNid(int conceptNid) {

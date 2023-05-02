@@ -94,7 +94,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<Integer> {
                 taskSemaphore.acquireUninterruptibly();
                 TinkExecutor.threadPool().execute(() -> {
                     try {
-                        ProtobufTransformer transformer = new ProtobufTransformer();
+                        ProtobufTransformer transformer = ProtobufTransformer.getInstance();
                         Entity<? extends EntityVersion> entity = transformer.transform(PBTinkarMsg.parseFrom(pbBytes));
                         EntityService.get().putEntity(entity);
                         transformer.getStampEntities()

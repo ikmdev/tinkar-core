@@ -12,7 +12,6 @@ import dev.ikm.tinkar.component.location.PlanarPoint;
 import dev.ikm.tinkar.component.location.SpatialPoint;
 import dev.ikm.tinkar.dto.ConceptDTO;
 import dev.ikm.tinkar.dto.ConceptDTOBuilder;
-import dev.ikm.tinkar.dto.graph.VertexDTO;
 import dev.ikm.tinkar.dto.graph.VertexDTOBuilder;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.graph.DiGraphEntity;
@@ -43,7 +42,23 @@ public class ProtobufTransformer {
 
     private final List<StampEntity<? extends StampEntityVersion>> stampEntities = new ArrayList<>(); //TODO need to look at his load service
 
-    public static Entity<? extends EntityVersion> transform(PBTinkarMsg pbTinkarMsg) {
+    private static ProtobufTransformer INSTANCE;
+
+    private ProtobufTransformer(){
+    }
+
+    public static ProtobufTransformer getInstance(){
+        if(INSTANCE == null){
+            synchronized (ProtobufTransformer.class){
+                if (INSTANCE == null){
+                    INSTANCE = new ProtobufTransformer();
+                }
+            }
+        }
+        return INSTANCE;
+    }
+
+    public Entity<? extends EntityVersion> transform(PBTinkarMsg pbTinkarMsg) {
         return switch (pbTinkarMsg.getValueCase()) {
             case CONCEPTCHRONOLOGYVALUE -> transformConceptChronology(pbTinkarMsg.getConceptChronologyValue());
             case SEMANTICCHRONOLOGYVALUE -> transformSemanticChronology(pbTinkarMsg.getSemanticChronologyValue());
@@ -57,7 +72,7 @@ public class ProtobufTransformer {
         return stampEntities;
     }
 
-    protected static ConceptEntity<? extends ConceptEntityVersion> transformConceptChronology(PBConceptChronology pbConceptChronology) {
+    protected ConceptEntity<? extends ConceptEntityVersion> transformConceptChronology(PBConceptChronology pbConceptChronology) {
         if(pbConceptChronology.getConceptVersionsCount() == 0){ //TODO - change proto file to say just "Versions"
             throw new RuntimeException("Exception thrown, STAMP Chronology can't contain zero versions");
         }
@@ -95,14 +110,14 @@ public class ProtobufTransformer {
         return ConceptRecordBuilder.builder(conceptRecord).versions(conceptVersions).build();
     }
 
-    protected static ConceptVersionRecord transformConceptVersion(PBConceptVersion pbConceptVersion, ConceptRecord concept) {
+    protected ConceptVersionRecord transformConceptVersion(PBConceptVersion pbConceptVersion, ConceptRecord concept) {
         return ConceptVersionRecordBuilder.builder()
                 .chronology(concept)
                 .stampNid(transformStampChronology(pbConceptVersion.getStamp()).nid())
                 .build();
     }
 
-    protected static SemanticEntity<? extends SemanticEntityVersion> transformSemanticChronology(PBSemanticChronology pbSemanticChronology){
+    protected SemanticEntity<? extends SemanticEntityVersion> transformSemanticChronology(PBSemanticChronology pbSemanticChronology){
         if(pbSemanticChronology.getVersionsCount() == 0){
             throw new RuntimeException("Exception thrown, STAMP Chronology can't contain zero versions");
         }
@@ -150,7 +165,7 @@ public class ProtobufTransformer {
     }
 
     //This is creating PBSemanticVersion (line 314 Tinkar.proto)
-    protected static SemanticVersionRecord transformSemanticVersion(PBSemanticVersion pbSemanticVersion, SemanticRecord semantic){
+    protected SemanticVersionRecord transformSemanticVersion(PBSemanticVersion pbSemanticVersion, SemanticRecord semantic){
         MutableList<Object> fieldValues = Lists.mutable.ofInitialCapacity(pbSemanticVersion.getFieldValuesCount());
         for(PBField pbField : pbSemanticVersion.getFieldValuesList()){
             fieldValues.add(transformField(pbField));
@@ -164,7 +179,7 @@ public class ProtobufTransformer {
 
     //Pattern Transformation
     //This is creating a PatternChronology (line 270 Tinkar.proto)
-    protected static PatternEntity<? extends PatternEntityVersion> transformPatternChronology(PBPatternChronology pbPatternChronology){
+    protected PatternEntity<? extends PatternEntityVersion> transformPatternChronology(PBPatternChronology pbPatternChronology){
         if(pbPatternChronology.getVersionsCount() == 0){
             throw new RuntimeException("Exception thrown, STAMP Chronology can't contain zero versions");
         }
@@ -202,7 +217,7 @@ public class ProtobufTransformer {
         return PatternRecordBuilder.builder(patternRecord).versions(patternVersions).build();
     }
 
-    protected static PatternVersionRecord transformPatternVersion(PBPatternVersion pbPatternVersion, PatternRecord pattern){
+    protected PatternVersionRecord transformPatternVersion(PBPatternVersion pbPatternVersion, PatternRecord pattern){
         MutableList<FieldDefinitionRecord> fieldDefinition = Lists.mutable
                 .withInitialCapacity(pbPatternVersion.getFieldDefinitionsCount());
         //TODO: Is this a proper way to grab NID?
@@ -224,7 +239,7 @@ public class ProtobufTransformer {
 
     //STAMP Transformation
     //This is creating PBStampChronology (line 209 Tinkar.proto)
-    public static StampRecord transformStampChronology(PBStampChronology pbStampChronology){
+    public StampRecord transformStampChronology(PBStampChronology pbStampChronology){
         if(pbStampChronology.getStampVersionsList().size() == 0){ //TODO - change proto file to say just "Versions"
             throw new RuntimeException("Exception thrown, STAMP Chronology can't contain zero versions");
         }
@@ -264,7 +279,7 @@ public class ProtobufTransformer {
         return StampRecordBuilder.builder(stampRecord).versions(stampVersions).build();
     }
 
-    protected static StampVersionRecord transformStampVersion(PBStampVersion pbStampVersion, StampRecord stampRecord){
+    protected StampVersionRecord transformStampVersion(PBStampVersion pbStampVersion, StampRecord stampRecord){
         return StampVersionRecordBuilder.builder()
                 .chronology(stampRecord)
                 .stateNid(Entity.nid(transformPublicId(pbStampVersion.getStatus())))
@@ -277,7 +292,7 @@ public class ProtobufTransformer {
 
     //Field Definition Transformation
     //This creates PBFieldDefinition (line 256 in Tinkar.proto)
-    protected static FieldDefinitionRecord transformFieldDefinitionRecord(PBFieldDefinition pbFieldDefinition,
+    protected FieldDefinitionRecord transformFieldDefinitionRecord(PBFieldDefinition pbFieldDefinition,
                                                                           int patternVersionStampNid, int patternNid) {
         int meaningNid = Entity.nid(transformPublicId(pbFieldDefinition.getMeaning()));
         int purposeNid = Entity.nid(transformPublicId(pbFieldDefinition.getPurpose()));
@@ -294,7 +309,7 @@ public class ProtobufTransformer {
 
     //Field Transformation
     //TODO: Use generics in transformField class rather than returning an object
-    protected static Object transformField(PBField pbField){
+    protected Object transformField(PBField pbField){
         return switch (pbField.getValueCase()){
             case BOOLVALUE -> pbField.getBoolValue();
             case BYTESVALUE -> pbField.getBytesValue().toByteArray();
@@ -320,7 +335,7 @@ public class ProtobufTransformer {
         };
     }
 
-    protected static PublicId transformPublicId(PBPublicId pbPublicId){
+    protected PublicId transformPublicId(PBPublicId pbPublicId){
         if (pbPublicId.getIdCount() == 0){
             throw new RuntimeException("Exception thrown, empty Public ID is present.");
         }
@@ -331,7 +346,7 @@ public class ProtobufTransformer {
                 .collect(Collectors.toList()));
     }
 
-    protected static PublicIdList transformPublicIdList(PBPublicIdList pbPublicIdList) {
+    protected PublicIdList transformPublicIdList(PBPublicIdList pbPublicIdList) {
         final PublicId[] publicIds = new PublicId[pbPublicIdList.getPublicIdsCount()];
         for (int i = 0; i < pbPublicIdList.getPublicIdsCount(); i++) {
             publicIds[i] = transformPublicId(pbPublicIdList.getPublicIds(i));
@@ -339,12 +354,12 @@ public class ProtobufTransformer {
         return PublicIds.list.of(publicIds);
     }
 
-    protected static PublicId1 transformVertexId(PBVertexId pbVertexId) {
+    protected PublicId1 transformVertexId(PBVertexId pbVertexId) {
         //TODO: Verify this is correct.
         return new PublicId1(UUID.nameUUIDFromBytes(pbVertexId.getId().toByteArray()));
     }
 
-    protected static DiGraphEntity<EntityVertex> transformDigraph(PBDiGraph pbDiGraph){
+    protected DiGraphEntity<EntityVertex> transformDigraph(PBDiGraph pbDiGraph){
         //pbDiGraph.get
         List<PBIntToMultipleIntMap> PredecessorMapList = pbDiGraph.getPredecesorMapList();
         List<PBIntToMultipleIntMap> SuccessorMapList = pbDiGraph.getPredecesorMapList();
@@ -357,7 +372,7 @@ public class ProtobufTransformer {
     }
 
     //TODO: Created and need to get more context to finish. This the same as Successor parse atm.
-    protected static ImmutableIntObjectMap<ImmutableIntList> parsePredecessorAndSuccessorMaps(List<PBIntToMultipleIntMap> predecessorSuccessorMapList, int predecesorSuccessorMapCount) {
+    protected ImmutableIntObjectMap<ImmutableIntList> parsePredecessorAndSuccessorMaps(List<PBIntToMultipleIntMap> predecessorSuccessorMapList, int predecesorSuccessorMapCount) {
         MutableIntObjectMap<ImmutableIntList> mutableIntObjectMap = new IntObjectHashMap<>();
         predecessorSuccessorMapList.forEach(pbIntToMultipleIntMap -> {
             MutableIntList mutableIntList = new IntArrayList();
@@ -367,7 +382,7 @@ public class ProtobufTransformer {
         return mutableIntObjectMap.toImmutable();
     }
 
-    protected static DiTreeEntity transformDiTreeEntity(PBDiTree pbDiTree) {
+    protected DiTreeEntity transformDiTreeEntity(PBDiTree pbDiTree) {
         return new DiTreeEntity(
                 //                EntityVertex.make(createVertexDTO(pbDiTree.getRoot())),
                 EntityVertex.make(transformVertexEntity(pbDiTree.getVertexMap(pbDiTree.getRoot()))),
@@ -376,13 +391,13 @@ public class ProtobufTransformer {
                 parsePredecessors(pbDiTree.getPredecesorMapList()));
     }
 
-    protected static ImmutableIntList parseRootSequences(PBDiGraph pbDiGraph) {
+    protected ImmutableIntList parseRootSequences(PBDiGraph pbDiGraph) {
         MutableIntList rootSequences = new IntArrayList(pbDiGraph.getRootSequenceCount());
         pbDiGraph.getRootSequenceList().forEach(rootSequences::add);
         return rootSequences.toImmutable();
     }
 
-    protected static ImmutableIntObjectMap<ImmutableIntList> parseSuccessors(List<PBIntToMultipleIntMap> successorMapList) {
+    protected ImmutableIntObjectMap<ImmutableIntList> parseSuccessors(List<PBIntToMultipleIntMap> successorMapList) {
         MutableIntObjectMap<ImmutableIntList> mutableIntObjectMap = new IntObjectHashMap<>();
         successorMapList.forEach(pbIntToMultipleIntMap -> {
             MutableIntList mutableIntList = new IntArrayList();
@@ -398,13 +413,13 @@ public class ProtobufTransformer {
         return mutableIntIntMap.toImmutable();
     }
 
-    protected static ImmutableList<EntityVertex> parseVertices(List<PBVertex> pbVertices, int pbVertexCount) {
+    protected ImmutableList<EntityVertex> parseVertices(List<PBVertex> pbVertices, int pbVertexCount) {
         MutableList<EntityVertex> vertexMap = Lists.mutable.ofInitialCapacity(pbVertexCount);
         pbVertices.forEach(pbVertex -> vertexMap.add(EntityVertex.make(transformVertexEntity(pbVertex))));
         return vertexMap.toImmutable();
     }
 
-    protected static EntityVertex transformVertexEntity(PBVertex pbVertex){
+    protected EntityVertex transformVertexEntity(PBVertex pbVertex){
         PublicId1 vertexID = processPBVertexID(pbVertex.getVertexId());
         MutableMap<ConceptDTO, Object> properties = Maps.mutable.ofInitialCapacity(pbVertex.getPropertiesCount());
         pbVertex.getPropertiesList().forEach(property -> properties.put(
@@ -425,21 +440,21 @@ public class ProtobufTransformer {
         return genEntityVertex;
     }
 
-    protected static PublicId1 processPBVertexID(PBVertexId vertexId) {
+    protected PublicId1 processPBVertexID(PBVertexId vertexId) {
         return new PublicId1(UUID.nameUUIDFromBytes(vertexId.toByteArray()));
     }
 
     protected int testMockEntityService(Component component){
         return Entity.nid(component);
     }
-    protected static PlanarPoint transformPlanarPoint(PBPlanarPoint planarPoint){
+    protected PlanarPoint transformPlanarPoint(PBPlanarPoint planarPoint){
         return new PlanarPoint(
                 planarPoint.getX(),
                 planarPoint.getY()
         );
     }
 
-    protected static SpatialPoint transformSpatialPoint(PBSpatialPoint spatialPoint){
+    protected SpatialPoint transformSpatialPoint(PBSpatialPoint spatialPoint){
         return new SpatialPoint(
                 spatialPoint.getX(),
                 spatialPoint.getY(),
