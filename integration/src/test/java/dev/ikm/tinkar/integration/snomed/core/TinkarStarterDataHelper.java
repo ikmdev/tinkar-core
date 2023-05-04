@@ -36,6 +36,7 @@ public class TinkarStarterDataHelper {
     public static void openSession(BiConsumer<MockedStatic<EntityService>, JsonNode> session) {
         // open session is a biconsumer that makes mockStaticEntityService available
         // in tests to customize and mock more methods or override mock methods.
+        MockEntity.clearCache();
         JsonNode starterData = loadStarterData(TEST_SNOMEDCT_STARTER_DATA_JSON);
 
         try (MockedStatic<EntityService> mockStaticEntityService = Mockito.mockStatic(EntityService.class)) {
