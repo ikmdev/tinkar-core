@@ -60,7 +60,7 @@ pipeline {
         stage('SonarQube Scan') {
 
             when{
-                { branch 'master'}
+                branch 'master'
             }
             agent {
                 docker { 
