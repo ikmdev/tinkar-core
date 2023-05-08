@@ -60,7 +60,7 @@ pipeline {
         stage('SonarQube Scan') {
 
             when (BRANCH_NAME == ''){
-
+                return false
             }
             agent {
                 docker { 
