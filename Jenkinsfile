@@ -59,7 +59,7 @@ pipeline {
 
         stage('SonarQube Scan') {
 
-            when {equals expected: true, actual: skipForNow}
+            when {BRANCH_NAME == ''}
             agent {
                 docker { 
                     image "maven:3.8.7-eclipse-temurin-19-alpine"
