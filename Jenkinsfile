@@ -60,7 +60,7 @@ pipeline {
         stage('SonarQube Scan') {
 
             when (BRANCH_NAME == ''){
-                echo 'skipping sonar analysis'
+                sh "echo 'skipping sonar analysis'"
             }
             agent {
                 docker { 
