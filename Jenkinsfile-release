@@ -96,6 +96,7 @@ pipeline {
                         sh "git push downstream ${RELEASE_VERSION}"
 
                         // Push the branch to downstream remote
+                        sh "git pull downstream ${BRANCH}"
                         sh "git push downstream ${BRANCH}"
                     }
                 }
