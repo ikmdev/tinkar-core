@@ -1,17 +1,14 @@
 package dev.ikm.tinkar.integration.provider.ephemeral;
 
-import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.ServiceProperties;
 import dev.ikm.tinkar.entity.export.ExportEntitiesController;
-import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromDtoFile;
-import dev.ikm.tinkar.entity.load.LoadEntitiesFromFileController;
-import dev.ikm.tinkar.entity.transfom.EntityTransformer;
 import dev.ikm.tinkar.entity.util.EntityCounter;
 import dev.ikm.tinkar.entity.util.EntityProcessor;
 import dev.ikm.tinkar.entity.util.EntityRealizer;
+import dev.ikm.tinkar.integration.TestConstants;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,7 +115,7 @@ class TestEphemeralProvider {
 //    @Order(5)
 //    public void howManyEntities() throws IOException {
 //        File file = TestConstants.PB_EXPORT_TEST_FILE;
-//        EntityTransformer entityTransformer = new EntityTransformer();
+//        EntityToTinkarSchemaTransformer entityTransformer = new EntityToTinkarSchemaTransformer();
 //            ExportEntitiesToProtobufFile exportEntitiesToProtobufFile = new ExportEntitiesToProtobufFile(file);
 //            exportEntitiesToProtobufFile.compute();
 ////        System.out.println("Current concept count: " + entityTransformer.transform());

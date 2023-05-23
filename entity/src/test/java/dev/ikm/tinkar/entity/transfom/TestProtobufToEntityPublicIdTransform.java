@@ -31,7 +31,7 @@ public class TestProtobufToEntityPublicIdTransform {
             // When I try to transform it into a public ID protobuf message
 
             // Then we will throw a Runtime exception
-            assertThrows(Throwable.class, () -> ProtobufTransformer.getInstance().transformPublicId(pbPublicId), "Not allowed to have empty UUID");
+            assertThrows(Throwable.class, () -> TinkarSchemaToEntityTransformer.getInstance().transformPublicId(pbPublicId), "Not allowed to have empty UUID");
         });
     }
 
@@ -49,7 +49,7 @@ public class TestProtobufToEntityPublicIdTransform {
             PBPublicId pbPublicId = PBPublicId.newBuilder().addId(byteString).build();
 
             // When I try to transform it into a public ID protobuf message
-            PublicId actualPublicId = ProtobufTransformer.getInstance().transformPublicId(pbPublicId);
+            PublicId actualPublicId = TinkarSchemaToEntityTransformer.getInstance().transformPublicId(pbPublicId);
 
             // Then we will check to verify that the transformed UUID (public ID) matches that of the original.
             assertEquals(actualPublicId, expectedPublicId, "Public ID's do not match.");
@@ -76,7 +76,7 @@ public class TestProtobufToEntityPublicIdTransform {
             PBPublicId pbPublicId = PBPublicId.newBuilder().addId(byteStringOne).addId(byteStringTwo).build();
 
             // When I try to transform them into a public ID protobuf message
-            PublicId actualPublicId = ProtobufTransformer.getInstance().transformPublicId(pbPublicId);
+            PublicId actualPublicId = TinkarSchemaToEntityTransformer.getInstance().transformPublicId(pbPublicId);
 
             // Then we will check to verify that the transformed UUIDs (public ID) matches that of the original.
             assertEquals(expectedCombinedSource, actualPublicId, "Public ID's do not match.");

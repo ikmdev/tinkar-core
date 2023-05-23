@@ -8,9 +8,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+
 import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TestProtobufToEntityPatternTransform {
@@ -34,7 +34,7 @@ public class TestProtobufToEntityPatternTransform {
             // When we transform PBPatternChronology
 
             // Then we will throw a Runtime exception
-            assertThrows(Throwable.class, () -> ProtobufTransformer.getInstance().transformPatternChronology(pbPatternChronology), "Not allowed to have no pattern versions.");
+            assertThrows(Throwable.class, () -> TinkarSchemaToEntityTransformer.getInstance().transformPatternChronology(pbPatternChronology), "Not allowed to have no pattern versions.");
         });
 
     }
@@ -86,7 +86,7 @@ public class TestProtobufToEntityPatternTransform {
                     .build();
 
             // When we transform PBPatternChronology
-            PatternEntity actualPatternChronologyOne = ProtobufTransformer.getInstance().transformPatternChronology(pbPatternChronologyOne);
+            PatternEntity actualPatternChronologyOne = TinkarSchemaToEntityTransformer.getInstance().transformPatternChronology(pbPatternChronologyOne);
 
             // Then the resulting PatternChronology should match the original PBPatternChronology
             assertEquals(nid(testConcept), actualPatternChronologyOne.nid(), "Nid's did not match in Pattern Chronology.");
@@ -173,13 +173,12 @@ public class TestProtobufToEntityPatternTransform {
                     .build();
 
             // When we transform PBPatternChronology
-            PatternEntity actualPatternChronologyOne = ProtobufTransformer.getInstance().transformPatternChronology(pbPatternChronologyOne);
+            PatternEntity actualPatternChronologyOne = TinkarSchemaToEntityTransformer.getInstance().transformPatternChronology(pbPatternChronologyOne);
 
             // Then the resulting PatternChronology should match the original PBPatternChronology
             assertEquals(nid(testConcept), actualPatternChronologyOne.nid(), "Nid's did not match in Pattern Chronology.");
             assertTrue(PublicId.equals(testConcept.publicId(), actualPatternChronologyOne.publicId()), "Public Id's of the pattern chronology do not match.");
             assertEquals(2, actualPatternChronologyOne.versions().size(), "Versions are empty");
         });
-
     }
 }

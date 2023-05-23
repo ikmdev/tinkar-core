@@ -63,7 +63,8 @@ public class LoadEntitiesFromDtoFile extends TrackingCallable<Integer> {
                     }
                     break;
                     case SEMANTIC_CHRONOLOGY: {
-                        TinkExecutor.threadPool().execute(new PutChronology(SemanticChronologyDTO.make(tinkIn)));
+                        SemanticChronologyDTO cDto = SemanticChronologyDTO.make(tinkIn);
+                        TinkExecutor.threadPool().execute(new PutChronology(cDto));
                         importCount.incrementAndGet();
                     }
                     break;

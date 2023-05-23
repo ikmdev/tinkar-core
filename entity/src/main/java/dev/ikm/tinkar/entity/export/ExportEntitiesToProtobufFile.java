@@ -5,22 +5,24 @@ import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
-import dev.ikm.tinkar.entity.transfom.EntityTransformer;
+import dev.ikm.tinkar.entity.transfom.EntityToTinkarSchemaTransformer;
 import dev.ikm.tinkar.schema.PBTinkarMsg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class ExportEntitiesToProtobufFile extends TrackingCallable<Integer> {
     private static final Logger LOG = LoggerFactory.getLogger(ExportEntitiesToProtobufFile.class);
-    private FileOutputStream fileOutputStream;
-    private final EntityTransformer entityTransformer = EntityTransformer.getInstance();
+
+    File protobufFile;
+    private final EntityToTinkarSchemaTransformer entityTransformer = EntityToTinkarSchemaTransformer.getInstance();
     final AtomicInteger exportConceptCount = new AtomicInteger();
     final AtomicInteger exportSemanticCount = new AtomicInteger();
     final AtomicInteger exportPatternCount = new AtomicInteger();
@@ -29,14 +31,9 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<Integer> {
 
     static final int VERBOSE_ERROR_COUNT = 10;
 
-
     public ExportEntitiesToProtobufFile(File file) {
         super(false, true);
-        try {
-            fileOutputStream = new FileOutputStream(file);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+        this.protobufFile = file;
         LOG.info("Exporting entities to: " + file);
     }
 
@@ -62,96 +59,90 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<Integer> {
         PrimitiveData.get().forEachPatternNid(nid -> patternCount.incrementAndGet());
         LOG.info("Found " + patternCount.get() + " pattern nids.");
 
-        // Looping through each concept and calling the transformer
-        PrimitiveData.get().forEachConceptNid(conceptNid -> {
-            try {
-                Entity<? extends EntityVersion> conceptEntity = EntityService.get().getEntityFast(conceptNid);
-                if(conceptEntity != null){
-                    PBTinkarMsg pbTinkarMsg = entityTransformer.transform(conceptEntity);
-                    writePBTinkarMsg(pbTinkarMsg);
-                    exportConceptCount.incrementAndGet();
-                } else {
-                    nullEntities.incrementAndGet();
-                    if (verboseErrors.get() < VERBOSE_ERROR_COUNT) {
-                        LOG.warn("No concept entity for: " + conceptNid);
-                        verboseErrors.incrementAndGet();
-                    }
-                }
-            } catch (UnsupportedOperationException | IllegalStateException | NullPointerException exception){
-                LOG.error("Processing conceptNid: " + conceptNid,exception);
-                exception.printStackTrace();
-            }});
+        try(FileOutputStream fileOutputStream = new FileOutputStream(protobufFile);
+            BufferedOutputStream bos = new BufferedOutputStream(fileOutputStream);
+            ZipOutputStream zos = new ZipOutputStream(bos)) {
 
-        // Looping through each semantic and calling the transformer
-        PrimitiveData.get().forEachSemanticNid(semanticNid -> {
-            try {
-                Entity<? extends EntityVersion> semanticEntity = EntityService.get().getEntityFast(semanticNid);
-                if(semanticEntity != null){
-                    PBTinkarMsg pbTinkarMsg = entityTransformer.transform(semanticEntity);
-                    writePBTinkarMsg(pbTinkarMsg);
-                    exportSemanticCount.incrementAndGet();
-                } else {
-                    nullEntities.incrementAndGet();
-                    if (verboseErrors.get() < VERBOSE_ERROR_COUNT) {
-                        LOG.warn("No semantic entity for: " + semanticNid);
-                        verboseErrors.incrementAndGet();
-                    }
-                }
-            }catch (UnsupportedOperationException | IllegalStateException exception){
-                LOG.error("Processing semanticNid: " + semanticNid,exception);
-                exception.printStackTrace();
-            }
-        });
+            // Create a single entry
+            ZipEntry zipEntry = new ZipEntry(protobufFile.getName().replace(".zip", ""));
+            zos.putNextEntry(zipEntry);
 
-        // Looping through each pattern and calling the transformer
-        PrimitiveData.get().forEachPatternNid(patternNid -> {
-            try {
-                Entity<? extends EntityVersion> patternEntity = EntityService.get().getEntityFast(patternNid);
-                if(patternEntity != null){
-                    PBTinkarMsg pbTinkarMsg = entityTransformer.transform(patternEntity);
-                    writePBTinkarMsg(pbTinkarMsg);
-                    exportPatternCount.incrementAndGet();
-                } else {
-                    nullEntities.incrementAndGet();
-                    if (verboseErrors.get() < VERBOSE_ERROR_COUNT) {
-                        LOG.warn("No pattern entity for: " + patternEntity);
-                        verboseErrors.incrementAndGet();
+            // Looping through each concept and calling the transformer
+            PrimitiveData.get().forEachConceptNid(conceptNid -> {
+                try {
+                    Entity<? extends EntityVersion> conceptEntity = EntityService.get().getEntityFast(conceptNid);
+                    if(conceptEntity != null){
+                        PBTinkarMsg pbTinkarMsg = entityTransformer.transform(conceptEntity);
+                        pbTinkarMsg.writeDelimitedTo(zos);
+                        exportConceptCount.incrementAndGet();
+                    } else {
+                        nullEntities.incrementAndGet();
+                        if (verboseErrors.get() < VERBOSE_ERROR_COUNT) {
+                            LOG.warn("No concept entity for: " + conceptNid);
+                            verboseErrors.incrementAndGet();
+                        }
                     }
+                } catch (UnsupportedOperationException | IllegalStateException | NullPointerException exception){
+                    LOG.error("Processing conceptNid: " + conceptNid,exception);
+                    exception.printStackTrace();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
-            }catch (UnsupportedOperationException | IllegalStateException exception){
-                LOG.error("Processing patternNid: " + patternNid,exception);
-                exception.printStackTrace();
-            }
-        });
+            });
+
+            // Looping through each semantic and calling the transformer
+            PrimitiveData.get().forEachSemanticNid(semanticNid -> {
+                try {
+                    Entity<? extends EntityVersion> semanticEntity = EntityService.get().getEntityFast(semanticNid);
+                    if(semanticEntity != null){
+                        PBTinkarMsg pbTinkarMsg = entityTransformer.transform(semanticEntity);
+                        pbTinkarMsg.writeDelimitedTo(zos);
+                        exportSemanticCount.incrementAndGet();
+                    } else {
+                        nullEntities.incrementAndGet();
+                        if (verboseErrors.get() < VERBOSE_ERROR_COUNT) {
+                            LOG.warn("No semantic entity for: " + semanticNid);
+                            verboseErrors.incrementAndGet();
+                        }
+                    }
+                }catch (UnsupportedOperationException | IllegalStateException exception){
+                    LOG.error("Processing semanticNid: " + semanticNid,exception);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+            // Looping through each pattern and calling the transformer
+            PrimitiveData.get().forEachPatternNid(patternNid -> {
+                try {
+                    Entity<? extends EntityVersion> patternEntity = EntityService.get().getEntityFast(patternNid);
+                    if(patternEntity != null){
+                        PBTinkarMsg pbTinkarMsg = entityTransformer.transform(patternEntity);
+                        pbTinkarMsg.writeDelimitedTo(zos);
+                        exportPatternCount.incrementAndGet();
+                    } else {
+                        nullEntities.incrementAndGet();
+                        if (verboseErrors.get() < VERBOSE_ERROR_COUNT) {
+                            LOG.warn("No pattern entity for: " + patternEntity);
+                            verboseErrors.incrementAndGet();
+                        }
+                    }
+                }catch (UnsupportedOperationException | IllegalStateException exception){
+                    LOG.error("Processing patternNid: " + patternNid,exception);
+                    exception.printStackTrace();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+            LOG.info("Zip entry size: " + zipEntry.getSize());
+            // finalize zip file
+            zos.closeEntry();
+            zos.flush();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
 
         return conceptCount.get() + patternCount.get() + semanticCount.get();
-    }
-
-    /**
-     *  This method is used to create a string with all counts for entities. Primarily used in testing to ensure
-     *  all entities loaded in are being exported with the same amounts of each entity object.
-     * @return a String with a message of the counts
-     */
-    public String reportCount(){
-        StringBuilder sb = new StringBuilder();
-        sb.append("Exported: " + exportConceptCount + " Concepts AFTER the export.\n");
-        sb.append("Exported: " + exportSemanticCount + " Semantics AFTER the export.\n");
-        sb.append("Exported: " + exportPatternCount + " Patterns AFTER the export.\n");
-        sb.append("Found: " + nullEntities.get() + " references to null items.");
-        sb.append("\n");
-        return sb.toString();
-    }
-
-    private synchronized void writePBTinkarMsg(PBTinkarMsg pbTinkarMsg) {
-        byte[] pbMessageBytes = pbTinkarMsg.toByteArray();
-        try {
-            this.fileOutputStream.write(ByteBuffer.allocate(pbMessageBytes.length + 1)
-                    .put((byte) pbMessageBytes.length)
-                    .put(pbMessageBytes)
-                    .array());
-        } catch(IOException exception){
-            exception.printStackTrace();
-            throw new RuntimeException();
-        }
     }
 }

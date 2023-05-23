@@ -1,16 +1,12 @@
 package dev.ikm.tinkar.entity.transfom;
 
-import com.google.protobuf.ByteString;
-import dev.ikm.tinkar.entity.Field;
 import dev.ikm.tinkar.schema.PBField;
-import dev.ikm.tinkar.schema.PBFieldDefinition;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.*;
+
+import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.openSession;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TestProtobufToEntityFieldTransform {
@@ -25,7 +21,7 @@ public class TestProtobufToEntityFieldTransform {
                     .build();
 
             // When we transform our String Field value
-            Object actualFieldString = ProtobufTransformer.getInstance().transformField(pbFieldString);
+            Object actualFieldString = TinkarSchemaToEntityTransformer.getInstance().transformField(pbFieldString);
 
             // Then the resulting Object should match the original passed in string value.
             assertEquals(expectedStringValue,actualFieldString.toString(), "The transformed string value does not match the expected.");
@@ -45,7 +41,7 @@ public class TestProtobufToEntityFieldTransform {
                     .build();
 
             // When we transform our Boolean Field value
-            Object actualFieldBool = ProtobufTransformer.getInstance().transformField(pbFieldBool);
+            Object actualFieldBool = TinkarSchemaToEntityTransformer.getInstance().transformField(pbFieldBool);
 
             // Then the resulting Object should match the original passed in boolean value.
             assertEquals(expectedBoolValue, actualFieldBool, "The transformed boolean value does not match the expected.");
@@ -63,7 +59,7 @@ public class TestProtobufToEntityFieldTransform {
                     .build();
 
             // When we transform our Integer Field value
-            Object actualFieldInt = ProtobufTransformer.getInstance().transformField(pbFieldInt);
+            Object actualFieldInt = TinkarSchemaToEntityTransformer.getInstance().transformField(pbFieldInt);
 
             // Then the resulting Object should match the original passed in Integer value.
             assertEquals(expectedIntValue, actualFieldInt, "The transformed integer value does not match the expected.");
@@ -81,7 +77,7 @@ public class TestProtobufToEntityFieldTransform {
                     .build();
 
             // When we transform our Float Field value
-            Object actualFieldFloat = ProtobufTransformer.getInstance().transformField(pbFieldFloat);
+            Object actualFieldFloat = TinkarSchemaToEntityTransformer.getInstance().transformField(pbFieldFloat);
 
             // Then the resulting Object should match the original passed in float value.
             assertEquals(expectedFloatValue, actualFieldFloat, "The transformed float value does not match the expected.");

@@ -1,26 +1,21 @@
 package dev.ikm.tinkar.entity.load;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.service.TrackingCallable;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.entity.EntityVersion;
-import dev.ikm.tinkar.entity.transfom.ProtobufTransformer;
+import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.transfom.TinkarSchemaToEntityTransformer;
 import dev.ikm.tinkar.schema.PBTinkarMsg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.DataInputStream;
-import java.io.EOFException;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 /**
  * The purpose of this class is to successfully load all Protobuf messages from a protobuf file and transform them into entities.
@@ -30,9 +25,13 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<Integer> {
     protected static final Logger LOG = LoggerFactory.getLogger(LoadEntitiesFromProtobufFile.class.getName());
     private static final int MAX_TASK_COUNT = Runtime.getRuntime().availableProcessors() * 2;
     final File importFile;
-    final AtomicInteger importCount = new AtomicInteger();
+    static final AtomicInteger importCount = new AtomicInteger();
     final Semaphore taskSemaphore = new Semaphore(MAX_TASK_COUNT, false);
     final AtomicInteger exceptionCount = new AtomicInteger();
+    final AtomicInteger importConceptCount = new AtomicInteger();
+    final AtomicInteger importSemanticCount = new AtomicInteger();
+    final AtomicInteger importPatternCount = new AtomicInteger();
+    final AtomicInteger importStampCount = new AtomicInteger();
 
     public LoadEntitiesFromProtobufFile(File importFile) {
         super(false, true);
@@ -50,75 +49,71 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<Integer> {
         LOG.info(getTitle());
 
         double sizeForAll = 0;
-        try (ZipFile zipFile = new ZipFile(importFile, StandardCharsets.UTF_8)) {
-            ZipEntry exportPBEntry = zipFile.getEntry("export.pb");
-            ZipEntry pbMessageCountEntry = zipFile.getEntry("count");
-            double totalSize = exportPBEntry.getSize();
-            sizeForAll += totalSize;
-            DataInputStream pbStream = new DataInputStream(zipFile.getInputStream(exportPBEntry));
-            DataInputStream pbMessageCountStream = new DataInputStream(zipFile.getInputStream(pbMessageCountEntry));
-            LOG.info(this.getClass().getSimpleName() + ": begin processing "
-                    + pbMessageCountStream.readLong() + " protocol buffers messages");
 
-            ByteBuffer byteBuffer;
-            int pbMessageLength;
-            int bytesReadCount;
-
-            while (pbStream.available() > 0) {
-                bytesReadCount = 0;
-                pbMessageLength = pbStream.readInt();
-
-                if (pbMessageLength == -1) {
-                    break; //EOF
+        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(importFile))) {
+            Consumer<Entity<? extends  EntityVersion>> entityConsumer = entity -> {
+                try {
+                    EntityService.get().putEntity(entity);
+                    updateCounts(entity);
+                } catch (Throwable e) {
+                    // output entities with issues
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("Error persisting entity types: " + entity.entityDataType() + " ");
+                    entity.publicId().asUuidList().forEach(c -> sb.append(" " + c.toString() + " "));
+                    LOG.error(sb.toString());
+                    e.printStackTrace();
                 }
+            };
 
-                byteBuffer = ByteBuffer.allocate(pbMessageLength);
+            Consumer<StampEntity<StampEntityVersion>> stampEntityConsumer = stampEntity -> {
+                EntityService.get().putEntity(stampEntity);
+                updateSTAMPCount();
+            };
 
-                while (bytesReadCount < pbMessageLength) {
-                    int sourceIndex = bytesReadCount;
-                    byte[] bytesRead;
+            ZipEntry zipEntry = zis.getNextEntry();
+            LOG.info("The zip entry name: " + zipEntry.getName());
+            LOG.info("The zip entry size: " + zipEntry.getSize());
+            TinkarSchemaToEntityTransformer transformer = TinkarSchemaToEntityTransformer.getInstance();
+            while (zipEntry != null) {
+                while (zis.available() > 0) {
+                    PBTinkarMsg pbTinkarMsg = PBTinkarMsg.parseDelimitedFrom(zis);
 
-                    if (bytesReadCount == 0) {
-                        bytesRead = new byte[pbMessageLength];
-                        bytesReadCount = pbStream.read(bytesRead, 0, pbMessageLength);
-                    } else {
-                        int lengthLeftToRead = pbMessageLength - bytesReadCount;
-                        bytesRead = new byte[lengthLeftToRead];
-                        bytesReadCount += pbStream.read(bytesRead, 0, lengthLeftToRead);
+                    if(pbTinkarMsg == null)
+                    {
+                        LOG.warn("Possible byte before end of file.");
+                        continue;
                     }
-                    byteBuffer.put(sourceIndex, bytesRead);
+                    transformer.transform(pbTinkarMsg, entityConsumer, stampEntityConsumer);
                 }
-
-                final byte[] pbBytes = byteBuffer.array();
-
-                taskSemaphore.acquireUninterruptibly();
-                TinkExecutor.threadPool().execute(() -> {
-                    try {
-                        ProtobufTransformer transformer = ProtobufTransformer.getInstance();
-                        Entity<? extends EntityVersion> entity = transformer.transform(PBTinkarMsg.parseFrom(pbBytes));
-                        EntityService.get().putEntity(entity);
-                        transformer.getStampEntities()
-                                .forEach(stampEntity -> EntityService.get().putEntity(stampEntity));
-                    } catch (IllegalStateException | InvalidProtocolBufferException e) {
-                        e.printStackTrace();
-                        exceptionCount.incrementAndGet();
-                    } finally {
-                        taskSemaphore.release();
-                    }
-                });
-
-                importCount.incrementAndGet();
+                // advance next zip entry
+                zipEntry = zis.getNextEntry();
             }
-        } catch (EOFException exception) {
-            exception.printStackTrace();
+        } catch (IllegalStateException | InvalidProtocolBufferException e) {
+            e.printStackTrace();
+            exceptionCount.incrementAndGet();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
 
-        taskSemaphore.acquireUninterruptibly(MAX_TASK_COUNT);
-
         updateProgress(sizeForAll, sizeForAll);
-        updateTitle("Loaded from " + importFile.getName());
-
+        updateTitle("POST-Loaded from " + importFile.getName());
+        LOG.info("The imported count of messages = " + importCount.get());
         return importCount.get();
+    }
+
+    private void updateCounts(Entity entity){
+        if(entity instanceof ConceptEntity<?>){
+            importConceptCount.incrementAndGet();
+        }else if(entity instanceof SemanticEntity<?>){
+            importSemanticCount.incrementAndGet();
+        }else if(entity instanceof PatternEntity<?>){
+            importPatternCount.incrementAndGet();
+        }
+        importCount.incrementAndGet();
+    }
+
+    private void updateSTAMPCount(){
+        importStampCount.incrementAndGet();
     }
 
     public String report(){

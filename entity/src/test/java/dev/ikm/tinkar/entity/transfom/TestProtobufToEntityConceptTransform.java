@@ -13,7 +13,6 @@ import org.junit.jupiter.api.TestInstance;
 
 import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TestProtobufToEntityConceptTransform {
@@ -22,6 +21,7 @@ public class TestProtobufToEntityConceptTransform {
     @DisplayName("Transform a Concept Chronology With Zero Public Id's")
     public void conceptChronologyTransformWithZeroPublicIds(){
         openSession(this, (mockedEntityService, conceptMap) -> {
+
             // Given a PBConceptChronology with a no Stamp Versions present
             Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
 
@@ -49,7 +49,7 @@ public class TestProtobufToEntityConceptTransform {
             // When we transform PBConceptChronology
 
             // Then we will throw a Runtime exception
-            assertThrows(Throwable.class, () -> ProtobufTransformer.getInstance().transformConceptChronology(pbConceptChronology), "Not allowed to have no public id's.");
+            assertThrows(Throwable.class, () -> TinkarSchemaToEntityTransformer.getInstance().transformConceptChronology(pbConceptChronology), "Not allowed to have no public id's.");
         });
     }
 
@@ -65,7 +65,7 @@ public class TestProtobufToEntityConceptTransform {
             // When we transform PBConceptChronology
 
             // Then we will throw a Runtime exception
-            assertThrows(Throwable.class, () -> ProtobufTransformer.getInstance().transformConceptChronology(pbConceptChronology), "Not allowed to have no stamp versions.");
+            assertThrows(Throwable.class, () -> TinkarSchemaToEntityTransformer.getInstance().transformConceptChronology(pbConceptChronology), "Not allowed to have no stamp versions.");
         });
     }
     @Test
@@ -98,7 +98,7 @@ public class TestProtobufToEntityConceptTransform {
                     .build();
 
             // When we transform PBConceptChronology
-            ConceptEntity actualConceptChronology = ProtobufTransformer.getInstance().transformConceptChronology(pbConceptChronology);
+            ConceptEntity actualConceptChronology = TinkarSchemaToEntityTransformer.getInstance().transformConceptChronology(pbConceptChronology);
 
             // Then the resulting ConceptChronology should match the original PBConceptChronology
             assertEquals(nid(testConcept), actualConceptChronology.nid(), "Nid's did not match in Concept Chronology.");
@@ -163,7 +163,7 @@ public class TestProtobufToEntityConceptTransform {
                     .build();
 
             // When we transform PBConceptChronology
-            ConceptEntity actualConceptChronologyTwo = ProtobufTransformer.getInstance().transformConceptChronology(pbConceptChronology);
+            ConceptEntity actualConceptChronologyTwo = TinkarSchemaToEntityTransformer.getInstance().transformConceptChronology(pbConceptChronology);
 
             // Then the resulting ConceptChronology should match the original PBConceptChronology
             assertEquals(nid(testConcept), actualConceptChronologyTwo.nid(), "Nid's did not match in concept Chronology.");
