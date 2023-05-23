@@ -8,7 +8,6 @@ import dev.ikm.tinkar.entity.RecordListBuilder;
 import dev.ikm.tinkar.schema.PBFieldDefinition;
 import dev.ikm.tinkar.schema.PBPatternVersion;
 import dev.ikm.tinkar.schema.PBStampChronology;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -31,7 +30,7 @@ public class TestEntityToProtobufPatternTransform {
             // Given an Entity Pattern Version
             // When we transform our Entity Pattern Version into a PBPatternVersion
             // Then the resulting PBPatternVersion should match the original entity value
-            assertThrows(Throwable.class, () -> EntityTransformer.getInstance().createPBPatternVersions(RecordListBuilder.make().build()), "Not allowed to have an empty Pattern Version.");
+            assertThrows(Throwable.class, () -> EntityToTinkarSchemaTransformer.getInstance().createPBPatternVersions(RecordListBuilder.make().build()), "Not allowed to have an empty Pattern Version.");
         });
     }
 
@@ -54,17 +53,17 @@ public class TestEntityToProtobufPatternTransform {
             when(mockPatternVersion.semanticPurpose().publicId()).thenReturn(referencedComponentPurposePublicId);
             when(mockPatternVersion.semanticMeaning().publicId()).thenReturn(referencedComponentMeaningPublicId);
 
-            EntityTransformer entityTransformer = spy(EntityTransformer.getInstance());
+            EntityToTinkarSchemaTransformer entityToTinkarSchemaTransformer = spy(EntityToTinkarSchemaTransformer.getInstance());
 
-            doReturn(PBStampChronology.getDefaultInstance()).when(entityTransformer).createPBStampChronology(any());
-            doReturn(List.of(PBFieldDefinition.getDefaultInstance())).when(entityTransformer).createPBFieldDefinitions(any());
+            doReturn(PBStampChronology.getDefaultInstance()).when(entityToTinkarSchemaTransformer).createPBStampChronology(any());
+            doReturn(List.of(PBFieldDefinition.getDefaultInstance())).when(entityToTinkarSchemaTransformer).createPBFieldDefinitions(any());
 
             // When we transform our Entity Pattern Version into a PBPatternVersion
-            List<PBPatternVersion> actualPBPatternVersion = entityTransformer.createPBPatternVersions(RecordListBuilder.make().with(mockPatternVersion).build());
+            List<PBPatternVersion> actualPBPatternVersion = entityToTinkarSchemaTransformer.createPBPatternVersions(RecordListBuilder.make().with(mockPatternVersion).build());
 
             // Then the resulting PBPatternVersion should match the original entity value
-            verify(entityTransformer, times(1)).createPBStampChronology(any());
-            verify(entityTransformer, times(1)).createPBFieldDefinitions(any());
+            verify(entityToTinkarSchemaTransformer, times(1)).createPBStampChronology(any());
+            verify(entityToTinkarSchemaTransformer, times(1)).createPBFieldDefinitions(any());
             assertEquals(1, actualPBPatternVersion.size(), "The versions are missing from pattern version.");
             assertEquals(createPBPublicId(referencedComponentPurposePublicId), actualPBPatternVersion.get(0).getReferencedComponentPurpose(), "The referenced component purpose didn't match.");
             assertEquals(createPBPublicId(referencedComponentMeaningPublicId), actualPBPatternVersion.get(0).getReferencedComponentMeaning(), "The referenced component meaning didn't match.");
@@ -90,17 +89,17 @@ public class TestEntityToProtobufPatternTransform {
             when(mockPatternVersion.semanticPurpose().publicId()).thenReturn(referencedComponentPurposePublicId);
             when(mockPatternVersion.semanticMeaning().publicId()).thenReturn(referencedComponentMeaningPublicId);
 
-            EntityTransformer entityTransformer = spy(EntityTransformer.getInstance());
+            EntityToTinkarSchemaTransformer entityToTinkarSchemaTransformer = spy(EntityToTinkarSchemaTransformer.getInstance());
 
-            doReturn(PBStampChronology.getDefaultInstance()).when(entityTransformer).createPBStampChronology(any());
-            doReturn(List.of(PBFieldDefinition.getDefaultInstance())).when(entityTransformer).createPBFieldDefinitions(any());
+            doReturn(PBStampChronology.getDefaultInstance()).when(entityToTinkarSchemaTransformer).createPBStampChronology(any());
+            doReturn(List.of(PBFieldDefinition.getDefaultInstance())).when(entityToTinkarSchemaTransformer).createPBFieldDefinitions(any());
 
             // When we transform our Entity Pattern Version into a PBPatternVersion
-            List<PBPatternVersion> actualPBPatternVersion = entityTransformer.createPBPatternVersions(RecordListBuilder.make().add(mockPatternVersion).addAndBuild(mockPatternVersion));
+            List<PBPatternVersion> actualPBPatternVersion = entityToTinkarSchemaTransformer.createPBPatternVersions(RecordListBuilder.make().add(mockPatternVersion).addAndBuild(mockPatternVersion));
 
             // Then the resulting PBPatternVersion should match the original entity value
-            verify(entityTransformer, times(2)).createPBStampChronology(any());
-            verify(entityTransformer, times(2)).createPBFieldDefinitions(any());
+            verify(entityToTinkarSchemaTransformer, times(2)).createPBStampChronology(any());
+            verify(entityToTinkarSchemaTransformer, times(2)).createPBFieldDefinitions(any());
             assertEquals(2, actualPBPatternVersion.size(), "The versions are missing from pattern version.");
             assertEquals(createPBPublicId(referencedComponentPurposePublicId), actualPBPatternVersion.get(0).getReferencedComponentPurpose(), "The referenced component purpose didn't match.");
             assertEquals(createPBPublicId(referencedComponentMeaningPublicId), actualPBPatternVersion.get(0).getReferencedComponentMeaning(), "The referenced component meaning didn't match.");
@@ -122,15 +121,15 @@ public class TestEntityToProtobufPatternTransform {
             when(mockPatternVersion.semanticPurpose()).thenReturn(referencedComponentPurpose);
             when(mockPatternVersion.semanticPurpose().publicId()).thenReturn(referencedComponentPurposePublicId);
 
-            EntityTransformer entityTransformer = spy(EntityTransformer.getInstance());
+            EntityToTinkarSchemaTransformer entityToTinkarSchemaTransformer = spy(EntityToTinkarSchemaTransformer.getInstance());
 
-            doReturn(PBStampChronology.getDefaultInstance()).when(entityTransformer).createPBStampChronology(any());
-            doReturn(List.of(PBFieldDefinition.getDefaultInstance())).when(entityTransformer).createPBFieldDefinitions(any());
+            doReturn(PBStampChronology.getDefaultInstance()).when(entityToTinkarSchemaTransformer).createPBStampChronology(any());
+            doReturn(List.of(PBFieldDefinition.getDefaultInstance())).when(entityToTinkarSchemaTransformer).createPBFieldDefinitions(any());
 
             // When we transform our Entity Pattern Version into a PBPatternVersion
 
             // Then the resulting PBPatternVersion should match the original entity value
-            assertThrows(Throwable.class, () -> EntityTransformer.getInstance().createPBPatternVersions(RecordListBuilder.make().add(mockPatternVersion).addAndBuild(mockPatternVersion)), "Not allowed to have an empty Semantic Meaning for a Pattern Version.");
+            assertThrows(Throwable.class, () -> EntityToTinkarSchemaTransformer.getInstance().createPBPatternVersions(RecordListBuilder.make().add(mockPatternVersion).addAndBuild(mockPatternVersion)), "Not allowed to have an empty Semantic Meaning for a Pattern Version.");
         });
     }
 
@@ -147,15 +146,15 @@ public class TestEntityToProtobufPatternTransform {
             when(mockPatternVersion.semanticMeaning()).thenReturn(referencedComponentMeaning);
             when(mockPatternVersion.semanticMeaning().publicId()).thenReturn(referencedComponentMeaningPublicId);
 
-            EntityTransformer entityTransformer = spy(EntityTransformer.getInstance());
+            EntityToTinkarSchemaTransformer entityToTinkarSchemaTransformer = spy(EntityToTinkarSchemaTransformer.getInstance());
 
-            doReturn(PBStampChronology.getDefaultInstance()).when(entityTransformer).createPBStampChronology(any());
-            doReturn(List.of(PBFieldDefinition.getDefaultInstance())).when(entityTransformer).createPBFieldDefinitions(any());
+            doReturn(PBStampChronology.getDefaultInstance()).when(entityToTinkarSchemaTransformer).createPBStampChronology(any());
+            doReturn(List.of(PBFieldDefinition.getDefaultInstance())).when(entityToTinkarSchemaTransformer).createPBFieldDefinitions(any());
 
             // When we transform our Entity Pattern Version into a PBPatternVersion
 
             // Then the resulting PBPatternVersion should match the original entity value
-            assertThrows(Throwable.class, () -> EntityTransformer.getInstance().createPBPatternVersions(RecordListBuilder.make().add(mockPatternVersion).addAndBuild(mockPatternVersion)), "Not allowed to have an empty Semantic Purpose for a Pattern Version.");
+            assertThrows(Throwable.class, () -> EntityToTinkarSchemaTransformer.getInstance().createPBPatternVersions(RecordListBuilder.make().add(mockPatternVersion).addAndBuild(mockPatternVersion)), "Not allowed to have an empty Semantic Purpose for a Pattern Version.");
         });
     }
 }

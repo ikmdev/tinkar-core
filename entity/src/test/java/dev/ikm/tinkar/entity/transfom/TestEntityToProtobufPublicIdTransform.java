@@ -29,7 +29,7 @@ public class TestEntityToProtobufPublicIdTransform {
             // When I try to transform it into a public ID message
 
             // Then we will throw a Runtime exception
-            assertThrows(Throwable.class, () -> EntityTransformer.getInstance().createPBPublicId(emptyPublicId), "Not allowed to have empty UUID");
+            assertThrows(Throwable.class, () -> EntityToTinkarSchemaTransformer.getInstance().createPBPublicId(emptyPublicId), "Not allowed to have empty UUID");
         });
     }
 
@@ -47,7 +47,7 @@ public class TestEntityToProtobufPublicIdTransform {
             PBPublicId expectedPBPublicId = PBPublicId.newBuilder().addId(byteString).build();
 
             // When I try to transform it into a public ID protobuf message
-            PBPublicId actualPBPublicId = EntityTransformer.getInstance().createPBPublicId(actualPublicId);
+            PBPublicId actualPBPublicId = EntityToTinkarSchemaTransformer.getInstance().createPBPublicId(actualPublicId);
 
             // Then we will check to verify that the transformed public ID matches that of the original.
             assertEquals(expectedPBPublicId, actualPBPublicId, "Protobuf Public ID's do not match.");

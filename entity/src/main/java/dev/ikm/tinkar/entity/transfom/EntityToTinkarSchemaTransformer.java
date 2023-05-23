@@ -27,30 +27,31 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Flow;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
  * The entityTransformer class is responsible for transformer a entity of a certain data type to a
  * Protobuf message object.
  */
-public class EntityTransformer{
+public class EntityToTinkarSchemaTransformer {
 
     private final AtomicInteger conceptCount = new AtomicInteger();
     private final AtomicInteger semanticCount = new AtomicInteger();
     private final AtomicInteger patternCount = new AtomicInteger();
 
-    private final Logger LOG = LoggerFactory.getLogger(EntityTransformer.class);
-    private static EntityTransformer INSTANCE;
+    private final Logger LOG = LoggerFactory.getLogger(EntityToTinkarSchemaTransformer.class);
+    private static EntityToTinkarSchemaTransformer INSTANCE;
+    private List<Flow.Subscriber<? super PBTinkarMsg>> subscribers = new ArrayList<>();
 
-    private EntityTransformer(){
+    private EntityToTinkarSchemaTransformer(){
     }
 
-    public static EntityTransformer getInstance(){
+    public static EntityToTinkarSchemaTransformer getInstance(){
         if(INSTANCE == null){
-            synchronized (EntityTransformer.class){
+            synchronized (EntityToTinkarSchemaTransformer.class){
                 if (INSTANCE == null){
-                    INSTANCE = new EntityTransformer();
+                    INSTANCE = new EntityToTinkarSchemaTransformer();
                 }
             }
         }
@@ -127,8 +128,7 @@ public class EntityTransformer{
                     .build())
                 .toList();
     }
-
-    protected PBTinkarMsg createPBPatternChronology(PatternEntity<PatternEntityVersion> patternEntity){
+        protected PBTinkarMsg createPBPatternChronology(PatternEntity<PatternEntityVersion> patternEntity){
         return PBTinkarMsg.newBuilder()
                 .setPatternChronologyValue(PBPatternChronology.newBuilder()
                         .setPublicId(createPBPublicId(patternEntity.publicId()))
@@ -188,6 +188,30 @@ public class EntityTransformer{
         return pbFieldDefinitions;
     }
 
+    //TODO: Add in Planar/Spatial point into the switch statement.
+    protected PBField createPBField(Object obj){
+        return switch (obj){
+            case Boolean bool -> toPBBool(bool);
+            case byte[] bytes -> toPBByte(bytes);
+            case Float f -> toPBFloat(f);
+            case Integer i -> toPBInteger(i);
+            case Stamp stamp -> toPBStamp(stamp);
+            case Concept concept -> toPBConcept(concept);
+            case Semantic semantic -> toPBSemantic(semantic);
+            case Pattern pattern -> toPBPattern(pattern);
+            case Component component -> toPBComponent(component);
+            case PublicId publicId -> toPBPublicId(publicId);
+            case PublicIdList publicIdList -> toPBPublicIdList(publicIdList);
+            case String s -> toPBString(s);
+            case Instant instant -> toPBInstant(instant);
+            case IntIdList intIdList -> toPBPublicIdList(intIdList);
+            case IntIdSet intIdSet -> toPBPublicIdList(intIdSet);
+            case DiTree diTree -> toPBDiTree(diTree);
+            case DiGraph diGraph -> toPBDiGraph(diGraph);
+            case null, default -> throw new IllegalStateException("Unknown or null field object for: " + obj);
+        };
+    }
+
     protected PBField toPBBool(boolean value) {
         return PBField.newBuilder().setBoolValue(value).build();
     }
@@ -227,10 +251,11 @@ public class EntityTransformer{
     protected PBField toPBInstant(Instant value) {
         return PBField.newBuilder().setTimeValue(createTimestamp(value.getEpochSecond())).build();
     }
-    protected PBField toPBIntIdList(IntIdList value) {
+    protected PBField toPBPublicIdList(IntIdList value) {
+        //TODO: Figure out what are the Int ID's getting written
         return PBField.newBuilder().setPublicIdListValue(createPBPublicIdList(value)).build();
     }
-    protected PBField toPBIntIdSet(IntIdSet value) {
+    protected PBField toPBPublicIdList(IntIdSet value) {
         return PBField.newBuilder().setPublicIdListValue(createPBPublicIdList(value)).build();
     }
     protected PBField toPBDiTree(DiTree value) {
@@ -240,29 +265,6 @@ public class EntityTransformer{
         return PBField.newBuilder().setDiGraphValue(createPBDiGraph((DiGraphEntity<EntityVertex>) value)).build();
     }
 
-    //TODO: Add in Planar/Spatial point into the switch statement.
-    protected PBField createPBField(Object obj){
-        return switch (obj){
-            case Boolean bool -> toPBBool(bool);
-            case byte[] bytes -> toPBByte(bytes);
-            case Float f -> toPBFloat(f);
-            case Integer i -> toPBInteger(i);
-            case Stamp stamp -> toPBStamp(stamp);
-            case Concept concept -> toPBConcept(concept);
-            case Semantic semantic -> toPBSemantic(semantic);
-            case Pattern pattern -> toPBPattern(pattern);
-            case Component component -> toPBComponent(component);
-            case PublicId publicId -> toPBPublicId(publicId);
-            case PublicIdList publicIdList -> toPBPublicIdList(publicIdList);
-            case String s -> toPBString(s);
-            case Instant instant -> toPBInstant(instant);
-            case IntIdList intIdList -> toPBIntIdList(intIdList);
-            case IntIdSet intIdSet -> toPBIntIdSet(intIdSet);
-            case DiTree diTree -> toPBDiTree(diTree);
-            case DiGraph diGraph -> toPBDiGraph(diGraph);
-            case null, default -> throw new IllegalStateException("Unknown or null field object for: " + obj);
-        };
-    }
     protected List<PBField> createPBFields(ImmutableList<Object> objects){
         final ArrayList<PBField> pbFields = new ArrayList<>();
         for(Object obj : objects){
@@ -285,11 +287,14 @@ public class EntityTransformer{
     }
 
     protected PBPublicId createPBPublicId(PublicId publicId){
+        if (publicId.uuidCount() == 0){
+            throw new RuntimeException("Exception thrown, empty Public ID is present [entity transformer].");
+        }
         return PBPublicId.newBuilder()
                 .addAllId(publicId.asUuidList().stream()
                         .map(UuidUtil::getRawBytes)
                         .map(ByteString::copyFrom)
-                        .collect(Collectors.toList()))
+                        .toList())
                 .build();
     }
 
@@ -304,7 +309,7 @@ public class EntityTransformer{
     }
 
     protected PBPublicIdList createPBPublicIdList(IntIdList intIdList){
-        ArrayList<PBPublicId> pbPublicIds = new ArrayList<>();
+        List<PBPublicId> pbPublicIds = new ArrayList<>();
         intIdList.forEach(nid -> pbPublicIds.add(createPBPublicId(EntityService.get().getEntityFast(nid).publicId())));
         return PBPublicIdList.newBuilder()
                 .addAllPublicIds(pbPublicIds)
@@ -412,4 +417,5 @@ public class EntityTransformer{
                 .setZ(spatialPoint.z())
                 .build();
     }
+
 }

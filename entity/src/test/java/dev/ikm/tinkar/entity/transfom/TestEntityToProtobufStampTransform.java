@@ -4,7 +4,6 @@ import com.google.protobuf.Timestamp;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.component.Concept;
-import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.schema.PBStampChronology;
 import dev.ikm.tinkar.schema.PBStampVersion;
@@ -48,7 +47,7 @@ public class TestEntityToProtobufStampTransform {
             when(mockStampVersion.time()).thenReturn(expectedTime);
 
             // When we transform our StampVersion into a PBStampVersion
-            List<PBStampVersion> actualPBStampVersion = EntityTransformer.getInstance().createPBStampVersions(new RecordListBuilder<StampVersionRecord>().addAndBuild(mockStampVersion));
+            List<PBStampVersion> actualPBStampVersion = EntityToTinkarSchemaTransformer.getInstance().createPBStampVersions(new RecordListBuilder<StampVersionRecord>().addAndBuild(mockStampVersion));
 
             // Then the resulting PBStampVersion should match the original entity value.
             assertEquals(createPBPublicId(State.ACTIVE.publicId()), actualPBStampVersion.get(0).getStatus(), "The States/Statuses do not match in PBStampVersion.");
@@ -80,7 +79,7 @@ public class TestEntityToProtobufStampTransform {
             // When we transform our StampVersion into a PBStampVersion
 
             // Then the resulting PBStampVersion should throw an exception if Status is not present.
-            assertThrows(Throwable.class, () -> EntityTransformer.getInstance().createPBStampVersions(new RecordListBuilder<StampVersionRecord>().addAndBuild(mockStampVersion)), "Not allowed to have an empty status in a STAMP.");
+            assertThrows(Throwable.class, () -> EntityToTinkarSchemaTransformer.getInstance().createPBStampVersions(new RecordListBuilder<StampVersionRecord>().addAndBuild(mockStampVersion)), "Not allowed to have an empty status in a STAMP.");
         });
     }
 
@@ -106,7 +105,7 @@ public class TestEntityToProtobufStampTransform {
             // When we transform our StampVersion into a PBStampVersion
 
             // Then the resulting PBStampVersion should throw an exception if Author is not present.
-            assertThrows(Throwable.class, () -> EntityTransformer.getInstance().createPBStampVersions(new RecordListBuilder<StampVersionRecord>().addAndBuild(mockStampVersion)), "Not allowed to have an empty author in a STAMP.");
+            assertThrows(Throwable.class, () -> EntityToTinkarSchemaTransformer.getInstance().createPBStampVersions(new RecordListBuilder<StampVersionRecord>().addAndBuild(mockStampVersion)), "Not allowed to have an empty author in a STAMP.");
         });
     }
 
@@ -133,7 +132,7 @@ public class TestEntityToProtobufStampTransform {
             // When we transform our StampVersion into a PBStampVersion
 
             // Then the resulting PBStampVersion should throw an exception if Module is not present.
-            assertThrows(Throwable.class, () -> EntityTransformer.getInstance().createPBStampVersions(new RecordListBuilder<StampVersionRecord>().addAndBuild(mockStampVersion)), "Not allowed to have an empty module in a STAMP.");
+            assertThrows(Throwable.class, () -> EntityToTinkarSchemaTransformer.getInstance().createPBStampVersions(new RecordListBuilder<StampVersionRecord>().addAndBuild(mockStampVersion)), "Not allowed to have an empty module in a STAMP.");
         });
     }
 
@@ -159,7 +158,7 @@ public class TestEntityToProtobufStampTransform {
             // When we transform our StampVersion into a PBStampVersion
 
             // Then the resulting PBStampVersion should throw an exception if Path is not present.
-            assertThrows(Throwable.class, () -> EntityTransformer.getInstance().createPBStampVersions(new RecordListBuilder<StampVersionRecord>().addAndBuild(mockStampVersion)), "Not allowed to have an empty Path in a STAMP.");
+            assertThrows(Throwable.class, () -> EntityToTinkarSchemaTransformer.getInstance().createPBStampVersions(new RecordListBuilder<StampVersionRecord>().addAndBuild(mockStampVersion)), "Not allowed to have an empty Path in a STAMP.");
         });
     }
 
@@ -174,7 +173,7 @@ public class TestEntityToProtobufStampTransform {
             // When we transform our StampVersion into a PBStampVersion
 
             // Then the resulting PBStampVersion should throw an exception because there is an empty stamp version.
-            assertThrows(Throwable.class, () -> EntityTransformer.getInstance().createPBStampChronology(mockedStampEntity), "Not allowed to have an empty stamp version in a StampChronology.");
+            assertThrows(Throwable.class, () -> EntityToTinkarSchemaTransformer.getInstance().createPBStampChronology(mockedStampEntity), "Not allowed to have an empty stamp version in a StampChronology.");
 
         });
     }
@@ -217,7 +216,7 @@ public class TestEntityToProtobufStampTransform {
             when(mockedStampEntityVersion.versions()).thenReturn(new RecordListBuilder<StampVersionRecord>().addAndBuild(mockedStampVersion));
 
             // When we perform the transform
-            PBStampChronology actualPBStampChronology = EntityTransformer.getInstance().createPBStampChronology(mockedStampEntityVersion);
+            PBStampChronology actualPBStampChronology = EntityToTinkarSchemaTransformer.getInstance().createPBStampChronology(mockedStampEntityVersion);
 
             //TODO: Add in Mockito Verify statements here
 
@@ -261,7 +260,7 @@ public class TestEntityToProtobufStampTransform {
             stampVersionRecords.build();
 
             // When we transform our StampVersion into a PBStampVersion
-            List<PBStampVersion> actualPBStampVersion = EntityTransformer.getInstance().createPBStampVersions(stampVersionRecords);
+            List<PBStampVersion> actualPBStampVersion = EntityToTinkarSchemaTransformer.getInstance().createPBStampVersions(stampVersionRecords);
 
             // Then the resulting PBStampVersions should match the original entity value.
             assertEquals(2, actualPBStampVersion.size(),"There are missing STAMP Versions in the Stamp Chronology.");

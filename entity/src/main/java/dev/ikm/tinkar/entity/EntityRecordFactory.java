@@ -22,7 +22,6 @@ import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
-import org.eclipse.collections.impl.list.mutable.primitive.ByteArrayList;
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.util.UUID;
 
+import static dev.ikm.tinkar.component.FieldDataType.COMPONENT_ID_LIST;
 import static dev.ikm.tinkar.component.FieldDataType.SEMANTIC_CHRONOLOGY;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -183,9 +183,10 @@ public class EntityRecordFactory {
             case SpatialPoint spatialPointField -> writeField(writeBuf, spatialPointField);
             case IntIdList intIdListField -> writeField(writeBuf, intIdListField);
             case IntIdSet intIdSetField -> writeField(writeBuf, intIdSetField);
+            case PublicId publicId -> writeField(writeBuf, publicId);
             case PublicIdList publicIdListField -> writeField(writeBuf, publicIdListField);
             case PublicIdSet publicIdSetField -> writeField(writeBuf, publicIdSetField);
-            default -> throw new IllegalStateException("Unexpected value: " + field);
+            default -> throw new IllegalStateException("Unexpected value: %s of class: %s".formatted(field, field.getClass()));
         }
     }
     /**
@@ -254,7 +255,7 @@ public class EntityRecordFactory {
     }
 
     public static void writeField(ByteBuf writeBuf, IntIdList intIdListField) {
-        writeBuf.writeByte(FieldDataType.COMPONENT_ID_LIST.token);
+        writeBuf.writeByte(COMPONENT_ID_LIST.token);
         writeBuf.writeInt(intIdListField.size());
         intIdListField.forEach(id -> writeBuf.writeInt(id));
     }
@@ -265,12 +266,17 @@ public class EntityRecordFactory {
         intIdSetField.forEach(id -> writeBuf.writeInt(id));
     }
 
+    public static void writeField(ByteBuf writeBuf, PublicId publicId) {
+        PrimitiveData.get().nidForPublicId(publicId);
+        writeBuf.writeByte(COMPONENT_ID_LIST.token);
+        publicId.forEach(writeBuf::writeLong);
+    }
     public static void writeField(ByteBuf writeBuf, PublicIdList publicIdListField) {
         MutableIntList nidList = IntLists.mutable.withInitialCapacity(publicIdListField.size());
         publicIdListField.forEach(publicId -> {
             nidList.add(PrimitiveData.get().nidForPublicId((PublicId) publicId));
         });
-        writeBuf.writeByte(FieldDataType.COMPONENT_ID_LIST.token);
+        writeBuf.writeByte(COMPONENT_ID_LIST.token);
         writeBuf.writeInt(nidList.size());
         nidList.forEach(id -> writeBuf.writeInt(id));
     }

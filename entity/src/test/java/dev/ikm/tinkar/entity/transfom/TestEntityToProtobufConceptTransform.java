@@ -1,26 +1,22 @@
 package dev.ikm.tinkar.entity.transfom;
 
-import com.google.protobuf.Timestamp;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
-import dev.ikm.tinkar.component.Concept;
-import dev.ikm.tinkar.entity.*;
-import dev.ikm.tinkar.schema.*;
-import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.State;
-import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.list.ImmutableList;
+import dev.ikm.tinkar.entity.ConceptEntity;
+import dev.ikm.tinkar.entity.ConceptVersionRecord;
+import dev.ikm.tinkar.entity.RecordListBuilder;
+import dev.ikm.tinkar.schema.PBConceptVersion;
+import dev.ikm.tinkar.schema.PBStampChronology;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.util.List;
 
-import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.*;
+import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.openSession;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.doReturn;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TestEntityToProtobufConceptTransform {
@@ -32,7 +28,7 @@ public class TestEntityToProtobufConceptTransform {
             // Given an Entity Concept Version
             // When we transform our Entity Concept Version into a PBConceptVersion
             // Then the resulting PBConceptVersion should match the original entity value
-            assertThrows(Throwable.class, () -> EntityTransformer.getInstance().createPBConceptVersions(RecordListBuilder.make().build()), "Not allowed to have an empty Concept Version.");
+            assertThrows(Throwable.class, () -> EntityToTinkarSchemaTransformer.getInstance().createPBConceptVersions(RecordListBuilder.make().build()), "Not allowed to have an empty Concept Version.");
         });
     }
 
@@ -47,7 +43,7 @@ public class TestEntityToProtobufConceptTransform {
             ConceptVersionRecord mockConceptVersion = mock(ConceptVersionRecord.class);
             when(mockConceptVersion.publicId()).thenReturn(conceptPublic);
 
-            EntityTransformer entityTransformer = spy(EntityTransformer.getInstance());
+            EntityToTinkarSchemaTransformer entityTransformer = spy(EntityToTinkarSchemaTransformer.getInstance());
 
             doReturn(PBStampChronology.getDefaultInstance()).when(entityTransformer).createPBStampChronology(any());
             // When we transform our Entity Pattern Version into a PBPatternVersion
@@ -71,7 +67,7 @@ public class TestEntityToProtobufConceptTransform {
             ConceptVersionRecord mockConceptVersion = mock(ConceptVersionRecord.class);
             when(mockConceptVersion.publicId()).thenReturn(conceptPublic);
 
-            EntityTransformer entityTransformer = spy(EntityTransformer.getInstance());
+            EntityToTinkarSchemaTransformer entityTransformer = spy(EntityToTinkarSchemaTransformer.getInstance());
 
             doReturn(PBStampChronology.getDefaultInstance()).when(entityTransformer).createPBStampChronology(any());
             // When we transform our Entity Pattern Version into a PBPatternVersion

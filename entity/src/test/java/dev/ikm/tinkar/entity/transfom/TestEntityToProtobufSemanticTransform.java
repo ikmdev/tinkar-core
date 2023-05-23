@@ -1,22 +1,19 @@
 package dev.ikm.tinkar.entity.transfom;
 
-import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.id.PublicIds;
-import dev.ikm.tinkar.component.Concept;
-import dev.ikm.tinkar.entity.*;
-import dev.ikm.tinkar.schema.*;
-import org.eclipse.collections.api.list.ImmutableList;
-import org.junit.jupiter.api.Disabled;
+import dev.ikm.tinkar.entity.RecordListBuilder;
+import dev.ikm.tinkar.entity.SemanticVersionRecord;
+import dev.ikm.tinkar.schema.PBField;
+import dev.ikm.tinkar.schema.PBSemanticVersion;
+import dev.ikm.tinkar.schema.PBStampChronology;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.*;
+import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.openSession;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.times;
 
 public class TestEntityToProtobufSemanticTransform {
     @Test
@@ -26,7 +23,7 @@ public class TestEntityToProtobufSemanticTransform {
             // Given an Entity Semantic Version
             // When we transform our Entity Semantic Version into a PBSemanticVersion
             // Then the resulting PBSemanticVersion should match the original entity value
-            assertThrows(Throwable.class, () -> EntityTransformer.getInstance().createPBSemanticVersions(RecordListBuilder.make().build()), "Not allowed to have an empty Semantic Version.");
+            assertThrows(Throwable.class, () -> EntityToTinkarSchemaTransformer.getInstance().createPBSemanticVersions(RecordListBuilder.make().build()), "Not allowed to have an empty Semantic Version.");
         });
     }
 
@@ -37,17 +34,17 @@ public class TestEntityToProtobufSemanticTransform {
             // Given an Entity Semantic Version
             SemanticVersionRecord mockSemanticVersion = mock(SemanticVersionRecord.class);
 
-            EntityTransformer entityTransformer = spy(EntityTransformer.getInstance());
+            EntityToTinkarSchemaTransformer entityToTinkarSchemaTransformer = spy(EntityToTinkarSchemaTransformer.getInstance());
 
-            doReturn(PBStampChronology.getDefaultInstance()).when(entityTransformer).createPBStampChronology(any());
-            doReturn(List.of(PBField.getDefaultInstance())).when(entityTransformer).createPBFields(any());
+            doReturn(PBStampChronology.getDefaultInstance()).when(entityToTinkarSchemaTransformer).createPBStampChronology(any());
+            doReturn(List.of(PBField.getDefaultInstance())).when(entityToTinkarSchemaTransformer).createPBFields(any());
 
             // When we transform our Entity Semantic Version into a PBSemanticVersion
-            List<PBSemanticVersion> actualPBSemanticVersion = entityTransformer.createPBSemanticVersions(RecordListBuilder.make().add(mockSemanticVersion));
+            List<PBSemanticVersion> actualPBSemanticVersion = entityToTinkarSchemaTransformer.createPBSemanticVersions(RecordListBuilder.make().add(mockSemanticVersion));
 
             // Then the resulting PBSemanticVersion should match the original entity value
-            verify(entityTransformer, times(1)).createPBStampChronology(any());
-            verify(entityTransformer, times(1)).createPBFields(any());
+            verify(entityToTinkarSchemaTransformer, times(1)).createPBStampChronology(any());
+            verify(entityToTinkarSchemaTransformer, times(1)).createPBFields(any());
             assertEquals(1, actualPBSemanticVersion.size(), "The versions are missing from semantic version.");
             assertTrue(actualPBSemanticVersion.get(0).hasStamp(), "The Semantic Version is missing a stamp.");
         });
@@ -61,17 +58,17 @@ public class TestEntityToProtobufSemanticTransform {
             // Given an Entity Semantic Version
             SemanticVersionRecord mockSemanticVersion = mock(SemanticVersionRecord.class);
 
-            EntityTransformer entityTransformer = spy(EntityTransformer.getInstance());
+            EntityToTinkarSchemaTransformer entityToTinkarSchemaTransformer = spy(EntityToTinkarSchemaTransformer.getInstance());
 
-            doReturn(PBStampChronology.getDefaultInstance()).when(entityTransformer).createPBStampChronology(any());
-            doReturn(List.of(PBField.getDefaultInstance())).when(entityTransformer).createPBFields(any());
+            doReturn(PBStampChronology.getDefaultInstance()).when(entityToTinkarSchemaTransformer).createPBStampChronology(any());
+            doReturn(List.of(PBField.getDefaultInstance())).when(entityToTinkarSchemaTransformer).createPBFields(any());
 
             // When we transform our Entity Semantic Versions into a PBSemanticVersion
-            List<PBSemanticVersion> actualPBSemanticVersion = entityTransformer.createPBSemanticVersions(RecordListBuilder.make().add(mockSemanticVersion).addAndBuild(mockSemanticVersion));
+            List<PBSemanticVersion> actualPBSemanticVersion = entityToTinkarSchemaTransformer.createPBSemanticVersions(RecordListBuilder.make().add(mockSemanticVersion).addAndBuild(mockSemanticVersion));
 
             // Then the resulting PBSemanticVersion should match the original entity value
-            verify(entityTransformer, times(2)).createPBStampChronology(any());
-            verify(entityTransformer, times(2)).createPBFields(any());
+            verify(entityToTinkarSchemaTransformer, times(2)).createPBStampChronology(any());
+            verify(entityToTinkarSchemaTransformer, times(2)).createPBFields(any());
             assertEquals(2, actualPBSemanticVersion.size(), "The versions are missing from semantic version.");
             assertTrue(actualPBSemanticVersion.get(0).hasStamp(), "The Semantic Version is missing a stamp in its first version.");
             assertTrue(actualPBSemanticVersion.get(1).hasStamp(), "The Semantic Version is missing a stamp in its second version.");
@@ -85,14 +82,14 @@ public class TestEntityToProtobufSemanticTransform {
             // Given an Entity Semantic Version
             SemanticVersionRecord mockSemanticVersion = mock(SemanticVersionRecord.class);
 
-            EntityTransformer entityTransformer = spy(EntityTransformer.getInstance());
+            EntityToTinkarSchemaTransformer entityToTinkarSchemaTransformer = spy(EntityToTinkarSchemaTransformer.getInstance());
 
-            doReturn(List.of(PBField.getDefaultInstance())).when(entityTransformer).createPBFields(any());
+            doReturn(List.of(PBField.getDefaultInstance())).when(entityToTinkarSchemaTransformer).createPBFields(any());
 
             // When we transform our Entity Semantic Versions into a PBSemanticVersion
 
             // Then the resulting PBSemanticVersion should throw an exception
-            assertThrows(Throwable.class, () -> EntityTransformer.getInstance().createPBSemanticVersions(RecordListBuilder.make().add(mockSemanticVersion)), "Not allowed to have an empty Stamp in Semantic Version.");
+            assertThrows(Throwable.class, () -> EntityToTinkarSchemaTransformer.getInstance().createPBSemanticVersions(RecordListBuilder.make().add(mockSemanticVersion)), "Not allowed to have an empty Stamp in Semantic Version.");
         });
     }
 
@@ -103,13 +100,13 @@ public class TestEntityToProtobufSemanticTransform {
             // Given an Entity Semantic Version
             SemanticVersionRecord mockSemanticVersion = mock(SemanticVersionRecord.class);
 
-            EntityTransformer entityTransformer = spy(EntityTransformer.getInstance());
+            EntityToTinkarSchemaTransformer entityToTinkarSchemaTransformer = spy(EntityToTinkarSchemaTransformer.getInstance());
 
-            doReturn(PBStampChronology.getDefaultInstance()).when(entityTransformer).createPBStampChronology(any());
+            doReturn(PBStampChronology.getDefaultInstance()).when(entityToTinkarSchemaTransformer).createPBStampChronology(any());
             // When we transform our Entity Semantic Versions into a PBSemanticVersion
 
             // Then the resulting PBSemanticVersion should throw an exception
-            assertThrows(Throwable.class, () -> EntityTransformer.getInstance().createPBSemanticVersions(RecordListBuilder.make().add(mockSemanticVersion)), "Not allowed to have an empty Field in Semantic Version.");
+            assertThrows(Throwable.class, () -> EntityToTinkarSchemaTransformer.getInstance().createPBSemanticVersions(RecordListBuilder.make().add(mockSemanticVersion)), "Not allowed to have an empty Field in Semantic Version.");
         });
     }
 }
