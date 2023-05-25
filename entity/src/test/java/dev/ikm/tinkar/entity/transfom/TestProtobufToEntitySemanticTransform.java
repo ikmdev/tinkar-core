@@ -2,10 +2,8 @@ package dev.ikm.tinkar.entity.transfom;
 
 import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.component.Semantic;
-import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.schema.*;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -32,7 +30,7 @@ public class TestProtobufToEntitySemanticTransform {
             // When we transform PBSemanticChronology
 
             // Then we will throw a Runtime exception
-            assertThrows(Throwable.class, () -> ProtobufTransformer.getInstance().transformSemanticChronology(pbSemanticChronology), "Not allowed to have no semantic versions.");
+            assertThrows(Throwable.class, () -> TinkarSchemaToEntityTransformer.getInstance().transformSemanticChronology(pbSemanticChronology), "Not allowed to have no semantic versions.");
         });
     }
     @Test
@@ -73,7 +71,7 @@ public class TestProtobufToEntitySemanticTransform {
                     .build();
 
             // When we transform PBSemanticChronology
-            SemanticEntity actualSemanticChronology = ProtobufTransformer.getInstance().transformSemanticChronology(pbSemanticChronology);
+            SemanticEntity actualSemanticChronology = TinkarSchemaToEntityTransformer.getInstance().transformSemanticChronology(pbSemanticChronology);
 
             // Then we compare the PBSemanticChronology to the expected one
             assertEquals(1, actualSemanticChronology.versions().size(), "Versions are missing from the Semantic Chronology.");
@@ -119,9 +117,8 @@ public class TestProtobufToEntitySemanticTransform {
             // When we transform PBSemanticChronology
 
             // Then we will throw a Runtime exception
-            assertThrows(Throwable.class, () -> ProtobufTransformer.getInstance().transformSemanticChronology(pbSemanticChronology), "Not allowed to have no semantic versions.");
+            assertThrows(Throwable.class, () -> TinkarSchemaToEntityTransformer.getInstance().transformSemanticChronology(pbSemanticChronology), "Not allowed to have no semantic versions.");
             });
     }
-
     //TODO: Add more coverage to Semantic missing fields
 }

@@ -25,7 +25,7 @@ public class TestEntityToProtobufFieldTransform {
                     .build();
 
             // When we transform our Protobuf String Field value
-            PBField actualPBFieldString = EntityTransformer.getInstance().createPBField(actualEntityFieldString);
+            PBField actualPBFieldString = EntityToTinkarSchemaTransformer.getInstance().createPBField(actualEntityFieldString);
 
             // Then the resulting Object should match the original passed in string value.
             assertEquals(expectedPBFieldString.toString(),actualPBFieldString.toString(), "The transformed string value does not match the expected.");
@@ -46,7 +46,7 @@ public class TestEntityToProtobufFieldTransform {
                     .build();
 
             // When we transform our Protobuf Boolean Field value
-            PBField actualPBFieldBoolean = EntityTransformer.getInstance().createPBField(actualEntityFieldBoolean);
+            PBField actualPBFieldBoolean = EntityToTinkarSchemaTransformer.getInstance().createPBField(actualEntityFieldBoolean);
 
             // Then the resulting Object should match the original passed in boolean value.
             assertEquals(expectedPBFieldBoolean,actualPBFieldBoolean, "The transformed boolean value does not match the expected.");
@@ -67,7 +67,7 @@ public class TestEntityToProtobufFieldTransform {
                     .build();
 
             // When we transform our Protobuf Integer Field value
-            PBField actualPBFieldInteger = EntityTransformer.getInstance().createPBField(actualEntityFieldInteger);
+            PBField actualPBFieldInteger = EntityToTinkarSchemaTransformer.getInstance().createPBField(actualEntityFieldInteger);
 
             // Then the resulting Object should match the original passed in integer value.
             assertEquals(expectedPBFieldInteger.toString(),actualPBFieldInteger.toString(), "The transformed integer value does not match the expected.");
@@ -88,7 +88,7 @@ public class TestEntityToProtobufFieldTransform {
                     .build();
 
             // When we transform our Protobuf Float Field value
-            PBField actualPBFieldFloat = EntityTransformer.getInstance().createPBField(actualEntityFloatInteger);
+            PBField actualPBFieldFloat = EntityToTinkarSchemaTransformer.getInstance().createPBField(actualEntityFloatInteger);
 
             // Then the resulting Object should match the original passed in float value.
             assertEquals(expectedPBFieldFloat.toString(),actualPBFieldFloat.toString(), "The transformed float value does not match the expected.");

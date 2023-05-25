@@ -5,12 +5,12 @@ import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.FieldDefinitionRecord;
 import dev.ikm.tinkar.schema.PBFieldDefinition;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.*;
+import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.createPBPublicId;
+import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.openSession;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
@@ -41,7 +41,7 @@ public class TestEntityToProtobufFieldDefinitionTransform {
             when(mockFieldDef.purpose()).thenReturn(purposeConcept);
 
             // When we transform the FieldDef entity to a protobuf message
-            PBFieldDefinition actualTransformedFieldDefinition = EntityTransformer.getInstance().createPBFieldDefinition(mockFieldDef);
+            PBFieldDefinition actualTransformedFieldDefinition = EntityToTinkarSchemaTransformer.getInstance().createPBFieldDefinition(mockFieldDef);
             // Then assert that the actual transformed Field def matches that of the expected.
             assertEquals(createPBPublicId(dataTypeConcept.publicId()), actualTransformedFieldDefinition.getDataType(), "Public Id's did not match in Field Definitions Data Type.");
             assertEquals(createPBPublicId(meaningConcept.publicId()), actualTransformedFieldDefinition.getMeaning(), "Public Id's did not match in Field Definitions Meaning.");
@@ -68,7 +68,7 @@ public class TestEntityToProtobufFieldDefinitionTransform {
             // When we transform the FieldDef entity to a protobuf message
 
             // Then throw an exception because missing fields in field definition are not allowed
-            assertThrows(Throwable.class, () -> EntityTransformer.getInstance().createPBFieldDefinition(mockFieldDef), "Not allowed to have a missing DataType in field definitions.");
+            assertThrows(Throwable.class, () -> EntityToTinkarSchemaTransformer.getInstance().createPBFieldDefinition(mockFieldDef), "Not allowed to have a missing DataType in field definitions.");
         });
     }
 
@@ -91,7 +91,7 @@ public class TestEntityToProtobufFieldDefinitionTransform {
             // When we transform the FieldDef entity to a protobuf message
 
             // Then throw an exception because missing fields in field definition are not allowed
-            assertThrows(Throwable.class, () -> EntityTransformer.getInstance().createPBFieldDefinition(mockFieldDef), "Not allowed to have a missing Meaning in field definitions.");
+            assertThrows(Throwable.class, () -> EntityToTinkarSchemaTransformer.getInstance().createPBFieldDefinition(mockFieldDef), "Not allowed to have a missing Meaning in field definitions.");
         });
 
     }
@@ -115,7 +115,7 @@ public class TestEntityToProtobufFieldDefinitionTransform {
             // When we transform the FieldDef entity to a protobuf message
 
             // Then throw an exception because missing fields in field definition are not allowed
-            assertThrows(Throwable.class, () -> EntityTransformer.getInstance().createPBFieldDefinition(mockFieldDef), "Not allowed to have a missing Purpose in field definitions.");
+            assertThrows(Throwable.class, () -> EntityToTinkarSchemaTransformer.getInstance().createPBFieldDefinition(mockFieldDef), "Not allowed to have a missing Purpose in field definitions.");
         });
     }
 }

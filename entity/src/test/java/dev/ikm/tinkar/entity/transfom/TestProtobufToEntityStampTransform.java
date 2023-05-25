@@ -3,6 +3,8 @@ package dev.ikm.tinkar.entity.transfom;
 import com.google.protobuf.Timestamp;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.component.Concept;
+import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.StampEntityVersion;
 import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.entity.StampVersionRecord;
 import dev.ikm.tinkar.schema.PBStampChronology;
@@ -10,6 +12,9 @@ import dev.ikm.tinkar.schema.PBStampVersion;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+
+import java.util.function.Consumer;
+
 import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
@@ -35,7 +40,7 @@ public class TestProtobufToEntityStampTransform {
             StampRecord mockStampRecord = mock(StampRecord.class);
 
             // When we transform PBStampVersion
-            StampVersionRecord actualStampVersionRecord = ProtobufTransformer.getInstance().transformStampVersion(pbStampVersion, mockStampRecord);
+            StampVersionRecord actualStampVersionRecord = TinkarSchemaToEntityTransformer.getInstance().transformStampVersion(pbStampVersion, mockStampRecord);
 
             // Then the resulting StampVersionRecord should match the original PBStampVersion
             assertEquals(nid(statusConcept), actualStampVersionRecord.stateNid(), "Status Nid did not match");
@@ -64,7 +69,7 @@ public class TestProtobufToEntityStampTransform {
             StampRecord mockStampRecord = mock(StampRecord.class);
 
             // When we transform PBStampVersion
-            StampVersionRecord actualStampVersionRecord = ProtobufTransformer.getInstance().transformStampVersion(pbStampVersion, mockStampRecord);
+            StampVersionRecord actualStampVersionRecord = TinkarSchemaToEntityTransformer.getInstance().transformStampVersion(pbStampVersion, mockStampRecord);
 
             // Then the resulting StampVersionRecord should match the original PBStampVersion
             assertEquals(nid(statusConcept), actualStampVersionRecord.stateNid(), "Status Nid did not match");
@@ -98,7 +103,7 @@ public class TestProtobufToEntityStampTransform {
             // When we transform PBStampVersion
 
             // Then we will throw a Runtime exception
-            assertThrows(Throwable.class, () -> ProtobufTransformer.getInstance().transformStampVersion(pbStampVersion, mockStampRecord), "Not allowed to have empty UUID for status.");
+            assertThrows(Throwable.class, () -> TinkarSchemaToEntityTransformer.getInstance().transformStampVersion(pbStampVersion, mockStampRecord), "Not allowed to have empty UUID for status.");
         });
     }
 
@@ -122,7 +127,7 @@ public class TestProtobufToEntityStampTransform {
             // When we transform PBStampVersion
 
             // Then we will throw a Runtime exception
-            assertThrows(Throwable.class, () -> ProtobufTransformer.getInstance().transformStampVersion(pbStampVersion, mockStampRecord), "Not allowed to have empty UUID for author.");
+            assertThrows(Throwable.class, () -> TinkarSchemaToEntityTransformer.getInstance().transformStampVersion(pbStampVersion, mockStampRecord), "Not allowed to have empty UUID for author.");
         });
     }
 
@@ -146,7 +151,7 @@ public class TestProtobufToEntityStampTransform {
             // When we transform PBStampVersion
 
             // Then we will throw a Runtime exception
-            assertThrows(Throwable.class, () -> ProtobufTransformer.getInstance().transformStampVersion(pbStampVersion, mockStampRecord), "Not allowed to have empty UUID for module.");
+            assertThrows(Throwable.class, () -> TinkarSchemaToEntityTransformer.getInstance().transformStampVersion(pbStampVersion, mockStampRecord), "Not allowed to have empty UUID for module.");
         });
     }
 
@@ -170,7 +175,7 @@ public class TestProtobufToEntityStampTransform {
             // When we transform PBStampVersion
 
             // Then we will throw a Runtime exception
-            assertThrows(Throwable.class, () -> ProtobufTransformer.getInstance().transformStampVersion(pbStampVersion, mockStampRecord), "Not allowed to have empty UUID for path.");
+            assertThrows(Throwable.class, () -> TinkarSchemaToEntityTransformer.getInstance().transformStampVersion(pbStampVersion, mockStampRecord), "Not allowed to have empty UUID for path.");
         });
     }
 
@@ -182,6 +187,7 @@ public class TestProtobufToEntityStampTransform {
     @DisplayName("Transform a Stamp Chronology With No Versions")
     public void stampChronologyTransformWithZeroVersion(){
         openSession(this, (mockedEntityService, conceptMap) -> {
+            Consumer<StampEntity<StampEntityVersion>> stampConsumer = (c) -> { };
             // Given a PBStampChronology with a no Stamp Versions present
             PBStampChronology pbStampChronology = PBStampChronology.newBuilder()
                     .setPublicId(createPBPublicId())
@@ -190,7 +196,7 @@ public class TestProtobufToEntityStampTransform {
             // When we transform PBStampChronology
 
             // Then we will throw a Runtime exception
-            assertThrows(Throwable.class, () -> ProtobufTransformer.getInstance().transformStampChronology(pbStampChronology), "Not allowed to have no stamp versions.");
+            assertThrows(Throwable.class, () -> TinkarSchemaToEntityTransformer.getInstance().transformStampChronology(pbStampChronology, stampConsumer), "Not allowed to have no stamp versions.");
         });
     }
 
@@ -201,6 +207,7 @@ public class TestProtobufToEntityStampTransform {
     @DisplayName("Transform a Stamp Chronology With One Version")
     public void stampChronologyTransformWithOneVersion(){
         openSession(this, (mockedEntityService, conceptMap) -> {
+            Consumer<StampEntity<StampEntityVersion>> stampConsumer = (c) -> { };
             // Given a PBStampChronology with a one Stamp Version present
             Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
             Concept statusConcept = conceptMap.get(STATUS_CONCEPT_NAME);
@@ -223,7 +230,7 @@ public class TestProtobufToEntityStampTransform {
                     .build();
 
             // When we transform PBStampChronology
-            StampRecord actualStampChronology = ProtobufTransformer.getInstance().transformStampChronology(pbStampChronology);
+            StampRecord actualStampChronology = TinkarSchemaToEntityTransformer.getInstance().transformStampChronology(pbStampChronology, stampConsumer);
 
             // Then the resulting StampChronology should match the original PBStampChronology
             assertEquals(nid(testConcept), actualStampChronology.nid(), "Nid's did not match in Stamp Chronology.");
@@ -241,6 +248,7 @@ public class TestProtobufToEntityStampTransform {
     @DisplayName("Transform a Stamp Chronology With Two Versions")
     public void stampChronologyTransformWithTwoVersions(){
         openSession(this, (mockedEntityService, conceptMap) -> {
+            Consumer<StampEntity<StampEntityVersion>> stampConsumer = (c) -> { };
             // Given a PBStampChronology with two Stamp Versions present
             Timestamp expectedTime1 = nowTimestamp();
             Timestamp expectedTime2 = nowTimestamp(60);
@@ -272,7 +280,7 @@ public class TestProtobufToEntityStampTransform {
                     .build();
 
             // When we transform PBStampChronology
-            StampRecord actualStampChronology = ProtobufTransformer.getInstance().transformStampChronology(pbStampChronology);
+            StampRecord actualStampChronology = TinkarSchemaToEntityTransformer.getInstance().transformStampChronology(pbStampChronology, stampConsumer);
 
             // Then the resulting StampChronology should match the original PBStampChronology
             assertEquals(nid(testConcept), actualStampChronology.nid(), "Nid's did not match in Stamp Chronology.");

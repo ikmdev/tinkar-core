@@ -192,6 +192,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         STAMP_CACHE.invalidate(entity.nid());
         if (entity instanceof SemanticEntity semanticEntity) {
             STRING_CACHE.invalidate(semanticEntity.referencedComponentNid());
+
             Entity parent = getEntityFast(semanticEntity.referencedComponentNid());
             while (parent != null) {
                 switch (parent) {
