@@ -5,9 +5,9 @@ import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.PatternVersionRecord;
 import dev.ikm.tinkar.entity.RecordListBuilder;
-import dev.ikm.tinkar.schema.PBFieldDefinition;
-import dev.ikm.tinkar.schema.PBPatternVersion;
-import dev.ikm.tinkar.schema.PBStampChronology;
+import dev.ikm.tinkar.schema.FieldDefinition;
+import dev.ikm.tinkar.schema.PatternVersion;
+import dev.ikm.tinkar.schema.StampChronology;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -55,11 +55,11 @@ public class TestEntityToProtobufPatternTransform {
 
             EntityToTinkarSchemaTransformer entityToTinkarSchemaTransformer = spy(EntityToTinkarSchemaTransformer.getInstance());
 
-            doReturn(PBStampChronology.getDefaultInstance()).when(entityToTinkarSchemaTransformer).createPBStampChronology(any());
-            doReturn(List.of(PBFieldDefinition.getDefaultInstance())).when(entityToTinkarSchemaTransformer).createPBFieldDefinitions(any());
+            doReturn(StampChronology.getDefaultInstance()).when(entityToTinkarSchemaTransformer).createPBStampChronology(any());
+            doReturn(List.of(FieldDefinition.getDefaultInstance())).when(entityToTinkarSchemaTransformer).createPBFieldDefinitions(any());
 
             // When we transform our Entity Pattern Version into a PBPatternVersion
-            List<PBPatternVersion> actualPBPatternVersion = entityToTinkarSchemaTransformer.createPBPatternVersions(RecordListBuilder.make().with(mockPatternVersion).build());
+            List<PatternVersion> actualPBPatternVersion = entityToTinkarSchemaTransformer.createPBPatternVersions(RecordListBuilder.make().with(mockPatternVersion).build());
 
             // Then the resulting PBPatternVersion should match the original entity value
             verify(entityToTinkarSchemaTransformer, times(1)).createPBStampChronology(any());
@@ -91,11 +91,11 @@ public class TestEntityToProtobufPatternTransform {
 
             EntityToTinkarSchemaTransformer entityToTinkarSchemaTransformer = spy(EntityToTinkarSchemaTransformer.getInstance());
 
-            doReturn(PBStampChronology.getDefaultInstance()).when(entityToTinkarSchemaTransformer).createPBStampChronology(any());
-            doReturn(List.of(PBFieldDefinition.getDefaultInstance())).when(entityToTinkarSchemaTransformer).createPBFieldDefinitions(any());
+            doReturn(StampChronology.getDefaultInstance()).when(entityToTinkarSchemaTransformer).createPBStampChronology(any());
+            doReturn(List.of(FieldDefinition.getDefaultInstance())).when(entityToTinkarSchemaTransformer).createPBFieldDefinitions(any());
 
             // When we transform our Entity Pattern Version into a PBPatternVersion
-            List<PBPatternVersion> actualPBPatternVersion = entityToTinkarSchemaTransformer.createPBPatternVersions(RecordListBuilder.make().add(mockPatternVersion).addAndBuild(mockPatternVersion));
+            List<PatternVersion> actualPBPatternVersion = entityToTinkarSchemaTransformer.createPBPatternVersions(RecordListBuilder.make().add(mockPatternVersion).addAndBuild(mockPatternVersion));
 
             // Then the resulting PBPatternVersion should match the original entity value
             verify(entityToTinkarSchemaTransformer, times(2)).createPBStampChronology(any());
@@ -123,8 +123,8 @@ public class TestEntityToProtobufPatternTransform {
 
             EntityToTinkarSchemaTransformer entityToTinkarSchemaTransformer = spy(EntityToTinkarSchemaTransformer.getInstance());
 
-            doReturn(PBStampChronology.getDefaultInstance()).when(entityToTinkarSchemaTransformer).createPBStampChronology(any());
-            doReturn(List.of(PBFieldDefinition.getDefaultInstance())).when(entityToTinkarSchemaTransformer).createPBFieldDefinitions(any());
+            doReturn(StampChronology.getDefaultInstance()).when(entityToTinkarSchemaTransformer).createPBStampChronology(any());
+            doReturn(List.of(FieldDefinition.getDefaultInstance())).when(entityToTinkarSchemaTransformer).createPBFieldDefinitions(any());
 
             // When we transform our Entity Pattern Version into a PBPatternVersion
 
@@ -148,8 +148,8 @@ public class TestEntityToProtobufPatternTransform {
 
             EntityToTinkarSchemaTransformer entityToTinkarSchemaTransformer = spy(EntityToTinkarSchemaTransformer.getInstance());
 
-            doReturn(PBStampChronology.getDefaultInstance()).when(entityToTinkarSchemaTransformer).createPBStampChronology(any());
-            doReturn(List.of(PBFieldDefinition.getDefaultInstance())).when(entityToTinkarSchemaTransformer).createPBFieldDefinitions(any());
+            doReturn(StampChronology.getDefaultInstance()).when(entityToTinkarSchemaTransformer).createPBStampChronology(any());
+            doReturn(List.of(FieldDefinition.getDefaultInstance())).when(entityToTinkarSchemaTransformer).createPBFieldDefinitions(any());
 
             // When we transform our Entity Pattern Version into a PBPatternVersion
 

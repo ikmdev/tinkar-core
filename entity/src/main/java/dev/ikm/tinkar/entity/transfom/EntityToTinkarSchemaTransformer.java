@@ -3,6 +3,7 @@ package dev.ikm.tinkar.entity.transfom;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Timestamp;
 import dev.ikm.tinkar.common.id.*;
+import dev.ikm.tinkar.common.id.PublicIdList;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.component.*;
 import dev.ikm.tinkar.component.graph.DiGraph;
@@ -15,6 +16,17 @@ import dev.ikm.tinkar.entity.graph.DiGraphEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.schema.*;
+import dev.ikm.tinkar.schema.ConceptChronology;
+import dev.ikm.tinkar.schema.ConceptVersion;
+import dev.ikm.tinkar.schema.Field;
+import dev.ikm.tinkar.schema.FieldDefinition;
+import dev.ikm.tinkar.schema.PatternChronology;
+import dev.ikm.tinkar.schema.PatternVersion;
+import dev.ikm.tinkar.schema.PublicId;
+import dev.ikm.tinkar.schema.SemanticChronology;
+import dev.ikm.tinkar.schema.SemanticVersion;
+import dev.ikm.tinkar.schema.StampVersion;
+import dev.ikm.tinkar.schema.VertexId;
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
@@ -42,7 +54,7 @@ public class EntityToTinkarSchemaTransformer {
 
     private final Logger LOG = LoggerFactory.getLogger(EntityToTinkarSchemaTransformer.class);
     private static EntityToTinkarSchemaTransformer INSTANCE;
-    private List<Flow.Subscriber<? super PBTinkarMsg>> subscribers = new ArrayList<>();
+    private List<Flow.Subscriber<? super TinkarMsg>> subscribers = new ArrayList<>();
 
     private EntityToTinkarSchemaTransformer(){
     }
@@ -63,7 +75,7 @@ public class EntityToTinkarSchemaTransformer {
      * @param entity
      * @return a Protobuf message of entity data type.
      */
-    public PBTinkarMsg transform(Entity entity){
+    public TinkarMsg transform(Entity entity){
         return switch (entity.entityDataType()){
             case CONCEPT_CHRONOLOGY -> createPBConceptChronology((ConceptEntity<ConceptEntityVersion>) entity);
             case SEMANTIC_CHRONOLOGY -> createPBSemanticChronology((SemanticEntity<SemanticEntityVersion>) entity);
@@ -72,33 +84,33 @@ public class EntityToTinkarSchemaTransformer {
         };
     }
 
-    protected PBTinkarMsg createPBConceptChronology(ConceptEntity<ConceptEntityVersion> conceptEntity){
-        return PBTinkarMsg.newBuilder()
-                .setConceptChronologyValue(PBConceptChronology.newBuilder()
+    protected TinkarMsg createPBConceptChronology(ConceptEntity<ConceptEntityVersion> conceptEntity){
+        return TinkarMsg.newBuilder()
+                .setConceptChronology(ConceptChronology.newBuilder()
                         .setPublicId(createPBPublicId(conceptEntity.publicId()))
-                        .addAllConceptVersions(createPBConceptVersions(conceptEntity.versions()))
+                        .addAllVersions(createPBConceptVersions(conceptEntity.versions()))
                         .build())
                 .build();
     }
 
-    protected List<PBConceptVersion> createPBConceptVersions(ImmutableList<ConceptEntityVersion> conceptEntityVersions){
+    protected List<ConceptVersion> createPBConceptVersions(ImmutableList<ConceptEntityVersion> conceptEntityVersions){
         if(conceptEntityVersions.size() == 0){
             throw new RuntimeException("Exception thrown, ImmutableList contains zero Entity Concept Versions");
         }
-        final ArrayList<PBConceptVersion> pbConceptVersions = new ArrayList<>();
-        conceptEntityVersions.forEach(conceptEntityVersion -> pbConceptVersions.add(PBConceptVersion.newBuilder()
+        final ArrayList<ConceptVersion> pbConceptVersions = new ArrayList<>();
+        conceptEntityVersions.forEach(conceptEntityVersion -> pbConceptVersions.add(ConceptVersion.newBuilder()
                 .setStamp(createPBStampChronology(conceptEntityVersion.stamp()))
                 .build()));
         return pbConceptVersions;
     }
 
-    protected PBTinkarMsg createPBSemanticChronology(SemanticEntity<SemanticEntityVersion> semanticEntity){
+    protected TinkarMsg createPBSemanticChronology(SemanticEntity<SemanticEntityVersion> semanticEntity){
         if(semanticEntity.versions().size() == 0){
             throw new RuntimeException("Exception thrown, Semantic Chronology can't contain zero versions");
         }
         if (semanticEntity.referencedComponent() != null) {
-            return PBTinkarMsg.newBuilder()
-                    .setSemanticChronologyValue(PBSemanticChronology.newBuilder()
+            return TinkarMsg.newBuilder()
+                    .setSemanticChronology(SemanticChronology.newBuilder()
                             .setPublicId(createPBPublicId(semanticEntity.publicId()))
                             .setReferencedComponent(createPBPublicId(semanticEntity.referencedComponent().publicId()))
                             .setPatternForSemantic(createPBPublicId(semanticEntity.pattern().publicId()))
@@ -107,8 +119,8 @@ public class EntityToTinkarSchemaTransformer {
                     .build();
 
         }
-        return PBTinkarMsg.newBuilder()
-                .setSemanticChronologyValue(PBSemanticChronology.newBuilder()
+        return TinkarMsg.newBuilder()
+                .setSemanticChronology(SemanticChronology.newBuilder()
                         .setPublicId(createPBPublicId(semanticEntity.publicId()))
                         .setReferencedComponent(createPBPublicId(PublicIds.of(0, 0)))
                         .setPatternForSemantic(createPBPublicId(semanticEntity.pattern().publicId()))
@@ -117,33 +129,33 @@ public class EntityToTinkarSchemaTransformer {
                 .build();
     }
 
-    protected List<PBSemanticVersion> createPBSemanticVersions(ImmutableList<SemanticEntityVersion> semanticEntityVersions) {
+    protected List<SemanticVersion> createPBSemanticVersions(ImmutableList<SemanticEntityVersion> semanticEntityVersions) {
         if(semanticEntityVersions.size() == 0){
             throw new RuntimeException("Exception thrown, ImmutableList contains zero Entity Semantic Versions");
         }
         return semanticEntityVersions.stream()
-                .map(semanticEntityVersion -> PBSemanticVersion.newBuilder()
+                .map(semanticEntityVersion -> SemanticVersion.newBuilder()
                     .setStamp(createPBStampChronology(semanticEntityVersion.stamp()))
-                    .addAllFieldValues(createPBFields(semanticEntityVersion.fieldValues()))
+                    .addAllFields(createPBFields(semanticEntityVersion.fieldValues()))
                     .build())
                 .toList();
     }
-        protected PBTinkarMsg createPBPatternChronology(PatternEntity<PatternEntityVersion> patternEntity){
-        return PBTinkarMsg.newBuilder()
-                .setPatternChronologyValue(PBPatternChronology.newBuilder()
+        protected TinkarMsg createPBPatternChronology(PatternEntity<PatternEntityVersion> patternEntity){
+        return TinkarMsg.newBuilder()
+                .setPatternChronology(PatternChronology.newBuilder()
                         .setPublicId(createPBPublicId(patternEntity.publicId()))
                         .addAllVersions(createPBPatternVersions(patternEntity.versions()))
                         .build())
                 .build();
     }
 
-    protected List<PBPatternVersion> createPBPatternVersions(ImmutableList<PatternEntityVersion> patternEntityVersions){
+    protected List<PatternVersion> createPBPatternVersions(ImmutableList<PatternEntityVersion> patternEntityVersions){
         if(patternEntityVersions.size() == 0){
             throw new RuntimeException("Exception thrown, ImmutableList contains zero Entity Pattern Versions");
         }
-        final ArrayList<PBPatternVersion> pbPatternVersions = new ArrayList<>();
+        final ArrayList<PatternVersion> pbPatternVersions = new ArrayList<>();
         patternEntityVersions.forEach(patternEntityVersion -> pbPatternVersions
-                .add(PBPatternVersion.newBuilder()
+                .add(PatternVersion.newBuilder()
                 .setStamp(createPBStampChronology(patternEntityVersion.stamp()))
                 .setReferencedComponentPurpose(createPBPublicId(patternEntityVersion.semanticPurpose().publicId()))
                 .setReferencedComponentMeaning(createPBPublicId(patternEntityVersion.semanticMeaning().publicId()))
@@ -152,17 +164,17 @@ public class EntityToTinkarSchemaTransformer {
         return pbPatternVersions;
     }
 
-    protected PBStampChronology createPBStampChronology(StampEntity<StampVersionRecord> stampEntity){
-        return PBStampChronology.newBuilder()
+    protected StampChronology createPBStampChronology(StampEntity<StampVersionRecord> stampEntity){
+        return StampChronology.newBuilder()
                 .setPublicId(createPBPublicId(stampEntity.publicId()))
-                .addAllStampVersions(createPBStampVersions(stampEntity.versions()))
+                .addAllVersions(createPBStampVersions(stampEntity.versions()))
                 .build();
     }
     // TODO: error occurring  here because setStatus method does not exist in PBConceptChronology (ask Andrew).
-    protected List<PBStampVersion> createPBStampVersions(ImmutableList<StampVersionRecord> stampVersionRecords){
+    protected List<StampVersion> createPBStampVersions(ImmutableList<StampVersionRecord> stampVersionRecords){
         return stampVersionRecords
                 .stream()
-                .map(stampVersionRecord -> PBStampVersion.newBuilder()
+                .map(stampVersionRecord -> StampVersion.newBuilder()
                     .setStatus(createPBPublicId(stampVersionRecord.state().publicId()))
                     .setAuthor(createPBPublicId(stampVersionRecord.author().publicId()))
                     .setModule(createPBPublicId(stampVersionRecord.module().publicId()))
@@ -172,24 +184,24 @@ public class EntityToTinkarSchemaTransformer {
                 .toList();
     }
 
-    protected PBFieldDefinition createPBFieldDefinition(FieldDefinitionRecord fieldDefinitionRecord){
-        return PBFieldDefinition.newBuilder()
+    protected FieldDefinition createPBFieldDefinition(FieldDefinitionRecord fieldDefinitionRecord){
+        return FieldDefinition.newBuilder()
                 .setMeaning(createPBPublicId(fieldDefinitionRecord.meaning().publicId()))
                 .setDataType(createPBPublicId(fieldDefinitionRecord.dataType().publicId()))
                 .setPurpose(createPBPublicId(fieldDefinitionRecord.purpose().publicId()))
                 .build();
     }
 
-    protected List<PBFieldDefinition> createPBFieldDefinitions
+    protected List<FieldDefinition> createPBFieldDefinitions
             (ImmutableList<FieldDefinitionRecord> fieldDefinitionRecords){
-        final ArrayList<PBFieldDefinition> pbFieldDefinitions = new ArrayList<>();
+        final ArrayList<FieldDefinition> pbFieldDefinitions = new ArrayList<>();
         fieldDefinitionRecords.forEach(fieldDefinitionRecord -> pbFieldDefinitions
                 .add(createPBFieldDefinition(fieldDefinitionRecord)));
         return pbFieldDefinitions;
     }
 
     //TODO: Add in Planar/Spatial point into the switch statement.
-    protected PBField createPBField(Object obj){
+    protected Field createPBField(Object obj){
         return switch (obj){
             case Boolean bool -> toPBBool(bool);
             case byte[] bytes -> toPBByte(bytes);
@@ -200,7 +212,7 @@ public class EntityToTinkarSchemaTransformer {
             case Semantic semantic -> toPBSemantic(semantic);
             case Pattern pattern -> toPBPattern(pattern);
             case Component component -> toPBComponent(component);
-            case PublicId publicId -> toPBPublicId(publicId);
+            case dev.ikm.tinkar.common.id.PublicId publicId -> toPBPublicId(publicId);
             case PublicIdList publicIdList -> toPBPublicIdList(publicIdList);
             case String s -> toPBString(s);
             case Instant instant -> toPBInstant(instant);
@@ -212,61 +224,61 @@ public class EntityToTinkarSchemaTransformer {
         };
     }
 
-    protected PBField toPBBool(boolean value) {
-        return PBField.newBuilder().setBoolValue(value).build();
+    protected Field toPBBool(boolean value) {
+        return Field.newBuilder().setBool(value).build();
     }
-    protected PBField toPBByte(byte[] value) {
-        return PBField.newBuilder().setBytesValue(ByteString.copyFrom(value)).build();
+    protected Field toPBByte(byte[] value) {
+        return Field.newBuilder().setBytes(ByteString.copyFrom(value)).build();
     }
-    protected PBField toPBFloat(float value) {
-        return PBField.newBuilder().setFloatValue(value).build();
+    protected Field toPBFloat(float value) {
+        return Field.newBuilder().setFloat(value).build();
     }
-    protected PBField toPBInteger(Integer value) {
-        return PBField.newBuilder().setIntValue(value).build();
+    protected Field toPBInteger(Integer value) {
+        return Field.newBuilder().setInt(value).build();
     }
-    protected PBField toPBStamp(Stamp value) {
-        return PBField.newBuilder().setStampValue(createPBStampChronology((StampRecord) value)).build();
+    protected Field toPBStamp(Stamp value) {
+        return Field.newBuilder().setStamp(createPBStampChronology((StampRecord) value)).build();
     }
-    protected PBField toPBConcept(Concept value) {
-        return PBField.newBuilder().setPublicIdValue(createPBPublicId(value.publicId())).build();
+    protected Field toPBConcept(Concept value) {
+        return Field.newBuilder().setPublicId(createPBPublicId(value.publicId())).build();
     }
-    protected PBField toPBSemantic(Semantic value) {
-        return PBField.newBuilder().setPublicIdValue(createPBPublicId(value.publicId())).build();
+    protected Field toPBSemantic(Semantic value) {
+        return Field.newBuilder().setPublicId(createPBPublicId(value.publicId())).build();
     }
-    protected PBField toPBPattern(Pattern value) {
-        return PBField.newBuilder().setPublicIdValue(createPBPublicId(value.publicId())).build();
+    protected Field toPBPattern(Pattern value) {
+        return Field.newBuilder().setPublicId(createPBPublicId(value.publicId())).build();
     }
-    protected PBField toPBComponent(Component value) {
-        return PBField.newBuilder().setPublicIdValue(createPBPublicId(value.publicId())).build();
+    protected Field toPBComponent(Component value) {
+        return Field.newBuilder().setPublicId(createPBPublicId(value.publicId())).build();
     }
-    protected PBField toPBPublicId(PublicId value) {
-        return PBField.newBuilder().setPublicIdValue(createPBPublicId(value)).build();
+    protected Field toPBPublicId(dev.ikm.tinkar.common.id.PublicId value) {
+        return Field.newBuilder().setPublicId(createPBPublicId(value)).build();
     }
-    protected PBField toPBPublicIdList(PublicIdList value) {
-        return PBField.newBuilder().setPublicIdListValue(createPBPublicIdList(value)).build();
+    protected Field toPBPublicIdList(PublicIdList value) {
+        return Field.newBuilder().setPublicIdList(createPBPublicIdList(value)).build();
     }
-    protected PBField toPBString(String value) {
-        return PBField.newBuilder().setStringValue(value).build();
+    protected Field toPBString(String value) {
+        return Field.newBuilder().setString(value).build();
     }
-    protected PBField toPBInstant(Instant value) {
-        return PBField.newBuilder().setTimeValue(createTimestamp(value.getEpochSecond())).build();
+    protected Field toPBInstant(Instant value) {
+        return Field.newBuilder().setTime(createTimestamp(value.getEpochSecond())).build();
     }
-    protected PBField toPBPublicIdList(IntIdList value) {
+    protected Field toPBPublicIdList(IntIdList value) {
         //TODO: Figure out what are the Int ID's getting written
-        return PBField.newBuilder().setPublicIdListValue(createPBPublicIdList(value)).build();
+        return Field.newBuilder().setPublicIdList(createPBPublicIdList(value)).build();
     }
-    protected PBField toPBPublicIdList(IntIdSet value) {
-        return PBField.newBuilder().setPublicIdListValue(createPBPublicIdList(value)).build();
+    protected Field toPBPublicIdList(IntIdSet value) {
+        return Field.newBuilder().setPublicIdList(createPBPublicIdList(value)).build();
     }
-    protected PBField toPBDiTree(DiTree value) {
-        return PBField.newBuilder().setDiTreeValue(createPBDiTree((DiTreeEntity) value)).build();
+    protected Field toPBDiTree(DiTree value) {
+        return Field.newBuilder().setDiTree(createPBDiTree((DiTreeEntity) value)).build();
     }
-    protected PBField toPBDiGraph(DiGraph value) {
-        return PBField.newBuilder().setDiGraphValue(createPBDiGraph((DiGraphEntity<EntityVertex>) value)).build();
+    protected Field toPBDiGraph(DiGraph value) {
+        return Field.newBuilder().setDiGraph(createPBDiGraph((DiGraphEntity<EntityVertex>) value)).build();
     }
 
-    protected List<PBField> createPBFields(ImmutableList<Object> objects){
-        final ArrayList<PBField> pbFields = new ArrayList<>();
+    protected List<Field> createPBFields(ImmutableList<Object> objects){
+        final ArrayList<Field> pbFields = new ArrayList<>();
         for(Object obj : objects){
             pbFields.add(createPBField(obj));
         }
@@ -274,8 +286,8 @@ public class EntityToTinkarSchemaTransformer {
     }
 
     //TODO: PBConcept on its own doesnt exist, because PBConcept is its own type of message (like semantic or pattern).
-    protected PBConceptChronology createPBConcept(PublicId publicId){
-        return PBConceptChronology.newBuilder()
+    protected ConceptChronology createPBConcept(dev.ikm.tinkar.common.id.PublicId publicId){
+        return ConceptChronology.newBuilder()
                 .setPublicId(createPBPublicId(publicId))
                 .build();
     }
@@ -286,11 +298,11 @@ public class EntityToTinkarSchemaTransformer {
                 .build();
     }
 
-    protected PBPublicId createPBPublicId(PublicId publicId){
+    protected PublicId createPBPublicId(dev.ikm.tinkar.common.id.PublicId publicId){
         if (publicId.uuidCount() == 0){
             throw new RuntimeException("Exception thrown, empty Public ID is present [entity transformer].");
         }
-        return PBPublicId.newBuilder()
+        return PublicId.newBuilder()
                 .addAllId(publicId.asUuidList().stream()
                         .map(UuidUtil::getRawBytes)
                         .map(ByteString::copyFrom)
@@ -298,44 +310,44 @@ public class EntityToTinkarSchemaTransformer {
                 .build();
     }
 
-    protected PBPublicIdList createPBPublicIdList(PublicIdList publicIdList){
-        ArrayList<PBPublicId> pbPublicIds = new ArrayList<>();
-        for(PublicId publicId : publicIdList.toIdArray()){
+    protected dev.ikm.tinkar.schema.PublicIdList createPBPublicIdList(PublicIdList publicIdList){
+        ArrayList<PublicId> pbPublicIds = new ArrayList<>();
+        for(dev.ikm.tinkar.common.id.PublicId publicId : publicIdList.toIdArray()){
             pbPublicIds.add(createPBPublicId(publicId));
         }
-        return PBPublicIdList.newBuilder()
+        return dev.ikm.tinkar.schema.PublicIdList.newBuilder()
                 .addAllPublicIds(pbPublicIds)
                 .build();
     }
 
-    protected PBPublicIdList createPBPublicIdList(IntIdList intIdList){
-        List<PBPublicId> pbPublicIds = new ArrayList<>();
+    protected dev.ikm.tinkar.schema.PublicIdList createPBPublicIdList(IntIdList intIdList){
+        List<PublicId> pbPublicIds = new ArrayList<>();
         intIdList.forEach(nid -> pbPublicIds.add(createPBPublicId(EntityService.get().getEntityFast(nid).publicId())));
-        return PBPublicIdList.newBuilder()
+        return dev.ikm.tinkar.schema.PublicIdList.newBuilder()
                 .addAllPublicIds(pbPublicIds)
                 .build();
     }
 
-    protected PBPublicIdList createPBPublicIdList(IntIdSet intIdSet){
-        ArrayList<PBPublicId> pbPublicIds = new ArrayList<>();
+    protected dev.ikm.tinkar.schema.PublicIdList createPBPublicIdList(IntIdSet intIdSet){
+        ArrayList<PublicId> pbPublicIds = new ArrayList<>();
         intIdSet.forEach(nid -> pbPublicIds.add(createPBPublicId(EntityService.get().getEntityFast(nid).publicId())));
-        return PBPublicIdList.newBuilder()
+        return dev.ikm.tinkar.schema.PublicIdList.newBuilder()
                 .addAllPublicIds(pbPublicIds)
                 .build();
     }
 
-    protected PBDiGraph createPBDiGraph(DiGraphEntity<EntityVertex> diGraph){
+    protected dev.ikm.tinkar.schema.DiGraph createPBDiGraph(DiGraphEntity<EntityVertex> diGraph){
         //List all PBVertex TODO-aks8m: Why is this called a map when it's a list??
-        ArrayList<PBVertex> pbVertices = new ArrayList<>();
+        ArrayList<dev.ikm.tinkar.schema.Vertex> pbVertices = new ArrayList<>();
         diGraph.vertexMap().forEach(vertex -> pbVertices.add(createPBVertex(vertex)));
         //Int Root Sequences TODO-aks8m: Is this a list of root Vertex's (then need to change protobuf)
         ArrayList<Integer> pbRoots = new ArrayList<>();
         diGraph.roots().forEach(root -> pbRoots.add(root.vertexIndex()));
-        ArrayList<PBIntToMultipleIntMap> pbSuccessorsMap = new ArrayList<>();
+        ArrayList<IntToMultipleIntMap> pbSuccessorsMap = new ArrayList<>();
         createPBIntToMultipleIntMaps(diGraph.successorMap().toImmutable());
-        ArrayList<PBIntToMultipleIntMap> pbPredecessorsMap = new ArrayList<>();
+        ArrayList<IntToMultipleIntMap> pbPredecessorsMap = new ArrayList<>();
         createPBIntToMultipleIntMaps(diGraph.predecessorMap().toImmutable());
-        return PBDiGraph.newBuilder()
+        return dev.ikm.tinkar.schema.DiGraph.newBuilder()
                 .addAllVertexMap(pbVertices)
                 .addAllRootSequence(pbRoots)
                 .addAllSuccessorMap(pbSuccessorsMap)
@@ -343,15 +355,15 @@ public class EntityToTinkarSchemaTransformer {
                 .build();
     }
 
-    protected PBDiTree createPBDiTree(DiTreeEntity diTree){
-        ArrayList<PBVertex> pbVertices = new ArrayList<>();
+    protected dev.ikm.tinkar.schema.DiTree createPBDiTree(DiTreeEntity diTree){
+        ArrayList<dev.ikm.tinkar.schema.Vertex> pbVertices = new ArrayList<>();
         diTree.vertexMap().forEach(vertex -> pbVertices.add(createPBVertex(vertex)));
         Vertex pbVertexRoot = diTree.root();
-        ArrayList<PBIntToIntMap> pbPredecesorMap = new ArrayList<>();
+        ArrayList<IntToIntMap> pbPredecesorMap = new ArrayList<>();
         createPBIntToIntMaps(diTree.predecessorMap().toImmutable());
-        ArrayList<PBIntToMultipleIntMap> pbSuccessorMap = new ArrayList<>();
+        ArrayList<IntToMultipleIntMap> pbSuccessorMap = new ArrayList<>();
         createPBIntToMultipleIntMaps(diTree.successorMap().toImmutable());
-        return PBDiTree.newBuilder()
+        return dev.ikm.tinkar.schema.DiTree.newBuilder()
                 .addAllVertexMap(pbVertices)
                 .setRoot(pbVertexRoot.vertexIndex())
                 .addAllPredecesorMap(pbPredecesorMap)
@@ -359,15 +371,15 @@ public class EntityToTinkarSchemaTransformer {
                 .build();
     }
 
-    protected PBVertex createPBVertex(EntityVertex vertex){
+    protected dev.ikm.tinkar.schema.Vertex createPBVertex(EntityVertex vertex){
         int pbVertexIndex = vertex.vertexIndex();
         RichIterable<Concept> vertexKeys = vertex.propertyKeys();
-        ArrayList<PBVertex.Property> pbPropertyList = new ArrayList<>();
-        vertexKeys.forEach(concept -> pbPropertyList.add(PBVertex.Property.newBuilder()
+        ArrayList<dev.ikm.tinkar.schema.Vertex.Property> pbPropertyList = new ArrayList<>();
+        vertexKeys.forEach(concept -> pbPropertyList.add(dev.ikm.tinkar.schema.Vertex.Property.newBuilder()
                 .setPublicId(createPBPublicId(concept.publicId()))
-                .setValue(createPBField(vertex.propertyFast(concept)))
+                .setField(createPBField(vertex.propertyFast(concept)))
                 .build()));
-        return PBVertex.newBuilder()
+        return dev.ikm.tinkar.schema.Vertex.newBuilder()
                 .setVertexId(createPBVertexId(vertex.vertexId()))
                 .setVertexIndex(pbVertexIndex)
                 .setMeaning(createPBPublicId(EntityService.get().getEntityFast(vertex.getMeaningNid()).publicId()))
@@ -375,26 +387,26 @@ public class EntityToTinkarSchemaTransformer {
                 .build();
     }
 
-    protected PBVertexId createPBVertexId(VertexId vertexId){
-        return PBVertexId.newBuilder()
-                .setId(ByteString.copyFrom(PublicId.idString(vertexId.asUuidArray()), StandardCharsets.UTF_8))
+    protected VertexId createPBVertexId(dev.ikm.tinkar.common.id.VertexId vertexId){
+        return VertexId.newBuilder()
+                .setId(ByteString.copyFrom(dev.ikm.tinkar.common.id.PublicId.idString(vertexId.asUuidArray()), StandardCharsets.UTF_8))
                 .build();
     }
-    protected List<PBIntToIntMap> createPBIntToIntMaps(ImmutableIntIntMap intToIntMap) {
-        ArrayList<PBIntToIntMap> pbIntToIntMaps = new ArrayList<>();
-        intToIntMap.forEachKeyValue((source, target) -> pbIntToIntMaps.add(PBIntToIntMap.newBuilder()
+    protected List<IntToIntMap> createPBIntToIntMaps(ImmutableIntIntMap intToIntMap) {
+        ArrayList<IntToIntMap> pbIntToIntMaps = new ArrayList<>();
+        intToIntMap.forEachKeyValue((source, target) -> pbIntToIntMaps.add(IntToIntMap.newBuilder()
                 .setSource(source)
                 .setTarget(target)
                 .build()
         ));
         return pbIntToIntMaps;
     }
-    protected List<PBIntToMultipleIntMap> createPBIntToMultipleIntMaps(ImmutableIntObjectMap intToMultipleIntMap){
-        List<PBIntToMultipleIntMap> pbIntToMultipleIntMaps = new ArrayList<>();
+    protected List<IntToMultipleIntMap> createPBIntToMultipleIntMaps(ImmutableIntObjectMap intToMultipleIntMap){
+        List<IntToMultipleIntMap> pbIntToMultipleIntMaps = new ArrayList<>();
         intToMultipleIntMap.keySet().forEach(source -> {
             final ArrayList<Integer> targets = new ArrayList<>();
             ((ImmutableIntList) intToMultipleIntMap.get(source)).forEach(target -> targets.add(target));
-            pbIntToMultipleIntMaps.add(PBIntToMultipleIntMap.newBuilder()
+            pbIntToMultipleIntMaps.add(IntToMultipleIntMap.newBuilder()
                     .setSource(source)
                     .addAllTarget(targets)
                     .build()
@@ -403,15 +415,15 @@ public class EntityToTinkarSchemaTransformer {
         return  pbIntToMultipleIntMaps;
     }
 
-    protected PBPlanarPoint createPBPlanaPoint(PlanarPoint planarPoint){
-        return PBPlanarPoint.newBuilder()
+    protected dev.ikm.tinkar.schema.PlanarPoint createPBPlanaPoint(PlanarPoint planarPoint){
+        return dev.ikm.tinkar.schema.PlanarPoint.newBuilder()
                 .setX(planarPoint.x())
                 .setY(planarPoint.y())
                 .build();
     }
 
-    protected PBSpatialPoint createPBSpatialPoint(SpatialPoint spatialPoint){
-        return PBSpatialPoint.newBuilder()
+    protected dev.ikm.tinkar.schema.SpatialPoint createPBSpatialPoint(SpatialPoint spatialPoint){
+        return dev.ikm.tinkar.schema.SpatialPoint.newBuilder()
                 .setX(spatialPoint.x())
                 .setY(spatialPoint.y())
                 .setZ(spatialPoint.z())

@@ -6,7 +6,7 @@ import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.transfom.EntityToTinkarSchemaTransformer;
-import dev.ikm.tinkar.schema.PBTinkarMsg;
+import dev.ikm.tinkar.schema.TinkarMsg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +72,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<Integer> {
                 try {
                     Entity<? extends EntityVersion> conceptEntity = EntityService.get().getEntityFast(conceptNid);
                     if(conceptEntity != null){
-                        PBTinkarMsg pbTinkarMsg = entityTransformer.transform(conceptEntity);
+                        TinkarMsg pbTinkarMsg = entityTransformer.transform(conceptEntity);
                         pbTinkarMsg.writeDelimitedTo(zos);
                         exportConceptCount.incrementAndGet();
                     } else {
@@ -95,7 +95,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<Integer> {
                 try {
                     Entity<? extends EntityVersion> semanticEntity = EntityService.get().getEntityFast(semanticNid);
                     if(semanticEntity != null){
-                        PBTinkarMsg pbTinkarMsg = entityTransformer.transform(semanticEntity);
+                        TinkarMsg pbTinkarMsg = entityTransformer.transform(semanticEntity);
                         pbTinkarMsg.writeDelimitedTo(zos);
                         exportSemanticCount.incrementAndGet();
                     } else {
@@ -117,7 +117,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<Integer> {
                 try {
                     Entity<? extends EntityVersion> patternEntity = EntityService.get().getEntityFast(patternNid);
                     if(patternEntity != null){
-                        PBTinkarMsg pbTinkarMsg = entityTransformer.transform(patternEntity);
+                        TinkarMsg pbTinkarMsg = entityTransformer.transform(patternEntity);
                         pbTinkarMsg.writeDelimitedTo(zos);
                         exportPatternCount.incrementAndGet();
                     } else {

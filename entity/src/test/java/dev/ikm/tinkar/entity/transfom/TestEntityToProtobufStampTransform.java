@@ -5,8 +5,8 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.entity.*;
-import dev.ikm.tinkar.schema.PBStampChronology;
-import dev.ikm.tinkar.schema.PBStampVersion;
+import dev.ikm.tinkar.schema.StampChronology;
+import dev.ikm.tinkar.schema.StampVersion;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.State;
 import org.eclipse.collections.api.factory.Lists;
@@ -47,7 +47,7 @@ public class TestEntityToProtobufStampTransform {
             when(mockStampVersion.time()).thenReturn(expectedTime);
 
             // When we transform our StampVersion into a PBStampVersion
-            List<PBStampVersion> actualPBStampVersion = EntityToTinkarSchemaTransformer.getInstance().createPBStampVersions(new RecordListBuilder<StampVersionRecord>().addAndBuild(mockStampVersion));
+            List<StampVersion> actualPBStampVersion = EntityToTinkarSchemaTransformer.getInstance().createPBStampVersions(new RecordListBuilder<StampVersionRecord>().addAndBuild(mockStampVersion));
 
             // Then the resulting PBStampVersion should match the original entity value.
             assertEquals(createPBPublicId(State.ACTIVE.publicId()), actualPBStampVersion.get(0).getStatus(), "The States/Statuses do not match in PBStampVersion.");
@@ -216,16 +216,16 @@ public class TestEntityToProtobufStampTransform {
             when(mockedStampEntityVersion.versions()).thenReturn(new RecordListBuilder<StampVersionRecord>().addAndBuild(mockedStampVersion));
 
             // When we perform the transform
-            PBStampChronology actualPBStampChronology = EntityToTinkarSchemaTransformer.getInstance().createPBStampChronology(mockedStampEntityVersion);
+            StampChronology actualPBStampChronology = EntityToTinkarSchemaTransformer.getInstance().createPBStampChronology(mockedStampEntityVersion);
 
             //TODO: Add in Mockito Verify statements here
 
             // Then we assure that the values match
             assertEquals(createPBPublicId(randomPublicID), actualPBStampChronology.getPublicId(), "The public ID's of the expected Stamp Chronology and actual do not match.");
-            assertEquals(1, actualPBStampChronology.getStampVersionsCount(), "The size of Stamp Versions do not match those expected in the Stamp Chronology");
-            assertEquals(createPBPublicId(authorConcept.publicId()), actualPBStampChronology.getStampVersions(0).getAuthor(), "The public ID's of the expected Stamp Chronology's Author and actual do not match.");
-            assertEquals(createPBPublicId(moduleConcept.publicId()), actualPBStampChronology.getStampVersions(0).getModule(), "The public ID's of the expected Stamp Chronology's Module and actual do not match.");
-            assertEquals(createPBPublicId(pathConcept.publicId()), actualPBStampChronology.getStampVersions(0).getPath(), "The public ID's of the expected Stamp Chronology's Path and actual do not match.");
+            assertEquals(1, actualPBStampChronology.getVersionsCount(), "The size of Stamp Versions do not match those expected in the Stamp Chronology");
+            assertEquals(createPBPublicId(authorConcept.publicId()), actualPBStampChronology.getVersions(0).getAuthor(), "The public ID's of the expected Stamp Chronology's Author and actual do not match.");
+            assertEquals(createPBPublicId(moduleConcept.publicId()), actualPBStampChronology.getVersions(0).getModule(), "The public ID's of the expected Stamp Chronology's Module and actual do not match.");
+            assertEquals(createPBPublicId(pathConcept.publicId()), actualPBStampChronology.getVersions(0).getPath(), "The public ID's of the expected Stamp Chronology's Path and actual do not match.");
         });
     }
 
@@ -260,7 +260,7 @@ public class TestEntityToProtobufStampTransform {
             stampVersionRecords.build();
 
             // When we transform our StampVersion into a PBStampVersion
-            List<PBStampVersion> actualPBStampVersion = EntityToTinkarSchemaTransformer.getInstance().createPBStampVersions(stampVersionRecords);
+            List<StampVersion> actualPBStampVersion = EntityToTinkarSchemaTransformer.getInstance().createPBStampVersions(stampVersionRecords);
 
             // Then the resulting PBStampVersions should match the original entity value.
             assertEquals(2, actualPBStampVersion.size(),"There are missing STAMP Versions in the Stamp Chronology.");

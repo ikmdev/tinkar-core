@@ -7,9 +7,9 @@ import com.google.protobuf.Timestamp;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.component.Concept;
-import dev.ikm.tinkar.entity.*;
-import dev.ikm.tinkar.schema.PBPublicId;
-import dev.ikm.tinkar.schema.PBStampVersion;
+import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.schema.StampVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -70,15 +70,15 @@ public class ProtobufToEntityTestHelper {
     public static final String PURPOSE_CONCEPT_NAME          = "purposeConcept";
 
 
-    public static PBPublicId createPBPublicId(){
-        return PBPublicId.newBuilder().build();
+    public static dev.ikm.tinkar.schema.PublicId createPBPublicId(){
+        return dev.ikm.tinkar.schema.PublicId.newBuilder().build();
     }
-    public static PBPublicId createPBPublicId(Concept concept){
+    public static dev.ikm.tinkar.schema.PublicId createPBPublicId(Concept concept){
         return createPBPublicId(concept.publicId());
     }
-    public static PBPublicId createPBPublicId(PublicId publicId){
+    public static dev.ikm.tinkar.schema.PublicId createPBPublicId(PublicId publicId){
         ByteString byteString = ByteString.copyFrom(UuidUtil.getRawBytes(publicId.asUuidList().get(0)));
-        return PBPublicId.newBuilder().addId(byteString).build();
+        return dev.ikm.tinkar.schema.PublicId.newBuilder().addId(byteString).build();
     }
 
     /**
@@ -96,7 +96,7 @@ public class ProtobufToEntityTestHelper {
     }
 
     /**
-     * Returns a Google's protocal buffers Timestamp object based on epoch time in seconds.
+     * Returns a Google's protocol buffers Timestamp object based on epoch time in seconds.
      * @return
      */
     public static Timestamp nowTimestamp() {
@@ -151,8 +151,8 @@ public class ProtobufToEntityTestHelper {
      * @param pathConcept
      * @return
      */
-    public static PBStampVersion createPbStampVersion(Timestamp expectedTime, Concept statusConcept, Concept authorConcept, Concept moduleConcept, Concept pathConcept) {
-        PBStampVersion pbStampVersion = PBStampVersion.newBuilder()
+    public static StampVersion createPbStampVersion(Timestamp expectedTime, Concept statusConcept, Concept authorConcept, Concept moduleConcept, Concept pathConcept) {
+        StampVersion pbStampVersion = StampVersion.newBuilder()
                 .setStatus(createPBPublicId(statusConcept))
                 .setTime(expectedTime)
                 .setAuthor(createPBPublicId(authorConcept))
@@ -162,8 +162,8 @@ public class ProtobufToEntityTestHelper {
         return pbStampVersion;
     }
 
-    public static PBStampVersion createPbStampVersion(Map<String, Concept> conceptMap, Timestamp expectedTime) {
-        PBStampVersion pbStampVersion = PBStampVersion.newBuilder()
+    public static StampVersion createPbStampVersion(Map<String, Concept> conceptMap, Timestamp expectedTime) {
+        StampVersion pbStampVersion = StampVersion.newBuilder()
                 .setStatus(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
                 .setTime(expectedTime)
                 .setAuthor(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))

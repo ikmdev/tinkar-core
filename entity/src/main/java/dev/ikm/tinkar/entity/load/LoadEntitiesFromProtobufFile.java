@@ -4,7 +4,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.transfom.TinkarSchemaToEntityTransformer;
-import dev.ikm.tinkar.schema.PBTinkarMsg;
+import dev.ikm.tinkar.schema.TinkarMsg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,7 +76,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<Integer> {
             TinkarSchemaToEntityTransformer transformer = TinkarSchemaToEntityTransformer.getInstance();
             while (zipEntry != null) {
                 while (zis.available() > 0) {
-                    PBTinkarMsg pbTinkarMsg = PBTinkarMsg.parseDelimitedFrom(zis);
+                    TinkarMsg pbTinkarMsg = TinkarMsg.parseDelimitedFrom(zis);
 
                     if(pbTinkarMsg == null)
                     {

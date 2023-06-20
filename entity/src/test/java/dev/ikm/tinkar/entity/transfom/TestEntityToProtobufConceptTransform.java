@@ -5,8 +5,8 @@ import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.ConceptVersionRecord;
 import dev.ikm.tinkar.entity.RecordListBuilder;
-import dev.ikm.tinkar.schema.PBConceptVersion;
-import dev.ikm.tinkar.schema.PBStampChronology;
+import dev.ikm.tinkar.schema.ConceptVersion;
+import dev.ikm.tinkar.schema.StampChronology;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -45,9 +45,9 @@ public class TestEntityToProtobufConceptTransform {
 
             EntityToTinkarSchemaTransformer entityTransformer = spy(EntityToTinkarSchemaTransformer.getInstance());
 
-            doReturn(PBStampChronology.getDefaultInstance()).when(entityTransformer).createPBStampChronology(any());
+            doReturn(StampChronology.getDefaultInstance()).when(entityTransformer).createPBStampChronology(any());
             // When we transform our Entity Pattern Version into a PBPatternVersion
-            List<PBConceptVersion> actualPBConceptVersion = entityTransformer.createPBConceptVersions(RecordListBuilder.make().with(mockConceptVersion).build());
+            List<ConceptVersion> actualPBConceptVersion = entityTransformer.createPBConceptVersions(RecordListBuilder.make().with(mockConceptVersion).build());
 
             // Then the resulting PBConceptVersion should match the original entity value
             assertEquals(1, actualPBConceptVersion.size(), "The size of the Concept Chronology does not match the expected.");
@@ -69,9 +69,9 @@ public class TestEntityToProtobufConceptTransform {
 
             EntityToTinkarSchemaTransformer entityTransformer = spy(EntityToTinkarSchemaTransformer.getInstance());
 
-            doReturn(PBStampChronology.getDefaultInstance()).when(entityTransformer).createPBStampChronology(any());
+            doReturn(StampChronology.getDefaultInstance()).when(entityTransformer).createPBStampChronology(any());
             // When we transform our Entity Pattern Version into a PBPatternVersion
-            List<PBConceptVersion> actualPBConceptVersion = entityTransformer.createPBConceptVersions(RecordListBuilder.make().with(mockConceptVersion).addAndBuild(mockConceptVersion));
+            List<ConceptVersion> actualPBConceptVersion = entityTransformer.createPBConceptVersions(RecordListBuilder.make().with(mockConceptVersion).addAndBuild(mockConceptVersion));
 
             // Then the resulting PBConceptVersion should match the original entity value
             assertEquals(2, actualPBConceptVersion.size(), "The size of the Concept Chronology does not match the expected.");

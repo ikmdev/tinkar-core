@@ -2,9 +2,7 @@ package dev.ikm.tinkar.entity.transfom;
 
 import dev.ikm.tinkar.entity.RecordListBuilder;
 import dev.ikm.tinkar.entity.SemanticVersionRecord;
-import dev.ikm.tinkar.schema.PBField;
-import dev.ikm.tinkar.schema.PBSemanticVersion;
-import dev.ikm.tinkar.schema.PBStampChronology;
+import dev.ikm.tinkar.schema.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -36,11 +34,11 @@ public class TestEntityToProtobufSemanticTransform {
 
             EntityToTinkarSchemaTransformer entityToTinkarSchemaTransformer = spy(EntityToTinkarSchemaTransformer.getInstance());
 
-            doReturn(PBStampChronology.getDefaultInstance()).when(entityToTinkarSchemaTransformer).createPBStampChronology(any());
-            doReturn(List.of(PBField.getDefaultInstance())).when(entityToTinkarSchemaTransformer).createPBFields(any());
+            doReturn(StampChronology.getDefaultInstance()).when(entityToTinkarSchemaTransformer).createPBStampChronology(any());
+            doReturn(List.of(Field.getDefaultInstance())).when(entityToTinkarSchemaTransformer).createPBFields(any());
 
             // When we transform our Entity Semantic Version into a PBSemanticVersion
-            List<PBSemanticVersion> actualPBSemanticVersion = entityToTinkarSchemaTransformer.createPBSemanticVersions(RecordListBuilder.make().add(mockSemanticVersion));
+            List<SemanticVersion> actualPBSemanticVersion = entityToTinkarSchemaTransformer.createPBSemanticVersions(RecordListBuilder.make().add(mockSemanticVersion));
 
             // Then the resulting PBSemanticVersion should match the original entity value
             verify(entityToTinkarSchemaTransformer, times(1)).createPBStampChronology(any());
@@ -60,11 +58,11 @@ public class TestEntityToProtobufSemanticTransform {
 
             EntityToTinkarSchemaTransformer entityToTinkarSchemaTransformer = spy(EntityToTinkarSchemaTransformer.getInstance());
 
-            doReturn(PBStampChronology.getDefaultInstance()).when(entityToTinkarSchemaTransformer).createPBStampChronology(any());
-            doReturn(List.of(PBField.getDefaultInstance())).when(entityToTinkarSchemaTransformer).createPBFields(any());
+            doReturn(StampChronology.getDefaultInstance()).when(entityToTinkarSchemaTransformer).createPBStampChronology(any());
+            doReturn(List.of(Field.getDefaultInstance())).when(entityToTinkarSchemaTransformer).createPBFields(any());
 
             // When we transform our Entity Semantic Versions into a PBSemanticVersion
-            List<PBSemanticVersion> actualPBSemanticVersion = entityToTinkarSchemaTransformer.createPBSemanticVersions(RecordListBuilder.make().add(mockSemanticVersion).addAndBuild(mockSemanticVersion));
+            List<SemanticVersion> actualPBSemanticVersion = entityToTinkarSchemaTransformer.createPBSemanticVersions(RecordListBuilder.make().add(mockSemanticVersion).addAndBuild(mockSemanticVersion));
 
             // Then the resulting PBSemanticVersion should match the original entity value
             verify(entityToTinkarSchemaTransformer, times(2)).createPBStampChronology(any());
@@ -84,7 +82,7 @@ public class TestEntityToProtobufSemanticTransform {
 
             EntityToTinkarSchemaTransformer entityToTinkarSchemaTransformer = spy(EntityToTinkarSchemaTransformer.getInstance());
 
-            doReturn(List.of(PBField.getDefaultInstance())).when(entityToTinkarSchemaTransformer).createPBFields(any());
+            doReturn(List.of(Field.getDefaultInstance())).when(entityToTinkarSchemaTransformer).createPBFields(any());
 
             // When we transform our Entity Semantic Versions into a PBSemanticVersion
 
@@ -102,7 +100,7 @@ public class TestEntityToProtobufSemanticTransform {
 
             EntityToTinkarSchemaTransformer entityToTinkarSchemaTransformer = spy(EntityToTinkarSchemaTransformer.getInstance());
 
-            doReturn(PBStampChronology.getDefaultInstance()).when(entityToTinkarSchemaTransformer).createPBStampChronology(any());
+            doReturn(StampChronology.getDefaultInstance()).when(entityToTinkarSchemaTransformer).createPBStampChronology(any());
             // When we transform our Entity Semantic Versions into a PBSemanticVersion
 
             // Then the resulting PBSemanticVersion should throw an exception
