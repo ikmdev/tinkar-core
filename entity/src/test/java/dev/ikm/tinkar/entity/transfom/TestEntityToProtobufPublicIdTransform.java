@@ -4,7 +4,6 @@ import com.google.protobuf.ByteString;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.component.Concept;
-import dev.ikm.tinkar.schema.PBPublicId;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,10 +43,10 @@ public class TestEntityToProtobufPublicIdTransform {
             PublicId actualPublicId = testConcept.publicId();
             //Creating a Protobuf with the Expected value
             ByteString byteString = ByteString.copyFrom(UuidUtil.getRawBytes(actualPublicId.asUuidList().get(0)));
-            PBPublicId expectedPBPublicId = PBPublicId.newBuilder().addId(byteString).build();
+            dev.ikm.tinkar.schema.PublicId expectedPBPublicId = dev.ikm.tinkar.schema.PublicId.newBuilder().addId(byteString).build();
 
             // When I try to transform it into a public ID protobuf message
-            PBPublicId actualPBPublicId = EntityToTinkarSchemaTransformer.getInstance().createPBPublicId(actualPublicId);
+            dev.ikm.tinkar.schema.PublicId actualPBPublicId = EntityToTinkarSchemaTransformer.getInstance().createPBPublicId(actualPublicId);
 
             // Then we will check to verify that the transformed public ID matches that of the original.
             assertEquals(expectedPBPublicId, actualPBPublicId, "Protobuf Public ID's do not match.");

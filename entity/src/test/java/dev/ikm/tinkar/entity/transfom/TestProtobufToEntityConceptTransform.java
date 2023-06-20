@@ -3,10 +3,10 @@ package dev.ikm.tinkar.entity.transfom;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.entity.ConceptEntity;
-import dev.ikm.tinkar.schema.PBConceptChronology;
-import dev.ikm.tinkar.schema.PBConceptVersion;
-import dev.ikm.tinkar.schema.PBStampChronology;
-import dev.ikm.tinkar.schema.PBStampVersion;
+import dev.ikm.tinkar.schema.ConceptChronology;
+import dev.ikm.tinkar.schema.ConceptVersion;
+import dev.ikm.tinkar.schema.StampChronology;
+import dev.ikm.tinkar.schema.StampVersion;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -25,7 +25,7 @@ public class TestProtobufToEntityConceptTransform {
             // Given a PBConceptChronology with a no Stamp Versions present
             Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
 
-            PBStampVersion pbStampVersion = PBStampVersion.newBuilder()
+            dev.ikm.tinkar.schema.StampVersion pbStampVersion = dev.ikm.tinkar.schema.StampVersion.newBuilder()
                     .setStatus(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
                     .setTime(nowTimestamp())
                     .setAuthor(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
@@ -33,17 +33,17 @@ public class TestProtobufToEntityConceptTransform {
                     .setPath(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
                     .build();
 
-            PBStampChronology pbStampChronology = PBStampChronology.newBuilder()
+            StampChronology pbStampChronology = StampChronology.newBuilder()
                     .setPublicId(createPBPublicId(testConcept))
-                    .addStampVersions(pbStampVersion)
+                    .addVersions(pbStampVersion)
                     .build();
 
-            PBConceptVersion pbConceptVersion = PBConceptVersion.newBuilder()
+            ConceptVersion pbConceptVersion = ConceptVersion.newBuilder()
                     .setStamp(pbStampChronology)
                     .build();
 
-            PBConceptChronology pbConceptChronology = PBConceptChronology.newBuilder()
-                    .addConceptVersions(pbConceptVersion)
+            ConceptChronology pbConceptChronology = ConceptChronology.newBuilder()
+                    .addVersions(pbConceptVersion)
                     .build();
 
             // When we transform PBConceptChronology
@@ -58,7 +58,7 @@ public class TestProtobufToEntityConceptTransform {
     public void conceptChronologyTransformWithZeroVersion(){
         openSession(this, (mockedEntityService, conceptMap) -> {
             // Given a PBConceptChronology with a no Stamp Versions present
-            PBConceptChronology pbConceptChronology = PBConceptChronology.newBuilder()
+            ConceptChronology pbConceptChronology = ConceptChronology.newBuilder()
                     .setPublicId(createPBPublicId(conceptMap.get(TEST_CONCEPT_NAME)))
                     .build();
 
@@ -75,7 +75,7 @@ public class TestProtobufToEntityConceptTransform {
             // Given a PBConceptChronology with a one Stamp Version present
             Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
 
-            PBStampVersion pbStampVersion = PBStampVersion.newBuilder()
+            StampVersion pbStampVersion = StampVersion.newBuilder()
                     .setStatus(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
                     .setTime(nowTimestamp())
                     .setAuthor(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
@@ -83,18 +83,18 @@ public class TestProtobufToEntityConceptTransform {
                     .setPath(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
                     .build();
 
-            PBStampChronology pbStampChronology = PBStampChronology.newBuilder()
+            StampChronology pbStampChronology = StampChronology.newBuilder()
                     .setPublicId(createPBPublicId(testConcept))
-                    .addStampVersions(pbStampVersion)
+                    .addVersions(pbStampVersion)
                     .build();
 
-            PBConceptVersion pbConceptVersion = PBConceptVersion.newBuilder()
+            ConceptVersion pbConceptVersion = ConceptVersion.newBuilder()
                     .setStamp(pbStampChronology)
                     .build();
 
-            PBConceptChronology pbConceptChronology = PBConceptChronology.newBuilder()
+            ConceptChronology pbConceptChronology = ConceptChronology.newBuilder()
                     .setPublicId(createPBPublicId(testConcept))
-                    .addConceptVersions(pbConceptVersion)
+                    .addVersions(pbConceptVersion)
                     .build();
 
             // When we transform PBConceptChronology
@@ -122,7 +122,7 @@ public class TestProtobufToEntityConceptTransform {
             Concept moduleConcept = conceptMap.get(MODULE_CONCEPT_NAME);
             Concept pathConcept = conceptMap.get(PATH_CONCEPT_NAME);
 
-            PBStampVersion pbStampVersionTwo = PBStampVersion.newBuilder()
+            StampVersion pbStampVersionTwo = StampVersion.newBuilder()
                     .setStatus(createPBPublicId(statusConcept))
                     .setTime(nowTimestamp())
                     .setAuthor(createPBPublicId(authorConcept))
@@ -130,12 +130,12 @@ public class TestProtobufToEntityConceptTransform {
                     .setPath(createPBPublicId(pathConcept))
                     .build();
 
-            PBStampChronology pbStampChronologyTwo = PBStampChronology.newBuilder()
+            StampChronology pbStampChronologyTwo = StampChronology.newBuilder()
                     .setPublicId(createPBPublicId(testConcept))
-                    .addStampVersions(pbStampVersionTwo)
+                    .addVersions(pbStampVersionTwo)
                     .build();
 
-            PBStampVersion pbStampVersionOne = PBStampVersion.newBuilder()
+            StampVersion pbStampVersionOne = StampVersion.newBuilder()
                     .setStatus(createPBPublicId(statusConcept))
                     .setTime(nowTimestamp())
                     .setAuthor(createPBPublicId(authorConcept))
@@ -143,23 +143,23 @@ public class TestProtobufToEntityConceptTransform {
                     .setPath(createPBPublicId(pathConcept))
                     .build();
 
-            PBStampChronology pbStampChronologyOne = PBStampChronology.newBuilder()
+            StampChronology pbStampChronologyOne = StampChronology.newBuilder()
                     .setPublicId(createPBPublicId(testConcept))
-                    .addStampVersions(pbStampVersionOne)
+                    .addVersions(pbStampVersionOne)
                     .build();
 
-            PBConceptVersion pbConceptVersionOne = PBConceptVersion.newBuilder()
+            ConceptVersion pbConceptVersionOne = ConceptVersion.newBuilder()
                     .setStamp(pbStampChronologyOne)
                     .build();
 
-            PBConceptVersion pbConceptVersionTwo = PBConceptVersion.newBuilder()
+            ConceptVersion pbConceptVersionTwo = ConceptVersion.newBuilder()
                     .setStamp(pbStampChronologyTwo)
                     .build();
 
-            PBConceptChronology pbConceptChronology = PBConceptChronology.newBuilder()
+            ConceptChronology pbConceptChronology = ConceptChronology.newBuilder()
                     .setPublicId(ProtobufToEntityTestHelper.createPBPublicId(testConcept))
-                    .addConceptVersions(pbConceptVersionOne)
-                    .addConceptVersions(pbConceptVersionTwo)
+                    .addVersions(pbConceptVersionOne)
+                    .addVersions(pbConceptVersionTwo)
                     .build();
 
             // When we transform PBConceptChronology

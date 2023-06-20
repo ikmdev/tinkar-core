@@ -4,7 +4,7 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.FieldDefinitionRecord;
-import dev.ikm.tinkar.schema.PBFieldDefinition;
+import dev.ikm.tinkar.schema.FieldDefinition;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -41,7 +41,7 @@ public class TestEntityToProtobufFieldDefinitionTransform {
             when(mockFieldDef.purpose()).thenReturn(purposeConcept);
 
             // When we transform the FieldDef entity to a protobuf message
-            PBFieldDefinition actualTransformedFieldDefinition = EntityToTinkarSchemaTransformer.getInstance().createPBFieldDefinition(mockFieldDef);
+            FieldDefinition actualTransformedFieldDefinition = EntityToTinkarSchemaTransformer.getInstance().createPBFieldDefinition(mockFieldDef);
             // Then assert that the actual transformed Field def matches that of the expected.
             assertEquals(createPBPublicId(dataTypeConcept.publicId()), actualTransformedFieldDefinition.getDataType(), "Public Id's did not match in Field Definitions Data Type.");
             assertEquals(createPBPublicId(meaningConcept.publicId()), actualTransformedFieldDefinition.getMeaning(), "Public Id's did not match in Field Definitions Meaning.");

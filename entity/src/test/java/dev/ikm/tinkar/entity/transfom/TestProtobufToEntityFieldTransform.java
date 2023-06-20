@@ -1,6 +1,6 @@
 package dev.ikm.tinkar.entity.transfom;
 
-import dev.ikm.tinkar.schema.PBField;
+import dev.ikm.tinkar.schema.Field;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -16,8 +16,8 @@ public class TestProtobufToEntityFieldTransform {
         openSession(this, (mockedEntityService, conceptMap) -> {
             // Given a string value
             String expectedStringValue = "Testing Field Transformation with a string.";
-            PBField pbFieldString = PBField.newBuilder()
-                    .setStringValue(expectedStringValue)
+            Field pbFieldString = Field.newBuilder()
+                    .setString(expectedStringValue)
                     .build();
 
             // When we transform our String Field value
@@ -36,8 +36,8 @@ public class TestProtobufToEntityFieldTransform {
         openSession(this, (mockedEntityService, conceptMap) -> {
             // Given a boolean value
             Boolean expectedBoolValue = true;
-            PBField pbFieldBool = PBField.newBuilder()
-                    .setBoolValue(expectedBoolValue)
+            Field pbFieldBool = Field.newBuilder()
+                    .setBool(expectedBoolValue)
                     .build();
 
             // When we transform our Boolean Field value
@@ -54,8 +54,8 @@ public class TestProtobufToEntityFieldTransform {
         openSession(this, (mockedEntityService, conceptMap) -> {
             // Given a integer value
             Integer expectedIntValue = 1568;
-            PBField pbFieldInt = PBField.newBuilder()
-                    .setIntValue(expectedIntValue)
+            Field pbFieldInt = Field.newBuilder()
+                    .setInt(expectedIntValue)
                     .build();
 
             // When we transform our Integer Field value
@@ -72,8 +72,8 @@ public class TestProtobufToEntityFieldTransform {
         openSession(this, (mockedEntityService, conceptMap) -> {
             // Given a float value
             Float expectedFloatValue = 1534.34f;
-            PBField pbFieldFloat = PBField.newBuilder()
-                    .setFloatValue(expectedFloatValue)
+            Field pbFieldFloat = Field.newBuilder()
+                    .setFloat(expectedFloatValue)
                     .build();
 
             // When we transform our Float Field value
