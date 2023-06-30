@@ -4,9 +4,13 @@
 String cron_string = BRANCH_NAME == "main" ? "10 3 * * 1-5" : ""
 
 pipeline {
-    agent any
+    agent {
+        label 'linux'
+    }
     
     environment {
+        EMAIL_TO = 'no-reply-jenkins@tinkarbuild.com'
+        EMAIL_TEXT = 'Check console output at $BUILD_URL to view the results. \n\n ${CHANGES} \n\n -------------------------------------------------- \n'
 
         SONAR_AUTH_TOKEN    = credentials('sonarqube_pac_token')
         SONARQUBE_URL       = "${GLOBAL_SONARQUBE_URL}"
@@ -29,18 +33,12 @@ pipeline {
         timestamps()
         ansiColor('xterm')
 
-        gitLabConnection('gitlab-komet-connection')
+        gitLabConnection('gitlab-installer-connection')
     }
         
     stages {
         
         stage('Maven Build') {
-            agent {
-                docker {
-                    image "maven:3.8.7-eclipse-temurin-19-alpine"
-                    args '-u root:root'
-                }
-            }
 
             steps {
                 updateGitlabCommitStatus name: 'build', state: 'running'
@@ -59,16 +57,6 @@ pipeline {
 
         stage('SonarQube Scan') {
 
-            when{
-                branch 'master'
-            }
-            agent {
-                docker { 
-                    image "maven:3.8.7-eclipse-temurin-19-alpine"
-                    args "-u root:root"
-                }
-            }
-
             steps{
                 configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
                     withSonarQubeEnv(installationName: 'EKS SonarQube', envOnly: true) {
@@ -78,7 +66,7 @@ pipeline {
                             mvn clean install -s '${MAVEN_SETTINGS}'  --batch-mode
                             mvn pmd:pmd -s '${MAVEN_SETTINGS}'  --batch-mode
                             mvn com.github.spotbugs:spotbugs-maven-plugin:4.7.3.2:spotbugs -s '${MAVEN_SETTINGS}'  --batch-mode
-                            mvn sonar:sonar -Dsonar.qualitygate.wait=true -X -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode
+                            mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar -Dsonar.qualitygate.wait=true -X -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode
                         """
                         
                     }
@@ -101,8 +89,6 @@ pipeline {
                             filters: [includePackage('io.jenkins.plugins.analysis.*')]
                     }
                 }
-                
-                
             }
 
             post {
@@ -113,13 +99,6 @@ pipeline {
         }
 
         stage("Publish to Nexus Repository Manager") {
-
-            agent {
-                docker {
-                    image "maven:3.8.7-eclipse-temurin-19-focal"
-                    args '-u root:root'
-                }
-            }
 
             steps {
 
@@ -159,14 +138,29 @@ pipeline {
     post {
         failure {
             updateGitlabCommitStatus name: 'build', state: 'failed'
-        }
-        success {
-            updateGitlabCommitStatus name: 'build', state: 'success'
+            mail body: '${EMAIL_TEXT}\n${BUILD_LOG, maxLines=100, escapeHtml=false}', 
+                    to: "${EMAIL_TO}", 
+                    subject: 'Build failed in Jenkins: $PROJECT_NAME - #$BUILD_NUMBER'
         }
         aborted {
             updateGitlabCommitStatus name: 'build', state: 'canceled'
         }
-        always {
+        unstable {
+            updateGitlabCommitStatus name: 'build', state: 'failed'
+            mail body: '${EMAIL_TEXT}\n${BUILD_LOG, maxLines=100, escapeHtml=false}', 
+                    to: "${EMAIL_TO}", 
+                    subject: 'Unstable build in Jenkins: $PROJECT_NAME - #$BUILD_NUMBER'
+        }
+        changed {
+            updateGitlabCommitStatus name: 'build', state: 'success'
+            mail body: '${EMAIL_TEXT}', 
+                    to: "${EMAIL_TO}", 
+                    subject: 'Jenkins build is back to normal: $PROJECT_NAME - #$BUILD_NUMBER'
+        }
+        success {
+            updateGitlabCommitStatus name: 'build', state: 'success'
+        }
+        cleanup {
             // Clean the workspace after build
             cleanWs(cleanWhenNotBuilt: false,
                 deleteDirs: true,
