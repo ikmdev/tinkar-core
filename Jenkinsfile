@@ -9,9 +9,6 @@ pipeline {
     }
     
     environment {
-        EMAIL_TO = 'no-reply-jenkins@tinkarbuild.com'
-        EMAIL_TEXT = 'Check console output at $BUILD_URL to view the results. \n\n ${CHANGES} \n\n -------------------------------------------------- \n'
-
         SONAR_AUTH_TOKEN    = credentials('sonarqube_pac_token')
         SONARQUBE_URL       = "${GLOBAL_SONARQUBE_URL}"
         SONAR_HOST_URL      = "${GLOBAL_SONARQUBE_URL}"
@@ -63,9 +60,6 @@ pipeline {
                         // This expands the environment variables SONAR_CONFIG_NAME, SONAR_HOST_URL, SONAR_AUTH_TOKEN that can be used by any script.
 
                         sh """
-                            mvn clean install -s '${MAVEN_SETTINGS}'  --batch-mode
-                            mvn pmd:pmd -s '${MAVEN_SETTINGS}'  --batch-mode
-                            mvn com.github.spotbugs:spotbugs-maven-plugin:4.7.3.2:spotbugs -s '${MAVEN_SETTINGS}'  --batch-mode
                             mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar -Dsonar.qualitygate.wait=true -X -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode
                         """
                         
@@ -73,10 +67,11 @@ pipeline {
                 }
                 script{
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
-                        
+                        // This will move to using the 'codeQuality' profile of maven once we achieve sufficient coverage
+                        // TODO add -PcodeQuality to this section so that it acts as a gate
                         sh """
-                        mvn pmd:pmd -s '${MAVEN_SETTINGS}'  --batch-mode
-                        mvn com.github.spotbugs:spotbugs-maven-plugin:4.7.3.2:spotbugs -s '${MAVEN_SETTINGS}'  --batch-mode
+                            mvn pmd:pmd -s '${MAVEN_SETTINGS}' --batch-mode
+                            mvn com.github.spotbugs:spotbugs-maven-plugin:spotbugs -PcodeQuality -s '${MAVEN_SETTINGS}'  --batch-mode
                         """
                         def pmd = scanForIssues tool: [$class: 'Pmd'], pattern: '**/target/pmd.xml'
                         publishIssues issues: [pmd]
@@ -88,12 +83,6 @@ pipeline {
                             issues: [pmd, spotbugs],
                             filters: [includePackage('io.jenkins.plugins.analysis.*')]
                     }
-                }
-            }
-
-            post {
-                always {
-                    echo "post always SonarQube Scan"
                 }
             }
         }
@@ -138,24 +127,55 @@ pipeline {
     post {
         failure {
             updateGitlabCommitStatus name: 'build', state: 'failed'
-            mail body: '${EMAIL_TEXT}\n${BUILD_LOG, maxLines=100, escapeHtml=false}', 
-                    to: "${EMAIL_TO}", 
-                    subject: 'Build failed in Jenkins: $PROJECT_NAME - #$BUILD_NUMBER'
+            emailext(
+
+                recipientProviders: [requestor(), culprits()],
+                subject: "Build failed in Jenkins: ${env.JOB_NAME} - #${env.BUILD_NUMBER}",
+                body: """
+                    Build failed in Jenkins: ${env.JOB_NAME} - #${BUILD_NUMBER}
+
+                    See attached log or URL:
+                    ${env.BUILD_URL}
+
+                    --------------------------------------------------
+
+                    Changes:
+                    ${CHANGES}
+                """,
+                attachLog: true
+            )
         }
         aborted {
             updateGitlabCommitStatus name: 'build', state: 'canceled'
         }
         unstable {
             updateGitlabCommitStatus name: 'build', state: 'failed'
-            mail body: '${EMAIL_TEXT}\n${BUILD_LOG, maxLines=100, escapeHtml=false}', 
-                    to: "${EMAIL_TO}", 
-                    subject: 'Unstable build in Jenkins: $PROJECT_NAME - #$BUILD_NUMBER'
+            emailext(
+                subject: "Unstable build in Jenkins: ${env.JOB_NAME} - #${env.BUILD_NUMBER}",
+                body: """
+                    See details at URL:
+                    ${env.BUILD_URL}
+
+                    --------------------------------------------------
+
+                    Changes:
+                    ${CHANGES}
+                """,
+                attachLog: true
+            )
         }
         changed {
             updateGitlabCommitStatus name: 'build', state: 'success'
-            mail body: '${EMAIL_TEXT}', 
-                    to: "${EMAIL_TO}", 
-                    subject: 'Jenkins build is back to normal: $PROJECT_NAME - #$BUILD_NUMBER'
+            emailext(
+                recipientProviders: [requestor(), culprits()],
+                subject: "Jenkins build is back to normal: ${env.JOB_NAME} - #${env.BUILD_NUMBER}",
+                body: """
+                Jenkins build is back to normal: ${env.JOB_NAME} - #${env.BUILD_NUMBER}
+
+                See URL for more information:
+                ${env.BUILD_URL}
+                """
+            )
         }
         success {
             updateGitlabCommitStatus name: 'build', state: 'success'
