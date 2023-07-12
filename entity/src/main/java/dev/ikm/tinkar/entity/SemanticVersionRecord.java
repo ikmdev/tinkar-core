@@ -107,7 +107,8 @@ public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
                 } else {
                     sb.append(fieldString);
                 }
-                sb.append("›\n");
+                sb.append("› ");
+                sb.append(field.getClass().getSimpleName()).append("\n");
 
             }
         } else {

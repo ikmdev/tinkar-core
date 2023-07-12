@@ -30,8 +30,9 @@ import java.util.function.ObjIntConsumer;
 public interface PrimitiveDataService {
 
     int FIRST_NID = Integer.MIN_VALUE + 1;
+    byte STAMP_DATA_TYPE = 7;
 
-    static ConcurrentHashSet<Integer> canceledStampNids = new ConcurrentHashSet<>();
+    ConcurrentHashSet<Integer> canceledStampNids = new ConcurrentHashSet<>();
 
     static int nidForUuids(ConcurrentMap<UUID, Integer> uuidNidMap, NidGenerator nidGenerator, ImmutableList<UUID> uuidList) {
         switch (uuidList.size()) {
@@ -204,6 +205,7 @@ public interface PrimitiveDataService {
      */
     private static void addToSet(byte[] bytes, MutableSet<ByteList> byteArraySet, MutableIntList stampsInSet) throws IOException {
         ByteBuf readBuf = ByteBuf.wrapForReading(bytes);
+        boolean stampDataType = bytes[9] == STAMP_DATA_TYPE;
         int arrayCount = readBuf.readInt();
         for (int i = 0; i < arrayCount; i++) {
             int arraySize = readBuf.readInt();
@@ -222,16 +224,20 @@ public interface PrimitiveDataService {
             } else {
                 byte[] newArray = new byte[arraySize];
                 readBuf.read(newArray);
-                int stampNid = ((newArray[1] & 0xFF) << 24) |
-                        ((newArray[2] & 0xFF) << 16) |
-                        ((newArray[3] & 0xFF) << 8) |
-                        ((newArray[4] & 0xFF) << 0);
-                if (stampsInSet.contains(stampNid)) {
-                    // Don't add, a newer version already exists (assuming addToSet is called in order of newest to oldest bytearray)
-                    // There should be no concurrent editing on versions with the same stamp.
-                } else {
+                if (stampDataType) {
                     byteArraySet.add(ByteLists.immutable.of(newArray));
-                    stampsInSet.add(stampNid);
+                } else {
+                    int stampNid = ((newArray[1] & 0xFF) << 24) |
+                            ((newArray[2] & 0xFF) << 16) |
+                            ((newArray[3] & 0xFF) << 8) |
+                            ((newArray[4] & 0xFF) << 0);
+                    if (stampsInSet.contains(stampNid)) {
+                        // Don't add, a newer version already exists (assuming addToSet is called in order of newest to oldest bytearray)
+                        // There should be no concurrent editing on versions with the same stamp.
+                    } else {
+                        byteArraySet.add(ByteLists.immutable.of(newArray));
+                        stampsInSet.add(stampNid);
+                    }
                 }
             }
         }
