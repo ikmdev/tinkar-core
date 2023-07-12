@@ -190,6 +190,13 @@ public class Transaction implements Comparable<Transaction> {
         componentsInTransaction.add(entity.nid());
     }
 
+    public void addComponent(int entityNid) {
+        if (entityNid == 0) {
+            throw new IllegalStateException("Entity nid cannot = 0. ");
+        }
+        componentsInTransaction.add(entityNid);
+    }
+
     public long commitTime() {
         return this.commitTime;
     }

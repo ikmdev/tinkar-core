@@ -117,24 +117,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
             try {
                 this.entityToBytesMap.forEachParallel(uuidNidCollector);
                 this.uuidsLoadedLatch.countDown();
-                LOG.info("Searching for canceled stamps. ");
-                for (int stampNid : stampNids) {
-                    StampRecord stamp = Entity.getStamp(stampNid);
-                    if (stamp.time() == Long.MAX_VALUE && Transaction.forStamp(stamp).isEmpty()) {
-                        // Uncommitted stamp found outside a transaction on restart. Set to canceled.
-                        LOG.warn("Canceling uncommitted stamp: " + stamp.publicId().asUuidList());
-                        StampVersionRecord lastVersion = stamp.lastVersion();
-                        StampVersionRecord canceledVersion = lastVersion.with().time(Long.MIN_VALUE).stateNid(State.CANCELED.nid()).build();
-                        byte[] stampBytes = stamp
-                                .without(lastVersion)
-                                .with(canceledVersion)
-                                .build().getBytes();
-                        this.entityToBytesMap.put(stampNid, stampBytes);
-                    }
-                    if (stamp.lastVersion().stateNid() == State.CANCELED.nid()) {
-                        PrimitiveData.get().addCanceledStampNid(stampNid);
-                    }
-                }
+                listAndCancelUncommittedStamps();
             } catch (ExecutionException | InterruptedException e) {
                 LOG.error(e.getLocalizedMessage(), e);
             } finally {
@@ -152,6 +135,33 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
         this.searcher = new Searcher();
     }
 
+    private void listAndCancelUncommittedStamps() {
+        LOG.info("Searching for canceled stamps in set of size " + stampNids.size());
+        int[] stampNidArray = stampNids.stream().sorted().mapToInt(value -> (int) value).toArray();
+        for (int stampNid : stampNidArray) {
+            StampRecord stamp = Entity.getStamp(stampNid);
+            LOG.info("Stamp: " + stamp);
+            if (stamp.time() == Long.MAX_VALUE && Transaction.forStamp(stamp).isEmpty()) {
+                // Uncommitted stamp found outside a transaction on restart. Set to canceled.
+                cancelUncommittedStamp(stampNid, stamp);
+            }
+            if (stamp.lastVersion().stateNid() == State.CANCELED.nid()) {
+                PrimitiveData.get().addCanceledStampNid(stampNid);
+            }
+        }
+    }
+
+    private void cancelUncommittedStamp(int stampNid, StampRecord stamp) {
+        LOG.warn("Canceling uncommitted stamp: " + stamp.publicId().asUuidList());
+        StampVersionRecord lastVersion = stamp.lastVersion();
+        StampVersionRecord canceledVersion = lastVersion.with().time(Long.MIN_VALUE).stateNid(State.CANCELED.nid()).build();
+        byte[] stampBytes = stamp
+                .without(lastVersion)
+                .with(canceledVersion)
+                .build().getBytes();
+        this.entityToBytesMap.put(stampNid, stampBytes);
+    }
+
     @Override
     public long writeSequence() {
         return writeSequence.sum();
@@ -163,6 +173,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
         LOG.info("Closing SpinedArrayProvider");
         try {
             save();
+            listAndCancelUncommittedStamps();
             entityToBytesMap.close();
             SpinedArrayProvider.singleton = null;
             this.indexer.close();

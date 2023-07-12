@@ -11,6 +11,8 @@ import dev.ikm.tinkar.component.location.SpatialPoint;
 
 import java.time.Instant;
 
+import static dev.ikm.tinkar.common.service.PrimitiveDataService.STAMP_DATA_TYPE;
+
 /**
  * Note that Double objects will be converted to Float objects by the serialization mechanisms.
  * <p>
@@ -31,7 +33,7 @@ public enum FieldDataType {
     PATTERN_VERSION((byte) 5, PatternVersion.class),
     SEMANTIC_VERSION((byte) 6, SemanticVersion.class),
 
-    STAMP((byte) 7, Stamp.class),
+    STAMP((byte) STAMP_DATA_TYPE, Stamp.class),
     STRING((byte) 8, String.class),
     INTEGER((byte) 9, Integer.class),
     FLOAT((byte) 10, Float.class),

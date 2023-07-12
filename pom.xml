@@ -45,7 +45,7 @@
         <module>integration</module>
         <module>code-coverage-aggregator</module>
     </modules>
-	    
+
     <properties>
         <maven.javadoc.skip>true</maven.javadoc.skip>
         <activej-bytebuf.version>4.3-r4</activej-bytebuf.version>
