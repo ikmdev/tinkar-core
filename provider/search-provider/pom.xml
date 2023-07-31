@@ -23,11 +23,29 @@
             <artifactId>eclipse-collections-api</artifactId>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.apache.lucene/lucene-queries -->
         <dependency>
-            <groupId>${tinkar-jpms-deps.groupId}</groupId>
-            <artifactId>lucene-uber</artifactId>
-            <scope>compile</scope>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-queryparser</artifactId>
+            <version>${lucene-queryparser.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-queries</artifactId>
+            <version>${lucene-queries.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-highlighter</artifactId>
+            <version>${lucene-highlighter.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+            <version>${lucene-core.version}</version>
+        </dependency>
+
 
         <dependency>
             <groupId>${tinkar-jpms-deps.groupId}</groupId>

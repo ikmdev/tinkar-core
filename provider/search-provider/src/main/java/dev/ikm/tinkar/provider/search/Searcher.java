@@ -1,5 +1,7 @@
 package dev.ikm.tinkar.provider.search;
 
+import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
+import dev.ikm.tinkar.common.util.time.Stopwatch;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.index.DirectoryReader;
@@ -8,9 +10,11 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
-import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
-import dev.ikm.tinkar.common.util.time.Stopwatch;
-import org.apache.lucene.search.highlight.*;
+import org.apache.lucene.search.highlight.Highlighter;
+import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
+import org.apache.lucene.search.highlight.NullFragmenter;
+import org.apache.lucene.search.highlight.QueryScorer;
+import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,10 +37,11 @@ public class Searcher {
     }
 
 
-    public PrimitiveDataSearchResult[] search(String queryString, int maxResultSize) throws ParseException, IOException, InvalidTokenOffsetsException {
+    public PrimitiveDataSearchResult[] search(String queryString, int maxResultSize) throws
+            ParseException, IOException, InvalidTokenOffsetsException {
         if (queryString != null & !queryString.isEmpty()) {
             Query query = parser.parse(queryString);
-            Formatter formatter = new SimpleHTMLFormatter();
+            SimpleHTMLFormatter formatter = new SimpleHTMLFormatter();
             QueryScorer scorer = new QueryScorer(query);
             Highlighter highlighter = new Highlighter(formatter, scorer);
             highlighter.setTextFragmenter(new NullFragmenter());
