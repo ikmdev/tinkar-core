@@ -10,6 +10,7 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.highlight.Formatter;
 import org.apache.lucene.search.highlight.Highlighter;
 import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
 import org.apache.lucene.search.highlight.NullFragmenter;
@@ -41,7 +42,7 @@ public class Searcher {
             ParseException, IOException, InvalidTokenOffsetsException {
         if (queryString != null & !queryString.isEmpty()) {
             Query query = parser.parse(queryString);
-            SimpleHTMLFormatter formatter = new SimpleHTMLFormatter();
+            Formatter formatter = new SimpleHTMLFormatter();
             QueryScorer scorer = new QueryScorer(query);
             Highlighter highlighter = new Highlighter(formatter, scorer);
             highlighter.setTextFragmenter(new NullFragmenter());
