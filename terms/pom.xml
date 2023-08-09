@@ -23,18 +23,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>${tinkar-jpms-deps.groupId}</groupId>
-            <artifactId>auto-service</artifactId>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>common</artifactId>
         </dependency>

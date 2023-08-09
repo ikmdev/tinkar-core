@@ -23,9 +23,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class TestProtobufRoundTrip {
+public class ProtobufRoundTripIT {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TestProtobufRoundTrip.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ProtobufRoundTripIT.class);
 
     @BeforeAll
     public void setupSuite() {

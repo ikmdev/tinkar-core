@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class SnomedToEntityDescriptionTest {
+public class SnomedToEntityDescriptionIT {
     SnomedToEntityDescription transformer;
 
     public static final long EXPECTED_DATE = LocalDate.parse("20020131", DateTimeFormatter.ofPattern("yyyyMMdd")).atTime(12,0,0).toInstant(ZoneOffset.UTC).toEpochMilli();

@@ -32,12 +32,6 @@
         </dependency>
 
         <dependency>
-            <groupId>${tinkar-jpms-deps.groupId}</groupId>
-            <artifactId>auto-service</artifactId>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>entity-provider</artifactId>
             <scope>test</scope>
@@ -63,6 +57,18 @@
                     <!-- <argLine>-Dchronicle.values.dumpCode=true ... -->
                     <!--                    <argLine>&#45;&#45;illegal-access=permit &#45;&#45;add-exports java.base/jdk.internal.ref=ALL-UNNAMED</argLine>-->
                     <argLine>--add-exports java.base/jdk.internal.ref=ALL-UNNAMED</argLine>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifestEntries>
+                            <Automatic-Module-Name>dev.ikm.tinkar.provider.spinedarray</Automatic-Module-Name>
+                        </manifestEntries>
+                    </archive>
                 </configuration>
             </plugin>
         </plugins>

@@ -30,7 +30,8 @@ pipeline {
         timestamps()
         ansiColor('xterm')
 
-        gitLabConnection('gitlab-installer-connection')
+        // necessary for communicating status to gitlab
+        gitLabConnection('fda-shield-group')
     }
         
     stages {
@@ -42,10 +43,11 @@ pipeline {
                 script{
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
                         sh """
-                        mvn clean install -s '${MAVEN_SETTINGS}' \
+                        mvn install -s '${MAVEN_SETTINGS}' \
                             --batch-mode \
                             -e \
-                            -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+                            -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
+                            -PcodeQuality
                         """
                     }
                 }
@@ -60,19 +62,17 @@ pipeline {
                         // This expands the environment variables SONAR_CONFIG_NAME, SONAR_HOST_URL, SONAR_AUTH_TOKEN that can be used by any script.
 
                         sh """
-                            mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar -Dsonar.qualitygate.wait=true -X -Dsonar.login=${SONAR_AUTH_TOKEN} -s '${MAVEN_SETTINGS}' --batch-mode
+                            mvn org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar \
+                                -Dsonar.qualitygate.wait=true \
+                                -Dsonar.login=${SONAR_AUTH_TOKEN} \
+                                -s '${MAVEN_SETTINGS}' \
+                                --batch-mode
                         """
                         
                     }
                 }
                 script{
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
-                        // This will move to using the 'codeQuality' profile of maven once we achieve sufficient coverage
-                        // TODO add -PcodeQuality to this section so that it acts as a gate
-                        sh """
-                            mvn pmd:pmd -s '${MAVEN_SETTINGS}' --batch-mode
-                            mvn com.github.spotbugs:spotbugs-maven-plugin:spotbugs -PcodeQuality -s '${MAVEN_SETTINGS}'  --batch-mode
-                        """
                         def pmd = scanForIssues tool: [$class: 'Pmd'], pattern: '**/target/pmd.xml'
                         publishIssues issues: [pmd]
 
@@ -123,7 +123,6 @@ pipeline {
         }
     }
 
-
     post {
         failure {
             updateGitlabCommitStatus name: 'build', state: 'failed'
@@ -137,10 +136,6 @@ pipeline {
                     See attached log or URL:
                     ${env.BUILD_URL}
 
-                    --------------------------------------------------
-
-                    Changes:
-                    ${CHANGES}
                 """,
                 attachLog: true
             )
@@ -156,10 +151,6 @@ pipeline {
                     See details at URL:
                     ${env.BUILD_URL}
 
-                    --------------------------------------------------
-
-                    Changes:
-                    ${CHANGES}
                 """,
                 attachLog: true
             )

@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class SnomedLanguageSemanticMultipleVersionsTest {
+class SnomedLanguageSemanticMultipleVersionsIT {
 
     @BeforeEach
     void setUp() {

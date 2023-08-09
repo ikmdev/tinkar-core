@@ -22,8 +22,8 @@ import java.util.Arrays;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class TestSpinedArrayProvider {
-    private static final Logger LOG = LoggerFactory.getLogger(TestSpinedArrayProvider.class);
+class SpinedArrayProviderIT {
+    private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayProviderIT.class);
 
     @BeforeAll
     static void setupSuite() {

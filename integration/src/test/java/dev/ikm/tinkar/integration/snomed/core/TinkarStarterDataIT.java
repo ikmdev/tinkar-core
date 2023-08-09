@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class TestTinkarStarterData {
+public class TinkarStarterDataIT {
 
     @Test
     @Order(1)

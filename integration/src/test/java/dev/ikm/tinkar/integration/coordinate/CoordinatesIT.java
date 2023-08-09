@@ -35,8 +35,8 @@ import static dev.ikm.tinkar.terms.TinkarTerm.PATH_ORIGINS_PATTERN;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class TestCoordinates {
-    private static final Logger LOG = LoggerFactory.getLogger(TestCoordinates.class);
+class CoordinatesIT {
+    private static final Logger LOG = LoggerFactory.getLogger(CoordinatesIT.class);
 
     @BeforeAll
     static void setupSuite() throws IOException {

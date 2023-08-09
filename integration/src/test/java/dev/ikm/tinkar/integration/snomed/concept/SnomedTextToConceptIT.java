@@ -17,14 +17,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class TestSnomedTextToConcept {
+public class SnomedTextToConceptIT {
 
     @Test
     @Order(1)
     @DisplayName("Test for one row of inactive stamp data in Concept File")
     public void testStampWithOneActiveRow() {
         openSession((mockStaticEntityService, starterData) -> {
-            List<String> row = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_1.txt");
+            List<String> row = loadSnomedFile(SnomedTextToConceptIT.class, "sct2_Concept_Full_US1000124_20220901_1.txt");
             StampRecord record = createStampChronology(row.get(0));
             assertEquals(1, record.versions().size(), "Has more than one row");
         });
@@ -35,7 +35,7 @@ public class TestSnomedTextToConcept {
     @DisplayName("Test for Active stamp in Concept File")
     public void testStampWithActiveTransformResult() {
         openSession((mockStaticEntityService, starterData) -> {
-            List<String> rows = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_1.txt");
+            List<String> rows = loadSnomedFile(SnomedTextToConceptIT.class, "sct2_Concept_Full_US1000124_20220901_1.txt");
 
             StampRecord record = createStampChronology(rows.get(0));
             UUID testStampUUID = getStampUUID(rows.get(0));
@@ -55,7 +55,7 @@ public class TestSnomedTextToConcept {
     @DisplayName("Test for one row of inactive stamp data in Concept File")
     public void testStampWithOneInactiveRow() {
         openSession((mockStaticEntityService, starterData) -> {
-            List<String> row = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_2.txt");
+            List<String> row = loadSnomedFile(SnomedTextToConceptIT.class, "sct2_Concept_Full_US1000124_20220901_2.txt");
             StampRecord record = createStampChronology(row.get(0));
             assertEquals(1, record.versions().size(), "Has more than one row");
         });
@@ -66,7 +66,7 @@ public class TestSnomedTextToConcept {
     @DisplayName("Test for Inactive stamp in Concept File")
     public void testStampWithInactiveTransformResult() {
         openSession((mockStaticEntityService, starterData) -> {
-            List<String> rows = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_2.txt");
+            List<String> rows = loadSnomedFile(SnomedTextToConceptIT.class, "sct2_Concept_Full_US1000124_20220901_2.txt");
             StampRecord record = createStampChronology(rows.get(0));
             UUID testStampUUID = getStampUUID(rows.get(0));
 
@@ -85,7 +85,7 @@ public class TestSnomedTextToConcept {
     @DisplayName("Test for Concept with single version record")
     public void testConceptWithSingleVersion() {
         openSession((mockStaticEntityService, starterData) -> {
-            List<String> rows = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_3.txt");
+            List<String> rows = loadSnomedFile(SnomedTextToConceptIT.class, "sct2_Concept_Full_US1000124_20220901_3.txt");
             ConceptRecord conceptRecord = createConceptChronology(rows.get(0));
             ImmutableList<ConceptVersionRecord> conceptVersionsRecord = conceptRecord.versions();
 
@@ -103,7 +103,7 @@ public class TestSnomedTextToConcept {
     @DisplayName("Test for Concept version record")
     public void testConceptVersions() {
         openSession((mockStaticEntityService, starterData) -> {
-            List<String> rows = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_3.txt");
+            List<String> rows = loadSnomedFile(SnomedTextToConceptIT.class, "sct2_Concept_Full_US1000124_20220901_3.txt");
             ConceptRecord conceptRecord = createConceptChronology(rows.get(0));
             ImmutableList<ConceptVersionRecord> conceptVersionsRecord = conceptRecord.versions();
             ConceptVersionRecord firstConceptVersionsRecord = conceptRecord.versions().get(0);
@@ -122,8 +122,8 @@ public class TestSnomedTextToConcept {
     @DisplayName("Test for Concept with multiple version concept record")
     public void testForSingleConceptMultipleVersion() {
         openSession((mockStaticEntityService, starterData) -> {
-            List<String> rows = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_4.txt");
-            List<ConceptRecord> conceptRecord = createConceptFromMultipleVersions(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_4.txt");
+            List<String> rows = loadSnomedFile(SnomedTextToConceptIT.class, "sct2_Concept_Full_US1000124_20220901_4.txt");
+            List<ConceptRecord> conceptRecord = createConceptFromMultipleVersions(SnomedTextToConceptIT.class, "sct2_Concept_Full_US1000124_20220901_4.txt");
 
             assertTrue(rows.size() > 1, "File with single or no rows exist");
             assertTrue(conceptRecord.size() == 1, "File with more than one concept exist");
@@ -136,7 +136,7 @@ public class TestSnomedTextToConcept {
     @DisplayName("Test for ConceptVersion to refer to same parent concept")
     public void testConceptWithMultipleVersionofSameConcept() {
         openSession((mockStaticEntityService, starterData) -> {
-            List<ConceptRecord> conceptRecord = createConceptFromMultipleVersions(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_4.txt");
+            List<ConceptRecord> conceptRecord = createConceptFromMultipleVersions(SnomedTextToConceptIT.class, "sct2_Concept_Full_US1000124_20220901_4.txt");
             ConceptRecord singleConcept = conceptRecord.get(0);
             ImmutableList<ConceptVersionRecord> conceptVersionsRecord = singleConcept.versions();
 
@@ -152,7 +152,7 @@ public class TestSnomedTextToConcept {
     @DisplayName("Test for 8th text file to create multiple concepts with multiple version")
     public void testMultipleConceptsWithMultipleVersion() {
         openSession((mockStaticEntityService, starterData) -> {
-            List<ConceptRecord> conceptRecord = createConceptFromMultipleVersions(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_8.txt");
+            List<ConceptRecord> conceptRecord = createConceptFromMultipleVersions(SnomedTextToConceptIT.class, "sct2_Concept_Full_US1000124_20220901_8.txt");
             assertTrue(conceptRecord.size() > 1, "File with one concept exist");
         });
 
@@ -163,7 +163,7 @@ public class TestSnomedTextToConcept {
     @DisplayName("Test concept for identifier semantic")
     public void testConceptsWithIdentifierSemantic() {
         openSession((mockStaticEntityService, starterData) -> {
-            List<String> rows = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_5.txt");
+            List<String> rows = loadSnomedFile(SnomedTextToConceptIT.class, "sct2_Concept_Full_US1000124_20220901_5.txt");
             UUID identifierPatternUUID = getIdentifierPatternUUID();
             UUID identifierSemanticUUID = getIdentifierSemanticUUID(rows.get(0));
             UUID referenceComponentUUID = getReferenceComponentUUID(rows.get(0));
@@ -183,7 +183,7 @@ public class TestSnomedTextToConcept {
     @DisplayName("Test concept for single identifier semantic version")
     public void testConceptsWithIdentifierSemanticVersion() {
         openSession((mockStaticEntityService, starterData) -> {
-            List<String> rows = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_5.txt");
+            List<String> rows = loadSnomedFile(SnomedTextToConceptIT.class, "sct2_Concept_Full_US1000124_20220901_5.txt");
             UUID identifierPatternUUID = getIdentifierPatternUUID();
             UUID identifierSemanticUUID = getIdentifierSemanticUUID(rows.get(0));
             UUID referenceComponentUUID = getReferenceComponentUUID(rows.get(0));
@@ -208,7 +208,7 @@ public class TestSnomedTextToConcept {
     @DisplayName("Test concept for definition status semantic")
     public void testConceptsWithDefinitionStatusSemantic() {
         openSession((mockStaticEntityService, starterData) -> {
-            List<String> rows = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_6.txt");
+            List<String> rows = loadSnomedFile(SnomedTextToConceptIT.class, "sct2_Concept_Full_US1000124_20220901_6.txt");
             UUID defintinitionStatusPatternUUID = getDefinitionStatusPatternUUID();
             UUID defintinitionStatusSemanticUUID = getDefinitionStatusSemanticUUID(rows.get(0));
             UUID referenceComponentUUID = getReferenceComponentUUID(rows.get(0));
@@ -228,7 +228,7 @@ public class TestSnomedTextToConcept {
     @DisplayName("Test concept for single definition status semantic version")
     public void testConceptsWithDefinitionStatusSemanticVersion() {
         openSession((mockStaticEntityService, starterData) -> {
-            List<String> rows = loadSnomedFile(TestSnomedTextToConcept.class, "sct2_Concept_Full_US1000124_20220901_6.txt");
+            List<String> rows = loadSnomedFile(SnomedTextToConceptIT.class, "sct2_Concept_Full_US1000124_20220901_6.txt");
             UUID defintinitionStatusPatternUUID = getDefinitionStatusPatternUUID();
             UUID defintinitionStatusSemanticUUID = getDefinitionStatusSemanticUUID(rows.get(0));
             UUID referenceComponentUUID = getReferenceComponentUUID(rows.get(0));
