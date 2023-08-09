@@ -18,9 +18,9 @@ import java.io.IOException;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class TestEphemeralProtobuf {
+public class EphemeralProtobufIT {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TestEphemeralProtobuf.class);
+    private static final Logger LOG = LoggerFactory.getLogger(EphemeralProtobufIT.class);
 
     @BeforeAll
     public void setupSuite() {

@@ -13,10 +13,6 @@
     <artifactId>integration</artifactId>
 
     <properties>
-        <skipTests>true</skipTests>
-        <skipITs>true</skipITs>
-        <skipSurefireReport>true</skipSurefireReport>
-        <sonar.skip>false</sonar.skip>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
     <dependencies>
@@ -58,21 +54,18 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>${jackson.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -86,6 +79,8 @@
 
     <build>
         <plugins>
+            <!--TODO testing is currently not running on this module and needs to be fixed.
+             There seems to be some sort of dependency problem though. -->
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
@@ -102,13 +97,7 @@
                             <goal>verify</goal>
                         </goals>
                         <configuration>
-                            <skipTests>${skip.integration.tests}</skipTests>
-                            <trimStackTrace>false</trimStackTrace>
-                            <includes>**/Test*.java</includes>
-                            <argLine>--enable-preview ${failsafe.jacoco.args}</argLine>
-                            <excludes>
-                                <exclude>TestEphemeralProtobufLoad.java</exclude>
-                            </excludes>
+                            <skipTests>true</skipTests>
                         </configuration>
                     </execution>
                 </executions>
@@ -133,66 +122,23 @@
                             <goal>unpack</goal>
                         </goals>
                     </execution>
-                    
                 </executions>
                 <configuration>
-                    <artifactItems> 
-                    
+                    <artifactItems>
                         <artifactItem>
                             <groupId>dev.ikm.build</groupId>
                             <artifactId>tinkar-test-dto</artifactId>
-                            <version>1.1.0</version>
+                            <version>${tinkar-test-dto.version}</version>
                             <type>zip</type>
                             <overWrite>false</overWrite>
                             <outputDirectory>${project.build.directory}/data</outputDirectory>
                         </artifactItem>
-
-<!--                        <artifactItem>-->
-<!--                            <groupId>dev.ikm.build</groupId>-->
-<!--                            <artifactId>tinkar-solor-us-export.pb</artifactId>-->
-<!--                            <version>1.4</version>-->
-<!--                            <type>.zip</type> &lt;!&ndash; TODO-aks8m: Need to remove extra '.' in file name &ndash;&gt;-->
-<!--                            <overWrite>false</overWrite>-->
-<!--                            <outputDirectory>${project.build.directory}/data</outputDirectory>-->
-<!--                        </artifactItem>-->
-                    </artifactItems> 
+                    </artifactItems>
                     <outputDirectory>${project.build.directory}/data</outputDirectory>
                     <overWriteReleases>false</overWriteReleases>
                     <overWriteSnapshots>true</overWriteSnapshots>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>before-integration-test-execution</id>
-                        <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>prepare-agent-integration</goal>
-                        </goals>
-                        <configuration>
-                            <propertyName>failsafe.jacoco.args</propertyName>
-                        </configuration>
-                    </execution>
-
-                    <execution>
-                        <id>after-integration-test-execution</id>
-                        <phase>post-integration-test</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <!-- for site generation -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-site-plugin</artifactId>
-            </plugin>
-
-
         </plugins>
     </build>
     <reporting>
@@ -200,7 +146,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>3.0.0-M9</version>
                 <reportSets>
                     <reportSet>
                         <id>integration-tests</id>

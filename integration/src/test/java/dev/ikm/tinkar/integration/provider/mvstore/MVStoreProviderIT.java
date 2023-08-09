@@ -38,9 +38,9 @@ import java.io.IOException;
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class TestMVStoreProvider {
+class MVStoreProviderIT {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TestMVStoreProvider.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MVStoreProviderIT.class);
 
     @BeforeAll
     static void setupSuite() {

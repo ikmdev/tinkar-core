@@ -19,7 +19,7 @@ import static dev.ikm.tinkar.integration.snomed.description.SnomedToEntityIdenti
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class SnomedToEntityIdentifierTest {
+public class SnomedToEntityIdentifierIT {
 
     SnomedToEntityIdentifier transformer;
 

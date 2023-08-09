@@ -4,7 +4,7 @@
     <parent>
         <groupId>dev.ikm.build</groupId>
         <artifactId>java-parent</artifactId>
-        <version>0.4.0</version>
+        <version>1.7.0</version>
         <relativePath />
     </parent>
 
@@ -43,7 +43,7 @@
         <module>terms</module>
         <module>provider</module>
         <module>integration</module>
-        <module>code-coverage-aggregator</module>
+        <module>aggregator</module>
     </modules>
 
     <properties>
@@ -78,6 +78,7 @@
         <testng.version>7.4.0</testng.version>
         <tinkar-jpms-deps.groupId>dev.ikm.jpms</tinkar-jpms-deps.groupId>
         <tinkar-jpms-deps.version>1.0.15</tinkar-jpms-deps.version>
+        <tinkar-test-dto.version>1.1.0</tinkar-test-dto.version>
         <protobuf-java.version>3.22.0-r3</protobuf-java.version>
         <sonar.skip>false</sonar.skip>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
@@ -85,23 +86,17 @@
         <sonar.language>java</sonar.language>
         <susel.version>0.1.2</susel.version>
 
-        <junit-jupiter-engine.version>5.7.0</junit-jupiter-engine.version>
-        <junit-platform-surefire-provider.version>1.3.0</junit-platform-surefire-provider.version>
-        <junit-platform-commons.version>1.7.0</junit-platform-commons.version>
-        <junit-platform-launcher.version>1.7.0</junit-platform-launcher.version>
-        <surefire-api.version>3.0.0-M9</surefire-api.version>
-        <common-java5.version>3.0.0-M9</common-java5.version>
         <maven-jxr-plugin.version>3.3.0</maven-jxr-plugin.version>
         <maven-license-plugin.version>4.1</maven-license-plugin.version>
 
         <tinkar-schema.version>1.8.0</tinkar-schema.version>
         <udaychandra-susel.version>0.1.2</udaychandra-susel.version>
+        <junit-jupiter-engine.version>5.7.0</junit-jupiter-engine.version>
+        <junit-platform-surefire-provider.version>1.3.0</junit-platform-surefire-provider.version>
         <junit-platform-commons.version>1.7.0</junit-platform-commons.version>
         <junit-platform-launcher.version>1.7.0</junit-platform-launcher.version>
         <junit-jupiter-api.version>5.6.3</junit-jupiter-api.version>
         <common-java5.version>3.0.0-M9</common-java5.version>
-        <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
-        <maven-dependency-plugin.version>3.5.0</maven-dependency-plugin.version>
     </properties>
 
     <!-- All Dependencies and versions used in this project are pre-defined here for use in modules -->
@@ -353,11 +348,53 @@
                 <version>${common-java5.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito.version}</version>
+            </dependency>
+
+            <!-- https://mvnrepository.com/artifact/org.apache.lucene/lucene-queries -->
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-queryparser</artifactId>
+                <version>${lucene-queryparser.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-queries</artifactId>
+                <version>${lucene-queries.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-highlighter</artifactId>
+                <version>${lucene-highlighter.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-core</artifactId>
+                <version>${lucene-core.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
     <dependencies>
-
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -376,21 +413,25 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-commons</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-launcher</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.maven.surefire</groupId>
             <artifactId>common-java5</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -412,22 +453,56 @@
                         <header>${basedir}/license.txt</header>
                     </configuration>
                 </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-dependency-plugin</artifactId>
-                    <version>${maven-dependency-plugin.version}</version>
-                </plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>${java.source.version}</source>
+                    <target>${java.target.version}</target>
+                    <fork>true</fork>
+                    <compilerArgs>
+                        <arg>--enable-preview</arg>
+                    </compilerArgs>
+                    <annotationProcessorPaths>
+                        <annotationProcessorPath>
+                            <groupId>io.soabase.record-builder</groupId>
+                            <artifactId>record-builder-processor</artifactId>
+                            <version>${record-builder-core.version}</version>
+                        </annotationProcessorPath>
+                        <annotationProcessorPath>
+                            <groupId>com.google.auto.service</groupId>
+                            <artifactId>auto-service</artifactId>
+                            <version>${auto-service.version}</version>
+                        </annotationProcessorPath>
+                    </annotationProcessorPaths>
+                    <annotationProcessors>
+                        <annotationProcessor>io.soabase.recordbuilder.processor.RecordBuilderProcessor
+                        </annotationProcessor>
+                        <annotationProcessor>com.google.auto.service.processor.AutoServiceProcessor
+                        </annotationProcessor>
+                    </annotationProcessors>
+                </configuration>
+            </plugin>
 
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+            </plugin>
+        </plugins>
     </build>
 
     <!-- for site generation -->
     <reporting>
 
         <plugins>
-
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
@@ -437,12 +512,6 @@
                         <reportsDirectory>${basedir}/target/failsafe-reports</reportsDirectory>
                     </reportsDirectories>
                 </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-report-plugin</artifactId>
-
             </plugin>
 
             <plugin>

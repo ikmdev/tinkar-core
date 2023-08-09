@@ -7,8 +7,8 @@
         <version>1.11.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>code-coverage-aggregator</artifactId>
-    <name>code coverage aggregator</name>
+    <artifactId>aggregator</artifactId>
+    <name>code coverage and documentation aggregator</name>
     <packaging>pom</packaging>
 
     <dependencies>
@@ -132,7 +132,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>${maven-surefire-report-plugin.version}</version>
                 <reportSets>
                     <reportSet>
                         <!-- defines aggregate unit test report -->
@@ -155,6 +154,19 @@
                         </reports>
                         <configuration>
                             <aggregate>true</aggregate>
+                        </configuration>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <reportSets>
+                    <reportSet>
+                        <id>aggregate</id>
+                        <configuration>
+                            <skippedModules>integration</skippedModules>
                         </configuration>
                     </reportSet>
                 </reportSets>

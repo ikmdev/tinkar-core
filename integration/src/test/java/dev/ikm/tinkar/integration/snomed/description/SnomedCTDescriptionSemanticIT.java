@@ -14,7 +14,7 @@ import static dev.ikm.tinkar.integration.snomed.description.SnomedCTDescriptionS
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class SnomedCTDescriptionSemanticTest {
+public class SnomedCTDescriptionSemanticIT {
 
     public static final String DESCRIPTION_PATTERN = "Description Pattern";
 

@@ -15,9 +15,9 @@ import java.io.File;
 import java.io.IOException;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class TestProtobufPerformance {
+public class ProtobufPerformanceIT {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TestProtobufRoundTrip.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ProtobufRoundTripIT.class);
 
     @BeforeAll
     public void setupSuite() {
