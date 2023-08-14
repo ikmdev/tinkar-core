@@ -51,12 +51,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
             <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>protobuf-java</artifactId>
         </dependency>
