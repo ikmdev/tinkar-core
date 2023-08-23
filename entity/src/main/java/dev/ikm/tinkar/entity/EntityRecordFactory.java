@@ -61,18 +61,29 @@ public class EntityRecordFactory {
         boolean complete = false;
         while (!complete) {
             try {
-                ByteBuf byteBuf = ByteBufPool.allocate(MAX_ENTITY_SIZE); // one byte for version...
+                ByteBuf byteBuf = ByteBufPool.allocate(MAX_ENTITY_SIZE);
+                // one byte for version...
+                //byte[0]
                 byteBuf.writeByte(ENTITY_FORMAT_VERSION);
+                //byte[1]
                 byteBuf.writeByte(entity.entityDataType().token); //ensure that the chronicle byte array sorts first.
+                //byte[2-5]
                 byteBuf.writeInt(entity.nid());
+                //byte[6-13]
                 byteBuf.writeLong(entity.mostSignificantBits());
+                //byte[14-21]
                 byteBuf.writeLong(entity.leastSignificantBits());
+
                 long[] additionalUuidLongs = entity.additionalUuidLongs();
                 if (additionalUuidLongs == null) {
+                    //byte[22]
                     byteBuf.writeByte((byte) 0);
                 } else {
+                    //byte[22]
                     byteBuf.writeByte((byte) additionalUuidLongs.length);
+
                     for (int i = 0; i < additionalUuidLongs.length; i++) {
+                        //byte[23 + (8*i) -> byte[30 + (8*i)]
                         byteBuf.writeLong(additionalUuidLongs[i]);
                     }
                 }
@@ -186,6 +197,7 @@ public class EntityRecordFactory {
             case Float floatField -> writeField(writeBuf, floatField);
             case byte[] byteArrayField -> writeField(writeBuf, byteArrayField);
             case Integer integerField -> writeField(writeBuf, integerField);
+            case Long longField -> writeField(writeBuf, longField);
             case Instant instantField -> writeField(writeBuf, instantField);
             case String stringField -> writeField(writeBuf, stringField);
             case Concept conceptField -> writeField(writeBuf, conceptField);
@@ -222,6 +234,11 @@ public class EntityRecordFactory {
                 writeBuf.writeInt(byteArrayField.length);
                 writeBuf.write(byteArrayField);
     }
+    public static void writeField(ByteBuf writeBuf, Long longField) {
+        writeBuf.writeByte(FieldDataType.LONG.token);
+        writeBuf.writeLong(longField);
+    }
+
 
     public static void writeField(ByteBuf writeBuf, Integer integerField) {
                 writeBuf.writeByte(FieldDataType.INTEGER.token);
@@ -582,7 +599,7 @@ public class EntityRecordFactory {
                 RecordListBuilder<Object> fields = RecordListBuilder.make();
                 for (int i = 0; i < fieldCount; i++) {
                     FieldDataType dataType = FieldDataType.fromToken(readBuf.readByte());
-                    fields.add(readDataType(readBuf, dataType, formatVersion));
+                    fields.add(readFieldData(readBuf, dataType, formatVersion));
                 }
                 fields.build();
                 yield new SemanticVersionRecord(semanticRecord, stampNid, fields);
@@ -614,7 +631,7 @@ public class EntityRecordFactory {
         };
     }
 
-    public static Object readDataType(ByteBuf readBuf, FieldDataType dataType, byte formatVersion) {
+    public static Object readFieldData(ByteBuf readBuf, FieldDataType dataType, byte formatVersion) {
         return switch (dataType) {
             case BOOLEAN -> readBuf.readBoolean();
             case FLOAT -> readBuf.readFloat();
@@ -632,6 +649,7 @@ public class EntityRecordFactory {
             case SPATIAL_POINT -> new SpatialPoint(readBuf.readInt(), readBuf.readInt(), readBuf.readInt());
             case COMPONENT_ID_LIST -> IntIds.list.of(readIntArray(readBuf));
             case COMPONENT_ID_SET -> IntIds.set.of(readIntArray(readBuf));
+            case LONG -> readBuf.readLong();
             default -> throw new UnsupportedOperationException("Can't handle field read of type: " + dataType);
         };
     }

@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.coordinate.logic.calculator;
 
 import com.google.auto.service.AutoService;
+import dev.ikm.tinkar.common.service.PrimitiveDataRepair;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinate;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
 import dev.ikm.tinkar.coordinate.logic.PremiseType;
@@ -109,9 +110,15 @@ public class LogicCalculatorWithCache implements LogicCalculator {
                         }
                     }
                 }
-                // TODO Raise an alert... ?
                 return false;
             default:
+                // TODO: testing patch code here... Need to move elsewhere.
+                if (semanticNids.length == 2) {
+                    if (PrimitiveData.get() instanceof PrimitiveDataRepair primitiveDataRepair) {
+                        primitiveDataRepair.mergeThenErase(semanticNids[0], semanticNids[1]);
+                        return hasSufficientSet(nid);
+                    };
+                }
                 // TODO Raise an alert...
                 throw new IllegalStateException("More than one set of axioms for concept: " + Entity.getFast(nid));
         }

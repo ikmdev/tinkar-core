@@ -211,21 +211,27 @@ public interface StampCalculator {
 
     OptionalInt getIndexForPurpose(int patternNid, int meaningNid);
 
-    // TODO add methods for getFieldForSemanticWithPurpose
     default <T extends Object> Latest<Field<T>> getFieldForSemanticWithMeaning(SemanticEntityVersion semanticVersion, EntityFacade meaning) {
         return getFieldForSemanticWithMeaning(Latest.of(semanticVersion), meaning);
     }
+    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithPurpose(SemanticEntityVersion semanticVersion, EntityFacade purpose) {
+        return getFieldForSemanticWithPurpose(Latest.of(semanticVersion), purpose);
+    }
 
-    // TODO add methods for getFieldForSemanticWithPurpose
     default <T extends Object> Latest<Field<T>> getFieldForSemanticWithMeaning(Latest<SemanticEntityVersion> latestSemantic, EntityFacade meaning) {
         return getFieldForSemantic(latestSemantic, meaning.nid(), FieldCriterion.MEANING);
+    }
+    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithPurpose(Latest<SemanticEntityVersion> latestSemantic, EntityFacade meaning) {
+        return getFieldForSemantic(latestSemantic, meaning.nid(), FieldCriterion.PURPOSE);
     }
 
     <T> Latest<Field<T>> getFieldForSemantic(Latest<SemanticEntityVersion> latestSemanticVersion, int criterionNid, FieldCriterion fieldCriterion);
 
-    // TODO add methods for getFieldForSemanticWithPurpose
     default <T extends Object> Latest<Field<T>> getFieldForSemanticWithMeaning(SemanticEntityVersion semanticVersion, int meaningNid) {
         return getFieldForSemantic(Latest.of(semanticVersion), meaningNid, FieldCriterion.MEANING);
+    }
+    default <T extends Object> Latest<Field<T>> getFieldForSemanticWithPurpose(SemanticEntityVersion semanticVersion, int purposeNid) {
+        return getFieldForSemantic(Latest.of(semanticVersion), purposeNid, FieldCriterion.PURPOSE);
     }
 
     default <T extends Object> Latest<Field<T>> getFieldForSemanticWithPurpose(Latest<SemanticEntityVersion> latestSemantic, int meaningNid) {

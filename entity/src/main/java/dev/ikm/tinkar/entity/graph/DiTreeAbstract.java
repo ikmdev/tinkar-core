@@ -167,7 +167,6 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
 
         protected Builder() {
         }
-
         /**
          * @param adaptorFactory
          * @param <A>

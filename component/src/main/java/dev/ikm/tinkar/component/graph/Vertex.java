@@ -52,6 +52,9 @@ public interface Vertex {
     <T extends Object> Optional<T> property(Concept propertyConcept);
 
 
+    Optional<Concept> propertyAsConcept(Concept propertyConcept);
+
+
     /**
      * @param propertyConcept
      * @param <T>             Type of the property object

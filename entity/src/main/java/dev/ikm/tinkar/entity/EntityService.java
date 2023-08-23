@@ -150,6 +150,10 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
         return nidForPublicId(component.publicId());
     }
 
+    void invalidateCaches(Entity entity);
+
+    void invalidateCaches(int... nids);
+
     <T extends Chronology<V>, V extends Version> T unmarshalChronology(byte[] bytes);
 
     default void addSortedUuids(List<UUID> uuidList, IntIdList idList) throws NoSuchElementException {

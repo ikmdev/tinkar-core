@@ -24,12 +24,17 @@ import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResultsLeafHash;
 import io.activej.bytebuf.ByteBuf;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.map.primitive.ImmutableIntIntMap;
 import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
 import org.eclipse.collections.api.map.primitive.MutableIntIntMap;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
+import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
+
+import java.util.BitSet;
+import java.util.stream.IntStream;
 
 public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
 
@@ -146,6 +151,12 @@ public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
         return new DiTreeEntity.Builder();
     }
 
+    public static DiTreeEntity.Builder builder(DiTree<EntityVertex> treeToCopy) {
+        Builder builder = new Builder();
+        builder.addVertexes(treeToCopy);
+        return builder;
+    }
+
     /**
      * Called to generate an isomorphicExpression and a mergedExpression.
      *
@@ -177,11 +188,51 @@ public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
         builder.addVertexesWithMap(another, solution.toArray(), anotherToThisVertexIndexMap, another.root.vertexIndex);
         return builder;
     }
+    /**
+     * Remove vertex and all recursive successor indexes.
+     * @param vertex vertex to begin removal at...
+     * @return a builder with the specified vertices removed.
+     */
+    public DiTreeEntity.Builder removeVertex(Vertex vertex) {
+        return removeVertex(vertex.vertexIndex());
+    }
+
+    /**
+     * Remove vertex and all recursive successor indexes.
+     * @param vertexIndex
+     * @return a builder with the specified vertices removed.
+     */
+     public DiTreeEntity.Builder removeVertex(int vertexIndex) {
+         // Create a solution that removes the vertex and its successors
+         MutableIntList mutableSolution = IntLists.mutable.ofAll(IntStream.range(0, this.vertexMap.size()));
+         removeFromSolutionRecursive(mutableSolution, vertexIndex);
+
+         // Create a builder with just the vertices in the solution.
+         Builder builder = new Builder();
+         builder.addVertexesWithMap(this, mutableSolution.toArray(),
+                 new int[this.vertexCount()], root.vertexIndex);
+         return builder;
+    }
+
+    private void removeFromSolutionRecursive(MutableIntList solution, int vertexIndex) {
+        solution.set(vertexIndex, -1);
+        if (successorMap.containsKey(vertexIndex)) {
+            successorMap.get(vertexIndex).forEach(successorIndex -> {
+                removeFromSolutionRecursive(solution, successorIndex);
+            });
+        }
+    }
+
 
     public static class Builder extends DiTreeAbstract.Builder<EntityVertex> {
         protected Builder() {
         }
 
+        /**
+         * Build can be called multiple times, and each build will reflect any updates, and not otherwise modify the
+         * builder.
+         * @return
+         */
         public DiTreeEntity build() {
 
             MutableIntObjectMap<ImmutableIntList> intermediateSuccessorMap = IntObjectMaps.mutable.ofInitialCapacity(successorMap.size());
@@ -198,17 +249,17 @@ public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
         }
 
         /**
-         * Adds the nodes with map.
+         * Adds the vertexes with map.
          *
-         * @param anotherTree                 the tree to add nodes from.
-         * @param solution                    an array mapping from the vertexIndex in anotherTree to the vertexIndex
-         *                                    in this tree. If the value of the solution element == -1, that vertex
-         *                                    is not added to this tree, otherwise the value of the
-         *                                    solution element is used for the vertexIndex in this directed tree.
-         * @param vertexIndexesToAddFromAnother   the list of vertexIndexes in anotherTree
-         *                                    to add to this tree on this invocation. Note that
-         *                                    children of the nodes indicated by vertexIndexesToAddFromAnother may be added by recursive calls
-         *                                    to this method, if the vertexIndexesToAddFromAnother index in the solution array is >= 0.
+         * @param anotherTree                   the tree to add nodes from.
+         * @param solution                      an array mapping from the vertexIndex in anotherTree to the vertexIndex
+         *                                      in this tree. If the value of the solution element == -1, that vertex
+         *                                      is not added to this tree, otherwise the value of the
+         *                                      solution element is used for the vertexIndex in this directed tree.
+         * @param vertexIndexesToAddFromAnother the list of vertexIndexes in anotherTree
+         *                                      to add to this tree on this invocation. Note that
+         *                                      children of the nodes indicated by vertexIndexesToAddFromAnother may be added by recursive calls
+         *                                      to this method, if the vertexIndexesToAddFromAnother index in the solution array is >= 0.
          * @return the EntityVertex elements added as a result of this instance of the
          * call, not including any children EntityVertexes added by recursive
          * calls. Those children EntityVertex elements can be retrieved by recursively
@@ -265,7 +316,7 @@ public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
                             filteredSuccessorVertexIndexes);
 
                     // Add filtered successors to builder
-                    for (EntityVertex successorVertex: successorVertexes) {
+                    for (EntityVertex successorVertex : successorVertexes) {
                         addEdge(successorVertex.vertexIndex, newVertex.vertexIndex);
                     }
                 }
@@ -277,6 +328,30 @@ public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
             }
             return results;
         }
+
+        /**
+         * Adds vertexes from another tree to this tree, with the edges of those vertexes.
+         *
+         * @param anotherTree the tree to add nodes from.
+         */
+        private void addVertexes(DiTree<EntityVertex> anotherTree) {
+            int vertexCount = anotherTree.vertexMap().size();
+            for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
+                final EntityVertex oldVertex = anotherTree.vertex(vertexIndex);
+                EntityVertex newVertex = oldVertex.copyWithUnassignedIndex();
+                this.addVertex(newVertex);
+                if (oldVertex.vertexIndex == anotherTree.root().vertexIndex) {
+                    this.setRoot(newVertex);
+                }
+            }
+            for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
+                final EntityVertex oldVertex = anotherTree.vertex(vertexIndex);
+                anotherTree.successors(oldVertex.vertexIndex).forEach(successorIndex -> {
+                    addEdge(successorIndex, oldVertex.vertexIndex);
+                });
+            }
+        }
     }
 
 }
+

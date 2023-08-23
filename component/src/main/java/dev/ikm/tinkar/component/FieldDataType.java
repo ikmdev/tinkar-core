@@ -70,6 +70,7 @@ public enum FieldDataType {
     STAMP_VERSION((byte) 25, Stamp.class),
 
     FIELD_DEFINITION((byte) 26, FieldDefinition.class),
+    LONG((byte) 27, Long.class),
 
     // Identified thing needs to go last...
     IDENTIFIED_THING(Byte.MAX_VALUE, Component.class);
@@ -139,10 +140,14 @@ public enum FieldDataType {
                 return STAMP_VERSION;
             case 26:
                 return FIELD_DEFINITION;
+            case 27:
+                return LONG;
 
             // Identified thing needs to go last...
             case Byte.MAX_VALUE:
                 return IDENTIFIED_THING;
+
+
             default:
                 throw new UnsupportedOperationException("FieldDatatype.fromToken can't handle token: " +
                         token);

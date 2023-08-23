@@ -264,6 +264,9 @@ public class StampCalculatorWithCache implements StampCalculator {
      */
     public <V extends EntityVersion> Latest<V> latest(Entity<V> chronicle) {
         final HashSet<EntityVersion> latestVersionSet = new HashSet<>();
+        if (chronicle == null) {
+            return Latest.empty();
+        }
 
         chronicle.versions()
                 .stream()
@@ -344,7 +347,7 @@ public class StampCalculatorWithCache implements StampCalculator {
                             Entity<EntityVersion> semanticRecord = EntityFactory.make(bytes);
                             return latest(semanticRecord);
                         });
-                latestSemanticVersion.ifPresent(semanticVersionRecord -> procedure.accept((SemanticEntityVersion) semanticVersionRecord, patternEntityVersion));
+                latestSemanticVersion.ifPresent(semanticVersion -> procedure.accept((SemanticEntityVersion) semanticVersion, patternEntityVersion));
             });
         });
     }
@@ -433,7 +436,7 @@ public class StampCalculatorWithCache implements StampCalculator {
     public <T> Latest<Field<T>> getFieldForSemantic(Latest<SemanticEntityVersion> latestSemanticVersion,
                                                     int criterionNid, FieldCriterion fieldCriterion) {
         if (latestSemanticVersion.isPresent()) {
-            SemanticVersionRecord semanticVersion = (SemanticVersionRecord) latestSemanticVersion.get();
+            SemanticEntityVersion semanticVersion = latestSemanticVersion.get();
             Latest<PatternEntityVersion> latestPattern = latest(semanticVersion.patternNid());
             PatternEntityVersion patternVersion = latestPattern.get();
             OptionalInt optionalIndex = switch (fieldCriterion) {
