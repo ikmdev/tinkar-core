@@ -25,7 +25,7 @@ import dev.ikm.tinkar.terms.State;
 public interface StampVersion extends Stamp<StampEntityVersion>, VersionData {
     default String describe() {
         return "s:" + PrimitiveData.text(stateNid()) +
-                " t:" + DateTimeUtil.format(time()) +
+                " t:" + DateTimeUtil.format(time(), DateTimeUtil.SEC_FORMATTER) +
                 " a:" + PrimitiveData.text(authorNid()) +
                 " m:" + PrimitiveData.text(moduleNid()) +
                 " p:" + PrimitiveData.text(pathNid());

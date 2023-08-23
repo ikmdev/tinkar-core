@@ -84,6 +84,11 @@ public final record VertexDTO(long vertexIdMsb, long vertexIdLsb, int vertexInde
         return (T) object;
     }
 
+    @Override
+    public Optional<Concept> propertyAsConcept(Concept propertyConcept) {
+        return property(propertyConcept);
+    }
+
     public static ImmutableMap<ConceptDTO, Object> abstractProperties(ImmutableMap<ConceptDTO, Object> incoming) {
         MutableMap<ConceptDTO, Object> outgoing = Maps.mutable.ofInitialCapacity(incoming.size());
         incoming.forEachKeyValue((key, value) -> {

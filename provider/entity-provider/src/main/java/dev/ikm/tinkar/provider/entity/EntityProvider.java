@@ -21,13 +21,12 @@ import com.google.auto.service.AutoService;
 import dev.ikm.tinkar.common.alert.AlertObject;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.service.CachingService;
-import dev.ikm.tinkar.common.service.DefaultDescriptionForNidService;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.PublicIdService;
+import dev.ikm.tinkar.common.service.*;
+import dev.ikm.tinkar.common.service.ExecutorService;
 import dev.ikm.tinkar.common.util.broadcast.Broadcaster;
 import dev.ikm.tinkar.common.util.broadcast.SimpleBroadcaster;
 import dev.ikm.tinkar.common.util.broadcast.Subscriber;
+import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.component.Chronology;
 import dev.ikm.tinkar.component.Stamp;
 import dev.ikm.tinkar.component.Version;
@@ -36,19 +35,24 @@ import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
+import org.eclipse.collections.api.factory.Sets;
+import org.eclipse.collections.api.factory.primitive.IntSets;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.set.MutableSet;
+import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 
 import static dev.ikm.tinkar.terms.TinkarTerm.DESCRIPTION_PATTERN;
 
 @AutoService({EntityService.class, PublicIdService.class, DefaultDescriptionForNidService.class})
-public class EntityProvider implements EntityService, PublicIdService, DefaultDescriptionForNidService {
+public class EntityProvider implements EntityService, PublicIdService, DefaultDescriptionForNidService, EntityDataRepair {
 
     private static final Logger LOG = LoggerFactory.getLogger(EntityProvider.class);
     private static final Cache<Integer, String> STRING_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
@@ -201,13 +205,11 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         putEntity(stampEntity);
     }
 
-    private void invalidateCaches(Entity entity) {
-        STRING_CACHE.invalidate(entity.nid());
-        ENTITY_CACHE.invalidate(entity.nid());
-        STAMP_CACHE.invalidate(entity.nid());
+    @Override
+    public void invalidateCaches(Entity entity) {
+        invalidateCaches(entity.nid());
         if (entity instanceof SemanticEntity semanticEntity) {
-            STRING_CACHE.invalidate(semanticEntity.referencedComponentNid());
-
+            invalidateCaches(semanticEntity.referencedComponentNid(), semanticEntity.patternNid());
             Entity parent = getEntityFast(semanticEntity.referencedComponentNid());
             while (parent != null) {
                 switch (parent) {
@@ -228,6 +230,15 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                     default -> throw new IllegalStateException("Unexpected value: " + parent);
                 }
             }
+        }
+    }
+
+    @Override
+    public void invalidateCaches(int... nids) {
+        for (int nid : nids) {
+            STRING_CACHE.invalidate(nid);
+            ENTITY_CACHE.invalidate(nid);
+            STAMP_CACHE.invalidate(nid);
         }
     }
 
@@ -297,6 +308,8 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     // This seems to be counter intuitive when implementing protobuf transforms, or at least not straightforward when
     // implementing. Suggest we refactor to just use Entity. The use of chronology seems to not be well conveyed, but
     // only understood because I've been working with other versions of this code.
+    // KEC: the use of chronology was to make it transparent to put a DTO vs an entity. If we eliminate DTOs,
+    // then we can revise and potentially eliminate.
     @Override
     public <T extends Chronology<V>, V extends Version> void putChronology(T chronology) {
         if (chronology instanceof Entity entity) {
@@ -333,5 +346,130 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     @Override
     public void removeSubscriber(Subscriber<Integer> subscriber) {
         this.processor.removeSubscriber(subscriber);
+    }
+
+    @Override
+    public void erase(Entity entity) {
+        if (PrimitiveData.get() instanceof PrimitiveDataRepair primitiveDataRepair) {
+            primitiveDataRepair.erase(entity.nid());
+        } else {
+            throw new UnsupportedOperationException("PrimitiveDataRepair is not supported by: " +
+                    PrimitiveData.get().getClass().getName());
+        }
+    }
+
+    @Override
+    public Future<Entity> mergeThenErase(Entity entityToMergeInto, Entity entityToErase) {
+        if (entityToMergeInto.getClass().equals(entityToMergeInto.getClass())) {
+            if (PrimitiveData.get() instanceof PrimitiveDataRepair primitiveDataRepair) {
+                FutureTask<Entity> mergeThenEraseTask = new FutureTask<>(() -> {
+                    Future<Entity> mergedEntity = mergeEntities(entityToMergeInto, entityToErase);
+                    Entity entityToKeep = mergedEntity.get();
+                    erase(entityToErase);
+                    primitiveDataRepair.put(entityToMergeInto.nid(), mergedEntity.get().getBytes());
+                    return entityToKeep;
+                });
+                return (Future<Entity>) TinkExecutor.threadPool().submit(mergeThenEraseTask);
+            } else {
+                throw new UnsupportedOperationException("PrimitiveDataRepair is not supported by: " +
+                        PrimitiveData.get().getClass().getName());
+            }
+        } else {
+            throw new IllegalStateException("Cannot merge entities of different types: \n" +
+                    entityToErase + "\n\n" + entityToMergeInto);
+        }
+    }
+
+    private static Future<Entity> mergeEntities(Entity<?> entityToMergeInto, Entity<?> entityToMergeFrom) {
+        // TODO Need to handle different IDs. ?
+        ImmutableIntSet entityOneStampNidSet = IntSets.immutable.ofAll(entityToMergeInto.versions().stream().mapToInt(version -> version.stampNid()));
+        ImmutableIntSet entityTwoStampNidSet = IntSets.immutable.ofAll(entityToMergeFrom.versions().stream().mapToInt(version -> version.stampNid()));
+        ImmutableIntSet stampDifferenceNids = entityOneStampNidSet.difference(entityTwoStampNidSet);
+        ImmutableIntSet stampUnionNids = entityOneStampNidSet.intersect(entityTwoStampNidSet);
+        ImmutableIntSet allStampNids = stampDifferenceNids.newWithAll(stampUnionNids);
+
+        for (int unionStamp : stampUnionNids.toArray()) {
+            if (!entityToMergeInto.getVersion(unionStamp).equals(entityToMergeFrom.getVersion(unionStamp))) {
+                return EntityMergeServiceFinder.adjudicatedMerge(entityToMergeInto, entityToMergeFrom);
+            }
+        }
+        // At this point, all versions with the same stamps have equal fields.
+        if (stampDifferenceNids.isEmpty()) {
+            return new FutureTask<>(() -> entityToMergeInto);
+        }
+
+        // Check to see if any of the stampDifferenceNids versions have the same time, module, and path
+        for (int differenceStampNid : stampDifferenceNids.toArray()) {
+            StampEntity differenceStamp = EntityService.get().getStampFast(differenceStampNid);
+            for (int anyStampNid : allStampNids.toArray()) {
+                if (differenceStampNid != anyStampNid) {
+                    StampEntity anyStamp = EntityService.get().getStampFast(anyStampNid);
+                    if (differenceStamp.time() == anyStamp.time() &&
+                            differenceStamp.moduleNid() == anyStamp.moduleNid() &&
+                            differenceStamp.pathNid() == anyStamp.pathNid()) {
+                        // Can't have 2 changes at the same virtual point of time, module, path
+                        return EntityMergeServiceFinder.adjudicatedMerge(entityToMergeInto, entityToMergeFrom);
+                    }
+                }
+            }
+        }
+        // At this point, all stamps represent distinct time, module, and path. We can just merge the versions.
+        return switch (entityToMergeInto) {
+            case ConceptRecord conceptOneRecord when entityToMergeFrom instanceof ConceptRecord conceptTwoRecord
+                    -> mergeAllConceptVersions(conceptOneRecord, conceptTwoRecord);
+            case PatternRecord patternOneRecord when entityToMergeFrom instanceof PatternRecord patternTwoRecord
+                -> mergeAllPatternVersions(patternOneRecord, patternTwoRecord);
+            case SemanticRecord semanticOneRecord when entityToMergeFrom instanceof SemanticRecord semanticTwoRecord
+                    -> mergeAllSemanticVersions(semanticOneRecord, semanticTwoRecord);
+            default -> throw new IllegalStateException("Can't merge:\n" + entityToMergeInto + "\nand:\n" + entityToMergeFrom);
+        };
+    }
+
+    private static Future<Entity> mergeAllPatternVersions(PatternRecord patternOneRecord, PatternRecord patternTwoRecord) {
+        // All versions are distinct. Merge using union...
+        RecordListBuilder<PatternVersionRecord> versionList = RecordListBuilder.make();
+        patternOneRecord.versions().forEach(versionRecord -> versionList.add(versionRecord));
+        patternTwoRecord.versions().forEach(versionRecord -> versionList.add(versionRecord));
+        MutableSet<UUID> additionalUuids = Sets.mutable.ofAll(patternOneRecord.asUuidList());
+        additionalUuids.addAll(patternTwoRecord.asUuidList().castToList());
+        additionalUuids.remove(new UUID(patternOneRecord.mostSignificantBits(), patternOneRecord.leastSignificantBits()));
+        long[] additionalUuidLongs = null;
+        if (additionalUuids.notEmpty()) {
+            additionalUuidLongs = UuidUtil.asArray(additionalUuids.toArray(new UUID[additionalUuids.size()] ));
+        }
+        PatternRecordBuilder builder = patternOneRecord.with().versions(versionList).additionalUuidLongs(additionalUuidLongs);
+        return new FutureTask<>(() -> builder.build());
+    }
+
+    private static Future<Entity> mergeAllSemanticVersions(SemanticRecord semanticOneRecord, SemanticRecord semanticTwoRecord) {
+        // All versions are distinct. Merge using union...
+        RecordListBuilder<SemanticVersionRecord> versionList = RecordListBuilder.make();
+        semanticOneRecord.versions().forEach(versionRecord -> versionList.add(versionRecord));
+        semanticTwoRecord.versions().forEach(versionRecord -> versionList.add(versionRecord));
+        MutableSet<UUID> additionalUuids = Sets.mutable.ofAll(semanticOneRecord.asUuidList());
+        additionalUuids.addAll(semanticTwoRecord.asUuidList().castToList());
+        additionalUuids.remove(new UUID(semanticOneRecord.mostSignificantBits(), semanticOneRecord.leastSignificantBits()));
+        long[] additionalUuidLongs = null;
+        if (additionalUuids.notEmpty()) {
+            additionalUuidLongs = UuidUtil.asArray(additionalUuids.toArray(new UUID[additionalUuids.size()] ));
+        }
+       SemanticRecordBuilder builder = semanticOneRecord.with().versions(versionList).additionalUuidLongs(additionalUuidLongs);
+        return new FutureTask<>(() -> builder.build());
+    }
+
+    private static FutureTask<Entity> mergeAllConceptVersions(ConceptRecord conceptOneRecord, ConceptRecord conceptTwoRecord) {
+        // All versions are distinct. Merge using union...
+        RecordListBuilder<ConceptVersionRecord> versionList = RecordListBuilder.make();
+        conceptOneRecord.versions().forEach(conceptVersionRecord -> versionList.add(conceptVersionRecord));
+        conceptTwoRecord.versions().forEach(conceptVersionRecord -> versionList.add(conceptVersionRecord));
+        MutableSet<UUID> additionalUuids = Sets.mutable.ofAll(conceptOneRecord.asUuidList());
+        additionalUuids.addAll(conceptTwoRecord.asUuidList().castToList());
+        additionalUuids.remove(new UUID(conceptOneRecord.mostSignificantBits(), conceptOneRecord.leastSignificantBits()));
+        long[] additionalUuidLongs = null;
+        if (additionalUuids.notEmpty()) {
+            additionalUuidLongs = UuidUtil.asArray(additionalUuids.toArray(new UUID[additionalUuids.size()] ));
+        }
+        ConceptRecordBuilder builder = conceptOneRecord.with().versions(versionList).additionalUuidLongs(additionalUuidLongs);
+        return new FutureTask<>(() -> builder.build());
     }
 }

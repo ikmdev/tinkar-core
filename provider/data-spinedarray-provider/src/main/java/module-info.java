@@ -37,6 +37,7 @@ module dev.ikm.tinkar.provider.spinedarray {
     requires static com.google.auto.service;
     requires org.eclipse.collections.api;
     requires org.eclipse.collections;
+    requires io.activej.bytebuf;
 
     provides DataServiceController
             with SpinedArrayOpenController, SpinedArrayNewController;

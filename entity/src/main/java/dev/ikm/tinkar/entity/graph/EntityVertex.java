@@ -25,6 +25,7 @@ import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityRecordFactory;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.PatternFacade;
 import io.activej.bytebuf.ByteBuf;
@@ -189,7 +190,7 @@ public class EntityVertex implements Vertex, VertexId {
             for (int i = 0; i < propertyCount; i++) {
                 int conceptNid = readBuf.readInt();
                 FieldDataType dataType = FieldDataType.fromToken(readBuf.readByte());
-                Object value = EntityRecordFactory.readDataType(readBuf, dataType, formatVersion);
+                Object value = EntityRecordFactory.readFieldData(readBuf, dataType, formatVersion);
                 mutableProperties.put(conceptNid, value);
             }
             this.properties = mutableProperties.toImmutable();
@@ -341,6 +342,28 @@ public class EntityVertex implements Vertex, VertexId {
             return property((ConceptFacade) propertyConcept);
         }
         return Optional.ofNullable(propertyFast(propertyConcept));
+    }
+
+    @Override
+    public Optional<Concept> propertyAsConcept(Concept propertyConcept) {
+        Optional<?> optionalPropertyValue = property(propertyConcept);
+
+        if (optionalPropertyValue.isEmpty()) {
+            return Optional.empty();
+        }
+        Optional<Entity> optionalEntityValue = switch (optionalPropertyValue.get()) {
+            case Integer nid -> EntityService.get().getEntity(nid);
+            case EntityFacade facade -> EntityService.get().getEntity(facade);
+            case null -> throw new IllegalStateException("optionalPropertyValue is null");
+            default -> throw new IllegalStateException("optionalPropertyValue is not an identifier or facade: " + optionalPropertyValue.get());
+        };
+        if (optionalEntityValue.isEmpty()) {
+            throw new IllegalStateException("Entity specified by property is not in database:: " + optionalPropertyValue.get());
+        }
+        if (optionalEntityValue.get() instanceof Concept conceptFacade) {
+            return Optional.of(conceptFacade);
+        }
+        throw new IllegalStateException("Cannot convert property to concept. Property: " + optionalPropertyValue.get());
     }
 
     @Override

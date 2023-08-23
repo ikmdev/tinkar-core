@@ -24,6 +24,8 @@ import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.State;
 import org.eclipse.collections.api.list.ImmutableList;
 
+import static dev.ikm.tinkar.common.util.time.DateTimeUtil.SEC_FORMATTER;
+
 public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
         Stamp<V>, Component, Version, IdentifierData {
     @Override
@@ -102,7 +104,7 @@ public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
 
     default String describe() {
         return "s:" + PrimitiveData.text(stateNid()) +
-                " t:" + DateTimeUtil.format(time()) +
+                " t:" + DateTimeUtil.format(time(), SEC_FORMATTER) +
                 " a:" + PrimitiveData.text(authorNid()) +
                 " m:" + PrimitiveData.text(moduleNid()) +
                 " p:" + PrimitiveData.text(pathNid());

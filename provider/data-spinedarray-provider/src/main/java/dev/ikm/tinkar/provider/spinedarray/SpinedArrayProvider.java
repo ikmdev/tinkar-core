@@ -15,26 +15,32 @@
  */
 package dev.ikm.tinkar.provider.spinedarray;
 
+import dev.ikm.tinkar.common.service.*;
+import dev.ikm.tinkar.common.util.uuid.UuidUtil;
+import io.activej.bytebuf.ByteBuf;
+import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.factory.Sets;
+import org.eclipse.collections.api.factory.primitive.LongSets;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
+import org.eclipse.collections.api.set.MutableSet;
 import org.eclipse.collections.api.set.primitive.IntSet;
+import org.eclipse.collections.api.set.primitive.LongSet;
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
+import org.eclipse.collections.impl.factory.primitive.LongLists;
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import dev.ikm.tinkar.collection.KeyType;
 import dev.ikm.tinkar.collection.SpinedByteArrayMap;
 import dev.ikm.tinkar.collection.SpinedIntIntMap;
 import dev.ikm.tinkar.collection.SpinedIntLongArrayMap;
 import dev.ikm.tinkar.common.alert.AlertStreams;
-import dev.ikm.tinkar.common.service.PrimitiveDataService;
-import dev.ikm.tinkar.common.service.NidGenerator;
-import dev.ikm.tinkar.common.service.ServiceKeys;
-import dev.ikm.tinkar.common.service.ServiceProperties;
-import dev.ikm.tinkar.common.service.TinkExecutor;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
@@ -67,7 +73,7 @@ import java.util.function.ObjIntConsumer;
  * <p>
  * MVStore performs worse when iterating over entities.
  */
-public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
+public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, PrimitiveDataRepair {
     private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayProvider.class);
     protected static final File defaultDataDirectory = new File("target/spinedarrays/");
     protected static SpinedArrayProvider singleton;
@@ -362,10 +368,15 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
 
     @Override
     public void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure) {
-        Stopwatch sw = new Stopwatch();
-        IntSet elementNids = getElementNidsForPatternNid(patternNid);
-        LOG.info("getElementNidsForPatternNid " + PrimitiveData.text(patternNid) +
-                " time: " + sw.durationString());
+        IntSet elementNids;
+        if (LOG.isTraceEnabled()) {
+            Stopwatch sw = new Stopwatch();
+            elementNids = getElementNidsForPatternNid(patternNid);
+            LOG.atTrace().log("getElementNidsForPatternNid " + PrimitiveData.text(patternNid) +
+                    " time: " + sw.durationString());
+        } else {
+            elementNids = getElementNidsForPatternNid(patternNid);
+        }
         if (elementNids.notEmpty()) {
             elementNids.forEach(procedure);
         } else {
@@ -449,5 +460,143 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator {
     @Override
     public String name() {
         return name;
+    }
+
+    @Override
+    public void erase(int nid) {
+        this.entityToBytesMap.put(nid, null);
+        this.nidToPatternNidMap.put(nid, Integer.MAX_VALUE);
+        this.nidToCitingComponentsNidMap.put(nid, null);
+        this.conceptNids.remove(nid);
+        this.semanticNids.remove(nid);
+        this.patternNids.remove(nid);
+        this.stampNids.remove(nid);
+        this.nidToCitingComponentsNidMap.forEach((nidPatternsCitingComponent, referencedComponentNid) -> {
+            MutableLongList nidPatternInLongToRemove = LongLists.mutable.withInitialCapacity(2);
+            for (long nidPatternInLong: nidPatternsCitingComponent) {
+                // The longs contain int nid, int patternNid in each long
+                int nidCitingComponent = IntsInLong.int1FromLong(nidPatternInLong);
+                if (nidCitingComponent == nid) {
+                    nidPatternInLongToRemove.add(nidPatternInLong);
+                }
+            }
+            if (nidPatternInLongToRemove.notEmpty()) {
+                MutableLongSet longSet = LongSets.mutable.of(nidPatternsCitingComponent);
+                longSet.removeAll(nidPatternInLongToRemove);
+                this.nidToCitingComponentsNidMap.put(referencedComponentNid, longSet.toArray());
+            }
+        });
+
+    }
+
+    @Override
+    public void mergeThenErase(int nidToErase, int nidToMergeInto) {
+
+
+        byte[] mergedBytes = merge(PrimitiveData.get().getBytes(nidToMergeInto), PrimitiveData.get().getBytes(nidToErase));
+        erase(nidToErase);
+        put(nidToMergeInto, mergedBytes);
+        EntityService.get().invalidateCaches(nidToErase, nidToMergeInto);
+    }
+
+    byte[] merge(byte[] bytesToMergeInto, byte[] bytesToBeErased) {
+        if (bytesToBeErased == null) {
+            return bytesToMergeInto;
+        }
+        ByteBuf readBufToMergeInto = ByteBuf.wrapForReading(bytesToMergeInto);
+        int mergeIntoArrayCount = readBufToMergeInto.readInt();
+        int mergeIntoChronicleArrayElementByteCount = readBufToMergeInto.readInt();
+        byte  mergeIntoEntityFormatVersion = readBufToMergeInto.readByte(); // Entity format version in a byte.
+        byte  mergeIntoEntityTypeToken = readBufToMergeInto.readByte(); // Entity type token
+
+        int mergeIntoNid = readBufToMergeInto.readInt();
+        ImmutableList<UUID> mergeIntoUuids = getUuidsFromBytes(readBufToMergeInto);
+
+        ByteBuf readBufToBeErased = ByteBuf.wrapForReading(bytesToBeErased);
+        int eraseComponentArrayCount = readBufToBeErased.readInt();
+        int eraseComponentChronicleArrayElementByteCount = readBufToBeErased.readInt();
+        byte  eraseComponentEntityFormatVersion = readBufToBeErased.readByte(); // Entity format version in a byte.
+        byte  eraseComponentEntityTypeToken = readBufToBeErased.readByte(); // Entity type token
+        int eraseComponentNid = readBufToBeErased.readInt();
+        ImmutableList<UUID> uuidsFromBytesToBeErased = getUuidsFromBytes(readBufToBeErased);
+
+        // Create final set of uuids...
+        MutableSet<UUID> uuidSet = Sets.mutable.ofAll(mergeIntoUuids);
+        uuidSet.addAll(uuidsFromBytesToBeErased.castToList());
+        ImmutableList<UUID> mergedUuids = uuidSet.toImmutableList();
+
+        // Note first array (the chronicle fields) will be larger by the number of additional UUIDs...
+
+        // Create bytes for merge into...
+        ByteBuf outputBytesToMergeInto = ByteBufPool.allocate(bytesToMergeInto.length + (mergedUuids.size() * 16));
+        int additionalMergedBytes = (mergedUuids.size() - mergeIntoUuids.size()) * 16;
+        outputBytesToMergeInto.writeInt(mergeIntoArrayCount);
+        outputBytesToMergeInto.writeInt(mergeIntoChronicleArrayElementByteCount + additionalMergedBytes);
+        outputBytesToMergeInto.writeByte(mergeIntoEntityFormatVersion);
+        outputBytesToMergeInto.writeByte(mergeIntoEntityTypeToken);
+        outputBytesToMergeInto.writeInt(mergeIntoNid);
+        writeUuidsAndRemaining(mergedUuids, outputBytesToMergeInto, readBufToMergeInto);
+
+        // Create bytes for to be erased
+        ByteBuf outputBytesToBeErased = ByteBufPool.allocate(bytesToBeErased.length + (mergedUuids.size() * 16));
+        int additionalErasedBytes = (mergedUuids.size() - uuidsFromBytesToBeErased.size()) * 16;
+        outputBytesToBeErased.writeInt(eraseComponentArrayCount);
+        outputBytesToBeErased.writeInt(eraseComponentChronicleArrayElementByteCount + additionalErasedBytes);
+        outputBytesToBeErased.writeByte(eraseComponentEntityFormatVersion);
+        outputBytesToBeErased.writeByte(eraseComponentEntityTypeToken);
+        outputBytesToBeErased.writeInt(mergeIntoNid);
+        writeUuidsAndRemaining(mergedUuids, outputBytesToBeErased, readBufToBeErased);
+
+        /*
+        Need to manage possible time duplicates on merge. This may require creating a new stamp and nudging the time
+        by a second to make the result unique. Since we need a new stamp, that is managed at the entity, rather than
+        the primitive level.
+         */
+
+        return PrimitiveDataService.merge(outputBytesToMergeInto.asArray(), outputBytesToBeErased.asArray());
+    }
+
+    /**
+     *
+     */
+    void writeUuidsAndRemaining(ImmutableList<UUID> mergedUuids, ByteBuf outputBytes, ByteBuf readBuf) {
+        /*
+         * Merging the UUIDs outside of a versioned object creates challenges wrt data integrity.
+         * Consider how we could version uuids within a public id. Maybe additional UUIDs are added
+         * to the public ID and has its own time stamp?
+         */
+        long[] additionalUuidLongs = UuidUtil.asArray(mergedUuids);
+        outputBytes.writeLong(additionalUuidLongs[0]); // The initial UUID is always present
+        outputBytes.writeLong(additionalUuidLongs[1]);
+        outputBytes.writeByte((byte) (additionalUuidLongs.length - 2));
+        for (int i = 2; i < additionalUuidLongs.length; i++) {
+            outputBytes.writeLong(additionalUuidLongs[i]);
+        }
+        int readBufToMergeIntoRemaining = readBuf.readRemaining();
+        for (int i = 0; i < readBufToMergeIntoRemaining; i++) {
+            outputBytes.writeByte(readBuf.get());
+        }
+    }
+
+    ImmutableList<UUID> getUuidsFromBytes(ByteBuf readBuf) {
+        MutableList<UUID> uuids = Lists.mutable.withInitialCapacity(2);
+        long msb = readBuf.readLong();
+        long lsb = readBuf.readLong();
+        uuids.add(new UUID(msb, lsb));
+        int additionalUuidLongSize = readBuf.readByte();
+        if (additionalUuidLongSize > 0) {
+            long[] additionalUuidLongs = new long[additionalUuidLongSize];
+            for (int i = 0; i < additionalUuidLongSize; i++) {
+                additionalUuidLongs[i] = readBuf.readLong();
+            }
+            ImmutableList<UUID> additionalUuids = UuidUtil.toList(additionalUuidLongs);
+            uuids.addAll(additionalUuids.castToList());
+        }
+        return uuids.toImmutableList();
+    }
+
+    @Override
+    public void put(int nid, byte[] bytesToOverwrite) {
+        this.entityToBytesMap.put(nid, bytesToOverwrite);
     }
 }

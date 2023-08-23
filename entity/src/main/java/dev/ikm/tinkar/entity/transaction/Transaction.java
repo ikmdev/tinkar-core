@@ -72,7 +72,14 @@ public class Transaction implements Comparable<Transaction> {
         if (stampUuids.length > 1) {
             throw new IllegalStateException("Can only handle one UUID for stamp. Found: " + version);
         }
-        return forStamp(stampUuids[0]);
+        for (Transaction transaction : activeTransactions) {
+            if (transaction.stampsInTransaction.contains(stampUuids[0])) {
+                if (transaction.componentsInTransaction.contains(version.nid())) {
+                    return Optional.of(transaction);
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     public static Transaction make() {

@@ -58,8 +58,8 @@ public class ConcurrentHashSet<T extends Object> implements Set<T> {
     }
 
     @Override
-    public Integer[] toArray() {
-        return keySet.toArray(new Integer[keySet.size()]);
+    public T[] toArray() {
+        return keySet.toArray((T[]) new Object[keySet.size()]);
     }
 
     @Override
