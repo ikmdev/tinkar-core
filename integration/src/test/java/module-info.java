@@ -34,6 +34,7 @@ open module dev.ikm.tinkar.integration.test {
     requires com.fasterxml.jackson.databind;
     requires org.eclipse.collections.api;
     requires org.mockito;
+    requires dev.ikm.tinkar.bindings;
 
     uses CachingService;
     uses DataServiceController;

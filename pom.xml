@@ -104,6 +104,7 @@
 
         <maven-jxr-plugin.version>3.3.0</maven-jxr-plugin.version>
         <tinkar-schema.version>1.8.0</tinkar-schema.version>
+        <tinkar-bindings.version>1.4.0</tinkar-bindings.version>
         <udaychandra-susel.version>0.1.2</udaychandra-susel.version>
         <junit-jupiter-engine.version>5.7.0</junit-jupiter-engine.version>
         <junit-platform-surefire-provider.version>1.3.0</junit-platform-surefire-provider.version>
@@ -226,6 +227,12 @@
                 <groupId>${project.groupId}</groupId>
                 <artifactId>tinkar-schema</artifactId>
                 <version>${tinkar-schema.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>tinkar-bindings</artifactId>
+                <version>${tinkar-bindings.version}</version>
             </dependency>
 
             <!-- JPMS Dependencies -->
@@ -411,6 +418,10 @@
     <!-- Cross project dependencies -->
     <dependencies>
         <dependency>
+            <groupId>dev.ikm.tinkar</groupId>
+            <artifactId>tinkar-bindings</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
@@ -448,6 +459,7 @@
             <artifactId>common-java5</artifactId>
             <scope>test</scope>
         </dependency>
+
     </dependencies>
 
     <build>

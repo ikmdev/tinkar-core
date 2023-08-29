@@ -15,6 +15,8 @@
  */
 package dev.ikm.tinkar.coordinate;
 
+import dev.ikm.tinkar.bindings.Bindings;
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import org.eclipse.collections.api.factory.Sets;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.coordinate.edit.EditCoordinateRecord;
@@ -35,8 +37,6 @@ import org.slf4j.LoggerFactory;
 public class Coordinates {
 
     private static final Logger LOG = LoggerFactory.getLogger(Coordinates.class);
-
-    //private static ChronologyChangeListener ccl;
 
     public static class Edit {
         public static EditCoordinateRecord Default() {
@@ -115,7 +115,7 @@ public class Coordinates {
          */
         public static LanguageCoordinateRecord UsEnglishFullyQualifiedName() {
             return LanguageCoordinateRecord.make(
-                    TinkarTerm.ENGLISH_LANGUAGE.nid(),
+                    PrimitiveData.get().nidForUuids(Bindings.ENGLISH_LANGUAGE.uuid()),
                     IntIds.list.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
                     IntIds.list.of(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
                             TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
@@ -129,7 +129,7 @@ public class Coordinates {
          */
         public static LanguageCoordinateRecord UsEnglishRegularName() {
             return LanguageCoordinateRecord.make(
-                    TinkarTerm.ENGLISH_LANGUAGE.nid(),
+                    PrimitiveData.get().nidForUuids(Bindings.ENGLISH_LANGUAGE.uuid()),
                     IntIds.list.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
                     IntIds.list.of(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
                             TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
@@ -140,7 +140,7 @@ public class Coordinates {
 
         public static LanguageCoordinateRecord GbEnglishFullyQualifiedName() {
             return LanguageCoordinateRecord.make(
-                    TinkarTerm.ENGLISH_LANGUAGE.nid(),
+                    PrimitiveData.get().nidForUuids(Bindings.ENGLISH_LANGUAGE.uuid()),
                     IntIds.list.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
                     IntIds.list.of(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
                             TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()),
@@ -152,7 +152,7 @@ public class Coordinates {
 
         public static LanguageCoordinateRecord GbEnglishPreferredName() {
             return LanguageCoordinateRecord.make(
-                    TinkarTerm.ENGLISH_LANGUAGE.nid(),
+                    PrimitiveData.get().nidForUuids(Bindings.ENGLISH_LANGUAGE.uuid()),
                     IntIds.list.of(TinkarTerm.DESCRIPTION_PATTERN.nid()),
                     IntIds.list.of(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid(),
                             TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()),
