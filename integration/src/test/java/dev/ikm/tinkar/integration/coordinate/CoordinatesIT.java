@@ -15,9 +15,7 @@
  */
 package dev.ikm.tinkar.integration.coordinate;
 
-import dev.ikm.tinkar.integration.TestConstants;
-import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.set.ImmutableSet;
+import dev.ikm.tinkar.bindings.Bindings;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -34,10 +32,24 @@ import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.ConceptEntity;
+import dev.ikm.tinkar.entity.ConceptEntityVersion;
+import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromDtoFile;
+import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.terms.TinkarTerm;
-import org.junit.jupiter.api.*;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.set.ImmutableSet;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,12 +111,12 @@ class CoordinatesIT {
 
         StampCoordinateRecord developmentLatestFilter = Coordinates.Stamp.DevelopmentLatest();
         LOG.info("development latest filter '" + developmentLatestFilter);
-        ConceptEntity englishLanguage = Entity.getFast(TinkarTerm.ENGLISH_LANGUAGE);
+        ConceptEntity englishLanguage = Entity.getFast(PrimitiveData.get().nidForUuids(Bindings.ENGLISH_LANGUAGE.uuid()));
         StampCalculatorWithCache calculator = StampCalculatorWithCache.getCalculator(developmentLatestFilter);
         Latest<ConceptEntityVersion> latest = calculator.latest(englishLanguage);
         LOG.info("Latest computed: '" + latest);
 
-        Entity.provider().forEachSemanticForComponent(TinkarTerm.ENGLISH_LANGUAGE.nid(), semanticEntity -> {
+        Entity.provider().forEachSemanticForComponent(PrimitiveData.get().nidForUuids(Bindings.ENGLISH_LANGUAGE.uuid()), semanticEntity -> {
             LOG.info(semanticEntity.toString() + "\n");
             for (int acceptibilityNid : EntityService.get().semanticNidsForComponentOfPattern(semanticEntity.nid(), TinkarTerm.US_DIALECT_PATTERN.nid())) {
                 LOG.info("  Acceptability US: \n    " + EntityService.get().getEntityFast(acceptibilityNid));
