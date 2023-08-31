@@ -47,6 +47,7 @@ pipeline {
                             --batch-mode \
                             -e \
                             -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
+                            -Dmaven.build.cache.enabled=false \
                             -PcodeQuality
                         """
                     }
@@ -64,8 +65,9 @@ pipeline {
                         sh """
                             mvn sonar:sonar \
                                 -Dsonar.qualitygate.wait=true \
-                                -Dsonar.login=${SONAR_AUTH_TOKEN} \
+                                -Dsonar.token=${SONAR_AUTH_TOKEN} \
                                 -s '${MAVEN_SETTINGS}' \
+                                -Dmaven.build.cache.enabled=false \
                                 --batch-mode
                         """
                         
@@ -115,6 +117,7 @@ pipeline {
                             -Dmaven.test.skip \
                             -s '${MAVEN_SETTINGS}' \
                             -P inject-application-properties \
+                            -Dmaven.build.cache.enabled=false \
                             -DrepositoryId='${repositoryId}'
                         """              
                     }
