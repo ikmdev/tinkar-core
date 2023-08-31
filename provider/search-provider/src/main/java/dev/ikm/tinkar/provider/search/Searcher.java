@@ -55,6 +55,7 @@ public class Searcher {
 
     public PrimitiveDataSearchResult[] search(String queryString, int maxResultSize) throws
             ParseException, IOException, InvalidTokenOffsetsException {
+        this.isearcher = new IndexSearcher(Indexer.getDirectoryReader());
         if (queryString != null & !queryString.isEmpty()) {
             Query query = parser.parse(queryString);
             Formatter formatter = new SimpleHTMLFormatter();
