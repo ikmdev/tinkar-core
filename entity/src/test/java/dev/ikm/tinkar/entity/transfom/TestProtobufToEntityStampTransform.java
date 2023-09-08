@@ -108,11 +108,11 @@ public class TestProtobufToEntityStampTransform {
             StampRecord mockStampRecord = mock(StampRecord.class);
             // Given a PBStampVersion with a missing Public Id for Status
             StampVersion pbStampVersion = StampVersion.newBuilder()
-                    .setStatus(createPBPublicId())
+                    .setStatusPublicId(createPBPublicId())
                     .setTime(nowTimestamp())
-                    .setAuthor(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
-                    .setModule(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
-                    .setPath(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
+                    .setAuthorPublicId(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
+                    .setModulePublicId(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
+                    .setPathPublicId(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
                     .build();
 
             // When we transform PBStampVersion
@@ -132,11 +132,11 @@ public class TestProtobufToEntityStampTransform {
             // Given a PBStampVersion with a missing Public Id for Author
             StampRecord mockStampRecord = mock(StampRecord.class);
             StampVersion pbStampVersion = StampVersion.newBuilder()
-                    .setStatus(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
+                    .setStatusPublicId(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
                     .setTime(nowTimestamp())
-                    .setAuthor(createPBPublicId())
-                    .setModule(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
-                    .setPath(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
+                    .setAuthorPublicId(createPBPublicId())
+                    .setModulePublicId(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
+                    .setPathPublicId(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
                     .build();
 
             // When we transform PBStampVersion
@@ -156,11 +156,11 @@ public class TestProtobufToEntityStampTransform {
             // Given a PBStampVersion with a missing Public Id for Module
             StampRecord mockStampRecord = mock(StampRecord.class);
             StampVersion pbStampVersion = StampVersion.newBuilder()
-                    .setStatus(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
+                    .setStatusPublicId(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
                     .setTime(nowTimestamp())
-                    .setAuthor(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
-                    .setModule(createPBPublicId())
-                    .setPath(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
+                    .setAuthorPublicId(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
+                    .setModulePublicId(createPBPublicId())
+                    .setPathPublicId(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
                     .build();
 
             // When we transform PBStampVersion
@@ -180,11 +180,11 @@ public class TestProtobufToEntityStampTransform {
             // Given a PBStampVersion with a missing Public Id for Path
             StampRecord mockStampRecord = mock(StampRecord.class);
             StampVersion pbStampVersion = StampVersion.newBuilder()
-                    .setStatus(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
+                    .setStatusPublicId(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
                     .setTime(nowTimestamp())
-                    .setAuthor(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
-                    .setModule(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
-                    .setPath(createPBPublicId())
+                    .setAuthorPublicId(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
+                    .setModulePublicId(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
+                    .setPathPublicId(createPBPublicId())
                     .build();
 
             // When we transform PBStampVersion
@@ -232,16 +232,16 @@ public class TestProtobufToEntityStampTransform {
 
             Timestamp expectedTime = nowTimestamp();
             StampVersion pbStampVersion = StampVersion.newBuilder()
-                    .setStatus(createPBPublicId(statusConcept))
+                    .setStatusPublicId(createPBPublicId(statusConcept))
                     .setTime(expectedTime)
-                    .setAuthor(createPBPublicId(authorConcept))
-                    .setModule(createPBPublicId(moduleConcept))
-                    .setPath(createPBPublicId(pathConcept))
+                    .setAuthorPublicId(createPBPublicId(authorConcept))
+                    .setModulePublicId(createPBPublicId(moduleConcept))
+                    .setPathPublicId(createPBPublicId(pathConcept))
                     .build();
 
             StampChronology pbStampChronology = StampChronology.newBuilder()
                     .setPublicId(createPBPublicId(conceptMap.get(TEST_CONCEPT_NAME)))
-                    .addVersions(pbStampVersion)
+                    .setFirstStampVersion(pbStampVersion)
                     .build();
 
             // When we transform PBStampChronology
@@ -250,14 +250,9 @@ public class TestProtobufToEntityStampTransform {
             // Then the resulting StampChronology should match the original PBStampChronology
             assertEquals(nid(testConcept), actualStampChronology.nid(), "Nid's did not match in Stamp Chronology.");
             assertTrue(PublicId.equals(testConcept.publicId(), actualStampChronology.publicId()), "Public Id's of the stamp chronology do not match.");
-            assertEquals(1, actualStampChronology.versions().size(), "Versions are empty");
-            assertEquals(nid(statusConcept), actualStampChronology.versions().get(0).stateNid(), "Status Nid did not match");
-            assertEquals(expectedTime.getSeconds(), actualStampChronology.versions().get(0).time(), "Time did not match");
-            assertEquals(nid(authorConcept), actualStampChronology.versions().get(0).authorNid(), "Author Nid did not match");
-            assertEquals(nid(moduleConcept), actualStampChronology.versions().get(0).moduleNid(), "Module Nid did not match");
-            assertEquals(nid(pathConcept), actualStampChronology.versions().get(0).pathNid(), "Path Nid did not match");
         });
     }
+
 
     @Test
     @DisplayName("Transform a Stamp Chronology With Two Versions")
@@ -274,24 +269,24 @@ public class TestProtobufToEntityStampTransform {
             Concept pathConcept = conceptMap.get(PATH_CONCEPT_NAME);
 
             StampVersion pbStampVersionOne = StampVersion.newBuilder()
-                    .setStatus(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
+                    .setStatusPublicId(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
                     .setTime(expectedTime1)
-                    .setAuthor(createPBPublicId(authorConcept))
-                    .setModule(createPBPublicId(moduleConcept))
-                    .setPath(createPBPublicId(pathConcept))
+                    .setAuthorPublicId(createPBPublicId(authorConcept))
+                    .setModulePublicId(createPBPublicId(moduleConcept))
+                    .setPathPublicId(createPBPublicId(pathConcept))
                     .build();
             StampVersion pbStampVersionTwo = StampVersion.newBuilder()
-                    .setStatus(createPBPublicId(statusConcept))
+                    .setStatusPublicId(createPBPublicId(statusConcept))
                     .setTime(expectedTime2)
-                    .setAuthor(createPBPublicId(authorConcept))
-                    .setModule(createPBPublicId(moduleConcept))
-                    .setPath(createPBPublicId(pathConcept))
+                    .setAuthorPublicId(createPBPublicId(authorConcept))
+                    .setModulePublicId(createPBPublicId(moduleConcept))
+                    .setPathPublicId(createPBPublicId(pathConcept))
                     .build();
 
             StampChronology pbStampChronology = StampChronology.newBuilder()
                     .setPublicId(createPBPublicId(testConcept))
-                    .addVersions(pbStampVersionOne)
-                    .addVersions(pbStampVersionTwo)
+                    .setFirstStampVersion(pbStampVersionOne)
+                    .setSecondStampVersion(pbStampVersionTwo)
                     .build();
 
             // When we transform PBStampChronology

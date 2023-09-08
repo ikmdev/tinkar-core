@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.entity.transfom;
 
 import dev.ikm.tinkar.component.Concept;
+import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.component.Semantic;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.schema.*;
@@ -38,8 +39,8 @@ public class TestProtobufToEntitySemanticTransform {
             // Given a PBSemanticChronology with a no Semantic Versions present
             SemanticChronology pbSemanticChronology = SemanticChronology.newBuilder()
                     .setPublicId(createPBPublicId(conceptMap.get(TEST_CONCEPT_NAME)))
-                    .setReferencedComponent(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
-                    .setPatternForSemantic(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
+                    .setReferencedComponentPublicId(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
+                    .setPatternForSemanticPublicId(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
                     .build();
 
             // When we transform PBSemanticChronology
@@ -56,33 +57,33 @@ public class TestProtobufToEntitySemanticTransform {
             Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
 
             StampVersion pbStampVersion = StampVersion.newBuilder()
-                    .setStatus(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
+                    .setStatusPublicId(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
                     .setTime(nowTimestamp())
-                    .setAuthor(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
-                    .setModule(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
-                    .setPath(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
+                    .setAuthorPublicId(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
+                    .setModulePublicId(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
+                    .setPathPublicId(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
                     .build();
 
             StampChronology pbStampChronology = StampChronology.newBuilder()
                     .setPublicId(createPBPublicId(testConcept))
-                    .addVersions(pbStampVersion)
+                    .setFirstStampVersion(pbStampVersion)
                     .build();
 
             String expectedStringValue = "Testing Field Transformation with a string.";
             Field pbFieldString = Field.newBuilder()
-                    .setString(expectedStringValue)
+                    .setStringValue(expectedStringValue)
                     .build();
 
             SemanticVersion pbSemanticVersion = SemanticVersion.newBuilder()
-                    .setStamp(pbStampChronology)
+                    .setStampChronologyPublicId(pbStampChronology.getPublicId())
                     .addFields(pbFieldString)
                     .build();
 
             SemanticChronology pbSemanticChronology = SemanticChronology.newBuilder()
                     .setPublicId(createPBPublicId(conceptMap.get(TEST_CONCEPT_NAME)))
-                    .setReferencedComponent(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
-                    .setPatternForSemantic(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
-                    .addVersions(pbSemanticVersion)
+                    .setReferencedComponentPublicId(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
+                    .setPatternForSemanticPublicId(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
+                    .addSemanticVersions(pbSemanticVersion)
                     .build();
 
             // When we transform PBSemanticChronology
@@ -90,6 +91,7 @@ public class TestProtobufToEntitySemanticTransform {
 
             // Then we compare the PBSemanticChronology to the expected one
             assertEquals(1, actualSemanticChronology.versions().size(), "Versions are missing from the Semantic Chronology.");
+            assertEquals(FieldDataType.SEMANTIC_CHRONOLOGY, actualSemanticChronology.entityDataType(), "The field data types are not matching up.");
         });
     }
 
@@ -101,39 +103,39 @@ public class TestProtobufToEntitySemanticTransform {
             Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
 
             StampVersion pbStampVersion = StampVersion.newBuilder()
-                    .setStatus(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
+                    .setStatusPublicId(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
                     .setTime(nowTimestamp())
-                    .setAuthor(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
-                    .setModule(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
-                    .setPath(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
+                    .setAuthorPublicId(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
+                    .setModulePublicId(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
+                    .setPathPublicId(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
                     .build();
 
             StampChronology pbStampChronology = StampChronology.newBuilder()
                     .setPublicId(createPBPublicId(testConcept))
-                    .addVersions(pbStampVersion)
+                    .setFirstStampVersion(pbStampVersion)
                     .build();
 
             String expectedStringValue = "Testing Field Transformation with a string.";
             Field pbFieldString = Field.newBuilder()
-                    .setString(expectedStringValue)
+                    .setStringValue(expectedStringValue)
                     .build();
 
             SemanticVersion pbSemanticVersion = SemanticVersion.newBuilder()
-                    .setStamp(pbStampChronology)
+                    .setStampChronologyPublicId(pbStampChronology.getPublicId())
                     .addFields(pbFieldString)
                     .build();
 
             SemanticChronology pbSemanticChronology = SemanticChronology.newBuilder()
-                    .setReferencedComponent(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
-                    .setPatternForSemantic(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
-                    .addVersions(pbSemanticVersion)
+                    .setReferencedComponentPublicId(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
+                    .setPatternForSemanticPublicId(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
+                    .addSemanticVersions(pbSemanticVersion)
                     .build();
 
             // When we transform PBSemanticChronology
 
             // Then we will throw a Runtime exception
             assertThrows(Throwable.class, () -> TinkarSchemaToEntityTransformer.getInstance().transformSemanticChronology(pbSemanticChronology), "Not allowed to have no semantic versions.");
-            });
+        });
     }
     //TODO: Add more coverage to Semantic missing fields
 }

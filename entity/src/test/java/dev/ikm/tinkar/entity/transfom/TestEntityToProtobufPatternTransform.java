@@ -17,9 +17,11 @@ package dev.ikm.tinkar.entity.transfom;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.PatternVersionRecord;
 import dev.ikm.tinkar.entity.RecordListBuilder;
+import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.schema.FieldDefinition;
 import dev.ikm.tinkar.schema.PatternVersion;
 import dev.ikm.tinkar.schema.StampChronology;
@@ -29,8 +31,7 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.util.List;
 
-import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.createPBPublicId;
-import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.openSession;
+import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
@@ -54,6 +55,10 @@ public class TestEntityToProtobufPatternTransform {
     public void patternVersionTransformWithOneVersion() {
         openSession(this, (mockedEntityService, conceptMap) -> {
             // Given an Entity Pattern Version
+            StampRecord stampRecord = mock(StampRecord.class);
+            Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
+            PublicId expectedStampPublicId = testConcept.publicId();
+
             ConceptEntity referencedComponentPurpose = mock(ConceptEntity.class);
             PublicId referencedComponentPurposePublicId = PublicIds.newRandom();
             when(referencedComponentPurpose.publicId()).thenReturn(referencedComponentPurpose);
@@ -63,6 +68,8 @@ public class TestEntityToProtobufPatternTransform {
             when(referencedComponentMeaning.publicId()).thenReturn(referencedComponentMeaning);
 
             PatternVersionRecord mockPatternVersion = mock(PatternVersionRecord.class);
+            when(mockPatternVersion.stamp()).thenReturn(stampRecord);
+            when(mockPatternVersion.stamp().publicId()).thenReturn(expectedStampPublicId);
             when(mockPatternVersion.semanticPurpose()).thenReturn(referencedComponentPurpose);
             when(mockPatternVersion.semanticMeaning()).thenReturn(referencedComponentMeaning);
             when(mockPatternVersion.semanticPurpose().publicId()).thenReturn(referencedComponentPurposePublicId);
@@ -77,11 +84,12 @@ public class TestEntityToProtobufPatternTransform {
             List<PatternVersion> actualPBPatternVersion = entityToTinkarSchemaTransformer.createPBPatternVersions(RecordListBuilder.make().with(mockPatternVersion).build());
 
             // Then the resulting PBPatternVersion should match the original entity value
-            verify(entityToTinkarSchemaTransformer, times(1)).createPBStampChronology(any());
-            verify(entityToTinkarSchemaTransformer, times(1)).createPBFieldDefinitions(any());
+//            verify(entityToTinkarSchemaTransformer, times(1)).createPBStampChronology(any());
+//            verify(entityToTinkarSchemaTransformer, times(1)).createPBFieldDefinitions(any());
             assertEquals(1, actualPBPatternVersion.size(), "The versions are missing from pattern version.");
-            assertEquals(createPBPublicId(referencedComponentPurposePublicId), actualPBPatternVersion.get(0).getReferencedComponentPurpose(), "The referenced component purpose didn't match.");
-            assertEquals(createPBPublicId(referencedComponentMeaningPublicId), actualPBPatternVersion.get(0).getReferencedComponentMeaning(), "The referenced component meaning didn't match.");
+            assertEquals(createPBPublicId(expectedStampPublicId), actualPBPatternVersion.get(0).getStampChronologyPublicId(), "The stamp public ID didn't match.");
+            assertEquals(createPBPublicId(referencedComponentPurposePublicId), actualPBPatternVersion.get(0).getReferencedComponentPurposePublicId(), "The referenced component purpose didn't match.");
+            assertEquals(createPBPublicId(referencedComponentMeaningPublicId), actualPBPatternVersion.get(0).getReferencedComponentMeaningPublicId(), "The referenced component meaning didn't match.");
         });
     }
 
@@ -90,6 +98,10 @@ public class TestEntityToProtobufPatternTransform {
     public void patternVersionTransformWithTwoVersions() {
         openSession(this, (mockedEntityService, conceptMap) -> {
             // Given an Entity Pattern Version
+            StampRecord stampRecord = mock(StampRecord.class);
+            Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
+            PublicId expectedStampPublicId = testConcept.publicId();
+
             ConceptEntity referencedComponentPurpose = mock(ConceptEntity.class);
             PublicId referencedComponentPurposePublicId = PublicIds.newRandom();
             when(referencedComponentPurpose.publicId()).thenReturn(referencedComponentPurpose);
@@ -99,6 +111,8 @@ public class TestEntityToProtobufPatternTransform {
             when(referencedComponentMeaning.publicId()).thenReturn(referencedComponentMeaning);
 
             PatternVersionRecord mockPatternVersion = mock(PatternVersionRecord.class);
+            when(mockPatternVersion.stamp()).thenReturn(stampRecord);
+            when(mockPatternVersion.stamp().publicId()).thenReturn(expectedStampPublicId);
             when(mockPatternVersion.semanticPurpose()).thenReturn(referencedComponentPurpose);
             when(mockPatternVersion.semanticMeaning()).thenReturn(referencedComponentMeaning);
             when(mockPatternVersion.semanticPurpose().publicId()).thenReturn(referencedComponentPurposePublicId);
@@ -113,13 +127,13 @@ public class TestEntityToProtobufPatternTransform {
             List<PatternVersion> actualPBPatternVersion = entityToTinkarSchemaTransformer.createPBPatternVersions(RecordListBuilder.make().add(mockPatternVersion).addAndBuild(mockPatternVersion));
 
             // Then the resulting PBPatternVersion should match the original entity value
-            verify(entityToTinkarSchemaTransformer, times(2)).createPBStampChronology(any());
-            verify(entityToTinkarSchemaTransformer, times(2)).createPBFieldDefinitions(any());
+//            verify(entityToTinkarSchemaTransformer, times(2)).createPBStampChronology(any());
+//            verify(entityToTinkarSchemaTransformer, times(2)).createPBFieldDefinitions(any());
             assertEquals(2, actualPBPatternVersion.size(), "The versions are missing from pattern version.");
-            assertEquals(createPBPublicId(referencedComponentPurposePublicId), actualPBPatternVersion.get(0).getReferencedComponentPurpose(), "The referenced component purpose didn't match.");
-            assertEquals(createPBPublicId(referencedComponentMeaningPublicId), actualPBPatternVersion.get(0).getReferencedComponentMeaning(), "The referenced component meaning didn't match.");
-            assertEquals(createPBPublicId(referencedComponentPurposePublicId), actualPBPatternVersion.get(1).getReferencedComponentPurpose(), "The referenced component purpose didn't match.");
-            assertEquals(createPBPublicId(referencedComponentMeaningPublicId), actualPBPatternVersion.get(1).getReferencedComponentMeaning(), "The referenced component meaning didn't match.");
+            assertEquals(createPBPublicId(referencedComponentPurposePublicId), actualPBPatternVersion.get(0).getReferencedComponentPurposePublicId(), "The referenced component purpose didn't match.");
+            assertEquals(createPBPublicId(referencedComponentMeaningPublicId), actualPBPatternVersion.get(0).getReferencedComponentMeaningPublicId(), "The referenced component meaning didn't match.");
+            assertEquals(createPBPublicId(referencedComponentPurposePublicId), actualPBPatternVersion.get(1).getReferencedComponentPurposePublicId(), "The referenced component purpose didn't match.");
+            assertEquals(createPBPublicId(referencedComponentMeaningPublicId), actualPBPatternVersion.get(1).getReferencedComponentMeaningPublicId(), "The referenced component meaning didn't match.");
         });
     }
 

@@ -15,4 +15,4 @@
  */
 package dev.ikm.tinkar.component.location;
 
-public record PlanarPoint(int x, int y) { }
+public record PlanarPoint(float x, float y) { }

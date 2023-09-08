@@ -17,9 +17,11 @@ package dev.ikm.tinkar.entity.transfom;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.ConceptVersionRecord;
 import dev.ikm.tinkar.entity.RecordListBuilder;
+import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.schema.ConceptVersion;
 import dev.ikm.tinkar.schema.StampChronology;
 import org.junit.jupiter.api.DisplayName;
@@ -28,7 +30,7 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.util.List;
 
-import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.openSession;
+import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -51,23 +53,29 @@ public class TestEntityToProtobufConceptTransform {
     @DisplayName("Transform a Entity Concept Chronology with all values")
     public void conceptChronologyTransformWithOneVersion() {
         openSession(this, (mockedEntityService, conceptMap) -> {
+            //Given a concept chronology with all values
             ConceptEntity conceptPublic = mock(ConceptEntity.class);
+            StampRecord stampRecord = mock(StampRecord.class);
             PublicId conceptPublicId = PublicIds.newRandom();
             when(conceptPublic.publicId()).thenReturn(conceptPublic);
+            Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
+            PublicId expectedPublicId = testConcept.publicId();
 
             ConceptVersionRecord mockConceptVersion = mock(ConceptVersionRecord.class);
             when(mockConceptVersion.publicId()).thenReturn(conceptPublic);
+            when(mockConceptVersion.stamp()).thenReturn(stampRecord);
+            when(mockConceptVersion.stamp().publicId()).thenReturn(expectedPublicId);
 
             EntityToTinkarSchemaTransformer entityTransformer = spy(EntityToTinkarSchemaTransformer.getInstance());
 
-            doReturn(StampChronology.getDefaultInstance()).when(entityTransformer).createPBStampChronology(any());
             // When we transform our Entity Pattern Version into a PBPatternVersion
             List<ConceptVersion> actualPBConceptVersion = entityTransformer.createPBConceptVersions(RecordListBuilder.make().with(mockConceptVersion).build());
 
             // Then the resulting PBConceptVersion should match the original entity value
             assertEquals(1, actualPBConceptVersion.size(), "The size of the Concept Chronology does not match the expected.");
+            assertEquals(createPBPublicId(expectedPublicId), actualPBConceptVersion.get(0).getStampChronologyPublicId(), "The Concept Chronology is missing a STAMP public ID.");
             assertFalse(actualPBConceptVersion.isEmpty(), "The Concept Version is empty.");
-            assertTrue(actualPBConceptVersion.get(0).hasStamp(), "The Concept Chronology is missing a STAMP.");
+            assertTrue(actualPBConceptVersion.get(0).hasStampChronologyPublicId(), "The Concept Chronology is missing a STAMP public ID.");
         });
     }
 
@@ -76,11 +84,16 @@ public class TestEntityToProtobufConceptTransform {
     public void conceptVersionTransformWithTwoVersions() {
         openSession(this, (mockedEntityService, conceptMap) -> {
             ConceptEntity conceptPublic = mock(ConceptEntity.class);
+            StampRecord stampRecord = mock(StampRecord.class);
             PublicId conceptPublicId = PublicIds.newRandom();
             when(conceptPublic.publicId()).thenReturn(conceptPublic);
+            Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
+            PublicId expectedPublicId = testConcept.publicId();
 
             ConceptVersionRecord mockConceptVersion = mock(ConceptVersionRecord.class);
             when(mockConceptVersion.publicId()).thenReturn(conceptPublic);
+            when(mockConceptVersion.stamp()).thenReturn(stampRecord);
+            when(mockConceptVersion.stamp().publicId()).thenReturn(expectedPublicId);
 
             EntityToTinkarSchemaTransformer entityTransformer = spy(EntityToTinkarSchemaTransformer.getInstance());
 
@@ -91,8 +104,8 @@ public class TestEntityToProtobufConceptTransform {
             // Then the resulting PBConceptVersion should match the original entity value
             assertEquals(2, actualPBConceptVersion.size(), "The size of the Concept Chronology does not match the expected.");
             assertFalse(actualPBConceptVersion.isEmpty(), "The Concept Version is empty.");
-            assertTrue(actualPBConceptVersion.get(0).hasStamp(), "The Concept Chronology is missing a STAMP.");
-            assertTrue(actualPBConceptVersion.get(1).hasStamp(), "The Concept Chronology is missing a STAMP.");
+            assertTrue(actualPBConceptVersion.get(0).hasStampChronologyPublicId(), "The Concept Chronology is missing a STAMP public ID.");
+            assertTrue(actualPBConceptVersion.get(1).hasStampChronologyPublicId(), "The Concept Chronology is missing a STAMP public ID.");
         });
     }
 }

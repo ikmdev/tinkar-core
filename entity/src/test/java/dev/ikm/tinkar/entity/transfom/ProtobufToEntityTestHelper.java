@@ -93,7 +93,7 @@ public class ProtobufToEntityTestHelper {
     }
     public static dev.ikm.tinkar.schema.PublicId createPBPublicId(PublicId publicId){
         ByteString byteString = ByteString.copyFrom(UuidUtil.getRawBytes(publicId.asUuidList().get(0)));
-        return dev.ikm.tinkar.schema.PublicId.newBuilder().addId(byteString).build();
+        return dev.ikm.tinkar.schema.PublicId.newBuilder().addUuids(byteString).build();
     }
 
     /**
@@ -168,22 +168,22 @@ public class ProtobufToEntityTestHelper {
      */
     public static StampVersion createPbStampVersion(Timestamp expectedTime, Concept statusConcept, Concept authorConcept, Concept moduleConcept, Concept pathConcept) {
         StampVersion pbStampVersion = StampVersion.newBuilder()
-                .setStatus(createPBPublicId(statusConcept))
+                .setStatusPublicId(createPBPublicId(statusConcept))
                 .setTime(expectedTime)
-                .setAuthor(createPBPublicId(authorConcept))
-                .setModule(createPBPublicId(moduleConcept))
-                .setPath(createPBPublicId(pathConcept))
+                .setAuthorPublicId(createPBPublicId(authorConcept))
+                .setModulePublicId(createPBPublicId(moduleConcept))
+                .setPathPublicId(createPBPublicId(pathConcept))
                 .build();
         return pbStampVersion;
     }
 
     public static StampVersion createPbStampVersion(Map<String, Concept> conceptMap, Timestamp expectedTime) {
         StampVersion pbStampVersion = StampVersion.newBuilder()
-                .setStatus(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
+                .setStatusPublicId(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
                 .setTime(expectedTime)
-                .setAuthor(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
-                .setModule(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
-                .setPath(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
+                .setAuthorPublicId(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
+                .setModulePublicId(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
+                .setPathPublicId(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
                 .build();
         return pbStampVersion;
     }

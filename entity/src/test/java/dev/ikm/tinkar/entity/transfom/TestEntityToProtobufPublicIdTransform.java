@@ -58,7 +58,7 @@ public class TestEntityToProtobufPublicIdTransform {
             PublicId actualPublicId = testConcept.publicId();
             //Creating a Protobuf with the Expected value
             ByteString byteString = ByteString.copyFrom(UuidUtil.getRawBytes(actualPublicId.asUuidList().get(0)));
-            dev.ikm.tinkar.schema.PublicId expectedPBPublicId = dev.ikm.tinkar.schema.PublicId.newBuilder().addId(byteString).build();
+            dev.ikm.tinkar.schema.PublicId expectedPBPublicId = dev.ikm.tinkar.schema.PublicId.newBuilder().addUuids(byteString).build();
 
             // When I try to transform it into a public ID protobuf message
             dev.ikm.tinkar.schema.PublicId actualPBPublicId = EntityToTinkarSchemaTransformer.getInstance().createPBPublicId(actualPublicId);
@@ -66,7 +66,7 @@ public class TestEntityToProtobufPublicIdTransform {
             // Then we will check to verify that the transformed public ID matches that of the original.
             assertEquals(expectedPBPublicId, actualPBPublicId, "Protobuf Public ID's do not match.");
             assertEquals(expectedPBPublicId.hashCode(), actualPBPublicId.hashCode(), "Protobuf Public ID's hash codes not match.");
-            assertEquals(expectedPBPublicId.getIdList(), actualPBPublicId.getIdList(), "Protobuf Public ID's lists not match.");
+            assertEquals(expectedPBPublicId.getUuidsList(), actualPBPublicId.getUuidsList(), "Protobuf Public ID's lists not match.");
         });
     }
 
