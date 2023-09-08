@@ -36,7 +36,7 @@ public class TestEntityToProtobufFieldTransform {
             Object actualEntityFieldString = actualStringValue;
 
             Field expectedPBFieldString = Field.newBuilder()
-                    .setString(actualStringValue)
+                    .setStringValue(actualStringValue)
                     .build();
 
             // When we transform our Protobuf String Field value
@@ -57,7 +57,7 @@ public class TestEntityToProtobufFieldTransform {
             Object actualEntityFieldBoolean = actualBooleanValue;
 
             Field expectedPBFieldBoolean= Field.newBuilder()
-                    .setBool(actualBooleanValue)
+                    .setBooleanValue(actualBooleanValue)
                     .build();
 
             // When we transform our Protobuf Boolean Field value
@@ -78,7 +78,7 @@ public class TestEntityToProtobufFieldTransform {
             Object actualEntityFieldInteger = actualIntegerValue;
 
             Field expectedPBFieldInteger= Field.newBuilder()
-                    .setInt(actualIntegerValue)
+                    .setIntValue(actualIntegerValue)
                     .build();
 
             // When we transform our Protobuf Integer Field value
@@ -99,7 +99,7 @@ public class TestEntityToProtobufFieldTransform {
             Object actualEntityFloatInteger = actualFloatValue;
 
             Field expectedPBFieldFloat= Field.newBuilder()
-                    .setFloat(actualFloatValue)
+                    .setFloatValue(actualFloatValue)
                     .build();
 
             // When we transform our Protobuf Float Field value

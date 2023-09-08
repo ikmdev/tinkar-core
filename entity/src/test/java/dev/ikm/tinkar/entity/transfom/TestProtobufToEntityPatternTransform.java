@@ -70,34 +70,34 @@ public class TestProtobufToEntityPatternTransform {
             Concept referencedComponentMeaningConcept = conceptMap.get(REF_COMP_MEANING_CONCEPT_NAME);
 
             StampVersion pbStampVersionOne = StampVersion.newBuilder()
-                    .setStatus(createPBPublicId(statusConcept))
+                    .setStatusPublicId(createPBPublicId(statusConcept))
                     .setTime(nowTimestamp())
-                    .setAuthor(createPBPublicId(authorConcept))
-                    .setModule(createPBPublicId(moduleConcept))
-                    .setPath(createPBPublicId(pathConcept))
+                    .setAuthorPublicId(createPBPublicId(authorConcept))
+                    .setModulePublicId(createPBPublicId(moduleConcept))
+                    .setPathPublicId(createPBPublicId(pathConcept))
                     .build();
 
             StampChronology pbStampChronologyOne = StampChronology.newBuilder()
                     .setPublicId(createPBPublicId(testConcept))
-                    .addVersions(pbStampVersionOne)
+                    //.addVersions(pbStampVersionOne)
                     .build();
 
             FieldDefinition pbFieldDefinitionOne = FieldDefinition.newBuilder()
-                    .setMeaning(createPBPublicId(meaningConcept))
-                    .setDataType(createPBPublicId(dataTypeConcept))
-                    .setPurpose(createPBPublicId(purposeConcept))
+                    .setMeaningPublicId(createPBPublicId(meaningConcept))
+                    .setDataTypePublicId(createPBPublicId(dataTypeConcept))
+                    .setPurposePublicId(createPBPublicId(purposeConcept))
                     .build();
 
             PatternVersion pbPatternVersionOne = PatternVersion.newBuilder()
-                    .setStamp(pbStampChronologyOne)
-                    .setReferencedComponentPurpose(createPBPublicId(referencedComponentPurposeConcept))
-                    .setReferencedComponentMeaning(createPBPublicId(referencedComponentMeaningConcept))
+                    .setStampChronologyPublicId(createPBPublicId(testConcept.publicId()))
+                    .setReferencedComponentPurposePublicId(createPBPublicId(referencedComponentPurposeConcept))
+                    .setReferencedComponentMeaningPublicId(createPBPublicId(referencedComponentMeaningConcept))
                     .addFieldDefinitions(pbFieldDefinitionOne)
                     .build();
 
             PatternChronology pbPatternChronologyOne = PatternChronology.newBuilder()
                     .setPublicId(createPBPublicId(testConcept))
-                    .addVersions(pbPatternVersionOne)
+                    .addPatternVersions(pbPatternVersionOne)
                     .build();
 
             // When we transform PBPatternChronology
@@ -129,62 +129,62 @@ public class TestProtobufToEntityPatternTransform {
             Concept referencedComponentMeaningConcept = conceptMap.get(REF_COMP_MEANING_CONCEPT_NAME);
 
             StampVersion pbStampVersionTwo = StampVersion.newBuilder()
-                    .setStatus(createPBPublicId(statusConcept))
+                    .setStatusPublicId(createPBPublicId(statusConcept))
                     .setTime(nowTimestamp())
-                    .setAuthor(createPBPublicId(authorConcept))
-                    .setModule(createPBPublicId(moduleConcept))
-                    .setPath(createPBPublicId(pathConcept))
+                    .setAuthorPublicId(createPBPublicId(authorConcept))
+                    .setModulePublicId(createPBPublicId(moduleConcept))
+                    .setPathPublicId(createPBPublicId(pathConcept))
                     .build();
 
             StampChronology pbStampChronologyTwo = StampChronology.newBuilder()
                     .setPublicId(createPBPublicId(testConcept))
-                    .addVersions(pbStampVersionTwo)
+//                    .addVersions(pbStampVersionTwo)
                     .build();
 
             FieldDefinition pbFieldDefinitionTwo = FieldDefinition.newBuilder()
-                    .setMeaning(createPBPublicId(meaningConcept))
-                    .setDataType(createPBPublicId(dataTypeConcept))
-                    .setPurpose(createPBPublicId(purposeConcept))
+                    .setMeaningPublicId(createPBPublicId(meaningConcept))
+                    .setDataTypePublicId(createPBPublicId(dataTypeConcept))
+                    .setPurposePublicId(createPBPublicId(purposeConcept))
                     .build();
 
             StampVersion pbStampVersionOne = StampVersion.newBuilder()
-                    .setStatus(createPBPublicId(statusConcept))
+                    .setStatusPublicId(createPBPublicId(statusConcept))
                     .setTime(nowTimestamp())
-                    .setAuthor(createPBPublicId(authorConcept))
-                    .setModule(createPBPublicId(moduleConcept))
-                    .setPath(createPBPublicId(pathConcept))
+                    .setAuthorPublicId(createPBPublicId(authorConcept))
+                    .setModulePublicId(createPBPublicId(moduleConcept))
+                    .setPathPublicId(createPBPublicId(pathConcept))
                     .build();
 
             StampChronology pbStampChronologyOne = StampChronology.newBuilder()
                     .setPublicId(createPBPublicId(testConcept))
-                    .addVersions(pbStampVersionOne)
+//                    .addVersions(pbStampVersionOne)
                     .build();
 
             FieldDefinition pbFieldDefinitionOne = FieldDefinition.newBuilder()
-                    .setMeaning(createPBPublicId(meaningConcept))
-                    .setDataType(createPBPublicId(dataTypeConcept))
-                    .setPurpose(createPBPublicId(purposeConcept))
+                    .setMeaningPublicId(createPBPublicId(meaningConcept))
+                    .setDataTypePublicId(createPBPublicId(dataTypeConcept))
+                    .setPurposePublicId(createPBPublicId(purposeConcept))
                     .build();
 
             PatternVersion pbPatternVersionOne = PatternVersion.newBuilder()
-                    .setStamp(pbStampChronologyOne)
-                    .setReferencedComponentPurpose(createPBPublicId(referencedComponentPurposeConcept))
-                    .setReferencedComponentMeaning(createPBPublicId(referencedComponentMeaningConcept))
+                    .setStampChronologyPublicId(createPBPublicId(testConcept))
+                    .setReferencedComponentPurposePublicId(createPBPublicId(referencedComponentPurposeConcept))
+                    .setReferencedComponentMeaningPublicId(createPBPublicId(referencedComponentMeaningConcept))
                     .addFieldDefinitions(pbFieldDefinitionOne)
                     .build();
 
             PatternVersion pbPatternVersionTwo = PatternVersion.newBuilder()
-                    .setStamp(pbStampChronologyTwo)
-                    .setReferencedComponentPurpose(createPBPublicId(referencedComponentPurposeConcept))
-                    .setReferencedComponentMeaning(createPBPublicId(referencedComponentMeaningConcept))
+                    .setStampChronologyPublicId(createPBPublicId(testConcept))
+                    .setReferencedComponentPurposePublicId(createPBPublicId(referencedComponentPurposeConcept))
+                    .setReferencedComponentMeaningPublicId(createPBPublicId(referencedComponentMeaningConcept))
                     .addFieldDefinitions(pbFieldDefinitionTwo)
                     .addFieldDefinitions(pbFieldDefinitionTwo)
                     .build();
 
             PatternChronology pbPatternChronologyOne = PatternChronology.newBuilder()
                     .setPublicId(createPBPublicId(testConcept))
-                    .addVersions(pbPatternVersionOne)
-                    .addVersions(pbPatternVersionTwo)
+                    .addPatternVersions(pbPatternVersionOne)
+                    .addPatternVersions(pbPatternVersionTwo)
                     .build();
 
             // When we transform PBPatternChronology

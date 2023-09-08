@@ -41,24 +41,24 @@ public class TestProtobufToEntityConceptTransform {
             Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
 
             dev.ikm.tinkar.schema.StampVersion pbStampVersion = dev.ikm.tinkar.schema.StampVersion.newBuilder()
-                    .setStatus(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
+                    .setStatusPublicId(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
                     .setTime(nowTimestamp())
-                    .setAuthor(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
-                    .setModule(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
-                    .setPath(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
+                    .setAuthorPublicId(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
+                    .setModulePublicId(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
+                    .setPathPublicId(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
                     .build();
 
             StampChronology pbStampChronology = StampChronology.newBuilder()
                     .setPublicId(createPBPublicId(testConcept))
-                    .addVersions(pbStampVersion)
+//                    .addVersions(pbStampVersion)
                     .build();
 
             ConceptVersion pbConceptVersion = ConceptVersion.newBuilder()
-                    .setStamp(pbStampChronology)
+                    .setStampChronologyPublicId(createPBPublicId(testConcept))
                     .build();
 
             ConceptChronology pbConceptChronology = ConceptChronology.newBuilder()
-                    .addVersions(pbConceptVersion)
+                    .addConceptVersions(pbConceptVersion)
                     .build();
 
             // When we transform PBConceptChronology
@@ -91,25 +91,25 @@ public class TestProtobufToEntityConceptTransform {
             Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
 
             StampVersion pbStampVersion = StampVersion.newBuilder()
-                    .setStatus(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
+                    .setStatusPublicId(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
                     .setTime(nowTimestamp())
-                    .setAuthor(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
-                    .setModule(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
-                    .setPath(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
+                    .setAuthorPublicId(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
+                    .setModulePublicId(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
+                    .setPathPublicId(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
                     .build();
 
             StampChronology pbStampChronology = StampChronology.newBuilder()
                     .setPublicId(createPBPublicId(testConcept))
-                    .addVersions(pbStampVersion)
+//                    .addVersions(pbStampVersion)
                     .build();
 
             ConceptVersion pbConceptVersion = ConceptVersion.newBuilder()
-                    .setStamp(pbStampChronology)
+                    .setStampChronologyPublicId(createPBPublicId(testConcept))
                     .build();
 
             ConceptChronology pbConceptChronology = ConceptChronology.newBuilder()
                     .setPublicId(createPBPublicId(testConcept))
-                    .addVersions(pbConceptVersion)
+                    .addConceptVersions(pbConceptVersion)
                     .build();
 
             // When we transform PBConceptChronology
@@ -124,67 +124,51 @@ public class TestProtobufToEntityConceptTransform {
         });
 
     }
-
-    // TODO write test to fail when stamp version is the same (time, author, etc.)
-    @Test
-    @DisplayName("Transform a Concept Chronology With Two Versions")
-    public void conceptChronologyTransformWithTwoVersions() {
-        openSession(this, (mockedEntityService, conceptMap) -> {
-            // Given a PBConceptChronology with two Stamp Versions present
+@Test
+    @DisplayName("Transform a Concept Chronology With Two Version")
+    public void conceptChronologyTransformWithTwoVersions(){
+        openSession(this, (mockedEntity, conceptMap) -> {
+            // Given a PBConceptChronology with a one Stamp Version present
             Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
-            Concept statusConcept = conceptMap.get(STATUS_CONCEPT_NAME);
-            Concept authorConcept = conceptMap.get(AUTHOR_CONCEPT_NAME);
-            Concept moduleConcept = conceptMap.get(MODULE_CONCEPT_NAME);
-            Concept pathConcept = conceptMap.get(PATH_CONCEPT_NAME);
 
-            StampVersion pbStampVersionTwo = StampVersion.newBuilder()
-                    .setStatus(createPBPublicId(statusConcept))
+            StampVersion pbStampVersion = StampVersion.newBuilder()
+                    .setStatusPublicId(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
                     .setTime(nowTimestamp())
-                    .setAuthor(createPBPublicId(authorConcept))
-                    .setModule(createPBPublicId(moduleConcept))
-                    .setPath(createPBPublicId(pathConcept))
+                    .setAuthorPublicId(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
+                    .setModulePublicId(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
+                    .setPathPublicId(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
                     .build();
 
-            StampChronology pbStampChronologyTwo = StampChronology.newBuilder()
+            StampChronology pbStampChronology = StampChronology.newBuilder()
                     .setPublicId(createPBPublicId(testConcept))
-                    .addVersions(pbStampVersionTwo)
-                    .build();
-
-            StampVersion pbStampVersionOne = StampVersion.newBuilder()
-                    .setStatus(createPBPublicId(statusConcept))
-                    .setTime(nowTimestamp())
-                    .setAuthor(createPBPublicId(authorConcept))
-                    .setModule(createPBPublicId(moduleConcept))
-                    .setPath(createPBPublicId(pathConcept))
-                    .build();
-
-            StampChronology pbStampChronologyOne = StampChronology.newBuilder()
-                    .setPublicId(createPBPublicId(testConcept))
-                    .addVersions(pbStampVersionOne)
+//                    .addVersions(pbStampVersion)
                     .build();
 
             ConceptVersion pbConceptVersionOne = ConceptVersion.newBuilder()
-                    .setStamp(pbStampChronologyOne)
+                    .setStampChronologyPublicId(createPBPublicId(testConcept))
                     .build();
 
             ConceptVersion pbConceptVersionTwo = ConceptVersion.newBuilder()
-                    .setStamp(pbStampChronologyTwo)
+                    .setStampChronologyPublicId(createPBPublicId(testConcept))
                     .build();
 
             ConceptChronology pbConceptChronology = ConceptChronology.newBuilder()
-                    .setPublicId(ProtobufToEntityTestHelper.createPBPublicId(testConcept))
-                    .addVersions(pbConceptVersionOne)
-                    .addVersions(pbConceptVersionTwo)
+                    .setPublicId(createPBPublicId(testConcept))
+                    .addConceptVersions(pbConceptVersionOne)
+                    .addConceptVersions(pbConceptVersionTwo)
                     .build();
 
             // When we transform PBConceptChronology
-            ConceptEntity actualConceptChronologyTwo = TinkarSchemaToEntityTransformer.getInstance().transformConceptChronology(pbConceptChronology);
+            ConceptEntity actualConceptChronology = TinkarSchemaToEntityTransformer.getInstance().transformConceptChronology(pbConceptChronology);
 
             // Then the resulting ConceptChronology should match the original PBConceptChronology
-            assertEquals(nid(testConcept), actualConceptChronologyTwo.nid(), "Nid's did not match in concept Chronology.");
-            assertTrue(PublicId.equals(testConcept.publicId(), actualConceptChronologyTwo.publicId()), "Public Id's of the concept chronology do not match.");
-            assertEquals(2, actualConceptChronologyTwo.versions().size(), "Versions are empty");
+            assertEquals(nid(testConcept), actualConceptChronology.nid(), "Nid's did not match in Concept Chronology.");
+            assertTrue(PublicId.equals(testConcept.publicId(), actualConceptChronology.publicId()), "Public Id's of the concept chronology do not match.");
+            assertEquals(2, actualConceptChronology.versions().size(), "Versions are empty");
             //TODO: do we need to test details of Stamp Version?
+//            assertEquals(expectedTime, actualConceptChronology.versions().get(0).time(), "Time did not match");
         });
+
     }
+    // TODO write test to fail when stamp version is the same (time, author, etc.)
 }

@@ -58,9 +58,9 @@ public class TestEntityToProtobufFieldDefinitionTransform {
             // When we transform the FieldDef entity to a protobuf message
             FieldDefinition actualTransformedFieldDefinition = EntityToTinkarSchemaTransformer.getInstance().createPBFieldDefinition(mockFieldDef);
             // Then assert that the actual transformed Field def matches that of the expected.
-            assertEquals(createPBPublicId(dataTypeConcept.publicId()), actualTransformedFieldDefinition.getDataType(), "Public Id's did not match in Field Definitions Data Type.");
-            assertEquals(createPBPublicId(meaningConcept.publicId()), actualTransformedFieldDefinition.getMeaning(), "Public Id's did not match in Field Definitions Meaning.");
-            assertEquals(createPBPublicId(purposeConcept.publicId()), actualTransformedFieldDefinition.getPurpose(), "Public Id's did not match in Field Definitions Purpose.");
+            assertEquals(createPBPublicId(dataTypeConcept.publicId()), actualTransformedFieldDefinition.getDataTypePublicId(), "Public Id's did not match in Field Definitions Data Type.");
+            assertEquals(createPBPublicId(meaningConcept.publicId()), actualTransformedFieldDefinition.getMeaningPublicId(), "Public Id's did not match in Field Definitions Meaning.");
+            assertEquals(createPBPublicId(purposeConcept.publicId()), actualTransformedFieldDefinition.getPurposePublicId(), "Public Id's did not match in Field Definitions Purpose.");
         });
     }
 

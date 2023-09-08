@@ -32,7 +32,7 @@ public class TestProtobufToEntityFieldTransform {
             // Given a string value
             String expectedStringValue = "Testing Field Transformation with a string.";
             Field pbFieldString = Field.newBuilder()
-                    .setString(expectedStringValue)
+                    .setStringValue(expectedStringValue)
                     .build();
 
             // When we transform our String Field value
@@ -52,7 +52,7 @@ public class TestProtobufToEntityFieldTransform {
             // Given a boolean value
             Boolean expectedBoolValue = true;
             Field pbFieldBool = Field.newBuilder()
-                    .setBool(expectedBoolValue)
+                    .setBooleanValue(expectedBoolValue)
                     .build();
 
             // When we transform our Boolean Field value
@@ -70,7 +70,7 @@ public class TestProtobufToEntityFieldTransform {
             // Given a integer value
             Integer expectedIntValue = 1568;
             Field pbFieldInt = Field.newBuilder()
-                    .setInt(expectedIntValue)
+                    .setIntValue(expectedIntValue)
                     .build();
 
             // When we transform our Integer Field value
@@ -88,7 +88,7 @@ public class TestProtobufToEntityFieldTransform {
             // Given a float value
             Float expectedFloatValue = 1534.34f;
             Field pbFieldFloat = Field.newBuilder()
-                    .setFloat(expectedFloatValue)
+                    .setFloatValue(expectedFloatValue)
                     .build();
 
             // When we transform our Float Field value

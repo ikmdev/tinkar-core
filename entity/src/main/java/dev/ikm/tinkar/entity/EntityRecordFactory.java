@@ -275,15 +275,15 @@ public class EntityRecordFactory {
 
     public static void writeField(ByteBuf writeBuf, PlanarPoint planarPointField) {
         writeBuf.writeByte(FieldDataType.PLANAR_POINT.token);
-        writeBuf.writeInt(planarPointField.x());
-        writeBuf.writeInt(planarPointField.y());
+        writeBuf.writeFloat(planarPointField.x());
+        writeBuf.writeFloat(planarPointField.y());
     }
 
     public static void writeField(ByteBuf writeBuf, SpatialPoint spatialPointField) {
         writeBuf.writeByte(FieldDataType.SPATIAL_POINT.token);
-        writeBuf.writeInt(spatialPointField.x());
-        writeBuf.writeInt(spatialPointField.y());
-        writeBuf.writeInt(spatialPointField.z());
+        writeBuf.writeInt((int) spatialPointField.x());
+        writeBuf.writeFloat(spatialPointField.y());
+        writeBuf.writeFloat(spatialPointField.z());
     }
 
     public static void writeField(ByteBuf writeBuf, IntIdList intIdListField) {

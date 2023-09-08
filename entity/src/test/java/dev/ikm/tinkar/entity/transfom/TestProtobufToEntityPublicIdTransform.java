@@ -60,7 +60,7 @@ public class TestProtobufToEntityPublicIdTransform {
             Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
             PublicId expectedPublicId = testConcept.publicId();
             ByteString byteString = ByteString.copyFrom(UuidUtil.getRawBytes(expectedPublicId.asUuidList().get(0)));
-            dev.ikm.tinkar.schema.PublicId  pbPublicId = dev.ikm.tinkar.schema.PublicId.newBuilder().addId(byteString).build();
+            dev.ikm.tinkar.schema.PublicId  pbPublicId = dev.ikm.tinkar.schema.PublicId.newBuilder().addUuids(byteString).build();
 
             // When I try to transform it into a public ID protobuf message
             PublicId actualPublicId = TinkarSchemaToEntityTransformer.getInstance().transformPublicId(pbPublicId);
@@ -87,7 +87,7 @@ public class TestProtobufToEntityPublicIdTransform {
             PublicId expectedCombinedSource = PublicIds.of(actualOnePublicId.asUuidList().get(0), actualTwoPublicId.asUuidList().get(0));
             ByteString byteStringOne = ByteString.copyFrom(UuidUtil.getRawBytes(actualOnePublicId.asUuidList().get(0)));
             ByteString byteStringTwo = ByteString.copyFrom(UuidUtil.getRawBytes(actualTwoPublicId.asUuidList().get(0)));
-            dev.ikm.tinkar.schema.PublicId  pbPublicId = dev.ikm.tinkar.schema.PublicId .newBuilder().addId(byteStringOne).addId(byteStringTwo).build();
+            dev.ikm.tinkar.schema.PublicId  pbPublicId = dev.ikm.tinkar.schema.PublicId .newBuilder().addUuids(byteStringOne).addUuids(byteStringTwo).build();
 
             // When I try to transform them into a public ID protobuf message
             PublicId actualPublicId = TinkarSchemaToEntityTransformer.getInstance().transformPublicId(pbPublicId);
