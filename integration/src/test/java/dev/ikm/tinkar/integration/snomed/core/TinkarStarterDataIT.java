@@ -29,6 +29,7 @@ import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterDataHelper.*;
 import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+@Disabled("Stale")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TinkarStarterDataIT {

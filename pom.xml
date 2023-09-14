@@ -5,7 +5,7 @@
     <parent>
         <groupId>dev.ikm.build</groupId>
         <artifactId>java-parent</artifactId>
-        <version>1.17.0</version>
+        <version>1.18.0</version>
         <relativePath />
     </parent>
 
@@ -78,8 +78,7 @@
         <jackson.version>2.14.2</jackson.version>
         <jetty-slf4j-impl.version>11.0.7</jetty-slf4j-impl.version>
         <jgrapht.version>1.5.0</jgrapht.version>
-        <junit.version>5.6.3</junit.version>
-        <mockito.version>5.2.0</mockito.version>
+        <mockito.version>5.5.0</mockito.version>
         <mvstore.version>1.4.200-r3</mvstore.version>
         <io.smallrye.reactive.version>1.3.1</io.smallrye.reactive.version>
         <jheaps.version>0.14-r3</jheaps.version>
@@ -106,11 +105,6 @@
         <tinkar-schema.version>1.13.0</tinkar-schema.version>
         <tinkar-bindings.version>1.4.0</tinkar-bindings.version>
         <udaychandra-susel.version>0.1.2</udaychandra-susel.version>
-        <junit-jupiter-engine.version>5.7.0</junit-jupiter-engine.version>
-        <junit-platform-surefire-provider.version>1.3.0</junit-platform-surefire-provider.version>
-        <junit-platform-commons.version>1.7.0</junit-platform-commons.version>
-        <junit-platform-launcher.version>1.7.0</junit-platform-launcher.version>
-        <junit-jupiter-api.version>5.6.3</junit-jupiter-api.version>
         <common-java5.version>3.0.0-M9</common-java5.version>
     </properties>
 
@@ -322,18 +316,6 @@
             </dependency>
 
             <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-engine</artifactId>
-                <version>${junit.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-api</artifactId>
-                <version>${junit-jupiter-api.version}</version>
-            </dependency>
-
-            <dependency>
                 <groupId>io.github.udaychandra.susel</groupId>
                 <artifactId>susel</artifactId>
                 <version>${susel.version}</version>
@@ -349,18 +331,6 @@
                         <artifactId>jheaps</artifactId>
                     </exclusion>
                 </exclusions>
-            </dependency>
-
-            <dependency>
-                <groupId>org.junit.platform</groupId>
-                <artifactId>junit-platform-commons</artifactId>
-                <version>${junit-platform-commons.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.junit.platform</groupId>
-                <artifactId>junit-platform-launcher</artifactId>
-                <version>${junit-platform-launcher.version}</version>
             </dependency>
 
             <dependency>
@@ -437,21 +407,15 @@
         </dependency>
 
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <scope>test</scope>
+          <groupId>org.junit.jupiter</groupId>
+          <artifactId>junit-jupiter</artifactId>
+          <scope>test</scope>
         </dependency>
 
         <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-commons</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-launcher</artifactId>
-            <scope>test</scope>
+          <groupId>org.junit.platform</groupId>
+          <artifactId>junit-platform-console</artifactId>
+          <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -459,7 +423,6 @@
             <artifactId>common-java5</artifactId>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <build>
@@ -487,41 +450,12 @@
 
     <!-- for site generation -->
     <reporting>
-
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-report-plugin</artifactId>
-                <configuration>
-                    <reportsDirectories>
-                        <trimStackTrace>false</trimStackTrace>
-                        <reportsDirectory>${basedir}/target/failsafe-reports</reportsDirectory>
-                    </reportsDirectories>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>${jacoco-maven-plugin.version}</version>
-                <reportSets>
-                    <reportSet>
-                        <id>jacoco-report</id>
-                        <reports>
-                            <report>report</report>
-                            <report>report-integration</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jxr-plugin</artifactId>
                 <version>${maven-jxr-plugin.version}</version>
             </plugin>
-
         </plugins>
     </reporting>
-
 </project>

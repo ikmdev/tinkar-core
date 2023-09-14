@@ -49,7 +49,7 @@ public class SnomedCTHelper {
      * @Param String
      * @Returns SnomedCTData
      * **/
-        public static SnomedCTData loadSnomedFile(Class<?> aClass, String snomedCTDataFile) {
+    public static SnomedCTData loadSnomedFile(Class<?> aClass, String snomedCTDataFile) {
         SnomedCTData snomedCTData = new SnomedCTData();
         try(InputStream inputStream = aClass.getResourceAsStream(snomedCTDataFile);){
             BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));

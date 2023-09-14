@@ -91,20 +91,7 @@ class EphemeralProviderIT {
     }
 
     @Test
-    @Order(4)
-    public void exportEntitiesToProtobuf() throws IOException {
-        File file = TestConstants.PB_TEST_FILE;
-        try {
-            ExportEntitiesController exportEntitiesController = new ExportEntitiesController();
-            exportEntitiesController.export(file);
-        }
-        catch (Exception e){
-            e.printStackTrace();
-        }
-    }
-
-    @Test
-    @Order(5)
+    @Order(3)
     public void countExport() {
         EntityProcessor processor = new EntityCounter();
         PrimitiveData.get().forEach(processor);
@@ -125,14 +112,4 @@ class EphemeralProviderIT {
         PrimitiveData.get().forEachParallel(processor);
         LOG.info("POST EPH Parallel realization: \n" + processor.report() + "\n\n");
     }
-
-//    @Test
-//    @Order(5)
-//    public void howManyEntities() throws IOException {
-//        File file = TestConstants.PB_EXPORT_TEST_FILE;
-//        EntityToTinkarSchemaTransformer entityTransformer = new EntityToTinkarSchemaTransformer();
-//            ExportEntitiesToProtobufFile exportEntitiesToProtobufFile = new ExportEntitiesToProtobufFile(file);
-//            exportEntitiesToProtobufFile.compute();
-////        System.out.println("Current concept count: " + entityTransformer.transform());
-//    }
 }

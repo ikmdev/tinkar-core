@@ -33,7 +33,7 @@ open module dev.ikm.tinkar.integration.test {
     requires com.fasterxml.jackson.core;
     requires com.fasterxml.jackson.databind;
     requires org.eclipse.collections.api;
-    requires org.mockito;
+    requires org.mockito; //TODO: delete with stale ITs
     requires dev.ikm.tinkar.bindings;
 
     uses CachingService;
