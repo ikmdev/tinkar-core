@@ -15,13 +15,6 @@
     </properties>
 
     <dependencies>
-
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <scope>test</scope>
-        </dependency>
-
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>common</artifactId>
@@ -42,20 +35,4 @@
             <artifactId>component</artifactId>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <!-- TODO move to classpath and remove -->
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <argLine>
-                        --add-opens dev.ikm.build.terms/dev.ikm.build.terms=ALL-UNNAMED
-                    </argLine>
-                 </configuration>
-            </plugin>
-        </plugins>
-    </build>
-
 </project>

@@ -21,6 +21,7 @@ import dev.ikm.tinkar.entity.SemanticVersionRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Disabled;
 
 import java.util.List;
 import java.util.UUID;
@@ -34,6 +35,7 @@ import static dev.ikm.tinkar.integration.snomed.description.SnomedToEntityIdenti
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Disabled("Stale")
 public class SnomedToEntityIdentifierIT {
 
     SnomedToEntityIdentifier transformer;

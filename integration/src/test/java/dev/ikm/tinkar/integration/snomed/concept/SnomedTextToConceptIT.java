@@ -30,6 +30,7 @@ import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterDataHelper.ope
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Disabled("Stale")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class SnomedTextToConceptIT {

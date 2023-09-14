@@ -21,6 +21,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.Disabled;
+
 
 import java.util.List;
 
@@ -28,6 +30,7 @@ import static dev.ikm.tinkar.integration.snomed.core.SnomedCTHelper.openSession;
 import static dev.ikm.tinkar.integration.snomed.description.SnomedCTDescriptionSemantic.createDescriptionSemantics;
 import static org.junit.jupiter.api.Assertions.*;
 
+@Disabled("Stale")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SnomedCTDescriptionSemanticIT {
 

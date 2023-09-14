@@ -19,12 +19,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
             <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>eclipse-collections-api</artifactId>
         </dependency>
@@ -33,7 +27,5 @@
             <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>eclipse-collections</artifactId>
         </dependency>
-
     </dependencies>
-
  </project>

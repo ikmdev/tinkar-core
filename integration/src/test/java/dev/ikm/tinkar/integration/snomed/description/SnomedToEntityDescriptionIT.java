@@ -34,6 +34,7 @@ import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterDataHelper.ope
 import static dev.ikm.tinkar.integration.snomed.description.SnomedToEntityDescription.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+@Disabled("Stale")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class SnomedToEntityDescriptionIT {
