@@ -30,6 +30,7 @@ import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -56,6 +57,7 @@ import java.io.IOException;
 class MVStoreProviderIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(MVStoreProviderIT.class);
+    private static final File MV_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(MVStoreProviderIT.class);
 
     @BeforeAll
     static void setupSuite() {
@@ -63,7 +65,7 @@ class MVStoreProviderIT {
         CachingService.clearAll();
         LOG.info("Setup suite: " + LOG.getName());
         LOG.info(ServiceProperties.jvmUuid());
-        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, TestConstants.MVSTORE_ROOT);
+        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, MV_DATASTORE_ROOT);
         PrimitiveData.selectControllerByName(TestConstants.MV_STORE_OPEN_NAME);
         PrimitiveData.start();
     }

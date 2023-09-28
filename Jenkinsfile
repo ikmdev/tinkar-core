@@ -1,4 +1,4 @@
-@Library("titan-library") _ 
+@Library("titan-library") _
 
 //run the build at 03:10 on every day-of-week from Monday through Friday but only on the main branch
 String cron_string = BRANCH_NAME == "main" ? "10 3 * * 1-5" : ""
@@ -7,12 +7,12 @@ pipeline {
     agent {
         label 'linux'
     }
-    
+
     environment {
         SONAR_AUTH_TOKEN    = credentials('sonarqube_pac_token')
         SONARQUBE_URL       = "${GLOBAL_SONARQUBE_URL}"
         SONAR_HOST_URL      = "${GLOBAL_SONARQUBE_URL}"
-        
+
         BRANCH_NAME         = "${GIT_BRANCH.split("/").size() > 1 ? GIT_BRANCH.split("/")[1] : GIT_BRANCH}"
     }
 
@@ -33,22 +33,34 @@ pipeline {
         // necessary for communicating status to gitlab
         gitLabConnection('fda-shield-group')
     }
-        
-    stages {
-        
-        stage('Maven Build') {
 
+    stages {
+
+        stage('Initialize') {
+            steps{
+                //Clean before checkout / build
+                cleanWs()
+                checkout scm
+                sh """
+                    java --version
+                    mvn --version
+                    printenv
+                """
+            }
+        }
+
+        stage('Maven Build') {
             steps {
                 updateGitlabCommitStatus name: 'build', state: 'running'
                 script{
                     configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
                         sh """
-                        mvn install -s '${MAVEN_SETTINGS}' \
-                            --batch-mode \
-                            -e \
-                            -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
-                            -Dmaven.build.cache.enabled=false \
-                            -PcodeQuality
+                            mvn clean install -s '${MAVEN_SETTINGS}' \
+                                --batch-mode \
+                                -e \
+                                -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
+                                -Dmaven.build.cache.enabled=false \
+                                -PcodeQuality
                         """
                     }
                 }
@@ -70,7 +82,7 @@ pipeline {
                                 -Dmaven.build.cache.enabled=false \
                                 --batch-mode
                         """
-                        
+
                     }
                 }
                 script{
@@ -94,17 +106,17 @@ pipeline {
             steps {
 
                 script {
-                    pomModel = readMavenPom(file: 'pom.xml')                    
+                    pomModel = readMavenPom(file: 'pom.xml')
                     pomVersion = pomModel.getVersion()
                     isSnapshot = pomVersion.contains("-SNAPSHOT")
                     repositoryId = 'maven-releases'
 
                     if (isSnapshot) {
                         repositoryId = 'maven-snapshots'
-                    } 
-                
-             
-                    configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) { 
+                    }
+
+
+                    configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
 
                         sh """
                             mvn deploy \
@@ -119,7 +131,7 @@ pipeline {
                             -P inject-application-properties \
                             -Dmaven.build.cache.enabled=false \
                             -DrepositoryId='${repositoryId}'
-                        """              
+                        """
                     }
                 }
             }

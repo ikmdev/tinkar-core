@@ -440,15 +440,8 @@ public class StampCalculatorWithCache implements StampCalculator {
             Latest<PatternEntityVersion> latestPattern = latest(semanticVersion.patternNid());
             PatternEntityVersion patternVersion = latestPattern.get();
             OptionalInt optionalIndex = switch (fieldCriterion) {
-                case MEANING -> {
-                    yield getIndexForMeaning(semanticVersion.patternNid(), criterionNid);
-                }
-                case PURPOSE -> {
-                    yield getIndexForPurpose(semanticVersion.patternNid(), criterionNid);
-                }
-                default -> {
-                    throw new IllegalStateException("Can't handle FieldCriterion: " + fieldCriterion);
-                }
+                case MEANING -> getIndexForMeaning(semanticVersion.patternNid(), criterionNid);
+                case PURPOSE -> getIndexForPurpose(semanticVersion.patternNid(), criterionNid);
             };
             if (optionalIndex.isPresent()) {
                 int indexForCriterion = optionalIndex.getAsInt();

@@ -20,6 +20,7 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
 import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.terms.State;
+import dev.ikm.tinkar.terms.TinkarTerm;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.list.ImmutableList;
 
@@ -34,13 +35,29 @@ public record StampRecord(
         ImmutableList<StampVersionRecord> versions)
         implements StampEntity<StampVersionRecord>, StampRecordBuilder.With {
 
-
+    private static StampRecord nonExistentStamp;
     public StampRecord {
         Validator.notZero(mostSignificantBits);
         Validator.notZero(leastSignificantBits);
         Validator.notZero(nid);
         Objects.requireNonNull(versions);
     }
+
+    /**
+     * The non-existent stamp is for indicating that a value of a component has not yet been created at any point in history
+     * where the creation and subsequent changes are not visible.
+     * TODO: State.PRIMORDIAL to State.PREMUNDANE, eliminating PRIMORDIAL?
+     * Premundane definition: before the creation of the world
+     * @return a stamp that represents that the
+     */
+    public static StampRecord nonExistentStamp() {
+        if (nonExistentStamp == null) {
+            nonExistentStamp = StampRecord.make(PrimitiveData.NONEXISTENT_STAMP_UUID, State.PRIMORDIAL,
+                    PrimitiveData.PREMUNDANE_TIME, TinkarTerm.AUTHOR_FOR_VERSION, TinkarTerm.UNINITIALIZED_COMPONENT, TinkarTerm.UNINITIALIZED_COMPONENT);
+        }
+        return nonExistentStamp;
+    }
+
     public static StampRecord make(UUID stampUuid, State state, long time, PublicId authorId, PublicId moduleId, PublicId pathId) {
         RecordListBuilder<StampVersionRecord> versionRecords = RecordListBuilder.make();
         StampRecord stampEntity = new StampRecord(stampUuid.getMostSignificantBits(),

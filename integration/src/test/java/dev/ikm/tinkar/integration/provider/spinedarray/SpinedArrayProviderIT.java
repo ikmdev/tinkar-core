@@ -39,6 +39,8 @@ import java.util.Arrays;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class SpinedArrayProviderIT {
     private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayProviderIT.class);
+    private static final File SAP_SPINEDARRAYPROVIDERIT_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
+            SpinedArrayProviderIT.class);
 
     @BeforeAll
     static void setupSuite() {
@@ -46,8 +48,8 @@ class SpinedArrayProviderIT {
         CachingService.clearAll();
         LOG.info("Setup Suite: " + LOG.getName());
         LOG.info(ServiceProperties.jvmUuid());
-        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, TestConstants.SAP_ROOT);
-        FileUtil.recursiveDelete(TestConstants.SAP_ROOT);
+        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, SAP_SPINEDARRAYPROVIDERIT_DATASTORE_ROOT);
+        FileUtil.recursiveDelete(SAP_SPINEDARRAYPROVIDERIT_DATASTORE_ROOT);
         PrimitiveData.selectControllerByName(TestConstants.SA_STORE_OPEN_NAME);
         PrimitiveData.start();
     }

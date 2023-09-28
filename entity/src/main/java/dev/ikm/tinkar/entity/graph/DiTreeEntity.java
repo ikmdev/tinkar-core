@@ -21,6 +21,7 @@ import dev.ikm.tinkar.component.graph.DiTree;
 import dev.ikm.tinkar.component.graph.Vertex;
 import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResults;
 import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResultsLeafHash;
+import dev.ikm.tinkar.terms.TinkarTerm;
 import io.activej.bytebuf.ByteBuf;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
@@ -116,8 +117,15 @@ public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
         if (this.vertexMap.size() != another.vertexMap.size()) {
             return false;
         }
-        //TODO implement
-        throw new UnsupportedOperationException();
+        IsomorphicResultsLeafHash isomorphicResult = new IsomorphicResultsLeafHash(this, another,
+                TinkarTerm.UNINITIALIZED_COMPONENT.nid());
+        try {
+            isomorphicResult.call();
+            return isomorphicResult.equivalent();
+        } catch (Exception e) {
+            AlertStreams.dispatchToRoot(e);
+        }
+        return false;
     }
 
     public static DiTreeEntity make(DiTree<Vertex> tree) {

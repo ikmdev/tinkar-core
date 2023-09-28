@@ -15,10 +15,13 @@
  */
 package dev.ikm.tinkar.coordinate.language.calculator;
 
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.component.Stamp;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinate;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinate;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
+import dev.ikm.tinkar.entity.*;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -27,9 +30,6 @@ import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.util.text.NaturalOrder;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.SemanticEntity;
-import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.*;
 
 import java.util.*;
@@ -257,6 +257,30 @@ public interface LanguageCalculator {
     Latest<SemanticEntityVersion> getSpecifiedDescription(ImmutableList<SemanticEntity> descriptionList);
 
     Optional<String> getTextFromSemanticVersion(SemanticEntityVersion semanticEntityVersion);
+
+    default String getPreferredTextForStamp(int stampNid) {
+        return getPreferredTextForStamp(Entity.getStamp(stampNid));
+    }
+    default String getPreferredTextForStamp(StampEntity stamp) {
+        StampVersion lastVersion = stamp.lastVersion();
+        return "s:" + getPreferredDescriptionStringOrNid(lastVersion.stateNid()) +
+                " t:" + DateTimeUtil.format(lastVersion.time(), DateTimeUtil.SEC_FORMATTER) +
+                " a:" + getPreferredDescriptionStringOrNid(lastVersion.authorNid()) +
+                " m:" + getPreferredDescriptionStringOrNid(lastVersion.moduleNid()) +
+                " p:" + getPreferredDescriptionStringOrNid(lastVersion.pathNid());
+    }
+    default String getFullyQualifiedTextForStamp(int stampNid) {
+        return getFullyQualifiedTextForStamp(Entity.getStamp(stampNid));
+    }
+    default String getFullyQualifiedTextForStamp(StampEntity stamp) {
+        StampVersion lastVersion = stamp.lastVersion();
+        StringBuilder sb = new StringBuilder();
+        return "s:" + getFullyQualifiedNameTextOrNid(lastVersion.stateNid()) +
+                " t:" + DateTimeUtil.format(lastVersion.time(), DateTimeUtil.TEXT_FORMAT_WITH_ZONE) +
+                " a:" + getFullyQualifiedNameTextOrNid(lastVersion.authorNid()) +
+                " m:" + getFullyQualifiedNameTextOrNid(lastVersion.moduleNid()) +
+                " p:" + getFullyQualifiedNameTextOrNid(lastVersion.pathNid());
+    }
 
     default String getFullyQualifiedDescriptionTextWithFallbackOrNid(EntityFacade entityFacade) {
         return getFullyQualifiedDescriptionTextWithFallbackOrNid(entityFacade.nid());

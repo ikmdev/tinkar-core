@@ -18,6 +18,9 @@ package dev.ikm.tinkar.terms;
 import java.util.UUID;
 
 public class TinkarTerm {
+    public static final EntityProxy.Pattern STAMP_PATTERN =
+            EntityProxy.Pattern.make("STAMP pattern", UUID.fromString("9fd67fee-abf9-551d-9d0e-76a4b1e8b4ee"));
+
     public static final EntityProxy.Pattern DESCRIPTION_PATTERN =
             EntityProxy.Pattern.make("Description pattern", UUID.fromString("a4de0039-2625-5842-8a4c-d1ce6aebf021"));
 

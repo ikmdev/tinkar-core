@@ -13,15 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.provider.entity;
+package dev.ikm.tinkar.coordinate.stamp.change;
 
-import com.google.auto.service.AutoService;
-import dev.ikm.tinkar.common.service.DefaultDescriptionForNidService;
+import dev.ikm.tinkar.entity.FieldRecord;
 
-@AutoService({DefaultDescriptionForNidService.class})
-public class DefaultDescriptionForNidServiceFactory {
-    public static DefaultDescriptionForNidService provider() {
-        // TODO: review startup order/bindings/
-        return EntityServiceFactory.provider();
-    }
+public record FieldChangeRecord(FieldRecord priorValue, FieldRecord currentValue) {
 }

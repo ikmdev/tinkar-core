@@ -25,6 +25,7 @@ import org.eclipse.collections.api.set.primitive.IntSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
@@ -35,6 +36,12 @@ import java.util.function.ToIntFunction;
 public class PrimitiveData {
     private static final Logger LOG = LoggerFactory.getLogger(PrimitiveData.class);
 
+
+    public static long PREMUNDANE_TIME = Long.MIN_VALUE + 1;
+
+    public static Instant PREMUNDANE_INSTANT = Instant.ofEpochSecond(Instant.MIN.getEpochSecond() + 1, 0);
+
+    public static UUID NONEXISTENT_STAMP_UUID = UUID.fromString("00fea511-30eb-4bbb-9105-c846db5bf0ad");
     private static DataServiceController<PrimitiveDataService> controllerSingleton;
     private static DefaultDescriptionForNidService defaultDescriptionForNidServiceSingleton;
     private static PublicIdService publicIdServiceSingleton;
@@ -45,20 +52,22 @@ public class PrimitiveData {
         try {
             singleton = new PrimitiveData();
         } catch (Throwable throwable) {
+            //TODO: Understand why.
             //throwable.printStackTrace();
-        }
+            //We don't want to swallow exceptions...
+            throwable.printStackTrace();       }
     }
 
-    public PrimitiveData() {
+    private PrimitiveData() {
+    }
+
+    public static void start() {
+        controllerSingleton.start();
         ServiceLoader<DefaultDescriptionForNidService> loader = ServiceLoader.load(DefaultDescriptionForNidService.class);
         PrimitiveData.defaultDescriptionForNidServiceSingleton = loader.findFirst().get();
         ServiceLoader<PublicIdService> publicIdLoader = ServiceLoader.load(PublicIdService.class);
         PrimitiveData.publicIdServiceSingleton = publicIdLoader.findFirst().get();
         LOG.info("Default desc service: " + defaultDescriptionForNidServiceSingleton);
-    }
-
-    public static void start() {
-        controllerSingleton.start();
     }
 
     public static void stop() {

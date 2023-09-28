@@ -64,6 +64,8 @@ import static dev.ikm.tinkar.terms.TinkarTerm.PATH_ORIGINS_PATTERN;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class CoordinatesIT {
     private static final Logger LOG = LoggerFactory.getLogger(CoordinatesIT.class);
+    private static final File SAP_COORDINATESIT_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
+            CoordinatesIT.class);
 
     @BeforeAll
     static void setupSuite() throws IOException {
@@ -71,8 +73,8 @@ class CoordinatesIT {
         CachingService.clearAll();
         LOG.info("Setup Suite: " + LOG.getName());
         LOG.info(ServiceProperties.jvmUuid());
-        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, TestConstants.SAP_ROOT);
-        FileUtil.recursiveDelete(TestConstants.SAP_ROOT);
+        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, SAP_COORDINATESIT_DATASTORE_ROOT);
+        FileUtil.recursiveDelete(SAP_COORDINATESIT_DATASTORE_ROOT);
         PrimitiveData.selectControllerByName(TestConstants.SA_STORE_OPEN_NAME);
         PrimitiveData.start();
         File file = TestConstants.TINK_TEST_FILE;

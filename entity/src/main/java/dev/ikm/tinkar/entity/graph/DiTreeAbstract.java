@@ -126,14 +126,40 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
         return toString("");
     }
     public String toString(String idSuffix) {
+        return toString(idSuffix, this.root.vertexIndex);
+    }
+    public String toString(String idSuffix, int rootIndex) {
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName()).append("{\n");
+        fragmentToString(idSuffix, vertex(rootIndex), sb, true);
+        sb.append('}');
 
+        return sb.toString();
+    }
+    /**
+     * Fragment to string.
+     *
+     * @return A string representing the fragment of the tree
+     * rooted in this vertex.
+     */
+    public String fragmentToString(EntityVertex fragmentRoot) {
+        final StringBuilder builder = new StringBuilder();
+        fragmentToString("", fragmentRoot, builder, false);
+        return builder.toString();
+    }
+
+    public String fragmentToString(String nodeIdSuffix, EntityVertex fragmentRoot) {
+        final StringBuilder builder = new StringBuilder();
+        fragmentToString(nodeIdSuffix, fragmentRoot, builder, false);
+        return builder.toString();
+    }
+    private void fragmentToString(String nodeIdSuffix, EntityVertex fragmentRoot, StringBuilder builder, boolean coverAllIndexes) {
         MutableIntSet coveredIndexes = IntSets.mutable.empty();
-        int nextIndex = root.vertexIndex;
+        int nextIndex = fragmentRoot.vertexIndex;
         while (nextIndex > -1) {
-            dfsProcess(root().vertexIndex, sb, 1, idSuffix, coveredIndexes);
-            if (coveredIndexes.size() < vertexMap.size()) {
+            dfsProcess(fragmentRoot.vertexIndex, builder, 1, nodeIdSuffix, coveredIndexes);
+
+            if (coverAllIndexes && coveredIndexes.size() < vertexMap.size()) {
                 for (int i = 0; i < vertexMap.size(); i++) {
                     if (!coveredIndexes.contains(i)) {
                         nextIndex = i;
@@ -144,10 +170,8 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
                 nextIndex = -1;
             }
         }
-        sb.append('}');
-
-        return sb.toString();
     }
+
 
     private void dfsProcess(int start, StringBuilder sb, int depth, String idSuffix, MutableIntSet coveredIndexes) {
         EntityVertex vertex = vertexMap.get(start);
@@ -318,15 +342,6 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
         return false;
     }
 
-    /**
-     * Fragment to string.
-     *
-     * @return A string representing the fragment of the tree
-     * rooted in this vertex.
-     */
-    public String fragmentToString(EntityVertex fragmentRoot) {
-        return fragmentToString("", fragmentRoot);
-    }
 
     /**
      * Use to when printing out multiple expressions, and you want to differentiate the
@@ -336,18 +351,5 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
      * @return A string representing the fragment of the expression
      * rooted in this node.
      */
-    public String fragmentToString(String nodeIdSuffix, EntityVertex fragmentRoot) {
-        final StringBuilder builder = new StringBuilder();
-        VertexVisitData vertexVisitData = new VertexVisitData(this.vertexCount(),(vertex, graph, visitData) -> {
-            for (int i = 0; i < visitData.distance(vertex.vertexIndex); i++) {
-                builder.append("    ");
-            }
-            builder.append(vertex.toString(nodeIdSuffix));
-            builder.append("\n");
-        });
-
-        this.depthFirstProcess(fragmentRoot.vertexIndex, vertexVisitData);
-        return builder.toString();
-    }
 }
 
