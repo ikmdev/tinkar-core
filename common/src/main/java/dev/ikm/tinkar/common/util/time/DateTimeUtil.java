@@ -15,12 +15,14 @@
  */
 package dev.ikm.tinkar.common.util.time;
 
+import dev.ikm.tinkar.common.service.PrimitiveData;
+
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 
 /**
  *
- * 
+ *
  */
 public class DateTimeUtil {
     public static final long MS_IN_YEAR =   1000L * 60 * 60 * 24 * 365;
@@ -42,9 +44,12 @@ public class DateTimeUtil {
     public static final DateTimeFormatter MONTH_FORMATTER = DateTimeFormatter.ofPattern("MMMM yyyy");
     public static final DateTimeFormatter YEAR_FORMATTER = DateTimeFormatter.ofPattern("yyyy");
     public static final DateTimeFormatter ZONE_FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
-    public static final DateTimeFormatter TEXT_FORMAT_WITH_ZONE = DateTimeFormatter.ofPattern("MMM dd, yyyy; hh:mm a zzz");
+    public static final DateTimeFormatter TEXT_FORMAT_WITH_ZONE = DateTimeFormatter.ofPattern("MMM dd, yyyy; hh:mm:ss a zzz");
     public static final DateTimeFormatter TIME_SIMPLE = DateTimeFormatter.ofPattern("HH:mm:ss");
     public static final DateTimeFormatter COMPRESSED_DATE_TIME = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssz");
+    public static final String LATEST = "Latest";
+    public static final String CANCELED = "Canceled";
+    public static final String PREMUNDANE = "Premundane";
 
     public static Instant epochMsToInstant(long epochMilliSecond) {
         if (epochMilliSecond == Long.MAX_VALUE) {
@@ -82,10 +87,13 @@ public class DateTimeUtil {
     }
     public static String format(long epochMilliSecond, DateTimeFormatter formatter) {
         if (epochMilliSecond == Long.MAX_VALUE) {
-            return "Latest";
+            return LATEST;
         }
         if (epochMilliSecond == Long.MIN_VALUE) {
-            return "Canceled";
+            return CANCELED;
+        }
+        if (epochMilliSecond == PrimitiveData.PREMUNDANE_TIME) {
+            return PREMUNDANE;
         }
         ZonedDateTime positionTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(epochMilliSecond), ZoneOffset.UTC);
         ZonedDateTime inLocalZone = positionTime.withZoneSameInstant(ZoneId.systemDefault());
@@ -108,11 +116,14 @@ public class DateTimeUtil {
      * @return Epoch millisecond of the date time...
      */
     public static long parseWithZone(String dateTime) {
-        if (dateTime.equalsIgnoreCase("Latest")) {
+        if (dateTime.equalsIgnoreCase(LATEST)) {
             return Long.MAX_VALUE;
         }
-        if (dateTime.equalsIgnoreCase("Canceled")) {
+        if (dateTime.equalsIgnoreCase(CANCELED)) {
             return Long.MIN_VALUE;
+        }
+        if (dateTime.equalsIgnoreCase(PREMUNDANE)) {
+            return PrimitiveData.PREMUNDANE_TIME;
         }
         return ZonedDateTime.parse(dateTime, ZONE_FORMATTER).toInstant().toEpochMilli();
     }
@@ -122,11 +133,14 @@ public class DateTimeUtil {
      * @return Epoch millisecond of the date time...
      */
     public static long compressedParse(String dateTime) {
-        if (dateTime.equalsIgnoreCase("Latest")) {
+        if (dateTime.equalsIgnoreCase(LATEST)) {
             return Long.MAX_VALUE;
         }
-        if (dateTime.equalsIgnoreCase("Canceled")) {
+        if (dateTime.equalsIgnoreCase(CANCELED)) {
             return Long.MIN_VALUE;
+        }
+        if (dateTime.equalsIgnoreCase(PREMUNDANE)) {
+            return PrimitiveData.PREMUNDANE_TIME;
         }
         return LocalDateTime.parse(dateTime, COMPRESSED_DATE_TIME).atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
     }
@@ -136,20 +150,26 @@ public class DateTimeUtil {
      * @return Epoch millisecond of the date time...
      */
     public static long parse(String dateTime) {
-        if (dateTime.equalsIgnoreCase("Latest")) {
+        if (dateTime.equalsIgnoreCase(LATEST)) {
             return Long.MAX_VALUE;
         }
-        if (dateTime.equalsIgnoreCase("Canceled")) {
+        if (dateTime.equalsIgnoreCase(CANCELED)) {
             return Long.MIN_VALUE;
+        }
+        if (dateTime.equalsIgnoreCase(PREMUNDANE)) {
+            return PrimitiveData.PREMUNDANE_TIME;
         }
         return LocalDateTime.parse(dateTime, FORMATTER).atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
     }
     public static String format(Instant instant, DateTimeFormatter formatter) {
         if (instant.equals(Instant.MAX)) {
-            return "Latest";
+            return LATEST;
         }
         if (instant.equals(Instant.MIN)) {
-            return "Canceled";
+            return CANCELED;
+        }
+        if (instant.equals(PrimitiveData.PREMUNDANE_INSTANT)) {
+            return PREMUNDANE;
         }
         return formatter.format(instant);
     }
@@ -161,10 +181,13 @@ public class DateTimeUtil {
     }
     public static String format(Instant instant, Double resolution) {
         if (instant.equals(Instant.MAX)) {
-            return "Latest";
+            return LATEST;
         }
         if (instant.equals(Instant.MIN)) {
-            return "Canceled";
+            return CANCELED;
+        }
+        if (instant.equals(PrimitiveData.PREMUNDANE_INSTANT)) {
+            return PREMUNDANE;
         }
         if (resolution < MS_IN_SEC) {
             return ZONE_FORMATTER.format(instant);

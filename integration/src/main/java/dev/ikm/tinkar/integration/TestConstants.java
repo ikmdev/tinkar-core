@@ -16,13 +16,19 @@
 package dev.ikm.tinkar.integration;
 
 import java.io.File;
+import java.util.function.Function;
 
 public class TestConstants {
-    public static final File TINK_TEST_FILE = new File(System.getProperty("user.dir"), "/target/data/tinkar-test-dto-1.1.0.zip");
-    public static final File PB_TEST_FILE = new File(System.getProperty("user.dir"), "/target/data/tinkar-export-test.pb.zip");
+    public static final Function<String,File> createFilePathInTarget = (pathName) -> new File("%s/target/%s".formatted(System.getProperty("user.dir"), pathName));
 
-    public static final File MVSTORE_ROOT = new File(System.getProperty("user.dir"), "/target/mvstore");
-    public static final File SAP_ROOT = new File(System.getProperty("user.dir"), "/target/spinedarrays");
+    public static final Function<Class,File>
+            createFilePathInTargetFromClassName = (clazz) -> createFilePathInTarget.apply("generated-datastores/%s".formatted(clazz.getSimpleName()));
+
+    public static final File TINK_TEST_FILE = createFilePathInTarget.apply("data/tinkar-test-dto-1.1.0.zip");
+    public static final File PB_TEST_FILE = createFilePathInTarget.apply("data/tinkar-export-test.pb.zip");
+
+    public static final File PB_ROUNDTRIP_TEST_FILE = createFilePathInTarget.apply("data/tinkar-export-test-roundtrip.pb.zip");
+    public static final File PB_PERFORMANCE_TEST_FILE = createFilePathInTarget.apply("data/tinkar-export-test-performance.pb.zip");
 
     public static final String MV_STORE_OPEN_NAME = "Open MV Store";
     public static final String EPHEMERAL_STORE_NAME = "Load Ephemeral Store";

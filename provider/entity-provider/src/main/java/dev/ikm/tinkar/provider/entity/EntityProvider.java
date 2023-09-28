@@ -22,7 +22,6 @@ import dev.ikm.tinkar.common.alert.AlertObject;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.*;
-import dev.ikm.tinkar.common.service.ExecutorService;
 import dev.ikm.tinkar.common.util.broadcast.Broadcaster;
 import dev.ikm.tinkar.common.util.broadcast.SimpleBroadcaster;
 import dev.ikm.tinkar.common.util.broadcast.Subscriber;
@@ -70,6 +69,9 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     protected EntityProvider() {
         LOG.info("Constructing EntityProvider");
         this.processor = new SimpleBroadcaster<>();
+        // Ensure that the non-existent stamp is always available.
+        // Write is idempotent, so writing each time should not cause any problems.
+        this.putEntity(StampRecord.nonExistentStamp());
     }
 
     public void addSubscriberWithWeakReference(Subscriber<Integer> subscriber) {

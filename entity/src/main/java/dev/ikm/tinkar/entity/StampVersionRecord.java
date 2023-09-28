@@ -87,14 +87,6 @@ public record StampVersionRecord(StampRecord chronology,
         return "sv: ≤" + describe() + "≥";
     }
 
-    public String describe() {
-        return "s:" + PrimitiveData.text(stateNid()) +
-                " t:" + DateTimeUtil.format(time()) +
-                " a:" + PrimitiveData.text(authorNid()) +
-                " m:" + PrimitiveData.text(moduleNid()) +
-                " p:" + PrimitiveData.text(pathNid());
-    }
-
     @Override
     public StampEntity stamp() {
         return chronology;

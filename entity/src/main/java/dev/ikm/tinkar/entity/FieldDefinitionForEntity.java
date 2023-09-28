@@ -62,4 +62,10 @@ public interface FieldDefinitionForEntity extends FieldDefinition {
     }
 
     int meaningNid();
+
+    /**
+     * The index of this field in the entity (patttern and semantic).
+     * @return field index
+     */
+    int indexInPattern();
 }

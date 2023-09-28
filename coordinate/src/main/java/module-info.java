@@ -43,6 +43,7 @@ module dev.ikm.tinkar.coordinate {
     exports dev.ikm.tinkar.coordinate.view.calculator;
     exports dev.ikm.tinkar.coordinate.view;
     exports dev.ikm.tinkar.coordinate;
+    exports dev.ikm.tinkar.coordinate.stamp.change;
 
     requires dev.ikm.tinkar.collection;
     requires dev.ikm.tinkar.common;

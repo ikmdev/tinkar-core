@@ -15,7 +15,11 @@
  */
 package dev.ikm.tinkar.coordinate.stamp.calculator;
 
+import dev.ikm.tinkar.common.service.NonExistentValue;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
+import dev.ikm.tinkar.coordinate.stamp.change.ChangeChronology;
+import dev.ikm.tinkar.coordinate.stamp.change.FieldChangeRecord;
+import dev.ikm.tinkar.coordinate.stamp.change.VersionChangeRecord;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -23,7 +27,6 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
 import dev.ikm.tinkar.common.util.functional.QuadConsumer;
 import dev.ikm.tinkar.common.util.functional.TriConsumer;
-import dev.ikm.tinkar.component.graph.DiTree;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.graph.DiTreeVersion;
 import dev.ikm.tinkar.entity.graph.VersionVertex;
@@ -31,10 +34,13 @@ import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.PatternFacade;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
+
+import static dev.ikm.tinkar.terms.TinkarTerm.STAMP_PATTERN;
 
 public interface StampCalculator {
     default Stream<Latest<SemanticEntityVersion>> streamLatestVersionForPattern(PatternFacade patternFacade) {
@@ -122,6 +128,7 @@ public interface StampCalculator {
         return updateFields(Entity.getFast(semanticNid), fields, stampNid);
     }
 
+    // TODO: maybe change references to Fields to SemanticFields in API? STAMP VALUES may also be considered fields.
     default SemanticRecord updateFields(SemanticRecord chronicle, ImmutableList<Object> fields, int stampNid) {
         return chronicle.with(new SemanticVersionRecord(chronicle, stampNid, fields)).build();
     }
@@ -140,6 +147,24 @@ public interface StampCalculator {
 
     RelativePosition relativePosition(int stampNid, int stampNid2);
 
+    /**
+     * Return a comparison result compatible with java.lang.Comparable used
+     * by the collections API. Note that java.lang.Comparable cannot handle
+     * comparisons of paths which may contain contradictions and unreachable
+     * positions. Contradictions returns 0 for equals, and unreachable returns
+     * Integer.MIN_VALUE so that it will sort before the reachable components. The developer may
+     * consider removing all unreachable components prior to a position comparison.
+     * @param stampNid
+     * @param stampNid2
+     */
+    default int comparePositions(int stampNid, int stampNid2) {
+        return switch (relativePosition(stampNid, stampNid2)) {
+            case AFTER -> 1;
+            case EQUAL, CONTRADICTION -> 0;
+            case BEFORE -> -1;
+            case UNREACHABLE -> Integer.MIN_VALUE;
+        };
+    }
     default RelativePosition relativePosition(StampEntity stamp1, StampEntity stamp2) {
         return relativePosition(stamp1.nid(), stamp2.nid());
     }
@@ -296,6 +321,112 @@ public interface StampCalculator {
         return false;
     }
 
+    /**
+     * Create a ChangeChronology for the provided nid.
+     * NOTE: The returned change chronology is sorted by path origin order then just time order. Not just time order.
+     * @param nid native identifier for the component.
+     * @return the ChangeChronology
+     */
+    default ChangeChronology changeChronology(int nid) {
+        return changeChronology(EntityService.get().getEntityFast(nid));
+    }
+
+    /**
+     * Create a ChangeChronology for the provided entity.
+     * NOTE: The returned change chronology is sorted by path origin order then just time order. Not just time order.
+     * @param entity
+     * @return the ChangeChronology
+     */
+    default ChangeChronology changeChronology(Entity<?> entity) {
+        MutableList<VersionChangeRecord> versionChangeRecords = Lists.mutable.withInitialCapacity(entity.versions().size());
+        List<DiTreeVersion<EntityVersion>> versionGraphList = getVersionGraphList((Entity<EntityVersion>) entity);
+        Latest<PatternEntityVersion> latestStampPattern = latest(STAMP_PATTERN.nid());
+
+        latestStampPattern.ifPresent(stampPatternVersion -> {
+            PatternEntityVersion patternForSemantic =
+                    (entity instanceof SemanticEntity<?> semanticEntity) ? (PatternEntityVersion) latest(semanticEntity.patternNid()).get() : null;
+            for (DiTreeVersion<EntityVersion> versionGraph: versionGraphList) {
+                VersionVertex root = versionGraph.root();
+                processVersionRecursive(versionGraph, root.vertexIndex(), versionChangeRecords,
+                        stampPatternVersion, patternForSemantic);
+            }
+        });
+        // Note PATH then TIME ordering, not strictly TIME only ordering
+        versionChangeRecords.sort((o1, o2) -> comparePositions(o2.stampNid(), o1.stampNid()));
+
+        return new ChangeChronology(entity.nid(), versionChangeRecords.toImmutable());
+    }
+    private static void processVersionRecursive(DiTreeVersion<EntityVersion> versionGraph, int nodeIndexToProcess,
+                                         MutableList<VersionChangeRecord> versionChangeRecords,
+                                         PatternEntityVersion latestPatternForStamp,
+                                         PatternEntityVersion latestPatternForSemantic) {
+        VersionVertex versionVertexToProcess = versionGraph.vertex(nodeIndexToProcess);
+        EntityVersion newVersion = versionVertexToProcess.version();
+        StampRecord newVersionStamp = Entity.getStamp(newVersion.stampNid());
+        MutableList<FieldChangeRecord> fieldChanges = Lists.mutable.empty();
+        versionGraph.predecessor(nodeIndexToProcess).ifPresentOrElse(predecessorIndex -> {
+            EntityVersion predecessorVersion = versionGraph.vertex(predecessorIndex).version();
+            StampRecord predecessorStamp = Entity.getStamp(predecessorVersion.stampNid());
+            if (latestPatternForSemantic != null &&
+                    newVersion instanceof SemanticEntityVersion newSemanticVersion &&
+                    predecessorVersion instanceof SemanticEntityVersion predecessorSemanticVersion) {
+                   addChangesForSemanticFieldsForPattern(latestPatternForSemantic, newVersionStamp, predecessorStamp, fieldChanges,
+                        predecessorSemanticVersion, newSemanticVersion);
+            }
+            addChangesForStampFieldsForPattern(latestPatternForStamp, newVersionStamp, predecessorStamp, fieldChanges, newVersion);
+        }, () -> {
+            if (latestPatternForSemantic != null &&
+                    newVersion instanceof SemanticEntityVersion newSemanticVersion) {
+
+                addChangesForSemanticFieldsForPattern(latestPatternForSemantic, newVersionStamp, StampRecord.nonExistentStamp(),
+                        fieldChanges, null, newSemanticVersion);
+            }
+            addChangesForStampFieldsForPattern(latestPatternForStamp, newVersionStamp, StampRecord.nonExistentStamp(), fieldChanges, newVersion);
+        });
+        versionChangeRecords.add(new VersionChangeRecord(newVersion.stampNid(),
+                fieldChanges.toImmutable()));
+        for (int successorIndex: versionGraph.successors(nodeIndexToProcess).toArray()) {
+            processVersionRecursive(versionGraph, successorIndex, versionChangeRecords, latestPatternForStamp, latestPatternForSemantic);
+        }
+    }
+
+    private static void addChangesForSemanticFieldsForPattern(PatternEntityVersion latestPatternVersion, StampRecord newVersionStamp,
+                                                           StampRecord predecessorStamp, MutableList<FieldChangeRecord> fieldChanges,
+                                                           SemanticEntityVersion priorVersion, SemanticEntityVersion newVersion) {
+        for (int fieldIndex = 0; fieldIndex < latestPatternVersion.fieldDefinitions().size(); fieldIndex++) {
+            FieldDefinitionForEntity fieldDefinitionRecord = latestPatternVersion.fieldDefinitions().get(fieldIndex);
+            Object newVersionValue = (newVersion != null) ? newVersion.fieldValues().get(fieldIndex): NonExistentValue.get();
+            Object priorVersionValue = (priorVersion != null) ? priorVersion.fieldValues().get(fieldIndex): NonExistentValue.get();
+            if (!Objects.deepEquals(newVersionValue, priorVersionValue)) {
+                fieldChanges.add(makeFieldChangeRecord(newVersionValue, newVersion,
+                        fieldDefinitionRecord, priorVersionValue, predecessorStamp));
+            }
+        }
+    }
+
+    private static void addChangesForStampFieldsForPattern(PatternEntityVersion latestPatternVersion, StampRecord newVersionStamp,
+                                                           StampRecord predecessorStamp, MutableList<FieldChangeRecord> fieldChanges,
+                                                           EntityVersion newVersion) {
+        for (int fieldIndex = 0; fieldIndex < latestPatternVersion.fieldDefinitions().size(); fieldIndex++) {
+            FieldDefinitionForEntity fieldDefinitionRecord = latestPatternVersion.fieldDefinitions().get(fieldIndex);
+            Object newVersionValue = newVersionStamp.fieldValues().get(fieldIndex);
+            Object priorVersionValue = predecessorStamp.fieldValues().get(fieldIndex);
+            if (!Objects.deepEquals(newVersionValue, priorVersionValue)) {
+                fieldChanges.add(makeFieldChangeRecord(newVersionValue, newVersion,
+                        fieldDefinitionRecord, priorVersionValue, predecessorStamp));
+            }
+        }
+    }
+
+    private static FieldChangeRecord makeFieldChangeRecord(Object newVersionValue, EntityVersion newVersion,
+                                                           FieldDefinitionForEntity fieldDefinitionRecord,
+                                                           Object priorVersionValue, StampEntity predecessorStamp) {
+        FieldRecord currentStatusRecord = new FieldRecord(newVersionValue,
+                newVersion.nid(), newVersion.stampNid(), fieldDefinitionRecord);
+        FieldRecord predecessorStatusRecord = new FieldRecord(priorVersionValue,
+                newVersion.nid(), predecessorStamp.nid(), fieldDefinitionRecord);
+        return new FieldChangeRecord(predecessorStatusRecord, currentStatusRecord);
+    }
 
 
     enum FieldCriterion {MEANING, PURPOSE}

@@ -36,6 +36,8 @@ public class ProtobufPerformanceIT {
 
     @BeforeAll
     public void setupSuite() {
+        LOG.info("JVM Version: " + System.getProperty("java.version"));
+        LOG.info("JVM Name: " + System.getProperty("java.vm.name"));
         startDatabase();
     }
     private void startDatabase() {
@@ -67,7 +69,7 @@ public class ProtobufPerformanceIT {
         System.out.println("[1] The count for DTO to Entities is: " + expectedEntityCount);
         System.out.println("The time it took for the Load DTO to Entities operation is: " + diffLoadDTO/1000000 + " milliseconds.");
 
-        File fileProtobuf = TestConstants.PB_TEST_FILE;
+        File fileProtobuf = TestConstants.PB_PERFORMANCE_TEST_FILE;
         //Printing out File size for this transformation
         System.out.println("[2] The size of the file is: " + fileProtobuf.length() + " bytes long.");
         long loadEntitiesTimeBefore = System.nanoTime();

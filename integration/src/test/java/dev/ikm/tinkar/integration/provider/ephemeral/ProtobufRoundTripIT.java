@@ -44,6 +44,8 @@ public class ProtobufRoundTripIT {
 
     @BeforeAll
     public void setupSuite() {
+        LOG.info("JVM Version: " + System.getProperty("java.version"));
+        LOG.info("JVM Name: " + System.getProperty("java.vm.name"));
         startDatabase();
     }
     private void startDatabase() {
@@ -80,9 +82,10 @@ public class ProtobufRoundTripIT {
         LoadEntitiesFromDtoFile loadDTO = new LoadEntitiesFromDtoFile(fileDTO);
         // When we import DTO into entities
         int expectedEntityCount = loadDTO.compute();
+        LOG.info("Entities loaded from dto: " + expectedEntityCount);
 
         // When we export Entities data to protobuf
-        File fileProtobuf = TestConstants.PB_TEST_FILE;
+        File fileProtobuf = TestConstants.PB_ROUNDTRIP_TEST_FILE;
         boolean pbZipFileSuccess = true;
         if (fileProtobuf.exists()) {
             pbZipFileSuccess = fileProtobuf.delete();
@@ -93,6 +96,7 @@ public class ProtobufRoundTripIT {
         }
         ExportEntitiesToProtobufFile exportEntitiesToProtobufFile = new ExportEntitiesToProtobufFile(fileProtobuf);
         int actualProtobufExportCount = exportEntitiesToProtobufFile.compute();
+        LOG.info("Entities exported to protobuf: " + actualProtobufExportCount);
 
         stopDatabase();
         startDatabase();
@@ -100,6 +104,7 @@ public class ProtobufRoundTripIT {
         // When we import protobuf data into entities
         LoadEntitiesFromProtobufFile loadEntitiesFromProtobufFile = new LoadEntitiesFromProtobufFile(fileProtobuf);
         int actualProtobufImportCount = loadEntitiesFromProtobufFile.compute();
+        LOG.info("Entities loaded from protobuf: " + actualProtobufImportCount);
 
 //         Then all imported and exported entities counts should match
         boolean boolEntityCount = expectedEntityCount == actualProtobufExportCount && expectedEntityCount == actualProtobufImportCount;

@@ -146,6 +146,9 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
     public IsomorphicResultsLeafHash(DiTreeEntity referenceTree, DiTreeEntity comparisonTree, int referencedConceptNid, MultipleEndpointTimer.Stopwatch stopwatch) {
         super(referenceTree, comparisonTree, referencedConceptNid, stopwatch);
     }
+    public IsomorphicResultsLeafHash(DiTreeEntity referenceTree, DiTreeEntity comparisonTree, int referencedConceptNid) {
+        super(referenceTree, comparisonTree, referencedConceptNid, null);
+    }
 
     @Override
     protected VVD makeVertexVisitData(int graphSize, VisitProcessor<VVD> vertexStartProcessor, VisitProcessor<VVD> vertexEndProcessor) {
@@ -396,12 +399,14 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
 
     private ImmutableList<IndexCorrelationSolution> extend(int referenceIndex, IndexCorrelationSolution incomingSolution, BitSet possibleComparisonIndexes) {
         MutableList<Pair> extensions = Lists.mutable.empty();
-        possibleComparisonIndexes.stream().forEach(comparisonIndex -> {
-            Pair possibleExtension = new Pair(referenceIndex, comparisonIndex);
-            if (consistent(incomingSolution, possibleExtension) && !cut(incomingSolution, possibleExtension)) {
-                extensions.add(possibleExtension);
-            }
-        });
+        if (possibleComparisonIndexes != null) {
+            possibleComparisonIndexes.stream().forEach(comparisonIndex -> {
+                Pair possibleExtension = new Pair(referenceIndex, comparisonIndex);
+                if (consistent(incomingSolution, possibleExtension) && !cut(incomingSolution, possibleExtension)) {
+                    extensions.add(possibleExtension);
+                }
+            });
+        }
         cut(incomingSolution, extensions);
         order(extensions);
 
@@ -492,7 +497,9 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
             });
             this.mergedTree = treeBuilder.build();
         }
-        stopwatch.end(FULL_COMPARISON);
+        if (stopwatch != null) {
+            stopwatch.end(FULL_COMPARISON);
+        }
         return this;
     }
 
