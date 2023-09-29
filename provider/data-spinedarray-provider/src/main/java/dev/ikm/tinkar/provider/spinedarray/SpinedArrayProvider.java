@@ -226,24 +226,22 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     @Override
     public int nidForUuids(UUID... uuids) {
         try {
-            if (this.uuidsLoadedLatch.await(15, TimeUnit.SECONDS)) {
-                if (uuids.length == 1) {
-                    return uuidToNidMap.computeIfAbsent(uuids[0], uuidKey -> newNid());
-                }
-                int nid = Integer.MAX_VALUE;
-                for (UUID uuid : uuids) {
-                    if (nid == Integer.MAX_VALUE) {
-                        nid = uuidToNidMap.computeIfAbsent(uuids[0], uuidKey -> newNid());
-                    } else {
-                        uuidToNidMap.put(uuid, nid);
-                    }
-                }
-                if (nid == Integer.MIN_VALUE) {
-                    throw new IllegalStateException("nid cannot be Integer.MIN_VALUE");
-                }
-                return nid;
+            this.uuidsLoadedLatch.await();
+            if (uuids.length == 1) {
+                return uuidToNidMap.computeIfAbsent(uuids[0], uuidKey -> newNid());
             }
-            throw new RuntimeException("UUID to nid map not loaded. Searching for nid to: " + Arrays.toString(uuids));
+            int nid = Integer.MAX_VALUE;
+            for (UUID uuid : uuids) {
+                if (nid == Integer.MAX_VALUE) {
+                    nid = uuidToNidMap.computeIfAbsent(uuids[0], uuidKey -> newNid());
+                } else {
+                    uuidToNidMap.put(uuid, nid);
+                }
+            }
+            if (nid == Integer.MIN_VALUE) {
+                throw new IllegalStateException("nid cannot be Integer.MIN_VALUE");
+            }
+            return nid;
         } catch (InterruptedException e) {
             LOG.error(e.getLocalizedMessage(), e);
             throw new RuntimeException(e);
@@ -473,7 +471,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         this.stampNids.remove(nid);
         this.nidToCitingComponentsNidMap.forEach((nidPatternsCitingComponent, referencedComponentNid) -> {
             MutableLongList nidPatternInLongToRemove = LongLists.mutable.withInitialCapacity(2);
-            for (long nidPatternInLong: nidPatternsCitingComponent) {
+            for (long nidPatternInLong : nidPatternsCitingComponent) {
                 // The longs contain int nid, int patternNid in each long
                 int nidCitingComponent = IntsInLong.int1FromLong(nidPatternInLong);
                 if (nidCitingComponent == nid) {
@@ -506,8 +504,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         ByteBuf readBufToMergeInto = ByteBuf.wrapForReading(bytesToMergeInto);
         int mergeIntoArrayCount = readBufToMergeInto.readInt();
         int mergeIntoChronicleArrayElementByteCount = readBufToMergeInto.readInt();
-        byte  mergeIntoEntityFormatVersion = readBufToMergeInto.readByte(); // Entity format version in a byte.
-        byte  mergeIntoEntityTypeToken = readBufToMergeInto.readByte(); // Entity type token
+        byte mergeIntoEntityFormatVersion = readBufToMergeInto.readByte(); // Entity format version in a byte.
+        byte mergeIntoEntityTypeToken = readBufToMergeInto.readByte(); // Entity type token
 
         int mergeIntoNid = readBufToMergeInto.readInt();
         ImmutableList<UUID> mergeIntoUuids = getUuidsFromBytes(readBufToMergeInto);
@@ -515,8 +513,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         ByteBuf readBufToBeErased = ByteBuf.wrapForReading(bytesToBeErased);
         int eraseComponentArrayCount = readBufToBeErased.readInt();
         int eraseComponentChronicleArrayElementByteCount = readBufToBeErased.readInt();
-        byte  eraseComponentEntityFormatVersion = readBufToBeErased.readByte(); // Entity format version in a byte.
-        byte  eraseComponentEntityTypeToken = readBufToBeErased.readByte(); // Entity type token
+        byte eraseComponentEntityFormatVersion = readBufToBeErased.readByte(); // Entity format version in a byte.
+        byte eraseComponentEntityTypeToken = readBufToBeErased.readByte(); // Entity type token
         int eraseComponentNid = readBufToBeErased.readInt();
         ImmutableList<UUID> uuidsFromBytesToBeErased = getUuidsFromBytes(readBufToBeErased);
 

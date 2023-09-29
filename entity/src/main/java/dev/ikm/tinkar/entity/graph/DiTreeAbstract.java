@@ -274,6 +274,18 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
             }
             return this;
         }
+        public DiTreeAbstract.Builder replaceVertex(V vertex) {
+            if (vertex.vertexIndex() > -1) {
+                if (vertex.vertexIndex() < vertexMap.size()) {
+                    vertexMap.set(vertex.vertexIndex, vertex);
+                } else {
+                    throw new IllegalStateException("Vertex index is greater than vertexMap.size(): " + vertex);
+                }
+            } else {
+                throw new IllegalStateException("Vertex replacing old vertex must have its index set: " + vertex);
+            }
+            return this;
+        }
 
         public DiTreeAbstract.Builder addEdge(V child, V parent) {
             addVertex(child);
@@ -324,6 +336,10 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
         @Override
         public ImmutableIntList successors(int vertexIndex) {
             return successorMap.get(vertexIndex).toImmutable();
+        }
+
+        public void setVertexIndex(EntityVertex changedSet, int vertexIndex) {
+            changedSet.setVertexIndex(vertexIndex);
         }
     }
 

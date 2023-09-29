@@ -76,7 +76,6 @@
         <eclipse-collections.version>11.1.0-r7</eclipse-collections.version>
         <eclipse-collections-api.version>11.1.0-r7</eclipse-collections-api.version>
         <jackson.version>2.14.2</jackson.version>
-        <jetty-slf4j-impl.version>11.0.7</jetty-slf4j-impl.version>
         <jgrapht.version>1.5.0</jgrapht.version>
         <mockito.version>5.5.0</mockito.version>
         <mvstore.version>1.4.200-r3</mvstore.version>
@@ -89,7 +88,8 @@
         <org.reactivestreams.version>1.0.3</org.reactivestreams.version>
         <roaringbitmap.version>0.9.31-r3</roaringbitmap.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <slf4j.version>2.0.0-alpha6</slf4j.version>
+        <slf4j.version>2.0.7</slf4j.version>
+        <log4j.version>3.0.0-alpha1</log4j.version>
         <testng.version>7.4.0</testng.version>
         <tinkar-jpms-deps.groupId>dev.ikm.jpms</tinkar-jpms-deps.groupId>
         <tinkar-jpms-deps.version>1.0.15</tinkar-jpms-deps.version>
@@ -304,15 +304,21 @@
             </dependency>
 
             <dependency>
-                <groupId>io.activej</groupId>
-                <artifactId>activej-launchers-http</artifactId>
-                <version>${activej-launchers.version}</version>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-simple</artifactId>
+                <version>${slf4j.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-slf4j-impl</artifactId>
-                <version>${jetty-slf4j-impl.version}</version>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-slf4j2-impl</artifactId>
+                <version>${log4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.activej</groupId>
+                <artifactId>activej-launchers-http</artifactId>
+                <version>${activej-launchers.version}</version>
             </dependency>
 
             <dependency>
@@ -391,14 +397,16 @@
             <groupId>dev.ikm.tinkar</groupId>
             <artifactId>tinkar-bindings</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
 
-        <dependency> <!-- TODO does this make sense? -->
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-slf4j-impl</artifactId>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <dependency>

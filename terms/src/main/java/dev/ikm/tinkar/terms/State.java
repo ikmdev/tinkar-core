@@ -47,20 +47,14 @@ public enum State implements dev.ikm.tinkar.component.Concept, ComponentWithNid 
 
     private static ImmutableIntObjectMap<State> nidStateMap;
 
-    static {
-        try {
+    public static State fromConceptNid(int conceptNid) {
+        if (nidStateMap == null) {
             MutableIntObjectMap<State> mutableNidStateMap = IntObjectMaps.mutable.ofInitialCapacity(5);
             for (State state : State.values()) {
                 mutableNidStateMap.put(state.nid(), state);
             }
             nidStateMap = mutableNidStateMap.toImmutable();
-        }catch (Throwable exception) {
-            MutableIntObjectMap<State> mutableNidStateMap = IntObjectMaps.mutable.ofInitialCapacity(5);
-            nidStateMap = mutableNidStateMap.toImmutable();
         }
-    }
-
-    public static State fromConceptNid(int conceptNid) {
         return nidStateMap.get(conceptNid);
     }
     public static State fromConcept(ConceptFacade concept) {
