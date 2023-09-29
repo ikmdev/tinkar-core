@@ -409,4 +409,11 @@ public class LogicalExpressionBuilder {
         }
         updateConceptReference(successors.get(0), conceptToChangeTo);
     }
+
+    public void changeSetType(LogicalAxiom.LogicalSet setAxiom, ConceptFacade conceptToChangeTo) {
+        EntityVertex changedSet = EntityVertex.make(setAxiom.vertexUUID(), conceptToChangeTo.nid());
+        builder.setVertexIndex(changedSet, setAxiom.vertexIndex());
+        builder.replaceVertex(changedSet);
+    }
+
 }
