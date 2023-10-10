@@ -56,6 +56,7 @@
         <module>coordinate</module>
         <module>entity</module>
         <module>dto</module>
+        <module>language-extensions</module>
         <module>terms</module>
         <module>provider</module>
         <module>integration</module>
