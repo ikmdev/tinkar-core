@@ -21,6 +21,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.ListIterable;
 import org.eclipse.collections.api.list.MutableList;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -30,9 +31,14 @@ import java.util.*;
  * Various UUID related utilities.
  *
  * @author darmbrust
- * 
+ *
  */
 public class UuidUtil {
+    /**
+     * The the ENCODING_FOR_UUID_GENERATION string. ISO-8859-1 is (according to the standards at least)
+     * the default encoding of documents delivered via HTTP with a MIME type beginning with "text/".
+     */
+    public static final String ENCODING_FOR_UUID_GENERATION = "8859_1";
     /**
      * Nil UUID
      * The "nil" UUID, a special case, is the UUID 00000000-0000-0000-0000-000000000000; that is, all bits set to zero.[2]
@@ -223,6 +229,22 @@ public class UuidUtil {
             uuids[i] = UUID.fromString(elements[i].trim());
         }
         return uuids;
+    }
+
+    /**
+     * Generates a type 3 UUID from the given string representing a SNOMED id.
+     *
+     * @param id a String representation of a SNOMED id
+     * @return the generated uuid
+     */
+    public static UUID fromSNOMED(String id) {
+        final String name = "org.snomed." + id;
+
+        try {
+            return UUID.nameUUIDFromBytes(name.getBytes(ENCODING_FOR_UUID_GENERATION));
+        } catch (final UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

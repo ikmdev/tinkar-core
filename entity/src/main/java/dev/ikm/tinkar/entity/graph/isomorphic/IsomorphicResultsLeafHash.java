@@ -88,7 +88,7 @@ import static dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResults.EndPoints
  * Maybe make a custom structure that will switch between direct representation or bitmap depending on
  * size and cardinality.
  *
- * 
+ *
  */
 public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> extends IsomorphicResultsAbstract<VVD> {
 
