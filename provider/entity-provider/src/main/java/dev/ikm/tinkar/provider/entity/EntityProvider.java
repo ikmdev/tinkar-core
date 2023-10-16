@@ -50,7 +50,7 @@ import java.util.function.Consumer;
 
 import static dev.ikm.tinkar.terms.TinkarTerm.DESCRIPTION_PATTERN;
 
-@AutoService({EntityService.class, PublicIdService.class, DefaultDescriptionForNidService.class})
+//@AutoService({EntityService.class, PublicIdService.class, DefaultDescriptionForNidService.class})
 public class EntityProvider implements EntityService, PublicIdService, DefaultDescriptionForNidService, EntityDataRepair {
 
     private static final Logger LOG = LoggerFactory.getLogger(EntityProvider.class);
