@@ -20,7 +20,7 @@ import dev.ikm.tinkar.entity.EntityService;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-@AutoService({EntityService.class})
+//@AutoService({EntityService.class})
 public class EntityServiceFactory {
     protected static final AtomicReference<EntityProvider> provider = new AtomicReference<>();
 
