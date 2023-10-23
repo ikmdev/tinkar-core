@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.integration.coordinate;
 
-import dev.ikm.tinkar.bindings.Bindings;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -113,12 +112,12 @@ class CoordinatesIT {
 
         StampCoordinateRecord developmentLatestFilter = Coordinates.Stamp.DevelopmentLatest();
         LOG.info("development latest filter '" + developmentLatestFilter);
-        ConceptEntity englishLanguage = Entity.getFast(PrimitiveData.get().nidForUuids(Bindings.ENGLISH_LANGUAGE.uuid()));
+        ConceptEntity englishLanguage = Entity.getFast(TinkarTerm.ENGLISH_LANGUAGE.nid());
         StampCalculatorWithCache calculator = StampCalculatorWithCache.getCalculator(developmentLatestFilter);
         Latest<ConceptEntityVersion> latest = calculator.latest(englishLanguage);
         LOG.info("Latest computed: '" + latest);
 
-        Entity.provider().forEachSemanticForComponent(PrimitiveData.get().nidForUuids(Bindings.ENGLISH_LANGUAGE.uuid()), semanticEntity -> {
+        Entity.provider().forEachSemanticForComponent(TinkarTerm.ENGLISH_LANGUAGE.nid(), semanticEntity -> {
             LOG.info(semanticEntity.toString() + "\n");
             for (int acceptibilityNid : EntityService.get().semanticNidsForComponentOfPattern(semanticEntity.nid(), TinkarTerm.US_DIALECT_PATTERN.nid())) {
                 LOG.info("  Acceptability US: \n    " + EntityService.get().getEntityFast(acceptibilityNid));

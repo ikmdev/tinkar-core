@@ -38,15 +38,11 @@ import java.io.IOException;
 
 public class Searcher {
     private static final Logger LOG = LoggerFactory.getLogger(Searcher.class);
-    DirectoryReader ireader;
-    IndexSearcher isearcher;
     QueryParser parser;
 
     public Searcher() throws IOException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening lucene searcher");
-        this.ireader = Indexer.getDirectoryReader();
-        this.isearcher = new IndexSearcher(ireader);
         this.parser = new QueryParser("text", Indexer.analyzer());
         stopwatch.stop();
         LOG.info("Opened lucene searcher in: " + stopwatch.durationString());
@@ -55,7 +51,7 @@ public class Searcher {
 
     public PrimitiveDataSearchResult[] search(String queryString, int maxResultSize) throws
             ParseException, IOException, InvalidTokenOffsetsException {
-        this.isearcher = new IndexSearcher(Indexer.getDirectoryReader());
+        IndexSearcher isearcher = new IndexSearcher(Indexer.indexReader());
         if (queryString != null & !queryString.isEmpty()) {
             Query query = parser.parse(queryString);
             Formatter formatter = new SimpleHTMLFormatter();

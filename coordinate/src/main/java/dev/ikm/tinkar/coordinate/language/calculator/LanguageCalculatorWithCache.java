@@ -223,7 +223,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
         final MutableList<SemanticEntityVersion> descriptionsForLanguageOfType = Lists.mutable.empty();
         //Find all descriptions that match the language and description type - moving through the desired description types until
         //we find at least one.
-        for (final int descType : descriptionTypePriority.toArray()) {
+        for (final int descTypeNid : descriptionTypePriority.toArray()) {
             for (SemanticEntity descriptionChronicle : descriptionList) {
                 final Latest<SemanticEntityVersion> latestDescription = stampCalculator.latest(descriptionChronicle);
 
@@ -239,7 +239,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
                                 descriptionTypeObject instanceof EntityFacade descriptionTypeFacade) {
                             if ((languageFacade.nid() == languageCoordinate.languageConceptNid() ||
                                     languageCoordinate.languageConceptNid() == TinkarTerm.LANGUAGE.nid()) // any language
-                                    && descriptionTypeFacade.nid() == descType) {
+                                    && descriptionTypeFacade.nid() == descTypeNid) {
                                 descriptionsForLanguageOfType.add(descriptionVersion);
                             }
                         } else {

@@ -84,9 +84,7 @@ public class VertexSortNaturalOrder implements VertexSort, Encodable {
         }
 
         MutableList<Edge> edgesToSort = Lists.mutable.ofAll(edges);
-        edgesToSort.sort((o1, o2) -> NaturalOrder.compareStrings(
-                navigationCalculator.getDescriptionTextOrNid(o1.destinationNid()),
-                navigationCalculator.getDescriptionTextOrNid(o2.destinationNid())));
+        edgesToSort.sort((o1, o2) -> NaturalOrder.compareStrings(o1.comparisonString(), o2.comparisonString()));
 
         return edgesToSort.toImmutable();
     }

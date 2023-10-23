@@ -25,13 +25,14 @@ import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.PatternFacade;
+import dev.ikm.tinkar.terms.TinkarTerm;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.list.ImmutableList;
 
 import java.util.Objects;
 
 @RecordBuilder
-public final record LanguageCoordinateRecord(int languageConceptNid,
+public record LanguageCoordinateRecord(int languageConceptNid,
                                              IntIdList descriptionPatternNidList,
                                              IntIdList descriptionTypePreferenceNidList,
                                              IntIdList dialectPatternPreferenceNidList,

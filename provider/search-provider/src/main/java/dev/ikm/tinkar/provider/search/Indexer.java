@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.provider.search;
 
+import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
@@ -28,6 +29,10 @@ import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
@@ -48,6 +53,7 @@ public class Indexer {
     public static final String TEXT_FIELD_NAME = "text";
     private static final Logger LOG = LoggerFactory.getLogger(Indexer.class);
     private static final File defaultDataDirectory = new File("target/lucene/");
+    private static DirectoryReader indexReader;
     private static Directory indexDirectory;
     private static Analyzer analyzer;
     private static IndexWriter indexWriter;
@@ -57,6 +63,7 @@ public class Indexer {
         Indexer.indexDirectory = new ByteBuffersDirectory();
         Indexer.analyzer = new StandardAnalyzer();
         Indexer.indexWriter = Indexer.getIndexWriter();
+        Indexer.indexReader = DirectoryReader.open(Indexer.indexWriter, true, false);
         this.indexPath = null;
     }
 
@@ -75,6 +82,9 @@ public class Indexer {
     public static Directory indexDirectory() {
         return indexDirectory;
     }
+    public static DirectoryReader indexReader() {
+        return indexReader;
+    }
 
     public Indexer(Path indexPath) throws IOException {
         Stopwatch stopwatch = new Stopwatch();
@@ -82,13 +92,10 @@ public class Indexer {
         this.indexPath = indexPath;
         Indexer.indexDirectory = FSDirectory.open(this.indexPath);
         Indexer.analyzer = new StandardAnalyzer();
-        this.indexWriter = Indexer.getIndexWriter();
+        Indexer.indexWriter = Indexer.getIndexWriter();
+        Indexer.indexReader = DirectoryReader.open(Indexer.indexWriter);
         stopwatch.stop();
         LOG.info("Opened lucene index in: " + stopwatch.durationString());
-    }
-
-    public static DirectoryReader getDirectoryReader() throws IOException {
-        return DirectoryReader.open(indexWriter);
     }
 
     public void commit() throws IOException {
@@ -102,19 +109,25 @@ public class Indexer {
     public void close() throws IOException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Closing lucene index");
-        this.indexWriter.close();
+        Indexer.indexReader.close();
+        Indexer.indexWriter.close();
         stopwatch.stop();
         LOG.info("Closed lucene index in: " + stopwatch.durationString());
     }
 
     public void index(Object object) {
         if (object instanceof SemanticEntity semanticEntity) {
-            // TODO move field allocation to threadlocal if performance concern?
             IntPoint nidPoint = new IntPoint(NID_POINT, 0);
+            // The IntPoint field does not store the value,
+            // so we also need a stored field to retrieve the nid from a document.
             StoredField nidField = new StoredField(NID, 0);
             StoredField rcNidField = new StoredField(RC_NID, 0);
             StoredField patternNidField = new StoredField(PATTERN_NID, 0);
             StoredField fieldIndexField = new StoredField(FIELD_INDEX, 0);
+
+            // KEC: Deliberately commented out. See explanation on method for reason.
+            // deleteDocumentIfExists(semanticEntity);
+
 
             Document document = new Document();
             nidPoint.setIntValue(semanticEntity.nid());
@@ -132,18 +145,53 @@ public class Indexer {
                     Object field = fields.get(i);
                     if (field instanceof String text) {
                         text = text.strip();
-                        document.add(new TextField(TEXT_FIELD_NAME, text, Field.Store.YES));
-                        fieldIndexField.setIntValue(i);
-                        document.add(fieldIndexField);
+                        if (i == 0) {
+                            document.add(new TextField(TEXT_FIELD_NAME, text, Field.Store.YES));
+                            fieldIndexField.setIntValue(i);
+                            document.add(fieldIndexField);
+                        } else {
+                            // Check to make sure identical text is not already in the document,
+                            // to prevent unnecessary document/index bloat.
+                            boolean alreadyAdded = false;
+                            for (String value: document.getValues(TEXT_FIELD_NAME)) {
+                                if (text.equals(value)) {
+                                    alreadyAdded = true;
+                                    break;
+                                }
+                            }
+                            if (!alreadyAdded) {
+                                document.add(new TextField(TEXT_FIELD_NAME, text, Field.Store.YES));
+                                fieldIndexField.setIntValue(i);
+                                document.add(fieldIndexField);
+                            }
+                        }
                     }
                 }
             }
             try {
-                this.indexWriter.addDocument(document);
+                long addSequence = this.indexWriter.addDocument(document);
             } catch (IOException e) {
                 LOG.error("Exception writing: " + object);
             }
         }
 
+    }
+
+    /**
+     * This method would delete any existing document for the semantic. This is a costly operation,
+     * and unnecessary for standard use cases. Since the semantic chronologies are append only,
+     * the same historic versions will still be written to the index. Determination of current
+     * content is done by the StampComputer, not by the lucene index, so there is no need to remove
+     * historic versions.
+     *
+     * @param semanticEntity
+     */
+    private static void deleteDocumentIfExists(SemanticEntity semanticEntity) {
+        try {
+            Query nidQuery = IntPoint.newExactQuery(NID_POINT, semanticEntity.nid());
+            long deleteSequence = indexWriter.deleteDocuments(nidQuery);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

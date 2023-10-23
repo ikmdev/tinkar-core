@@ -185,8 +185,17 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         return IntIds.list.of(VertexSortNaturalOrder.SINGLETON.sortVertexes(unsortedChildrenOf(conceptNid).toArray(), this));
     }
 
+    @Override
     public IntIdList unsortedChildrenOf(int conceptNid) {
         return getIntIdListForMeaning(conceptNid, TinkarTerm.RELATIONSHIP_DESTINATION);
+    }
+    @Override
+    public IntIdList unsortedUnversionedChildrenOf(int conceptNid) {
+        return getIntIdListForMeaningUnversioned(conceptNid, TinkarTerm.RELATIONSHIP_DESTINATION);
+    }
+    @Override
+    public IntIdList unsortedUnversionedParentsOf(int conceptNid) {
+        return getIntIdListForMeaningUnversioned(conceptNid, TinkarTerm.RELATIONSHIP_ORIGIN);
     }
 
     @Override
@@ -212,7 +221,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
                 int typeNid = patternEntityVersion.semanticMeaningNid();
                 IntIdList parents = getIntIdListForMeaningFromPattern(conceptNid, relationshipDirection, patternNid);
                 for (int parentNid : parents.toArray()) {
-                    edges.updateValue(parentNid, () -> new MutableEdge(IntSets.mutable.empty(), parentNid), mutableEdge -> {
+                    edges.updateValue(parentNid, () -> new MutableEdge(IntSets.mutable.empty(), parentNid, this.languageCalculator), mutableEdge -> {
                         mutableEdge.types.add(typeNid);
                         return mutableEdge;
                     });
@@ -224,7 +233,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
 
     private IntIdList getIntIdListForMeaningFromPattern(int referencedComponentNid, EntityProxy.Concept fieldMeaning, int patternNid) {
         MutableIntSet nidsInList = IntSets.mutable.empty();
-        intIdListForMeaningFromPattern(referencedComponentNid, fieldMeaning, patternNid, nidsInList, navigationCoordinate.vertexStates());
+        intIdListForMeaningFromPattern(referencedComponentNid, fieldMeaning, patternNid, nidsInList, navigationCoordinate.vertexStates(), true);
         return IntIds.list.of(nidsInList.toArray());
     }
 
@@ -232,12 +241,22 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         IntIdSet navigationPatternNids = navigationCoordinate.navigationPatternNids();
         MutableIntSet nidsInList = IntSets.mutable.empty();
         navigationPatternNids.forEach(navPatternNid -> {
-            intIdListForMeaningFromPattern(referencedComponentNid, fieldMeaning, navPatternNid, nidsInList, navigationCoordinate.vertexStates());
+            intIdListForMeaningFromPattern(referencedComponentNid, fieldMeaning, navPatternNid, nidsInList, navigationCoordinate.vertexStates(), true);
         });
         return IntIds.list.of(nidsInList.toArray());
     }
 
-    private void intIdListForMeaningFromPattern(int referencedComponentNid, EntityProxy.Concept fieldMeaning, int patternNid, MutableIntSet nidsInList, StateSet states) {
+    private IntIdList getIntIdListForMeaningUnversioned(int referencedComponentNid, EntityProxy.Concept fieldMeaning) {
+        IntIdSet navigationPatternNids = navigationCoordinate.navigationPatternNids();
+        MutableIntSet nidsInList = IntSets.mutable.empty();
+        navigationPatternNids.forEach(navPatternNid -> {
+            intIdListForMeaningFromPattern(referencedComponentNid, fieldMeaning, navPatternNid, nidsInList, navigationCoordinate.vertexStates(), false);
+        });
+        return IntIds.list.of(nidsInList.toArray());
+    }
+
+    private void intIdListForMeaningFromPattern(int referencedComponentNid, EntityProxy.Concept fieldMeaning,
+                                                int patternNid, MutableIntSet nidsInList, StateSet states, boolean versioned) {
         Latest<PatternEntityVersion> latestPatternEntityVersion = stampCalculator().latest(patternNid);
         latestPatternEntityVersion.ifPresentOrElse(
                 (patternEntityVersion) -> {
@@ -254,12 +273,11 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
                             SemanticEntityVersion navigationSemantic = latestNavigationSemantic.get();
                             IntIdSet intIdSet = (IntIdSet) navigationSemantic.fieldValues().get(indexForMeaning);
                             // Filter here by allowed vertex state...
-                            if (states == StateSet.ACTIVE_INACTIVE_AND_WITHDRAWN) {
-                                nidsInList.addAll(intIdSet.toArray());
-                            } else {
+                            if (versioned && states != StateSet.ACTIVE_INACTIVE_AND_WITHDRAWN) {
                                 intIdSet.forEach(nid ->
-                                        vertexStampCalculator.latest(nid).ifPresent(entityVersion -> nidsInList.add(entityVersion.nid()))
-                                );
+                                        vertexStampCalculator.latest(nid).ifPresent(entityVersion -> nidsInList.add(entityVersion.nid())));
+                            } else {
+                                nidsInList.addAll(intIdSet.toArray());
                             }
                         });
                     }
@@ -288,9 +306,9 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
                                              NavigationCoordinateRecord navigationCoordinate) {
     }
 
-    record MutableEdge(MutableIntSet types, int destinationNid) {
+    record MutableEdge(MutableIntSet types, int destinationNid, LanguageCalculator languageCalculator) {
         EdgeRecord toEdge() {
-            return new EdgeRecord(IntIds.set.of(types.toArray()), destinationNid);
+            return new EdgeRecord(IntIds.set.of(types.toArray()), destinationNid, languageCalculator);
         }
     }
 
