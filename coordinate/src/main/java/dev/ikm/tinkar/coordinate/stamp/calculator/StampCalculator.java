@@ -32,17 +32,23 @@ import dev.ikm.tinkar.entity.graph.DiTreeVersion;
 import dev.ikm.tinkar.entity.graph.VersionVertex;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.PatternFacade;
+import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
+import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 import static dev.ikm.tinkar.terms.TinkarTerm.STAMP_PATTERN;
 
 public interface StampCalculator {
+    Logger LOG = LoggerFactory.getLogger(StampCalculator.class);
     default Stream<Latest<SemanticEntityVersion>> streamLatestVersionForPattern(PatternFacade patternFacade) {
         return streamLatestVersionForPattern(patternFacade.nid());
     }
@@ -293,16 +299,46 @@ public interface StampCalculator {
         return getFieldForSemantic(componentNid, meaningNid, FieldCriterion.MEANING);
     }
 
+    /**
+     * Removes duplicate search results with the same component identifier. Necessary because
+     * deletion of documents is expensive in Lucene, and also the index would not change since
+     * we use an append only model of versions. Historic versions will still be in the index.
+     * This method makes sure that if there are duplicate matches for the same component,
+     * only the one with the highest score is returned. This method assumes that there is only
+     * index being searched. It is possible in the future that multiple indexes with different
+     * fields for the same component will return different results since different fields may be
+     * indexed. In such case, this method will need revision to handle multiple results from multiple
+     * indexes properly.
+     * @param query
+     * @param maxResultSize
+     * @return
+     * @throws Exception
+     */
     default ImmutableList<LatestVersionSearchResult> search(String query, int maxResultSize) throws Exception {
         PrimitiveDataSearchResult[] primitiveResults = PrimitiveData.get().search(query, maxResultSize);
-        MutableList<LatestVersionSearchResult> latestResults = Lists.mutable.withInitialCapacity(primitiveResults.length);
+        final MutableIntObjectMap<LatestVersionSearchResult> semanticNidSearchResultMap = IntObjectMaps.mutable.ofInitialCapacity(primitiveResults.length);
+        final AtomicInteger duplicates = new AtomicInteger();
         for (PrimitiveDataSearchResult primitiveResult : primitiveResults) {
-            Latest<SemanticEntityVersion> latestVersion = latest(primitiveResult.nid());
-            latestVersion.ifPresent(semanticVersion -> latestResults.add(
-                    new LatestVersionSearchResult(latestVersion, primitiveResult.fieldIndex(), primitiveResult.score(),
-                            primitiveResult.highlightedString())));
+            if (semanticNidSearchResultMap.containsKey(primitiveResult.nid())) {
+                duplicates.incrementAndGet();
+                LatestVersionSearchResult currentResult = semanticNidSearchResultMap.get(primitiveResult.nid());
+                if (currentResult.score() < primitiveResult.score()) {
+                    semanticNidSearchResultMap.put(primitiveResult.nid(),
+                            currentResult
+                                    .withScore(primitiveResult.score())
+                                    .withHighlightedString(primitiveResult.highlightedString())
+                    );
+                }
+            } else {
+                Latest<SemanticEntityVersion> latestVersion = latest(primitiveResult.nid());
+                latestVersion.ifPresent(semanticVersion -> semanticNidSearchResultMap.put(primitiveResult.nid(),
+                        new LatestVersionSearchResult(latestVersion, primitiveResult.fieldIndex(), primitiveResult.score(),
+                                primitiveResult.highlightedString())));
+            }
         }
-        return latestResults.toImmutable();
+        ImmutableList<LatestVersionSearchResult> filteredResults = Lists.immutable.ofAll(semanticNidSearchResultMap.values());
+        LOG.info("Removed " + duplicates.intValue() + " duplicates. Latest result count: " + filteredResults.size());
+        return filteredResults;
     }
 
     default boolean latestIsActive(Entity entity) {
@@ -357,9 +393,9 @@ public interface StampCalculator {
         return new ChangeChronology(entity.nid(), versionChangeRecords.toImmutable());
     }
     private static void processVersionRecursive(DiTreeVersion<EntityVersion> versionGraph, int nodeIndexToProcess,
-                                         MutableList<VersionChangeRecord> versionChangeRecords,
-                                         PatternEntityVersion latestPatternForStamp,
-                                         PatternEntityVersion latestPatternForSemantic) {
+                                                MutableList<VersionChangeRecord> versionChangeRecords,
+                                                PatternEntityVersion latestPatternForStamp,
+                                                PatternEntityVersion latestPatternForSemantic) {
         VersionVertex versionVertexToProcess = versionGraph.vertex(nodeIndexToProcess);
         EntityVersion newVersion = versionVertexToProcess.version();
         StampRecord newVersionStamp = Entity.getStamp(newVersion.stampNid());
@@ -370,7 +406,7 @@ public interface StampCalculator {
             if (latestPatternForSemantic != null &&
                     newVersion instanceof SemanticEntityVersion newSemanticVersion &&
                     predecessorVersion instanceof SemanticEntityVersion predecessorSemanticVersion) {
-                   addChangesForSemanticFieldsForPattern(latestPatternForSemantic, newVersionStamp, predecessorStamp, fieldChanges,
+                addChangesForSemanticFieldsForPattern(latestPatternForSemantic, newVersionStamp, predecessorStamp, fieldChanges,
                         predecessorSemanticVersion, newSemanticVersion);
             }
             addChangesForStampFieldsForPattern(latestPatternForStamp, newVersionStamp, predecessorStamp, fieldChanges, newVersion);
@@ -391,8 +427,8 @@ public interface StampCalculator {
     }
 
     private static void addChangesForSemanticFieldsForPattern(PatternEntityVersion latestPatternVersion, StampRecord newVersionStamp,
-                                                           StampRecord predecessorStamp, MutableList<FieldChangeRecord> fieldChanges,
-                                                           SemanticEntityVersion priorVersion, SemanticEntityVersion newVersion) {
+                                                              StampRecord predecessorStamp, MutableList<FieldChangeRecord> fieldChanges,
+                                                              SemanticEntityVersion priorVersion, SemanticEntityVersion newVersion) {
         for (int fieldIndex = 0; fieldIndex < latestPatternVersion.fieldDefinitions().size(); fieldIndex++) {
             FieldDefinitionForEntity fieldDefinitionRecord = latestPatternVersion.fieldDefinitions().get(fieldIndex);
             Object newVersionValue = (newVersion != null) ? newVersion.fieldValues().get(fieldIndex): NonExistentValue.get();

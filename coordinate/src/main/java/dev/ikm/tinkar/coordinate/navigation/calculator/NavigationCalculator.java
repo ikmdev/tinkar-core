@@ -131,6 +131,10 @@ public interface NavigationCalculator extends StampCalculatorDelegate, LanguageC
 
     IntIdList unsortedChildrenOf(int conceptNid);
 
+    IntIdList unsortedUnversionedChildrenOf(int conceptNid);
+
+    IntIdList unsortedUnversionedParentsOf(int conceptNid);
+
     default IntIdList sortedParentsOf(ConceptFacade concept) {
         return sortedParentsOf(concept.nid());
     }

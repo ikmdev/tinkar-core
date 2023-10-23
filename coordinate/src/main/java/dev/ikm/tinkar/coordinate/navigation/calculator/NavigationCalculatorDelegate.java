@@ -67,6 +67,16 @@ public interface NavigationCalculatorDelegate extends NavigationCalculator, Lang
     }
 
     @Override
+    default IntIdList unsortedUnversionedChildrenOf(int conceptNid) {
+        return navigationCalculator().unsortedUnversionedChildrenOf(conceptNid);
+    }
+
+    @Override
+    default IntIdList unsortedUnversionedParentsOf(int conceptNid) {
+        return navigationCalculator().unsortedUnversionedParentsOf(conceptNid);
+    }
+
+    @Override
     default IntIdList sortedParentsOf(int conceptNid) {
         return navigationCalculator().sortedParentsOf(conceptNid);
     }

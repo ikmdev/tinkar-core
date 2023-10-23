@@ -34,4 +34,6 @@ public interface Edge {
      * @return the destination concept nid.
      */
     int destinationNid();
+
+    String comparisonString();
 }

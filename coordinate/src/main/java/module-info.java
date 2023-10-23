@@ -47,7 +47,6 @@ module dev.ikm.tinkar.coordinate {
 
     requires dev.ikm.tinkar.collection;
     requires dev.ikm.tinkar.common;
-    requires dev.ikm.tinkar.bindings;
     requires transitive dev.ikm.tinkar.terms;
     requires static io.soabase.recordbuilder.core;
     requires static java.compiler;
