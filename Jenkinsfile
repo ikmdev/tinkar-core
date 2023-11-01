@@ -1,3 +1,5 @@
+#!groovy
+
 @Library("titan-library") _
 
 //run the build at 03:10 on every day-of-week from Monday through Friday but only on the main branch
@@ -12,6 +14,8 @@ pipeline {
         SONAR_AUTH_TOKEN    = credentials('sonarqube_pac_token')
         SONARQUBE_URL       = "${GLOBAL_SONARQUBE_URL}"
         SONAR_HOST_URL      = "${GLOBAL_SONARQUBE_URL}"
+
+        GPG_PASSPHRASE      = credentials('gpg_passphrase')
 
         BRANCH_NAME         = "${GIT_BRANCH.split("/").size() > 1 ? GIT_BRANCH.split("/")[1] : GIT_BRANCH}"
     }
@@ -130,7 +134,8 @@ pipeline {
                             -s '${MAVEN_SETTINGS}' \
                             -P inject-application-properties \
                             -Dmaven.build.cache.enabled=false \
-                            -DrepositoryId='${repositoryId}'
+                            -DrepositoryId='${repositoryId}' \
+                            -PsignArtifacts -Dgpg.passphrase='${GPG_PASSPHRASE}'
                         """
                     }
                 }
