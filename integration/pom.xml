@@ -12,8 +12,13 @@
     <name>TINKAR Integration</name>
     <artifactId>integration</artifactId>
 
+
     <properties>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <skip.unit.tests>false</skip.unit.tests>
+        <skip.integration.tests>true</skip.integration.tests>
+<!--        <skipTests>${skip.unit.tests}</skipTests>-->
+        <skipITs>${skip.integration.tests}</skipITs>
     </properties>
     <dependencies>
         <dependency>

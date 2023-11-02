@@ -6,8 +6,12 @@
 String cron_string = BRANCH_NAME == "main" ? "10 3 * * 1-5" : ""
 
 pipeline {
-    agent {
-        label 'linux'
+    agent any
+
+    tools {
+       jdk "java-21"
+       maven 'default'
+       git 'git'
     }
 
     environment {
