@@ -73,7 +73,7 @@
         <activej.version>4.3-r3</activej.version>
         <activej-launchers.version>4.3.1</activej-launchers.version>
         <build-helper-maven-plugin.version>3.2.0</build-helper-maven-plugin.version>
-        <caffeine.version>3.1.1-r3</caffeine.version>
+        <caffeine.version>3.1.8</caffeine.version>
         <eclipse-collections.version>11.1.0-r7</eclipse-collections.version>
         <eclipse-collections-api.version>11.1.0-r7</eclipse-collections-api.version>
         <jackson.version>2.14.2</jackson.version>
@@ -224,12 +224,6 @@
                 <version>${tinkar-schema.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>dev.ikm.tinkar</groupId>
-                <artifactId>tinkar-bindings</artifactId>
-                <version>${tinkar-bindings.version}</version>
-            </dependency>
-
             <!-- JPMS Dependencies -->
             <dependency>
                 <groupId>${tinkar-jpms-deps.groupId}</groupId>
@@ -262,7 +256,7 @@
             </dependency>
 
             <dependency>
-                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <groupId>com.github.ben-manes.caffeine</groupId>
                 <artifactId>caffeine</artifactId>
                 <version>${caffeine.version}</version>
             </dependency>
@@ -394,11 +388,6 @@
 
     <!-- Cross project dependencies -->
     <dependencies>
-        <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
-            <artifactId>tinkar-bindings</artifactId>
-        </dependency>
-
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>

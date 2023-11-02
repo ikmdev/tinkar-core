@@ -40,7 +40,7 @@
         </dependency>
 
         <dependency>
-            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
         </dependency>
 
