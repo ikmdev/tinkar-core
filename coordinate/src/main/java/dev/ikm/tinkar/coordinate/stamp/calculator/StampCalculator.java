@@ -246,6 +246,9 @@ public interface StampCalculator {
         return getFieldForSemanticWithMeaning(Latest.of(semanticVersion), meaning);
     }
     default <T extends Object> Latest<Field<T>> getFieldForSemanticWithPurpose(SemanticEntityVersion semanticVersion, EntityFacade purpose) {
+        if (semanticVersion == null) {
+            return Latest.empty();
+        }
         return getFieldForSemanticWithPurpose(Latest.of(semanticVersion), purpose);
     }
 

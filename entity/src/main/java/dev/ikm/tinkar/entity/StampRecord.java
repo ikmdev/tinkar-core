@@ -102,11 +102,13 @@ public record StampRecord(
         StringBuilder sb = new StringBuilder();
         sb.append("StampRecord{");
         sb.append("<").append(nid);
-        sb.append("> ").append(publicId().asUuidList()).append(" ");
-        for (StampEntityVersion version : versions) {
-            sb.append(version.describe());
+        sb.append("> [").append(publicId().asUuidList());
+        for (StampEntityVersion version : versions.toReversed()) {
+            sb.append(version.describe()).append(", ");
         }
-        sb.append('}');
+        sb.deleteCharAt(sb.length() - 1);
+        sb.deleteCharAt(sb.length() - 1);
+        sb.append("]}");
         return sb.toString();
     }
 
