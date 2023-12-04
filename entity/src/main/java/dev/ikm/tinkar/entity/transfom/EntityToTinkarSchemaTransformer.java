@@ -48,6 +48,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Flow;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -308,7 +309,7 @@ public class EntityToTinkarSchemaTransformer {
 
     protected Timestamp createTimestamp(long time){
         return Timestamp.newBuilder()
-                .setSeconds(time)
+                .setSeconds(TimeUnit.MILLISECONDS.toSeconds(time)) //This is in milliseconds from System.time and needs to be converted to seconds
                 .build();
     }
 
@@ -351,16 +352,14 @@ public class EntityToTinkarSchemaTransformer {
     }
 
     protected dev.ikm.tinkar.schema.DiGraph createPBDiGraph(DiGraphEntity<EntityVertex> diGraph){
-        //List all PBVertex TODO-aks8m: Why is this called a map when it's a list??
+         //List all PBVertex TODO-aks8m: Why is this called a map when it's a list??
         ArrayList<dev.ikm.tinkar.schema.Vertex> pbVertices = new ArrayList<>();
         diGraph.vertexMap().forEach(vertex -> pbVertices.add(createPBVertex(vertex)));
         //Int Root Sequences TODO-aks8m: Is this a list of root Vertex's (then need to change protobuf)
         ArrayList<Integer> pbRoots = new ArrayList<>();
         diGraph.roots().forEach(root -> pbRoots.add(root.vertexIndex()));
-        ArrayList<IntToMultipleIntMap> pbSuccessorsMap = new ArrayList<>();
-        createPBIntToMultipleIntMaps(diGraph.successorMap().toImmutable());
-        ArrayList<IntToMultipleIntMap> pbPredecessorsMap = new ArrayList<>();
-        createPBIntToMultipleIntMaps(diGraph.predecessorMap().toImmutable());
+        List<IntToMultipleIntMap> pbSuccessorsMap = createPBIntToMultipleIntMaps(diGraph.successorMap().toImmutable());
+        List<IntToMultipleIntMap> pbPredecessorsMap = createPBIntToMultipleIntMaps(diGraph.predecessorMap().toImmutable());
         return dev.ikm.tinkar.schema.DiGraph.newBuilder()
                 .addAllVertices(pbVertices)
                 .addAllRoots(pbRoots)
@@ -373,10 +372,8 @@ public class EntityToTinkarSchemaTransformer {
         ArrayList<dev.ikm.tinkar.schema.Vertex> pbVertices = new ArrayList<>();
         diTree.vertexMap().forEach(vertex -> pbVertices.add(createPBVertex(vertex)));
         Vertex pbVertexRoot = diTree.root();
-        ArrayList<IntToIntMap> pbPredecesorMap = new ArrayList<>();
-        createPBIntToIntMaps(diTree.predecessorMap().toImmutable());
-        ArrayList<IntToMultipleIntMap> pbSuccessorMap = new ArrayList<>();
-        createPBIntToMultipleIntMaps(diTree.successorMap().toImmutable());
+        List<IntToIntMap> pbPredecesorMap = createPBIntToIntMaps(diTree.predecessorMap().toImmutable());
+        List<IntToMultipleIntMap> pbSuccessorMap = createPBIntToMultipleIntMaps(diTree.successorMap().toImmutable());
         return dev.ikm.tinkar.schema.DiTree.newBuilder()
                 .addAllVertices(pbVertices)
                 .setRoot(pbVertexRoot.vertexIndex())

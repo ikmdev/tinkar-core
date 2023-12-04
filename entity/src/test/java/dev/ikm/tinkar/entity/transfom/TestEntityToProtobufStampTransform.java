@@ -30,6 +30,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.util.concurrent.TimeUnit;
+
 import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -57,7 +59,7 @@ public class TestEntityToProtobufStampTransform {
             when(mockStampVersion.author()).thenReturn((ConceptFacade) authorConcept);
             when(mockStampVersion.module()).thenReturn((ConceptFacade) moduleConcept);
             when(mockStampVersion.path()).thenReturn((ConceptFacade) pathConcept);
-            when(mockStampVersion.time()).thenReturn(expectedTime);
+            when(mockStampVersion.time()).thenReturn(TimeUnit.SECONDS.toMillis(expectedTime));
 
             // When we transform our StampVersion into a PBStampVersion
             StampVersion actualPBStampVersion = EntityToTinkarSchemaTransformer.getInstance().createPBStampVersion(mockStampVersion);
@@ -259,14 +261,14 @@ public class TestEntityToProtobufStampTransform {
             when(mockStampVersionOne.author()).thenReturn((ConceptFacade) authorConcept);
             when(mockStampVersionOne.module()).thenReturn((ConceptFacade) moduleConcept);
             when(mockStampVersionOne.path()).thenReturn((ConceptFacade) pathConcept);
-            when(mockStampVersionOne.time()).thenReturn(expectedTime);
+            when(mockStampVersionOne.time()).thenReturn(TimeUnit.SECONDS.toMillis(expectedTime));
 
             StampVersionRecord mockStampVersionTwo = mock(StampVersionRecord.class);
             when(mockStampVersionTwo.state()).thenReturn(State.ACTIVE);
             when(mockStampVersionTwo.author()).thenReturn((ConceptFacade) authorConcept);
             when(mockStampVersionTwo.module()).thenReturn((ConceptFacade) moduleConcept);
             when(mockStampVersionTwo.path()).thenReturn((ConceptFacade) pathConcept);
-            when(mockStampVersionTwo.time()).thenReturn(expectedTime+5);
+            when(mockStampVersionTwo.time()).thenReturn(TimeUnit.SECONDS.toMillis(expectedTime+5));
 
             // When we transform our StampVersion into a PBStampVersion
             StampVersion actualPBStampVersionOne = EntityToTinkarSchemaTransformer.getInstance().createPBStampVersion(mockStampVersionOne);

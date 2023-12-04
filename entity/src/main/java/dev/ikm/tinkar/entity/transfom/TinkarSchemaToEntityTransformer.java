@@ -17,7 +17,7 @@ package dev.ikm.tinkar.entity.transfom;
 
 import com.google.protobuf.ByteString;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.id.PublicIdList;
+import dev.ikm.tinkar.common.id.PublicIdSet;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.id.impl.PublicId1;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
@@ -33,9 +33,9 @@ import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.graph.DiGraphEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
-import dev.ikm.tinkar.schema.*;
 import dev.ikm.tinkar.schema.Field;
 import dev.ikm.tinkar.schema.StampVersion;
+import dev.ikm.tinkar.schema.*;
 import dev.ikm.tinkar.terms.EntityProxy;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Maps;
@@ -51,12 +51,13 @@ import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 import org.eclipse.collections.impl.map.mutable.primitive.IntIntHashMap;
 import org.eclipse.collections.impl.map.mutable.primitive.IntObjectHashMap;
+
 import java.nio.ByteBuffer;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 public class TinkarSchemaToEntityTransformer {
@@ -302,7 +303,7 @@ public class TinkarSchemaToEntityTransformer {
         return StampVersionRecordBuilder.builder()
                 .chronology(stampRecord)
                 .stateNid(Entity.nid(transformPublicId(pbStampVersion.getStatusPublicId())))
-                .time(Instant.ofEpochSecond(pbStampVersion.getTime().getSeconds()).getEpochSecond())
+                .time(TimeUnit.SECONDS.toMillis(pbStampVersion.getTime().getSeconds())) //needs to be in milliseconds and needs to be converted from seconds to milliseconds
                 .authorNid(Entity.nid(transformPublicId(pbStampVersion.getAuthorPublicId())))
                 .moduleNid(Entity.nid(transformPublicId(pbStampVersion.getModulePublicId())))
                 .pathNid(Entity.nid(transformPublicId(pbStampVersion.getPathPublicId())))
@@ -361,12 +362,15 @@ public class TinkarSchemaToEntityTransformer {
                 .map(byteBuffer -> new UUID(byteBuffer.getLong(), byteBuffer.getLong()))
                 .collect(Collectors.toList()));
     }
-    protected PublicIdList transformPublicIdList(dev.ikm.tinkar.schema.PublicIdList pbPublicIdList) {
+    protected PublicIdSet transformPublicIdList(dev.ikm.tinkar.schema.PublicIdList pbPublicIdList) {
+        if(pbPublicIdList.getPublicIdsCount() == 0){
+            return PublicIds.set.empty();
+        }
         PublicId[] publicIds = new PublicId[pbPublicIdList.getPublicIdsCount()];
         for(int i = 0; i < pbPublicIdList.getPublicIdsCount(); i++) {
             publicIds[i] = transformPublicId(pbPublicIdList.getPublicIds(i));
         }
-        return PublicIds.list.of(publicIds);
+        return PublicIds.set.of(publicIds);
     }
     protected PublicId1 transformVertexUUID(VertexUUID vertexUUID) {
         return new PublicId1(UUID.nameUUIDFromBytes(vertexUUID.toByteArray()));
@@ -423,12 +427,22 @@ public class TinkarSchemaToEntityTransformer {
         return vertexMap.toImmutable();
     }
     protected EntityVertex transformVertexEntity(Vertex pbVertex, Consumer<StampEntity<StampEntityVersion>> stampEntityConsumer){
-        PublicId1 vertexID = transformVertexUUID(pbVertex.getVertexUuid());
+        PublicId1 vertexID = transformVertexUUID(pbVertex.getVertexUuid()); //TODO-aks8m: Need to address the use of PublicId1 versus the parent PublicId
         MutableMap<ConceptDTO, Object> properties = Maps.mutable.ofInitialCapacity(pbVertex.getPropertiesCount());
-        pbVertex.getPropertiesList().forEach(property -> properties.put(
-                ConceptDTOBuilder.builder()
-                        .publicId(transformPublicId(pbVertex.getMeaningPublicId()))
-                        .build(), transformField(property.getField(), stampEntityConsumer)));
+        pbVertex.getPropertiesList().forEach(property -> {
+            Object propertyObject = transformField(property.getField(), stampEntityConsumer);
+            if(propertyObject instanceof PublicId){
+                properties.put(
+                        ConceptDTOBuilder.builder()
+                                .publicId(transformPublicId(pbVertex.getMeaningPublicId()))
+                                .build(),  EntityProxy.Concept.make((PublicId) propertyObject));
+            } else {
+                properties.put(
+                        ConceptDTOBuilder.builder()
+                                .publicId(transformPublicId(pbVertex.getMeaningPublicId()))
+                                .build(), propertyObject);
+            }
+        });
         var storedVertexDTO = VertexDTOBuilder.builder()
                 .vertexIdLsb(vertexID.leastSignificantBits())
                 .vertexIdMsb(vertexID.mostSignificantBits())
