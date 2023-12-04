@@ -109,6 +109,9 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
         name = configuredRoot.getName();
         configuredRoot.mkdirs();
+        File indexDir = new File(configuredRoot, "lucene");
+        this.indexer = new Indexer(indexDir.toPath());
+        this.searcher = new Searcher();
         SpinedArrayProvider.singleton = this;
         Get.singleton = this;
         Put.singleton = this;
@@ -151,9 +154,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         stopwatch.stop();
         LOG.info("Opened SpinedArrayProvider in: " + stopwatch.durationString());
 
-        File indexDir = new File(configuredRoot, "lucene");
-        this.indexer = new Indexer(indexDir.toPath());
-        this.searcher = new Searcher();
     }
 
     private void listAndCancelUncommittedStamps() {

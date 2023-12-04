@@ -62,6 +62,11 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<Integer> {
 
         // Setting about AtomicInteger counts to keep track of entity count.
         AtomicInteger verboseErrors = new AtomicInteger(0);
+
+        AtomicInteger stampCount = new AtomicInteger(0);
+        PrimitiveData.get().forEachConceptNid(nid -> stampCount.incrementAndGet());
+        LOG.info("Found " + stampCount.get() + " STAMP nids.");
+
         AtomicInteger conceptCount = new AtomicInteger(0);
         PrimitiveData.get().forEachConceptNid(nid -> conceptCount.incrementAndGet());
         LOG.info("Found " + conceptCount.get() + " concept nids.");
@@ -81,6 +86,29 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<Integer> {
             // Create a single entry
             ZipEntry zipEntry = new ZipEntry(protobufFile.getName().replace(".zip", ""));
             zos.putNextEntry(zipEntry);
+
+            //Looping Through each STAMP and call the transformer
+            PrimitiveData.get().forEachStampNid(stampNid -> {
+                try {
+                    Entity<? extends EntityVersion> stampEntity = EntityService.get().getEntityFast(stampNid);
+                    if(stampEntity != null){
+                        TinkarMsg pbTinkarMsg = entityTransformer.transform(stampEntity);
+                        pbTinkarMsg.writeDelimitedTo(zos);
+                        exportConceptCount.incrementAndGet();
+                    } else {
+                        nullEntities.incrementAndGet();
+                        if (verboseErrors.get() < VERBOSE_ERROR_COUNT) {
+                            LOG.warn("No STAMP entity for: " + stampNid);
+                            verboseErrors.incrementAndGet();
+                        }
+                    }
+                } catch (UnsupportedOperationException | IllegalStateException | NullPointerException exception){
+                    LOG.error("Processing stampNid: " + stampNid,exception);
+                    exception.printStackTrace();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
 
             // Looping through each concept and calling the transformer
             PrimitiveData.get().forEachConceptNid(conceptNid -> {
