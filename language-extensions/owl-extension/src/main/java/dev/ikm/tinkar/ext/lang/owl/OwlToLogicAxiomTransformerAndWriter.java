@@ -18,7 +18,6 @@ package dev.ikm.tinkar.ext.lang.owl;
 
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
-import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
@@ -261,7 +260,7 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
         }
 
         SemanticVersionRecordBuilder semanticVersionBuilder = SemanticVersionRecordBuilder.builder();
-        semanticVersionBuilder.fieldValues(Lists.immutable.of(logicalExpression));
+        semanticVersionBuilder.fieldValues(Lists.immutable.of(logicalExpression.sourceGraph()));
         StampEntity transactionStamp = transaction.getStamp(State.ACTIVE, time, authorNid, moduleNid, developmentPathNid);
         semanticVersionBuilder.stampNid(transactionStamp.nid());
         semanticVersionBuilder.chronology(newSemantic);
