@@ -5,7 +5,7 @@
     <parent>
         <groupId>dev.ikm.build</groupId>
         <artifactId>java-parent</artifactId>
-        <version>1.39.0</version>
+        <version>1.40.0</version>
         <relativePath />
     </parent>
 
@@ -36,6 +36,14 @@
     <scm>
         <url>http://www.github.com/ikmdev/tinkar-core</url>
     </scm>
+
+    <developers>
+        <developer>
+            <id>ikmdev</id>
+            <name>IKM Development Team</name>
+            <email>support@ikm.dev</email>
+        </developer>
+    </developers>
 
     <issueManagement>
         <system>GitHub</system>
