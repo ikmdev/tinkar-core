@@ -169,6 +169,7 @@ pipeline {
                                 --batch-mode \
                                 -e \
                                 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
+                                -Dmaven.build.cache.enabled=false \
                                 -DskipTests \
                                 -DskipITs \
                                 -Dmaven.main.skip \
