@@ -17,7 +17,11 @@ package dev.ikm.tinkar.entity.graph;
 
 import dev.ikm.tinkar.common.id.VertexId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.component.*;
+import dev.ikm.tinkar.component.Concept;
+import dev.ikm.tinkar.component.FieldDataType;
+import dev.ikm.tinkar.component.Pattern;
+import dev.ikm.tinkar.component.Semantic;
+import dev.ikm.tinkar.component.Stamp;
 import dev.ikm.tinkar.component.graph.Vertex;
 import dev.ikm.tinkar.dto.StampDTO;
 import dev.ikm.tinkar.dto.StampDTOBuilder;
