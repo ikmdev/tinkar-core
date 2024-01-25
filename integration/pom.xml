@@ -20,6 +20,17 @@
 <!--        <skipTests>${skip.unit.tests}</skipTests>-->
         <skipITs>${skip.integration.tests}</skipITs>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>dev.ikm.tinkar.ext.owl</groupId>
+                <artifactId>owl-extension</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -75,6 +86,11 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>dev.ikm.tinkar.ext.owl</groupId>
+            <artifactId>owl-extension</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

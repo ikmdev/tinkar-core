@@ -15,16 +15,17 @@
  */
 package dev.ikm.tinkar.entity.graph.adaptor.axiom;
 
+import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.MutableSet;
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -111,6 +112,11 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
         @Override
         public ConceptFacade concept() {
             return property(TinkarTerm.CONCEPT_REFERENCE);
+        }
+
+        @Override
+        public String toString() {
+            return "ConceptAxiomAdaptor: " + PrimitiveData.textWithNid(concept().nid());
         }
     }
 
@@ -203,6 +209,12 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
                 throw new IllegalStateException("Should only be one child for restriction. Found: " + children);
             }
             return children.getOnly();
+        }
+
+        @Override
+        public String toString() {
+            return "RoleAxiomAdaptor: " + PrimitiveData.textWithNid(roleOperator().nid()) + " "
+                    + PrimitiveData.textWithNid(type().nid()) + " " + restriction().toString() ;
         }
     }
 

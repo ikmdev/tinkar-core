@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import dev.ikm.tinkar.collection.IntObjectMap;
+package dev.ikm.tinkar.collection;
 
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,7 +22,7 @@ import java.util.function.ObjIntConsumer;
 
 /**
  *
- * 
+ *
  * @param <T>
  */
 public class IntObjectMapImpl<T> extends ConcurrentHashMap<Integer, T> implements IntObjectMap<T> {
@@ -64,5 +64,5 @@ public class IntObjectMapImpl<T> extends ConcurrentHashMap<Integer, T> implement
     public T accumulateAndGet(int index, T newValue, BinaryOperator<T> accumulatorFunction) {
         return super.merge(index, newValue, accumulatorFunction);
     }
-    
+
 }

@@ -17,7 +17,9 @@ package dev.ikm.tinkar.ext.lang.owl;
 
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.ConceptEntity;
+import dev.ikm.tinkar.entity.ConceptEntityVersion;
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpressionBuilder;
@@ -34,9 +36,9 @@ import java.util.List;
 import java.util.Optional;
 
 import static java.io.StreamTokenizer.TT_EOF;
-import static java.io.StreamTokenizer.TT_WORD;
 import static java.io.StreamTokenizer.TT_EOL;
 import static java.io.StreamTokenizer.TT_NUMBER;
+import static java.io.StreamTokenizer.TT_WORD;
 
 public class SctOwlUtilities {
 
@@ -48,6 +50,7 @@ public class SctOwlUtilities {
     public static final String OBJECTINTERSECTIONOF = "objectintersectionof";
     public static final String OBJECTSOMEVALUESFROM = "objectsomevaluesfrom";
     public static final String EQUIVALENTCLASSES = "equivalentclasses";
+    public static final String DATAHASVALUE = "datahasvalue";
 
     public static StreamTokenizer getParser(String stringToParse) {
         BufferedReader sctOwlReader = new BufferedReader(new StringReader(stringToParse));
@@ -179,13 +182,13 @@ public class SctOwlUtilities {
             case TRANSITIVEOBJECTPROPERTY:
                 parseAndDiscardOpenParen(t, original);
                 parseAndDiscardColon(t, original);
-                parseAndDiscardWord(t,original);
+                parseAndDiscardWord(t, original);
                 andList.add(logicalExpressionBuilder.ConceptAxiom(TinkarTerm.TRANSITIVE_FEATURE));
                 break;
             case REFLEXIVEOBJECTPROPERTY:
                 parseAndDiscardOpenParen(t, original);
                 parseAndDiscardColon(t, original);
-                parseAndDiscardWord(t,original);
+                parseAndDiscardWord(t, original);
                 andList.add(logicalExpressionBuilder.ConceptAxiom(TinkarTerm.REFLEXIVE_FEATURE));
                 break;
             case SUBCLASSOF:
@@ -216,13 +219,13 @@ public class SctOwlUtilities {
                     case TRANSITIVEOBJECTPROPERTY:
                         parseAndDiscardOpenParen(t, original);
                         parseAndDiscardColon(t, original);
-                        parseAndDiscardWord(t,original);
+                        parseAndDiscardWord(t, original);
                         andList.add(logicalExpressionBuilder.ConceptAxiom(TinkarTerm.TRANSITIVE_FEATURE));
                         break;
                     case REFLEXIVEOBJECTPROPERTY:
                         parseAndDiscardOpenParen(t, original);
                         parseAndDiscardColon(t, original);
-                        parseAndDiscardWord(t,original);
+                        parseAndDiscardWord(t, original);
                         andList.add(logicalExpressionBuilder.ConceptAxiom(TinkarTerm.REFLEXIVE_FEATURE));
                         break;
                     case SUBCLASSOF:
@@ -241,9 +244,11 @@ public class SctOwlUtilities {
     private static void throwIllegalStateException(StreamTokenizer t, String original) {
         throwIllegalStateException(Optional.empty(), t, original);
     }
+
     private static void throwIllegalStateException(String prefix, StreamTokenizer t, String original) {
         throwIllegalStateException(Optional.of(prefix), t, original);
     }
+
     private static void throwIllegalStateException(Optional<String> prefix, StreamTokenizer t, String original) {
         StringBuilder sb = new StringBuilder();
         if (prefix.isPresent()) {
@@ -267,7 +272,7 @@ public class SctOwlUtilities {
                 sb.append(t.sval);
                 break;
             default:
-                for (char c: Character.toChars(t.ttype)) {
+                for (char c : Character.toChars(t.ttype)) {
                     sb.append(c);
                 }
         }
@@ -387,7 +392,7 @@ public class SctOwlUtilities {
                 = EntityService.get().getEntity(propertyImplicationNid);
         if (optionalPropertyImplication.isPresent()) {
             ConceptFacade propertyImplication = optionalPropertyImplication.get();
-            ConceptFacade[]  propertyPattern = new ConceptFacade[propertyPatternList.size()];
+            ConceptFacade[] propertyPattern = new ConceptFacade[propertyPatternList.size()];
             for (int i = 0; i < propertyPattern.length; i++) {
                 propertyPattern[i] = propertyPatternList.get(i);
             }
@@ -399,6 +404,7 @@ public class SctOwlUtilities {
         }
 
     }
+
     private static void parseToCloseParen(StreamTokenizer tokenizer) throws IOException {
 
         while (tokenizer.ttype != ')' && tokenizer.ttype != TT_EOF) {
@@ -406,7 +412,6 @@ public class SctOwlUtilities {
             tokenizer.nextToken();
         }
     }
-
 
 
     private static LogicalAxiom.Atom.Connective.And processSet(LogicalExpressionBuilder logicalExpressionBuilder, StreamTokenizer tokenizer, String original) throws IOException {
@@ -472,7 +477,7 @@ public class SctOwlUtilities {
     private static List<LogicalAxiom.Atom> processObjectIntersectionOf(LogicalExpressionBuilder logicalExpressionBuilder, StreamTokenizer tokenizer, String original) throws IOException {
         List<LogicalAxiom.Atom> assertionList = new ArrayList<>();
         tokenizer.nextToken();
-        while (tokenizer.ttype != ')' ) {
+        while (tokenizer.ttype != ')') {
             switch (tokenizer.ttype) {
                 case ':':
                     assertionList.add(getConceptAssertion(logicalExpressionBuilder, tokenizer, original));
@@ -485,7 +490,15 @@ public class SctOwlUtilities {
                         case OBJECTSOMEVALUESFROM:
                             assertionList.add(getSomeRole(logicalExpressionBuilder, tokenizer, original));
                             break;
+                        case DATAHASVALUE:
+                            while (tokenizer.ttype != ')') {
+                                tokenizer.nextToken();
+                            }
+                            break;
                     }
+                    break;
+                case TT_EOF:
+                    throwIllegalStateException("Illegal EOF", tokenizer, original);
                     break;
             }
 
@@ -549,31 +562,10 @@ public class SctOwlUtilities {
     }
 
 
-    public static  String logicalExpressionToSctOwlStr(LogicalExpression expression) {
+    public static String logicalExpressionToSctOwlStr(LogicalExpression expression) {
         throw new UnsupportedOperationException();
     }
 
-
-
-//        while (tokenizer.nextToken() != TT_EOF) {
-//            switch (tokenizer.ttype) {
-//                case '(':
-//                    System.out.println('(');
-//                    break;
-//                case ')':
-//                    System.out.println(')');
-//                    break;
-//                case ':':
-//                    System.out.println(':');
-//                    break;
-//                case TT_WORD:
-//                    System.out.println(tokenizer.sval);
-//                    break;
-//                default:
-//                    System.out.println("Unrecognized ttype: " + tokenizer.ttype);
-//            }
-//
-//        }
 
     private static void parseAndDiscardOpenParen(StreamTokenizer tokenizer, String original) throws IOException {
         if (tokenizer.nextToken() == '(') {
@@ -588,6 +580,7 @@ public class SctOwlUtilities {
         }
         throwIllegalStateException("Expecting ':'.", tokenizer, original);
     }
+
     private static void parseAndDiscardWord(StreamTokenizer tokenizer, String original) throws IOException {
         if (tokenizer.nextToken() == TT_WORD) {
             return;
