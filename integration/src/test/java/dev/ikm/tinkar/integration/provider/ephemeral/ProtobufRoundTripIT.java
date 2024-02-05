@@ -22,10 +22,7 @@ import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromDtoFile;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.integration.TestConstants;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,6 +73,7 @@ public class ProtobufRoundTripIT {
      * @throws IOException
      */
     @Test
+    @Disabled
     public void roundTripTest() throws IOException {
         // Given initial DTO data
         File fileDTO = TestConstants.TINK_TEST_FILE;

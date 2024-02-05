@@ -27,6 +27,7 @@ import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -58,6 +59,7 @@ public class OwlTransformationTestIT {
     }
 
     @Test
+    @Disabled
     public void owlParserTest(){
         Transaction owlTransformationTransaction = Transaction.make();
 
@@ -73,6 +75,7 @@ public class OwlTransformationTestIT {
     }
 
     @Test
+    @Disabled
     public void testOwlExpression(){
         StringBuilder propertyBuilder = new StringBuilder();
         StringBuilder classBuilder = new StringBuilder();

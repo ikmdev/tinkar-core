@@ -66,7 +66,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     /**
      * TODO elegant shutdown of entityStream and others
      */
-    protected EntityProvider() {
+    public EntityProvider() {
         LOG.info("Constructing EntityProvider");
         this.processor = new SimpleBroadcaster<>();
         // Ensure that the non-existent stamp is always available.
