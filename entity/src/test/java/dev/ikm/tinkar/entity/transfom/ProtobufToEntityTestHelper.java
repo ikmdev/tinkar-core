@@ -17,10 +17,7 @@ package dev.ikm.tinkar.entity.transfom;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.protobuf.ByteString;
-import com.google.protobuf.Timestamp;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityService;
@@ -33,7 +30,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 
 import static org.mockito.Mockito.mock;
@@ -92,33 +93,29 @@ public class ProtobufToEntityTestHelper {
         return createPBPublicId(concept.publicId());
     }
     public static dev.ikm.tinkar.schema.PublicId createPBPublicId(PublicId publicId){
-        ByteString byteString = ByteString.copyFrom(UuidUtil.getRawBytes(publicId.asUuidList().get(0)));
-        return dev.ikm.tinkar.schema.PublicId.newBuilder().addUuids(byteString).build();
+        return dev.ikm.tinkar.schema.PublicId.newBuilder().addUuids(publicId.asUuidList().get(0).toString()).build();
     }
 
     /**
-     * Returns the current epoch time in seconds as a long.
-     * @return long current epoch time in seconds.
+     * Returns the current epoch time in milliseconds as a long.
+     * @return long current epoch time in milliseconds.
      */
-    public static long nowEpochSeconds() {
-        return Instant.now().getEpochSecond();
+    public static long nowEpochMillis() {
+        return Instant.now().toEpochMilli();
     }
-    public static long nowEpochSeconds(long secondsToAdd) {
-        return Instant.now().plusSeconds(secondsToAdd).getEpochSecond();
-    }
-    public static Timestamp createTimestamp(long epochSeconds) {
-        return Timestamp.newBuilder().setSeconds(epochSeconds).build();
+    public static long nowEpochMillis(long millisToAdd) {
+        return Instant.now().plusMillis(millisToAdd).toEpochMilli();
     }
 
     /**
-     * Returns a Google's protocol buffers Timestamp object based on epoch time in seconds.
-     * @return
+     * Returns the current epoch time in milliseconds as a long
+     * @return long current epoch time in milliseconds.
      */
-    public static Timestamp nowTimestamp() {
-        return createTimestamp(nowEpochSeconds());
+    public static long nowTimestamp() {
+        return nowEpochMillis();
     }
-    public static Timestamp nowTimestamp(long secondsToAdd) {
-        return createTimestamp(nowEpochSeconds(secondsToAdd));
+    public static long nowTimestamp(long millisToAdd) {
+        return nowEpochMillis(millisToAdd);
     }
 
     /**
@@ -150,8 +147,8 @@ public class ProtobufToEntityTestHelper {
 
     /**
      * This can only be used when the Entity.nid(PublicId) is mocked.
-     * @param concept
-     * @return
+     * @param concept The concept the method will get the nid for
+     * @return int concept nid
      */
     public static int nid(Concept concept) {
         return Entity.nid(concept.publicId());
@@ -166,7 +163,7 @@ public class ProtobufToEntityTestHelper {
      * @param pathConcept
      * @return
      */
-    public static StampVersion createPbStampVersion(Timestamp expectedTime, Concept statusConcept, Concept authorConcept, Concept moduleConcept, Concept pathConcept) {
+    public static StampVersion createPbStampVersion(long expectedTime, Concept statusConcept, Concept authorConcept, Concept moduleConcept, Concept pathConcept) {
         StampVersion pbStampVersion = StampVersion.newBuilder()
                 .setStatusPublicId(createPBPublicId(statusConcept))
                 .setTime(expectedTime)
@@ -177,7 +174,7 @@ public class ProtobufToEntityTestHelper {
         return pbStampVersion;
     }
 
-    public static StampVersion createPbStampVersion(Map<String, Concept> conceptMap, Timestamp expectedTime) {
+    public static StampVersion createPbStampVersion(Map<String, Concept> conceptMap, long expectedTime) {
         StampVersion pbStampVersion = StampVersion.newBuilder()
                 .setStatusPublicId(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
                 .setTime(expectedTime)

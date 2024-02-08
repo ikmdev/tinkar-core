@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.entity.transfom;
 
-import com.google.protobuf.Timestamp;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.entity.StampEntity;
@@ -28,11 +27,21 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.AUTHOR_CONCEPT_NAME;
+import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.MODULE_CONCEPT_NAME;
+import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.PATH_CONCEPT_NAME;
+import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.STATUS_CONCEPT_NAME;
+import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.TEST_CONCEPT_NAME;
+import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.createPBPublicId;
+import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.createPbStampVersion;
+import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.nid;
+import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.nowTimestamp;
+import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.openSession;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -45,7 +54,7 @@ public class TestProtobufToEntityStampTransform {
     public void stampVersionTransformWithStatusTimeAuthorModulePathPresent() {
         openSession(this, (mockedEntityService, conceptMap) -> {
             // Given a PBStampVersion
-            Timestamp expectedTime = nowTimestamp();
+            long expectedTime = nowTimestamp();
             Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
             Concept statusConcept = conceptMap.get(STATUS_CONCEPT_NAME);
             Concept authorConcept = conceptMap.get(AUTHOR_CONCEPT_NAME);
@@ -60,7 +69,7 @@ public class TestProtobufToEntityStampTransform {
 
             // Then the resulting StampVersionRecord should match the original PBStampVersion
             assertEquals(nid(statusConcept), actualStampVersionRecord.stateNid(), "Status Nid did not match");
-            assertEquals(expectedTime.getSeconds(), TimeUnit.MILLISECONDS.toSeconds(actualStampVersionRecord.time()), "Time did not match");
+            assertEquals(expectedTime, actualStampVersionRecord.time(), "Time did not match");
             assertEquals(nid(authorConcept), actualStampVersionRecord.authorNid(), "Author Nid did not match");
             assertEquals(nid(moduleConcept), actualStampVersionRecord.moduleNid(), "Module Nid did not match");
             assertEquals(nid(pathConcept), actualStampVersionRecord.pathNid(), "Path Nid did not match");
@@ -79,7 +88,7 @@ public class TestProtobufToEntityStampTransform {
             Concept authorConcept = conceptMap.get(AUTHOR_CONCEPT_NAME);
             Concept moduleConcept = conceptMap.get(MODULE_CONCEPT_NAME);
             Concept pathConcept = conceptMap.get(PATH_CONCEPT_NAME);
-            Timestamp expectedTime = nowTimestamp();
+            long expectedTime = nowTimestamp();
 
             StampVersion pbStampVersion = createPbStampVersion(conceptMap, expectedTime);
             StampRecord mockStampRecord = mock(StampRecord.class);
@@ -89,7 +98,7 @@ public class TestProtobufToEntityStampTransform {
 
             // Then the resulting StampVersionRecord should match the original PBStampVersion
             assertEquals(nid(statusConcept), actualStampVersionRecord.stateNid(), "Status Nid did not match");
-            assertEquals(expectedTime.getSeconds(), TimeUnit.MILLISECONDS.toSeconds(actualStampVersionRecord.time()), "Time did not match");
+            assertEquals(expectedTime, actualStampVersionRecord.time(), "Time did not match");
             assertEquals(nid(authorConcept), actualStampVersionRecord.authorNid(), "Author Nid did not match");
             assertEquals(nid(moduleConcept), actualStampVersionRecord.moduleNid(), "Module Nid did not match");
             assertEquals(nid(pathConcept), actualStampVersionRecord.pathNid(), "Path Nid did not match");
@@ -231,7 +240,7 @@ public class TestProtobufToEntityStampTransform {
             Concept moduleConcept = conceptMap.get(MODULE_CONCEPT_NAME);
             Concept pathConcept = conceptMap.get(PATH_CONCEPT_NAME);
 
-            Timestamp expectedTime = nowTimestamp();
+            long expectedTime = nowTimestamp();
             StampVersion pbStampVersion = StampVersion.newBuilder()
                     .setStatusPublicId(createPBPublicId(statusConcept))
                     .setTime(expectedTime)
@@ -261,8 +270,8 @@ public class TestProtobufToEntityStampTransform {
         openSession(this, (mockedEntityService, conceptMap) -> {
             Consumer<StampEntity<StampEntityVersion>> stampConsumer = (c) -> { };
             // Given a PBStampChronology with two Stamp Versions present
-            Timestamp expectedTime1 = nowTimestamp();
-            Timestamp expectedTime2 = nowTimestamp(60);
+            long expectedTime1 = nowTimestamp();
+            long expectedTime2 = nowTimestamp(60 * 1000);
             Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
             Concept statusConcept = conceptMap.get(STATUS_CONCEPT_NAME);
             Concept authorConcept = conceptMap.get(AUTHOR_CONCEPT_NAME);
@@ -298,12 +307,12 @@ public class TestProtobufToEntityStampTransform {
             assertTrue(PublicId.equals(testConcept.publicId(), actualStampChronology.publicId()), "Public Id's of the stamp chronology do not match.");
             assertEquals(2, actualStampChronology.versions().size(), "Versions are empty");
             assertEquals(nid(statusConcept), actualStampChronology.versions().get(0).stateNid(), "Status Nid did not match");
-            assertEquals(expectedTime1.getSeconds(), TimeUnit.MILLISECONDS.toSeconds(actualStampChronology.versions().get(0).time()), "Time did not match");
+            assertEquals(expectedTime1, actualStampChronology.versions().get(0).time(), "Time did not match");
             assertEquals(nid(authorConcept), actualStampChronology.versions().get(0).authorNid(), "Author Nid did not match");
             assertEquals(nid(moduleConcept), actualStampChronology.versions().get(0).moduleNid(), "Module Nid did not match");
             assertEquals(nid(pathConcept), actualStampChronology.versions().get(0).pathNid(), "Path Nid did not match");
             assertEquals(nid(statusConcept), actualStampChronology.versions().get(1).stateNid(), "Status Nid did not match");
-            assertEquals(expectedTime2.getSeconds(), TimeUnit.MILLISECONDS.toSeconds(actualStampChronology.versions().get(1).time()), "Time did not match");
+            assertEquals(expectedTime2, actualStampChronology.versions().get(1).time(), "Time did not match");
             assertEquals(nid(authorConcept), actualStampChronology.versions().get(1).authorNid(), "Author Nid did not match");
             assertEquals(nid(moduleConcept), actualStampChronology.versions().get(1).moduleNid(), "Module Nid did not match");
             assertEquals(nid(pathConcept), actualStampChronology.versions().get(1).pathNid(), "Path Nid did not match");
