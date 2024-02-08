@@ -16,10 +16,10 @@
 package dev.ikm.tinkar.entity.transfom;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.Timestamp;
+import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.PublicIdList;
-import dev.ikm.tinkar.common.id.*;
-import dev.ikm.tinkar.common.util.uuid.UuidUtil;
+import dev.ikm.tinkar.common.id.VertexId;
 import dev.ikm.tinkar.component.Component;
 import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.component.graph.DiGraph;
@@ -27,29 +27,45 @@ import dev.ikm.tinkar.component.graph.DiTree;
 import dev.ikm.tinkar.component.graph.Vertex;
 import dev.ikm.tinkar.component.location.PlanarPoint;
 import dev.ikm.tinkar.component.location.SpatialPoint;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.ConceptEntity;
+import dev.ikm.tinkar.entity.ConceptEntityVersion;
+import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.FieldDefinitionRecord;
+import dev.ikm.tinkar.entity.PatternEntity;
+import dev.ikm.tinkar.entity.PatternEntityVersion;
+import dev.ikm.tinkar.entity.SemanticEntity;
+import dev.ikm.tinkar.entity.SemanticEntityVersion;
+import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.StampVersionRecord;
 import dev.ikm.tinkar.entity.graph.DiGraphEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
+import dev.ikm.tinkar.schema.ConceptChronology;
+import dev.ikm.tinkar.schema.ConceptVersion;
 import dev.ikm.tinkar.schema.Field;
+import dev.ikm.tinkar.schema.FieldDefinition;
+import dev.ikm.tinkar.schema.IntToIntMap;
+import dev.ikm.tinkar.schema.IntToMultipleIntMap;
+import dev.ikm.tinkar.schema.PatternChronology;
+import dev.ikm.tinkar.schema.PatternVersion;
 import dev.ikm.tinkar.schema.PublicId;
+import dev.ikm.tinkar.schema.SemanticChronology;
+import dev.ikm.tinkar.schema.SemanticVersion;
+import dev.ikm.tinkar.schema.StampChronology;
 import dev.ikm.tinkar.schema.StampVersion;
-import dev.ikm.tinkar.schema.*;
+import dev.ikm.tinkar.schema.TinkarMsg;
+import dev.ikm.tinkar.schema.VertexUUID;
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.map.primitive.ImmutableIntIntMap;
 import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Flow;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.UUID;
 
 /**
  * The entityTransformer class is responsible for transformer a entity of a certain data type to a
@@ -57,13 +73,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class EntityToTinkarSchemaTransformer {
 
-    private final AtomicInteger conceptCount = new AtomicInteger();
-    private final AtomicInteger semanticCount = new AtomicInteger();
-    private final AtomicInteger patternCount = new AtomicInteger();
-
-    private final Logger LOG = LoggerFactory.getLogger(EntityToTinkarSchemaTransformer.class);
     private static EntityToTinkarSchemaTransformer INSTANCE;
-    private List<Flow.Subscriber<? super TinkarMsg>> subscribers = new ArrayList<>();
 
     private EntityToTinkarSchemaTransformer(){
     }
@@ -81,7 +91,7 @@ public class EntityToTinkarSchemaTransformer {
 
     /**
      * This method takes in an entity and is matched on its entity type based on the type of message. It is then transformed into a PB message.
-     * @param entity
+     * @param entity to be transformed to PB message
      * @return a Protobuf message of entity data type.
      */
     public TinkarMsg transform(Entity entity){
@@ -118,21 +128,13 @@ public class EntityToTinkarSchemaTransformer {
         if(semanticEntity.versions().size() == 0){
             throw new RuntimeException("Exception thrown, Semantic Chronology can't contain zero versions");
         }
-        if (semanticEntity.referencedComponent() != null) {
-            return TinkarMsg.newBuilder()
-                    .setSemanticChronology(SemanticChronology.newBuilder()
-                            .setPublicId(createPBPublicId(semanticEntity.publicId()))
-                            .setReferencedComponentPublicId(createPBPublicId(semanticEntity.referencedComponent().publicId()))
-                            .setPatternForSemanticPublicId(createPBPublicId(semanticEntity.pattern().publicId()))
-                            .addAllSemanticVersions(createPBSemanticVersions(semanticEntity.versions()))
-                            .build())
-                    .build();
-
+        if(semanticEntity.referencedComponent() == null){
+            throw new RuntimeException("Exception thrown, Semantic Chronology " + semanticEntity + " has null referenced component");
         }
         return TinkarMsg.newBuilder()
                 .setSemanticChronology(SemanticChronology.newBuilder()
                         .setPublicId(createPBPublicId(semanticEntity.publicId()))
-                        .setReferencedComponentPublicId(createPBPublicId(PublicIds.of(0, 0)))
+                        .setReferencedComponentPublicId(createPBPublicId(semanticEntity.referencedComponent().publicId()))
                         .setPatternForSemanticPublicId(createPBPublicId(semanticEntity.pattern().publicId()))
                         .addAllSemanticVersions(createPBSemanticVersions(semanticEntity.versions()))
                         .build())
@@ -184,10 +186,10 @@ public class EntityToTinkarSchemaTransformer {
     protected StampVersion createPBStampVersion(StampVersionRecord stampVersionRecord){
         return StampVersion.newBuilder()
                     .setStatusPublicId(createPBPublicId(stampVersionRecord.state().publicId()))
+                    .setTime(stampVersionRecord.time())
                     .setAuthorPublicId(createPBPublicId(stampVersionRecord.author().publicId()))
                     .setModulePublicId(createPBPublicId(stampVersionRecord.module().publicId()))
                     .setPathPublicId(createPBPublicId(stampVersionRecord.path().publicId()))
-                    .setTime(createTimestamp(stampVersionRecord.time()))
                     .build();
     }
 
@@ -260,7 +262,7 @@ public class EntityToTinkarSchemaTransformer {
         return Field.newBuilder().setStringValue(value).build();
     }
     protected Field toPBInstant(Instant value) {
-        return Field.newBuilder().setTimeValue(createTimestamp(value.getEpochSecond())).build();
+        return Field.newBuilder().setTimeValue(value.toEpochMilli()).build();
     }
     protected Field toPBPublicIdList(IntIdList value) {
         //TODO: Figure out what are the Int ID's getting written
@@ -307,20 +309,13 @@ public class EntityToTinkarSchemaTransformer {
                 .build();
     }
 
-    protected Timestamp createTimestamp(long time){
-        return Timestamp.newBuilder()
-                .setSeconds(TimeUnit.MILLISECONDS.toSeconds(time)) //This is in milliseconds from System.time and needs to be converted to seconds
-                .build();
-    }
-
     protected PublicId createPBPublicId(dev.ikm.tinkar.common.id.PublicId publicId){
         if (publicId.uuidCount() == 0){
             throw new RuntimeException("Exception thrown, empty Public ID is present [entity transformer].");
         }
         return PublicId.newBuilder()
                 .addAllUuids(publicId.asUuidList().stream()
-                        .map(UuidUtil::getRawBytes)
-                        .map(ByteString::copyFrom)
+                        .map(UUID::toString)
                         .toList())
                 .build();
     }
@@ -400,7 +395,7 @@ public class EntityToTinkarSchemaTransformer {
 
     protected VertexUUID createPBVertexUUID(dev.ikm.tinkar.common.id.VertexId vertexId){
         return VertexUUID.newBuilder()
-                .setUuid(ByteString.copyFrom(dev.ikm.tinkar.common.id.PublicId.idString(vertexId.asUuidArray()), StandardCharsets.UTF_8))
+                .setUuid(vertexId.asUuid().toString())
                 .build();
     }
     protected List<IntToIntMap> createPBIntToIntMaps(ImmutableIntIntMap intToIntMap) {
@@ -416,7 +411,7 @@ public class EntityToTinkarSchemaTransformer {
         List<IntToMultipleIntMap> pbIntToMultipleIntMaps = new ArrayList<>();
         intToMultipleIntMap.keySet().forEach(source -> {
             final ArrayList<Integer> targets = new ArrayList<>();
-            ((ImmutableIntList) intToMultipleIntMap.get(source)).forEach(target -> targets.add(target));
+            ((ImmutableIntList) intToMultipleIntMap.get(source)).forEach(targets::add);
             pbIntToMultipleIntMaps.add(IntToMultipleIntMap.newBuilder()
                     .setSource(source)
                     .addAllTargets(targets)

@@ -166,7 +166,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<Integer> {
                     } else {
                         nullEntities.incrementAndGet();
                         if (verboseErrors.get() < VERBOSE_ERROR_COUNT) {
-                            LOG.warn("No pattern entity for: " + patternEntity);
+                            LOG.warn("No pattern entity for: " + patternNid);
                             verboseErrors.incrementAndGet();
                         }
                     }

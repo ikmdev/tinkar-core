@@ -15,9 +15,15 @@
  */
 package dev.ikm.tinkar.entity.load;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import dev.ikm.tinkar.common.service.TrackingCallable;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.ConceptEntity;
+import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityVersion;
+import dev.ikm.tinkar.entity.PatternEntity;
+import dev.ikm.tinkar.entity.SemanticEntity;
+import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.StampEntityVersion;
 import dev.ikm.tinkar.entity.transfom.TinkarSchemaToEntityTransformer;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import org.slf4j.Logger;
@@ -26,7 +32,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.concurrent.Semaphore;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
@@ -38,10 +44,8 @@ import java.util.zip.ZipInputStream;
 public class LoadEntitiesFromProtobufFile extends TrackingCallable<Integer> {
 
     protected static final Logger LOG = LoggerFactory.getLogger(LoadEntitiesFromProtobufFile.class.getName());
-    private static final int MAX_TASK_COUNT = Runtime.getRuntime().availableProcessors() * 2;
     final File importFile;
     static final AtomicInteger importCount = new AtomicInteger();
-    final Semaphore taskSemaphore = new Semaphore(MAX_TASK_COUNT, false);
     final AtomicInteger exceptionCount = new AtomicInteger();
     final AtomicInteger importConceptCount = new AtomicInteger();
     final AtomicInteger importSemanticCount = new AtomicInteger();
@@ -56,7 +60,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<Integer> {
 
     /**
      * This purpose of this method is to process all protobuf messages and call the entity transformer.
-     * @return a Integer count of all entities/protobuf messages loaded/exported
+     * @return Integer count of all entities/protobuf messages loaded/exported
      * @throws IOException
      */
     public Integer compute() throws IOException {
@@ -73,8 +77,12 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<Integer> {
                 } catch (Throwable e) {
                     // output entities with issues
                     StringBuilder sb = new StringBuilder();
-                    sb.append("Error persisting entity types: " + entity.entityDataType() + " ");
-                    entity.publicId().asUuidList().forEach(c -> sb.append(" " + c.toString() + " "));
+                    sb.append("Error persisting entity types: ")
+                            .append(entity.entityDataType())
+                            .append(" ");
+                    entity.publicId().asUuidList().forEach(c -> sb.append(" ")
+                            .append(c.toString())
+                            .append(" "));
                     LOG.error(sb.toString());
                     e.printStackTrace();
                 }
@@ -85,7 +93,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<Integer> {
                 updateSTAMPCount();
             };
 
-            ZipEntry zipEntry = zis.getNextEntry();
+            ZipEntry zipEntry = Objects.requireNonNull(zis.getNextEntry());
             LOG.info("The zip entry name: " + zipEntry.getName());
             LOG.info("The zip entry size: " + zipEntry.getSize());
             TinkarSchemaToEntityTransformer transformer = TinkarSchemaToEntityTransformer.getInstance();
@@ -103,7 +111,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<Integer> {
                 // advance next zip entry
                 zipEntry = zis.getNextEntry();
             }
-        } catch (IllegalStateException | InvalidProtocolBufferException e) {
+        } catch (IllegalStateException e) {
             e.printStackTrace();
             exceptionCount.incrementAndGet();
         } catch (IOException e) {

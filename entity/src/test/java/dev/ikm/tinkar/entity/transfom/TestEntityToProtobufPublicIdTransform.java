@@ -15,9 +15,7 @@
  */
 package dev.ikm.tinkar.entity.transfom;
 
-import com.google.protobuf.ByteString;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.component.Concept;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -57,8 +55,7 @@ public class TestEntityToProtobufPublicIdTransform {
             Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
             PublicId actualPublicId = testConcept.publicId();
             //Creating a Protobuf with the Expected value
-            ByteString byteString = ByteString.copyFrom(UuidUtil.getRawBytes(actualPublicId.asUuidList().get(0)));
-            dev.ikm.tinkar.schema.PublicId expectedPBPublicId = dev.ikm.tinkar.schema.PublicId.newBuilder().addUuids(byteString).build();
+            dev.ikm.tinkar.schema.PublicId expectedPBPublicId = dev.ikm.tinkar.schema.PublicId.newBuilder().addUuids(actualPublicId.asUuidList().get(0).toString()).build();
 
             // When I try to transform it into a public ID protobuf message
             dev.ikm.tinkar.schema.PublicId actualPBPublicId = EntityToTinkarSchemaTransformer.getInstance().createPBPublicId(actualPublicId);

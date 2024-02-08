@@ -15,10 +15,8 @@
  */
 package dev.ikm.tinkar.entity.transfom;
 
-import com.google.protobuf.ByteString;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
-import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.component.Concept;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -59,8 +57,7 @@ public class TestProtobufToEntityPublicIdTransform {
             // Given a PBPublic ID with one UUID
             Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
             PublicId expectedPublicId = testConcept.publicId();
-            ByteString byteString = ByteString.copyFrom(UuidUtil.getRawBytes(expectedPublicId.asUuidList().get(0)));
-            dev.ikm.tinkar.schema.PublicId  pbPublicId = dev.ikm.tinkar.schema.PublicId.newBuilder().addUuids(byteString).build();
+            dev.ikm.tinkar.schema.PublicId  pbPublicId = dev.ikm.tinkar.schema.PublicId.newBuilder().addUuids(expectedPublicId.asUuidList().get(0).toString()).build();
 
             // When I try to transform it into a public ID protobuf message
             PublicId actualPublicId = TinkarSchemaToEntityTransformer.getInstance().transformPublicId(pbPublicId);
@@ -85,9 +82,10 @@ public class TestProtobufToEntityPublicIdTransform {
             PublicId actualOnePublicId = testConcept.publicId();
             PublicId actualTwoPublicId = testConcept.publicId();
             PublicId expectedCombinedSource = PublicIds.of(actualOnePublicId.asUuidList().get(0), actualTwoPublicId.asUuidList().get(0));
-            ByteString byteStringOne = ByteString.copyFrom(UuidUtil.getRawBytes(actualOnePublicId.asUuidList().get(0)));
-            ByteString byteStringTwo = ByteString.copyFrom(UuidUtil.getRawBytes(actualTwoPublicId.asUuidList().get(0)));
-            dev.ikm.tinkar.schema.PublicId  pbPublicId = dev.ikm.tinkar.schema.PublicId .newBuilder().addUuids(byteStringOne).addUuids(byteStringTwo).build();
+            dev.ikm.tinkar.schema.PublicId  pbPublicId = dev.ikm.tinkar.schema.PublicId .newBuilder()
+                    .addUuids(actualOnePublicId.asUuidList().get(0).toString())
+                    .addUuids(actualTwoPublicId.asUuidList().get(0).toString())
+                    .build();
 
             // When I try to transform them into a public ID protobuf message
             PublicId actualPublicId = TinkarSchemaToEntityTransformer.getInstance().transformPublicId(pbPublicId);
