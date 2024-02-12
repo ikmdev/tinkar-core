@@ -176,6 +176,7 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
                     if (!owlExpression.toLowerCase().contains("objectpropertychain")) {
                         //TODO ask Michael Lawley if this is ok...
                         String tempExpression = owlExpression.toLowerCase().replace("subobjectpropertyof", " subclassof");
+                        tempExpression = tempExpression.toLowerCase().replace("subdatapropertyof", " subclassof");
                         classBuilder.append(" ").append(tempExpression);
                     }
                 } else {
