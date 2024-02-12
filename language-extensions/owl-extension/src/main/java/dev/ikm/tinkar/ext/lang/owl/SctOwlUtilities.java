@@ -43,9 +43,13 @@ import static java.io.StreamTokenizer.TT_WORD;
 public class SctOwlUtilities {
 
     public static final String TRANSITIVEOBJECTPROPERTY = "transitiveobjectproperty";
+    public static final String PREFIX ="prefix";
+    public static final String ONTOLOGY ="ontology";
     public static final String REFLEXIVEOBJECTPROPERTY = "reflexiveobjectproperty";
     public static final String SUBCLASSOF = "subclassof";
     public static final String SUBOBJECTPROPERTYOF = "subobjectpropertyof";
+
+    public static final String SUBDATAPROPERTYOF = "subdatapropertyof";
     public static final String OBJECTPROPERTYCHAIN = "objectpropertychain";
     public static final String OBJECTINTERSECTIONOF = "objectintersectionof";
     public static final String OBJECTSOMEVALUESFROM = "objectsomevaluesfrom";
@@ -88,7 +92,10 @@ public class SctOwlUtilities {
                 case SUBCLASSOF:
                     leb.NecessarySet(processSet(leb, tokenizer, originalExpression));
                     break;
-
+                case PREFIX:
+                case ONTOLOGY:
+                    parseToCloseParen(tokenizer);
+                    break;
                 case TRANSITIVEOBJECTPROPERTY:
                 case REFLEXIVEOBJECTPROPERTY:
                     leb.NecessarySet(processObjectProperties(leb, tokenizer, originalExpression));
@@ -122,6 +129,7 @@ public class SctOwlUtilities {
             switch (tokenizer.sval.toLowerCase()) {
 
                 case SUBOBJECTPROPERTYOF: // TODO: Temporary addition, pending discussion with Michael Lawley
+                case SUBDATAPROPERTYOF:
                 case REFLEXIVEOBJECTPROPERTY:
                 case TRANSITIVEOBJECTPROPERTY:
                     tokenizer.pushBack();
@@ -287,6 +295,7 @@ public class SctOwlUtilities {
             switch (tokenizer.ttype) {
                 case TT_WORD:
                     switch (tokenizer.sval.toLowerCase()) {
+                        case SUBDATAPROPERTYOF:
                         case SUBOBJECTPROPERTYOF:
                             // SubObjectPropertyOf(ObjectPropertyChain(:127489000 :738774007) :127489000)
                             // SubPropertyOf( ObjectPropertyChain( :locatedIn :partOf ) :locatedIn )

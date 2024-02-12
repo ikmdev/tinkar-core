@@ -86,6 +86,7 @@ public class OwlTransformationTestIT {
                 propertyBuilder.append(" ").append(owlExpression);
                 if (!owlExpression.toLowerCase().contains("objectpropertychain")) {
                     String tempExpression = owlExpression.toLowerCase().replace("subobjectpropertyof", " subclassof");
+                    tempExpression = tempExpression.toLowerCase().replace("subdatapropertyof", " subclassof");
                     classBuilder.append(" ").append(tempExpression);
                 }
             } else {
@@ -119,11 +120,13 @@ public class OwlTransformationTestIT {
             "ObjectSomeValuesFrom(:762949000 :386897000) DataHasValue(:1142135004 \"60\"^^xsd:decimal) DataHasValue(:1142136003 \"1\"^^xsd:decimal)))" +
             "ObjectSomeValuesFrom(:609096000 ObjectIntersectionOf(ObjectSomeValuesFrom(:732943007 :386898005) ObjectSomeValuesFrom(:732945000 :258684004) ObjectSomeValuesFrom(:732947008 :732936001)" +
             "ObjectSomeValuesFrom(:762949000 :386898005) DataHasValue(:1142135004 \"100\"^^xsd:decimal) DataHasValue(:1142136003 \"1\"^^xsd:decimal))))";
+        String inputString4 = "SubClassOf(:1222765007 ObjectIntersectionOf(:1222592004 :1222593009 :1222594003))";
 
         List<String> owlExpressionsToProcess = new ArrayList<>();
         owlExpressionsToProcess.add(inputString1);
         owlExpressionsToProcess.add(inputString2);
         owlExpressionsToProcess.add(inputString3);
+        owlExpressionsToProcess.add(inputString4);
         return owlExpressionsToProcess;
     }
 }
