@@ -119,8 +119,8 @@ public class LogicalExpressionBuilder {
     }
     public LogicalAxiom.LogicalSet.PropertySet PropertySet(UUID vertexUuid, LogicalAxiom.Atom... elements) {
         EntityVertex propertySet = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.PROPERTY_SET.nid);
-        builder.addEdge(propertySet.vertexIndex(), rootIndex);
         builder.addVertex(propertySet);
+        builder.addEdge(propertySet.vertexIndex(), rootIndex);
         for (LogicalAxiom.Atom element : elements) {
             builder.addEdge(element.vertexIndex(), propertySet.vertexIndex());
         }
