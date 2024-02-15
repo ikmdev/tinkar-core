@@ -64,7 +64,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<Integer> {
         AtomicInteger verboseErrors = new AtomicInteger(0);
 
         AtomicInteger stampCount = new AtomicInteger(0);
-        PrimitiveData.get().forEachConceptNid(nid -> stampCount.incrementAndGet());
+        PrimitiveData.get().forEachStampNid(nid -> stampCount.incrementAndGet());
         LOG.info("Found " + stampCount.get() + " STAMP nids.");
 
         AtomicInteger conceptCount = new AtomicInteger(0);
@@ -186,6 +186,6 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<Integer> {
             e.printStackTrace();
         }
 
-        return conceptCount.get() + patternCount.get() + semanticCount.get();
+        return conceptCount.get() + patternCount.get() + semanticCount.get() + stampCount.get();
     }
 }
