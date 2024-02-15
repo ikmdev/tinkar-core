@@ -75,12 +75,12 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
     );
 
     private final int destinationPatternNid;
-    private final int authorNid = TinkarTerm.USER.nid();
-    private final int developmentPathNid = TinkarTerm.DEVELOPMENT_PATH.nid();
-
     private final Semaphore writeSemaphore;
     private final List<TransformationGroup> transformationRecords;
     private Transaction transaction;
+    private int authorNid = TinkarTerm.USER.nid();
+    private int moduleNid = TinkarTerm.SOLOR_OVERLAY_MODULE.nid();
+    private int pathNid = TinkarTerm.DEVELOPMENT_PATH.nid();
 
     private static final AtomicInteger foundWatchCount = new AtomicInteger(0);
 
@@ -100,6 +100,15 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
         updateTitle("EL++ OWL transformation");
         updateMessage("");
         addToTotalWork(transformationRecords.size());
+    }
+
+    public OwlToLogicAxiomTransformerAndWriter(Transaction transaction, List<TransformationGroup> transformationRecords,
+                                               int destinationPatternNid, Semaphore writeSemaphore,
+                                               int authorNid, int moduleNid, int pathNid) {
+        this(transaction, transformationRecords, destinationPatternNid, writeSemaphore);
+        this.authorNid = authorNid;
+        this.moduleNid = moduleNid;
+        this.pathNid = pathNid;
     }
 
     @Override
@@ -195,7 +204,7 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
             addLogicalExpression(transaction, conceptNid,
                     expression,
                     stampPosition.time(),
-                    TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), stampCoordinateForPosition);
+                    stampCoordinateForPosition);
         }
 
     }
@@ -206,13 +215,11 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
      * @param conceptNid        the conceptNid
      * @param logicalExpression the logical expression
      * @param time              the time
-     * @param moduleNid         the module
      * @param stampCoordinate   for determining current version if a graph already
      */
     private void addLogicalExpression(Transaction transaction, int conceptNid,
                                       LogicalExpression logicalExpression,
-                                      long time,
-                                      int moduleNid, StampCoordinateRecord stampCoordinate) throws Exception {
+                                      long time, StampCoordinateRecord stampCoordinate) throws Exception {
 
         // See if a semantic already exists in this pattern referencing this concept...
         int[] semanticNidsForComponentOfPattern = EntityService.get().semanticNidsForComponentOfPattern(conceptNid, destinationPatternNid);
@@ -232,11 +239,11 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
                 IsomorphicResults isomorphicResults = isomorphicResultsComputer.call();
 
                 if (!isomorphicResults.equivalent()) {
-                    addNewVersion(transaction, logicalExpression, time, moduleNid, SemanticRecordBuilder.builder(existingSemantic));
+                    addNewVersion(transaction, logicalExpression, time, SemanticRecordBuilder.builder(existingSemantic));
                 }
             } else {
                 // Latest is inactive or non-existent, need to add new.
-                addNewVersion(transaction, logicalExpression, time, moduleNid, SemanticRecordBuilder.builder(existingSemantic));
+                addNewVersion(transaction, logicalExpression, time, SemanticRecordBuilder.builder(existingSemantic));
             }
         } else {
 // Create UUID from seed and assign SemanticBuilder the value
@@ -250,12 +257,12 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
             newSemanticBuilder.referencedComponentNid(conceptNid);
             newSemanticBuilder.nid(PrimitiveData.nid(generartedSemanticUuid));
 
-            addNewVersion(transaction, logicalExpression, time, moduleNid, newSemanticBuilder);
+            addNewVersion(transaction, logicalExpression, time, newSemanticBuilder);
         }
     }
 
     private void addNewVersion(Transaction transaction, LogicalExpression logicalExpression,
-                               long time, int moduleNid, SemanticRecordBuilder newSemanticBuilder) {
+                               long time, SemanticRecordBuilder newSemanticBuilder) {
 
         ImmutableList<SemanticVersionRecord> oldSemanticVersions = newSemanticBuilder.versions();
         RecordListBuilder<SemanticVersionRecord> versionListBuilder = new RecordListBuilder<>();
@@ -270,7 +277,7 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
 
         SemanticVersionRecordBuilder semanticVersionBuilder = SemanticVersionRecordBuilder.builder();
         semanticVersionBuilder.fieldValues(Lists.immutable.of(logicalExpression.sourceGraph()));
-        StampEntity transactionStamp = transaction.getStamp(State.ACTIVE, time, authorNid, moduleNid, developmentPathNid);
+        StampEntity transactionStamp = transaction.getStamp(State.ACTIVE, time, authorNid, moduleNid, pathNid);
         semanticVersionBuilder.stampNid(transactionStamp.nid());
         semanticVersionBuilder.chronology(newSemantic);
         versionListBuilder.add(semanticVersionBuilder.build());
