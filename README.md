@@ -35,4 +35,4 @@ mvn clean install
 ## Issues and Contributions
 Technical and non-technical issues can be reported to the [Issue Tracker](https://github.com/ikmdev/tinkar-core/issues).
 
-Contributions can be submitted via pull requests. Please check the contribution guide for more details.
+Contributions can be submitted via pull requests. Please check the [contribution guide](doc/how-to-contribute.md) for more details.
