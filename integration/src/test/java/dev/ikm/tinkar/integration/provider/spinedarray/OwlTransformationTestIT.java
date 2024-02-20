@@ -19,50 +19,81 @@ import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.ServiceKeys;
 import dev.ikm.tinkar.common.service.ServiceProperties;
+import dev.ikm.tinkar.entity.ConceptRecord;
+import dev.ikm.tinkar.entity.ConceptRecordBuilder;
+import dev.ikm.tinkar.entity.ConceptVersionRecord;
+import dev.ikm.tinkar.entity.ConceptVersionRecordBuilder;
+import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityVersion;
+import dev.ikm.tinkar.entity.RecordListBuilder;
+import dev.ikm.tinkar.entity.SemanticRecord;
+import dev.ikm.tinkar.entity.SemanticRecordBuilder;
+import dev.ikm.tinkar.entity.SemanticVersionRecord;
+import dev.ikm.tinkar.entity.SemanticVersionRecordBuilder;
+import dev.ikm.tinkar.entity.StampRecord;
+import dev.ikm.tinkar.entity.StampRecordBuilder;
+import dev.ikm.tinkar.entity.StampVersionRecord;
+import dev.ikm.tinkar.entity.StampVersionRecordBuilder;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
+import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.ext.lang.owl.Rf2OwlToLogicAxiomTransformer;
 import dev.ikm.tinkar.ext.lang.owl.SctOwlUtilities;
+import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.MutableList;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class OwlTransformationTestIT {
+    private static final Logger LOG = LoggerFactory.getLogger(OwlTransformationTestIT.class);
+    public static final EntityProxy.Pattern IDENTIFIER_PATTERN = EntityProxy.Pattern.make("Identifier Pattern", UUID.fromString("5d60e14b-c410-5172-9559-3c4253278ae2"));
     public static final EntityProxy.Pattern AXIOM_SYNTAX_PATTERN = EntityProxy.Pattern.make("Axiom Syntax Pattern", UUID.fromString("c0ca180b-aae2-5fa1-9ab7-4a24f2dfe16b"));
-    File dataStoreFile;
-    String controllerName;
+    private static final File SAP_OWLTRANSFORMATIONTESTIT_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(OwlTransformationTestIT.class);
+    private static final List<EntityProxy.Concept> testConceptList = Arrays.asList(
+            EntityProxy.Concept.make("TESTCONCEPTONE", UUID.randomUUID()),
+            EntityProxy.Concept.make("TESTCONCEPTTWO", UUID.randomUUID()),
+            EntityProxy.Concept.make("TESTCONCEPTTHREE", UUID.randomUUID()));
+
     @BeforeEach
     public void startup(){
-      dataStoreFile = new File(System.getProperty("user.home") + "/Solor/snomedct-data");
-        controllerName = "Open SpinedArrayStore";
-
         CachingService.clearAll();
-        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, dataStoreFile);
-        PrimitiveData.selectControllerByName(controllerName);
+        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, SAP_OWLTRANSFORMATIONTESTIT_DATASTORE_ROOT);
+        PrimitiveData.selectControllerByName(TestConstants.EPHEMERAL_STORE_NAME);
         PrimitiveData.start();
-
+        loadStarterData(); // Load starter data from protobuf resource
+        generateTestAxiomData(); // Write minimal axiom test data
     }
+
     @AfterEach
     public  void breakdown(){
         PrimitiveData.stop();
     }
 
     @Test
-    @Disabled
-    public void owlParserTest(){
+    @Disabled("Requires tinkar-starter-data.pb.zip test resource")
+    public void owlTransformationWithDefaults(){
         Transaction owlTransformationTransaction = Transaction.make();
-
         try {
             new Rf2OwlToLogicAxiomTransformer(
                     owlTransformationTransaction,
@@ -71,15 +102,62 @@ public class OwlTransformationTestIT {
         } catch (Exception e){
             throw new RuntimeException(e);
         }
+        AtomicInteger testCount = new AtomicInteger();
+        Arrays.stream(EntityService.get()
+                .semanticNidsOfPattern(
+                    TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid())).forEach(definitionNid -> {
+                        EntityVersion version = EntityService.get().getEntityFast(definitionNid).versions().get(0);
 
+                        if (!version.path().equals(TinkarTerm.PRIMORDIAL_PATH)) {
+                            testCount.incrementAndGet();
+                            assertEquals(version.author(), TinkarTerm.USER);
+                            assertEquals(version.module(), TinkarTerm.SOLOR_OVERLAY_MODULE);
+                            assertEquals(version.path(), TinkarTerm.DEVELOPMENT_PATH);
+                        }
+                    });
+        assertEquals(testCount.get(), testConceptList.size());
+        LOG.info("Completed validation of " + testCount.get() + " axioms with default coordinates");
     }
 
     @Test
-    @Disabled
+    @Disabled("Requires tinkar-starter-data.pb.zip test resource")
+    public void owlTransformationWithoutDefaults(){
+        Transaction owlTransformationTransaction = Transaction.make();
+        try {
+            new Rf2OwlToLogicAxiomTransformer(
+                    owlTransformationTransaction,
+                    AXIOM_SYNTAX_PATTERN,
+                    TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+                    TinkarTerm.KOMET_USER.nid(),
+                    TinkarTerm.MODULE_FOR_USER.nid(),
+                    TinkarTerm.PATH_FOR_USER.nid()).call();
+        } catch (Exception e){
+            throw new RuntimeException(e);
+        }
+
+        AtomicInteger testCount = new AtomicInteger();
+        Arrays.stream(
+            EntityService.get().semanticNidsOfPattern(TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid())
+        ).forEach(definitionNid -> {
+            EntityVersion version = EntityService.get().getEntityFast(definitionNid).versions().get(0);
+
+            if (!version.path().equals(TinkarTerm.PRIMORDIAL_PATH)) {
+                testCount.incrementAndGet();
+                assertEquals(version.author(), TinkarTerm.KOMET_USER);
+                assertEquals(version.module(), TinkarTerm.MODULE_FOR_USER);
+                assertEquals(version.path(), TinkarTerm.PATH_FOR_USER);
+            }
+        });
+        assertEquals(testCount.get(), testConceptList.size());
+        LOG.info("Completed validation of " + testCount.get() + " axioms with user-defined coordinates");
+    }
+
+    @Test
+    @Disabled("Requires Snomed data to run this test")
     public void testOwlExpression(){
         StringBuilder propertyBuilder = new StringBuilder();
         StringBuilder classBuilder = new StringBuilder();
-        List<String> owlExpressionsToProcess = getStrings();
+        List<String> owlExpressionsToProcess = getOwlExpressionStrings();
 
         for (String owlExpression : owlExpressionsToProcess) {
             if (owlExpression.toLowerCase().contains("property")) {
@@ -92,8 +170,8 @@ public class OwlTransformationTestIT {
             } else {
                 classBuilder.append(" ").append(owlExpression);
             }
-
         }
+
         String owlClassExpressionsToProcess = classBuilder.toString();
         String owlPropertyExpressionsToProcess = propertyBuilder.toString();
         try {
@@ -106,7 +184,31 @@ public class OwlTransformationTestIT {
         }
     }
 
-    private static List<String> getStrings() {
+    private static void loadStarterData() {
+        try {
+            URL protobufFileResource = OwlTransformationTestIT.class.getResource("tinkar-starter-data.pb.zip");
+            File starterDataPB = new File(protobufFileResource.toURI());
+            int importCount = new LoadEntitiesFromProtobufFile(starterDataPB).compute();
+        } catch (IOException | URISyntaxException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private static void generateTestAxiomData() {
+        Entity<? extends EntityVersion> testStamp = createSTAMPTestHelper(TinkarTerm.ACTIVE_STATE,
+                System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.MODULE, TinkarTerm.SANDBOX_PATH);
+
+        EntityProxy.Concept parentConcept = EntityProxy.Concept.make("TESTPARENTCONCEPT", UUID.randomUUID());
+        createConceptTestHelper(parentConcept, parentConcept.description(), testStamp);
+
+        testConceptList.forEach(concept -> {
+            String owlAxiomString = "SubClassOf(:" + concept.description() + " :" + parentConcept.description() + ")";
+            createConceptTestHelper(concept, concept.description(), testStamp);
+            createAxiomSyntaxSemanticTestHelper(concept.nid(), owlAxiomString, testStamp);
+        });
+    }
+
+    private static List<String> getOwlExpressionStrings() {
         String inputString1 =
             "EquivalentClasses(:126885006 ObjectIntersectionOf(:64572001 ObjectSomeValuesFrom(:609096000 ObjectIntersectionOf(ObjectSomeValuesFrom(:116676008 :108369006) ObjectSomeValuesFrom(:363698007 :89837001)))))";
         String inputString2 =
@@ -128,5 +230,117 @@ public class OwlTransformationTestIT {
         owlExpressionsToProcess.add(inputString3);
         owlExpressionsToProcess.add(inputString4);
         return owlExpressionsToProcess;
+    }
+
+    private static Entity<? extends EntityVersion> createSTAMPTestHelper(EntityProxy.Concept status, long time, EntityProxy.Concept author, EntityProxy.Concept module, EntityProxy.Concept path){
+        LOG.info("Building STAMP Chronology");
+        UUID stampUUID = UUID.randomUUID();
+        RecordListBuilder<StampVersionRecord> versions = RecordListBuilder.make();
+        //Create STAMP Chronology
+        StampRecord stampRecord = StampRecordBuilder.builder()
+                .nid(EntityService.get().nidForUuids(stampUUID))
+                .leastSignificantBits(stampUUID.getLeastSignificantBits())
+                .mostSignificantBits(stampUUID.getMostSignificantBits())
+                .additionalUuidLongs(null)
+                .versions(versions)
+                .build();
+
+        LOG.info("Building STAMP Version");
+        //Create STAMP Version
+        versions.add(StampVersionRecordBuilder.builder()
+                .chronology(stampRecord)
+                .stateNid(status.nid())
+                .time(time)
+                .authorNid(author.nid())
+                .moduleNid(module.nid())
+                .pathNid(path.nid())
+                .build());
+
+        Entity<? extends EntityVersion> entity = StampRecordBuilder.builder(stampRecord).versions(versions.toImmutable()).build();
+        EntityService.get().putEntity(entity);
+        return entity;
+    }
+
+    private static Entity<? extends EntityVersion> createConceptTestHelper(EntityProxy.Concept concept, String id,
+                                                            Entity<? extends EntityVersion> stampEntity){
+        RecordListBuilder<ConceptVersionRecord> versions = RecordListBuilder.make();
+        ConceptRecord conceptRecord = ConceptRecordBuilder.builder()
+                .nid(concept.nid())
+                .leastSignificantBits(concept.asUuidArray()[0].getLeastSignificantBits())
+                .mostSignificantBits(concept.asUuidArray()[0].getMostSignificantBits())
+                .additionalUuidLongs(null)
+                .versions(versions.toImmutable())
+                .build();
+
+        versions.add(ConceptVersionRecordBuilder.builder()
+                .chronology(conceptRecord)
+                .stampNid(stampEntity.nid())
+                .build());
+
+        createIdentifierSemanticTestHelper(concept.nid(), id, stampEntity);
+
+        Entity<? extends EntityVersion> entity = ConceptRecordBuilder.builder(conceptRecord).versions(versions.toImmutable()).build();
+        EntityService.get().putEntity(entity);
+        return entity;
+    }
+
+    private static void createIdentifierSemanticTestHelper(int referencedComponentNid,
+                                                                       String id,
+                                                                       Entity<? extends EntityVersion> authoringSTAMP){
+        LOG.info("Building Identifier Semantic");
+        RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
+
+        UUID navigationSemanticUUID = UUID.randomUUID();
+        SemanticRecord semanticRecord = SemanticRecordBuilder.builder()
+                .nid(EntityService.get().nidForUuids(navigationSemanticUUID))
+                .leastSignificantBits(navigationSemanticUUID.getLeastSignificantBits())
+                .mostSignificantBits(navigationSemanticUUID.getMostSignificantBits())
+                .additionalUuidLongs(null)
+                .patternNid(IDENTIFIER_PATTERN.nid())
+                .referencedComponentNid(referencedComponentNid)
+                .versions(versions.toImmutable())
+                .build();
+
+        LOG.info("Building Identifier Semantic Fields");
+        MutableList<Object> identifierFields = Lists.mutable.empty();
+        identifierFields.add(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER);
+        identifierFields.add(id);
+
+        versions.add(SemanticVersionRecordBuilder.builder()
+                .chronology(semanticRecord)
+                .stampNid(authoringSTAMP.nid())
+                .fieldValues(identifierFields.toImmutable())
+                .build());
+
+        EntityService.get().putEntity(SemanticRecordBuilder.builder(semanticRecord).versions(versions.toImmutable()).build());
+    }
+
+    private static Entity<? extends EntityVersion> createAxiomSyntaxSemanticTestHelper(int referencedComponentNid,
+                                                                     String axiomSyntax,
+                                                                     Entity<? extends EntityVersion> authoringSTAMP){
+        RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
+        UUID axiomSyntaxSemantic = UUID.randomUUID();
+        SemanticRecord semanticRecord = SemanticRecordBuilder.builder()
+                .nid(EntityService.get().nidForUuids(axiomSyntaxSemantic))
+                .leastSignificantBits(axiomSyntaxSemantic.getLeastSignificantBits())
+                .mostSignificantBits(axiomSyntaxSemantic.getMostSignificantBits())
+                .additionalUuidLongs(null)
+                .patternNid(AXIOM_SYNTAX_PATTERN.nid())
+                .referencedComponentNid(referencedComponentNid)
+                .versions(versions.toImmutable())
+                .build();
+
+        MutableList<Object> axiomSyntaxFields = Lists.mutable.empty();
+        axiomSyntaxFields.add(axiomSyntax);
+
+        versions.add(SemanticVersionRecordBuilder.builder()
+                .chronology(semanticRecord)
+                .stampNid(authoringSTAMP.nid())
+                .fieldValues(axiomSyntaxFields.toImmutable())
+                .build());
+
+        Entity<? extends EntityVersion> entity = SemanticRecordBuilder.builder(semanticRecord).versions(versions.toImmutable()).build();
+        EntityService.get().putEntity(entity);
+        return entity;
     }
 }

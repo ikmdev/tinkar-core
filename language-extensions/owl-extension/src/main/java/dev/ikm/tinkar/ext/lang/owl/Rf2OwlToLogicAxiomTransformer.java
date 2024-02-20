@@ -86,6 +86,7 @@ public class Rf2OwlToLogicAxiomTransformer extends TrackingCallable<Void> {
                 if (semanticNids.length > 0) {
                     TransformationGroup tg = new TransformationGroup(conceptNid, semanticNids, PremiseType.STATED);
                     statedTransformList.add(tg);
+                    count.incrementAndGet();
                 }
             }
             if (statedTransformList.size() == transformSize) {
