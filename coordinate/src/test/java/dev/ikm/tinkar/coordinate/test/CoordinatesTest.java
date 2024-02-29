@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.coordinate;
+package dev.ikm.tinkar.coordinate.test;
 
 public class CoordinatesTest {
 }
