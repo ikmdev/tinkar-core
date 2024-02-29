@@ -35,6 +35,8 @@ open module dev.ikm.tinkar.integration.test {
     requires org.eclipse.collections.api;
     requires org.mockito; //TODO: delete with stale ITs
     requires dev.ikm.tinkar.ext.lang.owl;
+    requires java.logging;
+    requires dev.ikm.tinkar.schema;
 
     uses CachingService;
     uses DataServiceController;
