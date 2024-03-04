@@ -20,9 +20,12 @@ import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.ServiceKeys;
 import dev.ikm.tinkar.common.service.ServiceProperties;
-import dev.ikm.tinkar.common.util.broadcast.SimpleBroadcaster;
 import dev.ikm.tinkar.coordinate.Coordinates;
-import dev.ikm.tinkar.coordinate.stamp.*;
+import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
+import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecordBuilder;
+import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
+import dev.ikm.tinkar.coordinate.stamp.StampPositionRecordBuilder;
+import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.EntityService;
@@ -31,6 +34,7 @@ import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.StampEntityVersion;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,8 +47,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
-public class QueryByTimeTest {
-    private static final Logger LOG = LoggerFactory.getLogger(QueryByTimeTest.class);
+public class QueryByTimeIT {
+    private static final Logger LOG = LoggerFactory.getLogger(QueryByTimeIT.class);
 
     @BeforeEach
     public void init() {
@@ -56,6 +60,7 @@ public class QueryByTimeTest {
         PrimitiveData.start();
     }
     @Test
+    @Disabled("Enable the tests after figuring out the way to load the DataStores in Jenkins. or test directory")
     public void retrieveDataByTimeMultiPathTest() {
 
         String time = "2020-10-22T12:31:04";
