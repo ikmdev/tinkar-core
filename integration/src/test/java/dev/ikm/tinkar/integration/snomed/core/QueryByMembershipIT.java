@@ -1,20 +1,43 @@
+/*
+ * Copyright © 2015 Integrated Knowledge Management (support@ikm.dev)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package dev.ikm.tinkar.integration.snomed.core;
 
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.ServiceKeys;
 import dev.ikm.tinkar.common.service.ServiceProperties;
-import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
-import dev.ikm.tinkar.coordinate.stamp.StateSet;
-import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
-import dev.ikm.tinkar.entity.*;
-import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
+import dev.ikm.tinkar.entity.ConceptEntity;
+import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityVersion;
+import dev.ikm.tinkar.entity.PatternEntity;
+import dev.ikm.tinkar.entity.SemanticEntity;
+import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.StampEntityVersion;
 import dev.ikm.tinkar.entity.transfom.EntityToTinkarSchemaTransformer;
+import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import dev.ikm.tinkar.terms.TinkarTerm;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -23,16 +46,16 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-public class QueryByMembershipTest {
+public class QueryByMembershipIT {
 
 
-    private static final Logger LOG =  Logger.getLogger(QueryByMembershipTest.class.getSimpleName());
+    private static final Logger LOG = LoggerFactory.getLogger(
+            QueryByMembershipIT.class);
 
-    private static final String CONTROLLER_NAME =  TestConstants.OPEN_SPINED_ARRAY_STORE;
+    private static final String CONTROLLER_NAME =  TestConstants.SA_STORE_OPEN_NAME;
 
     private static final File DATA_STORE_FILE = new File(System.getProperty("user.home") + "/Solor/snomed-starter-data");
 
@@ -62,16 +85,13 @@ public class QueryByMembershipTest {
 
     @Test
     @DisplayName("Exporting filtered entities to  protobuf file")
-  //  @Disabled("Enable the tests after figuring out the way to load the DataStores in Jenkins. or test directory")
+    @Disabled("Enable the tests after figuring out the way to load the DataStores in Jenkins. or test directory")
     @Order(1)
-   public void exportoProtobufTest() throws IOException {
+   public void exportProtobufTest() throws IOException {
        initialize(DATA_STORE_FILE);
         AtomicInteger verboseErrors = new AtomicInteger(0);
-        int patternNidMembership = EntityService.get().nidForPublicId(TinkarTerm.PATHS_PATTERN);
+        int patternNidMembership = TinkarTerm.PATHS_PATTERN.nid();
         Set<Entity<? extends EntityVersion>> entitiesFromMembership = filterbyMembership(patternNidMembership);   //input pattern nid
-     //   Set<PatternEntity<PatternEntityVersion>> membershipPatterns = filterbyMembership1();
-        //  ExportEntitiesToProtobufFile exportEntitiesToProtobufFile = new ExportEntitiesToProtobufFile(new File(DATA_STORE_FILE.getPath()+".pb.zip"));
-      //  exportedEntitiesCount = exportEntitiesToProtobufFile.compute();
         File protobufFile = new File(System.getProperty("user.home") + "/Solor/membership-filter.pb.zip");
         try(FileOutputStream fileOutputStream = new FileOutputStream(protobufFile);
             BufferedOutputStream bos = new BufferedOutputStream(fileOutputStream);
@@ -80,7 +100,6 @@ public class QueryByMembershipTest {
             zos.putNextEntry(zipEntry);
             entitiesFromMembership.forEach(entity -> {
                 try {
-            //        Entity<? extends EntityVersion> patternEntity = EntityService.get().getEntityFast(entity);
                     if(entity != null){
                         TinkarMsg pbTinkarMsg = entityTransformer.transform(entity);
                         pbTinkarMsg.writeDelimitedTo(zos);
@@ -93,12 +112,10 @@ public class QueryByMembershipTest {
 
                             default -> throw new IllegalStateException("Unexpected value: " + entity);
                         }
-                  //      if(entity instanceof StampEntity<V>)
-                 //       exportPatternCount.incrementAndGet();
                     } else {
                         nullEntities.incrementAndGet();
                         if (verboseErrors.get() < VERBOSE_ERROR_COUNT) {
-                            LOG.warning("No pattern entity for: " + entity);
+                            LOG.warn("No pattern entity for: " + entity);
                             verboseErrors.incrementAndGet();
                         }
                     }
@@ -124,6 +141,8 @@ public class QueryByMembershipTest {
         LOG.info("Exported Pattern count: "+exportPatternCount);
         LOG.info("Exported Concept count: "+exportConceptCount);
         PrimitiveData.stop();
+        Assertions.assertTrue(exportSemanticCount.get()>0);
+        Assertions.assertTrue(exportConceptCount.get()>0);
 
    }
 
