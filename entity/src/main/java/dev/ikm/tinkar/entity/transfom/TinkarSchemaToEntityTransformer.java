@@ -475,12 +475,12 @@ public class TinkarSchemaToEntityTransformer {
             if(propertyObject instanceof PublicId){
                 properties.put(
                         ConceptDTOBuilder.builder()
-                                .publicId(transformPublicId(pbVertex.getMeaningPublicId()))
+                                .publicId(transformPublicId(property.getPublicId()))
                                 .build(),  EntityProxy.Concept.make((PublicId) propertyObject));
             } else {
                 properties.put(
                         ConceptDTOBuilder.builder()
-                                .publicId(transformPublicId(pbVertex.getMeaningPublicId()))
+                                .publicId(transformPublicId(property.getPublicId()))
                                 .build(), propertyObject);
             }
         });
