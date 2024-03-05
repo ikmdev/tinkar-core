@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 IKM (support@ikm.dev)
+ * Copyright © 2015 Integrated Knowledge Management (support@ikm.dev)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
