@@ -6,7 +6,7 @@
     <parent>
         <groupId>dev.ikm.tinkar</groupId>
         <artifactId>provider</artifactId>
-        <version>1.33.0</version>
+        <version>1.34.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>data-spinedarray-provider</artifactId>
