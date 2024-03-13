@@ -16,15 +16,8 @@
 package dev.ikm.tinkar.entity.load;
 
 import dev.ikm.tinkar.common.service.TrackingCallable;
-import dev.ikm.tinkar.entity.ConceptEntity;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.entity.EntityVersion;
-import dev.ikm.tinkar.entity.PatternEntity;
-import dev.ikm.tinkar.entity.SemanticEntity;
-import dev.ikm.tinkar.entity.StampEntity;
-import dev.ikm.tinkar.entity.StampEntityVersion;
-import dev.ikm.tinkar.entity.transfom.TinkarSchemaToEntityTransformer;
+import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.transform.TinkarSchemaToEntityTransformer;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,12 +90,21 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<Integer> {
             LOG.info("The zip entry name: " + zipEntry.getName());
             LOG.info("The zip entry size: " + zipEntry.getSize());
             TinkarSchemaToEntityTransformer transformer = TinkarSchemaToEntityTransformer.getInstance();
+            // TODO: Refactor to better handle importing with manifest
             while (zipEntry != null) {
+                if (zipEntry.getName().equals("META-INF/MANIFEST.MF")) {
+                    break;
+                }
                 while (zis.available() > 0) {
+                    // Last byte is -1 to tell protobuf parser that it is at EOF
+                    // Since there is a final byte, zis.available will still return 1
+                    // And pbTinkarMsg should be null for the last entry
                     TinkarMsg pbTinkarMsg = TinkarMsg.parseDelimitedFrom(zis);
 
-                    if(pbTinkarMsg == null)
-                    {
+                    if (zis.available() == 0) {
+                        break;
+                    }
+                    if(pbTinkarMsg == null) {
                         LOG.warn("Possible byte before end of file.");
                         continue;
                     }

@@ -18,23 +18,58 @@ package dev.ikm.tinkar.entity;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.util.broadcast.Broadcaster;
 import dev.ikm.tinkar.component.Chronology;
 import dev.ikm.tinkar.component.ChronologyService;
 import dev.ikm.tinkar.component.Component;
 import dev.ikm.tinkar.component.Version;
+import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import dev.ikm.tinkar.entity.internal.EntityServiceFinder;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.ComponentWithNid;
 import dev.ikm.tinkar.terms.EntityFacade;
 import org.eclipse.collections.api.list.ImmutableList;
 
+import java.io.File;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 public interface EntityService extends ChronologyService, Broadcaster<Integer> {
     static EntityService get() {
         return EntityServiceFinder.INSTANCE.get();
+    }
+
+    default CompletableFuture<EntityCountSummary> fullExport(File file) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return TinkExecutor.ioThreadPool().submit(new ExportEntitiesToProtobufFile(file)).get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    default CompletableFuture<EntityCountSummary> temporalExport(File file, long fromEpoch, long toEpoch) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return TinkExecutor.ioThreadPool().submit(new ExportEntitiesToProtobufFile(file, fromEpoch, toEpoch)).get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    default CompletableFuture<EntityCountSummary> membershipExport(File file, List<PublicId> membershipTags) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return TinkExecutor.ioThreadPool().submit(new ExportEntitiesToProtobufFile(file, membershipTags)).get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     @Override

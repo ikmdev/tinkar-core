@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.entity.transfom;
+package dev.ikm.tinkar.entity.transform;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
@@ -31,7 +31,7 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.util.List;
 
-import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.*;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;

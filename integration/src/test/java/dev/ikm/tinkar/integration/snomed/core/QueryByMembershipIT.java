@@ -27,7 +27,7 @@ import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.StampEntityVersion;
-import dev.ikm.tinkar.entity.transfom.EntityToTinkarSchemaTransformer;
+import dev.ikm.tinkar.entity.transform.EntityToTinkarSchemaTransformer;
 import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import dev.ikm.tinkar.terms.TinkarTerm;

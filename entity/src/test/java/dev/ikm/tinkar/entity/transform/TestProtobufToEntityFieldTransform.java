@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.entity.transfom;
+package dev.ikm.tinkar.entity.transform;
 
 import dev.ikm.tinkar.schema.Field;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.openSession;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.openSession;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

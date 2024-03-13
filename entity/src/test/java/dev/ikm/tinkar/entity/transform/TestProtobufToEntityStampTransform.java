@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.entity.transfom;
+package dev.ikm.tinkar.entity.transform;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.component.Concept;
@@ -29,16 +29,16 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.util.function.Consumer;
 
-import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.AUTHOR_CONCEPT_NAME;
-import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.MODULE_CONCEPT_NAME;
-import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.PATH_CONCEPT_NAME;
-import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.STATUS_CONCEPT_NAME;
-import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.TEST_CONCEPT_NAME;
-import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.createPBPublicId;
-import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.createPbStampVersion;
-import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.nid;
-import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.nowTimestamp;
-import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.openSession;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.AUTHOR_CONCEPT_NAME;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.MODULE_CONCEPT_NAME;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.PATH_CONCEPT_NAME;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.STATUS_CONCEPT_NAME;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.TEST_CONCEPT_NAME;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.createPBPublicId;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.createPbStampVersion;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.nid;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.nowTimestamp;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.openSession;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;

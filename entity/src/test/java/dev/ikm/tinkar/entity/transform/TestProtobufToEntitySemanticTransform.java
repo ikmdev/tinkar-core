@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.entity.transfom;
+package dev.ikm.tinkar.entity.transform;
 
 import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.component.FieldDataType;
@@ -24,7 +24,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import static dev.ikm.tinkar.entity.transfom.ProtobufToEntityTestHelper.*;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
