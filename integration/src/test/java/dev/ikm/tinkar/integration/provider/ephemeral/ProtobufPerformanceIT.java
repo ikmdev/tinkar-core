@@ -74,7 +74,7 @@ public class ProtobufPerformanceIT {
         System.out.println("[2] The size of the file is: " + fileProtobuf.length() + " bytes long.");
         long loadEntitiesTimeBefore = System.nanoTime();
         ExportEntitiesToProtobufFile exportEntitiesToProtobufFile = new ExportEntitiesToProtobufFile(fileProtobuf);
-        int actualProtobufExportCount = exportEntitiesToProtobufFile.compute();
+        long actualProtobufExportCount = exportEntitiesToProtobufFile.compute().getTotalCount();
         long diffLoadProto = (System.nanoTime() - loadEntitiesTimeBefore);
         System.out.println("[2] The count for Entities to Protobuf is: " + actualProtobufExportCount);
         System.out.println("The time it took for the Load Entities to a Protobuf file is: " + diffLoadProto/1000000 + " milliseconds.");

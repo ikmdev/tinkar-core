@@ -93,7 +93,7 @@ public class ProtobufRoundTripIT {
             throw new RuntimeException("Round trip test has failed setup to begin test. Unable to delete or create " + fileProtobuf.getName() + " to begin.");
         }
         ExportEntitiesToProtobufFile exportEntitiesToProtobufFile = new ExportEntitiesToProtobufFile(fileProtobuf);
-        int actualProtobufExportCount = exportEntitiesToProtobufFile.compute();
+        long actualProtobufExportCount = exportEntitiesToProtobufFile.compute().getTotalCount();
         LOG.info("Entities exported to protobuf: " + actualProtobufExportCount);
 
         stopDatabase();
