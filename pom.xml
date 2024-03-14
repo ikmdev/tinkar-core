@@ -69,6 +69,8 @@
         <module>provider</module>
         <module>integration</module>
         <module>aggregator</module>
+        <module>reasoner</module>
+
     </modules>
 
     <properties>
@@ -109,7 +111,6 @@
         <sonar.core.codeCoveragePlugin>jacoco</sonar.core.codeCoveragePlugin>
         <sonar.language>java</sonar.language>
         <susel.version>0.1.2</susel.version>
-
         <maven-jxr-plugin.version>3.3.0</maven-jxr-plugin.version>
         <tinkar-schema.version>1.26.0</tinkar-schema.version>
         <tinkar-bindings.version>1.4.0</tinkar-bindings.version>

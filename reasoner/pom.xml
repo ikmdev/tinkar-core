@@ -1,0 +1,68 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>reasoner</artifactId>
+    <packaging>pom</packaging>
+
+    <parent>
+        <groupId>dev.ikm.tinkar</groupId>
+        <artifactId>tinkar-core</artifactId>
+        <version>1.34.0-SNAPSHOT</version>
+    </parent>
+
+    <name>Reasoners</name>
+    <properties>
+        <ikm-classifier.version>0.17.0</ikm-classifier.version>
+        <owlapi.version>4.5.25-ikm-r3</owlapi.version>
+    </properties>
+
+    <modules>
+        <module>reasoner-elk-owl</module>
+        <module>reasoner-elk-snomed</module>
+        <module>reasoner-service</module>
+        <module>reasoner-test-data</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>dev.ikm.elk</groupId>
+                <artifactId>elk-snomed</artifactId>
+                <version>${ikm-classifier.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.elk</groupId>
+                <artifactId>elk-snomed-owl</artifactId>
+                <version>${ikm-classifier.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.owlapi</groupId>
+                <artifactId>owlapi-api</artifactId>
+                <version>${owlapi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.owlapi</groupId>
+                <artifactId>owlapi-impl</artifactId>
+                <version>${owlapi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.owlapi</groupId>
+                <artifactId>owlapi-apibinding</artifactId>
+                <version>${owlapi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.owlapi</groupId>
+                <artifactId>owlapi-parsers</artifactId>
+                <version>${owlapi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>reasoner-service</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+</project>
