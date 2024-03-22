@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.reasoner.elksnomed;
+package dev.ikm.tinkar.reasoner.elkowl;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -28,20 +28,27 @@ import java.util.HashSet;
 import java.util.ServiceLoader;
 import java.util.Set;
 
+import org.semanticweb.elk.owlapi.ElkReasonerFactory;
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.reasoner.InferenceType;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
+import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dev.ikm.elk.snomed.SnomedOntology;
-import dev.ikm.elk.snomed.SnomedOntologyReasoner;
-import dev.ikm.elk.snomed.model.Concept;
+import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.terms.TinkarTerm;
 
-public abstract class ElkSnomedTestBase extends PrimitiveDataTestBase {
+public abstract class ElkOwlTestBase extends PrimitiveDataTestBase {
 
-	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedTestBase.class);
+	private static final Logger LOG = LoggerFactory.getLogger(ElkOwlTestBase.class);
 
 	protected static int stated_count = Integer.MIN_VALUE;
 	protected static int active_count = Integer.MIN_VALUE;
@@ -80,47 +87,63 @@ public abstract class ElkSnomedTestBase extends PrimitiveDataTestBase {
 		assertTrue(expect.equals(actual), filePart);
 	}
 
-	public ElkSnomedData buildSnomedData() throws Exception {
-		LOG.info("buildSnomedData");
+	public ElkOwlData buildElkOwlAxiomData() throws Exception {
+		LOG.info("buildAxiomData");
 		ViewCalculator viewCalculator = getViewCalculator();
-		ElkSnomedData data = new ElkSnomedData();
-		ElkSnomedDataBuilder builder = new ElkSnomedDataBuilder(viewCalculator,
-				TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, data);
+		OWLDataFactory df = SnomedOwlOntology.createOntology().getDataFactory();
+		ElkOwlData axiomData = new ElkOwlData(df);
+		ElkOwlDataBuilder builder = new ElkOwlDataBuilder(viewCalculator,
+				TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, axiomData, df);
 		builder.build();
-		return data;
+		return axiomData;
 	}
 
-	public ArrayList<String> getSupercs(ElkSnomedData data, SnomedOntologyReasoner reasoner) {
+	public ArrayList<String> getSupercs(ElkOwlData axiomData, OWLReasoner reasoner) {
 		ArrayList<String> lines = new ArrayList<>();
-		for (Concept con : data.getConcepts()) {
-			int con_id = (int) con.getId();
-			String con_str = PrimitiveData.publicId(con_id).asUuidArray()[0] + "\t" + PrimitiveData.text(con_id);
-			for (Concept sup : reasoner.getSuperConcepts(con)) {
-				int sup_id = (int) sup.getId();
+		for (OWLClass clazz : axiomData.nidConceptMap.values()) {
+			int clazz_id = (int) SnomedOwlOntology.getId(clazz);
+			String clazz_str = PrimitiveData.publicId(clazz_id).asUuidArray()[0] + "\t" + PrimitiveData.text(clazz_id);
+			for (OWLClass sup : reasoner.getSuperClasses(clazz, true).getFlattened()) {
+				if (sup.isTopEntity())
+					continue;
+				int sup_id = (int) SnomedOwlOntology.getId(sup);
 				String sup_str = PrimitiveData.publicId(sup_id).asUuidArray()[0] + "\t" + PrimitiveData.text(sup_id);
-				lines.add(con_str + "\t" + sup_str);
+				lines.add(clazz_str + "\t" + sup_str);
 			}
 		}
 		Collections.sort(lines);
 		return lines;
 	}
 
-	public void runSnomedReasoner() throws Exception {
-		LOG.info("runSnomedReasoner");
-		ElkSnomedData data = buildSnomedData();
+	// TODO put this back in. fails with -ea on
+	// ProcessElkOwlResultsTask processResultsTask = new
+	// ProcessElkOwlResultsTask(reasoner, getViewCalculator(),
+	// EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN, axiomData);
+	// processResultsTask.compute();
+
+	public void runElkOwlReasoner() throws Exception {
+		LOG.info("runElkOwlReasoner");
+		ElkOwlData axiomData = buildElkOwlAxiomData();
 		LOG.info("Create ontology");
-		SnomedOntology ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes());
+		OWLOntologyManager mgr = OWLManager.createOWLOntologyManager();
+		OWLOntology ontology = mgr.createOntology();
+		LOG.info("Add axioms");
+		mgr.addAxioms(ontology, axiomData.axiomsSet);
 		LOG.info("Create reasoner");
-		SnomedOntologyReasoner reasoner = SnomedOntologyReasoner.create(ontology);
+		OWLReasonerFactory rf = (OWLReasonerFactory) new ElkReasonerFactory();
+		OWLReasoner reasoner = rf.createReasoner(ontology);
+		reasoner.flush();
+		reasoner.precomputeInferences(InferenceType.CLASS_HIERARCHY);
+		LOG.info("Classified");
 		Files.createDirectories(getWritePath("supercs").getParent());
 		Path path = getWritePath("supercs");
-		ArrayList<String> lines = getSupercs(data, reasoner);
+		ArrayList<String> lines = getSupercs(axiomData, reasoner);
 		Files.write(path, lines);
 	}
 
 	public ReasonerService initReasonerService() {
 		ReasonerService rs = ServiceLoader.load(ReasonerService.class).stream()
-				.filter(x -> x.type().getSimpleName().equals(ElkSnomedReasonerService.class.getSimpleName())) //
+				.filter(x -> x.type().getSimpleName().equals(ElkOwlReasonerService.class.getSimpleName()))
 				.findFirst().get().get();
 		rs.init(getViewCalculator(), TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
 				TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
@@ -141,8 +164,8 @@ public abstract class ElkSnomedTestBase extends PrimitiveDataTestBase {
 		return lines;
 	}
 
-	public void runSnomedReasonerService() throws Exception {
-		LOG.info("runSnomedReasonerService");
+	public void runElkOwlReasonerService() throws Exception {
+		LOG.info("runElkOwlReasonerService");
 		ReasonerService rs = initReasonerService();
 		rs.extractData();
 		rs.loadData();

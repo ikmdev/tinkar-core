@@ -13,7 +13,7 @@
 
 	<properties>
 		<ikm-classifier.groupId>dev.ikm.elk</ikm-classifier.groupId>
-		<ikm-classifier.version>0.17.0</ikm-classifier.version>
+		<ikm-classifier.version>0.18.0</ikm-classifier.version>
 	</properties>
 
 	<dependencies>

@@ -36,7 +36,7 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedReasonerService.class);
 
-	private ElkSnomedData axiomData;
+	private ElkSnomedData data;
 
 	private ElkSnomedDataBuilder builder;
 
@@ -48,28 +48,28 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	public void init(ViewCalculator viewCalculator, PatternFacade statedAxiomPattern,
 			PatternFacade inferredAxiomPattern) {
 		super.init(viewCalculator, statedAxiomPattern, inferredAxiomPattern);
-		this.axiomData = null;
+		this.data = null;
 		this.reasoner = null;
 	}
 
 	@Override
 	public void extractData() throws Exception {
-		axiomData = new ElkSnomedData();
-		builder = new ElkSnomedDataBuilder(viewCalculator, statedAxiomPattern, axiomData);
+		data = new ElkSnomedData();
+		builder = new ElkSnomedDataBuilder(viewCalculator, statedAxiomPattern, data);
 		builder.setProgressUpdater(progressUpdater);
 		builder.build();
 	};
 
 	@Override
 	public void loadData() throws Exception {
-		int axiomCount = this.axiomData.processedSemantics.get();
-		progressUpdater.updateProgress(0, axiomCount);
+		progressUpdater.updateProgress(0, data.getActiveConceptCount());
 		LOG.info("Create ontology");
-		ontology = new SnomedOntology(axiomData.nidConceptMap.values(), axiomData.nidRoleMap.values());
+		ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes());
 		LOG.info("Create reasoner");
 		reasoner = SnomedOntologyReasoner.create(ontology);
 	};
 
+	@Override
 	public void computeInferences() {
 		// Already done in SnomedOntologyReasoner.create
 	}
@@ -88,12 +88,12 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 
 	@Override
 	public int getConceptCount() {
-		return axiomData.activeConceptCount.get();
+		return data.getActiveConceptCount();
 	}
 
 	@Override
-	public ImmutableIntList getClassificationConceptSet() {
-		return axiomData.classificationConceptSet;
+	public ImmutableIntList getReasonerConceptSet() {
+		return data.getReasonerConceptSet();
 	}
 
 	private ImmutableIntSet toIntSet(Set<Long> classes) {

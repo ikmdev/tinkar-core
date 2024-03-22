@@ -15,30 +15,25 @@
  */
 package dev.ikm.tinkar.reasoner.elkowl;
 
-import java.io.IOException;
-
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dev.ikm.tinkar.common.service.PrimitiveData;
-
-public class SampleAxiomDataBuilderTest extends AxiomDataBuilderTest {
+public class SampleElkOwlClassifierTest extends SampleElkOwlDataBuilderTest {
 
 	@SuppressWarnings("unused")
-	private static final Logger LOG = LoggerFactory.getLogger(SampleAxiomDataBuilderTest.class);
+	private static final Logger LOG = LoggerFactory.getLogger(SampleElkOwlClassifierTest.class);
 
-	static {
-		stated_count = 83547;
-		active_count = 83547;
-		inactive_count = 0;
-		test_case = "sample";
+	@Test
+	public void supercs() throws Exception {
+		runElkOwlReasoner();
+		compare("supercs");
 	}
 
-	@BeforeAll
-	public static void startPrimitiveData() throws IOException {
-		setupPrimitiveData("sample-data-3-sa");
-		PrimitiveData.start();
+	@Test
+	public void supercsService() throws Exception {
+		runElkOwlReasonerService();
+		compare("supercs");
 	}
 
 }

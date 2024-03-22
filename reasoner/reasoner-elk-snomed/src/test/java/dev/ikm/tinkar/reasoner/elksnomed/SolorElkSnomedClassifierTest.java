@@ -15,11 +15,6 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed;
 
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,16 +27,12 @@ public class SolorElkSnomedClassifierTest extends SolorElkSnomedDataBuilderTest 
 	@Test
 	public void supercs() throws Exception {
 		runSnomedReasoner();
-		Path target_path = getWritePath("supercs");
-		assumeTrue(Files.exists(target_path));
 		compare("supercs");
 	}
 
 	@Test
 	public void supercsService() throws Exception {
 		runSnomedReasonerService();
-		Path target_path = getWritePath("supercs");
-		assumeTrue(Files.exists(target_path));
 		compare("supercs");
 	}
 

@@ -15,32 +15,13 @@
  */
 package dev.ikm.tinkar.reasoner.elkowl;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-import org.semanticweb.owlapi.functional.renderer.OWLFunctionalSyntaxRenderer;
 import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.PrefixManager;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
-import uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryImpl;
+public class ElkOwlPrefixManager {
 
-@Deprecated
-public class ElkOwlManager {
-
-	private ElkOwlManager() {
-	}
-
-	private static OWLDataFactory dataFactory;
-
-	public static OWLDataFactory getOWLDataFactory() {
-		if (dataFactory == null)
-			dataFactory = (OWLDataFactory) new OWLDataFactoryImpl();
-		return dataFactory;
+	private ElkOwlPrefixManager() {
 	}
 
 	public static final String PREFIX = "http://dev.tinkar/id/";
@@ -59,19 +40,6 @@ public class ElkOwlManager {
 		if (prefixManager == null)
 			prefixManager = new DefaultPrefixManager(null, null, PREFIX);
 		return prefixManager;
-	}
-
-	public static OWLObjectProperty getOwlObjectProperty(int id) {
-		return getOWLDataFactory().getOWLObjectProperty(":" + id, getPrefixManager());
-	}
-
-	public static OWLClass getOwlClass(int id) {
-		return getOWLDataFactory().getOWLClass(":" + id, getPrefixManager());
-	}
-
-	public static void writeOntology(OWLOntology ontology, Path path) throws Exception {
-		OWLFunctionalSyntaxRenderer fsr = new OWLFunctionalSyntaxRenderer();
-		fsr.render(ontology, Files.newBufferedWriter(path));
 	}
 
 }

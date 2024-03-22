@@ -24,50 +24,33 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.semanticweb.elk.owlapi.ElkReasonerFactory;
-import org.semanticweb.owlapi.OWLAPIConfigProvider;
-import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.functional.parser.OWLFunctionalSyntaxOWLParser;
-import org.semanticweb.owlapi.io.StringDocumentSource;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.reasoner.InferenceType;
-import org.semanticweb.owlapi.reasoner.OWLReasoner;
-import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
 
 public class SolorTest {
 
 	private static final Logger LOG = LoggerFactory.getLogger(SolorTest.class);
-
-	private OWLReasoner reasoner;
 
 	@Test
 	public void loadAndClassify() throws Exception {
 		Path solor_axioms_file = Paths.get("src", "test", "resources", "solor", "solor-axioms.txt");
 		assumeTrue(Files.exists(solor_axioms_file), "No file: " + solor_axioms_file);
 		LOG.info("Create ontology");
-		OWLOntologyManager mgr = OWLManager.createOWLOntologyManager();
-		OWLOntology ontology = mgr.createOntology();
+		SnomedOwlOntology ontology = SnomedOwlOntology.createOntology();
 		LOG.info("Read axioms");
 		List<String> lines = Files.readAllLines(solor_axioms_file);
 		LOG.info("Read axioms: " + lines.size());
-		lines.add(0, "Prefix(:=<" + ElkOwlManager.PREFIX + ">) Ontology(");
+		lines.add(0, "Prefix(:=<" + ElkOwlPrefixManager.PREFIX + ">) Ontology(");
 		lines.add(")");
-		OWLOntologyLoaderConfiguration config = new OWLAPIConfigProvider().get();
-		new OWLFunctionalSyntaxOWLParser().parse(new StringDocumentSource(String.join("\n", lines)), ontology, config);
-		LOG.info("Axioms: " + ontology.getAxiomCount());
-		LOG.info("Create reasoner");
-		OWLReasonerFactory rf = (OWLReasonerFactory) new ElkReasonerFactory();
-		reasoner = rf.createReasoner(ontology);
-		reasoner.flush();
+		ontology.loadOntology(lines);
+		LOG.info("Axioms: " + ontology.getAxioms().size());
 		LOG.info("Compute inferences");
-		reasoner.precomputeInferences(InferenceType.CLASS_HIERARCHY);
+		ontology.classify();
 		LOG.info("Done");
-		ElkOwlManager.writeOntology(ontology, Paths.get("target", "solor.ofn"));
-		assertEquals(364192, ontology.getAxiomCount());
+		ontology.writeOntology(Paths.get("target", "solor.ofn"));
+		assertEquals(364192, ontology.getAxioms().size());
 	}
 
 }

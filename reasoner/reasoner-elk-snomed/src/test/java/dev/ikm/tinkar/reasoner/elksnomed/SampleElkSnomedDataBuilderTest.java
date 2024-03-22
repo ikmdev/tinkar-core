@@ -35,9 +35,11 @@ public class SampleElkSnomedDataBuilderTest extends ElkSnomedDataBuilderTest {
 		test_case = "sample";
 	}
 
+	public static final String db = "sample-data-3-sa";
+
 	@BeforeAll
 	public static void startPrimitiveData() throws IOException {
-		setupPrimitiveData("sample-data-3-sa");
+		setupPrimitiveData(db);
 		PrimitiveData.start();
 	}
 

@@ -66,15 +66,15 @@ public abstract class ElkSnomedDataBuilderTest extends ElkSnomedTestBase {
 
 	@Test
 	public void build() throws Exception {
-		ElkSnomedData axiomData = buildSnomedData();
-		assertEquals(active_count, axiomData.activeConceptCount.get());
-		assertEquals(inactive_count, axiomData.inactiveConceptCount.get());
+		ElkSnomedData data = buildSnomedData();
+		assertEquals(active_count, data.getActiveConceptCount());
+		assertEquals(inactive_count, data.getInactiveConceptCount());
 		Files.createDirectories(getWritePath("concepts").getParent());
-		axiomData.writeConcepts(getWritePath("concepts"));
-		axiomData.writeRoles(getWritePath("roles"));
+		data.writeConcepts(getWritePath("concepts"));
+		data.writeRoleTypes(getWritePath("roles"));
 		compare("concepts");
 		compare("roles");
-		assertEquals(axiomData.classificationConceptSet.size(), axiomData.nidConceptMap.entrySet().size());
+		assertEquals(data.getReasonerConceptSet().size(), data.getConcepts().size());
 	}
 
 }

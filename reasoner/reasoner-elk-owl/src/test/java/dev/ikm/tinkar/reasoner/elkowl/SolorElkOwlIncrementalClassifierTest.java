@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.reasoner.elksnomed;
+package dev.ikm.tinkar.reasoner.elkowl;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,10 +28,10 @@ import dev.ikm.tinkar.reasoner.service.ReasonerService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 
-public class SolorElkSnomedIncrementalClassifierTest extends ElkSnomedTestBase {
+public class SolorElkOwlIncrementalClassifierTest extends ElkOwlTestBase {
 
 	@SuppressWarnings("unused")
-	private static final Logger LOG = LoggerFactory.getLogger(SolorElkSnomedIncrementalClassifierTest.class);
+	private static final Logger LOG = LoggerFactory.getLogger(SolorElkOwlIncrementalClassifierTest.class);
 
 	{
 		test_case = "solor";
@@ -47,8 +47,8 @@ public class SolorElkSnomedIncrementalClassifierTest extends ElkSnomedTestBase {
 	}
 
 	public ArrayList<String> classifyAll() throws Exception {
-		String db = SolorElkSnomedDataBuilderTest.db + "-all";
-		copyDb(SolorElkSnomedDataBuilderTest.db, db);
+		String db = SolorElkOwlDataBuilderTest.db + "-all";
+		copyDb(SolorElkOwlDataBuilderTest.db, db);
 		setupPrimitiveData(db);
 		PrimitiveData.start();
 		ReasonerService rs = initReasonerService();
@@ -61,8 +61,8 @@ public class SolorElkSnomedIncrementalClassifierTest extends ElkSnomedTestBase {
 	}
 
 	public ArrayList<String> classifyInc() throws Exception {
-		String db = SolorElkSnomedDataBuilderTest.db + "-inc";
-		copyDb(SolorElkSnomedDataBuilderTest.db, db);
+		String db = SolorElkOwlDataBuilderTest.db + "-inc";
+		copyDb(SolorElkOwlDataBuilderTest.db, db);
 		setupPrimitiveData(db);
 		PrimitiveData.start();
 		ReasonerService rs = initReasonerService();

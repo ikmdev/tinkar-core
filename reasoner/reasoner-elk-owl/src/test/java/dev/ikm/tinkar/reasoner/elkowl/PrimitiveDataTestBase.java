@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.reasoner.elkowl;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
@@ -38,7 +37,6 @@ import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculatorWithCache;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 public abstract class PrimitiveDataTestBase {
 
@@ -63,6 +61,13 @@ public abstract class PrimitiveDataTestBase {
 		});
 	}
 
+	public static void copyDb(String source_name, String target_name) throws IOException {
+		Path source_path = Paths.get("target", "db", source_name).toAbsolutePath();
+		Path target_path = Paths.get("target", "db", target_name).toAbsolutePath();
+		assumeTrue(Files.exists(source_path));
+		copyDirectory(source_path, target_path);
+	}
+
 	public static void setupPrimitiveData(String name) throws IOException {
 		LOG.info("Setup for: " + name);
 		LOG.info("DataServiceController: " + PrimitiveData.getControllerOptions());
@@ -72,14 +77,12 @@ public abstract class PrimitiveDataTestBase {
 //		}
 		PrimitiveData.selectControllerByName("Open SpinedArrayStore");
 		DataServiceController<?> dsc = PrimitiveData.getController();
-//		Path source_path = Paths.get(System.getProperty("user.home"), "SolorTest", name).toAbsolutePath();
+		// Paths.get(System.getProperty("user.home"), "SolorTest",
+		// name).toAbsolutePath();
 		Path target_path = Paths.get("target", "db", name).toAbsolutePath();
-//		LOG.info("Source: " + source_path);
 		LOG.info("Target: " + target_path);
 		// Temp until test data artifacts are in maven repo
 		assumeTrue(Files.exists(target_path));
-		assertTrue(Files.exists(target_path));
-//		copyDirectory(source_path, target_path);
 		DataUriOption duo = new DataUriOption(name, target_path.toUri());
 		LOG.info("PrimitiveData: " + dsc + " " + duo + " " + duo.uri());
 		dsc.setDataUriOption(duo);
@@ -97,16 +100,6 @@ public abstract class PrimitiveDataTestBase {
 		ViewCoordinateRecord vcr = Coordinates.View.DefaultView();
 		ViewCalculatorWithCache viewCalculator = ViewCalculatorWithCache.getCalculator(vcr);
 		return viewCalculator;
-	}
-
-	public ElkOwlAxiomData buildAxiomData() throws Exception {
-		LOG.info("buildAxiomData");
-		ViewCalculator viewCalculator = getViewCalculator();
-		ElkOwlAxiomData axiomData = new ElkOwlAxiomData();
-		ElkOwlAxiomDataBuilder builder = new ElkOwlAxiomDataBuilder(viewCalculator,
-				TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, axiomData);
-		builder.build();
-		return axiomData;
 	}
 
 }

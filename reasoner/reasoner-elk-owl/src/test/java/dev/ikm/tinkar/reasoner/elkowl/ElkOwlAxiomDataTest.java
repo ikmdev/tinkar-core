@@ -17,21 +17,30 @@ package dev.ikm.tinkar.reasoner.elkowl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ElkOwlManagerTest {
+import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
 
-	private static final Logger LOG = LoggerFactory.getLogger(ElkOwlManagerTest.class);
+public class ElkOwlAxiomDataTest {
+
+	private static final Logger LOG = LoggerFactory.getLogger(ElkOwlAxiomDataTest.class);
+
+	private static ElkOwlData axiomData;
+
+	@BeforeAll
+	public static void setup() throws Exception {
+		axiomData = new ElkOwlData(SnomedOwlOntology.createOntology().getDataFactory());
+	}
 
 	public void getConcept(int id) {
-		OWLClass ooc = ElkOwlManager.getOwlClass(id);
+		OWLClass ooc = axiomData.getConcept(id);
 		LOG.info("Concept: " + ooc);
-		assertEquals(ElkOwlManager.PREFIX + id, ooc.getIRI().toString());
+		assertEquals(ElkOwlPrefixManager.PREFIX + id, ooc.getIRI().toString());
 		assertEquals(id, Integer.parseInt(ooc.getIRI().getShortForm()));
 	}
 
@@ -46,9 +55,9 @@ public class ElkOwlManagerTest {
 	}
 
 	public void getRole(int id) {
-		OWLObjectProperty oop = ElkOwlManager.getOwlObjectProperty(id);
+		OWLObjectProperty oop = axiomData.getRole(id);
 		LOG.info("Role: " + oop);
-		assertEquals(ElkOwlManager.PREFIX + id, oop.getIRI().toString());
+		assertEquals(ElkOwlPrefixManager.PREFIX + id, oop.getIRI().toString());
 		assertEquals(id, Integer.parseInt(oop.getIRI().getShortForm()));
 	}
 
@@ -60,15 +69,6 @@ public class ElkOwlManagerTest {
 	@Test
 	public void getRoleMin() {
 		getRole(Integer.MIN_VALUE);
-	}
-
-	@Test
-	public void removePrefix() {
-		OWLClass sub = ElkOwlManager.getOwlClass(1);
-		OWLClass sup = ElkOwlManager.getOwlClass(2);
-		OWLSubClassOfAxiom axiom = ElkOwlManager.getOWLDataFactory().getOWLSubClassOfAxiom(sub, sup);
-		LOG.info("Ax: " + ElkOwlManager.removePrefix(axiom));
-		assertEquals("SubClassOf(:1 :2)", ElkOwlManager.removePrefix(axiom));
 	}
 
 }

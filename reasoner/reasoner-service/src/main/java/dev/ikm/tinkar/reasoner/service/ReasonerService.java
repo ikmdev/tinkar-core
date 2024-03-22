@@ -46,15 +46,17 @@ public interface ReasonerService {
 
 	public void loadData() throws Exception;
 
+	// TODO Maybe separate full from incremental
 	public void computeInferences();
 
 	public boolean isIncrementalReady();
 
+	// TODO Obtain conceptNid from DiTreeEntity?
 	public void processIncremental(DiTreeEntity definition, int conceptNid);
 
 	public int getConceptCount();
 
-	public ImmutableIntList getClassificationConceptSet();
+	public ImmutableIntList getReasonerConceptSet();
 
 	public ImmutableIntSet getEquivalent(int id);
 
