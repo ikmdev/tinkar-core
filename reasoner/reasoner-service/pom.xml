@@ -13,12 +13,12 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>${parent.groupId}</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>coordinate</artifactId>
 		</dependency>
 
 		<dependency>
-			<groupId>${parent.groupId}</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>terms</artifactId>
 		</dependency>
 	</dependencies>
