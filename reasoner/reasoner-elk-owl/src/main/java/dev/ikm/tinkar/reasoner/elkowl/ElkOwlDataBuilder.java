@@ -25,6 +25,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
@@ -35,6 +36,7 @@ import org.semanticweb.owlapi.model.OWLSubPropertyChainOfAxiom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -49,27 +51,27 @@ import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.terms.TinkarTerm;
 
-public class ElkOwlAxiomDataBuilder {
+public class ElkOwlDataBuilder {
 
-	private static final Logger LOG = LoggerFactory.getLogger(ElkOwlAxiomDataBuilder.class);
+	private static final Logger LOG = LoggerFactory.getLogger(ElkOwlDataBuilder.class);
 
 	private final ViewCalculator viewCalculator;
 
 	private final PatternFacade statedAxiomPattern;
 
-	private final ElkOwlAxiomData axiomData;
+	private final ElkOwlData axiomData;
 
 	private OWLDataFactory owlDataFactory;
 
 	private TrackingCallable<?> progressUpdater = null;
 
-	public ElkOwlAxiomDataBuilder(ViewCalculator viewCalculator, PatternFacade statedAxiomPattern,
-			ElkOwlAxiomData axiomData) {
+	public ElkOwlDataBuilder(ViewCalculator viewCalculator, PatternFacade statedAxiomPattern,
+			ElkOwlData axiomData, OWLDataFactory owlDataFactory) {
 		super();
 		this.viewCalculator = viewCalculator;
 		this.statedAxiomPattern = statedAxiomPattern;
 		this.axiomData = axiomData;
-		owlDataFactory = ElkOwlManager.getOWLDataFactory();
+		this.owlDataFactory = owlDataFactory;
 	}
 
 	public void setProgressUpdater(TrackingCallable<?> progressUpdater) {
@@ -156,6 +158,11 @@ public class ElkOwlAxiomDataBuilder {
 		int[] includedConceptNidArray = includedConceptNids.stream().mapToInt(boxedInt -> (int) boxedInt).toArray();
 		Arrays.sort(includedConceptNidArray);
 		axiomData.classificationConceptSet = IntLists.immutable.of(includedConceptNidArray);
+		for (OWLClass con : axiomData.nidConceptMap.values()) {
+			int nid = (int) SnomedOwlOntology.getId(con);
+			if (axiomData.nidAxiomsMap.get(nid) == null)
+				LOG.warn("No axioms for: " + nid + " " + PrimitiveData.text(nid));
+		}
 		updateProgress(totalCount, totalCount);
 //		updateMessage("Extract in " + durationString());
 //		LOG.info("Extract in " + durationString());
@@ -168,6 +175,8 @@ public class ElkOwlAxiomDataBuilder {
 	public IncrementalChanges processIncremental(DiTreeEntity definition, int conceptNid) {
 		ImmutableList<OWLAxiom> additions = processDefinition(definition, conceptNid);
 		ImmutableList<OWLAxiom> deletions = axiomData.nidAxiomsMap.get(conceptNid);
+		if (deletions == null)
+			throw new RuntimeException(conceptNid + " " + PrimitiveData.text(conceptNid));
 		axiomData.nidAxiomsMap.put(conceptNid, additions);
 		deletions.forEach(axiomData.axiomsSet::remove);
 //		axiomData.axiomsSet.removeAll(deletions.castToList());

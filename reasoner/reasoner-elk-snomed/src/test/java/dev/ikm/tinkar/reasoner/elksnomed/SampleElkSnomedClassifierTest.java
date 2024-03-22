@@ -25,8 +25,15 @@ public class SampleElkSnomedClassifierTest extends SampleElkSnomedDataBuilderTes
 	private static final Logger LOG = LoggerFactory.getLogger(SampleElkSnomedClassifierTest.class);
 
 	@Test
-	public void classify() throws Exception {
+	public void supercs() throws Exception {
 		runSnomedReasoner();
+		compare("supercs");
+	}
+
+	@Test
+	public void supercsService() throws Exception {
+		runSnomedReasonerService();
+		compare("supercs");
 	}
 
 }

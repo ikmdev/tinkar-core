@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.reasoner.elksnomed;
+package dev.ikm.tinkar.reasoner.elkowl;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,31 +28,33 @@ import dev.ikm.tinkar.reasoner.service.ReasonerService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 
-public class SolorElkSnomedIncrementalClassifierTest extends ElkSnomedTestBase {
+public class SampleElkOwlIncrementalClassifierTest extends ElkOwlTestBase {
 
 	@SuppressWarnings("unused")
-	private static final Logger LOG = LoggerFactory.getLogger(SolorElkSnomedIncrementalClassifierTest.class);
+	private static final Logger LOG = LoggerFactory.getLogger(SampleElkOwlIncrementalClassifierTest.class);
 
 	{
-		test_case = "solor";
+		test_case = "sample";
 	}
 
-	// Chronic lung disease: [23e07078-f1e2-3f6a-9b7a-9397bcd91cfe]
-	private static final UUID ChronicLungDiseaseUuid = UUID.fromString("23e07078-f1e2-3f6a-9b7a-9397bcd91cfe");
+	// Occupations [753d2b35-3924-5f9c-a6c7-a5c3a55fda29]
+	// Occupation [4d0506d1-d961-5bf9-9a7f-bb1a702c7425]
+	private static final UUID occupationsUuid = UUID.fromString("753d2b35-3924-5f9c-a6c7-a5c3a55fda29");
+	private static final UUID occupationUuid = UUID.fromString("4d0506d1-d961-5bf9-9a7f-bb1a702c7425");
 
-	private DiTreeEntity makeEquivalent(ReasonerService rs) {
+	private DiTreeEntity changeParent(ReasonerService rs) {
 		TempEditUtil editor = new TempEditUtil(rs.getViewCalculator(), rs.getStatedAxiomPattern());
-		DiTreeEntity editedDefinition = editor.makeEquivalent(ChronicLungDiseaseUuid);
+		DiTreeEntity editedDefinition = editor.setParent(occupationUuid, occupationsUuid);
 		return editedDefinition;
 	}
 
 	public ArrayList<String> classifyAll() throws Exception {
-		String db = SolorElkSnomedDataBuilderTest.db + "-all";
-		copyDb(SolorElkSnomedDataBuilderTest.db, db);
+		String db = SampleElkOwlDataBuilderTest.db + "-all";
+		copyDb(SampleElkOwlDataBuilderTest.db, db);
 		setupPrimitiveData(db);
 		PrimitiveData.start();
 		ReasonerService rs = initReasonerService();
-		makeEquivalent(rs);
+		changeParent(rs);
 		rs.extractData();
 		rs.loadData();
 		rs.computeInferences();
@@ -61,17 +63,17 @@ public class SolorElkSnomedIncrementalClassifierTest extends ElkSnomedTestBase {
 	}
 
 	public ArrayList<String> classifyInc() throws Exception {
-		String db = SolorElkSnomedDataBuilderTest.db + "-inc";
-		copyDb(SolorElkSnomedDataBuilderTest.db, db);
+		String db = SampleElkOwlDataBuilderTest.db + "-inc";
+		copyDb(SampleElkOwlDataBuilderTest.db, db);
 		setupPrimitiveData(db);
 		PrimitiveData.start();
 		ReasonerService rs = initReasonerService();
 		rs.extractData();
 		rs.loadData();
 		rs.computeInferences();
-		DiTreeEntity def = makeEquivalent(rs);
-		int cldNid = PrimitiveData.nid(ChronicLungDiseaseUuid);
-		rs.processIncremental(def, cldNid);
+		DiTreeEntity def = changeParent(rs);
+		int occupationNid = PrimitiveData.nid(occupationUuid);
+		rs.processIncremental(def, occupationNid);
 		rs.computeInferences();
 		ArrayList<String> lines = getSupercs(rs);
 		return lines;

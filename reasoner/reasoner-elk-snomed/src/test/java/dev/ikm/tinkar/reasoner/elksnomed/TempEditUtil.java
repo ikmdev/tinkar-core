@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.reasoner.elkowl;
+package dev.ikm.tinkar.reasoner.elksnomed;
 
 import java.util.UUID;
 

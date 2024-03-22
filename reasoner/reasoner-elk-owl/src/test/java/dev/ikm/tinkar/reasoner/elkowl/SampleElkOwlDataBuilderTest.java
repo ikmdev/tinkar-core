@@ -15,12 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.elkowl;
 
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
-
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
@@ -28,10 +23,10 @@ import org.slf4j.LoggerFactory;
 
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
-public class SampleClassifierTest extends ClassifierTest {
+public class SampleElkOwlDataBuilderTest extends ElkOwlDataBuilderTest {
 
 	@SuppressWarnings("unused")
-	private static final Logger LOG = LoggerFactory.getLogger(SampleClassifierTest.class);
+	private static final Logger LOG = LoggerFactory.getLogger(SampleElkOwlDataBuilderTest.class);
 
 	static {
 		stated_count = 83547;
@@ -39,15 +34,12 @@ public class SampleClassifierTest extends ClassifierTest {
 		inactive_count = 0;
 		test_case = "sample";
 	}
+	
+	public static final String db = "sample-data-3-sa";
 
 	@BeforeAll
 	public static void startPrimitiveData() throws IOException {
-		Path source = Paths.get("target", "db", "sample-data-3-sa");
-		Path target = Paths.get("target", "db", "sample-data-classifier");
-		// Temp until test data artifacts are in maven repo
-		assumeTrue(Files.exists(source));
-		PrimitiveDataTestBase.copyDirectory(source, target);
-		setupPrimitiveData("sample-data-classifier");
+		setupPrimitiveData(db);
 		PrimitiveData.start();
 	}
 

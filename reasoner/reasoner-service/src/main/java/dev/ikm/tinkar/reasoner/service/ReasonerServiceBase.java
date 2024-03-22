@@ -24,6 +24,7 @@ import dev.ikm.tinkar.terms.PatternFacade;
 
 public abstract class ReasonerServiceBase implements ReasonerService {
 
+	@SuppressWarnings("unused")
 	private static final Logger LOG = LoggerFactory.getLogger(ReasonerServiceBase.class);
 
 	protected ViewCalculator viewCalculator;

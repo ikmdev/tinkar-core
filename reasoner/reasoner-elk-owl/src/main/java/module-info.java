@@ -40,5 +40,8 @@ module dev.ikm.tinkar.reasoner.elkowl {
 	exports dev.ikm.tinkar.reasoner.elkowl;
 
 	provides ReasonerService with ElkOwlReasonerService;
+	
+	// TODO needed for unit test
+	uses ReasonerService;
 
 }

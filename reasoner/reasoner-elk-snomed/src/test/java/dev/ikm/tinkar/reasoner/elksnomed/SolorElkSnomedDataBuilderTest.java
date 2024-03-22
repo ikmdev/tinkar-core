@@ -29,15 +29,17 @@ public class SolorElkSnomedDataBuilderTest extends ElkSnomedDataBuilderTest {
 	private static final Logger LOG = LoggerFactory.getLogger(SolorElkSnomedDataBuilderTest.class);
 
 	static {
-		stated_count = 548180; 
-		active_count = 488602; 
-		inactive_count = 59578; 
+		stated_count = 548180;
+		active_count = 488602;
+		inactive_count = 59578;
 		test_case = "solor";
 	}
 
+	public static final String db = "solor-08-27-256-sa";
+
 	@BeforeAll
 	public static void startPrimitiveData() throws IOException {
-		setupPrimitiveData("solor-08-27-256-sa");
+		setupPrimitiveData(db);
 		PrimitiveData.start();
 	}
 

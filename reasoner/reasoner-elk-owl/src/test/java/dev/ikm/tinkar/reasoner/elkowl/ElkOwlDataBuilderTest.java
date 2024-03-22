@@ -16,16 +16,8 @@
 package dev.ikm.tinkar.reasoner.elkowl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
@@ -36,9 +28,9 @@ import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.terms.TinkarTerm;
 
-public abstract class AxiomDataBuilderTest extends PrimitiveDataTestBase {
+public abstract class ElkOwlDataBuilderTest extends ElkOwlTestBase {
 
-	private static final Logger LOG = LoggerFactory.getLogger(AxiomDataBuilderTest.class);
+	private static final Logger LOG = LoggerFactory.getLogger(ElkOwlDataBuilderTest.class);
 
 	@Test
 	public void statedPattern() throws Exception {
@@ -47,11 +39,6 @@ public abstract class AxiomDataBuilderTest extends PrimitiveDataTestBase {
 		assertEquals(TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
 				logicCoordinateRecord.statedAxiomsPatternNid());
 	}
-
-	protected static int stated_count = Integer.MIN_VALUE;
-	protected static int active_count = Integer.MIN_VALUE;
-	protected static int inactive_count = Integer.MIN_VALUE;
-	protected static String test_case;
 
 	@Test
 	public void count() throws Exception {
@@ -77,38 +64,9 @@ public abstract class AxiomDataBuilderTest extends PrimitiveDataTestBase {
 		assertEquals(inactive_count, inactive_cnt.intValue());
 	}
 
-	protected Path getWritePath(String filePart) {
-		Path path = Paths.get("target", test_case, test_case + "-" + filePart + ".txt");
-		LOG.info("Write path: " + path);
-		return path;
-	}
-
-	private Path getExpectPath(String filePart) {
-		Path path = Paths.get("src", "test", "resources", test_case, test_case + "-" + filePart + ".txt");
-		assumeTrue(Files.exists(path));
-		LOG.info("Expect patch: " + path);
-		return path;
-	}
-
-	@SuppressWarnings("unused")
-	private void compare(String filePart) throws IOException {
-		List<String> expect = Files.readAllLines(getExpectPath(filePart));
-		List<String> actual = Files.readAllLines(getWritePath(filePart));
-		if (!expect.equals(actual)) {
-			Set<String> expect_copy = new HashSet<>(expect);
-			expect_copy.removeAll(actual);
-			expect_copy.forEach(l -> LOG.error("Missing: " + l));
-			Set<String> actual_copy = new HashSet<>(actual);
-			actual_copy.removeAll(expect);
-			actual_copy.forEach(l -> LOG.error("Extra: " + l));
-		}
-		// assertEquals too verbose if the test fails
-		assertTrue(expect.equals(actual), filePart);
-	}
-
 	@Test
 	public void build() throws Exception {
-		ElkOwlAxiomData axiomData = buildAxiomData();
+		ElkOwlData axiomData = buildElkOwlAxiomData();
 		assertEquals(active_count, axiomData.activeConceptCount.get());
 		assertEquals(inactive_count, axiomData.inactiveConceptCount.get());
 		Files.createDirectories(getWritePath("concepts").getParent());
@@ -119,6 +77,8 @@ public abstract class AxiomDataBuilderTest extends PrimitiveDataTestBase {
 		compare("roles");
 		// TODO This isn't stable since it uses nids. But it's going away anyhow
 		// compare("axioms");
+		// TODO
+//		assertEquals(axiomData.classificationConceptSet.size(), axiomData.nidConceptMap.entrySet().size());
 	}
 
 }
