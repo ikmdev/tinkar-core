@@ -18,27 +18,27 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>${parent.groupId}</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>entity</artifactId>
 		</dependency>
 
 		<dependency>
-			<groupId>${parent.groupId}</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>coordinate</artifactId>
 		</dependency>
 
 		<dependency>
-			<groupId>${parent.groupId}</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>entity-provider</artifactId>
 		</dependency>
 
 		<dependency>
-			<groupId>${parent.groupId}</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>data-spinedarray-provider</artifactId>
 		</dependency>
 
 		<dependency>
-			<groupId>${parent.groupId}</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>executor-provider</artifactId>
 			<scope>test</scope>
 		</dependency>

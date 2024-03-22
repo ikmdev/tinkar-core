@@ -21,43 +21,47 @@
 
 	<modules>
 		<module>reasoner-test-data-assembly-descriptor</module>
+		<module>reasoner-test-data-sample</module>
+		<module>reasoner-test-data-solor</module>
 	</modules>
-
-	<build>
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-assembly-plugin</artifactId>
-					<version>${maven-assembly-plugin.version}</version>
-					<executions>
-						<execution>
-							<id>reasoner</id>
-							<phase>package</phase>
-							<goals>
-								<goal>single</goal>
-							</goals>
-							<configuration>
-								<includeProjectBuildFilters>false</includeProjectBuildFilters>
-								<descriptorRefs>
-									<descriptorRef>data</descriptorRef>
-								</descriptorRefs>
-								<appendAssemblyId>false</appendAssemblyId>
-							</configuration>
-						</execution>
-					</executions>
-				</plugin>
-			</plugins>
-		</pluginManagement>
-	</build>
 
 	<profiles>
 		<profile>
 			<id>test-data-build</id>
-			<modules>
-				<module>reasoner-test-data-sample</module>
-				<module>reasoner-test-data-solor</module>
-			</modules>
+			<build>
+				<pluginManagement>
+					<plugins>
+						<plugin>
+							<groupId>org.apache.maven.plugins</groupId>
+							<artifactId>maven-assembly-plugin</artifactId>
+							<version>${maven-assembly-plugin.version}</version>
+							<dependencies>
+								<dependency>
+									<groupId>${project.groupId}</groupId>
+									<artifactId>reasoner-test-data-assembly-descriptor</artifactId>
+									<version>${project.parent.version}</version>
+								</dependency>
+							</dependencies>
+							<executions>
+								<execution>
+									<id>reasoner</id>
+									<phase>package</phase>
+									<goals>
+										<goal>single</goal>
+									</goals>
+									<configuration>
+										<includeProjectBuildFilters>false</includeProjectBuildFilters>
+										<descriptorRefs>
+											<descriptorRef>data</descriptorRef>
+										</descriptorRefs>
+										<appendAssemblyId>false</appendAssemblyId>
+									</configuration>
+								</execution>
+							</executions>
+						</plugin>
+					</plugins>
+				</pluginManagement>
+			</build>
 		</profile>
 	</profiles>
 
