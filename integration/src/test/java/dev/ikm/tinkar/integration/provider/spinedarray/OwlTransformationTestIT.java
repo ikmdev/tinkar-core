@@ -188,8 +188,8 @@ public class OwlTransformationTestIT {
         try {
             URL protobufFileResource = OwlTransformationTestIT.class.getResource("tinkar-starter-data.pb.zip");
             File starterDataPB = new File(protobufFileResource.toURI());
-            int importCount = new LoadEntitiesFromProtobufFile(starterDataPB).compute();
-        } catch (IOException | URISyntaxException ex) {
+            long importCount = new LoadEntitiesFromProtobufFile(starterDataPB).compute().getTotalCount();
+        } catch (URISyntaxException ex) {
             throw new RuntimeException(ex);
         }
     }

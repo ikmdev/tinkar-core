@@ -101,7 +101,7 @@ public class ProtobufRoundTripIT {
 
         // When we import protobuf data into entities
         LoadEntitiesFromProtobufFile loadEntitiesFromProtobufFile = new LoadEntitiesFromProtobufFile(fileProtobuf);
-        int actualProtobufImportCount = loadEntitiesFromProtobufFile.compute();
+        long actualProtobufImportCount = loadEntitiesFromProtobufFile.compute().getTotalCount();
         LOG.info("Entities loaded from protobuf: " + actualProtobufImportCount);
 
 //         Then all imported and exported entities counts should match

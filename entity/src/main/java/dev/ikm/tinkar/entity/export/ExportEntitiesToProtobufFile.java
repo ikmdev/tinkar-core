@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.entity.export;
 
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.aggregator.DefaultEntityAggregator;
@@ -35,10 +36,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.IntConsumer;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -78,9 +78,12 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
 
     @Override
     public EntityCountSummary compute() {
+        updateMessage("Analyzing Entities...");
+        updateProgress(-1, 1);
+
         EntityCountSummary entityCountSummary;
-        addToTotalWork(entityAggregator.totalCount());
         updateMessage("Exporting Entities...");
+        addToTotalWork(entityAggregator.totalCount());
 
         try (FileOutputStream fos = new FileOutputStream(protobufFile);
              BufferedOutputStream bos = new BufferedOutputStream(fos);
@@ -135,10 +138,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
     }
 
     private String generateManifestContent(EntityCountSummary summary){
-        StringBuilder manifestContent = new StringBuilder();
-        String moduleString = String.join("; ", moduleList.stream().map(PublicId::idString).toList());
-        String authorString = String.join("; ", authorList.stream().map(PublicId::idString).toList());
-        manifestContent
+        StringBuilder manifestContent = new StringBuilder()
                 // TODO: Dynamically populate this user
                 .append("Packager-Name: ").append(TinkarTerm.KOMET_USER.description()).append("\n")
                 .append("Package-Date: ").append(LocalDateTime.now(Clock.systemUTC())).append("\n")
@@ -147,9 +147,32 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                 .append("Semantic-Count: ").append(summary.semanticsCount()).append("\n")
                 .append("Pattern-Count: ").append(summary.patternsCount()).append("\n")
                 .append("Stamp-Count: ").append(summary.stampsCount()).append("\n")
-                .append("Module-Dependencies: ").append(moduleString).append("\n")
-                .append("Authors: ").append(authorString).append("\n"); // Final new line is necessary
+                .append(idsToManifestEntry(moduleList))
+                .append(idsToManifestEntry(authorList))
+                .append("\n"); // Final new line necessary per Manifest spec
+
         return manifestContent.toString();
+    }
+
+    private String idsToManifestEntry(Collection<PublicId> publicIds) {
+        StringBuilder manifestEntry = new StringBuilder();
+        publicIds.forEach((publicId) -> {
+            // Convert PublicId to Manifest Entry Name
+            String idString = publicId.asUuidList().stream()
+                    .map(UUID::toString)
+                    .collect(Collectors.joining(","));
+            // Get Description
+            Optional<Entity<EntityVersion>> entity = EntityService.get().getEntity(PrimitiveData.nid(publicId));
+            String manifestDescription = "Description Undefined";
+            if (entity.isPresent()) {
+                manifestDescription = entity.get().description();
+            }
+            // Create Manifest Entry
+            manifestEntry.append("\n")
+                    .append("Name: ").append(idString).append("\n")
+                    .append("Description: ").append(manifestDescription).append("\n");
+        });
+        return manifestEntry.toString();
     }
 
     private void logCounts(EntityCountSummary summary) {
