@@ -15,6 +15,9 @@
  */
 package dev.ikm.tinkar.entity.load;
 
+import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.transform.TinkarSchemaToEntityTransformer;
@@ -25,25 +28,30 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 /**
  * The purpose of this class is to successfully load all Protobuf messages from a protobuf file and transform them into entities.
  */
-public class LoadEntitiesFromProtobufFile extends TrackingCallable<Integer> {
+public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSummary> {
 
     protected static final Logger LOG = LoggerFactory.getLogger(LoadEntitiesFromProtobufFile.class.getName());
-    final File importFile;
-    static final AtomicInteger importCount = new AtomicInteger();
-    final AtomicInteger exceptionCount = new AtomicInteger();
-    final AtomicInteger importConceptCount = new AtomicInteger();
-    final AtomicInteger importSemanticCount = new AtomicInteger();
-    final AtomicInteger importPatternCount = new AtomicInteger();
-    final AtomicInteger importStampCount = new AtomicInteger();
+
+    private final TinkarSchemaToEntityTransformer entityTransformer =
+            TinkarSchemaToEntityTransformer.getInstance();
+    private static final String MANIFEST_RELPATH = "META-INF/MANIFEST.MF";
+    private final File importFile;
+    private final AtomicLong importCount = new AtomicLong();
+    private final AtomicLong importConceptCount = new AtomicLong();
+    private final AtomicLong importSemanticCount = new AtomicLong();
+    private final AtomicLong importPatternCount = new AtomicLong();
+    private final AtomicLong importStampCount = new AtomicLong();
 
     public LoadEntitiesFromProtobufFile(File importFile) {
         super(false, true);
@@ -53,103 +61,134 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<Integer> {
 
     /**
      * This purpose of this method is to process all protobuf messages and call the entity transformer.
-     * @return Integer count of all entities/protobuf messages loaded/exported
-     * @throws IOException
+     * @return EntityCountSummary count of all entities/protobuf messages loaded/exported
      */
-    public Integer compute() throws IOException {
-        updateTitle("Loading " + importFile.getName());
-        LOG.info(getTitle());
+    public EntityCountSummary compute() {
+        initCounts();
 
-        double sizeForAll = 0;
+        updateTitle("Import Protobuf Data from " + importFile.getName());
+        updateProgress(-1, 1);
+        updateMessage("Analyzing Import File...");
 
+        // Analyze Manifest and update tracking callable
+        long expectedImports = analyzeManifest();
+        LOG.info(expectedImports + " Entities to process...");
+        updateProgress(0, expectedImports);
+        updateMessage("Importing Protobuf Data...");
+
+        // Process Protobuf Entry
         try (ZipInputStream zis = new ZipInputStream(new FileInputStream(importFile))) {
+            // Consumer to be run for each transformed Entity
             Consumer<Entity<? extends  EntityVersion>> entityConsumer = entity -> {
-                try {
-                    EntityService.get().putEntity(entity);
+                    EntityService.get().putEntityQuietly(entity);
                     updateCounts(entity);
-                } catch (Throwable e) {
-                    // output entities with issues
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("Error persisting entity types: ")
-                            .append(entity.entityDataType())
-                            .append(" ");
-                    entity.publicId().asUuidList().forEach(c -> sb.append(" ")
-                            .append(c.toString())
-                            .append(" "));
-                    LOG.error(sb.toString());
-                    e.printStackTrace();
-                }
             };
 
-            Consumer<StampEntity<StampEntityVersion>> stampEntityConsumer = stampEntity -> {
-                EntityService.get().putEntity(stampEntity);
-                updateSTAMPCount();
-            };
-
-            ZipEntry zipEntry = Objects.requireNonNull(zis.getNextEntry());
-            LOG.info("The zip entry name: " + zipEntry.getName());
-            LOG.info("The zip entry size: " + zipEntry.getSize());
-            TinkarSchemaToEntityTransformer transformer = TinkarSchemaToEntityTransformer.getInstance();
-            // TODO: Refactor to better handle importing with manifest
-            while (zipEntry != null) {
-                if (zipEntry.getName().equals("META-INF/MANIFEST.MF")) {
-                    break;
+            ZipEntry zipEntry;
+            while ((zipEntry = zis.getNextEntry()) != null) {
+                if (zipEntry.getName().equals(MANIFEST_RELPATH)) {
+                    continue;
                 }
                 while (zis.available() > 0) {
-                    // Last byte is -1 to tell protobuf parser that it is at EOF
-                    // Since there is a final byte, zis.available will still return 1
-                    // And pbTinkarMsg should be null for the last entry
+                    // zis.available returns 1 until AFTER EOF has been reached
+                    // Protobuf parser reads the data UP TO EOF, so zis.available
+                    // will return 1 when the only thing left is EOF
+                    // pbTinkarMsg should be null for this last entry
                     TinkarMsg pbTinkarMsg = TinkarMsg.parseDelimitedFrom(zis);
-
-                    if (zis.available() == 0) {
-                        break;
-                    }
-                    if(pbTinkarMsg == null) {
-                        LOG.warn("Possible byte before end of file.");
+                    if (pbTinkarMsg == null) {
                         continue;
                     }
-                    transformer.transform(pbTinkarMsg, entityConsumer, stampEntityConsumer);
+
+                    // TODO: Remove need for Stamp Consumer since Stamps are now consumed by Entity Consumer
+                    entityTransformer.transform(pbTinkarMsg, entityConsumer, (stampEntity) -> {});
+
+                    // Batch progress updates to prevent hanging the UI thread
+                    if (importCount.incrementAndGet() % 1000 == 0) {
+                        updateProgress(importCount.get(), expectedImports);
+                    }
                 }
-                // advance next zip entry
-                zipEntry = zis.getNextEntry();
             }
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-            exceptionCount.incrementAndGet();
         } catch (IOException e) {
+            updateTitle("Import Protobuf Data from " + importFile.getName() + " with error(s)");
             throw new RuntimeException(e);
+        } finally {
+            updateMessage("In " + durationString());
+            updateProgress(1,1);
         }
 
-        updateProgress(sizeForAll, sizeForAll);
-        updateTitle("POST-Loaded from " + importFile.getName());
-        LOG.info("The imported count of messages = " + importCount.get());
-        return importCount.get();
+        if (importCount.get() != expectedImports) {
+            throw new IllegalStateException("ERROR: Expected " + expectedImports + " imported Entities, but imported " + importCount.get());
+        }
+        return summarize();
     }
 
     private void updateCounts(Entity entity){
-        if(entity instanceof ConceptEntity<?>){
-            importConceptCount.incrementAndGet();
-        }else if(entity instanceof SemanticEntity<?>){
-            importSemanticCount.incrementAndGet();
-        }else if(entity instanceof PatternEntity<?>){
-            importPatternCount.incrementAndGet();
+        switch (entity) {
+            case ConceptEntity ignored -> importConceptCount.incrementAndGet();
+            case SemanticEntity ignored -> importSemanticCount.incrementAndGet();
+            case PatternEntity ignored -> importPatternCount.incrementAndGet();
+            case StampEntity ignored -> importStampCount.incrementAndGet();
+            default -> throw new IllegalStateException("Unexpected value: " + entity);
         }
-        importCount.incrementAndGet();
     }
 
-    private void updateSTAMPCount(){
-        importStampCount.incrementAndGet();
+    public EntityCountSummary summarize() {
+        LOG.info("Imported: " + importCount.get() + " entities in: " + durationString());
+        return new EntityCountSummary(
+                importConceptCount.get(),
+                importSemanticCount.get(),
+                importPatternCount.get(),
+                importStampCount.get()
+        );
     }
 
-    public String report(){
-        return "Imported: " +
-                importCount +
-                " entities in: " +
-                durationString() +
-                " with " +
-                exceptionCount.get() +
-                " exceptions." +
-                "\n";
+    protected void initCounts() {
+        importCount.set(0);
+        importConceptCount.set(0);
+        importSemanticCount.set(0);
+        importPatternCount.set(0);
+        importStampCount.set(0);
     }
 
+    private long analyzeManifest() {
+        long expectedImports = -1;
+        Map<PublicId, String> manifestEntryData = new HashMap<>();
+
+        // Read Manifest from Zip
+        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(importFile))) {
+            ZipEntry zipEntry;
+            while ((zipEntry = zis.getNextEntry()) != null) {
+                if (zipEntry.getName().equals(MANIFEST_RELPATH)) {
+                    Manifest manifest = new Manifest(zis);
+                    expectedImports = Long.parseLong(manifest.getMainAttributes().getValue("Total-Count"));
+                    // Get Dependent Module / Author PublicIds and Descriptions
+                    manifest.getEntries().keySet().forEach((publicIdKey) -> {
+                        PublicId publicId = PublicIds.of(publicIdKey.split(","));
+                        String description = manifest.getEntries().get(publicIdKey).getValue("Description");
+                        manifestEntryData.put(publicId, description);
+                    });
+                }
+                zis.closeEntry();
+                LOG.info(zipEntry.getName() + " zip entry size: " + zipEntry.getSize());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        manifestEntryData.keySet().forEach((publicId) -> {
+            AtomicBoolean isPresent = new AtomicBoolean(false);
+            PrimitiveData.get().forEachConceptNid(nid -> {
+                if (EntityService.get().getEntityFast(nid).publicId().equals(publicId)) {
+                    isPresent.set(true);
+                }
+            });
+            if (!isPresent.get()) {
+                LOG.warn("Dependent Module or Author is not Present -" +
+                        " PublicId: " + publicId.idString() +
+                        " Description: " + manifestEntryData.get(publicId));
+            }
+        });
+
+        return expectedImports;
+    }
 }

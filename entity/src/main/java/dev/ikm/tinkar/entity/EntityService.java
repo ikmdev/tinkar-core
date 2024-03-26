@@ -26,6 +26,7 @@ import dev.ikm.tinkar.component.Component;
 import dev.ikm.tinkar.component.Version;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import dev.ikm.tinkar.entity.internal.EntityServiceFinder;
+import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.ComponentWithNid;
 import dev.ikm.tinkar.terms.EntityFacade;
@@ -66,6 +67,16 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 return TinkExecutor.ioThreadPool().submit(new ExportEntitiesToProtobufFile(file, membershipTags)).get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    default CompletableFuture<EntityCountSummary> loadData(File file) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return TinkExecutor.ioThreadPool().submit(new LoadEntitiesFromProtobufFile(file)).get();
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
@@ -170,6 +181,13 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      * @param entity
      */
     void putEntity(Entity entity);
+
+    /**
+     * Each time an entity is put via this method, Flow.Subscriber
+     * is not notified that the entity may have changed.
+     * @param entity
+     */
+    void putEntityQuietly(Entity entity);
 
     /**
      * @param stampEntity

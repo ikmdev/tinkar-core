@@ -45,7 +45,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.function.Consumer;
 
 import static dev.ikm.tinkar.terms.TinkarTerm.DESCRIPTION_PATTERN;
@@ -199,6 +200,26 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         processor.dispatch(entity.nid());
         if (entity instanceof SemanticEntity semanticEntity) {
             processor.dispatch(semanticEntity.referencedComponentNid());
+        }
+    }
+
+    @Override
+    public void putEntityQuietly(Entity entity) {
+        invalidateCaches(entity);
+        ENTITY_CACHE.put(entity.nid(), entity);
+        if (entity instanceof StampEntity stampEntity) {
+            STAMP_CACHE.put(stampEntity.nid(), stampEntity);
+            if (stampEntity.lastVersion().stateNid() == State.CANCELED.nid()) {
+                PrimitiveData.get().addCanceledStampNid(stampEntity.nid());
+            }
+        }
+        if (entity instanceof SemanticEntity semanticEntity) {
+            PrimitiveData.get().merge(entity.nid(),
+                    semanticEntity.patternNid(),
+                    semanticEntity.referencedComponentNid(),
+                    entity.getBytes(), entity);
+        } else {
+            PrimitiveData.get().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, entity.getBytes(), entity);
         }
     }
 
