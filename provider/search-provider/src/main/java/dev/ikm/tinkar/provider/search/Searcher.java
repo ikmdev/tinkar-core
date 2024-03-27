@@ -15,26 +15,31 @@
  */
 package dev.ikm.tinkar.provider.search;
 
+import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
+import dev.ikm.tinkar.coordinate.Coordinates;
+import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
+import dev.ikm.tinkar.coordinate.navigation.NavigationCoordinateRecord;
+import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculator;
+import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
+import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
+import dev.ikm.tinkar.entity.EntityService;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.StoredField;
-import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.highlight.Formatter;
-import org.apache.lucene.search.highlight.Highlighter;
-import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
-import org.apache.lucene.search.highlight.NullFragmenter;
-import org.apache.lucene.search.highlight.QueryScorer;
-import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
+import org.apache.lucene.search.highlight.*;
+import org.eclipse.collections.impl.factory.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Searcher {
     private static final Logger LOG = LoggerFactory.getLogger(Searcher.class);
@@ -47,7 +52,6 @@ public class Searcher {
         stopwatch.stop();
         LOG.info("Opened lucene searcher in: " + stopwatch.durationString());
     }
-
 
     public PrimitiveDataSearchResult[] search(String queryString, int maxResultSize) throws
             ParseException, IOException, InvalidTokenOffsetsException {
@@ -76,6 +80,117 @@ public class Searcher {
             return results;
         }
         return new PrimitiveDataSearchResult[0];
+    }
+
+    /**
+     * Returns a default navigation calculator with coordinates for
+     * inferred navigation, active stamps on development path, & english synonyms
+     *
+     * @return  NavigationCalculator
+     */
+    private static NavigationCalculator defaultNavigationCalculator() {
+        StampCoordinateRecord stampCoordinateRecord = Coordinates.Stamp.DevelopmentLatestActiveOnly();
+        LanguageCoordinateRecord languageCoordinateRecord = Coordinates.Language.UsEnglishRegularName();
+        NavigationCoordinateRecord navigationCoordinateRecord = Coordinates.Navigation.inferred().toNavigationCoordinateRecord();
+        return NavigationCalculatorWithCache.getCalculator(stampCoordinateRecord, Lists.immutable.of(languageCoordinateRecord), navigationCoordinateRecord);
+    }
+
+    /**
+     * Returns List of Children PublicIds for the Entity PublicId provided
+     * using the default NavigationCalculator from {@link #defaultNavigationCalculator()}
+     *
+     * @param   parentConceptId PublicId of the parent concept
+     * @return  List of PublicIds for the children concepts
+     */
+    public static List<PublicId> childrenOf(PublicId parentConceptId) {
+        return childrenOf(defaultNavigationCalculator(), parentConceptId);
+    }
+
+    /**
+     * Returns List of Children PublicIds for the Entity PublicId provided
+     * using a supplied NavigationCalculator
+     * <p>
+     * Provided as an ease-of-use method to convert nids provided by the
+     * {@link NavigationCalculator#childrenOf(int)} method to PublicIds
+     *
+     * @param   navCalc NavigationCalculator to calculate children
+     * @param   parentConceptId PublicId of the parent concept
+     * @return  List of PublicIds for the children concepts
+     */
+    public static List<PublicId> childrenOf(NavigationCalculator navCalc, PublicId parentConceptId) {
+        List<PublicId> childIds = new ArrayList<>();
+        int[] childNidList = navCalc.childrenOf(EntityService.get().nidForPublicId(parentConceptId)).toArray();
+        for (int childNid : childNidList) {
+            EntityService.get().getEntity(childNid).ifPresent((entity) -> childIds.add(entity.publicId()));
+        }
+        return childIds;
+    }
+
+    /**
+     * Returns List of descendant PublicIds for the Entity PublicId provided
+     * using the default NavigationCalculator from {@link #defaultNavigationCalculator()}
+     *
+     * @param   ancestorConceptId PublicId of the ancestor concept
+     * @return  List of PublicIds for the descendant concepts
+     */
+    public static List<PublicId> descendantsOf(PublicId ancestorConceptId) {
+        return descendantsOf(defaultNavigationCalculator(), ancestorConceptId);
+    }
+
+    /**
+     * Returns List of descendant PublicIds for the Entity PublicId provided
+     * using a supplied NavigationCalculator
+     * <p>
+     * Provided as an ease-of-use method to convert nids provided by the
+     * {@link NavigationCalculator#descendentsOf(int)} method to PublicIds
+     *
+     * @param   navCalc NavigationCalculator to calculate descendants
+     * @param   ancestorConceptId PublicId of the ancestor concept
+     * @return  List of PublicIds for the descendant concepts
+     */
+    public static List<PublicId> descendantsOf(NavigationCalculator navCalc, PublicId ancestorConceptId) {
+        List<PublicId> descendantIds = new ArrayList<>();
+        int[] descendantNidList = navCalc.descendentsOf(EntityService.get().nidForPublicId(ancestorConceptId)).toArray();
+        for (int descendantNid : descendantNidList) {
+            EntityService.get().getEntity(descendantNid).ifPresent((entity) -> descendantIds.add(entity.publicId()));
+        }
+        return descendantIds;
+    }
+
+    /**
+     * Returns List of Fully Qualified Name (FQN) Strings for the Entity PublicIds provided
+     * using the default NavigationCalculator from {@link #defaultNavigationCalculator()}
+     *
+     * @param   conceptIds List of PublicIds for concepts with FQNs to return
+     * @return  List of FQN Strings with indexes matching the supplied List of PublicIds
+     */
+    public static List<String> descriptionsOf(List<PublicId> conceptIds) {
+        return descriptionsOf(defaultNavigationCalculator(), conceptIds);
+    }
+
+    /**
+     * Returns List of Fully Qualified Name (FQN) Strings for the Entity PublicIds provided
+     * using a supplied NavigationCalculator
+     * <p>
+     * Provided as an ease-of-use method to retrieve FQNs for multiple concepts at once
+     * using the {@link NavigationCalculator#getFullyQualifiedNameText(int)} method
+     *
+     * @param   navCalc NavigationCalculator to calculate FQNs
+     * @param   conceptIds List of PublicIds for concepts with FQNs to return
+     * @return  List of FQN Strings with indexes matching the supplied List of PublicIds
+     */
+    public static List<String> descriptionsOf(NavigationCalculator navCalc, List<PublicId> conceptIds) {
+        List<String> names = new ArrayList<>();
+        for (PublicId pid : conceptIds) {
+            navCalc.getFullyQualifiedNameText(EntityService.get().nidForPublicId(pid))
+                    .ifPresentOrElse(names::add,
+                        () -> {
+                            LOG.warn("FQN not defined for " + pid.idString());
+                            names.add("");
+                        }
+                    );
+        }
+        return names;
     }
 
 }
