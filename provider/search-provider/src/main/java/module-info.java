@@ -22,6 +22,8 @@ module dev.ikm.tinkar.provider.search {
     requires org.apache.lucene.highlighter;
     requires org.apache.lucene.core;
     requires static transitive com.google.auto.service;
+    requires dev.ikm.tinkar.coordinate;
+    requires org.eclipse.collections;
 
     exports dev.ikm.tinkar.provider.search;
 }

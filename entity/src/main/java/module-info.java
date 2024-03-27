@@ -30,10 +30,10 @@ import dev.ikm.tinkar.entity.load.LoadEntitiesFromFileController;
 module dev.ikm.tinkar.entity {
     requires org.slf4j;
     requires io.activej.bytebuf;
+    requires transitive dev.ikm.tinkar.common;
     requires transitive dev.ikm.tinkar.component;
     requires dev.ikm.tinkar.dto;
     requires java.logging;
-    requires transitive dev.ikm.tinkar.common;
     requires transitive com.github.benmanes.caffeine;
     requires org.eclipse.collections;
     requires org.eclipse.collections.api;

@@ -36,6 +36,7 @@ open module dev.ikm.tinkar.integration.test {
     requires org.mockito; //TODO: delete with stale ITs
     requires dev.ikm.tinkar.ext.lang.owl;
     requires dev.ikm.tinkar.schema;
+    requires dev.ikm.tinkar.provider.search;
 
     uses CachingService;
     uses DataServiceController;
