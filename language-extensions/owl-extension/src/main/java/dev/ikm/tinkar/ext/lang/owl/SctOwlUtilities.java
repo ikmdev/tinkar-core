@@ -15,8 +15,9 @@
  */
 package dev.ikm.tinkar.ext.lang.owl;
 
+import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.ConceptEntityVersion;
 import dev.ikm.tinkar.entity.EntityService;
@@ -34,11 +35,9 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-import static java.io.StreamTokenizer.TT_EOF;
-import static java.io.StreamTokenizer.TT_EOL;
-import static java.io.StreamTokenizer.TT_NUMBER;
-import static java.io.StreamTokenizer.TT_WORD;
+import static java.io.StreamTokenizer.*;
 
 public class SctOwlUtilities {
 
@@ -63,6 +62,7 @@ public class SctOwlUtilities {
         t.wordChars('0', '9');
         t.wordChars('a', 'z');
         t.wordChars('A', 'Z');
+        t.wordChars('-', '-'); // Used to represent UUID as a single token
         t.wordChars(128 + 32, 255);
         t.whitespaceChars(0, ' ');
         t.commentChar('#');
@@ -95,6 +95,7 @@ public class SctOwlUtilities {
                 case PREFIX:
                 case ONTOLOGY:
                     parseToCloseParen(tokenizer);
+                    tokenizer.pushBack();
                     break;
                 case TRANSITIVEOBJECTPROPERTY:
                 case REFLEXIVEOBJECTPROPERTY:
@@ -166,16 +167,19 @@ public class SctOwlUtilities {
         if (t.nextToken() != ':') {
             throw new IllegalStateException("Expecting ':' found: " + t.ttype + " " + t.sval);
         }
-        if (t.nextToken() != TT_WORD) {
+        // TODO: Why do we always expect this to be an identifier and not a TT_WORD like OBJECTINTERSECTIONOF?
+        // Skip concept id...
+        if (t.nextToken() != '[') {
             throw new IllegalStateException("Expecting concept identifier found: " + t.ttype + " " + t.sval);
         }
+        parseAndDiscardPublicId(t, original);
         if (t.nextToken() != ':') {
             throw new IllegalStateException("Expecting ':' found: " + t.ttype + " " + t.sval);
         }
-        if (t.nextToken() == TT_WORD) {
+        if (t.nextToken() == '[') {
             return logicalExpressionBuilder.ConceptAxiom(
-                    PrimitiveData.nid(UuidUtil.fromSNOMED(t.sval)));
-        } else {
+                    PrimitiveData.nid(processPublicId(t, original)));
+        }  else {
             throwIllegalStateException("Expecting concept identifier. ", t, original);
         }
         throw new IllegalStateException("unreachable");
@@ -314,17 +318,18 @@ public class SctOwlUtilities {
                             switch (tokenizer.nextToken()) {
                                 case ':':
                                     // Skip concept id...
-                                    if (tokenizer.nextToken() != TT_WORD) {
-                                        throwIllegalStateException("Expecting Word.", tokenizer, original);
+                                    if (tokenizer.nextToken() != '[') {
+                                        throwIllegalStateException("Expecting PublicId.", tokenizer, original);
                                     }
+                                    parseAndDiscardPublicId(tokenizer, original);
                                     if (tokenizer.nextToken() != ':') {
                                         throwIllegalStateException("Expecting :.", tokenizer, original);
                                     }
-                                    if (tokenizer.nextToken() != TT_WORD) {
-                                        throwIllegalStateException("Expecting Word.", tokenizer, original);
+                                    if (tokenizer.nextToken() != '[') {
+                                        throwIllegalStateException("Expecting PublicId.", tokenizer, original);
                                     }
                                     andList.add(logicalExpressionBuilder.ConceptAxiom(
-                                            PrimitiveData.nid(UuidUtil.fromSNOMED(tokenizer.sval))));
+                                            PrimitiveData.nid(processPublicId(tokenizer, original))));
                                     parseToCloseParen(tokenizer);
 
                                     break;
@@ -373,11 +378,11 @@ public class SctOwlUtilities {
         final List<ConceptFacade> propertyPatternList = new ArrayList<>();
 
         while (tokenizer.nextToken() == ':') {
-            if (tokenizer.nextToken() != TT_WORD) {
-                throwIllegalStateException("Expected TT_WORD.", tokenizer, original);
+            if (tokenizer.nextToken() != '[') {
+                throwIllegalStateException("Expected PublicId.", tokenizer, original);
             }
-            Optional<? extends ConceptFacade> optionalPatternPart =
-                    EntityService.get().getEntity(PrimitiveData.nid(UuidUtil.fromSNOMED(tokenizer.sval)));
+            Optional<? extends ConceptFacade> optionalPatternPart = EntityService.get().getEntity(
+                    PrimitiveData.nid(processPublicId(tokenizer, original)));
 
             if (optionalPatternPart.isPresent()) {
                 propertyPatternList.add(optionalPatternPart.get());
@@ -392,10 +397,10 @@ public class SctOwlUtilities {
         if (tokenizer.nextToken() != ':') {
             throwIllegalStateException("Expected :.", tokenizer, original);
         }
-        if (tokenizer.nextToken() != TT_WORD) {
-            throwIllegalStateException("Expected TT_WORD.", tokenizer, original);
+        if (tokenizer.nextToken() != '[') {
+            throwIllegalStateException("Expected PublicId.", tokenizer, original);
         }
-        int propertyImplicationNid = PrimitiveData.nid(UuidUtil.fromSNOMED(tokenizer.sval));
+        int propertyImplicationNid = PrimitiveData.nid(processPublicId(tokenizer, original));
 
         Optional<ConceptEntity<ConceptEntityVersion>> optionalPropertyImplication
                 = EntityService.get().getEntity(propertyImplicationNid);
@@ -441,9 +446,10 @@ public class SctOwlUtilities {
                         if (tokenizer.nextToken() != ':') {
                             throw new IllegalStateException("Expecting :. Found: " + tokenizer + "\n" + original);
                         }
-                        if (tokenizer.nextToken() != TT_WORD) {
+                        if (tokenizer.nextToken() != '[') {
                             throw new IllegalStateException("Expecting identifier. Found: " + tokenizer + "\n" + original);
                         }
+                        parseAndDiscardPublicId(tokenizer, original);
 
                         return logicalExpressionBuilder.And(andList.toArray(new LogicalAxiom.Atom[andList.size()]));
 
@@ -454,9 +460,9 @@ public class SctOwlUtilities {
             default:
                 throwIllegalStateException("Expecting identifier start or ObjectIntersectionOf.", tokenizer, original);
         }
-        if (tokenizer.nextToken() == TT_WORD) {
+        if (tokenizer.nextToken() == '[') {
             // the identifier for the concept being defined.
-
+            parseAndDiscardPublicId(tokenizer, original);
         } else {
             throwIllegalStateException("Expecting identifier.", tokenizer, original);
         }
@@ -518,11 +524,11 @@ public class SctOwlUtilities {
     }
 
     private static LogicalAxiom.Atom.ConceptAxiom getConceptAssertion(LogicalExpressionBuilder logicalExpressionBuilder, StreamTokenizer tokenizer, String original) throws IOException {
-        if (tokenizer.nextToken() != TT_WORD) {
+        if (tokenizer.nextToken() != '[') {
             // the identifier for the concept being defined.
-            throwIllegalStateException("Expecting SNOMED identifier.", tokenizer, original);
+            throwIllegalStateException("Expecting PublicId.", tokenizer, original);
         }
-        return logicalExpressionBuilder.ConceptAxiom(PrimitiveData.nid(UuidUtil.fromSNOMED(tokenizer.sval)));
+        return logicalExpressionBuilder.ConceptAxiom(PrimitiveData.nid(processPublicId(tokenizer, original)));
     }
 
     private static LogicalAxiom.Atom.TypedAtom.Role getSomeRole(LogicalExpressionBuilder logicalExpressionBuilder, StreamTokenizer tokenizer, String original) throws IOException {
@@ -534,12 +540,13 @@ public class SctOwlUtilities {
             // the identifier for the concept being defined.
             throwIllegalStateException("Expecting :.", tokenizer, original);
         }
-        if (tokenizer.nextToken() != TT_WORD) {
+        if (tokenizer.nextToken() != '[') {
             // the identifier for the concept being defined.
-            throwIllegalStateException("Expecting SNOMED identifier.", tokenizer, original);
+            throwIllegalStateException("Expecting PublicId String.", tokenizer, original);
         }
+        Optional<? extends ConceptFacade> optionalRoleType = EntityService.get().getEntity(
+                PrimitiveData.nid(processPublicId(tokenizer, original)));
 
-        Optional<? extends ConceptFacade> optionalRoleType = EntityService.get().getEntity(PrimitiveData.nid(UuidUtil.fromSNOMED(tokenizer.sval)));
         if (optionalRoleType.isPresent()) {
             LogicalAxiom.Atom.TypedAtom.Role someRole = logicalExpressionBuilder.SomeRole(optionalRoleType.get(), getRestriction(logicalExpressionBuilder, tokenizer, original));
             if (tokenizer.nextToken() != ')') {
@@ -591,9 +598,40 @@ public class SctOwlUtilities {
     }
 
     private static void parseAndDiscardWord(StreamTokenizer tokenizer, String original) throws IOException {
-        if (tokenizer.nextToken() == TT_WORD) {
-            return;
+        switch (tokenizer.nextToken()) {
+            case TT_WORD: return;
+            case '[':
+                parseAndDiscardPublicId(tokenizer, original);
+                break;
+            default:
+                throwIllegalStateException("Expecting TT_WORD.", tokenizer, original);
         }
-        throwIllegalStateException("Expecting ':'.", tokenizer, original);
+    }
+
+
+    private static void parseAndDiscardPublicId(StreamTokenizer tokenizer, String original) throws IOException {
+        processPublicId(tokenizer, original);
+    }
+
+    private static PublicId processPublicId(StreamTokenizer tokenizer, String original) throws IOException {
+        List<UUID> uuids = new ArrayList<>();
+        while (tokenizer.nextToken() != ']') {
+            switch (tokenizer.ttype) {
+                case ',':
+                    continue;
+                case TT_WORD:
+                    uuids.add(UUID.fromString(tokenizer.sval));
+                    break;
+                case TT_EOF:
+                    throwIllegalStateException("Illegal EOF", tokenizer, original);
+                    break;
+                default:
+                    throwIllegalStateException("Expecting ']' to end PublicId definition.", tokenizer, original);
+            }
+        }
+        if (uuids.isEmpty()) {
+            throwIllegalStateException("Expecting UUID.", tokenizer, original);
+        }
+        return PublicIds.of(uuids.toArray(new UUID[0]));
     }
 }
