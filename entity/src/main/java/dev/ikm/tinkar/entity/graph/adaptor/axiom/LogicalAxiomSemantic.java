@@ -30,7 +30,7 @@ public enum LogicalAxiomSemantic {
     OR(TinkarTerm.OR, LogicalAxiom.Atom.Connective.Or.class),
     PROPERTY_PATTERN_IMPLICATION(TinkarTerm.PROPERTY_PATTERN_IMPLICATION, LogicalAxiom.Atom.PropertyPatternImplication.class),
     PROPERTY_SET(TinkarTerm.PROPERTY_SET, LogicalAxiom.Atom.LogicalSet.PropertySet.class),
-    ROLE(TinkarTerm.ROLE_TYPE, LogicalAxiom.Atom.TypedAtom.Role.class),
+    ROLE(TinkarTerm.ROLE, LogicalAxiom.Atom.TypedAtom.Role.class),
     SUFFICIENT_SET(TinkarTerm.SUFFICIENT_SET, LogicalAxiom.Atom.LogicalSet.SufficientSet.class),
     DISJOINT_WITH(TinkarTerm.DISJOINT_WITH, LogicalAxiom.Atom.DisjointWithAxiom.class),
     FEATURE(TinkarTerm.FEATURE, LogicalAxiom.Atom.TypedAtom.Feature.class);
