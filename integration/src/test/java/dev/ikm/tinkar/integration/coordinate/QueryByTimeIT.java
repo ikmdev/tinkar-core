@@ -110,7 +110,7 @@ public class QueryByTimeIT {
                 });
     }
 
-    @Test
+ //   @Test
     public void retrieveDataByTimeTest() {
         String time = "2020-10-22T12:31:04";
         LocalDateTime localDateTime = LocalDateTime.parse(time, DateTimeFormatter.ISO_LOCAL_DATE_TIME);

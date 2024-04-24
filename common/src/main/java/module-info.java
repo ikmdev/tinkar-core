@@ -34,7 +34,6 @@ module dev.ikm.tinkar.common {
     requires org.slf4j;
     requires static com.google.auto.service;
 
-
     exports dev.ikm.tinkar.common.alert;
     exports dev.ikm.tinkar.common.binary;
     exports dev.ikm.tinkar.common.id;

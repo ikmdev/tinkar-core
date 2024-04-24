@@ -17,8 +17,6 @@
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <skip.unit.tests>false</skip.unit.tests>
         <skip.integration.tests>false</skip.integration.tests>
-<!--        <skipTests>${skip.unit.tests}</skipTests>-->
-<!--        <skipITs>${skip.integration.tests}</skipITs>-->
     </properties>
 
     <dependencyManagement>
@@ -26,6 +24,11 @@
             <dependency>
                 <groupId>dev.ikm.tinkar.ext.owl</groupId>
                 <artifactId>owl-extension</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.tinkar.fhir</groupId>
+                <artifactId>fhir-extension</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
@@ -89,6 +92,12 @@
         <dependency>
             <groupId>dev.ikm.tinkar.ext.owl</groupId>
             <artifactId>owl-extension</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>dev.ikm.tinkar.fhir</groupId>
+            <artifactId>fhir-extension</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
