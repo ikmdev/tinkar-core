@@ -85,7 +85,7 @@
         <caffeine.version>3.1.8</caffeine.version>
         <eclipse-collections.version>11.1.0-r7</eclipse-collections.version>
         <eclipse-collections-api.version>11.1.0-r7</eclipse-collections-api.version>
-        <jackson.version>2.14.2</jackson.version>
+        <jackson.version>2.17.0</jackson.version>
         <jgrapht.version>1.5.0</jgrapht.version>
         <mockito.version>5.5.0</mockito.version>
         <mvstore.version>1.4.200-r3</mvstore.version>

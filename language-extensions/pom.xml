@@ -13,6 +13,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>owl-extension</module>
+        <module>fhir-extension</module>
     </modules>
 
 </project>
