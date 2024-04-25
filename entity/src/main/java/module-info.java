@@ -46,6 +46,7 @@ module dev.ikm.tinkar.entity {
     requires org.jgrapht.core;
 
     exports dev.ikm.tinkar.entity;
+    exports dev.ikm.tinkar.entity.aggregator;
     exports dev.ikm.tinkar.entity.graph;
     exports dev.ikm.tinkar.entity.util;
     exports dev.ikm.tinkar.entity.load;
