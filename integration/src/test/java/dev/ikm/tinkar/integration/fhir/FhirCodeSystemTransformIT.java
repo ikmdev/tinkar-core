@@ -44,8 +44,8 @@ public class FhirCodeSystemTransformIT {
     FhirCodeSystemTransform fhirCodeSystemTransform;
     FhirStatedDefinitionTransformer fhirStatedDefinitionTransformer;
     StampCalculator stampCalculator;
-
-  //  @BeforeEach
+    final int transformSize = 1000;
+//    @BeforeEach
     public void init() {
         File dataStore = new File(System.getProperty("user.home") + "/Solor/SnomedCT_US_20230901_SpinedArray-20240402");
         String controller = "Open SpinedArrayStore";
@@ -54,11 +54,11 @@ public class FhirCodeSystemTransformIT {
         PrimitiveData.selectControllerByName(controller);
         PrimitiveData.start();
     }
-   // @AfterEach
+//    @AfterEach
     public void endTest() {
         PrimitiveData.stop();
     }
-  //  @Test
+//    @Test
     public void testFhirCodeSystemTransformation() {
         int patternNid = TinkarTerm.DESCRIPTION_PATTERN.nid();
         Set<Integer> pathNids = new HashSet<>();
@@ -69,28 +69,48 @@ public class FhirCodeSystemTransformIT {
                 })
         );
 
+        AtomicInteger counter = new AtomicInteger();
+        AtomicInteger totalConcepts = new AtomicInteger();
         pathNids.forEach(pathNid -> {
             if(TinkarTerm.DEVELOPMENT_PATH.nid() == pathNid){
+
                 StampCalculator stampCalculatorWithCache =   initStampCalculator(pathNid);
                 List<ConceptEntity<? extends  ConceptEntityVersion>> concepts = new ArrayList<>();
                 PrimitiveData.get().forEachConceptNid((conceptnid) -> {
-                    Entity<EntityVersion> entity = EntityService.get().getEntityFast(conceptnid);
-                    if(entity instanceof ConceptEntity conceptEntity){
-                        concepts.add(conceptEntity);
+                    if(counter.get() == transformSize){
+                       totalConcepts.set(totalConcepts.get()+transformSize);
+                       processConceptBatch(concepts, stampCalculatorWithCache, totalConcepts.get());
+                       concepts.clear();
+                       counter.set(0);
+                    }
+                    if(counter.get() < transformSize) {
+                        Entity<EntityVersion> entity = EntityService.get().getEntityFast(conceptnid);
+                        if (entity instanceof ConceptEntity conceptEntity) {
+                            concepts.add(conceptEntity);
+                            counter.getAndIncrement();
+                        }
                     }
                 });
-                fhirCodeSystemTransform= new FhirCodeSystemTransform(stampCalculatorWithCache, concepts, (fhirString) -> {
-                    Assertions.assertNotNull(fhirString);
-                    Assertions.assertFalse(fhirString.isEmpty());
-                });
-                try {
-                    fhirCodeSystemTransform.compute();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
+                if(counter.get() < transformSize && counter.get() > 0){
+                    totalConcepts.set(totalConcepts.get()+counter.get());
+                    processConceptBatch(concepts, stampCalculatorWithCache, totalConcepts.get());
                 }
             }
         });
 
+    }
+
+    private void processConceptBatch(List<ConceptEntity<? extends ConceptEntityVersion>> concepts, StampCalculator stampCalculatorWithCache, int conceptCount) {
+        System.out.println("Processing Concepts : " + concepts.size() + "   TOTAL CONCEPTS : " + conceptCount);
+        fhirCodeSystemTransform= new FhirCodeSystemTransform(stampCalculatorWithCache, concepts, (fhirString) -> {
+            Assertions.assertNotNull(fhirString);
+            Assertions.assertFalse(fhirString.isEmpty());
+        });
+        try {
+            fhirCodeSystemTransform.compute();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
  //   @Test
