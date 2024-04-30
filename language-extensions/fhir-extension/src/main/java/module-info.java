@@ -32,6 +32,9 @@ import dev.ikm.tinkar.entity.StampService;
 
     requires transitive dev.ikm.jpms.hapi.fhir.base;
     requires transitive dev.ikm.jpms.org.hl7.fhir.r4;
+    requires transitive dev.ikm.jpms.hapi.fhir.structures.r4;
+    requires transitive dev.ikm.jpms.org.hl7.fhir.utilities;
+
     requires org.slf4j;
     requires org.eclipse.collections.api;
     requires dev.ikm.tinkar.provider.entity;
