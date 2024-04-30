@@ -75,7 +75,7 @@
     <properties>
         <maven.javadoc.skip>true</maven.javadoc.skip>
         <activej-bytebuf.version>4.3-r4</activej-bytebuf.version>
-        <activej-common.version>4.3-r2</activej-common.version>
+        <activej-common.version>4.3-r3</activej-common.version>
         <auto-service.version>1.0.1</auto-service.version>
         <jpms-auto-service.version>1.0.1-r3</jpms-auto-service.version>
         <jpms-record-builder-core.version>36-r3</jpms-record-builder-core.version>
@@ -88,7 +88,7 @@
         <jackson.version>2.17.0</jackson.version>
         <jgrapht.version>1.5.0</jgrapht.version>
         <mockito.version>5.5.0</mockito.version>
-        <mvstore.version>1.4.200-r3</mvstore.version>
+        <mvstore.version>2.2.220-r1</mvstore.version>
         <io.smallrye.reactive.version>1.3.1</io.smallrye.reactive.version>
         <jheaps.version>0.14-r3</jheaps.version>
         <lucene-core.version>9.7.0</lucene-core.version>
@@ -112,7 +112,7 @@
         <sonar.language>java</sonar.language>
         <susel.version>0.1.2</susel.version>
         <maven-jxr-plugin.version>3.3.0</maven-jxr-plugin.version>
-        <tinkar-schema.version>1.26.0</tinkar-schema.version>
+        <tinkar-schema.version>1.27.0</tinkar-schema.version>
         <tinkar-bindings.version>1.4.0</tinkar-bindings.version>
         <udaychandra-susel.version>0.1.2</udaychandra-susel.version>
         <common-java5.version>3.0.0-M9</common-java5.version>
