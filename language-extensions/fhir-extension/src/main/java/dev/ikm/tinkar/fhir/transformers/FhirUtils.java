@@ -40,6 +40,12 @@ public class FhirUtils {
        return PublicIds.of(UuidUtil.fromSNOMED(string));
     }
 
+    public static Coding generateCoding(String system, String code) {
+        Coding coding = new Coding();
+        coding.setSystem(system);
+        coding.setCode(code);
+        return coding;
+    }
     public static Coding generateCodingObject(StampCalculator stampCalculator, String snomedId){
         Coding coding = new Coding();
         coding.setSystem(SNOMEDCT_URL);

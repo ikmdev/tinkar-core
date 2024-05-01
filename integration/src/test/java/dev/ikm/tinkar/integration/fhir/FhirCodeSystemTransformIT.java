@@ -29,6 +29,8 @@ import dev.ikm.tinkar.fhir.transformers.FhirStatedDefinitionTransformer;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.junit.jupiter.api.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -44,21 +46,23 @@ public class FhirCodeSystemTransformIT {
     FhirCodeSystemTransform fhirCodeSystemTransform;
     FhirStatedDefinitionTransformer fhirStatedDefinitionTransformer;
     StampCalculator stampCalculator;
+    private static final Logger LOG = LoggerFactory.getLogger(FhirCodeSystemTransformIT.class);
     final int transformSize = 1000;
-//    @BeforeEach
+
+    //@BeforeEach
     public void init() {
-        File dataStore = new File(System.getProperty("user.home") + "/Solor/SnomedCT_US_20230901_SpinedArray-20240402");
+        File dataStore = new File(System.getProperty("user.home") + "/Solor/snomedct-data");
         String controller = "Open SpinedArrayStore";
         CachingService.clearAll();
         ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, dataStore);
         PrimitiveData.selectControllerByName(controller);
         PrimitiveData.start();
     }
-//    @AfterEach
+    //@AfterEach
     public void endTest() {
         PrimitiveData.stop();
     }
-//    @Test
+    //@Test
     public void testFhirCodeSystemTransformation() {
         int patternNid = TinkarTerm.DESCRIPTION_PATTERN.nid();
         Set<Integer> pathNids = new HashSet<>();
@@ -101,10 +105,12 @@ public class FhirCodeSystemTransformIT {
     }
 
     private void processConceptBatch(List<ConceptEntity<? extends ConceptEntityVersion>> concepts, StampCalculator stampCalculatorWithCache, int conceptCount) {
-        System.out.println("Processing Concepts : " + concepts.size() + "   TOTAL CONCEPTS : " + conceptCount);
-        fhirCodeSystemTransform= new FhirCodeSystemTransform(stampCalculatorWithCache, concepts, (fhirString) -> {
+        LOG.debug("Processing Concepts : " + concepts.size() + "   TOTAL CONCEPTS : " + conceptCount);
+        fhirCodeSystemTransform= new FhirCodeSystemTransform(stampCalculatorWithCache, concepts, (fhirString, provenanceString) -> {
             Assertions.assertNotNull(fhirString);
             Assertions.assertFalse(fhirString.isEmpty());
+            Assertions.assertNotNull(provenanceString);
+            Assertions.assertFalse(provenanceString.isEmpty());
         });
         try {
             fhirCodeSystemTransform.compute();
@@ -113,8 +119,8 @@ public class FhirCodeSystemTransformIT {
         }
     }
 
- //   @Test
- //   @DisplayName("Test transformation of axiom semantics.")
+//    @Test
+//    @DisplayName("Test transformation of axiom semantics.")
     public void testTransformAxiomSemantics() {
 
         String toTime = "2019-10-22T12:31:04";

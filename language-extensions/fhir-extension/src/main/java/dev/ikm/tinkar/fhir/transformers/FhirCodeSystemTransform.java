@@ -22,14 +22,17 @@ import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.fhir.transformers.provenance.FhirProvenanceTransform;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Date;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 import static dev.ikm.tinkar.fhir.transformers.FhirConstants.*;
@@ -44,23 +47,35 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
     private static final Logger LOG = LoggerFactory.getLogger(FhirCodeSystemTransform.class);
     public StampCalculator stampCalculatorWithCache;
     private final Stream<ConceptEntity<? extends ConceptEntityVersion>> concepts;
-    private CodeSystem codeSystem;
-    private final Consumer<String> fhirTransform;
-    public FhirCodeSystemTransform(StampCalculator stampCalculator, List<ConceptEntity<? extends ConceptEntityVersion>> concepts, Consumer<String> fhirTransform) {
-        this(stampCalculator, concepts.stream(), fhirTransform);
-    }
+    private final CodeSystem codeSystem;
+    private final BiConsumer<String, String> provenanceTransform;
 
-    public FhirCodeSystemTransform(StampCalculator stampCalculator, Stream<ConceptEntity<? extends ConceptEntityVersion>> concepts, Consumer<String> fhirTransform) {
-        this.fhirTransform = fhirTransform;
+    private Date oldestOfTheLatestDate;
+
+    public FhirCodeSystemTransform(StampCalculator stampCalculator, List<ConceptEntity<? extends ConceptEntityVersion>> concepts, BiConsumer<String, String> provenanceTransform) {
+        this(stampCalculator, concepts.stream(), provenanceTransform);
+    }
+    public FhirCodeSystemTransform(StampCalculator stampCalculator, Stream<ConceptEntity<? extends ConceptEntityVersion>> concepts, BiConsumer<String, String> provenanceTransform) {
+        this.provenanceTransform = provenanceTransform;
         this.stampCalculatorWithCache = stampCalculator;
         this.codeSystem = new CodeSystem();
         this.concepts = concepts;
+
+    }
+
+    private void retrieveOldestOfLatest(StampEntity<StampEntityVersion> stampEntity){
+       StampEntityVersion latestVersion = stampCalculatorWithCache.latest(stampEntity).get();
+       long latestVersionTime=latestVersion.stamp().time();
+       Date date =new Date(latestVersionTime);
+       if(oldestOfTheLatestDate == null || oldestOfTheLatestDate.after(date)){
+            oldestOfTheLatestDate = date;
+       }
     }
 
     private void forEachSemanticForComponent(int conceptNid){
-
         Latest<EntityVersion> latestConceptVersion = stampCalculatorWithCache.latest(conceptNid);
         latestConceptVersion.ifPresent(conceptEntity -> {
+            retrieveOldestOfLatest(latestConceptVersion.get().stamp());
             CodeSystem.ConceptDefinitionComponent concept = new CodeSystem.ConceptDefinitionComponent();
             FhirUtils.retrieveConcept(stampCalculatorWithCache, latestConceptVersion.get().publicId(), (code, entity) -> {
                 concept.setCode(code);
@@ -124,14 +139,22 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
         FhirStaticData.generateCodeSystemFilterContent(codeSystem);
         FhirStaticData.generateCodeSystemPropertyContent(codeSystem);
 
+        AtomicInteger counter= new AtomicInteger();
         concepts.forEach(concept -> {
-            forEachSemanticForComponent(concept.nid());
+            if(counter.getAndIncrement() < 3){
+                if(LOG.isDebugEnabled()){
+                    LOG.debug("Processing Concept : {}",  concept);
+                }
+                forEachSemanticForComponent(concept.nid());
+            }
         });
+
         Bundle bundle = new Bundle();
-        bundle.setType(Bundle.BundleType.COLLECTION);
+        bundle.setType(Bundle.BundleType.BATCH);
         bundle.addEntry()
                 .setResource(codeSystem)
                 .setFullUrl(codeSystem.getIdElement().getValue());
+
 
         FhirContext ctx = FhirContext.forR4();
         IParser parser = ctx.newJsonParser();
@@ -140,7 +163,9 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
         if(LOG.isDebugEnabled()){
             LOG.debug(bundleJson);
         }
-        fhirTransform.accept(bundleJson);
+        Provenance provenance = FhirProvenanceTransform.provenanceTransform("CodeSystem/"+codeSystem.getId(), oldestOfTheLatestDate);
+        String provenanceBundleJson = parser.setPrettyPrint(true).encodeResourceToString(provenance);
+        provenanceTransform.accept(bundleJson, provenanceBundleJson);
         return null;
     }
 }
