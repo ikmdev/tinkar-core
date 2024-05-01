@@ -58,7 +58,7 @@ public class PublicIds {
             return new PublicId2(uuids[0], uuids[1]);
         }
         if (uuids.length == 3) {
-            return new PublicId3(uuids[0], uuids[1], uuids[3]);
+            return new PublicId3(uuids[0], uuids[1], uuids[2]);
         }
         return new PublicIdN(uuids);
     }
