@@ -45,7 +45,7 @@ public class FhirTransformAPIIT {
 
 //    @BeforeEach
     public void startupDb() {
-        File dataStore = new File(System.getProperty("user.home") + "/Solor/SnomedCT_US_20230901_SpinedArray-20240402");
+        File dataStore = new File(System.getProperty("user.home") + "/Solor/snomedct-data");
         String controller = "Open SpinedArrayStore";
         CachingService.clearAll();
         ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, dataStore);
@@ -72,9 +72,11 @@ public class FhirTransformAPIIT {
         LOG.info("Total Concepts : " + concepts.size());
 
         StampCalculator stampCalculator = initStampCalculator(toTimeStamp); // Can use from ViewCalculator.
-        FhirCodeSystemTransform fhirCodeSystemTransform= new FhirCodeSystemTransform(stampCalculator, concepts, (fhirString) -> {
+        FhirCodeSystemTransform fhirCodeSystemTransform= new FhirCodeSystemTransform(stampCalculator, concepts, (fhirString, provenanaceString) -> {
             Assertions.assertNotNull(fhirString);
             Assertions.assertFalse(fhirString.isEmpty());
+            Assertions.assertNotNull(provenanaceString);
+            Assertions.assertFalse(provenanaceString.isEmpty());
         });
         try {
             fhirCodeSystemTransform.compute();
@@ -90,7 +92,7 @@ public class FhirTransformAPIIT {
         EntityCountSummary summary =    temporalEntityAggregator.aggregate(nid -> {
             Entity<EntityVersion> entity = EntityService.get().getEntityFast(nid);
             if (entity instanceof ConceptEntity conceptEntity) {
-                System.out.println(counter.getAndIncrement() + " : " + conceptEntity);
+                LOG.debug(counter.getAndIncrement() + " : " + conceptEntity);
                 concepts.add(conceptEntity);
             }else if(entity instanceof SemanticEntity semanticEntity){
                 Entity<EntityVersion> referencedConcept = semanticEntity.referencedComponent();

@@ -190,8 +190,8 @@ public class FhirStaticData {
         return codeSystem;
     }
     public static CodeSystem generateCodeSystemExtensionContent(CodeSystem codeSystem){
+        //TODO this has to be dynamic and further logic TBD based on requirements.
         codeSystem.setId(CODE_SYSTEM_ID);
-
         Meta meta = new Meta();
         meta.setLastUpdated(new Date());
         codeSystem.setMeta(meta);
