@@ -243,7 +243,7 @@
             <dependency>
                 <groupId>${tinkar-jpms-deps.groupId}</groupId>
                 <artifactId>record-builder-core</artifactId>
-                <version>${record-builder-core.version}</version>
+                <version>${jpms-record-builder-core.version}</version>
             </dependency>
 
             <dependency>
