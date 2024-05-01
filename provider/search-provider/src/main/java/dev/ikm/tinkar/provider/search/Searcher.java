@@ -15,7 +15,9 @@
  */
 package dev.ikm.tinkar.provider.search;
 
+import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.coordinate.Coordinates;
@@ -25,11 +27,16 @@ import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculator;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.SemanticEntityVersion;
+import dev.ikm.tinkar.terms.EntityProxy;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.search.highlight.*;
 import org.eclipse.collections.impl.factory.Lists;
 import org.slf4j.Logger;
@@ -38,9 +45,12 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class Searcher {
     private static final Logger LOG = LoggerFactory.getLogger(Searcher.class);
+    public static final EntityProxy.Pattern LIDR_RECORD_PATTERN = EntityProxy.Pattern.make(null, UUID.fromString("c3d52f47-0565-5cfb-9b0b-d7501a33b35d"));
+    public static final EntityProxy.Pattern DIAGNOSTIC_DEVICE_PATTERN = EntityProxy.Pattern.make(null, UUID.fromString("a507b3c7-eadb-5d54-84c0-c44f3155d0bc"));
     QueryParser parser;
     private final SearcherManager searcherManager;
 
@@ -194,6 +204,51 @@ public class Searcher {
                     );
         }
         return names;
+    }
+
+    /**
+     * Returns List of LIDR Record PublicIds for the provided Test Kit Device.
+     * <p>
+     * Provided as an ease-of-use method to retrieve LIDR Record Ids for a Test Kit Device.
+     *
+     * @param   testKitId associated Test Kit Device PublicId
+     * @return  List of Public Ids given test kit concept and lidr record pattern.
+     */
+    public static List<PublicId> getLidrRecordSemanticsFromTestKit(PublicId testKitId){
+        List<PublicId> lidrRecordSemanticIds = new ArrayList<>();
+
+        EntityService.get().getEntity(testKitId.asUuidArray()).ifPresent((testKitEntity) -> {
+            EntityService.get().forEachSemanticForComponentOfPattern(testKitEntity.nid(), DIAGNOSTIC_DEVICE_PATTERN.nid(), diagnosticDeviceSemantic -> {
+                EntityService.get().forEachSemanticForComponentOfPattern(diagnosticDeviceSemantic.nid(), LIDR_RECORD_PATTERN.nid(), lidrRecordSemantic -> {
+                    lidrRecordSemanticIds.add(lidrRecordSemantic.publicId());
+                });
+            });
+        });
+
+        return lidrRecordSemanticIds;
+    }
+
+    /**
+     * Returns List of Result Conformance PublicIds for all LIDR Records of the Test Kit Device
+     * <p>
+     * Provided as an ease-of-use method to retrieve Result Conformances / Constraints for a Test Kit
+     *
+     * @param   testKitId PublicId of the Test Kit Device
+     * @return  List of PublicIds for all Result Conformances / Constraints for the Test Kit Device
+     */
+    public static List<PublicId> getResultConformanceFromTestKit(PublicId testKitId) {
+        List<PublicId> resultConformanceList = new ArrayList<>();
+
+        for (PublicId lidrRecordId : getLidrRecordSemanticsFromTestKit(testKitId)) {
+            EntityService.get().getEntity(lidrRecordId.asUuidArray()).ifPresent((lidrRecordEntity) -> {
+                SemanticEntityVersion lidrRecordSemanticVersion = (SemanticEntityVersion) lidrRecordEntity.versions().get(0);
+                int idxResultConformances = 5;
+                ((IntIdSet) lidrRecordSemanticVersion.fieldValues().get(idxResultConformances))
+                        .map(PrimitiveData::publicId)
+                        .forEach(resultConformanceList::add);
+            });
+        }
+        return resultConformanceList;
     }
 
 }
