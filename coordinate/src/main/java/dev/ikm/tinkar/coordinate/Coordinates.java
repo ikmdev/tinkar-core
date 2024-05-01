@@ -52,8 +52,8 @@ public class Coordinates {
                     TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN,
                     TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
                     TinkarTerm.SOLOR_CONCEPT_ASSEMBLAGE,
-                    TinkarTerm.STATED_NAVIGATION,
-                    TinkarTerm.INFERRED_NAVIGATION,
+                    TinkarTerm.STATED_NAVIGATION_PATTERN,
+                    TinkarTerm.INFERRED_NAVIGATION_PATTERN,
                     TinkarTerm.NAVIGATION_VERTEX);
         }
     }

@@ -50,6 +50,9 @@ public class ConceptToDataType {
         if (TinkarTerm.FLOAT_FIELD.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.FLOAT;
         }
+        if (TinkarTerm.INSTANT_LITERAL.publicId().equals(dataTypeConcept.publicId())) {
+            return FieldDataType.INSTANT;
+        }
         throw new UnsupportedOperationException("Can't handle: " + dataTypeConcept);
     }
 }

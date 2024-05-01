@@ -116,7 +116,7 @@ public class OwlToLogicalAxiomIT {
     }
 
     private EntityVertex makeRoleVertex(Entity roleType){
-        EntityVertex roleVertex = EntityVertex.make(UUID.randomUUID(), TinkarTerm.ROLE.nid());
+        EntityVertex roleVertex = EntityVertex.make(TinkarTerm.ROLE.nid());
         roleVertex.putUncommittedProperty(TinkarTerm.ROLE_TYPE.nid(), roleType);
         roleVertex.putUncommittedProperty(TinkarTerm.ROLE_OPERATOR.nid(), TinkarTerm.EXISTENTIAL_RESTRICTION);
         roleVertex.commitProperties();

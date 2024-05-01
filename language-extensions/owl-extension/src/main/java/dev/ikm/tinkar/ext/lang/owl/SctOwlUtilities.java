@@ -195,13 +195,13 @@ public class SctOwlUtilities {
                 parseAndDiscardOpenParen(t, original);
                 parseAndDiscardColon(t, original);
                 parseAndDiscardWord(t, original);
-                andList.add(logicalExpressionBuilder.ConceptAxiom(TinkarTerm.TRANSITIVE_FEATURE));
+                andList.add(logicalExpressionBuilder.ConceptAxiom(TinkarTerm.TRANSITIVE_PROPERTY));
                 break;
             case REFLEXIVEOBJECTPROPERTY:
                 parseAndDiscardOpenParen(t, original);
                 parseAndDiscardColon(t, original);
                 parseAndDiscardWord(t, original);
-                andList.add(logicalExpressionBuilder.ConceptAxiom(TinkarTerm.REFLEXIVE_FEATURE));
+                andList.add(logicalExpressionBuilder.ConceptAxiom(TinkarTerm.REFLEXIVE_PROPERTY));
                 break;
             case SUBCLASSOF:
                 andList.add(handleSubclassOf(logicalExpressionBuilder, t, original));
@@ -232,13 +232,13 @@ public class SctOwlUtilities {
                         parseAndDiscardOpenParen(t, original);
                         parseAndDiscardColon(t, original);
                         parseAndDiscardWord(t, original);
-                        andList.add(logicalExpressionBuilder.ConceptAxiom(TinkarTerm.TRANSITIVE_FEATURE));
+                        andList.add(logicalExpressionBuilder.ConceptAxiom(TinkarTerm.TRANSITIVE_PROPERTY));
                         break;
                     case REFLEXIVEOBJECTPROPERTY:
                         parseAndDiscardOpenParen(t, original);
                         parseAndDiscardColon(t, original);
                         parseAndDiscardWord(t, original);
-                        andList.add(logicalExpressionBuilder.ConceptAxiom(TinkarTerm.REFLEXIVE_FEATURE));
+                        andList.add(logicalExpressionBuilder.ConceptAxiom(TinkarTerm.REFLEXIVE_PROPERTY));
                         break;
                     case SUBCLASSOF:
                         andList.add(handleSubclassOf(logicalExpressionBuilder, t, original));
@@ -345,12 +345,12 @@ public class SctOwlUtilities {
                             break;
 
                         case REFLEXIVEOBJECTPROPERTY:
-                            andList.add(logicalExpressionBuilder.ConceptAxiom(TinkarTerm.REFLEXIVE_FEATURE));
+                            andList.add(logicalExpressionBuilder.ConceptAxiom(TinkarTerm.REFLEXIVE_PROPERTY));
                             parseToCloseParen(tokenizer);
                             break;
 
                         case TRANSITIVEOBJECTPROPERTY:
-                            andList.add(logicalExpressionBuilder.ConceptAxiom(TinkarTerm.TRANSITIVE_FEATURE));
+                            andList.add(logicalExpressionBuilder.ConceptAxiom(TinkarTerm.TRANSITIVE_PROPERTY));
                             // TransitiveObjectProperty(:774081006)
                             parseToCloseParen(tokenizer);
                             break;

@@ -18,36 +18,235 @@ package dev.ikm.tinkar.terms;
 import java.util.UUID;
 
 public class TinkarTerm {
-    public static final EntityProxy.Pattern STAMP_PATTERN =
-            EntityProxy.Pattern.make("STAMP pattern", UUID.fromString("9fd67fee-abf9-551d-9d0e-76a4b1e8b4ee"));
+    /**
+     * Java binding for the pattern described as <strong><em>Axiom attachment order options assemblage (SOLOR)</em></strong>;
+     * identified by UUID: {@code 5a68c86b-35d5-579b-95c0-a2e7a93b7bdd}.
+     */
+    public static final EntityProxy.Pattern AXIOM_ATTACHMENT_ORDER_OPTIONS_PATTERN =
+            EntityProxy.Pattern.make("Axiom attachment order options assemblage (SOLOR)", UUID.fromString("5a68c86b-35d5-579b-95c0-a2e7a93b7bdd"));
 
+    /**
+     * Java binding for the pattern described as <strong><em>Axiom order options assemblage (SOLOR)</em></strong>;
+     * identified by UUID: {@code 927563ae-cfb7-5a49-9424-1b81bf52f607}.
+     */
+    public static final EntityProxy.Pattern AXIOM_ORDER_OPTIONS_PATTERN =
+            EntityProxy.Pattern.make("Axiom order options assemblage (SOLOR)", UUID.fromString("927563ae-cfb7-5a49-9424-1b81bf52f607"));
+
+    /**
+     * Java binding for the pattern described as <strong><em>Comment Pattern</em></strong>;
+     * identified by UUID: {@code 3734fb0a-4c14-5831-9a61-4743af609e7a}.
+     * <p> Used to support comment semantics.
+     * <p> Field 0 is a string that represents the text of the comment.
+     */
+    public static final EntityProxy.Pattern COMMENT_PATTERN =
+            EntityProxy.Pattern.make("Comment pattern", UUID.fromString("3734fb0a-4c14-5831-9a61-4743af609e7a"));
+
+    /**
+     * Java binding for the pattern described as <strong><em>Concept attachment order options assemblage (SOLOR)</em></strong>;
+     * identified by UUID: {@code f4c488eb-5ecc-50af-ac25-31d5f99c09a7}.
+     */
+    public static final EntityProxy.Pattern CONCEPT_ATTACHMENT_ORDER_OPTIONS_PATTERN =
+            EntityProxy.Pattern.make("Concept attachment order options assemblage (SOLOR)", UUID.fromString("f4c488eb-5ecc-50af-ac25-31d5f99c09a7"));
+
+    /**
+     * Java binding for the pattern described as <strong><em>Dependency management assemblage (SOLOR)</em></strong>;
+     * identified by UUID: {@code b1dbb86b-e283-549e-ba94-5cb7dc3190c1}.
+     */
+    public static final EntityProxy.Pattern DEPENDENCY_MANAGEMENT_ASSEMBLAGE =
+            EntityProxy.Pattern.make("Dependency management assemblage (SOLOR)", UUID.fromString("b1dbb86b-e283-549e-ba94-5cb7dc3190c1"));
+
+    /**
+     * Java binding for the pattern described as <strong><em>Description Pattern</em></strong>;
+     * identified by UUID: {@code a4de0039-2625-5842-8a4c-d1ce6aebf021}.
+     * <p> Used to support Description semantics.
+     * <p> Field 0 is a Component that represents the language used by the description text.
+     * <p> Field 1 is a String that represents the description text.
+     * <p> Field 2 is a Component that represents the text case significance.
+     * <p> Field 3 is a Component that represents the description type.
+     */
     public static final EntityProxy.Pattern DESCRIPTION_PATTERN =
             EntityProxy.Pattern.make("Description pattern", UUID.fromString("a4de0039-2625-5842-8a4c-d1ce6aebf021"));
 
-    public static final EntityProxy.Pattern GB_DIALECT_PATTERN =
-            EntityProxy.Pattern.make("GB English dialect", UUID.fromString("561f817a-130e-5e56-984d-910e9991558c"));
+    /**
+     * Java binding for the pattern described as <strong><em>Description attachment order options assemblage (SOLOR)</em></strong>;
+     * identified by UUID: {@code 8d436a25-0ebf-59a8-bc8b-ad70c86d7f6a}.
+     */
+    public static final EntityProxy.Pattern DESCRIPTION_ATTACHMENT_ORDER_OPTIONS_PATTERN =
+            EntityProxy.Pattern.make("Description attachment order options assemblage (SOLOR)", UUID.fromString("8d436a25-0ebf-59a8-bc8b-ad70c86d7f6a"));
 
-    public static final EntityProxy.Pattern US_DIALECT_PATTERN =
-            EntityProxy.Pattern.make("US Dialect pattern", UUID.fromString("08f9112c-c041-56d3-b89b-63258f070074"));
+    /**
+     * Java binding for the pattern described as <strong><em>Description type order options assemblage (SOLOR)</em></strong>;
+     * identified by UUID: {@code 4b734c90-7b11-506b-9bc6-d24bf4f8255a}.
+     */
+    public static final EntityProxy.Pattern DESCRIPTION_TYPE_ORDER_OPTIONS_PATTERN =
+            EntityProxy.Pattern.make("Description type order options assemblage (SOLOR)", UUID.fromString("4b734c90-7b11-506b-9bc6-d24bf4f8255a"));
 
-    public static final EntityProxy.Pattern INFERRED_NAVIGATION_PATTERN =
-            EntityProxy.Pattern.make("Inferred navigation", UUID.fromString("a53cc42d-c07e-5934-96b3-2ede3264474e"));
+    /**
+     * Java binding for the pattern described as <strong><em>Detail order options assemblage (SOLOR)</em></strong>;
+     * identified by UUID: {@code 58a80695-42ed-5409-92c5-9703fde8916f}.
+     */
+    public static final EntityProxy.Pattern DETAIL_ORDER_OPTIONS_PATTERN =
+            EntityProxy.Pattern.make("Detail order options assemblage (SOLOR)", UUID.fromString("58a80695-42ed-5409-92c5-9703fde8916f"));
 
-    public static final EntityProxy.Pattern STATED_NAVIGATION_PATTERN =
-            EntityProxy.Pattern.make("Stated navigation", UUID.fromString("d02957d6-132d-5b3c-adba-505f5778d998"));
-
+    /**
+     * Java binding for the pattern described as <strong><em>El Plus Plus Stated Axioms Pattern</em></strong>;
+     * identified by UUID: {@code e813eb92-7d07-5035-8d43-e81249f5b36e}.
+     * <p> Used to support stated axioms.
+     * <p> Field 0 is a Ditree that represents stated terminological axioms.
+     */
     public static final EntityProxy.Pattern EL_PLUS_PLUS_STATED_AXIOMS_PATTERN =
             EntityProxy.Pattern.make("EL++ stated form pattern", UUID.fromString("e813eb92-7d07-5035-8d43-e81249f5b36e"));
 
+    /**
+     * Java binding for the pattern described as <strong><em>El Plus Plus Inferred Axioms Pattern</em></strong>;
+     * identified by UUID: {@code 9f011812-15c9-5b1b-85f8-bb262bc1b2a2}.
+     * <p> Used to support inferred axioms.
+     * <p> Field 0 is a Ditree that represents the inferred terminological axioms.
+     */
     public static final EntityProxy.Pattern EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN =
             EntityProxy.Pattern.make("EL ++ Inferred form pattern", UUID.fromString("9f011812-15c9-5b1b-85f8-bb262bc1b2a2"));
 
-    public static final EntityProxy.Pattern TINKAR_BASE_MODEL_COMPONENT_PATTERN =
-            EntityProxy.Pattern.make("Tinkar base model component pattern", UUID.fromString("6070f6f5-893d-5144-adce-7d305c391cf9"));
-    public static final EntityProxy.Pattern KOMET_BASE_MODEL_COMPONENT_PATTERN =
-            EntityProxy.Pattern.make("Komet base model component pattern", UUID.fromString("bbbbf1fe-00f0-55e0-a19c-6300dbaab9b2"));
-    public static final EntityProxy.Pattern COMMENT_PATTERN =
-            EntityProxy.Pattern.make("Comment pattern", UUID.fromString("3734fb0a-4c14-5831-9a61-4743af609e7a"));
+    /**
+     * Java binding for the pattern described as <strong><em>EL++ Inferred Digraph (SOLOR)</em></strong>;
+     * identified by UUID: {@code aca20339-3fb0-540c-99bb-e366f3a30a1b}.
+     */
+    public static final EntityProxy.Pattern EL_PLUS_PLUS_INFERRED_DIGRAPH =
+            EntityProxy.Pattern.make("EL++ Inferred Digraph (SOLOR)", UUID.fromString("aca20339-3fb0-540c-99bb-e366f3a30a1b"));
+
+    /**
+     * Java binding for the pattern described as <strong><em>EL++ Stated Digraph (SOLOR)</em></strong>;
+     * identified by UUID: {@code d67c1c32-95ca-54a5-a4de-8b48312eb292}.
+     */
+    public static final EntityProxy.Pattern EL_PLUS_PLUS_STATED_DIGRAPH =
+            EntityProxy.Pattern.make("EL++ Stated Digraph (SOLOR)", UUID.fromString("d67c1c32-95ca-54a5-a4de-8b48312eb292"));
+
+    /**
+     * Java binding for the pattern described as <strong><em>GB Dialect Pattern</em></strong>;
+     * identified by UUID: {@code 561f817a-130e-5e56-984d-910e9991558c}.
+     * <p> Used to define GB Dialect semantics for descriptions.
+     * <p> Field 0 is a Component that represents the acceptability of a description for the GB English Dialect.
+     */
+    public static final EntityProxy.Pattern GB_DIALECT_PATTERN =
+            EntityProxy.Pattern.make("GB English dialect", UUID.fromString("561f817a-130e-5e56-984d-910e9991558c"));
+
+    /**
+     * Java binding for the pattern described as <strong><em>Identifier Pattern</em></strong>;
+     * identified by UUID: {@code 5d60e14b-c410-5172-9559-3c4253278ae2}.
+     * <p> Used to support Identifier semantics.
+     * <p> Field 0 is a Component that represents the source of the identifier.
+     * <p> Field 1 is a string that represents the source of the identifier.
+     */
+    public static final EntityProxy.Pattern IDENTIFIER_PATTERN =
+            EntityProxy.Pattern.make("Identifier Pattern", UUID.fromString("5d60e14b-c410-5172-9559-3c4253278ae2"));
+
+    /**
+     * Java binding for the pattern described as <strong><em>Inferred Navigation Pattern</em></strong>;
+     * identified by UUID: {@code a53cc42d-c07e-5934-96b3-2ede3264474e}.
+     * <p> Used to specify the relationship origins and destinations for concepts based on inferred axioms.
+     * <p> Field 0 is a Component ID that represents Relationship Destination.
+     * <p> Field 1 is a Component ID that represents Relationship Origin.
+     */
+    public static final EntityProxy.Pattern INFERRED_NAVIGATION_PATTERN =
+            EntityProxy.Pattern.make("Inferred navigation", UUID.fromString("a53cc42d-c07e-5934-96b3-2ede3264474e"));
+
+    /**
+     * Java binding for the pattern described as <strong><em>Komet Base Model Component Pattern</em></strong>;
+     * identified by UUID: {@code bbbbf1fe-00f0-55e0-a19c-6300dbaab9b2}.
+     * <p> Used to support Komet Base Model membership semantics.
+     * <p> This membership semantic contains no fields and acts as a tag.
+     */
+    public static final EntityProxy.Pattern KOMET_BASE_MODEL_COMPONENT_PATTERN = EntityProxy.Pattern.make("Komet base model component pattern", UUID.fromString("bbbbf1fe-00f0-55e0-a19c-6300dbaab9b2"));
+
+    /**
+     * Java binding for the pattern described as <strong><em>Navigation pattern (SOLOR)</em></strong>;
+     * identified by UUID: {@code f0c31815-f786-5ea3-b814-7dc0ba032563}.
+     */
+    public static final EntityProxy.Pattern NAVIGATION_PATTERN =
+            EntityProxy.Pattern.make("Navigation pattern (SOLOR)", UUID.fromString("f0c31815-f786-5ea3-b814-7dc0ba032563"));
+
+    /**
+     * Java binding for the pattern described as <strong><em>OWL Axiom Syntax Pattern</em></strong>;
+     * identified by UUID: {@code c0ca180b-aae2-5fa1-9ab7-4a24f2dfe16b}.
+     * <p> Used to support the type of OWL axiom syntax.
+     * <p> Field 0 is a String that represents the syntax type of the OWL axioms.
+     */
+    public static final EntityProxy.Pattern OWL_AXIOM_SYNTAX_PATTERN = EntityProxy.Pattern.make("OWL Axiom Syntax Pattern", UUID.fromString("c0ca180b-aae2-5fa1-9ab7-4a24f2dfe16b"));
+
+    /**
+     * Java binding for the pattern described as <strong><em>Version control path origin pattern</em></strong>;
+     * identified by UUID: {@code 70f89dd5-2cdb-59bb-bbaa-98527513547c}.
+     * <p> Used to support path branching semantics.
+     * <p> Field 0 is a Component that represents the path concept.
+     * <p> Field 1 is an Instant Literal that represents the path origin.
+     */
+    public static final EntityProxy.Pattern PATH_ORIGINS_PATTERN =
+            EntityProxy.Pattern.make("Version control path origin pattern", UUID.fromString("70f89dd5-2cdb-59bb-bbaa-98527513547c"));
+
+    /**
+     * Java binding for the pattern described as <strong><em>Version control path pattern</em></strong>;
+     * identified by UUID: {@code add1db57-72fe-53c8-a528-1614bda20ec6}.
+     * <p> Used to support path membership semantics.
+     * <p> This membership semantic contains no fields and acts as a tag.
+     */
+    public static final EntityProxy.Pattern PATHS_PATTERN =
+            EntityProxy.Pattern.make("Version control path pattern", UUID.fromString("add1db57-72fe-53c8-a528-1614bda20ec6"));
+
+    /**
+     * Java binding for the pattern described as <strong><em>SOLOR concept assemblage (SOLOR)</em></strong>;
+     * identified by UUID: {@code d39b3ecd-9a80-5009-a8ac-0b947f95ca7c}.
+     * <p> Used to support SOLOR membership semantics.
+     * <p> This membership semantic contains no fields and acts as a tag.
+     */
+    public static final EntityProxy.Pattern SOLOR_CONCEPT_ASSEMBLAGE =
+            EntityProxy.Pattern.make("SOLOR concept assemblage (SOLOR)", UUID.fromString("d39b3ecd-9a80-5009-a8ac-0b947f95ca7c"));
+
+    /**
+     * Java binding for the pattern described as <strong><em>STAMP Pattern</em></strong>;
+     * identified by UUID: {@code 9fd67fee-abf9-551d-9d0e-76a4b1e8b4ee}.
+     * <p> Used to define the structure of STAMP components.
+     * <p> Field 0 is a Component that represents the Status.
+     * <p> Field 1 is a Long that represents the Time of creation in Epoch Milliseconds.
+     * <p> Field 2 is a Component that represents the Author.
+     * <p> Field 3 is a Component that represents the Module.
+     * <p> Field 4 is a Component that represents the Path.
+     */
+    public static final EntityProxy.Pattern STAMP_PATTERN =
+            EntityProxy.Pattern.make("STAMP pattern", UUID.fromString("9fd67fee-abf9-551d-9d0e-76a4b1e8b4ee"));
+
+    /**
+     * Java binding for the pattern described as <strong><em>Stated Navigation Pattern</em></strong>;
+     * identified by UUID: {@code d02957d6-132d-5b3c-adba-505f5778d998}.
+     * <p> Used to specify the relationship origins and destinations for concepts based on stated axioms.
+     * <p> Field 0 is a component ID for the relationship destination.
+     * <p> Field 1 is a component ID for the relationship origin
+     */
+    public static final EntityProxy.Pattern STATED_NAVIGATION_PATTERN =
+            EntityProxy.Pattern.make("Stated navigation", UUID.fromString("d02957d6-132d-5b3c-adba-505f5778d998"));
+    /**
+     * Java binding for the concept described as <strong><em>Starter Data Authoring (SOLOR)</em></strong>;
+     * identified by UUID: {@code
+     * <a href="http://localhost:8080/terminology/rest/concept/070deb74-acc5-46bf-b9c6-eaee1b58ef52">
+     * 070deb74-acc5-46bf-b9c6-eaee1b58ef52</a>}.
+     */
+    public static final EntityProxy.Concept STARTER_DATA_AUTHORING =
+            EntityProxy.Concept.make("Starter Data Authoring (SOLOR)", UUID.fromString("070deb74-acc5-46bf-b9c6-eaee1b58ef52"));
+    /**
+     * Java binding for the pattern described as <strong><em>Tinkar Base Model Component Pattern</em></strong>;
+     * identified by UUID: {@code 6070f6f5-893d-5144-adce-7d305c391cf9}.
+     * <p> Used to support Tinkar Base Model membership semantics.
+     * <p> This membership semantic contains no fields and acts as a tag.
+     */
+    public static final EntityProxy.Pattern TINKAR_BASE_MODEL_COMPONENT_PATTERN = EntityProxy.Pattern.make("Tinkar base model component pattern", UUID.fromString("6070f6f5-893d-5144-adce-7d305c391cf9"));
+
+    /**
+     * Java binding for the pattern described as <strong><em>US Dialect Pattern</em></strong>;
+     * identified by UUID: {@code 08f9112c-c041-56d3-b89b-63258f070074}.
+     * <p> Used to define US Dialect semantics for descriptions.
+     * <p> Field 0 is a Component that represents the acceptability of a description for the US English Dialect.
+     */
+    public static final EntityProxy.Pattern US_DIALECT_PATTERN =
+            EntityProxy.Pattern.make("US Dialect pattern", UUID.fromString("08f9112c-c041-56d3-b89b-63258f070074"));
+
     /**
      * Java binding for the concept described as <strong><em>Acceptable (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -408,14 +607,7 @@ public class TinkarTerm {
      */
     public static final EntityProxy.Concept AUTOMATION_RULE_ASSEMBLAGE =
             EntityProxy.Concept.make("Automation rule assemblage (SOLOR)", UUID.fromString("688cdb52-94a4-5c1c-af2f-f66896bb0df0"));
-    /**
-     * Java binding for the concept described as <strong><em>Axiom attachment order options assemblage (SOLOR)</em></strong>;
-     * identified by UUID: {@code
-     * <a href="http://localhost:8080/terminology/rest/concept/5a68c86b-35d5-579b-95c0-a2e7a93b7bdd">
-     * 5a68c86b-35d5-579b-95c0-a2e7a93b7bdd</a>}.
-     */
-    public static final EntityProxy.Pattern AXIOM_ATTACHMENT_ORDER_OPTIONS_PATTERN =
-            EntityProxy.Pattern.make("Axiom attachment order options assemblage (SOLOR)", UUID.fromString("5a68c86b-35d5-579b-95c0-a2e7a93b7bdd"));
+
     /**
      * Java binding for the concept described as <strong><em>Axiom focus (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -424,14 +616,7 @@ public class TinkarTerm {
      */
     public static final EntityProxy.Concept AXIOM_FOCUS =
             EntityProxy.Concept.make("Axiom focus (SOLOR)", UUID.fromString("9c6fbddd-58bd-5881-b926-c813bbff849b"));
-    /**
-     * Java binding for the concept described as <strong><em>Axiom order options assemblage (SOLOR)</em></strong>;
-     * identified by UUID: {@code
-     * <a href="http://localhost:8080/terminology/rest/concept/927563ae-cfb7-5a49-9424-1b81bf52f607">
-     * 927563ae-cfb7-5a49-9424-1b81bf52f607</a>}.
-     */
-    public static final EntityProxy.Pattern AXIOM_ORDER_OPTIONS_PATTERN =
-            EntityProxy.Pattern.make("Axiom order options assemblage (SOLOR)", UUID.fromString("927563ae-cfb7-5a49-9424-1b81bf52f607"));
+
     /**
      * Java binding for the concept described as <strong><em>Axiom origin (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -440,6 +625,14 @@ public class TinkarTerm {
      */
     public static final EntityProxy.Concept AXIOM_ORIGIN =
             EntityProxy.Concept.make("Axiom origin (SOLOR)", UUID.fromString("b868bd83-5cd4-5d84-9cf7-b08674fbc79b"));
+    /**
+     * Java binding for the concept described as <strong><em>Axiom Syntax (SOLOR)</em></strong>;
+     * identified by UUID: {@code
+     * <a href="http://localhost:8080/terminology/rest/concept/8da1c508-c2a2-4899-b26d-87f8b98a7558">
+     * 8da1c508-c2a2-4899-b26d-87f8b98a7558</a>}.
+     */
+    public static final EntityProxy.Concept AXIOM_SYNTAX =
+            EntityProxy.Concept.make("Axiom Syntax (SOLOR)", UUID.fromString("8da1c508-c2a2-4899-b26d-87f8b98a7558"));
     /**
      * Java binding for the concept described as <strong><em>Body structure (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -1000,14 +1193,7 @@ public class TinkarTerm {
      */
     public static final EntityProxy.Concept CONCEPT_ASSEMBLAGE_FOR_LOGIC_COORDINATE =
             EntityProxy.Concept.make("Concept assemblage for logic coordinate (SOLOR)", UUID.fromString("16486419-5d1c-574f-bde6-21910ad66f44"));
-    /**
-     * Java binding for the concept described as <strong><em>Concept attachment order options assemblage (SOLOR)</em></strong>;
-     * identified by UUID: {@code
-     * <a href="http://localhost:8080/terminology/rest/concept/f4c488eb-5ecc-50af-ac25-31d5f99c09a7">
-     * f4c488eb-5ecc-50af-ac25-31d5f99c09a7</a>}.
-     */
-    public static final EntityProxy.Pattern CONCEPT_ATTACHMENT_ORDER_OPTIONS_PATTERN =
-            EntityProxy.Pattern.make("Concept attachment order options assemblage (SOLOR)", UUID.fromString("f4c488eb-5ecc-50af-ac25-31d5f99c09a7"));
+
     /**
      * Java binding for the concept described as <strong><em>Concept builder panel (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -1448,14 +1634,7 @@ public class TinkarTerm {
      */
     public static final EntityProxy.Concept DEFINITION_ROOT =
             EntityProxy.Concept.make("Definition root (SOLOR)", UUID.fromString("e7271c01-6ed4-5240-963f-34d1f24153b0"));
-    /**
-     * Java binding for the concept described as <strong><em>Dependency management assemblage (SOLOR)</em></strong>;
-     * identified by UUID: {@code
-     * <a href="http://localhost:8080/terminology/rest/concept/b1dbb86b-e283-549e-ba94-5cb7dc3190c1">
-     * b1dbb86b-e283-549e-ba94-5cb7dc3190c1</a>}.
-     */
-    public static final EntityProxy.Pattern DEPENDENCY_MANAGEMENT_ASSEMBLAGE =
-            EntityProxy.Pattern.make("Dependency management assemblage (SOLOR)", UUID.fromString("b1dbb86b-e283-549e-ba94-5cb7dc3190c1"));
+
     /**
      * Java binding for the concept described as <strong><em>Description (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -1488,14 +1667,7 @@ public class TinkarTerm {
      */
     public static final EntityProxy.Concept DESCRIPTION_ASSEMBLAGE =
             EntityProxy.Concept.make("Description assemblage (SOLOR)", UUID.fromString("c9b9a4ac-3a1c-516c-bbef-3a13e30df27d"));
-    /**
-     * Java binding for the concept described as <strong><em>Description attachment order options assemblage (SOLOR)</em></strong>;
-     * identified by UUID: {@code
-     * <a href="http://localhost:8080/terminology/rest/concept/8d436a25-0ebf-59a8-bc8b-ad70c86d7f6a">
-     * 8d436a25-0ebf-59a8-bc8b-ad70c86d7f6a</a>}.
-     */
-    public static final EntityProxy.Pattern DESCRIPTION_ATTACHMENT_ORDER_OPTIONS_PATTERN =
-            EntityProxy.Pattern.make("Description attachment order options assemblage (SOLOR)", UUID.fromString("8d436a25-0ebf-59a8-bc8b-ad70c86d7f6a"));
+
     /**
      * Java binding for the concept described as <strong><em>Description case sensitive (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -1608,14 +1780,7 @@ public class TinkarTerm {
      */
     public static final EntityProxy.Concept DESCRIPTION_TYPE_IN_SOURCE_TERMINOLOGY =
             EntityProxy.Concept.make("Description type in source terminology (SOLOR)", UUID.fromString("ef7d9808-a839-5119-a604-b777268eb719"));
-    /**
-     * Java binding for the concept described as <strong><em>Description type order options assemblage (SOLOR)</em></strong>;
-     * identified by UUID: {@code
-     * <a href="http://localhost:8080/terminology/rest/concept/4b734c90-7b11-506b-9bc6-d24bf4f8255a">
-     * 4b734c90-7b11-506b-9bc6-d24bf4f8255a</a>}.
-     */
-    public static final EntityProxy.Pattern DESCRIPTION_TYPE_ORDER_OPTIONS_PATTERN =
-            EntityProxy.Pattern.make("Description type order options assemblage (SOLOR)", UUID.fromString("4b734c90-7b11-506b-9bc6-d24bf4f8255a"));
+
     /**
      * Java binding for the concept described as <strong><em>Description type preference list for language coordinate (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -1688,14 +1853,7 @@ public class TinkarTerm {
      */
     public static final EntityProxy.Concept DETAIL_NODES =
             EntityProxy.Concept.make("Detail nodes (SOLOR)", UUID.fromString("d6e5a6c1-2976-5bfa-847b-14ca0e6417d1"));
-    /**
-     * Java binding for the concept described as <strong><em>Detail order options assemblage (SOLOR)</em></strong>;
-     * identified by UUID: {@code
-     * <a href="http://localhost:8080/terminology/rest/concept/58a80695-42ed-5409-92c5-9703fde8916f">
-     * 58a80695-42ed-5409-92c5-9703fde8916f</a>}.
-     */
-    public static final EntityProxy.Pattern DETAIL_ORDER_OPTIONS_PATTERN =
-            EntityProxy.Pattern.make("Detail order options assemblage (SOLOR)", UUID.fromString("58a80695-42ed-5409-92c5-9703fde8916f"));
+
     /**
      * Java binding for the concept described as <strong><em>Detail pane axiom order (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -1944,14 +2102,7 @@ public class TinkarTerm {
      */
     public static final EntityProxy.Concept EL_PLUS_PLUS_INFERRED_CONCEPT_DEFINITION =
             EntityProxy.Concept.make("EL++ Inferred Concept Definition (SOLOR)", UUID.fromString("b2897aa0-a697-5bf2-9156-7a437c6a5057"));
-    /**
-     * Java binding for the concept described as <strong><em>EL++ Inferred Digraph (SOLOR)</em></strong>;
-     * identified by UUID: {@code
-     * <a href="http://localhost:8080/terminology/rest/concept/aca20339-3fb0-540c-99bb-e366f3a30a1b">
-     * aca20339-3fb0-540c-99bb-e366f3a30a1b</a>}.
-     */
-    public static final EntityProxy.Pattern EL_PLUS_PLUS_INFERRED_DIGRAPH =
-            EntityProxy.Pattern.make("EL++ Inferred Digraph (SOLOR)", UUID.fromString("aca20339-3fb0-540c-99bb-e366f3a30a1b"));
+
     /**
      * Java binding for the concept described as <strong><em>EL++ Inferred terminological axioms (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -1968,14 +2119,7 @@ public class TinkarTerm {
      */
     public static final EntityProxy.Concept EL_PLUS_PLUS_STATED_CONCEPT_DEFINITION =
             EntityProxy.Concept.make("EL++ Stated Concept Definition (SOLOR)", UUID.fromString("0c464a4a-a0bc-53ef-9c01-ef5a049f2656"));
-    /**
-     * Java binding for the concept described as <strong><em>EL++ Stated Digraph (SOLOR)</em></strong>;
-     * identified by UUID: {@code
-     * <a href="http://localhost:8080/terminology/rest/concept/d67c1c32-95ca-54a5-a4de-8b48312eb292">
-     * d67c1c32-95ca-54a5-a4de-8b48312eb292</a>}.
-     */
-    public static final EntityProxy.Pattern EL_PLUS_PLUS_STATED_DIGRAPH =
-            EntityProxy.Pattern.make("EL++ Stated Digraph (SOLOR)", UUID.fromString("d67c1c32-95ca-54a5-a4de-8b48312eb292"));
+
     /**
      * Java binding for the concept described as <strong><em>EL++ Stated terminological axioms (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -2184,6 +2328,14 @@ public class TinkarTerm {
      */
     public static final EntityProxy.Concept EXPORT_SPECIFICATION_PANEL =
             EntityProxy.Concept.make("Export specification panel (SOLOR)", UUID.fromString("04b4e66a-6cc0-596e-ae45-d181d23c1b69"));
+    /**
+     * Java binding for the concept described as <strong><em>Express axiom syntax (SOLOR)</em></strong>;
+     * identified by UUID: {@code
+     * <a href="http://localhost:8080/terminology/rest/concept/db55557c-e9ee-4504-aae3-df695b6d6c57">
+     * db55557c-e9ee-4504-aae3-df695b6d6c57</a>}.
+     */
+    public static final EntityProxy.Concept EXPRESS_AXIOM_SYNTAX =
+            EntityProxy.Concept.make("Express axiom syntax (SOLOR)", UUID.fromString("db55557c-e9ee-4504-aae3-df695b6d6c57"));
     /**
      * Java binding for the concept described as <strong><em>Extended description type (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -2705,6 +2857,14 @@ public class TinkarTerm {
     public static final EntityProxy.Concept IMPORT_SPECIFICATION_PANEL =
             EntityProxy.Concept.make("Import specification panel (SOLOR)", UUID.fromString("14830e36-3067-56b0-b5b7-a7f297279f4a"));
     /**
+     * Java binding for the concept described as <strong><em>Implication Set (SOLOR)</em></strong>;
+     * identified by UUID: {@code
+     * <a href="http://localhost:8080/terminology/rest/concept/def77c09-e1eb-40f2-931a-e7cf2ce0e597">
+     * def77c09-e1eb-40f2-931a-e7cf2ce0e597</a>}.
+     */
+    public static final EntityProxy.Concept IMPLICATION_SET =
+            EntityProxy.Concept.make("Implication Set (SOLOR)", UUID.fromString("def77c09-e1eb-40f2-931a-e7cf2ce0e597"));
+    /**
      * Java binding for the concept described as <strong><em>Inactive status (SOLOR)</em></strong>;
      * identified by UUID: {@code
      * <a href="http://localhost:8080/terminology/rest/concept/03004053-c23e-5206-8514-fb551dd328f4">
@@ -2750,8 +2910,8 @@ public class TinkarTerm {
      * <a href="http://localhost:8080/terminology/rest/concept/4bc6c333-7fc9-52f1-942d-f8decba19dc2">
      * 4bc6c333-7fc9-52f1-942d-f8decba19dc2</a>}.
      */
-    public static final EntityProxy.Pattern INFERRED_NAVIGATION =
-            EntityProxy.Pattern.make("Inferred navigation (SOLOR)", UUID.fromString("4bc6c333-7fc9-52f1-942d-f8decba19dc2"));
+    public static final EntityProxy.Concept INFERRED_NAVIGATION =
+            EntityProxy.Concept.make("Inferred navigation (SOLOR)", UUID.fromString("4bc6c333-7fc9-52f1-942d-f8decba19dc2"));
     /**
      * Java binding for the concept described as <strong><em>Inferred premise type (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -4016,14 +4176,7 @@ public class TinkarTerm {
      */
     public static final EntityProxy.Concept NAVIGATION_CONCEPT_SET =
             EntityProxy.Concept.make("Navigation concept set (SOLOR)", UUID.fromString("fc965c5d-ad17-555e-bcb5-b78fd45c8c5f"));
-    /**
-     * Java binding for the concept described as <strong><em>Navigation pattern (SOLOR)</em></strong>;
-     * identified by UUID: {@code
-     * <a href="http://localhost:8080/terminology/rest/concept/f0c31815-f786-5ea3-b814-7dc0ba032563">
-     * f0c31815-f786-5ea3-b814-7dc0ba032563</a>}.
-     */
-    public static final EntityProxy.Concept NAVIGATION_PATTERN =
-            EntityProxy.Concept.make("Navigation pattern (SOLOR)", UUID.fromString("f0c31815-f786-5ea3-b814-7dc0ba032563"));
+
     /**
      * Java binding for the concept described as <strong><em>Navigation vertex (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -4312,14 +4465,7 @@ public class TinkarTerm {
      */
     public static final EntityProxy.Concept PATH_ORIGINS =
             EntityProxy.Concept.make("Path origins (SOLOR)", UUID.fromString("6e6a112e-7d8c-53c7-aaf1-c46e2d69743c"));
-    /**
-     * Java binding for the concept described as <strong><em>Version control path origin pattern</em></strong>;
-     * identified by UUID: {@code
-     * <a href="http://localhost:8080/terminology/rest/concept/70f89dd5-2cdb-59bb-bbaa-98527513547c">
-     * 70f89dd5-2cdb-59bb-bbaa-98527513547c</a>}.
-     */
-    public static final EntityProxy.Concept PATH_ORIGINS_PATTERN =
-            EntityProxy.Concept.make("Version control path origin pattern", UUID.fromString("70f89dd5-2cdb-59bb-bbaa-98527513547c"));
+
     /**
      * Java binding for the concept described as <strong><em>Path origins for stamp path (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -4336,14 +4482,7 @@ public class TinkarTerm {
      */
     public static final EntityProxy.Concept PATH_PRECEDENCE =
             EntityProxy.Concept.make("Path precedence (SOLOR)", UUID.fromString("fba850b7-de84-5df2-ab0b-d1caa6a358ff"));
-    /**
-     * Java binding for the concept described as <strong><em>Version control path pattern</em></strong>;
-     * identified by UUID: {@code
-     * <a href="http://localhost:8080/terminology/rest/concept/add1db57-72fe-53c8-a528-1614bda20ec6">
-     * add1db57-72fe-53c8-a528-1614bda20ec6</a>}.
-     */
-    public static final EntityProxy.Concept PATHS_PATTERN =
-            EntityProxy.Concept.make("Version control path pattern", UUID.fromString("add1db57-72fe-53c8-a528-1614bda20ec6"));
+
     /**
      * Java binding for the concept described as <strong><em>Performance circumstance properties (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -4790,8 +4929,8 @@ public class TinkarTerm {
      * <a href="http://localhost:8080/terminology/rest/concept/7e779e4a-61ed-5c4a-aacc-03cf524b7c73">
      * 7e779e4a-61ed-5c4a-aacc-03cf524b7c73</a>}.
      */
-    public static final EntityProxy.Concept REFLEXIVE_FEATURE =
-            EntityProxy.Concept.make("Reflexive feature (SOLOR)", UUID.fromString("7e779e4a-61ed-5c4a-aacc-03cf524b7c73"));
+    public static final EntityProxy.Concept REFLEXIVE_PROPERTY =
+            EntityProxy.Concept.make("Reflexive property (SOLOR)", UUID.fromString("7e779e4a-61ed-5c4a-aacc-03cf524b7c73"));
     /**
      * Java binding for the concept described as <strong><em>Regular name description type (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -5001,6 +5140,14 @@ public class TinkarTerm {
     public static final EntityProxy.Concept ROLE_OPERATOR =
             EntityProxy.Concept.make("Role operator (SOLOR)", UUID.fromString("f9860cb8-a7c7-5743-9d7c-ffc6e8a24a0f"));
     /**
+     * Java binding for the concept described as <strong><em>Role restriction (SOLOR)</em></strong>;
+     * identified by UUID: {@code
+     * <a href="http://localhost:8080/terminology/rest/concept/988bb02a-9b4a-4ef9-937e-fa8a6afc6c42">
+     * 988bb02a-9b4a-4ef9-937e-fa8a6afc6c42</a>}.
+     */
+    public static final EntityProxy.Concept ROLE_RESTRICTION =
+            EntityProxy.Concept.make("Role restriction (SOLOR)", UUID.fromString("988bb02a-9b4a-4ef9-937e-fa8a6afc6c42"));
+    /**
      * Java binding for the concept described as <strong><em>Role type (SOLOR)</em></strong>;
      * identified by UUID: {@code
      * <a href="http://localhost:8080/terminology/rest/concept/76320274-be2a-5ba0-b3e8-e6d2e383ee6a">
@@ -5200,14 +5347,7 @@ public class TinkarTerm {
      */
     public static final EntityProxy.Concept SOLOR_CONCEPT =
             EntityProxy.Concept.make("SOLOR concept (SOLOR)", UUID.fromString("7c21b6c5-cf11-5af9-893b-743f004c97f5"));
-    /**
-     * Java binding for the concept described as <strong><em>SOLOR concept assemblage (SOLOR)</em></strong>;
-     * identified by UUID: {@code
-     * <a href="http://localhost:8080/terminology/rest/concept/d39b3ecd-9a80-5009-a8ac-0b947f95ca7c">
-     * d39b3ecd-9a80-5009-a8ac-0b947f95ca7c</a>}.
-     */
-    public static final EntityProxy.Pattern SOLOR_CONCEPT_ASSEMBLAGE =
-            EntityProxy.Pattern.make("SOLOR concept assemblage (SOLOR)", UUID.fromString("d39b3ecd-9a80-5009-a8ac-0b947f95ca7c"));
+
     /**
      * Java binding for the concept described as <strong><em>SOLOR issue assemblage (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -5550,8 +5690,8 @@ public class TinkarTerm {
      * <a href="http://localhost:8080/terminology/rest/concept/614017af-9903-53d9-aab4-15fd02193dce">
      * 614017af-9903-53d9-aab4-15fd02193dce</a>}.
      */
-    public static final EntityProxy.Pattern STATED_NAVIGATION =
-            EntityProxy.Pattern.make("Stated navigation (SOLOR)", UUID.fromString("614017af-9903-53d9-aab4-15fd02193dce"));
+    public static final EntityProxy.Concept STATED_NAVIGATION =
+            EntityProxy.Concept.make("Stated navigation (SOLOR)", UUID.fromString("614017af-9903-53d9-aab4-15fd02193dce"));
     /**
      * Java binding for the concept described as <strong><em>Stated premise type (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -6030,8 +6170,8 @@ public class TinkarTerm {
      * <a href="http://localhost:8080/terminology/rest/concept/53f866d0-fd61-5c85-a16c-150bd619a0ac">
      * 53f866d0-fd61-5c85-a16c-150bd619a0ac</a>}.
      */
-    public static final EntityProxy.Concept TRANSITIVE_FEATURE =
-            EntityProxy.Concept.make("Transitive feature (SOLOR)", UUID.fromString("53f866d0-fd61-5c85-a16c-150bd619a0ac"));
+    public static final EntityProxy.Concept TRANSITIVE_PROPERTY =
+            EntityProxy.Concept.make("Transitive property (SOLOR)", UUID.fromString("53f866d0-fd61-5c85-a16c-150bd619a0ac"));
     /**
      * Java binding for the concept described as <strong><em>Tree amalgam properties (SOLOR)</em></strong>;
      * identified by UUID: {@code
