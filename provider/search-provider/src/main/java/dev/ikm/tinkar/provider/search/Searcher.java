@@ -29,9 +29,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.*;
 import org.apache.lucene.search.highlight.*;
 import org.eclipse.collections.impl.factory.Lists;
 import org.slf4j.Logger;
@@ -44,18 +42,22 @@ import java.util.List;
 public class Searcher {
     private static final Logger LOG = LoggerFactory.getLogger(Searcher.class);
     QueryParser parser;
+    private final SearcherManager searcherManager;
 
     public Searcher() throws IOException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening lucene searcher");
         this.parser = new QueryParser("text", Indexer.analyzer());
+        this.searcherManager = new SearcherManager(Indexer.indexReader(), null);
         stopwatch.stop();
         LOG.info("Opened lucene searcher in: " + stopwatch.durationString());
     }
 
     public PrimitiveDataSearchResult[] search(String queryString, int maxResultSize) throws
             ParseException, IOException, InvalidTokenOffsetsException {
-        IndexSearcher isearcher = new IndexSearcher(Indexer.indexReader());
+        boolean refreshOutcome = searcherManager.maybeRefresh();
+        LOG.info("Index Reader refresh outcome = " + refreshOutcome);
+        IndexSearcher indexSearcher = searcherManager.acquire();
         if (queryString != null & !queryString.isEmpty()) {
             Query query = parser.parse(queryString);
             Formatter formatter = new SimpleHTMLFormatter();
@@ -63,10 +65,10 @@ public class Searcher {
             Highlighter highlighter = new Highlighter(formatter, scorer);
             highlighter.setTextFragmenter(new NullFragmenter());
 
-            ScoreDoc[] hits = isearcher.search(query, maxResultSize).scoreDocs;
+            ScoreDoc[] hits = indexSearcher.search(query, maxResultSize).scoreDocs;
             PrimitiveDataSearchResult[] results = new PrimitiveDataSearchResult[hits.length];
             for (int i = 0; i < hits.length; i++) {
-                Document hitDoc = isearcher.doc(hits[i].doc);
+                Document hitDoc = indexSearcher.doc(hits[i].doc);
                 StoredField nidField = (StoredField) hitDoc.getField(Indexer.NID);
                 StoredField patternNidField = (StoredField) hitDoc.getField(Indexer.PATTERN_NID);
                 StoredField rcNidField = (StoredField) hitDoc.getField(Indexer.RC_NID);
@@ -79,6 +81,7 @@ public class Searcher {
             }
             return results;
         }
+        searcherManager.release(indexSearcher);
         return new PrimitiveDataSearchResult[0];
     }
 

@@ -37,6 +37,9 @@ open module dev.ikm.tinkar.integration.test {
     requires dev.ikm.tinkar.ext.lang.owl;
     requires dev.ikm.tinkar.schema;
     requires dev.ikm.tinkar.provider.search;
+    requires org.apache.lucene.highlighter;
+    requires org.apache.lucene.queryparser;
+    requires org.apache.lucene.core;
     requires dev.ikm.tinkar.fhir.transformers;
 
     uses CachingService;
