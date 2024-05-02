@@ -29,7 +29,7 @@ import static dev.ikm.tinkar.fhir.transformers.FhirConstants.*;
 public class FhirProvenanceTransform {
 
 
-    public static Provenance provenanceTransform(String reference, Date oldestOfTheLatestDate){
+    public static Provenance provenanceTransform(String reference, Date oldestOfTheLatestDate, Date latestOfTheLatestDate){
         Provenance provenance = new Provenance();
         provenance.setId(UUID.randomUUID().toString());
         provenance.setMeta(new Meta().addProfile(TERMINOLOGY_CHANGESET_PROVENANCE_PROFILE));
@@ -38,7 +38,7 @@ public class FhirProvenanceTransform {
         provenance.addTarget().setReference(reference);
         provenance.getOccurredPeriod()
                 .setStart(oldestOfTheLatestDate)
-                .setEnd(new Date());
+                .setEnd(latestOfTheLatestDate);
 
         provenance.setRecorded(new Date());
 

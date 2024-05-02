@@ -20,14 +20,16 @@ import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.ServiceKeys;
 import dev.ikm.tinkar.common.service.ServiceProperties;
+import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.coordinate.stamp.*;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.aggregator.TemporalEntityAggregator;
 import dev.ikm.tinkar.fhir.transformers.FhirCodeSystemTransform;
+import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.terms.TinkarTerm;
-import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,26 +40,28 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-
+//@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class FhirTransformAPIIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(FhirTransformAPIIT.class);
+    private static final File SAP_SPINEDARRAYPROVIDERIT_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
+            FhirTransformAPIIT.class);
 
-//    @BeforeEach
-    public void startupDb() {
-        File dataStore = new File(System.getProperty("user.home") + "/Solor/snomedct-data");
-        String controller = "Open SpinedArrayStore";
+    //@BeforeAll
+    public void setup() {
         CachingService.clearAll();
-        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, dataStore);
-        PrimitiveData.selectControllerByName(controller);
+        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, SAP_SPINEDARRAYPROVIDERIT_DATASTORE_ROOT);
+        FileUtil.recursiveDelete(SAP_SPINEDARRAYPROVIDERIT_DATASTORE_ROOT);
+        PrimitiveData.selectControllerByName(TestConstants.SA_STORE_OPEN_NAME);
         PrimitiveData.start();
     }
-//    @AfterEach
-    public void stopDB(){
+
+    //@AfterAll
+    public void teardown() {
         PrimitiveData.stop();
     }
 
-//    @Test
+    //@Test
     public void testFhirCallWithAgregator(){
 
         String fromTime = "2019-10-22T12:31:04";
@@ -72,11 +76,9 @@ public class FhirTransformAPIIT {
         LOG.info("Total Concepts : " + concepts.size());
 
         StampCalculator stampCalculator = initStampCalculator(toTimeStamp); // Can use from ViewCalculator.
-        FhirCodeSystemTransform fhirCodeSystemTransform= new FhirCodeSystemTransform(stampCalculator, concepts, (fhirString, provenanaceString) -> {
-            Assertions.assertNotNull(fhirString);
-            Assertions.assertFalse(fhirString.isEmpty());
-            Assertions.assertNotNull(provenanaceString);
-            Assertions.assertFalse(provenanaceString.isEmpty());
+        FhirCodeSystemTransform fhirCodeSystemTransform= new FhirCodeSystemTransform(stampCalculator, concepts, (fhirProvenanceString) -> {
+            Assertions.assertNotNull(fhirProvenanceString);
+            Assertions.assertFalse(fhirProvenanceString.isEmpty());
         });
         try {
             fhirCodeSystemTransform.compute();

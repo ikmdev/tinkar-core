@@ -20,12 +20,15 @@ import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.ServiceKeys;
 import dev.ikm.tinkar.common.service.ServiceProperties;
+import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.coordinate.stamp.*;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.load.LoadEntitiesFromDtoFile;
 import dev.ikm.tinkar.fhir.transformers.FhirCodeSystemTransform;
 import dev.ikm.tinkar.fhir.transformers.FhirStatedDefinitionTransformer;
+import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.junit.jupiter.api.*;
@@ -33,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -42,28 +46,38 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+//@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class FhirCodeSystemTransformIT {
     FhirCodeSystemTransform fhirCodeSystemTransform;
     FhirStatedDefinitionTransformer fhirStatedDefinitionTransformer;
     StampCalculator stampCalculator;
     private static final Logger LOG = LoggerFactory.getLogger(FhirCodeSystemTransformIT.class);
     final int transformSize = 1000;
+    File dataStore = new File(System.getProperty("user.home") + "/Solor/SnomedCT_US_20230901_SpinedArray-20240402");
 
-    //@BeforeEach
-    public void init() {
-        File dataStore = new File(System.getProperty("user.home") + "/Solor/snomedct-data");
-        String controller = "Open SpinedArrayStore";
+    //@BeforeAll
+    public void setup() {
         CachingService.clearAll();
         ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, dataStore);
-        PrimitiveData.selectControllerByName(controller);
+       // FileUtil.recursiveDelete(dataStore);
+        PrimitiveData.selectControllerByName(TestConstants.SA_STORE_OPEN_NAME);
         PrimitiveData.start();
     }
-    //@AfterEach
-    public void endTest() {
+
+    //@AfterAll
+    public void teardown() {
         PrimitiveData.stop();
     }
+
     //@Test
-    public void testFhirCodeSystemTransformation() {
+    public void testFhirCodeSystemTransformation()  throws IOException {
+
+//        File file = TestConstants.TINK_TEST_FILE;
+//        LoadEntitiesFromDtoFile loadDTO = new LoadEntitiesFromDtoFile(file);
+//        int count = loadDTO.compute();
+//        LOG.info(count + " entitles loaded from file: " + loadDTO.report() + "\n\n");
+
+
         int patternNid = TinkarTerm.DESCRIPTION_PATTERN.nid();
         Set<Integer> pathNids = new HashSet<>();
         EntityService.get().forEachSemanticOfPattern(patternNid,patternEntity1 ->
@@ -106,11 +120,9 @@ public class FhirCodeSystemTransformIT {
 
     private void processConceptBatch(List<ConceptEntity<? extends ConceptEntityVersion>> concepts, StampCalculator stampCalculatorWithCache, int conceptCount) {
         LOG.debug("Processing Concepts : " + concepts.size() + "   TOTAL CONCEPTS : " + conceptCount);
-        fhirCodeSystemTransform= new FhirCodeSystemTransform(stampCalculatorWithCache, concepts, (fhirString, provenanceString) -> {
-            Assertions.assertNotNull(fhirString);
-            Assertions.assertFalse(fhirString.isEmpty());
-            Assertions.assertNotNull(provenanceString);
-            Assertions.assertFalse(provenanceString.isEmpty());
+        fhirCodeSystemTransform= new FhirCodeSystemTransform(stampCalculatorWithCache, concepts, (fhirProvenanceString) -> {
+            Assertions.assertNotNull(fhirProvenanceString);
+            Assertions.assertFalse(fhirProvenanceString.isEmpty());
         });
         try {
             fhirCodeSystemTransform.compute();

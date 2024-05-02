@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 public class FhirStaticData {
     private static final Logger LOG = LoggerFactory.getLogger(FhirStaticData.class);
@@ -191,7 +192,7 @@ public class FhirStaticData {
     }
     public static CodeSystem generateCodeSystemExtensionContent(CodeSystem codeSystem){
         //TODO this has to be dynamic and further logic TBD based on requirements.
-        codeSystem.setId(CODE_SYSTEM_ID);
+        codeSystem.setId(String.valueOf(UUID.randomUUID()));
         Meta meta = new Meta();
         meta.setLastUpdated(new Date());
         codeSystem.setMeta(meta);
