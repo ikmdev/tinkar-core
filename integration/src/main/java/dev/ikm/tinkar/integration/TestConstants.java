@@ -35,5 +35,7 @@ public class TestConstants {
     public static final String MV_STORE_OPEN_NAME = "Open MV Store";
     public static final String EPHEMERAL_STORE_NAME = "Load Ephemeral Store";
     public static final String SA_STORE_OPEN_NAME = "Open SpinedArrayStore";
+    public static final File SNOMED_CT_DATA = createFilePathInTarget.apply("data/snomedct-2023.09.01.zip");
+
 }
 

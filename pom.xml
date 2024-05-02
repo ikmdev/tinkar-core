@@ -104,6 +104,7 @@
         <tinkar-jpms-deps.groupId>dev.ikm.jpms</tinkar-jpms-deps.groupId>
         <tinkar-jpms-deps.version>1.0.15</tinkar-jpms-deps.version>
         <tinkar-test-dto.version>1.1.0</tinkar-test-dto.version>
+        <snomedct-data.version>2023.09.01</snomedct-data.version>
         <tinkar-starter-data.version>0.1</tinkar-starter-data.version>
         <protobuf-java.version>3.22.0-r3</protobuf-java.version>
         <sonar.skip>false</sonar.skip>
