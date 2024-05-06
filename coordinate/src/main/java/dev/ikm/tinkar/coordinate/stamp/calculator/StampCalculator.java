@@ -15,11 +15,20 @@
  */
 package dev.ikm.tinkar.coordinate.stamp.calculator;
 
+import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.NonExistentValue;
+import dev.ikm.tinkar.coordinate.Coordinates;
+import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
+import dev.ikm.tinkar.coordinate.navigation.NavigationCoordinateRecord;
+import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculator;
+import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
+import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.coordinate.stamp.change.ChangeChronology;
 import dev.ikm.tinkar.coordinate.stamp.change.FieldChangeRecord;
 import dev.ikm.tinkar.coordinate.stamp.change.VersionChangeRecord;
+import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -37,10 +46,7 @@ import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.OptionalInt;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
@@ -342,6 +348,52 @@ public interface StampCalculator {
         ImmutableList<LatestVersionSearchResult> filteredResults = Lists.immutable.ofAll(semanticNidSearchResultMap.values());
         LOG.info("Removed " + duplicates.intValue() + " duplicates. Latest result count: " + filteredResults.size());
         return filteredResults;
+    }
+
+    /**
+     * Performs a lucene based search using the {@link #search(String, int)} method but applies an additional constraint
+     * which restricts the search results to only those concepts that qualify as descendants of the passed in ancestor.
+     * This search initializes a default navigation calculator.
+     *
+     * @param ancestor  Concept that is ancestor to all returned search results
+     * @param query Search string
+     * @param maxResultSize Search results size limit
+     * @return  Immutable list of LatestVersionSearchResult records
+     * @throws Exception
+     */
+    default ImmutableList<LatestVersionSearchResult> searchDescendants(PublicId ancestor, String query, int maxResultSize) throws Exception {
+        var stampCoordinate = Coordinates.Stamp.DevelopmentLatestActiveOnly();
+        var languageCoordinate = Coordinates.Language.UsEnglishRegularName();
+        var navigationCoordinate = Coordinates.Navigation.inferred().toNavigationCoordinateRecord();
+        var navigationCalculator = NavigationCalculatorWithCache.getCalculator(stampCoordinate, Lists.immutable.of(languageCoordinate), navigationCoordinate);
+        return searchDescendants(navigationCalculator, ancestor, query, maxResultSize);
+    }
+
+    /**
+     * Performs a lucene based search using the {@link #search(String, int)} method but applies an additional constraint
+     * which restricts the search results to only those concepts that qualify as descendants of the passed in ancestor.
+     *
+     * @param navigationCalculator Navigation calculator used to compute the latest descendants of filter
+     * @param ancestor Concept that is ancestor to all returned search results
+     * @param query Search string
+     * @param maxResultSize Search results size limit
+     * @return  Immutable list of LatestVersionSearchResult records
+     * @throws Exception
+     */
+    default ImmutableList<LatestVersionSearchResult> searchDescendants(NavigationCalculator navigationCalculator, PublicId ancestor, String query, int maxResultSize) throws Exception {
+        ImmutableList<LatestVersionSearchResult> latestVersionSearchResults = search(query, maxResultSize);
+        MutableList<LatestVersionSearchResult> latestVersionSearchResultMutableList = Lists.mutable.empty();
+
+        IntIdSet descendantNids = navigationCalculator.descendentsOf(EntityService.get().nidForPublicId(ancestor));
+
+        latestVersionSearchResults.forEach(latestVersionSearchResult -> {
+            int chronologyNid = latestVersionSearchResult.latestVersion().get().chronology().referencedComponent().nid();
+            if (descendantNids.contains(chronologyNid)) {
+                latestVersionSearchResultMutableList.add(latestVersionSearchResult);
+            }
+        });
+
+        return latestVersionSearchResultMutableList.toImmutable();
     }
 
     default boolean latestIsActive(Entity entity) {

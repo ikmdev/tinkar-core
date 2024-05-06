@@ -52,13 +52,21 @@ public class Searcher {
     public static final EntityProxy.Pattern LIDR_RECORD_PATTERN = EntityProxy.Pattern.make(null, UUID.fromString("c3d52f47-0565-5cfb-9b0b-d7501a33b35d"));
     public static final EntityProxy.Pattern DIAGNOSTIC_DEVICE_PATTERN = EntityProxy.Pattern.make(null, UUID.fromString("a507b3c7-eadb-5d54-84c0-c44f3155d0bc"));
     QueryParser parser;
-    private final SearcherManager searcherManager;
+    private static final SearcherManager searcherManager;
+
+    //TODO - refactor this class to not have static fields. Currently needed when using this SearcherManager class.
+    static {
+        try {
+            searcherManager = new SearcherManager(Indexer.indexReader(), null);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public Searcher() throws IOException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening lucene searcher");
         this.parser = new QueryParser("text", Indexer.analyzer());
-        this.searcherManager = new SearcherManager(Indexer.indexReader(), null);
         stopwatch.stop();
         LOG.info("Opened lucene searcher in: " + stopwatch.durationString());
     }
@@ -68,30 +76,34 @@ public class Searcher {
         boolean refreshOutcome = searcherManager.maybeRefresh();
         LOG.info("Index Reader refresh outcome = " + refreshOutcome);
         IndexSearcher indexSearcher = searcherManager.acquire();
-        if (queryString != null & !queryString.isEmpty()) {
-            Query query = parser.parse(queryString);
-            Formatter formatter = new SimpleHTMLFormatter();
-            QueryScorer scorer = new QueryScorer(query);
-            Highlighter highlighter = new Highlighter(formatter, scorer);
-            highlighter.setTextFragmenter(new NullFragmenter());
+        try {
+            if (queryString != null & !queryString.isEmpty()) {
+                PrimitiveDataSearchResult[] results;
+                    Query query = parser.parse(queryString);
+                    Formatter formatter = new SimpleHTMLFormatter();
+                    QueryScorer scorer = new QueryScorer(query);
+                    Highlighter highlighter = new Highlighter(formatter, scorer);
+                    highlighter.setTextFragmenter(new NullFragmenter());
 
-            ScoreDoc[] hits = indexSearcher.search(query, maxResultSize).scoreDocs;
-            PrimitiveDataSearchResult[] results = new PrimitiveDataSearchResult[hits.length];
-            for (int i = 0; i < hits.length; i++) {
-                Document hitDoc = indexSearcher.doc(hits[i].doc);
-                StoredField nidField = (StoredField) hitDoc.getField(Indexer.NID);
-                StoredField patternNidField = (StoredField) hitDoc.getField(Indexer.PATTERN_NID);
-                StoredField rcNidField = (StoredField) hitDoc.getField(Indexer.RC_NID);
-                StoredField fieldIndexField = (StoredField) hitDoc.getField(Indexer.FIELD_INDEX);
-                StoredField textField = (StoredField) hitDoc.getField(Indexer.TEXT_FIELD_NAME);
-                String highlightedString = highlighter.getBestFragment(Indexer.analyzer(), Indexer.TEXT_FIELD_NAME, textField.stringValue());
+                    ScoreDoc[] hits = indexSearcher.search(query, maxResultSize).scoreDocs;
+                    results = new PrimitiveDataSearchResult[hits.length];
+                    for (int i = 0; i < hits.length; i++) {
+                        Document hitDoc = indexSearcher.doc(hits[i].doc);
+                        StoredField nidField = (StoredField) hitDoc.getField(Indexer.NID);
+                        StoredField patternNidField = (StoredField) hitDoc.getField(Indexer.PATTERN_NID);
+                        StoredField rcNidField = (StoredField) hitDoc.getField(Indexer.RC_NID);
+                        StoredField fieldIndexField = (StoredField) hitDoc.getField(Indexer.FIELD_INDEX);
+                        StoredField textField = (StoredField) hitDoc.getField(Indexer.TEXT_FIELD_NAME);
+                        String highlightedString = highlighter.getBestFragment(Indexer.analyzer(), Indexer.TEXT_FIELD_NAME, textField.stringValue());
 
-                results[i] = new PrimitiveDataSearchResult(nidField.numericValue().intValue(), rcNidField.numericValue().intValue(),
-                        patternNidField.numericValue().intValue(), fieldIndexField.numericValue().intValue(), hits[i].score, highlightedString);
+                        results[i] = new PrimitiveDataSearchResult(nidField.numericValue().intValue(), rcNidField.numericValue().intValue(),
+                                patternNidField.numericValue().intValue(), fieldIndexField.numericValue().intValue(), hits[i].score, highlightedString);
+                    }
+                return results;
             }
-            return results;
+        } finally {
+            searcherManager.release(indexSearcher);
         }
-        searcherManager.release(indexSearcher);
         return new PrimitiveDataSearchResult[0];
     }
 
