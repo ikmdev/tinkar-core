@@ -33,7 +33,6 @@ public class FhirProvenanceTransform {
         Provenance provenance = new Provenance();
         provenance.setId(UUID.randomUUID().toString());
         provenance.setMeta(new Meta().addProfile(TERMINOLOGY_CHANGESET_PROVENANCE_PROFILE));
-        provenance.setText(new Narrative().setStatus(Narrative.NarrativeStatus.GENERATED));
 
         provenance.addTarget().setReference(reference);
         provenance.getOccurredPeriod()
