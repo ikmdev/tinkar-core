@@ -16,24 +16,23 @@
 package dev.ikm.tinkar.integration.provider.search;
 
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.ServiceKeys;
 import dev.ikm.tinkar.common.service.ServiceProperties;
+import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.provider.search.Searcher;
 import dev.ikm.tinkar.terms.TinkarTerm;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -140,4 +139,50 @@ public class SearchProviderIT {
                         "   Actual: " + actualFQNs
         );
     }
+
+    private void setupSnomedLoincLidrData() {
+        PrimitiveData.stop();
+        CachingService.clearAll();
+        File dataStore = new File(System.getProperty("user.home") + "/Solor/snomedLidrLoinc-data-5-6-2024-withCollabData-dev");
+        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, dataStore);
+        PrimitiveData.selectControllerByName(TestConstants.SA_STORE_OPEN_NAME);
+        PrimitiveData.start();
+    }
+
+    @Test
+    @Disabled
+    public void getResultConformancesFromLidrRecordIT() {
+        setupSnomedLoincLidrData();
+
+        PublicId lidrRecordId = PublicIds.of(UUID.fromString("ac475ee0-8f34-49e7-b0ba-28f5b4cb2a44"));
+        List<PublicId> expectedResultConformances = Arrays.asList(PublicIds.of(UUID.fromString("46366a93-9895-3703-ad7f-cb2596e7cb5d")));
+        List<PublicId> actualResultConformances = Searcher.getResultConformancesFromLidrRecord(lidrRecordId);
+
+        Collections.sort(expectedResultConformances);
+        Collections.sort(actualResultConformances);
+        assertEquals(expectedResultConformances, actualResultConformances, "LIDR Record Result Conformances do not match");
+    }
+
+
+    @Test
+    @Disabled
+    public void getAllowedResultsFromResultConformanceIT() {
+        setupSnomedLoincLidrData();
+
+        PublicId resultConformanceId = PublicIds.of(UUID.fromString("46366a93-9895-3703-ad7f-cb2596e7cb5d"));
+        List<PublicId> expectedAllowedResults = Arrays.asList(
+                PublicIds.of(UUID.fromString("97b0fbff-cd01-3018-9f72-03ffc7c9027c")),
+                PublicIds.of(UUID.fromString("f477b09d-0760-396a-97b0-5abc4fbde352")),
+                PublicIds.of(UUID.fromString("2bf6b6b1-74f7-3ebc-a48b-5a7f12980559")),
+                PublicIds.of(UUID.fromString("cff1d554-6d56-33f3-bf5d-9d5a6e231128")),
+                PublicIds.of(UUID.fromString("152f35e3-f0a3-3a5e-9de2-d79ae288f7ba")),
+                PublicIds.of(UUID.fromString("39925f20-bd93-343f-a4c0-588762316250"))
+        );
+        List<PublicId> actualAllowedResults = Searcher.getAllowedResultsFromResultConformance(resultConformanceId);
+
+        Collections.sort(expectedAllowedResults);
+        Collections.sort(actualAllowedResults);
+        assertEquals(expectedAllowedResults, actualAllowedResults, "Result Conformance allowed results do not match");
+    }
+
 }

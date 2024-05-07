@@ -51,6 +51,8 @@ public class Searcher {
     private static final Logger LOG = LoggerFactory.getLogger(Searcher.class);
     public static final EntityProxy.Pattern LIDR_RECORD_PATTERN = EntityProxy.Pattern.make(null, UUID.fromString("c3d52f47-0565-5cfb-9b0b-d7501a33b35d"));
     public static final EntityProxy.Pattern DIAGNOSTIC_DEVICE_PATTERN = EntityProxy.Pattern.make(null, UUID.fromString("a507b3c7-eadb-5d54-84c0-c44f3155d0bc"));
+    public static final EntityProxy.Pattern QUANTITATIVE_ALLOWED_RESULT_SET_PATTERN = EntityProxy.Pattern.make(null, UUID.fromString("9d40d06b-7776-5a56-97e4-0c27f5d574c7"));
+    public static final EntityProxy.Pattern QUALITATIVE_ALLOWED_RESULT_SET_PATTERN = EntityProxy.Pattern.make(null, UUID.fromString("160a63a6-3cba-510e-83d1-235822045885"));
     QueryParser parser;
     private final SearcherManager searcherManager;
 
@@ -208,8 +210,6 @@ public class Searcher {
 
     /**
      * Returns List of LIDR Record PublicIds for the provided Test Kit Device.
-     * <p>
-     * Provided as an ease-of-use method to retrieve LIDR Record Ids for a Test Kit Device.
      *
      * @param   testKitId associated Test Kit Device PublicId
      * @return  List of Public Ids given test kit concept and lidr record pattern.
@@ -230,25 +230,106 @@ public class Searcher {
 
     /**
      * Returns List of Result Conformance PublicIds for all LIDR Records of the Test Kit Device
-     * <p>
-     * Provided as an ease-of-use method to retrieve Result Conformances / Constraints for a Test Kit
+     * using the default NavigationCalculator from {@link #defaultNavigationCalculator()}
      *
      * @param   testKitId PublicId of the Test Kit Device
      * @return  List of PublicIds for all Result Conformances / Constraints for the Test Kit Device
      */
     public static List<PublicId> getResultConformanceFromTestKit(PublicId testKitId) {
+        return getResultConformanceFromTestKit(defaultNavigationCalculator(), testKitId);
+    }
+
+    /**
+     * Returns List of Result Conformance PublicIds for all LIDR Records of the Test Kit Device
+     *
+     * @param   navCalc NavigationCalculator for determining latest version
+     * @param   testKitId PublicId of the Test Kit Device
+     * @return  List of PublicIds for all Result Conformances / Constraints for the Test Kit Device
+     */
+    public static List<PublicId> getResultConformanceFromTestKit(NavigationCalculator navCalc, PublicId testKitId) {
         List<PublicId> resultConformanceList = new ArrayList<>();
 
         for (PublicId lidrRecordId : getLidrRecordSemanticsFromTestKit(testKitId)) {
-            EntityService.get().getEntity(lidrRecordId.asUuidArray()).ifPresent((lidrRecordEntity) -> {
-                SemanticEntityVersion lidrRecordSemanticVersion = (SemanticEntityVersion) lidrRecordEntity.versions().get(0);
-                int idxResultConformances = 5;
-                ((IntIdSet) lidrRecordSemanticVersion.fieldValues().get(idxResultConformances))
-                        .map(PrimitiveData::publicId)
-                        .forEach(resultConformanceList::add);
-            });
+            resultConformanceList.addAll(getResultConformancesFromLidrRecord(navCalc, lidrRecordId));
         }
         return resultConformanceList;
+    }
+
+    /**
+     * Returns List of Result Conformance PublicIds for a LIDR Record
+     * using the default NavigationCalculator from {@link #defaultNavigationCalculator()}
+     *
+     * @param   lidrRecordId PublicId of the LIDR Record
+     * @return  List of PublicIds for Result Conformances of the LIDR Record
+     */
+    public static List<PublicId> getResultConformancesFromLidrRecord(PublicId lidrRecordId) {
+        return getResultConformancesFromLidrRecord(defaultNavigationCalculator(), lidrRecordId);
+    }
+
+    /**
+     * Returns List of Result Conformance PublicIds for a LIDR Record
+     *
+     * @param   navCalc NavigationCalculator for determining latest version
+     * @param   lidrRecordId PublicId of the LIDR Record
+     * @return  List of PublicIds for Result Conformances of the LIDR Record
+     */
+    public static List<PublicId> getResultConformancesFromLidrRecord(NavigationCalculator navCalc, PublicId lidrRecordId) {
+        List<PublicId> resultConformanceList = new ArrayList<>();
+        EntityService.get().getEntity(lidrRecordId.asUuidArray()).ifPresent((lidrRecordEntity) -> {
+            navCalc.stampCalculator().latest(lidrRecordEntity)
+                    .ifPresent((lidrRecordVersion) -> {
+                        SemanticEntityVersion lidrRecordSemanticVersion = (SemanticEntityVersion) lidrRecordVersion;
+                        int idxResultConformances = 5;
+                        ((IntIdSet) lidrRecordSemanticVersion.fieldValues().get(idxResultConformances))
+                                .map(PrimitiveData::publicId)
+                                .forEach(resultConformanceList::add);
+                    });
+        });
+        return resultConformanceList;
+    }
+
+    /**
+     * Returns List of Allowed Results PublicIds for a Result Conformance
+     * using the default NavigationCalculator from {@link #defaultNavigationCalculator()}
+     *
+     * @param   resultConformanceId PublicId of the Result Conformance
+     * @return  List of PublicIds for Allowed Results of the Result Conformance
+     */
+    public static List<PublicId> getAllowedResultsFromResultConformance(PublicId resultConformanceId) {
+        return getAllowedResultsFromResultConformance(defaultNavigationCalculator(), resultConformanceId);
+    }
+
+    /**
+     * Returns List of Allowed Results PublicIds for a Result Conformance
+     *
+     * @param   navCalc NavigationCalculator for determining latest version
+     * @param   resultConformanceId PublicId of the Result Conformance
+     * @return  List of PublicIds for Allowed Results of the Result Conformance
+     */
+    public static List<PublicId> getAllowedResultsFromResultConformance(NavigationCalculator navCalc, PublicId resultConformanceId) {
+        List<PublicId> allowedResultsList = new ArrayList<>();
+
+        int resultConformanceNid = EntityService.get().nidForPublicId(resultConformanceId);
+
+        EntityService.get().forEachSemanticForComponentOfPattern(resultConformanceNid, QUANTITATIVE_ALLOWED_RESULT_SET_PATTERN.nid(),
+                (quantitativeResultSet) -> {
+                    navCalc.stampCalculator().latest(quantitativeResultSet)
+                            .ifPresent((latestQuantitativeResultSet) -> {
+                                ((IntIdSet) latestQuantitativeResultSet.fieldValues().get(0))
+                                        .map(PrimitiveData::publicId)
+                                        .forEach(allowedResultsList::add);
+                            });
+                });
+        EntityService.get().forEachSemanticForComponentOfPattern(resultConformanceNid, QUALITATIVE_ALLOWED_RESULT_SET_PATTERN.nid(),
+                (qualitativeResultSet) -> {
+                    navCalc.stampCalculator().latest(qualitativeResultSet)
+                            .ifPresent((latestQualitativeResultSet) -> {
+                                ((IntIdSet) latestQualitativeResultSet.fieldValues().get(0))
+                                        .map(PrimitiveData::publicId)
+                                        .forEach(allowedResultsList::add);
+                            });
+                });
+        return allowedResultsList;
     }
 
 }
