@@ -52,12 +52,12 @@ public class FhirProvenanceTransform {
         CodeableConcept authorCodeAbleConcept = new CodeableConcept();
         authorCodeAbleConcept.addCoding(FhirUtils.generateCoding(PROVENANCE_PARTICIPANT_TYPE_URL, "author"));
         provenance.addAgent().setType(authorCodeAbleConcept)
-                .setWho(new Reference().setDisplay("Ted Klein"));
+                .setWho(new Reference().setDisplay(TinkarTerm.USER.description()));
 
         CodeableConcept custodianCodeAbleConcept = new CodeableConcept();
         custodianCodeAbleConcept.addCoding(FhirUtils.generateCoding(PROVENANCE_PARTICIPANT_TYPE_URL, "custodian"));
         provenance.addAgent().setType(custodianCodeAbleConcept)
-                .setWho(new Reference().setDisplay(TinkarTerm.USER.description()));
+                .setWho(new Reference().setDisplay("Integrated Knowledge Management"));
 
         provenance.addEntity().setRole(Provenance.ProvenanceEntityRole.REVISION)
                 .setWhat(new Reference().setReference(TERMINOLOGY_CODESYSTEM_VARIABLE_ROLE_URL)
