@@ -28,7 +28,7 @@ import dev.ikm.tinkar.entity.aggregator.TemporalEntityAggregator;
 import dev.ikm.tinkar.fhir.transformers.FhirCodeSystemTransform;
 import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.terms.TinkarTerm;
-import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,17 +36,16 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-//@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class FhirTransformAPIIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(FhirTransformAPIIT.class);
-    private static final File SAP_SPINEDARRAYPROVIDERIT_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
-            FhirTransformAPIIT.class);
+    private static final File SAP_SPINEDARRAYPROVIDERIT_DATASTORE_ROOT = new File(System.getProperty("user.home") + "/Solor/snomed+loinc+lidr_int_2024-05-02_reasoned");  //snomedLidrLoinc-data-5-6-2024-withCollabData-dev");
 
-    //@BeforeAll
+   // @BeforeAll
     public void setup() {
         CachingService.clearAll();
         ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, SAP_SPINEDARRAYPROVIDERIT_DATASTORE_ROOT);
@@ -55,27 +54,27 @@ public class FhirTransformAPIIT {
         PrimitiveData.start();
     }
 
-    //@AfterAll
+   // @AfterAll
     public void teardown() {
         PrimitiveData.stop();
     }
 
-    //@Test
+   // @Test
     public void testFhirCallWithAgregator(){
 
-        String fromTime = "2024-05-03T12:00:04";
+        String fromTime = "2024-05-08T12:00:04";
         LocalDateTime fromLocalDateTime = LocalDateTime.parse(fromTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         long fromTimeStamp = fromLocalDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-        String toTime = "2024-05-03T12:31:04";
+        String toTime = "2024-05-09T12:00:04";
         LocalDateTime toLocalDateTime = LocalDateTime.parse(toTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         long toTimeStamp = toLocalDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 
-        List<ConceptEntity<? extends ConceptEntityVersion>> concepts = getConceptEntities(fromTimeStamp, toTimeStamp);
+        Map<String, ConceptEntity<? extends ConceptEntityVersion>> concepts = getConceptEntities(fromTimeStamp, toTimeStamp);
 
         LOG.info("Total Concepts : " + concepts.size());
 
         StampCalculator stampCalculator = initStampCalculator(toTimeStamp); // Can use from ViewCalculator.
-        FhirCodeSystemTransform fhirCodeSystemTransform= new FhirCodeSystemTransform(stampCalculator, concepts, (fhirProvenanceString) -> {
+        FhirCodeSystemTransform fhirCodeSystemTransform= new FhirCodeSystemTransform(stampCalculator, concepts.values().stream(), (fhirProvenanceString) -> {
             Assertions.assertNotNull(fhirProvenanceString);
             Assertions.assertFalse(fhirProvenanceString.isEmpty());
         });
@@ -86,19 +85,19 @@ public class FhirTransformAPIIT {
         }
     }
 
-    private static List<ConceptEntity<? extends ConceptEntityVersion>> getConceptEntities(long fromTimeStamp, long toTimeStamp) {
+    private static Map<String, ConceptEntity<? extends ConceptEntityVersion>> getConceptEntities(long fromTimeStamp, long toTimeStamp) {
         AtomicInteger counter = new AtomicInteger(0);
-        List<ConceptEntity<? extends  ConceptEntityVersion>> concepts = new ArrayList<>();
+        Map<String, ConceptEntity<? extends  ConceptEntityVersion>> concepts = new HashMap<>();
         TemporalEntityAggregator temporalEntityAggregator = new TemporalEntityAggregator(fromTimeStamp, toTimeStamp);
-        EntityCountSummary summary =    temporalEntityAggregator.aggregate(nid -> {
+        temporalEntityAggregator.aggregate(nid -> {
             Entity<EntityVersion> entity = EntityService.get().getEntityFast(nid);
             if (entity instanceof ConceptEntity conceptEntity) {
                 LOG.debug(counter.getAndIncrement() + " : " + conceptEntity);
-                concepts.add(conceptEntity);
+                concepts.putIfAbsent(conceptEntity.publicId().idString(), conceptEntity);
             }else if(entity instanceof SemanticEntity semanticEntity){
                 Entity<EntityVersion> referencedConcept = semanticEntity.referencedComponent();
                 if (referencedConcept instanceof ConceptEntity concept) {
-                    concepts.add(concept);
+                    concepts.putIfAbsent(concept.publicId().idString(), concept);
                 }
             }
         });

@@ -64,7 +64,7 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
 
     }
 
-    private void retrieveOldestOfLatest(StampEntity<? extends StampEntityVersion> stampEntity){
+    private void retrieveOldestOfLatest(StampEntity<?> stampEntity){
        StampEntityVersion latestVersion = stampCalculatorWithCache.latest(stampEntity).get();
        long latestVersionTime=latestVersion.stamp().time();
        Date date =new Date(latestVersionTime);
@@ -73,7 +73,7 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
        }
     }
 
-    private void retrieveLatestDate(StampEntity<? extends StampEntityVersion> stampEntity){
+    private void retrieveLatestDate(StampEntity<?> stampEntity){
         StampEntityVersion latestVersion = stampCalculatorWithCache.latest(stampEntity).get();
         long latestVersionTime=latestVersion.stamp().time();
         Date date =new Date(latestVersionTime);
@@ -85,16 +85,17 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
     private void forEachSemanticForComponent(int conceptNid){
         Latest<EntityVersion> latestConceptVersion = stampCalculatorWithCache.latest(conceptNid);
         latestConceptVersion.ifPresent(conceptEntity -> {
-            retrieveOldestOfLatest(latestConceptVersion.get().stamp());
-            retrieveLatestDate(latestConceptVersion.get().stamp());
+            retrieveOldestOfLatest(conceptEntity.stamp());
+            retrieveLatestDate(conceptEntity.stamp());
             CodeSystem.ConceptDefinitionComponent concept = new CodeSystem.ConceptDefinitionComponent();
-            FhirUtils.retrieveConcept(stampCalculatorWithCache, latestConceptVersion.get().publicId(), (code, entity) -> {
-                concept.setCode(code);
-                codeSystem.addConcept(concept);
-            });
+            codeSystem.addConcept(concept);
+            FhirUtils.retrieveConcept(stampCalculatorWithCache, latestConceptVersion.get().publicId(),
+                    (code, entity) -> concept.setCode(code));
             EntityService.get().forEachSemanticForComponent(conceptEntity.nid(), semanticEntity -> {
                 Latest<SemanticEntityVersion> latestSemanticVersion = stampCalculatorWithCache.latest(semanticEntity);
                 latestSemanticVersion.ifPresent(semanticEntityVersion -> {
+                    retrieveOldestOfLatest(semanticEntityVersion.stamp());
+                    retrieveLatestDate(semanticEntityVersion.stamp());
                     if(semanticEntityVersion.patternNid() == PrimitiveData.get().nidForPublicId(IDENTIFIER_PATTERN.publicId())){
                         FhirIdentifierTransform fhirIdentifierTransform = new FhirIdentifierTransform();
                         List<Extension> identifierExtensions = fhirIdentifierTransform.transformIdentifierSemantic(semanticEntityVersion);
@@ -166,11 +167,9 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
         bundle.addEntry()
                 .setResource(codeSystem)
                 .setFullUrl(codeSystem.getIdElement().getValue());
-
         bundle.addEntry()
                 .setResource(provenance)
                 .setFullUrl(provenance.getIdElement().getValue());
-
 
         FhirContext ctx = FhirContext.forR4();
         IParser parser = ctx.newJsonParser();
