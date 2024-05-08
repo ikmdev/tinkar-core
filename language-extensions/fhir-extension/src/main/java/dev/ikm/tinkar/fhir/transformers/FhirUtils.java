@@ -19,15 +19,18 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityVersion;
+import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.TinkarTerm;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.IntegerType;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.BiConsumer;
 
 import static dev.ikm.tinkar.fhir.transformers.FhirConstants.ROLE_GROUP_URL;
@@ -67,7 +70,7 @@ public class FhirUtils {
         EntityService.get().forEachSemanticForComponentOfPattern(entity.nid(), FhirConstants.IDENTIFIER_PATTERN.nid(), identifierSemantic -> {
             SemanticEntityVersion version = stampCalculator.latest(identifierSemantic).get();//getLatestVersion(identifierSemantic);
             if(version.fieldValues().get(0) instanceof EntityProxy.Concept snomedIdentifierConcept
-            && Objects.equals(getSnomedIdentifierConcept().publicId().idString(), snomedIdentifierConcept.publicId().idString())){
+            && PublicId.equals(TinkarTerm.SCTID.publicId(), snomedIdentifierConcept.publicId())){
                 snomedConceptsMap.putIfAbsent(version.fieldValues().get(1).toString(), entity.description());
                 snomedId.accept(version.fieldValues().get(1).toString(), entity);
             }

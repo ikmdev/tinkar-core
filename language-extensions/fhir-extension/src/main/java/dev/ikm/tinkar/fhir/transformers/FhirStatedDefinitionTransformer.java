@@ -35,10 +35,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import static dev.ikm.tinkar.fhir.transformers.FhirConstants.*;
-import static dev.ikm.tinkar.fhir.transformers.FhirUtils.*;
+import static dev.ikm.tinkar.fhir.transformers.FhirUtils.generateCodingObject;
+import static dev.ikm.tinkar.fhir.transformers.FhirUtils.retrieveConcept;
 import static dev.ikm.tinkar.terms.TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN;
 
 public class FhirStatedDefinitionTransformer {
@@ -97,16 +97,15 @@ public class FhirStatedDefinitionTransformer {
     private String processLeafNode(DiTreeEntity diTreeEntity, EntityVertex entityVertex) {
         StringBuilder stringBuilder = new StringBuilder();
         diTreeEntity.predecessor(entityVertex).ifPresent(parentVertex -> {
-            if(Objects.equals(TinkarTerm.AND.publicId().idString(), parentVertex.meaning().publicId().idString())){
+            if(PublicId.equals(TinkarTerm.AND.publicId(), parentVertex.meaning().publicId())){
                 stringBuilder.append(processLeafNode(diTreeEntity, parentVertex));
-            } else  if(Objects.equals(TinkarTerm.CONCEPT_REFERENCE.publicId().idString(), parentVertex.meaning().publicId().idString())){
+            } else  if(PublicId.equals(TinkarTerm.CONCEPT_REFERENCE.publicId(), parentVertex.meaning().publicId())){
                 stringBuilder.append(processLeafNode(diTreeEntity, parentVertex));
-            } else  if(Objects.equals(TinkarTerm.SUFFICIENT_SET.publicId().idString(), parentVertex.meaning().publicId().idString())){
+            } else  if(PublicId.equals(TinkarTerm.SUFFICIENT_SET.publicId(), parentVertex.meaning().publicId())){
                 stringBuilder.append("Is-a");
-               // stringBuilder.append(processParentConceptReference());
-            }else if(Objects.equals(TinkarTerm.NECESSARY_SET.publicId().idString(), parentVertex.meaning().publicId().idString())){
+            }else if(PublicId.equals(TinkarTerm.NECESSARY_SET.publicId(), parentVertex.meaning().publicId())){
                 stringBuilder.append("Is a");
-            } else  if(Objects.equals(TinkarTerm.ROLE_TYPE.publicId().idString(), parentVertex.meaning().publicId().idString())){
+            } else  if(PublicId.equals(TinkarTerm.ROLE.publicId(), parentVertex.meaning().publicId())){
                 parentVertex.properties().values().forEach(value -> {
                     EntityProxy.Concept concept = (EntityProxy.Concept) value;
                     if(!concept.description().toLowerCase().contains("restriction")){
