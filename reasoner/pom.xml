@@ -22,7 +22,6 @@
         <module>reasoner-elk-owl</module>
         <module>reasoner-elk-snomed</module>
         <module>reasoner-service</module>
-        <module>reasoner-test-data</module>
     </modules>
 
     <dependencyManagement>
@@ -65,4 +64,17 @@
         </dependencies>
     </dependencyManagement>
 
+    <profiles>
+        <profile>
+            <id>reasoner-test-data</id>
+            <activation>
+                <property>
+                    <name>!stageOSSRH</name>
+                </property>
+            </activation>
+            <modules>
+                <module>reasoner-test-data</module>
+            </modules>
+        </profile>
+    </profiles>
 </project>
