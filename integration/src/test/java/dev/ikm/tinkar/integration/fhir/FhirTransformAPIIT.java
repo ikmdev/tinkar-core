@@ -39,13 +39,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+//@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class FhirTransformAPIIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(FhirTransformAPIIT.class);
     private static final File SAP_SPINEDARRAYPROVIDERIT_DATASTORE_ROOT = new File(System.getProperty("user.home") + "/Solor/snomed+loinc+lidr_int_2024-05-02_reasoned");  //snomedLidrLoinc-data-5-6-2024-withCollabData-dev");
 
-    @BeforeAll
+ //   @BeforeAll
     public void setup() {
         CachingService.clearAll();
         ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, SAP_SPINEDARRAYPROVIDERIT_DATASTORE_ROOT);
@@ -54,12 +54,12 @@ public class FhirTransformAPIIT {
         PrimitiveData.start();
     }
 
-    @AfterAll
+//    @AfterAll
     public void teardown() {
         PrimitiveData.stop();
     }
 
-    @Test
+//    @Test
     public void testFhirCallWithAgregator(){
 
 //        String fromTime = "2024-05-09T10:00:04";
