@@ -28,6 +28,8 @@ import dev.ikm.tinkar.terms.TinkarTerm;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.IntegerType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,6 +40,7 @@ import static dev.ikm.tinkar.fhir.transformers.FhirConstants.SNOMEDCT_URL;
 
 public class FhirUtils {
 
+    private static final Logger LOG = LoggerFactory.getLogger(FhirUtils.class);
     public static Map<String, String> snomedConceptsMap = new HashMap<>();
     public static PublicId generatePublicId(String string) {
        return PublicIds.of(UuidUtil.fromSNOMED(string));
@@ -49,16 +52,33 @@ public class FhirUtils {
         coding.setCode(code);
         return coding;
     }
+
+    public static Coding generateCodingProperty(String system, String code, String display) {
+        Coding coding = new Coding();
+        coding.setSystem(system);
+        coding.setCode(code);
+        coding.setDisplay(display);
+        return coding;
+    }
+
     public static Coding generateCodingObject(StampCalculator stampCalculator, String snomedId){
+        if(snomedId == null || snomedId.trim().isEmpty()){
+            LOG.warn("snomedId is null, returning null coding value.");
+            return null;
+        }
         Coding coding = new Coding();
         coding.setSystem(SNOMEDCT_URL);
         coding.setCode(snomedId);
         String display = snomedConceptsMap.get(snomedId);
         if( display == null){
             PublicId publicId = FhirUtils.generatePublicId(snomedId);
-            FhirUtils.retrieveConcept(stampCalculator, publicId, (snomedCTCode, snomedCTEntity) ->
-                coding.setDisplay(snomedCTEntity.description())
-            );
+            FhirUtils.retrieveConcept(stampCalculator, publicId, (snomedCTCode, snomedCTEntity) ->{
+                if(snomedCTEntity != null){
+                    coding.setDisplay(snomedCTEntity.description());
+                }else{
+                    coding.setDisplay("Does not exist");
+                }
+            });
         }else{
             coding.setDisplay(display);
         }
@@ -67,20 +87,33 @@ public class FhirUtils {
 
     public static void retrieveConcept(StampCalculator stampCalculator, PublicId publicId, BiConsumer<String, Entity<EntityVersion>> snomedId) {
         Entity<EntityVersion> entity = EntityService.get().getEntityFast(publicId.asUuidArray());
-        EntityService.get().forEachSemanticForComponentOfPattern(entity.nid(), FhirConstants.IDENTIFIER_PATTERN.nid(), identifierSemantic -> {
-            SemanticEntityVersion version = stampCalculator.latest(identifierSemantic).get();//getLatestVersion(identifierSemantic);
-            if(version.fieldValues().get(0) instanceof EntityProxy.Concept snomedIdentifierConcept
-            && PublicId.equals(TinkarTerm.SCTID.publicId(), snomedIdentifierConcept.publicId())){
-                snomedConceptsMap.putIfAbsent(version.fieldValues().get(1).toString(), entity.description());
-                snomedId.accept(version.fieldValues().get(1).toString(), entity);
+        if(entity != null){
+            int [] idSemantics = EntityService.get().semanticNidsForComponentOfPattern(entity.nid(), FhirConstants.IDENTIFIER_PATTERN.nid());
+            if(idSemantics.length > 0){
+                EntityService.get().forEachSemanticForComponentOfPattern(entity.nid(), FhirConstants.IDENTIFIER_PATTERN.nid(), identifierSemantic -> {
+                    SemanticEntityVersion version = stampCalculator.latest(identifierSemantic).get();//getLatestVersion(identifierSemantic);
+                    if(version.fieldValues().get(0) instanceof EntityProxy.Concept snomedIdentifierConcept
+                            && (PublicId.equals(TinkarTerm.SCTID.publicId(), snomedIdentifierConcept.publicId())
+                            || idSemantics.length == 1)){
+                        snomedConceptsMap.putIfAbsent(version.fieldValues().get(1).toString(), entity.description());
+                        snomedId.accept(version.fieldValues().get(1).toString(), entity);
+                    }
+                });
+            }else{
+                snomedConceptsMap.putIfAbsent(entity.publicId().asUuidArray()[0].toString(), entity.description());
+                snomedId.accept(entity.publicId().asUuidArray()[0].toString(), entity);
             }
-        });
+
+        }else{
+            LOG.warn("Unable to retrive snomed concept for publicId: " + publicId);
+//            snomedConceptsMap.putIfAbsent("NA", "Does not exist");
+//            snomedId.accept("NA", null);
+        }
     }
 
     public static EntityProxy.Concept getSnomedIdentifierConcept(){
         return EntityProxy.Concept.make(PublicIds.of(UuidUtil.fromSNOMED("900000000000294009")));
     }
-
 
     public static Extension generateRoleGroup(int roleGroupValue) {
         Extension extension = new Extension();
