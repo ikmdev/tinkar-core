@@ -39,7 +39,6 @@ import java.util.List;
 import static dev.ikm.tinkar.fhir.transformers.FhirConstants.*;
 import static dev.ikm.tinkar.fhir.transformers.FhirUtils.generateCodingObject;
 import static dev.ikm.tinkar.fhir.transformers.FhirUtils.retrieveConcept;
-import static dev.ikm.tinkar.terms.TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN;
 
 public class FhirStatedDefinitionTransformer {
     private static final Logger LOG = LoggerFactory.getLogger(FhirStatedDefinitionTransformer.class);
@@ -56,14 +55,14 @@ public class FhirStatedDefinitionTransformer {
         List<CodeSystem.ConceptPropertyComponent> statedAxiomProperties = new ArrayList<>();
         latestStatedSemanticVersion.ifPresent((statedSemanticVersion) ->{
             if(statedSemanticVersion.fieldValues().get(0) instanceof DiTreeEntity diTreeEntity){
-                if(EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.equals(elPlusPlusAxiomsPattern)){
+            /*    if(EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.equals(elPlusPlusAxiomsPattern)){
                     relationshipSnomedId = STATED_RELATIONSHIP_SNOMEDID;
                     definedSnomedId = SUFFICIENTLY_DEFINED_SNOMEDID;
                     generateConceptRootDefinition(statedAxiomProperties, statedSemanticEntity, "Is a");
                 }else{
                     relationshipSnomedId = INFERRED_RELATIONSHIP_SNOMEDID;
                     definedSnomedId = NOT_SUFFICIENTLY_DEFINED_SNOMEDID;
-                }
+                }*/
                 processVertexMap(statedAxiomProperties, diTreeEntity);
             }
         });
@@ -77,6 +76,13 @@ public class FhirStatedDefinitionTransformer {
     private void processVertex(List<CodeSystem.ConceptPropertyComponent> statedAxiomProperties, DiTreeEntity diTreeEntity, EntityVertex entityVertex) {
         if(LOG.isDebugEnabled()){
             LOG.debug("Processing entity vertex : {} ", entityVertex);
+        }
+        if(PublicId.equals(TinkarTerm.SUFFICIENT_SET.publicId(), entityVertex.meaning().publicId())){
+            relationshipSnomedId = STATED_RELATIONSHIP_SNOMEDID;
+            definedSnomedId = SUFFICIENTLY_DEFINED_SNOMEDID;
+        }else if(PublicId.equals(TinkarTerm.NECESSARY_SET.publicId(), entityVertex.meaning().publicId())){
+            relationshipSnomedId = INFERRED_RELATIONSHIP_SNOMEDID;
+            definedSnomedId = NOT_SUFFICIENTLY_DEFINED_SNOMEDID;
         }
         ImmutableIntList nextVertices = diTreeEntity.successorMap().get(entityVertex.vertexIndex());
         if(nextVertices == null){
@@ -101,11 +107,10 @@ public class FhirStatedDefinitionTransformer {
                 stringBuilder.append(processLeafNode(diTreeEntity, parentVertex));
             } else  if(PublicId.equals(TinkarTerm.CONCEPT_REFERENCE.publicId(), parentVertex.meaning().publicId())){
                 stringBuilder.append(processLeafNode(diTreeEntity, parentVertex));
-            } else  if(PublicId.equals(TinkarTerm.SUFFICIENT_SET.publicId(), parentVertex.meaning().publicId())){
-                stringBuilder.append("Is-a");
-            }else if(PublicId.equals(TinkarTerm.NECESSARY_SET.publicId(), parentVertex.meaning().publicId())){
+            } else  if(PublicId.equals(TinkarTerm.SUFFICIENT_SET.publicId(), parentVertex.meaning().publicId())
+                || (PublicId.equals(TinkarTerm.NECESSARY_SET.publicId(), parentVertex.meaning().publicId()))){
                 stringBuilder.append("Is a");
-            } else  if(PublicId.equals(TinkarTerm.ROLE.publicId(), parentVertex.meaning().publicId())){
+            }else if(PublicId.equals(TinkarTerm.ROLE.publicId(), parentVertex.meaning().publicId())){
                 parentVertex.properties().values().forEach(value -> {
                     EntityProxy.Concept concept = (EntityProxy.Concept) value;
                     if(!concept.description().toLowerCase().contains("restriction")){
@@ -129,13 +134,18 @@ public class FhirStatedDefinitionTransformer {
             entityVertex.properties().values().forEach(value -> {
                 EntityProxy.Concept concept = (EntityProxy.Concept) value;
                 PublicId publicId = concept.publicId();
+                Coding coding = new Coding();
+                statedAxiomProperty.setValue(coding);
                 retrieveConcept(stampCalculator, publicId, (snomedCTCode, referencedEntity)->{
-                    Coding coding = new Coding();
-                    statedAxiomProperty.setValue(coding);
                     coding.setSystem(SNOMEDCT_URL);
                     coding.setCode(snomedCTCode);
                     coding.setDisplay(referencedEntity.description());
                 });
+                if(coding.getSystem() == null){
+                    coding.setSystem("TBD...");
+                    coding.setCode(concept.publicId().asUuidArray()[0].toString());
+                    coding.setDisplay(concept.description());
+                }
             });
         }
     }

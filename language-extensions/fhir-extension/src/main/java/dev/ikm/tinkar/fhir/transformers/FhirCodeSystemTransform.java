@@ -50,6 +50,9 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
     private final CodeSystem codeSystem;
     private final Consumer<String> fhirAndProvenanceJson;
 
+    private Date fromDate;
+    private Date toDate;
+
     private Date oldestOfTheLatestDate;
     private Date latestOfTheLatestDate;
 
@@ -62,6 +65,16 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
         this.codeSystem = new CodeSystem();
         this.concepts = concepts;
 
+    }
+
+    public FhirCodeSystemTransform(long fromDate, long toDate, StampCalculator stampCalculator,
+                                   Stream<ConceptEntity<? extends ConceptEntityVersion>> concepts, Consumer<String> fhirAndProvenanceJson) {
+        this.fhirAndProvenanceJson = fhirAndProvenanceJson;
+        this.stampCalculatorWithCache = stampCalculator;
+        this.codeSystem = new CodeSystem();
+        this.concepts = concepts;
+        this.fromDate = new Date(fromDate);
+        this.toDate = new Date(toDate);
     }
 
     private void retrieveOldestOfLatest(StampEntity<?> stampEntity){
@@ -89,8 +102,10 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
             retrieveLatestDate(conceptEntity.stamp());
             CodeSystem.ConceptDefinitionComponent concept = new CodeSystem.ConceptDefinitionComponent();
             codeSystem.addConcept(concept);
+
             FhirUtils.retrieveConcept(stampCalculatorWithCache, latestConceptVersion.get().publicId(),
                     (code, entity) -> concept.setCode(code));
+
             EntityService.get().forEachSemanticForComponent(conceptEntity.nid(), semanticEntity -> {
                 Latest<SemanticEntityVersion> latestSemanticVersion = stampCalculatorWithCache.latest(semanticEntity);
                 latestSemanticVersion.ifPresent(semanticEntityVersion -> {
@@ -161,15 +176,15 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
             }
         });
 
-        Provenance provenance = FhirProvenanceTransform.provenanceTransform("CodeSystem/"+codeSystem.getId(), oldestOfTheLatestDate, latestOfTheLatestDate);
+        Provenance provenance = FhirProvenanceTransform.provenanceTransform("CodeSystem/"+codeSystem.getId(), fromDate, toDate);
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.COLLECTION);
         bundle.addEntry()
                 .setResource(codeSystem)
-                .setFullUrl(codeSystem.getIdElement().getValue());
+                .setFullUrl("urn:uuid:" + codeSystem.getIdElement().getValue());
         bundle.addEntry()
                 .setResource(provenance)
-                .setFullUrl(provenance.getIdElement().getValue());
+              .setFullUrl("urn:uuid:"+provenance.getIdElement().getValue());
 
         FhirContext ctx = FhirContext.forR4();
         IParser parser = ctx.newJsonParser();

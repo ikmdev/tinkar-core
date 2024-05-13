@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.fhir.transformers;
 
+import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -24,10 +25,8 @@ import org.hl7.fhir.r4.model.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import static dev.ikm.tinkar.fhir.transformers.FhirConstants.*;
-import static dev.ikm.tinkar.fhir.transformers.FhirUtils.getSnomedIdentifierConcept;
 
 public class FhirIdentifierTransform {
 
@@ -37,9 +36,9 @@ public class FhirIdentifierTransform {
         Identifier identifier = new Identifier();
 
         if(fields.get(0) instanceof EntityProxy.Concept identifierConcept
-                && (Objects.equals(getSnomedIdentifierConcept().publicId().idString(), identifierConcept.publicId().idString())
-                || Objects.equals(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER.publicId().idString(), identifierConcept.publicId().idString()))){
-            identifier.setSystem(getIdentifierSystemURL(identifierConcept.publicId().idString()));
+                && (PublicId.equals(TinkarTerm.SCTID.publicId(), identifierConcept.publicId())
+                || PublicId.equals(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER.publicId(), identifierConcept.publicId()))){
+            identifier.setSystem(getIdentifierSystemURL(identifierConcept.publicId()));
         }
         identifier.setValue(fields.get(1).toString());
         Extension extension = new Extension();
@@ -50,8 +49,8 @@ public class FhirIdentifierTransform {
 
     }
 
-    private String getIdentifierSystemURL(String publicIdString) {
-        return (Objects.equals(getSnomedIdentifierConcept().publicId().idString(), publicIdString)) ?  SNOMEDCT_URL : IKM_DEV_URL;
+    private String getIdentifierSystemURL(PublicId publicIdString) {
+        return (PublicId.equals(TinkarTerm.SCTID.publicId(), publicIdString)) ?  SNOMEDCT_URL : IKM_DEV_URL;
     }
 
 

@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static dev.ikm.tinkar.fhir.transformers.FhirConstants.*;
 import static dev.ikm.tinkar.fhir.transformers.FhirUtils.generateCodingObject;
@@ -64,11 +65,14 @@ public class FhirDescriptionTransformation {
     }
 
     private List<CodeSystem.ConceptDefinitionDesignationComponent> descriptionAcceptability(SemanticEntity<SemanticEntityVersion> descriptionSemantic) {
+
+        AtomicBoolean missingLanguage = new AtomicBoolean(true);
         List<CodeSystem.ConceptDefinitionDesignationComponent> designations = new ArrayList<>();
+
         EntityService.get().forEachSemanticForComponent(descriptionSemantic.nid(), (languageSemantic) -> {
+            missingLanguage.set(false);
             CodeSystem.ConceptDefinitionDesignationComponent designation = new CodeSystem.ConceptDefinitionDesignationComponent();
             designations.add(designation);
-
             Extension caseSensitivityExtension = descriptionCaseSensitivity(descriptionSemantic, designation);
             designation.addExtension(caseSensitivityExtension);
 
@@ -77,12 +81,13 @@ public class FhirDescriptionTransformation {
             acceptabilityExtension.setUrl(DESCRIPTION_ACCEPTABILITY_URL);
             CodeableConcept acceptabilityCodableConcept = new CodeableConcept();
             acceptabilityExtension.setValue(acceptabilityCodableConcept);
-
             Latest<SemanticEntityVersion> latestLanguageSemanticVersion = stampCalculatorWithCache.latest(languageSemantic);
             latestLanguageSemanticVersion.ifPresent(languageSemanticVersion -> {
                 if(languageSemanticVersion.fieldValues().get(0) instanceof EntityProxy.Concept acceptabilityConcept){
                     String acceptabilityId = acceptabilityCodes.get(acceptabilityConcept.publicId().asUuidArray()[0].toString());
-                    acceptabilityCodableConcept.addCoding(generateCodingObject(stampCalculatorWithCache, acceptabilityId));
+                    if(acceptabilityId !=null){
+                        acceptabilityCodableConcept.addCoding(generateCodingObject(stampCalculatorWithCache, acceptabilityId));
+                    }
                 }
                 if(languageSemantic.patternNid() == TinkarTerm.US_DIALECT_PATTERN.nid()){
                     designation.setLanguage("en-US");
@@ -91,6 +96,13 @@ public class FhirDescriptionTransformation {
                 }
             });
         });
+
+        if(missingLanguage.get()){
+            CodeSystem.ConceptDefinitionDesignationComponent designation = new CodeSystem.ConceptDefinitionDesignationComponent();
+            designations.add(designation);
+            Extension caseSensitivityExtension = descriptionCaseSensitivity(descriptionSemantic, designation);
+            designation.addExtension(caseSensitivityExtension);
+        }
         return designations;
     }
 
@@ -106,12 +118,16 @@ public class FhirDescriptionTransformation {
             caseSensitivityExtension.setValue(caseSensitiveCodeableConcept);
             if(fields.get(2) instanceof EntityProxy.Concept caseSencitivityConcept){
                 String caseSignificanceId = caseSencitivityCodes.get(caseSencitivityConcept.publicId().asUuidArray()[0].toString());
-                caseSensitiveCodeableConcept.addCoding(generateCodingObject(stampCalculatorWithCache, caseSignificanceId));
+                if(caseSignificanceId !=null){
+                    caseSensitiveCodeableConcept.addCoding(generateCodingObject(stampCalculatorWithCache, caseSignificanceId));
+                }
             }
             if(fields.get(3) instanceof EntityProxy.Concept useConcept){
                 String typeId = descriptionTypeCodes.get(useConcept.publicId().asUuidArray()[0].toString());
-                Coding useCoding = generateCodingObject(stampCalculatorWithCache, typeId);
-                designation.setUse(useCoding);
+                if(typeId != null){
+                    Coding useCoding = generateCodingObject(stampCalculatorWithCache, typeId);
+                    designation.setUse(useCoding);
+                }
             }
         });
         return caseSensitivityExtension;
