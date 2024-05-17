@@ -27,13 +27,14 @@ import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @AutoService(DataServiceController.class)
 public class ProviderEphemeralNewController implements DataServiceController<PrimitiveDataService> {
 
     public static String CONTROLLER_NAME = "Load Ephemeral Store";
-    private static Logger LOG = Logger.getLogger(ProviderEphemeralNewController.class.getName());
+    private static Logger LOG = LoggerFactory.getLogger(ProviderEphemeralNewController.class.getName());
     private DataUriOption dataUriOption;
 
     public List<DataUriOption> providerOptions() {
