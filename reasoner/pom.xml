@@ -69,7 +69,7 @@
             <id>reasoner-test-data</id>
             <activation>
                 <property>
-                    <name>!stageOSSRH</name>
+                    <name>newVersion</name>
                 </property>
             </activation>
             <modules>
