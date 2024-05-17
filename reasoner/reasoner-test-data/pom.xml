@@ -42,6 +42,9 @@
 	<profiles>
 		<profile>
 			<id>test-data-build</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
 			<build>
 				<pluginManagement>
 					<plugins>
