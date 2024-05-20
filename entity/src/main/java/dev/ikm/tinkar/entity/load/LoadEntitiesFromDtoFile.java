@@ -31,12 +31,13 @@ import java.nio.charset.Charset;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class LoadEntitiesFromDtoFile extends TrackingCallable<Integer> {
-    protected static final Logger LOG = Logger.getLogger(LoadEntitiesFromDtoFile.class.getName());
+    protected static final Logger LOG = LoggerFactory.getLogger(LoadEntitiesFromDtoFile.class.getName());
     private static final int MAX_TASK_COUNT = 100;
     final File importFile;
     final AtomicInteger importCount = new AtomicInteger();
