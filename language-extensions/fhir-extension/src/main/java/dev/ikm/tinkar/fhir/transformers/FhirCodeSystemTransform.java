@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -166,14 +165,11 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
         FhirStaticData.generateCodeSystemFilterContent(codeSystem);
         FhirStaticData.generateCodeSystemPropertyContent(codeSystem);
 
-        AtomicInteger counter= new AtomicInteger();
         concepts.forEach(concept -> {
-            if(counter.getAndIncrement() < 3){
-                if(LOG.isDebugEnabled()){
-                    LOG.debug("Processing Concept : {}",  concept);
-                }
-                forEachSemanticForComponent(concept.nid());
+            if(LOG.isDebugEnabled()){
+                LOG.debug("Processing Concept : {}",  concept);
             }
+            forEachSemanticForComponent(concept.nid());
         });
 
         Provenance provenance = FhirProvenanceTransform.provenanceTransform("CodeSystem/"+codeSystem.getId(), fromDate, toDate);
