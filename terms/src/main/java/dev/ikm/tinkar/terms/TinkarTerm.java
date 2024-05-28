@@ -1683,7 +1683,7 @@ public class TinkarTerm {
      * c3dde9ea-b144-5f49-845a-20cc7d305250</a>}.
      */
     public static final EntityProxy.Concept DESCRIPTION_CASE_SIGNIFICANCE =
-            EntityProxy.Concept.make("Description case significance (SOLOR)", UUID.fromString("c3dde9ea-b144-5f49-845a-20cc7d305250"));
+            EntityProxy.Concept.make("Description case significance (SOLOR)", UUID.fromString("c3dde9ea-b144-5f49-845a-20cc7d305250"), UUID.fromString("f30b0312-2c85-3e65-8609-2d89f8437d34"));
     /**
      * Java binding for the concept described as <strong><em>Description core type (SOLOR)</em></strong>;
      * identified by UUID: {@code
