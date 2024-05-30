@@ -98,8 +98,7 @@
         <org.reactivestreams.version>1.0.3</org.reactivestreams.version>
         <roaringbitmap.version>0.9.31-r3</roaringbitmap.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <slf4j.version>2.0.7</slf4j.version>
-        <log4j.version>3.0.0-alpha1</log4j.version>
+        <slf4j.version>2.0.13</slf4j.version>
         <testng.version>7.4.0</testng.version>
         <tinkar-jpms-deps.groupId>dev.ikm.jpms</tinkar-jpms-deps.groupId>
         <tinkar-jpms-deps.version>1.0.15</tinkar-jpms-deps.version>
@@ -312,12 +311,6 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-simple</artifactId>
                 <version>${slf4j.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-slf4j2-impl</artifactId>
-                <version>${log4j.version}</version>
             </dependency>
 
             <dependency>
