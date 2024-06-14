@@ -101,7 +101,6 @@ pipeline {
         }
 
         /* stage('SonarQube Scan') {
-
             steps{
                 configFileProvider([configFile(fileId: 'settings.xml', variable: 'MAVEN_SETTINGS')]) {
                     withSonarQubeEnv(installationName: 'EKS SonarQube', envOnly: true) {
@@ -172,6 +171,11 @@ pipeline {
         }
 
         stage("Publish to OSSRH maven central") {
+            when{
+                expression{
+                    buildingTag() && !isSnapshot
+                }
+            }
             steps {
                 script {
                     pomModel = readMavenPom(file: 'pom.xml')
