@@ -95,7 +95,7 @@ public class ElkOwlReasonerService extends ReasonerServiceBase {
 
 	@Override
 	public int getConceptCount() {
-		return axiomData.activeConceptCount.get();
+		return axiomData.getActiveConceptCount();
 	}
 
 	@Override

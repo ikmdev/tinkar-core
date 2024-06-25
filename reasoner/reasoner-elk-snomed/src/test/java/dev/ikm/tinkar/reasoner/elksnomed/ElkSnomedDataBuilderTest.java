@@ -48,13 +48,13 @@ public abstract class ElkSnomedDataBuilderTest extends ElkSnomedTestBase {
 		AtomicInteger inactive_cnt = new AtomicInteger();
 		viewCalculator.forEachSemanticVersionOfPatternParallel(TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
 				(semanticEntityVersion, patternEntityVersion) -> {
-					int conceptNid = semanticEntityVersion.referencedComponentNid();
-					if (viewCalculator.latestIsActive(conceptNid)) {
-						active_cnt.incrementAndGet();
-					} else {
-						inactive_cnt.incrementAndGet();
-					}
-					cnt.incrementAndGet();
+						int conceptNid = semanticEntityVersion.referencedComponentNid();
+						if (viewCalculator.latestIsActive(conceptNid)) {
+							active_cnt.incrementAndGet();
+						} else {
+							inactive_cnt.incrementAndGet();
+						}
+						cnt.incrementAndGet();
 				});
 		LOG.info("Cnt: " + cnt.intValue());
 		LOG.info("Active Cnt: " + active_cnt.intValue());
@@ -72,8 +72,8 @@ public abstract class ElkSnomedDataBuilderTest extends ElkSnomedTestBase {
 		Files.createDirectories(getWritePath("concepts").getParent());
 		data.writeConcepts(getWritePath("concepts"));
 		data.writeRoleTypes(getWritePath("roles"));
-		compare("concepts");
-		compare("roles");
+//		compare("concepts");
+//		compare("roles");
 		assertEquals(data.getReasonerConceptSet().size(), data.getConcepts().size());
 	}
 

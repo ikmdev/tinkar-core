@@ -65,8 +65,8 @@ public class ElkOwlDataBuilder {
 
 	private TrackingCallable<?> progressUpdater = null;
 
-	public ElkOwlDataBuilder(ViewCalculator viewCalculator, PatternFacade statedAxiomPattern,
-			ElkOwlData axiomData, OWLDataFactory owlDataFactory) {
+	public ElkOwlDataBuilder(ViewCalculator viewCalculator, PatternFacade statedAxiomPattern, ElkOwlData axiomData,
+			OWLDataFactory owlDataFactory) {
 		super();
 		this.viewCalculator = viewCalculator;
 		this.statedAxiomPattern = statedAxiomPattern;
@@ -126,34 +126,42 @@ public class ElkOwlDataBuilder {
 		// TODO get a native concurrent collector for roaring
 		// https://stackoverflow.com/questions/29916881/how-to-implement-a-thread-safe-collector
 		ConcurrentHashSet<Integer> includedConceptNids = new ConcurrentHashSet<>(totalCount);
+		AtomicInteger ex_cnt = new AtomicInteger();
 		viewCalculator.forEachSemanticVersionOfPatternParallel(logicCoordinate.statedAxiomsPatternNid(),
 				(semanticEntityVersion, patternEntityVersion) -> {
-					int conceptNid = semanticEntityVersion.referencedComponentNid();
-					// TODO: In some cases, may wish to classify axioms from inactive concepts. Put
-					// in logic coordinate?
-					if (viewCalculator.latestIsActive(conceptNid)) {
-						// For now, only classify active until we get snomed data issues worked out
-						includedConceptNids.add(conceptNid);
+					try {
+						int conceptNid = semanticEntityVersion.referencedComponentNid();
+						// TODO: In some cases, may wish to classify axioms from inactive concepts. Put
+						// in logic coordinate?
+						if (viewCalculator.latestIsActive(conceptNid)) {
+							// For now, only classify active until we get snomed data issues worked out
+							includedConceptNids.add(conceptNid);
 //						OWLClass concept = getConcept(conceptNid);
-						DiTreeEntity definition = (DiTreeEntity) semanticEntityVersion.fieldValues().get(0);
-						ImmutableList<OWLAxiom> axiomsForDefinition = processDefinition(definition, conceptNid);
+							DiTreeEntity definition = (DiTreeEntity) semanticEntityVersion.fieldValues().get(0);
+							ImmutableList<OWLAxiom> axiomsForDefinition = processDefinition(definition, conceptNid);
 //						LOG.info(axiomsForDefinition.size() + " " + axiomsForDefinition);
-						if (axiomData.nidAxiomsMap.compareAndSet(conceptNid, null, axiomsForDefinition)) {
-							axiomData.axiomsSet.addAll(axiomsForDefinition.castToList());
+							if (axiomData.nidAxiomsMap.compareAndSet(conceptNid, null, axiomsForDefinition)) {
+								axiomData.axiomsSet.addAll(axiomsForDefinition.castToList());
+							} else {
+								alert(new IllegalStateException("Definition for " + conceptNid + " already exists"));
+							}
+							axiomData.incrementActiveConceptCount();
 						} else {
-							alert(new IllegalStateException("Definition for " + conceptNid + " already exists"));
+							axiomData.incrementInactiveConceptCount();
 						}
-						axiomData.activeConceptCount.incrementAndGet();
-					} else {
-						axiomData.inactiveConceptCount.incrementAndGet();
-					}
-					int processedCount = axiomData.processedSemantics.incrementAndGet();
-					if (processedCount % 100 == 0) {
-						updateProgress(processedCount, totalCount);
-					}
+						int processedCount = axiomData.processedSemantics.incrementAndGet();
+						if (processedCount % 100 == 0) {
+							updateProgress(processedCount, totalCount);
+						}
 //					if (axiomCounter.get() < 5) {
 //						LOG.info("Axiom: \n" + semanticEntityVersion);
 //					}
+					} catch (Exception ex) {
+						if (ex_cnt.incrementAndGet() < 10) {
+							LOG.error(ex.getMessage());
+							LOG.error("", ex);
+						}
+					}
 				});
 		int[] includedConceptNidArray = includedConceptNids.stream().mapToInt(boxedInt -> (int) boxedInt).toArray();
 		Arrays.sort(includedConceptNidArray);
@@ -168,8 +176,13 @@ public class ElkOwlDataBuilder {
 //		LOG.info("Extract in " + durationString());
 		LOG.info("Total axioms: " + totalCount + " " + axiomData.processedSemantics.get() + " "
 				+ axiomData.axiomsSet.size());
-		LOG.info("Active concepts: " + axiomData.activeConceptCount.get());
-		LOG.info("Inactive concepts: " + axiomData.inactiveConceptCount.get());
+		LOG.info("Active concepts: " + axiomData.getActiveConceptCount());
+		LOG.info("Inactive concepts: " + axiomData.getInactiveConceptCount());
+		if (ex_cnt.get() != 0) {
+			String msg = "Exceptions: " + ex_cnt.get();
+			LOG.error(msg);
+			throw new Exception(msg);
+		}
 	}
 
 	public IncrementalChanges processIncremental(DiTreeEntity definition, int conceptNid) {
@@ -191,6 +204,8 @@ public class ElkOwlDataBuilder {
 	private ImmutableList<OWLAxiom> processRoot(EntityVertex rootVertex, int conceptNid, DiTreeEntity definition,
 			MutableList<OWLAxiom> axioms) throws IllegalStateException {
 		for (final EntityVertex childVertex : definition.successors(rootVertex)) {
+//			if (PrimitiveData.text(conceptNid).equals("Transitive Feature"))
+//				LOG.info("Transitive: " + PrimitiveData.text(conceptNid) + " " + childVertex);
 			switch (LogicalAxiomSemantic.get(childVertex.getMeaningNid())) {
 			case SUFFICIENT_SET -> {
 				processSufficientSet(childVertex, conceptNid, definition, axioms);
@@ -262,6 +277,8 @@ public class ElkOwlDataBuilder {
 
 		case CONCEPT:
 			final ConceptFacade concept = logicVertex.propertyFast(TinkarTerm.CONCEPT_REFERENCE);
+//			if (PrimitiveData.text(concept.nid()).equals("Transitive Feature"))
+//				LOG.info("Transitive parent: " + PrimitiveData.text(conceptNid) + " " + definition);
 			return Optional.of(axiomData.getConcept(concept.nid()));
 
 		case DEFINITION_ROOT:
@@ -323,10 +340,21 @@ public class ElkOwlDataBuilder {
 			switch (LogicalAxiomSemantic.get(node.getMeaningNid())) {
 			case CONCEPT:
 				final ConceptFacade successorConcept = node.propertyFast(TinkarTerm.CONCEPT_REFERENCE);
-				axioms.add(owlDataFactory.getOWLSubObjectPropertyOfAxiom(axiomData.getRole(conceptNid),
-						axiomData.getRole(successorConcept.nid())));
+				if (PrimitiveData.text(successorConcept.nid()).equals("Transitive Feature")) {
+//					LOG.info("Transitive property parent: " + conceptNid + " " + PrimitiveData.text(conceptNid) + "\n"
+//							+ definition);
+					axioms.add(owlDataFactory.getOWLTransitiveObjectPropertyAxiom(axiomData.getRole(conceptNid)));
+				} else if (PrimitiveData.text(successorConcept.nid()).equals("Reflexive Feature")) {
+//					LOG.info("Reflexive property parent: " + conceptNid + " " + PrimitiveData.text(conceptNid) + "\n"
+//							+ definition);
+					axioms.add(owlDataFactory.getOWLReflexiveObjectPropertyAxiom(axiomData.getRole(conceptNid)));
+				} else {
+					axioms.add(owlDataFactory.getOWLSubObjectPropertyOfAxiom(axiomData.getRole(conceptNid),
+							axiomData.getRole(successorConcept.nid())));
+				}
 				break;
 			case PROPERTY_PATTERN_IMPLICATION:
+//				LOG.info("PPI: " + PrimitiveData.text(conceptNid) + " " + definition);
 				final ConceptFacade pi = node.propertyFast(TinkarTerm.PROPERTY_PATTERN_IMPLICATION);
 				final IntIdList ps = node.propertyFast(TinkarTerm.PROPERTY_SET);
 				List<OWLObjectProperty> chain = ps.intStream().mapToObj(x -> axiomData.getRole(x)).toList();
