@@ -30,6 +30,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.common.service.DataUriOption;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -70,19 +71,18 @@ public abstract class PrimitiveDataTestBase {
 
 	public static void setupPrimitiveData(String name) throws IOException {
 		LOG.info("Setup for: " + name);
+		Path target_path = Paths.get("target", "db", name).toAbsolutePath();
+		LOG.info("Target: " + target_path);
+		// Temp until test data artifacts are in maven repo
+		assumeTrue(Files.exists(target_path));
 		LOG.info("DataServiceController: " + PrimitiveData.getControllerOptions());
 //		for (DataServiceController<?> dsc : PrimitiveData.getControllerOptions()) {
 //		for (DataUriOption duo : dsc.providerOptions()) {
 //			LOG.info("DataUriOption: " + duo);
 //		}
+		CachingService.clearAll();
 		PrimitiveData.selectControllerByName("Open SpinedArrayStore");
 		DataServiceController<?> dsc = PrimitiveData.getController();
-		// Paths.get(System.getProperty("user.home"), "SolorTest",
-		// name).toAbsolutePath();
-		Path target_path = Paths.get("target", "db", name).toAbsolutePath();
-		LOG.info("Target: " + target_path);
-		// Temp until test data artifacts are in maven repo
-		assumeTrue(Files.exists(target_path));
 		DataUriOption duo = new DataUriOption(name, target_path.toUri());
 		LOG.info("PrimitiveData: " + dsc + " " + duo + " " + duo.uri());
 		dsc.setDataUriOption(duo);

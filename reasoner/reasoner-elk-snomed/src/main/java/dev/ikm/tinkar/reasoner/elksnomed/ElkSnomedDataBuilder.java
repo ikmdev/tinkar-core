@@ -29,6 +29,7 @@ import dev.ikm.elk.snomed.model.Role;
 import dev.ikm.elk.snomed.model.RoleGroup;
 import dev.ikm.elk.snomed.model.RoleType;
 import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
@@ -80,18 +81,26 @@ public class ElkSnomedDataBuilder {
 		updateProgress(0, totalCount);
 		final AtomicInteger processedCount = new AtomicInteger();
 		LogicCoordinateRecord logicCoordinate = viewCalculator.logicCalculator().logicCoordinateRecord();
+		AtomicInteger ex_cnt = new AtomicInteger();
 		viewCalculator.forEachSemanticVersionOfPatternParallel(logicCoordinate.statedAxiomsPatternNid(),
 				(semanticEntityVersion, patternEntityVersion) -> {
-					int conceptNid = semanticEntityVersion.referencedComponentNid();
-					if (viewCalculator.latestIsActive(conceptNid)) {
-						// For now, only classify active
-						DiTreeEntity definition = (DiTreeEntity) semanticEntityVersion.fieldValues().get(0);
-						processDefinition(definition, conceptNid);
-						data.incrementActiveConceptCount();
-					} else {
-						data.incrementInactiveConceptCount();
+					try {
+						int conceptNid = semanticEntityVersion.referencedComponentNid();
+						if (viewCalculator.latestIsActive(conceptNid)) {
+							// For now, only classify active
+							DiTreeEntity definition = (DiTreeEntity) semanticEntityVersion.fieldValues().get(0);
+							processDefinition(definition, conceptNid);
+							data.incrementActiveConceptCount();
+						} else {
+							data.incrementInactiveConceptCount();
+						}
+						updateProgress(processedCount.incrementAndGet(), totalCount);
+					} catch (Exception ex) {
+						if (ex_cnt.incrementAndGet() < 10) {
+							LOG.error(ex.getMessage());
+							LOG.error("", ex);
+						}
 					}
-					updateProgress(processedCount.incrementAndGet(), totalCount);
 				});
 		data.initializeReasonerConceptSet();
 		for (Concept con : data.getConcepts()) {
@@ -102,6 +111,11 @@ public class ElkSnomedDataBuilder {
 		LOG.info("Total processed: " + totalCount + " " + processedCount.get());
 		LOG.info("Active concepts: " + data.getActiveConceptCount());
 		LOG.info("Inactive concepts: " + data.getInactiveConceptCount());
+		if (ex_cnt.get() != 0) {
+			String msg = "Exceptions: " + ex_cnt.get();
+			LOG.error(msg);
+			throw new Exception(msg);
+		}
 	}
 
 	public Concept processIncremental(DiTreeEntity definition, int conceptNid) {
@@ -166,7 +180,7 @@ public class ElkSnomedDataBuilder {
 	}
 
 	private void processPropertySet(EntityVertex propertySetNode, int conceptNid, DiTreeEntity definition) {
-		LOG.info("PropertySet: " + propertySetNode + " " + definition);
+//		LOG.info("PropertySet: " + propertySetNode + " " + definition);
 		final ImmutableList<EntityVertex> children = definition.successors(propertySetNode);
 		if (children.size() != 1)
 			throw new IllegalStateException(
@@ -213,7 +227,11 @@ public class ElkSnomedDataBuilder {
 				int role_operator_nid = getNid(child, TinkarTerm.ROLE_OPERATOR);
 				int role_type_nid = getNid(child, TinkarTerm.ROLE_TYPE);
 				if (role_operator_nid == TinkarTerm.EXISTENTIAL_RESTRICTION.nid()) {
-					if (role_type_nid == TinkarTerm.ROLE_GROUP.nid()) {
+					// TODO use nids when the db is fixed
+					ConceptFacade cf = child.propertyFast(TinkarTerm.ROLE_TYPE);
+					PublicId role_type_public_id = cf.publicId();
+					if (PublicId.equals(role_type_public_id, TinkarTerm.ROLE_GROUP.publicId())) {
+//					if (role_type_nid == TinkarTerm.ROLE_GROUP.nid()) {
 						// TODO Placeholder for now so the tests work
 						data.getOrCreateRoleType(role_type_nid);
 						processRoleGroup(def, child, definition);

@@ -43,13 +43,29 @@ public class ElkOwlData {
 
 	public final AtomicInteger processedSemantics = new AtomicInteger();
 
-	public final AtomicInteger activeConceptCount = new AtomicInteger();
+	private final AtomicInteger activeConceptCount = new AtomicInteger();
 
-	public final AtomicInteger inactiveConceptCount = new AtomicInteger();
+	private final AtomicInteger inactiveConceptCount = new AtomicInteger();
 
 	public ImmutableIntList classificationConceptSet = null;
 
 	private OWLDataFactory dataFactory;
+
+	public int getActiveConceptCount() {
+		return activeConceptCount.get();
+	}
+
+	public int incrementActiveConceptCount() {
+		return activeConceptCount.incrementAndGet();
+	}
+
+	public int getInactiveConceptCount() {
+		return inactiveConceptCount.get();
+	}
+
+	public int incrementInactiveConceptCount() {
+		return inactiveConceptCount.incrementAndGet();
+	}
 
 	public ElkOwlData(OWLDataFactory dataFactory) {
 		this.dataFactory = dataFactory;
