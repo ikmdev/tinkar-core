@@ -15,32 +15,14 @@
  */
 package dev.ikm.tinkar.integration.provider.spinedarray;
 
-import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.ServiceKeys;
-import dev.ikm.tinkar.common.service.ServiceProperties;
-import dev.ikm.tinkar.entity.ConceptRecord;
-import dev.ikm.tinkar.entity.ConceptRecordBuilder;
-import dev.ikm.tinkar.entity.ConceptVersionRecord;
-import dev.ikm.tinkar.entity.ConceptVersionRecordBuilder;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.entity.EntityVersion;
-import dev.ikm.tinkar.entity.RecordListBuilder;
-import dev.ikm.tinkar.entity.SemanticRecord;
-import dev.ikm.tinkar.entity.SemanticRecordBuilder;
-import dev.ikm.tinkar.entity.SemanticVersionRecord;
-import dev.ikm.tinkar.entity.SemanticVersionRecordBuilder;
-import dev.ikm.tinkar.entity.StampRecord;
-import dev.ikm.tinkar.entity.StampRecordBuilder;
-import dev.ikm.tinkar.entity.StampVersionRecord;
-import dev.ikm.tinkar.entity.StampVersionRecordBuilder;
+import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
-import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.ext.lang.owl.Rf2OwlToLogicAxiomTransformer;
 import dev.ikm.tinkar.ext.lang.owl.SctOwlUtilities;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
@@ -54,8 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -65,11 +45,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class OwlTransformationTestIT {
+public class OwlTransformationTestIT extends TestHelper {
     private static final Logger LOG = LoggerFactory.getLogger(OwlTransformationTestIT.class);
     public static final EntityProxy.Pattern IDENTIFIER_PATTERN = EntityProxy.Pattern.make("Identifier Pattern", UUID.fromString("5d60e14b-c410-5172-9559-3c4253278ae2"));
     public static final EntityProxy.Pattern AXIOM_SYNTAX_PATTERN = EntityProxy.Pattern.make("Axiom Syntax Pattern", UUID.fromString("c0ca180b-aae2-5fa1-9ab7-4a24f2dfe16b"));
-    private static final File SAP_OWLTRANSFORMATIONTESTIT_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(OwlTransformationTestIT.class);
+    private static final File SAP_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(OwlTransformationTestIT.class);
     private static final List<EntityProxy.Concept> testConceptList = Arrays.asList(
             EntityProxy.Concept.make("TESTCONCEPTONE", UUID.randomUUID()),
             EntityProxy.Concept.make("TESTCONCEPTTWO", UUID.randomUUID()),
@@ -77,11 +57,7 @@ public class OwlTransformationTestIT {
 
     @BeforeEach
     public void startup(){
-        CachingService.clearAll();
-        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, SAP_OWLTRANSFORMATIONTESTIT_DATASTORE_ROOT);
-        PrimitiveData.selectControllerByName(TestConstants.EPHEMERAL_STORE_NAME);
-        PrimitiveData.start();
-        loadStarterData(); // Load starter data from protobuf resource
+        loadSpinedArrayDataBase(SAP_DATASTORE_ROOT);
         generateTestAxiomData(); // Write minimal axiom test data
     }
 
@@ -115,7 +91,7 @@ public class OwlTransformationTestIT {
                             assertEquals(version.path(), TinkarTerm.DEVELOPMENT_PATH);
                         }
                     });
-        assertEquals(testCount.get(), testConceptList.size());
+        assertEquals(testConceptList.size(), testCount.get());
         LOG.info("Completed validation of " + testCount.get() + " axioms with default coordinates");
     }
 
@@ -181,16 +157,6 @@ public class OwlTransformationTestIT {
             assertNotNull(expression);
         } catch (IOException e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    private static void loadStarterData() {
-        try {
-            URL protobufFileResource = OwlTransformationTestIT.class.getResource("tinkar-starter-data.pb.zip");
-            File starterDataPB = new File(protobufFileResource.toURI());
-            long importCount = new LoadEntitiesFromProtobufFile(starterDataPB).compute().getTotalCount();
-        } catch (URISyntaxException ex) {
-            throw new RuntimeException(ex);
         }
     }
 

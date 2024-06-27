@@ -16,10 +16,6 @@
 package dev.ikm.tinkar.integration.fhir;
 
 import dev.ikm.tinkar.common.id.IntIds;
-import dev.ikm.tinkar.common.service.CachingService;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.ServiceKeys;
-import dev.ikm.tinkar.common.service.ServiceProperties;
 import dev.ikm.tinkar.coordinate.stamp.*;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
@@ -27,54 +23,42 @@ import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.aggregator.TemporalEntityAggregator;
 import dev.ikm.tinkar.fhir.transformers.FhirCodeSystemTransform;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-//@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class FhirTransformAPIIT {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+public class FhirTransformAPIIT extends TestHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(FhirTransformAPIIT.class);
-    private static final File SAP_SPINEDARRAYPROVIDERIT_DATASTORE_ROOT = new File(System.getProperty("user.home") + "/Solor/snomed+loinc+lidr_int_2024-05-02_reasoned");  //snomedLidrLoinc-data-5-6-2024-withCollabData-dev");
+    private static final File SAP_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(FhirTransformAPIIT.class);
 
- //   @BeforeAll
+    @BeforeAll
     public void setup() {
-        CachingService.clearAll();
-        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, SAP_SPINEDARRAYPROVIDERIT_DATASTORE_ROOT);
-  //      FileUtil.recursiveDelete(SAP_SPINEDARRAYPROVIDERIT_DATASTORE_ROOT);
-        PrimitiveData.selectControllerByName(TestConstants.SA_STORE_OPEN_NAME);
-        PrimitiveData.start();
+        loadSpinedArrayDataBase(SAP_DATASTORE_ROOT);
     }
 
-//    @AfterAll
-    public void teardown() {
-        PrimitiveData.stop();
-    }
 
-//    @Test
+    @Test
+    @DisplayName("Test the agregator for this data")
+    @Disabled("The agregator is returning zero concepts. Need to enable the test after the from and to time stamps are figured out.")
     public void testFhirCallWithAgregator(){
 
-//        String fromTime = "2024-05-09T10:00:04";
-//       String toTime = "2024-05-10T12:00:04";
-//        String fromTime = "2024-05-08T11:00:04";
-//        String toTime = "2024-05-09T10:00:04";
-        String fromTime = "2024-05-09T11:00:04";
-        String toTime = "2024-05-11T12:00:04";
+//        String fromTime = "2000-05-09T10:00:04";
+//        String toTime = "2024-11-22T12:31:04";
+//        LocalDateTime fromLocalDateTime = LocalDateTime.parse(fromTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+//        long fromTimeStamp = fromLocalDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+//        LocalDateTime toLocalDateTime = LocalDateTime.parse(toTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+//        long toTimeStamp = toLocalDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 
-
-        LocalDateTime fromLocalDateTime = LocalDateTime.parse(fromTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-        long fromTimeStamp = fromLocalDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-
-        LocalDateTime toLocalDateTime = LocalDateTime.parse(toTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-        long toTimeStamp = toLocalDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        long fromTimeStamp = Long.MAX_VALUE;
+        long toTimeStamp = Long.MIN_VALUE;
 
         Map<String, ConceptEntity<? extends ConceptEntityVersion>> concepts = getConceptEntities(fromTimeStamp, toTimeStamp);
 
@@ -111,8 +95,8 @@ public class FhirTransformAPIIT {
         return concepts;
     }
 
-    private StampCalculator initStampCalculator(long toTime) {
-        return initStampCalculator(TinkarTerm.DEVELOPMENT_PATH.nid(), Long.MAX_VALUE);
+    private StampCalculator initStampCalculator(long toTime ) {
+        return initStampCalculator(TinkarTerm.DEVELOPMENT_PATH.nid(), toTime);
     }
 
     private StampCalculatorWithCache initStampCalculator(Integer pathNid, long toTimeStamp) {

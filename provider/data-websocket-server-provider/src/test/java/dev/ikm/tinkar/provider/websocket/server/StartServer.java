@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.provider.websocket.server;
 
-import dev.ikm.tinkar.entity.load.LoadEntitiesFromDtoFile;
+import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,9 +27,9 @@ public class StartServer {
     public static void main(String[] args) {
         try {
             File file = new File("/Users/kec/Solor/tinkar-export.zip");
-            LoadEntitiesFromDtoFile loadTink = new LoadEntitiesFromDtoFile(file);
-            int count = loadTink.call();
-            LOG.info("Loaded. " + loadTink.report());
+            LoadEntitiesFromProtobufFile loadTink =  new LoadEntitiesFromProtobufFile(file);
+            loadTink.compute();
+            LOG.info("Loaded. " + loadTink.summarize());
             DataProviderWebsocketServer server = new DataProviderWebsocketServer();
             server.launch(args);
         } catch (Exception e) {

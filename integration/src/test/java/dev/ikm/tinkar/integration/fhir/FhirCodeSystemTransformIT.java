@@ -16,10 +16,7 @@
 package dev.ikm.tinkar.integration.fhir;
 
 import dev.ikm.tinkar.common.id.IntIds;
-import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.ServiceKeys;
-import dev.ikm.tinkar.common.service.ServiceProperties;
 import dev.ikm.tinkar.coordinate.stamp.*;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
@@ -27,6 +24,7 @@ import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.fhir.transformers.FhirCodeSystemTransform;
 import dev.ikm.tinkar.fhir.transformers.FhirStatedDefinitionTransformer;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.junit.jupiter.api.*;
@@ -44,30 +42,27 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-//@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class FhirCodeSystemTransformIT {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+public class FhirCodeSystemTransformIT extends TestHelper {
+
+    private static final Logger LOG = LoggerFactory.getLogger(FhirCodeSystemTransformIT.class);
+    private static final File SAP_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
+            FhirCodeSystemTransformIT.class);
+
     FhirCodeSystemTransform fhirCodeSystemTransform;
     FhirStatedDefinitionTransformer fhirStatedDefinitionTransformer;
     StampCalculator stampCalculator;
-    private static final Logger LOG = LoggerFactory.getLogger(FhirCodeSystemTransformIT.class);
     final int transformSize = 1000;
-    File dataStore = new File(System.getProperty("user.home") + "/Solor/SnomedCT_US_20230901_SpinedArray-20240402");
 
-    //@BeforeAll
+
+    @BeforeAll
     public void setup() {
-        CachingService.clearAll();
-        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, dataStore);
-       // FileUtil.recursiveDelete(dataStore);
-        PrimitiveData.selectControllerByName(TestConstants.SA_STORE_OPEN_NAME);
-        PrimitiveData.start();
+        loadSpinedArrayDataBase(SAP_DATASTORE_ROOT);
     }
 
-    //@AfterAll
-    public void teardown() {
-        PrimitiveData.stop();
-    }
 
-    //@Test
+    @Test
+    @DisplayName("Test Fhir transform for entire file" )
     public void testFhirCodeSystemTransformation()  throws IOException {
 
 //        File file = TestConstants.TINK_TEST_FILE;
@@ -129,8 +124,8 @@ public class FhirCodeSystemTransformIT {
         }
     }
 
-//    @Test
-//    @DisplayName("Test transformation of axiom semantics.")
+    @Test
+    @DisplayName("Test transformation of axiom semantics.")
     public void testTransformAxiomSemantics() {
 
         String toTime = "2019-10-22T12:31:04";

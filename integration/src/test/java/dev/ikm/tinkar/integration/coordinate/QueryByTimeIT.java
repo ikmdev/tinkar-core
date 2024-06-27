@@ -16,26 +16,18 @@
 package dev.ikm.tinkar.integration.coordinate;
 
 import dev.ikm.tinkar.common.id.IntIds;
-import dev.ikm.tinkar.common.service.CachingService;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.ServiceKeys;
-import dev.ikm.tinkar.common.service.ServiceProperties;
 import dev.ikm.tinkar.coordinate.Coordinates;
-import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
-import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecordBuilder;
-import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
-import dev.ikm.tinkar.coordinate.stamp.StampPositionRecordBuilder;
-import dev.ikm.tinkar.coordinate.stamp.StateSet;
+import dev.ikm.tinkar.coordinate.stamp.*;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.StampEntityVersion;
+import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.TinkarTerm;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,22 +39,23 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
-public class QueryByTimeIT {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class QueryByTimeIT extends TestHelper {
+
     private static final Logger LOG = LoggerFactory.getLogger(QueryByTimeIT.class);
+    private static final File SAP_COORDINATESIT_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
+            QueryByTimeIT.class);
 
-    @BeforeEach
+    @BeforeAll
     public void init() {
-        File dataStore = new File(System.getProperty("user.home") + "/Solor/starter-data-export");
-        String controllerName = "Open SpinedArrayStore";
-        CachingService.clearAll();
-        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, dataStore);
-        PrimitiveData.selectControllerByName(controllerName);
-        PrimitiveData.start();
+        loadSpinedArrayDataBase(SAP_COORDINATESIT_DATASTORE_ROOT);
     }
-    @Test
-    @Disabled("Enable the tests after figuring out the way to load the DataStores in Jenkins. or test directory")
-    public void retrieveDataByTimeMultiPathTest() {
 
+    @Test
+    @Order(1)
+    @DisplayName("Test to retrieve data by multi path")
+    public void retrieveDataByTimeMultiPathTest() {
         String time = "2020-10-22T12:31:04";
         LocalDateTime localDateTime = LocalDateTime.parse(time, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         long timestamp = localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
@@ -76,7 +69,6 @@ public class QueryByTimeIT {
                 pathNids.add(stamp.pathNid());
             })
         );
-
         pathNids.forEach(pathNid -> {
             LOG.info("PATH NID: " + EntityService.get().getEntityFast(pathNid));
             Stream<Latest<SemanticEntityVersion>> filteredVersionsStream =
@@ -88,7 +80,6 @@ public class QueryByTimeIT {
                             semanticVersion.nid() + " at time " + time + ": " + semanticVersion);
                 }
             });
-
         });
     }
 
@@ -110,7 +101,9 @@ public class QueryByTimeIT {
                 });
     }
 
- //   @Test
+    @Test
+    @Order(2)
+    @DisplayName("Test to retrieve data by time")
     public void retrieveDataByTimeTest() {
         String time = "2020-10-22T12:31:04";
         LocalDateTime localDateTime = LocalDateTime.parse(time, DateTimeFormatter.ISO_LOCAL_DATE_TIME);

@@ -32,7 +32,6 @@ module dev.ikm.tinkar.provider.entity {
 	requires transitive dev.ikm.tinkar.component;
 	requires transitive dev.ikm.tinkar.common;
 	requires transitive dev.ikm.tinkar.entity;
-	requires transitive dev.ikm.tinkar.dto;
 	requires transitive dev.ikm.tinkar.terms;
 	requires org.eclipse.collections.api;
 	requires org.eclipse.collections;

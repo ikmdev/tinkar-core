@@ -15,18 +15,14 @@
  */
 package dev.ikm.tinkar.integration.provider.ephemeral;
 
-import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.ServiceProperties;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
-import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.ext.lang.owl.SctOwlUtilities;
-import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.TinkarTerm;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -40,30 +36,12 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class OwlToLogicalAxiomIT {
+public class OwlToLogicalAxiomIT extends TestHelper {
     private static final Logger LOG = LoggerFactory.getLogger(OwlToLogicalAxiomIT.class);
 
     @BeforeAll
     public static void setUp() {
-        LOG.info("JVM Version: " + System.getProperty("java.version"));
-        LOG.info("JVM Name: " + System.getProperty("java.vm.name"));
-        startDatabase();
-        LoadEntitiesFromProtobufFile loadEntitiesFromProtobufFile = new LoadEntitiesFromProtobufFile(TestConstants.PB_STARTER_DATA_REASONED);
-        loadEntitiesFromProtobufFile.compute();
-    }
-
-    @AfterAll
-    public static void tearDown() {
-        PrimitiveData.stop();
-    }
-
-    private static void startDatabase() {
-        LOG.info("Clear caches");
-        CachingService.clearAll();
-        LOG.info("Setup Ephemeral Protobuf Suite: " + LOG.getName());
-        LOG.info(ServiceProperties.jvmUuid());
-        PrimitiveData.selectControllerByName(TestConstants.EPHEMERAL_STORE_NAME);
-        PrimitiveData.start();
+        loadEphemeralDataBase();
     }
 
     private boolean datastoreEmpty() {
@@ -71,6 +49,7 @@ public class OwlToLogicalAxiomIT {
         PrimitiveData.get().forEachConceptNid((ignored) -> datastoreSize.incrementAndGet());
         return datastoreSize.get() == 0;
     }
+
     private List<Entity> addIfAbsent(List<UUID> entitiesToAdd) {
         List<Entity> concepts = new ArrayList<>();
         StampEntityVersion defaultStamp = (StampEntityVersion) EntityService.get().getEntity(PrimitiveData.NONEXISTENT_STAMP_UUID).get().versions().get(0);

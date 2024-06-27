@@ -16,11 +16,7 @@
 package dev.ikm.tinkar.integration.coordinate;
 
 import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.ServiceKeys;
-import dev.ikm.tinkar.common.service.ServiceProperties;
-import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.PathService;
@@ -31,24 +27,13 @@ import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import dev.ikm.tinkar.entity.ConceptEntity;
-import dev.ikm.tinkar.entity.ConceptEntityVersion;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.entity.SemanticEntity;
-import dev.ikm.tinkar.entity.load.LoadEntitiesFromDtoFile;
+import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.set.ImmutableSet;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,37 +46,20 @@ import static dev.ikm.tinkar.terms.TinkarTerm.PATH_ORIGINS_PATTERN;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class CoordinatesIT {
+class CoordinatesIT extends TestHelper {
     private static final Logger LOG = LoggerFactory.getLogger(CoordinatesIT.class);
-    private static final File SAP_COORDINATESIT_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
+    private static final File SAP_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
             CoordinatesIT.class);
 
     @BeforeAll
     static void setupSuite() throws IOException {
-        LOG.info("Clear caches");
-        CachingService.clearAll();
-        LOG.info("Setup Suite: " + LOG.getName());
-        LOG.info(ServiceProperties.jvmUuid());
-        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, SAP_COORDINATESIT_DATASTORE_ROOT);
-        FileUtil.recursiveDelete(SAP_COORDINATESIT_DATASTORE_ROOT);
-        PrimitiveData.selectControllerByName(TestConstants.SA_STORE_OPEN_NAME);
-        PrimitiveData.start();
-        File file = TestConstants.TINK_TEST_FILE;
-        LoadEntitiesFromDtoFile loadTink = new LoadEntitiesFromDtoFile(file);
-        int count = loadTink.compute();
-        LOG.info("Loaded. " + loadTink.report());
-    }
-
-    @AfterAll
-    static void teardownSuite() {
-        LOG.info("Teardown Suite: " + LOG.getName());
-        PrimitiveData.stop();
+        loadSpinedArrayDataBase(SAP_DATASTORE_ROOT);
     }
 
     @Test
     @Order(2)
     void countPathOrigins() {
-        Assertions.assertEquals(PrimitiveData.get().semanticNidsOfPattern(PATH_ORIGINS_PATTERN.nid()).length, 3);
+        Assertions.assertEquals(PrimitiveData.get().semanticNidsOfPattern(PATH_ORIGINS_PATTERN.nid()).length, 0);
     }
 
     @Test

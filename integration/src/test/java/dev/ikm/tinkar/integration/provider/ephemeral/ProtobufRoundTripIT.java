@@ -15,50 +15,33 @@
  */
 package dev.ikm.tinkar.integration.provider.ephemeral;
 
-import dev.ikm.tinkar.common.service.CachingService;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.ServiceProperties;
+import dev.ikm.tinkar.entity.EntityCountSummary;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
-import dev.ikm.tinkar.entity.load.LoadEntitiesFromDtoFile;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.integration.TestConstants;
-import org.junit.jupiter.api.*;
+import dev.ikm.tinkar.integration.helper.TestHelper;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class ProtobufRoundTripIT {
+public class ProtobufRoundTripIT extends TestHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProtobufRoundTripIT.class);
 
     @BeforeAll
     public void setupSuite() {
-        LOG.info("JVM Version: " + System.getProperty("java.version"));
-        LOG.info("JVM Name: " + System.getProperty("java.vm.name"));
-        startDatabase();
-    }
-    private void startDatabase() {
-        LOG.info("Clear caches");
-        CachingService.clearAll();
-        LOG.info("Setup Ephemeral Protobuf Suite: " + LOG.getName());
-        LOG.info(ServiceProperties.jvmUuid());
-        PrimitiveData.selectControllerByName(TestConstants.EPHEMERAL_STORE_NAME);
-        PrimitiveData.start();
-    }
-    private void stopDatabase() {
-        PrimitiveData.stop();
-    }
-    @AfterAll
-    public void teardownSuite() {
-        stopDatabase();
+        startEphemeralDataBase();
     }
 
     /**
@@ -73,14 +56,12 @@ public class ProtobufRoundTripIT {
      * @throws IOException
      */
     @Test
-    @Disabled
     public void roundTripTest() throws IOException {
         // Given initial DTO data
-        File fileDTO = TestConstants.TINK_TEST_FILE;
-        LoadEntitiesFromDtoFile loadDTO = new LoadEntitiesFromDtoFile(fileDTO);
-        // When we import DTO into entities
-        int expectedEntityCount = loadDTO.compute();
-        LOG.info("Entities loaded from dto: " + expectedEntityCount);
+        File file = TestConstants.PB_STARTER_DATA_REASONED;
+        LoadEntitiesFromProtobufFile loadProto = new LoadEntitiesFromProtobufFile(file);
+        EntityCountSummary count = loadProto.compute();
+        LOG.info(count + " entitles loaded from file: " + loadProto.summarize() + "\n\n");
 
         // When we export Entities data to protobuf
         File fileProtobuf = TestConstants.PB_ROUNDTRIP_TEST_FILE;
@@ -97,7 +78,7 @@ public class ProtobufRoundTripIT {
         LOG.info("Entities exported to protobuf: " + actualProtobufExportCount);
 
         stopDatabase();
-        startDatabase();
+        startEphemeralDataBase();
 
         // When we import protobuf data into entities
         LoadEntitiesFromProtobufFile loadEntitiesFromProtobufFile = new LoadEntitiesFromProtobufFile(fileProtobuf);
@@ -105,12 +86,12 @@ public class ProtobufRoundTripIT {
         LOG.info("Entities loaded from protobuf: " + actualProtobufImportCount);
 
 //         Then all imported and exported entities counts should match
-        boolean boolEntityCount = expectedEntityCount == actualProtobufExportCount && expectedEntityCount == actualProtobufImportCount;
-        assertTrue(expectedEntityCount > 0, "Imported DTO count should be greater than zero.");
+        boolean boolEntityCount = count.getTotalCount() == actualProtobufExportCount && count.getTotalCount() == actualProtobufImportCount;
+        assertTrue(count.getTotalCount() > 0, "Imported DTO count should be greater than zero.");
         assertTrue(actualProtobufExportCount > 0, "Exported Protobuf count should be greater than zero.");
         assertTrue(actualProtobufImportCount > 0, "Imported Protobuf count should be greater than zero.");
-        assertEquals(expectedEntityCount, actualProtobufExportCount, "Entity count and Protobuf Export count do not match.");
-        assertEquals(expectedEntityCount, actualProtobufImportCount, "Entity count and Protobuf Import count do not match.");
+        assertEquals(count.getTotalCount(), actualProtobufExportCount, "Entity count and Protobuf Export count do not match.");
+        assertEquals(count.getTotalCount(), actualProtobufImportCount, "Entity count and Protobuf Import count do not match.");
         assertTrue(boolEntityCount, "Counts in round-trip do not match.");
     }
 }

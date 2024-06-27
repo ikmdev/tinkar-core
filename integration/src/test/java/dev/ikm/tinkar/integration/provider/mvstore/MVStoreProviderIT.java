@@ -16,16 +16,15 @@
 package dev.ikm.tinkar.integration.provider.mvstore;
 
 
-import dev.ikm.tinkar.integration.TestConstants;
-import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.ServiceKeys;
-import dev.ikm.tinkar.common.service.ServiceProperties;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
-import dev.ikm.tinkar.entity.load.LoadEntitiesFromDtoFile;
+import dev.ikm.tinkar.entity.EntityCountSummary;
+import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.entity.util.EntityCounter;
 import dev.ikm.tinkar.entity.util.EntityProcessor;
 import dev.ikm.tinkar.entity.util.EntityRealizer;
+import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.TestHelper;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,35 +53,23 @@ import java.io.IOException;
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class MVStoreProviderIT {
+class MVStoreProviderIT extends TestHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(MVStoreProviderIT.class);
     private static final File MV_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(MVStoreProviderIT.class);
 
     @BeforeAll
     static void setupSuite() {
-        LOG.info("Clear caches");
-        CachingService.clearAll();
-        LOG.info("Setup suite: " + LOG.getName());
-        LOG.info(ServiceProperties.jvmUuid());
-        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, MV_DATASTORE_ROOT);
-        PrimitiveData.selectControllerByName(TestConstants.MV_STORE_OPEN_NAME);
-        PrimitiveData.start();
-    }
-
-
-    @AfterAll
-    static void teardownSuite() {
-        LOG.info("Teardown suite: " + LOG.getName());
-        PrimitiveData.stop();
+        loadMVStoreDataBase(MV_DATASTORE_ROOT);
     }
 
     @Test
     @Order(1)
     public void loadChronologies() throws IOException {
-        LoadEntitiesFromDtoFile loadTink = new LoadEntitiesFromDtoFile(TestConstants.TINK_TEST_FILE);
-        int count = loadTink.compute();
-        LOG.info("Loaded. " + loadTink.report() + "\n\n");
+        File file = TestConstants.PB_STARTER_DATA_REASONED;
+        LoadEntitiesFromProtobufFile loadProto = new LoadEntitiesFromProtobufFile(file);
+        EntityCountSummary count = loadProto.compute();
+        LOG.info(count + " entitles loaded from file: " + loadProto.summarize() + "\n\n");
     }
 
     @Test

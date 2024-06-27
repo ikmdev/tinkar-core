@@ -15,15 +15,12 @@
  */
 package dev.ikm.tinkar.integration.changeSet;
 
-import dev.ikm.tinkar.common.service.CachingService;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.ServiceKeys;
-import dev.ikm.tinkar.common.service.ServiceProperties;
 import dev.ikm.tinkar.entity.EntityCountSummary;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.TestHelper;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -34,29 +31,22 @@ import java.util.concurrent.ExecutionException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-//    @ExtendWith(MockitoExtension.class)
-    class EntityServiceIT {
-    private EntityService entityService;
+class EntityServiceIT extends TestHelper {
+
+    private static final File SAP_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
+            EntityServiceIT.class);
     @BeforeEach
     public void init() {
-        //am i creating a new/copy dataStore or using an existing one
-        File dataStore = new File(System.getProperty("user.home") + "/Solor/starter-data-export");
-        //make sure it can run as eds
-        String controllerName = TestConstants.SA_STORE_OPEN_NAME;
-        CachingService.clearAll();
-        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, dataStore);
-        PrimitiveData.selectControllerByName(controllerName);
-        PrimitiveData.start();
+        loadSpinedArrayDataBase(SAP_DATASTORE_ROOT);
     }
 
     @Test
-    @Disabled
-    void temporalExport_shouldExportEntitiesInSpecifiedTemporalRange() throws ExecutionException, InterruptedException {
+    @DisplayName("Test export entities in temporal range")
+    void testExportEntitiesInSpecifiedTemporalRange() throws ExecutionException, InterruptedException {
 
-        File file = new File(String.valueOf(TestConstants.PB_TEST_FILE));
-
-        String from = "2024-03-01T00:00:00";
-        String to ="2024-03-21T00:00:00";
+        File file = new File("exportFile");
+        String from = "2020-03-01T00:00:00";
+        String to ="2024-10-21T00:00:00";
 
         // Parse the string to LocalDateTime
         LocalDateTime dateTimeFrom = LocalDateTime.parse(from);
@@ -67,19 +57,19 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
         long toEpoch = dateTimeTo.toInstant(ZoneOffset.UTC).toEpochMilli();
 
         // Perform the temporal export operation
-        EntityCountSummary summary = entityService.temporalExport(file, fromEpoch, toEpoch).get();
+        EntityCountSummary summary = EntityService.get().temporalExport(file, fromEpoch, toEpoch).get();
 
         // Verify the summary
         assertNotNull(summary);
         // Add your assertions here based on the expected summary values
         // For example:
-        assertEquals(100, summary.conceptsCount());
-        assertEquals(50, summary.semanticsCount());
-        assertEquals(10, summary.patternsCount());
-        assertEquals(10, summary.stampsCount());
+        assertEquals(295, summary.conceptsCount());
+        assertEquals(3047, summary.semanticsCount());
+        assertEquals(17, summary.patternsCount());
+        assertEquals(2, summary.stampsCount());
 
         // Clean up (delete the file if it was created)
-        //file.delete();
+        file.delete();
     }
 
 }
