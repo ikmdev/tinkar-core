@@ -21,12 +21,14 @@ import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.ServiceKeys;
 import dev.ikm.tinkar.common.service.ServiceProperties;
-import dev.ikm.tinkar.common.util.io.FileUtil;
-import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.provider.search.Searcher;
 import dev.ikm.tinkar.terms.TinkarTerm;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,35 +39,13 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class SearchProviderIT {
+public class SearchProviderIT extends TestHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(SearchProviderIT.class);
 
     @BeforeAll
     public void setUp() throws IOException {
-        LOG.info("JVM Version: " + System.getProperty("java.version"));
-        LOG.info("JVM Name: " + System.getProperty("java.vm.name"));
-        startDatabase();
-        LoadEntitiesFromProtobufFile loadEntitiesFromProtobufFile = new LoadEntitiesFromProtobufFile(TestConstants.PB_STARTER_DATA_REASONED);
-        loadEntitiesFromProtobufFile.compute();
-
-    }
-
-    @AfterAll
-    public void tearDown() {
-        stopDatabase();
-    }
-
-    private void startDatabase() {
-        LOG.info("Clear caches");
-        CachingService.clearAll();
-        LOG.info("Setup Ephemeral Protobuf Suite: " + LOG.getName());
-        LOG.info(ServiceProperties.jvmUuid());
-        PrimitiveData.selectControllerByName(TestConstants.EPHEMERAL_STORE_NAME);
-        PrimitiveData.start();
-    }
-    private void stopDatabase() {
-        PrimitiveData.stop();
+        loadEphemeralDataBase();
     }
 
     @Test

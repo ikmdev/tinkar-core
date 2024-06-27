@@ -15,15 +15,15 @@
  */
 package dev.ikm.tinkar.integration.provider.ephemeral;
 
-import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.ServiceProperties;
+import dev.ikm.tinkar.entity.EntityCountSummary;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
-import dev.ikm.tinkar.entity.load.LoadEntitiesFromDtoFile;
+import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.entity.util.EntityCounter;
 import dev.ikm.tinkar.entity.util.EntityProcessor;
 import dev.ikm.tinkar.entity.util.EntityRealizer;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.TestHelper;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,33 +33,23 @@ import java.io.IOException;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class EphemeralProtobufIT {
+public class EphemeralProtobufIT extends TestHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(EphemeralProtobufIT.class);
 
     @BeforeAll
     public void setupSuite() {
-        LOG.info("Clear caches");
-        CachingService.clearAll();
-        LOG.info("Setup Ephemeral Protobuf Suite: " + LOG.getName());
-        LOG.info(ServiceProperties.jvmUuid());
-        PrimitiveData.selectControllerByName(TestConstants.EPHEMERAL_STORE_NAME);
-        PrimitiveData.start();
+       startEphemeralDataBase();
     }
 
-    @AfterAll
-    public void teardownSuite() {
-        LOG.info("Teardown Suite: " + LOG.getName());
-        PrimitiveData.stop();
-    }
 
     @Test
     @Order(1)
-    public void loadDTOFile() throws IOException {
-        File file = TestConstants.TINK_TEST_FILE;
-        LoadEntitiesFromDtoFile loadDTO = new LoadEntitiesFromDtoFile(file);
-        int count = loadDTO.compute();
-        LOG.info(count + " entitles loaded from file: " + loadDTO.report() + "\n\n");
+    public void loadProtoBufFile() throws IOException {
+        File file = TestConstants.PB_STARTER_DATA_REASONED;
+        LoadEntitiesFromProtobufFile loadProto = new LoadEntitiesFromProtobufFile(file);
+        EntityCountSummary count = loadProto.compute();
+        LOG.info(count + " entitles loaded from file: " + loadProto.summarize() + "\n\n");
     }
     @Test
     @Order(2)
@@ -83,15 +73,13 @@ public class EphemeralProtobufIT {
         PrimitiveData.get().forEachParallel(processor);
         LOG.info("EPH Parallel realization: \n" + processor.report() + "\n\n");
     }
+
     @Test
     @Order(3)
     public void exportEntitiesToProtobuf() throws IOException {
-        File file = TestConstants.PB_TEST_FILE;//TINK_TEST_FILE;
-
+        File file = TestConstants.PB_TEST_FILE;
         ExportEntitiesToProtobufFile exportEntitiesToProtobufFile = new ExportEntitiesToProtobufFile(file);
         exportEntitiesToProtobufFile.compute();
-//        ExportEntitiesController exportEntitiesController = new ExportEntitiesController();
-//        exportEntitiesController.export(file);
     }
 
 }

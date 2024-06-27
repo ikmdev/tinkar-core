@@ -128,14 +128,6 @@
                             <artifactItems>
                                 <artifactItem>
                                     <groupId>dev.ikm.build</groupId>
-                                    <artifactId>tinkar-test-dto</artifactId>
-                                    <version>${tinkar-test-dto.version}</version>
-                                    <type>zip</type>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${project.build.directory}/data</outputDirectory>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>dev.ikm.build</groupId>
                                     <artifactId>tinkar-starter-data-reasoned</artifactId>
                                     <version>${tinkar-starter-data.version}</version>
                                     <classifier>pb</classifier>

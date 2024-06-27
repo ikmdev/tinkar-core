@@ -32,7 +32,6 @@ module dev.ikm.tinkar.entity {
     requires io.activej.bytebuf;
     requires transitive dev.ikm.tinkar.common;
     requires transitive dev.ikm.tinkar.component;
-    requires dev.ikm.tinkar.dto;
     requires java.logging;
     requires transitive com.github.benmanes.caffeine;
     requires org.eclipse.collections;

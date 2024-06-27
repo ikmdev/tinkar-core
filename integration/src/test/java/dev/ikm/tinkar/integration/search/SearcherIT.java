@@ -15,23 +15,14 @@
  */
 package dev.ikm.tinkar.integration.search;
 
-import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.id.PublicIds;
-import dev.ikm.tinkar.common.service.*;
-import dev.ikm.tinkar.common.util.io.FileUtil;
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.Coordinates;
-import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
-import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
-import dev.ikm.tinkar.coordinate.stamp.StateSet;
-import dev.ikm.tinkar.coordinate.stamp.calculator.LatestVersionSearchResult;
-import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.provider.search.Searcher;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.list.ImmutableList;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -43,20 +34,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class SearcherIT {
+public class SearcherIT extends TestHelper {
 
-    private static final File SAP_SPINEDARRAYPROVIDERIT_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
+    private static final File SAP_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
             SearcherIT.class);
 
     @BeforeAll
     public void setup() {
-        CachingService.clearAll();
-        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, SAP_SPINEDARRAYPROVIDERIT_DATASTORE_ROOT);
-        FileUtil.recursiveDelete(SAP_SPINEDARRAYPROVIDERIT_DATASTORE_ROOT);
-        PrimitiveData.selectControllerByName(TestConstants.SA_STORE_OPEN_NAME);
-        PrimitiveData.start();
-        LoadEntitiesFromProtobufFile loadEntitiesFromProtobufFile = new LoadEntitiesFromProtobufFile(TestConstants.PB_STARTER_DATA_REASONED);
-        loadEntitiesFromProtobufFile.compute();
+        loadSpinedArrayDataBase(SAP_DATASTORE_ROOT);
     }
 
     @AfterAll

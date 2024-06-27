@@ -15,23 +15,14 @@
  */
 package dev.ikm.tinkar.entity.graph;
 
+import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.VertexId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.component.Concept;
-import dev.ikm.tinkar.component.FieldDataType;
-import dev.ikm.tinkar.component.Pattern;
-import dev.ikm.tinkar.component.Semantic;
-import dev.ikm.tinkar.component.Stamp;
+import dev.ikm.tinkar.common.util.uuid.UuidUtil;
+import dev.ikm.tinkar.component.*;
 import dev.ikm.tinkar.component.graph.Vertex;
-import dev.ikm.tinkar.dto.StampDTO;
-import dev.ikm.tinkar.dto.StampDTOBuilder;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityRecordFactory;
-import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.EntityFacade;
-import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.PatternFacade;
+import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.terms.*;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.RichIterable;
@@ -47,6 +38,7 @@ import org.eclipse.collections.impl.map.mutable.primitive.IntObjectHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -82,6 +74,10 @@ public class EntityVertex implements Vertex, VertexId {
      */
     public EntityVertex(EntityVertex another) {
         fill(another);
+    }
+
+    public void setMeaningNid(int meaningNid){
+        this.meaningNid = meaningNid;
     }
 
     public EntityVertex copyWithUnassignedIndex() {
@@ -136,15 +132,9 @@ public class EntityVertex implements Vertex, VertexId {
                 return (T) object;
             }
             return (T) EntityProxy.Pattern.make(pattern.publicId());
-        } else if (object instanceof Stamp & !(object instanceof StampDTO)) {
+        } else if (object instanceof Stamp) {
             Stamp stampValue = (Stamp) object;
-            return (T) StampDTOBuilder.builder()
-                    .publicId(stampValue.publicId())
-                    .statusPublicId(stampValue.state().publicId())
-                    .time(stampValue.time())
-                    .authorPublicId(stampValue.author().publicId())
-                    .modulePublicId(stampValue.module().publicId())
-                    .pathPublicId(stampValue.path().publicId()).build();
+            return (T) createStampRecord(stampValue);
         } else if (object instanceof Double) {
             object = ((Double) object).floatValue();
         } else if (object instanceof Integer) {
@@ -153,6 +143,50 @@ public class EntityVertex implements Vertex, VertexId {
             object = new ByteArrayList(byteArray);
         }
         return (T) object;
+    }
+
+    private static StampEntity<? extends StampEntityVersion> createStampRecord(Stamp stamp) {
+        if(stamp.publicId() == null){
+            throw new RuntimeException("Exception thrown, STAMP Public id is null.");
+        }
+        PublicId stampPublicId = stamp.publicId();
+        RecordListBuilder<StampVersionRecord> stampVersions = RecordListBuilder.make();
+        StampRecord stampRecord;
+
+        if (stamp.publicId().uuidCount() > 0) {
+            int conceptNid = Entity.nid(stampPublicId);
+            if (stampPublicId.uuidCount() > 1) {
+                stampRecord = StampRecordBuilder.builder()
+                        .leastSignificantBits(stampPublicId.asUuidArray()[0].getLeastSignificantBits())
+                        .mostSignificantBits(stampPublicId.asUuidArray()[0].getMostSignificantBits())
+                        .additionalUuidLongs(UuidUtil.asArray(Arrays.copyOfRange(stampPublicId.asUuidArray(),
+                                1, stampPublicId.uuidCount())))
+                        .nid(conceptNid)
+                        .versions(stampVersions)
+                        .build();
+            } else {
+                stampRecord = StampRecordBuilder.builder()
+                        .leastSignificantBits(stampPublicId.asUuidArray()[0].getLeastSignificantBits())
+                        .mostSignificantBits(stampPublicId.asUuidArray()[0].getMostSignificantBits())
+                        .nid(conceptNid)
+                        .versions(stampVersions)
+                        .build();
+            }
+        } else {
+            throw new IllegalStateException("missing primordial UUID");
+        }
+        StampVersionRecord stampVersionRecord = StampVersionRecordBuilder.builder()
+                        .stateNid(EntityService.get().nidForPublicId(stamp.state().publicId()))
+                        .time(stamp.time())
+                        .authorNid(EntityService.get().nidForPublicId(stamp.author().publicId()))
+                        .moduleNid(EntityService.get().nidForPublicId(stamp.module().publicId()))
+                        .pathNid(EntityService.get().nidForPublicId(stamp.path().publicId()))
+                        .build();
+        stampVersions.add(stampVersionRecord);
+
+        StampEntity<? extends StampEntityVersion> stampEntity = StampRecordBuilder.builder(stampRecord).versions(stampVersions).build();
+
+        return stampEntity;
     }
 
     public static EntityVertex make(ConceptFacade conceptFacade) {
@@ -423,6 +457,10 @@ public class EntityVertex implements Vertex, VertexId {
     }
 
 
+    public void setProperties(MutableIntObjectMap<Object> properties){
+        this.properties = properties.toImmutable();
+    }
+
     public final byte[] getBytes() {
         int bufSize = DEFAULT_SIZE;
         AtomicReference<ByteBuf> byteBufRef =
@@ -453,7 +491,7 @@ public class EntityVertex implements Vertex, VertexId {
         }
     }
 
-    protected void setVertexIndex(int vertexIndex) {
+    public void setVertexIndex(int vertexIndex) {
         this.vertexIndex = vertexIndex;
     }
 

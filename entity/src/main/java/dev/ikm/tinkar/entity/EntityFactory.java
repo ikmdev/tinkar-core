@@ -16,7 +16,6 @@
 package dev.ikm.tinkar.entity;
 
 import dev.ikm.tinkar.component.*;
-import dev.ikm.tinkar.dto.StampDTO;
 import io.activej.bytebuf.ByteBuf;
 
 public class EntityFactory {
@@ -86,8 +85,8 @@ public class EntityFactory {
         }
     }
 
-    public static StampEntity makeStamp(StampDTO stampDTO) {
-        throw new UnsupportedOperationException("Can't makeStamp: " + stampDTO);
+    public static StampEntity makeStamp(Stamp stamp) {
+        throw new UnsupportedOperationException("Can't makeStamp: " + stamp);
         //return StampEntity.make(stampDTO);
     }
 }

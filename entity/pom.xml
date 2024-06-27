@@ -21,11 +21,6 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>dto</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>common</artifactId>
         </dependency>
 

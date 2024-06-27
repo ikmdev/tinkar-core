@@ -26,9 +26,6 @@ import java.util.concurrent.Future;
 public class LoadEntitiesFromFileController implements LoadDataFromFileController {
     @Override
     public Future<?> load(File file) {
-        if (!file.getName().toLowerCase().contains("pb"))
-            return TinkExecutor.ioThreadPool().submit(new LoadEntitiesFromDtoFile(file));
-        else
-            return TinkExecutor.ioThreadPool().submit(new LoadEntitiesFromProtobufFile(file));
+        return TinkExecutor.ioThreadPool().submit(new LoadEntitiesFromProtobufFile(file));
     }
 }

@@ -24,71 +24,24 @@ import dev.ikm.tinkar.component.Component;
 import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.component.location.PlanarPoint;
 import dev.ikm.tinkar.component.location.SpatialPoint;
-import dev.ikm.tinkar.dto.ConceptDTO;
-import dev.ikm.tinkar.dto.ConceptDTOBuilder;
-import dev.ikm.tinkar.dto.graph.VertexDTOBuilder;
-import dev.ikm.tinkar.entity.ConceptEntity;
-import dev.ikm.tinkar.entity.ConceptEntityVersion;
-import dev.ikm.tinkar.entity.ConceptRecord;
-import dev.ikm.tinkar.entity.ConceptRecordBuilder;
-import dev.ikm.tinkar.entity.ConceptVersionRecord;
-import dev.ikm.tinkar.entity.ConceptVersionRecordBuilder;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityRecordFactory;
-import dev.ikm.tinkar.entity.EntityVersion;
-import dev.ikm.tinkar.entity.FieldDefinitionRecord;
-import dev.ikm.tinkar.entity.FieldDefinitionRecordBuilder;
-import dev.ikm.tinkar.entity.PatternEntity;
-import dev.ikm.tinkar.entity.PatternEntityVersion;
-import dev.ikm.tinkar.entity.PatternRecord;
-import dev.ikm.tinkar.entity.PatternRecordBuilder;
-import dev.ikm.tinkar.entity.PatternVersionRecord;
-import dev.ikm.tinkar.entity.PatternVersionRecordBuilder;
-import dev.ikm.tinkar.entity.RecordListBuilder;
-import dev.ikm.tinkar.entity.SemanticEntity;
-import dev.ikm.tinkar.entity.SemanticEntityVersion;
-import dev.ikm.tinkar.entity.SemanticRecord;
-import dev.ikm.tinkar.entity.SemanticRecordBuilder;
-import dev.ikm.tinkar.entity.SemanticVersionRecord;
-import dev.ikm.tinkar.entity.SemanticVersionRecordBuilder;
-import dev.ikm.tinkar.entity.StampEntity;
-import dev.ikm.tinkar.entity.StampEntityVersion;
-import dev.ikm.tinkar.entity.StampRecord;
-import dev.ikm.tinkar.entity.StampRecordBuilder;
-import dev.ikm.tinkar.entity.StampVersionRecord;
-import dev.ikm.tinkar.entity.StampVersionRecordBuilder;
+import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.graph.DiGraphEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
-import dev.ikm.tinkar.schema.ConceptChronology;
-import dev.ikm.tinkar.schema.ConceptVersion;
-import dev.ikm.tinkar.schema.DiGraph;
-import dev.ikm.tinkar.schema.DiTree;
 import dev.ikm.tinkar.schema.Field;
-import dev.ikm.tinkar.schema.FieldDefinition;
-import dev.ikm.tinkar.schema.IntToIntMap;
-import dev.ikm.tinkar.schema.IntToMultipleIntMap;
-import dev.ikm.tinkar.schema.PatternChronology;
-import dev.ikm.tinkar.schema.PatternVersion;
-import dev.ikm.tinkar.schema.SemanticChronology;
-import dev.ikm.tinkar.schema.SemanticVersion;
-import dev.ikm.tinkar.schema.StampChronology;
 import dev.ikm.tinkar.schema.StampVersion;
-import dev.ikm.tinkar.schema.TinkarMsg;
-import dev.ikm.tinkar.schema.Vertex;
-import dev.ikm.tinkar.schema.VertexUUID;
+import dev.ikm.tinkar.schema.*;
 import dev.ikm.tinkar.terms.EntityProxy;
 import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
-import org.eclipse.collections.api.map.MutableMap;
 import org.eclipse.collections.api.map.primitive.ImmutableIntIntMap;
 import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
 import org.eclipse.collections.api.map.primitive.MutableIntIntMap;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
+import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 import org.eclipse.collections.impl.map.mutable.primitive.IntIntHashMap;
 import org.eclipse.collections.impl.map.mutable.primitive.IntObjectHashMap;
@@ -331,7 +284,6 @@ public class TinkarSchemaToEntityTransformer {
             stampVersions.add(transformStampVersion(stampChronology.getSecondStampVersion(), stampRecord));
         }
 
-
         StampEntity<? extends StampEntityVersion> stampEntity = StampRecordBuilder.builder(stampRecord).versions(stampVersions).build();
         if(stampEntityConsumer != null){
             stampEntityConsumer.accept((StampEntity<StampEntityVersion>) stampEntity);
@@ -468,31 +420,59 @@ public class TinkarSchemaToEntityTransformer {
     }
     protected EntityVertex transformVertexEntity(Vertex pbVertex, Consumer<StampEntity<StampEntityVersion>> stampEntityConsumer){
         UUID vertexID = transformVertexUUID(pbVertex.getVertexUuid());
-        MutableMap<ConceptDTO, Object> properties = Maps.mutable.ofInitialCapacity(pbVertex.getPropertiesCount());
+        MutableIntObjectMap<Object> properties =  IntObjectMaps.mutable.empty();
+        EntityVertex storedVertex = EntityVertex.make(vertexID, EntityService.get().nidForPublicId(transformPublicId(pbVertex.getMeaningPublicId())));
+        storedVertex.setVertexIndex(pbVertex.getIndex());
         pbVertex.getPropertiesList().forEach(property -> {
             Object propertyObject = transformField(property.getField(), stampEntityConsumer);
             if(propertyObject instanceof PublicId){
-                properties.put(
-                        ConceptDTOBuilder.builder()
-                                .publicId(transformPublicId(property.getPublicId()))
-                                .build(),  EntityProxy.Concept.make((PublicId) propertyObject));
+                properties.put(createConceptRecord(property).nid(), EntityProxy.Concept.make((PublicId) propertyObject));
             } else {
-                properties.put(
-                        ConceptDTOBuilder.builder()
-                                .publicId(transformPublicId(property.getPublicId()))
-                                .build(), propertyObject);
+                properties.put(createConceptRecord(property).nid(),propertyObject);
             }
         });
-        var storedVertexDTO = VertexDTOBuilder.builder()
-                .vertexIdLsb(vertexID.getLeastSignificantBits())
-                .vertexIdMsb(vertexID.getMostSignificantBits())
-                .vertexIndex(pbVertex.getIndex())
-                .meaning(ConceptDTOBuilder.builder()
-                        .publicId(transformPublicId(pbVertex.getMeaningPublicId()))
-                        .build())
-                .properties(properties.toImmutable())
-                .build();
-        return EntityVertex.make(storedVertexDTO);
+        storedVertex.setProperties(properties);
+        return storedVertex;
+    }
+
+
+    // TODO revist below logic to create conceptRecord. Version info is missing below. Need to figure out to populate it.
+
+    private ConceptRecord createConceptRecord(Vertex.Property property) {
+        if(property.getPublicId() == null){
+            throw new RuntimeException("Exception thrown, STAMP Public id is null.");
+        }
+        PublicId conceptPublicId = transformPublicId(property.getPublicId());
+        RecordListBuilder<ConceptVersionRecord> conceptVersionRecords = RecordListBuilder.make();
+        ConceptRecord conceptRecord;
+
+        if (conceptPublicId.uuidCount() > 0) {
+            int conceptNid = Entity.nid(conceptPublicId);
+            if (conceptPublicId.uuidCount() > 1) {
+                conceptRecord = ConceptRecordBuilder.builder()
+                        .leastSignificantBits(conceptPublicId.asUuidArray()[0].getLeastSignificantBits())
+                        .mostSignificantBits(conceptPublicId.asUuidArray()[0].getMostSignificantBits())
+                        .additionalUuidLongs(UuidUtil.asArray(Arrays.copyOfRange(conceptPublicId.asUuidArray(),
+                                1, conceptPublicId.uuidCount())))
+                        .nid(conceptNid)
+                        .versions(conceptVersionRecords)
+                        .build();
+            } else {
+                conceptRecord = ConceptRecordBuilder.builder()
+                        .leastSignificantBits(conceptPublicId.asUuidArray()[0].getLeastSignificantBits())
+                        .mostSignificantBits(conceptPublicId.asUuidArray()[0].getMostSignificantBits())
+                        .nid(conceptNid)
+                        .versions(conceptVersionRecords)
+                        .build();
+            }
+        } else {
+            throw new IllegalStateException("missing primordial UUID");
+        }
+
+
+      //  ConceptEntity<? extends ConceptEntityVersion> conceptEntity = ConceptRecordBuilder.builder().versions().build();
+
+        return conceptRecord;
     }
 
     protected int testMockEntityService(Component component){

@@ -15,18 +15,16 @@
  */
 package dev.ikm.tinkar.integration.provider.spinedarray;
 
-import dev.ikm.tinkar.integration.TestConstants;
-import dev.ikm.tinkar.common.util.io.FileUtil;
-import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
-import dev.ikm.tinkar.common.service.CachingService;
-import dev.ikm.tinkar.common.service.ServiceProperties;
-import dev.ikm.tinkar.common.service.ServiceKeys;
-import dev.ikm.tinkar.entity.load.LoadEntitiesFromDtoFile;
+import dev.ikm.tinkar.common.util.time.Stopwatch;
+import dev.ikm.tinkar.entity.EntityCountSummary;
+import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.entity.util.EntityCounter;
 import dev.ikm.tinkar.entity.util.EntityProcessor;
 import dev.ikm.tinkar.entity.util.EntityRealizer;
+import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.TestHelper;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,36 +35,23 @@ import java.util.Arrays;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class SpinedArrayProviderIT {
+class SpinedArrayProviderIT extends TestHelper {
     private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayProviderIT.class);
-    private static final File SAP_SPINEDARRAYPROVIDERIT_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
+    private static final File SAP_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
             SpinedArrayProviderIT.class);
 
     @BeforeAll
     static void setupSuite() {
-        LOG.info("Clear caches");
-        CachingService.clearAll();
-        LOG.info("Setup Suite: " + LOG.getName());
-        LOG.info(ServiceProperties.jvmUuid());
-        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, SAP_SPINEDARRAYPROVIDERIT_DATASTORE_ROOT);
-        FileUtil.recursiveDelete(SAP_SPINEDARRAYPROVIDERIT_DATASTORE_ROOT);
-        PrimitiveData.selectControllerByName(TestConstants.SA_STORE_OPEN_NAME);
-        PrimitiveData.start();
-    }
-
-    @AfterAll
-    static void teardownSuite() {
-        LOG.info("Teardown Suite: " + LOG.getName());
-        PrimitiveData.stop();
+        loadSpinedArrayDataBase(SAP_DATASTORE_ROOT);
     }
 
     @Test
     @Order(1)
     public void loadChronologies() throws IOException {
-        File file = TestConstants.TINK_TEST_FILE;
-        LoadEntitiesFromDtoFile loadTink = new LoadEntitiesFromDtoFile(file);
-        int count = loadTink.compute();
-        LOG.info("Loaded. " + loadTink.report());
+        File file = TestConstants.PB_STARTER_DATA_REASONED;
+        LoadEntitiesFromProtobufFile loadProto = new LoadEntitiesFromProtobufFile(file);
+        EntityCountSummary count = loadProto.compute();
+        LOG.info(count + " entitles loaded from file: " + loadProto.summarize() + "\n\n");
     }
 
     @Test
