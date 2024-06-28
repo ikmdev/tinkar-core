@@ -27,6 +27,8 @@ open module dev.ikm.tinkar.integration {
     requires dev.ikm.tinkar.terms;
     requires dev.ikm.tinkar.coordinate;
     requires com.google.protobuf;
+    requires org.slf4j;
+    requires org.eclipse.collections.api;
 
     uses DataServiceController;
     uses DefaultDescriptionForNidService;
