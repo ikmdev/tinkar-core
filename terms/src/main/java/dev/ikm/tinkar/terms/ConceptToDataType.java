@@ -50,9 +50,22 @@ public class ConceptToDataType {
         if (TinkarTerm.FLOAT_FIELD.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.FLOAT;
         }
+        if (TinkarTerm.BOOLEAN_FIELD.publicId().equals(dataTypeConcept.publicId())) {
+            return FieldDataType.BOOLEAN;
+        }
+        if (TinkarTerm.BYTE_ARRAY_FIELD.publicId().equals(dataTypeConcept.publicId())) {
+            return FieldDataType.BYTE_ARRAY;
+        }
+        if (TinkarTerm.ARRAY_FIELD.publicId().equals(dataTypeConcept.publicId())) {
+            return FieldDataType.OBJECT_ARRAY;
+        }
         if (TinkarTerm.INSTANT_LITERAL.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.INSTANT;
         }
+        if (TinkarTerm.LONG.publicId().equals(dataTypeConcept.publicId())) {
+            return FieldDataType.LONG;
+        }
+
         throw new UnsupportedOperationException("Can't handle: " + dataTypeConcept);
     }
 }
