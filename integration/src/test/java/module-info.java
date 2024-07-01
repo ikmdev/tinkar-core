@@ -41,6 +41,7 @@ open module dev.ikm.tinkar.integration.test {
     requires org.apache.lucene.queryparser;
     requires org.apache.lucene.core;
     requires dev.ikm.tinkar.fhir.transformers;
+    requires dev.ikm.tinkar.ext.binding;
     requires io.soabase.recordbuilder.core;
     requires java.compiler;
 

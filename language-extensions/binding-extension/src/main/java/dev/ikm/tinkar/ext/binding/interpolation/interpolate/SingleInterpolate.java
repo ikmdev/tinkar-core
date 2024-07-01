@@ -13,7 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.provider.executor;
+package dev.ikm.tinkar.ext.binding.interpolation.interpolate;
 
-public class ExecutorProviderTest {
+import java.util.function.Consumer;
+
+/**
+ * A functional interpolation that takes a single Object of type T
+ * @param <T> Type of Object to be interpolated
+ */
+@FunctionalInterface
+public interface SingleInterpolate<T> {
+
+    /**
+     * Perform interpolation
+     * @param input Object of type T to be interpolated
+     * @param outputConsumer User defined consumer to process interpolation output
+     */
+    void apply(T input, Consumer<String> outputConsumer);
 }
