@@ -31,6 +31,11 @@
                 <artifactId>fhir-extension</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>dev.ikm.tinkar.ext.binding</groupId>
+                <artifactId>binding-extension</artifactId>
+                <version>${project.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     
@@ -100,6 +105,12 @@
             <artifactId>fhir-extension</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>dev.ikm.tinkar.ext.binding</groupId>
+            <artifactId>binding-extension</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <profiles>
@@ -127,23 +138,23 @@
                         <configuration>
                             <artifactItems>
                                 <artifactItem>
-                                    <groupId>dev.ikm.build</groupId>
-                                    <artifactId>tinkar-starter-data-reasoned</artifactId>
+                                    <groupId>dev.ikm.tinkar.data</groupId>
+                                    <artifactId>tinkar-starter-data</artifactId>
                                     <version>${tinkar-starter-data.version}</version>
                                     <classifier>pb</classifier>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${project.build.directory}/data</outputDirectory>
                                 </artifactItem>
-                                <!-- todo- need to figure out why the data is not getting pulled from nexus
                                 <artifactItem>
-                                     <groupId>dev.ikm.build</groupId>
-                                     <artifactId>snomedct</artifactId>
-                                     <version>${snomedct-data.version}</version>
-                                     <type>zip</type>
-                                     <overWrite>false</overWrite>
-                                     <outputDirectory>${project.build.directory}/data</outputDirectory>
-                                 </artifactItem>-->
+                                    <groupId>dev.ikm.build</groupId>
+                                    <artifactId>tinkar-starter-data-reasoned</artifactId>
+                                    <version>0.1</version>
+                                    <classifier>pb</classifier>
+                                    <type>zip</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${project.build.directory}/data</outputDirectory>
+                                </artifactItem>
                             </artifactItems>
                             <outputDirectory>${project.build.directory}/data</outputDirectory>
                             <overWriteReleases>false</overWriteReleases>

@@ -13,20 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.terms;
+module dev.ikm.tinkar.ext.binding {
+    requires dev.ikm.tinkar.entity;
+    requires dev.ikm.tinkar.coordinate;
+    requires org.eclipse.collections.api;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
-import java.util.UUID;
-
-class ProxyFactoryTest {
-
-    @Test
-    void create() {
-        EntityProxy ep = EntityProxy.make("\"<te&t>", new UUID[] {UUID.randomUUID()});
-        String xml = ep.toXmlFragment();
-        EntityFacade ep2 = ProxyFactory.fromXmlFragment(xml);
-        Assertions.assertEquals(ep, ep2);
-    }
+    exports dev.ikm.tinkar.ext.binding;
 }
