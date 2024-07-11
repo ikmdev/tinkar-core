@@ -20,6 +20,7 @@ import dev.ikm.tinkar.collection.SpinedByteArrayMap;
 import dev.ikm.tinkar.collection.SpinedIntIntMap;
 import dev.ikm.tinkar.collection.SpinedIntLongArrayMap;
 import dev.ikm.tinkar.common.alert.AlertStreams;
+import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
@@ -273,6 +274,26 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             LOG.error(e.getLocalizedMessage(), e);
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public boolean hasUuid(UUID uuid) {
+        try {
+            this.uuidsLoadedLatch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        return uuidToNidMap.containsKey(uuid);
+    }
+
+    @Override
+    public boolean hasPublicId(PublicId publicId) {
+        try {
+            this.uuidsLoadedLatch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        return publicId.asUuidList().stream().anyMatch(uuidToNidMap::containsKey);
     }
 
     @Override

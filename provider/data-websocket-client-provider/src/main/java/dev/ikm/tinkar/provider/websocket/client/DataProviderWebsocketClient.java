@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.provider.websocket.client;
 
+import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
 import dev.ikm.tinkar.common.service.PrimitiveDataService;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
@@ -143,6 +144,16 @@ public class DataProviderWebsocketClient
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public boolean hasUuid(UUID uuid) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean hasPublicId(PublicId publicId) {
+        throw new UnsupportedOperationException();
     }
 
     @Override

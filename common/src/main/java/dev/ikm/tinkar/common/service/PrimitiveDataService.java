@@ -289,6 +289,10 @@ public interface PrimitiveDataService {
 
     int nidForUuids(ImmutableList<UUID> uuidList);
 
+    boolean hasUuid(UUID uuid);
+
+    boolean hasPublicId(PublicId publicId);
+
     void forEach(ObjIntConsumer<byte[]> action);
 
     void forEachParallel(ObjIntConsumer<byte[]> action);
