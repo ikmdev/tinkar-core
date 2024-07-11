@@ -17,6 +17,7 @@ package dev.ikm.tinkar.provider.ephemeral;
 
 import dev.ikm.tinkar.collection.KeyType;
 import dev.ikm.tinkar.collection.SpinedIntIntMapAtomic;
+import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.NidGenerator;
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
 import dev.ikm.tinkar.common.service.PrimitiveDataService;
@@ -119,6 +120,16 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     @Override
     public int nidForUuids(ImmutableList<UUID> uuidList) {
         return PrimitiveDataService.nidForUuids(uuidNidMap, this, uuidList);
+    }
+
+    @Override
+    public boolean hasUuid(UUID uuid) {
+        return uuidNidMap.containsKey(uuid);
+    }
+
+    @Override
+    public boolean hasPublicId(PublicId publicId) {
+        return publicId.asUuidList().stream().anyMatch(uuidNidMap::containsKey);
     }
 
     @Override

@@ -28,8 +28,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.jar.Manifest;
@@ -176,13 +176,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         }
 
         manifestEntryData.keySet().forEach((publicId) -> {
-            AtomicBoolean isPresent = new AtomicBoolean(false);
-            PrimitiveData.get().forEachConceptNid(nid -> {
-                if (EntityService.get().getEntityFast(nid).publicId().equals(publicId)) {
-                    isPresent.set(true);
-                }
-            });
-            if (!isPresent.get()) {
+            if (!PrimitiveData.get().hasPublicId(publicId)) {
                 LOG.warn("Dependent Module or Author is not Present -" +
                         " PublicId: " + publicId.idString() +
                         " Description: " + manifestEntryData.get(publicId));

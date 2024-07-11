@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.provider.mvstore;
 
+import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
@@ -172,6 +173,16 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     @Override
     public int nidForUuids(ImmutableList<UUID> uuidList) {
         return PrimitiveDataService.nidForUuids(uuidToNidMap, this, uuidList);
+    }
+
+    @Override
+    public boolean hasUuid(UUID uuid) {
+        return uuidToNidMap.containsKey(uuid);
+    }
+
+    @Override
+    public boolean hasPublicId(PublicId publicId) {
+        return publicId.asUuidList().stream().anyMatch(uuidToNidMap::containsKey);
     }
 
     @Override
