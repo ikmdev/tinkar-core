@@ -19,6 +19,7 @@ import com.google.auto.service.AutoService;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.validation.ValidationRecord;
 import dev.ikm.tinkar.common.validation.ValidationSeverity;
+import dev.ikm.tinkar.entity.EntityCountSummary;
 import dev.ikm.tinkar.provider.spinedarray.internal.Get;
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.map.ImmutableMap;
@@ -122,8 +123,8 @@ public class SpinedArrayNewController extends SpinedArrayController {
 
                 ServiceLoader<LoadDataFromFileController> controllerFinder = ServiceLoader.load(LoadDataFromFileController.class);
                 LoadDataFromFileController loader = controllerFinder.findFirst().get();
-                Future<Integer> loadFuture = (Future<Integer>) loader.load(new File(importDataFileString));
-                int count = loadFuture.get();
+                Future<EntityCountSummary> loadFuture = (Future<EntityCountSummary>) loader.load(new File(importDataFileString));
+                EntityCountSummary count = loadFuture.get();
                 Get.singleton.save();
             } catch (InterruptedException | IOException | ExecutionException e) {
                 e.printStackTrace();

@@ -20,6 +20,9 @@ import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.common.service.DataUriOption;
 import dev.ikm.tinkar.common.service.LoadDataFromFileController;
 import dev.ikm.tinkar.common.service.PrimitiveDataService;
+import dev.ikm.tinkar.entity.EntityCountSummary;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -27,8 +30,6 @@ import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @AutoService(DataServiceController.class)
 public class ProviderEphemeralNewController implements DataServiceController<PrimitiveDataService> {
@@ -86,8 +87,8 @@ public class ProviderEphemeralNewController implements DataServiceController<Pri
                 File file = new File(this.dataUriOption.uri());
                 ServiceLoader<LoadDataFromFileController> controllerFinder = ServiceLoader.load(LoadDataFromFileController.class);
                 LoadDataFromFileController loader = controllerFinder.findFirst().get();
-                Future<Integer> loadFuture = (Future<Integer>) loader.load(file);
-                int count = loadFuture.get();
+                Future<EntityCountSummary> loadFuture = (Future<EntityCountSummary>) loader.load(file);
+                EntityCountSummary entityCountSummary = loadFuture.get();
             }
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
