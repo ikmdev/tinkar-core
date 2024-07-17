@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.ServiceLoader;
 import java.util.Set;
 
@@ -109,7 +110,7 @@ public abstract class ElkSnomedTestBase extends PrimitiveDataTestBase {
 		LOG.info("runSnomedReasoner");
 		ElkSnomedData data = buildSnomedData();
 		LOG.info("Create ontology");
-		SnomedOntology ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes());
+		SnomedOntology ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(), List.of());
 		LOG.info("Create reasoner");
 		SnomedOntologyReasoner reasoner = SnomedOntologyReasoner.create(ontology);
 		Files.createDirectories(getWritePath("supercs").getParent());
