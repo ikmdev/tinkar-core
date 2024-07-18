@@ -107,7 +107,7 @@ public class SnomedUS20230901ElkOwlDataBuilderTestIT extends ElkOwlDataBuilderTe
 		// TODO 138875005 |SNOMED CT Concept (SNOMED RT+CTV3)|
 		// TODO 734146004 |OWL ontology namespace (OWL metadata concept)|
 		assertEquals(0, missing_concept_cnt);
-		for (OWLObjectProperty clazz : ontology.getObjectProperties()) {
+		for (OWLObjectProperty clazz : ontology.getOwlObjectProperties()) {
 			long id = SnomedOwlOntology.getId(clazz);
 			UUID uuid = UuidUtil.fromSNOMED("" + id);
 			int nid = PrimitiveData.nid(uuid);

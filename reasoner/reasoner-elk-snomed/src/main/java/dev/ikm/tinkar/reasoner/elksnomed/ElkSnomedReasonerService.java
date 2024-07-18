@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed;
 
+import java.util.List;
 import java.util.Set;
 
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
@@ -27,9 +28,9 @@ import org.slf4j.LoggerFactory;
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.elk.snomed.SnomedOntologyReasoner;
 import dev.ikm.elk.snomed.model.Concept;
-import dev.ikm.tinkar.reasoner.service.ReasonerServiceBase;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.reasoner.service.ReasonerServiceBase;
 import dev.ikm.tinkar.terms.PatternFacade;
 
 public class ElkSnomedReasonerService extends ReasonerServiceBase {
@@ -64,7 +65,7 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	public void loadData() throws Exception {
 		progressUpdater.updateProgress(0, data.getActiveConceptCount());
 		LOG.info("Create ontology");
-		ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes());
+		ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(), List.of());
 		LOG.info("Create reasoner");
 		reasoner = SnomedOntologyReasoner.create(ontology);
 	};

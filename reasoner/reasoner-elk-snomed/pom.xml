@@ -64,6 +64,13 @@
 									<version>2024.05.02</version>
 									<type>zip</type>
 								</artifactItem>
+<!--								<artifactItem>-->
+<!--									<groupId>dev.ikm.tinkar.data</groupId>-->
+<!--									<artifactId>tinkar-starter-data</artifactId>-->
+<!--									<version>1.0.0</version>-->
+<!--									<classifier>pb</classifier>-->
+<!--									<type>zip</type>-->
+<!--								</artifactItem>-->
 							</artifactItems>
 							<outputDirectory>
 								${project.build.directory}/db</outputDirectory>
