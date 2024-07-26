@@ -180,6 +180,16 @@
             <groupId>dev.ikm.tinkar</groupId>
             <artifactId>entity-provider</artifactId>
         </dependency>
+        <dependency>
+            <groupId>dev.ikm.jpms</groupId>
+            <artifactId>hapi-fhir-base</artifactId>
+            <version>7.0.2-r4</version>
+        </dependency>
+        <!--        <dependency>-->
+<!--            <groupId>dev.ikm.jpms</groupId>-->
+<!--            <artifactId>hapi-fhir-base</artifactId>-->
+<!--            <version>7.1.6-SNAPSHOT</version>-->
+<!--        </dependency>-->
 
 
     </dependencies>

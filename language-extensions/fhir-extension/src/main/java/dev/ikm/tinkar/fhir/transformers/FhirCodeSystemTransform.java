@@ -55,6 +55,7 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
     private Date oldestOfTheLatestDate;
     private Date latestOfTheLatestDate;
 
+
     public FhirCodeSystemTransform(StampCalculator stampCalculator, List<ConceptEntity<? extends ConceptEntityVersion>> concepts, Consumer<String> fhirAndProvenanceJson) {
         this(stampCalculator, concepts.stream(), fhirAndProvenanceJson);
     }
@@ -63,7 +64,6 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
         this.stampCalculatorWithCache = stampCalculator;
         this.codeSystem = new CodeSystem();
         this.concepts = concepts;
-
     }
 
     public FhirCodeSystemTransform(long fromDate, long toDate, StampCalculator stampCalculator,
@@ -93,6 +93,7 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
             latestOfTheLatestDate = date;
         }
     }
+
 
     private void forEachSemanticForComponent(int conceptNid){
         Latest<EntityVersion> latestConceptVersion = stampCalculatorWithCache.latest(conceptNid);
@@ -174,13 +175,13 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
 
         Provenance provenance = FhirProvenanceTransform.provenanceTransform("CodeSystem/"+codeSystem.getId(), fromDate, toDate);
         Bundle bundle = new Bundle();
-        bundle.setType(Bundle.BundleType.COLLECTION);
+        bundle.setType(Bundle.BundleType.TRANSACTION);
         bundle.addEntry()
                 .setResource(codeSystem)
-                .setFullUrl("urn:uuid:" + codeSystem.getIdElement().getValue());
+                .setFullUrl(codeSystem.getResourceType().name() + "/" + codeSystem.getIdElement().getValue());
         bundle.addEntry()
                 .setResource(provenance)
-              .setFullUrl("urn:uuid:"+provenance.getIdElement().getValue());
+                .setFullUrl(provenance.getResourceType().name() + "/" +provenance.getIdElement().getValue());
 
         FhirContext ctx = FhirContext.forR4();
         IParser parser = ctx.newJsonParser();

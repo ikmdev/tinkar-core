@@ -15,6 +15,9 @@
  */
 package dev.ikm.tinkar.fhir.transformers;
 
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.rest.client.api.IGenericClient;
+import dev.ikm.tinkar.component.SemanticVersion;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.EntityService;
@@ -23,15 +26,9 @@ import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.hl7.fhir.r4.model.CodeSystem;
-import org.hl7.fhir.r4.model.CodeableConcept;
-import org.hl7.fhir.r4.model.Coding;
-import org.hl7.fhir.r4.model.Extension;
+import org.hl7.fhir.r4.model.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static dev.ikm.tinkar.fhir.transformers.FhirConstants.*;
@@ -43,6 +40,7 @@ public class FhirDescriptionTransformation {
     Map<String, String> caseSencitivityCodes;
     Map<String, String> acceptabilityCodes;
     Map<String, String> descriptionTypeCodes;
+    private IGenericClient fhirClient;
     public FhirDescriptionTransformation(StampCalculator stampCalculatorWithCache) {
         this.stampCalculatorWithCache = stampCalculatorWithCache;
         caseSencitivityCodes = new HashMap<>();
@@ -59,9 +57,66 @@ public class FhirDescriptionTransformation {
         descriptionTypeCodes.put(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.publicId().asUuidArray()[0].toString(), FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE_SNOMEDID);
         descriptionTypeCodes.put(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.publicId().asUuidArray()[0].toString(), REGULAR_NAME_DESCRIPTION_TYPE_SNOMEDID);
     }
+    public void codeSystemService(String fhirServerBase){
+        FhirContext fhirContext=FhirContext.forR4();
+        fhirClient = fhirContext.newRestfulGenericClient(fhirServerBase);
+    }
+
+    public Optional<CodeSystem> getLatestCodeSystem(){
+        CodeSystem latestCodeSystem = fetchLatestCodeSystemFromFHIRServer();
+        return Optional.ofNullable(latestCodeSystem);
+    }
+
+    private CodeSystem fetchLatestCodeSystemFromFHIRServer() {
+        Bundle bundle = fhirClient.search()
+                .forResource(CodeSystem.class)
+                .sort()
+                .descending(CodeSystem.SP_DATE)
+                .returnBundle(Bundle.class)
+                .execute();
+
+        if(bundle.hasEntry()){
+            return (CodeSystem)
+                    bundle.getEntryFirstRep().getResource();
+        }else return null;
+    }
 
     public List<CodeSystem.ConceptDefinitionDesignationComponent> transformDescription(SemanticEntity<SemanticEntityVersion> descriptionSemantic) {
         return descriptionAcceptability(descriptionSemantic);
+    }
+
+    public List<SemanticEntityVersion> descriptionAcceptabilityFhir(CodeSystem codeSystem, SemanticEntity<SemanticEntityVersion> descriptionSemantic){
+        List<SemanticEntityVersion> tinkarSemanticVersions = new ArrayList<>();
+
+        for (CodeSystem.ConceptDefinitionComponent conceptDefinition: codeSystem.getConcept()) {
+            for (CodeSystem.ConceptDefinitionDesignationComponent designation: conceptDefinition.getDesignation()){
+
+                String language=designation.getLanguage();
+                String value=designation.getValue();
+
+                EntityService.get().forEachSemanticForComponent(descriptionSemantic.nid(), (languageSemantic) -> {
+                    Optional<CodeSystem> latestCodeSystem=getLatestCodeSystem();
+                    //checking if language is an instance of acceptability concept
+                    latestCodeSystem.ifPresent(codeSystemLanguage -> {
+                        if (designation.hasLanguage() && designation.hasExtension(DESCRIPTION_ACCEPTABILITY_URL)){
+                            Extension acceptabilityExtension= designation.getExtensionByUrl(DESCRIPTION_ACCEPTABILITY_URL);
+                            if (acceptabilityExtension != null && acceptabilityExtension.getValue() instanceof CodeableConcept){
+                                CodeableConcept acceptabilityConcept = (CodeableConcept) acceptabilityExtension.getValue();
+                                //set the language for tinkar description "en"
+                                for (Coding coding: acceptabilityConcept.getCoding()) {
+                                    if (coding.getCode().equals(language)){
+                                        if (TinkarTerm.US_DIALECT_PATTERN.nid() == languageSemantic.patternNid()){
+                                            //how to get description lang to set
+                                            //see composer api
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+        }
     }
 
     private List<CodeSystem.ConceptDefinitionDesignationComponent> descriptionAcceptability(SemanticEntity<SemanticEntityVersion> descriptionSemantic) {

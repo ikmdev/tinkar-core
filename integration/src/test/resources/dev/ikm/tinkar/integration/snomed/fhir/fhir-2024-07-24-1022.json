@@ -1,0 +1,1232 @@
+{
+  "resourceType": "Bundle",
+  "type": "collection",
+  "entry": [ {
+    "fullUrl": "urn:uuid:c450945e-4872-4293-8c79-242319d85327",
+    "resource": {
+      "resourceType": "CodeSystem",
+      "id": "c450945e-4872-4293-8c79-242319d85327",
+      "meta": {
+        "lastUpdated": "2024-07-24T10:22:27.663-04:00"
+      },
+      "extension": [ {
+        "url": "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+        "valueCode": "fhir"
+      } ],
+      "url": "http://snomed.info/sctVAExtension",
+      "identifier": [ {
+        "system": "urn:ietf:rfc:3986",
+        "value": "urn:oid:2.16.840.1.113883.6.96"
+      } ],
+      "name": "SNOMED_CT",
+      "title": "SNOMED CT (all versions)",
+      "status": "active",
+      "experimental": false,
+      "publisher": "IHTSDO",
+      "contact": [ {
+        "telecom": [ {
+          "system": "url",
+          "value": "http://ihtsdo.org"
+        } ]
+      } ],
+      "description": "SNOMED CT is the most comprehensive and precise clinical health terminology product in the world, owned and distributed around the world by The International Health Terminology Standards Development Organisation (IHTSDO).",
+      "copyright": "© 2002-2016 International Health Terminology Standards Development Organisation (IHTSDO). All rights reserved. SNOMED CT®, was originally created by The College of American Pathologists. \\\"SNOMED\\\" and \\\"SNOMED CT\\\" are registered trademarks of the IHTSDO http://www.ihtsdo.org/snomed-ct/get-snomed-ct",
+      "caseSensitive": false,
+      "hierarchyMeaning": "is-a",
+      "compositional": true,
+      "versionNeeded": false,
+      "content": "fragment",
+      "filter": [ {
+        "code": "concept",
+        "description": "Filter that includes concepts based on their logical definition. e.g. [concept] [is-a] [x] - include all concepts with an is-a relationship to concept x, or [concept] [in] [x]- include all concepts in the reference set identified by concept x",
+        "operator": [ "is-a", "in" ],
+        "value": "A SNOMED CT code"
+      }, {
+        "code": "expression",
+        "description": "The result of the filter is the result of executing the given SNOMED CT Expression Constraint",
+        "operator": [ "=" ],
+        "value": "A SNOMED CT ECL expression (see http://snomed.org/ecl)"
+      }, {
+        "code": "expressions",
+        "description": "Whether post-coordinated expressions are included in the value set",
+        "operator": [ "=" ],
+        "value": "true or false"
+      } ],
+      "property": [ {
+        "code": "Priority",
+        "uri": "http://snomed.info/id/260870009",
+        "type": "code"
+      }, {
+        "code": "Access",
+        "uri": "http://snomed.info/id/260507000",
+        "type": "code"
+      }, {
+        "code": "Procedure site",
+        "uri": "http://snomed.info/id/363704007",
+        "type": "code"
+      }, {
+        "code": "Is a",
+        "uri": "http://snomed.info/id/116680003",
+        "type": "code"
+      }, {
+        "code": "Status",
+        "uri": "Status value: [10b873e2-8247-5ab5-9dec-4edef37fc219]",
+        "type": "code"
+      }, {
+        "code": "OWL Stated Axiom",
+        "type": "string"
+      } ],
+      "concept": [ {
+        "extension": [ {
+          "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/codesystem-concept-additional-identifier",
+          "valueIdentifier": {
+            "system": "https://www.ikm.dev/",
+            "value": "23e07078-f1e2-3f6a-9b7a-9397bcd91cfe"
+          }
+        }, {
+          "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/codesystem-concept-additional-identifier",
+          "valueIdentifier": {
+            "system": "http://snomed.info/sct",
+            "value": "413839001"
+          }
+        } ],
+        "code": "413839001",
+        "designation": [ {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000448009",
+                "display": "Case insensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000548007",
+                "display": "Preferred"
+              } ]
+            }
+          } ],
+          "language": "en-GB",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000003001",
+            "display": "Fully qualified name"
+          },
+          "value": "Chronic lung disease (disorder) -test"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000448009",
+                "display": "Case insensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000548007",
+                "display": "Preferred"
+              } ]
+            }
+          } ],
+          "language": "en-US",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000003001",
+            "display": "Fully qualified name"
+          },
+          "value": "Chronic lung disease (disorder) -test"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000448009",
+                "display": "Case insensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000548007",
+                "display": "Preferred"
+              } ]
+            }
+          } ],
+          "language": "en-US",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "Chronic lung disease"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000448009",
+                "display": "Case insensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000548007",
+                "display": "Preferred"
+              } ]
+            }
+          } ],
+          "language": "en-GB",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "Chronic lung disease"
+        } ],
+        "property": [ {
+          "code": "Axiom Syntax Pattern",
+          "valueString": "EquivalentClasses(:[23e07078-f1e2-3f6a-9b7a-9397bcd91cfe] ObjectIntersectionOf(:[ab4e618b-b954-3d56-a44b-f0f29d6f59d3] ObjectSomeValuesFrom(:[051fbfed-3c40-3130-8c09-889cb7b7b5b6] ObjectSomeValuesFrom(:[0d8a9cbb-e21e-3de7-9aad-8223c000849f] :[0a0507f5-0268-357a-8b6c-a84fabafbf6e])) ObjectSomeValuesFrom(:[051fbfed-3c40-3130-8c09-889cb7b7b5b6] ObjectSomeValuesFrom(:[3a6d919d-6c25-3aae-9bc3-983ead83a928] :[44a7e2f1-d05e-3f21-b4a6-19ee9a62dd12]))))"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/defining-relationship-type",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000010007",
+                "display": "Stated"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/el-profile-set-operator",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000073002",
+                "display": "Sufficient concept definition"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/role-group",
+            "valueInteger": 0
+          } ],
+          "code": "Is a",
+          "valueCoding": {
+            "system": "http://snomed.info/sct",
+            "code": "64572001",
+            "display": "Disease"
+          }
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/defining-relationship-type",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000010007",
+                "display": "Stated"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/el-profile-set-operator",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000073002",
+                "display": "Sufficient concept definition"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/role-group",
+            "valueInteger": 0
+          } ],
+          "code": "Clinical course",
+          "valueCoding": {
+            "system": "http://snomed.info/sct",
+            "code": "90734009",
+            "display": "Chronic"
+          }
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/defining-relationship-type",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000010007",
+                "display": "Stated"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/el-profile-set-operator",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000073002",
+                "display": "Sufficient concept definition"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/role-group",
+            "valueInteger": 0
+          } ],
+          "code": "Finding site",
+          "valueCoding": {
+            "system": "http://snomed.info/sct",
+            "code": "39607008",
+            "display": "Lung"
+          }
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/defining-relationship-type",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000010007",
+                "display": "Stated"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/el-profile-set-operator",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000073002",
+                "display": "Sufficient concept definition"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/role-group",
+            "valueInteger": 0
+          } ],
+          "code": "Is a",
+          "valueCoding": {
+            "system": "http://snomed.info/sct",
+            "code": "64572001",
+            "display": "Disease"
+          }
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/defining-relationship-type",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000010007",
+                "display": "Stated"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/el-profile-set-operator",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000073002",
+                "display": "Sufficient concept definition"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/role-group",
+            "valueInteger": 0
+          } ],
+          "code": "Clinical course",
+          "valueCoding": {
+            "system": "http://snomed.info/sct",
+            "code": "90734009",
+            "display": "Chronic"
+          }
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/defining-relationship-type",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000010007",
+                "display": "Stated"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/el-profile-set-operator",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000073002",
+                "display": "Sufficient concept definition"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/role-group",
+            "valueInteger": 0
+          } ],
+          "code": "Finding site",
+          "valueCoding": {
+            "system": "http://snomed.info/sct",
+            "code": "39607008",
+            "display": "Lung"
+          }
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/defining-relationship-type",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000011006",
+                "display": "Inferred relationship"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/el-profile-set-operator",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000074008",
+                "display": "Necessary but not sufficient concept definition"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/role-group",
+            "valueInteger": 0
+          } ],
+          "code": "Is a",
+          "valueCoding": {
+            "system": "http://snomed.info/sct",
+            "code": "17097001",
+            "display": "Chronic respiratory disease"
+          }
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/defining-relationship-type",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000011006",
+                "display": "Inferred relationship"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/el-profile-set-operator",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000074008",
+                "display": "Necessary but not sufficient concept definition"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/role-group",
+            "valueInteger": 0
+          } ],
+          "code": "Is a",
+          "valueCoding": {
+            "system": "http://snomed.info/sct",
+            "code": "19829001",
+            "display": "Disease of lung"
+          }
+        }, {
+          "code": "Status",
+          "valueCoding": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000545005",
+            "display": "Active value"
+          }
+        } ]
+      }, {
+        "extension": [ {
+          "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/codesystem-concept-additional-identifier",
+          "valueIdentifier": {
+            "system": "https://www.ikm.dev/",
+            "value": "3335ecb4-8b83-33d6-b899-07ab3e1e5232"
+          }
+        }, {
+          "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/codesystem-concept-additional-identifier",
+          "valueIdentifier": {
+            "system": "http://snomed.info/sct",
+            "value": "86903007"
+          }
+        } ],
+        "code": "86903007",
+        "designation": [ {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000017005",
+                "display": "Case sensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000548007",
+                "display": "Preferred"
+              } ]
+            }
+          } ],
+          "language": "en-US",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "T-lymphotropic virus-test"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000017005",
+                "display": "Case sensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000548007",
+                "display": "Preferred"
+              } ]
+            }
+          } ],
+          "language": "en-GB",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "T-lymphotropic virus-test"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000020002",
+                "display": "Initial character case insensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000549004",
+                "display": "Acceptable"
+              } ]
+            }
+          } ],
+          "language": "en-GB",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "T-lymphotropic virus, NOS"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000020002",
+                "display": "Initial character case insensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000549004",
+                "display": "Acceptable"
+              } ]
+            }
+          } ],
+          "language": "en-US",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "T-lymphotropic virus, NOS"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000020002",
+                "display": "Initial character case insensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000549004",
+                "display": "Acceptable"
+              } ]
+            }
+          } ],
+          "language": "en-GB",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "Human T-lymphotropic virus, type III (HTLV-III)"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000020002",
+                "display": "Initial character case insensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000549004",
+                "display": "Acceptable"
+              } ]
+            }
+          } ],
+          "language": "en-US",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "Human T-lymphotropic virus, type III (HTLV-III)"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000020002",
+                "display": "Initial character case insensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000549004",
+                "display": "Acceptable"
+              } ]
+            }
+          } ],
+          "language": "en-GB",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "Lymphadenopathy-associated virus, type I (LAV-I)"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000020002",
+                "display": "Initial character case insensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000549004",
+                "display": "Acceptable"
+              } ]
+            }
+          } ],
+          "language": "en-US",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "Lymphadenopathy-associated virus, type I (LAV-I)"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000020002",
+                "display": "Initial character case insensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000549004",
+                "display": "Acceptable"
+              } ]
+            }
+          } ],
+          "language": "en-US",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "Lymphadenopathy-associated virus (LAV)"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000020002",
+                "display": "Initial character case insensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000549004",
+                "display": "Acceptable"
+              } ]
+            }
+          } ],
+          "language": "en-GB",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "Lymphadenopathy-associated virus (LAV)"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000020002",
+                "display": "Initial character case insensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000548007",
+                "display": "Preferred"
+              } ]
+            }
+          } ],
+          "language": "en-GB",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "Human immunodeficiency virus, NOS"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000020002",
+                "display": "Initial character case insensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000549004",
+                "display": "Acceptable"
+              } ]
+            }
+          } ],
+          "language": "en-GB",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "Human immunodeficiency virus, NOS"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000020002",
+                "display": "Initial character case insensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000548007",
+                "display": "Preferred"
+              } ]
+            }
+          } ],
+          "language": "en-US",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "Human immunodeficiency virus, NOS"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000020002",
+                "display": "Initial character case insensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000549004",
+                "display": "Acceptable"
+              } ]
+            }
+          } ],
+          "language": "en-US",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "Human immunodeficiency virus, NOS"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000017005",
+                "display": "Case sensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000549004",
+                "display": "Acceptable"
+              } ]
+            }
+          } ],
+          "language": "en-GB",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "HIV"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000017005",
+                "display": "Case sensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000549004",
+                "display": "Acceptable"
+              } ]
+            }
+          } ],
+          "language": "en-US",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "HIV"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000017005",
+                "display": "Case sensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000549004",
+                "display": "Acceptable"
+              } ]
+            }
+          } ],
+          "language": "en-US",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "AIDS virus"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000017005",
+                "display": "Case sensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000549004",
+                "display": "Acceptable"
+              } ]
+            }
+          } ],
+          "language": "en-GB",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "AIDS virus"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000017005",
+                "display": "Case sensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000549004",
+                "display": "Acceptable"
+              } ]
+            }
+          } ],
+          "language": "en-US",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "HTLV-3 - Human T-cell lymphotropic virus type 3"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000017005",
+                "display": "Case sensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000549004",
+                "display": "Acceptable"
+              } ]
+            }
+          } ],
+          "language": "en-GB",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "HTLV-3 - Human T-cell lymphotropic virus type 3"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000017005",
+                "display": "Case sensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000549004",
+                "display": "Acceptable"
+              } ]
+            }
+          } ],
+          "language": "en-GB",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "HIV1 - Human immunodeficiency virus type 1"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000017005",
+                "display": "Case sensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000549004",
+                "display": "Acceptable"
+              } ]
+            }
+          } ],
+          "language": "en-US",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "HIV1 - Human immunodeficiency virus type 1"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000020002",
+                "display": "Initial character case insensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000549004",
+                "display": "Acceptable"
+              } ]
+            }
+          } ],
+          "language": "en-US",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "Human T-cell lymphotropic virus 3"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000020002",
+                "display": "Initial character case insensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000549004",
+                "display": "Acceptable"
+              } ]
+            }
+          } ],
+          "language": "en-GB",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000013009",
+            "display": "Regular name description type"
+          },
+          "value": "Human T-cell lymphotropic virus 3"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000017005",
+                "display": "Case sensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000548007",
+                "display": "Preferred"
+              } ]
+            }
+          } ],
+          "language": "en-US",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000003001",
+            "display": "Fully qualified name"
+          },
+          "value": "T-lymphotropic virus (organism)"
+        }, {
+          "extension": [ {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-case-sensitivity",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000017005",
+                "display": "Case sensitive"
+              } ]
+            }
+          }, {
+            "url": "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/description-acceptability",
+            "valueCodeableConcept": {
+              "coding": [ {
+                "system": "http://snomed.info/sct",
+                "code": "900000000000548007",
+                "display": "Preferred"
+              } ]
+            }
+          } ],
+          "language": "en-GB",
+          "use": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000003001",
+            "display": "Fully qualified name"
+          },
+          "value": "T-lymphotropic virus (organism)"
+        } ],
+        "property": [ {
+          "code": "Status",
+          "valueCoding": {
+            "system": "http://snomed.info/sct",
+            "code": "900000000000546006",
+            "display": "Inactive value"
+          }
+        } ]
+      } ]
+    }
+  }, {
+    "fullUrl": "urn:uuid:6f75e567-f2ef-4e95-83a5-fd13ebd773cf",
+    "resource": {
+      "resourceType": "Provenance",
+      "id": "6f75e567-f2ef-4e95-83a5-fd13ebd773cf",
+      "meta": {
+        "profile": [ "https://hl7.org/fhir/uv/termchangeset/StructureDefinition/terminology-changeset-provenance-profile" ]
+      },
+      "target": [ {
+        "reference": "CodeSystem/c450945e-4872-4293-8c79-242319d85327"
+      } ],
+      "occurredPeriod": {
+        "start": "2024-07-23T12:00:00-04:00",
+        "end": "2024-07-24T12:00:00-04:00"
+      },
+      "recorded": "2024-07-24T10:22:27.685-04:00",
+      "reason": [ {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-ActReason",
+          "code": "METAMGT"
+        } ]
+      } ],
+      "activity": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/v3-DataOperation",
+          "code": "UPDATE"
+        } ]
+      },
+      "agent": [ {
+        "type": {
+          "coding": [ {
+            "system": "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+            "code": "author"
+          } ]
+        },
+        "who": {
+          "display": "User (SOLOR)"
+        }
+      }, {
+        "type": {
+          "coding": [ {
+            "system": "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+            "code": "custodian"
+          } ]
+        },
+        "who": {
+          "display": "Integrated Knowledge Management"
+        }
+      } ],
+      "entity": [ {
+        "role": "revision",
+        "what": {
+          "reference": "http://snomed.info/sct/731000124108/version/20240404",
+          "display": "EvidenceVariableRole"
+        }
+      } ]
+    }
+  } ]
+}
