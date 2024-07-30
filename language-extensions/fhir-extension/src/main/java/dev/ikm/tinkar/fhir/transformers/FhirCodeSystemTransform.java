@@ -48,10 +48,8 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
     private final Stream<ConceptEntity<? extends ConceptEntityVersion>> concepts;
     private final CodeSystem codeSystem;
     private final Consumer<String> fhirAndProvenanceJson;
-
     private Date fromDate;
     private Date toDate;
-
     private Date oldestOfTheLatestDate;
     private Date latestOfTheLatestDate;
 

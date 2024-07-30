@@ -15,15 +15,19 @@
  */
 package dev.ikm.tinkar.fhir.transformers;
 
-import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
-import dev.ikm.tinkar.component.SemanticVersion;
+import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.composer.ComposerSession;
+import dev.ikm.tinkar.composer.template.FullyQualifiedName;
+import dev.ikm.tinkar.composer.template.USEnglishDialect;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.fhir.r4.model.*;
@@ -57,10 +61,10 @@ public class FhirDescriptionTransformation {
         descriptionTypeCodes.put(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.publicId().asUuidArray()[0].toString(), FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE_SNOMEDID);
         descriptionTypeCodes.put(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.publicId().asUuidArray()[0].toString(), REGULAR_NAME_DESCRIPTION_TYPE_SNOMEDID);
     }
-    public void codeSystemService(String fhirServerBase){
-        FhirContext fhirContext=FhirContext.forR4();
-        fhirClient = fhirContext.newRestfulGenericClient(fhirServerBase);
-    }
+//    public void codeSystemService(String fhirServerBase){
+//        FhirContext fhirContext=FhirContext.forR4();
+//        fhirClient = fhirContext.newRestfulGenericClient(fhirServerBase);
+//    }
 
     public Optional<CodeSystem> getLatestCodeSystem(){
         CodeSystem latestCodeSystem = fetchLatestCodeSystemFromFHIRServer();
@@ -85,30 +89,35 @@ public class FhirDescriptionTransformation {
         return descriptionAcceptability(descriptionSemantic);
     }
 
-    public List<SemanticEntityVersion> descriptionAcceptabilityFhir(CodeSystem codeSystem, SemanticEntity<SemanticEntityVersion> descriptionSemantic){
-        List<SemanticEntityVersion> tinkarSemanticVersions = new ArrayList<>();
+    public ComposerSession descriptionAcceptabilityFhir(CodeSystem codeSystem, SemanticEntity<SemanticEntityVersion> descriptionSemantic){
+        State status = State.ACTIVE;
+        long time = PrimitiveData.PREMUNDANE_TIME;
+        EntityProxy.Concept author = TinkarTerm.USER;
+        EntityProxy.Concept module = TinkarTerm.PRIMORDIAL_MODULE;
+        EntityProxy.Concept path = TinkarTerm.PRIMORDIAL_PATH;
+        ComposerSession session = new ComposerSession(status, time, author, module, path);
 
         for (CodeSystem.ConceptDefinitionComponent conceptDefinition: codeSystem.getConcept()) {
             for (CodeSystem.ConceptDefinitionDesignationComponent designation: conceptDefinition.getDesignation()){
-
-                String language=designation.getLanguage();
-                String value=designation.getValue();
-
                 EntityService.get().forEachSemanticForComponent(descriptionSemantic.nid(), (languageSemantic) -> {
                     Optional<CodeSystem> latestCodeSystem=getLatestCodeSystem();
                     //checking if language is an instance of acceptability concept
                     latestCodeSystem.ifPresent(codeSystemLanguage -> {
                         if (designation.hasLanguage() && designation.hasExtension(DESCRIPTION_ACCEPTABILITY_URL)){
                             Extension acceptabilityExtension= designation.getExtensionByUrl(DESCRIPTION_ACCEPTABILITY_URL);
-                            if (acceptabilityExtension != null && acceptabilityExtension.getValue() instanceof CodeableConcept){
-                                CodeableConcept acceptabilityConcept = (CodeableConcept) acceptabilityExtension.getValue();
-                                //set the language for tinkar description "en"
+                            if (acceptabilityExtension != null && acceptabilityExtension.getValue() instanceof CodeableConcept acceptabilityConcept){
+                                //set the language for tinkar description "en-US" or "en-GB"
                                 for (Coding coding: acceptabilityConcept.getCoding()) {
-                                    if (coding.getCode().equals(language)){
-                                        if (TinkarTerm.US_DIALECT_PATTERN.nid() == languageSemantic.patternNid()){
-                                            //how to get description lang to set
-                                            //see composer api
-                                        }
+                                    if (designation.getLanguage().equals("en-US")) {
+                                        EntityProxy.Concept acceptabilityUS = EntityProxy.Concept.make(coding.getDisplay(), UUID.nameUUIDFromBytes(coding.getDisplay().getBytes()));
+                                        session.composeConcept(acceptabilityUS)
+                                                .with(new FullyQualifiedName(EntityProxy.Semantic.make(PublicIds.newRandom()), TinkarTerm.ENGLISH_LANGUAGE, acceptabilityExtension.getValue().toString(), TinkarTerm.DESCRIPTION_ACCEPTABILITY)
+                                                        .with(new USEnglishDialect(EntityProxy.Semantic.make(PublicIds.newRandom()), TinkarTerm.PREFERRED)));
+                                    } else if (designation.getLanguage().equals("en-GB")) {
+                                        EntityProxy.Concept acceptabilityGB = EntityProxy.Concept.make(coding.getDisplay(), UUID.nameUUIDFromBytes(coding.getDisplay().getBytes()));
+                                        session.composeConcept(acceptabilityGB)
+                                                .with(new FullyQualifiedName(EntityProxy.Semantic.make(PublicIds.newRandom()), TinkarTerm.GB_ENGLISH_DIALECT, acceptabilityExtension.getValue().toString(), TinkarTerm.DESCRIPTION_ACCEPTABILITY)
+                                                        .with(new USEnglishDialect(EntityProxy.Semantic.make(PublicIds.newRandom()), TinkarTerm.PREFERRED)));
                                     }
                                 }
                             }
@@ -117,6 +126,7 @@ public class FhirDescriptionTransformation {
                 });
             }
         }
+        return session;
     }
 
     private List<CodeSystem.ConceptDefinitionDesignationComponent> descriptionAcceptability(SemanticEntity<SemanticEntityVersion> descriptionSemantic) {
