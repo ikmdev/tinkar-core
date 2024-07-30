@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+
 import java.util.ServiceLoader;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -63,9 +64,9 @@ public class PrimitiveData {
 
     public static void start() {
         controllerSingleton.start();
-        ServiceLoader<DefaultDescriptionForNidService> loader = ServiceLoader.load(DefaultDescriptionForNidService.class);
+        ServiceLoader<DefaultDescriptionForNidService> loader = PluggableService.load(DefaultDescriptionForNidService.class);
         PrimitiveData.defaultDescriptionForNidServiceSingleton = loader.findFirst().get();
-        ServiceLoader<PublicIdService> publicIdLoader = ServiceLoader.load(PublicIdService.class);
+        ServiceLoader<PublicIdService> publicIdLoader = PluggableService.load(PublicIdService.class);
         PrimitiveData.publicIdServiceSingleton = publicIdLoader.findFirst().get();
         LOG.info("Default desc service: " + defaultDescriptionForNidServiceSingleton);
     }
@@ -114,7 +115,7 @@ public class PrimitiveData {
     }
 
     public static List<DataServiceController> getControllerOptions() {
-        final List<DataServiceController> dataServiceControllers = ServiceLoader.load(DataServiceController.class)
+        final List<DataServiceController> dataServiceControllers = PluggableService.load(DataServiceController.class)
                 .stream().map(dataServiceControllerProvider -> dataServiceControllerProvider.get()).toList();
         return dataServiceControllers;
     }
@@ -132,7 +133,7 @@ public class PrimitiveData {
         DataServiceController<PrimitiveDataService> topContender = null;
         int topScore = -1;
         int controllerCount = 0;
-        ServiceLoader<DataServiceController> loader = ServiceLoader.load(DataServiceController.class);
+        ServiceLoader<DataServiceController> loader = PluggableService.load(DataServiceController.class);
         for (DataServiceController controller : loader) {
             if (PrimitiveDataService.class.isAssignableFrom(controller.serviceClass())) {
                 controllerCount++;

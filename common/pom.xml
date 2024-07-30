@@ -12,17 +12,19 @@
     <packaging>jar</packaging>
     <name>TINKAR Common</name>
 
+    <properties>
+        <plugin-boot-layer-module.version>1.0-SNAPSHOT</plugin-boot-layer-module.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>roaringbitmap</artifactId>
         </dependency>
-
         <dependency>
             <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>activej-bytebuf</artifactId>
         </dependency>
-
         <dependency>
             <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>activej-common</artifactId>

@@ -17,6 +17,8 @@ package dev.ikm.tinkar.entity;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import dev.ikm.tinkar.common.service.PluggableService;
+
 import java.util.ServiceLoader;
 import java.util.concurrent.Future;
 
@@ -27,19 +29,19 @@ public enum EntityMergeServiceFinder {
 
     EntityMergeServiceFinder() {
         Class serviceClass = EntityMergeService.class;
-        ServiceLoader<EntityMergeService> serviceLoader = ServiceLoader.load(serviceClass);
+        ServiceLoader<EntityMergeService> serviceLoader = PluggableService.load(serviceClass);
         Optional<EntityMergeService> optionalService = serviceLoader.findFirst();
         if (optionalService.isPresent()) {
             this.service = optionalService.get();
         } else {
             throw new NoSuchElementException("No " + serviceClass.getName() +
-                    " found by ServiceLoader...");
+                    " found by PluggableService...");
         }
     }
 
     public static EntityMergeService get() {
         if (INSTANCE.service == null) {
-            throw new NoSuchElementException("No EntityMergeService found by ServiceLoader...");
+            throw new NoSuchElementException("No EntityMergeService found by PluggableService...");
         }
         return INSTANCE.service;
     }

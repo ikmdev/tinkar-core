@@ -28,7 +28,7 @@ public interface CachingService {
     Logger LOG = LoggerFactory.getLogger(CachingService.class);
 
     static void clearAll() {
-        ServiceLoader<CachingService> serviceLoader = ServiceLoader.load(CachingService.class);
+        ServiceLoader<CachingService> serviceLoader = PluggableService.load(CachingService.class);
         serviceLoader.forEach(cachingService -> {
             LOG.info("Resetting cache: " + cachingService.getClass().getName());
             cachingService.reset();

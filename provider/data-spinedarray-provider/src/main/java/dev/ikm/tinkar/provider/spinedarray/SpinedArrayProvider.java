@@ -67,7 +67,8 @@ import java.util.function.ObjIntConsumer;
 /**
  * Maybe a hybrid of SpinedArrayProvider and MVStoreProvider is worth considering.
  * <p>
- * SpinedArrayProvider is performing horribly becuase of dependency on ConcurrentUuidIntHashMap serilization.
+ * SpinedArrayProvider is performing horribly because of dependency on ConcurrentUuidIntHashMap serialization.
+ * TODO: consider if we remove ConcurrentUuidIntHashMap, or improve.
  * <p>
  * MVStore performs worse when iterating over entities.
  */
@@ -152,6 +153,16 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         stopwatch.stop();
         LOG.info("Opened SpinedArrayProvider in: " + stopwatch.durationString());
 
+    }
+
+    @Override
+    public boolean hasUuid(UUID uuid) {
+        try {
+            this.uuidsLoadedLatch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        return uuidToNidMap.containsKey(uuid);
     }
 
     private void listAndCancelUncommittedStamps() {
@@ -274,16 +285,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             LOG.error(e.getLocalizedMessage(), e);
             throw new RuntimeException(e);
         }
-    }
-
-    @Override
-    public boolean hasUuid(UUID uuid) {
-        try {
-            this.uuidsLoadedLatch.await();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        return uuidToNidMap.containsKey(uuid);
     }
 
     @Override
