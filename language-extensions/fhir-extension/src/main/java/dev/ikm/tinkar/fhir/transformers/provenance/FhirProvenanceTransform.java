@@ -28,7 +28,6 @@ import static dev.ikm.tinkar.fhir.transformers.FhirConstants.*;
 
 public class FhirProvenanceTransform {
 
-
     public static Provenance provenanceTransform(String reference, Date oldestOfTheLatestDate, Date latestOfTheLatestDate){
         Provenance provenance = new Provenance();
         provenance.setId(UUID.randomUUID().toString());

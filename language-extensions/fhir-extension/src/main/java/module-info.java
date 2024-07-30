@@ -40,6 +40,7 @@ import dev.ikm.tinkar.entity.StampService;
     requires org.eclipse.collections.api;
     requires dev.ikm.tinkar.provider.entity;
     requires dev.ikm.tinkar.coordinate;
+    requires dev.ikm.tinkar.composer;
 
     exports dev.ikm.tinkar.fhir.transformers;
 
