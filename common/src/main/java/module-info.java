@@ -22,6 +22,8 @@
 import dev.ikm.tinkar.common.alert.AlertReportingService;
 import dev.ikm.tinkar.common.service.*;
 
+import java.util.ServiceLoader;
+
 @SuppressWarnings("module")
         // 7 in HL7 is not a version reference
 module dev.ikm.tinkar.common {
@@ -33,6 +35,7 @@ module dev.ikm.tinkar.common {
     requires org.roaringbitmap;
     requires org.slf4j;
     requires static com.google.auto.service;
+
 
     exports dev.ikm.tinkar.common.alert;
     exports dev.ikm.tinkar.common.binary;
@@ -63,5 +66,6 @@ module dev.ikm.tinkar.common {
     uses DataServiceController;
     uses DefaultDescriptionForNidService;
     uses ExecutorController;
+    uses PluginServiceLoader;
     uses PublicIdService;
 }

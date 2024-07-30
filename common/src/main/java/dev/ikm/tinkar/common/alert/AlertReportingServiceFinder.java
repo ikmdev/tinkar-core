@@ -26,14 +26,14 @@ public enum AlertReportingServiceFinder {
 
     AlertReportingServiceFinder() {
         Class serviceClass = AlertReportingService.class;
-        ServiceLoader<AlertReportingService> serviceLoader = ServiceLoader.load(serviceClass);
-        Optional<AlertReportingService> optionalService = serviceLoader.findFirst();
+        ServiceLoader<AlertReportingService> PluggableServiceLoader = ServiceLoader.load(serviceClass);
+        Optional<AlertReportingService> optionalService = PluggableServiceLoader.findFirst();
         if (optionalService.isPresent()) {
             this.service = optionalService.get();
 
         } else {
             throw new NoSuchElementException("No " + serviceClass.getName() +
-                    " found by ServiceLoader...");
+                    " found by PluggableService...");
         }
     }
 

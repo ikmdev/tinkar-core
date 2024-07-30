@@ -21,6 +21,8 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.ServiceLoader;
 
+import dev.ikm.tinkar.common.service.PluggableService;
+
 public enum EntityServiceFinder {
     INSTANCE;
 
@@ -28,13 +30,13 @@ public enum EntityServiceFinder {
 
     EntityServiceFinder() {
         Class serviceClass = EntityService.class;
-        ServiceLoader<EntityService> serviceLoader = ServiceLoader.load(serviceClass);
+        ServiceLoader<EntityService> serviceLoader = PluggableService.load(serviceClass);
         Optional<EntityService> optionalService = serviceLoader.findFirst();
         if (optionalService.isPresent()) {
             this.service = optionalService.get();
         } else {
             throw new NoSuchElementException("No " + serviceClass.getName() +
-                    " found by ServiceLoader...");
+                    " found by PluggableService...");
         }
     }
 

@@ -16,10 +16,7 @@
 package dev.ikm.tinkar.provider.ephemeral;
 
 import com.google.auto.service.AutoService;
-import dev.ikm.tinkar.common.service.DataServiceController;
-import dev.ikm.tinkar.common.service.DataUriOption;
-import dev.ikm.tinkar.common.service.LoadDataFromFileController;
-import dev.ikm.tinkar.common.service.PrimitiveDataService;
+import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.entity.EntityCountSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +32,7 @@ import java.util.concurrent.Future;
 public class ProviderEphemeralNewController implements DataServiceController<PrimitiveDataService> {
 
     public static String CONTROLLER_NAME = "Load Ephemeral Store";
-    private static Logger LOG = LoggerFactory.getLogger(ProviderEphemeralNewController.class.getName());
+    private static Logger LOG = LoggerFactory.getLogger(ProviderEphemeralNewController.class);
     private DataUriOption dataUriOption;
 
     public List<DataUriOption> providerOptions() {
@@ -85,7 +82,7 @@ public class ProviderEphemeralNewController implements DataServiceController<Pri
             ProviderEphemeral.provider();
             if (this.dataUriOption != null) {
                 File file = new File(this.dataUriOption.uri());
-                ServiceLoader<LoadDataFromFileController> controllerFinder = ServiceLoader.load(LoadDataFromFileController.class);
+                ServiceLoader<LoadDataFromFileController> controllerFinder = PluggableService.load(LoadDataFromFileController.class);
                 LoadDataFromFileController loader = controllerFinder.findFirst().get();
                 Future<EntityCountSummary> loadFuture = (Future<EntityCountSummary>) loader.load(file);
                 EntityCountSummary entityCountSummary = loadFuture.get();

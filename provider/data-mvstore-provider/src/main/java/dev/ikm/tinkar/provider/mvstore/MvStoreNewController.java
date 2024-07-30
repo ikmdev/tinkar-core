@@ -31,6 +31,8 @@ import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
+import dev.ikm.tinkar.common.service.PluggableService;
+
 import java.util.ServiceLoader;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -113,7 +115,7 @@ public class MvStoreNewController extends MvStoreController {
                 ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, dataDirectory);
                 new MVStoreProvider();
 
-                ServiceLoader<LoadDataFromFileController> controllerFinder = ServiceLoader.load(LoadDataFromFileController.class);
+                ServiceLoader<LoadDataFromFileController> controllerFinder = PluggableService.load(LoadDataFromFileController.class);
                 LoadDataFromFileController loader = controllerFinder.findFirst().get();
                 Future<EntityCountSummary> loadFuture = (Future<EntityCountSummary>) loader.load(new File(importDataFileString));
                 EntityCountSummary entityCountSummary = loadFuture.get();
