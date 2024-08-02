@@ -15,6 +15,8 @@
  */
 package dev.ikm.tinkar.integration.langext.fhir;
 
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.IParser;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.coordinate.stamp.*;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
@@ -22,14 +24,18 @@ import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.aggregator.TemporalEntityAggregator;
 import dev.ikm.tinkar.fhir.transformers.FhirCodeSystemTransform;
+import dev.ikm.tinkar.fhir.transformers.LoadEntitiesFromFhirJson;
 import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.TinkarTerm;
+import org.hl7.fhir.r4.model.Bundle;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -44,6 +50,19 @@ public class FhirTransformAPIIT extends TestHelper {
         loadSpinedArrayDataBase(SAP_DATASTORE_ROOT);
     }
 
+    /*@Test
+    public void testIdentifierTransform() throws IOException {
+        LoadEntitiesFromFhirJson loadEntitiesFromFhirJson = new LoadEntitiesFromFhirJson();
+        FhirContext ctx = FhirContext.forR4();
+        IParser parser = ctx.newJsonParser();
+
+
+        String jsonContent = new String(Files.readAllBytes(
+                new File("C:\\Users\\patrichards\\FDA-Shield\\tinkar-core\\language-extensions\\fhir-extension\\src\\main\\java\\dev\\ikm\\tinkar\\fhir\\transformers\\fhirJson\\fhir-2024-07-24-1022.json").toPath()));
+
+        Bundle bundle=parser.parseResource(Bundle.class, jsonContent);
+        loadEntitiesFromFhirJson.FhirCodeSystemConceptTransform(bundle);
+    }*/
 
     @Test
     @DisplayName("Test the agregator for this data")
