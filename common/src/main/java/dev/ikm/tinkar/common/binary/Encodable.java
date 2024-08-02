@@ -15,6 +15,8 @@
  */
 package dev.ikm.tinkar.common.binary;
 
+import dev.ikm.tinkar.common.service.PluggableService;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -77,7 +79,7 @@ public interface Encodable {
         try {
             DecoderInput input = new DecoderInput(bytes);
             String objectClassString = input.readString();
-            return (T) decode(Class.forName(objectClassString), Decoder.class, new Object[]{input});
+            return (T) decode(PluggableService.forName(objectClassString), Decoder.class, new Object[]{input});
 
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | ClassNotFoundException ex) {
             throw new EncodingExceptionUnchecked(ex);

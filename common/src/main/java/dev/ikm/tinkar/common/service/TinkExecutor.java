@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.ServiceConfigurationError;
+
 import java.util.ServiceLoader;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ScheduledExecutorService;
@@ -35,7 +36,7 @@ public class TinkExecutor {
     ServiceLoader<ExecutorController> loader;
 
     private TinkExecutor() {
-        this.loader = ServiceLoader.load(ExecutorController.class);
+        this.loader = PluggableService.load(ExecutorController.class);
     }
 
     private static final int defaultParallelBatchSize = Runtime.getRuntime().availableProcessors() * 4;

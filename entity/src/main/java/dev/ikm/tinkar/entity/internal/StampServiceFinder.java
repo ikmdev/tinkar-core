@@ -21,6 +21,8 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.ServiceLoader;
 
+import dev.ikm.tinkar.common.service.PluggableService;
+
 public enum StampServiceFinder {
     INSTANCE;
 
@@ -28,13 +30,13 @@ public enum StampServiceFinder {
 
     StampServiceFinder() {
         Class serviceClass = StampService.class;
-        ServiceLoader<StampService> serviceLoader = ServiceLoader.load(serviceClass);
+        ServiceLoader<StampService> serviceLoader = PluggableService.load(serviceClass);
         Optional<StampService> optionalService = serviceLoader.findFirst();
         if (optionalService.isPresent()) {
             this.service = optionalService.get();
         } else {
             throw new NoSuchElementException("No " + serviceClass.getName() +
-                    " found by ServiceLoader...");
+                    " found by PluggableService...");
         }
     }
 

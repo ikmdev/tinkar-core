@@ -22,12 +22,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.ServiceLoader;
-import java.util.Set;
+import java.util.*;
+
+import dev.ikm.tinkar.common.service.PluggableService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,7 +117,7 @@ public abstract class ElkSnomedTestBase extends PrimitiveDataTestBase {
 	}
 
 	public ReasonerService initReasonerService() {
-		ReasonerService rs = ServiceLoader.load(ReasonerService.class).stream()
+		ReasonerService rs = PluggableService.load(ReasonerService.class).stream()
 				.filter(x -> x.type().getSimpleName().equals(ElkSnomedReasonerService.class.getSimpleName())) //
 				.findFirst().get().get();
 		rs.init(getViewCalculator(), TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
