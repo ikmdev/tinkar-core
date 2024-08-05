@@ -35,8 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-import static dev.ikm.tinkar.fhir.transformers.FhirConstants.ROLE_GROUP_URL;
-import static dev.ikm.tinkar.fhir.transformers.FhirConstants.SNOMEDCT_URL;
+import static dev.ikm.tinkar.fhir.transformers.FhirConstants.*;
 
 public class FhirUtils {
 
@@ -50,6 +49,17 @@ public class FhirUtils {
         Coding coding = new Coding();
         coding.setSystem(system);
         coding.setCode(code);
+        return coding;
+    }
+
+    static Coding getCodingByURL(String url) {
+        Coding coding = null;
+        if (url.equals(DESCRIPTION_ACCEPTABILITY_URL) || url.equals(DESCRIPTION_CASE_SENSITIVITY_URL)) {
+            coding = new Coding();
+            String system = coding.getSystem();
+            String code = coding.getCode();
+            String display = coding.getDisplay();
+        }
         return coding;
     }
 

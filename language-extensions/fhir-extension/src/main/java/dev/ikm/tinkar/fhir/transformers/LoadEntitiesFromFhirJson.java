@@ -18,15 +18,16 @@ package dev.ikm.tinkar.fhir.transformers;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
+import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.composer.ComposerSession;
+import dev.ikm.tinkar.composer.template.FullyQualifiedName;
 import dev.ikm.tinkar.entity.EntityCountSummary;
 import dev.ikm.tinkar.fhir.transformers.provenance.FhirProvenanceTransform;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
-import org.eclipse.collections.api.factory.Lists;
 import org.hl7.fhir.r4.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
@@ -76,6 +76,40 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
         return null;
     }
 
+    public static ComposerSession composerSession(){
+        State status = State.ACTIVE;
+        long time = PrimitiveData.PREMUNDANE_TIME;
+        EntityProxy.Concept author = TinkarTerm.USER;
+        EntityProxy.Concept module = TinkarTerm.PRIMORDIAL_MODULE;
+        EntityProxy.Concept path = TinkarTerm.PRIMORDIAL_PATH;
+        ComposerSession session = new ComposerSession(status, time, author, module, path);
+        session.close();
+        return session;
+    }
+
+    public Bundle parseJsonBundle(String jsonBundle, CodeSystem codeSystem){
+        codeSystem= new CodeSystem();
+        Provenance provenance = FhirProvenanceTransform.provenanceTransform("CodeSystem/"+codeSystem.getId(), fromDate, toDate);
+        Bundle bundle = new Bundle();
+        bundle.setType(Bundle.BundleType.TRANSACTION);
+        bundle.addEntry()
+                .setResource(codeSystem)
+                .setFullUrl(codeSystem.getResourceType().name() + "/" + codeSystem.getIdElement().getValue());
+        bundle.addEntry()
+                .setResource(provenance)
+                .setFullUrl(provenance.getResourceType().name() + "/" +provenance.getIdElement().getValue());
+
+        FhirContext ctx = FhirContext.forR4();
+        IParser parser = ctx.newJsonParser();
+
+        String bundleJson = parser.setPrettyPrint(true).encodeResourceToString(bundle);
+        if(LOG.isDebugEnabled()){
+            LOG.debug(bundleJson);
+        }
+
+        return (Bundle) parser.parseResource(jsonBundle);
+    }
+
     public ComposerSession FhirCodeSystemConceptTransform(Bundle bundle){
         CodeSystem codeSystem = new CodeSystem();
         ComposerSession session=composerSession();
@@ -86,6 +120,7 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
             Resource resource = entry.getResource();
             if (resource instanceof CodeSystem){
                 codeSystem = (CodeSystem) resource;
+                //all concepts retrieved...
                 for (CodeSystem.ConceptDefinitionComponent concept: codeSystem.getConcept()) {
                     for (Extension extension: concept.getExtension()) {
                     String url = extension.getUrl();
@@ -96,9 +131,31 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
                         if (SNOMEDCT_URL.equals(system) || IKM_DEV_URL.equals(system)){
                             EntityProxy.Concept identifierConcept = EntityProxy.Concept.make(value);
                             session.composeConcept(identifierConcept);
+                            }
                         }
                     }
-                    }
+
+                    for (CodeSystem.ConceptDefinitionDesignationComponent designation: concept.getDesignation()) {
+                        for (Extension designationExtension:designation.getExtension()) {
+                            String url=designationExtension.getUrl();
+                                Coding coding= FhirUtils.getCodingByURL(url);
+                                if (SNOMEDCT_URL.equals(coding.getSystem())){
+                                    EntityProxy.Concept designationConcept = EntityProxy.Concept.make(PublicIds.of(coding.getCode()));
+                                    session.composeConcept(designationConcept)
+                                            .with(new FullyQualifiedName(EntityProxy.Semantic.make(coding.getCode()),
+                                                    TinkarTerm.ENGLISH_LANGUAGE,
+                                                    designation.getValue(),
+                                                    TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE));
+                                } else if (IKM_DEV_URL.equals(coding.getSystem())) {
+                                    EntityProxy.Concept designationConcept = EntityProxy.Concept.make(PublicIds.of(coding.getCode()));
+                                    session.composeConcept(designationConcept)
+                                            .with(new FullyQualifiedName(EntityProxy.Semantic.make(coding.getCode()),
+                                                    TinkarTerm.ENGLISH_LANGUAGE,
+                                                    designation.getValue(),
+                                                    TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE));
+                                }
+
+                        }
 
                     /*for (CodeSystem.ConceptDefinitionDesignationComponent designationComponent: concept.getDesignation()) {
                         List<Extension> extension=designationComponent.getExtension();
@@ -143,7 +200,7 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
         return session;
     }
 
-    public ComposerSession transformIdentifier(Bundle bundle) throws IOException{
+   /* public ComposerSession transformIdentifier(Bundle bundle) throws IOException{
         ComposerSession session = composerSession();
         this.codeSystem.getConcept();
         Provenance provenance = FhirProvenanceTransform.provenanceTransform("CodeSystem/"+codeSystem.getId(), fromDate, toDate);
@@ -188,59 +245,9 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
                             TinkarTerm.DESCRIPTION_ACCEPTABILITY));
         }
             return session;
-    }
+    }*/
 
-    public Bundle parseJsonBundle(String jsonBundle, CodeSystem codeSystem){
-        codeSystem= new CodeSystem();
-        Provenance provenance = FhirProvenanceTransform.provenanceTransform("CodeSystem/"+codeSystem.getId(), fromDate, toDate);
-        Bundle bundle = new Bundle();
-        bundle.setType(Bundle.BundleType.TRANSACTION);
-        bundle.addEntry()
-                .setResource(codeSystem)
-                .setFullUrl(codeSystem.getResourceType().name() + "/" + codeSystem.getIdElement().getValue());
-        bundle.addEntry()
-                .setResource(provenance)
-                .setFullUrl(provenance.getResourceType().name() + "/" +provenance.getIdElement().getValue());
-
-        FhirContext ctx = FhirContext.forR4();
-        IParser parser = ctx.newJsonParser();
-
-        String bundleJson = parser.setPrettyPrint(true).encodeResourceToString(bundle);
-        if(LOG.isDebugEnabled()){
-            LOG.debug(bundleJson);
-        }
-
-        return (Bundle) parser.parseResource(jsonBundle);
-    }
-
-    public static ComposerSession composerSession(){
-        State status = State.ACTIVE;
-        long time = PrimitiveData.PREMUNDANE_TIME;
-        EntityProxy.Concept author = TinkarTerm.USER;
-        EntityProxy.Concept module = TinkarTerm.PRIMORDIAL_MODULE;
-        EntityProxy.Concept path = TinkarTerm.PRIMORDIAL_PATH;
-        ComposerSession session = new ComposerSession(status, time, author, module, path);
-        session.close();
-        return session;
-    }
-
-    public Optional<CodeSystem> getLatestCodeSystem(){
-        CodeSystem latestCodeSystem = fetchLatestCodeSystemFromFHIRServer();
-        return Optional.ofNullable(latestCodeSystem);
-    }
-
-    private CodeSystem fetchLatestCodeSystemFromFHIRServer() {
-        Bundle bundle = fhirClient.search()
-                .forResource(CodeSystem.class)
-                .sort()
-                .descending(CodeSystem.SP_DATE)
-                .returnBundle(Bundle.class)
-                .execute();
-
-        if(bundle.hasEntry()){
-            return (CodeSystem)
-                    bundle.getEntryFirstRep().getResource();
-        }else return null;
-    }
 
 }
+
+

@@ -94,7 +94,7 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
+        <!--<dependency>
             <groupId>dev.ikm.tinkar.ext.owl</groupId>
             <artifactId>owl-extension</artifactId>
             <scope>test</scope>
@@ -110,7 +110,7 @@
             <groupId>dev.ikm.tinkar.ext.binding</groupId>
             <artifactId>binding-extension</artifactId>
             <scope>test</scope>
-        </dependency>
+        </dependency>-->
     </dependencies>
 
     <profiles>
