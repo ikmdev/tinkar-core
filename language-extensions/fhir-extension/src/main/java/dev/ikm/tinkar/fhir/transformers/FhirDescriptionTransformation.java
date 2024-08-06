@@ -16,7 +16,8 @@
 package dev.ikm.tinkar.fhir.transformers;
 
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.composer.ComposerSession;
+import dev.ikm.tinkar.composer.Composer;
+import dev.ikm.tinkar.composer.Session;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.EntityService;
@@ -69,13 +70,14 @@ public class FhirDescriptionTransformation {
         return descriptionAcceptability(descriptionSemantic);
     }
 
-    public ComposerSession descriptionAcceptabilityFhir(CodeSystem codeSystem, SemanticEntity<SemanticEntityVersion> descriptionSemantic){
+    public Session descriptionAcceptabilityFhir(CodeSystem codeSystem, SemanticEntity<SemanticEntityVersion> descriptionSemantic){
         State status = State.ACTIVE;
         long time = PrimitiveData.PREMUNDANE_TIME;
         EntityProxy.Concept author = TinkarTerm.USER;
         EntityProxy.Concept module = TinkarTerm.PRIMORDIAL_MODULE;
         EntityProxy.Concept path = TinkarTerm.PRIMORDIAL_PATH;
-        ComposerSession session = new ComposerSession(status, time, author, module, path);
+        Composer composer = new Composer("FHIR Concept Composer...");
+        Session session = composer.open(status, time, author, module, path);
 
         /*for (CodeSystem.ConceptDefinitionComponent conceptDefinition: codeSystem.getConcept()) {
             for (CodeSystem.ConceptDefinitionDesignationComponent designation: conceptDefinition.getDesignation()){

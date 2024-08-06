@@ -17,10 +17,11 @@ package dev.ikm.tinkar.fhir.transformers;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
-import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
-import dev.ikm.tinkar.composer.ComposerSession;
+import dev.ikm.tinkar.composer.Composer;
+import dev.ikm.tinkar.composer.Session;
+import dev.ikm.tinkar.composer.assembler.ConceptAssembler;
 import dev.ikm.tinkar.composer.template.FullyQualifiedName;
 import dev.ikm.tinkar.entity.EntityCountSummary;
 import dev.ikm.tinkar.fhir.transformers.provenance.FhirProvenanceTransform;
@@ -75,16 +76,35 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
         return null;
     }
 
-    public static ComposerSession composerSession() {
+    public EntityProxy.Concept generateLanguage(String language){
+        return switch (language) {
+            case "en-GB" -> TinkarTerm.GB_ENGLISH_DIALECT;
+            case "en-US" -> TinkarTerm.ENGLISH_LANGUAGE;
+            default -> throw new IllegalArgumentException("Unsupported language code: "+language);
+        };
+    }
+
+    public EntityProxy.Concept generateDisplay(String display){
+        return switch (display) {
+            case "Case insensitive" -> TinkarTerm.DESCRIPTION_CASE_SENSITIVE;
+            case "Preferred" -> TinkarTerm.PREFERRED;
+            case "Fully qualified name" -> TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE;
+            case "Regular name description type" -> TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE;
+            default -> throw new IllegalArgumentException("Unsupported display code: "+display);
+        };
+    }
+
+   /* public static Session composerSession() {
         State status = State.ACTIVE;
         long time = PrimitiveData.PREMUNDANE_TIME;
         EntityProxy.Concept author = TinkarTerm.USER;
         EntityProxy.Concept module = TinkarTerm.PRIMORDIAL_MODULE;
         EntityProxy.Concept path = TinkarTerm.PRIMORDIAL_PATH;
-        ComposerSession session = new ComposerSession(status, time, author, module, path);
-        session.close();
+        Composer composer = new Composer("FHIR Concept Composer...");
+        Session session = composer.open(status, time, author, module, path);
         return session;
-    }
+
+    }*/
 
     public Bundle parseJsonBundle(String jsonBundle, CodeSystem codeSystem) {
         codeSystem = new CodeSystem();
@@ -109,9 +129,15 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
         return (Bundle) parser.parseResource(jsonBundle);
     }
 
-    public ComposerSession FhirCodeSystemConceptTransform(Bundle bundle) {
+    public Session FhirCodeSystemConceptTransform(Bundle bundle) {
+        State status = State.ACTIVE;
+        long time = PrimitiveData.PREMUNDANE_TIME;
+        EntityProxy.Concept author = TinkarTerm.USER;
+        EntityProxy.Concept module = TinkarTerm.PRIMORDIAL_MODULE;
+        EntityProxy.Concept path = TinkarTerm.PRIMORDIAL_PATH;
+        Composer composer = new Composer("FHIR Concept Composer...");
+        Session session = composer.open(status, time, author, module, path);
         CodeSystem codeSystem = new CodeSystem();
-        ComposerSession session = composerSession();
         String jsonBundle = parser.setPrettyPrint(true).encodeResourceToString(bundle);
         bundle = parseJsonBundle(jsonBundle, codeSystem);
 
@@ -129,7 +155,7 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
                             String value = valueIdentifier.getValue();
                             if (SNOMEDCT_URL.equals(system) || IKM_DEV_URL.equals(system)) {
                                 EntityProxy.Concept identifierConcept = EntityProxy.Concept.make(value);
-                                session.composeConcept(identifierConcept);
+
                             }
                         }
                     }
@@ -139,19 +165,41 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
                             String url = designationExtension.getUrl();
                             Coding coding = FhirUtils.getCodingByURL(url);
                             if (SNOMEDCT_URL.equals(coding.getSystem())) {
-                                EntityProxy.Concept designationConcept = EntityProxy.Concept.make(PublicIds.of(coding.getCode()));
-                                session.composeConcept(designationConcept)
-                                        .with(new FullyQualifiedName(EntityProxy.Semantic.make(coding.getCode()),
-                                                TinkarTerm.ENGLISH_LANGUAGE,
-                                                designation.getValue(),
-                                                TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE));
-                            } else if (IKM_DEV_URL.equals(coding.getSystem())) {
-                                EntityProxy.Concept designationConcept = EntityProxy.Concept.make(PublicIds.of(coding.getCode()));
-                                session.composeConcept(designationConcept)
-                                        .with(new FullyQualifiedName(EntityProxy.Semantic.make(coding.getCode()),
-                                                TinkarTerm.ENGLISH_LANGUAGE,
-                                                designation.getValue(),
-                                                TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE));
+                                session.compose((ConceptAssembler conceptAssembler) -> conceptAssembler
+                                        .attach((FullyQualifiedName fqn) -> fqn
+                                                .language(generateLanguage(designation.getLanguage()))
+                                                .text(designationExtension.getValue().toString())
+                                                .caseSignificance(generateDisplay(coding.getDisplay()))));
+                                composer.commitSession(session);
+                            }
+
+                            if (designation.hasLanguage()){
+                                String language=designation.getLanguage();
+                                Coding languageCoding=FhirUtils.getUseByLanguage(language);
+                                session.compose((ConceptAssembler conceptAssembler) -> conceptAssembler
+                                        .attach((FullyQualifiedName fqn) -> fqn
+                                                .language(generateLanguage(designation.getLanguage()))
+                                                .text(designationExtension.getValue().toString())
+                                                .caseSignificance(generateDisplay(languageCoding.getDisplay()))));
+                                composer.commitSession(session);
+                            }
+
+                        }
+
+                        for (CodeSystem.ConceptPropertyComponent property : concept.getProperty()) {
+                            String propertyCode= property.getCode();
+                            StringType propertyString=property.getValueStringType();
+                            for (Extension propertyExtensions: property.getExtension()) {
+                                    Coding propertyCoding=FhirUtils.getCodingByCode(propertyCode);
+                                    //create pattern here, composer api
+                                String url=propertyExtensions.getUrl();
+                                if (url.equals(DEFINING_RELATIONSHIP_TYPE_URL) || url.equals(EL_PROFILE_SET_OPERATOR_URL)){
+                                    Coding coding=FhirUtils.getCodingByURL(url);
+                                    //create pattern here using composer api
+                                    if (url.equals(ROLE_GROUP_URL)){
+                                        //role group code
+                                    }
+                                }
                             }
 
                         }

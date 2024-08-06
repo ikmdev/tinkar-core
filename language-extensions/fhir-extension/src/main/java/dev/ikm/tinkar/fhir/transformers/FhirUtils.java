@@ -25,6 +25,7 @@ import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
+import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.IntegerType;
@@ -55,6 +56,34 @@ public class FhirUtils {
     static Coding getCodingByURL(String url) {
         Coding coding = null;
         if (url.equals(DESCRIPTION_ACCEPTABILITY_URL) || url.equals(DESCRIPTION_CASE_SENSITIVITY_URL)) {
+            coding = new Coding();
+            String system = coding.getSystem();
+            String code = coding.getCode();
+            String display = coding.getDisplay();
+        }
+        return coding;
+    }
+
+    static Coding getUseByLanguage(String language) {
+        CodeSystem.ConceptDefinitionDesignationComponent designation= new CodeSystem.ConceptDefinitionDesignationComponent();
+        Coding use=designation.getUse();
+        if (language.equals("en-US") || language.equals("en-GB")) {
+            use = new Coding();
+            String system = use.getSystem();
+            String code = use.getCode();
+            String display = use.getDisplay();
+        }
+        return use;
+    }
+
+    public static Coding getCodingByCode(String propertyCode) {
+        CodeSystem.ConceptPropertyComponent property = new CodeSystem.ConceptPropertyComponent();
+        propertyCode=property.getCode();
+        Coding coding = null;
+        String IS_A = "Is a";
+        String CLINICAL_COURSE="Clinical course";
+        String FINDING_SITE = "Finding site";
+        if (propertyCode.equals(IS_A) || propertyCode.equals(CLINICAL_COURSE) || propertyCode.equals(FINDING_SITE)){
             coding = new Coding();
             String system = coding.getSystem();
             String code = coding.getCode();
@@ -131,4 +160,6 @@ public class FhirUtils {
         extension.setValue(new IntegerType(roleGroupValue));
         return extension;
     }
+
+
 }

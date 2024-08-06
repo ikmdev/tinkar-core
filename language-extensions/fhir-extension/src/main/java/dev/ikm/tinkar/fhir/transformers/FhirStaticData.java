@@ -56,7 +56,7 @@ public class FhirStaticData {
     private static final String PROPERTY_URI2 = "http://snomed.info/id/260507000";
     private static final String PROPERTY_CODE3 = "Procedure site";
     private static final String PROPERTY_URI3 = "http://snomed.info/id/363704007";
-    private static final String PROPERTY_CODE4 = "Is a";
+    private static final String IS_A = "Is a";
     private static final String PROPERTY_URI4 = "http://snomed.info/id/116680003";
     private static final String PROPERTY_CODE5 = "Status";
     private static final String PROPERTY_URI5 = "Status value: [10b873e2-8247-5ab5-9dec-4edef37fc219]";
@@ -82,7 +82,7 @@ public class FhirStaticData {
         propertyComponent3.setType(CodeSystem.PropertyType.CODE);
 
         CodeSystem.PropertyComponent propertyComponent4 = new CodeSystem.PropertyComponent();
-        propertyComponent4.setCode(PROPERTY_CODE4);
+        propertyComponent4.setCode(IS_A);
         propertyComponent4.setUri(PROPERTY_URI4);
         propertyComponent4.setType(CodeSystem.PropertyType.CODE);
 
