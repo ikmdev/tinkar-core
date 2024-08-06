@@ -45,6 +45,11 @@ open module dev.ikm.tinkar.integration.test {
     requires io.soabase.recordbuilder.core;
     requires java.compiler;
 
+   /* requires transitive dev.ikm.jpms.hapi.fhir.base;
+    requires transitive dev.ikm.jpms.org.hl7.fhir.r4;
+    requires transitive dev.ikm.jpms.hapi.fhir.structures.r4;
+    requires transitive dev.ikm.jpms.org.hl7.fhir.utilities;*/
+
     uses CachingService;
     uses DataServiceController;
     uses DefaultDescriptionForNidService;

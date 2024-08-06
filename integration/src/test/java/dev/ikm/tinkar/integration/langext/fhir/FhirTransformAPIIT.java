@@ -50,7 +50,7 @@ public class FhirTransformAPIIT extends TestHelper {
         loadSpinedArrayDataBase(SAP_DATASTORE_ROOT);
     }
 
-    /*@Test
+    @Test
     public void testIdentifierTransform() throws IOException {
         LoadEntitiesFromFhirJson loadEntitiesFromFhirJson = new LoadEntitiesFromFhirJson();
         FhirContext ctx = FhirContext.forR4();
@@ -62,7 +62,7 @@ public class FhirTransformAPIIT extends TestHelper {
 
         Bundle bundle=parser.parseResource(Bundle.class, jsonContent);
         loadEntitiesFromFhirJson.FhirCodeSystemConceptTransform(bundle);
-    }*/
+    }
 
     @Test
     @DisplayName("Test the agregator for this data")

@@ -17,7 +17,6 @@ package dev.ikm.tinkar.fhir.transformers;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
-import ca.uhn.fhir.rest.client.api.IGenericClient;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
@@ -48,20 +47,20 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
     private IParser parser;
     private Date fromDate;
     private Date toDate;
-    private IGenericClient fhirClient;
     private Consumer<String> fhirAndProvenanceJson;
     private final AtomicLong importCount = new AtomicLong();
     private final AtomicLong importConceptCount = new AtomicLong();
     private final AtomicLong importSemanticCount = new AtomicLong();
     private final AtomicLong importPatternCount = new AtomicLong();
     private final AtomicLong importStampCount = new AtomicLong();
+
     public LoadEntitiesFromFhirJson(File importFile) {
         super(false, true);
         this.importFile = importFile;
         System.out.println("Loading entities from: " + importFile.getAbsolutePath());
     }
 
-    public LoadEntitiesFromFhirJson(){
+    public LoadEntitiesFromFhirJson() {
         this.ctx = FhirContext.forR4();
         this.parser = ctx.newJsonParser();
         this.codeSystem = new CodeSystem();
@@ -76,7 +75,7 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
         return null;
     }
 
-    public static ComposerSession composerSession(){
+    public static ComposerSession composerSession() {
         State status = State.ACTIVE;
         long time = PrimitiveData.PREMUNDANE_TIME;
         EntityProxy.Concept author = TinkarTerm.USER;
@@ -87,9 +86,9 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
         return session;
     }
 
-    public Bundle parseJsonBundle(String jsonBundle, CodeSystem codeSystem){
-        codeSystem= new CodeSystem();
-        Provenance provenance = FhirProvenanceTransform.provenanceTransform("CodeSystem/"+codeSystem.getId(), fromDate, toDate);
+    public Bundle parseJsonBundle(String jsonBundle, CodeSystem codeSystem) {
+        codeSystem = new CodeSystem();
+        Provenance provenance = FhirProvenanceTransform.provenanceTransform("CodeSystem/" + codeSystem.getId(), fromDate, toDate);
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.TRANSACTION);
         bundle.addEntry()
@@ -97,63 +96,63 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
                 .setFullUrl(codeSystem.getResourceType().name() + "/" + codeSystem.getIdElement().getValue());
         bundle.addEntry()
                 .setResource(provenance)
-                .setFullUrl(provenance.getResourceType().name() + "/" +provenance.getIdElement().getValue());
+                .setFullUrl(provenance.getResourceType().name() + "/" + provenance.getIdElement().getValue());
 
         FhirContext ctx = FhirContext.forR4();
         IParser parser = ctx.newJsonParser();
 
         String bundleJson = parser.setPrettyPrint(true).encodeResourceToString(bundle);
-        if(LOG.isDebugEnabled()){
+        if (LOG.isDebugEnabled()) {
             LOG.debug(bundleJson);
         }
 
         return (Bundle) parser.parseResource(jsonBundle);
     }
 
-    public ComposerSession FhirCodeSystemConceptTransform(Bundle bundle){
+    public ComposerSession FhirCodeSystemConceptTransform(Bundle bundle) {
         CodeSystem codeSystem = new CodeSystem();
-        ComposerSession session=composerSession();
+        ComposerSession session = composerSession();
         String jsonBundle = parser.setPrettyPrint(true).encodeResourceToString(bundle);
         bundle = parseJsonBundle(jsonBundle, codeSystem);
 
-        for (Bundle.BundleEntryComponent entry: bundle.getEntry()) {
+        for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
             Resource resource = entry.getResource();
-            if (resource instanceof CodeSystem){
+            if (resource instanceof CodeSystem) {
                 codeSystem = (CodeSystem) resource;
                 //all concepts retrieved...
-                for (CodeSystem.ConceptDefinitionComponent concept: codeSystem.getConcept()) {
-                    for (Extension extension: concept.getExtension()) {
-                    String url = extension.getUrl();
-                    if (CODE_CONCEPT_ADDITIONAL_IDENTIFIER_URL.equals(url)){
-                        Identifier valueIdentifier= (Identifier) extension.getValue();
-                        String system=valueIdentifier.getSystem();
-                        String value=valueIdentifier.getValue();
-                        if (SNOMEDCT_URL.equals(system) || IKM_DEV_URL.equals(system)){
-                            EntityProxy.Concept identifierConcept = EntityProxy.Concept.make(value);
-                            session.composeConcept(identifierConcept);
+                for (CodeSystem.ConceptDefinitionComponent concept : codeSystem.getConcept()) {
+                    for (Extension extension : concept.getExtension()) {
+                        String url = extension.getUrl();
+                        if (CODE_CONCEPT_ADDITIONAL_IDENTIFIER_URL.equals(url)) {
+                            Identifier valueIdentifier = (Identifier) extension.getValue();
+                            String system = valueIdentifier.getSystem();
+                            String value = valueIdentifier.getValue();
+                            if (SNOMEDCT_URL.equals(system) || IKM_DEV_URL.equals(system)) {
+                                EntityProxy.Concept identifierConcept = EntityProxy.Concept.make(value);
+                                session.composeConcept(identifierConcept);
                             }
                         }
                     }
 
-                    for (CodeSystem.ConceptDefinitionDesignationComponent designation: concept.getDesignation()) {
-                        for (Extension designationExtension:designation.getExtension()) {
-                            String url=designationExtension.getUrl();
-                                Coding coding= FhirUtils.getCodingByURL(url);
-                                if (SNOMEDCT_URL.equals(coding.getSystem())){
-                                    EntityProxy.Concept designationConcept = EntityProxy.Concept.make(PublicIds.of(coding.getCode()));
-                                    session.composeConcept(designationConcept)
-                                            .with(new FullyQualifiedName(EntityProxy.Semantic.make(coding.getCode()),
-                                                    TinkarTerm.ENGLISH_LANGUAGE,
-                                                    designation.getValue(),
-                                                    TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE));
-                                } else if (IKM_DEV_URL.equals(coding.getSystem())) {
-                                    EntityProxy.Concept designationConcept = EntityProxy.Concept.make(PublicIds.of(coding.getCode()));
-                                    session.composeConcept(designationConcept)
-                                            .with(new FullyQualifiedName(EntityProxy.Semantic.make(coding.getCode()),
-                                                    TinkarTerm.ENGLISH_LANGUAGE,
-                                                    designation.getValue(),
-                                                    TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE));
-                                }
+                    for (CodeSystem.ConceptDefinitionDesignationComponent designation : concept.getDesignation()) {
+                        for (Extension designationExtension : designation.getExtension()) {
+                            String url = designationExtension.getUrl();
+                            Coding coding = FhirUtils.getCodingByURL(url);
+                            if (SNOMEDCT_URL.equals(coding.getSystem())) {
+                                EntityProxy.Concept designationConcept = EntityProxy.Concept.make(PublicIds.of(coding.getCode()));
+                                session.composeConcept(designationConcept)
+                                        .with(new FullyQualifiedName(EntityProxy.Semantic.make(coding.getCode()),
+                                                TinkarTerm.ENGLISH_LANGUAGE,
+                                                designation.getValue(),
+                                                TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE));
+                            } else if (IKM_DEV_URL.equals(coding.getSystem())) {
+                                EntityProxy.Concept designationConcept = EntityProxy.Concept.make(PublicIds.of(coding.getCode()));
+                                session.composeConcept(designationConcept)
+                                        .with(new FullyQualifiedName(EntityProxy.Semantic.make(coding.getCode()),
+                                                TinkarTerm.ENGLISH_LANGUAGE,
+                                                designation.getValue(),
+                                                TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE));
+                            }
 
                         }
 
@@ -193,12 +192,12 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
                             };
                         });
                     ;}*/
+                    }
                 }
             }
-        }
 
-        return session;
-    }
+            return session;
+        }
 
    /* public ComposerSession transformIdentifier(Bundle bundle) throws IOException{
         ComposerSession session = composerSession();
@@ -246,8 +245,7 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
         }
             return session;
     }*/
+        return session;
 
-
+    }
 }
-
-
