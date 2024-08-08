@@ -25,7 +25,6 @@ import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
-import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.IntegerType;
@@ -57,7 +56,7 @@ public class FhirUtils {
         return switch (code) {
             case "900000000000448009" -> TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE;
             case "900000000000017005" -> TinkarTerm.DESCRIPTION_CASE_SENSITIVE;
-//            case "900000000000020002" -> "tbd";
+            case "900000000000020002" -> TinkarTerm.DESCRIPTION_INITIAL_CHARACTER_CASE_SENSITIVE;
             default -> throw new IllegalArgumentException("Unsupported display code: "+code);
         };
     }
@@ -66,7 +65,7 @@ public class FhirUtils {
         return switch (code) {
             case "900000000000548007" -> TinkarTerm.PREFERRED;
             case "900000000000549004" -> TinkarTerm.ACCEPTABLE;
-            default -> throw new IllegalStateException("Unexpected value: " + code);
+            default -> throw new IllegalArgumentException("Unexpected value: " + code);
         };
     }
 
@@ -74,7 +73,7 @@ public class FhirUtils {
         return switch (code){
             case "900000000000003001" -> TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE;
             case "900000000000013009" -> TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE;
-            default -> throw new IllegalStateException("Unexpected value: " + code);
+            default -> throw new IllegalArgumentException("Unexpected value: " + code);
         };
     }
 
@@ -82,29 +81,13 @@ public class FhirUtils {
         return switch (language){
             case "en-US" -> TinkarTerm.ENGLISH_LANGUAGE;
             case "en-GB" -> TinkarTerm.GB_ENGLISH_DIALECT;
-            default -> throw new IllegalStateException("Unexpected value: " + language);
+            default -> throw new IllegalArgumentException("Unexpected value: " + language);
         };
     }
 
     static Coding getCodingByURL(String url) {
         Coding coding = null;
         if (url.equals(DESCRIPTION_ACCEPTABILITY_URL) || url.equals(DESCRIPTION_CASE_SENSITIVITY_URL)) {
-            coding = new Coding();
-            String system = coding.getSystem();
-            String code = coding.getCode();
-            String display = coding.getDisplay();
-        }
-        return coding;
-    }
-
-    public static Coding getCodingByCode(String propertyCode) {
-        CodeSystem.ConceptPropertyComponent property = new CodeSystem.ConceptPropertyComponent();
-        propertyCode=property.getCode();
-        Coding coding = null;
-        String IS_A = "Is a";
-        String CLINICAL_COURSE="Clinical course";
-        String FINDING_SITE = "Finding site";
-        if (propertyCode.equals(IS_A) || propertyCode.equals(CLINICAL_COURSE) || propertyCode.equals(FINDING_SITE)){
             coding = new Coding();
             String system = coding.getSystem();
             String code = coding.getCode();

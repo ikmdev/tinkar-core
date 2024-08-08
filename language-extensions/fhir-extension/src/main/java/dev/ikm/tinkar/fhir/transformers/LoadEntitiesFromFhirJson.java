@@ -22,7 +22,9 @@ import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.composer.Composer;
 import dev.ikm.tinkar.composer.Session;
 import dev.ikm.tinkar.composer.assembler.ConceptAssembler;
+import dev.ikm.tinkar.composer.assembler.SemanticAssembler;
 import dev.ikm.tinkar.composer.template.FullyQualifiedName;
+import dev.ikm.tinkar.composer.template.USDialect;
 import dev.ikm.tinkar.entity.EntityCountSummary;
 import dev.ikm.tinkar.fhir.transformers.provenance.FhirProvenanceTransform;
 import dev.ikm.tinkar.terms.EntityProxy;
@@ -123,6 +125,8 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
         String jsonBundle = parser.setPrettyPrint(true).encodeResourceToString(bundle);
         bundle = parseJsonBundle(jsonBundle, codeSystem);
 
+        EntityProxy.Concept conceptId = null;
+
         for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
             Resource resource = entry.getResource();
             if (resource instanceof CodeSystem) {
@@ -136,7 +140,7 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
                             String system = valueIdentifier.getSystem();
                             String value = valueIdentifier.getValue();
                             if (SNOMEDCT_URL.equals(system) || IKM_DEV_URL.equals(system)) {
-                                EntityProxy.Concept identifierConcept = EntityProxy.Concept.make(value);
+                                conceptId = EntityProxy.Concept.make(value);
 
                             }
                         }
@@ -147,8 +151,10 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
                         for (Extension designationExtension : designation.getExtension()) {
                             String url = designationExtension.getUrl();
                             Coding coding = FhirUtils.getCodingByURL(url);
+                            Coding useCoding =designation.getUse();
                             if (SNOMEDCT_URL.equals(coding.getSystem())) {
-                                session.compose((ConceptAssembler conceptAssembler) -> conceptAssembler
+                                EntityProxy.Concept finalConceptId = conceptId;
+                                session.compose((ConceptAssembler conceptAssembler) -> conceptAssembler.concept(finalConceptId)
                                         .attach((FullyQualifiedName fqn) -> fqn
                                                 .language(FhirUtils.generateLanguage(designation.getLanguage()))
                                                 .text(designationExtension.getValue().toString())
@@ -162,7 +168,18 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
                             StringType propertyString=property.getValueStringType();
                             for (Extension propertyExtensions: property.getExtension()) {
                                     Coding propertyCoding=FhirUtils.getCodingByCode(propertyCode);
-                                    //create pattern here, composer api
+                                    //create semantic here, composer api
+                                /*EntityProxy.Concept finalConceptId1 = conceptId;
+                                session.compose((SemanticAssembler semanticAssembler) -> semanticAssembler
+                                        .reference(finalConceptId1)
+                                        .pattern(TinkarTerm.OWL_AXIOM_SYNTAX_PATTERN)
+                                        .fieldValues(fieldValues -> fieldValues
+                                                .with()
+                                                //synonym
+                                                .with(FhirUtils.generateNameType(REGULAR_NAME_DESCRIPTION_TYPE_SNOMEDID))
+                                                .with(TinkarTerm.RE))
+                                        .attach((USDialect dialect) -> dialect
+                                                .acceptability(FhirUtils.generateAcceptability())));*/
                                 String url=propertyExtensions.getUrl();
                                 if (url.equals(DEFINING_RELATIONSHIP_TYPE_URL) || url.equals(EL_PROFILE_SET_OPERATOR_URL)){
                                     Coding coding=FhirUtils.getCodingByURL(url);
