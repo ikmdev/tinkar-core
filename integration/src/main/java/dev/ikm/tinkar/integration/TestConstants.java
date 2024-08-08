@@ -27,7 +27,7 @@ public class TestConstants {
     public static final File TINK_TEST_FILE = createFilePathInTarget.apply("data/tinkar-test-dto-1.1.0.zip");
     public static final File PB_TEST_FILE = createFilePathInTarget.apply("data/tinkar-export-test.pb.zip");
     public static final File PB_STARTER_DATA = createFilePathInTarget.apply("data/tinkar-starter-data-0.1-pb.zip");
-    public static final File PB_STARTER_DATA_REASONED = createFilePathInTarget.apply("data/tinkar-starter-data-reasoned-0.1-pb.zip");
+    public static final File PB_STARTER_DATA_REASONED = createFilePathInTarget.apply("data/tinkar-starter-data-reasoned-1.0.0-pb.zip");
 
     public static final File PB_ROUNDTRIP_TEST_FILE = createFilePathInTarget.apply("data/tinkar-export-test-roundtrip.pb.zip");
     public static final File PB_PERFORMANCE_TEST_FILE = createFilePathInTarget.apply("data/tinkar-export-test-performance.pb.zip");

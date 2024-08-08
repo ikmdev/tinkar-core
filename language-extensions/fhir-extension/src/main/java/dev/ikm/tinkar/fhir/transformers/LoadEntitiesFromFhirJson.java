@@ -76,24 +76,6 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
         return null;
     }
 
-    public EntityProxy.Concept generateLanguage(String language){
-        return switch (language) {
-            case "en-GB" -> TinkarTerm.GB_ENGLISH_DIALECT;
-            case "en-US" -> TinkarTerm.ENGLISH_LANGUAGE;
-            default -> throw new IllegalArgumentException("Unsupported language code: "+language);
-        };
-    }
-
-    public EntityProxy.Concept generateDisplay(String display){
-        return switch (display) {
-            case "Case insensitive" -> TinkarTerm.DESCRIPTION_CASE_SENSITIVE;
-            case "Preferred" -> TinkarTerm.PREFERRED;
-            case "Fully qualified name" -> TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE;
-            case "Regular name description type" -> TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE;
-            default -> throw new IllegalArgumentException("Unsupported display code: "+display);
-        };
-    }
-
    /* public static Session composerSession() {
         State status = State.ACTIVE;
         long time = PrimitiveData.PREMUNDANE_TIME;
@@ -160,6 +142,7 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
                         }
                     }
 
+                    //Designation transform
                     for (CodeSystem.ConceptDefinitionDesignationComponent designation : concept.getDesignation()) {
                         for (Extension designationExtension : designation.getExtension()) {
                             String url = designationExtension.getUrl();
@@ -167,23 +150,11 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
                             if (SNOMEDCT_URL.equals(coding.getSystem())) {
                                 session.compose((ConceptAssembler conceptAssembler) -> conceptAssembler
                                         .attach((FullyQualifiedName fqn) -> fqn
-                                                .language(generateLanguage(designation.getLanguage()))
+                                                .language(FhirUtils.generateLanguage(designation.getLanguage()))
                                                 .text(designationExtension.getValue().toString())
-                                                .caseSignificance(generateDisplay(coding.getDisplay()))));
+                                                .caseSignificance(FhirUtils.generateCaseSignificance(coding.getCode()))));
                                 composer.commitSession(session);
                             }
-
-                            if (designation.hasLanguage()){
-                                String language=designation.getLanguage();
-                                Coding languageCoding=FhirUtils.getUseByLanguage(language);
-                                session.compose((ConceptAssembler conceptAssembler) -> conceptAssembler
-                                        .attach((FullyQualifiedName fqn) -> fqn
-                                                .language(generateLanguage(designation.getLanguage()))
-                                                .text(designationExtension.getValue().toString())
-                                                .caseSignificance(generateDisplay(languageCoding.getDisplay()))));
-                                composer.commitSession(session);
-                            }
-
                         }
 
                         for (CodeSystem.ConceptPropertyComponent property : concept.getProperty()) {

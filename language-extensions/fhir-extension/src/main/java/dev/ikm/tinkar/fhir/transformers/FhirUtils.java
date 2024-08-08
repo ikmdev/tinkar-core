@@ -53,6 +53,39 @@ public class FhirUtils {
         return coding;
     }
 
+    public static EntityProxy.Concept generateCaseSignificance(String code){
+        return switch (code) {
+            case "900000000000448009" -> TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE;
+            case "900000000000017005" -> TinkarTerm.DESCRIPTION_CASE_SENSITIVE;
+//            case "900000000000020002" -> "tbd";
+            default -> throw new IllegalArgumentException("Unsupported display code: "+code);
+        };
+    }
+
+    public static EntityProxy.Concept generateAcceptability(String code){
+        return switch (code) {
+            case "900000000000548007" -> TinkarTerm.PREFERRED;
+            case "900000000000549004" -> TinkarTerm.ACCEPTABLE;
+            default -> throw new IllegalStateException("Unexpected value: " + code);
+        };
+    }
+
+    public static EntityProxy.Concept generateNameType(String code){
+        return switch (code){
+            case "900000000000003001" -> TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE;
+            case "900000000000013009" -> TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE;
+            default -> throw new IllegalStateException("Unexpected value: " + code);
+        };
+    }
+
+    public static EntityProxy.Concept generateLanguage(String language) {
+        return switch (language){
+            case "en-US" -> TinkarTerm.ENGLISH_LANGUAGE;
+            case "en-GB" -> TinkarTerm.GB_ENGLISH_DIALECT;
+            default -> throw new IllegalStateException("Unexpected value: " + language);
+        };
+    }
+
     static Coding getCodingByURL(String url) {
         Coding coding = null;
         if (url.equals(DESCRIPTION_ACCEPTABILITY_URL) || url.equals(DESCRIPTION_CASE_SENSITIVITY_URL)) {
@@ -62,18 +95,6 @@ public class FhirUtils {
             String display = coding.getDisplay();
         }
         return coding;
-    }
-
-    static Coding getUseByLanguage(String language) {
-        CodeSystem.ConceptDefinitionDesignationComponent designation= new CodeSystem.ConceptDefinitionDesignationComponent();
-        Coding use=designation.getUse();
-        if (language.equals("en-US") || language.equals("en-GB")) {
-            use = new Coding();
-            String system = use.getSystem();
-            String code = use.getCode();
-            String display = use.getDisplay();
-        }
-        return use;
     }
 
     public static Coding getCodingByCode(String propertyCode) {
