@@ -17,13 +17,12 @@ package dev.ikm.tinkar.fhir.transformers;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
+import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.composer.Composer;
 import dev.ikm.tinkar.composer.Session;
-import dev.ikm.tinkar.composer.assembler.ConceptAssembler;
-import dev.ikm.tinkar.composer.assembler.SemanticAssembler;
-import dev.ikm.tinkar.composer.template.FullyQualifiedName;
+import dev.ikm.tinkar.composer.template.Synonym;
 import dev.ikm.tinkar.composer.template.USDialect;
 import dev.ikm.tinkar.entity.EntityCountSummary;
 import dev.ikm.tinkar.fhir.transformers.provenance.FhirProvenanceTransform;
@@ -40,7 +39,8 @@ import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
-import static dev.ikm.tinkar.fhir.transformers.FhirConstants.*;
+import static dev.ikm.tinkar.fhir.transformers.FhirConstants.CODE_CONCEPT_ADDITIONAL_IDENTIFIER_URL;
+import static dev.ikm.tinkar.fhir.transformers.FhirConstants.IKM_DEV_URL;
 
 public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummary> {
     private static final Logger LOG = LoggerFactory.getLogger(LoadEntitiesFromFhirJson.class);
@@ -139,37 +139,33 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
                             Identifier valueIdentifier = (Identifier) extension.getValue();
                             String system = valueIdentifier.getSystem();
                             String value = valueIdentifier.getValue();
-                            if (SNOMEDCT_URL.equals(system) || IKM_DEV_URL.equals(system)) {
-                                conceptId = EntityProxy.Concept.make(value);
-
+                            if (IKM_DEV_URL.equals(system)) {
+                                conceptId = EntityProxy.Concept.make(PublicIds.of(value));
                             }
                         }
                     }
-
                     //Designation transform
                     for (CodeSystem.ConceptDefinitionDesignationComponent designation : concept.getDesignation()) {
-                        for (Extension designationExtension : designation.getExtension()) {
-                            String url = designationExtension.getUrl();
-                            Coding coding = FhirUtils.getCodingByURL(url);
-                            Coding useCoding =designation.getUse();
-                            if (SNOMEDCT_URL.equals(coding.getSystem())) {
-                                EntityProxy.Concept finalConceptId = conceptId;
-                                session.compose((ConceptAssembler conceptAssembler) -> conceptAssembler.concept(finalConceptId)
-                                        .attach((FullyQualifiedName fqn) -> fqn
-                                                .language(FhirUtils.generateLanguage(designation.getLanguage()))
-                                                .text(designationExtension.getValue().toString())
-                                                .caseSignificance(FhirUtils.generateCaseSignificance(coding.getCode()))));
-                                composer.commitSession(session);
-                            }
-                        }
+                        Extension caseSensitivityExtension = designation.getExtension().get(0);
+                        Extension acceptabilityExtension = designation.getExtension().get(1);
+                        CodeableConcept designationCaseSensitivityCodeableConcept = (CodeableConcept) caseSensitivityExtension.getValue();
+                        CodeableConcept designationAcceptabilityCodeableConcept = (CodeableConcept) acceptabilityExtension.getValue();
+                        //Coding useCoding = designation.getUse();
+                        session.compose(new Synonym()
+                                        .language(FhirUtils.generateLanguage(designation.getLanguage()))
+                                        .text(designation.getValue())
+                                        .caseSignificance(FhirUtils.generateCaseSignificance(designationCaseSensitivityCodeableConcept.getCoding().get(0).getCode())), conceptId)
+                                .attach(new USDialect()
+                                        .acceptability(FhirUtils.generateAcceptability(designationAcceptabilityCodeableConcept.getCoding().getLast().getCode())));
+                        composer.commitSession(session);
+                    }
 
-                        for (CodeSystem.ConceptPropertyComponent property : concept.getProperty()) {
+                        /*for (CodeSystem.ConceptPropertyComponent property : concept.getProperty()) {
                             String propertyCode= property.getCode();
                             StringType propertyString=property.getValueStringType();
                             for (Extension propertyExtensions: property.getExtension()) {
-                                    Coding propertyCoding=FhirUtils.getCodingByCode(propertyCode);
                                     //create semantic here, composer api
-                                /*EntityProxy.Concept finalConceptId1 = conceptId;
+                                *//*EntityProxy.Concept finalConceptId1 = conceptId;
                                 session.compose((SemanticAssembler semanticAssembler) -> semanticAssembler
                                         .reference(finalConceptId1)
                                         .pattern(TinkarTerm.OWL_AXIOM_SYNTAX_PATTERN)
@@ -179,7 +175,7 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
                                                 .with(FhirUtils.generateNameType(REGULAR_NAME_DESCRIPTION_TYPE_SNOMEDID))
                                                 .with(TinkarTerm.RE))
                                         .attach((USDialect dialect) -> dialect
-                                                .acceptability(FhirUtils.generateAcceptability())));*/
+                                                .acceptability(FhirUtils.generateAcceptability())));*//*
                                 String url=propertyExtensions.getUrl();
                                 if (url.equals(DEFINING_RELATIONSHIP_TYPE_URL) || url.equals(EL_PROFILE_SET_OPERATOR_URL)){
                                     Coding coding=FhirUtils.getCodingByURL(url);
@@ -190,97 +186,15 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
                                 }
                             }
 
-                        }
+                        }*/
 
-                    /*for (CodeSystem.ConceptDefinitionDesignationComponent designationComponent: concept.getDesignation()) {
-                        List<Extension> extension=designationComponent.getExtension();
 
-                            designationComponent.getExtension().forEach(designationExtensions -> {
-                                if (designationExtensions.getUrl().equals(FhirConstants.DESCRIPTION_CASE_SENSITIVITY_URL) || designationExtensions.getUrl().equals(FhirConstants.DESCRIPTION_ACCEPTABILITY_URL)){
-                                    if (designationExtensions.getValue() instanceof CodeableConcept codeableConcept){
-                                    codeableConcept.getCoding().forEach(designationCoding -> {
-                                        if (designationCoding.getSystem().equals(SNOMEDCT_URL)){
-                                            //figure out correct impl to put in here, go in komet to look at how fqn is made
-                                            EntityProxy.Concept designationConcept = EntityProxy.Concept.make(designationCoding.getDisplay(),UUID.fromString(designationCoding.getCode()));
-                                            session.composeConcept(designationConcept);
-                                            if (designationComponent.hasLanguage() && designationComponent.hasExtension(FhirConstants.DESCRIPTION_ACCEPTABILITY_URL)){
-                                                Extension acceptabilityExtension= designationComponent.getExtensionByUrl(FhirConstants.DESCRIPTION_ACCEPTABILITY_URL);
-                                                if (acceptabilityExtension != null && acceptabilityExtension.getValue() instanceof CodeableConcept acceptabilityConcept){
-                                                    //set the language for tinkar description "en-US" or "en-GB"
-                                                    for (Coding coding: acceptabilityConcept.getCoding()) {
-                                                        if (designationComponent.getLanguage().equals("en-US")) {
-                                                            EntityProxy.Concept acceptabilityUS = EntityProxy.Concept.make(coding.getDisplay(), UUID.nameUUIDFromBytes(coding.getDisplay().getBytes()));
-                                                            session.composeConcept(acceptabilityUS)
-                                                                    .with(new FullyQualifiedName(EntityProxy.Semantic.make(PublicIds.newRandom()), TinkarTerm.ENGLISH_LANGUAGE, acceptabilityExtension.getValue().toString(), TinkarTerm.DESCRIPTION_ACCEPTABILITY)
-                                                                            .with(new USEnglishDialect(EntityProxy.Semantic.make(PublicIds.newRandom()), TinkarTerm.PREFERRED)));
-                                                        } else if (designationComponent.getLanguage().equals("en-GB")) {
-                                                            EntityProxy.Concept acceptabilityGB = EntityProxy.Concept.make(coding.getDisplay(), UUID.nameUUIDFromBytes(coding.getDisplay().getBytes()));
-                                                            session.composeConcept(acceptabilityGB)
-                                                                    .with(new FullyQualifiedName(EntityProxy.Semantic.make(PublicIds.newRandom()), TinkarTerm.GB_ENGLISH_DIALECT, acceptabilityExtension.getValue().toString(), TinkarTerm.DESCRIPTION_ACCEPTABILITY)
-                                                                            .with(new USEnglishDialect(EntityProxy.Semantic.make(PublicIds.newRandom()), TinkarTerm.PREFERRED)));
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    });
-                                }
-                            };
-                        });
-                    ;}*/
-                    }
                 }
             }
 
             return session;
         }
 
-   /* public ComposerSession transformIdentifier(Bundle bundle) throws IOException{
-        ComposerSession session = composerSession();
-        this.codeSystem.getConcept();
-        Provenance provenance = FhirProvenanceTransform.provenanceTransform("CodeSystem/"+codeSystem.getId(), fromDate, toDate);
-        bundle.setType(Bundle.BundleType.TRANSACTION);
-        bundle.addEntry()
-                .setResource(codeSystem)
-                .setFullUrl(codeSystem.getResourceType().name() + "/" + codeSystem.getIdElement().getValue());
-        bundle.addEntry()
-                .setResource(provenance)
-                .setFullUrl(provenance.getResourceType().name() + "/" +provenance.getIdElement().getValue());
-
-        FhirContext ctx = FhirContext.forR4();
-        IParser parser = ctx.newJsonParser();
-
-        String bundleJson = parser.setPrettyPrint(true).encodeResourceToString(bundle);
-
-        Identifier identifier = bundle.getIdentifier();
-        identifier.getExtension().forEach(identifierExtension -> {
-            if (identifierExtension.getUrl().equals(CODE_CONCEPT_ADDITIONAL_IDENTIFIER_URL) && identifier.getSystem().equals(FhirConstants.IKM_DEV_URL)){
-                session.composeSemantic(EntityProxy.Semantic.make(identifier.getExtension().getFirst().getValue().toString()),
-                        EntityProxy.Concept.make(identifier.getExtension().getFirst().getValue().toString()),
-                        TinkarTerm.DESCRIPTION_PATTERN,
-                        Lists.immutable.of(
-                                TinkarTerm.DESCRIPTION_ACCEPTABILITY));
-            } else if (identifierExtension.getUrl().equals(CODE_CONCEPT_ADDITIONAL_IDENTIFIER_URL) && identifier.getSystem().equals(SNOMEDCT_URL)) {
-                session.composeSemantic(EntityProxy.Semantic.make(identifier.getExtension().getLast().getValue().toString()),
-                        EntityProxy.Concept.make(identifier.getExtension().getLast().getValue().toString()),
-                        TinkarTerm.DESCRIPTION_PATTERN,
-                        Lists.immutable.of(
-                                TinkarTerm.DESCRIPTION_ACCEPTABILITY));
-            }
-        });
-        if (identifier.getExtension().getFirst().getUrl().equals(CODE_CONCEPT_ADDITIONAL_IDENTIFIER_URL) && identifier.getSystem().equals(FhirConstants.IKM_DEV_URL)) {
-            //code is publicID
-
-        } else if (identifier.getExtension().getFirst().getUrl().equals(CODE_CONCEPT_ADDITIONAL_IDENTIFIER_URL) && identifier.getSystem().equals(FhirConstants.SNOMEDCT_URL)) {
-            //code is snomedID
-            session.composeSemantic(EntityProxy.Semantic.make(identifier.getExtension().getLast().getValue().toString()),
-                    EntityProxy.Concept.make(identifier.getExtension().getLast().getValue().toString()),
-                    TinkarTerm.DESCRIPTION_PATTERN,
-                    Lists.immutable.of(
-                            TinkarTerm.DESCRIPTION_ACCEPTABILITY));
-        }
-            return session;
-    }*/
         return session;
 
     }

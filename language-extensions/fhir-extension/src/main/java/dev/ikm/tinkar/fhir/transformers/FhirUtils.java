@@ -41,8 +41,9 @@ public class FhirUtils {
 
     private static final Logger LOG = LoggerFactory.getLogger(FhirUtils.class);
     public static Map<String, String> snomedConceptsMap = new HashMap<>();
+
     public static PublicId generatePublicId(String string) {
-       return PublicIds.of(UuidUtil.fromSNOMED(string));
+        return PublicIds.of(UuidUtil.fromSNOMED(string));
     }
 
     public static Coding generateCoding(String system, String code) {
@@ -52,16 +53,16 @@ public class FhirUtils {
         return coding;
     }
 
-    public static EntityProxy.Concept generateCaseSignificance(String code){
+    public static EntityProxy.Concept generateCaseSignificance(String code) {
         return switch (code) {
             case "900000000000448009" -> TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE;
             case "900000000000017005" -> TinkarTerm.DESCRIPTION_CASE_SENSITIVE;
             case "900000000000020002" -> TinkarTerm.DESCRIPTION_INITIAL_CHARACTER_CASE_SENSITIVE;
-            default -> throw new IllegalArgumentException("Unsupported display code: "+code);
+            default -> throw new IllegalArgumentException("Unsupported display code: " + code);
         };
     }
 
-    public static EntityProxy.Concept generateAcceptability(String code){
+    public static EntityProxy.Concept generateAcceptability(String code) {
         return switch (code) {
             case "900000000000548007" -> TinkarTerm.PREFERRED;
             case "900000000000549004" -> TinkarTerm.ACCEPTABLE;
@@ -69,8 +70,8 @@ public class FhirUtils {
         };
     }
 
-    public static EntityProxy.Concept generateNameType(String code){
-        return switch (code){
+    public static EntityProxy.Concept generateNameType(String code) {
+        return switch (code) {
             case "900000000000003001" -> TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE;
             case "900000000000013009" -> TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE;
             default -> throw new IllegalArgumentException("Unexpected value: " + code);
@@ -78,7 +79,7 @@ public class FhirUtils {
     }
 
     public static EntityProxy.Concept generateLanguage(String language) {
-        return switch (language){
+        return switch (language) {
             case "en-US" -> TinkarTerm.ENGLISH_LANGUAGE;
             case "en-GB" -> TinkarTerm.GB_ENGLISH_DIALECT;
             default -> throw new IllegalArgumentException("Unexpected value: " + language);
@@ -104,8 +105,8 @@ public class FhirUtils {
         return coding;
     }
 
-    public static Coding generateCodingObject(StampCalculator stampCalculator, String snomedId){
-        if(snomedId == null || snomedId.trim().isEmpty()){
+    public static Coding generateCodingObject(StampCalculator stampCalculator, String snomedId) {
+        if (snomedId == null || snomedId.trim().isEmpty()) {
             LOG.warn("snomedId is null, returning null coding value.");
             return null;
         }
@@ -113,16 +114,16 @@ public class FhirUtils {
         coding.setSystem(SNOMEDCT_URL);
         coding.setCode(snomedId);
         String display = snomedConceptsMap.get(snomedId);
-        if( display == null){
+        if (display == null) {
             PublicId publicId = FhirUtils.generatePublicId(snomedId);
-            FhirUtils.retrieveConcept(stampCalculator, publicId, (snomedCTCode, snomedCTEntity) ->{
-                if(snomedCTEntity != null){
+            FhirUtils.retrieveConcept(stampCalculator, publicId, (snomedCTCode, snomedCTEntity) -> {
+                if (snomedCTEntity != null) {
                     coding.setDisplay(snomedCTEntity.description());
-                }else{
+                } else {
                     coding.setDisplay("Does not exist");
                 }
             });
-        }else{
+        } else {
             coding.setDisplay(display);
         }
         return coding;
@@ -130,31 +131,31 @@ public class FhirUtils {
 
     public static void retrieveConcept(StampCalculator stampCalculator, PublicId publicId, BiConsumer<String, Entity<EntityVersion>> snomedId) {
         Entity<EntityVersion> entity = EntityService.get().getEntityFast(publicId.asUuidArray());
-        if(entity != null){
-            int [] idSemantics = EntityService.get().semanticNidsForComponentOfPattern(entity.nid(), FhirConstants.IDENTIFIER_PATTERN.nid());
-            if(idSemantics.length > 0){
+        if (entity != null) {
+            int[] idSemantics = EntityService.get().semanticNidsForComponentOfPattern(entity.nid(), FhirConstants.IDENTIFIER_PATTERN.nid());
+            if (idSemantics.length > 0) {
                 EntityService.get().forEachSemanticForComponentOfPattern(entity.nid(), FhirConstants.IDENTIFIER_PATTERN.nid(), identifierSemantic -> {
                     SemanticEntityVersion version = stampCalculator.latest(identifierSemantic).get();//getLatestVersion(identifierSemantic);
-                    if(version.fieldValues().get(0) instanceof EntityProxy.Concept snomedIdentifierConcept
+                    if (version.fieldValues().get(0) instanceof EntityProxy.Concept snomedIdentifierConcept
                             && (PublicId.equals(TinkarTerm.SCTID.publicId(), snomedIdentifierConcept.publicId())
-                            || idSemantics.length == 1)){
+                            || idSemantics.length == 1)) {
                         snomedConceptsMap.putIfAbsent(version.fieldValues().get(1).toString(), entity.description());
                         snomedId.accept(version.fieldValues().get(1).toString(), entity);
                     }
                 });
-            }else{
+            } else {
                 snomedConceptsMap.putIfAbsent(entity.publicId().asUuidArray()[0].toString(), entity.description());
                 snomedId.accept(entity.publicId().asUuidArray()[0].toString(), entity);
             }
 
-        }else{
+        } else {
             LOG.warn("Unable to retrive snomed concept for publicId: " + publicId);
 //            snomedConceptsMap.putIfAbsent("NA", "Does not exist");
 //            snomedId.accept("NA", null);
         }
     }
 
-    public static EntityProxy.Concept getSnomedIdentifierConcept(){
+    public static EntityProxy.Concept getSnomedIdentifierConcept() {
         return EntityProxy.Concept.make(PublicIds.of(UuidUtil.fromSNOMED("900000000000294009")));
     }
 
