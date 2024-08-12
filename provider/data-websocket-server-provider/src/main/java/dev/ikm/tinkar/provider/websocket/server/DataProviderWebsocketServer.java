@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.provider.websocket.server;
 
+import dev.ikm.tinkar.common.service.PluggableService;
 import dev.ikm.tinkar.common.service.PrimitiveDataService;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
@@ -35,7 +36,7 @@ public class DataProviderWebsocketServer extends MultithreadedHttpServerLauncher
     private final PrimitiveDataService dataService;
 
     public DataProviderWebsocketServer() {
-        this.serviceLoader = ServiceLoader.load(PrimitiveDataService.class);
+        this.serviceLoader = PluggableService.load(PrimitiveDataService.class);
         this.dataService = this.serviceLoader.findFirst().get();
     }
 

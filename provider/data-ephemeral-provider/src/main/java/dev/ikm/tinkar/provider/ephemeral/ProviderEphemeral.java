@@ -118,13 +118,13 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     }
 
     @Override
-    public int nidForUuids(ImmutableList<UUID> uuidList) {
-        return PrimitiveDataService.nidForUuids(uuidNidMap, this, uuidList);
+    public boolean hasUuid(UUID uuid) {
+        return uuidNidMap.containsKey(uuid);
     }
 
     @Override
-    public boolean hasUuid(UUID uuid) {
-        return uuidNidMap.containsKey(uuid);
+    public int nidForUuids(ImmutableList<UUID> uuidList) {
+        return PrimitiveDataService.nidForUuids(uuidNidMap, this, uuidList);
     }
 
     @Override

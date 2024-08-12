@@ -21,6 +21,8 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.ServiceLoader;
 
+import dev.ikm.tinkar.common.service.PluggableService;
+
 public enum PathServiceFinder {
     INSTANCE;
 
@@ -28,13 +30,13 @@ public enum PathServiceFinder {
 
     PathServiceFinder() {
         Class serviceClass = PathService.class;
-        ServiceLoader<PathService> serviceLoader = ServiceLoader.load(serviceClass);
+        ServiceLoader<PathService> serviceLoader = PluggableService.load(serviceClass);
         Optional<PathService> optionalService = serviceLoader.findFirst();
         if (optionalService.isPresent()) {
             this.service = optionalService.get();
         } else {
             throw new NoSuchElementException("No " + serviceClass.getName() +
-                    " found by ServiceLoader...");
+                    " found by PluggableService...");
         }
     }
 

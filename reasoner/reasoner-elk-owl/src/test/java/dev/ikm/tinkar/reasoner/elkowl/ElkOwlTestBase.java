@@ -25,7 +25,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.ServiceLoader;
+import dev.ikm.tinkar.common.service.PluggableService;
 import java.util.Set;
 
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
@@ -142,7 +142,7 @@ public abstract class ElkOwlTestBase extends PrimitiveDataTestBase {
 	}
 
 	public ReasonerService initReasonerService() {
-		ReasonerService rs = ServiceLoader.load(ReasonerService.class).stream()
+		ReasonerService rs = PluggableService.load(ReasonerService.class).stream()
 				.filter(x -> x.type().getSimpleName().equals(ElkOwlReasonerService.class.getSimpleName()))
 				.findFirst().get().get();
 		rs.init(getViewCalculator(), TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
