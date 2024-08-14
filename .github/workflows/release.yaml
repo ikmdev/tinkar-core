@@ -1,0 +1,154 @@
+name: Release Workflow
+
+run-name: "Releasing ${{ github.event.repository.name }} #${{github.run_number}}"
+
+# Trigger workflow manually
+on:
+  workflow_dispatch:
+
+env:
+    BRANCH_NAME: ${{github.ref_name}}
+    TRUNK_BRANCH_NAME: 'main'
+    IKMDEVOPS_PAT: ${{secrets.IKMDEVOPS_PAT_TOKEN}}
+    GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+    GPG_PASSPHRASE: ${{secrets.SELF_HOSTED_GPG_PASSPHRASE}}
+    MAVEN_SETTING: '/home/ec2-user/maven/.m2/settings.xml'
+    
+
+jobs:
+  initilization:
+    name: Initilization
+    runs-on: ubuntu-24.04
+    outputs:
+      NEXT_SNAPSHOT_VERSION: ${{steps.nextSnapshotVersion.outputs.SnapshotVersion}}
+      RELEASE_VERSION: ${{steps.splitCurrentVersion.outputs._0}}
+
+    steps:
+      - name: Verify Branch
+        if: env.BRANCH_NAME != env.TRUNK_BRANCH_NAME
+        run: |
+          echo "ERROR: Attempting to release from branch ${{env.BRANCH_NAME}}. Release from ${{env.TRUNK_BRANCH_NAME}} branch only"
+          exit 1
+
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+
+      - name: Extract Version
+        id: get_current_version
+        run: |
+            echo "POM_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_OUTPUT
+
+      - name: Print Maven POM project version
+        run: |
+          echo "version = ${{ steps.get_current_version.outputs.POM_VERSION }}"
+
+      - name: Verify Is SNAPSHOT Version
+        if: ${{ !contains(steps.get_current_version.outputs.POM_VERSION, '-SNAPSHOT')}}
+        run: |
+          echo "ERROR: Version is set to incompatible version ${{steps.get_current_version.outputs.POM_VERSION}}. Only SNAPSHOT development versions can be converted to a release version."
+          exit 1
+
+      - name: Split version code
+        uses: xom9ikk/split@v1.1
+        id: splitCurrentVersion
+        with:
+          string: ${{steps.get_current_version.outputs.POM_VERSION}}
+          separator: '-'
+          limit: -1
+
+      - name: Split version code - Separate By .
+        uses: xom9ikk/split@v1.1
+        id: splitVersionMinor
+        with:
+          string: ${{steps.splitCurrentVersion.outputs._0}}
+          separator: .
+          limit: -1
+
+      - name: Increment Snapshot Version
+        id: nextSnapshotVersion
+        run: |
+          SnapshotVersion="${{steps.splitVersionMinor.outputs._0}}.$((${{steps.splitVersionMinor.outputs._1}} + 1)).${{steps.splitVersionMinor.outputs._2}}-SNAPSHOT"
+          echo "::set-output name=SnapshotVersion::$SnapshotVersion"
+
+      - name: Print Information
+        run: |
+          echo "Release Version -- ${{steps.splitCurrentVersion.outputs._0}}"
+          echo "Snapshot Version -- ${{steps.nextSnapshotVersion.outputs.SnapshotVersion}}"
+
+
+  release-job:
+    name: Release Job
+    needs: initilization
+    runs-on: ubuntu-20.04
+    if: github.repository_owner == 'ikmdev'
+    permissions:
+      contents: write
+    steps:
+          - name: Setup Java
+            uses: actions/setup-java@v4
+            with:
+             distribution: 'zulu'
+             java-version: '21'
+
+          - name: Build IKMDEV Code
+            uses: ikmdev/maven-release-action@testing
+            with:
+              branch_name: ${{env.BRANCH_NAME}}
+              ikmdevops_pat: ${{env.IKMDEVOPS_PAT}}
+              github_token: ${{env.GITHUB_TOKEN}}
+              gpg_passphrase: ${{env.GPG_PASSPHRASE}}
+              next_snapshot_version: ${{needs.initilization.outputs.NEXT_SNAPSHOT_VERSION}}
+              release_version: ${{needs.initilization.outputs.RELEASE_VERSION}}
+              ossrh_username: ${{secrets.OSSRH_TOKEN_USER}}
+              ossrh_token: ${{secrets.OSSRH_TOKEN_PASS}}
+
+  publish:
+     name: Publish Job
+     needs: release-job
+     runs-on: self-hosted
+     if: github.repository_owner == 'ikmdev'
+     steps:
+             
+        - name: Checkout Code Repository
+          uses: actions/checkout@v4
+          with:
+            ref: ${{needs.release-job.outputs.RELEASE_VERSION}}
+          
+
+        - name: Setup Java
+          uses: actions/setup-java@v4
+          with:
+              distribution: 'zulu'
+              java-version: '21'
+          
+    
+        - name: Maven Build
+          run: |
+            /home/ec2-user/.sdkman/candidates/maven/current/bin/mvn --version
+            /home/ec2-user/.sdkman/candidates/maven/current/bin/mvn clean install \
+              --batch-mode \
+              -e \
+              -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
+              -PcodeQuality
+    
+    
+        - name: Publish To OSSRH (Maven Central Staging)
+          run: |
+              /home/ec2-user/.sdkman/candidates/maven/current/bin/mvn deploy \
+                  --batch-mode \
+                  -e \
+                  -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
+                  -DskipTests \
+                  -DskipITs \
+                  -Dmaven.main.skip \
+                  -Dmaven.test.skip \
+                  -s ${{env.MAVEN_SETTING}} \
+                  -DrepositoryId='maven-releases' \
+                  -DrepositoryIdOSSRH='true' \
+                  -PstageOSSRH -Dgpg.passphrase=${{secrets.SELF_HOSTED_GPG_PASSPHRASE}}     
