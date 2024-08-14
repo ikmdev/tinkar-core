@@ -26,7 +26,9 @@ import dev.ikm.tinkar.coordinate.navigation.NavigationCoordinateRecord;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculator;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
+import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
 import org.apache.lucene.document.Document;
@@ -344,4 +346,16 @@ public class Searcher {
         return allowedResultsList;
     }
 
+    public static List<PublicId> membersOf(PublicId memberPatternId) {
+        List<PublicId> conceptIds = new ArrayList<>();
+        EntityService.get().getEntity(EntityService.get().nidForPublicId(memberPatternId)).ifPresent((e) -> {
+            if (e instanceof PatternEntity<?> patternEntity) {
+                EntityService.get().forEachSemanticOfPattern(patternEntity.nid(), (semanticEntityOfPattern) -> {
+                    conceptIds.add(semanticEntityOfPattern.referencedComponent().publicId());
+                });
+            }
+        });
+
+        return conceptIds;
+    }
 }
