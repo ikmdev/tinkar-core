@@ -36,7 +36,7 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'azul'
+          distribution: 'zulu'
           java-version: '21'
 
       - name: Extract Version
@@ -93,7 +93,7 @@ jobs:
           - name: Setup Java
             uses: actions/setup-java@v4
             with:
-             distribution: 'adopt'
+             distribution: 'zulu'
              java-version: '21'
 
           - name: Build IKMDEV Code
@@ -124,7 +124,7 @@ jobs:
         - name: Setup Java
           uses: actions/setup-java@v4
           with:
-              distribution: 'azul'
+              distribution: 'zulu'
               java-version: '21'
           
     
