@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
             java-version: '21'
-            distribution: 'adopt'
+            distribution: 'azul'
       - name: Build IKMDEV Code
         uses: ikmdev/maven-clean-install-build-action@main
         with:
