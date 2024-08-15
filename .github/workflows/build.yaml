@@ -5,7 +5,8 @@ run-name: 'Build Workflow -- ${{ github.head_ref || github.ref_name }}'
 on:
     push:
     pull_request:
-
+    workflow_dispatch:
+      
 env:
   MAVEN_SETTING: '/home/ec2-user/maven/.m2/settings.xml'
   BRANCH_NAME: ${{github.ref_name}}
