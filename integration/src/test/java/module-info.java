@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.common.service.DefaultDescriptionForNidService;
@@ -49,6 +50,7 @@ open module dev.ikm.tinkar.integration.test {
     requires transitive dev.ikm.jpms.org.hl7.fhir.r4;
     requires transitive dev.ikm.jpms.hapi.fhir.structures.r4;
     requires transitive dev.ikm.jpms.org.hl7.fhir.utilities;
+    requires dev.ikm.tinkar.composer;
 
     uses CachingService;
     uses DataServiceController;

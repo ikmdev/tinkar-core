@@ -25,11 +25,12 @@ import dev.ikm.tinkar.common.service.PublicIdService;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.StampService;
 
- module dev.ikm.tinkar.fhir.transformers {
+module dev.ikm.tinkar.fhir.transformers {
 
     requires java.compiler;
     requires dev.ikm.tinkar.common;
     requires dev.ikm.tinkar.entity;
+    requires dev.ikm.tinkar.ext.lang.owl;
 
     requires transitive dev.ikm.jpms.hapi.fhir.base;
     requires transitive dev.ikm.jpms.org.hl7.fhir.r4;

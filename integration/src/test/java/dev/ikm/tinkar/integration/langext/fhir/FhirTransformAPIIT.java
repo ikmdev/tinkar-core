@@ -18,11 +18,14 @@ package dev.ikm.tinkar.integration.langext.fhir;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.composer.Session;
 import dev.ikm.tinkar.coordinate.stamp.*;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.aggregator.TemporalEntityAggregator;
+import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
+import dev.ikm.tinkar.ext.lang.owl.SctOwlUtilities;
 import dev.ikm.tinkar.fhir.transformers.FhirCodeSystemTransform;
 import dev.ikm.tinkar.fhir.transformers.LoadEntitiesFromFhirJson;
 import dev.ikm.tinkar.integration.TestConstants;
@@ -39,6 +42,7 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class FhirTransformAPIIT extends TestHelper {
 
@@ -51,23 +55,34 @@ public class FhirTransformAPIIT extends TestHelper {
     }
 
     @Test
+    public void testOwlSyntax() throws IOException {
+        LogicalExpression owlTransform = SctOwlUtilities.sctToLogicalExpression("EquivalentClasses(:[23e07078-f1e2-3f6a-9b7a-9397bcd91cfe] ObjectIntersectionOf(:[ab4e618b-b954-3d56-a44b-f0f29d6f59d3] ObjectSomeValuesFrom(:[051fbfed-3c40-3130-8c09-889cb7b7b5b6] ObjectSomeValuesFrom(:[0d8a9cbb-e21e-3de7-9aad-8223c000849f] :[0a0507f5-0268-357a-8b6c-a84fabafbf6e])) ObjectSomeValuesFrom(:[051fbfed-3c40-3130-8c09-889cb7b7b5b6] ObjectSomeValuesFrom(:[3a6d919d-6c25-3aae-9bc3-983ead83a928] :[44a7e2f1-d05e-3f21-b4a6-19ee9a62dd12]))))", "");
+    }
+
+    @Test
     public void testIdentifierTransform() throws IOException {
         LoadEntitiesFromFhirJson loadEntitiesFromFhirJson = new LoadEntitiesFromFhirJson();
         FhirContext ctx = FhirContext.forR4();
         IParser parser = ctx.newJsonParser();
 
 
+//        String jsonContent = new String(Files.readAllBytes(
+//                new File("C:\\Users\\patrichards\\FDA-Shield\\tinkar-core\\language-extensions\\fhir-extension\\src\\main\\java\\dev\\ikm\\tinkar\\fhir\\transformers\\fhirJson\\fhir-2024-07-24-1022.json").toPath()));
         String jsonContent = new String(Files.readAllBytes(
-                new File("C:\\Users\\patrichards\\FDA-Shield\\tinkar-core\\language-extensions\\fhir-extension\\src\\main\\java\\dev\\ikm\\tinkar\\fhir\\transformers\\fhirJson\\fhir-2024-07-24-1022.json").toPath()));
+                new File("C:\\Users\\patrichards\\FDA-Shield\\tinkar-core\\language-extensions\\fhir-extension\\src\\main\\java\\dev\\ikm\\tinkar\\fhir\\transformers\\fhirJson\\fhir-2024-08-07-1212.json").toPath()));
+        Bundle bundle = parser.parseResource(Bundle.class, jsonContent);
+        Session session = loadEntitiesFromFhirJson.FhirCodeSystemConceptTransform(bundle);
 
-        Bundle bundle=parser.parseResource(Bundle.class, jsonContent);
-        loadEntitiesFromFhirJson.FhirCodeSystemConceptTransform(bundle);
+//        int expectedComponentsUpdatedCount = 60;
+//        int actualComponentsUpdatedCount = session.componentsInSessionCount();
+//        assertEquals(expectedComponentsUpdatedCount, actualComponentsUpdatedCount,
+//                String.format("Expect %s updated components, but %s were updated instead.", expectedComponentsUpdatedCount, actualComponentsUpdatedCount));
     }
 
     @Test
     @DisplayName("Test the agregator for this data")
     @Disabled("The agregator is returning zero concepts. Need to enable the test after the from and to time stamps are figured out.")
-    public void testFhirCallWithAgregator(){
+    public void testFhirCallWithAgregator() {
 
 //        String fromTime = "2000-05-09T10:00:04";
 //        String toTime = "2024-11-22T12:31:04";
@@ -84,7 +99,7 @@ public class FhirTransformAPIIT extends TestHelper {
         LOG.info("Total Concepts : " + concepts.size());
 
         StampCalculator stampCalculator = initStampCalculator(toTimeStamp); // Can use from ViewCalculator.
-        FhirCodeSystemTransform fhirCodeSystemTransform= new FhirCodeSystemTransform(fromTimeStamp, toTimeStamp, stampCalculator, concepts.values().stream(), (fhirProvenanceString) -> {
+        FhirCodeSystemTransform fhirCodeSystemTransform = new FhirCodeSystemTransform(fromTimeStamp, toTimeStamp, stampCalculator, concepts.values().stream(), (fhirProvenanceString) -> {
             Assertions.assertNotNull(fhirProvenanceString);
             Assertions.assertFalse(fhirProvenanceString.isEmpty());
         });
@@ -97,14 +112,14 @@ public class FhirTransformAPIIT extends TestHelper {
 
     private static Map<String, ConceptEntity<? extends ConceptEntityVersion>> getConceptEntities(long fromTimeStamp, long toTimeStamp) {
         AtomicInteger counter = new AtomicInteger(0);
-        Map<String, ConceptEntity<? extends  ConceptEntityVersion>> concepts = new HashMap<>();
+        Map<String, ConceptEntity<? extends ConceptEntityVersion>> concepts = new HashMap<>();
         TemporalEntityAggregator temporalEntityAggregator = new TemporalEntityAggregator(fromTimeStamp, toTimeStamp);
         temporalEntityAggregator.aggregate(nid -> {
             Entity<EntityVersion> entity = EntityService.get().getEntityFast(nid);
             if (entity instanceof ConceptEntity conceptEntity) {
                 LOG.debug(counter.getAndIncrement() + " : " + conceptEntity);
                 concepts.putIfAbsent(conceptEntity.publicId().idString(), conceptEntity);
-            }else if(entity instanceof SemanticEntity semanticEntity){
+            } else if (entity instanceof SemanticEntity semanticEntity) {
                 Entity<EntityVersion> referencedConcept = semanticEntity.referencedComponent();
                 if (referencedConcept instanceof ConceptEntity concept) {
                     concepts.putIfAbsent(concept.publicId().idString(), concept);
@@ -114,7 +129,7 @@ public class FhirTransformAPIIT extends TestHelper {
         return concepts;
     }
 
-    private StampCalculator initStampCalculator(long toTime ) {
+    private StampCalculator initStampCalculator(long toTime) {
         return initStampCalculator(TinkarTerm.DEVELOPMENT_PATH.nid(), toTime);
     }
 

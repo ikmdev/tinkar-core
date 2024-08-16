@@ -53,6 +53,15 @@ public class FhirUtils {
         return coding;
     }
 
+
+    public static EntityProxy.Concept generateProfileSetOperator(String code) {
+        return switch (code) {
+            case ACTIVE_VALUE_SNOMEDID -> TinkarTerm.ACTIVE_STATE;
+            case INACTIVE_VALUE_SNOMEDID -> TinkarTerm.INACTIVE_STATE;
+            default -> throw new IllegalStateException("Unexpected value: " + code);
+        };
+    }
+
     public static EntityProxy.Concept generateCaseSignificance(String code) {
         return switch (code) {
             case "900000000000448009" -> TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE;
@@ -84,17 +93,6 @@ public class FhirUtils {
             case "en-GB" -> TinkarTerm.GB_ENGLISH_DIALECT;
             default -> throw new IllegalArgumentException("Unexpected value: " + language);
         };
-    }
-
-    static Coding getCodingByURL(String url) {
-        Coding coding = null;
-        if (url.equals(DESCRIPTION_ACCEPTABILITY_URL) || url.equals(DESCRIPTION_CASE_SENSITIVITY_URL)) {
-            coding = new Coding();
-            String system = coding.getSystem();
-            String code = coding.getCode();
-            String display = coding.getDisplay();
-        }
-        return coding;
     }
 
     public static Coding generateCodingProperty(String system, String code, String display) {

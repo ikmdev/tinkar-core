@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -14,7 +15,8 @@
 
 
     <properties>
-        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
         <skip.unit.tests>false</skip.unit.tests>
         <skip.integration.tests>false</skip.integration.tests>
         <fhir-base.version>7.0.2-r6</fhir-base.version>
@@ -24,33 +26,33 @@
     </properties>
 
     <dependencyManagement>
-    <dependencies>
-        <dependency>
-            <groupId>dev.ikm.jpms</groupId>
-            <artifactId>hapi-fhir-base</artifactId>
-            <version>${fhir-base.version}</version>
-        </dependency>
+        <dependencies>
+            <dependency>
+                <groupId>dev.ikm.jpms</groupId>
+                <artifactId>hapi-fhir-base</artifactId>
+                <version>${fhir-base.version}</version>
+            </dependency>
 
-        <dependency>
-            <groupId>dev.ikm.jpms</groupId>
-            <artifactId>hapi-fhir-structures-r4</artifactId>
-            <version>${fhir-structures.version}</version>
-        </dependency>
+            <dependency>
+                <groupId>dev.ikm.jpms</groupId>
+                <artifactId>hapi-fhir-structures-r4</artifactId>
+                <version>${fhir-structures.version}</version>
+            </dependency>
 
-        <dependency>
-            <groupId>dev.ikm.jpms</groupId>
-            <artifactId>org.hl7.fhir.r4</artifactId>
-            <version>${fhir-hl7-r4.version}</version>
-        </dependency>
+            <dependency>
+                <groupId>dev.ikm.jpms</groupId>
+                <artifactId>org.hl7.fhir.r4</artifactId>
+                <version>${fhir-hl7-r4.version}</version>
+            </dependency>
 
-        <dependency>
-            <groupId>dev.ikm.jpms</groupId>
-            <artifactId>org.hl7.fhir.utilities</artifactId>
-            <version>${fhir-hl7-utilities.version}</version>
-        </dependency>
-    </dependencies>
+            <dependency>
+                <groupId>dev.ikm.jpms</groupId>
+                <artifactId>org.hl7.fhir.utilities</artifactId>
+                <version>${fhir-hl7-utilities.version}</version>
+            </dependency>
+        </dependencies>
     </dependencyManagement>
-    
+
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -148,22 +150,26 @@
                         </executions>
                         <configuration>
                             <artifactItems>
+                                <!--
+                                                                <artifactItem>
+                                                                    <groupId>dev.ikm.tinkar.data</groupId>
+                                                                    <artifactId>SnomedCT_US_20200901_SpinedArray</artifactId>
+                                                                    <version>${snomedct-data.version}</version>
+                                                                    <classifier>pb</classifier>
+                                                                    <type>zip</type>
+                                                                    <overWrite>false</overWrite>
+                                                                    <outputDirectory>${project.build.directory}/data</outputDirectory>
+                                                                </artifactItem>
+                                -->
                                 <artifactItem>
                                     <groupId>dev.ikm.tinkar.data</groupId>
                                     <artifactId>tinkar-starter-data</artifactId>
                                     <version>${tinkar-starter-data.version}</version>
                                     <classifier>pb</classifier>
                                     <type>zip</type>
-                                    <overWrite>false</overWrite>
                                     <outputDirectory>${project.build.directory}/data</outputDirectory>
                                 </artifactItem>
-                                <artifactItem>
-                                    <groupId>dev.ikm.tinkar.data</groupId>
-                                    <artifactId>tinkar-starter-data-reasoned</artifactId>
-                                    <version>${tinkar-starter-data.version}</version>
-                                    <classifier>pb</classifier>
-                                    <type>zip</type>
-                                </artifactItem>                            </artifactItems>
+                            </artifactItems>
                             <outputDirectory>${project.build.directory}/data</outputDirectory>
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>true</overWriteSnapshots>

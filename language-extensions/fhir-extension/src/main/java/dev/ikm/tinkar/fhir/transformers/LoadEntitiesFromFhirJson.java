@@ -18,13 +18,16 @@ package dev.ikm.tinkar.fhir.transformers;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import dev.ikm.tinkar.common.id.PublicIds;
-import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.composer.Composer;
 import dev.ikm.tinkar.composer.Session;
-import dev.ikm.tinkar.composer.template.Synonym;
+import dev.ikm.tinkar.composer.assembler.ConceptAssembler;
+import dev.ikm.tinkar.composer.template.AxiomSyntax;
+import dev.ikm.tinkar.composer.template.FullyQualifiedName;
 import dev.ikm.tinkar.composer.template.USDialect;
 import dev.ikm.tinkar.entity.EntityCountSummary;
+import dev.ikm.tinkar.entity.transaction.Transaction;
+import dev.ikm.tinkar.ext.lang.owl.Rf2OwlToLogicAxiomTransformer;
 import dev.ikm.tinkar.fhir.transformers.provenance.FhirProvenanceTransform;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
@@ -37,10 +40,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 
-import static dev.ikm.tinkar.fhir.transformers.FhirConstants.CODE_CONCEPT_ADDITIONAL_IDENTIFIER_URL;
-import static dev.ikm.tinkar.fhir.transformers.FhirConstants.IKM_DEV_URL;
+import static dev.ikm.tinkar.fhir.transformers.FhirConstants.*;
 
 public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummary> {
     private static final Logger LOG = LoggerFactory.getLogger(LoadEntitiesFromFhirJson.class);
@@ -50,7 +51,6 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
     private IParser parser;
     private Date fromDate;
     private Date toDate;
-    private Consumer<String> fhirAndProvenanceJson;
     private final AtomicLong importCount = new AtomicLong();
     private final AtomicLong importConceptCount = new AtomicLong();
     private final AtomicLong importSemanticCount = new AtomicLong();
@@ -114,23 +114,25 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
     }
 
     public Session FhirCodeSystemConceptTransform(Bundle bundle) {
-        State status = State.ACTIVE;
-        long time = PrimitiveData.PREMUNDANE_TIME;
-        EntityProxy.Concept author = TinkarTerm.USER;
-        EntityProxy.Concept module = TinkarTerm.PRIMORDIAL_MODULE;
-        EntityProxy.Concept path = TinkarTerm.PRIMORDIAL_PATH;
-        Composer composer = new Composer("FHIR Concept Composer...");
-        Session session = composer.open(status, time, author, module, path);
         CodeSystem codeSystem = new CodeSystem();
         String jsonBundle = parser.setPrettyPrint(true).encodeResourceToString(bundle);
         bundle = parseJsonBundle(jsonBundle, codeSystem);
 
         EntityProxy.Concept conceptId = null;
 
+        Session session = null;
         for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
             Resource resource = entry.getResource();
             if (resource instanceof CodeSystem) {
                 codeSystem = (CodeSystem) resource;
+
+                State status = State.ACTIVE;
+                long time = codeSystem.getMeta().getLastUpdated().getTime();
+                EntityProxy.Concept author = TinkarTerm.USER;
+                EntityProxy.Concept module = TinkarTerm.DEVELOPMENT_MODULE;
+                EntityProxy.Concept path = TinkarTerm.DEVELOPMENT_PATH;
+                Composer composer = new Composer("FHIR Concept Composer...");
+                session = composer.open(status, time, author, module, path);
                 //all concepts retrieved...
                 for (CodeSystem.ConceptDefinitionComponent concept : codeSystem.getConcept()) {
                     for (Extension extension : concept.getExtension()) {
@@ -145,57 +147,49 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
                         }
                     }
                     //Designation transform
-                    for (CodeSystem.ConceptDefinitionDesignationComponent designation : concept.getDesignation()) {
+                    EntityProxy.Concept finalConceptId1 = conceptId;
+                    Session designationSession = session;
+                    concept.getDesignation().forEach(designation -> {
                         Extension caseSensitivityExtension = designation.getExtension().get(0);
                         Extension acceptabilityExtension = designation.getExtension().get(1);
                         CodeableConcept designationCaseSensitivityCodeableConcept = (CodeableConcept) caseSensitivityExtension.getValue();
                         CodeableConcept designationAcceptabilityCodeableConcept = (CodeableConcept) acceptabilityExtension.getValue();
                         //Coding useCoding = designation.getUse();
-                        session.compose(new Synonym()
+                        EntityProxy.Concept finalConceptId = finalConceptId1;
+                        designationSession.compose((ConceptAssembler conceptAssembler) -> conceptAssembler.concept(finalConceptId)
+                                .attach((FullyQualifiedName fqn) -> fqn
                                         .language(FhirUtils.generateLanguage(designation.getLanguage()))
                                         .text(designation.getValue())
-                                        .caseSignificance(FhirUtils.generateCaseSignificance(designationCaseSensitivityCodeableConcept.getCoding().get(0).getCode())), conceptId)
-                                .attach(new USDialect()
-                                        .acceptability(FhirUtils.generateAcceptability(designationAcceptabilityCodeableConcept.getCoding().getLast().getCode())));
-                        composer.commitSession(session);
-                    }
-
-                        /*for (CodeSystem.ConceptPropertyComponent property : concept.getProperty()) {
-                            String propertyCode= property.getCode();
-                            StringType propertyString=property.getValueStringType();
-                            for (Extension propertyExtensions: property.getExtension()) {
-                                    //create semantic here, composer api
-                                *//*EntityProxy.Concept finalConceptId1 = conceptId;
-                                session.compose((SemanticAssembler semanticAssembler) -> semanticAssembler
-                                        .reference(finalConceptId1)
-                                        .pattern(TinkarTerm.OWL_AXIOM_SYNTAX_PATTERN)
-                                        .fieldValues(fieldValues -> fieldValues
-                                                .with()
-                                                //synonym
-                                                .with(FhirUtils.generateNameType(REGULAR_NAME_DESCRIPTION_TYPE_SNOMEDID))
-                                                .with(TinkarTerm.RE))
+                                        .caseSignificance(FhirUtils.generateCaseSignificance(designationCaseSensitivityCodeableConcept.getCoding().get(0).getCode()))
                                         .attach((USDialect dialect) -> dialect
-                                                .acceptability(FhirUtils.generateAcceptability())));*//*
-                                String url=propertyExtensions.getUrl();
-                                if (url.equals(DEFINING_RELATIONSHIP_TYPE_URL) || url.equals(EL_PROFILE_SET_OPERATOR_URL)){
-                                    Coding coding=FhirUtils.getCodingByURL(url);
-                                    //create pattern here using composer api
-                                    if (url.equals(ROLE_GROUP_URL)){
-                                        //role group code
-                                    }
+                                                .acceptability(FhirUtils.generateAcceptability(designationAcceptabilityCodeableConcept.getCoding().getLast().getCode())))));
+                    });
+                    //property axiom transform
+                    EntityProxy.Concept finalConceptId = conceptId;
+                    Session axiomSession = session;
+                    concept.getProperty().subList(0, concept.getProperty().size()).forEach(property -> {
+                        if (property.getExtension() != null && !property.getCode().equals(FhirConstants.STATUS)) {
+                            if (property.getValue() instanceof StringType) {
+                                String propertyOwlSyntax = property.getValueStringType().getValue();
+                                axiomSession.compose(new AxiomSyntax().text(propertyOwlSyntax), finalConceptId);
+                                Transaction owlTransformationTransaction = Transaction.make();
+                                try {
+                                    new Rf2OwlToLogicAxiomTransformer(
+                                            owlTransformationTransaction,
+                                            AXIOM_SYNTAX_PATTERN,
+                                            TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN).call();
+                                } catch (Exception e) {
+                                    throw new RuntimeException(e);
                                 }
+                                composer.commitSession(axiomSession);
                             }
-
-                        }*/
-
-
+                        }
+                    });
                 }
             }
-
-            return session;
         }
-
+        assert session != null;
+        LOG.info("Generating concepts: " + session);
         return session;
-
     }
 }

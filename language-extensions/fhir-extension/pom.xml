@@ -195,6 +195,12 @@
             <artifactId>composer</artifactId>
             <version>1.0.0</version>
         </dependency>
+        <dependency>
+            <groupId>dev.ikm.tinkar.ext.owl</groupId>
+            <artifactId>owl-extension</artifactId>
+            <version>1.58.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>

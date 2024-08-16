@@ -29,21 +29,21 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
-import static dev.ikm.tinkar.integration.TestConstants.PB_STARTER_DATA_REASONED;
+import static dev.ikm.tinkar.integration.TestConstants.PB_STARTER_DATA;
 
 public class TestHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestHelper.class);
 
-     protected static void startEphemeralDataBase() {
-         CachingService.clearAll();
-         LOG.info("Cleared caches");
-         LOG.info("JVM Version: " + System.getProperty("java.version"));
-         LOG.info("JVM Name: " + System.getProperty("java.vm.name"));
-         LOG.info("Setup Ephemeral Suite: " + LOG.getName());
-         LOG.info(ServiceProperties.jvmUuid());
-         PrimitiveData.selectControllerByName(TestConstants.EPHEMERAL_STORE_NAME);
-         PrimitiveData.start();
+    protected static void startEphemeralDataBase() {
+        CachingService.clearAll();
+        LOG.info("Cleared caches");
+        LOG.info("JVM Version: " + System.getProperty("java.version"));
+        LOG.info("JVM Name: " + System.getProperty("java.vm.name"));
+        LOG.info("Setup Ephemeral Suite: " + LOG.getName());
+        LOG.info(ServiceProperties.jvmUuid());
+        PrimitiveData.selectControllerByName(TestConstants.EPHEMERAL_STORE_NAME);
+        PrimitiveData.start();
     }
 
     protected static void startSpinedArrayDataBase(File fileDataStore) {
@@ -67,23 +67,23 @@ public class TestHelper {
         PrimitiveData.start();
     }
 
-    protected static void loadEphemeralDataBase(){
+    protected static void loadEphemeralDataBase() {
         startEphemeralDataBase();
         loadDataBase();
     }
 
-    protected static void loadSpinedArrayDataBase(File fileDataStore){
+    protected static void loadSpinedArrayDataBase(File fileDataStore) {
         startSpinedArrayDataBase(fileDataStore);
         loadDataBase();
     }
 
-    protected static void loadMVStoreDataBase(File fileDataStore){
+    protected static void loadMVStoreDataBase(File fileDataStore) {
         startMVStoreDataBase(fileDataStore);
         loadDataBase();
     }
 
-    protected static void loadDataBase(){
-        LoadEntitiesFromProtobufFile loadProto = new LoadEntitiesFromProtobufFile(PB_STARTER_DATA_REASONED);
+    protected static void loadDataBase() {
+        LoadEntitiesFromProtobufFile loadProto = new LoadEntitiesFromProtobufFile(PB_STARTER_DATA);
         EntityCountSummary count = loadProto.compute();
         LOG.info(count + " entitles loaded from file: " + loadProto.summarize() + "\n\n");
     }
