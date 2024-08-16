@@ -59,7 +59,13 @@ class CoordinatesIT extends TestHelper {
     @Test
     @Order(2)
     void countPathOrigins() {
-        Assertions.assertEquals(PrimitiveData.get().semanticNidsOfPattern(PATH_ORIGINS_PATTERN.nid()).length, 0);
+        // There are 4 Paths and 3 PathOrigins:
+        //      MasterPath originates from DevelopmentPath
+        //      DevelopmentPath originates from SandboxPath
+        //      SandboxPath originates from PrimordialPath
+        //      PrimordialPath is, by definition, the origin and therefore does not have a PathOrigin
+        int expectedPathOriginsCount = 3;
+        Assertions.assertEquals(expectedPathOriginsCount, PrimitiveData.get().semanticNidsOfPattern(PATH_ORIGINS_PATTERN.nid()).length);
     }
 
     @Test
