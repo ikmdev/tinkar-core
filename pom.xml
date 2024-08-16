@@ -72,6 +72,8 @@
     </modules>
 
     <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
         <maven.javadoc.skip>true</maven.javadoc.skip>
         <activej-bytebuf.version>4.3-r6</activej-bytebuf.version>
         <activej-common.version>4.3-r6</activej-common.version>
