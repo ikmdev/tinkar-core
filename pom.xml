@@ -94,6 +94,7 @@
         <lucene-queryparser.version>9.7.0</lucene-queryparser.version>
         <lucene-queries.version>9.7.0</lucene-queries.version>
         <lucene-highlighter.version>9.7.0</lucene-highlighter.version>
+        <lucene-suggest.version>9.7.0</lucene-suggest.version>
         <org.reactivestreams.version>1.0.3</org.reactivestreams.version>
         <roaringbitmap.version>0.9.31-r3</roaringbitmap.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -376,6 +377,11 @@
                 <groupId>org.apache.lucene</groupId>
                 <artifactId>lucene-core</artifactId>
                 <version>${lucene-core.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-suggest</artifactId>
+                <version>${lucene-suggest.version}</version>
             </dependency>
 
         </dependencies>

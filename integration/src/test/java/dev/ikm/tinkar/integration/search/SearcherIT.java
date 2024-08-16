@@ -15,12 +15,17 @@
  */
 package dev.ikm.tinkar.integration.search;
 
+import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
+import dev.ikm.tinkar.coordinate.stamp.calculator.LatestVersionSearchResult;
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.provider.search.Searcher;
+import dev.ikm.tinkar.provider.search.TypeAheadSearch;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.junit.jupiter.api.AfterAll;
@@ -29,6 +34,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.io.File;
+import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -121,4 +128,101 @@ public class SearcherIT extends TestHelper {
         // 2) Refrenced component type restriction
         assertEquals(6, searchResults.size(), "Exactly 6 search results should be returned");
     }
+
+    @Test
+    public void typeAheadIndexerTest() throws Exception {
+        System.out.println("STARTING THE TEST");
+        TypeAheadSearch.buildSuggester();
+        List<String> suggestions = TypeAheadSearch.suggest("r");
+        System.out.println("LOOKING FOR SUGGESTIONS FOR R");
+        for (String suggestion : suggestions) {
+            System.out.println(suggestion);
+        }
+        assertEquals(41, suggestions.size());
+    }
+
+    @Test
+    public void typeAheadIndexerTestSearchAndDescendants1() throws Exception {
+        // f7495b58-6630-3499-a44e-2052b5fcf06c - Author ID
+        // Model concept: [7bbd4210-381c-11e7-9598-0800200c9a66]
+
+        Stopwatch stopwatch = new Stopwatch();
+        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("f7495b58-6630-3499-a44e-2052b5fcf06c")).get().publicId();
+
+        String userInput = "u";
+        List<LatestVersionSearchResult> allSearchResults = TypeAheadSearch.typeAheadSuggestions(userInput, ancestorId);
+
+        stopwatch.stop();
+
+        System.out.println(allSearchResults);
+        System.out.println(allSearchResults.size());
+
+        System.out.println("STOPWATCH: " + stopwatch.durationString());
+
+    }
+
+    @Test
+    public void typeAheadIndexerTestSearchAndDescendants2() throws Exception {
+        // f7495b58-6630-3499-a44e-2052b5fcf06c - Author ID
+        // Model concept: [7bbd4210-381c-11e7-9598-0800200c9a66]
+
+        long startTime = System.nanoTime();
+
+        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("7bbd4210-381c-11e7-9598-0800200c9a66")).get().publicId();
+
+
+        String userInput = "a";
+        List<LatestVersionSearchResult> allSearchResults = TypeAheadSearch.typeAheadSuggestions(userInput, ancestorId);
+
+        long endTime = System.nanoTime();
+        long duration = endTime - startTime;
+
+        System.out.println(allSearchResults);
+        System.out.println(allSearchResults.size());
+
+        System.out.println("STOPWATCH: " + (duration / 1_000_000));
+
+    }
+
+    @Test
+    public void typeAheadIndexerTestSearchAndDescendantsFuzzy() throws Exception {
+        // f7495b58-6630-3499-a44e-2052b5fcf06c - Author ID
+        // Model concept: [7bbd4210-381c-11e7-9598-0800200c9a66]
+        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("f7495b58-6630-3499-a44e-2052b5fcf06c")).get().publicId();
+
+        Stopwatch stopwatch = new Stopwatch();
+
+        String userInput = "u";
+        List<LatestVersionSearchResult> allSearchResults = TypeAheadSearch.typeAheadFuzzySuggestions(userInput, ancestorId);
+
+        stopwatch.stop();
+
+        System.out.println(allSearchResults);
+        System.out.println(allSearchResults.size());
+
+        System.out.println("STOPWATCH: " + stopwatch.durationString());
+
+    }
+
+    @Test
+    public void typeAheadIndexerTestSearchAndDescendantsFuzzy2() throws Exception {
+        // f7495b58-6630-3499-a44e-2052b5fcf06c - Author ID
+        // Model concept: [7bbd4210-381c-11e7-9598-0800200c9a66]
+        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("7bbd4210-381c-11e7-9598-0800200c9a66")).get().publicId();
+
+        long startTime = System.nanoTime();
+
+        String userInput = "a";
+        List<LatestVersionSearchResult> allSearchResults = TypeAheadSearch.typeAheadFuzzySuggestions(userInput, ancestorId);
+
+        long endTime = System.nanoTime();
+        long duration = endTime - startTime;
+
+        System.out.println(allSearchResults);
+        System.out.println(allSearchResults.size());
+
+        System.out.println("STOPWATCH: " + (duration / 1_000_000));
+
+    }
+
 }

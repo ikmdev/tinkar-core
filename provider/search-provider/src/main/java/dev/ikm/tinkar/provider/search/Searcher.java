@@ -81,26 +81,26 @@ public class Searcher {
         try {
             if (queryString != null & !queryString.isEmpty()) {
                 PrimitiveDataSearchResult[] results;
-                    Query query = parser.parse(queryString);
-                    Formatter formatter = new SimpleHTMLFormatter();
-                    QueryScorer scorer = new QueryScorer(query);
-                    Highlighter highlighter = new Highlighter(formatter, scorer);
-                    highlighter.setTextFragmenter(new NullFragmenter());
+                Query query = parser.parse(queryString);
+                Formatter formatter = new SimpleHTMLFormatter();
+                QueryScorer scorer = new QueryScorer(query);
+                Highlighter highlighter = new Highlighter(formatter, scorer);
+                highlighter.setTextFragmenter(new NullFragmenter());
 
-                    ScoreDoc[] hits = indexSearcher.search(query, maxResultSize).scoreDocs;
-                    results = new PrimitiveDataSearchResult[hits.length];
-                    for (int i = 0; i < hits.length; i++) {
-                        Document hitDoc = indexSearcher.doc(hits[i].doc);
-                        StoredField nidField = (StoredField) hitDoc.getField(Indexer.NID);
-                        StoredField patternNidField = (StoredField) hitDoc.getField(Indexer.PATTERN_NID);
-                        StoredField rcNidField = (StoredField) hitDoc.getField(Indexer.RC_NID);
-                        StoredField fieldIndexField = (StoredField) hitDoc.getField(Indexer.FIELD_INDEX);
-                        StoredField textField = (StoredField) hitDoc.getField(Indexer.TEXT_FIELD_NAME);
-                        String highlightedString = highlighter.getBestFragment(Indexer.analyzer(), Indexer.TEXT_FIELD_NAME, textField.stringValue());
+                ScoreDoc[] hits = indexSearcher.search(query, maxResultSize).scoreDocs;
+                results = new PrimitiveDataSearchResult[hits.length];
+                for (int i = 0; i < hits.length; i++) {
+                    Document hitDoc = indexSearcher.doc(hits[i].doc);
+                    StoredField nidField = (StoredField) hitDoc.getField(Indexer.NID);
+                    StoredField patternNidField = (StoredField) hitDoc.getField(Indexer.PATTERN_NID);
+                    StoredField rcNidField = (StoredField) hitDoc.getField(Indexer.RC_NID);
+                    StoredField fieldIndexField = (StoredField) hitDoc.getField(Indexer.FIELD_INDEX);
+                    StoredField textField = (StoredField) hitDoc.getField(Indexer.TEXT_FIELD_NAME);
+                    String highlightedString = highlighter.getBestFragment(Indexer.analyzer(), Indexer.TEXT_FIELD_NAME, textField.stringValue());
 
-                        results[i] = new PrimitiveDataSearchResult(nidField.numericValue().intValue(), rcNidField.numericValue().intValue(),
-                                patternNidField.numericValue().intValue(), fieldIndexField.numericValue().intValue(), hits[i].score, highlightedString);
-                    }
+                    results[i] = new PrimitiveDataSearchResult(nidField.numericValue().intValue(), rcNidField.numericValue().intValue(),
+                            patternNidField.numericValue().intValue(), fieldIndexField.numericValue().intValue(), hits[i].score, highlightedString);
+                }
                 return results;
             }
         } finally {
@@ -113,9 +113,9 @@ public class Searcher {
      * Returns a default navigation calculator with coordinates for
      * inferred navigation, active stamps on development path, & english synonyms
      *
-     * @return  NavigationCalculator
+     * @return NavigationCalculator
      */
-    private static NavigationCalculator defaultNavigationCalculator() {
+    public static NavigationCalculator defaultNavigationCalculator() {
         StampCoordinateRecord stampCoordinateRecord = Coordinates.Stamp.DevelopmentLatestActiveOnly();
         LanguageCoordinateRecord languageCoordinateRecord = Coordinates.Language.UsEnglishRegularName();
         NavigationCoordinateRecord navigationCoordinateRecord = Coordinates.Navigation.inferred().toNavigationCoordinateRecord();
@@ -126,8 +126,8 @@ public class Searcher {
      * Returns List of Children PublicIds for the Entity PublicId provided
      * using the default NavigationCalculator from {@link #defaultNavigationCalculator()}
      *
-     * @param   parentConceptId PublicId of the parent concept
-     * @return  List of PublicIds for the children concepts
+     * @param parentConceptId PublicId of the parent concept
+     * @return List of PublicIds for the children concepts
      */
     public static List<PublicId> childrenOf(PublicId parentConceptId) {
         return childrenOf(defaultNavigationCalculator(), parentConceptId);
@@ -140,9 +140,9 @@ public class Searcher {
      * Provided as an ease-of-use method to convert nids provided by the
      * {@link NavigationCalculator#childrenOf(int)} method to PublicIds
      *
-     * @param   navCalc NavigationCalculator to calculate children
-     * @param   parentConceptId PublicId of the parent concept
-     * @return  List of PublicIds for the children concepts
+     * @param navCalc         NavigationCalculator to calculate children
+     * @param parentConceptId PublicId of the parent concept
+     * @return List of PublicIds for the children concepts
      */
     public static List<PublicId> childrenOf(NavigationCalculator navCalc, PublicId parentConceptId) {
         List<PublicId> childIds = new ArrayList<>();
@@ -157,8 +157,8 @@ public class Searcher {
      * Returns List of descendant PublicIds for the Entity PublicId provided
      * using the default NavigationCalculator from {@link #defaultNavigationCalculator()}
      *
-     * @param   ancestorConceptId PublicId of the ancestor concept
-     * @return  List of PublicIds for the descendant concepts
+     * @param ancestorConceptId PublicId of the ancestor concept
+     * @return List of PublicIds for the descendant concepts
      */
     public static List<PublicId> descendantsOf(PublicId ancestorConceptId) {
         return descendantsOf(defaultNavigationCalculator(), ancestorConceptId);
@@ -171,9 +171,9 @@ public class Searcher {
      * Provided as an ease-of-use method to convert nids provided by the
      * {@link NavigationCalculator#descendentsOf(int)} method to PublicIds
      *
-     * @param   navCalc NavigationCalculator to calculate descendants
-     * @param   ancestorConceptId PublicId of the ancestor concept
-     * @return  List of PublicIds for the descendant concepts
+     * @param navCalc           NavigationCalculator to calculate descendants
+     * @param ancestorConceptId PublicId of the ancestor concept
+     * @return List of PublicIds for the descendant concepts
      */
     public static List<PublicId> descendantsOf(NavigationCalculator navCalc, PublicId ancestorConceptId) {
         List<PublicId> descendantIds = new ArrayList<>();
@@ -188,8 +188,8 @@ public class Searcher {
      * Returns List of Fully Qualified Name (FQN) Strings for the Entity PublicIds provided
      * using the default NavigationCalculator from {@link #defaultNavigationCalculator()}
      *
-     * @param   conceptIds List of PublicIds for concepts with FQNs to return
-     * @return  List of FQN Strings with indexes matching the supplied List of PublicIds
+     * @param conceptIds List of PublicIds for concepts with FQNs to return
+     * @return List of FQN Strings with indexes matching the supplied List of PublicIds
      */
     public static List<String> descriptionsOf(List<PublicId> conceptIds) {
         return descriptionsOf(defaultNavigationCalculator(), conceptIds);
@@ -202,19 +202,19 @@ public class Searcher {
      * Provided as an ease-of-use method to retrieve FQNs for multiple concepts at once
      * using the {@link NavigationCalculator#getFullyQualifiedNameText(int)} method
      *
-     * @param   navCalc NavigationCalculator to calculate FQNs
-     * @param   conceptIds List of PublicIds for concepts with FQNs to return
-     * @return  List of FQN Strings with indexes matching the supplied List of PublicIds
+     * @param navCalc    NavigationCalculator to calculate FQNs
+     * @param conceptIds List of PublicIds for concepts with FQNs to return
+     * @return List of FQN Strings with indexes matching the supplied List of PublicIds
      */
     public static List<String> descriptionsOf(NavigationCalculator navCalc, List<PublicId> conceptIds) {
         List<String> names = new ArrayList<>();
         for (PublicId pid : conceptIds) {
             navCalc.getFullyQualifiedNameText(EntityService.get().nidForPublicId(pid))
                     .ifPresentOrElse(names::add,
-                        () -> {
-                            LOG.warn("FQN not defined for " + pid.idString());
-                            names.add("");
-                        }
+                            () -> {
+                                LOG.warn("FQN not defined for " + pid.idString());
+                                names.add("");
+                            }
                     );
         }
         return names;
@@ -223,10 +223,10 @@ public class Searcher {
     /**
      * Returns List of LIDR Record PublicIds for the provided Test Kit Device.
      *
-     * @param   testKitId associated Test Kit Device PublicId
-     * @return  List of Public Ids given test kit concept and lidr record pattern.
+     * @param testKitId associated Test Kit Device PublicId
+     * @return List of Public Ids given test kit concept and lidr record pattern.
      */
-    public static List<PublicId> getLidrRecordSemanticsFromTestKit(PublicId testKitId){
+    public static List<PublicId> getLidrRecordSemanticsFromTestKit(PublicId testKitId) {
         List<PublicId> lidrRecordSemanticIds = new ArrayList<>();
 
         EntityService.get().getEntity(testKitId.asUuidArray()).ifPresent((testKitEntity) -> {
@@ -244,8 +244,8 @@ public class Searcher {
      * Returns List of Result Conformance PublicIds for all LIDR Records of the Test Kit Device
      * using the default NavigationCalculator from {@link #defaultNavigationCalculator()}
      *
-     * @param   testKitId PublicId of the Test Kit Device
-     * @return  List of PublicIds for all Result Conformances / Constraints for the Test Kit Device
+     * @param testKitId PublicId of the Test Kit Device
+     * @return List of PublicIds for all Result Conformances / Constraints for the Test Kit Device
      */
     public static List<PublicId> getResultConformanceFromTestKit(PublicId testKitId) {
         return getResultConformanceFromTestKit(defaultNavigationCalculator(), testKitId);
@@ -254,9 +254,9 @@ public class Searcher {
     /**
      * Returns List of Result Conformance PublicIds for all LIDR Records of the Test Kit Device
      *
-     * @param   navCalc NavigationCalculator for determining latest version
-     * @param   testKitId PublicId of the Test Kit Device
-     * @return  List of PublicIds for all Result Conformances / Constraints for the Test Kit Device
+     * @param navCalc   NavigationCalculator for determining latest version
+     * @param testKitId PublicId of the Test Kit Device
+     * @return List of PublicIds for all Result Conformances / Constraints for the Test Kit Device
      */
     public static List<PublicId> getResultConformanceFromTestKit(NavigationCalculator navCalc, PublicId testKitId) {
         List<PublicId> resultConformanceList = new ArrayList<>();
@@ -271,8 +271,8 @@ public class Searcher {
      * Returns List of Result Conformance PublicIds for a LIDR Record
      * using the default NavigationCalculator from {@link #defaultNavigationCalculator()}
      *
-     * @param   lidrRecordId PublicId of the LIDR Record
-     * @return  List of PublicIds for Result Conformances of the LIDR Record
+     * @param lidrRecordId PublicId of the LIDR Record
+     * @return List of PublicIds for Result Conformances of the LIDR Record
      */
     public static List<PublicId> getResultConformancesFromLidrRecord(PublicId lidrRecordId) {
         return getResultConformancesFromLidrRecord(defaultNavigationCalculator(), lidrRecordId);
@@ -281,9 +281,9 @@ public class Searcher {
     /**
      * Returns List of Result Conformance PublicIds for a LIDR Record
      *
-     * @param   navCalc NavigationCalculator for determining latest version
-     * @param   lidrRecordId PublicId of the LIDR Record
-     * @return  List of PublicIds for Result Conformances of the LIDR Record
+     * @param navCalc      NavigationCalculator for determining latest version
+     * @param lidrRecordId PublicId of the LIDR Record
+     * @return List of PublicIds for Result Conformances of the LIDR Record
      */
     public static List<PublicId> getResultConformancesFromLidrRecord(NavigationCalculator navCalc, PublicId lidrRecordId) {
         List<PublicId> resultConformanceList = new ArrayList<>();
@@ -304,8 +304,8 @@ public class Searcher {
      * Returns List of Allowed Results PublicIds for a Result Conformance
      * using the default NavigationCalculator from {@link #defaultNavigationCalculator()}
      *
-     * @param   resultConformanceId PublicId of the Result Conformance
-     * @return  List of PublicIds for Allowed Results of the Result Conformance
+     * @param resultConformanceId PublicId of the Result Conformance
+     * @return List of PublicIds for Allowed Results of the Result Conformance
      */
     public static List<PublicId> getAllowedResultsFromResultConformance(PublicId resultConformanceId) {
         return getAllowedResultsFromResultConformance(defaultNavigationCalculator(), resultConformanceId);
@@ -314,9 +314,9 @@ public class Searcher {
     /**
      * Returns List of Allowed Results PublicIds for a Result Conformance
      *
-     * @param   navCalc NavigationCalculator for determining latest version
-     * @param   resultConformanceId PublicId of the Result Conformance
-     * @return  List of PublicIds for Allowed Results of the Result Conformance
+     * @param navCalc             NavigationCalculator for determining latest version
+     * @param resultConformanceId PublicId of the Result Conformance
+     * @return List of PublicIds for Allowed Results of the Result Conformance
      */
     public static List<PublicId> getAllowedResultsFromResultConformance(NavigationCalculator navCalc, PublicId resultConformanceId) {
         List<PublicId> allowedResultsList = new ArrayList<>();
@@ -342,6 +342,26 @@ public class Searcher {
                             });
                 });
         return allowedResultsList;
+    }
+
+    /**
+     * Returns a list of PublicIds for Descendants given an ancestor and list of ancestors to constrain by
+     *
+     * @param ancestor
+     * @param constraintAncestors
+     * @return List of PublicIds for a given ancestor constrained by other ancestors
+     */
+    public static List<PublicId> getDescendantsWithConstraint(PublicId ancestor, List<PublicId> constraintAncestors) {
+        List<PublicId> constraintDescendants = new ArrayList<>();
+        List<PublicId> descendantsWithConstraints = descendantsOf(ancestor);
+
+        constraintAncestors.forEach(a -> {
+            constraintDescendants.addAll(descendantsOf(a));
+        });
+
+        descendantsWithConstraints.removeAll(constraintDescendants);
+
+        return descendantsWithConstraints;
     }
 
 }
