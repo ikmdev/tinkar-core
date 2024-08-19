@@ -24,10 +24,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.concurrent.ExecutionException;
 
+import static dev.ikm.tinkar.integration.TestConstants.createFilePathInTarget;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -44,32 +43,24 @@ class EntityServiceIT extends TestHelper {
     @DisplayName("Test export entities in temporal range")
     void testExportEntitiesInSpecifiedTemporalRange() throws ExecutionException, InterruptedException {
 
-        File file = new File("exportFile");
-        String from = "2020-03-01T00:00:00";
-        String to ="2024-10-21T00:00:00";
+        File exportFile = createFilePathInTarget.apply("data/testExportEntitiesInSpecifiedTemporalRange-pb.zip");
+        exportFile.delete(); // Clean up previously created file
 
-        // Parse the string to LocalDateTime
-        LocalDateTime dateTimeFrom = LocalDateTime.parse(from);
-        LocalDateTime dateTimeTo = LocalDateTime.parse(to);
-
-        // Convert LocalDateTime to epoch milliseconds
-        long fromEpoch = dateTimeFrom.toInstant(ZoneOffset.UTC).toEpochMilli();
-        long toEpoch = dateTimeTo.toInstant(ZoneOffset.UTC).toEpochMilli();
+        // Starter Data is created at Premundane time which is Long.MIN_VALUE+1 epoch milliseconds
+        long fromEpoch = Long.MIN_VALUE;
+        long toEpoch = Long.MIN_VALUE+2;
 
         // Perform the temporal export operation
-        EntityCountSummary summary = EntityService.get().temporalExport(file, fromEpoch, toEpoch).get();
+        EntityCountSummary summary = EntityService.get().temporalExport(exportFile, fromEpoch, toEpoch).get();
 
         // Verify the summary
         assertNotNull(summary);
         // Add your assertions here based on the expected summary values
         // For example:
-        assertEquals(295, summary.conceptsCount());
-        assertEquals(3047, summary.semanticsCount());
-        assertEquals(17, summary.patternsCount());
+        assertEquals(296, summary.conceptsCount());
+        assertEquals(3063, summary.semanticsCount());
+        assertEquals(16, summary.patternsCount());
         assertEquals(2, summary.stampsCount());
-
-        // Clean up (delete the file if it was created)
-        file.delete();
     }
 
 }
