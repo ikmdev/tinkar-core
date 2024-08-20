@@ -60,6 +60,7 @@ public class LogicalExpression {
                     case PROPERTY_SET -> new LogicalAxiomAdaptor.PropertySetAdaptor(this, i);
                     case ROLE -> new LogicalAxiomAdaptor.RoleAxiomAdaptor(this, i);
                     case SUFFICIENT_SET -> new LogicalAxiomAdaptor.SufficientSetAdaptor(this, i);
+                    case INCLUSION_SET -> new LogicalAxiomAdaptor.InclusionSetAdaptor(this, i);
                 }
             } else {
                 mutableAdaptorList.add(null);
