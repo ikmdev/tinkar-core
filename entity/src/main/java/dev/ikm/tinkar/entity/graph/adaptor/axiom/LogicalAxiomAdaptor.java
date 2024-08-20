@@ -185,6 +185,19 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
         }
     }
 
+    public static final class InclusionSetAdaptor extends LogicalAxiomAdaptor implements LogicalAxiom.LogicalSet.InclusionSet {
+
+        public InclusionSetAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
+            super(enclosingExpression, vertexIndex);
+            assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(TinkarTerm.INCLUSION_SET);
+        }
+
+        @Override
+        public ImmutableSet<Atom> elements() {
+            return children(Atom.class);
+        }
+    }
+
     public static final class RoleAxiomAdaptor extends LogicalAxiomAdaptor implements LogicalAxiom.Atom.TypedAtom.Role {
 
         public RoleAxiomAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {

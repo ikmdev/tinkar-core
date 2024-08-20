@@ -7,6 +7,9 @@
 
 Tinkar core is an essential repository that creates the primitive functionality and data types for Komet. Tinkar core is also responsible for managing caches and I/O (spined-array) of the application. Building `tinkar-core` is a prerequisite to building `komet` on your local machine.
 
+### Team Ownership - Product Owner
+Data Team
+
 ## Getting Started
 
 Follow the instructions below to set up the local environment for `tinkar-core`:
