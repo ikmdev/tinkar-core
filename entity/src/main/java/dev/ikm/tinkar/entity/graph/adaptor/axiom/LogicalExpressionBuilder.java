@@ -114,6 +114,21 @@ public class LogicalExpressionBuilder {
         }
         return new LogicalAxiomAdaptor.NecessarySetAdaptor(logicalExpression, necessarySet.vertexIndex());
     }
+
+    public LogicalAxiom.LogicalSet.InclusionSet InclusionSet(LogicalAxiom.Atom... elements) {
+        return InclusionSet(UUID.randomUUID(), elements);
+    }
+    public LogicalAxiom.LogicalSet.InclusionSet InclusionSet(UUID vertexUuid, LogicalAxiom.Atom... elements) {
+        EntityVertex propertySet = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.INCLUSION_SET.nid);
+        builder.addVertex(propertySet);
+        builder.addEdge(propertySet.vertexIndex(), rootIndex);
+        for (LogicalAxiom.Atom element : elements) {
+            builder.addEdge(element.vertexIndex(), propertySet.vertexIndex());
+        }
+        return new LogicalAxiomAdaptor.InclusionSetAdaptor(logicalExpression, propertySet.vertexIndex());
+    }
+
+
     public LogicalAxiom.LogicalSet.PropertySet PropertySet(LogicalAxiom.Atom... elements) {
         return PropertySet(UUID.randomUUID(), elements);
     }
