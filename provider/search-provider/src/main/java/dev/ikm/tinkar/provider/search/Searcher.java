@@ -26,6 +26,8 @@ import dev.ikm.tinkar.coordinate.navigation.NavigationCoordinateRecord;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculator;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
+import dev.ikm.tinkar.entity.ConceptEntity;
+import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
@@ -347,21 +349,49 @@ public class Searcher {
     /**
      * Returns a list of PublicIds for Descendants given an ancestor and list of ancestors to constrain by
      *
-     * @param ancestor
-     * @param constraintAncestors
+     * @param ancestorId
+     * @param constraintAncestorIds
      * @return List of PublicIds for a given ancestor constrained by other ancestors
      */
-    public static List<PublicId> getDescendantsWithConstraint(PublicId ancestor, List<PublicId> constraintAncestors) {
-        List<PublicId> constraintDescendants = new ArrayList<>();
-        List<PublicId> descendantsWithConstraints = descendantsOf(ancestor);
+    public static List<PublicId> getDescendantsWithConstraint(PublicId ancestorId, List<PublicId> constraintAncestorIds) {
+        List<PublicId> descendantsWithConstraints = new ArrayList<>();
+        Entity ancestorEntity = EntityService.get().getEntityFast(ancestorId.asUuidArray());
 
-        constraintAncestors.forEach(a -> {
-            constraintDescendants.addAll(descendantsOf(a));
-        });
+        if (ancestorEntity instanceof ConceptEntity) {
+            List<PublicId> constraintDescendants = new ArrayList<>();
+            descendantsWithConstraints = descendantsOf(ancestorId);
 
-        descendantsWithConstraints.removeAll(constraintDescendants);
+            constraintAncestorIds.forEach(constraint -> {
+                Entity constraintConcept = EntityService.get().getEntityFast(constraint.asUuidArray());
+                if (constraintConcept instanceof ConceptEntity) {
+                    constraintDescendants.addAll(descendantsOf(constraintConcept));
+                }
+            });
 
-        return descendantsWithConstraints;
+            descendantsWithConstraints.removeAll(constraintDescendants);
+
+            return descendantsWithConstraints;
+        } else {
+            return descendantsWithConstraints;
+        }
+    }
+
+    /**
+     * Returns the String representing the Value Constraint Semantic’s Units field value of the Concept for the specified module
+     *
+     * @param conceptId
+     * @param moduleId
+     * @return Optional String
+     */
+    public static String getValueConstraint(PublicId conceptId, PublicId moduleId) {
+        Entity conceptEntity = EntityService.get().getEntityFast(conceptId.asUuidArray());
+
+        if (conceptEntity instanceof ConceptEntity) {
+
+        } else {
+
+        }
+        return "";
     }
 
 }

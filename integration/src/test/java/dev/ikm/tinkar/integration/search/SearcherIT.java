@@ -34,6 +34,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -224,5 +225,74 @@ public class SearcherIT extends TestHelper {
         System.out.println("STOPWATCH: " + (duration / 1_000_000));
 
     }
+
+    @Test
+    public void descendantsWithConstraintTest() throws Exception {
+        List<PublicId> constraintAncestors = new ArrayList<>();
+        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("7bbd4210-381c-11e7-9598-0800200c9a66")).get().publicId();
+        List<PublicId> descendants = Searcher.getDescendantsWithConstraint(ancestorId, constraintAncestors);
+        for (PublicId descendant : descendants) {
+            System.out.println(descendant);
+        }
+    }
+
+    @Test
+    public void descendantsWithConstraintTestNoChildrenEmptyList() throws Exception {
+        List<PublicId> constraintAncestors = new ArrayList<>();
+        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("3642d9a3-8e23-5289-836b-366c0b1e2900")).get().publicId();
+        List<PublicId> descendants = Searcher.getDescendantsWithConstraint(ancestorId, constraintAncestors);
+        assertEquals(0, descendants.size());
+
+    }
+
+    @Test
+    public void descendantsWithConstraintTestNoChildrenNonEmptyList() throws Exception {
+        List<PublicId> constraintAncestors = new ArrayList<>();
+        PublicId constraintId = EntityService.get().getEntity(UUID.fromString("7bbd4210-381c-11e7-9598-0800200c9a66")).get().publicId();
+        constraintAncestors.add(constraintId);
+        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("3642d9a3-8e23-5289-836b-366c0b1e2900")).get().publicId();
+        List<PublicId> descendants = Searcher.getDescendantsWithConstraint(ancestorId, constraintAncestors);
+        assertEquals(0, descendants.size());
+    }
+
+    @Test
+    public void descendantsWithConstraintTestChildrenEmptyList() throws Exception {
+        List<PublicId> constraintAncestors = new ArrayList<>();
+        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("f7495b58-6630-3499-a44e-2052b5fcf06c")).get().publicId();
+        List<PublicId> descendants = Searcher.getDescendantsWithConstraint(ancestorId, constraintAncestors);
+        assertEquals(7, descendants.size());
+    }
+
+    @Test
+    public void descendantsWithConstraintTestChildrenNonEmptyList() throws Exception {
+        List<PublicId> constraintAncestors = new ArrayList<>();
+        PublicId constraintId = EntityService.get().getEntity(UUID.fromString("f7495b58-6630-3499-a44e-2052b5fcf06c")).get().publicId();
+        constraintAncestors.add(constraintId);
+        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("7bbd4210-381c-11e7-9598-0800200c9a66")).get().publicId();
+        List<PublicId> descendants = Searcher.getDescendantsWithConstraint(ancestorId, constraintAncestors);
+        assertEquals(7, descendants.size());
+    }
+
+
+    @Test
+    public void descendantsWithConstraintConstraintNotAConcept() throws Exception {
+        List<PublicId> constraintAncestors = new ArrayList<>();
+        PublicId constraintId = EntityService.get().getEntity(UUID.fromString("9c25d708-b9e9-4e97-b9f2-cba5dc917975")).get().publicId();
+        constraintAncestors.add(constraintId);
+        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("7bbd4210-381c-11e7-9598-0800200c9a66")).get().publicId();
+        List<PublicId> descendants = Searcher.getDescendantsWithConstraint(ancestorId, constraintAncestors);
+        assertEquals(147, descendants.size());
+    }
+
+    @Test
+    public void descendantsWithConstraintConstraintDNE() throws Exception {
+        List<PublicId> constraintAncestors = new ArrayList<>();
+        PublicId constraintId = EntityService.get().getEntity(UUID.fromString("abcde-6630-3499-a44e-2052b5fcf06c")).get().publicId();
+        constraintAncestors.add(constraintId);
+        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("7bbd4210-381c-11e7-9598-0800200c9a66")).get().publicId();
+        List<PublicId> descendants = Searcher.getDescendantsWithConstraint(ancestorId, constraintAncestors);
+        assertEquals(7, descendants.size());
+    }
+
 
 }
