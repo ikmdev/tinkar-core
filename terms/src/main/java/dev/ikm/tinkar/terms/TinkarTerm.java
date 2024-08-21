@@ -6816,18 +6816,6 @@ public class TinkarTerm {
     public static final EntityProxy.Concept VALUE_CONSTRAINT_SOURCE =
             EntityProxy.Concept.make("Value Constraint Source", UUID.fromString("09aa031a-6290-4ec9-a44c-23928a767da3"));
 
-    public static final EntityProxy.Concept PRESENCE =
-            EntityProxy.Concept.make("Presence", UUID.fromString("a1d6faa6-7d51-4fa1-bd0a-28074f051cc1"), UUID.fromString("233f7dcf-aeb4-36c9-b096-e8c3b6a37616"));
-
-    public static final EntityProxy.Concept ABSENCE =
-            EntityProxy.Concept.make("Absence", UUID.fromString("275d4224-3a26-4870-a55f-4d81c13a50e3"), UUID.fromString("598908a9-a254-3e1d-8136-c363e09eaae2"));
-
-    public static final EntityProxy.Concept UNDETERMINED =
-            EntityProxy.Concept.make("Undetermined", UUID.fromString("0dc6b1bf-4ba7-4e94-8dab-db6a21d6b885"), UUID.fromString("8c688254-17f3-35a9-8acd-e1b75e75d384"));
-
-    public static final EntityProxy.Concept INVALID =
-            EntityProxy.Concept.make("Invalid", UUID.fromString("1469a1b8-f168-4688-83f9-45a62c33e87a"), UUID.fromString("2bf6b6b1-74f7-3ebc-a48b-5a7f12980559"));
-
     public static final EntityProxy.Concept EL_PLUS_PLUS_TERMINOLOGICAL_AXIOMS =
             EntityProxy.Concept.make("EL++ terminological axioms (SOLOR)", UUID.fromString("b3ec50c4-e8cf-4720-b192-31374705f3b7"));
 
