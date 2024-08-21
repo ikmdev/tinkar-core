@@ -2109,6 +2109,7 @@ public class TinkarTerm {
      * <a href="http://localhost:8080/terminology/rest/concept/b6d3be7d-1d7f-5c44-a425-5357f878c212">
      * b6d3be7d-1d7f-5c44-a425-5357f878c212</a>}.
      */
+    @Deprecated
     public static final EntityProxy.Concept EL_PLUS_PLUS_INFERRED_TERMINOLOGICAL_AXIOMS =
             EntityProxy.Concept.make("EL++ Inferred terminological axioms (SOLOR)", UUID.fromString("b6d3be7d-1d7f-5c44-a425-5357f878c212"));
     /**
@@ -2126,6 +2127,7 @@ public class TinkarTerm {
      * <a href="http://localhost:8080/terminology/rest/concept/1412bd09-eb0c-5107-9756-10c1c417d385">
      * 1412bd09-eb0c-5107-9756-10c1c417d385</a>}.
      */
+    @Deprecated
     public static final EntityProxy.Concept EL_PLUS_PLUS_STATED_TERMINOLOGICAL_AXIOMS =
             EntityProxy.Concept.make("EL++ Stated terminological axioms (SOLOR)", UUID.fromString("1412bd09-eb0c-5107-9756-10c1c417d385"));
     /**
@@ -6780,6 +6782,58 @@ public class TinkarTerm {
      */
     public static final EntityProxy.Concept C_SNOMED_INTERNATIONAL =
             EntityProxy.Concept.make("© SNOMED International (SOLOR)", UUID.fromString("d03b0cc5-dfdf-5580-b162-f2fb0e15eb94"));
+
+    public static final EntityProxy.Concept EXAMPLE_UCUM_UNITS =
+            EntityProxy.Concept.make("Example UCUM Units", UUID.fromString("80cd4978-314d-46e3-bc13-9980280ae955"));
+
+    public static final EntityProxy.Concept INFERRED_DEFINITION =
+            EntityProxy.Concept.make("Inferred Definition", UUID.fromString("b1abf4dc-9838-4b46-ac55-10c4f92ba10b"), UUID.fromString("1290e6ba-48d0-31d2-8d62-e133373c63f5"));
+
+    public static final EntityProxy.Concept IDENTIFIER_VALUE =
+            EntityProxy.Concept.make("Identifier Value", UUID.fromString("b32dd26b-c3fc-487e-987e-16ace71a0d0f"));
+
+    public static final EntityProxy.Concept MAXIMUM_VALUE_OPERATOR =
+            EntityProxy.Concept.make("Maximum Value Operator", UUID.fromString("7b8916ab-fd50-41df-8fc2-0b2a7a78be6d"));
+
+    public static final EntityProxy.Concept MINIMUM_VALUE_OPERATOR =
+            EntityProxy.Concept.make("Minimum Value Operator", UUID.fromString("ded98e42-f74a-4432-9ae7-01b94dc2fdea"));
+
+    public static final EntityProxy.Concept REFERENCE_RANGE =
+            EntityProxy.Concept.make("Reference Range", UUID.fromString("87ce975b-309b-47f4-a6c6-4ae6df6649a1"));
+
+    public static final EntityProxy.Concept REFERENCE_RANGE_MAXIMUM =
+            EntityProxy.Concept.make("Reference Range Maximum", UUID.fromString("72d58983-b1e1-4ca9-833f-0e40c1defd39"));
+
+    public static final EntityProxy.Concept REFERENCE_RANGE_MINIMUM =
+            EntityProxy.Concept.make("Reference Range Minimum", UUID.fromString("37c35a88-9e27-42ca-b626-186773c4b612"));
+
+    public static final EntityProxy.Concept STATED_DEFINITION =
+            EntityProxy.Concept.make("Stated Definition", UUID.fromString("28608bd3-ac73-4fe8-a5f0-1efe0d6650a8"), UUID.fromString("3b0dbd3b-2e53-3a30-8576-6c7fa7773060"));
+
+    public static final EntityProxy.Concept VALUE_CONSTRAINT =
+            EntityProxy.Concept.make("Value Constraint", UUID.fromString("8c55fb86-92d8-42a9-ad70-1e23abbf7eec"));
+
+    public static final EntityProxy.Concept VALUE_CONSTRAINT_SOURCE =
+            EntityProxy.Concept.make("Value Constraint Source", UUID.fromString("09aa031a-6290-4ec9-a44c-23928a767da3"));
+
+    public static final EntityProxy.Concept PRESENCE =
+            EntityProxy.Concept.make("Presence", UUID.fromString("a1d6faa6-7d51-4fa1-bd0a-28074f051cc1"), UUID.fromString("233f7dcf-aeb4-36c9-b096-e8c3b6a37616"));
+
+    public static final EntityProxy.Concept ABSENCE =
+            EntityProxy.Concept.make("Absence", UUID.fromString("275d4224-3a26-4870-a55f-4d81c13a50e3"), UUID.fromString("598908a9-a254-3e1d-8136-c363e09eaae2"));
+
+    public static final EntityProxy.Concept UNDETERMINED =
+            EntityProxy.Concept.make("Undetermined", UUID.fromString("0dc6b1bf-4ba7-4e94-8dab-db6a21d6b885"), UUID.fromString("8c688254-17f3-35a9-8acd-e1b75e75d384"));
+
+    public static final EntityProxy.Concept INVALID =
+            EntityProxy.Concept.make("Invalid", UUID.fromString("1469a1b8-f168-4688-83f9-45a62c33e87a"), UUID.fromString("2bf6b6b1-74f7-3ebc-a48b-5a7f12980559"));
+
+    public static final EntityProxy.Concept EL_PLUS_PLUS_TERMINOLOGICAL_AXIOMS =
+            EntityProxy.Concept.make("EL++ terminological axioms (SOLOR)", UUID.fromString("b3ec50c4-e8cf-4720-b192-31374705f3b7"));
+
+    public static final EntityProxy.Concept TINKAR_MODEL_CONCEPT =
+            EntityProxy.Concept.make("Tinkar Model concept (SOLOR)", UUID.fromString("bc59d656-83d3-47d8-9507-0e656ea95463"));
+
     /**
      * ConceptProxy for: "Tinkar root concept".
      */
