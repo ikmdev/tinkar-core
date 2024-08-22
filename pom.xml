@@ -6,7 +6,7 @@
         <groupId>dev.ikm.build</groupId>
         <artifactId>java-parent</artifactId>
         <version>1.47.0</version>
-        <relativePath />
+        <relativePath/>
     </parent>
 
     <groupId>dev.ikm.tinkar</groupId>
@@ -95,7 +95,6 @@
         <lucene-queryparser.version>9.7.0</lucene-queryparser.version>
         <lucene-queries.version>9.7.0</lucene-queries.version>
         <lucene-highlighter.version>9.7.0</lucene-highlighter.version>
-        <lucene-suggest.version>9.7.0</lucene-suggest.version>
         <org.reactivestreams.version>1.0.3</org.reactivestreams.version>
         <roaringbitmap.version>0.9.31-r3</roaringbitmap.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -107,7 +106,8 @@
         <tinkar-starter-data.version>1.0.0</tinkar-starter-data.version>
         <protobuf-java.version>3.22.0-r3</protobuf-java.version>
         <sonar.skip>false</sonar.skip>
-        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
         <sonar.core.codeCoveragePlugin>jacoco</sonar.core.codeCoveragePlugin>
         <sonar.language>java</sonar.language>
         <susel.version>0.1.2</susel.version>
@@ -379,11 +379,6 @@
                 <artifactId>lucene-core</artifactId>
                 <version>${lucene-core.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.apache.lucene</groupId>
-                <artifactId>lucene-suggest</artifactId>
-                <version>${lucene-suggest.version}</version>
-            </dependency>
 
         </dependencies>
     </dependencyManagement>
@@ -407,15 +402,15 @@
         </dependency>
 
         <dependency>
-          <groupId>org.junit.jupiter</groupId>
-          <artifactId>junit-jupiter</artifactId>
-          <scope>test</scope>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
-          <groupId>org.junit.platform</groupId>
-          <artifactId>junit-platform-console</artifactId>
-          <scope>test</scope>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-console</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
