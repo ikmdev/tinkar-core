@@ -18,6 +18,7 @@ package dev.ikm.tinkar.common.service;
 import com.google.auto.service.AutoService;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
+import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
@@ -29,10 +30,12 @@ import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.list.primitive.ByteList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.api.set.MutableSet;
 import org.eclipse.collections.api.set.primitive.MutableLongSet;
 import org.eclipse.collections.impl.factory.primitive.ByteLists;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
+import org.eclipse.collections.impl.factory.primitive.LongLists;
 import org.eclipse.collections.impl.factory.primitive.LongSets;
 
 import java.io.IOException;
@@ -142,8 +145,9 @@ public interface PrimitiveDataService {
         try {
             MutableSet<ByteList> byteArraySet = Sets.mutable.empty();
             MutableIntList stampList = IntLists.mutable.withInitialCapacity(16);
-            addToSet(newBytes, byteArraySet, stampList);
-            addToSet(oldBytes, byteArraySet, stampList);
+            byte entityFormat = newBytes[8];
+            addToSet(newBytes, byteArraySet, stampList, entityFormat);
+            addToSet(oldBytes, byteArraySet, stampList, entityFormat);
             MutableList<ByteList> byteArrayList = byteArraySet.toList();
 
             byteArrayList.sort((o1, o2) -> {
@@ -157,31 +161,87 @@ public interface PrimitiveDataService {
             });
             // Remove canceled versions here
             if (byteArrayList.size() > 2) {
+                MutableList<ByteList> chronologyByteLists = Lists.mutable.empty();
                 MutableIntList indexesToRemove = IntLists.mutable.empty();
-                for (int i = 1; i < byteArrayList.size(); i++) {
+                for (int i = 0; i < byteArrayList.size(); i++) {
                     ByteList versionBytes = byteArrayList.get(i);
                     byte versionToken = versionBytes.get(0);
                     switch (versionToken) {
                         /*
+                            CONCEPT_CHRONOLOGY((byte) 1, ConceptChronology.class),
+                            PATTERN_CHRONOLOGY((byte) 2, PatternChronology.class),
+                            SEMANTIC_CHRONOLOGY((byte) 3, SemanticChronology.class),
+                            STAMP(STAMP_DATA_TYPE, Stamp.class)
+                        */
+                        case 1, 2, 3, STAMP_DATA_TYPE-> chronologyByteLists.add(versionBytes);
+
+                        /*
                             CONCEPT_VERSION((byte) 4, ConceptVersion.class),
                             PATTERN_VERSION((byte) 5, PatternVersion.class),
                             SEMANTIC_VERSION((byte) 6, SemanticVersion.class),
+                            STAMP_VERSION((byte) 25, Stamp.class)
                          */
-                        case 4:
-                        case 5:
-                        case 6:
+                        case 4, 5, 6, 25 -> {
                             int stampNid = ((versionBytes.get(1) & 0xFF) << 24) |
                                     ((versionBytes.get(2) & 0xFF) << 16) |
                                     ((versionBytes.get(3) & 0xFF) << 8) |
                                     ((versionBytes.get(4) & 0xFF) << 0);
                             if (PrimitiveData.get().isCanceledStampNid(stampNid)) {
+                                // Garbage collection for canceled versions...
                                 indexesToRemove.add(i);
                             }
-                        default:
-                            // Leave all versions. Need to retain canceled version for stamps.
+                        }
+                        default -> {
+                            // Leave all versions. Need to retain canceled version if component is a stamp.
+                        }
                     }
                 }
                 indexesToRemove.reverseThis().forEach(index -> byteArrayList.remove(index));
+
+                // UUIDs were added...
+                if (chronologyByteLists.size() > 1) {
+                    // need to merge into one record for the chronology...
+                    MutableSet<UUID> uuids = Sets.mutable.empty();
+                    for (ByteList chronologyByteList : chronologyByteLists) {
+                        MutableLongList longList = LongLists.mutable.empty();
+                        ByteBuf chronologyBytes = ByteBuf.wrapForReading(chronologyByteList.toArray());
+                        chronologyBytes.readByte(); // EntityType token
+                        chronologyBytes.readInt(); // Entity nid
+                        longList.add(chronologyBytes.readLong()); // Entity most significant bits
+                        longList.add(chronologyBytes.readLong()); // Entity least significant bits
+                        int additionalUuidLongs = chronologyBytes.readByte(); // Additional UUID longs...
+                        for (int i = 0; i < additionalUuidLongs; i++) {
+                            longList.add(chronologyBytes.readLong());
+                        }
+                        uuids.addAll(UuidUtil.toList(longList.toArray()).castToList());
+                    }
+                    ImmutableList<UUID> uuidList = uuids.toImmutableList();
+                    ByteBuf chronologyBytes = ByteBuf.wrapForReading(chronologyByteLists.get(0).toArray());
+                    ByteBuf writeBuf = ByteBufPool.allocate(16 * uuidList.size() + chronologyBytes.array().length);
+                    writeBuf.writeByte(chronologyBytes.readByte()); // EntityType token
+                    writeBuf.writeInt(chronologyBytes.readInt()); // Entity nid
+                    chronologyBytes.readLong(); // Discard msb
+                    chronologyBytes.readLong(); // Discard lsb
+                    int discardAdditionalUuidLongs = chronologyBytes.readByte();
+                    for (int i = 0; i < discardAdditionalUuidLongs; i++) {
+                        chronologyBytes.readLong();
+                    }
+
+                    // write the new UUIDs.
+                    writeBuf.writeLong(uuidList.get(0).getMostSignificantBits());
+                    writeBuf.writeLong(uuidList.get(0).getLeastSignificantBits());
+                    int additionalUuidLongs = uuidList.size() * 2 - 2;
+                    writeBuf.writeByte((byte) additionalUuidLongs);
+                    for (int uuidIndex = 1; uuidIndex < uuidList.size(); uuidIndex++) {
+                        writeBuf.writeLong(uuidList.get(uuidIndex).getMostSignificantBits());
+                        writeBuf.writeLong(uuidList.get(uuidIndex).getLeastSignificantBits());
+                    }
+                    while (chronologyBytes.canRead()) {
+                        writeBuf.writeByte(chronologyBytes.readByte());
+                    }
+                    byteArrayList.removeAll(chronologyByteLists);
+                    byteArrayList.add(0, ByteLists.immutable.of(writeBuf.asArray()));
+                }
             }
 
             ByteBuf byteBuf = ByteBufPool.allocate(oldBytes.length + newBytes.length);
@@ -190,7 +250,9 @@ public interface PrimitiveDataService {
             for (ByteList byteArray : byteArrayList) {
                 if (first) {
                     // Add 4 to have room for the number of versions.
-                    byteBuf.writeInt(byteArray.size() + 4);
+                    // Add 1 for the entity format token
+                    byteBuf.writeInt(byteArray.size() + 5);
+                    byteBuf.writeByte(entityFormat);
                     byteArray.forEach(b -> {
                         byteBuf.put(b);
                     });
@@ -218,15 +280,21 @@ public interface PrimitiveDataService {
      *                     the edits of a single version under a single stamp value are sequential, not concurrent.
      * @throws IOException
      */
-    private static void addToSet(byte[] bytes, MutableSet<ByteList> byteArraySet, MutableIntList stampsInSet) throws IOException {
+    private static void addToSet(byte[] bytes, MutableSet<ByteList> byteArraySet, MutableIntList stampsInSet,
+                                 byte entityFormat) throws IOException {
         ByteBuf readBuf = ByteBuf.wrapForReading(bytes);
         boolean stampDataType = bytes[9] == STAMP_DATA_TYPE;
         int arrayCount = readBuf.readInt();
         for (int i = 0; i < arrayCount; i++) {
             int arraySize = readBuf.readInt();
             if (i == 0) {
+                byte localEntityFormat = readBuf.readByte();
+                if (localEntityFormat != entityFormat) {
+                    throw new IllegalStateException("All entities should be the same format. Found: " + entityFormat + " != " + localEntityFormat);
+                }
                 // The first array is the chronicle, and has a field for the number of versions...
-                byte[] newArray = new byte[arraySize - 4];
+                // Add one for the entityFormat token.
+                byte[] newArray = new byte[arraySize - 5];
                 readBuf.read(newArray);
                 byteArraySet.add(ByteLists.immutable.of(newArray));
                 int versionCount = readBuf.readInt();

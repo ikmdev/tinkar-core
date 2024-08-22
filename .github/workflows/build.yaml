@@ -5,6 +5,7 @@ run-name: 'Build Workflow -- ${{ github.head_ref || github.ref_name }}'
 on:
     push:
     pull_request:
+    workflow_dispatch:
 
 env:
   MAVEN_SETTING: '/home/ec2-user/maven/.m2/settings.xml'
@@ -14,7 +15,6 @@ jobs:
   build-job:
     name: Build Job
     runs-on: ubuntu-24.04
-    if: github.repository_owner == 'ikmdev'
     steps:
       - uses: actions/setup-java@v4
         with:

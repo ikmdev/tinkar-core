@@ -152,6 +152,12 @@ public sealed interface LogicalAxiom permits LogicalAxiom.Atom, LogicalAxiom.Def
                 return LogicalAxiomSemantic.PROPERTY_SET;
             }
         }
+
+        sealed interface InclusionSet extends LogicalSet permits LogicalAxiomAdaptor.InclusionSetAdaptor {
+            default LogicalAxiomSemantic axiomSemantic() {
+                return LogicalAxiomSemantic.INCLUSION_SET;
+            }
+        }
     }
 
 }
