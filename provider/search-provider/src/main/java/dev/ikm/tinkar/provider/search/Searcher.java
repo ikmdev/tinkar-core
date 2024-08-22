@@ -346,16 +346,25 @@ public class Searcher {
         return allowedResultsList;
     }
 
+    /**
+     * Returns List of PublicIds for the Concepts tagged with the Membership Pattern
+     *
+     * @param   memberPatternId PublicId of the Membership Pattern
+     * @return  List of PublicIds for the Concepts tagged with the Membership Pattern
+     */
     public static List<PublicId> membersOf(PublicId memberPatternId) {
         List<PublicId> conceptIds = new ArrayList<>();
-        EntityService.get().getEntity(EntityService.get().nidForPublicId(memberPatternId)).ifPresent((e) -> {
-            if (e instanceof PatternEntity<?> patternEntity) {
-                EntityService.get().forEachSemanticOfPattern(patternEntity.nid(), (semanticEntityOfPattern) -> {
-                    conceptIds.add(semanticEntityOfPattern.referencedComponent().publicId());
-                });
-            }
-        });
-
+        try {
+            EntityService.get().getEntity(EntityService.get().nidForPublicId(memberPatternId)).ifPresent((e) -> {
+                if (e instanceof PatternEntity<?> patternEntity) {
+                    EntityService.get().forEachSemanticOfPattern(patternEntity.nid(), (semanticEntityOfPattern) -> {
+                        conceptIds.add(semanticEntityOfPattern.referencedComponent().publicId());
+                    });
+                }
+            });
+        } catch (Exception e) {
+            LOG.error("Exception retrieving membersOf for publicId " + memberPatternId +", " + e);
+        }
         return conceptIds;
     }
 }
