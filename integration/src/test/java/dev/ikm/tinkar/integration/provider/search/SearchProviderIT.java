@@ -33,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -44,7 +43,7 @@ public class SearchProviderIT extends TestHelper {
     private static final Logger LOG = LoggerFactory.getLogger(SearchProviderIT.class);
 
     @BeforeAll
-    public void setUp() throws IOException {
+    public void setUp() {
         loadEphemeralDataBase();
     }
 
@@ -57,7 +56,8 @@ public class SearchProviderIT extends TestHelper {
                 TinkarTerm.KOMET_USER.publicId(),
                 TinkarTerm.KOMET_USER_LIST.publicId(),
                 TinkarTerm.MODULE_FOR_USER.publicId(),
-                TinkarTerm.PATH_FOR_USER.publicId()
+                TinkarTerm.PATH_FOR_USER.publicId(),
+                TinkarTerm.STARTER_DATA_AUTHORING.publicId()
         );
 
         List<PublicId> actualUserChildren = Searcher.childrenOf(TinkarTerm.USER.publicId());
@@ -76,13 +76,14 @@ public class SearchProviderIT extends TestHelper {
     public void getDescendantsIT() {
         List<PublicId> expectedUserDescendants = Arrays.asList(
                 // Children of Role
-                TinkarTerm.ROLE_GROUP.publicId(),
                 TinkarTerm.ROLE_OPERATOR.publicId(),
                 TinkarTerm.ROLE_TYPE.publicId(),
+                TinkarTerm.ROLE_RESTRICTION.publicId(),
                 // Children of Role Operator
                 TinkarTerm.REFERENCED_COMPONENT_SUBTYPE_RESTRICTION.publicId(),
                 TinkarTerm.REFERENCED_COMPONENT_TYPE_RESTRICTION.publicId(),
-                TinkarTerm.UNIVERSAL_RESTRICTION.publicId()
+                TinkarTerm.UNIVERSAL_RESTRICTION.publicId(),
+                TinkarTerm.EXISTENTIAL_RESTRICTION.publicId()
         );
 
         List<PublicId> actualUserDescendants = Searcher.descendantsOf(TinkarTerm.ROLE.publicId());
@@ -101,8 +102,8 @@ public class SearchProviderIT extends TestHelper {
     public void getDescriptionsIT() {
         List<String> expectedFQNs = List.of(
                 "Integrated Knowledge Management (SOLOR)",
-                "Meaning  (SOLOR)",
-                "Purpose (SOLOR)"
+                "Meaning",
+                "Purpose"
         );
 
         List<PublicId> conceptsWithFQNs = List.of(

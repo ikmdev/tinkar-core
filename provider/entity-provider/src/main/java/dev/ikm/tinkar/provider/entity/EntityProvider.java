@@ -182,21 +182,22 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     @Override
     public void putEntity(Entity entity) {
         invalidateCaches(entity);
-        ENTITY_CACHE.put(entity.nid(), entity);
         if (entity instanceof StampEntity stampEntity) {
             STAMP_CACHE.put(stampEntity.nid(), stampEntity);
             if (stampEntity.lastVersion().stateNid() == State.CANCELED.nid()) {
                 PrimitiveData.get().addCanceledStampNid(stampEntity.nid());
             }
         }
+        byte[] mergedEntityBytes;
         if (entity instanceof SemanticEntity semanticEntity) {
-            PrimitiveData.get().merge(entity.nid(),
+            mergedEntityBytes = PrimitiveData.get().merge(entity.nid(),
                     semanticEntity.patternNid(),
                     semanticEntity.referencedComponentNid(),
                     entity.getBytes(), entity);
         } else {
-            PrimitiveData.get().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, entity.getBytes(), entity);
+            mergedEntityBytes = PrimitiveData.get().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, entity.getBytes(), entity);
         }
+        ENTITY_CACHE.put(entity.nid(),  EntityRecordFactory.make(mergedEntityBytes));
         processor.dispatch(entity.nid());
         if (entity instanceof SemanticEntity semanticEntity) {
             processor.dispatch(semanticEntity.referencedComponentNid());
@@ -206,21 +207,22 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     @Override
     public void putEntityQuietly(Entity entity) {
         invalidateCaches(entity);
-        ENTITY_CACHE.put(entity.nid(), entity);
         if (entity instanceof StampEntity stampEntity) {
             STAMP_CACHE.put(stampEntity.nid(), stampEntity);
             if (stampEntity.lastVersion().stateNid() == State.CANCELED.nid()) {
                 PrimitiveData.get().addCanceledStampNid(stampEntity.nid());
             }
         }
+        byte[] mergedEntityBytes;
         if (entity instanceof SemanticEntity semanticEntity) {
-            PrimitiveData.get().merge(entity.nid(),
+            mergedEntityBytes = PrimitiveData.get().merge(entity.nid(),
                     semanticEntity.patternNid(),
                     semanticEntity.referencedComponentNid(),
                     entity.getBytes(), entity);
         } else {
-            PrimitiveData.get().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, entity.getBytes(), entity);
+            mergedEntityBytes = PrimitiveData.get().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, entity.getBytes(), entity);
         }
+        ENTITY_CACHE.put(entity.nid(),  EntityRecordFactory.make(mergedEntityBytes));
     }
 
     @Override

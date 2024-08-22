@@ -1,6 +1,14 @@
 # tinkar-core
 
+[![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/summary/new_code?id=ikmdev_tinkar-core)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=ikmdev_tinkar-core&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=ikmdev_tinkar-core)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=ikmdev_tinkar-core&metric=coverage)](https://sonarcloud.io/summary/new_code?id=ikmdev_tinkar-core)
+
+
 Tinkar core is an essential repository that creates the primitive functionality and data types for Komet. Tinkar core is also responsible for managing caches and I/O (spined-array) of the application. Building `tinkar-core` is a prerequisite to building `komet` on your local machine.
+
+### Team Ownership - Product Owner
+Data Team
 
 ## Getting Started
 
