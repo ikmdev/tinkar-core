@@ -1822,14 +1822,6 @@ public class TinkarTerm {
     public static final EntityProxy.Concept DESCRIPTION_AND_OR_DIALECT_PROPERTIES =
             EntityProxy.Concept.make("Description/dialect properties (SOLOR)", UUID.fromString("e52b42c8-15d5-50d0-992c-bac006c963c4"));
     /**
-     * Java binding for the concept described as <strong><em>Descriptum (SOLOR)</em></strong>;
-     * identified by UUID: {@code
-     * <a href="http://localhost:8080/terminology/rest/concept/1b1986a8-f9e3-59f9-9adb-03b0d03c1d8e">
-     * 1b1986a8-f9e3-59f9-9adb-03b0d03c1d8e</a>}.
-     */
-    public static final EntityProxy.Concept DESCRIPTUM =
-            EntityProxy.Concept.make("Descriptum (SOLOR)", UUID.fromString("1b1986a8-f9e3-59f9-9adb-03b0d03c1d8e"));
-    /**
      * Java binding for the concept described as <strong><em>Destination module for edit coordinate (SOLOR)</em></strong>;
      * identified by UUID: {@code
      * <a href="http://localhost:8080/terminology/rest/concept/349cfd1d-10fd-5f8d-a0a5-d5ef0932b4da">
