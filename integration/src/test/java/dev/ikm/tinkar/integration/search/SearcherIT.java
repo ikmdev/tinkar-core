@@ -150,7 +150,7 @@ public class SearcherIT extends TestHelper {
         List<PublicId> constraintAncestors = new ArrayList<>();
         PublicId ancestorId = PublicIds.of("f7495b58-6630-3499-a44e-2052b5fcf06c");
         List<PublicId> descendants = Searcher.getDescendantsWithConstraint(ancestorId, constraintAncestors);
-        assertEquals(7, descendants.size());
+        assertEquals(8, descendants.size());
     }
 
     @Test
@@ -160,7 +160,7 @@ public class SearcherIT extends TestHelper {
         constraintAncestors.add(constraintId);
         PublicId ancestorId = PublicIds.of("7bbd4210-381c-11e7-9598-0800200c9a66");
         List<PublicId> descendants = Searcher.getDescendantsWithConstraint(ancestorId, constraintAncestors);
-        assertEquals(147, descendants.size());
+        assertEquals(181, descendants.size());
     }
 
 
@@ -171,7 +171,7 @@ public class SearcherIT extends TestHelper {
         constraintAncestors.add(constraintId);
         PublicId ancestorId = PublicIds.of("7bbd4210-381c-11e7-9598-0800200c9a66");
         List<PublicId> descendants = Searcher.getDescendantsWithConstraint(ancestorId, constraintAncestors);
-        assertEquals(147, descendants.size());
+        assertEquals(181, descendants.size());
     }
 
     @Test
@@ -181,7 +181,7 @@ public class SearcherIT extends TestHelper {
         constraintAncestors.add(constraintId);
         PublicId ancestorId = PublicIds.of(UUID.fromString("f7495b58-6630-3499-a44e-2052b5fcf06c"));
         List<PublicId> descendants = Searcher.getDescendantsWithConstraint(ancestorId, constraintAncestors);
-        assertEquals(7, descendants.size());
+        assertEquals(8, descendants.size());
     }
 
     @Test
