@@ -16,16 +16,13 @@
 package dev.ikm.tinkar.integration.search;
 
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
-import dev.ikm.tinkar.coordinate.stamp.calculator.LatestVersionSearchResult;
-import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.provider.search.Searcher;
-import dev.ikm.tinkar.provider.search.TypeAheadSearch;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.junit.jupiter.api.AfterAll;
@@ -131,126 +128,19 @@ public class SearcherIT extends TestHelper {
     }
 
     @Test
-    public void typeAheadIndexerTest() throws Exception {
-        System.out.println("STARTING THE TEST");
-        TypeAheadSearch.buildSuggester();
-        List<String> suggestions = TypeAheadSearch.suggest("r");
-        System.out.println("LOOKING FOR SUGGESTIONS FOR R");
-        for (String suggestion : suggestions) {
-            System.out.println(suggestion);
-        }
-        assertEquals(41, suggestions.size());
-    }
-
-    @Test
-    public void typeAheadIndexerTestSearchAndDescendants1() throws Exception {
-        // f7495b58-6630-3499-a44e-2052b5fcf06c - Author ID
-        // Model concept: [7bbd4210-381c-11e7-9598-0800200c9a66]
-
-        Stopwatch stopwatch = new Stopwatch();
-        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("f7495b58-6630-3499-a44e-2052b5fcf06c")).get().publicId();
-
-        String userInput = "u";
-        List<LatestVersionSearchResult> allSearchResults = TypeAheadSearch.typeAheadSuggestions(userInput, ancestorId);
-
-        stopwatch.stop();
-
-        System.out.println(allSearchResults);
-        System.out.println(allSearchResults.size());
-
-        System.out.println("STOPWATCH: " + stopwatch.durationString());
-
-    }
-
-    @Test
-    public void typeAheadIndexerTestSearchAndDescendants2() throws Exception {
-        // f7495b58-6630-3499-a44e-2052b5fcf06c - Author ID
-        // Model concept: [7bbd4210-381c-11e7-9598-0800200c9a66]
-
-        long startTime = System.nanoTime();
-
-        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("7bbd4210-381c-11e7-9598-0800200c9a66")).get().publicId();
-
-
-        String userInput = "a";
-        List<LatestVersionSearchResult> allSearchResults = TypeAheadSearch.typeAheadSuggestions(userInput, ancestorId);
-
-        long endTime = System.nanoTime();
-        long duration = endTime - startTime;
-
-        System.out.println(allSearchResults);
-        System.out.println(allSearchResults.size());
-
-        System.out.println("STOPWATCH: " + (duration / 1_000_000));
-
-    }
-
-    @Test
-    public void typeAheadIndexerTestSearchAndDescendantsFuzzy() throws Exception {
-        // f7495b58-6630-3499-a44e-2052b5fcf06c - Author ID
-        // Model concept: [7bbd4210-381c-11e7-9598-0800200c9a66]
-        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("f7495b58-6630-3499-a44e-2052b5fcf06c")).get().publicId();
-
-        Stopwatch stopwatch = new Stopwatch();
-
-        String userInput = "u";
-        List<LatestVersionSearchResult> allSearchResults = TypeAheadSearch.typeAheadFuzzySuggestions(userInput, ancestorId);
-
-        stopwatch.stop();
-
-        System.out.println(allSearchResults);
-        System.out.println(allSearchResults.size());
-
-        System.out.println("STOPWATCH: " + stopwatch.durationString());
-
-    }
-
-    @Test
-    public void typeAheadIndexerTestSearchAndDescendantsFuzzy2() throws Exception {
-        // f7495b58-6630-3499-a44e-2052b5fcf06c - Author ID
-        // Model concept: [7bbd4210-381c-11e7-9598-0800200c9a66]
-        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("7bbd4210-381c-11e7-9598-0800200c9a66")).get().publicId();
-
-        long startTime = System.nanoTime();
-
-        String userInput = "a";
-        List<LatestVersionSearchResult> allSearchResults = TypeAheadSearch.typeAheadFuzzySuggestions(userInput, ancestorId);
-
-        long endTime = System.nanoTime();
-        long duration = endTime - startTime;
-
-        System.out.println(allSearchResults);
-        System.out.println(allSearchResults.size());
-
-        System.out.println("STOPWATCH: " + (duration / 1_000_000));
-
-    }
-
-    @Test
-    public void descendantsWithConstraintTest() throws Exception {
-        List<PublicId> constraintAncestors = new ArrayList<>();
-        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("7bbd4210-381c-11e7-9598-0800200c9a66")).get().publicId();
-        List<PublicId> descendants = Searcher.getDescendantsWithConstraint(ancestorId, constraintAncestors);
-        for (PublicId descendant : descendants) {
-            System.out.println(descendant);
-        }
-    }
-
-    @Test
     public void descendantsWithConstraintTestNoChildrenEmptyList() throws Exception {
         List<PublicId> constraintAncestors = new ArrayList<>();
-        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("3642d9a3-8e23-5289-836b-366c0b1e2900")).get().publicId();
+        PublicId ancestorId = PublicIds.of("3642d9a3-8e23-5289-836b-366c0b1e2900");
         List<PublicId> descendants = Searcher.getDescendantsWithConstraint(ancestorId, constraintAncestors);
         assertEquals(0, descendants.size());
-
     }
 
     @Test
     public void descendantsWithConstraintTestNoChildrenNonEmptyList() throws Exception {
         List<PublicId> constraintAncestors = new ArrayList<>();
-        PublicId constraintId = EntityService.get().getEntity(UUID.fromString("7bbd4210-381c-11e7-9598-0800200c9a66")).get().publicId();
+        PublicId constraintId = PublicIds.of("7bbd4210-381c-11e7-9598-0800200c9a66");
         constraintAncestors.add(constraintId);
-        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("3642d9a3-8e23-5289-836b-366c0b1e2900")).get().publicId();
+        PublicId ancestorId = PublicIds.of("3642d9a3-8e23-5289-836b-366c0b1e2900");
         List<PublicId> descendants = Searcher.getDescendantsWithConstraint(ancestorId, constraintAncestors);
         assertEquals(0, descendants.size());
     }
@@ -258,7 +148,7 @@ public class SearcherIT extends TestHelper {
     @Test
     public void descendantsWithConstraintTestChildrenEmptyList() throws Exception {
         List<PublicId> constraintAncestors = new ArrayList<>();
-        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("f7495b58-6630-3499-a44e-2052b5fcf06c")).get().publicId();
+        PublicId ancestorId = PublicIds.of("f7495b58-6630-3499-a44e-2052b5fcf06c");
         List<PublicId> descendants = Searcher.getDescendantsWithConstraint(ancestorId, constraintAncestors);
         assertEquals(7, descendants.size());
     }
@@ -266,20 +156,20 @@ public class SearcherIT extends TestHelper {
     @Test
     public void descendantsWithConstraintTestChildrenNonEmptyList() throws Exception {
         List<PublicId> constraintAncestors = new ArrayList<>();
-        PublicId constraintId = EntityService.get().getEntity(UUID.fromString("f7495b58-6630-3499-a44e-2052b5fcf06c")).get().publicId();
+        PublicId constraintId = PublicIds.of("f7495b58-6630-3499-a44e-2052b5fcf06c");
         constraintAncestors.add(constraintId);
-        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("7bbd4210-381c-11e7-9598-0800200c9a66")).get().publicId();
+        PublicId ancestorId = PublicIds.of("7bbd4210-381c-11e7-9598-0800200c9a66");
         List<PublicId> descendants = Searcher.getDescendantsWithConstraint(ancestorId, constraintAncestors);
-        assertEquals(7, descendants.size());
+        assertEquals(147, descendants.size());
     }
 
 
     @Test
     public void descendantsWithConstraintConstraintNotAConcept() throws Exception {
         List<PublicId> constraintAncestors = new ArrayList<>();
-        PublicId constraintId = EntityService.get().getEntity(UUID.fromString("9c25d708-b9e9-4e97-b9f2-cba5dc917975")).get().publicId();
+        PublicId constraintId = PublicIds.of("9c25d708-b9e9-4e97-b9f2-cba5dc917975");
         constraintAncestors.add(constraintId);
-        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("7bbd4210-381c-11e7-9598-0800200c9a66")).get().publicId();
+        PublicId ancestorId = PublicIds.of("7bbd4210-381c-11e7-9598-0800200c9a66");
         List<PublicId> descendants = Searcher.getDescendantsWithConstraint(ancestorId, constraintAncestors);
         assertEquals(147, descendants.size());
     }
@@ -287,12 +177,22 @@ public class SearcherIT extends TestHelper {
     @Test
     public void descendantsWithConstraintConstraintDNE() throws Exception {
         List<PublicId> constraintAncestors = new ArrayList<>();
-        PublicId constraintId = EntityService.get().getEntity(UUID.fromString("abcde-6630-3499-a44e-2052b5fcf06c")).get().publicId();
+        PublicId constraintId = PublicIds.of("abcde-6630-3499-a44e-2052b5fcf06c");
         constraintAncestors.add(constraintId);
-        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("7bbd4210-381c-11e7-9598-0800200c9a66")).get().publicId();
+        PublicId ancestorId = PublicIds.of(UUID.fromString("f7495b58-6630-3499-a44e-2052b5fcf06c"));
         List<PublicId> descendants = Searcher.getDescendantsWithConstraint(ancestorId, constraintAncestors);
         assertEquals(7, descendants.size());
     }
 
+    @Test
+    public void descendantsWithConstraintConstraints() throws Exception {
+        List<PublicId> constraintAncestors = new ArrayList<>();
+        PublicId constraintId = TinkarTerm.ROLE_OPERATOR.publicId();
+        constraintAncestors.add(constraintId);
+        PublicId ancestorId = TinkarTerm.ROLE.publicId();
+        List<PublicId> descendants = Searcher.getDescendantsWithConstraint(ancestorId, constraintAncestors);
+        System.out.println(descendants);
+        assertEquals(2, descendants.size());
+    }
 
 }

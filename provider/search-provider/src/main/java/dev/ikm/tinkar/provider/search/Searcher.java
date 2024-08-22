@@ -20,14 +20,13 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
+import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
 import dev.ikm.tinkar.coordinate.navigation.NavigationCoordinateRecord;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculator;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
-import dev.ikm.tinkar.entity.ConceptEntity;
-import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
@@ -349,49 +348,65 @@ public class Searcher {
     /**
      * Returns a list of PublicIds for Descendants given an ancestor and list of ancestors to constrain by
      *
-     * @param ancestorId
-     * @param constraintAncestorIds
+     * @param ancestorId            ID of the primary ancestor to find Descendants of
+     * @param constraintAncestorIds List of IDs for descendants to constrain by (includes itself)
      * @return List of PublicIds for a given ancestor constrained by other ancestors
      */
     public static List<PublicId> getDescendantsWithConstraint(PublicId ancestorId, List<PublicId> constraintAncestorIds) {
         List<PublicId> descendantsWithConstraints = new ArrayList<>();
-        Entity ancestorEntity = EntityService.get().getEntityFast(ancestorId.asUuidArray());
-
-        if (ancestorEntity instanceof ConceptEntity) {
-            List<PublicId> constraintDescendants = new ArrayList<>();
-            descendantsWithConstraints = descendantsOf(ancestorId);
-
-            constraintAncestorIds.forEach(constraint -> {
-                Entity constraintConcept = EntityService.get().getEntityFast(constraint.asUuidArray());
-                if (constraintConcept instanceof ConceptEntity) {
-                    constraintDescendants.addAll(descendantsOf(constraintConcept));
+        if (PrimitiveData.get().hasPublicId(ancestorId)) {
+            EntityService.get().getEntity(ancestorId.asUuidArray()).ifPresent(ancestorEntity -> {
+                if (ancestorEntity instanceof Concept) {
+                    List<PublicId> constraintDescendants = new ArrayList<>();
+                    descendantsWithConstraints.addAll(descendantsOf(ancestorId));
+                    constraintAncestorIds.forEach(constraintId -> {
+                        if (PrimitiveData.get().hasPublicId(constraintId)) {
+                            EntityService.get().getEntity(constraintId.asUuidArray()).ifPresent(constraintEntity -> {
+                                if (constraintEntity instanceof Concept) {
+                                    constraintDescendants.add(constraintId);
+                                    constraintDescendants.addAll(descendantsOf(constraintId));
+                                }
+                            });
+                        }
+                    });
+                    descendantsWithConstraints.removeAll(constraintDescendants);
                 }
             });
-
-            descendantsWithConstraints.removeAll(constraintDescendants);
-
-            return descendantsWithConstraints;
-        } else {
-            return descendantsWithConstraints;
         }
+        return descendantsWithConstraints;
     }
 
     /**
-     * Returns the String representing the Value Constraint Semantic’s Units field value of the Concept for the specified module
+     * Returns a list of PublicIds for Descendants given an ancestor and list of ancestors to constrain by
      *
-     * @param conceptId
-     * @param moduleId
-     * @return Optional String
+     * @param navCalc               NavigationCalculator for determining latest version
+     * @param ancestorId            ID of the primary ancestor to find Descendants of
+     * @param constraintAncestorIds List of IDs for descendants to constrain by (includes itself)
+     * @return List of PublicIds for a given ancestor constrained by other ancestors
      */
-    public static String getValueConstraint(PublicId conceptId, PublicId moduleId) {
-        Entity conceptEntity = EntityService.get().getEntityFast(conceptId.asUuidArray());
-
-        if (conceptEntity instanceof ConceptEntity) {
-
-        } else {
-
+    public static List<PublicId> getDescendantsWithConstraint(NavigationCalculator navCalc, PublicId ancestorId, List<PublicId> constraintAncestorIds) {
+        List<PublicId> descendantsWithConstraints = new ArrayList<>();
+        if (PrimitiveData.get().hasPublicId(ancestorId)) {
+            EntityService.get().getEntity(ancestorId.asUuidArray()).ifPresent(ancestorEntity -> {
+                if (ancestorEntity instanceof Concept) {
+                    List<PublicId> constraintDescendants = new ArrayList<>();
+                    descendantsWithConstraints.addAll(descendantsOf(navCalc, ancestorId));
+                    constraintAncestorIds.forEach(constraintId -> {
+                        if (PrimitiveData.get().hasPublicId(constraintId)) {
+                            EntityService.get().getEntity(constraintId.asUuidArray()).ifPresent(constraintEntity -> {
+                                if (constraintEntity instanceof Concept) {
+                                    constraintDescendants.add(constraintId);
+                                    constraintDescendants.addAll(descendantsOf(navCalc, constraintId));
+                                }
+                            });
+                        }
+                    });
+                    descendantsWithConstraints.removeAll(constraintDescendants);
+                }
+            });
         }
-        return "";
+        return descendantsWithConstraints;
     }
+
 
 }
