@@ -2859,13 +2859,13 @@ public class TinkarTerm {
     public static final EntityProxy.Concept IMPORT_SPECIFICATION_PANEL =
             EntityProxy.Concept.make("Import specification panel (SOLOR)", UUID.fromString("14830e36-3067-56b0-b5b7-a7f297279f4a"));
     /**
-     * Java binding for the concept described as <strong><em>Implication Set (SOLOR)</em></strong>;
+     * Java binding for the concept described as <strong><em>Inclusion Set (SOLOR)</em></strong>;
      * identified by UUID: {@code
      * <a href="http://localhost:8080/terminology/rest/concept/def77c09-e1eb-40f2-931a-e7cf2ce0e597">
      * def77c09-e1eb-40f2-931a-e7cf2ce0e597</a>}.
      */
-    public static final EntityProxy.Concept IMPLICATION_SET =
-            EntityProxy.Concept.make("Implication Set (SOLOR)", UUID.fromString("def77c09-e1eb-40f2-931a-e7cf2ce0e597"));
+    public static final EntityProxy.Concept INCLUSION_SET =
+            EntityProxy.Concept.make("Inclusion Set (SOLOR)", UUID.fromString("def77c09-e1eb-40f2-931a-e7cf2ce0e597"));
     /**
      * Java binding for the concept described as <strong><em>Inactive status (SOLOR)</em></strong>;
      * identified by UUID: {@code

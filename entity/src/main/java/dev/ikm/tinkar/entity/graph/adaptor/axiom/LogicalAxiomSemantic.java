@@ -33,7 +33,8 @@ public enum LogicalAxiomSemantic {
     ROLE(TinkarTerm.ROLE, LogicalAxiom.Atom.TypedAtom.Role.class),
     SUFFICIENT_SET(TinkarTerm.SUFFICIENT_SET, LogicalAxiom.Atom.LogicalSet.SufficientSet.class),
     DISJOINT_WITH(TinkarTerm.DISJOINT_WITH, LogicalAxiom.Atom.DisjointWithAxiom.class),
-    FEATURE(TinkarTerm.FEATURE, LogicalAxiom.Atom.TypedAtom.Feature.class);
+    FEATURE(TinkarTerm.FEATURE, LogicalAxiom.Atom.TypedAtom.Feature.class),
+    INCLUSION_SET(TinkarTerm.INCLUSION_SET, LogicalAxiom.Atom.LogicalSet.InclusionSet.class);
 
     public final int nid;
     public final Class<? extends LogicalAxiom> axiomClass;

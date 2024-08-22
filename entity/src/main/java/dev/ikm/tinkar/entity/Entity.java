@@ -95,8 +95,16 @@ public interface Entity<T extends EntityVersion>
         return EntityService.get().getEntity(nid);
     }
 
+    static <T extends Entity<V>, V extends EntityVersion> T getOrThrow(int nid) {
+        return (T) EntityService.get().getEntity(nid).get();
+    }
+
     static <T extends Entity<V>, V extends EntityVersion> Optional<T> get(EntityFacade facade) {
         return EntityService.get().getEntity(facade.nid());
+    }
+
+    static <T extends Entity<V>, V extends EntityVersion> T getOrThrow(EntityFacade facade) {
+        return (T) EntityService.get().getEntity(facade.nid()).get();
     }
 
     static <T extends Entity<V>, V extends EntityVersion> T getFast(int nid) {
