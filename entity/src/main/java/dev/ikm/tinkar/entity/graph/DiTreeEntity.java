@@ -210,16 +210,16 @@ public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
      * @param vertexIndex
      * @return a builder with the specified vertices removed.
      */
-     public DiTreeEntity.Builder removeVertex(int vertexIndex) {
-         // Create a solution that removes the vertex and its successors
-         MutableIntList mutableSolution = IntLists.mutable.ofAll(IntStream.range(0, this.vertexMap.size()));
-         removeFromSolutionRecursive(mutableSolution, vertexIndex);
+    public DiTreeEntity.Builder removeVertex(int vertexIndex) {
+        // Create a solution that removes the vertex and its successors
+        MutableIntList mutableSolution = IntLists.mutable.ofAll(IntStream.range(0, this.vertexMap.size()));
+        removeFromSolutionRecursive(mutableSolution, vertexIndex);
 
-         // Create a builder with just the vertices in the solution.
-         Builder builder = new Builder();
-         builder.addVertexesWithMap(this, mutableSolution.toArray(),
-                 new int[this.vertexCount()], root.vertexIndex);
-         return builder;
+        // Create a builder with just the vertices in the solution.
+        Builder builder = new Builder();
+        builder.addVertexesWithMap(this, mutableSolution.toArray(),
+                new int[this.vertexCount()], root.vertexIndex);
+        return builder;
     }
 
     private void removeFromSolutionRecursive(MutableIntList solution, int vertexIndex) {
@@ -359,7 +359,13 @@ public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
                 });
             }
         }
+
+        @Override
+        public String toString() {
+            return "DiTreeEntity.Builder{\n" +
+                    build().toString() +
+                    "\n}";
+        }
     }
 
 }
-
