@@ -72,7 +72,7 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
         return OptionalInt.empty();
     }
     @Override
-    public Optional<EntityVertex> predecessor(EntityVertex vertex) {
+    public Optional<V> predecessor(EntityVertex vertex) {
         /**
          * Note that a get() method on IntInt map returns 0 as a default even if there is no key.
          * Thus you must test for containsKey()
@@ -230,10 +230,10 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
         }
 
         @Override
-        public ImmutableList<EntityVertex> successors(EntityVertex vertex) {
+        public ImmutableList<V> successors(EntityVertex vertex) {
             MutableIntList successorList = successorMap.get(vertex.vertexIndex());
             if (successorList != null) {
-                MutableList<EntityVertex> successors = Lists.mutable.ofInitialCapacity(successorList.size());
+                MutableList<V> successors = Lists.mutable.ofInitialCapacity(successorList.size());
                 successorList.forEach(successorIndex -> {
                     successors.add(vertex(successorIndex));
                 });
@@ -317,7 +317,7 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
         }
 
         @Override
-        public Optional<EntityVertex> predecessor(EntityVertex vertex) {
+        public Optional<V> predecessor(EntityVertex vertex) {
             /**
              * Note that a get() method on IntInt map returns 0 as a default even if there is no key.
              * Thus you must test for containsKey()
