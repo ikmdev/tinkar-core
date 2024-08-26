@@ -27,6 +27,7 @@ import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculator;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
 import org.apache.lucene.document.Document;
@@ -44,6 +45,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -344,4 +346,24 @@ public class Searcher {
         return allowedResultsList;
     }
 
+    /**
+     * Returns List of PublicIds for the Concepts tagged with the Membership Pattern
+     *
+     * @param   memberPatternId PublicId of the Membership Pattern
+     * @return  List of PublicIds for the Concepts tagged with the Membership Pattern
+     */
+    public static List<PublicId> membersOf(PublicId memberPatternId) {
+        if (PrimitiveData.get().hasPublicId(memberPatternId)) {
+            List<PublicId> conceptIds = new ArrayList<>();
+            EntityService.get().getEntity(memberPatternId.asUuidArray()).ifPresent((e) -> {
+                if (e instanceof PatternEntity<?> patternEntity) {
+                    EntityService.get().forEachSemanticOfPattern(patternEntity.nid(), (semanticEntityOfPattern) ->
+                        conceptIds.add(semanticEntityOfPattern.referencedComponent().publicId()));
+                }
+            });
+
+            return conceptIds;
+        }
+        return Collections.emptyList();
+    }
 }
