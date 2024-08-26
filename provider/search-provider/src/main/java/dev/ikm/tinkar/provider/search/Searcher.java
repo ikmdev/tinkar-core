@@ -26,8 +26,11 @@ import dev.ikm.tinkar.coordinate.navigation.NavigationCoordinateRecord;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculator;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
+import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.PatternEntity;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
 import org.apache.lucene.document.Document;
@@ -38,7 +41,12 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.SearcherManager;
-import org.apache.lucene.search.highlight.*;
+import org.apache.lucene.search.highlight.Formatter;
+import org.apache.lucene.search.highlight.Highlighter;
+import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
+import org.apache.lucene.search.highlight.NullFragmenter;
+import org.apache.lucene.search.highlight.QueryScorer;
+import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
 import org.eclipse.collections.impl.factory.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +55,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public class Searcher {
@@ -365,5 +374,34 @@ public class Searcher {
             return conceptIds;
         }
         return Collections.emptyList();
+    }
+
+    /**
+     * Returns PublicId for the Concepts associated with the identifier
+     *
+     * @param   identifier UUID of the Semantic
+     * @return  PublicId for the Concept associated with the identifier
+     */
+
+    public static Optional<PublicId> getPublicId(String identifier) {
+        UUID uuid;
+        try {
+            uuid = UUID.fromString(identifier);
+        } catch (IllegalArgumentException e) {
+            LOG.error("String identifier is not a UUID");
+            return Optional.empty();
+        }
+        if (PrimitiveData.get().hasUuid(uuid)) {
+            Optional<Entity<EntityVersion>> e = EntityService.get().getEntity(uuid);
+            if (e.isPresent()) {
+                Entity<?> entity = e.get();
+                if (entity instanceof SemanticEntity<?> semanticEntity) {
+                    // Now return the latest version for this SemanticEntity
+                    return Optional.ofNullable(defaultNavigationCalculator().stampCalculator().latest(semanticEntity).get().referencedComponent().publicId());
+                }
+            }
+        }
+
+        return Optional.empty();
     }
 }
