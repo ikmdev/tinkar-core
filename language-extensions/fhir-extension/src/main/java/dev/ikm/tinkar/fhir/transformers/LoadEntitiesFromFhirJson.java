@@ -37,7 +37,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -65,30 +64,14 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
 
     public LoadEntitiesFromFhirJson() {
         this.ctx = FhirContext.forR4();
-        this.parser = ctx.newJsonParser();
+        parser = ctx.newJsonParser();
         this.codeSystem = new CodeSystem();
-    }
-
-    public static void main(String[] args) throws IOException {
-
     }
 
     @Override
     protected EntityCountSummary compute() throws Exception {
         return null;
     }
-
-   /* public static Session composerSession() {
-        State status = State.ACTIVE;
-        long time = PrimitiveData.PREMUNDANE_TIME;
-        EntityProxy.Concept author = TinkarTerm.USER;
-        EntityProxy.Concept module = TinkarTerm.PRIMORDIAL_MODULE;
-        EntityProxy.Concept path = TinkarTerm.PRIMORDIAL_PATH;
-        Composer composer = new Composer("FHIR Concept Composer...");
-        Session session = composer.open(status, time, author, module, path);
-        return session;
-
-    }*/
 
     public Bundle parseJsonBundle(String jsonBundle, CodeSystem codeSystem) {
         codeSystem = new CodeSystem();
@@ -114,7 +97,6 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
     }
 
     public Session FhirCodeSystemConceptTransform(Bundle bundle) {
-        CodeSystem codeSystem = new CodeSystem();
         String jsonBundle = parser.setPrettyPrint(true).encodeResourceToString(bundle);
         bundle = parseJsonBundle(jsonBundle, codeSystem);
 
@@ -163,6 +145,7 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
                                         .caseSignificance(FhirUtils.generateCaseSignificance(designationCaseSensitivityCodeableConcept.getCoding().get(0).getCode()))
                                         .attach((USDialect dialect) -> dialect
                                                 .acceptability(FhirUtils.generateAcceptability(designationAcceptabilityCodeableConcept.getCoding().getLast().getCode())))));
+                        composer.commitSession(designationSession);
                     });
                     //property axiom transform
                     EntityProxy.Concept finalConceptId = conceptId;

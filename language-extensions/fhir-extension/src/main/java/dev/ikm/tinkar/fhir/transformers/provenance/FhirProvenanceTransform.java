@@ -28,7 +28,7 @@ import static dev.ikm.tinkar.fhir.transformers.FhirConstants.*;
 
 public class FhirProvenanceTransform {
 
-    public static Provenance provenanceTransform(String reference, Date oldestOfTheLatestDate, Date latestOfTheLatestDate){
+    public static Provenance provenanceTransform(String reference, Date oldestOfTheLatestDate, Date latestOfTheLatestDate) {
         Provenance provenance = new Provenance();
         provenance.setId(UUID.randomUUID().toString());
         provenance.setMeta(new Meta().addProfile(TERMINOLOGY_CHANGESET_PROVENANCE_PROFILE));
@@ -58,9 +58,11 @@ public class FhirProvenanceTransform {
         provenance.addAgent().setType(custodianCodeAbleConcept)
                 .setWho(new Reference().setDisplay("Integrated Knowledge Management"));
 
+        Identifier identifier = new Identifier();
+        identifier.setValue(TERMINOLOGY_CODESYSTEM_VARIABLE_ROLE_URL);
         provenance.addEntity().setRole(Provenance.ProvenanceEntityRole.REVISION)
-                .setWhat(new Reference().setReference(TERMINOLOGY_CODESYSTEM_VARIABLE_ROLE_URL)
-                        .setDisplay("EvidenceVariableRole"));
+                .setWhat(new Reference().setIdentifier(identifier)
+                        .setDisplay("SNOMED CT"));
 
         Bundle provenanceBundle = new Bundle();
         provenanceBundle.setType(Bundle.BundleType.BATCH);

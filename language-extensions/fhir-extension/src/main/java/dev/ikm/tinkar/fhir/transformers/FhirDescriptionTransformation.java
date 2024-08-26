@@ -15,16 +15,12 @@
  */
 package dev.ikm.tinkar.fhir.transformers;
 
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.composer.Composer;
-import dev.ikm.tinkar.composer.Session;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.hl7.fhir.r4.model.CodeSystem;
@@ -47,15 +43,16 @@ public class FhirDescriptionTransformation {
     Map<String, String> caseSencitivityCodes;
     Map<String, String> acceptabilityCodes;
     Map<String, String> descriptionTypeCodes;
+    Map<String, String> statusCodes;
 
     public FhirDescriptionTransformation(StampCalculator stampCalculatorWithCache) {
         this.stampCalculatorWithCache = stampCalculatorWithCache;
         caseSencitivityCodes = new HashMap<>();
-        caseSencitivityCodes.put(TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE.publicId().asUuidArray()[0].toString(),  DESCRIPTION_NOT_CASE_SENSITIVE_SNOMEDID);
+        caseSencitivityCodes.put(TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE.publicId().asUuidArray()[0].toString(), DESCRIPTION_NOT_CASE_SENSITIVE_SNOMEDID);
         caseSencitivityCodes.put(TinkarTerm.DESCRIPTION_CASE_SENSITIVE.publicId().asUuidArray()[0].toString(), DESCRIPTION_CASE_SENSITIVE_SNOMEDID);
         caseSencitivityCodes.put(TinkarTerm.DESCRIPTION_INITIAL_CHARACTER_CASE_SENSITIVE.publicId().asUuidArray()[0].toString(), DESCRIPTION_INITIAL_CHARACTER_CASE_SENSITIVE_SNOMEDID);
 
-        acceptabilityCodes= new HashMap<>();
+        acceptabilityCodes = new HashMap<>();
         acceptabilityCodes.put(TinkarTerm.PREFERRED.publicId().asUuidArray()[0].toString(), PREFERRED_SNOMEDID);
         acceptabilityCodes.put(TinkarTerm.ACCEPTABLE.publicId().asUuidArray()[0].toString(), ACCEPTABLE_SNOMEDID);
 
@@ -65,49 +62,8 @@ public class FhirDescriptionTransformation {
         descriptionTypeCodes.put(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.publicId().asUuidArray()[0].toString(), REGULAR_NAME_DESCRIPTION_TYPE_SNOMEDID);
     }
 
-
     public List<CodeSystem.ConceptDefinitionDesignationComponent> transformDescription(SemanticEntity<SemanticEntityVersion> descriptionSemantic) {
         return descriptionAcceptability(descriptionSemantic);
-    }
-
-    public Session descriptionAcceptabilityFhir(CodeSystem codeSystem, SemanticEntity<SemanticEntityVersion> descriptionSemantic){
-        State status = State.ACTIVE;
-        long time = PrimitiveData.PREMUNDANE_TIME;
-        EntityProxy.Concept author = TinkarTerm.USER;
-        EntityProxy.Concept module = TinkarTerm.PRIMORDIAL_MODULE;
-        EntityProxy.Concept path = TinkarTerm.PRIMORDIAL_PATH;
-        Composer composer = new Composer("FHIR Concept Composer...");
-        Session session = composer.open(status, time, author, module, path);
-
-        /*for (CodeSystem.ConceptDefinitionComponent conceptDefinition: codeSystem.getConcept()) {
-            for (CodeSystem.ConceptDefinitionDesignationComponent designation: conceptDefinition.getDesignation()){
-                EntityService.get().forEachSemanticForComponent(descriptionSemantic.nid(), (languageSemantic) -> {
-                    //checking if language is an instance of acceptability concept
-                    .ifPresent(codeSystemLanguage -> {
-                        if (designation.hasLanguage() && designation.hasExtension(DESCRIPTION_ACCEPTABILITY_URL)){
-                            Extension acceptabilityExtension= designation.getExtensionByUrl(DESCRIPTION_ACCEPTABILITY_URL);
-                            if (acceptabilityExtension != null && acceptabilityExtension.getValue() instanceof CodeableConcept acceptabilityConcept){
-                                //set the language for tinkar description "en-US" or "en-GB"
-                                for (Coding coding: acceptabilityConcept.getCoding()) {
-                                    if (designation.getLanguage().equals("en-US")) {
-                                        EntityProxy.Concept acceptabilityUS = EntityProxy.Concept.make(coding.getDisplay(), UUID.nameUUIDFromBytes(coding.getDisplay().getBytes()));
-                                        session.composeConcept(acceptabilityUS)
-                                                .with(new FullyQualifiedName(EntityProxy.Semantic.make(PublicIds.newRandom()), TinkarTerm.ENGLISH_LANGUAGE, acceptabilityExtension.getValue().toString(), TinkarTerm.DESCRIPTION_ACCEPTABILITY)
-                                                        .with(new USEnglishDialect(EntityProxy.Semantic.make(PublicIds.newRandom()), TinkarTerm.PREFERRED)));
-                                    } else if (designation.getLanguage().equals("en-GB")) {
-                                        EntityProxy.Concept acceptabilityGB = EntityProxy.Concept.make(coding.getDisplay(), UUID.nameUUIDFromBytes(coding.getDisplay().getBytes()));
-                                        session.composeConcept(acceptabilityGB)
-                                                .with(new FullyQualifiedName(EntityProxy.Semantic.make(PublicIds.newRandom()), TinkarTerm.GB_ENGLISH_DIALECT, acceptabilityExtension.getValue().toString(), TinkarTerm.DESCRIPTION_ACCEPTABILITY)
-                                                        .with(new USEnglishDialect(EntityProxy.Semantic.make(PublicIds.newRandom()), TinkarTerm.PREFERRED)));
-                                    }
-                                }
-                            }
-                        }
-                    });
-                });
-            }
-        }*/
-        return session;
     }
 
     private List<CodeSystem.ConceptDefinitionDesignationComponent> descriptionAcceptability(SemanticEntity<SemanticEntityVersion> descriptionSemantic) {
@@ -129,21 +85,21 @@ public class FhirDescriptionTransformation {
             acceptabilityExtension.setValue(acceptabilityCodableConcept);
             Latest<SemanticEntityVersion> latestLanguageSemanticVersion = stampCalculatorWithCache.latest(languageSemantic);
             latestLanguageSemanticVersion.ifPresent(languageSemanticVersion -> {
-                if(languageSemanticVersion.fieldValues().get(0) instanceof EntityProxy.Concept acceptabilityConcept){
+                if (languageSemanticVersion.fieldValues().get(0) instanceof EntityProxy.Concept acceptabilityConcept) {
                     String acceptabilityId = acceptabilityCodes.get(acceptabilityConcept.publicId().asUuidArray()[0].toString());
-                    if(acceptabilityId !=null){
+                    if (acceptabilityId != null) {
                         acceptabilityCodableConcept.addCoding(generateCodingObject(stampCalculatorWithCache, acceptabilityId));
                     }
                 }
-                if(languageSemantic.patternNid() == TinkarTerm.US_DIALECT_PATTERN.nid()){
+                if (languageSemantic.patternNid() == TinkarTerm.US_DIALECT_PATTERN.nid()) {
                     designation.setLanguage("en-US");
-                }else if(languageSemantic.patternNid() == TinkarTerm.GB_DIALECT_PATTERN.nid()){
+                } else if (languageSemantic.patternNid() == TinkarTerm.GB_DIALECT_PATTERN.nid()) {
                     designation.setLanguage("en-GB");
                 }
             });
         });
 
-        if(missingLanguage.get()){
+        if (missingLanguage.get()) {
             CodeSystem.ConceptDefinitionDesignationComponent designation = new CodeSystem.ConceptDefinitionDesignationComponent();
             designations.add(designation);
             Extension caseSensitivityExtension = descriptionCaseSensitivity(descriptionSemantic, designation);
@@ -162,15 +118,15 @@ public class FhirDescriptionTransformation {
             caseSensitivityExtension.setUrl(DESCRIPTION_CASE_SENSITIVITY_URL);
             CodeableConcept caseSensitiveCodeableConcept = new CodeableConcept();
             caseSensitivityExtension.setValue(caseSensitiveCodeableConcept);
-            if(fields.get(2) instanceof EntityProxy.Concept caseSencitivityConcept){
+            if (fields.get(2) instanceof EntityProxy.Concept caseSencitivityConcept) {
                 String caseSignificanceId = caseSencitivityCodes.get(caseSencitivityConcept.publicId().asUuidArray()[0].toString());
-                if(caseSignificanceId !=null){
+                if (caseSignificanceId != null) {
                     caseSensitiveCodeableConcept.addCoding(generateCodingObject(stampCalculatorWithCache, caseSignificanceId));
                 }
             }
-            if(fields.get(3) instanceof EntityProxy.Concept useConcept){
+            if (fields.get(3) instanceof EntityProxy.Concept useConcept) {
                 String typeId = descriptionTypeCodes.get(useConcept.publicId().asUuidArray()[0].toString());
-                if(typeId != null){
+                if (typeId != null) {
                     Coding useCoding = generateCodingObject(stampCalculatorWithCache, typeId);
                     designation.setUse(useCoding);
                 }

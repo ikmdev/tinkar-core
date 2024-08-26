@@ -67,7 +67,8 @@ public class FhirUtils {
             case "900000000000448009" -> TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE;
             case "900000000000017005" -> TinkarTerm.DESCRIPTION_CASE_SENSITIVE;
             case "900000000000020002" -> TinkarTerm.DESCRIPTION_INITIAL_CHARACTER_CASE_SENSITIVE;
-            default -> throw new IllegalArgumentException("Unsupported display code: " + code);
+            default ->
+                    throw new IllegalArgumentException("Unexpected value while generating case significance: " + code);
         };
     }
 
@@ -75,7 +76,7 @@ public class FhirUtils {
         return switch (code) {
             case "900000000000548007" -> TinkarTerm.PREFERRED;
             case "900000000000549004" -> TinkarTerm.ACCEPTABLE;
-            default -> throw new IllegalArgumentException("Unexpected value: " + code);
+            default -> throw new IllegalArgumentException("Unexpected value while generating acceptability: " + code);
         };
     }
 
@@ -83,7 +84,7 @@ public class FhirUtils {
         return switch (code) {
             case "900000000000003001" -> TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE;
             case "900000000000013009" -> TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE;
-            default -> throw new IllegalArgumentException("Unexpected value: " + code);
+            default -> throw new IllegalArgumentException("Unexpected value while generating name type: " + code);
         };
     }
 
@@ -91,7 +92,7 @@ public class FhirUtils {
         return switch (language) {
             case "en-US" -> TinkarTerm.ENGLISH_LANGUAGE;
             case "en-GB" -> TinkarTerm.GB_ENGLISH_DIALECT;
-            default -> throw new IllegalArgumentException("Unexpected value: " + language);
+            default -> throw new IllegalArgumentException("Unexpected value while generating language: " + language);
         };
     }
 

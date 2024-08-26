@@ -186,7 +186,7 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
         bundle.addEntry()
                 .setResource(codeSystem)
                 .setFullUrl(codeSystem.getResourceType().name() + "/" + codeSystem.getIdElement().getValue())
-                .setRequest(provenanceRequest);
+                .setRequest(codeSystemRequest);
 
         bundle.addEntry()
                 .setResource(provenance)
