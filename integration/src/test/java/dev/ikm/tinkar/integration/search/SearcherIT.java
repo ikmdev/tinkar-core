@@ -33,9 +33,9 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SearcherIT extends TestHelper {
@@ -127,7 +127,7 @@ public class SearcherIT extends TestHelper {
     }
 
     @Test
-    public void searchConceptsNonExistentMembershipSemantic() throws Exception {
+    public void searchConceptsNonExistingMembershipSemantic() throws Exception {
         // test memberPatternId does not exist
         EntityProxy.Concept conceptProxy = EntityProxy.Concept.make(PublicIds.newRandom());
         List<PublicId> conceptIds = Searcher.membersOf(conceptProxy.publicId());
@@ -155,5 +155,21 @@ public class SearcherIT extends TestHelper {
         assertEquals(1, conceptIds.size(), "there should be 1 tagged concept associated with this pattern");
         conceptIds = Searcher.membersOf(TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
         assertEquals(295, conceptIds.size(), "there should be 295 tagged concept associated with this pattern");
+    }
+
+    @Test
+    public void searchExistingIdentifierPublicId() throws Exception {
+        //d11895b5-0ece-58ff-9fe1-f4c099629ce2
+        Optional<PublicId> publicId = Searcher.getPublicId("d11895b5-0ece-58ff-9fe1-f4c099629ce2");
+        assertTrue(publicId.isPresent(), "Non-empty PublicId should be returned");
+        assertEquals(1, publicId.get().asUuidArray().length, "UUID array should be size 1");
+        assertEquals("ad3dd2dd-ddb0-584c-bea4-c6d9b91d461f", publicId.get().asUuidArray()[0].toString(), "Concept does not match expected id");
+    }
+
+    @Test
+    public void searchNonExistingIdentifierPublicId() throws Exception {
+        //d11895b5-0ece-58ff-9fe1-f4c099629ce2
+        Optional<PublicId> publicId = Searcher.getPublicId("ad3dd2dd-ddb0-584c-bea4-c6d9b91d461f");
+        assertFalse(publicId.isPresent(), "Concept should be null for non-semantic uuid");
     }
 }
