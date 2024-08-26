@@ -2101,7 +2101,6 @@ public class TinkarTerm {
      * <a href="http://localhost:8080/terminology/rest/concept/b6d3be7d-1d7f-5c44-a425-5357f878c212">
      * b6d3be7d-1d7f-5c44-a425-5357f878c212</a>}.
      */
-    @Deprecated
     public static final EntityProxy.Concept EL_PLUS_PLUS_INFERRED_TERMINOLOGICAL_AXIOMS =
             EntityProxy.Concept.make("EL++ Inferred terminological axioms (SOLOR)", UUID.fromString("b6d3be7d-1d7f-5c44-a425-5357f878c212"));
     /**
@@ -2119,7 +2118,6 @@ public class TinkarTerm {
      * <a href="http://localhost:8080/terminology/rest/concept/1412bd09-eb0c-5107-9756-10c1c417d385">
      * 1412bd09-eb0c-5107-9756-10c1c417d385</a>}.
      */
-    @Deprecated
     public static final EntityProxy.Concept EL_PLUS_PLUS_STATED_TERMINOLOGICAL_AXIOMS =
             EntityProxy.Concept.make("EL++ Stated terminological axioms (SOLOR)", UUID.fromString("1412bd09-eb0c-5107-9756-10c1c417d385"));
     /**
