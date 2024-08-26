@@ -15,12 +15,15 @@
  */
 package dev.ikm.tinkar.integration.search;
 
+import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
 import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.provider.search.Searcher;
+import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.junit.jupiter.api.AfterAll;
@@ -29,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.io.File;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -120,5 +124,36 @@ public class SearcherIT extends TestHelper {
         // 1) Refrenced component subtype restriction
         // 2) Refrenced component type restriction
         assertEquals(6, searchResults.size(), "Exactly 6 search results should be returned");
+    }
+
+    @Test
+    public void searchConceptsNonExistentMembershipSemantic() throws Exception {
+        // test memberPatternId does not exist
+        EntityProxy.Concept conceptProxy = EntityProxy.Concept.make(PublicIds.newRandom());
+        List<PublicId> conceptIds = Searcher.membersOf(conceptProxy.publicId());
+        assertTrue(conceptIds.isEmpty(), "memberPatternId does not exist, should return empty list");
+    }
+
+    @Test
+    public void searchConceptsNonPatternMembershipSemantic() throws Exception {
+        // test memberPatternId exists but is not a pattern
+        List<PublicId> conceptIds = Searcher.membersOf(TinkarTerm.ROLE.publicId());
+        assertTrue(conceptIds.isEmpty(), "memberPatternId exists but not a pattern, should return empty list");
+    }
+
+    @Test
+    public void searchConceptsNoTaggedMembershipSemantic() throws Exception {
+        // test memberPatternId with no tagged concepts
+        List<PublicId> conceptIds = Searcher.membersOf(TinkarTerm.COMMENT_PATTERN);
+        assertTrue(conceptIds.isEmpty(), "memberPatternId has no tagged concepts, should return empty list");
+    }
+
+    @Test
+    public void searchConceptsWithTaggedMembershipSemantic() throws Exception {
+        // test memberPatternId with tagged concepts
+        List<PublicId> conceptIds = Searcher.membersOf(TinkarTerm.KOMET_BASE_MODEL_COMPONENT_PATTERN);
+        assertEquals(1, conceptIds.size(), "there should be 1 tagged concept associated with this pattern");
+        conceptIds = Searcher.membersOf(TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
+        assertEquals(295, conceptIds.size(), "there should be 295 tagged concept associated with this pattern");
     }
 }
