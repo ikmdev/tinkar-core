@@ -17,6 +17,7 @@ package dev.ikm.tinkar.entity.graph;
 
 import dev.ikm.tinkar.component.graph.DiTree;
 import dev.ikm.tinkar.component.graph.GraphAdaptorFactory;
+import dev.ikm.tinkar.terms.ConceptFacade;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.factory.Lists;
@@ -71,7 +72,7 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
         return OptionalInt.empty();
     }
     @Override
-    public Optional<EntityVertex> predecessor(EntityVertex vertex) {
+    public Optional<V> predecessor(EntityVertex vertex) {
         /**
          * Note that a get() method on IntInt map returns 0 as a default even if there is no key.
          * Thus you must test for containsKey()
@@ -229,10 +230,10 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
         }
 
         @Override
-        public ImmutableList<EntityVertex> successors(EntityVertex vertex) {
+        public ImmutableList<V> successors(EntityVertex vertex) {
             MutableIntList successorList = successorMap.get(vertex.vertexIndex());
             if (successorList != null) {
-                MutableList<EntityVertex> successors = Lists.mutable.ofInitialCapacity(successorList.size());
+                MutableList<V> successors = Lists.mutable.ofInitialCapacity(successorList.size());
                 successorList.forEach(successorIndex -> {
                     successors.add(vertex(successorIndex));
                 });
@@ -316,7 +317,7 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
         }
 
         @Override
-        public Optional<EntityVertex> predecessor(EntityVertex vertex) {
+        public Optional<V> predecessor(EntityVertex vertex) {
             /**
              * Note that a get() method on IntInt map returns 0 as a default even if there is no key.
              * Thus you must test for containsKey()
@@ -348,15 +349,26 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
         return super.hashCode();
     }
 
-    public boolean hasParentVertexWithMeaning(int vertexIndex, int meaningNid) {
+    /**
+     * Checks if there exists a predecessor vertex with the given meaningNid in the hierarchical structure of the graph.
+     *
+     * @param vertexIndex The index of the vertex to start the search from.
+     * @param meaningNid  The meaningNid to search for.
+     * @return {@code true} if a predecessor vertex with the given meaningNid exists, {@code false} otherwise.
+     */
+    public boolean hasPredecessorVertexWithMeaning(int vertexIndex, int meaningNid) {
         if (vertex(vertexIndex).meaningNid == meaningNid) {
             return true;
         }
         if (predecessorMap.containsKey(vertexIndex)) {
-            return hasParentVertexWithMeaning(predecessorMap.get(vertexIndex), meaningNid);
+            return hasPredecessorVertexWithMeaning(predecessorMap.get(vertexIndex), meaningNid);
         }
         return false;
     }
+    public boolean hasPredecessorVertexWithMeaning(EntityVertex vertex, ConceptFacade meaning) {
+        return hasPredecessorVertexWithMeaning(vertex.vertexIndex, meaning.nid());
+    }
+
 
 
     /**
@@ -368,4 +380,3 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
      * rooted in this node.
      */
 }
-

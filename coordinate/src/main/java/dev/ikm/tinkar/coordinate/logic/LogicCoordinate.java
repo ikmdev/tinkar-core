@@ -18,14 +18,21 @@ package dev.ikm.tinkar.coordinate.logic;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinate;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
+import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.SemanticEntity;
+import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.terms.TinkarTerm;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.MutableList;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -101,77 +108,192 @@ public interface LogicCoordinate {
         return TinkarTerm.INFERRED_NAVIGATION_PATTERN.nid();
     }
 
+    /**
+     * Retrieves the root node identifier of the logic coordinate.
+     *
+     * @return The root node identifier.
+     */
     int rootNid();
 
+    /**
+     * Returns the classifier for this LogicCoordinate.
+     *
+     * @return The ConceptFacade representing the classifier for this LogicCoordinate.
+     */
     default ConceptFacade classifier() {
         return Entity.getFast(classifierNid());
     }
 
+    /**
+     * Returns the description logic profile as a ConceptFacade object.
+     *
+     * @return The ConceptFacade representing the description logic profile.
+     */
     default ConceptFacade descriptionLogicProfile() {
         return Entity.getFast(descriptionLogicProfileNid());
     }
 
+    /**
+     * Retrieves the pattern facade representing the inferred axioms pattern according to this logic coordinate.
+     *
+     * @return The pattern facade representing the inferred axioms pattern.
+     */
     default PatternFacade inferredAxiomsPattern() {
         return EntityProxy.Pattern.make(inferredAxiomsPatternNid());
     }
 
+    /**
+     * Retrieves the pattern facade representing the stated axioms pattern according to this logic coordinate.
+     *
+     * @return The pattern facade representing the stated axioms pattern.
+     */
     default PatternFacade statedAxiomsPattern() {
         return EntityProxy.Pattern.make(statedAxiomsPatternNid());
     }
 
+    /**
+     * Returns a `PatternFacade` object representing the concept member pattern according to this logic coordinate.
+     *
+     * @return The concept member pattern represented as a `PatternFacade` object.
+     */
     default PatternFacade conceptMemberPattern() {
         return EntityProxy.Pattern.make(conceptMemberPatternNid());
     }
 
+    /**
+     * Returns a PatternFacade object representing the stated navigation pattern according to this logic coordinate.
+     *
+     * @return the stated navigation pattern represented as a PatternFacade object.
+     */
     default PatternFacade statedNavigationPattern() {
         return PatternFacade.make(statedNavigationPatternNid());
     }
 
+    /**
+     * Retrieves the pattern facade for inferred navigation.
+     *
+     * @return The pattern facade for inferred navigation.
+     */
     default PatternFacade inferredNavigationPattern() {
         return PatternFacade.make(inferredNavigationPatternNid());
     }
 
+    /**
+     * Retrieves the latest version of the stated axioms for a given concept and stamp coordinate.
+     *
+     * @param conceptNid      The concept's unique identifier.
+     * @param stampCoordinate The stamp coordinate specifying the version of the axioms.
+     * @return The latest version of the stated axioms for the given concept and stamp coordinate.
+     */
     default Latest<DiTreeEntity> getStatedAxiomsVersion(int conceptNid, StampCoordinate stampCoordinate) {
         return getAxiomsVersion(conceptNid, PremiseType.STATED, stampCoordinate);
     }
 
-    default Latest<DiTreeEntity> getAxiomsVersion(int conceptNid, PremiseType premiseType, StampCoordinate stampCoordinate) {
-        throw new UnsupportedOperationException();
-//      int assemblageSequence;
-//
-//      if (premiseType == PremiseType.INFERRED) {
-//         assemblageSequence = getInferredAssemblageNid();
-//      } else {
-//         assemblageSequence = getStatedAssemblageNid();
-//      }
-//      ImmutableList<LatestVersion<DiTreeEntity>> latestVersionList = Get.assemblageService()
-//              .getSnapshot(LogicGraphVersion.class, stampCoordinateRecord)
-//              .getLatestSemanticVersionsForComponentFromAssemblage(conceptNid, assemblageSequence);
-//      if (latestVersionList.isEmpty()) {
-//         return Optional.empty();
-//      }
-//      LatestVersion<DiTreeEntity> logicalDef = Get.assemblageService()
-//              .getSnapshot(LogicGraphVersion.class, stampCoordinateRecord)
-//              .getLatestSemanticVersionsForComponentFromAssemblage(conceptNid, assemblageSequence).get(0);
-//
-//      if (logicalDef.isPresent()) {
-//         return Optional.of(logicalDef.get().getLogicalExpression());
-//      }
-//      return Optional.empty();
+    /**
+     * Returns the pattern for a given premise type.
+     *
+     * @param premiseType The premise type to get the pattern for.
+     * @return The pattern facade for the given premise type.
+     */
+    default PatternFacade getPatternForPremiseType(PremiseType premiseType) {
+        return switch (premiseType) {
+            case STATED -> statedAxiomsPattern();
+            case INFERRED -> inferredAxiomsPattern();
+        };
     }
 
+    /**
+     * Retrieves the latest version of the axioms for a given concept, premise type, and stamp coordinate.
+     *
+     * @param conceptNid The concept's unique identifier.
+     * @param premiseType The type of premise to get the axioms for.
+     * @param stampCoordinate The stamp coordinate specifying the version of the axioms.
+     * @return The latest version of the axioms for the given concept, premise type, and stamp coordinate.
+     */
+    default Latest<DiTreeEntity> getAxiomsVersion(int conceptNid, PremiseType premiseType, StampCoordinate stampCoordinate) {
+        SemanticEntity<SemanticEntityVersion> axiomSemantic = getAxiomsSemantic(conceptNid, premiseType);
+        StampCalculatorWithCache calculator = StampCalculatorWithCache.getCalculator(stampCoordinate.toStampCoordinateRecord());
+        Latest<SemanticEntityVersion> latest = calculator.latest(axiomSemantic);
+        if (latest.isAbsent()) {
+            return Latest.empty();
+        }
+        return Latest.of((DiTreeEntity) latest.get().fieldValues().get(0));
+    }
+
+    /**
+     * Retrieves the chronology of axioms for a given concept and premise type.
+     *
+     * @param conceptNid The concept's unique identifier.
+     * @param premiseType The type of premise to get the axioms for.
+     * @return An immutable list of DiTreeEntity objects representing the chronology of axioms.
+     */
+    default ImmutableList<DiTreeEntity> getAxiomsChronology(int conceptNid, PremiseType premiseType) {
+        SemanticEntity<SemanticEntityVersion> axiomSemantic = getAxiomsSemantic(conceptNid, premiseType);
+        MutableList<DiTreeEntity> axiomChronology = Lists.mutable.empty();
+        axiomSemantic.versions().forEach(semanticEntityVersion ->
+                axiomChronology.add((DiTreeEntity) semanticEntityVersion.fieldValues().get(0)));
+        return axiomChronology.toImmutable();
+    }
+
+    /**
+     * Retrieves the semantic entity representing the axioms for a given concept and premise type.
+     *
+     * @param conceptNid The unique identifier of the concept.
+     * @param premiseType The type of premise to get the axioms for.
+     * @return The semantic entity representing the axioms for the given concept and premise type.
+     * @throws IllegalStateException If there are too many semantic entities for the given concept and premise type.
+     */
+    default SemanticEntity<SemanticEntityVersion> getAxiomsSemantic(int conceptNid, PremiseType premiseType) {
+        List<SemanticEntity<SemanticEntityVersion>> semanticList = new ArrayList<>();
+        Entity.provider().forEachSemanticForComponentOfPattern(
+                conceptNid,
+                getPatternForPremiseType(premiseType).nid(),
+                semanticList::add
+        );
+        if (semanticList.size() > 1) {
+            throw new IllegalStateException("Too many semantics for " + PrimitiveData.textWithNid(conceptNid) + " " + premiseType);
+        }
+        return semanticList.getFirst();
+    }
+
+    /**
+     * Retrieves the latest version of the inferred axioms for a given concept and stamp coordinate.
+     *
+     * @param Concept          The concept facade representing the concept.
+     * @param stampCoordinate The stamp coordinate specifying the version of the axioms.
+     * @return The latest version of the inferred axioms for the given concept and stamp coordinate.
+     */
     default Latest<DiTreeEntity> getInferredAxiomsVersion(ConceptFacade Concept, StampCoordinate stampCoordinate) {
         return getAxiomsVersion(Concept.nid(), PremiseType.INFERRED, stampCoordinate);
     }
 
+    /**
+     * Returns the latest version of the stated axioms for a given concept and stamp coordinate.
+     *
+     * @param Concept          The ConceptFacade representing the concept.
+     * @param stampCoordinate The StampCoordinate specifying the version of the axioms.
+     * @return The latest version of the stated axioms for the given concept and stamp coordinate.
+     */
     default Latest<DiTreeEntity> getStatedAxiomsVersion(ConceptFacade Concept, StampCoordinate stampCoordinate) {
         return getAxiomsVersion(Concept.nid(), PremiseType.STATED, stampCoordinate);
     }
 
+    /**
+     * Retrieves the latest version of the inferred axioms for a given concept and stamp coordinate.
+     *
+     * @param conceptNid      The concept's unique identifier.
+     * @param stampCoordinate The stamp coordinate specifying the version of the axioms.
+     * @return The latest version of the inferred axioms for the given concept and stamp coordinate.
+     */
     default Latest<DiTreeEntity> getInferredAxiomsVersion(int conceptNid, StampCoordinate stampCoordinate) {
         return getAxiomsVersion(conceptNid, PremiseType.INFERRED, stampCoordinate);
     }
 
+    /**
+     * Converts the LogicCoordinate object to a user-friendly string representation.
+     *
+     * @return A string representing the LogicCoordinate object in a human-readable format.
+     */
     default String toUserString() {
         StringBuilder sb = new StringBuilder("   stated axiom pattern: ");
         sb.append(PrimitiveData.text(this.statedAxiomsPatternNid()));
@@ -197,6 +319,10 @@ public interface LogicCoordinate {
         return Entity.getFast(rootNid());
     }
 
+    /**
+     * Returns a LogicCoordinateRecord for the LogicCoordinate.
+     *
+     * @return The LogicCoordinateRecord representation of the LogicCoordinate.
+     */
     LogicCoordinateRecord toLogicCoordinateRecord();
 }
-

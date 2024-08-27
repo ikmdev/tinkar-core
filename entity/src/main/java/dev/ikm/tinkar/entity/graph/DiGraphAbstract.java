@@ -19,6 +19,7 @@ import dev.ikm.tinkar.component.graph.DiGraph;
 import dev.ikm.tinkar.component.graph.Graph;
 import dev.ikm.tinkar.component.graph.GraphAdaptorFactory;
 import dev.ikm.tinkar.component.graph.Vertex;
+import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityFacade;
 import io.activej.bytebuf.ByteBuf;
 import org.eclipse.collections.api.factory.Lists;
@@ -117,6 +118,17 @@ public abstract class DiGraphAbstract<V extends EntityVertex>  {
 
     public Optional<ImmutableIntList> successorNids(int vertexIndex) {
         return Optional.ofNullable(successorMap.get(vertexIndex));
+    }
+    public Optional<V> firstVertexWithMeaning(ConceptFacade vertexMeaning) {
+        return firstVertexWithMeaning(vertexMeaning.nid());
+    }
+    public Optional<V>  firstVertexWithMeaning(int vertexMeaningNid) {
+        for (V vertex : vertexMap) {
+            if (vertex.meaningNid == vertexMeaningNid) {
+                return Optional.of(vertex);
+            }
+        }
+        return Optional.empty();
     }
 
     public boolean containsVertexWithMeaning(EntityFacade meaning) {

@@ -15,26 +15,29 @@
  */
 package dev.ikm.tinkar.entity.graph.isomorphic;
 
+import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
+import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiomSemantic;
 import dev.ikm.tinkar.terms.TinkarTerm;
-import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
 
 import java.util.Objects;
 
 /**
- * The Class RelationshipKey. Equal when equivalent, ignoring vertexIndex.
+ * The Class SetElementKey. Equal when equivalent, ignoring vertexIndex.
  *
- * 
+ *
  */
-public class RelationshipKey
-        implements Comparable<RelationshipKey> {
+public class SetElementKey
+        implements Comparable<SetElementKey> {
     /** The concepts referenced at node or below. */
     final int vertexIndex;
-    final boolean necessarySet;
-    final ImmutableIntList conceptsReferencedAtNodeOrBelow;
+    final LogicalAxiomSemantic enclosingSetType;
+    // Using IntIdList, so that toString method will include text of concept, not just nids.
+    final IntIdList conceptsReferencedAtNodeOrBelow;
     final int hashCode;
 
     //~--- constructors --------------------------------------------------------
@@ -45,15 +48,40 @@ public class RelationshipKey
      * @param vertexIndex the vertex id
      * @param expression the expression
      */
-    public RelationshipKey(int vertexIndex, DiTreeEntity expression) {
+    public SetElementKey(int vertexIndex, DiTreeEntity expression) {
         this.vertexIndex = vertexIndex;
-        this.necessarySet = expression.hasParentVertexWithMeaning(vertexIndex, TinkarTerm.NECESSARY_SET.nid());
+        this.enclosingSetType = getEnclosingSetType(vertexIndex, expression);
         MutableIntSet conceptsReferencedAtNodeOrBelowCollector = IntSets.mutable.empty();
         processVertexAndChildren(vertexIndex, expression, conceptsReferencedAtNodeOrBelowCollector);
-        this.conceptsReferencedAtNodeOrBelow = conceptsReferencedAtNodeOrBelowCollector.toSortedList().toImmutable();
-        this.hashCode = Objects.hash(necessarySet,
+        this.conceptsReferencedAtNodeOrBelow = IntIds.list.of(conceptsReferencedAtNodeOrBelowCollector.toSortedList().toArray());
+        this.hashCode = Objects.hash(enclosingSetType,
                 IsomorphicResultsLeafHash.makeNidListHash(expression.vertex(vertexIndex).getMeaningNid(),
-                this.conceptsReferencedAtNodeOrBelow.toArray()));
+                        this.conceptsReferencedAtNodeOrBelow.toArray()));
+    }
+
+    /**
+     * Determines the enclosing set type of a vertex within a given expression.
+     *
+     * @param vertexIndex  the index of the vertex
+     * @param expression   the expression containing the vertex
+     * @return the logical axiom semantic representing the enclosing set type
+     * @throws IllegalStateException if the vertex is not contained within a known set type
+     */
+    private LogicalAxiomSemantic getEnclosingSetType(int vertexIndex, DiTreeEntity expression) {
+        if (expression.hasPredecessorVertexWithMeaning(vertexIndex, TinkarTerm.NECESSARY_SET.nid())) {
+            return LogicalAxiomSemantic.NECESSARY_SET;
+        }
+        if (expression.hasPredecessorVertexWithMeaning(vertexIndex, TinkarTerm.SUFFICIENT_SET.nid())) {
+            return LogicalAxiomSemantic.SUFFICIENT_SET;
+        }
+        if (expression.hasPredecessorVertexWithMeaning(vertexIndex, TinkarTerm.PROPERTY_SET.nid())) {
+            return LogicalAxiomSemantic.PROPERTY_SET;
+        }
+        if (expression.hasPredecessorVertexWithMeaning(vertexIndex, TinkarTerm.INCLUSION_SET.nid())) {
+            return LogicalAxiomSemantic.INCLUSION_SET;
+        }
+        throw new IllegalStateException("vertex " + vertexIndex +
+                " is not contained within a known set type: " + expression);
     }
 
     @Override
@@ -85,12 +113,12 @@ public class RelationshipKey
      * @return the int
      */
     @Override
-    public int compareTo(RelationshipKey o) {
+    public int compareTo(SetElementKey o) {
         if (this.hashCode != o.hashCode) {
             return Integer.compare(this.hashCode, o.hashCode);
         }
-        if (this.necessarySet != o.necessarySet) {
-            return Boolean.compare(this.necessarySet, o.necessarySet);
+        if (this.enclosingSetType != o.enclosingSetType) {
+            return enclosingSetType.compareTo(o.enclosingSetType);
         }
         int comparison = Integer.compare(this.conceptsReferencedAtNodeOrBelow.size(), o.conceptsReferencedAtNodeOrBelow.size());
 
@@ -111,7 +139,7 @@ public class RelationshipKey
 
     @Override
     public boolean equals(Object other) {
-        if (other instanceof RelationshipKey otherKey) {
+        if (other instanceof SetElementKey otherKey) {
             return compareTo(otherKey) == 0;
         }
         return false;
@@ -119,6 +147,6 @@ public class RelationshipKey
 
     @Override
     public String toString() {
-        return "RelationshipKey{" + "vertexId=" + vertexIndex + ", in necessary set=" + necessarySet + ", conceptsReferencedAtNodeOrBelow=" + conceptsReferencedAtNodeOrBelow + '}';
+        return "SetElementKey{" + "vertexId=" + vertexIndex + ", in necessary set=" + enclosingSetType + ", conceptsReferencedAtNodeOrBelow=" + conceptsReferencedAtNodeOrBelow + '}';
     }
 }
