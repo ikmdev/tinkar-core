@@ -30,7 +30,6 @@ import static dev.ikm.tinkar.common.util.Symbols.NULL_SIGN;
 
 /**
  *
- * 
  */
 public abstract class IsomorphicResultsAbstract<VVD extends VertexVisitData>
         implements IsomorphicResults, Callable<IsomorphicResults> {
@@ -55,12 +54,12 @@ public abstract class IsomorphicResultsAbstract<VVD extends VertexVisitData>
     /**
      * Nodes that are relationship roots in the referenceExpression.
      */
-    protected final MutableObjectIntMap<RelationshipKey> referenceRelationshipNodesMap = ObjectIntMaps.mutable.empty();
+    protected final MutableObjectIntMap<SetElementKey> referenceRelationshipNodesMap = ObjectIntMaps.mutable.empty();
 
     /**
      * Nodes that are relationship roots in the comparisonExpression.
      */
-    protected final MutableObjectIntMap<RelationshipKey> comparisonRelationshipNodesMap = ObjectIntMaps.mutable.empty();
+    protected final MutableObjectIntMap<SetElementKey> comparisonRelationshipNodesMap = ObjectIntMaps.mutable.empty();
     /**
      * The comparison deletion roots.
      */
@@ -195,14 +194,20 @@ public abstract class IsomorphicResultsAbstract<VVD extends VertexVisitData>
     }
 
     @Override
-    public final List<EntityVertex> getAddedRelationshipRoots() {
-        final TreeSet<RelationshipKey> addedRelationshipRoots = new TreeSet<>(this.referenceRelationshipNodesMap.keySet());
-        addedRelationshipRoots.removeAll(this.comparisonRelationshipNodesMap.keySet());
+    public final List<EntityVertex> getAddedSetElements() {
+        final TreeSet<SetElementKey> addedSetElementKeys = getAddedSetElementKeys();
         List<EntityVertex> results = new ArrayList<>();
-        for (RelationshipKey relationshipKey : addedRelationshipRoots) {
-            results.add(this.referenceTree.vertex(this.referenceRelationshipNodesMap.get(relationshipKey)));
+        for (SetElementKey setElementKey : addedSetElementKeys) {
+            results.add(this.comparisonTree.vertex(this.comparisonRelationshipNodesMap.getOrThrow(setElementKey)));
         }
         return results;
+    }
+
+    @Override
+    public final TreeSet<SetElementKey> getAddedSetElementKeys() {
+        final TreeSet<SetElementKey> addedSetElementKeys = new TreeSet<>(this.comparisonRelationshipNodesMap.keySet());
+        addedSetElementKeys.removeAll(this.referenceRelationshipNodesMap.keySet());
+        return addedSetElementKeys;
     }
 
     @Override
@@ -225,14 +230,20 @@ public abstract class IsomorphicResultsAbstract<VVD extends VertexVisitData>
     }
 
     @Override
-    public final List<EntityVertex> getDeletedRelationshipRoots() {
-        final TreeSet<RelationshipKey> deletedRelationshipRoots = new TreeSet<>(this.comparisonRelationshipNodesMap.keySet());
-        deletedRelationshipRoots.removeAll(this.referenceRelationshipNodesMap.keySet());
+    public final List<EntityVertex> getDeletedSetElements() {
+        final TreeSet<SetElementKey> deletedSetElementKeys = getDeletedSetElementKeys();
         List<EntityVertex> results = new ArrayList<>();
-        for (RelationshipKey deletedNodeId : deletedRelationshipRoots) {
-            results.add(this.comparisonTree.vertex(this.comparisonRelationshipNodesMap.get(deletedNodeId)));
+        for (SetElementKey deletedElementKey : deletedSetElementKeys) {
+            results.add(this.referenceTree.vertex(this.referenceRelationshipNodesMap.getOrThrow(deletedElementKey)));
         }
         return results;
+    }
+
+    @Override
+    public final TreeSet<SetElementKey> getDeletedSetElementKeys() {
+        final TreeSet<SetElementKey> deletedElementKeys = new TreeSet<>(this.referenceRelationshipNodesMap.keySet());
+        deletedElementKeys.removeAll(this.comparisonRelationshipNodesMap.keySet());
+        return deletedElementKeys;
     }
 
     @Override
@@ -255,11 +266,11 @@ public abstract class IsomorphicResultsAbstract<VVD extends VertexVisitData>
     }
 
     @Override
-    public final List<EntityVertex> getSharedRelationshipRoots() {
-        final TreeSet<RelationshipKey> sharedRelationshipRoots = new TreeSet<>(this.referenceRelationshipNodesMap.keySet());
+    public final List<EntityVertex> getSharedSetElements() {
+        final TreeSet<SetElementKey> sharedRelationshipRoots = new TreeSet<>(this.referenceRelationshipNodesMap.keySet());
         sharedRelationshipRoots.retainAll(this.comparisonRelationshipNodesMap.keySet());
         List<EntityVertex> results = new ArrayList<>();
-        for (RelationshipKey sharedRootKey : sharedRelationshipRoots) {
+        for (SetElementKey sharedRootKey : sharedRelationshipRoots) {
             results.add(this.comparisonTree.vertex(this.comparisonRelationshipNodesMap.get(sharedRootKey)));
         }
         return results;
@@ -400,19 +411,19 @@ public abstract class IsomorphicResultsAbstract<VVD extends VertexVisitData>
                 builder.append("  ").append(this.comparisonTree.fragmentToString("c", deletionRoot));
                 builder.append("\n");
             });
-            builder.append("\nShared relationship roots: \n\n");
-            getSharedRelationshipRoots().forEach((EntityVertex sharedRelRoot) -> {
-                builder.append("  ").append(this.comparisonTree.fragmentToString(sharedRelRoot));
+            builder.append("\nShared set elements: \n\n");
+            getSharedSetElements().forEach((EntityVertex sharedRelRoot) -> {
+                builder.append("  ").append(this.referenceTree.fragmentToString(sharedRelRoot));
                 builder.append("\n");
             });
-            builder.append("\nNew relationship roots: \n\n");
-            getAddedRelationshipRoots().forEach((EntityVertex addedRelRoot) -> {
+            builder.append("\nNew set elements: \n\n");
+            getAddedSetElements().forEach((EntityVertex addedRelRoot) -> {
                 builder.append("  ").append(this.comparisonTree.fragmentToString(addedRelRoot));
                 builder.append("\n");
             });
-            builder.append("\nDeleted relationship roots: \n\n");
-            getDeletedRelationshipRoots().forEach((EntityVertex deletedRelRoot) -> {
-                builder.append("  ").append(this.comparisonTree.fragmentToString(deletedRelRoot));
+            builder.append("\nDeleted set elements: \n\n");
+            getDeletedSetElements().forEach((EntityVertex deletedRelRoot) -> {
+                builder.append("  ").append(this.referenceTree.fragmentToString(deletedRelRoot));
                 builder.append("\n");
             });
             builder.append("\nMerged: \n\n");
