@@ -247,6 +247,21 @@ public class TinkarTerm {
     public static final EntityProxy.Pattern US_DIALECT_PATTERN =
             EntityProxy.Pattern.make("US Dialect pattern", UUID.fromString("08f9112c-c041-56d3-b89b-63258f070074"));
 
+
+    /**
+     * Java binding for the pattern described as <strong><em>Value Constraint Pattern</em></strong>;
+     * identified by UUID: {@code 922697f7-36ba-4afc-9dd5-f29d54b0fdec}.
+     * <p> Used to define the value constraint pattern.
+     * <p> Field 0 is a Concept that represents the Value Constraint Source.
+     * <p> Field 1 is a Concept that represents the Minimum Value Operator.
+     * <p> Field 2 is a Float that represents the Reference Range Minimum.
+     * <p> Field 3 is a Component that represents the Maximum Value Operator.
+     * <p> Field 4 is a Float that represents the Reference Range Maximum.
+     * <p> Field 5 is a String that represents the Example UCUM Units.
+     */
+    public static final EntityProxy.Pattern VALUE_CONSTRAINT_PATTERN =
+            EntityProxy.Pattern.make("Value Constraint Pattern", UUID.fromString("922697f7-36ba-4afc-9dd5-f29d54b0fdec"));
+    
     /**
      * Java binding for the concept described as <strong><em>Acceptable (SOLOR)</em></strong>;
      * identified by UUID: {@code
