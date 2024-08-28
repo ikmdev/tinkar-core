@@ -247,6 +247,9 @@ public class TinkarTerm {
     public static final EntityProxy.Pattern US_DIALECT_PATTERN =
             EntityProxy.Pattern.make("US Dialect pattern", UUID.fromString("08f9112c-c041-56d3-b89b-63258f070074"));
 
+    public static final EntityProxy.Pattern VALUE_CONSTRAINT_PATTERN =
+            EntityProxy.Pattern.make("Value Constraint Pattern", UUID.fromString("922697f7-36ba-4afc-9dd5-f29d54b0fdec"));
+    
     /**
      * Java binding for the concept described as <strong><em>Acceptable (SOLOR)</em></strong>;
      * identified by UUID: {@code
