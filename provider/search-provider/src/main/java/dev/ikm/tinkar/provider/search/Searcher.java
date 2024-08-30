@@ -33,6 +33,7 @@ import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.TinkarTerm;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -377,29 +378,26 @@ public class Searcher {
     }
 
     /**
-     * Returns PublicId for the Concepts associated with the identifier
+     * Returns PublicId for the Concept associated with a Semantic containing a field with the given identifier
      *
-     * @param   identifier UUID of the Semantic
-     * @return  PublicId for the Concept associated with the identifier
+     * @param   identifier String identifier
+     * @return  Optional wrapped PublicId for the Concept associated with the Semantic containing the identifier
      */
-
     public static Optional<PublicId> getPublicId(String identifier) {
-        UUID uuid;
         try {
-            uuid = UUID.fromString(identifier);
-        } catch (IllegalArgumentException e) {
-            LOG.error("String identifier is not a UUID");
-            return Optional.empty();
-        }
-        if (PrimitiveData.get().hasUuid(uuid)) {
-            Optional<Entity<EntityVersion>> e = EntityService.get().getEntity(uuid);
-            if (e.isPresent()) {
-                Entity<?> entity = e.get();
+            Entity<?> identifierPattern = EntityService.get().getEntity(TinkarTerm.IDENTIFIER_PATTERN).get();
+            int[] semanticNids = EntityService.get().semanticNidsOfPattern(identifierPattern.nid());
+            for (int nid : semanticNids) {
+                Entity<EntityVersion> entity = EntityService.get().getEntity(nid).get();
                 if (entity instanceof SemanticEntity<?> semanticEntity) {
-                    // Now return the latest version for this SemanticEntity
-                    return Optional.ofNullable(defaultNavigationCalculator().stampCalculator().latest(semanticEntity).get().referencedComponent().publicId());
+                    SemanticEntityVersion latestVersion = defaultNavigationCalculator().stampCalculator().latest(semanticEntity).get();
+                    if (latestVersion.fieldValues().contains(identifier)) {
+                        return Optional.of(latestVersion.referencedComponent().publicId());
+                    }
                 }
             }
+        } catch (Exception e) {
+            LOG.error("Encountered exception {}", e.getMessage());
         }
 
         return Optional.empty();

@@ -161,17 +161,18 @@ public class SearcherIT extends TestHelper {
 
     @Test
     public void searchExistingIdentifierPublicId() throws Exception {
-        //d11895b5-0ece-58ff-9fe1-f4c099629ce2
-        Optional<PublicId> publicId = Searcher.getPublicId("d11895b5-0ece-58ff-9fe1-f4c099629ce2");
+        //38e0c7b8-1e33-56a2-9eb2-ee20c4960684
+        Optional<PublicId> publicId = Searcher.getPublicId("38e0c7b8-1e33-56a2-9eb2-ee20c4960684");
         assertTrue(publicId.isPresent(), "Non-empty PublicId should be returned");
         assertEquals(1, publicId.get().asUuidArray().length, "UUID array should be size 1");
-        assertEquals("ad3dd2dd-ddb0-584c-bea4-c6d9b91d461f", publicId.get().asUuidArray()[0].toString(), "Concept does not match expected id");
+        assertEquals("38e0c7b8-1e33-56a2-9eb2-ee20c4960684", publicId.get().asUuidArray()[0].toString(), "Concept does not match expected id");
     }
 
     @Test
     public void searchNonExistingIdentifierPublicId() throws Exception {
-        //d11895b5-0ece-58ff-9fe1-f4c099629ce2
-        Optional<PublicId> publicId = Searcher.getPublicId("ad3dd2dd-ddb0-584c-bea4-c6d9b91d461f");
+        Optional<PublicId> publicId = Searcher.getPublicId("abcxyz");
+        assertFalse(publicId.isPresent(), "Concept should be null for non-existing uuid");
+        publicId = Searcher.getPublicId(TinkarTerm.KOMET_BASE_MODEL_COMPONENT_PATTERN.asUuidArray()[0].toString());
         assertFalse(publicId.isPresent(), "Concept should be null for non-semantic uuid");
     }
 }
