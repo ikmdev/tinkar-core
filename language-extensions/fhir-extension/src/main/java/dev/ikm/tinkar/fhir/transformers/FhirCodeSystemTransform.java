@@ -172,7 +172,7 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
             forEachSemanticForComponent(concept.nid());
         });
 
-        Provenance provenance = FhirProvenanceTransform.provenanceTransform("CodeSystem/" + codeSystem.getId(), fromDate, toDate);
+        Provenance provenance = FhirProvenanceTransform.provenanceTransform(CODESYSTEM + codeSystem.getId(), fromDate, toDate);
         Bundle.BundleEntryRequestComponent codeSystemRequest = new Bundle.BundleEntryRequestComponent();
         codeSystemRequest.setMethod(Bundle.HTTPVerb.POST)
                 .setUrl("CodeSystem");

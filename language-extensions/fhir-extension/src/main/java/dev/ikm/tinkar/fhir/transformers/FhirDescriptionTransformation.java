@@ -39,11 +39,10 @@ import static dev.ikm.tinkar.fhir.transformers.FhirUtils.generateCodingObject;
 
 public class FhirDescriptionTransformation {
 
-    StampCalculator stampCalculatorWithCache;
-    Map<String, String> caseSencitivityCodes;
-    Map<String, String> acceptabilityCodes;
-    Map<String, String> descriptionTypeCodes;
-    Map<String, String> statusCodes;
+    private final StampCalculator stampCalculatorWithCache;
+    private final Map<String, String> caseSencitivityCodes;
+    private final Map<String, String> acceptabilityCodes;
+    private final Map<String, String> descriptionTypeCodes;
 
     public FhirDescriptionTransformation(StampCalculator stampCalculatorWithCache) {
         this.stampCalculatorWithCache = stampCalculatorWithCache;

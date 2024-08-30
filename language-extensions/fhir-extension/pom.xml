@@ -93,7 +93,7 @@
             <dependency>
                 <groupId>dev.ikm.jpms</groupId>
                 <artifactId>hapi-fhir-base</artifactId>
-                <version>7.0.2-r6</version>
+                <version>${fhir-base.version}</version>
             </dependency>
 
             <dependency>
@@ -112,7 +112,7 @@
                 <groupId>dev.ikm.jpms</groupId>
                 <artifactId>org.hl7.fhir.utilities</artifactId>
                 <version>${fhir-hl7-utilities.version}</version>
-               </dependency>
+            </dependency>
             <dependency>
                 <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>composer</artifactId>
@@ -185,11 +185,6 @@
             <groupId>dev.ikm.tinkar</groupId>
             <artifactId>entity-provider</artifactId>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>dev.ikm.jpms</groupId>-->
-<!--            <artifactId>hapi-fhir-base</artifactId>-->
-<!--            <version>7.0.2-r7-SNAPSHOT</version>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>dev.ikm.tinkar</groupId>
             <artifactId>composer</artifactId>

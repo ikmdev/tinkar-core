@@ -32,7 +32,12 @@ import dev.ikm.tinkar.fhir.transformers.provenance.FhirProvenanceTransform;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
-import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.CodeSystem;
+import org.hl7.fhir.r4.model.CodeableConcept;
+import org.hl7.fhir.r4.model.Extension;
+import org.hl7.fhir.r4.model.Provenance;
+import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +45,9 @@ import java.io.File;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static dev.ikm.tinkar.fhir.transformers.FhirConstants.*;
+import static dev.ikm.tinkar.fhir.transformers.FhirConstants.AXIOM_SYNTAX_PATTERN;
+import static dev.ikm.tinkar.fhir.transformers.FhirConstants.CODE_CONCEPT_ADDITIONAL_IDENTIFIER_URL;
+import static dev.ikm.tinkar.fhir.transformers.FhirConstants.IKM_DEV_URL;
 
 public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummary> {
     private static final Logger LOG = LoggerFactory.getLogger(LoadEntitiesFromFhirJson.class);
@@ -59,7 +66,7 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
     public LoadEntitiesFromFhirJson(File importFile) {
         super(false, true);
         this.importFile = importFile;
-        System.out.println("Loading entities from: " + importFile.getAbsolutePath());
+        LOG.info("Loading entities from: " + importFile.getAbsolutePath());
     }
 
     public LoadEntitiesFromFhirJson() {
@@ -96,7 +103,7 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
         return (Bundle) parser.parseResource(jsonBundle);
     }
 
-    public Session FhirCodeSystemConceptTransform(Bundle bundle) {
+    public Session fhirCodeSystemConceptTransform(Bundle bundle) {
         String jsonBundle = parser.setPrettyPrint(true).encodeResourceToString(bundle);
         bundle = parseJsonBundle(jsonBundle, codeSystem);
 
@@ -115,7 +122,6 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
                 EntityProxy.Concept path = TinkarTerm.DEVELOPMENT_PATH;
                 Composer composer = new Composer("FHIR Concept Composer...");
                 session = composer.open(status, time, author, module, path);
-                //all concepts retrieved...
                 for (CodeSystem.ConceptDefinitionComponent concept : codeSystem.getConcept()) {
                     for (Extension extension : concept.getExtension()) {
                         String url = extension.getUrl();
@@ -128,7 +134,6 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
                             }
                         }
                     }
-                    //Designation transform
                     EntityProxy.Concept finalConceptId1 = conceptId;
                     Session designationSession = session;
                     concept.getDesignation().forEach(designation -> {
@@ -147,7 +152,6 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
                                                 .acceptability(FhirUtils.generateAcceptability(designationAcceptabilityCodeableConcept.getCoding().getLast().getCode())))));
                         composer.commitSession(designationSession);
                     });
-                    //property axiom transform
                     EntityProxy.Concept finalConceptId = conceptId;
                     Session axiomSession = session;
                     concept.getProperty().subList(0, concept.getProperty().size()).forEach(property -> {

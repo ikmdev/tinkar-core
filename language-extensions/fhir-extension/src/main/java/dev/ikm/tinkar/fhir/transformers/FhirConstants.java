@@ -57,5 +57,6 @@ public class FhirConstants {
     public static final String TERMINOLOGY_CODESYSTEM_VARIABLE_ROLE_URL = "http://snomed.info/sct/731000124108/version/20240404";
     public static final String REFERENCE_URL = "CodeSystem/HL7VariableRoleChangeSet";
     public static final String CODE_SYSTEM_ID = "snomedctVAExtension";
+    public static final String CODESYSTEM = "CodeSystem/";
 
 }

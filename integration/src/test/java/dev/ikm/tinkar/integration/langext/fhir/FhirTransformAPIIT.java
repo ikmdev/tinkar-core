@@ -20,10 +20,19 @@ import ca.uhn.fhir.parser.IParser;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.composer.Session;
-import dev.ikm.tinkar.coordinate.stamp.*;
+import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
+import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecordBuilder;
+import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
+import dev.ikm.tinkar.coordinate.stamp.StampPositionRecordBuilder;
+import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.ConceptEntity;
+import dev.ikm.tinkar.entity.ConceptEntityVersion;
+import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityVersion;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.aggregator.TemporalEntityAggregator;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.ext.lang.owl.SctOwlUtilities;
@@ -33,7 +42,12 @@ import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.hl7.fhir.r4.model.Bundle;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +57,8 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class FhirTransformAPIIT extends TestHelper {
@@ -54,7 +70,6 @@ public class FhirTransformAPIIT extends TestHelper {
     public void setup() {
         //add dataStore
         startSpinedArrayDataBase(new File(System.getProperty("user.home") + "/Solor/"));
-        //loadSpinedArrayDataBase(SAP_DATASTORE_ROOT);
     }
 
     @Test
@@ -71,31 +86,22 @@ public class FhirTransformAPIIT extends TestHelper {
         IParser parser = ctx.newJsonParser();
 
 
-//        String jsonContent = new String(Files.readAllBytes(
-//                new File("C:\\Users\\patrichards\\FDA-Shield\\tinkar-core\\language-extensions\\fhir-extension\\src\\main\\java\\dev\\ikm\\tinkar\\fhir\\transformers\\fhirJson\\fhir-2024-08-21-1251.json").toPath()));
         String jsonContent = new String(Files.readAllBytes(
-                new File("C:\\Users\\patrichards\\FDA-Shield\\tinkar-core\\language-extensions\\fhir-extension\\src\\main\\java\\dev\\ikm\\tinkar\\fhir\\transformers\\fhirJson\\fhir-2024-08-07-1204.json").toPath()));
-        Bundle bundle = parser.parseResource(Bundle.class, jsonContent);
-        Session session = loadEntitiesFromFhirJson.FhirCodeSystemConceptTransform(bundle);
+                new File(System.getProperty("user.home") + "/Fhir/fhir-2024-08-21-1251.json").toPath()));
 
-//        int expectedComponentsUpdatedCount = 60;
-//        int actualComponentsUpdatedCount = session.componentsInSessionCount();
-//        assertEquals(expectedComponentsUpdatedCount, actualComponentsUpdatedCount,
-//                String.format("Expect %s updated components, but %s were updated instead.", expectedComponentsUpdatedCount, actualComponentsUpdatedCount));
+        Bundle bundle = parser.parseResource(Bundle.class, jsonContent);
+        Session session = loadEntitiesFromFhirJson.fhirCodeSystemConceptTransform(bundle);
+
+        int expectedComponentsUpdatedCount = 10;
+        int actualComponentsUpdatedCount = session.componentsInSessionCount();
+        assertEquals(expectedComponentsUpdatedCount, actualComponentsUpdatedCount,
+                String.format("Expect %s updated components, but %s were updated instead.", expectedComponentsUpdatedCount, actualComponentsUpdatedCount));
     }
 
     @Test
     @DisplayName("Test the agregator for this data")
     @Disabled("The agregator is returning zero concepts. Need to enable the test after the from and to time stamps are figured out.")
     public void testFhirCallWithAgregator() {
-
-//        String fromTime = "2000-05-09T10:00:04";
-//        String toTime = "2024-11-22T12:31:04";
-//        LocalDateTime fromLocalDateTime = LocalDateTime.parse(fromTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-//        long fromTimeStamp = fromLocalDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-//        LocalDateTime toLocalDateTime = LocalDateTime.parse(toTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-//        long toTimeStamp = toLocalDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-
         long fromTimeStamp = Long.MAX_VALUE;
         long toTimeStamp = Long.MIN_VALUE;
 
@@ -103,7 +109,7 @@ public class FhirTransformAPIIT extends TestHelper {
 
         LOG.info("Total Concepts : " + concepts.size());
 
-        StampCalculator stampCalculator = initStampCalculator(toTimeStamp); // Can use from ViewCalculator.
+        StampCalculator stampCalculator = initStampCalculator(toTimeStamp);
         FhirCodeSystemTransform fhirCodeSystemTransform = new FhirCodeSystemTransform(fromTimeStamp, toTimeStamp, stampCalculator, concepts.values().stream(), (fhirProvenanceString) -> {
             Assertions.assertNotNull(fhirProvenanceString);
             Assertions.assertFalse(fhirProvenanceString.isEmpty());
@@ -115,7 +121,7 @@ public class FhirTransformAPIIT extends TestHelper {
         }
     }
 
-    private static Map<String, ConceptEntity<? extends ConceptEntityVersion>> getConceptEntities(long fromTimeStamp, long toTimeStamp) {
+    private Map<String, ConceptEntity<? extends ConceptEntityVersion>> getConceptEntities(long fromTimeStamp, long toTimeStamp) {
         AtomicInteger counter = new AtomicInteger(0);
         Map<String, ConceptEntity<? extends ConceptEntityVersion>> concepts = new HashMap<>();
         TemporalEntityAggregator temporalEntityAggregator = new TemporalEntityAggregator(fromTimeStamp, toTimeStamp);
