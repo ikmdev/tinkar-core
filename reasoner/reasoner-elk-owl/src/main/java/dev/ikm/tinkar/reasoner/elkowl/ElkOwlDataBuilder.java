@@ -65,6 +65,8 @@ public class ElkOwlDataBuilder {
 
 	private TrackingCallable<?> progressUpdater = null;
 
+	private AtomicInteger inclusionSetCounter = new AtomicInteger();
+
 	public ElkOwlDataBuilder(ViewCalculator viewCalculator, PatternFacade statedAxiomPattern, ElkOwlData axiomData,
 			OWLDataFactory owlDataFactory) {
 		super();
@@ -115,6 +117,7 @@ public class ElkOwlDataBuilder {
 	}
 
 	public void build() throws Exception {
+		inclusionSetCounter.set(0);
 //		AtomicInteger processedSemanticsCounter = axiomData.processedSemantics;
 		AtomicInteger totalCounter = new AtomicInteger();
 		PrimitiveData.get().forEachSemanticNidOfPattern(statedAxiomPattern.nid(), i -> totalCounter.incrementAndGet());
@@ -183,6 +186,13 @@ public class ElkOwlDataBuilder {
 			LOG.error(msg);
 			throw new Exception(msg);
 		}
+		// TODO: Implement Inclusion Set Processing and remove inclusionSetCounter workaround
+		if (inclusionSetCounter.get() != 0) {
+			// Temporary fix for skipping Inclusion Sets. Notify user via UI, but don't throw the error to stop the process.
+			String errMessage = "Inclusion Set processing is not yet supported. Skipped " + inclusionSetCounter.get() + " Inclusion Sets.";
+			LOG.warn(errMessage);
+			AlertStreams.dispatchToRoot(new UnsupportedOperationException(errMessage));
+		}
 	}
 
 	public IncrementalChanges processIncremental(DiTreeEntity definition, int conceptNid) {
@@ -212,6 +222,10 @@ public class ElkOwlDataBuilder {
 			}
 			case NECESSARY_SET -> {
 				processNecessarySet(childVertex, conceptNid, definition, axioms);
+			}
+			case INCLUSION_SET -> {
+				// TODO: Implement Inclusion Set Processing and remove inclusionSetCounter workaround
+				inclusionSetCounter.incrementAndGet();
 			}
 			case PROPERTY_SET -> {
 				processPropertySet(childVertex, conceptNid, definition, axioms);
