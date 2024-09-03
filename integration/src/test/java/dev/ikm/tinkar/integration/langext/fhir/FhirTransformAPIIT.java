@@ -68,8 +68,7 @@ public class FhirTransformAPIIT extends TestHelper {
 
     @BeforeAll
     public void setup() {
-        //add dataStore
-        startSpinedArrayDataBase(new File(System.getProperty("user.home") + "/Solor/"));
+        loadSpinedArrayDataBase(SAP_DATASTORE_ROOT);
     }
 
     @Test
