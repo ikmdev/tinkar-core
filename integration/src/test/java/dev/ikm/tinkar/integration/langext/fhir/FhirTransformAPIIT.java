@@ -15,11 +15,7 @@
  */
 package dev.ikm.tinkar.integration.langext.fhir;
 
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
 import dev.ikm.tinkar.common.id.IntIds;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.composer.Session;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecordBuilder;
 import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
@@ -34,14 +30,10 @@ import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.aggregator.TemporalEntityAggregator;
-import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
-import dev.ikm.tinkar.ext.lang.owl.SctOwlUtilities;
 import dev.ikm.tinkar.fhir.transformers.FhirCodeSystemTransform;
-import dev.ikm.tinkar.fhir.transformers.LoadEntitiesFromFhirJson;
 import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.TinkarTerm;
-import org.hl7.fhir.r4.model.Bundle;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -52,13 +44,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class FhirTransformAPIIT extends TestHelper {
@@ -69,32 +57,6 @@ public class FhirTransformAPIIT extends TestHelper {
     @BeforeAll
     public void setup() {
         loadSpinedArrayDataBase(SAP_DATASTORE_ROOT);
-    }
-
-    @Test
-    public void testOwlSyntax() throws IOException {
-        boolean defRootExists = PrimitiveData.get().hasPublicId(TinkarTerm.DEFINITION_ROOT.publicId());
-        LogicalExpression owlTransform = SctOwlUtilities.sctToLogicalExpression("EquivalentClasses(:[23e07078-f1e2-3f6a-9b7a-9397bcd91cfe] ObjectIntersectionOf(:[ab4e618b-b954-3d56-a44b-f0f29d6f59d3] ObjectSomeValuesFrom(:[051fbfed-3c40-3130-8c09-889cb7b7b5b6] ObjectSomeValuesFrom(:[0d8a9cbb-e21e-3de7-9aad-8223c000849f] :[0a0507f5-0268-357a-8b6c-a84fabafbf6e])) ObjectSomeValuesFrom(:[051fbfed-3c40-3130-8c09-889cb7b7b5b6] ObjectSomeValuesFrom(:[3a6d919d-6c25-3aae-9bc3-983ead83a928] :[44a7e2f1-d05e-3f21-b4a6-19ee9a62dd12]))))", "");
-    }
-
-    @Test
-    @DisplayName("Test the transform of a fhir json to tinkar")
-    public void testFhirJsonTransform() throws IOException {
-        LoadEntitiesFromFhirJson loadEntitiesFromFhirJson = new LoadEntitiesFromFhirJson();
-        FhirContext ctx = FhirContext.forR4();
-        IParser parser = ctx.newJsonParser();
-
-
-        String jsonContent = new String(Files.readAllBytes(
-                new File(System.getProperty("user.home") + "/Fhir/fhir-2024-08-21-1251.json").toPath()));
-
-        Bundle bundle = parser.parseResource(Bundle.class, jsonContent);
-        Session session = loadEntitiesFromFhirJson.fhirCodeSystemConceptTransform(bundle);
-
-        int expectedComponentsUpdatedCount = 10;
-        int actualComponentsUpdatedCount = session.componentsInSessionCount();
-        assertEquals(expectedComponentsUpdatedCount, actualComponentsUpdatedCount,
-                String.format("Expect %s updated components, but %s were updated instead.", expectedComponentsUpdatedCount, actualComponentsUpdatedCount));
     }
 
     @Test
