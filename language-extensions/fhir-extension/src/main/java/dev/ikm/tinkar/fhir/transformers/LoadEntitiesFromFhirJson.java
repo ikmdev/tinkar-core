@@ -36,14 +36,14 @@ import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Extension;
+import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Provenance;
 import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.StringType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.util.Date;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static dev.ikm.tinkar.fhir.transformers.FhirConstants.AXIOM_SYNTAX_PATTERN;
 import static dev.ikm.tinkar.fhir.transformers.FhirConstants.CODE_CONCEPT_ADDITIONAL_IDENTIFIER_URL;
@@ -51,26 +51,20 @@ import static dev.ikm.tinkar.fhir.transformers.FhirConstants.IKM_DEV_URL;
 
 public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummary> {
     private static final Logger LOG = LoggerFactory.getLogger(LoadEntitiesFromFhirJson.class);
-    private File importFile;
+
     private CodeSystem codeSystem;
-    private FhirContext ctx;
-    private IParser parser;
+    private final IParser parser;
     private Date fromDate;
     private Date toDate;
-    private final AtomicLong importCount = new AtomicLong();
+   /* private final AtomicLong importCount = new AtomicLong();
     private final AtomicLong importConceptCount = new AtomicLong();
     private final AtomicLong importSemanticCount = new AtomicLong();
     private final AtomicLong importPatternCount = new AtomicLong();
-    private final AtomicLong importStampCount = new AtomicLong();
+    private final AtomicLong importStampCount = new AtomicLong();*/
 
-    public LoadEntitiesFromFhirJson(File importFile) {
-        super(false, true);
-        this.importFile = importFile;
-        LOG.info("Loading entities from: " + importFile.getAbsolutePath());
-    }
 
     public LoadEntitiesFromFhirJson() {
-        this.ctx = FhirContext.forR4();
+        FhirContext ctx = FhirContext.forR4();
         parser = ctx.newJsonParser();
         this.codeSystem = new CodeSystem();
     }
@@ -80,8 +74,8 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
         return null;
     }
 
-    public Bundle parseJsonBundle(String jsonBundle, CodeSystem codeSystem) {
-        codeSystem = new CodeSystem();
+    public Bundle parseJsonBundle(String jsonBundle) {
+        CodeSystem codeSystem = new CodeSystem();
         Provenance provenance = FhirProvenanceTransform.provenanceTransform("CodeSystem/" + codeSystem.getId(), fromDate, toDate);
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.TRANSACTION);
@@ -105,7 +99,7 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
 
     public Session fhirCodeSystemConceptTransform(Bundle bundle) {
         String jsonBundle = parser.setPrettyPrint(true).encodeResourceToString(bundle);
-        bundle = parseJsonBundle(jsonBundle, codeSystem);
+        bundle = parseJsonBundle(jsonBundle);
 
         EntityProxy.Concept conceptId = null;
 
@@ -142,8 +136,7 @@ public class LoadEntitiesFromFhirJson extends TrackingCallable<EntityCountSummar
                         CodeableConcept designationCaseSensitivityCodeableConcept = (CodeableConcept) caseSensitivityExtension.getValue();
                         CodeableConcept designationAcceptabilityCodeableConcept = (CodeableConcept) acceptabilityExtension.getValue();
                         //Coding useCoding = designation.getUse();
-                        EntityProxy.Concept finalConceptId = finalConceptId1;
-                        designationSession.compose((ConceptAssembler conceptAssembler) -> conceptAssembler.concept(finalConceptId)
+                        designationSession.compose((ConceptAssembler conceptAssembler) -> conceptAssembler.concept(finalConceptId1)
                                 .attach((FullyQualifiedName fqn) -> fqn
                                         .language(FhirUtils.generateLanguage(designation.getLanguage()))
                                         .text(designation.getValue())
