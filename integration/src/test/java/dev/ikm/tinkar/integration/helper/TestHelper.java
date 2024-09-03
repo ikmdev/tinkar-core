@@ -28,6 +28,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
+import static dev.ikm.tinkar.integration.TestConstants.PB_STARTER_DATA_REASONED;
+
 public class TestHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestHelper.class);
@@ -80,7 +82,7 @@ public class TestHelper {
     }
 
     protected static void loadDataBase() {
-        LoadEntitiesFromProtobufFile loadProto = new LoadEntitiesFromProtobufFile(new File(System.getProperty("user.home") + "/Solor/" + "snomedLidrLoinc-data-7-1-2024-withCollabData-dev"));
+        LoadEntitiesFromProtobufFile loadProto = new LoadEntitiesFromProtobufFile(PB_STARTER_DATA_REASONED);
         EntityCountSummary count = loadProto.compute();
         LOG.info(count + " entitles loaded from file: " + loadProto.summarize() + "\n\n");
     }
