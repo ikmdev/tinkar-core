@@ -247,6 +247,21 @@ public class TinkarTerm {
     public static final EntityProxy.Pattern US_DIALECT_PATTERN =
             EntityProxy.Pattern.make("US Dialect pattern", UUID.fromString("08f9112c-c041-56d3-b89b-63258f070074"));
 
+
+    /**
+     * Java binding for the pattern described as <strong><em>Value Constraint Pattern</em></strong>;
+     * identified by UUID: {@code 922697f7-36ba-4afc-9dd5-f29d54b0fdec}.
+     * <p> Used to define the value constraint pattern.
+     * <p> Field 0 is a Concept that represents the Value Constraint Source.
+     * <p> Field 1 is a Concept that represents the Minimum Value Operator.
+     * <p> Field 2 is a Float that represents the Reference Range Minimum.
+     * <p> Field 3 is a Component that represents the Maximum Value Operator.
+     * <p> Field 4 is a Float that represents the Reference Range Maximum.
+     * <p> Field 5 is a String that represents the Example UCUM Units.
+     */
+    public static final EntityProxy.Pattern VALUE_CONSTRAINT_PATTERN =
+            EntityProxy.Pattern.make("Value Constraint Pattern", UUID.fromString("922697f7-36ba-4afc-9dd5-f29d54b0fdec"));
+    
     /**
      * Java binding for the concept described as <strong><em>Acceptable (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -1822,14 +1837,6 @@ public class TinkarTerm {
     public static final EntityProxy.Concept DESCRIPTION_AND_OR_DIALECT_PROPERTIES =
             EntityProxy.Concept.make("Description/dialect properties (SOLOR)", UUID.fromString("e52b42c8-15d5-50d0-992c-bac006c963c4"));
     /**
-     * Java binding for the concept described as <strong><em>Descriptum (SOLOR)</em></strong>;
-     * identified by UUID: {@code
-     * <a href="http://localhost:8080/terminology/rest/concept/1b1986a8-f9e3-59f9-9adb-03b0d03c1d8e">
-     * 1b1986a8-f9e3-59f9-9adb-03b0d03c1d8e</a>}.
-     */
-    public static final EntityProxy.Concept DESCRIPTUM =
-            EntityProxy.Concept.make("Descriptum (SOLOR)", UUID.fromString("1b1986a8-f9e3-59f9-9adb-03b0d03c1d8e"));
-    /**
      * Java binding for the concept described as <strong><em>Destination module for edit coordinate (SOLOR)</em></strong>;
      * identified by UUID: {@code
      * <a href="http://localhost:8080/terminology/rest/concept/349cfd1d-10fd-5f8d-a0a5-d5ef0932b4da">
@@ -2857,13 +2864,13 @@ public class TinkarTerm {
     public static final EntityProxy.Concept IMPORT_SPECIFICATION_PANEL =
             EntityProxy.Concept.make("Import specification panel (SOLOR)", UUID.fromString("14830e36-3067-56b0-b5b7-a7f297279f4a"));
     /**
-     * Java binding for the concept described as <strong><em>Implication Set (SOLOR)</em></strong>;
+     * Java binding for the concept described as <strong><em>Inclusion Set (SOLOR)</em></strong>;
      * identified by UUID: {@code
      * <a href="http://localhost:8080/terminology/rest/concept/def77c09-e1eb-40f2-931a-e7cf2ce0e597">
      * def77c09-e1eb-40f2-931a-e7cf2ce0e597</a>}.
      */
-    public static final EntityProxy.Concept IMPLICATION_SET =
-            EntityProxy.Concept.make("Implication Set (SOLOR)", UUID.fromString("def77c09-e1eb-40f2-931a-e7cf2ce0e597"));
+    public static final EntityProxy.Concept INCLUSION_SET =
+            EntityProxy.Concept.make("Inclusion Set (SOLOR)", UUID.fromString("def77c09-e1eb-40f2-931a-e7cf2ce0e597"));
     /**
      * Java binding for the concept described as <strong><em>Inactive status (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -6780,6 +6787,46 @@ public class TinkarTerm {
      */
     public static final EntityProxy.Concept C_SNOMED_INTERNATIONAL =
             EntityProxy.Concept.make("© SNOMED International (SOLOR)", UUID.fromString("d03b0cc5-dfdf-5580-b162-f2fb0e15eb94"));
+
+    public static final EntityProxy.Concept EXAMPLE_UCUM_UNITS =
+            EntityProxy.Concept.make("Example UCUM Units", UUID.fromString("80cd4978-314d-46e3-bc13-9980280ae955"));
+
+    public static final EntityProxy.Concept INFERRED_DEFINITION =
+            EntityProxy.Concept.make("Inferred Definition", UUID.fromString("b1abf4dc-9838-4b46-ac55-10c4f92ba10b"), UUID.fromString("1290e6ba-48d0-31d2-8d62-e133373c63f5"));
+
+    public static final EntityProxy.Concept IDENTIFIER_VALUE =
+            EntityProxy.Concept.make("Identifier Value", UUID.fromString("b32dd26b-c3fc-487e-987e-16ace71a0d0f"));
+
+    public static final EntityProxy.Concept MAXIMUM_VALUE_OPERATOR =
+            EntityProxy.Concept.make("Maximum Value Operator", UUID.fromString("7b8916ab-fd50-41df-8fc2-0b2a7a78be6d"));
+
+    public static final EntityProxy.Concept MINIMUM_VALUE_OPERATOR =
+            EntityProxy.Concept.make("Minimum Value Operator", UUID.fromString("ded98e42-f74a-4432-9ae7-01b94dc2fdea"));
+
+    public static final EntityProxy.Concept REFERENCE_RANGE =
+            EntityProxy.Concept.make("Reference Range", UUID.fromString("87ce975b-309b-47f4-a6c6-4ae6df6649a1"));
+
+    public static final EntityProxy.Concept REFERENCE_RANGE_MAXIMUM =
+            EntityProxy.Concept.make("Reference Range Maximum", UUID.fromString("72d58983-b1e1-4ca9-833f-0e40c1defd39"));
+
+    public static final EntityProxy.Concept REFERENCE_RANGE_MINIMUM =
+            EntityProxy.Concept.make("Reference Range Minimum", UUID.fromString("37c35a88-9e27-42ca-b626-186773c4b612"));
+
+    public static final EntityProxy.Concept STATED_DEFINITION =
+            EntityProxy.Concept.make("Stated Definition", UUID.fromString("28608bd3-ac73-4fe8-a5f0-1efe0d6650a8"), UUID.fromString("3b0dbd3b-2e53-3a30-8576-6c7fa7773060"));
+
+    public static final EntityProxy.Concept VALUE_CONSTRAINT =
+            EntityProxy.Concept.make("Value Constraint", UUID.fromString("8c55fb86-92d8-42a9-ad70-1e23abbf7eec"));
+
+    public static final EntityProxy.Concept VALUE_CONSTRAINT_SOURCE =
+            EntityProxy.Concept.make("Value Constraint Source", UUID.fromString("09aa031a-6290-4ec9-a44c-23928a767da3"));
+
+    public static final EntityProxy.Concept EL_PLUS_PLUS_TERMINOLOGICAL_AXIOMS =
+            EntityProxy.Concept.make("EL++ terminological axioms (SOLOR)", UUID.fromString("b3ec50c4-e8cf-4720-b192-31374705f3b7"));
+
+    public static final EntityProxy.Concept TINKAR_MODEL_CONCEPT =
+            EntityProxy.Concept.make("Tinkar Model concept (SOLOR)", UUID.fromString("bc59d656-83d3-47d8-9507-0e656ea95463"));
+
     /**
      * ConceptProxy for: "Tinkar root concept".
      */

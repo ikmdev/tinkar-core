@@ -87,10 +87,10 @@ public class SctOwlUtilities {
         while (tokenizer.ttype == TT_WORD) {
             switch (tokenizer.sval.toLowerCase()) {
                 case EQUIVALENTCLASSES:
-                    leb.SufficientSet(processSet(leb, tokenizer, originalExpression));
+                    processSet(EQUIVALENTCLASSES, leb, tokenizer, originalExpression);
                     break;
                 case SUBCLASSOF:
-                    leb.NecessarySet(processSet(leb, tokenizer, originalExpression));
+                    processSet(SUBCLASSOF, leb, tokenizer, originalExpression);
                     break;
                 case PREFIX:
                 case ONTOLOGY:
@@ -428,7 +428,7 @@ public class SctOwlUtilities {
     }
 
 
-    private static LogicalAxiom.Atom.Connective.And processSet(LogicalExpressionBuilder logicalExpressionBuilder, StreamTokenizer tokenizer, String original) throws IOException {
+    private static LogicalAxiom.Atom.LogicalSet processSet(String priorToken, LogicalExpressionBuilder logicalExpressionBuilder, StreamTokenizer tokenizer, String original) throws IOException {
         if (tokenizer.nextToken() != '(') {
             throwIllegalStateException("Expecting (.", tokenizer, original);
         }
@@ -451,7 +451,7 @@ public class SctOwlUtilities {
                         }
                         parseAndDiscardPublicId(tokenizer, original);
 
-                        return logicalExpressionBuilder.And(andList.toArray(new LogicalAxiom.Atom[andList.size()]));
+                        return logicalExpressionBuilder.InclusionSet(logicalExpressionBuilder.And(andList.toArray(new LogicalAxiom.Atom[andList.size()])));
 
                     default:
                         throwIllegalStateException("Expecting ObjectIntersectionOf.", tokenizer, original);
@@ -485,8 +485,11 @@ public class SctOwlUtilities {
                 throwIllegalStateException("Expecting identifier or ObjectIntersectionOf.", tokenizer, original);
         }
 
-
-        return logicalExpressionBuilder.And(andList.toArray(new LogicalAxiom.Atom[andList.size()]));
+        // Necessary or sufficient...
+        if (priorToken.equals(EQUIVALENTCLASSES)) {
+            return logicalExpressionBuilder.SufficientSet(logicalExpressionBuilder.And(andList.toArray(new LogicalAxiom.Atom[andList.size()])));
+        }
+        return logicalExpressionBuilder.NecessarySet(logicalExpressionBuilder.And(andList.toArray(new LogicalAxiom.Atom[andList.size()])));
     }
 
     private static List<LogicalAxiom.Atom> processObjectIntersectionOf(LogicalExpressionBuilder logicalExpressionBuilder, StreamTokenizer tokenizer, String original) throws IOException {
