@@ -22,8 +22,6 @@
 import dev.ikm.tinkar.common.alert.AlertReportingService;
 import dev.ikm.tinkar.common.service.*;
 
-import java.util.ServiceLoader;
-
 @SuppressWarnings("module")
         // 7 in HL7 is not a version reference
 module dev.ikm.tinkar.common {

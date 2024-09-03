@@ -34,6 +34,11 @@ public class FhirConstants {
     public static final String SUFFICIENTLY_DEFINED_SNOMEDID = "900000000000073002";
     public static final String INFERRED_RELATIONSHIP_SNOMEDID = "900000000000011006";
     public static final String NOT_SUFFICIENTLY_DEFINED_SNOMEDID = "900000000000074008";
+    public static final String CLINICAL_COURSE_SNOMEDID = "90734009";
+    public static final String FINDING_SITE_SNOMEDID = "39607008";
+    public static final String IS_A_SNOMEDID = "64572001";
+    public static final String ASSOCIATED_MORPHOLOGY_SNOMEDID = "108369006";
+
     public static final String STATUS = "Status";
     public static final String SNOMEDCT_URL = "http://snomed.info/sct";
     public static final String IKM_DEV_URL = "https://www.ikm.dev/";
@@ -52,4 +57,6 @@ public class FhirConstants {
     public static final String TERMINOLOGY_CODESYSTEM_VARIABLE_ROLE_URL = "http://snomed.info/sct/731000124108/version/20240404";
     public static final String REFERENCE_URL = "CodeSystem/HL7VariableRoleChangeSet";
     public static final String CODE_SYSTEM_ID = "snomedctVAExtension";
+    public static final String CODESYSTEM = "CodeSystem/";
+
 }

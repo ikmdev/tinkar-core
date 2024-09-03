@@ -17,6 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import ca.uhn.fhir.parser.IParser;
 import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.common.service.DefaultDescriptionForNidService;
@@ -24,11 +25,12 @@ import dev.ikm.tinkar.common.service.PublicIdService;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.StampService;
 
- module dev.ikm.tinkar.fhir.transformers {
+module dev.ikm.tinkar.fhir.transformers {
 
     requires java.compiler;
     requires dev.ikm.tinkar.common;
     requires dev.ikm.tinkar.entity;
+    requires dev.ikm.tinkar.ext.lang.owl;
 
     requires transitive dev.ikm.jpms.hapi.fhir.base;
     requires transitive dev.ikm.jpms.org.hl7.fhir.r4;
@@ -39,6 +41,7 @@ import dev.ikm.tinkar.entity.StampService;
     requires org.eclipse.collections.api;
     requires dev.ikm.tinkar.provider.entity;
     requires dev.ikm.tinkar.coordinate;
+    requires dev.ikm.tinkar.composer;
 
     exports dev.ikm.tinkar.fhir.transformers;
 
