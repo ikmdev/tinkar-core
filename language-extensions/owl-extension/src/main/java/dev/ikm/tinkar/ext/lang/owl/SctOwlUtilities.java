@@ -42,8 +42,8 @@ import static java.io.StreamTokenizer.*;
 public class SctOwlUtilities {
 
     public static final String TRANSITIVEOBJECTPROPERTY = "transitiveobjectproperty";
-    public static final String PREFIX ="prefix";
-    public static final String ONTOLOGY ="ontology";
+    public static final String PREFIX = "prefix";
+    public static final String ONTOLOGY = "ontology";
     public static final String REFLEXIVEOBJECTPROPERTY = "reflexiveobjectproperty";
     public static final String SUBCLASSOF = "subclassof";
     public static final String SUBOBJECTPROPERTYOF = "subobjectpropertyof";
@@ -179,7 +179,7 @@ public class SctOwlUtilities {
         if (t.nextToken() == '[') {
             return logicalExpressionBuilder.ConceptAxiom(
                     PrimitiveData.nid(processPublicId(t, original)));
-        }  else {
+        } else {
             throwIllegalStateException("Expecting concept identifier. ", t, original);
         }
         throw new IllegalStateException("unreachable");
@@ -334,7 +334,7 @@ public class SctOwlUtilities {
 
                                     break;
                                 case TT_WORD:
-                                    if (!tokenizer.sval.toLowerCase().equals(OBJECTPROPERTYCHAIN)) {
+                                    if (!tokenizer.sval.equalsIgnoreCase(OBJECTPROPERTYCHAIN)) {
                                         throwIllegalStateException("Expected ObjectPropertyChain.", tokenizer, original);
                                     }
                                     andList.add(processObjectPropertyChain(logicalExpressionBuilder, tokenizer, original));
@@ -474,7 +474,7 @@ public class SctOwlUtilities {
                 andList.add(getConceptAssertion(logicalExpressionBuilder, tokenizer, original));
                 break;
             case TT_WORD:
-                if (tokenizer.sval.toLowerCase().equals(OBJECTINTERSECTIONOF)) {
+                if (tokenizer.sval.equalsIgnoreCase(OBJECTINTERSECTIONOF)) {
                     andList.addAll(processObjectIntersectionOf(logicalExpressionBuilder, tokenizer, original));
                 } else {
                     throwIllegalStateException("Expecting ObjectIntersectionOf.", tokenizer, original);
@@ -602,7 +602,8 @@ public class SctOwlUtilities {
 
     private static void parseAndDiscardWord(StreamTokenizer tokenizer, String original) throws IOException {
         switch (tokenizer.nextToken()) {
-            case TT_WORD: return;
+            case TT_WORD:
+                return;
             case '[':
                 parseAndDiscardPublicId(tokenizer, original);
                 break;

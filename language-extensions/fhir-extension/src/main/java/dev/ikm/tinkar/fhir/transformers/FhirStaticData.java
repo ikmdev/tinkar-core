@@ -56,13 +56,13 @@ public class FhirStaticData {
     private static final String PROPERTY_URI2 = "http://snomed.info/id/260507000";
     private static final String PROPERTY_CODE3 = "Procedure site";
     private static final String PROPERTY_URI3 = "http://snomed.info/id/363704007";
-    private static final String PROPERTY_CODE4 = "Is a";
+    private static final String IS_A = "Is a";
     private static final String PROPERTY_URI4 = "http://snomed.info/id/116680003";
     private static final String PROPERTY_CODE5 = "Status";
     private static final String PROPERTY_URI5 = "Status value: [10b873e2-8247-5ab5-9dec-4edef37fc219]";
-    private static final String PROPERTY_CODE6 ="OWL Stated Axiom";
+    private static final String PROPERTY_CODE6 = "OWL Stated Axiom";
 
-    public static CodeSystem generateCodeSystemPropertyContent(CodeSystem codeSystem){
+    public static CodeSystem generateCodeSystemPropertyContent(CodeSystem codeSystem) {
         CodeSystem.PropertyComponent propertyComponent = new CodeSystem.PropertyComponent();
         propertyComponent.setCode(PROPERTY_CODE);
         propertyComponent.setUri(PROPERTY_URI);
@@ -82,7 +82,7 @@ public class FhirStaticData {
         propertyComponent3.setType(CodeSystem.PropertyType.CODE);
 
         CodeSystem.PropertyComponent propertyComponent4 = new CodeSystem.PropertyComponent();
-        propertyComponent4.setCode(PROPERTY_CODE4);
+        propertyComponent4.setCode(IS_A);
         propertyComponent4.setUri(PROPERTY_URI4);
         propertyComponent4.setType(CodeSystem.PropertyType.CODE);
 
@@ -105,12 +105,13 @@ public class FhirStaticData {
         LOG.debug(codeSystem.toString());
         return codeSystem;
     }
-    public static CodeSystem generateCodeSystemFilterContent(CodeSystem codeSystem){
+
+    public static CodeSystem generateCodeSystemFilterContent(CodeSystem codeSystem) {
         CodeSystem.CodeSystemFilterComponent codeSystemFilterComponent = new CodeSystem.CodeSystemFilterComponent();
 
         CodeSystem.FilterOperatorEnumFactory filterOperatorEnumFactory = new CodeSystem.FilterOperatorEnumFactory();
 
-        List<CodeSystem.CodeSystemFilterComponent> filters =codeSystem.getFilter();
+        List<CodeSystem.CodeSystemFilterComponent> filters = codeSystem.getFilter();
 
         codeSystemFilterComponent.setCode(CODE_SYSTEM_FILTER_CODE);
         codeSystemFilterComponent.setDescription(CODE_SYSTEM_FILTER_DESCRIPTION);
@@ -150,7 +151,8 @@ public class FhirStaticData {
         LOG.debug(codeSystem.toString());
         return codeSystem;
     }
-    public static CodeSystem generateCodeSystemContactContent(CodeSystem codeSystem){
+
+    public static CodeSystem generateCodeSystemContactContent(CodeSystem codeSystem) {
         ContactPoint contactPoint = new ContactPoint();
         contactPoint.setSystem(ContactPoint.ContactPointSystem.URL);
         contactPoint.setValue(CODE_SYSTEM_VALUE);
@@ -175,7 +177,7 @@ public class FhirStaticData {
         return codeSystem;
     }
 
-    public static CodeSystem generateCodeSystemIdentifierContent(CodeSystem codeSystem){
+    public static CodeSystem generateCodeSystemIdentifierContent(CodeSystem codeSystem) {
         Identifier identifier = new Identifier();
         identifier.setSystem(IDENTIFIER_SYSTEM);
         identifier.setValue(IDENTIFIER_VALUE);
@@ -183,6 +185,7 @@ public class FhirStaticData {
         codeSystem.setName(SNOMED_CT);
         codeSystem.setTitle(SNOMED_CT_ALL_VERSIONS);
         codeSystem.setStatus(Enumerations.PublicationStatus.ACTIVE);
+
         codeSystem.setExperimental(false);
         codeSystem.setPublisher(CODE_SYSTEM_PUBLISHER);
         codeSystem.addIdentifier(identifier);
@@ -190,7 +193,8 @@ public class FhirStaticData {
         LOG.debug(codeSystem.toString());
         return codeSystem;
     }
-    public static CodeSystem generateCodeSystemExtensionContent(CodeSystem codeSystem){
+
+    public static CodeSystem generateCodeSystemExtensionContent(CodeSystem codeSystem) {
         //TODO this has to be dynamic and further logic TBD based on requirements.
         codeSystem.setId(String.valueOf(UUID.randomUUID()));
         Meta meta = new Meta();
