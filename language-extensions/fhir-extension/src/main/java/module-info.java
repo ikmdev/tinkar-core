@@ -30,7 +30,6 @@ module dev.ikm.tinkar.fhir.transformers {
     requires java.compiler;
     requires dev.ikm.tinkar.common;
     requires dev.ikm.tinkar.entity;
-    requires dev.ikm.tinkar.ext.lang.owl;
 
     requires transitive dev.ikm.jpms.hapi.fhir.base;
     requires transitive dev.ikm.jpms.org.hl7.fhir.r4;
@@ -41,7 +40,6 @@ module dev.ikm.tinkar.fhir.transformers {
     requires org.eclipse.collections.api;
     requires dev.ikm.tinkar.provider.entity;
     requires dev.ikm.tinkar.coordinate;
-    requires dev.ikm.tinkar.composer;
 
     exports dev.ikm.tinkar.fhir.transformers;
 
