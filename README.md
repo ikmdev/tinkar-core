@@ -41,6 +41,6 @@ mvn clean install
 4. To build and run Komet, please refer to the Komet README [LINK]
 
 ## Issues and Contributions
-Technical and non-technical issues can be reported to the [Issue Tracker](https://github.com/ikmdev/tinkar-core/issues).
+Technical and non-technical issues can be reported to the GitHub [Issue Tracker](https://github.com/ikmdev/tinkar-core/issues).
 
 Contributions can be submitted via pull requests. Please check the [contribution guide](doc/how-to-contribute.md) for more details.
