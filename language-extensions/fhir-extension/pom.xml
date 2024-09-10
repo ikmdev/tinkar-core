@@ -26,7 +26,7 @@
         <fhir-hl7-r4.version>6.3.3-r8</fhir-hl7-r4.version>
         <fhir-hl7-utilities.version>6.3.3-r7</fhir-hl7-utilities.version>
         <fasterxml-jackson-core.version>2.17.0</fasterxml-jackson-core.version>
-        <guava.version>33.1.0-jre-r1</guava.version>
+        <guava.version>33.3.0-jre-r1</guava.version>
     </properties>
 
     <dependencyManagement>
@@ -38,17 +38,17 @@
             </dependency>
 
             <dependency>
-                <groupId>org.apache.commons</groupId>
+                <groupId>dev.ikm.jpms</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>${commons-lang3.version}</version>
             </dependency>
             <dependency>
-                <groupId>commons-io</groupId>
+                <groupId>dev.ikm.jpms</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>${commons-io.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.commons</groupId>
+                <groupId>dev.ikm.jpms</groupId>
                 <artifactId>commons-text</artifactId>
                 <version>${commons-text.version}</version>
             </dependency>
@@ -134,16 +134,16 @@
             <artifactId>common</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.apache.commons</groupId>
+            <groupId>dev.ikm.jpms</groupId>
             <artifactId>commons-lang3</artifactId>
         </dependency>
         <dependency>
-            <groupId>commons-io</groupId>
+            <groupId>dev.ikm.jpms</groupId>
             <artifactId>commons-io</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.apache.commons</groupId>
+            <groupId>dev.ikm.jpms</groupId>
             <artifactId>commons-text</artifactId>
         </dependency>
 
