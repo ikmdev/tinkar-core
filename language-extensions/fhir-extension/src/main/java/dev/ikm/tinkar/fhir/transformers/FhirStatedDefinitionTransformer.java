@@ -16,6 +16,8 @@
 package dev.ikm.tinkar.fhir.transformers;
 
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.coordinate.Calculators;
+import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.EntityService;
@@ -36,7 +38,13 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-import static dev.ikm.tinkar.fhir.transformers.FhirConstants.*;
+import static dev.ikm.tinkar.fhir.transformers.FhirConstants.DEFINING_RELATIONSHIP_TYPE_URL;
+import static dev.ikm.tinkar.fhir.transformers.FhirConstants.EL_PROFILE_SET_OPERATOR_URL;
+import static dev.ikm.tinkar.fhir.transformers.FhirConstants.INFERRED_RELATIONSHIP_SNOMEDID;
+import static dev.ikm.tinkar.fhir.transformers.FhirConstants.NOT_SUFFICIENTLY_DEFINED_SNOMEDID;
+import static dev.ikm.tinkar.fhir.transformers.FhirConstants.SNOMEDCT_URL;
+import static dev.ikm.tinkar.fhir.transformers.FhirConstants.STATED_RELATIONSHIP_SNOMEDID;
+import static dev.ikm.tinkar.fhir.transformers.FhirConstants.SUFFICIENTLY_DEFINED_SNOMEDID;
 import static dev.ikm.tinkar.fhir.transformers.FhirUtils.generateCodingObject;
 import static dev.ikm.tinkar.fhir.transformers.FhirUtils.retrieveConcept;
 
@@ -139,7 +147,7 @@ public class FhirStatedDefinitionTransformer {
                 retrieveConcept(stampCalculator, publicId, (snomedCTCode, referencedEntity)->{
                     coding.setSystem(SNOMEDCT_URL);
                     coding.setCode(snomedCTCode);
-                    coding.setDisplay(referencedEntity.description());
+                    Calculators.Language.UsEnglishRegularName(Coordinates.Stamp.DevelopmentLatestActiveOnly()).getFullyQualifiedNameText(concept).ifPresentOrElse(coding::setDisplay, ()->{coding.setDisplay(referencedEntity.description());});
                 });
                 if(coding.getSystem() == null){
                     coding.setSystem("TBD...");
