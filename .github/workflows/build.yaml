@@ -31,4 +31,3 @@ jobs:
           sonarcloud_projectKey: ${{ github.repository_owner }}_${{ github.event.repository.name }}
           sonarcloud_coverage_jacoco_xmlReportPaths: ${{ 'target/site/jacoco/jacoco.xml' }}
           sonarcloud_java_binaries: ${{ 'target/classes' }}
-          sonarcloud_tests: ${{ 'src/test/java' }}      
