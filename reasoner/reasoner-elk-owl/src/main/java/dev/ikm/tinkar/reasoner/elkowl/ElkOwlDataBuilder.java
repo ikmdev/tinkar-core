@@ -15,11 +15,21 @@
  */
 package dev.ikm.tinkar.reasoner.elkowl;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
+import dev.ikm.tinkar.common.alert.AlertObject;
+import dev.ikm.tinkar.common.alert.AlertStreams;
+import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.TrackingCallable;
+import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
+import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
+import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
+import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.entity.graph.EntityVertex;
+import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiomSemantic;
+import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.PatternFacade;
+import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -36,290 +46,280 @@ import org.semanticweb.owlapi.model.OWLSubPropertyChainOfAxiom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
-import dev.ikm.tinkar.common.alert.AlertStreams;
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.TrackingCallable;
-import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
-import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
-import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import dev.ikm.tinkar.entity.graph.DiTreeEntity;
-import dev.ikm.tinkar.entity.graph.EntityVertex;
-import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiomSemantic;
-import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ElkOwlDataBuilder {
 
-	private static final Logger LOG = LoggerFactory.getLogger(ElkOwlDataBuilder.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ElkOwlDataBuilder.class);
 
-	private final ViewCalculator viewCalculator;
+    private final ViewCalculator viewCalculator;
 
-	private final PatternFacade statedAxiomPattern;
+    private final PatternFacade statedAxiomPattern;
 
-	private final ElkOwlData axiomData;
+    private final ElkOwlData axiomData;
 
-	private OWLDataFactory owlDataFactory;
+    private final OWLDataFactory owlDataFactory;
 
-	private TrackingCallable<?> progressUpdater = null;
+    private TrackingCallable<?> progressUpdater = null;
 
-	private AtomicInteger inclusionSetCounter = new AtomicInteger();
+    private final AtomicInteger inclusionSetCounter = new AtomicInteger();
 
-	public ElkOwlDataBuilder(ViewCalculator viewCalculator, PatternFacade statedAxiomPattern, ElkOwlData axiomData,
-			OWLDataFactory owlDataFactory) {
-		super();
-		this.viewCalculator = viewCalculator;
-		this.statedAxiomPattern = statedAxiomPattern;
-		this.axiomData = axiomData;
-		this.owlDataFactory = owlDataFactory;
-	}
+    public ElkOwlDataBuilder(ViewCalculator viewCalculator, PatternFacade statedAxiomPattern, ElkOwlData axiomData,
+                             OWLDataFactory owlDataFactory) {
+        super();
+        this.viewCalculator = viewCalculator;
+        this.statedAxiomPattern = statedAxiomPattern;
+        this.axiomData = axiomData;
+        this.owlDataFactory = owlDataFactory;
+    }
 
-	public void setProgressUpdater(TrackingCallable<?> progressUpdater) {
-		this.progressUpdater = progressUpdater;
-	}
+    public void setProgressUpdater(TrackingCallable<?> progressUpdater) {
+        this.progressUpdater = progressUpdater;
+    }
 
-	private void updateProgress(int count, int total) {
-		if (progressUpdater != null)
-			progressUpdater.updateProgress(count, total);
-	}
+    private void updateProgress(int count, int total) {
+        if (progressUpdater != null)
+            progressUpdater.updateProgress(count, total);
+    }
 
-	private void alert(Exception ex) {
-		try {
-			AlertStreams.dispatchToRoot(ex);
-		} catch (Exception e) {
-			LOG.error("AlertStreams.dispatchToRoot failed");
-			LOG.error("Alert ex", ex.getMessage());
-		}
-	}
+    private void alert(Exception ex) {
+        try {
+            AlertStreams.dispatchToRoot(ex);
+        } catch (Exception e) {
+            LOG.error("AlertStreams.dispatchToRoot failed");
+            LOG.error("Alert ex", ex.getMessage());
+        }
+    }
 
-	public static class IncrementalChanges {
+    public static class IncrementalChanges {
 
-		private ImmutableList<OWLAxiom> additions;
+        private final ImmutableList<OWLAxiom> additions;
 
-		private ImmutableList<OWLAxiom> deletions;
+        private final ImmutableList<OWLAxiom> deletions;
 
-		public IncrementalChanges(ImmutableList<OWLAxiom> additions, ImmutableList<OWLAxiom> deletions) {
-			super();
-			this.additions = additions;
-			this.deletions = deletions;
-		}
+        public IncrementalChanges(ImmutableList<OWLAxiom> additions, ImmutableList<OWLAxiom> deletions) {
+            super();
+            this.additions = additions;
+            this.deletions = deletions;
+        }
 
-		public ImmutableList<OWLAxiom> getAdditions() {
-			return additions;
-		}
+        public ImmutableList<OWLAxiom> getAdditions() {
+            return additions;
+        }
 
-		public ImmutableList<OWLAxiom> getDeletions() {
-			return deletions;
-		}
+        public ImmutableList<OWLAxiom> getDeletions() {
+            return deletions;
+        }
 
-	}
+    }
 
-	public void build() throws Exception {
-		inclusionSetCounter.set(0);
+    public void build() throws Exception {
+        inclusionSetCounter.set(0);
 //		AtomicInteger processedSemanticsCounter = axiomData.processedSemantics;
-		AtomicInteger totalCounter = new AtomicInteger();
-		PrimitiveData.get().forEachSemanticNidOfPattern(statedAxiomPattern.nid(), i -> totalCounter.incrementAndGet());
-		final int totalCount = totalCounter.get();
-		LOG.info("Total axioms: " + totalCount);
-		updateProgress(0, totalCount);
-		LogicCoordinateRecord logicCoordinate = viewCalculator.logicCalculator().logicCoordinateRecord();
-		axiomData.processedSemantics.set(0);
-		// TODO get a native concurrent collector for roaring
-		// https://stackoverflow.com/questions/29916881/how-to-implement-a-thread-safe-collector
-		ConcurrentHashSet<Integer> includedConceptNids = new ConcurrentHashSet<>(totalCount);
-		AtomicInteger ex_cnt = new AtomicInteger();
-		viewCalculator.forEachSemanticVersionOfPatternParallel(logicCoordinate.statedAxiomsPatternNid(),
-				(semanticEntityVersion, patternEntityVersion) -> {
-					try {
-						int conceptNid = semanticEntityVersion.referencedComponentNid();
-						// TODO: In some cases, may wish to classify axioms from inactive concepts. Put
-						// in logic coordinate?
-						if (viewCalculator.latestIsActive(conceptNid)) {
-							// For now, only classify active until we get snomed data issues worked out
-							includedConceptNids.add(conceptNid);
+        AtomicInteger totalCounter = new AtomicInteger();
+        PrimitiveData.get().forEachSemanticNidOfPattern(statedAxiomPattern.nid(), i -> totalCounter.incrementAndGet());
+        final int totalCount = totalCounter.get();
+        LOG.info("Total axioms: " + totalCount);
+        updateProgress(0, totalCount);
+        LogicCoordinateRecord logicCoordinate = viewCalculator.logicCalculator().logicCoordinateRecord();
+        axiomData.processedSemantics.set(0);
+        // TODO get a native concurrent collector for roaring
+        // https://stackoverflow.com/questions/29916881/how-to-implement-a-thread-safe-collector
+        ConcurrentHashSet<Integer> includedConceptNids = new ConcurrentHashSet<>(totalCount);
+        AtomicInteger ex_cnt = new AtomicInteger();
+        viewCalculator.forEachSemanticVersionOfPatternParallel(logicCoordinate.statedAxiomsPatternNid(),
+                (semanticEntityVersion, patternEntityVersion) -> {
+                    try {
+                        int conceptNid = semanticEntityVersion.referencedComponentNid();
+                        // TODO: In some cases, may wish to classify axioms from inactive concepts. Put
+                        // in logic coordinate?
+                        if (viewCalculator.latestIsActive(conceptNid)) {
+                            // For now, only classify active until we get snomed data issues worked out
+                            includedConceptNids.add(conceptNid);
 //						OWLClass concept = getConcept(conceptNid);
-							DiTreeEntity definition = (DiTreeEntity) semanticEntityVersion.fieldValues().get(0);
-							ImmutableList<OWLAxiom> axiomsForDefinition = processDefinition(definition, conceptNid);
+                            DiTreeEntity definition = (DiTreeEntity) semanticEntityVersion.fieldValues().get(0);
+                            ImmutableList<OWLAxiom> axiomsForDefinition = processDefinition(definition, conceptNid);
 //						LOG.info(axiomsForDefinition.size() + " " + axiomsForDefinition);
-							if (axiomData.nidAxiomsMap.compareAndSet(conceptNid, null, axiomsForDefinition)) {
-								axiomData.axiomsSet.addAll(axiomsForDefinition.castToList());
-							} else {
-								alert(new IllegalStateException("Definition for " + conceptNid + " already exists"));
-							}
-							axiomData.incrementActiveConceptCount();
-						} else {
-							axiomData.incrementInactiveConceptCount();
-						}
-						int processedCount = axiomData.processedSemantics.incrementAndGet();
-						if (processedCount % 100 == 0) {
-							updateProgress(processedCount, totalCount);
-						}
+                            if (axiomData.nidAxiomsMap.compareAndSet(conceptNid, null, axiomsForDefinition)) {
+                                axiomData.axiomsSet.addAll(axiomsForDefinition.castToList());
+                            } else {
+                                alert(new IllegalStateException("Definition for " + conceptNid + " already exists"));
+                            }
+                            axiomData.incrementActiveConceptCount();
+                        } else {
+                            axiomData.incrementInactiveConceptCount();
+                        }
+                        int processedCount = axiomData.processedSemantics.incrementAndGet();
+                        if (processedCount % 100 == 0) {
+                            updateProgress(processedCount, totalCount);
+                        }
 //					if (axiomCounter.get() < 5) {
 //						LOG.info("Axiom: \n" + semanticEntityVersion);
 //					}
-					} catch (Exception ex) {
-						if (ex_cnt.incrementAndGet() < 10) {
-							LOG.error(ex.getMessage());
-							LOG.error("", ex);
-						}
-					}
-				});
-		int[] includedConceptNidArray = includedConceptNids.stream().mapToInt(boxedInt -> (int) boxedInt).toArray();
-		Arrays.sort(includedConceptNidArray);
-		axiomData.classificationConceptSet = IntLists.immutable.of(includedConceptNidArray);
-		for (OWLClass con : axiomData.nidConceptMap.values()) {
-			int nid = (int) SnomedOwlOntology.getId(con);
-			if (axiomData.nidAxiomsMap.get(nid) == null)
-				LOG.warn("No axioms for: " + nid + " " + PrimitiveData.text(nid));
-		}
-		updateProgress(totalCount, totalCount);
+                    } catch (Exception ex) {
+                        if (ex_cnt.incrementAndGet() < 10) {
+                            LOG.error(ex.getMessage());
+                            LOG.error("", ex);
+                        }
+                    }
+                });
+        int[] includedConceptNidArray = includedConceptNids.stream().mapToInt(boxedInt -> boxedInt).toArray();
+        Arrays.sort(includedConceptNidArray);
+        axiomData.classificationConceptSet = IntLists.immutable.of(includedConceptNidArray);
+        for (OWLClass con : axiomData.nidConceptMap.values()) {
+            int nid = (int) SnomedOwlOntology.getId(con);
+            if (axiomData.nidAxiomsMap.get(nid) == null)
+                LOG.warn("No axioms for: " + nid + " " + PrimitiveData.text(nid));
+        }
+        updateProgress(totalCount, totalCount);
 //		updateMessage("Extract in " + durationString());
 //		LOG.info("Extract in " + durationString());
-		LOG.info("Total axioms: " + totalCount + " " + axiomData.processedSemantics.get() + " "
-				+ axiomData.axiomsSet.size());
-		LOG.info("Active concepts: " + axiomData.getActiveConceptCount());
-		LOG.info("Inactive concepts: " + axiomData.getInactiveConceptCount());
-		if (ex_cnt.get() != 0) {
-			String msg = "Exceptions: " + ex_cnt.get();
-			LOG.error(msg);
-			throw new Exception(msg);
-		}
-		// TODO: Implement Inclusion Set Processing and remove inclusionSetCounter workaround
-		if (inclusionSetCounter.get() != 0) {
-			// Temporary fix for skipping Inclusion Sets. Notify user via UI, but don't throw the error to stop the process.
-			String errMessage = "Inclusion Set processing is not yet supported. Skipped " + inclusionSetCounter.get() + " Inclusion Sets.";
-			LOG.warn(errMessage);
-			AlertStreams.dispatchToRoot(new UnsupportedOperationException(errMessage));
-		}
-	}
+        LOG.info("Total axioms: " + totalCount + " " + axiomData.processedSemantics.get() + " "
+                + axiomData.axiomsSet.size());
+        LOG.info("Active concepts: " + axiomData.getActiveConceptCount());
+        LOG.info("Inactive concepts: " + axiomData.getInactiveConceptCount());
+        if (ex_cnt.get() != 0) {
+            String msg = "Exceptions: " + ex_cnt.get();
+            LOG.error(msg);
+            throw new Exception(msg);
+        }
+        // TODO: Implement Inclusion Set Processing and remove inclusionSetCounter workaround
+        if (inclusionSetCounter.get() != 0) {
+            // Temporary fix for skipping Inclusion Sets. Notify user via UI, but don't throw the error to stop the process.
+            String errMessage = "Inclusion Set processing is not yet supported. Skipped " + inclusionSetCounter.get() + " Inclusion Sets.";
+            LOG.warn(errMessage);
+            AlertStreams.getRoot().dispatch(AlertObject.makeWarning("Inclusion Set Not Yet Supported", errMessage));
+        }
+    }
 
-	public IncrementalChanges processIncremental(DiTreeEntity definition, int conceptNid) {
-		ImmutableList<OWLAxiom> additions = processDefinition(definition, conceptNid);
-		ImmutableList<OWLAxiom> deletions = axiomData.nidAxiomsMap.get(conceptNid);
-		if (deletions == null)
-			throw new RuntimeException(conceptNid + " " + PrimitiveData.text(conceptNid));
-		axiomData.nidAxiomsMap.put(conceptNid, additions);
-		deletions.forEach(axiomData.axiomsSet::remove);
+    public IncrementalChanges processIncremental(DiTreeEntity definition, int conceptNid) {
+        ImmutableList<OWLAxiom> additions = processDefinition(definition, conceptNid);
+        ImmutableList<OWLAxiom> deletions = axiomData.nidAxiomsMap.get(conceptNid);
+        if (deletions == null)
+            throw new RuntimeException(conceptNid + " " + PrimitiveData.text(conceptNid));
+        axiomData.nidAxiomsMap.put(conceptNid, additions);
+        deletions.forEach(axiomData.axiomsSet::remove);
 //		axiomData.axiomsSet.removeAll(deletions.castToList());
-		// TODO update active concept count etc. ??
-		return new IncrementalChanges(additions, deletions);
-	}
+        // TODO update active concept count etc. ??
+        return new IncrementalChanges(additions, deletions);
+    }
 
-	private ImmutableList<OWLAxiom> processDefinition(DiTreeEntity definition, int conceptNid) {
-		return processRoot(definition.root(), conceptNid, definition, Lists.mutable.empty());
-	}
+    private ImmutableList<OWLAxiom> processDefinition(DiTreeEntity definition, int conceptNid) {
+        return processRoot(definition.root(), conceptNid, definition, Lists.mutable.empty());
+    }
 
-	private ImmutableList<OWLAxiom> processRoot(EntityVertex rootVertex, int conceptNid, DiTreeEntity definition,
-			MutableList<OWLAxiom> axioms) throws IllegalStateException {
-		for (final EntityVertex childVertex : definition.successors(rootVertex)) {
+    private ImmutableList<OWLAxiom> processRoot(EntityVertex rootVertex, int conceptNid, DiTreeEntity definition,
+                                                MutableList<OWLAxiom> axioms) throws IllegalStateException {
+        for (final EntityVertex childVertex : definition.successors(rootVertex)) {
 //			if (PrimitiveData.text(conceptNid).equals("Transitive Feature"))
 //				LOG.info("Transitive: " + PrimitiveData.text(conceptNid) + " " + childVertex);
-			switch (LogicalAxiomSemantic.get(childVertex.getMeaningNid())) {
-			case SUFFICIENT_SET -> {
-				processSufficientSet(childVertex, conceptNid, definition, axioms);
-			}
-			case NECESSARY_SET -> {
-				processNecessarySet(childVertex, conceptNid, definition, axioms);
-			}
-			case INCLUSION_SET -> {
-				// TODO: Implement Inclusion Set Processing and remove inclusionSetCounter workaround
-				inclusionSetCounter.incrementAndGet();
-			}
-			case PROPERTY_SET -> {
-				processPropertySet(childVertex, conceptNid, definition, axioms);
-			}
-			default ->
-				throw new IllegalStateException("Unexpected value: " + PrimitiveData.text(childVertex.getMeaningNid()));
-			}
-		}
-		return axioms.toImmutable();
-	}
+            switch (LogicalAxiomSemantic.get(childVertex.getMeaningNid())) {
+                case SUFFICIENT_SET -> {
+                    processSufficientSet(childVertex, conceptNid, definition, axioms);
+                }
+                case NECESSARY_SET -> {
+                    processNecessarySet(childVertex, conceptNid, definition, axioms);
+                }
+                case INCLUSION_SET -> {
+                    // TODO: Implement Inclusion Set Processing and remove inclusionSetCounter workaround
+                    inclusionSetCounter.incrementAndGet();
+                }
+                case PROPERTY_SET -> {
+                    processPropertySet(childVertex, conceptNid, definition, axioms);
+                }
+                default ->
+                        throw new IllegalStateException("Unexpected value: " + PrimitiveData.text(childVertex.getMeaningNid()));
+            }
+        }
+        return axioms.toImmutable();
+    }
 
-	private void processNecessarySet(EntityVertex sufficientSetVertex, int conceptNid, DiTreeEntity definition,
-			MutableList<OWLAxiom> axioms) {
-		final ImmutableList<EntityVertex> childVertexList = definition.successors(sufficientSetVertex);
-		if (childVertexList.size() == 1) {
-			final Optional<OWLClassExpression> conjunctionConcept = generateAxioms(childVertexList.get(0), conceptNid,
-					definition, axioms);
-			if (conjunctionConcept.isPresent()) {
-				OWLSubClassOfAxiom axiom = owlDataFactory.getOWLSubClassOfAxiom(axiomData.getConcept(conceptNid),
-						conjunctionConcept.get());
-				axioms.add(axiom);
-			} else {
-				throw new IllegalStateException("Child node must return a conjunction concept. Concept: " + conceptNid
-						+ " definition: " + definition);
-			}
-		} else {
-			throw new IllegalStateException("Necessary sets require a single AND child... " + childVertexList);
-		}
-	}
+    private void processNecessarySet(EntityVertex sufficientSetVertex, int conceptNid, DiTreeEntity definition,
+                                     MutableList<OWLAxiom> axioms) {
+        final ImmutableList<EntityVertex> childVertexList = definition.successors(sufficientSetVertex);
+        if (childVertexList.size() == 1) {
+            final Optional<OWLClassExpression> conjunctionConcept = generateAxioms(childVertexList.get(0), conceptNid,
+                    definition, axioms);
+            if (conjunctionConcept.isPresent()) {
+                OWLSubClassOfAxiom axiom = owlDataFactory.getOWLSubClassOfAxiom(axiomData.getConcept(conceptNid),
+                        conjunctionConcept.get());
+                axioms.add(axiom);
+            } else {
+                throw new IllegalStateException("Child node must return a conjunction concept. Concept: " + conceptNid
+                        + " definition: " + definition);
+            }
+        } else {
+            throw new IllegalStateException("Necessary sets require a single AND child... " + childVertexList);
+        }
+    }
 
-	private void processSufficientSet(EntityVertex necessarySetVertex, int conceptNid, DiTreeEntity definition,
-			MutableList<OWLAxiom> axioms) {
-		final ImmutableList<EntityVertex> childVertexList = definition.successors(necessarySetVertex);
-		if (childVertexList.size() == 1) {
-			final Optional<OWLClassExpression> conjunctionConcept = generateAxioms(childVertexList.get(0), conceptNid,
-					definition, axioms);
-			if (conjunctionConcept.isPresent()) {
-				OWLEquivalentClassesAxiom axiom = owlDataFactory
-						.getOWLEquivalentClassesAxiom(axiomData.getConcept(conceptNid), conjunctionConcept.get());
-				axioms.add(axiom);
-			} else {
-				throw new IllegalStateException("Child node must return a conjunction concept. Concept: " + conceptNid
-						+ " definition: " + definition);
-			}
-		} else {
-			throw new IllegalStateException("Sufficient sets require a single AND child... " + childVertexList);
-		}
-	}
+    private void processSufficientSet(EntityVertex necessarySetVertex, int conceptNid, DiTreeEntity definition,
+                                      MutableList<OWLAxiom> axioms) {
+        final ImmutableList<EntityVertex> childVertexList = definition.successors(necessarySetVertex);
+        if (childVertexList.size() == 1) {
+            final Optional<OWLClassExpression> conjunctionConcept = generateAxioms(childVertexList.get(0), conceptNid,
+                    definition, axioms);
+            if (conjunctionConcept.isPresent()) {
+                OWLEquivalentClassesAxiom axiom = owlDataFactory
+                        .getOWLEquivalentClassesAxiom(axiomData.getConcept(conceptNid), conjunctionConcept.get());
+                axioms.add(axiom);
+            } else {
+                throw new IllegalStateException("Child node must return a conjunction concept. Concept: " + conceptNid
+                        + " definition: " + definition);
+            }
+        } else {
+            throw new IllegalStateException("Sufficient sets require a single AND child... " + childVertexList);
+        }
+    }
 
-	/**
-	 * Generate axioms.
-	 *
-	 * @param logicVertex the logic node
-	 * @param conceptNid  the concept nid
-	 * @param definition  the logical definition
-	 * @return the optional
-	 */
-	private Optional<OWLClassExpression> generateAxioms(EntityVertex logicVertex, int conceptNid,
-			DiTreeEntity definition, MutableList<OWLAxiom> axioms) {
-		switch (LogicalAxiomSemantic.get(logicVertex.getMeaningNid())) {
-		case AND:
-			return processAnd(logicVertex, conceptNid, definition, axioms);
+    /**
+     * Generate axioms.
+     *
+     * @param logicVertex the logic node
+     * @param conceptNid  the concept nid
+     * @param definition  the logical definition
+     * @return the optional
+     */
+    private Optional<OWLClassExpression> generateAxioms(EntityVertex logicVertex, int conceptNid,
+                                                        DiTreeEntity definition, MutableList<OWLAxiom> axioms) {
+        switch (LogicalAxiomSemantic.get(logicVertex.getMeaningNid())) {
+            case AND:
+                return processAnd(logicVertex, conceptNid, definition, axioms);
 
-		case CONCEPT:
-			final ConceptFacade concept = logicVertex.propertyFast(TinkarTerm.CONCEPT_REFERENCE);
+            case CONCEPT:
+                final ConceptFacade concept = logicVertex.propertyFast(TinkarTerm.CONCEPT_REFERENCE);
 //			if (PrimitiveData.text(concept.nid()).equals("Transitive Feature"))
 //				LOG.info("Transitive parent: " + PrimitiveData.text(conceptNid) + " " + definition);
-			return Optional.of(axiomData.getConcept(concept.nid()));
+                return Optional.of(axiomData.getConcept(concept.nid()));
 
-		case DEFINITION_ROOT:
-			processRoot(logicVertex, conceptNid, definition, axioms);
-			break;
+            case DEFINITION_ROOT:
+                processRoot(logicVertex, conceptNid, definition, axioms);
+                break;
 
-		case DISJOINT_WITH:
-			throw new UnsupportedOperationException("Not supported");
+            case DISJOINT_WITH:
+                throw new UnsupportedOperationException("Not supported");
 
-		case FEATURE:
-			return processFeatureNode(logicVertex, conceptNid, definition, axioms);
+            case FEATURE:
+                return processFeatureNode(logicVertex, conceptNid, definition, axioms);
 
-		case PROPERTY_SET:
-			processPropertySet(logicVertex, conceptNid, definition, axioms);
-			break;
+            case PROPERTY_SET:
+                processPropertySet(logicVertex, conceptNid, definition, axioms);
+                break;
 
-		case OR:
-			throw new UnsupportedOperationException("Not supported");
+            case OR:
+                throw new UnsupportedOperationException("Not supported");
 
-		case ROLE:
-			ConceptFacade roleOperator = logicVertex.propertyFast(TinkarTerm.ROLE_OPERATOR);
-			if (roleOperator.nid() == TinkarTerm.EXISTENTIAL_RESTRICTION.nid()) {
-				return processRoleNodeSome(logicVertex, conceptNid, definition, axioms);
-			} else {
-				throw new UnsupportedOperationException(
-						"Role: " + PrimitiveData.text(roleOperator.nid()) + " not supported. ");
-			}
+            case ROLE:
+                ConceptFacade roleOperator = logicVertex.propertyFast(TinkarTerm.ROLE_OPERATOR);
+                if (roleOperator.nid() == TinkarTerm.EXISTENTIAL_RESTRICTION.nid()) {
+                    return processRoleNodeSome(logicVertex, conceptNid, definition, axioms);
+                } else {
+                    throw new UnsupportedOperationException(
+                            "Role: " + PrimitiveData.text(roleOperator.nid()) + " not supported. ");
+                }
 
 //		case LITERAL_BOOLEAN:
 //		case LITERAL_FLOAT:
@@ -329,155 +329,155 @@ public class ElkOwlDataBuilder {
 //			throw new UnsupportedOperationException("Expected concept logicNode, found literal logicNode: "
 //					+ logicVertex + " Concept: " + conceptNid + " definition: " + definition);
 
-		case SUFFICIENT_SET:
-		case NECESSARY_SET:
-			throw new UnsupportedOperationException("Not expected here: " + logicVertex);
-		case PROPERTY_PATTERN_IMPLICATION:
-			throw new UnsupportedOperationException();
-		}
+            case SUFFICIENT_SET:
+            case NECESSARY_SET:
+                throw new UnsupportedOperationException("Not expected here: " + logicVertex);
+            case PROPERTY_PATTERN_IMPLICATION:
+                throw new UnsupportedOperationException();
+        }
 
-		return Optional.empty();
-	}
+        return Optional.empty();
+    }
 
-	private void processPropertySet(EntityVertex propertySetNode, int conceptNid, DiTreeEntity definition,
-			MutableList<OWLAxiom> axioms) {
-		final ImmutableList<EntityVertex> children = definition.successors(propertySetNode);
-		if (children.size() != 1) {
-			throw new IllegalStateException(
-					"PropertySetNode can only have one child. Concept: " + conceptNid + " definition: " + definition);
-		}
-		if (!(children.get(0).getMeaningNid() == TinkarTerm.AND.nid())) {
-			throw new IllegalStateException("PropertySetNode can only have AND for a child. Concept: " + conceptNid
-					+ " definition: " + definition);
-		}
-		for (EntityVertex node : definition.successors(children.get(0))) {
-			switch (LogicalAxiomSemantic.get(node.getMeaningNid())) {
-			case CONCEPT:
-				final ConceptFacade successorConcept = node.propertyFast(TinkarTerm.CONCEPT_REFERENCE);
-				if (PrimitiveData.text(successorConcept.nid()).equals("Transitive Feature")) {
+    private void processPropertySet(EntityVertex propertySetNode, int conceptNid, DiTreeEntity definition,
+                                    MutableList<OWLAxiom> axioms) {
+        final ImmutableList<EntityVertex> children = definition.successors(propertySetNode);
+        if (children.size() != 1) {
+            throw new IllegalStateException(
+                    "PropertySetNode can only have one child. Concept: " + conceptNid + " definition: " + definition);
+        }
+        if (!(children.get(0).getMeaningNid() == TinkarTerm.AND.nid())) {
+            throw new IllegalStateException("PropertySetNode can only have AND for a child. Concept: " + conceptNid
+                    + " definition: " + definition);
+        }
+        for (EntityVertex node : definition.successors(children.get(0))) {
+            switch (LogicalAxiomSemantic.get(node.getMeaningNid())) {
+                case CONCEPT:
+                    final ConceptFacade successorConcept = node.propertyFast(TinkarTerm.CONCEPT_REFERENCE);
+                    if (PrimitiveData.text(successorConcept.nid()).equals("Transitive Feature")) {
 //					LOG.info("Transitive property parent: " + conceptNid + " " + PrimitiveData.text(conceptNid) + "\n"
 //							+ definition);
-					axioms.add(owlDataFactory.getOWLTransitiveObjectPropertyAxiom(axiomData.getRole(conceptNid)));
-				} else if (PrimitiveData.text(successorConcept.nid()).equals("Reflexive Feature")) {
+                        axioms.add(owlDataFactory.getOWLTransitiveObjectPropertyAxiom(axiomData.getRole(conceptNid)));
+                    } else if (PrimitiveData.text(successorConcept.nid()).equals("Reflexive Feature")) {
 //					LOG.info("Reflexive property parent: " + conceptNid + " " + PrimitiveData.text(conceptNid) + "\n"
 //							+ definition);
-					axioms.add(owlDataFactory.getOWLReflexiveObjectPropertyAxiom(axiomData.getRole(conceptNid)));
-				} else {
-					axioms.add(owlDataFactory.getOWLSubObjectPropertyOfAxiom(axiomData.getRole(conceptNid),
-							axiomData.getRole(successorConcept.nid())));
-				}
-				break;
-			case PROPERTY_PATTERN_IMPLICATION:
+                        axioms.add(owlDataFactory.getOWLReflexiveObjectPropertyAxiom(axiomData.getRole(conceptNid)));
+                    } else {
+                        axioms.add(owlDataFactory.getOWLSubObjectPropertyOfAxiom(axiomData.getRole(conceptNid),
+                                axiomData.getRole(successorConcept.nid())));
+                    }
+                    break;
+                case PROPERTY_PATTERN_IMPLICATION:
 //				LOG.info("PPI: " + PrimitiveData.text(conceptNid) + " " + definition);
-				final ConceptFacade pi = node.propertyFast(TinkarTerm.PROPERTY_PATTERN_IMPLICATION);
-				final IntIdList ps = node.propertyFast(TinkarTerm.PROPERTY_SET);
-				List<OWLObjectProperty> chain = ps.intStream().mapToObj(x -> axiomData.getRole(x)).toList();
-				OWLSubPropertyChainOfAxiom axiom = owlDataFactory.getOWLSubPropertyChainOfAxiom(chain,
-						axiomData.getRole(pi.nid()));
-				axioms.add(axiom);
-				break;
-			default:
-				throw new UnsupportedOperationException("Can't handle: " + node + " in: " + definition);
-			}
-		}
-	}
+                    final ConceptFacade pi = node.propertyFast(TinkarTerm.PROPERTY_PATTERN_IMPLICATION);
+                    final IntIdList ps = node.propertyFast(TinkarTerm.PROPERTY_SET);
+                    List<OWLObjectProperty> chain = ps.intStream().mapToObj(x -> axiomData.getRole(x)).toList();
+                    OWLSubPropertyChainOfAxiom axiom = owlDataFactory.getOWLSubPropertyChainOfAxiom(chain,
+                            axiomData.getRole(pi.nid()));
+                    axioms.add(axiom);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Can't handle: " + node + " in: " + definition);
+            }
+        }
+    }
 
-	/**
-	 * Process and.
-	 *
-	 * @param andNode    the and node
-	 * @param conceptNid the concept nid
-	 * @param definition the logical definition
-	 * @return the optional
-	 */
-	private Optional<OWLClassExpression> processAnd(EntityVertex andNode, int conceptNid, DiTreeEntity definition,
-			MutableList<OWLAxiom> axioms) {
-		final ImmutableList<EntityVertex> childrenLogicNodes = definition.successors(andNode);
-		final OWLClassExpression[] conjunctionConcepts = new OWLClassExpression[childrenLogicNodes.size()];
-		for (int i = 0; i < childrenLogicNodes.size(); i++) {
-			conjunctionConcepts[i] = generateAxioms(childrenLogicNodes.get(i), conceptNid, definition, axioms).get();
-		}
-		if (conjunctionConcepts.length == 1)
-			return Optional.of(conjunctionConcepts[0]);
-		OWLObjectIntersectionOf expr = owlDataFactory.getOWLObjectIntersectionOf(conjunctionConcepts);
-		return Optional.of(expr);
-	}
+    /**
+     * Process and.
+     *
+     * @param andNode    the and node
+     * @param conceptNid the concept nid
+     * @param definition the logical definition
+     * @return the optional
+     */
+    private Optional<OWLClassExpression> processAnd(EntityVertex andNode, int conceptNid, DiTreeEntity definition,
+                                                    MutableList<OWLAxiom> axioms) {
+        final ImmutableList<EntityVertex> childrenLogicNodes = definition.successors(andNode);
+        final OWLClassExpression[] conjunctionConcepts = new OWLClassExpression[childrenLogicNodes.size()];
+        for (int i = 0; i < childrenLogicNodes.size(); i++) {
+            conjunctionConcepts[i] = generateAxioms(childrenLogicNodes.get(i), conceptNid, definition, axioms).get();
+        }
+        if (conjunctionConcepts.length == 1)
+            return Optional.of(conjunctionConcepts[0]);
+        OWLObjectIntersectionOf expr = owlDataFactory.getOWLObjectIntersectionOf(conjunctionConcepts);
+        return Optional.of(expr);
+    }
 
-	/**
-	 * Process role node some.
-	 *
-	 * @param roleNodeSome the role node some
-	 * @param conceptNid   the concept nid
-	 * @param definition   the logical definition
-	 * @return the optional
-	 */
-	private Optional<OWLClassExpression> processRoleNodeSome(EntityVertex roleNodeSome, int conceptNid,
-			DiTreeEntity definition, MutableList<OWLAxiom> axioms) {
-		ConceptFacade roleType = roleNodeSome.propertyFast(TinkarTerm.ROLE_TYPE);
-		final OWLObjectProperty theRole = axiomData.getRole(roleType.nid());
-		final ImmutableList<EntityVertex> children = definition.successors(roleNodeSome);
-		if (children.size() != 1) {
-			throw new IllegalStateException(
-					"RoleNodeSome can only have one child. Concept: " + conceptNid + " definition: " + definition);
-		}
-		final Optional<OWLClassExpression> restrictionConcept = generateAxioms(children.get(0), conceptNid, definition,
-				axioms);
-		if (restrictionConcept.isPresent()) {
-			return Optional.of(owlDataFactory.getOWLObjectSomeValuesFrom(theRole, restrictionConcept.get()));
-		}
-		throw new UnsupportedOperationException("Child of role node can not return null concept. Concept: " + conceptNid
-				+ " definition: " + definition);
-	}
+    /**
+     * Process role node some.
+     *
+     * @param roleNodeSome the role node some
+     * @param conceptNid   the concept nid
+     * @param definition   the logical definition
+     * @return the optional
+     */
+    private Optional<OWLClassExpression> processRoleNodeSome(EntityVertex roleNodeSome, int conceptNid,
+                                                             DiTreeEntity definition, MutableList<OWLAxiom> axioms) {
+        ConceptFacade roleType = roleNodeSome.propertyFast(TinkarTerm.ROLE_TYPE);
+        final OWLObjectProperty theRole = axiomData.getRole(roleType.nid());
+        final ImmutableList<EntityVertex> children = definition.successors(roleNodeSome);
+        if (children.size() != 1) {
+            throw new IllegalStateException(
+                    "RoleNodeSome can only have one child. Concept: " + conceptNid + " definition: " + definition);
+        }
+        final Optional<OWLClassExpression> restrictionConcept = generateAxioms(children.get(0), conceptNid, definition,
+                axioms);
+        if (restrictionConcept.isPresent()) {
+            return Optional.of(owlDataFactory.getOWLObjectSomeValuesFrom(theRole, restrictionConcept.get()));
+        }
+        throw new UnsupportedOperationException("Child of role node can not return null concept. Concept: " + conceptNid
+                + " definition: " + definition);
+    }
 
-	/**
-	 * Process feature node.
-	 *
-	 * @param featureNode the feature node
-	 * @param conceptNid  the concept nid
-	 * @param definition  the logical definition
-	 * @return the optional
-	 */
-	private Optional<OWLClassExpression> processFeatureNode(EntityVertex featureNode, int conceptNid,
-			DiTreeEntity definition, MutableList<OWLAxiom> axioms) {
+    /**
+     * Process feature node.
+     *
+     * @param featureNode the feature node
+     * @param conceptNid  the concept nid
+     * @param definition  the logical definition
+     * @return the optional
+     */
+    private Optional<OWLClassExpression> processFeatureNode(EntityVertex featureNode, int conceptNid,
+                                                            DiTreeEntity definition, MutableList<OWLAxiom> axioms) {
 //		EntityFacade featureFacade = featureNode.propertyFast(TinkarTerm.FEATURE);
 //		final Feature theFeature = getFeature(featureFacade.nid());
-		throw new UnsupportedOperationException();
-		/*
-		 * final ImmutableList<EntityVertex> children =
-		 * logicGraph.successors(featureNode);
-		 * 
-		 * if (children.size() != 1) { throw new
-		 * IllegalStateException("FeatureNode can only have one child. Concept: " +
-		 * conceptNid + " graph: " + logicGraph); }
-		 * 
-		 * final Optional<Literal> optionalLiteral = generateLiterals(children[0],
-		 * getConcept(conceptNid), logicGraph);
-		 * 
-		 * if (optionalLiteral.isPresent()) { switch (featureNode.getOperator()) { case
-		 * EQUALS: return Optional.of(Factory.createDatatype(theFeature,
-		 * Operator.EQUALS, optionalLiteral.get()));
-		 * 
-		 * case GREATER_THAN: return Optional.of(Factory.createDatatype(theFeature,
-		 * Operator.GREATER_THAN, optionalLiteral.get()));
-		 * 
-		 * case GREATER_THAN_EQUALS: return
-		 * Optional.of(Factory.createDatatype(theFeature, Operator.GREATER_THAN_EQUALS,
-		 * optionalLiteral.get()));
-		 * 
-		 * case LESS_THAN: return Optional.of(Factory.createDatatype(theFeature,
-		 * Operator.LESS_THAN, optionalLiteral.get()));
-		 * 
-		 * case LESS_THAN_EQUALS: return Optional.of(Factory.createDatatype(theFeature,
-		 * Operator.LESS_THAN_EQUALS, optionalLiteral.get()));
-		 * 
-		 * default: throw new
-		 * UnsupportedOperationException(featureNode.getOperator().toString()); } }
-		 * 
-		 * throw new
-		 * UnsupportedOperationException("Child of FeatureNode node cannot return null concept. Concept: "
-		 * + conceptNid + " graph: " + logicGraph);
-		 * 
-		 */
-	}
+        throw new UnsupportedOperationException();
+        /*
+         * final ImmutableList<EntityVertex> children =
+         * logicGraph.successors(featureNode);
+         *
+         * if (children.size() != 1) { throw new
+         * IllegalStateException("FeatureNode can only have one child. Concept: " +
+         * conceptNid + " graph: " + logicGraph); }
+         *
+         * final Optional<Literal> optionalLiteral = generateLiterals(children[0],
+         * getConcept(conceptNid), logicGraph);
+         *
+         * if (optionalLiteral.isPresent()) { switch (featureNode.getOperator()) { case
+         * EQUALS: return Optional.of(Factory.createDatatype(theFeature,
+         * Operator.EQUALS, optionalLiteral.get()));
+         *
+         * case GREATER_THAN: return Optional.of(Factory.createDatatype(theFeature,
+         * Operator.GREATER_THAN, optionalLiteral.get()));
+         *
+         * case GREATER_THAN_EQUALS: return
+         * Optional.of(Factory.createDatatype(theFeature, Operator.GREATER_THAN_EQUALS,
+         * optionalLiteral.get()));
+         *
+         * case LESS_THAN: return Optional.of(Factory.createDatatype(theFeature,
+         * Operator.LESS_THAN, optionalLiteral.get()));
+         *
+         * case LESS_THAN_EQUALS: return Optional.of(Factory.createDatatype(theFeature,
+         * Operator.LESS_THAN_EQUALS, optionalLiteral.get()));
+         *
+         * default: throw new
+         * UnsupportedOperationException(featureNode.getOperator().toString()); } }
+         *
+         * throw new
+         * UnsupportedOperationException("Child of FeatureNode node cannot return null concept. Concept: "
+         * + conceptNid + " graph: " + logicGraph);
+         *
+         */
+    }
 
 }
