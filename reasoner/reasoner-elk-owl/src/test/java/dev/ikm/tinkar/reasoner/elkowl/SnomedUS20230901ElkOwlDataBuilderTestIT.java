@@ -41,13 +41,13 @@ public class SnomedUS20230901ElkOwlDataBuilderTestIT extends ElkOwlDataBuilderTe
 	private static final Logger LOG = LoggerFactory.getLogger(SnomedUS20230901ElkOwlDataBuilderTestIT.class);
 
 	static {
-		stated_count = 393471;
-		active_count = 370282;
-		inactive_count = 23189;
+		stated_count = 393479;
+		active_count = 370291;
+		inactive_count = 23188;
 		test_case = "snomed-us-20230901";
 	}
 
-	public static final String db = "SnomedCT_US_20230901_SpinedArray-20240502";
+	public static final String db = "SnomedCT_US_20230901_SpinedArray-20240830";
 
 	protected String getDir() {
 		// TODO
@@ -127,7 +127,7 @@ public class SnomedUS20230901ElkOwlDataBuilderTestIT extends ElkOwlDataBuilderTe
 //			LOG.info("\t" + PrimitiveData.publicId(x));
 //			LOG.info("\t" + axiom_data.nidAxiomsMap.get(x));
 //		});
-		assertEquals(282, axiom_data_concept_nids.size());
+		assertEquals(294, axiom_data_concept_nids.size());
 //		axiom_data_role_nids.forEach(x -> {
 //			LOG.info("Extra role: " + x + " " + PrimitiveData.text(x));
 //			LOG.info("\t" + axiom_data.nidAxiomsMap.get(x));

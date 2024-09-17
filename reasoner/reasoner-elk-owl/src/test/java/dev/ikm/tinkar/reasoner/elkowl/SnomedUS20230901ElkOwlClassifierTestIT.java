@@ -87,10 +87,13 @@ public class SnomedUS20230901ElkOwlClassifierTestIT extends SnomedUS20230901ElkO
 		int other_miss_cnt = 0;
 		SnomedIsa isas = SnomedIsa.init(rels_file);
 		nid_sctid_map = new HashMap<>();
-		for (long sctid : isas.getConcepts()) {
+		for (long sctid : isas.getOrderedConcepts()) {
 			UUID uuid = UuidUtil.fromSNOMED("" + sctid);
 			int nid = PrimitiveData.nid(uuid);
 			nid_sctid_map.put(nid, sctid);
+			// 417163006 |Traumatic or non-traumatic injury (disorder)|
+			if (sctid == 417163006)
+				LOG.info(">>>>>>>>>>>>" + sctid + " " + nid + " " + PrimitiveData.text(nid));
 		}
 		for (OWLClass clazz : ontology.getOwlClasses()) {
 			long nid = SnomedOwlOntology.getId(clazz);
@@ -131,7 +134,9 @@ public class SnomedUS20230901ElkOwlClassifierTestIT extends SnomedUS20230901ElkO
 				}
 			}
 		}
-		other_misses.stream().limit(10).forEach((sctid) -> {
+		isas.getOrderedConcepts().stream().filter(other_misses::contains)
+//		.limit(10)
+		.forEach((sctid) -> {
 			UUID uuid = UuidUtil.fromSNOMED("" + sctid);
 			int nid = PrimitiveData.nid(uuid);
 			LOG.error("Miss: " + sctid + " " + PrimitiveData.text(nid));
@@ -149,7 +154,7 @@ public class SnomedUS20230901ElkOwlClassifierTestIT extends SnomedUS20230901ElkO
 		LOG.error("Other cnt: " + other_miss_cnt);
 //		assertEquals(expected_miss_cnt, miss_cnt);
 		// TODO this should be 0 after all the data issues are fixed
-		assertEquals(10375, other_miss_cnt);
+		assertEquals(9786, other_miss_cnt);
 	}
 
 }
