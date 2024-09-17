@@ -32,3 +32,4 @@ jobs:
           sonarcloud_coverage_jacoco_xmlReportPaths: ${{ 'target/site/jacoco/jacoco.xml' }}
           sonarcloud_java_binaries: ${{ 'target/classes' }}
           #sonarcloud_tests: ${{ 'src' }}  
+          sonar.verbose: true
