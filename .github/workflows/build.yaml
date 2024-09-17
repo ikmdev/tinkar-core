@@ -31,4 +31,4 @@ jobs:
           sonarcloud_projectKey: ${{ 'casaras1_tinkar-core' }}
           sonarcloud_coverage_jacoco_xmlReportPaths: ${{ 'target/site/jacoco/jacoco.xml' }}
           sonarcloud_java_binaries: ${{ 'target/classes' }}
-          sonarcloud_tests: ${{ 'src/test/java' }}  
+          sonarcloud_tests: ${{ '' }}  
