@@ -190,6 +190,7 @@ public class ElkOwlDataBuilder {
             // Temporary fix for skipping Inclusion Sets. Notify user via UI, but don't throw the error to stop the process.
             String errMessage = "Inclusion Set processing is not yet supported. Skipped " + inclusionSetCounter.get() + " Inclusion Sets.";
             LOG.warn(errMessage);
+
         }
     }
 
