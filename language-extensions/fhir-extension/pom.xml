@@ -18,9 +18,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <asm.version>9.1</asm.version>
         <jsonschema2pojo-core.version>1.2.1</jsonschema2pojo-core.version>
-        <commons-lang3.version>3.17.0-r4</commons-lang3.version>
-        <commons-text.version>1.12.0-r4</commons-text.version>
-        <commons-io.version>2.16.1-r4</commons-io.version>
         <fhir-base.version>7.0.2-r9</fhir-base.version>
         <fhir-structures.version>7.0.2-r8</fhir-structures.version>
         <fhir-hl7-r4.version>6.3.3-r9</fhir-hl7-r4.version>
@@ -35,22 +32,6 @@
                 <groupId>dev.ikm.jpms</groupId>
                 <artifactId>guava</artifactId>
                 <version>${guava.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>dev.ikm.jpms</groupId>
-                <artifactId>commons-lang3</artifactId>
-                <version>${commons-lang3.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.ikm.jpms</groupId>
-                <artifactId>commons-io</artifactId>
-                <version>${commons-io.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>dev.ikm.jpms</groupId>
-                <artifactId>commons-text</artifactId>
-                <version>${commons-text.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.jsonschema2pojo</groupId>
@@ -126,19 +107,6 @@
         <dependency>
             <groupId>dev.ikm.tinkar</groupId>
             <artifactId>common</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>dev.ikm.jpms</groupId>
-            <artifactId>commons-lang3</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>dev.ikm.jpms</groupId>
-            <artifactId>commons-io</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>dev.ikm.jpms</groupId>
-            <artifactId>commons-text</artifactId>
         </dependency>
 
         <dependency>
