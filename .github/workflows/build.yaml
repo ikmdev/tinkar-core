@@ -1,36 +1,5 @@
 name: Build Workflow
 
-# Inputs
-inputs:
- branch_name: 
-   description: "Current Branch"
-   required: true
-   default: "main"
- sonarcloud_token:
-   description: "Token For Sonarcloud"
-   required: true
- sonarcloud_host_url:     
-   description: "Sonarcloud Host URL"
-   required: true
- sonarcloud_organization:
-   description: "Organization Name on Sonarcloud "
-   required: true
- sonarcloud_sources:
-   description: "source folder"
-   required: true   
- sonarcloud_projectKey:
-   description: "Sonar project key"
-   required: true
- sonarcloud_coverage_jacoco_xmlReportPaths:
-   description: "Jacoco reports path"
-   required: true
- sonarcloud_java_binaries:
-   description: "Java binaries folder"
-   required: true         
- sonarcloud_tests:
-   description: "Java test folder"
-   required: true                
-
 run-name: 'Build Workflow -- ${{ github.head_ref || github.ref_name }}'
 
 on:
