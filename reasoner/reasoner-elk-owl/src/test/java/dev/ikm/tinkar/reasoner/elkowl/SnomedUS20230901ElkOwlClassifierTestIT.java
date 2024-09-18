@@ -92,8 +92,8 @@ public class SnomedUS20230901ElkOwlClassifierTestIT extends SnomedUS20230901ElkO
 			int nid = PrimitiveData.nid(uuid);
 			nid_sctid_map.put(nid, sctid);
 			// 417163006 |Traumatic or non-traumatic injury (disorder)|
-			if (sctid == 417163006)
-				LOG.info(">>>>>>>>>>>>" + sctid + " " + nid + " " + PrimitiveData.text(nid));
+//			if (sctid == 417163006)
+//				LOG.info(">>>>>>>>>>>>" + sctid + " " + nid + " " + PrimitiveData.text(nid));
 		}
 		for (OWLClass clazz : ontology.getOwlClasses()) {
 			long nid = SnomedOwlOntology.getId(clazz);
