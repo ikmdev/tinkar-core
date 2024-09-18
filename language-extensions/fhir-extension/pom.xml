@@ -22,9 +22,9 @@
         <commons-text.version>1.12.0</commons-text.version>
         <commons-io.version>2.16.1</commons-io.version>
         <fhir-base.version>7.0.2-r8</fhir-base.version>
-        <fhir-structures.version>7.0.2-r5</fhir-structures.version>
-        <fhir-hl7-r4.version>6.3.3-r6</fhir-hl7-r4.version>
-        <fhir-hl7-utilities.version>6.3.3-r5</fhir-hl7-utilities.version>
+        <fhir-structures.version>7.0.2-r7</fhir-structures.version>
+        <fhir-hl7-r4.version>6.3.3-r8</fhir-hl7-r4.version>
+        <fhir-hl7-utilities.version>6.3.3-r7</fhir-hl7-utilities.version>
         <fasterxml-jackson-core.version>2.17.0</fasterxml-jackson-core.version>
         <guava.version>33.1.0-jre-r1</guava.version>
     </properties>
@@ -91,17 +91,23 @@
                 <version>${project.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>dev.ikm.jpms</groupId>
-                <artifactId>hapi-fhir-base</artifactId>
-                <version>${fhir-base.version}</version>
-            </dependency>
+			<dependency>
+				<groupId>dev.ikm.jpms</groupId>
+				<artifactId>hapi-fhir-base</artifactId>
+				<version>${fhir-base.version}</version>
+			</dependency>
 
-            <dependency>
-                <groupId>dev.ikm.jpms</groupId>
-                <artifactId>hapi-fhir-structures-r4</artifactId>
-                <version>${fhir-structures.version}</version>
-            </dependency>
+			<dependency>
+				<groupId>dev.ikm.jpms</groupId>
+				<artifactId>hapi-fhir-structures-r4</artifactId>
+				<version>${fhir-structures.version}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>ca.uhn.hapi.fhir</groupId>
+						<artifactId>hapi-fhir-base</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
 
             <dependency>
                 <groupId>dev.ikm.jpms</groupId>
