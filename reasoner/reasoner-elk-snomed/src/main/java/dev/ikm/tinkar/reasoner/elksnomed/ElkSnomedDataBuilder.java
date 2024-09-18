@@ -137,8 +137,8 @@ public class ElkSnomedDataBuilder {
 	}
 
 	private void processDefinition(DiTreeEntity definition, int conceptNid) throws IllegalStateException {
-		if (List.of(-2141275885, -2141972902).contains(conceptNid))
-			LOG.info(">>>>> " + conceptNid + " " + PrimitiveData.text(conceptNid) + "\n" + definition);
+//		if (List.of(-2141275885, -2141972902).contains(conceptNid))
+//			LOG.info(">>>>> " + conceptNid + " " + PrimitiveData.text(conceptNid) + "\n" + definition);
 		EntityVertex root = definition.root();
 		for (EntityVertex child : definition.successors(root)) {
 			switch (getMeaning(child)) {

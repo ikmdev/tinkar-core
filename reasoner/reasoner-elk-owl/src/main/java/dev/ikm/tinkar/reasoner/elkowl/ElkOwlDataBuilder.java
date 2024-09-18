@@ -65,8 +65,6 @@ public class ElkOwlDataBuilder {
 
 	private TrackingCallable<?> progressUpdater = null;
 
-	private AtomicInteger inclusionSetCounter = new AtomicInteger();
-
 	public ElkOwlDataBuilder(ViewCalculator viewCalculator, PatternFacade statedAxiomPattern, ElkOwlData axiomData,
 			OWLDataFactory owlDataFactory) {
 		super();
@@ -117,7 +115,6 @@ public class ElkOwlDataBuilder {
 	}
 
 	public void build() throws Exception {
-		inclusionSetCounter.set(0);
 //		AtomicInteger processedSemanticsCounter = axiomData.processedSemantics;
 		AtomicInteger totalCounter = new AtomicInteger();
 		PrimitiveData.get().forEachSemanticNidOfPattern(statedAxiomPattern.nid(), i -> totalCounter.incrementAndGet());
@@ -186,9 +183,6 @@ public class ElkOwlDataBuilder {
 			LOG.error(msg);
 			throw new Exception(msg);
 		}
-		// TODO: remove inclusionSetCounter
-		if (inclusionSetCounter.get() != 0)
-			LOG.info("Inclusion sets: " + inclusionSetCounter.get());
 	}
 
 	public IncrementalChanges processIncremental(DiTreeEntity definition, int conceptNid) {
@@ -220,7 +214,6 @@ public class ElkOwlDataBuilder {
 				processNecessarySet(childVertex, conceptNid, definition, axioms);
 			}
 			case INCLUSION_SET -> {
-				inclusionSetCounter.incrementAndGet();
 				processInclusionSet(childVertex, conceptNid, definition, axioms);
 			}
 			case PROPERTY_SET -> {
@@ -281,7 +274,7 @@ public class ElkOwlDataBuilder {
 				OWLSubClassOfAxiom axiom = owlDataFactory.getOWLSubClassOfAxiom(conjunctionConcept.get(),
 						axiomData.getConcept(conceptNid));
 				axioms.add(axiom);
-				LOG.info("Inclusion set: " + PrimitiveData.text(conceptNid) + "\n" + definition + "\n" + axioms);
+//				LOG.info("Inclusion set: " + PrimitiveData.text(conceptNid) + "\n" + definition + "\n" + axioms);
 			} else {
 				throw new IllegalStateException("Child node must return a conjunction concept. Concept: " + conceptNid
 						+ " definition: " + definition);

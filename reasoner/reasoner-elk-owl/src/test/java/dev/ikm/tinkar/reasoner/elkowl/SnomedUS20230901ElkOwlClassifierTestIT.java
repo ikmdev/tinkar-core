@@ -154,7 +154,7 @@ public class SnomedUS20230901ElkOwlClassifierTestIT extends SnomedUS20230901ElkO
 		LOG.error("Other cnt: " + other_miss_cnt);
 //		assertEquals(expected_miss_cnt, miss_cnt);
 		// TODO this should be 0 after all the data issues are fixed
-		assertEquals(9786, other_miss_cnt);
+		assertEquals(214, other_miss_cnt);
 	}
 
 }

@@ -72,7 +72,7 @@
 								<artifactItem>
 									<groupId>${snomed-test-data.groupid}</groupId>
 									<artifactId>
-										snomed-test-data-us-20230901</artifactId>
+										snomed-test-data-intl-20240201</artifactId>
 									<version>${snomed-test-data.version}</version>
 									<type>zip</type>
 								</artifactItem>

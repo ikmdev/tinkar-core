@@ -42,13 +42,20 @@ public class SnomedUS20230901ElkSnomedDataBuilderTestIT extends ElkSnomedDataBui
 	private static final Logger LOG = LoggerFactory.getLogger(SnomedUS20230901ElkSnomedDataBuilderTestIT.class);
 
 	static {
-		stated_count = 393479;
-		active_count = 370291;
-		inactive_count = 23188;
+		stated_count = // 393479;
+				414488;
+		active_count = // 370291;
+				390194;
+		inactive_count = // 23188;
+				24294;
 		test_case = "snomed-us-20230901";
 	}
 
-	public static final String db = "SnomedCT_US_20230901_SpinedArray-20240830";
+	// TODO get all this back once test db are available
+
+	public static final String db =
+			// "SnomedCT_US_20230901_SpinedArray-20240830";
+			"September2024_ConnectathonDataset_v1";
 
 	protected String getDir() {
 		// TODO
@@ -56,16 +63,24 @@ public class SnomedUS20230901ElkSnomedDataBuilderTestIT extends ElkSnomedDataBui
 		return "target/db/snomed-test-data-" + getEditionDir() + "-" + getVersion();
 	}
 
+//	protected String getEdition() {
+//		return "US1000124";
+//	}
+//
+//	protected String getEditionDir() {
+//		return "us";
+//	}
+	
 	protected String getEdition() {
-		return "US1000124";
+		return "INT";
 	}
 
 	protected String getEditionDir() {
-		return "us";
+		return "intl";
 	}
 
 	protected String getVersion() {
-		return "20230901";
+		return "20240201";
 	}
 
 	protected Path axioms_file = Paths.get(getDir(),
@@ -100,6 +115,7 @@ public class SnomedUS20230901ElkSnomedDataBuilderTestIT extends ElkSnomedDataBui
 			if (data_con == null) {
 				LOG.error("No concept: " + con);
 				missing_concept_cnt++;
+				continue;
 			}
 			if (con.getDefinitions().size() != data_con.getDefinitions().size())
 				LOG.error("Defs: " + con + " " + con.getDefinitions().size() + " " + data_con.getDefinitions().size()
