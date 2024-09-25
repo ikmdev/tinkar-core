@@ -19,13 +19,16 @@ import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.service.*;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.TinkExecutor;
+import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
-import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.integration.DataIntegrity;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.DataStore;
+import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -49,35 +52,19 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class DataIntegrityIT {
     private static final Logger LOG = LoggerFactory.getLogger(DataIntegrity.class);
-    private static final File SAP_DATAINTEGRITYIT_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(DataIntegrityIT.class);
+    private static final File DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(DataIntegrityIT.class);
     public DataIntegrity dataIntegrity;
 
     @BeforeAll
     public static void beforeAll() {
-        LOG.info("JVM Version: " + System.getProperty("java.version"));
-        LOG.info("JVM Name: " + System.getProperty("java.vm.name"));
-        LOG.info("Setup Ephemeral Protobuf Suite: " + LOG.getName());
-        startDatabase(TestConstants.SA_STORE_OPEN_NAME, SAP_DATAINTEGRITYIT_DATASTORE_ROOT);
-
-        File starterDataFile = TestConstants.PB_STARTER_DATA_REASONED;
-        EntityCountSummary summaryLoadStarterData = new LoadEntitiesFromProtobufFile(starterDataFile).compute();
-        LOG.info("Import complete for {}. Imported {} Entities.", starterDataFile.getName(), summaryLoadStarterData.getTotalCount());
-    }
-
-    private static void startDatabase(String datastoreControllerName, File datastoreFile) {
-        LOG.info("Clear caches");
-        CachingService.clearAll();
-        LOG.info(ServiceProperties.jvmUuid());
-        if (datastoreFile != null) {
-            ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, datastoreFile);
-        }
-        PrimitiveData.selectControllerByName(datastoreControllerName);
-        PrimitiveData.start();
+        FileUtil.recursiveDelete(DATASTORE_ROOT);
+        TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
     }
 
     @AfterAll
     public static void afterAll(){
-        PrimitiveData.stop();
+        TestHelper.stopDatabase();
     }
 
     @Test

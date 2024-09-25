@@ -24,6 +24,7 @@ import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.fhir.transformers.FhirCodeSystemTransform;
 import dev.ikm.tinkar.fhir.transformers.FhirStatedDefinitionTransformer;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.hl7.fhir.r4.model.CodeSystem;
@@ -32,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -43,10 +43,10 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class FhirCodeSystemTransformIT extends TestHelper {
+public class FhirCodeSystemTransformIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(FhirCodeSystemTransformIT.class);
-    private static final File SAP_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
+    private static final File DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
             FhirCodeSystemTransformIT.class);
 
     FhirCodeSystemTransform fhirCodeSystemTransform;
@@ -54,23 +54,15 @@ public class FhirCodeSystemTransformIT extends TestHelper {
     StampCalculator stampCalculator;
     final int transformSize = 1000;
 
-
     @BeforeAll
-    public void setup() {
-        loadSpinedArrayDataBase(SAP_DATASTORE_ROOT);
+    public void beforeAll() {
+        TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
     }
-
 
     @Test
     @DisplayName("Test Fhir transform for entire file" )
-    public void testFhirCodeSystemTransformation()  throws IOException {
-
-//        File file = TestConstants.TINK_TEST_FILE;
-//        LoadEntitiesFromDtoFile loadDTO = new LoadEntitiesFromDtoFile(file);
-//        int count = loadDTO.compute();
-//        LOG.info(count + " entitles loaded from file: " + loadDTO.report() + "\n\n");
-
-
+    public void testFhirCodeSystemTransformation() {
         int patternNid = TinkarTerm.DESCRIPTION_PATTERN.nid();
         Set<Integer> pathNids = new HashSet<>();
         EntityService.get().forEachSemanticOfPattern(patternNid,patternEntity1 ->

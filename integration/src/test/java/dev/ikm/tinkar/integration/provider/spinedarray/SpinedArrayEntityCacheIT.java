@@ -21,6 +21,7 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
@@ -37,19 +38,20 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class SpinedArrayEntityCacheIT extends TestHelper {
+class SpinedArrayEntityCacheIT {
     private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayEntityCacheIT.class);
-    private static final File SAP_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
+    private static final File DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
             SpinedArrayEntityCacheIT.class);
 
     @BeforeAll
     static void beforeAll() {
-        loadSpinedArrayDataBase(SAP_DATASTORE_ROOT);
+        TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
     }
 
     @AfterAll
     static void afterAll() {
-        PrimitiveData.stop();
+        TestHelper.stopDatabase();;
     }
 
     // Entity Cache Refresh Cases:

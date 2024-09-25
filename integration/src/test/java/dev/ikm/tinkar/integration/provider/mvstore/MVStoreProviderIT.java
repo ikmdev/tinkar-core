@@ -24,13 +24,13 @@ import dev.ikm.tinkar.entity.util.EntityCounter;
 import dev.ikm.tinkar.entity.util.EntityProcessor;
 import dev.ikm.tinkar.entity.util.EntityRealizer;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * Concerned that MVStore may not be "bullet proof" based on this exception. Will watch, and save for posterity.
@@ -53,19 +53,19 @@ import java.io.IOException;
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class MVStoreProviderIT extends TestHelper {
+class MVStoreProviderIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(MVStoreProviderIT.class);
-    private static final File MV_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(MVStoreProviderIT.class);
+    private static final File DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(MVStoreProviderIT.class);
 
     @BeforeAll
-    static void setupSuite() {
-        loadMVStoreDataBase(MV_DATASTORE_ROOT);
+    static void beforeAll() {
+        TestHelper.startDataBase(DataStore.MV_STORE, DATASTORE_ROOT);
     }
 
     @Test
     @Order(1)
-    public void loadChronologies() throws IOException {
+    public void loadChronologies() {
         File file = TestConstants.PB_STARTER_DATA_REASONED;
         LoadEntitiesFromProtobufFile loadProto = new LoadEntitiesFromProtobufFile(file);
         EntityCountSummary count = loadProto.compute();
@@ -133,4 +133,5 @@ class MVStoreProviderIT extends TestHelper {
         PrimitiveData.get().forEachParallel(processor);
         LOG.info("MVS Parallel realization: \n" + processor.report() + "\n\n");
     }
+
 }

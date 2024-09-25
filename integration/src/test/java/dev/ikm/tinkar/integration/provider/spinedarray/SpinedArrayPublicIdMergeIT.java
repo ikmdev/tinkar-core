@@ -18,39 +18,40 @@ package dev.ikm.tinkar.integration.provider.spinedarray;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class SpinedArrayPublicIdMergeIT extends TestHelper {
+class SpinedArrayPublicIdMergeIT {
     private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayPublicIdMergeIT.class);
     private static final File SAP_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
             SpinedArrayPublicIdMergeIT.class);
 
     @BeforeAll
     static void beforeAll() {
-        loadSpinedArrayDataBase(SAP_DATASTORE_ROOT);
+        TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
     }
 
     @AfterAll
     static void afterAll() {
-        PrimitiveData.stop();
+        TestHelper.stopDatabase();;
     }
 
     // Merging PublicId Cases:

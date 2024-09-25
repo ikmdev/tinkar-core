@@ -43,7 +43,7 @@ public class SnomedToEntityDescriptionIT {
     public static final long EXPECTED_DATE = LocalDate.parse("20020131", DateTimeFormatter.ofPattern("yyyyMMdd")).atTime(12,0,0).toInstant(ZoneOffset.UTC).toEpochMilli();
 
     @BeforeEach
-    public void setup() {
+    public void beforeEach() {
         transformer = new SnomedToEntityDescription();
     }
 

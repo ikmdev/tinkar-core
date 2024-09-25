@@ -25,6 +25,7 @@ import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.StampEntityVersion;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.*;
@@ -41,15 +42,16 @@ import java.util.stream.Stream;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class QueryByTimeIT extends TestHelper {
+public class QueryByTimeIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(QueryByTimeIT.class);
-    private static final File SAP_COORDINATESIT_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
+    private static final File DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
             QueryByTimeIT.class);
 
     @BeforeAll
-    public void init() {
-        loadSpinedArrayDataBase(SAP_COORDINATESIT_DATASTORE_ROOT);
+    public void beforeAll() {
+        TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
     }
 
     @Test

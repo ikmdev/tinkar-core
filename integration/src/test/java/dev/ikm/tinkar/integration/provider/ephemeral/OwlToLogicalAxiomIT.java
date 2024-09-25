@@ -21,8 +21,11 @@ import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.ext.lang.owl.SctOwlUtilities;
+import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.TinkarTerm;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -36,12 +39,18 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class OwlToLogicalAxiomIT extends TestHelper {
+public class OwlToLogicalAxiomIT {
     private static final Logger LOG = LoggerFactory.getLogger(OwlToLogicalAxiomIT.class);
 
     @BeforeAll
-    public static void setUp() {
-        loadEphemeralDataBase();
+    public static void beforeAll() {
+        TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
+    }
+
+    @AfterAll
+    public static void afterAll() {
+        TestHelper.stopDatabase();
     }
 
     private boolean datastoreEmpty() {

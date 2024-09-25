@@ -17,11 +17,8 @@ package dev.ikm.tinkar.integration.provider.search;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
-import dev.ikm.tinkar.common.service.CachingService;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.ServiceKeys;
-import dev.ikm.tinkar.common.service.ServiceProperties;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.provider.search.Searcher;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -38,13 +35,14 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class SearchProviderIT extends TestHelper {
+public class SearchProviderIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(SearchProviderIT.class);
 
     @BeforeAll
-    public void setUp() {
-        loadEphemeralDataBase();
+    public void beforeAll() {
+        TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
     }
 
     @Test
@@ -122,12 +120,9 @@ public class SearchProviderIT extends TestHelper {
     }
 
     private void setupSnomedLoincLidrData() {
-        PrimitiveData.stop();
-        CachingService.clearAll();
         File dataStore = new File(System.getProperty("user.home") + "/Solor/snomedLidrLoinc-data-5-6-2024-withCollabData-dev");
-        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, dataStore);
-        PrimitiveData.selectControllerByName(TestConstants.SA_STORE_OPEN_NAME);
-        PrimitiveData.start();
+        TestHelper.stopDatabase();
+        TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, dataStore);
     }
 
     @Test
@@ -143,7 +138,6 @@ public class SearchProviderIT extends TestHelper {
         Collections.sort(actualResultConformances);
         assertEquals(expectedResultConformances, actualResultConformances, "LIDR Record Result Conformances do not match");
     }
-
 
     @Test
     @Disabled

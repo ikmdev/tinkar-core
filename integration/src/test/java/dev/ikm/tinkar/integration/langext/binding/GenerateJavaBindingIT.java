@@ -15,24 +15,20 @@
  */
 package dev.ikm.tinkar.integration.langext.binding;
 
-import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.ServiceKeys;
-import dev.ikm.tinkar.common.service.ServiceProperties;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculator;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculatorWithCache;
-import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
-import dev.ikm.tinkar.entity.PatternEntityVersion;
-import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.ext.binding.BindingHelper;
 import dev.ikm.tinkar.ext.binding.GenerateJavaBindingTask;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.DataStore;
+import dev.ikm.tinkar.integration.helper.TestHelper;
 import org.eclipse.collections.api.factory.Lists;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -44,28 +40,22 @@ import java.nio.file.Path;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static dev.ikm.tinkar.integration.TestConstants.createFilePathInTarget;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class GenerateJavaBindingIT {
 
-    private static final File datastore = TestConstants.createFilePathInTargetFromClassName.apply(GenerateJavaBindingIT.class);
-    public static final File PB_STARTER_DATA = createFilePathInTarget.apply("data/tinkar-starter-data-1.0.0-pb.zip");
+    private static final File DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(GenerateJavaBindingIT.class);
 
     private StampCalculator stampCalculator;
     private LanguageCalculator languageCalculator;
     private final String className = "BindingTest";
 
     @BeforeAll
-    public void setup() {
-        CachingService.clearAll();
-		ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, datastore);
-		FileUtil.recursiveDelete(datastore);
-        PrimitiveData.selectControllerByName(TestConstants.SA_STORE_OPEN_NAME);
-        PrimitiveData.start();
-		LoadEntitiesFromProtobufFile loadEntitiesFromProtobufFile = new LoadEntitiesFromProtobufFile(PB_STARTER_DATA);
-		loadEntitiesFromProtobufFile.compute();
+    public void beforeAll() {
+        FileUtil.recursiveDelete(DATASTORE_ROOT);
+        TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA);
 
         stampCalculator = Coordinates.Stamp.DevelopmentLatest().stampCalculator();
         languageCalculator = LanguageCalculatorWithCache
@@ -74,8 +64,8 @@ public class GenerateJavaBindingIT {
     }
 
     @AfterAll
-    public void teardown() {
-        PrimitiveData.stop();
+    public void afterAll() {
+        TestHelper.stopDatabase();
     }
 
     @Test
