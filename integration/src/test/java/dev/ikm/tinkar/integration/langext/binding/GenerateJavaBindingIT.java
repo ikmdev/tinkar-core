@@ -94,7 +94,7 @@ public class GenerateJavaBindingIT {
                     Stream.empty(),
                     "IKM Author",
                     "dev.ikm.tinkar.integration.langext.binding",
-                    "BindingsTest",
+                    "BindingTest",
                     UUID.randomUUID(),
                     interpolationConsumer -> {
                         try {
@@ -103,14 +103,10 @@ public class GenerateJavaBindingIT {
                             throw new RuntimeException(e);
                         }
                     },
-                    new BindingHelper(languageCalculator, stampCalculator, fqn -> {
-                        if (fqn.contains("+")){
-                            return fqn.replace("+", " PLUS");
-                        } else if (fqn.contains("/")){
-                            return fqn.replace("/", "_SLASH_");
-                        }
-                        return fqn;
-                    })
+                    new BindingHelper(languageCalculator, stampCalculator, fqn -> fqn
+                            .replace("+", " PLUS")
+                            .replace("/", "_SLASH_")
+                            .replace("-", "_"))
             );
             generateJavaBindingTask.call();
 
