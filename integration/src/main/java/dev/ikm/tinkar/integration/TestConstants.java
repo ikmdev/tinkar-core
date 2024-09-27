@@ -19,9 +19,9 @@ import java.io.File;
 import java.util.function.Function;
 
 public class TestConstants {
-    public static final Function<String,File> createFilePathInTarget = (pathName) -> new File("%s/target/%s".formatted(System.getProperty("user.dir"), pathName));
+    public static final Function<String, File> createFilePathInTarget = (pathName) -> new File("%s/target/%s".formatted(System.getProperty("user.dir"), pathName));
 
-    public static final Function<Class,File>
+    public static final Function<Class, File>
             createFilePathInTargetFromClassName = (clazz) -> createFilePathInTarget.apply("generated-datastores/%s".formatted(clazz.getSimpleName()));
 
     public static final File TINK_TEST_FILE = createFilePathInTarget.apply("data/tinkar-test-dto-1.1.0.zip");

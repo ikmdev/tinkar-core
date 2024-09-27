@@ -213,6 +213,9 @@ public class ElkOwlDataBuilder {
 			case NECESSARY_SET -> {
 				processNecessarySet(childVertex, conceptNid, definition, axioms);
 			}
+			case INCLUSION_SET -> {
+				processInclusionSet(childVertex, conceptNid, definition, axioms);
+			}
 			case PROPERTY_SET -> {
 				processPropertySet(childVertex, conceptNid, definition, axioms);
 			}
@@ -258,6 +261,26 @@ public class ElkOwlDataBuilder {
 			}
 		} else {
 			throw new IllegalStateException("Sufficient sets require a single AND child... " + childVertexList);
+		}
+	}
+
+	private void processInclusionSet(EntityVertex inclusionSetVertex, int conceptNid, DiTreeEntity definition,
+			MutableList<OWLAxiom> axioms) {
+		final ImmutableList<EntityVertex> childVertexList = definition.successors(inclusionSetVertex);
+		if (childVertexList.size() == 1) {
+			final Optional<OWLClassExpression> conjunctionConcept = generateAxioms(childVertexList.get(0), conceptNid,
+					definition, axioms);
+			if (conjunctionConcept.isPresent()) {
+				OWLSubClassOfAxiom axiom = owlDataFactory.getOWLSubClassOfAxiom(conjunctionConcept.get(),
+						axiomData.getConcept(conceptNid));
+				axioms.add(axiom);
+//				LOG.info("Inclusion set: " + PrimitiveData.text(conceptNid) + "\n" + definition + "\n" + axioms);
+			} else {
+				throw new IllegalStateException("Child node must return a conjunction concept. Concept: " + conceptNid
+						+ " definition: " + definition);
+			}
+		} else {
+			throw new IllegalStateException("Inclusion sets require a single AND child... " + childVertexList);
 		}
 	}
 
@@ -317,6 +340,7 @@ public class ElkOwlDataBuilder {
 
 		case SUFFICIENT_SET:
 		case NECESSARY_SET:
+		case INCLUSION_SET:
 			throw new UnsupportedOperationException("Not expected here: " + logicVertex);
 		case PROPERTY_PATTERN_IMPLICATION:
 			throw new UnsupportedOperationException();

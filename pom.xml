@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>dev.ikm.build</groupId>
         <artifactId>java-parent</artifactId>
         <version>1.47.0</version>
-        <relativePath />
+        <relativePath/>
     </parent>
 
     <groupId>dev.ikm.tinkar</groupId>
     <artifactId>tinkar-core</artifactId>
-    <version>1.66.0-SNAPSHOT</version>
+    <version>1.71.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>IKM tinkar core</name>
@@ -21,9 +22,12 @@
         Tinkar and its underlining data model serves as a self-describing terminology model
         that can be used to harmonize other standards based models.
     </description>
-
+    <url>http://www.ikm.dev</url>
     <inceptionYear>2015</inceptionYear>
-
+    <organization>
+        <name>Integrated Knowledge Management</name>
+        <url>http://www.ikm.dev</url>
+    </organization>
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
@@ -33,10 +37,6 @@
         </license>
     </licenses>
 
-    <scm>
-        <url>http://www.github.com/ikmdev/tinkar-core</url>
-    </scm>
-
     <developers>
         <developer>
             <id>ikmdev</id>
@@ -44,18 +44,6 @@
             <email>support@ikm.dev</email>
         </developer>
     </developers>
-
-    <issueManagement>
-        <system>GitHub</system>
-        <url>https://github.com/ikmdev/tinkar-core/issues</url>
-    </issueManagement>
-
-    <url>http://www.ikm.dev</url>
-
-    <organization>
-        <name>Integrated Knowledge Management</name>
-        <url>http://www.ikm.dev</url>
-    </organization>
 
     <modules>
         <module>collection</module>
@@ -70,6 +58,14 @@
         <module>integration</module>
         <module>aggregator</module>
     </modules>
+
+    <scm>
+        <url>http://www.github.com/ikmdev/tinkar-core</url>
+    </scm>
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/ikmdev/tinkar-core/issues</url>
+    </issueManagement>
 
     <properties>
         <maven.javadoc.skip>true</maven.javadoc.skip>
@@ -104,12 +100,13 @@
         <tinkar-starter-data.version>1.0.0</tinkar-starter-data.version>
         <protobuf-java.version>3.22.0-r6</protobuf-java.version>
         <sonar.skip>false</sonar.skip>
-        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
         <sonar.core.codeCoveragePlugin>jacoco</sonar.core.codeCoveragePlugin>
         <sonar.language>java</sonar.language>
         <susel.version>0.1.2</susel.version>
         <maven-jxr-plugin.version>3.3.0</maven-jxr-plugin.version>
-        <tinkar-schema.version>1.27.0</tinkar-schema.version>
+        <tinkar-schema.version>1.31.0</tinkar-schema.version>
         <tinkar-bindings.version>1.4.0</tinkar-bindings.version>
         <udaychandra-susel.version>0.1.2</udaychandra-susel.version>
         <common-java5.version>3.0.0-M9</common-java5.version>
@@ -140,9 +137,9 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>component</artifactId>
-                <classifier>tests</classifier>
-                <type>test-jar</type>
                 <version>${project.version}</version>
+                <type>test-jar</type>
+                <classifier>tests</classifier>
             </dependency>
 
             <dependency>
@@ -379,35 +376,32 @@
 
         </dependencies>
     </dependencyManagement>
-
     <!-- Cross project dependencies -->
     <dependencies>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j2-impl</artifactId>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>auto-service</artifactId>
         </dependency>
 
         <dependency>
-          <groupId>org.junit.jupiter</groupId>
-          <artifactId>junit-jupiter</artifactId>
-          <scope>test</scope>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
-          <groupId>org.junit.platform</groupId>
-          <artifactId>junit-platform-console</artifactId>
-          <scope>test</scope>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-console</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <dependency>

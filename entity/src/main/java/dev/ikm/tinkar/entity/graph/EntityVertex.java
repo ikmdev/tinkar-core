@@ -22,7 +22,10 @@ import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.component.*;
 import dev.ikm.tinkar.component.graph.Vertex;
 import dev.ikm.tinkar.entity.*;
-import dev.ikm.tinkar.terms.*;
+import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.EntityFacade;
+import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.PatternFacade;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.RichIterable;
@@ -176,12 +179,12 @@ public class EntityVertex implements Vertex, VertexId {
             throw new IllegalStateException("missing primordial UUID");
         }
         StampVersionRecord stampVersionRecord = StampVersionRecordBuilder.builder()
-                        .stateNid(EntityService.get().nidForPublicId(stamp.state().publicId()))
-                        .time(stamp.time())
-                        .authorNid(EntityService.get().nidForPublicId(stamp.author().publicId()))
-                        .moduleNid(EntityService.get().nidForPublicId(stamp.module().publicId()))
-                        .pathNid(EntityService.get().nidForPublicId(stamp.path().publicId()))
-                        .build();
+                .stateNid(EntityService.get().nidForPublicId(stamp.state().publicId()))
+                .time(stamp.time())
+                .authorNid(EntityService.get().nidForPublicId(stamp.author().publicId()))
+                .moduleNid(EntityService.get().nidForPublicId(stamp.module().publicId()))
+                .pathNid(EntityService.get().nidForPublicId(stamp.path().publicId()))
+                .build();
         stampVersions.add(stampVersionRecord);
 
         StampEntity<? extends StampEntityVersion> stampEntity = StampRecordBuilder.builder(stampRecord).versions(stampVersions).build();
@@ -600,13 +603,13 @@ public class EntityVertex implements Vertex, VertexId {
         conceptNidSet.add(meaningNid);
         if (this.properties != null) {
             this.properties.keySet().forEach(keyNid -> conceptNidSet.add(keyNid));
-//            this.properties.values().forEach(propertyValue -> {
-//                switch (propertyValue) {
-//                    case ConceptEntity concept -> conceptNidSet.add(concept.nid());
-//                    case ConceptFacade conceptFacade -> conceptNidSet.add(conceptFacade.nid());
-//                    default -> { /* not a concept, so ignore */ }
-//                }
-//            });
+            this.properties.values().forEach(propertyValue -> {
+                switch (propertyValue) {
+                    case ConceptEntity concept -> conceptNidSet.add(concept.nid());
+                    case ConceptFacade conceptFacade -> conceptNidSet.add(conceptFacade.nid());
+                    default -> { /* not a concept, so ignore */ }
+                }
+            });
         }
     }
 

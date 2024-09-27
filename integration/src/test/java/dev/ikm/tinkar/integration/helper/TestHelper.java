@@ -19,7 +19,6 @@ import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.ServiceKeys;
 import dev.ikm.tinkar.common.service.ServiceProperties;
-import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.entity.EntityCountSummary;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.integration.TestConstants;
@@ -35,15 +34,15 @@ public class TestHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestHelper.class);
 
-     protected static void startEphemeralDataBase() {
-         CachingService.clearAll();
-         LOG.info("Cleared caches");
-         LOG.info("JVM Version: " + System.getProperty("java.version"));
-         LOG.info("JVM Name: " + System.getProperty("java.vm.name"));
-         LOG.info("Setup Ephemeral Suite: " + LOG.getName());
-         LOG.info(ServiceProperties.jvmUuid());
-         PrimitiveData.selectControllerByName(TestConstants.EPHEMERAL_STORE_NAME);
-         PrimitiveData.start();
+    protected static void startEphemeralDataBase() {
+        CachingService.clearAll();
+        LOG.info("Cleared caches");
+        LOG.info("JVM Version: " + System.getProperty("java.version"));
+        LOG.info("JVM Name: " + System.getProperty("java.vm.name"));
+        LOG.info("Setup Ephemeral Suite: " + LOG.getName());
+        LOG.info(ServiceProperties.jvmUuid());
+        PrimitiveData.selectControllerByName(TestConstants.EPHEMERAL_STORE_NAME);
+        PrimitiveData.start();
     }
 
     protected static void startSpinedArrayDataBase(File fileDataStore) {
@@ -52,7 +51,7 @@ public class TestHelper {
         LOG.info("Setup Suite: " + LOG.getName());
         LOG.info(ServiceProperties.jvmUuid());
         ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, fileDataStore);
-        FileUtil.recursiveDelete(fileDataStore);
+        //FileUtil.recursiveDelete(fileDataStore);
         PrimitiveData.selectControllerByName(TestConstants.SA_STORE_OPEN_NAME);
         PrimitiveData.start();
     }
@@ -67,22 +66,22 @@ public class TestHelper {
         PrimitiveData.start();
     }
 
-    protected static void loadEphemeralDataBase(){
+    protected static void loadEphemeralDataBase() {
         startEphemeralDataBase();
         loadDataBase();
     }
 
-    protected static void loadSpinedArrayDataBase(File fileDataStore){
+    protected static void loadSpinedArrayDataBase(File fileDataStore) {
         startSpinedArrayDataBase(fileDataStore);
         loadDataBase();
     }
 
-    protected static void loadMVStoreDataBase(File fileDataStore){
+    protected static void loadMVStoreDataBase(File fileDataStore) {
         startMVStoreDataBase(fileDataStore);
         loadDataBase();
     }
 
-    protected static void loadDataBase(){
+    protected static void loadDataBase() {
         LoadEntitiesFromProtobufFile loadProto = new LoadEntitiesFromProtobufFile(PB_STARTER_DATA_REASONED);
         EntityCountSummary count = loadProto.compute();
         LOG.info(count + " entitles loaded from file: " + loadProto.summarize() + "\n\n");

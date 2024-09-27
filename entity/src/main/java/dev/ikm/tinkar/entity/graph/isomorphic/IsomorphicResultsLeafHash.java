@@ -23,6 +23,7 @@ import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.entity.graph.VisitProcessor;
 import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -36,7 +37,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import static dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResults.EndPoints.FULL_COMPARISON;
 
@@ -87,8 +90,6 @@ import static dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResults.EndPoints
  * <p>
  * Maybe make a custom structure that will switch between direct representation or bitmap depending on
  * size and cardinality.
- *
- *
  */
 public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> extends IsomorphicResultsAbstract<VVD> {
 
@@ -100,7 +101,8 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
      * And vertex above...
      * In example below nodes 6 and 5 had same hashcode. Revised to include meaning nid for vertex
      * in addition to the nidList...
-     *
+     * <p>
+     * <pre>
      * DiTreeEntity{
      *    [0]➞[9,13] Definition root
      *      [9]➞[8] Sufficient set
@@ -120,7 +122,7 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
      *          [10] Concept reference: Product containing cycloserine
      *          [11] Concept reference: Product manufactured as oral dose form
      * }
-     *
+     * </pre>
      * @param sortedNids a sorted array of nids
      * @return a hashcode, other than -1
      */
@@ -146,6 +148,7 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
     public IsomorphicResultsLeafHash(DiTreeEntity referenceTree, DiTreeEntity comparisonTree, int referencedConceptNid, MultipleEndpointTimer.Stopwatch stopwatch) {
         super(referenceTree, comparisonTree, referencedConceptNid, stopwatch);
     }
+
     public IsomorphicResultsLeafHash(DiTreeEntity referenceTree, DiTreeEntity comparisonTree, int referencedConceptNid) {
         super(referenceTree, comparisonTree, referencedConceptNid, null);
     }
@@ -198,6 +201,7 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
         });
 
     }
+
     public static final int score(ImmutableIntList correlation) {
         return correlation.primitiveStream().reduce(0, (partialResult, nextItem) -> nextItem >= 0 ? ++partialResult : partialResult);
     }
@@ -209,6 +213,7 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
     }
 
     private static final AtomicInteger possibleSolutionSize = new AtomicInteger(1024);
+
     /**
      * Inspired by VF2++ with optimizations for Komet's use case and data structures.
      * There is potential to parallelize this method..
@@ -295,7 +300,7 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
         if (solutionsToSeed.size() > 1) {
             MutableList<IndexCorrelationSolution> cutList = Lists.mutable.ofInitialCapacity(solutionsToSeed.size());
             solutionsToSeed.sort((o1, o2) -> Integer.compare(o2.score(), o1.score()));
-            for (IndexCorrelationSolution solution: solutionsToSeed) {
+            for (IndexCorrelationSolution solution : solutionsToSeed) {
                 if (cutList.isEmpty()) {
                     cutList.add(solution);
                 } else if (cutList.get(0).score() == solution.score()) {
@@ -348,6 +353,7 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
 
     /**
      * Cut based strictly on the evaluation of the Pair itself.
+     *
      * @param solutionToExtend
      * @param extension
      * @return
@@ -359,6 +365,7 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
 
     /**
      * Cut based on comparing the Pairs to each other.
+     *
      * @param solutionToExtend
      * @param extensions
      */
@@ -434,7 +441,7 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
         }
 
         // TODO verify that this is a proper test for isomorphic
-        final boolean isomorphic =  this.referenceTree.vertexCount() == this.comparisonTree.vertexCount() &&
+        final boolean isomorphic = this.referenceTree.vertexCount() == this.comparisonTree.vertexCount() &&
                 this.referenceToComparisonIndexCorrelation.score() == this.referenceTree.vertexCount();
         // If test if isomorphic, and if so, isomorphic tree = reference tree...
         // TODO this.isomorphicTree = reference tree if equivalent.
@@ -449,12 +456,21 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
                     this.referenceToComparisonIndexCorrelation.solution(), this.referenceToIsomorphicIndexMap).build();
         }
 
-        this.referenceVisitData().vertexIndexesForDepth(3).stream().forEach(vertexIndex -> IsomorphicResultsLeafHash.this.referenceRelationshipNodesMap.put(
-                new RelationshipKey(vertexIndex, IsomorphicResultsLeafHash.this.referenceTree), vertexIndex));
+        // The depth of 3 is below:
+        //      definition root -> necessary set -> and
+        //      definition root -> sufficient set -> and
+        //      definition root -> implication set -> and
+        //      definition root -> property set -> and
+
+        this.referenceVisitData().vertexIndexesForDepth(3).stream().forEach(vertexIndex ->
+                IsomorphicResultsLeafHash.this.referenceRelationshipNodesMap.put(
+                        new SetElementKey(vertexIndex, IsomorphicResultsLeafHash.this.referenceTree), vertexIndex));
+
         this.comparisonVisitData().vertexIndexesForDepth(3).stream().forEach(vertexIndex -> {
             this.comparisonRelationshipNodesMap.put(
-                    new RelationshipKey(vertexIndex, this.comparisonTree), vertexIndex);
+                    new SetElementKey(vertexIndex, this.comparisonTree), vertexIndex);
         });
+
         computeReferenceInclusionsAndDeletions();
         computeComparisonInclusionsAndDeletions();
 
@@ -482,23 +498,130 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
                     comparisonToMergedMap[this.referenceToComparisonIndexCorrelation.solution().get(referenceVertexIndex)] = referenceVertexIndex;
                 }
             }
-            // Add the deletions
-            getDeletedRelationshipRoots().forEach((deletionRoot) -> {
-                // deleted relationships roots come from the comparison tree.
-                OptionalInt predecessorNid = this.comparisonVisitData().predecessorIndex(deletionRoot.vertexIndex());
+
+            getAddedSetElements().forEach((elementToAdd) -> {
+                // added elements come from the comparison tree.
+                OptionalInt predecessorNid = this.comparisonVisitData().predecessorIndex(elementToAdd.vertexIndex());
                 if (predecessorNid.isPresent()) {
                     int comparisonTreeToReferenceTreeVertexIndex = this.comparisonToReferenceIndexMap[predecessorNid.getAsInt()];
                     if (comparisonTreeToReferenceTreeVertexIndex >= 0) {
+                        // put it below the shared predecessor...
                         final int rootToAddParentIndexInMergedTree
                                 = this.referenceToMergedIndexMap[comparisonTreeToReferenceTreeVertexIndex];
-                        addFragment(deletionRoot, this.comparisonTree, rootToAddParentIndexInMergedTree, treeBuilder);
+                        addFragment(elementToAdd, this.comparisonTree, rootToAddParentIndexInMergedTree, treeBuilder);
+                    } else {
+                        // Decide where to put it.
+                        if (this.comparisonTree.hasPredecessorVertexWithMeaning(elementToAdd, TinkarTerm.NECESSARY_SET)) {
+                            // Easy case is if it is inside  the necessary set, since there is only one necessary set
+                            BitSet necessarySetIndexes = this.referenceVisitData().necessarySetIndexes();
+                            switch (necessarySetIndexes.cardinality()) {
+                                case 0 -> {
+                                    // If there are no necessary sets, we can start the merge with a new necessary set...
+                                    int necessarySetIndexInComparison =
+                                            this.comparisonVisitData().necessarySetIndexes().nextSetBit(0);
+                                    EntityVertex necessarySetVertexInComparison = this.comparisonTree.vertex(necessarySetIndexInComparison);
+                                    addFragment(necessarySetVertexInComparison, this.comparisonTree, treeBuilder.getRoot().vertexIndex(), treeBuilder);
+                                }
+                                case 1 -> {
+                                    // Find the AND under the necessary set...
+                                    DiTreeEntity tree = treeBuilder.build();
+                                    EntityVertex necessarySet = tree.firstVertexWithMeaning(TinkarTerm.NECESSARY_SET).get();
+                                    ImmutableList<EntityVertex> necessarySetSuccessors = tree.successors(necessarySet);
+
+                                    necessarySetSuccessors.getFirstOptional().ifPresent(andVertex -> {
+                                        if (andVertex.getMeaningNid() != TinkarTerm.AND.nid()) {
+                                            throw new IllegalStateException("Missing necessary set and: " + tree);
+                                        }
+                                        addFragment(elementToAdd, this.comparisonTree, andVertex.vertexIndex(), treeBuilder);
+                                    });
+
+
+                                }
+                                default ->
+                                        throw new IllegalStateException("More than one necessary set found: " + necessarySetIndexes);
+                            }
+                        } else if (this.comparisonTree.hasPredecessorVertexWithMeaning(elementToAdd, TinkarTerm.SUFFICIENT_SET)) {
+                            //@TODO simple algorithm for now, just add all sufficient sets. In the future, do more complete comparison.
+                            int andParentIndex =
+                                    this.comparisonVisitData().predecessorIndex(elementToAdd.vertexIndex()).getAsInt();
+                            if (this.comparisonTree.vertex(andParentIndex).getMeaningNid() != TinkarTerm.AND.nid()) {
+                                throw new IllegalStateException("Element to add does not have AND for its parent: " + this.comparisonTree.vertex(andParentIndex));
+                            }
+                            int sufficientSetIndexInComparison = this.comparisonVisitData().predecessorIndex(andParentIndex).getAsInt();
+                            EntityVertex sufficientSetVertexInComparison = this.comparisonTree.vertex(sufficientSetIndexInComparison);
+                            if (sufficientSetVertexInComparison.getMeaningNid() != TinkarTerm.SUFFICIENT_SET.nid()) {
+                                throw new IllegalStateException("Element to add does not have SUFFICIENT_SET for its ancestor: " + sufficientSetVertexInComparison);
+                            }
+                            AtomicBoolean notAdded = new AtomicBoolean(true);
+                            treeBuilder.vertexMap().forEach((Consumer<EntityVertex>) treeBuilderEntityVertex -> {
+                                if (treeBuilderEntityVertex.mostSignificantBits() == sufficientSetVertexInComparison.mostSignificantBits() &&
+                                        treeBuilderEntityVertex.leastSignificantBits() == sufficientSetVertexInComparison.leastSignificantBits()) {
+                                    notAdded.set(false);
+                                }
+                            });
+                            if (notAdded.get()) {
+                                addFragment(sufficientSetVertexInComparison, this.comparisonTree, treeBuilder.getRoot().vertexIndex(), treeBuilder);
+                            }
+                        } else if (this.comparisonTree.hasPredecessorVertexWithMeaning(elementToAdd, TinkarTerm.INCLUSION_SET)) {
+                            // There can be multiple implication sets
+                            //@TODO simple algorithm for now, just add all implication sets. In the future, do more complete comparison.
+                            int andParentIndex =
+                                    this.comparisonVisitData().predecessorIndex(elementToAdd.vertexIndex()).getAsInt();
+                            if (this.comparisonTree.vertex(andParentIndex).getMeaningNid() != TinkarTerm.AND.nid()) {
+                                throw new IllegalStateException("Element to add does not have AND for its parent: " + this.comparisonTree.vertex(andParentIndex));
+                            }
+                            int implicationSetIndexInComparison = this.comparisonVisitData().predecessorIndex(andParentIndex).getAsInt();
+                            EntityVertex implicationSetVertexInComparison = this.comparisonTree.vertex(implicationSetIndexInComparison);
+                            if (implicationSetVertexInComparison.getMeaningNid() != TinkarTerm.INCLUSION_SET.nid()) {
+                                throw new IllegalStateException("Element to add does not have IMPLICATION_SET for its ancestor: " + implicationSetVertexInComparison);
+                            }
+                            AtomicBoolean notAdded = new AtomicBoolean(true);
+                            treeBuilder.vertexMap().forEach((Consumer<EntityVertex>) treeBuilderEntityVertex -> {
+                                if (treeBuilderEntityVertex.mostSignificantBits() == implicationSetVertexInComparison.mostSignificantBits() &&
+                                        treeBuilderEntityVertex.leastSignificantBits() == implicationSetVertexInComparison.leastSignificantBits()) {
+                                    notAdded.set(false);
+                                }
+                            });
+                            if (notAdded.get()) {
+                                addFragment(implicationSetVertexInComparison, this.comparisonTree, treeBuilder.getRoot().vertexIndex(), treeBuilder);
+                            }
+                        } else if (this.comparisonTree.hasPredecessorVertexWithMeaning(elementToAdd, TinkarTerm.PROPERTY_SET)) {
+                            // Easy case is if it is inside  the property set, since there is only one property set
+                            BitSet propertySetIndexes = this.referenceVisitData().propertySetIndexes();
+                            switch (propertySetIndexes.cardinality()) {
+                                case 0 -> {
+                                    // If there are no property sets, we can start the merge with a new property set...
+                                    int propertySetIndexInComparison =
+                                            this.comparisonVisitData().necessarySetIndexes().nextSetBit(0);
+                                    EntityVertex propertySetVertexInComparison = this.comparisonTree.vertex(propertySetIndexInComparison);
+                                    addFragment(propertySetVertexInComparison, this.comparisonTree, treeBuilder.getRoot().vertexIndex(), treeBuilder);
+                                }
+                                case 1 -> {
+                                    // Find the AND under the property set...
+                                    DiTreeEntity tree = treeBuilder.build();
+                                    EntityVertex propertySet = tree.firstVertexWithMeaning(TinkarTerm.PROPERTY_SET).get();
+                                    ImmutableList<EntityVertex> propertySetSuccessors = tree.successors(propertySet);
+
+                                    propertySetSuccessors.getFirstOptional().ifPresent(andVertex -> {
+                                        if (andVertex.getMeaningNid() != TinkarTerm.AND.nid()) {
+                                            throw new IllegalStateException("Missing property set and: " + tree);
+                                        }
+                                        addFragment(elementToAdd, this.comparisonTree, andVertex.vertexIndex(), treeBuilder);
+                                    });
+                                }
+                                default ->
+                                        throw new IllegalStateException("More than one property set found: " + propertySetIndexes);
+                            }
+                        }
                     }
+                } else {
+                    throw new IllegalStateException("Element to add does not have a predecessor: " + elementToAdd);
+                }
+                this.mergedTree = treeBuilder.build();
+                if (stopwatch != null) {
+                    stopwatch.end(FULL_COMPARISON);
                 }
             });
-            this.mergedTree = treeBuilder.build();
-        }
-        if (stopwatch != null) {
-            stopwatch.end(FULL_COMPARISON);
         }
         return this;
     }

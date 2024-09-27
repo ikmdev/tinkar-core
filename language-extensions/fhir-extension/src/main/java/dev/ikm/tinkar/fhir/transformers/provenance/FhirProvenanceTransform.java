@@ -19,17 +19,22 @@ import dev.ikm.tinkar.fhir.transformers.FhirUtils;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.hl7.fhir.r4.model.*;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import static dev.ikm.tinkar.fhir.transformers.FhirConstants.*;
 
 public class FhirProvenanceTransform {
 
+    public static Date dateFormatter(Date date) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
 
-    public static Provenance provenanceTransform(String reference, Date oldestOfTheLatestDate, Date latestOfTheLatestDate){
+        calendar.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return calendar.getTime();
+    }
+
+    public static Provenance provenanceTransform(String reference, Date oldestOfTheLatestDate, Date latestOfTheLatestDate) {
+
         Provenance provenance = new Provenance();
         provenance.setId(UUID.randomUUID().toString());
         provenance.setMeta(new Meta().addProfile(TERMINOLOGY_CHANGESET_PROVENANCE_PROFILE));
@@ -59,9 +64,11 @@ public class FhirProvenanceTransform {
         provenance.addAgent().setType(custodianCodeAbleConcept)
                 .setWho(new Reference().setDisplay("Integrated Knowledge Management"));
 
+        Identifier identifier = new Identifier();
+        identifier.setValue(TERMINOLOGY_CODESYSTEM_VARIABLE_ROLE_URL);
         provenance.addEntity().setRole(Provenance.ProvenanceEntityRole.REVISION)
-                .setWhat(new Reference().setReference(TERMINOLOGY_CODESYSTEM_VARIABLE_ROLE_URL)
-                        .setDisplay("EvidenceVariableRole"));
+                .setWhat(new Reference().setIdentifier(identifier)
+                        .setDisplay("SNOMED CT"));
 
         Bundle provenanceBundle = new Bundle();
         provenanceBundle.setType(Bundle.BundleType.BATCH);

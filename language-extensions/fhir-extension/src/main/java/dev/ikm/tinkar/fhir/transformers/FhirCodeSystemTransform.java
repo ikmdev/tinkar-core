@@ -48,22 +48,21 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
     private final Stream<ConceptEntity<? extends ConceptEntityVersion>> concepts;
     private final CodeSystem codeSystem;
     private final Consumer<String> fhirAndProvenanceJson;
-
     private Date fromDate;
     private Date toDate;
-
     private Date oldestOfTheLatestDate;
     private Date latestOfTheLatestDate;
+
 
     public FhirCodeSystemTransform(StampCalculator stampCalculator, List<ConceptEntity<? extends ConceptEntityVersion>> concepts, Consumer<String> fhirAndProvenanceJson) {
         this(stampCalculator, concepts.stream(), fhirAndProvenanceJson);
     }
+
     public FhirCodeSystemTransform(StampCalculator stampCalculator, Stream<ConceptEntity<? extends ConceptEntityVersion>> concepts, Consumer<String> fhirAndProvenanceJson) {
         this.fhirAndProvenanceJson = fhirAndProvenanceJson;
         this.stampCalculatorWithCache = stampCalculator;
         this.codeSystem = new CodeSystem();
         this.concepts = concepts;
-
     }
 
     public FhirCodeSystemTransform(long fromDate, long toDate, StampCalculator stampCalculator,
@@ -76,25 +75,26 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
         this.toDate = new Date(toDate);
     }
 
-    private void retrieveOldestOfLatest(StampEntity<?> stampEntity){
-       StampEntityVersion latestVersion = stampCalculatorWithCache.latest(stampEntity).get();
-       long latestVersionTime=latestVersion.stamp().time();
-       Date date =new Date(latestVersionTime);
-       if(oldestOfTheLatestDate == null || oldestOfTheLatestDate.after(date)){
+    private void retrieveOldestOfLatest(StampEntity<?> stampEntity) {
+        StampEntityVersion latestVersion = stampCalculatorWithCache.latest(stampEntity).get();
+        long latestVersionTime = latestVersion.stamp().time();
+        Date date = new Date(latestVersionTime);
+        if (oldestOfTheLatestDate == null || oldestOfTheLatestDate.after(date)) {
             oldestOfTheLatestDate = date;
-       }
+        }
     }
 
-    private void retrieveLatestDate(StampEntity<?> stampEntity){
+    private void retrieveLatestDate(StampEntity<?> stampEntity) {
         StampEntityVersion latestVersion = stampCalculatorWithCache.latest(stampEntity).get();
-        long latestVersionTime=latestVersion.stamp().time();
-        Date date =new Date(latestVersionTime);
-        if(latestOfTheLatestDate == null || latestOfTheLatestDate.before(date)){
+        long latestVersionTime = latestVersion.stamp().time();
+        Date date = new Date(latestVersionTime);
+        if (latestOfTheLatestDate == null || latestOfTheLatestDate.before(date)) {
             latestOfTheLatestDate = date;
         }
     }
 
-    private void forEachSemanticForComponent(int conceptNid){
+
+    private void forEachSemanticForComponent(int conceptNid) {
         Latest<EntityVersion> latestConceptVersion = stampCalculatorWithCache.latest(conceptNid);
         latestConceptVersion.ifPresent(conceptEntity -> {
             retrieveOldestOfLatest(conceptEntity.stamp());
@@ -110,25 +110,25 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
                 latestSemanticVersion.ifPresent(semanticEntityVersion -> {
                     retrieveOldestOfLatest(semanticEntityVersion.stamp());
                     retrieveLatestDate(semanticEntityVersion.stamp());
-                    if(semanticEntityVersion.patternNid() == PrimitiveData.get().nidForPublicId(IDENTIFIER_PATTERN.publicId())){
+                    if (semanticEntityVersion.patternNid() == PrimitiveData.get().nidForPublicId(IDENTIFIER_PATTERN.publicId())) {
                         FhirIdentifierTransform fhirIdentifierTransform = new FhirIdentifierTransform();
                         List<Extension> identifierExtensions = fhirIdentifierTransform.transformIdentifierSemantic(semanticEntityVersion);
                         concept.getExtension().addAll(identifierExtensions);
-                    }else  if(semanticEntityVersion.patternNid() == PrimitiveData.get().nidForPublicId(TinkarTerm.DESCRIPTION_PATTERN.publicId())){
-                        List<CodeSystem.ConceptDefinitionDesignationComponent> designations  = concept.getDesignation();
+                    } else if (semanticEntityVersion.patternNid() == PrimitiveData.get().nidForPublicId(TinkarTerm.DESCRIPTION_PATTERN.publicId())) {
+                        List<CodeSystem.ConceptDefinitionDesignationComponent> designations = concept.getDesignation();
                         FhirDescriptionTransformation descriptionTransformation = new FhirDescriptionTransformation(stampCalculatorWithCache);
                         designations.addAll(descriptionTransformation.transformDescription(semanticEntity));
-                    }else if(semanticEntityVersion.patternNid() == PrimitiveData.get().nidForPublicId(AXIOM_SYNTAX_PATTERN.publicId())) {
-                        CodeSystem.ConceptPropertyComponent axiomProperty= new CodeSystem.ConceptPropertyComponent();
+                    } else if (semanticEntityVersion.patternNid() == PrimitiveData.get().nidForPublicId(AXIOM_SYNTAX_PATTERN.publicId())) {
+                        CodeSystem.ConceptPropertyComponent axiomProperty = new CodeSystem.ConceptPropertyComponent();
                         concept.addProperty(axiomProperty);
                         axiomProperty.setCode(AXIOM_SYNTAX_PATTERN.description());
                         StringType stringType = new StringType();
                         stringType.setValue(semanticEntityVersion.fieldValues().get(0).toString());
                         axiomProperty.setValue(stringType);
-                    }else if(semanticEntityVersion.patternNid() == PrimitiveData.get().nidForPublicId(EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.publicId())) {
+                    } else if (semanticEntityVersion.patternNid() == PrimitiveData.get().nidForPublicId(EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.publicId())) {
                         FhirStatedDefinitionTransformer fhirStatedDefinitionTransformer = new FhirStatedDefinitionTransformer(stampCalculatorWithCache);
                         concept.getProperty().addAll(fhirStatedDefinitionTransformer.transfromAxiomSemantics(semanticEntity, EL_PLUS_PLUS_STATED_AXIOMS_PATTERN));
-                    }else if(semanticEntityVersion.patternNid() == PrimitiveData.get().nidForPublicId(EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.publicId())) {
+                    } else if (semanticEntityVersion.patternNid() == PrimitiveData.get().nidForPublicId(EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.publicId())) {
                         FhirStatedDefinitionTransformer fhirStatedDefinitionTransformer = new FhirStatedDefinitionTransformer(stampCalculatorWithCache);
                         concept.getProperty().addAll(fhirStatedDefinitionTransformer.transfromAxiomSemantics(semanticEntity, EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN));
                     }
@@ -139,14 +139,14 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
     }
 
     private CodeSystem.ConceptPropertyComponent generateStatusProperty(Latest<EntityVersion> latestConceptVersion) {
-        CodeSystem.ConceptPropertyComponent property= new CodeSystem.ConceptPropertyComponent();
+        CodeSystem.ConceptPropertyComponent property = new CodeSystem.ConceptPropertyComponent();
         property.setCode(STATUS);
         StampEntity<StampEntityVersion> stampEntity = EntityService.get().getEntityFast(latestConceptVersion.get().stampNid());
         State state = stampCalculatorWithCache.latest(stampEntity).get().state();
         Coding coding = null;
-        if(state == ACTIVE){
+        if (state == ACTIVE) {
             coding = generateCodingObject(stampCalculatorWithCache, ACTIVE_VALUE_SNOMEDID);
-        }else if(state == INACTIVE){
+        } else if (state == INACTIVE) {
             coding = generateCodingObject(stampCalculatorWithCache, INACTIVE_VALUE_SNOMEDID);
         }
         property.setValue(coding);
@@ -156,7 +156,7 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
 
     @Override
     public Void compute() throws Exception {
-        if(stampCalculatorWithCache == null){
+        if (stampCalculatorWithCache == null) {
             throw new ExceptionInInitializerError("Stamp Calculator has not been initialized.");
         }
         FhirStaticData.generateCodeSystemExtensionContent(codeSystem);
@@ -166,27 +166,38 @@ public class FhirCodeSystemTransform extends TrackingCallable<Void> {
         FhirStaticData.generateCodeSystemPropertyContent(codeSystem);
 
         concepts.forEach(concept -> {
-            if(LOG.isDebugEnabled()){
-                LOG.debug("Processing Concept : {}",  concept);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Processing Concept : {}", concept);
             }
             forEachSemanticForComponent(concept.nid());
         });
 
-        Provenance provenance = FhirProvenanceTransform.provenanceTransform("CodeSystem/"+codeSystem.getId(), fromDate, toDate);
+        Provenance provenance = FhirProvenanceTransform.provenanceTransform(CODESYSTEM + codeSystem.getId(), fromDate, toDate);
+        Bundle.BundleEntryRequestComponent codeSystemRequest = new Bundle.BundleEntryRequestComponent();
+        codeSystemRequest.setMethod(Bundle.HTTPVerb.POST)
+                .setUrl("CodeSystem");
+
+        Bundle.BundleEntryRequestComponent provenanceRequest = new Bundle.BundleEntryRequestComponent();
+        provenanceRequest.setMethod(Bundle.HTTPVerb.POST)
+                .setUrl("Provenance");
+
         Bundle bundle = new Bundle();
-        bundle.setType(Bundle.BundleType.COLLECTION);
+        bundle.setType(Bundle.BundleType.TRANSACTION);
         bundle.addEntry()
                 .setResource(codeSystem)
-                .setFullUrl("urn:uuid:" + codeSystem.getIdElement().getValue());
+                .setFullUrl(codeSystem.getResourceType().name() + "/" + codeSystem.getIdElement().getValue())
+                .setRequest(codeSystemRequest);
+
         bundle.addEntry()
                 .setResource(provenance)
-              .setFullUrl("urn:uuid:"+provenance.getIdElement().getValue());
+                .setFullUrl(provenance.getResourceType().name() + "/" + provenance.getIdElement().getValue())
+                .setRequest(provenanceRequest);
 
         FhirContext ctx = FhirContext.forR4();
         IParser parser = ctx.newJsonParser();
 
         String bundleJson = parser.setPrettyPrint(true).encodeResourceToString(bundle);
-        if(LOG.isDebugEnabled()){
+        if (LOG.isDebugEnabled()) {
             LOG.debug(bundleJson);
         }
         fhirAndProvenanceJson.accept(bundleJson);

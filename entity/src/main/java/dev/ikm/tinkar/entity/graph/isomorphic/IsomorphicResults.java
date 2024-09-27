@@ -20,13 +20,13 @@ import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 
 import java.util.List;
+import java.util.TreeSet;
 
 //~--- interfaces -------------------------------------------------------------
 
 /**
  * Computed results of an isomorphic comparison of two expressions: the
  * reference expression and the comparison expression.
- * 
  */
 public interface IsomorphicResults {
     public enum EndPoints {
@@ -38,8 +38,17 @@ public interface IsomorphicResults {
      * @return roots for connected nodes that comprise is-a, typed relationships, or relationship groups that are
      *  in the referenceExpression, but not in the comparisonExpression.
      */
-    List<EntityVertex> getAddedRelationshipRoots();
+    List<EntityVertex> getAddedSetElements();
 
+    /**
+     * Returns the TreeSet of SetElementKeys that represent the added set elements.
+     * <p>
+     * The SetElementKey class is used to uniquely identify set elements based on their vertex index and
+     * the concepts referenced at or below the vertex.
+     *
+     * @return TreeSet of SetElementKeys representing the added set elements.
+     */
+    TreeSet<SetElementKey> getAddedSetElementKeys();
     /**
      * Gets the additional node roots.
      *
@@ -70,7 +79,15 @@ public interface IsomorphicResults {
      * @return roots for connected nodes that comprise is-a, typed relationships, or relationship groups that are
      * in the comparisonExpression, but not in the referenceExpression.
      */
-    List<EntityVertex> getDeletedRelationshipRoots();
+    List<EntityVertex> getDeletedSetElements();
+
+    /**
+     * Retrieve the TreeSet of SetElementKeys that represent the deleted set elements.
+     *
+     * @return A TreeSet of SetElementKeys, where each key uniquely identifies a deleted set element
+     *         based on its vertex index and the concepts referenced at or below the vertex.
+     */
+    TreeSet<SetElementKey> getDeletedSetElementKeys();
 
     /**
      * Gets the isomorphic expression.
@@ -100,7 +117,7 @@ public interface IsomorphicResults {
      * @return roots for connected nodes that comprise is-a, typed relationships, or relationship groups that are
      *  in both the referenceExpression and in the comparisonExpression.
      */
-    List<EntityVertex> getSharedRelationshipRoots();
+    List<EntityVertex> getSharedSetElements();
 
     /**
      *
@@ -108,4 +125,3 @@ public interface IsomorphicResults {
      */
     boolean equivalent();
 }
-

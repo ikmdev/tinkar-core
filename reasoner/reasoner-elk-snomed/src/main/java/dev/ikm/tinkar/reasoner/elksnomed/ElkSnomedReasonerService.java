@@ -37,11 +37,11 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedReasonerService.class);
 
-	private ElkSnomedData data;
+	protected ElkSnomedData data;
 
-	private ElkSnomedDataBuilder builder;
+	protected ElkSnomedDataBuilder builder;
 
-	private SnomedOntology ontology;
+	protected SnomedOntology ontology;
 
 	private SnomedOntologyReasoner reasoner;
 
@@ -97,7 +97,7 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 		return data.getReasonerConceptSet();
 	}
 
-	private ImmutableIntSet toIntSet(Set<Long> classes) {
+	protected ImmutableIntSet toIntSet(Set<Long> classes) {
 		if (classes == null)
 			return null;
 		MutableIntSet parentNids = IntSets.mutable.withInitialCapacity(classes.size());
