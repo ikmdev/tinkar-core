@@ -19,6 +19,7 @@ import dev.ikm.tinkar.entity.EntityCountSummary;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -35,13 +36,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class ProtobufRoundTripIT extends TestHelper {
+public class ProtobufRoundTripIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProtobufRoundTripIT.class);
 
     @BeforeAll
-    public void setupSuite() {
-        startEphemeralDataBase();
+    public void beforeAll() {
+        TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
     }
 
     /**
@@ -77,15 +78,15 @@ public class ProtobufRoundTripIT extends TestHelper {
         long actualProtobufExportCount = exportEntitiesToProtobufFile.compute().getTotalCount();
         LOG.info("Entities exported to protobuf: " + actualProtobufExportCount);
 
-        stopDatabase();
-        startEphemeralDataBase();
+        TestHelper.stopDatabase();
+        TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
 
         // When we import protobuf data into entities
         LoadEntitiesFromProtobufFile loadEntitiesFromProtobufFile = new LoadEntitiesFromProtobufFile(fileProtobuf);
         long actualProtobufImportCount = loadEntitiesFromProtobufFile.compute().getTotalCount();
         LOG.info("Entities loaded from protobuf: " + actualProtobufImportCount);
 
-//         Then all imported and exported entities counts should match
+        // Then all imported and exported entities counts should match
         boolean boolEntityCount = count.getTotalCount() == actualProtobufExportCount && count.getTotalCount() == actualProtobufImportCount;
         assertTrue(count.getTotalCount() > 0, "Imported DTO count should be greater than zero.");
         assertTrue(actualProtobufExportCount > 0, "Exported Protobuf count should be greater than zero.");

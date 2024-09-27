@@ -23,37 +23,42 @@ import dev.ikm.tinkar.entity.util.EntityCounter;
 import dev.ikm.tinkar.entity.util.EntityProcessor;
 import dev.ikm.tinkar.entity.util.EntityRealizer;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class EphemeralProtobufIT extends TestHelper {
+public class EphemeralProtobufIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(EphemeralProtobufIT.class);
 
     @BeforeAll
-    public void setupSuite() {
-       startEphemeralDataBase();
+    public static void beforeAll() {
+        TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
     }
-
 
     @Test
     @Order(1)
-    public void loadProtoBufFile() throws IOException {
+    public void loadProtoBufFile() {
         File file = TestConstants.PB_STARTER_DATA_REASONED;
         LoadEntitiesFromProtobufFile loadProto = new LoadEntitiesFromProtobufFile(file);
-        EntityCountSummary count = loadProto.compute();
-        LOG.info(count + " entitles loaded from file: " + loadProto.summarize() + "\n\n");
+        EntityCountSummary entityCountSummary = loadProto.compute();
+        LOG.info(entityCountSummary.getTotalCount() + " entities loaded from file: " + loadProto.summarize() + "\n\n");
     }
+
     @Test
     @Order(2)
-    public void countDTO(){
+    public void countEntities(){
         EntityProcessor processor = new EntityCounter();
         PrimitiveData.get().forEach(processor);
         LOG.info("EPH Sequential count: \n" + processor.report() + "\n\n");
@@ -76,10 +81,11 @@ public class EphemeralProtobufIT extends TestHelper {
 
     @Test
     @Order(3)
-    public void exportEntitiesToProtobuf() throws IOException {
+    public void exportEntitiesToProtobuf() {
         File file = TestConstants.PB_TEST_FILE;
         ExportEntitiesToProtobufFile exportEntitiesToProtobufFile = new ExportEntitiesToProtobufFile(file);
-        exportEntitiesToProtobufFile.compute();
+        EntityCountSummary entityCountSummary = exportEntitiesToProtobufFile.compute();
+        LOG.info(entityCountSummary.getTotalCount() + " entities exported from file");
     }
 
 }

@@ -41,7 +41,7 @@ public class SnomedToEntityIdentifierIT {
     SnomedToEntityIdentifier transformer;
 
     @BeforeEach
-    public void setup() {
+    public void beforeEach() {
         transformer = new SnomedToEntityIdentifier();
     }
 
