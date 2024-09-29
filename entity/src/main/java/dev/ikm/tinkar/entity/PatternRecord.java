@@ -28,7 +28,7 @@ public record PatternRecord(
         long mostSignificantBits, long leastSignificantBits,
         long[] additionalUuidLongs, int nid,
         ImmutableList<PatternVersionRecord> versions)
-        implements PatternEntity<PatternVersionRecord>, PatternRecordBuilder.With {
+        implements PatternEntity<PatternVersionRecord>, ImmutableEntity<PatternVersionRecord>, PatternRecordBuilder.With {
 
     public PatternRecord {
         Validator.notZero(mostSignificantBits);

@@ -31,7 +31,7 @@ public record SemanticRecord(
         long mostSignificantBits, long leastSignificantBits,
         long[] additionalUuidLongs, int nid, int patternNid, int referencedComponentNid,
         ImmutableList<SemanticVersionRecord> versions)
-        implements SemanticEntity<SemanticVersionRecord>, SemanticRecordBuilder.With {
+        implements SemanticEntity<SemanticVersionRecord>, ImmutableEntity<SemanticVersionRecord>, SemanticRecordBuilder.With {
 
         public SemanticRecord {
             Validator.notZero(mostSignificantBits);

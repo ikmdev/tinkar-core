@@ -28,7 +28,7 @@ import io.soabase.recordbuilder.core.RecordBuilder;
 public record StampVersionRecord(StampRecord chronology,
                                  int stateNid, long time, int authorNid,
                                  int moduleNid,
-                                 int pathNid) implements StampEntityVersion, StampVersionRecordBuilder.With {
+                                 int pathNid) implements StampEntityVersion, ImmutableVersion, StampVersionRecordBuilder.With {
 
 
     public StampVersionRecord {

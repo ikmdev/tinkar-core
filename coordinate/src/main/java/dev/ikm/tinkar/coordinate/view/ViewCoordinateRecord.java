@@ -40,7 +40,7 @@ public record ViewCoordinateRecord(StampCoordinateRecord stampCoordinate,
                                    LogicCoordinateRecord logicCoordinate,
                                    NavigationCoordinateRecord navigationCoordinate,
                                    EditCoordinateRecord editCoordinate)
-        implements ViewCoordinate, ImmutableCoordinate, ViewCoordinateRecordBuilder.With {
+        implements ViewCoordinate, ViewCoordinateImmutable, ViewCoordinateRecordBuilder.With {
 
     public static ViewCoordinateRecord make(StampCoordinateRecord viewStampFilter,
                                             LanguageCoordinate languageCoordinate,

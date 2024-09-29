@@ -47,7 +47,7 @@ import java.util.Set;
 @RecordBuilder
 public record StampCoordinateRecord(StateSet allowedStates, StampPositionRecord stampPosition, IntIdSet moduleNids,
                                     IntIdSet excludedModuleNids, IntIdList modulePriorityNidList)
-        implements StampCoordinate, ImmutableCoordinate, StampCoordinateRecordBuilder.With {
+        implements StampCoordinate, ImmutableCoordinate, StampCoordinateImmutable, StampCoordinateRecordBuilder.With {
 
     @Decoder
     public static StampCoordinateRecord decode(DecoderInput in) {
