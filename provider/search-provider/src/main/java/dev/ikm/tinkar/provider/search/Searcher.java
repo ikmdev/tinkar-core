@@ -20,17 +20,20 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
+import dev.ikm.tinkar.component.Component;
+import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
 import dev.ikm.tinkar.coordinate.navigation.NavigationCoordinateRecord;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculator;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
-import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
+import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.PatternEntity;
-import dev.ikm.tinkar.entity.SemanticEntity;
+import dev.ikm.tinkar.entity.PatternEntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -378,21 +381,31 @@ public class Searcher {
     }
 
     /**
-     * Returns PublicId for the Concept associated with a Semantic containing a field with the given identifier
+     * Returns PublicId for the Concept associated with a Semantic containing fields with the given identifier source and value
      *
-     * @param   identifier String identifier
-     * @return  Optional wrapped PublicId for the Concept associated with the Semantic containing the identifier
+     * @param   identifierSource PublicId identifierSource
+     * @param   identifierValue String identifierValue
+     * @return  Optional wrapped PublicId for the Concept associated with the Semantic containing the identifier source and value
      */
-    public static Optional<PublicId> getPublicId(String identifier) {
+    public static Optional<PublicId> getPublicId(PublicId identifierSource, String identifierValue) {
+        ViewCalculator viewCalc = Calculators.View.Default();
+        Latest<PatternEntityVersion> latestIdPattern = viewCalc.latestPatternEntityVersion(TinkarTerm.IDENTIFIER_PATTERN);
+
+        if (latestIdPattern.isAbsent()) {
+            throw new RuntimeException("Identifier Pattern is absent from data set");
+        }
+
         try {
-            Entity<?> identifierPattern = EntityService.get().getEntity(TinkarTerm.IDENTIFIER_PATTERN).get();
-            int[] semanticNids = EntityService.get().semanticNidsOfPattern(identifierPattern.nid());
+            int[] semanticNids = EntityService.get().semanticNidsOfPattern(TinkarTerm.IDENTIFIER_PATTERN.nid());
             for (int nid : semanticNids) {
-                Entity<EntityVersion> entity = EntityService.get().getEntity(nid).get();
-                if (entity instanceof SemanticEntity<?> semanticEntity) {
-                    SemanticEntityVersion latestVersion = defaultNavigationCalculator().stampCalculator().latest(semanticEntity).get();
-                    if (latestVersion.fieldValues().contains(identifier)) {
-                        return Optional.of(latestVersion.referencedComponent().publicId());
+                EntityVersion entityVersion = viewCalc.latest(nid).get();
+                if (entityVersion instanceof SemanticEntityVersion semanticEntityVersion) {
+                    Object idValue = latestIdPattern.get().getFieldWithMeaning(TinkarTerm.IDENTIFIER_VALUE, semanticEntityVersion);
+                    if (identifierValue != null && identifierValue.equals(idValue)) {
+                        Component idSource = latestIdPattern.get().getFieldWithMeaning(TinkarTerm.IDENTIFIER_SOURCE, semanticEntityVersion);
+                        if (identifierSource != null && idSource != null && PublicId.equals(idSource.publicId(), identifierSource)) {
+                            return Optional.of(semanticEntityVersion.referencedComponent().publicId());
+                        }
                     }
                 }
             }
