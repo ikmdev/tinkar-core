@@ -34,15 +34,6 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SnomedLanguageSemanticMultipleVersionsIT {
 
-    @BeforeEach
-    void setUp() {
-    }
-
-    @AfterEach
-    void tearDown() {
-    }
-
-
     @Test
     @DisplayName("Language Acceptability Semantic with multiple versions")
     @Order(1)

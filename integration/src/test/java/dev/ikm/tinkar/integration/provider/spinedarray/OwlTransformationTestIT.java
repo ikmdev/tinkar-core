@@ -15,13 +15,28 @@
  */
 package dev.ikm.tinkar.integration.provider.spinedarray;
 
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.ConceptRecord;
+import dev.ikm.tinkar.entity.ConceptRecordBuilder;
+import dev.ikm.tinkar.entity.ConceptVersionRecord;
+import dev.ikm.tinkar.entity.ConceptVersionRecordBuilder;
+import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityVersion;
+import dev.ikm.tinkar.entity.RecordListBuilder;
+import dev.ikm.tinkar.entity.SemanticRecord;
+import dev.ikm.tinkar.entity.SemanticRecordBuilder;
+import dev.ikm.tinkar.entity.SemanticVersionRecord;
+import dev.ikm.tinkar.entity.SemanticVersionRecordBuilder;
+import dev.ikm.tinkar.entity.StampRecord;
+import dev.ikm.tinkar.entity.StampRecordBuilder;
+import dev.ikm.tinkar.entity.StampVersionRecord;
+import dev.ikm.tinkar.entity.StampVersionRecordBuilder;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.ext.lang.owl.Rf2OwlToLogicAxiomTransformer;
 import dev.ikm.tinkar.ext.lang.owl.SctOwlUtilities;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -45,25 +60,26 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class OwlTransformationTestIT extends TestHelper {
+public class OwlTransformationTestIT {
     private static final Logger LOG = LoggerFactory.getLogger(OwlTransformationTestIT.class);
     public static final EntityProxy.Pattern IDENTIFIER_PATTERN = EntityProxy.Pattern.make("Identifier Pattern", UUID.fromString("5d60e14b-c410-5172-9559-3c4253278ae2"));
     public static final EntityProxy.Pattern AXIOM_SYNTAX_PATTERN = EntityProxy.Pattern.make("Axiom Syntax Pattern", UUID.fromString("c0ca180b-aae2-5fa1-9ab7-4a24f2dfe16b"));
-    private static final File SAP_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(OwlTransformationTestIT.class);
+    private static final File DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(OwlTransformationTestIT.class);
     private static final List<EntityProxy.Concept> testConceptList = Arrays.asList(
             EntityProxy.Concept.make("TESTCONCEPTONE", UUID.randomUUID()),
             EntityProxy.Concept.make("TESTCONCEPTTWO", UUID.randomUUID()),
             EntityProxy.Concept.make("TESTCONCEPTTHREE", UUID.randomUUID()));
 
     @BeforeEach
-    public void startup(){
-        loadSpinedArrayDataBase(SAP_DATASTORE_ROOT);
+    public void beforeEach(){
+        TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
         generateTestAxiomData(); // Write minimal axiom test data
     }
 
     @AfterEach
-    public  void breakdown(){
-        PrimitiveData.stop();
+    public void afterEach(){
+        TestHelper.stopDatabase();
     }
 
     @Test
@@ -309,4 +325,5 @@ public class OwlTransformationTestIT extends TestHelper {
         EntityService.get().putEntity(entity);
         return entity;
     }
+
 }

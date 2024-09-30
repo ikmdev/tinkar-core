@@ -21,75 +21,48 @@ import dev.ikm.tinkar.common.service.ServiceKeys;
 import dev.ikm.tinkar.common.service.ServiceProperties;
 import dev.ikm.tinkar.entity.EntityCountSummary;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
-import dev.ikm.tinkar.integration.TestConstants;
-import org.junit.jupiter.api.AfterAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
-import static dev.ikm.tinkar.integration.TestConstants.PB_STARTER_DATA_REASONED;
-
 public class TestHelper {
-
     private static final Logger LOG = LoggerFactory.getLogger(TestHelper.class);
 
-    protected static void startEphemeralDataBase() {
+    public static void startDataBase(DataStore dataStore, File fileDataStore) {
+        if (fileDataStore.exists()) {
+            LOG.warn("Datastore {} already exists. Loading this datastore may impact test results.\n" +
+                    "Consider leveraging Maven's clean lifecycle phase or `FileUtil.recursiveDelete` during test setup.", fileDataStore.getName());
+        }
         CachingService.clearAll();
         LOG.info("Cleared caches");
+        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, fileDataStore);
+        startDataController(dataStore);
+    }
+
+    public static void startDataBase(DataStore dataStore) {
+        CachingService.clearAll();
+        LOG.info("Cleared caches");
+        startDataController(dataStore);
+    }
+
+    private static void startDataController(DataStore dataStore) {
         LOG.info("JVM Version: " + System.getProperty("java.version"));
         LOG.info("JVM Name: " + System.getProperty("java.vm.name"));
-        LOG.info("Setup Ephemeral Suite: " + LOG.getName());
         LOG.info(ServiceProperties.jvmUuid());
-        PrimitiveData.selectControllerByName(TestConstants.EPHEMERAL_STORE_NAME);
+        PrimitiveData.selectControllerByName(dataStore.CONTROLLER_NAME);
         PrimitiveData.start();
     }
 
-    protected static void startSpinedArrayDataBase(File fileDataStore) {
-        LOG.info("Clear caches");
-        CachingService.clearAll();
-        LOG.info("Setup Suite: " + LOG.getName());
-        LOG.info(ServiceProperties.jvmUuid());
-        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, fileDataStore);
-        //FileUtil.recursiveDelete(fileDataStore);
-        PrimitiveData.selectControllerByName(TestConstants.SA_STORE_OPEN_NAME);
-        PrimitiveData.start();
+    public static EntityCountSummary loadDataFile(File dataFile){
+        EntityCountSummary entityCountSummary = new LoadEntitiesFromProtobufFile(dataFile).compute();
+        LOG.info("Import complete for {}. Imported {} Entities.", dataFile.getName(), entityCountSummary.getTotalCount());
+        return entityCountSummary;
     }
 
-    protected static void startMVStoreDataBase(File fileDataStore) {
-        LOG.info("Clear caches");
-        CachingService.clearAll();
-        LOG.info("Setup suite: " + LOG.getName());
-        LOG.info(ServiceProperties.jvmUuid());
-        ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, fileDataStore);
-        PrimitiveData.selectControllerByName(TestConstants.MV_STORE_OPEN_NAME);
-        PrimitiveData.start();
-    }
-
-    protected static void loadEphemeralDataBase() {
-        startEphemeralDataBase();
-        loadDataBase();
-    }
-
-    protected static void loadSpinedArrayDataBase(File fileDataStore) {
-        startSpinedArrayDataBase(fileDataStore);
-        loadDataBase();
-    }
-
-    protected static void loadMVStoreDataBase(File fileDataStore) {
-        startMVStoreDataBase(fileDataStore);
-        loadDataBase();
-    }
-
-    protected static void loadDataBase() {
-        LoadEntitiesFromProtobufFile loadProto = new LoadEntitiesFromProtobufFile(PB_STARTER_DATA_REASONED);
-        EntityCountSummary count = loadProto.compute();
-        LOG.info(count + " entitles loaded from file: " + loadProto.summarize() + "\n\n");
-    }
-
-    @AfterAll
-    protected static void stopDatabase() {
+    public static void stopDatabase() {
         LOG.info("Teardown Suite: " + LOG.getName());
         PrimitiveData.stop();
     }
+
 }
