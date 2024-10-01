@@ -16,7 +16,6 @@
 package dev.ikm.tinkar.reasoner.elksnomed;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
@@ -30,8 +29,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dev.ikm.elk.snomed.SnomedDescriptions;
-import dev.ikm.elk.snomed.SnomedIds;
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.elk.snomed.owl.OwlTransformer;
@@ -39,24 +36,24 @@ import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 
-public class SnomedUS20230901ElkSnomedDataBuilderTestIT extends ElkSnomedDataBuilderTest {
+public class SnomedUS20240901ElkSnomedDataBuilderTestIT extends ElkSnomedDataBuilderTest {
 
 	@SuppressWarnings("unused")
-	private static final Logger LOG = LoggerFactory.getLogger(SnomedUS20230901ElkSnomedDataBuilderTestIT.class);
+	private static final Logger LOG = LoggerFactory.getLogger(SnomedUS20240901ElkSnomedDataBuilderTestIT.class);
 
 	static {
 		stated_count = 393479;
 		active_count = 370291;
 		inactive_count = 23188;
-		test_case = "snomed-us-20230901";
+		test_case = "snomed-us-20240901";
 	}
 
 	// TODO get all this back once test db are available
 
-	public static final String db = "SnomedCT_US_20230901_SpinedArray-20240920";
+	public static final String db = "Snomedct-us-20240901-spinedarray-data-20240920";
 
 	protected String getDir() {
-		// TODO data vs. db
+		// TODO
 //		return "target/data/snomed-test-data-" + getEditionDir() + "-" + getVersion();
 		return "target/db/snomed-test-data-" + getEditionDir() + "-" + getVersion();
 	}
@@ -70,7 +67,7 @@ public class SnomedUS20230901ElkSnomedDataBuilderTestIT extends ElkSnomedDataBui
 	}
 
 	protected String getVersion() {
-		return "20230901";
+		return "20240901";
 	}
 
 	protected Path axioms_file = Paths.get(getDir(),
@@ -78,9 +75,6 @@ public class SnomedUS20230901ElkSnomedDataBuilderTestIT extends ElkSnomedDataBui
 
 	protected Path rels_file = Paths.get(getDir(),
 			"sct2_Relationship_Snapshot_" + getEdition() + "_" + getVersion() + ".txt");
-
-	protected Path descriptions_file = Paths.get(getDir(),
-			"sct2_Description_Snapshot-en_" + getEdition() + "_" + getVersion() + ".txt");
 
 	@BeforeAll
 	public static void startPrimitiveData() throws IOException {
@@ -96,23 +90,14 @@ public class SnomedUS20230901ElkSnomedDataBuilderTestIT extends ElkSnomedDataBui
 		LOG.info("\t" + axioms_file);
 		LOG.info("\t" + rels_file);
 		ElkSnomedData data = buildSnomedData();
-		{
-			Concept us_con = data.getConcept(ElkSnomedData.getNid(SnomedIds.us_nlm_module));
-			assertNotNull(us_con);
-		}
 		int missing_concept_cnt = 0;
 		int missing_role_cnt = 0;
 		SnomedOwlOntology ontology = SnomedOwlOntology.createOntology();
 		ontology.loadOntology(axioms_file);
 		SnomedOntology snomedOntology = new OwlTransformer().transform(ontology);
-		snomedOntology.setDescriptions(SnomedDescriptions.init(descriptions_file));
-		{
-			Concept us_con = snomedOntology.getConcept(SnomedIds.us_nlm_module);
-			assertNotNull(us_con);
-			LOG.info(snomedOntology.getFsn(us_con.getId()));
-		}
 		for (Concept con : snomedOntology.getConcepts()) {
-			int nid = ElkSnomedData.getNid(con.getId());
+			UUID uuid = UuidUtil.fromSNOMED("" + con.getId());
+			int nid = PrimitiveData.nid(uuid);
 			Concept data_con = data.getConcept(nid);
 			if (data_con == null) {
 				LOG.error("No concept: " + con);
@@ -120,9 +105,8 @@ public class SnomedUS20230901ElkSnomedDataBuilderTestIT extends ElkSnomedDataBui
 				continue;
 			}
 			if (con.getDefinitions().size() != data_con.getDefinitions().size())
-				LOG.error("Definition size: " + con.getId() + " " + snomedOntology.getFsn(con.getId()) + "\n"
-						+ "Expect " + con.getDefinitions().size() + " Actual " + data_con.getDefinitions().size() + "\n"
-						+ nid + " " + UuidUtil.fromSNOMED("" + con.getId()));
+				LOG.error("Defs: " + con + " " + con.getDefinitions().size() + " " + data_con.getDefinitions().size()
+						+ " " + nid + " " + uuid);
 
 			if (con.getGciDefinitions().size() != data_con.getGciDefinitions().size())
 				LOG.error("Gcis: " + con);

@@ -17,23 +17,23 @@ package dev.ikm.tinkar.reasoner.hybrid;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
-import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.ikm.elk.snomed.SnomedIds;
 import dev.ikm.elk.snomed.SnomedOntology;
-import dev.ikm.elk.snomed.SnomedOntologyReasoner;
-import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology;
+import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology.SwecIds;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedReasonerService;
-import dev.ikm.tinkar.reasoner.service.ReasonerServiceBase;
 import dev.ikm.tinkar.terms.PatternFacade;
+import dev.ikm.tinkar.terms.TinkarTerm;
 
 public class HybridReasonerService extends ElkSnomedReasonerService {
 
@@ -41,19 +41,29 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 
 	private StatementSnomedOntology sso;
 
+	public static long getRootId() {
+		return TinkarTerm.ROOT_VERTEX.nid();
+	}
+
+	public static SwecIds getSwecNids() {
+		SwecIds swec_ids = new StatementSnomedOntology.SwecIds(getNid(StatementSnomedOntology.swec_id),
+				getNid(SnomedIds.root), getNid(StatementSnomedOntology.finding_context_id),
+				getNid(StatementSnomedOntology.known_absent_id));
+		return swec_ids;
+	}
+
+	public static int getNid(long sctid) {
+		UUID uuid = UuidUtil.fromSNOMED("" + sctid);
+		int nid = PrimitiveData.nid(uuid);
+		return nid;
+	}
+
 	@Override
 	public void init(ViewCalculator viewCalculator, PatternFacade statedAxiomPattern,
 			PatternFacade inferredAxiomPattern) {
 		super.init(viewCalculator, statedAxiomPattern, inferredAxiomPattern);
+		sso = null;
 	}
-
-//	@Override
-//	public void extractData() throws Exception {
-//		data = new ElkSnomedData();
-//		builder = new ElkSnomedDataBuilder(viewCalculator, statedAxiomPattern, data);
-//		builder.setProgressUpdater(progressUpdater);
-//		builder.build();
-//	};
 
 	@Override
 	public void loadData() throws Exception {
@@ -64,8 +74,8 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 
 	@Override
 	public void computeInferences() {
-		sso = StatementSnomedOntology.create(ontology);
-
+		sso = StatementSnomedOntology.create(ontology, HybridReasonerService.getRootId(), getSwecNids());
+		sso.classify();
 	}
 
 	@Override
@@ -80,16 +90,6 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 //		reasoner.process(concept);
 //		reasoner.flush();
 	}
-
-//	@Override
-//	public int getConceptCount() {
-//		return data.getActiveConceptCount();
-//	}
-
-//	@Override
-//	public ImmutableIntList getReasonerConceptSet() {
-//		return data.getReasonerConceptSet();
-//	}
 
 	@Override
 	public ImmutableIntSet getEquivalent(int id) {

@@ -34,6 +34,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.ikm.elk.snomed.SnomedIds;
 import dev.ikm.elk.snomed.SnomedIsa;
 import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -104,7 +105,7 @@ public class SnomedUS20230901ElkOwlClassifierTestIT extends SnomedUS20230901ElkO
 				continue;
 			}
 			Set<Long> parents = isas.getParents(sctid);
-			if (sctid == SnomedIsa.root) {
+			if (sctid == SnomedIds.root) {
 				assertTrue(parents.isEmpty());
 			} else {
 				assertNotNull(parents);

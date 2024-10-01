@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.ikm.elk.snomed.SnomedIds;
 import dev.ikm.elk.snomed.SnomedIsa;
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.elk.snomed.SnomedOntologyReasoner;
@@ -111,7 +112,7 @@ public class SnomedUS20230901ElkSnomedClassifierTestIT extends SnomedUS20230901E
 				continue;
 			}
 			Set<Long> parents = isas.getParents(sctid);
-			if (sctid == SnomedIsa.root) {
+			if (sctid == SnomedIds.root) {
 				assertTrue(parents.isEmpty());
 			} else {
 				assertNotNull(parents);
