@@ -16,8 +16,10 @@
 package dev.ikm.tinkar.terms;
 
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.component.Component;
+import org.eclipse.collections.api.list.ImmutableList;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -67,9 +69,8 @@ public class EntityProxy implements EntityFacade, PublicId {
         return new EntityProxy(description, uuids);
     }
 
-    @Override
-    public final PublicId publicId() {
-        return this;
+    public PublicId publicId() {
+        return PublicIds.of(uuids);
     }
 
     @Override
@@ -85,14 +86,14 @@ public class EntityProxy implements EntityFacade, PublicId {
                 return Arrays.equals(this.uuids, other.uuids);
             }
         }
-        if (o instanceof ComponentWithNid) {
-            return this.nid() == ((ComponentWithNid) o).nid();
+        if (o instanceof ComponentWithNid componentWithNid) {
+            return this.nid() == componentWithNid.nid();
         }
-        if (o instanceof PublicId) {
-            return PublicId.equals(this, (PublicId) o);
+        if (o instanceof PublicId publicId) {
+            return PublicId.equals(this.publicId(), publicId);
         }
-        if (o instanceof Component) {
-            return PublicId.equals(this, ((Component) o).publicId());
+        if (o instanceof Component component) {
+            return PublicId.equals(this.publicId(), component.publicId());
         }
         return false;
     }
@@ -101,7 +102,7 @@ public class EntityProxy implements EntityFacade, PublicId {
     public String toString() {
         return this.getClass().getSimpleName() + "{"
                 + description() +
-                " " + Arrays.toString(asUuidArray()) +
+                " " + Arrays.toString(uuids) +
                 "<" + cachedNid +
                 ">}";
     }
@@ -114,28 +115,6 @@ public class EntityProxy implements EntityFacade, PublicId {
     }
 
     @Override
-    public UUID[] asUuidArray() {
-        if (this.uuids == null) {
-            this.uuids = PrimitiveData.publicId(nid()).asUuidArray();
-        }
-        return this.uuids;
-    }
-
-    @Override
-    public int uuidCount() {
-        return asUuidArray().length;
-    }
-
-    @Override
-    public void forEach(LongConsumer consumer) {
-        for (UUID uuid : asUuidArray()) {
-            consumer.accept(uuid.getMostSignificantBits());
-            consumer.accept(uuid.getLeastSignificantBits());
-        }
-
-    }
-
-    @Override
     public final int nid() {
         if (cachedNid == 0) {
             cachedNid = PrimitiveData.get().nidForUuids(uuids);
@@ -143,7 +122,37 @@ public class EntityProxy implements EntityFacade, PublicId {
         return cachedNid;
     }
 
-    public static class Concept extends EntityProxy implements ConceptFacade, PublicId {
+    @Override
+    public ImmutableList<UUID> asUuidList() {
+        return PublicId.super.asUuidList();
+    }
+
+    @Override
+    public UUID[] asUuidArray() {
+        return publicId().asUuidArray();
+    }
+
+    @Override
+    public int compareTo(PublicId o) {
+        return publicId().compareTo(o);
+    }
+
+    @Override
+    public boolean contains(UUID uuid) {
+        return publicId().contains(uuid);
+    }
+
+    @Override
+    public int uuidCount() {
+        return publicId().uuidCount();
+    }
+
+    @Override
+    public void forEach(LongConsumer consumer) {
+        publicId().forEach(consumer);
+    }
+
+    public static class Concept extends EntityProxy implements ConceptFacade {
 
 
         private Concept(int conceptNid) {

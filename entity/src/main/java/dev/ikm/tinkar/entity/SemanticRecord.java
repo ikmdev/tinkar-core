@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.entity;
 
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
 import dev.ikm.tinkar.terms.PatternFacade;
@@ -139,6 +140,10 @@ public record SemanticRecord(
 
     public SemanticAnalogueBuilder without(SemanticVersionRecord versionToAdd) {
         return analogueBuilder().remove(versionToAdd);
+    }
+
+    public PublicId publicId() {
+        return PublicIds.of(asUuidArray());
     }
 
 }
