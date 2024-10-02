@@ -20,12 +20,15 @@ import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.component.Component;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.function.LongConsumer;
 
 public class EntityProxy implements EntityFacade, PublicId {
+    private static final Logger log = LoggerFactory.getLogger(EntityProxy.class);
     /**
      * Universal identifiers for the concept proxied by the this object.
      */
@@ -44,6 +47,8 @@ public class EntityProxy implements EntityFacade, PublicId {
      */
     protected EntityProxy(int nid) {
         this.cachedNid = nid;
+        this.uuids = PrimitiveData.publicId(nid).asUuidArray();
+        this.description = PrimitiveData.text(nid);
     }
 
     protected EntityProxy(String description, UUID[] uuids) {

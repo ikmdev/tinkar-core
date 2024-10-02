@@ -51,6 +51,9 @@ public class PublicIds {
     }
 
     public static final PublicId of(UUID... uuids) {
+        if (uuids == null) {
+            throw new IllegalStateException("UUIDs cannot be null");
+        }
         if (uuids.length == 1) {
             return new PublicId1(uuids[0]);
         }
@@ -72,6 +75,9 @@ public class PublicIds {
     }
 
     public static final PublicId of(long... uuidParts) {
+        if (uuidParts == null) {
+            throw new IllegalStateException("uuidParts cannot be null");
+        }
         if (uuidParts.length == 2) {
             return new PublicId1(uuidParts[0], uuidParts[1]);
         }
