@@ -76,7 +76,7 @@ public class JavaTemplates {
                  ${patternFieldDefinitions}
                  * <ul>
                  */
-                public static final Pattern ${patternVariable} = Concept.make("${patternDescription}", PublicIds.of(${patternPublicId}));
+                public static final Pattern ${patternVariable} = Pattern.make("${patternDescription}", PublicIds.of(${patternPublicId}));
             """;
 
     public static final String JAVA_PATTERN_FIELD_DEFINITION_TEMPLATE =

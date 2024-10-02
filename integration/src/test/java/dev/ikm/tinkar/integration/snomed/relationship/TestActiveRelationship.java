@@ -30,15 +30,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TestActiveRelationship {
 
-    @BeforeAll
-    public void setupSuite() throws IOException {
-
-    }
-
-    @AfterAll
-    public void teardownSuite() throws IOException{
-
-    }
     @Test
     @DisplayName("Test Snomed to Entity Relationship Version. - One record.")
     public void testSnomedToEntityRelationShipOneRecord(){

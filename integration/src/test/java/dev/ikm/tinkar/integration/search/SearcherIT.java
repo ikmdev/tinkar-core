@@ -17,10 +17,10 @@ package dev.ikm.tinkar.integration.search;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
-import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.provider.search.Searcher;
 import dev.ikm.tinkar.terms.EntityProxy;
@@ -38,19 +38,20 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class SearcherIT extends TestHelper {
+public class SearcherIT {
 
-    private static final File SAP_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
+    private static final File DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
             SearcherIT.class);
 
     @BeforeAll
-    public void setup() {
-        loadSpinedArrayDataBase(SAP_DATASTORE_ROOT);
+    public void beforeAll() {
+        TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
     }
 
     @AfterAll
-    public void teardown() {
-        PrimitiveData.stop();
+    public void afterAll() {
+        TestHelper.stopDatabase();
     }
 
     @Test

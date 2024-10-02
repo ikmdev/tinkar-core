@@ -30,15 +30,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TestSnomedToEntityLanguage {
 
-    @BeforeAll
-    public void setupSuite() throws IOException {
-
-    }
-
-    @AfterAll
-    public void teardownSuite() throws IOException{
-
-    }
     @Test
     @DisplayName("Test Snomed to Entity Language.")
     public void testSnomedToEntityLanguage(){

@@ -70,8 +70,10 @@ public class GenerateJavaBindingTask extends TrackingCallable<Void> {
                 .empty("imports",
                         outputConsumer -> outputConsumer.accept("""
                                 import java.util.UUID;
+                                import dev.ikm.tinkar.common.id.PublicIds;
                                 import dev.ikm.tinkar.terms.EntityProxy.Concept;
-                                import dev.ikm.tinkar.terms.EntityProxy.Pattern;"""))
+                                import dev.ikm.tinkar.terms.EntityProxy.Pattern;"""
+                        ))
                 .empty("className", outputConsumer -> outputConsumer.accept(className))
                 .empty("namespaceUUID", outputConsumer -> outputConsumer.accept(namespace.toString()))
                 .stream("concepts", conceptEntities,

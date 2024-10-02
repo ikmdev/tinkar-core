@@ -137,6 +137,8 @@ public class ElkSnomedDataBuilder {
 	}
 
 	private void processDefinition(DiTreeEntity definition, int conceptNid) throws IllegalStateException {
+//		if (List.of(-2141275885, -2141972902).contains(conceptNid))
+//			LOG.info(">>>>> " + conceptNid + " " + PrimitiveData.text(conceptNid) + "\n" + definition);
 		EntityVertex root = definition.root();
 		for (EntityVertex child : definition.successors(root)) {
 			switch (getMeaning(child)) {
@@ -153,6 +155,15 @@ public class ElkSnomedDataBuilder {
 				def.setDefinitionType(DefinitionType.SubConcept);
 				processDefinition(def, child, definition);
 				concept.addDefinition(def);
+			}
+			case INCLUSION_SET -> {
+//				LOG.info("Inclusion set: " + PrimitiveData.text(conceptNid));
+//				LOG.info("" + definition);
+				Concept concept = data.getOrCreateConcept(conceptNid);
+				Definition def = new Definition();
+				def.setDefinitionType(DefinitionType.SubConcept);
+				processDefinition(def, child, definition);
+				concept.addGciDefinition(def);
 			}
 			case PROPERTY_SET -> {
 				processPropertySet(child, conceptNid, definition);

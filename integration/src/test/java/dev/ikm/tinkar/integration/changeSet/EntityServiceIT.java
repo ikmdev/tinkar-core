@@ -18,6 +18,7 @@ package dev.ikm.tinkar.integration.changeSet;
 import dev.ikm.tinkar.entity.EntityCountSummary;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,13 +31,14 @@ import static dev.ikm.tinkar.integration.TestConstants.createFilePathInTarget;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-class EntityServiceIT extends TestHelper {
+class EntityServiceIT {
 
-    private static final File SAP_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
-            EntityServiceIT.class);
+    private static final File SAP_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(EntityServiceIT.class);
+
     @BeforeEach
-    public void init() {
-        loadSpinedArrayDataBase(SAP_DATASTORE_ROOT);
+    void beforeEach() {
+        TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, SAP_DATASTORE_ROOT);
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
     }
 
     @Test
