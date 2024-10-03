@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -41,7 +40,6 @@ import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 
 public class SnomedUS20230901ElkSnomedDataBuilderTestIT extends ElkSnomedDataBuilderTest {
 
-	@SuppressWarnings("unused")
 	private static final Logger LOG = LoggerFactory.getLogger(SnomedUS20230901ElkSnomedDataBuilderTestIT.class);
 
 	static {
@@ -101,7 +99,7 @@ public class SnomedUS20230901ElkSnomedDataBuilderTestIT extends ElkSnomedDataBui
 			assertNotNull(us_con);
 		}
 		int missing_concept_cnt = 0;
-		int missing_role_cnt = 0;
+//		int missing_role_cnt = 0;
 		SnomedOwlOntology ontology = SnomedOwlOntology.createOntology();
 		ontology.loadOntology(axioms_file);
 		SnomedOntology snomedOntology = new OwlTransformer().transform(ontology);

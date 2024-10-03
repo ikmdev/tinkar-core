@@ -41,20 +41,15 @@ public class SnomedUS20230901ElkOwlDataBuilderTestIT extends ElkOwlDataBuilderTe
 	private static final Logger LOG = LoggerFactory.getLogger(SnomedUS20230901ElkOwlDataBuilderTestIT.class);
 
 	static {
-		stated_count = // 393479;
-				414488;
-		active_count = // 370291;
-				390194;
-		inactive_count = // 23188;
-				24294;
+		stated_count = 393479;
+		active_count = 370291;
+		inactive_count = 23188;
 		test_case = "snomed-us-20230901";
 	}
 
 	// TODO get all this back once test db are available
 
-	public static final String db =
-			// "SnomedCT_US_20230901_SpinedArray-20240830";
-			"September2024_ConnectathonDataset_v1";
+	public static final String db = "SnomedCT_US_20230901_SpinedArray-20240920";
 
 	protected String getDir() {
 		// TODO
@@ -62,24 +57,16 @@ public class SnomedUS20230901ElkOwlDataBuilderTestIT extends ElkOwlDataBuilderTe
 		return "target/db/snomed-test-data-" + getEditionDir() + "-" + getVersion();
 	}
 
-//	protected String getEdition() {
-//		return "US1000124";
-//	}
-//
-//	protected String getEditionDir() {
-//		return "us";
-//	}
-
 	protected String getEdition() {
-		return "INT";
+		return "US1000124";
 	}
 
 	protected String getEditionDir() {
-		return "intl";
+		return "us";
 	}
 
 	protected String getVersion() {
-		return "20240201";
+		return "20230901";
 	}
 
 	protected Path axioms_file = Paths.get(getDir(),
@@ -142,15 +129,12 @@ public class SnomedUS20230901ElkOwlDataBuilderTestIT extends ElkOwlDataBuilderTe
 //			LOG.info("\t" + PrimitiveData.publicId(x));
 //			LOG.info("\t" + axiom_data.nidAxiomsMap.get(x));
 //		});
-		// TODO revert after connectathon
-		assertEquals( // 294,
-				24208, axiom_data_concept_nids.size());
+		assertEquals(294, axiom_data_concept_nids.size());
 //		axiom_data_role_nids.forEach(x -> {
 //			LOG.info("Extra role: " + x + " " + PrimitiveData.text(x));
 //			LOG.info("\t" + axiom_data.nidAxiomsMap.get(x));
 //		});
-		assertEquals(// 11,
-				16, axiom_data_role_nids.size());
+		assertEquals(11, axiom_data_role_nids.size());
 	}
 
 }

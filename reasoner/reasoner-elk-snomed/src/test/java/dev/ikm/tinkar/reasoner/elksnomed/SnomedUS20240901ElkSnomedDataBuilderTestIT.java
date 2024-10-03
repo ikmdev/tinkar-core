@@ -91,7 +91,7 @@ public class SnomedUS20240901ElkSnomedDataBuilderTestIT extends ElkSnomedDataBui
 		LOG.info("\t" + rels_file);
 		ElkSnomedData data = buildSnomedData();
 		int missing_concept_cnt = 0;
-		int missing_role_cnt = 0;
+//		int missing_role_cnt = 0;
 		SnomedOwlOntology ontology = SnomedOwlOntology.createOntology();
 		ontology.loadOntology(axioms_file);
 		SnomedOntology snomedOntology = new OwlTransformer().transform(ontology);
