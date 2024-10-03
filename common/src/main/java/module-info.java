@@ -26,13 +26,13 @@ import dev.ikm.tinkar.common.service.*;
         // 7 in HL7 is not a version reference
 module dev.ikm.tinkar.common {
     requires transitive java.prefs;
-    requires io.activej.bytebuf;
-    requires io.activej.common;
-    requires org.eclipse.collections;
-    requires org.eclipse.collections.api;
-    requires org.roaringbitmap;
+    requires dev.ikm.jpms.activej.bytebuf;
+    requires dev.ikm.jpms.activej.common;
+    requires dev.ikm.jpms.eclipse.collections;
+    requires dev.ikm.jpms.eclipse.collections.api;
+    requires dev.ikm.jpms.roaringbitmap;
     requires org.slf4j;
-    requires static com.google.auto.service;
+    requires static dev.ikm.jpms.auto.service;
 
 
     exports dev.ikm.tinkar.common.alert;

@@ -22,10 +22,10 @@
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
 module dev.ikm.tinkar.collection {
     requires transitive dev.ikm.tinkar.common;
-    requires org.eclipse.collections.api;
-    requires org.eclipse.collections;
+    requires dev.ikm.jpms.eclipse.collections.api;
+    requires dev.ikm.jpms.eclipse.collections;
     requires org.slf4j;
-    requires transitive static com.google.auto.service;
+    requires transitive static dev.ikm.jpms.auto.service;
 
     exports dev.ikm.tinkar.collection;
     opens dev.ikm.tinkar.collection to org.eclipse.collections.api, org.eclipse.collections;

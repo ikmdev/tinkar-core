@@ -8,6 +8,7 @@
         <version>1.72.0-SNAPSHOT</version>
     </parent>
 
+    <name>TINKAR Language Extensions</name>
     <artifactId>language-extensions</artifactId>
     <packaging>pom</packaging>
 

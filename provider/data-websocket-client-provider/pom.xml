@@ -33,6 +33,12 @@
         <dependency>
             <groupId>io.activej</groupId>
             <artifactId>activej-launchers-http</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.activej</groupId>
+                    <artifactId>activej-bytebuf</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 

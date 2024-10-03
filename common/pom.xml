@@ -20,6 +20,11 @@
     <dependencies>
         <dependency>
             <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>auto-service</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>roaringbitmap</artifactId>
         </dependency>
         <dependency>

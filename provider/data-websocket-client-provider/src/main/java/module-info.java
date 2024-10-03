@@ -26,20 +26,20 @@ import dev.ikm.tinkar.provider.websocket.client.WebsocketServiceController;
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
 module dev.ikm.tinkar.provider.websocket.client {
     requires org.slf4j;
-    requires io.activej.bytebuf;
+    requires dev.ikm.jpms.activej.bytebuf;
     requires io.activej.eventloop;
     requires io.activej.http;
     requires io.activej.inject;
     requires io.activej.launcher;
     requires io.activej.promise;
     requires io.activej.service;
-    requires org.eclipse.collections.api;
+    requires dev.ikm.jpms.eclipse.collections.api;
     requires java.base;
     requires dev.ikm.tinkar.common;
     requires dev.ikm.tinkar.component;
     requires java.net.http;
     requires dev.ikm.tinkar.entity;
-    requires static transitive com.google.auto.service;
+    requires static transitive dev.ikm.jpms.auto.service;
 
     provides DataServiceController
             with WebsocketServiceController;

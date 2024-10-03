@@ -6,7 +6,7 @@
     <parent>
         <groupId>dev.ikm.build</groupId>
         <artifactId>java-parent</artifactId>
-        <version>1.47.0</version>
+        <version>1.50.0</version>
         <relativePath/>
     </parent>
 
@@ -68,37 +68,32 @@
     </issueManagement>
 
     <properties>
-        <maven.javadoc.skip>true</maven.javadoc.skip>
-        <activej-bytebuf.version>4.3-r7</activej-bytebuf.version>
-        <activej-common.version>4.3-r7</activej-common.version>
-        <auto-service.version>1.0.1</auto-service.version>
-        <jpms-auto-service.version>1.0.1-r6</jpms-auto-service.version>
-        <jpms-record-builder-core.version>36-r6</jpms-record-builder-core.version>
-        <activej-launchers.version>4.3.1</activej-launchers.version>
-        <build-helper-maven-plugin.version>3.2.0</build-helper-maven-plugin.version>
+<!--        <maven.javadoc.skip>true</maven.javadoc.skip>-->
+        <activej-bytebuf.version>4.3-r10</activej-bytebuf.version>
+        <activej-common.version>4.3-r8</activej-common.version>
+        <asm.version>9.1</asm.version>
+        <jsonschema2pojo-core.version>1.2.1</jsonschema2pojo-core.version>
+        <commons-lang3.version>3.14.0</commons-lang3.version>
+        <commons-text.version>1.12.0</commons-text.version>
+        <commons-io.version>2.16.1</commons-io.version>
         <caffeine.version>3.1.8</caffeine.version>
-        <eclipse-collections.version>11.1.0-r10</eclipse-collections.version>
-        <eclipse-collections-api.version>11.1.0-r10</eclipse-collections-api.version>
+
         <jackson.version>2.17.0</jackson.version>
         <jgrapht.version>1.5.0</jgrapht.version>
         <mockito.version>5.5.0</mockito.version>
-        <mvstore.version>2.2.220-r4</mvstore.version>
+        <mvstore.version>2.3.232-r1</mvstore.version>
         <io.smallrye.reactive.version>1.3.1</io.smallrye.reactive.version>
-        <jheaps.version>0.14-r6</jheaps.version>
         <lucene-core.version>9.7.0</lucene-core.version>
         <lucene-queryparser.version>9.7.0</lucene-queryparser.version>
         <lucene-queries.version>9.7.0</lucene-queries.version>
         <lucene-highlighter.version>9.7.0</lucene-highlighter.version>
-        <org.reactivestreams.version>1.0.3</org.reactivestreams.version>
-        <roaringbitmap.version>0.9.31-r7</roaringbitmap.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <slf4j.version>2.0.13</slf4j.version>
         <log4j.version>3.0.0-alpha1</log4j.version>
         <testng.version>7.4.0</testng.version>
-        <tinkar-jpms-deps.groupId>dev.ikm.jpms</tinkar-jpms-deps.groupId>
         <snomedct-data.version>2023.09.01</snomedct-data.version>
         <tinkar-starter-data.version>1.0.0</tinkar-starter-data.version>
-        <protobuf-java.version>3.22.0-r6</protobuf-java.version>
+        <protobuf-java.version>3.22.0-r7</protobuf-java.version>
         <sonar.skip>false</sonar.skip>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
@@ -106,10 +101,27 @@
         <sonar.language>java</sonar.language>
         <susel.version>0.1.2</susel.version>
         <maven-jxr-plugin.version>3.3.0</maven-jxr-plugin.version>
-        <tinkar-schema.version>1.31.0</tinkar-schema.version>
+        <tinkar-schema.version>1.33.0</tinkar-schema.version>
         <tinkar-bindings.version>1.4.0</tinkar-bindings.version>
         <udaychandra-susel.version>0.1.2</udaychandra-susel.version>
         <common-java5.version>3.0.0-M9</common-java5.version>
+        <fasterxml-jackson-core.version>2.17.0</fasterxml-jackson-core.version>
+        <activej-launchers.version>4.3.1</activej-launchers.version>
+
+        <!-- JPMS Dependencies -->
+        <tinkar-jpms-deps.groupId>dev.ikm.jpms</tinkar-jpms-deps.groupId>
+        <fhir-base.version>7.0.2-r10</fhir-base.version>
+        <fhir-structures.version>7.0.2-r9</fhir-structures.version>
+        <fhir-hl7-r4.version>6.3.3-r10</fhir-hl7-r4.version>
+        <fhir-hl7-utilities.version>6.3.3-r9</fhir-hl7-utilities.version>
+        <guava.version>33.3.0-jre-r1</guava.version>
+        <jpms-auto-service.version>1.0.1-r7</jpms-auto-service.version>
+        <jpms-record-builder-core.version>36-r7</jpms-record-builder-core.version>
+        <eclipse-collections.version>11.1.0-r11</eclipse-collections.version>
+        <eclipse-collections-api.version>11.1.0-r11</eclipse-collections-api.version>
+        <jheaps.version>0.14-r6</jheaps.version>
+        <roaringbitmap.version>0.9.31-r8</roaringbitmap.version>
+
     </properties>
 
     <!-- All Dependencies and versions used in this project are pre-defined here for use in modules -->
@@ -117,25 +129,25 @@
         <dependencies>
             <!-- Submodules -->
             <dependency>
-                <groupId>${project.groupId}</groupId>
+                <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>collection</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>${project.groupId}</groupId>
+                <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>common</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>${project.groupId}</groupId>
+                <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>component</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>${project.groupId}</groupId>
+                <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>component</artifactId>
                 <version>${project.version}</version>
                 <type>test-jar</type>
@@ -143,73 +155,73 @@
             </dependency>
 
             <dependency>
-                <groupId>${project.groupId}</groupId>
+                <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>coordinate</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>${project.groupId}</groupId>
+                <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>entity</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>${project.groupId}</groupId>
+                <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>integration</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>${project.groupId}</groupId>
+                <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>data-ephemeral-provider</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>${project.groupId}</groupId>
+                <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>data-mvstore-provider</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>${project.groupId}</groupId>
+                <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>data-spinedarray-provider</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>${project.groupId}</groupId>
+                <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>data-websocket-client-provider</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>${project.groupId}</groupId>
+                <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>data-websocket-server-provider</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>${project.groupId}</groupId>
+                <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>entity-provider</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>${project.groupId}</groupId>
+                <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>executor-provider</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>${project.groupId}</groupId>
+                <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>search-provider</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>${project.groupId}</groupId>
+                <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>terms</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -288,7 +300,61 @@
                 <version>${mvstore.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>hapi-fhir-base</artifactId>
+                <version>${fhir-base.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>hapi-fhir-structures-r4</artifactId>
+                <version>${fhir-structures.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>ca.uhn.hapi.fhir</groupId>
+                        <artifactId>hapi-fhir-base</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>org.hl7.fhir.r4</artifactId>
+                <version>${fhir-hl7-r4.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>org.hl7.fhir.utilities</artifactId>
+                <version>${fhir-hl7-utilities.version}</version>
+            </dependency>
+
             <!-- Everything else -->
+            <dependency>
+                <groupId>org.jsonschema2pojo</groupId>
+                <artifactId>jsonschema2pojo-core</artifactId>
+                <version>${jsonschema2pojo-core.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>fasterxml-jackson-core</artifactId>
+                <version>${fasterxml-jackson-core.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jsr310</artifactId>
+                <version>${fasterxml-jackson-core.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
@@ -317,12 +383,6 @@
                 <groupId>org.jgrapht</groupId>
                 <artifactId>jgrapht-core</artifactId>
                 <version>${jgrapht.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.jheaps</groupId>
-                        <artifactId>jheaps</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
 
             <dependency>

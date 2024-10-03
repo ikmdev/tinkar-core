@@ -34,9 +34,9 @@ module dev.ikm.tinkar.provider.mvstore {
     requires dev.ikm.tinkar.component;
     requires dev.ikm.tinkar.entity;
     requires dev.ikm.tinkar.provider.search;
-    requires org.eclipse.collections.api;
-    requires org.eclipse.collections;
-    requires org.h2.mvstore;
+    requires dev.ikm.jpms.eclipse.collections.api;
+    requires dev.ikm.jpms.eclipse.collections;
+    requires dev.ikm.jpms.h2.mvstore;
     requires org.slf4j;
 
     uses LoadDataFromFileController;

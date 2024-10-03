@@ -48,12 +48,12 @@ module dev.ikm.tinkar.coordinate {
     requires dev.ikm.tinkar.collection;
     requires dev.ikm.tinkar.common;
     requires transitive dev.ikm.tinkar.terms;
-    requires static io.soabase.recordbuilder.core;
+    requires static dev.ikm.jpms.recordbuilder.core;
     requires static java.compiler;
     requires dev.ikm.tinkar.entity;
     requires org.slf4j;
-    requires org.eclipse.collections.api;
-    requires org.eclipse.collections;
+    requires dev.ikm.jpms.eclipse.collections.api;
+    requires dev.ikm.jpms.eclipse.collections;
 
     provides CachingService with
             LanguageCalculatorWithCache.CacheProvider,
