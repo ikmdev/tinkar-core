@@ -21,11 +21,11 @@
 	</modules>
 
 	<properties>
-		<maven-assembly-plugin.version>3.7.1</maven-assembly-plugin.version>
-		<ikm-reasoner.version>0.30.0-SNAPSHOT</ikm-reasoner.version>
+		<hybrid-reasoner.version>1.0.1-SNAPSHOT</hybrid-reasoner.version>
+		<ikm-reasoner.version>0.30.0</ikm-reasoner.version>
 		<owlapi.version>4.7.1</owlapi.version>
-		<skipITs>true</skipITs>
 		<reasoner-test-data.groupid>dev.ikm.reasoner-test-data</reasoner-test-data.groupid>
+		<skipITs>true</skipITs>
 		<snomed-test-data.groupid>dev.ikm.snomed</snomed-test-data.groupid>
 		<snomed-test-data.version>0.1.0</snomed-test-data.version>
 	</properties>
@@ -41,6 +41,11 @@
 				<groupId>dev.ikm.elk</groupId>
 				<artifactId>elk-snomed-owl</artifactId>
 				<version>${ikm-reasoner.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.ikm.hybrid-reasoner</groupId>
+				<artifactId>hybrid-reasoner-snomed</artifactId>
+				<version>${hybrid-reasoner.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>dev.ikm.owlapi</groupId>

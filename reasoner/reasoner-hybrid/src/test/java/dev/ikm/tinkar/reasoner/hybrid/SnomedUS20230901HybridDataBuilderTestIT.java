@@ -37,9 +37,7 @@ public class SnomedUS20230901HybridDataBuilderTestIT extends HybridDataBuilderTe
 		test_case = "snomed-us-20230901";
 	}
 
-	// TODO get all this back once test db are available
-
-	public static final String db = "Snomedct-us-20240901-spinedarray-data-20240920";
+	public static final String db = "SnomedCT_US_20230901_SpinedArray-20240920";
 
 	protected String getDir() {
 		// TODO

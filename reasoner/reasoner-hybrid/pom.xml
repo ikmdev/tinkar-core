@@ -48,8 +48,7 @@
 		<dependency>
 			<groupId>dev.ikm.hybrid-reasoner</groupId>
 			<artifactId>hybrid-reasoner-snomed</artifactId>
-			<version>1.0.1-SNAPSHOT</version>
-		</dependency>
+			</dependency>
 	</dependencies>
 
 	<build>
@@ -71,6 +70,13 @@
 									<groupId>${reasoner-test-data.groupid}</groupId>
 									<artifactId>
 										tinkar-test-data-snomed-us-20230901</artifactId>
+									<version>2024.09.20</version>
+									<type>zip</type>
+								</artifactItem>
+								<artifactItem>
+									<groupId>${reasoner-test-data.groupid}</groupId>
+									<artifactId>
+										tinkar-test-data-snomed-us-20230901-nfh</artifactId>
 									<version>2024.09.20</version>
 									<type>zip</type>
 								</artifactItem>
