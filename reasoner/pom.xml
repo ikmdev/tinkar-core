@@ -21,7 +21,7 @@
 	</modules>
 
 	<properties>
-		<hybrid-reasoner.version>1.0.1-SNAPSHOT</hybrid-reasoner.version>
+		<hybrid-reasoner.version>1.0.1</hybrid-reasoner.version>
 		<ikm-reasoner.version>0.30.0</ikm-reasoner.version>
 		<owlapi.version>4.7.1</owlapi.version>
 		<reasoner-test-data.groupid>dev.ikm.reasoner-test-data</reasoner-test-data.groupid>
