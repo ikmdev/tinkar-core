@@ -30,7 +30,7 @@ import java.util.Objects;
 public record PatternVersionRecord(PatternRecord chronology, int stampNid,
                                    int semanticPurposeNid, int semanticMeaningNid,
                                    ImmutableList<FieldDefinitionRecord> fieldDefinitions)
-        implements PatternEntityVersion, PatternVersionRecordBuilder.With {
+        implements PatternEntityVersion, ImmutableVersion, PatternVersionRecordBuilder.With {
 
     public PatternVersionRecord {
         Validator.notZero(stampNid);

@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.entity;
 
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.Validator;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -28,7 +29,7 @@ public record PatternRecord(
         long mostSignificantBits, long leastSignificantBits,
         long[] additionalUuidLongs, int nid,
         ImmutableList<PatternVersionRecord> versions)
-        implements PatternEntity<PatternVersionRecord>, PatternRecordBuilder.With {
+        implements PatternEntity<PatternVersionRecord>, ImmutableEntity<PatternVersionRecord>, PatternRecordBuilder.With {
 
     public PatternRecord {
         Validator.notZero(mostSignificantBits);
@@ -97,5 +98,9 @@ public record PatternRecord(
 
     public PatternAnalogueBuilder without(PatternEntityVersion versionToAdd) {
         return analogueBuilder().remove(versionToAdd);
+    }
+
+    public PublicId publicId() {
+        return PublicIds.of(asUuidArray());
     }
 }

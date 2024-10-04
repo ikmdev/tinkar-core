@@ -30,7 +30,7 @@ public record ConceptRecord(
         long mostSignificantBits, long leastSignificantBits,
         long[] additionalUuidLongs, int nid,
         ImmutableList<ConceptVersionRecord> versions)
-        implements ConceptEntity<ConceptVersionRecord>, ConceptRecordBuilder.With {
+        implements ConceptEntity<ConceptVersionRecord>, ImmutableEntity<ConceptVersionRecord>, ConceptRecordBuilder.With {
 
 
     public ConceptRecord {

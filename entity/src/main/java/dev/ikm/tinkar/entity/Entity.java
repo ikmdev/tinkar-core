@@ -132,6 +132,20 @@ public interface Entity<T extends EntityVersion>
         return null;
     }
 
+    default Optional<T> getVersion(PublicId stampId) {
+        return Optional.ofNullable(getVersionFast(stampId));
+    }
+
+    default T getVersionFast(PublicId stampId) {
+        int stampNid = nid(stampId);
+        for (T version : versions()) {
+            if (version.stampNid() == stampNid) {
+                return version;
+            }
+        }
+        return null;
+    }
+
     default IntIdSet stampNids() {
         MutableIntList stampNids = IntLists.mutable.withInitialCapacity(versions().size());
         for (EntityVersion version : versions()) {

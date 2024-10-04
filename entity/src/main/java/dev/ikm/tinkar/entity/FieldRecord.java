@@ -29,7 +29,9 @@ import java.util.Objects;
  */
 @RecordBuilder
 public record FieldRecord<T>(T value, int semanticNid, int semanticVersionStampNid,
-                             FieldDefinitionForEntity fieldDefinition) implements FieldDefinition, Field<T>, FieldRecordBuilder.With {
+                             FieldDefinitionForEntity fieldDefinition)
+        implements FieldDefinition, Field<T>,
+                   ImmutableField<T>, FieldRecordBuilder.With {
 
 
     public FieldRecord {

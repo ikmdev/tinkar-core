@@ -23,7 +23,7 @@ import java.util.Objects;
 
 @RecordBuilder
 public record ConceptVersionRecord(ConceptRecord chronology, int stampNid)
-        implements ConceptEntityVersion, ConceptVersionRecordBuilder.With {
+        implements ConceptEntityVersion, ImmutableVersion, ConceptVersionRecordBuilder.With {
 
 
     public ConceptVersionRecord {

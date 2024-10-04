@@ -33,7 +33,7 @@ public record StampRecord(
         long mostSignificantBits, long leastSignificantBits,
         long[] additionalUuidLongs, int nid,
         ImmutableList<StampVersionRecord> versions)
-        implements StampEntity<StampVersionRecord>, StampRecordBuilder.With {
+        implements StampEntity<StampVersionRecord>, ImmutableEntity<StampVersionRecord>, IdentifierData, StampRecordBuilder.With {
 
     private static StampRecord nonExistentStamp;
     public StampRecord {
