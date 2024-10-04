@@ -15,24 +15,12 @@
  */
 package dev.ikm.tinkar.entity;
 
-import dev.ikm.tinkar.component.ConceptChronology;
-import dev.ikm.tinkar.component.FieldDataType;
-import dev.ikm.tinkar.terms.ConceptFacade;
-import org.eclipse.collections.api.list.ImmutableList;
-
-public interface ConceptEntity<V extends ConceptEntityVersion>
-        extends Entity<V>,
-        ConceptChronology<V>,
-        ConceptFacade {
-
-    @Override
-    ImmutableList<V> versions();
-
-    default FieldDataType entityDataType() {
-        return FieldDataType.CONCEPT_CHRONOLOGY;
-    }
-
-    default FieldDataType versionDataType() {
-        return FieldDataType.CONCEPT_VERSION;
-    }
+/**
+ * Parent interface for all <code>ImmutableVersion</code> objects.
+ * @TODO consider removing the EntityVersion interface and working directly with the records.
+ * Except the observable versions use the interface, so need to consider how we best approach.
+ * Maybe this current approach is optimal.
+ */
+public sealed interface ImmutableVersion extends EntityVersion
+        permits ConceptVersionRecord, PatternVersionRecord, StampVersionRecord, SemanticVersionRecord {
 }

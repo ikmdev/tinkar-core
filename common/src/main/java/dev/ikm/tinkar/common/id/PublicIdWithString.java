@@ -13,26 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.entity;
+package dev.ikm.tinkar.common.id;
 
-import dev.ikm.tinkar.component.ConceptChronology;
-import dev.ikm.tinkar.component.FieldDataType;
-import dev.ikm.tinkar.terms.ConceptFacade;
-import org.eclipse.collections.api.list.ImmutableList;
+import dev.ikm.tinkar.common.binary.Encodable;
 
-public interface ConceptEntity<V extends ConceptEntityVersion>
-        extends Entity<V>,
-        ConceptChronology<V>,
-        ConceptFacade {
-
-    @Override
-    ImmutableList<V> versions();
-
-    default FieldDataType entityDataType() {
-        return FieldDataType.CONCEPT_CHRONOLOGY;
-    }
-
-    default FieldDataType versionDataType() {
-        return FieldDataType.CONCEPT_VERSION;
-    }
+/**
+ * An interface that can be implemented by an enum, and can also be made compatible
+ * with a future concept binding that may exist in a starter set or elsewhere.
+ * @param <T>
+ */
+public interface PublicIdWithString<T> extends Comparable<PublicIdStringKey>, Encodable {
 }

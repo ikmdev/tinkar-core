@@ -33,7 +33,7 @@ import dev.ikm.tinkar.common.util.text.NaturalOrder;
  * <p>
  * T is the class this is a key for, to help code comprehension
  */
-public class PublicIdStringKey<T> implements Comparable<PublicIdStringKey>, Encodable {
+public class PublicIdStringKey<T> implements PublicIdWithString<PublicIdStringKey> {
 
     final PublicId publicId;
     String string;

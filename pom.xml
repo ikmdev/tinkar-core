@@ -11,7 +11,7 @@
 
     <groupId>dev.ikm.tinkar</groupId>
     <artifactId>tinkar-core</artifactId>
-    <version>1.71.0-SNAPSHOT</version>
+    <version>1.72.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>IKM tinkar core</name>
@@ -105,7 +105,7 @@
         <sonar.language>java</sonar.language>
         <susel.version>0.1.2</susel.version>
         <maven-jxr-plugin.version>3.3.0</maven-jxr-plugin.version>
-        <tinkar-schema.version>1.27.0</tinkar-schema.version>
+        <tinkar-schema.version>1.31.0</tinkar-schema.version>
         <tinkar-bindings.version>1.4.0</tinkar-bindings.version>
         <udaychandra-susel.version>0.1.2</udaychandra-susel.version>
         <common-java5.version>3.0.0-M9</common-java5.version>
@@ -384,6 +384,7 @@
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j2-impl</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>${tinkar-jpms-deps.groupId}</groupId>

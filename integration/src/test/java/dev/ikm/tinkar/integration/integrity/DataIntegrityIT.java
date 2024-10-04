@@ -19,13 +19,33 @@ import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.service.*;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.TinkExecutor;
+import dev.ikm.tinkar.common.util.io.FileUtil;
+import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityVersion;
+import dev.ikm.tinkar.entity.FieldDefinitionRecord;
+import dev.ikm.tinkar.entity.FieldDefinitionRecordBuilder;
+import dev.ikm.tinkar.entity.PatternRecord;
+import dev.ikm.tinkar.entity.PatternRecordBuilder;
+import dev.ikm.tinkar.entity.PatternVersionRecord;
+import dev.ikm.tinkar.entity.PatternVersionRecordBuilder;
+import dev.ikm.tinkar.entity.RecordListBuilder;
+import dev.ikm.tinkar.entity.SemanticEntity;
+import dev.ikm.tinkar.entity.SemanticEntityVersion;
+import dev.ikm.tinkar.entity.SemanticRecord;
+import dev.ikm.tinkar.entity.SemanticRecordBuilder;
+import dev.ikm.tinkar.entity.SemanticVersionRecord;
+import dev.ikm.tinkar.entity.SemanticVersionRecordBuilder;
+import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
-import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.integration.DataIntegrity;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.DataStore;
+import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -41,43 +61,33 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DataIntegrityIT {
     private static final Logger LOG = LoggerFactory.getLogger(DataIntegrity.class);
-    private static final File SAP_DATAINTEGRITYIT_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(DataIntegrityIT.class);
+    private static final File DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(DataIntegrityIT.class);
     public DataIntegrity dataIntegrity;
 
     @BeforeAll
     public static void beforeAll() {
-        LOG.info("JVM Version: " + System.getProperty("java.version"));
-        LOG.info("JVM Name: " + System.getProperty("java.vm.name"));
-        LOG.info("Setup Ephemeral Protobuf Suite: " + LOG.getName());
-        startDatabase(TestConstants.SA_STORE_OPEN_NAME, SAP_DATAINTEGRITYIT_DATASTORE_ROOT);
-
-        File starterDataFile = TestConstants.PB_STARTER_DATA_REASONED;
-        EntityCountSummary summaryLoadStarterData = new LoadEntitiesFromProtobufFile(starterDataFile).compute();
-        LOG.info("Import complete for {}. Imported {} Entities.", starterDataFile.getName(), summaryLoadStarterData.getTotalCount());
-    }
-
-    private static void startDatabase(String datastoreControllerName, File datastoreFile) {
-        LOG.info("Clear caches");
-        CachingService.clearAll();
-        LOG.info(ServiceProperties.jvmUuid());
-        if (datastoreFile != null) {
-            ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, datastoreFile);
-        }
-        PrimitiveData.selectControllerByName(datastoreControllerName);
-        PrimitiveData.start();
+        FileUtil.recursiveDelete(DATASTORE_ROOT);
+        TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
     }
 
     @AfterAll
-    public static void afterAll(){
-        PrimitiveData.stop();
+    public static void afterAll() {
+        TestHelper.stopDatabase();
     }
 
     @Test
@@ -114,7 +124,7 @@ public class DataIntegrityIT {
     }
 
     @Test
-    public void correctDataIntegrityTest(){
+    public void correctDataIntegrityTest() {
         List<Integer> aggregatedNullNidList = new ArrayList<>();
         Map<String, List<? extends Entity>> typeNameEntityMap = new HashMap<>();
         typeNameEntityMap.put("Stamp", dataIntegrity.validateStampReferences(aggregatedNullNidList));
@@ -146,25 +156,25 @@ public class DataIntegrityIT {
     @Test
     public void semanticFieldSample() {
         ImmutableList<EntityProxy.Concept> patternFieldDefinitions = Lists.immutable.of(
-                    TinkarTerm.COMPONENT_FIELD,
-                    TinkarTerm.STRING
-            );
+                TinkarTerm.COMPONENT_FIELD,
+                TinkarTerm.STRING
+        );
 
         ImmutableList<Object> tooLongSemanticFieldValues = Lists.immutable.of(
                 TinkarTerm.IDENTIFIER_SOURCE,
                 "Test-UUID",
                 "This extra field value should throw an error"
-            );
+        );
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
         SemanticEntity<? extends SemanticEntityVersion> semanticEntityWithTooManyFieldValues =
                 SemanticTestHelper.createSemanticWithSupplier(referencedComponentNid, patternEntity.nid(), tooLongSemanticFieldValues, authoringStamp);
-        
+
         assertFalse(DataIntegrity.validateSemanticFieldDataType(semanticEntityWithTooManyFieldValues));
     }
 
@@ -181,7 +191,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -206,7 +216,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -228,7 +238,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -251,7 +261,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -273,7 +283,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -295,7 +305,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -319,7 +329,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -366,7 +376,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -419,7 +429,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -461,7 +471,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -484,7 +494,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -507,7 +517,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -530,7 +540,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -553,7 +563,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -576,7 +586,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -598,7 +608,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -620,7 +630,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -642,7 +652,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -666,7 +676,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -691,7 +701,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -713,7 +723,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -747,7 +757,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -770,7 +780,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -793,7 +803,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -816,7 +826,7 @@ public class DataIntegrityIT {
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();
         StampEntity authoringStamp = StampRecord.make(UUID.randomUUID(), State.ACTIVE, System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp , patternFieldDefinitions);
+        Entity patternEntity = PatternTestHelper.createPattern(EntityProxy.Pattern.make("Test Pattern", UUID.randomUUID()), authoringStamp, patternFieldDefinitions);
         EntityService.get().putEntity(authoringStamp);
         EntityService.get().putEntity(patternEntity);
 
@@ -864,11 +874,12 @@ public class DataIntegrityIT {
                                                                     ImmutableList<EntityProxy.Concept> fieldDefinitionConcepts) {
             return createPattern(pattern, TinkarTerm.MEANING, TinkarTerm.PURPOSE, authoringSTAMP, fieldDefinitionConcepts);
         }
+
         public static Entity<? extends EntityVersion> createPattern(EntityProxy.Pattern pattern,
                                                                     EntityProxy.Concept meaningConcept,
                                                                     EntityProxy.Concept purposeConcept,
                                                                     Entity<? extends EntityVersion> authoringSTAMP,
-                                                                    ImmutableList<EntityProxy.Concept> fieldDefinitionConcepts){
+                                                                    ImmutableList<EntityProxy.Concept> fieldDefinitionConcepts) {
 
             MutableList<FieldDefinitionRecord> fieldDefinitions = Lists.mutable.empty();
             int i = 0;
@@ -897,11 +908,12 @@ public class DataIntegrityIT {
         }
 
         public static FieldDefinitionRecord fieldDefinition(int patternNid, EntityProxy.Concept dataType,
-                                                            Entity<? extends EntityVersion> authoringSTAMP, int idx){
+                                                            Entity<? extends EntityVersion> authoringSTAMP, int idx) {
             return fieldDefinition(patternNid, TinkarTerm.MEANING, TinkarTerm.PURPOSE, dataType, authoringSTAMP, idx);
         }
+
         public static FieldDefinitionRecord fieldDefinition(int patternNid, EntityProxy.Concept meaning, EntityProxy.Concept purpose,
-                                                            EntityProxy.Concept dataType, Entity<? extends EntityVersion> authoringSTAMP, int idx){
+                                                            EntityProxy.Concept dataType, Entity<? extends EntityVersion> authoringSTAMP, int idx) {
             return FieldDefinitionRecordBuilder.builder()
                     .patternNid(patternNid)
                     .meaningNid(meaning.nid())

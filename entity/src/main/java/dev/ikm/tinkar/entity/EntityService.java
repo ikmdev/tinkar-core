@@ -104,6 +104,9 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
     default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(Component component) {
         return getEntity(nidForPublicId(component.publicId()));
     }
+    default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(PublicId publicId) {
+        return getEntity(nidForPublicId(publicId));
+    }
 
     default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(int nid) {
         T entity = getEntityFast(nid);
@@ -118,6 +121,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
     default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(ImmutableList<UUID> uuidList) {
         return getEntity(nidForUuids(uuidList));
     }
+
 
     default int nidForUuids(ImmutableList<UUID> uuidList) {
         return nidForPublicId(PublicIds.of(uuidList.toArray(new UUID[uuidList.size()])));

@@ -13,26 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.entity;
+package dev.ikm.tinkar.integration.helper;
 
-import dev.ikm.tinkar.component.ConceptChronology;
-import dev.ikm.tinkar.component.FieldDataType;
-import dev.ikm.tinkar.terms.ConceptFacade;
-import org.eclipse.collections.api.list.ImmutableList;
+public enum DataStore {
+    SPINED_ARRAY_STORE("Open SpinedArrayStore"),
+    EPHEMERAL_STORE("Load Ephemeral Store"),
+    MV_STORE("Open MV Store");
 
-public interface ConceptEntity<V extends ConceptEntityVersion>
-        extends Entity<V>,
-        ConceptChronology<V>,
-        ConceptFacade {
+    final String CONTROLLER_NAME;
 
-    @Override
-    ImmutableList<V> versions();
-
-    default FieldDataType entityDataType() {
-        return FieldDataType.CONCEPT_CHRONOLOGY;
-    }
-
-    default FieldDataType versionDataType() {
-        return FieldDataType.CONCEPT_VERSION;
+    DataStore(String contollerName) {
+        this.CONTROLLER_NAME = contollerName;
     }
 }

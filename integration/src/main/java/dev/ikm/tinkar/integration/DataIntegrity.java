@@ -75,7 +75,7 @@ public class DataIntegrity {
         LOG.info("Datastore location: " + datastoreRootLocation);
         CachingService.clearAll();
         ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, datastoreRootLocation);
-        PrimitiveData.selectControllerByName(TestConstants.SA_STORE_OPEN_NAME);
+        PrimitiveData.selectControllerByName("Open SpinedArrayStore");
         PrimitiveData.start();
     }
 

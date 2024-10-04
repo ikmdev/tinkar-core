@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.entity;
 
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.PublicIds;
 
 import java.util.UUID;
 import java.util.function.LongConsumer;
@@ -60,6 +61,6 @@ public interface IdentifierData extends PublicId {
     }
 
     default PublicId publicId() {
-        return this;
+        return PublicIds.of(asUuidArray());
     }
 }

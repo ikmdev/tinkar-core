@@ -28,7 +28,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 import static dev.ikm.tinkar.common.util.time.DateTimeUtil.SEC_FORMATTER;
 
 public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
-        Stamp<V>, Component, Version, IdentifierData {
+        Stamp<V>, Component, Version {
     @Override
     default State state() {
         return lastVersion().state();

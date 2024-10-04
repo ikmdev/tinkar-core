@@ -13,26 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.entity;
+package dev.ikm.tinkar.coordinate.view;
 
-import dev.ikm.tinkar.component.ConceptChronology;
-import dev.ikm.tinkar.component.FieldDataType;
-import dev.ikm.tinkar.terms.ConceptFacade;
-import org.eclipse.collections.api.list.ImmutableList;
+import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
 
-public interface ConceptEntity<V extends ConceptEntityVersion>
-        extends Entity<V>,
-        ConceptChronology<V>,
-        ConceptFacade {
-
-    @Override
-    ImmutableList<V> versions();
-
-    default FieldDataType entityDataType() {
-        return FieldDataType.CONCEPT_CHRONOLOGY;
-    }
-
-    default FieldDataType versionDataType() {
-        return FieldDataType.CONCEPT_VERSION;
-    }
+public sealed interface ViewCoordinateImmutable extends ViewCoordinate, ImmutableCoordinate
+    permits ViewCoordinateRecord {
 }

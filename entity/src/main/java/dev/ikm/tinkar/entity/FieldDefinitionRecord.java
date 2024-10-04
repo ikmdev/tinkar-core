@@ -23,7 +23,7 @@ import io.soabase.recordbuilder.core.RecordBuilder;
 @RecordBuilder
 public record FieldDefinitionRecord(int dataTypeNid, int purposeNid, int meaningNid, int patternVersionStampNid,
                                     int patternNid, int indexInPattern)
-        implements FieldDefinitionForEntity, FieldDefinitionRecordBuilder.With {
+        implements FieldDefinitionForEntity, ImmutableFieldDefinition, FieldDefinitionRecordBuilder.With {
 
     public FieldDefinitionRecord {
         Validator.notZero(dataTypeNid);

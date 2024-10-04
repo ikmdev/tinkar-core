@@ -32,7 +32,7 @@ import java.util.Objects;
 @RecordBuilder
 public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
                                     ImmutableList<Object> fieldValues)
-        implements SemanticEntityVersion, SemanticVersionRecordBuilder.With {
+        implements SemanticEntityVersion, ImmutableVersion, SemanticVersionRecordBuilder.With {
 
     public SemanticVersionRecord {
         Validator.notZero(stampNid);

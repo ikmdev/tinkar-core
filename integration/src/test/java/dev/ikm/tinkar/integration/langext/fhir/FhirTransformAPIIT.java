@@ -32,6 +32,7 @@ import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.aggregator.TemporalEntityAggregator;
 import dev.ikm.tinkar.fhir.transformers.FhirCodeSystemTransform;
 import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.Assertions;
@@ -49,14 +50,15 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class FhirTransformAPIIT extends TestHelper {
+public class FhirTransformAPIIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(FhirTransformAPIIT.class);
-    private static final File SAP_DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(FhirTransformAPIIT.class);
+    private static final File DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(FhirTransformAPIIT.class);
 
     @BeforeAll
-    public void setup() {
-        loadSpinedArrayDataBase(SAP_DATASTORE_ROOT);
+    public void beforeAll() {
+        TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
     }
 
     @Test
