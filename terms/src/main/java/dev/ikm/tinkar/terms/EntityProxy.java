@@ -19,6 +19,7 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.component.Component;
+import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,8 +48,6 @@ public class EntityProxy implements EntityFacade, PublicId {
      */
     protected EntityProxy(int nid) {
         this.cachedNid = nid;
-        this.uuids = PrimitiveData.publicId(nid).asUuidArray();
-        this.description = PrimitiveData.text(nid);
     }
 
     protected EntityProxy(String description, UUID[] uuids) {
@@ -60,6 +59,17 @@ public class EntityProxy implements EntityFacade, PublicId {
     protected EntityProxy(String description, PublicId publicId) {
         this.uuids = publicId.asUuidArray();
         this.description = description;
+    }
+
+    public UUID[] uuids() {
+        if (uuids == null) {
+            if (cachedNid == 0) {
+                throw new IllegalStateException("Nid and UUIDs not initialized");
+            } else {
+                uuids = PrimitiveData.publicId(nid()).asUuidArray();
+            }
+        }
+        return uuids;
     }
 
     public static EntityProxy make(String description, PublicId publicId) {
@@ -75,7 +85,7 @@ public class EntityProxy implements EntityFacade, PublicId {
     }
 
     public PublicId publicId() {
-        return PublicIds.of(uuids);
+        return PublicIds.of(uuids());
     }
 
     @Override
@@ -122,6 +132,9 @@ public class EntityProxy implements EntityFacade, PublicId {
     @Override
     public final int nid() {
         if (cachedNid == 0) {
+            if (uuids == null) {
+                throw new IllegalStateException("Nid and UUIDs not initialized");
+            }
             cachedNid = PrimitiveData.get().nidForUuids(uuids);
         }
         return cachedNid;
@@ -129,7 +142,7 @@ public class EntityProxy implements EntityFacade, PublicId {
 
     @Override
     public ImmutableList<UUID> asUuidList() {
-        return PublicId.super.asUuidList();
+        return Lists.immutable.of(uuids());
     }
 
     @Override
