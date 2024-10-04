@@ -116,7 +116,7 @@
         <guava.version>33.3.0-jre-r1</guava.version>
         <jpms-auto-service.version>1.0.1-r7</jpms-auto-service.version>
         <jpms-record-builder-core.version>36-r7</jpms-record-builder-core.version>
-        <eclipse-collections.version>11.1.0-r11</eclipse-collections.version>
+        <eclipse-collections.version>11.1.0-r12</eclipse-collections.version>
         <eclipse-collections-api.version>11.1.0-r11</eclipse-collections-api.version>
         <jheaps.version>0.14-r6</jheaps.version>
         <roaringbitmap.version>0.9.31-r8</roaringbitmap.version>
