@@ -5,11 +5,7 @@
 	<parent>
 		<groupId>dev.ikm.tinkar</groupId>
 		<artifactId>tinkar-core</artifactId>
-<<<<<<< HEAD
 		<version>1.72.0-SNAPSHOT</version>
-=======
-		<version>1.71.0-SNAPSHOT</version>
->>>>>>> 7f5ab885 (updating tinkar core to reflect jpms module changes related to module renaming)
 	</parent>
 
 	<artifactId>reasoner</artifactId>
@@ -20,7 +16,6 @@
 	<modules>
 		<module>reasoner-elk-owl</module>
 		<module>reasoner-elk-snomed</module>
-<!--		<module>reasoner-hybrid</module>-->
 		<module>reasoner-service</module>
 	</modules>
 
@@ -73,10 +68,6 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
-<<<<<<< HEAD
-
-=======
->>>>>>> 7f5ab885 (updating tinkar core to reflect jpms module changes related to module renaming)
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
