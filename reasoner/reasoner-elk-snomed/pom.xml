@@ -66,7 +66,7 @@
 									<groupId>${reasoner-test-data.groupid}</groupId>
 									<artifactId>
 										tinkar-test-data-snomed-us-20230901</artifactId>
-									<version>2024.09.20</version>
+									<version>2024.10.03</version>
 									<type>zip</type>
 								</artifactItem>
 								<artifactItem>
