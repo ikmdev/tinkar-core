@@ -31,13 +31,13 @@ module dev.ikm.tinkar.fhir.transformers {
     requires dev.ikm.tinkar.common;
     requires dev.ikm.tinkar.entity;
 
+    requires transitive dev.ikm.jpms.hapi.fhir.utilities;
     requires transitive dev.ikm.jpms.hapi.fhir.base;
-    requires transitive dev.ikm.jpms.org.hl7.fhir.r4;
+    requires transitive dev.ikm.jpms.hapi.fhir.r4;
     requires transitive dev.ikm.jpms.hapi.fhir.structures.r4;
-    requires transitive dev.ikm.jpms.org.hl7.fhir.utilities;
 
     requires org.slf4j;
-    requires org.eclipse.collections.api;
+    requires dev.ikm.jpms.eclipse.collections.api;
     requires dev.ikm.tinkar.provider.entity;
     requires dev.ikm.tinkar.coordinate;
 

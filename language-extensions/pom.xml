@@ -11,6 +11,8 @@
     <artifactId>language-extensions</artifactId>
     <packaging>pom</packaging>
 
+    <name>TINKAR Language Extensions</name>
+
     <modules>
         <module>owl-extension</module>
         <module>fhir-extension</module>

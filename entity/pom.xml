@@ -51,6 +51,11 @@
         </dependency>
 
         <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>activej-bytebuf</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.jgrapht</groupId>
             <artifactId>jgrapht-core</artifactId>
             <exclusions>

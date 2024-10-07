@@ -13,7 +13,7 @@
     <artifactId>binding-extension</artifactId>
     <packaging>jar</packaging>
 
-    <name>TINKAR Binding Extension</name>
+    <name>TINKAR Language Extension - Binding</name>
 
     <dependencyManagement>
         <dependencies>

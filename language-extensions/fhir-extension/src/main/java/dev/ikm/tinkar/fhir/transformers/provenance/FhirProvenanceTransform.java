@@ -17,9 +17,20 @@ package dev.ikm.tinkar.fhir.transformers.provenance;
 
 import dev.ikm.tinkar.fhir.transformers.FhirUtils;
 import dev.ikm.tinkar.terms.TinkarTerm;
-import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.CodeableConcept;
+import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.Identifier;
+import org.hl7.fhir.r4.model.Meta;
+import org.hl7.fhir.r4.model.Provenance;
+import org.hl7.fhir.r4.model.Reference;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.TimeZone;
+import java.util.UUID;
 
 import static dev.ikm.tinkar.fhir.transformers.FhirConstants.*;
 
