@@ -22,9 +22,9 @@ module dev.ikm.tinkar.terms {
     requires transitive dev.ikm.tinkar.component;
     requires dev.ikm.tinkar.common;
     requires java.xml;
-    requires org.eclipse.collections.api;
-    requires org.eclipse.collections;
+    requires dev.ikm.jpms.eclipse.collections.api;
+    requires dev.ikm.jpms.eclipse.collections;
     requires org.slf4j;
-    requires transitive static com.google.auto.service;
+    requires transitive static dev.ikm.jpms.auto.service;
     exports dev.ikm.tinkar.terms;
 }

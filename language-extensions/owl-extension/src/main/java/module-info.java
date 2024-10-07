@@ -18,7 +18,7 @@ module dev.ikm.tinkar.ext.lang.owl {
     requires dev.ikm.tinkar.coordinate;
     requires org.slf4j;
     requires dev.ikm.tinkar.entity;
-    requires org.eclipse.collections.api;
+    requires dev.ikm.jpms.eclipse.collections.api;
 
     exports dev.ikm.tinkar.ext.lang.owl;
 }

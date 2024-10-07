@@ -27,13 +27,13 @@ open module dev.ikm.tinkar.integration.test {
     requires dev.ikm.tinkar.provider.entity;
     requires dev.ikm.tinkar.terms;
     requires dev.ikm.tinkar.coordinate;
-    requires com.google.protobuf;
+    requires dev.ikm.jpms.protobuf;
     requires org.junit.jupiter.api;
     requires dev.ikm.tinkar.integration;
     requires org.slf4j;
     requires com.fasterxml.jackson.core;
     requires com.fasterxml.jackson.databind;
-    requires org.eclipse.collections.api;
+    requires dev.ikm.jpms.eclipse.collections.api;
     requires org.mockito; //TODO: delete with stale ITs
     requires dev.ikm.tinkar.ext.lang.owl;
     requires dev.ikm.tinkar.schema;
@@ -43,13 +43,13 @@ open module dev.ikm.tinkar.integration.test {
     requires org.apache.lucene.core;
     requires dev.ikm.tinkar.fhir.transformers;
     requires dev.ikm.tinkar.ext.binding;
-    requires io.soabase.recordbuilder.core;
+    requires dev.ikm.jpms.recordbuilder.core;
     requires java.compiler;
 
     requires transitive dev.ikm.jpms.hapi.fhir.base;
-    requires transitive dev.ikm.jpms.org.hl7.fhir.r4;
+    requires transitive dev.ikm.jpms.hapi.fhir.r4;
     requires transitive dev.ikm.jpms.hapi.fhir.structures.r4;
-    requires transitive dev.ikm.jpms.org.hl7.fhir.utilities;
+    requires transitive dev.ikm.jpms.hapi.fhir.utilities;
 
     uses CachingService;
     uses DataServiceController;

@@ -28,8 +28,8 @@ import dev.ikm.tinkar.provider.ephemeral.ProviderEphemeralNewController;
 module dev.ikm.tinkar.provider.ephemeral {
     requires java.base;
     requires dev.ikm.tinkar.collection;
-    requires org.eclipse.collections;
-    requires org.eclipse.collections.api;
+    requires dev.ikm.jpms.eclipse.collections;
+    requires dev.ikm.jpms.eclipse.collections.api;
     requires dev.ikm.tinkar.common;
     requires dev.ikm.tinkar.component;
     requires dev.ikm.tinkar.provider.search;

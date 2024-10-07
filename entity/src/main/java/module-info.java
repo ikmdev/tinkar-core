@@ -28,22 +28,23 @@ import dev.ikm.tinkar.entity.load.LoadEntitiesFromFileController;
 @SuppressWarnings("module")
         // 7 in HL7 is not a version reference
 module dev.ikm.tinkar.entity {
-    requires org.slf4j;
-    requires io.activej.bytebuf;
     requires transitive dev.ikm.tinkar.common;
     requires transitive dev.ikm.tinkar.component;
-    requires java.logging;
     requires transitive com.github.benmanes.caffeine;
-    requires org.eclipse.collections;
-    requires org.eclipse.collections.api;
-    requires static io.soabase.recordbuilder.core;
-    requires static java.compiler;
     requires transitive dev.ikm.tinkar.terms;
+
+    requires static dev.ikm.jpms.recordbuilder.core;
+    requires static java.compiler;
+
+    requires org.slf4j;
+    requires dev.ikm.jpms.activej.bytebuf;
+    requires java.logging;
+    requires dev.ikm.jpms.eclipse.collections;
+    requires dev.ikm.jpms.eclipse.collections.api;
     requires java.xml;
     requires dev.ikm.tinkar.schema;
-    requires com.google.protobuf;
+    requires dev.ikm.jpms.protobuf;
     requires org.jgrapht.core;
-
     exports dev.ikm.tinkar.entity;
     exports dev.ikm.tinkar.entity.aggregator;
     exports dev.ikm.tinkar.entity.graph;
