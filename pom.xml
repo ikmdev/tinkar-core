@@ -5,7 +5,7 @@
     <parent>
         <groupId>dev.ikm.build</groupId>
         <artifactId>java-parent</artifactId>
-        <version>1.50.0</version>
+        <version>1.52.0</version>
         <relativePath/>
     </parent>
 
@@ -67,7 +67,6 @@
     </issueManagement>
 
     <properties>
-<!--        <maven.javadoc.skip>true</maven.javadoc.skip>-->
         <activej-bytebuf.version>4.3-r10</activej-bytebuf.version>
         <activej-common.version>4.3-r8</activej-common.version>
         <asm.version>9.1</asm.version>
@@ -109,10 +108,10 @@
 
         <!-- JPMS Dependencies -->
         <tinkar-jpms-deps.groupId>dev.ikm.jpms</tinkar-jpms-deps.groupId>
-        <fhir-base.version>7.0.2-r10</fhir-base.version>
-        <fhir-structures.version>7.0.2-r9</fhir-structures.version>
-        <fhir-hl7-r4.version>6.3.3-r10</fhir-hl7-r4.version>
-        <fhir-hl7-utilities.version>6.3.3-r9</fhir-hl7-utilities.version>
+        <fhir-base.version>7.0.2-r11</fhir-base.version>
+        <fhir-structures.version>7.0.2-r10</fhir-structures.version>
+        <fhir-hl7-r4.version>6.3.3-r11</fhir-hl7-r4.version>
+        <fhir-hl7-utilities.version>6.3.3-r10</fhir-hl7-utilities.version>
         <guava.version>33.3.0-jre-r1</guava.version>
         <jpms-auto-service.version>1.0.1-r7</jpms-auto-service.version>
         <jpms-record-builder-core.version>36-r7</jpms-record-builder-core.version>
