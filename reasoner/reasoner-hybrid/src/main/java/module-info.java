@@ -18,8 +18,8 @@ import dev.ikm.tinkar.reasoner.hybrid.HybridReasonerService;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
 
 module dev.ikm.tinkar.reasoner.hybrid {
-	requires org.eclipse.collections;
-	requires org.eclipse.collections.api;
+	requires dev.ikm.jpms.eclipse.collections;
+	requires dev.ikm.jpms.eclipse.collections.api;
 	requires org.slf4j;
 
 	requires dev.ikm.tinkar.collection;
