@@ -54,18 +54,23 @@
 			</dependency>
 			<dependency>
 				<groupId>dev.ikm.owlapi</groupId>
-				<artifactId>owlapi-impl</artifactId>
+				<artifactId>owlapi-apibinding</artifactId>
 				<version>${owlapi.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>dev.ikm.owlapi</groupId>
-				<artifactId>owlapi-apibinding</artifactId>
+				<artifactId>owlapi-impl</artifactId>
 				<version>${owlapi.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>dev.ikm.owlapi</groupId>
 				<artifactId>owlapi-parsers</artifactId>
 				<version>${owlapi.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>reasoner-elk-snomed</artifactId>
+				<version>${project.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>dev.ikm.tinkar</groupId>

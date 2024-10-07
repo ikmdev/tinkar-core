@@ -34,12 +34,11 @@
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>reasoner-service</artifactId>
+			<artifactId>reasoner-elk-snomed</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>reasoner-elk-snomed</artifactId>
-			<version>${project.version}</version>
+			<artifactId>reasoner-service</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>dev.ikm.elk</groupId>
@@ -48,7 +47,7 @@
 		<dependency>
 			<groupId>dev.ikm.hybrid-reasoner</groupId>
 			<artifactId>hybrid-reasoner-snomed</artifactId>
-			</dependency>
+		</dependency>
 	</dependencies>
 
 	<build>
