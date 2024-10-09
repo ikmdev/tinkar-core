@@ -51,7 +51,7 @@ public class SnomedUS20230901ElkSnomedDataBuilderTestIT extends ElkSnomedDataBui
 
 	// TODO get all this back once test db are available
 
-	public static final String db = "SnomedCT_US_20230901_SpinedArray-20241003";
+	public static final String db = "SnomedCT_US_20230901_SpinedArray-20240920";
 
 	protected String getDir() {
 		// TODO data vs. db

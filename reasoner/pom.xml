@@ -21,9 +21,9 @@
 	</modules>
 
 	<properties>
-		<hybrid-reasoner.version>1.0.1</hybrid-reasoner.version>
-		<ikm-reasoner.version>0.30.0</ikm-reasoner.version>
-		<owlapi.version>4.7.1</owlapi.version>
+		<hybrid-reasoner.version>1.0.2</hybrid-reasoner.version>
+		<ikm-reasoner.version>0.31.0</ikm-reasoner.version>
+		<owlapi.version>4.7.3</owlapi.version>
 		<reasoner-test-data.groupid>dev.ikm.reasoner-test-data</reasoner-test-data.groupid>
 		<skipITs>true</skipITs>
 		<snomed-test-data.groupid>dev.ikm.snomed</snomed-test-data.groupid>
