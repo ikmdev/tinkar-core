@@ -26,6 +26,7 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import dev.ikm.elk.snomed.SnomedIds;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -104,7 +105,7 @@ public class SnomedUS20230901ElkOwlClassifierTestIT extends SnomedUS20230901ElkO
 				continue;
 			}
 			Set<Long> parents = isas.getParents(sctid);
-			if (sctid == SnomedIsa.root) {
+			if (sctid == SnomedIds.root) {
 				assertTrue(parents.isEmpty());
 			} else {
 				assertNotNull(parents);

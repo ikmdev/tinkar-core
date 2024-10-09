@@ -21,7 +21,7 @@
 
 	<properties>
 		<maven-assembly-plugin.version>3.7.1</maven-assembly-plugin.version>
-		<ikm-reasoner.version>0.29.0</ikm-reasoner.version>
+		<ikm-reasoner.version>0.31.0</ikm-reasoner.version>
 		<owlapi.version>4.7.1</owlapi.version>
 		<skipITs>true</skipITs>
 		<reasoner-test-data.groupid>dev.ikm.reasoner-test-data</reasoner-test-data.groupid>
