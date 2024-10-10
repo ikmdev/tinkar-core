@@ -26,11 +26,6 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>dev.ikm.tinkar.fhir</groupId>
-                <artifactId>fhir-extension</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>dev.ikm.tinkar.ext.binding</groupId>
                 <artifactId>binding-extension</artifactId>
                 <version>${project.version}</version>
@@ -95,12 +90,6 @@
         <dependency>
             <groupId>dev.ikm.tinkar.ext.owl</groupId>
             <artifactId>owl-extension</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>dev.ikm.tinkar.fhir</groupId>
-            <artifactId>fhir-extension</artifactId>
             <scope>test</scope>
         </dependency>
 
