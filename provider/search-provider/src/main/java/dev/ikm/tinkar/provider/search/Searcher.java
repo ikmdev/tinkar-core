@@ -20,16 +20,23 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
+import dev.ikm.tinkar.component.Component;
+import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
 import dev.ikm.tinkar.coordinate.navigation.NavigationCoordinateRecord;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculator;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
+import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
+import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.PatternEntity;
+import dev.ikm.tinkar.entity.PatternEntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.TinkarTerm;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -38,7 +45,12 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.SearcherManager;
-import org.apache.lucene.search.highlight.*;
+import org.apache.lucene.search.highlight.Formatter;
+import org.apache.lucene.search.highlight.Highlighter;
+import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
+import org.apache.lucene.search.highlight.NullFragmenter;
+import org.apache.lucene.search.highlight.QueryScorer;
+import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
 import org.eclipse.collections.impl.factory.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +59,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public class Searcher {
@@ -365,5 +378,41 @@ public class Searcher {
             return conceptIds;
         }
         return Collections.emptyList();
+    }
+
+    /**
+     * Returns PublicId for the Concept associated with a Semantic containing fields with the given identifier source and value
+     *
+     * @param   identifierSource PublicId identifierSource
+     * @param   identifierValue String identifierValue
+     * @return  Optional wrapped PublicId for the Concept associated with the Semantic containing the identifier source and value
+     */
+    public static Optional<PublicId> getPublicId(PublicId identifierSource, String identifierValue) {
+        ViewCalculator viewCalc = Calculators.View.Default();
+        Latest<PatternEntityVersion> latestIdPattern = viewCalc.latestPatternEntityVersion(TinkarTerm.IDENTIFIER_PATTERN);
+
+        if (latestIdPattern.isAbsent()) {
+            throw new RuntimeException("Identifier Pattern is absent from data set");
+        }
+
+        try {
+            int[] semanticNids = EntityService.get().semanticNidsOfPattern(TinkarTerm.IDENTIFIER_PATTERN.nid());
+            for (int nid : semanticNids) {
+                EntityVersion entityVersion = viewCalc.latest(nid).get();
+                if (entityVersion instanceof SemanticEntityVersion semanticEntityVersion) {
+                    Object idValue = latestIdPattern.get().getFieldWithMeaning(TinkarTerm.IDENTIFIER_VALUE, semanticEntityVersion);
+                    if (identifierValue != null && identifierValue.equals(idValue)) {
+                        Component idSource = latestIdPattern.get().getFieldWithMeaning(TinkarTerm.IDENTIFIER_SOURCE, semanticEntityVersion);
+                        if (identifierSource != null && idSource != null && PublicId.equals(idSource.publicId(), identifierSource)) {
+                            return Optional.of(semanticEntityVersion.referencedComponent().publicId());
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOG.error("Encountered exception {}", e.getMessage());
+        }
+
+        return Optional.empty();
     }
 }
