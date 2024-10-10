@@ -16,6 +16,7 @@
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <skip.unit.tests>false</skip.unit.tests>
         <skip.integration.tests>false</skip.integration.tests>
+        <tinkar-composer.version>1.4.0</tinkar-composer.version>
     </properties>
 
     <dependencyManagement>
@@ -36,14 +37,14 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>dev.ikm.tinkar</groupId>
+                <groupId>${project.groupId}</groupId>
                 <artifactId>composer</artifactId>
-                <version>1.4.0</version>
+                <version>${tinkar-composer.version}</version>
             </dependency>
             <dependency>
-                <groupId>dev.ikm.jpms</groupId>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
                 <artifactId>eclipse-collections-api</artifactId>
-                <version>11.1.0-r4</version>
+                <version>${eclipse-collections-api.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -88,7 +89,7 @@
             <artifactId>search-provider</artifactId>
         </dependency>
         <dependency>
-            <groupId>dev.ikm.jpms</groupId>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>eclipse-collections-api</artifactId>
         </dependency>
 
