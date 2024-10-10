@@ -112,7 +112,7 @@
         <fhir-structures.version>7.0.2-r10</fhir-structures.version>
         <fhir-hl7-r4.version>6.3.3-r11</fhir-hl7-r4.version>
         <fhir-hl7-utilities.version>6.3.3-r10</fhir-hl7-utilities.version>
-        <guava.version>33.3.0-jre-r1</guava.version>
+        <guava.version>33.3.0-jre-r2</guava.version>
         <jpms-auto-service.version>1.0.1-r7</jpms-auto-service.version>
         <jpms-record-builder-core.version>36-r7</jpms-record-builder-core.version>
         <eclipse-collections.version>11.1.0-r12</eclipse-collections.version>
