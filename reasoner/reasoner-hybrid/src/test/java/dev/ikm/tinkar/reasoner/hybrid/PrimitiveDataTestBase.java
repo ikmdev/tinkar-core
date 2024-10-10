@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.reasoner.elkowl;
+package dev.ikm.tinkar.reasoner.hybrid;
 
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -65,7 +65,6 @@ public abstract class PrimitiveDataTestBase {
 	public static void copyDb(String source_name, String target_name) throws IOException {
 		Path source_path = Paths.get("target", "db", source_name).toAbsolutePath();
 		Path target_path = Paths.get("target", "db", target_name).toAbsolutePath();
-		LOG.info("Source: " + source_path);
 		assumeTrue(Files.exists(source_path));
 		copyDirectory(source_path, target_path);
 	}
