@@ -23,6 +23,7 @@ import dev.ikm.tinkar.entity.StampService;
 
 open module dev.ikm.tinkar.integration.test {
     requires dev.ikm.tinkar.common;
+    requires dev.ikm.tinkar.composer;
     requires dev.ikm.tinkar.entity;
     requires dev.ikm.tinkar.provider.entity;
     requires dev.ikm.tinkar.terms;

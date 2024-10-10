@@ -17,19 +17,29 @@ package dev.ikm.tinkar.integration.search;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.util.io.FileUtil;
+import dev.ikm.tinkar.composer.Composer;
+import dev.ikm.tinkar.composer.Session;
+import dev.ikm.tinkar.composer.assembler.PatternAssembler;
+import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
+import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
+import dev.ikm.tinkar.entity.PatternEntityVersion;
 import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.provider.search.Searcher;
 import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.List;
@@ -41,18 +51,38 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SearcherIT {
-
+    private static final Logger LOG = LoggerFactory.getLogger(SearcherIT.class);
     private static final File DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
             SearcherIT.class);
-
+    private final Composer composer = new Composer("SearcherIT");
     @BeforeAll
     public void beforeAll() {
         TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
         TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
+        //JTD add code here to modify the specific artifacts used by the search*ExistingIdentifier tests
+        //    with the Composer API until we can get updated reasoned starter data
+        // temporarily update latest IDENTIFIER_PATTERN
+        try {
+            Latest<PatternEntityVersion> latestIdPattern = Calculators.View.Default().latestPatternEntityVersion(TinkarTerm.IDENTIFIER_PATTERN);
+            if ( latestIdPattern.get().fieldDefinitions().get(1).meaningNid() == TinkarTerm.IDENTIFIER_SOURCE.nid()) {
+                Session session = composer.open(State.ACTIVE, /*time,*/ TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+                session.compose((PatternAssembler patternAssembler) -> patternAssembler
+                        .pattern(TinkarTerm.IDENTIFIER_PATTERN)
+                        .meaning(TinkarTerm.IDENTIFIER_SOURCE)
+                        .purpose(TinkarTerm.IDENTIFIER_SOURCE)
+                        .fieldDefinition(TinkarTerm.IDENTIFIER_SOURCE, TinkarTerm.IDENTIFIER_SOURCE, TinkarTerm.COMPONENT_FIELD)
+                        .fieldDefinition(TinkarTerm.IDENTIFIER_VALUE, TinkarTerm.IDENTIFIER_VALUE, TinkarTerm.STRING)
+                );
+            }
+        } catch (Exception e) {
+            LOG.error("Exception creating new IDENTIFIER_PATTERN");
+        }
     }
 
     @AfterAll
     public void afterAll() {
+        // delete temporary database
+        FileUtil.recursiveDelete(DATASTORE_ROOT);
         TestHelper.stopDatabase();
     }
 
@@ -124,8 +154,8 @@ public class SearcherIT {
         var searchResults = stampCoordinate.stampCalculator().searchDescendants(navigationCalculator, TinkarTerm.ROLE, "Component", 100);
 
         //Then there should only be 6 LatestVersionSearchResults, a grouping of FQN, SYN, DEF for the following concepts:
-        // 1) Refrenced component subtype restriction
-        // 2) Refrenced component type restriction
+        // 1) Referenced component subtype restriction
+        // 2) Referenced component type restriction
         assertEquals(6, searchResults.size(), "Exactly 6 search results should be returned");
     }
 
@@ -166,7 +196,7 @@ public class SearcherIT {
         //identifier: LANGUAGE_NID_FOR_LANGUAGE_COORDINATE
         Optional<PublicId> publicId = Searcher.getPublicId(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, TinkarTerm.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE.asUuidArray()[0].toString());
         assertTrue(publicId.isPresent(), "PublicId should be found");
-        assertTrue(PublicId.equals(publicId.get(), TinkarTerm.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE), "Concept PublicId should be REFERENCED_COMPONENT_SUBTYPE_RESTRICTION");
+        assertTrue(PublicId.equals(publicId.get(), TinkarTerm.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE), "Concept PublicId should be LANGUAGE_NID_FOR_LANGUAGE_COORDINATE");
     }
 
     @Test
