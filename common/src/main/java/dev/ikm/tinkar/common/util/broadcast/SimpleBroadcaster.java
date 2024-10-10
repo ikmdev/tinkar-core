@@ -48,7 +48,7 @@ public class SimpleBroadcaster<T> implements Broadcaster<T>, Subscriber<T>{
     }
 
     public void addSubscriberWithWeakReference(Subscriber<T> subscriber) {
-        LOG.atDebug().log(subscriber + " subscribing to " + this);
+        LOG.debug(subscriber + " subscribing to " + this);
         for (WeakReference<Subscriber<T>> subscriberWeakReference: subscriberWeakReferenceList) {
             if (subscriberWeakReference.get() == subscriber) {
                 throw new IllegalStateException("Trying to add duplicate listener: " + subscriber);
@@ -57,7 +57,7 @@ public class SimpleBroadcaster<T> implements Broadcaster<T>, Subscriber<T>{
         subscriberWeakReferenceList.add(new WeakReference<>(subscriber));
     }
     public void removeSubscriber(Subscriber<T> subscriber) {
-        LOG.atDebug().log("Removing " + subscriber + " from " + this);
+        LOG.debug("Removing " + subscriber + " from " + this);
         for (WeakReference<Subscriber<T>> subscriberWeakReference: subscriberWeakReferenceList) {
             if (subscriberWeakReference.get() == subscriber) {
                 subscriberWeakReferenceList.remove(subscriberWeakReference);
