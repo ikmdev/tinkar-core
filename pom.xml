@@ -108,10 +108,6 @@
 
         <!-- JPMS Dependencies -->
         <tinkar-jpms-deps.groupId>dev.ikm.jpms</tinkar-jpms-deps.groupId>
-        <fhir-base.version>7.0.2-r11</fhir-base.version>
-        <fhir-structures.version>7.0.2-r10</fhir-structures.version>
-        <fhir-hl7-r4.version>6.3.3-r11</fhir-hl7-r4.version>
-        <fhir-hl7-utilities.version>6.3.3-r10</fhir-hl7-utilities.version>
         <guava.version>33.3.0-jre-r2</guava.version>
         <jpms-auto-service.version>1.0.1-r7</jpms-auto-service.version>
         <jpms-record-builder-core.version>36-r7</jpms-record-builder-core.version>
@@ -302,36 +298,6 @@
                 <groupId>${tinkar-jpms-deps.groupId}</groupId>
                 <artifactId>guava</artifactId>
                 <version>${guava.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>${tinkar-jpms-deps.groupId}</groupId>
-                <artifactId>hapi-fhir-base</artifactId>
-                <version>${fhir-base.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>${tinkar-jpms-deps.groupId}</groupId>
-                <artifactId>hapi-fhir-structures-r4</artifactId>
-                <version>${fhir-structures.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>ca.uhn.hapi.fhir</groupId>
-                        <artifactId>hapi-fhir-base</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-
-            <dependency>
-                <groupId>${tinkar-jpms-deps.groupId}</groupId>
-                <artifactId>org.hl7.fhir.r4</artifactId>
-                <version>${fhir-hl7-r4.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>${tinkar-jpms-deps.groupId}</groupId>
-                <artifactId>org.hl7.fhir.utilities</artifactId>
-                <version>${fhir-hl7-utilities.version}</version>
             </dependency>
 
             <!-- Everything else -->
