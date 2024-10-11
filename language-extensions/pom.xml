@@ -15,7 +15,6 @@
 
     <modules>
         <module>owl-extension</module>
-        <module>fhir-extension</module>
         <module>binding-extension</module>
     </modules>
 </project>
