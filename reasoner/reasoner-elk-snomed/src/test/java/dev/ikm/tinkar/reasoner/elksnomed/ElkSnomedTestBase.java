@@ -106,7 +106,7 @@ public abstract class ElkSnomedTestBase extends PrimitiveDataTestBase {
 		return lines;
 	}
 
-	public void runSnomedReasoner() throws Exception {
+	public ArrayList<String> runSnomedReasoner() throws Exception {
 		LOG.info("runSnomedReasoner");
 		ElkSnomedData data = buildSnomedData();
 		LOG.info("Create ontology");
@@ -117,6 +117,7 @@ public abstract class ElkSnomedTestBase extends PrimitiveDataTestBase {
 		Path path = getWritePath("supercs");
 		ArrayList<String> lines = getSupercs(data, reasoner);
 		Files.write(path, lines);
+		return lines;
 	}
 
 	public ReasonerService initReasonerService() {
@@ -142,7 +143,7 @@ public abstract class ElkSnomedTestBase extends PrimitiveDataTestBase {
 		return lines;
 	}
 
-	public void runSnomedReasonerService() throws Exception {
+	public ArrayList<String> runSnomedReasonerService() throws Exception {
 		LOG.info("runSnomedReasonerService");
 		ReasonerService rs = initReasonerService();
 		rs.extractData();
@@ -152,6 +153,7 @@ public abstract class ElkSnomedTestBase extends PrimitiveDataTestBase {
 		Path path = getWritePath("supercs");
 		ArrayList<String> lines = getSupercs(rs);
 		Files.write(path, lines);
+		return lines;
 	}
 
 }

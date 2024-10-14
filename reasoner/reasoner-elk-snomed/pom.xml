@@ -63,17 +63,31 @@
 							<skip>${skipITs}</skip>
 							<artifactItems>
 								<artifactItem>
-									<groupId>${reasoner-test-data.groupid}</groupId>
-									<artifactId>
-										tinkar-test-data-snomed-us-20230901</artifactId>
-									<version>2024.09.20</version>
-									<type>zip</type>
-								</artifactItem>
-								<artifactItem>
 									<groupId>${snomed-test-data.groupid}</groupId>
 									<artifactId>
 										snomed-test-data-us-20230901</artifactId>
 									<version>${snomed-test-data.version}</version>
+									<type>zip</type>
+								</artifactItem>
+							</artifactItems>
+							<outputDirectory>
+								${project.build.directory}/data</outputDirectory>
+						</configuration>
+					</execution>
+					<execution>
+						<id>unpack-test-db</id>
+						<phase>pre-integration-test</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<skip>${skipITs}</skip>
+							<artifactItems>
+								<artifactItem>
+									<groupId>${reasoner-test-data.groupid}</groupId>
+									<artifactId>
+										tinkar-test-data-snomed-us-20230901</artifactId>
+									<version>2024.09.20</version>
 									<type>zip</type>
 								</artifactItem>
 							</artifactItems>

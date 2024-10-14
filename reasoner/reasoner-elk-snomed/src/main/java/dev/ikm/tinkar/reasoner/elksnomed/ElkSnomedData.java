@@ -58,16 +58,20 @@ public class ElkSnomedData {
 		return Collections.unmodifiableCollection(nidRoleTypeMap.values());
 	}
 
-	public RoleType getOrCreateRoleType(int roleNid) {
-		return nidRoleTypeMap.computeIfAbsent(roleNid, RoleType::new);
-	}
-
 	public Concept getConcept(int conceptNid) {
 		return nidConceptMap.get(conceptNid);
 	}
 
 	public Concept getOrCreateConcept(int conceptNid) {
 		return nidConceptMap.computeIfAbsent(conceptNid, Concept::new);
+	}
+
+	public RoleType getRoleType(int roleNid) {
+		return nidRoleTypeMap.get(roleNid);
+	}
+
+	public RoleType getOrCreateRoleType(int roleNid) {
+		return nidRoleTypeMap.computeIfAbsent(roleNid, RoleType::new);
 	}
 
 	public int getActiveConceptCount() {
