@@ -191,7 +191,7 @@ public class ElkSnomedDataBuilder {
 	}
 
 	private void processPropertySet(EntityVertex propertySetNode, int conceptNid, DiTreeEntity definition) {
-//		LOG.info("PropertySet: " + propertySetNode + " " + definition);
+//		LOG.info("PropertySet: " + PrimitiveData.text(conceptNid) + " " + propertySetNode + "\n" + definition);
 		final ImmutableList<EntityVertex> children = definition.successors(propertySetNode);
 		if (children.size() != 1)
 			throw new IllegalStateException(
@@ -203,10 +203,15 @@ public class ElkSnomedDataBuilder {
 		for (EntityVertex node : definition.successors(child)) {
 			switch (getMeaning(node)) {
 			case CONCEPT -> {
-				// TODO reflexive and transitive -- these are in the db a superconcepts
-				// TODO case for concept model attribute as sup
 				final ConceptFacade nodeConcept = node.propertyFast(TinkarTerm.CONCEPT_REFERENCE);
-				data.getOrCreateRoleType(conceptNid).addSuperRoleType(data.getOrCreateRoleType(nodeConcept.nid()));
+				RoleType roleType = data.getOrCreateRoleType(conceptNid);
+				if (nodeConcept.nid() == TinkarTerm.TRANSITIVE_PROPERTY.nid()) {
+					roleType.setTransitive(true);
+				} else if (nodeConcept.nid() == TinkarTerm.REFLEXIVE_PROPERTY.nid()) {
+					roleType.setReflexive(true);
+				} else {
+					roleType.addSuperRoleType(data.getOrCreateRoleType(nodeConcept.nid()));
+				}
 			}
 			case PROPERTY_PATTERN_IMPLICATION -> {
 				// final ConceptFacade pi =
