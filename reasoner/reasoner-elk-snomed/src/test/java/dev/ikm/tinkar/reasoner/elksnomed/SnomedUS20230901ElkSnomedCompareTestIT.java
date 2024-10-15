@@ -20,6 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.nio.file.Files;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -29,6 +32,7 @@ import dev.ikm.elk.snomed.SnomedDescriptions;
 import dev.ikm.elk.snomed.SnomedIds;
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.elk.snomed.model.Concept;
+import dev.ikm.elk.snomed.model.Definition;
 import dev.ikm.elk.snomed.model.RoleType;
 import dev.ikm.elk.snomed.owl.OwlTransformer;
 import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
@@ -59,24 +63,24 @@ public class SnomedUS20230901ElkSnomedCompareTestIT extends SnomedUS20230901ElkS
 			assertNotNull(us_con);
 			LOG.info(snomedOntology.getFsn(us_con.getId()));
 		}
-		int missing_concept_cnt = 0;
-		int missing_role_cnt = 0;
+		for (RoleType role : snomedOntology.getRoleTypes()) {
+			int nid = ElkSnomedData.getNid(role.getId());
+			RoleType data_role = data.getRoleType(nid);
+			if (data_role == null)
+				continue;
+			data_role.setId(role.getId());
+		}
 		for (Concept con : snomedOntology.getConcepts()) {
 			int nid = ElkSnomedData.getNid(con.getId());
 			Concept data_con = data.getConcept(nid);
-			if (data_con == null) {
-				LOG.error("No concept: " + con);
-				missing_concept_cnt++;
+			if (data_con == null)
 				continue;
-			}
-			if (con.getDefinitions().size() != data_con.getDefinitions().size())
-				LOG.error("Definition size: " + con.getId() + " " + snomedOntology.getFsn(con.getId()) + "\n"
-						+ "Expect " + con.getDefinitions().size() + " Actual " + data_con.getDefinitions().size() + "\n"
-						+ nid + " " + UuidUtil.fromSNOMED("" + con.getId()));
-
-			if (con.getGciDefinitions().size() != data_con.getGciDefinitions().size())
-				LOG.error("Gcis: " + con);
+			data_con.setId(con.getId());
 		}
+		int missing_role_cnt = 0;
+		int missing_concept_cnt = 0;
+		int compare_role_cnt = 0;
+		int compare_concept_cnt = 0;
 		for (RoleType role : snomedOntology.getRoleTypes()) {
 			int nid = ElkSnomedData.getNid(role.getId());
 			RoleType data_role = data.getRoleType(nid);
@@ -85,9 +89,68 @@ public class SnomedUS20230901ElkSnomedCompareTestIT extends SnomedUS20230901ElkS
 				missing_role_cnt++;
 				continue;
 			}
+			if (!compare(role, data_role, snomedOntology))
+				compare_role_cnt++;
 		}
-		assertEquals(0, missing_concept_cnt);
+		for (Concept con : snomedOntology.getConcepts()) {
+			int nid = ElkSnomedData.getNid(con.getId());
+			Concept data_con = data.getConcept(nid);
+			if (data_con == null) {
+				LOG.error("No concept: " + con);
+				missing_concept_cnt++;
+				continue;
+			}
+//			LOG.info(con.getId() + " " + snomedOntology.getFsn(con.getId()));
+			if (!compare(con, data_con, snomedOntology))
+				compare_concept_cnt++;
+		}
 		assertEquals(0, missing_role_cnt);
+		assertEquals(0, missing_concept_cnt);
+		// TODO should be 0 when data issues are fixed
+		assertEquals(5, compare_role_cnt);
+		assertEquals(7, compare_concept_cnt);
+	}
+
+	public boolean compareEquals(Object expect, Object actual, String msg) {
+		if (Objects.equals(expect, actual))
+			return true;
+		LOG.error(msg);
+		LOG.error("Expect: " + expect + " Actual: " + actual);
+		return false;
+	}
+
+	public boolean compare(RoleType expect, RoleType actual, SnomedOntology snomedOntology) {
+		String con_msg = expect.getId() + " " + snomedOntology.getFsn(expect.getId());
+		return compareEquals(new HashSet<>(expect.getSuperRoleTypes()), new HashSet<>(actual.getSuperRoleTypes()),
+				"Super Role Types " + con_msg)
+				& compareEquals(expect.isTransitive(), actual.isTransitive(), "Transitive " + con_msg)
+				& compareEquals(expect.getChained(), actual.getChained(), "Chained " + con_msg)
+				& compareEquals(expect.isReflexive(), actual.isReflexive(), "Reflexive " + con_msg);
+	}
+
+	public boolean compare(Concept expect, Concept actual, SnomedOntology snomedOntology) {
+		compareDefinitions(expect.getDefinitions(), actual.getDefinitions(), "Definitions ", expect, snomedOntology);
+		compareDefinitions(expect.getGciDefinitions(), actual.getGciDefinitions(), "Gci Definitions ", expect,
+				snomedOntology);
+		String con_msg = expect.getId() + " " + snomedOntology.getFsn(expect.getId());
+		return compareEquals(new HashSet<>(expect.getDefinitions()),
+				new HashSet<>(actual.getDefinitions().stream().map(x -> x.copy()).toList()), "Definitions " + con_msg)
+				& compareEquals(new HashSet<>(expect.getGciDefinitions()),
+						new HashSet<>(actual.getGciDefinitions().stream().map(x -> x.copy()).toList()),
+						"Gci Definitions " + con_msg);
+	}
+
+	@Deprecated
+	public boolean compareDefinitions(List<Definition> expect, List<Definition> actual, String msg, Concept con,
+			SnomedOntology snomedOntology) {
+		if (expect.size() != actual.size()) {
+			LOG.error(msg + con.getId() + " " + snomedOntology.getFsn(con.getId()) + "\n" + "Expect " + expect.size()
+					+ " Actual " + actual.size() + "\n"
+					// + nid + " "
+					+ UuidUtil.fromSNOMED("" + con.getId()));
+			return false;
+		}
+		return true;
 	}
 
 }
