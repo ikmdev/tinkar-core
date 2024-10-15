@@ -170,13 +170,17 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         int[] stampNidArray = stampNids.stream().sorted().mapToInt(value -> (int) value).toArray();
         for (int stampNid : stampNidArray) {
             StampRecord stamp = Entity.getStamp(stampNid);
-            LOG.info("Stamp: " + stamp);
-            if (stamp.time() == Long.MAX_VALUE && Transaction.forStamp(stamp).isEmpty()) {
-                // Uncommitted stamp found outside a transaction on restart. Set to canceled.
-                cancelUncommittedStamp(stampNid, stamp);
-            }
-            if (stamp.lastVersion().stateNid() == State.CANCELED.nid()) {
-                PrimitiveData.get().addCanceledStampNid(stampNid);
+            if (stamp.lastVersion() == null) {
+                LOG.info("Null last version for stamp with nid: " + stampNid);
+            } else {
+                LOG.info("Stamp: " + stamp);
+                if (stamp.time() == Long.MAX_VALUE && Transaction.forStamp(stamp).isEmpty()) {
+                    // Uncommitted stamp found outside a transaction on restart. Set to canceled.
+                    cancelUncommittedStamp(stampNid, stamp);
+                }
+                if (stamp.lastVersion().stateNid() == State.CANCELED.nid()) {
+                    PrimitiveData.get().addCanceledStampNid(stampNid);
+                }
             }
         }
     }

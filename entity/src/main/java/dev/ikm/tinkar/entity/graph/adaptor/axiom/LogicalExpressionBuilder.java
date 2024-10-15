@@ -15,6 +15,9 @@
  */
 package dev.ikm.tinkar.entity.graph.adaptor.axiom;
 
+import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.id.IntIdListFactory;
+import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.terms.EntityProxy;
 import org.eclipse.collections.api.factory.Lists;
@@ -305,12 +308,12 @@ public class LogicalExpressionBuilder {
                                                                                         ConceptFacade implication) {
         EntityVertex propertyPatternImplicationAxiom = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.PROPERTY_PATTERN_IMPLICATION.nid);
         builder.addVertex(propertyPatternImplicationAxiom);
-        throw new UnsupportedOperationException();
-//        propertyPatternImplicationAxiom.putUncommittedProperty(TinkarTerm.PATTERN.nid(), featureType);
-//        propertyPatternImplicationAxiom.putUncommittedProperty(TinkarTerm.PROPERTY_PATTERN_IMPLICATION.nid(), implication);
-//
-//        propertyPatternImplicationAxiom.commitProperties();
-//        return new LogicalAxiomAdaptor.PropertyPatternImplicationAdaptor(logicalExpression, propertyPatternImplicationAxiom.vertexIndex());
+        propertyPatternImplicationAxiom.putUncommittedProperty(TinkarTerm.PROPERTY_SET.nid(),
+                IntIds.list.of(propertyPattern.castToList(),  (ConceptFacade conceptFacade) -> conceptFacade.nid()));
+        propertyPatternImplicationAxiom.putUncommittedProperty(TinkarTerm.PROPERTY_PATTERN_IMPLICATION.nid(), implication);
+
+        propertyPatternImplicationAxiom.commitProperties();
+        return new LogicalAxiomAdaptor.PropertyPatternImplicationAdaptor(logicalExpression, propertyPatternImplicationAxiom.vertexIndex());
     }
 
     public LogicalAxiom addCloneOfNode(LogicalAxiom rootToClone) {
