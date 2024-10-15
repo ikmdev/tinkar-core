@@ -4745,7 +4745,7 @@ public class TinkarTerm {
      * d0d759fd-510f-475a-900e-b1439b4536e1</a>}.
      */
     public static final EntityProxy.Concept PROPERTY_SEQUENCE =
-            EntityProxy.Concept.make("Property sequence (Solor)", UUID.fromString("d0d759fd-510f-475a-900e-b1439b4536e1"));
+            EntityProxy.Concept.make("Property sequence (SOLOR)", UUID.fromString("d0d759fd-510f-475a-900e-b1439b4536e1"));
     /**
      * Java binding for the concept described as <strong><em>Property set (SOLOR)</em></strong>;
      * identified by UUID: {@code
