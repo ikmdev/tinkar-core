@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.collections.api.list.ImmutableList;
@@ -23,6 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dev.ikm.elk.snomed.model.Concept;
+import dev.ikm.elk.snomed.model.ConcreteRole;
+import dev.ikm.elk.snomed.model.ConcreteRoleType;
 import dev.ikm.elk.snomed.model.Definition;
 import dev.ikm.elk.snomed.model.DefinitionType;
 import dev.ikm.elk.snomed.model.Role;
@@ -268,8 +269,9 @@ public class ElkSnomedDataBuilder {
 				}
 			}
 			case FEATURE -> {
-				LOG.info("Feature: " + "\n" + definition);
-
+//				LOG.info("Feature: " + "\n" + definition);
+				ConcreteRole role = makeConcreteRole(child, definition);
+				def.addUngroupedConcreteRole(role);
 			}
 			default -> throw new IllegalArgumentException("Unexpected value: " + getMeaning(child));
 			}
@@ -286,6 +288,15 @@ public class ElkSnomedDataBuilder {
 		EntityVertex child = children.getFirst();
 		int concept_nid = getNid(child, TinkarTerm.CONCEPT_REFERENCE);
 		return new Role(role_type, data.getOrCreateConcept(concept_nid));
+	}
+
+	private ConcreteRole makeConcreteRole(EntityVertex node, DiTreeEntity definition) {
+//		int role_operator_nid = getNid(node, TinkarTerm.CONCRETE_DOMAIN_OPERATOR);
+		int role_type_nid = getNid(node, TinkarTerm.FEATURE_TYPE);
+		int value = node.propertyFast(TinkarTerm.LITERAL_VALUE);
+//		LOG.info("[" + PrimitiveData.text(role_operator_nid) + "] " + PrimitiveData.text(role_type_nid) + ": " + value);
+		ConcreteRoleType role_type = data.getOrCreateConcreteRoleType(role_type_nid);
+		return new ConcreteRole(role_type, String.valueOf(value), ConcreteRole.ValueType.Integer);
 	}
 
 	private void processRoleGroup(Definition def, EntityVertex node, DiTreeEntity definition) {
@@ -306,6 +317,13 @@ public class ElkSnomedDataBuilder {
 				throw new UnsupportedOperationException(
 						"Role: " + PrimitiveData.text(role_operator_nid) + " not supported. ");
 			}
+		}
+		case FEATURE -> {
+//			LOG.info("Feature: " + "\n" + definition);
+			RoleGroup rg = new RoleGroup();
+			def.addRoleGroup(rg);
+			ConcreteRole role = makeConcreteRole(child, definition);
+			rg.addConcreteRole(role);
 		}
 		case AND -> {
 			processRoleGroupAnd(def, child, definition);
@@ -329,6 +347,11 @@ public class ElkSnomedDataBuilder {
 					throw new UnsupportedOperationException(
 							"Role: " + PrimitiveData.text(role_operator_nid) + " not supported. ");
 				}
+			}
+			case FEATURE -> {
+//				LOG.info("Feature: " + "\n" + definition);
+				ConcreteRole role = makeConcreteRole(child, definition);
+				rg.addConcreteRole(role);
 			}
 			default -> throw new IllegalArgumentException("Unexpected value: " + getMeaning(child));
 			}
