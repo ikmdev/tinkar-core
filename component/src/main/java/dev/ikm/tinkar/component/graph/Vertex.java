@@ -52,7 +52,7 @@ public interface Vertex {
     <T extends Object> Optional<T> property(Concept propertyConcept);
 
 
-    Optional<Concept> propertyAsConcept(Concept propertyConcept);
+    Optional<? extends Concept> propertyAsConcept(Concept propertyConcept);
 
 
     /**

@@ -18,6 +18,7 @@ package dev.ikm.tinkar.ext.lang.owl;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.ConceptEntityVersion;
 import dev.ikm.tinkar.entity.EntityService;
@@ -32,6 +33,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StreamTokenizer;
 import java.io.StringReader;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -509,9 +512,7 @@ public class SctOwlUtilities {
                             assertionList.add(getSomeRole(logicalExpressionBuilder, tokenizer, original));
                             break;
                         case DATAHASVALUE:
-                            while (tokenizer.ttype != ')') {
-                                tokenizer.nextToken();
-                            }
+                            assertionList.add(getDataHasValue(logicalExpressionBuilder, tokenizer, original));
                             break;
                     }
                     break;
@@ -560,6 +561,81 @@ public class SctOwlUtilities {
         } else {
             throw new IllegalStateException("Role type not in the database: " + tokenizer.sval);
         }
+    }
+
+    private static LogicalAxiom.Atom.TypedAtom.Feature getDataHasValue(LogicalExpressionBuilder logicalExpressionBuilder,
+                                                                       StreamTokenizer tokenizer, String original) throws IOException {
+        // DataHasValue(:1142135004 "60"^^xsd:decimal)
+        if (tokenizer.nextToken() != '(') {
+            // the identifier for the concept being defined.
+            throwIllegalStateException("Expecting (.", tokenizer, original);
+        }
+        if (tokenizer.nextToken() != ':') {
+            // the identifier for the concept being defined.
+            throwIllegalStateException("Expecting :.", tokenizer, original);
+        }
+        if (tokenizer.nextToken() != '[') {
+            // the identifier for the concept being defined.
+            throwIllegalStateException("Expecting PublicId String.", tokenizer, original);
+        }
+        Optional<? extends ConceptFacade> optionalDataType = EntityService.get().getEntity(
+                PrimitiveData.nid(processPublicId(tokenizer, original)));
+
+        if (optionalDataType.isPresent()) {
+            // ConceptFacade featureType, ConceptFacade concreteDomainOperator,
+            //                                                            Object literalValue
+            LogicalAxiom.Atom.TypedAtom.Feature typedDataFeature =
+                    logicalExpressionBuilder.FeatureAxiom(optionalDataType.get(),
+                    TinkarTerm.EQUAL_TO,
+                    getValue(logicalExpressionBuilder, tokenizer, original));
+            //ConceptFacade featureType, ConceptFacade concreteDomainOperator,
+            //        Object literalValue
+              if (tokenizer.nextToken() != ')') {
+                // the identifier for the concept being defined.
+                throwIllegalStateException("Expecting ).", tokenizer, original);
+            }
+            return typedDataFeature;
+        } else {
+            throw new IllegalStateException("Role type not in the database: " + tokenizer.sval);
+        }
+    }
+    private static Object getValue(LogicalExpressionBuilder logicalExpressionBuilder, StreamTokenizer tokenizer, String original) throws IOException {
+        if (tokenizer.nextToken() == '"') {
+            String stringValue = tokenizer.sval;
+            if (tokenizer.nextToken() != '^') {
+                throwIllegalStateException("Expecting '^'.", tokenizer, original);
+            }
+            if (tokenizer.nextToken() != '^') {
+                throwIllegalStateException("Expecting '^'.", tokenizer, original);
+            }
+            if (tokenizer.nextToken() != TT_WORD && !tokenizer.sval.equalsIgnoreCase("xsd")) {
+                throwIllegalStateException("Expecting '^'.", tokenizer, original);
+            }
+            if (tokenizer.nextToken() != ':') {
+                throwIllegalStateException("Expecting '^'.", tokenizer, original);
+            }
+            if (tokenizer.nextToken() == TT_WORD) {
+                Object returnValue = switch (tokenizer.sval) {
+                    case "datetime" ->
+                        DateTimeUtil.epochMsToInstant(DateTimeUtil.parse(stringValue));
+                    case "decimal", "double" -> Double.parseDouble(stringValue);
+                    case "float" -> Float.parseFloat(stringValue);
+                    case "integer" -> Integer.parseInt(stringValue);
+                    case "string" -> stringValue;
+                    case "boolean" -> Boolean.parseBoolean(stringValue);
+                    default -> throw new IllegalStateException("Can't handle " + tokenizer.sval);
+                };
+                if (tokenizer.nextToken() != ')') {
+                    throwIllegalStateException("Expecting ')'.", tokenizer, original);
+                }
+                return returnValue;
+            } else {
+                throwIllegalStateException("Expecting '^'.", tokenizer, original);
+            }
+        } else {
+            throwIllegalStateException("Expecting '\"'.", tokenizer, original);
+        }
+        throw new IllegalStateException("Current token " + tokenizer.sval + " \n\nOriginal: " + original);
     }
 
     private static LogicalAxiom.Atom getRestriction(LogicalExpressionBuilder logicalExpressionBuilder, StreamTokenizer tokenizer, String original) throws IOException {
