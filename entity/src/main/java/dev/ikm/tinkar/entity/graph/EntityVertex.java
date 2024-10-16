@@ -416,7 +416,7 @@ public class EntityVertex implements Vertex, VertexId {
     }
 
     @Override
-    public RichIterable<Concept> propertyKeys() {
+    public RichIterable<ConceptFacade> propertyKeys() {
         if (properties != null) {
             return properties.keySet().collect(nid -> EntityProxy.Concept.make(nid));
         }
