@@ -15,19 +15,18 @@
  */
 package dev.ikm.tinkar.entity.graph.adaptor.axiom;
 
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdListFactory;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.entity.graph.EntityVertex;
+import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.set.ImmutableSet;
-import dev.ikm.tinkar.entity.graph.DiTreeEntity;
-import dev.ikm.tinkar.entity.graph.EntityVertex;
-import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 import java.util.UUID;
 
@@ -308,7 +307,10 @@ public class LogicalExpressionBuilder {
                                                                                         ConceptFacade implication) {
         EntityVertex propertyPatternImplicationAxiom = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.PROPERTY_PATTERN_IMPLICATION.nid);
         builder.addVertex(propertyPatternImplicationAxiom);
-        propertyPatternImplicationAxiom.putUncommittedProperty(TinkarTerm.PROPERTY_SET.nid(),
+
+        boolean isPropertySeqPresent = EntityService.get().getEntity(TinkarTerm.PROPERTY_SEQUENCE.publicId()).isPresent();
+        EntityProxy.Concept propertyGroupConcept = isPropertySeqPresent ? TinkarTerm.PROPERTY_SEQUENCE : TinkarTerm.PROPERTY_SET;
+        propertyPatternImplicationAxiom.putUncommittedProperty(propertyGroupConcept.nid(),
                 IntIds.list.of(propertyPattern.castToList(),  (ConceptFacade conceptFacade) -> conceptFacade.nid()));
         propertyPatternImplicationAxiom.putUncommittedProperty(TinkarTerm.PROPERTY_PATTERN_IMPLICATION.nid(), implication);
 
