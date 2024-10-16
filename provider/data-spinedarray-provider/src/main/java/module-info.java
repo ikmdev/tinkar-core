@@ -34,10 +34,10 @@ module dev.ikm.tinkar.provider.spinedarray {
     requires dev.ikm.tinkar.component;
     requires dev.ikm.tinkar.entity;
     requires dev.ikm.tinkar.provider.search;
-    requires static com.google.auto.service;
-    requires org.eclipse.collections.api;
-    requires org.eclipse.collections;
-    requires io.activej.bytebuf;
+    requires static dev.ikm.jpms.auto.service;
+    requires dev.ikm.jpms.eclipse.collections.api;
+    requires dev.ikm.jpms.eclipse.collections;
+    requires dev.ikm.jpms.activej.bytebuf;
 
     provides DataServiceController
             with SpinedArrayOpenController, SpinedArrayNewController;

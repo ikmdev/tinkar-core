@@ -17,8 +17,8 @@ import dev.ikm.tinkar.reasoner.elkowl.ElkOwlReasonerService;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
 
 module dev.ikm.tinkar.reasoner.elkowl {
-	requires org.eclipse.collections;
-	requires org.eclipse.collections.api;
+	requires dev.ikm.jpms.eclipse.collections;
+	requires dev.ikm.jpms.eclipse.collections.api;
 	requires org.slf4j;
 
 	requires dev.ikm.tinkar.collection;

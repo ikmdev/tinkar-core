@@ -65,6 +65,7 @@ public abstract class PrimitiveDataTestBase {
 	public static void copyDb(String source_name, String target_name) throws IOException {
 		Path source_path = Paths.get("target", "db", source_name).toAbsolutePath();
 		Path target_path = Paths.get("target", "db", target_name).toAbsolutePath();
+		LOG.info("Source: " + source_path);
 		assumeTrue(Files.exists(source_path));
 		copyDirectory(source_path, target_path);
 	}
@@ -83,7 +84,7 @@ public abstract class PrimitiveDataTestBase {
 		CachingService.clearAll();
 		PrimitiveData.selectControllerByName("Open SpinedArrayStore");
 		DataServiceController<?> dsc = PrimitiveData.getController();
-			DataUriOption duo = new DataUriOption(name, target_path.toUri());
+		DataUriOption duo = new DataUriOption(name, target_path.toUri());
 		LOG.info("PrimitiveData: " + dsc + " " + duo + " " + duo.uri());
 		dsc.setDataUriOption(duo);
 		PrimitiveData.setController(dsc);

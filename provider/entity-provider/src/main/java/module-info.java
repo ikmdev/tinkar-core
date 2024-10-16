@@ -33,9 +33,9 @@ module dev.ikm.tinkar.provider.entity {
 	requires transitive dev.ikm.tinkar.common;
 	requires transitive dev.ikm.tinkar.entity;
 	requires transitive dev.ikm.tinkar.terms;
-	requires org.eclipse.collections.api;
-	requires org.eclipse.collections;
-	requires static transitive com.google.auto.service;
+	requires dev.ikm.jpms.eclipse.collections.api;
+	requires dev.ikm.jpms.eclipse.collections;
+	requires static transitive dev.ikm.jpms.auto.service;
 
     provides EntityService
             with EntityServiceFactory;

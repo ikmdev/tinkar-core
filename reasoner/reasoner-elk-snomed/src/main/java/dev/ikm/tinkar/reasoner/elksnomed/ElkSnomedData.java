@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
@@ -29,8 +30,15 @@ import org.eclipse.collections.impl.factory.primitive.IntLists;
 import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.elk.snomed.model.RoleType;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 
 public class ElkSnomedData {
+
+	public static int getNid(long sctid) {
+		UUID uuid = UuidUtil.fromSNOMED("" + sctid);
+		int nid = PrimitiveData.nid(uuid);
+		return nid;
+	}
 
 	private final ConcurrentHashMap<Integer, Concept> nidConceptMap = new ConcurrentHashMap<>();
 
