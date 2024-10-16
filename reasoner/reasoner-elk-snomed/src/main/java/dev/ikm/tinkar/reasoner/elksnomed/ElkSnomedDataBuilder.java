@@ -137,8 +137,6 @@ public class ElkSnomedDataBuilder {
 	}
 
 	private void processDefinition(DiTreeEntity definition, int conceptNid) throws IllegalStateException {
-//		if (List.of(-2141275885, -2141972902).contains(conceptNid))
-//			LOG.info(">>>>> " + conceptNid + " " + PrimitiveData.text(conceptNid) + "\n" + definition);
 		EntityVertex root = definition.root();
 		for (EntityVertex child : definition.successors(root)) {
 			switch (getMeaning(child)) {
@@ -203,8 +201,8 @@ public class ElkSnomedDataBuilder {
 		for (EntityVertex node : definition.successors(child)) {
 			switch (getMeaning(node)) {
 			case CONCEPT -> {
-				final ConceptFacade nodeConcept = node.propertyFast(TinkarTerm.CONCEPT_REFERENCE);
 				RoleType roleType = data.getOrCreateRoleType(conceptNid);
+				ConceptFacade nodeConcept = node.propertyFast(TinkarTerm.CONCEPT_REFERENCE);
 				if (nodeConcept.nid() == TinkarTerm.TRANSITIVE_PROPERTY.nid()) {
 					roleType.setTransitive(true);
 				} else if (nodeConcept.nid() == TinkarTerm.REFLEXIVE_PROPERTY.nid()) {
@@ -214,17 +212,26 @@ public class ElkSnomedDataBuilder {
 				}
 			}
 			case PROPERTY_PATTERN_IMPLICATION -> {
-				// final ConceptFacade pi =
-				// node.propertyFast(TinkarTerm.PROPERTY_PATTERN_IMPLICATION);
-				final IntIdList ps = node.propertyFast(TinkarTerm.PROPERTY_SET);
-				List<RoleType> chain = ps.intStream().mapToObj(x -> data.getOrCreateRoleType(x)).toList();
-				if (chain.size() != 2)
+				LOG.info("PropertySet: " + PrimitiveData.text(conceptNid) + " " + propertySetNode + "\n" + definition);
+				RoleType roleType = data.getOrCreateRoleType(conceptNid);
+				ConceptFacade ppi = node.propertyFast(TinkarTerm.PROPERTY_PATTERN_IMPLICATION);
+				if (ppi.nid() != conceptNid)
 					throw new IllegalStateException(
-							"Property chain != 2. Concept: " + conceptNid + " definition: " + definition);
-				if (chain.getFirst().getId() != conceptNid)
+							"Property chain malformed. Concept: " + conceptNid + " definition: " + definition);
+				IntIdList ps = node.propertyFast(TinkarTerm.PROPERTY_SET);
+				if (ps.size() != 2)
+					throw new IllegalStateException("Property chain " + ps.size() + " != 2. Concept: " + conceptNid
+							+ " definition: " + definition);
+				if (ps.get(0) != conceptNid)
 					throw new IllegalStateException(
-							"Property chain not supported. Concept: " + conceptNid + " definition: " + definition);
-				chain.get(0).setChained(chain.get(1));
+							"Property chain malformed. Concept: " + conceptNid + " definition: " + definition);
+				RoleType prop1 = data.getOrCreateRoleType(ps.get(0));
+				RoleType prop2 = data.getOrCreateRoleType(ps.get(1));
+				if (!roleType.equals(prop1))
+					throw new IllegalStateException("This is a bug.");
+				roleType.setChained(prop2);
+				LOG.info("PPI: " + PrimitiveData.text((int) prop1.getId()) + " "
+						+ PrimitiveData.text((int) prop1.getChained().getId()));
 			}
 			default -> throw new UnsupportedOperationException("Can't handle: " + node + " in: " + definition);
 			}
@@ -259,6 +266,10 @@ public class ElkSnomedDataBuilder {
 					throw new UnsupportedOperationException(
 							"Role: " + PrimitiveData.text(role_operator_nid) + " not supported. ");
 				}
+			}
+			case FEATURE -> {
+				LOG.info("Feature: " + "\n" + definition);
+
 			}
 			default -> throw new IllegalArgumentException("Unexpected value: " + getMeaning(child));
 			}
