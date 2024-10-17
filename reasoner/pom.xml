@@ -22,7 +22,7 @@
 
 	<properties>
 		<hybrid-reasoner.version>1.0.3</hybrid-reasoner.version>
-		<ikm-reasoner.version>0.33.0-SNAPSHOT</ikm-reasoner.version>
+		<ikm-reasoner.version>0.35.0-SNAPSHOT</ikm-reasoner.version>
 		<owlapi.version>4.7.5</owlapi.version>
 		<reasoner-test-data.groupid>dev.ikm.reasoner-test-data</reasoner-test-data.groupid>
 		<skipITs>true</skipITs>

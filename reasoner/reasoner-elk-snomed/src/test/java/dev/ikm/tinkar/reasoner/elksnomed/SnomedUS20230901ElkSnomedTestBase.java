@@ -38,6 +38,7 @@ public class SnomedUS20230901ElkSnomedTestBase extends ElkSnomedDataBuilderTest 
 	}
 
 	public static final String db = "SnomedCT_US_20230901_SpinedArray-20240920";
+//	public static final String db = "tinkar-snomedct-international-20241001-kec";
 
 	protected String getDir() {
 		return "target/data/snomed-test-data-" + getEditionDir() + "-" + getVersion();
