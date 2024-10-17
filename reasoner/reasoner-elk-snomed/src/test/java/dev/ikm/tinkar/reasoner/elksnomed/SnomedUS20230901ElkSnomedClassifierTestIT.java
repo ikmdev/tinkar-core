@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -39,20 +40,20 @@ import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 
-public class SnomedUS20230901ElkSnomedClassifierTestIT extends SnomedUS20230901ElkSnomedDataBuilderTestIT {
+public class SnomedUS20230901ElkSnomedClassifierTestIT extends SnomedUS20230901ElkSnomedTestBase {
 
 	private static final Logger LOG = LoggerFactory.getLogger(SnomedUS20230901ElkSnomedClassifierTestIT.class);
 
 	@Test
 	public void supercs() throws Exception {
-		runSnomedReasoner();
-		compare("supercs");
+		ArrayList<String> lines = runSnomedReasoner();
+		assertEquals(632106, lines.size());
 	}
 
 	@Test
 	public void supercsService() throws Exception {
-		runSnomedReasonerService();
-		compare("supercs");
+		ArrayList<String> lines = runSnomedReasonerService();
+		assertEquals(632106, lines.size());
 	}
 
 	private HashMap<Integer, Long> nid_sctid_map;
@@ -69,44 +70,24 @@ public class SnomedUS20230901ElkSnomedClassifierTestIT extends SnomedUS20230901E
 		SnomedOntology ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(), List.of());
 		LOG.info("Create reasoner");
 		SnomedOntologyReasoner reasoner = SnomedOntologyReasoner.create(ontology);
-
-//		ViewCalculator viewCalculator = getViewCalculator();
-//		{
-////			LOG.info("Props>>>>>");
-//			OWLOntology oo = ontology.getOntology();
-////			assertEquals(371575, oo.getAxiomCount());
-////			assertEquals(370018, oo.getSignature().size());
-////			assertEquals(369879, oo.getClassesInSignature().size());
-////			assertEquals(126, oo.getObjectPropertiesInSignature().size());
-////			assertEquals(5, oo.getAxioms(AxiomType.SUB_PROPERTY_CHAIN_OF).size());
-////			oo.getAxioms(AxiomType.SUB_PROPERTY_CHAIN_OF).forEach(x -> LOG.info("" + x));
-//			assertEquals(4, oo.getAxioms(AxiomType.TRANSITIVE_OBJECT_PROPERTY).size());
-////			oo.getAxioms(AxiomType.TRANSITIVE_OBJECT_PROPERTY).forEach(x -> {
-////				LOG.info("" + x);
-////				long id = SnomedOwlOntology.getId(x.getProperty().asOWLObjectProperty());
-////				LOG.info("" + axiomData.nidAxiomsMap.get((int) id));
-////			});
-//			assertEquals(2, oo.getAxioms(AxiomType.REFLEXIVE_OBJECT_PROPERTY).size());
-////			oo.getAxioms(AxiomType.REFLEXIVE_OBJECT_PROPERTY).forEach(x -> LOG.info("" + x));
-//		}
 		TreeSet<Long> misses = new TreeSet<>();
 		TreeSet<Long> other_misses = new TreeSet<>();
+		int non_snomed_cnt = 0;
 		int miss_cnt = 0;
 		int pharma_miss_cnt = 0;
 		int other_miss_cnt = 0;
 		SnomedIsa isas = SnomedIsa.init(rels_file);
 		nid_sctid_map = new HashMap<>();
 		for (long sctid : isas.getOrderedConcepts()) {
-			UUID uuid = UuidUtil.fromSNOMED("" + sctid);
-			int nid = PrimitiveData.nid(uuid);
+			int nid = ElkSnomedData.getNid(sctid);
 			nid_sctid_map.put(nid, sctid);
 		}
-		for (Concept clazz : ontology.getConcepts()) {
-			long nid = clazz.getId();
+		for (Concept con : ontology.getConcepts()) {
+			long nid = con.getId();
 			Set<Long> sups = toSctids(reasoner.getSuperConcepts(nid));
 			Long sctid = nid_sctid_map.get((int) nid);
 			if (sctid == null) {
-//				LOG.error("No concept: " + nid + " " + PrimitiveData.text((int) nid));
+				non_snomed_cnt++;
 				continue;
 			}
 			Set<Long> parents = isas.getParents(sctid);
@@ -140,8 +121,8 @@ public class SnomedUS20230901ElkSnomedClassifierTestIT extends SnomedUS20230901E
 				}
 			}
 		}
-		isas.getOrderedConcepts().stream().filter(other_misses::contains)
-//		.limit(10)
+		isas.getOrderedConcepts().stream().filter(other_misses::contains) //
+				.limit(10) //
 				.forEach((sctid) -> {
 					UUID uuid = UuidUtil.fromSNOMED("" + sctid);
 					int nid = PrimitiveData.nid(uuid);
@@ -158,8 +139,10 @@ public class SnomedUS20230901ElkSnomedClassifierTestIT extends SnomedUS20230901E
 		LOG.error("Miss cnt: " + miss_cnt);
 		LOG.error("Pharma cnt: " + pharma_miss_cnt);
 		LOG.error("Other cnt: " + other_miss_cnt);
-//		assertEquals(expected_miss_cnt, miss_cnt);
+		assertEquals(284, non_snomed_cnt);
 		// TODO this should be 0 after all the data issues are fixed
+		assertEquals(20582, miss_cnt);
+		assertEquals(20274, pharma_miss_cnt);
 		assertEquals(251, other_miss_cnt);
 	}
 

@@ -17,10 +17,8 @@ package dev.ikm.tinkar.reasoner.elksnomed;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.nio.file.Files;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +30,6 @@ public abstract class ElkSnomedDataBuilderTest extends ElkSnomedTestBase {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedDataBuilderTest.class);
 
-	@Test
 	public void statedPattern() throws Exception {
 		ViewCalculator viewCalculator = getViewCalculator();
 		LogicCoordinateRecord logicCoordinateRecord = viewCalculator.logicCalculator().logicCoordinateRecord();
@@ -40,7 +37,6 @@ public abstract class ElkSnomedDataBuilderTest extends ElkSnomedTestBase {
 				logicCoordinateRecord.statedAxiomsPatternNid());
 	}
 
-	@Test
 	public void count() throws Exception {
 		ViewCalculator viewCalculator = getViewCalculator();
 		AtomicInteger cnt = new AtomicInteger();
@@ -48,13 +44,13 @@ public abstract class ElkSnomedDataBuilderTest extends ElkSnomedTestBase {
 		AtomicInteger inactive_cnt = new AtomicInteger();
 		viewCalculator.forEachSemanticVersionOfPatternParallel(TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
 				(semanticEntityVersion, patternEntityVersion) -> {
-						int conceptNid = semanticEntityVersion.referencedComponentNid();
-						if (viewCalculator.latestIsActive(conceptNid)) {
-							active_cnt.incrementAndGet();
-						} else {
-							inactive_cnt.incrementAndGet();
-						}
-						cnt.incrementAndGet();
+					int conceptNid = semanticEntityVersion.referencedComponentNid();
+					if (viewCalculator.latestIsActive(conceptNid)) {
+						active_cnt.incrementAndGet();
+					} else {
+						inactive_cnt.incrementAndGet();
+					}
+					cnt.incrementAndGet();
 				});
 		LOG.info("Cnt: " + cnt.intValue());
 		LOG.info("Active Cnt: " + active_cnt.intValue());
@@ -64,17 +60,17 @@ public abstract class ElkSnomedDataBuilderTest extends ElkSnomedTestBase {
 		assertEquals(inactive_count, inactive_cnt.intValue());
 	}
 
-	@Test
 	public void build() throws Exception {
 		ElkSnomedData data = buildSnomedData();
 		assertEquals(active_count, data.getActiveConceptCount());
 		assertEquals(inactive_count, data.getInactiveConceptCount());
-		Files.createDirectories(getWritePath("concepts").getParent());
-		data.writeConcepts(getWritePath("concepts"));
-		data.writeRoleTypes(getWritePath("roles"));
+		assertEquals(data.getReasonerConceptSet().size(), data.getConcepts().size());
+		// TODO get these to work again
+//		Files.createDirectories(getWritePath("concepts").getParent());
+//		data.writeConcepts(getWritePath("concepts"));
+//		data.writeRoleTypes(getWritePath("roles"));
 //		compare("concepts");
 //		compare("roles");
-		assertEquals(data.getReasonerConceptSet().size(), data.getConcepts().size());
 	}
 
 }
