@@ -17,13 +17,16 @@ package dev.ikm.tinkar.entity.aggregator;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityCountSummary;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 import java.util.function.IntConsumer;
 
@@ -49,20 +52,33 @@ public class MembershipEntityAggregator extends EntityAggregator {
             patternEntity.stampNids().forEach(stampNidSet::add);
 
             EntityService.get().forEachSemanticOfPattern(patternNid, (semanticEntityOfPattern) -> {
-                int referencedConceptNid = semanticEntityOfPattern.referencedComponentNid();
+                int referencedComponentNid = semanticEntityOfPattern.referencedComponentNid();
 
-                // Aggregate Concept and Stamps
-                nidConsumer.accept(referencedConceptNid);
-                conceptsAggregatedCount.incrementAndGet();
-                Entity<? extends EntityVersion> referencedConceptEntity = EntityService.get().getEntityFast(referencedConceptNid);
-                referencedConceptEntity.stampNids().forEach(stampNidSet::add);
+                if (referencedComponentNid != patternNid) {
+                    // Aggregate Concept and Stamps
+                    nidConsumer.accept(referencedComponentNid);
+                    Entity<? extends EntityVersion> referencedComponentEntity = EntityService.get().getEntityFast(referencedComponentNid);
+                    switch (referencedComponentEntity.versionDataType()) {
+                        case FieldDataType.CONCEPT_VERSION -> conceptsAggregatedCount.incrementAndGet();
+                        case FieldDataType.PATTERN_VERSION -> patternsAggregatedCount.incrementAndGet();
+                        case FieldDataType.SEMANTIC_VERSION -> semanticsAggregatedCount.incrementAndGet();
+                        case FieldDataType.STAMP_VERSION -> stampsAggregatedCount.incrementAndGet();
+                        default -> throw new IllegalStateException("Referenced Component not a valid type");
+                    }
+                    referencedComponentEntity.stampNids().forEach(stampNidSet::add);
+                }
 
                 // Aggregate Semantics and Stamps
-                EntityService.get().forEachSemanticForComponent(referencedConceptNid, (semanticEntity) -> {
-                    semanticsAggregatedCount.incrementAndGet();
-                    nidConsumer.accept(semanticEntity.nid());
-                    semanticEntity.stampNids().forEach(stampNidSet::add);
-                });
+                Queue<Integer> queue = new LinkedList<>();
+                queue.add(referencedComponentNid);
+                while (!queue.isEmpty()) {
+                    EntityService.get().forEachSemanticForComponent(queue.remove(), (semanticEntity) -> {
+                        queue.add(semanticEntity.nid());
+                        semanticsAggregatedCount.incrementAndGet();
+                        nidConsumer.accept(semanticEntity.nid());
+                        semanticEntity.stampNids().forEach(stampNidSet::add);
+                    });
+                }
             });
         });
         stampsAggregatedCount.set(stampNidSet.size());
