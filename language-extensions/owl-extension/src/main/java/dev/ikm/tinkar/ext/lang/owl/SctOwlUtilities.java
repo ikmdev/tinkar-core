@@ -28,6 +28,8 @@ import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpressionBuilder;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -43,12 +45,13 @@ import java.util.UUID;
 import static java.io.StreamTokenizer.*;
 
 public class SctOwlUtilities {
-
+    private static final Logger LOG = LoggerFactory.getLogger(SctOwlUtilities.class);
     public static final String TRANSITIVEOBJECTPROPERTY = "transitiveobjectproperty";
     public static final String PREFIX = "prefix";
     public static final String ONTOLOGY = "ontology";
     public static final String REFLEXIVEOBJECTPROPERTY = "reflexiveobjectproperty";
     public static final String SUBCLASSOF = "subclassof";
+    public static final String SUBANNOTATIONPROPERTYOF = "subannotationpropertyof";
     public static final String SUBOBJECTPROPERTYOF = "subobjectpropertyof";
 
     public static final String SUBDATAPROPERTYOF = "subdatapropertyof";
@@ -92,7 +95,10 @@ public class SctOwlUtilities {
                 case EQUIVALENTCLASSES:
                     processSet(EQUIVALENTCLASSES, leb, tokenizer, originalExpression);
                     break;
-                case SUBCLASSOF:
+                case SUBCLASSOF, SUBANNOTATIONPROPERTYOF:
+                    if (tokenizer.sval.toLowerCase().equals(SUBANNOTATIONPROPERTYOF)) {
+                        LOG.warn("Converting SUBANNOTATIONPROPERTYOF to SUBCLASSOF. SUBANNOTATIONPROPERTYOF is not yet supported.");
+                    }
                     processSet(SUBCLASSOF, leb, tokenizer, originalExpression);
                     break;
                 case PREFIX:
@@ -588,17 +594,12 @@ public class SctOwlUtilities {
                     logicalExpressionBuilder.FeatureAxiom(optionalDataType.get(),
                     TinkarTerm.EQUAL_TO,
                     getValue(logicalExpressionBuilder, tokenizer, original));
-            //ConceptFacade featureType, ConceptFacade concreteDomainOperator,
-            //        Object literalValue
-              if (tokenizer.nextToken() != ')') {
-                // the identifier for the concept being defined.
-                throwIllegalStateException("Expecting ).", tokenizer, original);
-            }
             return typedDataFeature;
         } else {
             throw new IllegalStateException("Role type not in the database: " + tokenizer.sval);
         }
     }
+
     private static Object getValue(LogicalExpressionBuilder logicalExpressionBuilder, StreamTokenizer tokenizer, String original) throws IOException {
         if (tokenizer.nextToken() == '"') {
             String stringValue = tokenizer.sval;
