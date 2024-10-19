@@ -195,6 +195,7 @@ public class EntityRecordFactory {
         switch (field) {
             case Boolean booleanField -> writeField(writeBuf, booleanField);
             case Float floatField -> writeField(writeBuf, floatField);
+            case Double doubleField -> writeField(writeBuf, doubleField);
             case byte[] byteArrayField -> writeField(writeBuf, byteArrayField);
             case Integer integerField -> writeField(writeBuf, integerField);
             case Long longField -> writeField(writeBuf, longField);
