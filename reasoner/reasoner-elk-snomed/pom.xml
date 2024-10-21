@@ -102,7 +102,7 @@
 								<artifactItem>
 									<groupId>${reasoner-test-data.groupid}</groupId>
 									<artifactId>
-										tinkar-test-data-snomed-us-20241001</artifactId>
+										tinkar-test-data-snomed-intl-20241001</artifactId>
 									<version>2024.10.18</version>
 									<type>zip</type>
 								</artifactItem>
