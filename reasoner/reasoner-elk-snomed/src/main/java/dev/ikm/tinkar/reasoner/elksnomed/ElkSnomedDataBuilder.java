@@ -221,7 +221,7 @@ public class ElkSnomedDataBuilder {
 				if (ppi.nid() != conceptNid)
 					throw new IllegalStateException(
 							"Property chain malformed. Concept: " + conceptNid + " definition: " + definition);
-				IntIdList ps = node.propertyFast(TinkarTerm.PROPERTY_SET);
+				IntIdList ps = node.propertyFast(TinkarTerm.PROPERTY_SEQUENCE);
 				if (ps.size() != 2)
 					throw new IllegalStateException("Property chain " + ps.size() + " != 2. Concept: " + conceptNid
 							+ " definition: " + definition);
