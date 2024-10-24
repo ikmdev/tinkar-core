@@ -43,7 +43,7 @@ import java.util.UUID;
 import static java.io.StreamTokenizer.*;
 
 public class SctOwlUtilities {
-
+	
     public static final String TRANSITIVEOBJECTPROPERTY = "transitiveobjectproperty";
     public static final String PREFIX = "prefix";
     public static final String ONTOLOGY = "ontology";
@@ -81,7 +81,7 @@ public class SctOwlUtilities {
 
 
         String originalExpression = owlClassExpressionsToProcess + " " + owlPropertyExpressionsToProcess;
-
+        
         final LogicalExpressionBuilder leb = new LogicalExpressionBuilder();
 
 
@@ -599,44 +599,44 @@ public class SctOwlUtilities {
             throw new IllegalStateException("Role type not in the database: " + tokenizer.sval);
         }
     }
-    private static Object getValue(LogicalExpressionBuilder logicalExpressionBuilder, StreamTokenizer tokenizer, String original) throws IOException {
-        if (tokenizer.nextToken() == '"') {
-            String stringValue = tokenizer.sval;
-            if (tokenizer.nextToken() != '^') {
-                throwIllegalStateException("Expecting '^'.", tokenizer, original);
-            }
-            if (tokenizer.nextToken() != '^') {
-                throwIllegalStateException("Expecting '^'.", tokenizer, original);
-            }
-            if (tokenizer.nextToken() != TT_WORD && !tokenizer.sval.equalsIgnoreCase("xsd")) {
-                throwIllegalStateException("Expecting '^'.", tokenizer, original);
-            }
-            if (tokenizer.nextToken() != ':') {
-                throwIllegalStateException("Expecting '^'.", tokenizer, original);
-            }
-            if (tokenizer.nextToken() == TT_WORD) {
-                Object returnValue = switch (tokenizer.sval) {
-                    case "datetime" ->
-                        DateTimeUtil.epochMsToInstant(DateTimeUtil.parse(stringValue));
-                    case "decimal", "double" -> Double.parseDouble(stringValue);
-                    case "float" -> Float.parseFloat(stringValue);
-                    case "integer" -> Integer.parseInt(stringValue);
-                    case "string" -> stringValue;
-                    case "boolean" -> Boolean.parseBoolean(stringValue);
-                    default -> throw new IllegalStateException("Can't handle " + tokenizer.sval);
-                };
-                if (tokenizer.nextToken() != ')') {
-                    throwIllegalStateException("Expecting ')'.", tokenizer, original);
-                }
-                return returnValue;
-            } else {
-                throwIllegalStateException("Expecting '^'.", tokenizer, original);
-            }
-        } else {
-            throwIllegalStateException("Expecting '\"'.", tokenizer, original);
-        }
-        throw new IllegalStateException("Current token " + tokenizer.sval + " \n\nOriginal: " + original);
-    }
+
+	private static Object getValue(LogicalExpressionBuilder logicalExpressionBuilder, StreamTokenizer tokenizer,
+			String original) throws IOException {
+		if (tokenizer.nextToken() == '"') {
+			String stringValue = tokenizer.sval;
+			if (tokenizer.nextToken() != '^') {
+				throwIllegalStateException("Expecting '^'.", tokenizer, original);
+			}
+			if (tokenizer.nextToken() != '^') {
+				throwIllegalStateException("Expecting '^'.", tokenizer, original);
+			}
+			if (tokenizer.nextToken() != TT_WORD && !tokenizer.sval.equalsIgnoreCase("xsd")) {
+				throwIllegalStateException("Expecting '^'.", tokenizer, original);
+			}
+			if (tokenizer.nextToken() != ':') {
+				throwIllegalStateException("Expecting '^'.", tokenizer, original);
+			}
+			if (tokenizer.nextToken() == TT_WORD) {
+				Object returnValue = switch (tokenizer.sval) {
+				case "datetime" -> DateTimeUtil.epochMsToInstant(DateTimeUtil.parse(stringValue));
+				// TODO This needs to be some sort of decimal
+				case "decimal" -> Float.parseFloat(stringValue);
+				case "double" -> Double.parseDouble(stringValue);
+				case "float" -> Float.parseFloat(stringValue);
+				case "integer" -> Integer.parseInt(stringValue);
+				case "string" -> stringValue;
+				case "boolean" -> Boolean.parseBoolean(stringValue);
+				default -> throw new IllegalStateException("Can't handle " + tokenizer.sval);
+				};
+				return returnValue;
+			} else {
+				throwIllegalStateException("Expecting '^'.", tokenizer, original);
+			}
+		} else {
+			throwIllegalStateException("Expecting '\"'.", tokenizer, original);
+		}
+		throw new IllegalStateException("Current token " + tokenizer.sval + " \n\nOriginal: " + original);
+	}
 
     private static LogicalAxiom.Atom getRestriction(LogicalExpressionBuilder logicalExpressionBuilder, StreamTokenizer tokenizer, String original) throws IOException {
         switch (tokenizer.nextToken()) {
