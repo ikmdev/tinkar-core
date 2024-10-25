@@ -15,11 +15,11 @@
  */
 package dev.ikm.tinkar.provider.spinedarray.internal;
 
-import dev.ikm.tinkar.provider.spinedarray.SpinedArrayProvider;
 import dev.ikm.tinkar.component.Chronology;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityRecordFactory;
 import dev.ikm.tinkar.entity.SemanticEntity;
+import dev.ikm.tinkar.provider.spinedarray.SpinedArrayProvider;
 
 public class Put {
     public static SpinedArrayProvider singleton;

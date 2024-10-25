@@ -15,8 +15,8 @@
  */
 package dev.ikm.tinkar.provider.search;
 
-import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import org.apache.lucene.analysis.Analyzer;
@@ -29,10 +29,7 @@ import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
@@ -54,9 +51,9 @@ public class Indexer {
     private static final Logger LOG = LoggerFactory.getLogger(Indexer.class);
     private static final File defaultDataDirectory = new File("target/lucene/");
     private static DirectoryReader indexReader;
-    private static Directory indexDirectory;
-    private static Analyzer analyzer;
-    private static IndexWriter indexWriter;
+    static Directory indexDirectory;
+    static Analyzer analyzer;
+    static IndexWriter indexWriter;
     private final Path indexPath;
 
     public Indexer() throws IOException {
@@ -111,6 +108,7 @@ public class Indexer {
         LOG.info("Closing lucene index");
         Indexer.indexReader.close();
         Indexer.indexWriter.close();
+        TypeAheadSearch.close();
         stopwatch.stop();
         LOG.info("Closed lucene index in: " + stopwatch.durationString());
     }
@@ -170,6 +168,9 @@ public class Indexer {
             }
             try {
                 long addSequence = this.indexWriter.addDocument(document);
+                if (!EntityService.get().isLoadPhase()) {
+                    TypeAheadSearch.buildSuggester();
+                }
             } catch (IOException e) {
                 LOG.error("Exception writing: " + object);
             }
