@@ -58,46 +58,56 @@ public class TypeAheadSearch {
 
     public static final String TEXT_FIELD_NAME = "text";
 
-    private static AnalyzingSuggester suggester;
-    private static FuzzySuggester fuzzySuggester;
-    private static DirectoryReader reader;
+    private AnalyzingSuggester suggester;
+    private FuzzySuggester fuzzySuggester;
+    private DirectoryReader reader;
 
-    public static void buildSuggester() throws IOException {
+    private static TypeAheadSearch typeAheadSearch = null;
+    public static synchronized TypeAheadSearch get() {
+        if (typeAheadSearch == null) {
+            typeAheadSearch = new TypeAheadSearch();
+        }
+        return typeAheadSearch;
+    }
+
+    private TypeAheadSearch() {}
+
+    public void buildSuggester() throws IOException {
         Stopwatch stopwatch = new Stopwatch();
-        reader = DirectoryReader.open(Indexer.indexWriter);
+        reader = DirectoryReader.open(Indexer.indexWriter());
         LuceneDictionary dict = new LuceneDictionary(reader, TEXT_FIELD_NAME);
-        suggester = new AnalyzingSuggester(Indexer.indexDirectory, "suggest", Indexer.analyzer);
+        suggester = new AnalyzingSuggester(Indexer.indexDirectory(), "suggest", Indexer.analyzer());
         suggester.build(dict);
         LOG.info("TypeAheadSearch index build duration: {}", stopwatch.durationString());
     }
 
-    public static void close() throws IOException {
+    public void close() throws IOException {
         if (reader != null) {
             reader.close();
         }
     }
 
-    public static List<String> suggest(String term) throws IOException {
+    public List<String> suggest(String term) throws IOException {
         List<Lookup.LookupResult> lookup = suggester.lookup(term, false, 100);
         return lookup.stream().map(a -> a.key.toString()).collect(Collectors.toList());
     }
 
-    public static void buildFuzzySuggester() throws IOException {
+    public void buildFuzzySuggester() throws IOException {
         Stopwatch stopwatch = new Stopwatch();
-        reader = DirectoryReader.open(Indexer.indexWriter);
+        reader = DirectoryReader.open(Indexer.indexWriter());
         LuceneDictionary dict = new LuceneDictionary(reader, TEXT_FIELD_NAME);
-        fuzzySuggester = new FuzzySuggester(Indexer.indexDirectory, "suggest", Indexer.analyzer);
+        fuzzySuggester = new FuzzySuggester(Indexer.indexDirectory(), "suggest", Indexer.analyzer());
         fuzzySuggester.build(dict);
         LOG.info("TypeAheadSearch fuzzy index build duration: {}", stopwatch.durationString());
     }
 
-    public static List<String> fuzzySuggest(String term) throws IOException {
+    public List<String> fuzzySuggest(String term) throws IOException {
         List<Lookup.LookupResult> lookup = fuzzySuggester.lookup(term, false, 100);
         return lookup.stream().map(a -> a.key.toString()).collect(Collectors.toList());
     }
 
-    public static void buildSearchIndex(String term) throws IOException, ParseException, InvalidTokenOffsetsException {
-        DirectoryReader reader = DirectoryReader.open(Indexer.indexWriter);
+    public void buildSearchIndex(String term) throws IOException, ParseException, InvalidTokenOffsetsException {
+        DirectoryReader reader = DirectoryReader.open(Indexer.indexWriter());
         LuceneDictionary dict = new LuceneDictionary(reader, TEXT_FIELD_NAME);
         IndexSearcher indexSearcher = new IndexSearcher(reader);
         QueryParser parser = new QueryParser("text", Indexer.analyzer());
@@ -126,7 +136,7 @@ public class TypeAheadSearch {
         System.out.println(Arrays.toString(results));
     }
 
-    public static List<String> buildSuggestionsFromDescendants(PublicId ancestorId, List<String> suggestions){
+    public List<String> buildSuggestionsFromDescendants(PublicId ancestorId, List<String> suggestions){
         int[] descendantList = Searcher.defaultNavigationCalculator().descendentsOf(EntityService.get().nidForPublicId(ancestorId)).toArray();
         List<Entity<?>> entityList = new ArrayList<>();
         for (int descendantNid : descendantList) {
@@ -144,9 +154,9 @@ public class TypeAheadSearch {
         return suggestions;
     }
 
-    public static List<LatestVersionSearchResult> typeAheadSuggestions(String userInput, PublicId ancestorId) throws Exception {
-        List<String> suggestions = TypeAheadSearch.suggest(userInput);
-        TypeAheadSearch.buildSuggestionsFromDescendants(ancestorId, suggestions);
+    public List<LatestVersionSearchResult> typeAheadSuggestions(String userInput, PublicId ancestorId) throws Exception {
+        List<String> suggestions = suggest(userInput);
+        buildSuggestionsFromDescendants(ancestorId, suggestions);
 
         List<LatestVersionSearchResult> allSearchResults = new ArrayList<>();
 
@@ -159,10 +169,10 @@ public class TypeAheadSearch {
         return allSearchResults;
     }
 
-    public static List<LatestVersionSearchResult> typeAheadFuzzySuggestions(String userInput, PublicId ancestorId) throws Exception {
+    public List<LatestVersionSearchResult> typeAheadFuzzySuggestions(String userInput, PublicId ancestorId) throws Exception {
         buildFuzzySuggester();
-        List<String> suggestions = TypeAheadSearch.fuzzySuggest(userInput);
-        TypeAheadSearch.buildSuggestionsFromDescendants(ancestorId, suggestions);
+        List<String> suggestions = fuzzySuggest(userInput);
+        buildSuggestionsFromDescendants(ancestorId, suggestions);
 
         List<LatestVersionSearchResult> allSearchResults = new ArrayList<>();
 

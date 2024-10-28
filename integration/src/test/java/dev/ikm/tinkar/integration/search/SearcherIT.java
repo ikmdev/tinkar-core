@@ -168,7 +168,7 @@ public class SearcherIT {
 
     @Test
     public void typeAheadIndexerTest() throws Exception {
-        List<String> suggestions = TypeAheadSearch.suggest("r");
+        List<String> suggestions = TypeAheadSearch.get().suggest("r");
         assertEquals(40, suggestions.size());
 
         // Add a new semantic
@@ -181,7 +181,7 @@ public class SearcherIT {
                 .fieldValues((MutableList<Object> values) -> values
                         .withAll(list))
         );
-        suggestions = TypeAheadSearch.suggest("r");
+        suggestions = TypeAheadSearch.get().suggest("r");
         assertEquals(41, suggestions.size());
     }
 
@@ -194,7 +194,7 @@ public class SearcherIT {
         PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("f7495b58-6630-3499-a44e-2052b5fcf06c")).get().publicId();
 
         String userInput = "u";
-        List<LatestVersionSearchResult> allSearchResults = TypeAheadSearch.typeAheadSuggestions(userInput, ancestorId);
+        List<LatestVersionSearchResult> allSearchResults = TypeAheadSearch.get().typeAheadSuggestions(userInput, ancestorId);
 
         stopwatch.stop();
     }
@@ -210,7 +210,7 @@ public class SearcherIT {
 
 
         String userInput = "a";
-        List<LatestVersionSearchResult> allSearchResults = TypeAheadSearch.typeAheadSuggestions(userInput, ancestorId);
+        List<LatestVersionSearchResult> allSearchResults = TypeAheadSearch.get().typeAheadSuggestions(userInput, ancestorId);
 
         long endTime = System.nanoTime();
         long duration = endTime - startTime;
@@ -225,7 +225,7 @@ public class SearcherIT {
         Stopwatch stopwatch = new Stopwatch();
 
         String userInput = "u";
-        List<LatestVersionSearchResult> allSearchResults = TypeAheadSearch.typeAheadFuzzySuggestions(userInput, ancestorId);
+        List<LatestVersionSearchResult> allSearchResults = TypeAheadSearch.get().typeAheadFuzzySuggestions(userInput, ancestorId);
 
         stopwatch.stop();
     }
@@ -239,7 +239,7 @@ public class SearcherIT {
         long startTime = System.nanoTime();
 
         String userInput = "a";
-        List<LatestVersionSearchResult> allSearchResults = TypeAheadSearch.typeAheadFuzzySuggestions(userInput, ancestorId);
+        List<LatestVersionSearchResult> allSearchResults = TypeAheadSearch.get().typeAheadFuzzySuggestions(userInput, ancestorId);
 
         long endTime = System.nanoTime();
         long duration = endTime - startTime;

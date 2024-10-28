@@ -544,7 +544,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         loadPhase = false;
         // Now we build the AnalyzingSuggester Index
         try {
-            TypeAheadSearch.buildSuggester();
+            TypeAheadSearch.get().buildSuggester();
         } catch (IOException e) {
             LOG.error("Encountered exception {}", e.getMessage());
         }

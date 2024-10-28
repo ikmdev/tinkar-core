@@ -51,9 +51,9 @@ public class Indexer {
     private static final Logger LOG = LoggerFactory.getLogger(Indexer.class);
     private static final File defaultDataDirectory = new File("target/lucene/");
     private static DirectoryReader indexReader;
-    static Directory indexDirectory;
-    static Analyzer analyzer;
-    static IndexWriter indexWriter;
+    private static Directory indexDirectory;
+    private static Analyzer analyzer;
+    private static IndexWriter indexWriter;
     private final Path indexPath;
 
     public Indexer() throws IOException {
@@ -68,14 +68,15 @@ public class Indexer {
         //Create the indexer
         IndexWriterConfig config = new IndexWriterConfig(analyzer());
         config.setCommitOnClose(true);
-        IndexWriter indexWriter = new IndexWriter(indexDirectory(), config);
-        return indexWriter;
+        return new IndexWriter(indexDirectory(), config);
     }
 
     public static Analyzer analyzer() {
         return analyzer;
     }
-
+    public static IndexWriter indexWriter() {
+        return indexWriter;
+    }
     public static Directory indexDirectory() {
         return indexDirectory;
     }
@@ -98,9 +99,9 @@ public class Indexer {
     public void commit() throws IOException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Committing lucene index");
-        this.indexWriter.commit();
+        indexWriter.commit();
         stopwatch.stop();
-        LOG.info("Committed lucene index in: " + stopwatch.durationString());
+        LOG.info("Committed lucene index in: {}", stopwatch.durationString());
     }
 
     public void close() throws IOException {
@@ -108,7 +109,7 @@ public class Indexer {
         LOG.info("Closing lucene index");
         Indexer.indexReader.close();
         Indexer.indexWriter.close();
-        TypeAheadSearch.close();
+        TypeAheadSearch.get().close();
         stopwatch.stop();
         LOG.info("Closed lucene index in: " + stopwatch.durationString());
     }
@@ -167,9 +168,9 @@ public class Indexer {
                 }
             }
             try {
-                long addSequence = this.indexWriter.addDocument(document);
+                long addSequence = indexWriter.addDocument(document);
                 if (!EntityService.get().isLoadPhase()) {
-                    TypeAheadSearch.buildSuggester();
+                    TypeAheadSearch.get().buildSuggester();
                 }
             } catch (IOException e) {
                 LOG.error("Exception writing: " + object);
