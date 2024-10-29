@@ -20,14 +20,21 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
+import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResultsLeafHash;
+import dev.ikm.tinkar.entity.graph.isomorphic.SetElementKey;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.factory.Sets;
+import org.eclipse.collections.api.factory.primitive.IntLists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.set.ImmutableSet;
+import org.eclipse.collections.api.set.MutableSet;
 
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -63,7 +70,67 @@ public class LogicalExpressionBuilder {
         this.rootIndex = logicalExpressionTree.root().vertexIndex();
         this.logicalExpression = new LogicalExpression(this.builder);
     }
+
+    enum NormalizeResult {
+        NO_CHANGES,
+        NODES_REMOVED
+    }
+
+    public NormalizeResult normalize() {
+        NormalizeResult result = NormalizeResult.NO_CHANGES;
+        // Check for multiple necessary sets.
+        ImmutableList<LogicalAxiom.LogicalSet.NecessarySet> necessarySets = logicalExpression.nodesOfType(LogicalAxiom.LogicalSet.NecessarySet.class);
+        if (necessarySets.size() > 1) {
+            MutableList<LogicalAxiom> duplicateAxioms = Lists.mutable.empty();
+            MutableList<LogicalAxiom> axiomsToRetain = Lists.mutable.empty();
+            MutableSet<SetElementKey> usedKeys = Sets.mutable.empty();
+            DiTreeEntity diTree = builder.build();
+            LogicalAxiom.LogicalSet.NecessarySet setToSave = null;
+            LogicalAxiom.Atom.Connective connectiveForMerge = null;
+
+            for (LogicalAxiom.LogicalSet.NecessarySet necessarySet : necessarySets) {
+                for (LogicalAxiom.Atom.Connective connective : necessarySet.elements()) {
+                    if (setToSave == null) {
+                        setToSave = necessarySet;
+                        connectiveForMerge = connective;
+                    } else {
+                        duplicateAxioms.add(necessarySet);
+                        duplicateAxioms.add(connective);
+                    }
+                    connective.elements().forEach(element -> {
+                        SetElementKey key = new SetElementKey(element.vertexIndex(), diTree);
+                        if (usedKeys.contains(key)) {
+                            duplicateAxioms.add(element);
+                        } else {
+                            axiomsToRetain.add(element);
+                            usedKeys.add(key);
+                        }
+                    });
+                }
+            }
+            // Modify the graph...
+            final int connectiveIndex = connectiveForMerge.vertexIndex();
+            axiomsToRetain.forEach(axiom -> {
+                builder.predecessorIndex(axiom.vertexIndex()).ifPresent(predecessorIndex -> {
+                    if (predecessorIndex != connectiveIndex) {
+                        builder.setPredecessorIndex(axiom.vertexIndex(), connectiveIndex);
+                    }
+                });
+            });
+            if (duplicateAxioms.notEmpty()) {
+                result = NormalizeResult.NODES_REMOVED;
+            }
+            duplicateAxioms.forEach(axiom -> builder.removeNotRecursive(axiom.vertexIndex()));
+        }
+        return result;
+    }
+
     public LogicalExpression build() {
+        NormalizeResult result = normalize();
+        if (result == NormalizeResult.NODES_REMOVED) {
+            builder.compress();
+        }
+        this.logicalExpression = new LogicalExpression(this.builder);
         return logicalExpression.build();
     }
 
@@ -302,7 +369,7 @@ public class LogicalExpressionBuilder {
         return PropertyPatternImplicationAxiom(UUID.randomUUID(), propertyPattern, implication);
     }
 
-        public LogicalAxiom.Atom.PropertyPatternImplication PropertyPatternImplicationAxiom(UUID vertexUuid,
+    public LogicalAxiom.Atom.PropertyPatternImplication PropertyPatternImplicationAxiom(UUID vertexUuid,
                                                                                             ImmutableList<ConceptFacade> propertyPattern,
                                                                                         ConceptFacade implication) {
         EntityVertex propertyPatternImplicationAxiom = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.PROPERTY_PATTERN_IMPLICATION.nid);
@@ -318,73 +385,82 @@ public class LogicalExpressionBuilder {
         return new LogicalAxiomAdaptor.PropertyPatternImplicationAdaptor(logicalExpression, propertyPatternImplicationAxiom.vertexIndex());
     }
 
-    public LogicalAxiom addCloneOfNode(LogicalAxiom rootToClone) {
+    /**
+     * Creates and returns a recursive clone of the given logical axiom node.
+     *
+     * @param rootToClone the root node to be cloned. The node can be of type And,
+     *                    ConceptAxiom, DefinitionRoot, DisjointWithAxiom, Feature,
+     *                    NecessarySet, Or, PropertyPatternImplication, PropertySet,
+     *                    Role, or SufficientSet.
+     * @param <A> the type of logical axiom to be returned, extending LogicalAxiom
+     * @return a cloned copy of the provided logical axiom node along with its recursive structure added to
+     * the logical expression.
+     */
+    public <A extends LogicalAxiom> A addCloneOfNode(LogicalAxiom rootToClone) {
         return switch (rootToClone) {
             case LogicalAxiom.Atom.Connective.And and -> {
+                MutableList<LogicalAxiom.Atom> childElements = Lists.mutable.empty();
                 ImmutableSet<LogicalAxiom.Atom> elements = and.elements();
-                MutableList<LogicalAxiom.Atom> childElements = Lists.mutable.ofInitialCapacity(elements.size());
                 for (LogicalAxiom.Atom element : elements) {
-                    childElements.add((LogicalAxiom.Atom) addCloneOfNode(element));
+                    childElements.add(addCloneOfNode(element));
                 }
-                yield And(and.vertexUUID(), childElements.toArray(new LogicalAxiom.Atom[childElements.size()]));
+                yield (A) And(and.vertexUUID(), childElements.toArray(new LogicalAxiom.Atom[childElements.size()]));
             }
 
-            case LogicalAxiom.Atom.ConceptAxiom conceptAxiom -> ConceptAxiom(conceptAxiom.vertexUUID(), conceptAxiom.concept());
+            case LogicalAxiom.Atom.ConceptAxiom conceptAxiom -> (A) ConceptAxiom(conceptAxiom.vertexUUID(), conceptAxiom.concept());
 
             case LogicalAxiom.DefinitionRoot definitionRoot -> {
-                ImmutableSet<LogicalAxiom.LogicalSet> sets = definitionRoot.sets();
-                MutableList<LogicalAxiom.Atom> childSets = Lists.mutable.ofInitialCapacity(sets.size());
-                for (LogicalAxiom.LogicalSet logicalSet : sets) {
-                    childSets.add((LogicalAxiom.Atom) addCloneOfNode(logicalSet));
-                }
+                MutableList<LogicalAxiom.Atom> childSets = Lists.mutable.empty();
+                definitionRoot.sets().forEach(logicalSet -> childSets.add(addCloneOfNode(logicalSet)));
                 // Definition root was created when builder was created...
-                yield logicalExpression.definitionRoot();
+                yield (A) logicalExpression.definitionRoot();
             }
-            case LogicalAxiom.Atom.DisjointWithAxiom disjointWithAxiom -> DisjointWithAxiom(disjointWithAxiom.vertexUUID(), disjointWithAxiom.disjointWith());
 
-            case LogicalAxiom.Atom.TypedAtom.Feature feature -> FeatureAxiom(feature.vertexUUID(), feature.type(), feature.concreteDomainOperator(), feature.literal());
+            case LogicalAxiom.Atom.DisjointWithAxiom disjointWithAxiom -> (A) DisjointWithAxiom(disjointWithAxiom.vertexUUID(), disjointWithAxiom.disjointWith());
+
+            case LogicalAxiom.Atom.TypedAtom.Feature feature -> (A) FeatureAxiom(feature.vertexUUID(), feature.type(), feature.concreteDomainOperator(), feature.literal());
+
             case LogicalAxiom.LogicalSet.NecessarySet necessarySet -> {
-                // TODO remove the AND from the set... Will make isomorphic calculations faster... ?
-                ImmutableSet<LogicalAxiom.Atom> elements = necessarySet.elements();
-                MutableList<LogicalAxiom.Atom.Connective> childElements = Lists.mutable.ofInitialCapacity(elements.size());
-                for (LogicalAxiom.Atom element : elements) {
-                    childElements.add((LogicalAxiom.Atom.Connective) addCloneOfNode(element));
-                }
-                yield NecessarySet(necessarySet.vertexUUID(), childElements.toArray(new LogicalAxiom.Atom[childElements.size()]));
+                // TODO consider removing ANDs the set, and make the sets a connective... Will make isomorphic calculations faster... ?
+                MutableList<LogicalAxiom.Atom.Connective> childElements = Lists.mutable.empty();
+                necessarySet.elements().forEach(element -> childElements.add(addCloneOfNode(element)));
+                yield (A) NecessarySet(necessarySet.vertexUUID(), childElements.toArray(new LogicalAxiom.Atom[childElements.size()]));
             }
+
             case LogicalAxiom.Atom.Connective.Or or -> {
-                ImmutableSet<LogicalAxiom.Atom> elements = or.elements();
-                MutableList<LogicalAxiom.Atom> childElements = Lists.mutable.ofInitialCapacity(elements.size());
-                for (LogicalAxiom.Atom element : elements) {
-                    childElements.add((LogicalAxiom.Atom) addCloneOfNode(element));
-                }
-                yield Or(or.vertexUUID(), childElements.toArray(childElements.toArray(new LogicalAxiom.Atom[childElements.size()])));
+                MutableList<LogicalAxiom.Atom> childElements = Lists.mutable.empty();
+                or.elements().forEach(element -> childElements.add(addCloneOfNode(element)));
+                yield (A) Or(or.vertexUUID(), childElements.toArray(childElements.toArray(new LogicalAxiom.Atom[childElements.size()])));
             }
+
             case LogicalAxiom.Atom.PropertyPatternImplication propertyPatternImplication ->
-                    PropertyPatternImplicationAxiom(propertyPatternImplication.vertexUUID(), propertyPatternImplication.propertyPattern(), propertyPatternImplication.implication());
+                    (A) PropertyPatternImplicationAxiom(propertyPatternImplication.vertexUUID(), propertyPatternImplication.propertyPattern(), propertyPatternImplication.implication());
+
             case LogicalAxiom.LogicalSet.PropertySet propertySet -> {
                 // TODO remove the AND from the set... Will make isomorphic calculations faster... ?
-                ImmutableSet<LogicalAxiom.Atom> elements = propertySet.elements();
-                MutableList<LogicalAxiom.Atom.Connective> childElements = Lists.mutable.ofInitialCapacity(elements.size());
-                for (LogicalAxiom.Atom element : elements) {
-                    childElements.add((LogicalAxiom.Atom.Connective) addCloneOfNode(element));
-                }
-                yield PropertySet(propertySet.vertexUUID(), childElements.toArray(new LogicalAxiom.Atom[childElements.size()]));
+                MutableList<LogicalAxiom.Atom.Connective> childElements = Lists.mutable.empty();
+                propertySet.elements().forEach(element -> childElements.add(addCloneOfNode(element)));
+                yield (A) PropertySet(propertySet.vertexUUID(), childElements.toArray(new LogicalAxiom.Atom[childElements.size()]));
             }
-            case LogicalAxiom.Atom.TypedAtom.Role role -> Role(role.vertexUUID(), role.roleOperator(), role.type(), (LogicalAxiom.Atom) addCloneOfNode(role.restriction()));
+
+            case LogicalAxiom.Atom.TypedAtom.Role role -> (A) Role(role.vertexUUID(), role.roleOperator(), role.type(), addCloneOfNode(role.restriction()));
+
             case LogicalAxiom.LogicalSet.SufficientSet sufficientSet -> {
                 // TODO remove the AND from the set... Will make isomorphic calculations faster... ?
-                ImmutableSet<LogicalAxiom.Atom> elements = sufficientSet.elements();
-                MutableList<LogicalAxiom.Atom.Connective> childElements = Lists.mutable.ofInitialCapacity(elements.size());
-                for (LogicalAxiom.Atom element : elements) {
-                    childElements.add((LogicalAxiom.Atom.Connective) addCloneOfNode(element));
-                }
-                yield SufficientSet(sufficientSet.vertexUUID(), childElements.toArray(new LogicalAxiom.Atom[childElements.size()]));
+                MutableList<LogicalAxiom.Atom.Connective> childElements = Lists.mutable.empty();
+                sufficientSet.elements().forEach(element -> childElements.add(addCloneOfNode(element)));
+                yield (A) SufficientSet(sufficientSet.vertexUUID(), childElements.toArray(new LogicalAxiom.Atom[childElements.size()]));
             }
             default -> throw new IllegalStateException("Unexpected value: " + rootToClone);
         };
     }
 
+    /**
+     * Updates the concept reference within the specified concept axiom to the new concept reference.
+     *
+     * @param conceptAxiom The concept axiom whose concept reference is to be updated.
+     * @param newConceptReference The new concept reference to update within the concept axiom.
+     */
     public void updateConceptReference(LogicalAxiom.Atom.ConceptAxiom conceptAxiom, ConceptFacade newConceptReference) {
         EntityVertex conceptReferenceVertex = this.builder.vertex(conceptAxiom.vertexIndex());
         conceptReferenceVertex.putUncommittedProperty(TinkarTerm.CONCEPT_REFERENCE.nid(),
@@ -392,35 +468,71 @@ public class LogicalExpressionBuilder {
         conceptReferenceVertex.commitProperties();
     }
 
+    /**
+     * Updates the concept reference within the specified concept vertex to the new concept reference.
+     *
+     * @param conceptReferenceVertex The entity vertex representing the concept reference to be updated.
+     * @param newConceptReference The new concept reference to update within the vertex.
+     */
     public void updateConceptReference(EntityVertex conceptReferenceVertex, ConceptFacade newConceptReference) {
         conceptReferenceVertex.putUncommittedProperty(TinkarTerm.CONCEPT_REFERENCE.nid(),
                 EntityProxy.Concept.make(newConceptReference.description(), newConceptReference.publicId()));
         conceptReferenceVertex.commitProperties();
     }
 
+    /**
+     * Updates the concept reference within the specified concept axiom to the new concept reference ID.
+     *
+     * @param conceptAxiom The concept axiom whose concept reference is to be updated.
+     * @param newConceptReferenceNid The new concept reference ID.
+     */
     public void updateConceptReference(LogicalAxiom.Atom.ConceptAxiom conceptAxiom, int newConceptReferenceNid) {
         updateConceptReference(conceptAxiom, EntityProxy.Concept.make(PrimitiveData.text(newConceptReferenceNid),
                 PrimitiveData.publicId(newConceptReferenceNid)));
     }
 
+    /**
+     * Updates the role type of the specified role axiom.
+     *
+     * @param roleAxiom The logical axiom representing the role whose type is to be updated.
+     * @param conceptToChangeTo The new concept to which the role type will be updated.
+     */
     public void updateRoleType(LogicalAxiom.Atom.TypedAtom.Role roleAxiom, ConceptFacade conceptToChangeTo) {
         EntityVertex roleVertex = this.builder.vertex(roleAxiom.vertexIndex());
         roleVertex.putUncommittedProperty(TinkarTerm.ROLE_TYPE.nid(), EntityProxy.Concept.make(conceptToChangeTo));
         roleVertex.commitProperties();
     }
 
+    /**
+     * Updates the type of the specified feature axiom to a new type.
+     *
+     * @param featureAxiom The logical feature axiom whose type is to be updated.
+     * @param conceptToChangeTo The new concept to which the feature type will be changed.
+     */
     public void updateFeatureType(LogicalAxiom.Atom.TypedAtom.Feature featureAxiom, ConceptFacade conceptToChangeTo) {
         EntityVertex roleVertex = this.builder.vertex(featureAxiom.vertexIndex());
         roleVertex.putUncommittedProperty(TinkarTerm.FEATURE_TYPE.nid(), EntityProxy.Concept.make(conceptToChangeTo));
         roleVertex.commitProperties();
     }
 
+    /**
+     * Updates the operator (equals, less than, greater than, ...) of a given feature axiom.
+     *
+     * @param featureAxiom The logical feature axiom whose operator is to be updated.
+     * @param conceptToChangeTo The new concept to which the operator will be changed.
+     */
     public void updateFeatureOperator(LogicalAxiom.Atom.TypedAtom.Feature featureAxiom, ConceptFacade conceptToChangeTo) {
         EntityVertex roleVertex = this.builder.vertex(featureAxiom.vertexIndex());
         roleVertex.putUncommittedProperty(TinkarTerm.CONCRETE_DOMAIN_OPERATOR.nid(), EntityProxy.Concept.make(conceptToChangeTo));
         roleVertex.commitProperties();
     }
 
+    /**
+     * Updates the concept restriction (universal or extensional) for a given role axiom.
+     *
+     * @param roleAxiom The logical axiomatic role whose restriction is to be updated.
+     * @param conceptToChangeTo The new concept to which the restriction will be changed.
+     */
     public void updateRoleRestriction(LogicalAxiom.Atom.TypedAtom.Role roleAxiom, ConceptFacade conceptToChangeTo) {
         EntityVertex roleVertex = this.builder.vertex(roleAxiom.vertexIndex());
         ImmutableList<EntityVertex> successors = this.builder.successors(roleVertex);
@@ -430,10 +542,18 @@ public class LogicalExpressionBuilder {
         updateConceptReference(successors.get(0), conceptToChangeTo);
     }
 
+    /**
+     * Changes the type of the specified logical set axiom to a new type (property set, necessary set, sufficient set,
+     * inclusion set).
+     *
+     * @param setAxiom the logical set axiom to be altered
+     * @param conceptToChangeTo the new concept to change the type to
+     */
     public void changeSetType(LogicalAxiom.LogicalSet setAxiom, ConceptFacade conceptToChangeTo) {
         EntityVertex changedSet = EntityVertex.make(setAxiom.vertexUUID(), conceptToChangeTo.nid());
         builder.setVertexIndex(changedSet, setAxiom.vertexIndex());
         builder.replaceVertex(changedSet);
     }
+
 
 }

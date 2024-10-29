@@ -132,7 +132,7 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
     public String toString(String idSuffix, int rootIndex) {
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName()).append("{\n");
-        fragmentToString(idSuffix, vertex(rootIndex), sb, true);
+        fragmentToString(idSuffix, vertex(rootIndex), sb, false);
         sb.append('}');
 
         return sb.toString();
@@ -316,6 +316,13 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
             return root;
         }
 
+        public OptionalInt predecessorIndex(int vertexIndex) {
+            if (this.predecessorMap.containsKey(vertexIndex)) {
+                return OptionalInt.of(this.predecessorMap.get(vertexIndex));
+            }
+            return OptionalInt.empty();
+        }
+
         @Override
         public Optional<V> predecessor(EntityVertex vertex) {
             /**
@@ -341,6 +348,13 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
 
         public void setVertexIndex(EntityVertex changedSet, int vertexIndex) {
             changedSet.setVertexIndex(vertexIndex);
+        }
+
+        public void setPredecessorIndex(int vertexIndex, int predecessorIndex) {
+            int oldPredecessorIndex = predecessorMap.get(vertexIndex);
+            successorMap.get(oldPredecessorIndex).remove(vertexIndex);
+            predecessorMap.put(vertexIndex, predecessorIndex);
+            successorMap.get(predecessorIndex).add(vertexIndex);
         }
     }
 

@@ -31,6 +31,7 @@ public class VertexVisitData {
     private final BitSet necessarySets;
     private final BitSet sufficientSets;
     private final BitSet propertySets;
+    private final BitSet inclusionSets;
 
     /** The max depth. */
     private int maxDepth = 0;
@@ -80,6 +81,7 @@ public class VertexVisitData {
         this.necessarySets = new BitSet(graphSize);
         this.sufficientSets = new BitSet(graphSize);
         this.propertySets = new BitSet(graphSize);
+        this.inclusionSets = new BitSet(graphSize);
         this.distanceArray = ArrayUtil.createAndFillWithMinusOne(graphSize);
         this.discoverySequenceArray = ArrayUtil.createAndFillWithMinusOne(graphSize);
         this.finishSequenceArray = ArrayUtil.createAndFillWithMinusOne(graphSize);
@@ -97,6 +99,9 @@ public class VertexVisitData {
         }
         if (vertex.meaningNid == TinkarTerm.PROPERTY_SET.nid()) {
             this.propertySets.set(vertex.vertexIndex);
+        }
+        if (vertex.meaningNid == TinkarTerm.INCLUSION_SET.nid()) {
+            this.inclusionSets.set(vertex.vertexIndex);
         }
 
         if (vertexStartConsumer != null) {
@@ -167,6 +172,7 @@ public class VertexVisitData {
     public BitSet sufficientSetIndexes() {
         return this.sufficientSets;
     }
+    public BitSet inclusionSetIndexes() { return this.inclusionSets; }
 
     /**
      * Gets the max depth.

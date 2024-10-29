@@ -180,14 +180,14 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     }
 
     private void listAndCancelUncommittedStamps() {
-        LOG.info("Searching for canceled stamps in set of size " + stampNids.size());
+        LOG.debug("Searching for canceled stamps in set of size " + stampNids.size());
         int[] stampNidArray = stampNids.stream().sorted().mapToInt(value -> (int) value).toArray();
         for (int stampNid : stampNidArray) {
             StampRecord stamp = Entity.getStamp(stampNid);
             if (stamp.lastVersion() == null) {
-                LOG.info("Null last version for stamp with nid: " + stampNid);
+                LOG.debug("Null last version for stamp with nid: " + stampNid);
             } else {
-                LOG.info("Stamp: " + stamp);
+                LOG.debug("Stamp: " + stamp);
                 if (stamp.time() == Long.MAX_VALUE && Transaction.forStamp(stamp).isEmpty()) {
                     // Uncommitted stamp found outside a transaction on restart. Set to canceled.
                     cancelUncommittedStamp(stampNid, stamp);

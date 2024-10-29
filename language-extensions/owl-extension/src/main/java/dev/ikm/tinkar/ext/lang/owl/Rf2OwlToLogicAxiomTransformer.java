@@ -29,6 +29,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -95,6 +97,11 @@ public class Rf2OwlToLogicAxiomTransformer extends TrackingCallable<Void> {
                         transaction, listForTask, logicalAxiomPattern.nid(), writeSemaphore, authorNid, moduleNid, pathNid);
                 Future<Void> transformerFuture = TinkExecutor.threadPool().submit(transformer);
                 //TODO what do do with the future?
+                try {
+                    transformerFuture.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    throw new RuntimeException(e);
+                }
                 statedTransformList.clear();
             }
         });
@@ -104,6 +111,11 @@ public class Rf2OwlToLogicAxiomTransformer extends TrackingCallable<Void> {
                 transaction, statedTransformList, logicalAxiomPattern.nid(), writeSemaphore, authorNid, moduleNid, pathNid);
         Future<Void> transformerFuture = TinkExecutor.threadPool().submit(remainingStatedtransformer);
         //TODO what do do with the future?
+        try {
+            transformerFuture.get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
 
         completedUnitOfWork();
 
