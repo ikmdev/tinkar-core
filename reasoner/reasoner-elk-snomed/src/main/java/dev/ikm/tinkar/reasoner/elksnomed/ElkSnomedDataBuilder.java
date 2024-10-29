@@ -22,6 +22,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.ikm.elk.snomed.SnomedIds;
 import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.elk.snomed.model.ConcreteRole;
 import dev.ikm.elk.snomed.model.ConcreteRole.ValueType;
@@ -35,6 +36,7 @@ import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
+import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
@@ -204,18 +206,27 @@ public class ElkSnomedDataBuilder {
 		for (EntityVertex node : definition.successors(child)) {
 			switch (getMeaning(node)) {
 			case CONCEPT -> {
-				RoleType roleType = data.getOrCreateRoleType(conceptNid);
 				ConceptFacade nodeConcept = node.propertyFast(TinkarTerm.CONCEPT_REFERENCE);
-				if (nodeConcept.nid() == TinkarTerm.TRANSITIVE_PROPERTY.nid()) {
-					roleType.setTransitive(true);
-				} else if (nodeConcept.nid() == TinkarTerm.REFLEXIVE_PROPERTY.nid()) {
-					roleType.setReflexive(true);
+				// This won't work if SNOMED introduces data property hierarchy
+//				LOG.info("UUID for " + SnomedIds.concept_model_data_attribute + " "
+//						+ UuidUtil.fromSNOMED("" + SnomedIds.concept_model_data_attribute));
+//				if (nodeConcept.nid() == ElkSnomedData.getNid(SnomedIds.concept_model_data_attribute)) {
+				if (nodeConcept.nid() == TinkarTerm.CONCEPT_MODEL_DATA_ATTRIBUTE.nid()) {
+					ConcreteRoleType roleType = data.getOrCreateConcreteRoleType(conceptNid);
+					roleType.addSuperConcreteRoleType(data.getOrCreateConcreteRoleType(nodeConcept.nid()));
 				} else {
-					roleType.addSuperRoleType(data.getOrCreateRoleType(nodeConcept.nid()));
+					RoleType roleType = data.getOrCreateRoleType(conceptNid);
+					if (nodeConcept.nid() == TinkarTerm.TRANSITIVE_PROPERTY.nid()) {
+						roleType.setTransitive(true);
+					} else if (nodeConcept.nid() == TinkarTerm.REFLEXIVE_PROPERTY.nid()) {
+						roleType.setReflexive(true);
+					} else {
+						roleType.addSuperRoleType(data.getOrCreateRoleType(nodeConcept.nid()));
+					}
 				}
 			}
 			case PROPERTY_PATTERN_IMPLICATION -> {
-				LOG.info("PropertySet: " + PrimitiveData.text(conceptNid) + " " + propertySetNode + "\n" + definition);
+//				LOG.info("PropertySet: " + PrimitiveData.text(conceptNid) + " " + propertySetNode + "\n" + definition);
 				RoleType roleType = data.getOrCreateRoleType(conceptNid);
 				// TODO: update to new concept binding: Property sequence implication...
 				ConceptFacade ppi = node.propertyFast(TinkarTerm.PROPERTY_PATTERN_IMPLICATION);
@@ -223,6 +234,10 @@ public class ElkSnomedDataBuilder {
 					throw new IllegalStateException(
 							"Property chain malformed. Concept: " + conceptNid + " definition: " + definition);
 				IntIdList ps = node.propertyFast(TinkarTerm.PROPERTY_SEQUENCE);
+				if (ps == null)
+					throw new IllegalStateException(
+							"Property chain malformed. Expected " + TinkarTerm.PROPERTY_SEQUENCE.description()
+									+ " Concept: " + conceptNid + " definition: " + definition);
 				if (ps.size() != 2)
 					throw new IllegalStateException("Property chain " + ps.size() + " != 2. Concept: " + conceptNid
 							+ " definition: " + definition);
@@ -234,8 +249,8 @@ public class ElkSnomedDataBuilder {
 				if (!roleType.equals(prop1))
 					throw new IllegalStateException("This is a bug.");
 				roleType.setChained(prop2);
-				LOG.info("PPI: " + PrimitiveData.text((int) prop1.getId()) + " "
-						+ PrimitiveData.text((int) prop1.getChained().getId()));
+//				LOG.info("PPI: " + PrimitiveData.text((int) prop1.getId()) + " -> "
+//						+ PrimitiveData.text((int) prop1.getChained().getId()));
 			}
 			default -> throw new UnsupportedOperationException("Can't handle: " + node + " in: " + definition);
 			}
