@@ -72,10 +72,10 @@ public abstract class HybridTestBase extends PrimitiveDataTestBase {
 		if (!expect.equals(actual)) {
 			Set<String> expect_copy = new HashSet<>(expect);
 			expect_copy.removeAll(actual);
-			expect_copy.forEach(l -> LOG.error("Missing: " + l));
+			expect_copy.stream().limit(100).forEach(l -> LOG.error("Missing: " + l));
 			Set<String> actual_copy = new HashSet<>(actual);
 			actual_copy.removeAll(expect);
-			actual_copy.forEach(l -> LOG.error("Extra: " + l));
+			actual_copy.stream().limit(100).forEach(l -> LOG.error("Extra: " + l));
 		}
 		// assertEquals verbose if the test fails
 		assertTrue(expect.equals(actual), filePart);

@@ -228,6 +228,7 @@ public class ElkSnomedDataBuilder {
 			case PROPERTY_PATTERN_IMPLICATION -> {
 //				LOG.info("PropertySet: " + PrimitiveData.text(conceptNid) + " " + propertySetNode + "\n" + definition);
 				RoleType roleType = data.getOrCreateRoleType(conceptNid);
+				// TODO: update to new concept binding: Property sequence implication...
 				ConceptFacade ppi = node.propertyFast(TinkarTerm.PROPERTY_PATTERN_IMPLICATION);
 				if (ppi.nid() != conceptNid)
 					throw new IllegalStateException(

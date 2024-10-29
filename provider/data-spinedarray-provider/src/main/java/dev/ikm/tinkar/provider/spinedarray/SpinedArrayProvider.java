@@ -21,12 +21,26 @@ import dev.ikm.tinkar.collection.SpinedIntIntMap;
 import dev.ikm.tinkar.collection.SpinedIntLongArrayMap;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.service.*;
+import dev.ikm.tinkar.common.service.NidGenerator;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.PrimitiveDataRepair;
+import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
+import dev.ikm.tinkar.common.service.PrimitiveDataService;
+import dev.ikm.tinkar.common.service.ServiceKeys;
+import dev.ikm.tinkar.common.service.ServiceProperties;
+import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.ConceptEntity;
+import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.PatternEntity;
+import dev.ikm.tinkar.entity.SemanticEntity;
+import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.StampRecord;
+import dev.ikm.tinkar.entity.StampVersionRecord;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.provider.search.Indexer;
 import dev.ikm.tinkar.provider.search.Searcher;
@@ -166,14 +180,14 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     }
 
     private void listAndCancelUncommittedStamps() {
-        LOG.info("Searching for canceled stamps in set of size " + stampNids.size());
+        LOG.debug("Searching for canceled stamps in set of size " + stampNids.size());
         int[] stampNidArray = stampNids.stream().sorted().mapToInt(value -> (int) value).toArray();
         for (int stampNid : stampNidArray) {
             StampRecord stamp = Entity.getStamp(stampNid);
             if (stamp.lastVersion() == null) {
-                LOG.info("Null last version for stamp with nid: " + stampNid);
+                LOG.debug("Null last version for stamp with nid: " + stampNid);
             } else {
-                LOG.info("Stamp: " + stamp);
+                LOG.debug("Stamp: " + stamp);
                 if (stamp.time() == Long.MAX_VALUE && Transaction.forStamp(stamp).isEmpty()) {
                     // Uncommitted stamp found outside a transaction on restart. Set to canceled.
                     cancelUncommittedStamp(stampNid, stamp);

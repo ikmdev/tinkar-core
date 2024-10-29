@@ -133,7 +133,7 @@ public sealed interface LogicalAxiom permits LogicalAxiom.Atom, LogicalAxiom.Def
     }
 
     sealed interface LogicalSet extends LogicalAxiom {
-        ImmutableSet<Atom> elements();
+        ImmutableSet<Atom.Connective> elements();
 
         sealed interface NecessarySet extends LogicalSet permits LogicalAxiomAdaptor.NecessarySetAdaptor {
             default LogicalAxiomSemantic axiomSemantic() {

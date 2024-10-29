@@ -25,9 +25,7 @@ import dev.ikm.tinkar.component.location.PlanarPoint;
 import dev.ikm.tinkar.component.location.SpatialPoint;
 import dev.ikm.tinkar.entity.graph.DiGraphEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
-import dev.ikm.tinkar.terms.ComponentWithNid;
-import dev.ikm.tinkar.terms.EntityFacade;
-import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.*;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.factory.Lists;
@@ -193,69 +191,100 @@ public class EntityRecordFactory {
      */
     public static void writeField(ByteBuf writeBuf, Object field) {
         switch (field) {
-            case Boolean booleanField -> writeField(writeBuf, booleanField);
-            case Float floatField -> writeField(writeBuf, floatField);
-            case byte[] byteArrayField -> writeField(writeBuf, byteArrayField);
-            case Integer integerField -> writeField(writeBuf, integerField);
-            case Long longField -> writeField(writeBuf, longField);
-            case Instant instantField -> writeField(writeBuf, instantField);
-            case String stringField -> writeField(writeBuf, stringField);
-            case Concept conceptField -> writeField(writeBuf, conceptField);
-            case Semantic semanticField -> writeField(writeBuf, semanticField);
-            case Pattern patternField -> writeField(writeBuf, patternField);
-            case EntityFacade entityField -> writeField(writeBuf, entityField);
-            case Component componentField -> writeField(writeBuf, componentField);
-            case DiTreeEntity diTreeEntityField -> writeField(writeBuf, diTreeEntityField);
-            case PlanarPoint planarPointField -> writeField(writeBuf, planarPointField);
-            case SpatialPoint spatialPointField -> writeField(writeBuf, spatialPointField);
-            case IntIdList intIdListField -> writeField(writeBuf, intIdListField);
-            case IntIdSet intIdSetField -> writeField(writeBuf, intIdSetField);
-            case PublicId publicId -> writeField(writeBuf, publicId);
-            case PublicIdList publicIdListField -> writeField(writeBuf, publicIdListField);
-            case PublicIdSet publicIdSetField -> writeField(writeBuf, publicIdSetField);
+            case Boolean booleanField ->
+                    writeTokenAndField(writeBuf, FieldDataType.BOOLEAN, () -> writeBuf.writeBoolean(booleanField));
+            case Float floatField ->
+                    writeTokenAndField(writeBuf, FieldDataType.FLOAT, () -> writeBuf.writeFloat(floatField));
+            case Double doubleField ->
+                    writeTokenAndField(writeBuf, FieldDataType.FLOAT, () -> writeBuf.writeFloat(doubleField.floatValue()));
+            case byte[] byteArrayField ->
+                    writeTokenAndField(writeBuf, FieldDataType.BYTE_ARRAY, () -> {
+                        writeBuf.writeInt(byteArrayField.length);
+                        writeBuf.write(byteArrayField);
+                    });
+            case Integer integerField ->
+                    writeTokenAndField(writeBuf, FieldDataType.INTEGER, () -> writeBuf.writeInt(integerField));
+            case Long longField ->
+                    writeTokenAndField(writeBuf, FieldDataType.LONG, () -> writeBuf.writeLong(longField));
+            case Instant instantField ->
+                    writeTokenAndField(writeBuf, FieldDataType.INSTANT, () -> {
+                        writeBuf.writeLong(instantField.getEpochSecond());
+                        writeBuf.writeInt(instantField.getNano());
+                    });
+            case String stringField ->
+                    writeTokenAndField(writeBuf, FieldDataType.STRING, () -> {
+                        byte[] bytes = stringField.getBytes(UTF_8);
+                        writeBuf.writeInt(bytes.length);
+                        writeBuf.write(bytes);
+                    });
+            case ConceptFacade conceptField ->
+                    writeTokenAndField(writeBuf, FieldDataType.CONCEPT, () -> writeBuf.writeInt(conceptField.nid()));
+            case Concept conceptField ->
+                    writeTokenAndField(writeBuf, FieldDataType.CONCEPT, () -> writeBuf.writeInt(Entity.nid(conceptField)));
+            case SemanticFacade semanticField ->
+                    writeTokenAndField(writeBuf, FieldDataType.SEMANTIC, () -> writeBuf.writeInt(semanticField.nid()));
+            case Semantic semanticField ->
+                    writeTokenAndField(writeBuf, FieldDataType.SEMANTIC, () -> writeBuf.writeInt(Entity.nid(semanticField)));
+            case PatternFacade patternField ->
+                    writeTokenAndField(writeBuf, FieldDataType.PATTERN, () -> writeBuf.writeInt(patternField.nid()));
+            case Pattern patternField ->
+                    writeTokenAndField(writeBuf, FieldDataType.PATTERN, () -> writeBuf.writeInt(Entity.nid(patternField)));
+            case EntityFacade entityField ->
+                    writeTokenAndField(writeBuf, FieldDataType.IDENTIFIED_THING, () -> writeBuf.writeInt(entityField.nid()));
+            case Component componentField ->
+                    writeTokenAndField(writeBuf, FieldDataType.IDENTIFIED_THING, () -> writeBuf.writeInt(Entity.nid(componentField)));
+            case DiTreeEntity diTreeEntityField ->
+                    writeTokenAndField(writeBuf, FieldDataType.DITREE, () ->
+                            writeBuf.write(diTreeEntityField.getBytes()));
+            case PlanarPoint planarPointField ->
+                    writeTokenAndField(writeBuf, FieldDataType.PLANAR_POINT, () -> {
+                        writeBuf.writeByte(FieldDataType.PLANAR_POINT.token);
+                        writeBuf.writeFloat(planarPointField.x());
+                        writeBuf.writeFloat(planarPointField.y());
+                    });
+            case SpatialPoint spatialPointField ->
+                    writeTokenAndField(writeBuf, FieldDataType.SPATIAL_POINT, () -> {
+                        writeBuf.writeInt((int) spatialPointField.x());
+                        writeBuf.writeFloat(spatialPointField.y());
+                        writeBuf.writeFloat(spatialPointField.z());
+                    });
+            case IntIdList intIdListField ->
+                    writeTokenAndField(writeBuf, COMPONENT_ID_LIST, () -> {
+                        writeBuf.writeInt(intIdListField.size());
+                        intIdListField.forEach(id -> writeBuf.writeInt(id));
+                    });
+            case IntIdSet intIdSetField ->
+                    writeTokenAndField(writeBuf, FieldDataType.COMPONENT_ID_SET, () -> {
+                        writeBuf.writeInt(intIdSetField.size());
+                        intIdSetField.forEach(id -> writeBuf.writeInt(id));
+                    });
+            case PublicId publicId ->
+                    writeTokenAndField(writeBuf, FieldDataType.IDENTIFIED_THING, () ->
+                            writeBuf.writeInt(Entity.nid(publicId)));
+            case PublicIdList publicIdListField -> {
+                    MutableIntList nidList = IntLists.mutable.withInitialCapacity(publicIdListField.size());
+                    publicIdListField.forEach(publicId -> {
+                        nidList.add(PrimitiveData.get().nidForPublicId((PublicId) publicId));
+                    });
+                    writeBuf.writeByte(COMPONENT_ID_LIST.token);
+                    writeBuf.writeInt(nidList.size());
+                    nidList.forEach(id -> writeBuf.writeInt(id));
+            }
+            case PublicIdSet publicIdSetField -> {
+                MutableIntList nidSet = IntLists.mutable.withInitialCapacity(publicIdSetField.size());
+                publicIdSetField.forEach(publicId -> {
+                    nidSet.add(PrimitiveData.get().nidForPublicId((PublicId) publicId));
+                });
+                writeBuf.writeByte(FieldDataType.COMPONENT_ID_SET.token);
+                writeBuf.writeInt(nidSet.size());
+                nidSet.forEach(id -> writeBuf.writeInt(id));
+            }
             default -> throw new IllegalStateException("Unexpected value: %s of class: %s".formatted(field, field.getClass()));
         }
     }
-    /**
-     * START OF REFACTORING the writeField methods
-     */
-    public static void writeField(ByteBuf writeBuf, Boolean bool) {
-        writeBuf.writeByte(FieldDataType.BOOLEAN.token);
-        writeBuf.writeBoolean(bool);
-    }
-
-    public static void writeField(ByteBuf writeBuf, Float fieldValue) {
-        writeBuf.writeByte(FieldDataType.FLOAT.token);
-        writeBuf.writeFloat(fieldValue);
-    }
-
-    public static void writeField(ByteBuf writeBuf, byte[] byteArrayField) {
-        writeBuf.writeByte(FieldDataType.BYTE_ARRAY.token);
-                writeBuf.writeInt(byteArrayField.length);
-                writeBuf.write(byteArrayField);
-    }
-    public static void writeField(ByteBuf writeBuf, Long longField) {
-        writeBuf.writeByte(FieldDataType.LONG.token);
-        writeBuf.writeLong(longField);
-    }
-
-
-    public static void writeField(ByteBuf writeBuf, Integer integerField) {
-                writeBuf.writeByte(FieldDataType.INTEGER.token);
-                writeBuf.writeInt(integerField);
-    }
-
-    public static void writeField(ByteBuf writeBuf, Instant instantField) {
-                writeBuf.writeByte(FieldDataType.INSTANT.token);
-                writeBuf.writeLong(instantField.getEpochSecond());
-                writeBuf.writeInt(instantField.getNano());
-    }
-
-    public static void writeField(ByteBuf writeBuf, String stringField) {
-                writeBuf.writeByte(FieldDataType.STRING.token);
-                byte[] bytes = stringField.getBytes(UTF_8);
-                writeBuf.writeInt(bytes.length);
-                writeBuf.write(bytes);
+    public static void writeTokenAndField(ByteBuf writeBuf, FieldDataType fieldDataType, Runnable writer) {
+        writeBuf.writeByte(fieldDataType.token);
+        writer.run();
     }
 
     public static void writeField(ByteBuf writeBuf, EntityFacade entityField) {
@@ -266,70 +295,6 @@ public class EntityRecordFactory {
     public static void writeField(ByteBuf writeBuf, Component componentField) {
         writeBuf.writeByte(FieldDataType.IDENTIFIED_THING.token);
         writeBuf.writeInt(Entity.nid(componentField));
-    }
-
-    public static void writeField(ByteBuf writeBuf, DiTreeEntity diTreeEntityField) {
-        writeBuf.writeByte(FieldDataType.DITREE.token);
-        writeBuf.write(diTreeEntityField.getBytes());
-    }
-
-    public static void writeField(ByteBuf writeBuf, PlanarPoint planarPointField) {
-        writeBuf.writeByte(FieldDataType.PLANAR_POINT.token);
-        writeBuf.writeFloat(planarPointField.x());
-        writeBuf.writeFloat(planarPointField.y());
-    }
-
-    public static void writeField(ByteBuf writeBuf, SpatialPoint spatialPointField) {
-        writeBuf.writeByte(FieldDataType.SPATIAL_POINT.token);
-        writeBuf.writeInt((int) spatialPointField.x());
-        writeBuf.writeFloat(spatialPointField.y());
-        writeBuf.writeFloat(spatialPointField.z());
-    }
-
-    public static void writeField(ByteBuf writeBuf, IntIdList intIdListField) {
-        writeBuf.writeByte(COMPONENT_ID_LIST.token);
-        writeBuf.writeInt(intIdListField.size());
-        intIdListField.forEach(id -> writeBuf.writeInt(id));
-    }
-
-    public static void writeField(ByteBuf writeBuf, IntIdSet intIdSetField) {
-        writeBuf.writeByte(FieldDataType.COMPONENT_ID_SET.token);
-        writeBuf.writeInt(intIdSetField.size());
-        intIdSetField.forEach(id -> writeBuf.writeInt(id));
-    }
-
-    public static void writeField(ByteBuf writeBuf, PublicId publicId) {
-        PrimitiveData.get().nidForPublicId(publicId);
-        writeBuf.writeByte(COMPONENT_ID_LIST.token);
-        publicId.forEach(writeBuf::writeLong);
-    }
-    public static void writeField(ByteBuf writeBuf, PublicIdList publicIdListField) {
-        MutableIntList nidList = IntLists.mutable.withInitialCapacity(publicIdListField.size());
-        publicIdListField.forEach(publicId -> {
-            nidList.add(PrimitiveData.get().nidForPublicId((PublicId) publicId));
-        });
-        writeBuf.writeByte(COMPONENT_ID_LIST.token);
-        writeBuf.writeInt(nidList.size());
-        nidList.forEach(id -> writeBuf.writeInt(id));
-    }
-
-    public static void writeField(ByteBuf writeBuf, PublicIdSet publicIdSetField) {
-        MutableIntList nidSet = IntLists.mutable.withInitialCapacity(publicIdSetField.size());
-        publicIdSetField.forEach(publicId -> {
-            nidSet.add(PrimitiveData.get().nidForPublicId((PublicId) publicId));
-        });
-        writeBuf.writeByte(FieldDataType.COMPONENT_ID_SET.token);
-        writeBuf.writeInt(nidSet.size());
-        nidSet.forEach(id -> writeBuf.writeInt(id));
-    }
-
-    public static void writeField(ByteBuf writeBuf, Concept conceptField) {
-        writeBuf.writeByte(FieldDataType.CONCEPT.token);
-        if (conceptField instanceof ComponentWithNid) {
-            writeBuf.writeInt(((ComponentWithNid) conceptField).nid());
-        } else {
-            writeBuf.writeInt(Entity.nid(conceptField));
-        }
     }
 
     public static void writeField(ByteBuf writeBuf, Semantic semanticField) {

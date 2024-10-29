@@ -70,8 +70,7 @@ public class LogicalExpression {
 
     public LogicalExpression build() {
         if (sourceGraph instanceof DiTreeEntity.Builder diTreeBuilder) {
-            return new LogicalExpression(diTreeBuilder.build(),
-                    Lists.immutable.ofAll(this.adaptors));
+            return new LogicalExpression(diTreeBuilder.build());
         }
         throw new IllegalStateException("sourceGraph not instanceof DiTreeEntity.Builder");
     }
@@ -89,13 +88,19 @@ public class LogicalExpression {
         return false;
     }
 
-    public ImmutableList<LogicalAxiom> nodesOfType(LogicalAxiomSemantic axiomType) {
-        MutableList<LogicalAxiom> axiomsOfType = Lists.mutable.ofInitialCapacity(8);
-        for (LogicalAxiomAdaptor axiomAdaptor : adaptors) {
-            if (axiomType.axiomClass.isAssignableFrom(axiomAdaptor.getClass())) {
-                axiomsOfType.add(axiomAdaptor);
+    /**
+     * Retrieves a list of nodes (axioms) of a specific type from the logical expression.
+     *
+     * @param axiomTypeClass the class of the type of logical axioms to retrieve
+     * @return an immutable list of logical axioms of the specified type
+     */
+    public <A extends LogicalAxiom> ImmutableList<A> nodesOfType(Class<A> axiomTypeClass) {
+        MutableList<A> axiomsOfType = Lists.mutable.ofInitialCapacity(8);
+        adaptors.forEach((LogicalAxiomAdaptor adaptor) -> {
+            if (axiomTypeClass.isInstance(adaptor)) {
+                axiomsOfType.add((A) adaptor);
             }
-        }
+        });
         return axiomsOfType.toImmutable();
     }
 

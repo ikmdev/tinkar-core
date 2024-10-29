@@ -21,7 +21,12 @@ import com.google.auto.service.AutoService;
 import dev.ikm.tinkar.common.alert.AlertObject;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.service.*;
+import dev.ikm.tinkar.common.service.CachingService;
+import dev.ikm.tinkar.common.service.DefaultDescriptionForNidService;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.PrimitiveDataRepair;
+import dev.ikm.tinkar.common.service.PublicIdService;
+import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.util.broadcast.Broadcaster;
 import dev.ikm.tinkar.common.util.broadcast.SimpleBroadcaster;
 import dev.ikm.tinkar.common.util.broadcast.Subscriber;
@@ -29,8 +34,31 @@ import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.component.Chronology;
 import dev.ikm.tinkar.component.Stamp;
 import dev.ikm.tinkar.component.Version;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.ConceptEntity;
+import dev.ikm.tinkar.entity.ConceptRecord;
+import dev.ikm.tinkar.entity.ConceptRecordBuilder;
+import dev.ikm.tinkar.entity.ConceptVersionRecord;
+import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityDataRepair;
+import dev.ikm.tinkar.entity.EntityMergeServiceFinder;
+import dev.ikm.tinkar.entity.EntityRecordFactory;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityVersion;
+import dev.ikm.tinkar.entity.PatternEntity;
+import dev.ikm.tinkar.entity.PatternEntityVersion;
+import dev.ikm.tinkar.entity.PatternRecord;
+import dev.ikm.tinkar.entity.PatternRecordBuilder;
+import dev.ikm.tinkar.entity.PatternVersionRecord;
+import dev.ikm.tinkar.entity.RecordListBuilder;
+import dev.ikm.tinkar.entity.SemanticEntity;
+import dev.ikm.tinkar.entity.SemanticEntityVersion;
+import dev.ikm.tinkar.entity.SemanticRecord;
+import dev.ikm.tinkar.entity.SemanticRecordBuilder;
+import dev.ikm.tinkar.entity.SemanticVersionRecord;
+import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.entity.transaction.Transaction;
+import dev.ikm.tinkar.provider.search.TypeAheadSearch;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -42,6 +70,7 @@ import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
@@ -63,6 +92,8 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     //Multi<Entity<? extends EntityVersion>> chronologyBroadcaster = BroadcastProcessor.create().toHotStream();
     //  <T extends Entity<? extends EntityVersion>>
     final Broadcaster<Integer> processor;
+
+    private boolean loadPhase = false;
 
     /**
      * TODO elegant shutdown of entityStream and others
@@ -496,5 +527,26 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         }
         ConceptRecordBuilder builder = conceptOneRecord.with().versions(versionList).additionalUuidLongs(additionalUuidLongs);
         return new FutureTask<>(() -> builder.build());
+    }
+
+    @Override
+    public boolean isLoadPhase() {
+        return loadPhase;
+    }
+
+    @Override
+    public void beginLoadPhase() {
+        loadPhase = true;
+    }
+
+    @Override
+    public void endLoadPhase() {
+        loadPhase = false;
+        // Now we build the AnalyzingSuggester Index
+        try {
+            TypeAheadSearch.get().buildSuggester();
+        } catch (IOException e) {
+            LOG.error("Encountered exception {}", e.getMessage());
+        }
     }
 }

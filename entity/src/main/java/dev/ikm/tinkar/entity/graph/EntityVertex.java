@@ -89,6 +89,12 @@ public class EntityVertex implements Vertex, VertexId {
         return newVertex;
     }
 
+    public EntityVertex copyWithNewIndex(int newIndex) {
+        EntityVertex  newVertex = new EntityVertex(this);
+        newVertex.vertexIndex = newIndex;
+        return newVertex;
+    }
+
     public static EntityVertex make(Vertex vertex) {
         EntityVertex entityVertex = new EntityVertex();
         entityVertex.fill(vertex);
