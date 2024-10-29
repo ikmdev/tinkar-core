@@ -33,7 +33,11 @@ import dev.ikm.tinkar.terms.EntityFacade;
 import org.eclipse.collections.api.list.ImmutableList;
 
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
@@ -249,4 +253,10 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
     int[] semanticNidsForComponentOfPattern(int componentNid, int patternNid);
 
     void notifyRefreshRequired(Transaction transaction);
+
+    boolean isLoadPhase();
+
+    void endLoadPhase();
+
+    void beginLoadPhase();
 }

@@ -45,7 +45,9 @@ import java.util.UUID;
 import static java.io.StreamTokenizer.*;
 
 public class SctOwlUtilities {
+
     private static final Logger LOG = LoggerFactory.getLogger(SctOwlUtilities.class);
+  
     public static final String TRANSITIVEOBJECTPROPERTY = "transitiveobjectproperty";
     public static final String PREFIX = "prefix";
     public static final String ONTOLOGY = "ontology";
@@ -84,7 +86,7 @@ public class SctOwlUtilities {
 
 
         String originalExpression = owlClassExpressionsToProcess + " " + owlPropertyExpressionsToProcess;
-
+        
         final LogicalExpressionBuilder leb = new LogicalExpressionBuilder();
 
 

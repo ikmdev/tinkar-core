@@ -6835,6 +6835,9 @@ public class TinkarTerm {
     public static final EntityProxy.Concept TINKAR_MODEL_CONCEPT =
             EntityProxy.Concept.make("Tinkar Model concept (SOLOR)", UUID.fromString("bc59d656-83d3-47d8-9507-0e656ea95463"));
 
+	public static final EntityProxy.Concept CONCEPT_MODEL_DATA_ATTRIBUTE = 
+			EntityProxy.Concept.make("Concept model data attribute (SOLOR)", UUID.fromString("e418d7a7-2760-3746-ba2e-253b5e383147"));
+
     /**
      * ConceptProxy for: "Tinkar root concept".
      */

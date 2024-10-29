@@ -19,7 +19,14 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.ConceptEntity;
+import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityCountSummary;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityVersion;
+import dev.ikm.tinkar.entity.PatternEntity;
+import dev.ikm.tinkar.entity.SemanticEntity;
+import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.transform.TinkarSchemaToEntityTransformer;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import org.slf4j.Logger;
@@ -77,6 +84,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         updateMessage("Importing Protobuf Data...");
 
         // Process Protobuf Entry
+        EntityService.get().beginLoadPhase();
         try (ZipInputStream zis = new ZipInputStream(new FileInputStream(importFile))) {
             // Consumer to be run for each transformed Entity
             Consumer<Entity<? extends  EntityVersion>> entityConsumer = entity -> {
@@ -112,6 +120,11 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             updateTitle("Import Protobuf Data from " + importFile.getName() + " with error(s)");
             throw new RuntimeException(e);
         } finally {
+            try {
+                EntityService.get().endLoadPhase();
+            } catch (Exception e) {
+                LOG.error("Encountered exception {}", e.getMessage());
+            }
             updateMessage("In " + durationString());
             updateProgress(1,1);
         }

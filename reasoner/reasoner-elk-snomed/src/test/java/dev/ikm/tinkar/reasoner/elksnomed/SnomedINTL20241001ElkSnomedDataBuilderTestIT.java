@@ -13,20 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module dev.ikm.tinkar.provider.search {
-    requires org.slf4j;
-    requires transitive dev.ikm.tinkar.entity;
-    requires dev.ikm.jpms.eclipse.collections.api;
-    requires org.apache.lucene.queryparser;
-    requires org.apache.lucene.queries;
-    requires org.apache.lucene.highlighter;
-    requires org.apache.lucene.core;
-    requires static transitive dev.ikm.jpms.auto.service;
-    requires dev.ikm.tinkar.coordinate;
-    requires dev.ikm.jpms.eclipse.collections;
-    requires org.apache.lucene.suggest;
-    requires dev.ikm.tinkar.common;
-    requires dev.ikm.tinkar.terms;
+package dev.ikm.tinkar.reasoner.elksnomed;
 
-    exports dev.ikm.tinkar.provider.search;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class SnomedINTL20241001ElkSnomedDataBuilderTestIT extends SnomedINTL20241001ElkSnomedTestBase {
+
+	@SuppressWarnings("unused")
+	private static final Logger LOG = LoggerFactory.getLogger(SnomedINTL20241001ElkSnomedDataBuilderTestIT.class);
+
+	@Test
+	public void statedPattern() throws Exception {
+		super.statedPattern();
+	}
+
+	@Test
+	public void count() throws Exception {
+		super.count();
+	}
+
+	@Test
+	public void build() throws Exception {
+		super.build();
+	}
 }

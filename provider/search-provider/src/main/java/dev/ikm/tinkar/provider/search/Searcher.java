@@ -130,7 +130,7 @@ public class Searcher {
      *
      * @return  NavigationCalculator
      */
-    private static NavigationCalculator defaultNavigationCalculator() {
+    static NavigationCalculator defaultNavigationCalculator() {
         StampCoordinateRecord stampCoordinateRecord = Coordinates.Stamp.DevelopmentLatestActiveOnly();
         LanguageCoordinateRecord languageCoordinateRecord = Coordinates.Language.UsEnglishRegularName();
         NavigationCoordinateRecord navigationCoordinateRecord = Coordinates.Navigation.inferred().toNavigationCoordinateRecord();

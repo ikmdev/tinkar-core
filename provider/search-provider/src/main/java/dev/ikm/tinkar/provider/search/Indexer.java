@@ -15,8 +15,8 @@
  */
 package dev.ikm.tinkar.provider.search;
 
-import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import org.apache.lucene.analysis.Analyzer;
@@ -29,10 +29,7 @@ import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
@@ -71,14 +68,15 @@ public class Indexer {
         //Create the indexer
         IndexWriterConfig config = new IndexWriterConfig(analyzer());
         config.setCommitOnClose(true);
-        IndexWriter indexWriter = new IndexWriter(indexDirectory(), config);
-        return indexWriter;
+        return new IndexWriter(indexDirectory(), config);
     }
 
     public static Analyzer analyzer() {
         return analyzer;
     }
-
+    public static IndexWriter indexWriter() {
+        return indexWriter;
+    }
     public static Directory indexDirectory() {
         return indexDirectory;
     }
@@ -101,9 +99,9 @@ public class Indexer {
     public void commit() throws IOException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Committing lucene index");
-        this.indexWriter.commit();
+        indexWriter.commit();
         stopwatch.stop();
-        LOG.info("Committed lucene index in: " + stopwatch.durationString());
+        LOG.info("Committed lucene index in: {}", stopwatch.durationString());
     }
 
     public void close() throws IOException {
@@ -111,6 +109,7 @@ public class Indexer {
         LOG.info("Closing lucene index");
         Indexer.indexReader.close();
         Indexer.indexWriter.close();
+        TypeAheadSearch.get().close();
         stopwatch.stop();
         LOG.info("Closed lucene index in: " + stopwatch.durationString());
     }
@@ -169,7 +168,10 @@ public class Indexer {
                 }
             }
             try {
-                long addSequence = this.indexWriter.addDocument(document);
+                long addSequence = indexWriter.addDocument(document);
+                if (!EntityService.get().isLoadPhase()) {
+                    TypeAheadSearch.get().buildSuggester();
+                }
             } catch (IOException e) {
                 LOG.error("Exception writing: " + object);
             }
