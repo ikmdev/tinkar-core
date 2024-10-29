@@ -85,6 +85,7 @@
         <lucene-queryparser.version>9.7.0</lucene-queryparser.version>
         <lucene-queries.version>9.7.0</lucene-queries.version>
         <lucene-highlighter.version>9.7.0</lucene-highlighter.version>
+        <lucene-suggest.version>9.7.0</lucene-suggest.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <slf4j.version>2.0.13</slf4j.version>
         <log4j.version>3.0.0-alpha1</log4j.version>
@@ -398,6 +399,11 @@
                 <version>${lucene-core.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-suggest</artifactId>
+                <version>${lucene-suggest.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     <!-- Cross project dependencies -->
