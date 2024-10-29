@@ -592,7 +592,7 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
                                 case 0 -> {
                                     // If there are no property sets, we can start the merge with a new property set...
                                     int propertySetIndexInComparison =
-                                            this.comparisonVisitData().necessarySetIndexes().nextSetBit(0);
+                                            this.comparisonVisitData().propertySetIndexes().nextSetBit(0);
                                     EntityVertex propertySetVertexInComparison = this.comparisonTree.vertex(propertySetIndexInComparison);
                                     addFragment(propertySetVertexInComparison, this.comparisonTree, treeBuilder.getRoot().vertexIndex(), treeBuilder);
                                 }

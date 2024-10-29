@@ -21,6 +21,8 @@ import dev.ikm.tinkar.terms.TinkarTerm;
 
 /**
  * Provide a standard means to connect implementation classes and terminology.
+ *
+ * TODO: Not sure if this class is redundant given the sealed logical axiom interfaces. Consider consolidation.
  */
 public enum LogicalAxiomSemantic {
     AND(TinkarTerm.AND, LogicalAxiom.Atom.Connective.And.class),

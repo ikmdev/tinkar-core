@@ -154,8 +154,8 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
         }
 
         @Override
-        public ImmutableSet<Atom> elements() {
-            return children(Atom.class);
+        public ImmutableSet<Atom.Connective> elements() {
+            return children(Atom.Connective.class);
         }
     }
 
@@ -167,8 +167,8 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
         }
 
         @Override
-        public ImmutableSet<Atom> elements() {
-            return children(Atom.class);
+        public ImmutableSet<Atom.Connective> elements() {
+            return children(Atom.Connective.class);
         }
     }
 
@@ -180,8 +180,8 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
         }
 
         @Override
-        public ImmutableSet<Atom> elements() {
-            return children(Atom.class);
+        public ImmutableSet<Atom.Connective> elements() {
+            return children(Atom.Connective.class);
         }
     }
 
@@ -193,8 +193,8 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
         }
 
         @Override
-        public ImmutableSet<Atom> elements() {
-            return children(Atom.class);
+        public ImmutableSet<Atom.Connective> elements() {
+            return children(Atom.Connective.class);
         }
     }
 

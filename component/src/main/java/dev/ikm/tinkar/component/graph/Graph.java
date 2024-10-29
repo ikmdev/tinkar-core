@@ -23,6 +23,10 @@ import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
 
 import java.util.UUID;
 
+/**
+ * TODO: Consider removing and only going with entities...
+ * @param <V>
+ */
 public interface Graph<V extends Vertex> {
 
     <A> A adapt(GraphAdaptorFactory<A> adaptorFactory);

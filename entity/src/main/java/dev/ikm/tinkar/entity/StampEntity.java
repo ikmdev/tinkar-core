@@ -22,6 +22,7 @@ import dev.ikm.tinkar.component.Stamp;
 import dev.ikm.tinkar.component.Version;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.State;
+import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 
@@ -36,7 +37,10 @@ public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
 
     @Override
     default long time() {
-        return lastVersion().time();
+        if (lastVersion() != null) {
+            return lastVersion().time();
+        }
+        return Long.MIN_VALUE;
     }
 
     @Override
@@ -58,15 +62,24 @@ public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
     StampEntity stamp();
 
     default int pathNid() {
-        return lastVersion().pathNid();
+        if (lastVersion() != null) {
+            return lastVersion().pathNid();
+        }
+        return TinkarTerm.CANCELED_STATE.nid();
     }
 
     default int moduleNid() {
-        return lastVersion().moduleNid();
+        if (lastVersion() != null) {
+            return lastVersion().moduleNid();
+        }
+        return TinkarTerm.CANCELED_STATE.nid();
     }
 
     default int authorNid() {
-        return lastVersion().authorNid();
+        if (lastVersion() != null) {
+            return lastVersion().authorNid();
+        }
+        return TinkarTerm.CANCELED_STATE.nid();
     }
 
     default StampEntityVersion lastVersion() {
@@ -109,7 +122,10 @@ public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
     }
 
     default int stateNid() {
-        return lastVersion().stateNid();
+        if (lastVersion() != null) {
+            return lastVersion().stateNid();
+        }
+        return TinkarTerm.CANCELED_STATE.nid();
     }
 
     default String describe() {

@@ -23,7 +23,10 @@ import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResults;
 import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResultsLeafHash;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import io.activej.bytebuf.ByteBuf;
+import org.eclipse.collections.api.block.function.primitive.IntFunction;
+import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.map.primitive.ImmutableIntIntMap;
@@ -33,12 +36,17 @@ import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
-
+    private static final Logger LOG = LoggerFactory.getLogger(DiTreeEntity.class);
 
     public DiTreeEntity(EntityVertex root,
                         ImmutableList<EntityVertex> vertexMap,
@@ -246,6 +254,8 @@ public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
             MutableIntObjectMap<ImmutableIntList> intermediateSuccessorMap = IntObjectMaps.mutable.ofInitialCapacity(successorMap.size());
             successorMap.forEachKeyValue((vertex, successorList) -> intermediateSuccessorMap.put(vertex, successorList.toImmutable()));
 
+
+
             return new DiTreeEntity(root,
                     vertexMap.toImmutable(),
                     intermediateSuccessorMap.toImmutable(),
@@ -358,6 +368,90 @@ public class DiTreeEntity extends DiTreeAbstract<EntityVertex> {
                     addEdge(successorIndex, oldVertex.vertexIndex);
                 });
             }
+        }
+
+        private void removeSuccessor(int vertexIndexToRemove, int predecessorIndex) {
+            if (this.successorMap.containsKey(predecessorIndex)) {
+                if (this.successorMap.get(predecessorIndex).size() == 1 &&
+                    this.successorMap.get(predecessorIndex).contains(vertexIndexToRemove)) {
+                    this.successorMap.removeKey(predecessorIndex);
+                } else {
+                    this.successorMap.get(predecessorIndex).remove(vertexIndexToRemove);
+                }
+            }
+        }
+
+        public void removeNotRecursive(EntityVertex vertexToRemove) {
+            removeNotRecursive(vertexToRemove.vertexIndex);
+        }
+
+        public void removeNotRecursive(int vertexIndexToRemove) {
+            if (vertexIndexToRemove == root.vertexIndex) {
+                throw new UnsupportedOperationException("Cannot remove the root: " + vertexIndexToRemove);
+            }
+            if (this.predecessorMap.containsKey(vertexIndexToRemove)) {
+                removeSuccessor(vertexIndexToRemove, this.predecessorMap.get(vertexIndexToRemove));
+            }
+            this.vertexMap.set(vertexIndexToRemove, null);
+            this.successorMap.removeKey(vertexIndexToRemove);
+            this.predecessorMap.remove(vertexIndexToRemove);
+        }
+
+        /**
+         * Remove null elements from the array and sequentially fill those elements with the next
+         * non-null element and renumber existing references to reflect this change.
+         */
+        public void compress() {
+
+            MutableIntIntMap oldNewIndexMap = IntIntMaps.mutable.ofInitialCapacity(this.vertexMap.size());
+            IntStream.range(0, this.vertexMap.size()).forEach(i -> oldNewIndexMap.put(i, -1));
+            AtomicInteger nextIndex = new AtomicInteger(0);
+            oldNewIndexMap.updateValues((left, right) -> {
+                if (vertexMap.get(left) == null) {
+                    return -1;
+                } else {
+                    return nextIndex.getAndIncrement();
+                }
+            });
+            LOG.debug("Old to new index map: {}", oldNewIndexMap);
+            //Adaptors need to be adjusted...
+            int newTreeSize = nextIndex.get();
+            final MutableList<EntityVertex> compressedVertexMap = Lists.mutable.ofInitialCapacity(newTreeSize);
+            final MutableIntObjectMap<MutableIntList> compressedSuccessorMap = IntObjectMaps.mutable.ofInitialCapacity(newTreeSize);
+            final MutableIntIntMap compressedPredecessorMap = IntIntMaps.mutable.ofInitialCapacity(newTreeSize);
+
+            for (int i = 0; i < this.vertexMap.size(); i++) {
+                if (oldNewIndexMap.get(i) != -1) {
+                    int newIndex = oldNewIndexMap.get(i);
+                    compressedVertexMap.add(newIndex, this.vertexMap.get(i).copyWithNewIndex(newIndex));
+                    if (successorMap.containsKey(i)) {
+                        MutableIntList compressedSuccessorList =  IntLists.mutable.empty();
+                        this.successorMap.get(i).forEach(oldSuccessorIndex -> {
+                            if (oldSuccessorIndex != -1) {
+                                compressedSuccessorList.add(oldNewIndexMap.get(oldSuccessorIndex));
+                            }
+                        });
+                        compressedSuccessorMap.put(oldNewIndexMap.get(i), compressedSuccessorList);
+                    }
+                    if (this.predecessorMap.containsKey(i) && oldNewIndexMap.get(i) != -1) {
+                        compressedPredecessorMap.put(oldNewIndexMap.get(i), oldNewIndexMap.get(this.predecessorMap.get(i)));
+                    }
+                }
+            }
+            LOG.debug("Compressed vertex map: {}", compressedVertexMap);
+            LOG.debug("Compressed successor map: {}", compressedSuccessorMap);
+            LOG.debug("Compressed predecessor map: {}", compressedPredecessorMap);
+            this.vertexMap.clear();
+            this.vertexMap.addAll(compressedVertexMap);
+            this.successorMap.clear();
+            this.successorMap.putAll(compressedSuccessorMap);
+            this.predecessorMap.clear();
+            this.predecessorMap.putAll(compressedPredecessorMap);
+            this.root = compressedVertexMap.get(root.vertexIndex);
+            LOG.debug("New tree: {}", this);
+            LOG.debug("New tree size: {}", this.vertexMap.size());
+            LOG.debug("New tree root: {}", this.root);
+            LOG.debug("New tree successor map: {}", this.successorMap);
         }
 
         @Override

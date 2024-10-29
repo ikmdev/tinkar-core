@@ -139,6 +139,7 @@ public class SctOwlUtilities {
             switch (tokenizer.sval.toLowerCase()) {
 
                 case SUBOBJECTPROPERTYOF: // TODO: Temporary addition, pending discussion with Michael Lawley
+                case SUBANNOTATIONPROPERTYOF: // TODO: Temporary addition, pending discussion with Michael Lawley
                 case SUBDATAPROPERTYOF:
                 case REFLEXIVEOBJECTPROPERTY:
                 case TRANSITIVEOBJECTPROPERTY:
@@ -165,7 +166,9 @@ public class SctOwlUtilities {
         if (tokenizer.ttype != TT_EOF) {
             throwIllegalStateException("Expecting TT_WORD. ", tokenizer, originalExpression);
         }
+
         LogicalExpression expression = leb.build();
+
         return expression;
     }
 
@@ -310,6 +313,7 @@ public class SctOwlUtilities {
                     switch (tokenizer.sval.toLowerCase()) {
                         case SUBDATAPROPERTYOF:
                         case SUBOBJECTPROPERTYOF:
+                        case SUBANNOTATIONPROPERTYOF:
                             // SubObjectPropertyOf(ObjectPropertyChain(:127489000 :738774007) :127489000)
                             // SubPropertyOf( ObjectPropertyChain( :locatedIn :partOf ) :locatedIn )
                             // If x is located in y and y is part of z then x is located in z, for example a disease located in a part is located in the whole.

@@ -17,6 +17,8 @@ package dev.ikm.tinkar.entity.graph.isomorphic;
 
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.component.graph.DiTree;
+import dev.ikm.tinkar.entity.graph.DiTreeAbstract;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiomSemantic;
@@ -48,7 +50,7 @@ public class SetElementKey
      * @param vertexIndex the vertex id
      * @param expression the expression
      */
-    public SetElementKey(int vertexIndex, DiTreeEntity expression) {
+    public SetElementKey(int vertexIndex, DiTreeAbstract<EntityVertex> expression) {
         this.vertexIndex = vertexIndex;
         this.enclosingSetType = getEnclosingSetType(vertexIndex, expression);
         MutableIntSet conceptsReferencedAtNodeOrBelowCollector = IntSets.mutable.empty();
@@ -67,7 +69,7 @@ public class SetElementKey
      * @return the logical axiom semantic representing the enclosing set type
      * @throws IllegalStateException if the vertex is not contained within a known set type
      */
-    private LogicalAxiomSemantic getEnclosingSetType(int vertexIndex, DiTreeEntity expression) {
+    private LogicalAxiomSemantic getEnclosingSetType(int vertexIndex, DiTreeAbstract<EntityVertex> expression) {
         if (expression.hasPredecessorVertexWithMeaning(vertexIndex, TinkarTerm.NECESSARY_SET.nid())) {
             return LogicalAxiomSemantic.NECESSARY_SET;
         }
@@ -95,7 +97,7 @@ public class SetElementKey
      * @param vertexIndex the vertex index
      * @param tree the tree
      */
-    private void processVertexAndChildren(int vertexIndex, DiTreeEntity tree, MutableIntSet conceptsReferencedAtNodeOrBelowCollector) {
+    private void processVertexAndChildren(int vertexIndex, DiTreeAbstract<EntityVertex> tree, MutableIntSet conceptsReferencedAtNodeOrBelowCollector) {
         final EntityVertex vertex = tree.vertex(vertexIndex);
 
         tree.vertex(vertexIndex).addConceptsReferencedByVertex(conceptsReferencedAtNodeOrBelowCollector);

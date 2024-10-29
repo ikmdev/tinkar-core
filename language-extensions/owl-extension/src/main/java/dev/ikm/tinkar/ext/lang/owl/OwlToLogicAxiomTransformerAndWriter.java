@@ -37,6 +37,8 @@ import dev.ikm.tinkar.entity.SemanticVersionRecord;
 import dev.ikm.tinkar.entity.SemanticVersionRecordBuilder;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom;
+import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiomSemantic;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResults;
 import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResultsLeafHash;
@@ -189,6 +191,7 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
                         classBuilder.append(" ").append(tempExpression);
                     }
                 } else {
+
                     classBuilder.append(" ").append(owlExpression);
                 }
 
@@ -200,6 +203,13 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
             LogicalExpression expression = SctOwlUtilities.sctToLogicalExpression(
                     owlClassExpressionsToProcess,
                     owlPropertyExpressionsToProcess);
+
+            if (expression.nodesOfType(LogicalAxiom.LogicalSet.NecessarySet.class).size() > 1) {
+                // Need to merge necessary sets.
+                LOG.warn("\n\n{} has expression with multiple necessary sets: {}\n\n", PrimitiveData.text(conceptNid), expression);
+                DiTreeEntity.Builder diTreeEntityBuilder = DiTreeEntity.builder();
+
+            }
 
             addLogicalExpression(transaction, conceptNid,
                     expression,
