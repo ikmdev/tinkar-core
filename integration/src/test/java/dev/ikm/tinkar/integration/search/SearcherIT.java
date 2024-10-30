@@ -18,7 +18,6 @@ package dev.ikm.tinkar.integration.search;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.io.FileUtil;
-import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.composer.Composer;
 import dev.ikm.tinkar.composer.Session;
 import dev.ikm.tinkar.composer.assembler.PatternAssembler;
@@ -27,14 +26,13 @@ import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
-import dev.ikm.tinkar.coordinate.stamp.calculator.LatestVersionSearchResult;
-import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.PatternEntityVersion;
 import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.provider.search.Searcher;
 import dev.ikm.tinkar.provider.search.TypeAheadSearch;
+import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -50,7 +48,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -88,9 +86,9 @@ public class SearcherIT {
 
     @AfterAll
     public void afterAll() {
+        TestHelper.stopDatabase();
         // delete temporary database
         FileUtil.recursiveDelete(DATASTORE_ROOT);
-        TestHelper.stopDatabase();
     }
 
     @Test
@@ -103,7 +101,7 @@ public class SearcherIT {
         var stampCoordinate = Coordinates.Stamp.DevelopmentLatestActiveOnly();
         var searchResults = stampCoordinate.stampCalculator().search("user", 100);
 
-        assertTrue(searchResults.size() > 0, "Missing search results");
+        assertTrue(searchResults.notEmpty(), "Missing search results");
     }
 
     @Test
@@ -168,9 +166,13 @@ public class SearcherIT {
 
     @Test
     public void typeAheadIndexerTest() throws Exception {
-        List<String> suggestions = TypeAheadSearch.get().suggest("r");
-        assertEquals(40, suggestions.size());
+        var stampCoordinate = Coordinates.Stamp.DevelopmentLatestActiveOnly();
+        var languageCoordinate = Coordinates.Language.UsEnglishRegularName();
+        var navigationCoordinate = Coordinates.Navigation.inferred().toNavigationCoordinateRecord();
+        var navigationCalculator = NavigationCalculatorWithCache.getCalculator(stampCoordinate, Lists.immutable.of(languageCoordinate), navigationCoordinate);
 
+        List<ConceptFacade> concepts = TypeAheadSearch.get().typeAheadSuggestions(navigationCalculator, "r", 50);
+        assertEquals(40, concepts.size());
         // Add a new semantic
         MutableList<String> list = Lists.mutable.empty();
         list.add("rAdded");
@@ -181,70 +183,23 @@ public class SearcherIT {
                 .fieldValues((MutableList<Object> values) -> values
                         .withAll(list))
         );
-        suggestions = TypeAheadSearch.get().suggest("r");
-        assertEquals(41, suggestions.size());
+        concepts = TypeAheadSearch.get().typeAheadSuggestions("r", 50);
+        assertEquals(41, concepts.size());
+        AtomicInteger commentConcepts = new AtomicInteger();
+        concepts.forEach(conceptFacade -> {
+            if (PublicId.equals(conceptFacade.publicId(), TinkarTerm.COMMENT)) {
+                commentConcepts.getAndIncrement();
+            }
+        });
+        assertTrue(concepts.contains(TinkarTerm.COMMENT));
+        assertEquals(1, commentConcepts.get());
     }
 
     @Test
-    public void typeAheadIndexerTestSearchAndDescendants1() throws Exception {
-        // f7495b58-6630-3499-a44e-2052b5fcf06c - Author ID
-        // Model concept: [7bbd4210-381c-11e7-9598-0800200c9a66]
-
-        Stopwatch stopwatch = new Stopwatch();
-        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("f7495b58-6630-3499-a44e-2052b5fcf06c")).get().publicId();
-
-        String userInput = "u";
-        List<LatestVersionSearchResult> allSearchResults = TypeAheadSearch.get().typeAheadSuggestions(userInput, ancestorId);
-
-        stopwatch.stop();
+    public void typeAheadMaxResultsTest() throws Exception {
+        List<ConceptFacade> concepts = TypeAheadSearch.get().typeAheadSuggestions("r", 20);
+        assertEquals(20, concepts.size());
     }
-
-    @Test
-    public void typeAheadIndexerTestSearchAndDescendants2() throws Exception {
-        // f7495b58-6630-3499-a44e-2052b5fcf06c - Author ID
-        // Model concept: [7bbd4210-381c-11e7-9598-0800200c9a66]
-
-        long startTime = System.nanoTime();
-
-        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("7bbd4210-381c-11e7-9598-0800200c9a66")).get().publicId();
-
-
-        String userInput = "a";
-        List<LatestVersionSearchResult> allSearchResults = TypeAheadSearch.get().typeAheadSuggestions(userInput, ancestorId);
-
-        long endTime = System.nanoTime();
-        long duration = endTime - startTime;
-    }
-
-    @Test
-    public void typeAheadIndexerTestSearchAndDescendantsFuzzy() throws Exception {
-        // f7495b58-6630-3499-a44e-2052b5fcf06c - Author ID
-        // Model concept: [7bbd4210-381c-11e7-9598-0800200c9a66]
-        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("f7495b58-6630-3499-a44e-2052b5fcf06c")).get().publicId();
-
-        Stopwatch stopwatch = new Stopwatch();
-
-        String userInput = "u";
-        List<LatestVersionSearchResult> allSearchResults = TypeAheadSearch.get().typeAheadFuzzySuggestions(userInput, ancestorId);
-
-        stopwatch.stop();
-    }
-
-    @Test
-    public void typeAheadIndexerTestSearchAndDescendantsFuzzy2() throws Exception {
-        // f7495b58-6630-3499-a44e-2052b5fcf06c - Author ID
-        // Model concept: [7bbd4210-381c-11e7-9598-0800200c9a66]
-        PublicId ancestorId = EntityService.get().getEntity(UUID.fromString("7bbd4210-381c-11e7-9598-0800200c9a66")).get().publicId();
-
-        long startTime = System.nanoTime();
-
-        String userInput = "a";
-        List<LatestVersionSearchResult> allSearchResults = TypeAheadSearch.get().typeAheadFuzzySuggestions(userInput, ancestorId);
-
-        long endTime = System.nanoTime();
-        long duration = endTime - startTime;
-    }
-
 
     @Test
     public void searchConceptsNonExistentMembershipSemantic() throws Exception {
