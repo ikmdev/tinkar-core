@@ -86,9 +86,9 @@ public class SearcherIT {
 
     @AfterAll
     public void afterAll() {
+        TestHelper.stopDatabase();
         // delete temporary database
         FileUtil.recursiveDelete(DATASTORE_ROOT);
-        TestHelper.stopDatabase();
     }
 
     @Test
