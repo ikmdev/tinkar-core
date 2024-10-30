@@ -16,26 +16,11 @@
 
 package dev.ikm.tinkar.provider.search;
 
-import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
-import dev.ikm.tinkar.coordinate.Coordinates;
+import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.LatestVersionSearchResult;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityService;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.StoredField;
+import dev.ikm.tinkar.terms.ConceptFacade;
 import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.highlight.Formatter;
-import org.apache.lucene.search.highlight.Highlighter;
-import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
-import org.apache.lucene.search.highlight.QueryScorer;
-import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
 import org.apache.lucene.search.spell.LuceneDictionary;
 import org.apache.lucene.search.suggest.Lookup;
 import org.apache.lucene.search.suggest.analyzing.AnalyzingSuggester;
@@ -46,17 +31,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class TypeAheadSearch {
     private static final Logger LOG = LoggerFactory.getLogger(TypeAheadSearch.class);
-    public static final String NID = "nid";
-
-    public static final String TEXT_FIELD_NAME = "text";
+    private static final String TEXT_FIELD_NAME = "text";
 
     private AnalyzingSuggester suggester;
     private FuzzySuggester fuzzySuggester;
@@ -78,110 +59,70 @@ public class TypeAheadSearch {
         LuceneDictionary dict = new LuceneDictionary(reader, TEXT_FIELD_NAME);
         suggester = new AnalyzingSuggester(Indexer.indexDirectory(), "suggest", Indexer.analyzer());
         suggester.build(dict);
-        LOG.info("TypeAheadSearch index build duration: {}", stopwatch.durationString());
+        LOG.debug("TypeAheadSearch index build duration: {}", stopwatch.durationString());
     }
 
-    public void close() throws IOException {
+    public void close() {
         if (reader != null) {
-            reader.close();
-        }
-    }
-
-    public List<String> suggest(String term) throws IOException {
-        List<Lookup.LookupResult> lookup = suggester.lookup(term, false, 100);
-        return lookup.stream().map(a -> a.key.toString()).collect(Collectors.toList());
-    }
-
-    public void buildFuzzySuggester() throws IOException {
-        Stopwatch stopwatch = new Stopwatch();
-        reader = DirectoryReader.open(Indexer.indexWriter());
-        LuceneDictionary dict = new LuceneDictionary(reader, TEXT_FIELD_NAME);
-        fuzzySuggester = new FuzzySuggester(Indexer.indexDirectory(), "suggest", Indexer.analyzer());
-        fuzzySuggester.build(dict);
-        LOG.info("TypeAheadSearch fuzzy index build duration: {}", stopwatch.durationString());
-    }
-
-    public List<String> fuzzySuggest(String term) throws IOException {
-        List<Lookup.LookupResult> lookup = fuzzySuggester.lookup(term, false, 100);
-        return lookup.stream().map(a -> a.key.toString()).collect(Collectors.toList());
-    }
-
-    public void buildSearchIndex(String term) throws IOException, ParseException, InvalidTokenOffsetsException {
-        DirectoryReader reader = DirectoryReader.open(Indexer.indexWriter());
-        LuceneDictionary dict = new LuceneDictionary(reader, TEXT_FIELD_NAME);
-        IndexSearcher indexSearcher = new IndexSearcher(reader);
-        QueryParser parser = new QueryParser("text", Indexer.analyzer());
-        Query query = parser.parse(term);
-        Formatter formatter = new SimpleHTMLFormatter();
-        QueryScorer scorer = new QueryScorer(query);
-        Highlighter highlighter = new Highlighter(formatter, scorer);
-        ScoreDoc[] hits = indexSearcher.search(query, 100).scoreDocs;
-        System.out.println(hits);
-        PrimitiveDataSearchResult[] results = new PrimitiveDataSearchResult[hits.length];
-
-        for (int i = 0; i < hits.length; i++) {
-            Document hitDoc = indexSearcher.doc(hits[i].doc);
-            StoredField nidField = (StoredField) hitDoc.getField(Indexer.NID);
-            StoredField patternNidField = (StoredField) hitDoc.getField(Indexer.PATTERN_NID);
-            StoredField rcNidField = (StoredField) hitDoc.getField(Indexer.RC_NID);
-            StoredField fieldIndexField = (StoredField) hitDoc.getField(Indexer.FIELD_INDEX);
-            StoredField textField = (StoredField) hitDoc.getField(Indexer.TEXT_FIELD_NAME);
-            String highlightedString = highlighter.getBestFragment(Indexer.analyzer(), Indexer.TEXT_FIELD_NAME, textField.stringValue());
-
-            results[i] = new PrimitiveDataSearchResult(nidField.numericValue().intValue(), rcNidField.numericValue().intValue(),
-                    patternNidField.numericValue().intValue(), fieldIndexField.numericValue().intValue(), hits[i].score, highlightedString);
-            System.out.println(results[i]);
-        }
-        System.out.println(results);
-        System.out.println(Arrays.toString(results));
-    }
-
-    public List<String> buildSuggestionsFromDescendants(PublicId ancestorId, List<String> suggestions){
-        int[] descendantList = Searcher.defaultNavigationCalculator().descendentsOf(EntityService.get().nidForPublicId(ancestorId)).toArray();
-        List<Entity<?>> entityList = new ArrayList<>();
-        for (int descendantNid : descendantList) {
-            EntityService.get().getEntity(descendantNid).ifPresent(entityList::add);
-        }
-        Iterator<String> iterator = suggestions.iterator();
-        while(iterator.hasNext()){
-            String suggestion = iterator.next();
-            boolean found = entityList.stream().anyMatch(entity -> entity.entityToString().contains(suggestion));
-            if(!found) {
-                iterator.remove();
+            try {
+                reader.close();
+            } catch (IOException e) {
+                LOG.error("Caught Exception closing reader {}", e.getMessage());
             }
         }
-
-        return suggestions;
     }
 
-    public List<LatestVersionSearchResult> typeAheadSuggestions(String userInput, PublicId ancestorId) throws Exception {
-        List<String> suggestions = suggest(userInput);
-        buildSuggestionsFromDescendants(ancestorId, suggestions);
-
-        List<LatestVersionSearchResult> allSearchResults = new ArrayList<>();
-
-        var stampCoordinate = Coordinates.Stamp.DevelopmentLatestActiveOnly();
-        for(String s : suggestions){
-            ImmutableList<LatestVersionSearchResult> searchResults = stampCoordinate.stampCalculator().searchDescendants(ancestorId, s, 100);
-            allSearchResults.addAll((Collection<? extends LatestVersionSearchResult>) searchResults);
-        }
-
-        return allSearchResults;
+    private List<String> suggest(String term, int maxResults) throws IOException {
+        List<Lookup.LookupResult> lookup = suggester.lookup(term, false, maxResults);
+        return lookup.stream().map(a -> a.key.toString()).collect(Collectors.toList());
     }
 
-    public List<LatestVersionSearchResult> typeAheadFuzzySuggestions(String userInput, PublicId ancestorId) throws Exception {
-        buildFuzzySuggester();
-        List<String> suggestions = fuzzySuggest(userInput);
-        buildSuggestionsFromDescendants(ancestorId, suggestions);
+    /**
+     * Returns List of ConceptFacades with Semantics matching the userInput using the TypeAhead search function
+     * using the default NavigationCalculator from {@link Searcher#defaultNavigationCalculator()}
+     *
+     * @param   userInput String userInput
+     * @param   maxResults int maxResults
+     * @return  List of ConceptFacades
+     */
+    public List<ConceptFacade> typeAheadSuggestions(String userInput, int maxResults) {
+        return typeAheadSuggestions(Searcher.defaultNavigationCalculator(), userInput, maxResults);
+    }
 
-        List<LatestVersionSearchResult> allSearchResults = new ArrayList<>();
+    /**
+     * Returns List of ConceptFacades with Semantics matching the userInput using the TypeAhead search function
+     *
+     * @param   navCalc NavigationCalculator navCalc
+     * @param   userInput String userInput
+     * @param   maxResults int maxResults
+     * @return  List of ConceptFacades
+     */
+    public List<ConceptFacade> typeAheadSuggestions(NavigationCalculator navCalc, String userInput, int maxResults) {
 
-        var stampCoordinate = Coordinates.Stamp.DevelopmentLatestActiveOnly();
-        for(String s : suggestions){
-            ImmutableList<LatestVersionSearchResult> searchResults = stampCoordinate.stampCalculator().searchDescendants(ancestorId, s, 100);
-            allSearchResults.addAll((Collection<? extends LatestVersionSearchResult>) searchResults);
+        List<String> suggestions = null;
+        try {
+            suggestions = suggest(userInput, maxResults);
+        } catch (IOException e) {
+            LOG.error("Encountered exception {}", e.getMessage());
+            return Collections.emptyList();
         }
 
-        return allSearchResults;
+        List<ConceptFacade> conceptList = new ArrayList<>();
+        suggestions.forEach((suggestion) -> {
+            try {
+                ImmutableList<LatestVersionSearchResult> results = navCalc.search(suggestion, 1);
+                results.forEach(latestVersionSearchResult -> {
+                    latestVersionSearchResult.latestVersion().ifPresent(semanticEntityVersion -> {
+                        if (semanticEntityVersion.referencedComponent() instanceof ConceptFacade conceptFacade) {
+                            conceptList.add(conceptFacade);
+                        }
+                    });
+                });
+            } catch (Exception e) {
+                LOG.error("Encountered exception {}", e.getMessage());
+            }
+
+        });
+        return conceptList;
     }
 }
