@@ -91,7 +91,7 @@ public class Searcher {
     public PrimitiveDataSearchResult[] search(String queryString, int maxResultSize) throws
             ParseException, IOException, InvalidTokenOffsetsException {
         boolean refreshOutcome = searcherManager.maybeRefresh();
-        LOG.info("Index Reader refresh outcome = " + refreshOutcome);
+        LOG.debug("Index Reader refresh outcome = {}", refreshOutcome);
         IndexSearcher indexSearcher = searcherManager.acquire();
         try {
             if (queryString != null & !queryString.isEmpty()) {
