@@ -90,20 +90,18 @@
 						<configuration>
 							<skip>${skipITs}</skip>
 							<artifactItems>
+<!--								<artifactItem>-->
+<!--									<groupId>${reasoner-test-data.groupid}</groupId>-->
+<!--									<artifactId>-->
+<!--										tinkar-test-data-snomed-us-20230901</artifactId>-->
+<!--									<version>2024.09.20</version>-->
+<!--									<type>zip</type>-->
+<!--								</artifactItem>-->
 								<artifactItem>
 									<groupId>${reasoner-test-data.groupid}</groupId>
 									<artifactId>
-										tinkar-test-data-snomed-us-20230901</artifactId>
-									<version>2024.09.20</version>
-<!--	<artifactId>tinkar-test-data-snomed-intl-20241001-kec</artifactId>-->
-<!--	<version>2024.10.01</version>-->
-									<type>zip</type>
-								</artifactItem>
-								<artifactItem>
-									<groupId>${reasoner-test-data.groupid}</groupId>
-									<artifactId>
-										tinkar-test-data-snomed-intl-20241001</artifactId>
-									<version>2024.10.18</version>
+										tinkar-test-data-build-snomed-intl-20241001</artifactId>
+									<version>2024.10.28</version>
 									<type>zip</type>
 								</artifactItem>
 							</artifactItems>
