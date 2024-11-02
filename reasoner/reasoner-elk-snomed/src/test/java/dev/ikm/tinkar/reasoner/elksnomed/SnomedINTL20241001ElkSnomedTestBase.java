@@ -31,13 +31,13 @@ public class SnomedINTL20241001ElkSnomedTestBase extends ElkSnomedDataBuilderTes
 	private static final Logger LOG = LoggerFactory.getLogger(SnomedINTL20241001ElkSnomedTestBase.class);
 
 	static {
-		stated_count = 394202;
-		active_count = 366841;
-		inactive_count = 27361;
-		test_case = "snomed-us-20241001";
+		stated_count = 396532;
+		active_count = 369152;
+		inactive_count = 27380;
+		test_case = "snomed-intl-20241001";
 	}
 
-	public static final String db = "SnomedCT_INTL_20241001_SpinedArray-20241018";
+	public static final String db = "snomed-sa";
 
 	protected String getDir() {
 		return "target/data/snomed-test-data-" + getEditionDir() + "-" + getVersion();

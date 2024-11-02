@@ -105,8 +105,8 @@ public class SnomedINTL20241001ElkSnomedCompareTestIT extends SnomedINTL20241001
 		}
 		assertEquals(0, missing_role_cnt);
 		assertEquals(0, missing_concept_cnt);
+		assertEquals(0, compare_role_cnt);
 		// TODO should be 0 when data issues are fixed
-		assertEquals(5, compare_role_cnt);
 		assertEquals(7, compare_concept_cnt);
 	}
 
