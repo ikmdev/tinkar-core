@@ -6821,7 +6821,7 @@ public class TinkarTerm {
             EntityProxy.Concept.make("Reference Range Minimum", UUID.fromString("37c35a88-9e27-42ca-b626-186773c4b612"));
 
     public static final EntityProxy.Concept STATED_DEFINITION =
-            EntityProxy.Concept.make("Stated Definition", UUID.fromString("28608bd3-ac73-4fe8-a5f0-1efe0d6650a8"), UUID.fromString("3b0dbd3b-2e53-3a30-8576-6c7fa7773060"));
+            EntityProxy.Concept.make("Stated Definition", UUID.fromString("28608bd3-ac73-4fe8-a5f0-1efe0d6650a8"));
 
     public static final EntityProxy.Concept VALUE_CONSTRAINT =
             EntityProxy.Concept.make("Value Constraint", UUID.fromString("8c55fb86-92d8-42a9-ad70-1e23abbf7eec"));
@@ -6837,6 +6837,16 @@ public class TinkarTerm {
 
 	public static final EntityProxy.Concept CONCEPT_MODEL_DATA_ATTRIBUTE = 
 			EntityProxy.Concept.make("Concept model data attribute (SOLOR)", UUID.fromString("e418d7a7-2760-3746-ba2e-253b5e383147"));
+
+    public static final EntityProxy.Concept ANNOTATION_PROPERTY_SET =
+            EntityProxy.Concept.make("Annotation property set (SOLOR)", UUID.fromString("cb9e33de-f82c-495d-89fa-69afecbcd47d"));
+
+    public static final EntityProxy.Concept DATA_PROPERTY_SET =
+            EntityProxy.Concept.make("Data property set (SOLOR)", UUID.fromString("6b8ed642-de72-4aee-953d-42e5db92c0ab"));
+
+    public static final EntityProxy.Concept PROPERTY_SEQUENCE_IMPLICATION =
+            EntityProxy.Concept.make("Property sequence implication (SOLOR)", UUID.fromString("9a47a5db-42a6-49ee-9083-54bc305a9456"));
+
 
     /**
      * ConceptProxy for: "Tinkar root concept".
