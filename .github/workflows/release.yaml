@@ -23,7 +23,7 @@ jobs:
           exit 1
 
       - name: Release IKMDEV Code
-        uses: ikmdev/maven-release-action@main
+        uses: ikmdev/maven-release-action@v1
         with:
           ikmdevops_pat: ${{secrets.IKMDEVOPS_PAT_TOKEN}}
           github_token: ${{secrets.GITHUB_TOKEN}}
