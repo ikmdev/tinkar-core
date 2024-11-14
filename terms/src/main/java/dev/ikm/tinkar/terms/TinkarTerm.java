@@ -6800,7 +6800,7 @@ public class TinkarTerm {
             EntityProxy.Concept.make("Example UCUM Units", UUID.fromString("80cd4978-314d-46e3-bc13-9980280ae955"));
 
     public static final EntityProxy.Concept INFERRED_DEFINITION =
-            EntityProxy.Concept.make("Inferred Definition", UUID.fromString("b1abf4dc-9838-4b46-ac55-10c4f92ba10b"), UUID.fromString("1290e6ba-48d0-31d2-8d62-e133373c63f5"));
+            EntityProxy.Concept.make("Inferred Definition", UUID.fromString("b1abf4dc-9838-4b46-ac55-10c4f92ba10b"));
 
     public static final EntityProxy.Concept IDENTIFIER_VALUE =
             EntityProxy.Concept.make("Identifier Value", UUID.fromString("b32dd26b-c3fc-487e-987e-16ace71a0d0f"));
