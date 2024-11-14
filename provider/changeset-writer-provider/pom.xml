@@ -20,7 +20,6 @@
         <dependency>
             <groupId>dev.ikm.tinkar</groupId>
             <artifactId>entity-provider</artifactId>
-            <version>${project.parent.version}</version>
         </dependency>
     </dependencies>
 </project>
