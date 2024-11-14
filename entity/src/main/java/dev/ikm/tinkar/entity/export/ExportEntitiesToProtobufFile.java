@@ -120,7 +120,14 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             // Write Manifest File
             ZipEntry manifestEntry = new ZipEntry("META-INF/MANIFEST.MF");
             zos.putNextEntry(manifestEntry);
-            zos.write(generateManifestContent(entityCountSummary).getBytes(StandardCharsets.UTF_8));
+            zos.write(generateManifestContent(entityCountSummary.getTotalCount(),
+                    entityCountSummary.conceptsCount(),
+                    entityCountSummary.semanticsCount(),
+                    entityCountSummary.patternsCount(),
+                    entityCountSummary.stampsCount(),
+                    moduleList,
+                    authorList
+                ).getBytes(StandardCharsets.UTF_8));
             zos.closeEntry();
             zos.flush();
 
@@ -137,24 +144,29 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
         return entityCountSummary;
     }
 
-    private String generateManifestContent(EntityCountSummary summary){
+    public static String generateManifestContent(long entityCount,
+                                           long conceptsCount,
+                                           long semanticsCount,
+                                           long patternsCount,
+                                           long stampsCount,
+                                           Set<PublicId> moduleList,
+                                           Set<PublicId> authorList){
         StringBuilder manifestContent = new StringBuilder()
                 // TODO: Dynamically populate this user
                 .append("Packager-Name: ").append(TinkarTerm.KOMET_USER.description()).append("\n")
                 .append("Package-Date: ").append(LocalDateTime.now(Clock.systemUTC())).append("\n")
-                .append("Total-Count: ").append(summary.getTotalCount()).append("\n")
-                .append("Concept-Count: ").append(summary.conceptsCount()).append("\n")
-                .append("Semantic-Count: ").append(summary.semanticsCount()).append("\n")
-                .append("Pattern-Count: ").append(summary.patternsCount()).append("\n")
-                .append("Stamp-Count: ").append(summary.stampsCount()).append("\n")
+                .append("Total-Count: ").append(entityCount).append("\n")
+                .append("Concept-Count: ").append(conceptsCount).append("\n")
+                .append("Semantic-Count: ").append(semanticsCount).append("\n")
+                .append("Pattern-Count: ").append(patternsCount).append("\n")
+                .append("Stamp-Count: ").append(stampsCount).append("\n")
                 .append(idsToManifestEntry(moduleList))
                 .append(idsToManifestEntry(authorList))
                 .append("\n"); // Final new line necessary per Manifest spec
-
         return manifestContent.toString();
     }
 
-    private String idsToManifestEntry(Collection<PublicId> publicIds) {
+    public static String idsToManifestEntry(Collection<PublicId> publicIds) {
         StringBuilder manifestEntry = new StringBuilder();
         publicIds.forEach((publicId) -> {
             // Convert PublicId to Manifest Entry Name

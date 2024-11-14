@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.provider.websocket.client;
 
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
 import dev.ikm.tinkar.common.service.PrimitiveDataService;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
@@ -205,7 +206,7 @@ public class DataProviderWebsocketClient
     }
 
     @Override
-    public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject) {
+    public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject, DataActivity activity) {
         throw new UnsupportedOperationException();
     }
 

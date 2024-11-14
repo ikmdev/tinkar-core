@@ -16,11 +16,7 @@
 package dev.ikm.tinkar.provider.mvstore;
 
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.service.NidGenerator;
-import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
-import dev.ikm.tinkar.common.service.PrimitiveDataService;
-import dev.ikm.tinkar.common.service.ServiceKeys;
-import dev.ikm.tinkar.common.service.ServiceProperties;
+import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.entity.Entity;
@@ -210,7 +206,7 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     }
 
     @Override
-    public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject) {
+    public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject, DataActivity dataActivity) {
         if (!nidToPatternNidMap.containsKey(nid)) {
             this.nidToPatternNidMap.put(nid, patternNid);
             if (patternNid != Integer.MAX_VALUE) {
