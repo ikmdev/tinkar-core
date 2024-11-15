@@ -18,6 +18,7 @@ package dev.ikm.tinkar.entity;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.util.broadcast.Broadcaster;
 import dev.ikm.tinkar.component.Chronology;
@@ -186,16 +187,41 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      * is notified that the entity may have changed by publishing the
      * nid of the entity.
      *
+     * Defaults to an activity of DataActivity.SYNCHRONIZABLE_EDIT.
+     *
      * @param entity
      */
-    void putEntity(Entity entity);
+    default void putEntity(Entity entity) {
+        putEntity(entity, DataActivity.SYNCHRONIZABLE_EDIT);
+    }
+
+    /**
+     * Inserts or updates a given entity and associates it with a specified data activity.
+     * Each time an entity is put via this method, each Flow.Subscriber is notified that the
+     * entity may have changed by publishing the nid of the entity.
+     * TODO: convert to the event bus instead of the Flow.Subscriber
+     * @param entity The entity to be put into the system.
+     * @param activity The data activity associated with the entity.
+     */
+    void putEntity(Entity entity, DataActivity activity);
 
     /**
      * Each time an entity is put via this method, Flow.Subscriber
      * is not notified that the entity may have changed.
      * @param entity
      */
-    void putEntityQuietly(Entity entity);
+    void putEntityQuietly(Entity entity, DataActivity activity);
+    /**
+     * Each time an entity is put via this method, Flow.Subscriber
+     * is not notified that the entity may have changed.
+     *
+     * Defaults to an activity of DataActivity.SYNCHRONIZABLE_EDIT.
+     *
+     * @param entity
+     */
+    default void putEntityQuietly(Entity entity) {
+        putEntityQuietly(entity, DataActivity.SYNCHRONIZABLE_EDIT);
+    }
 
     /**
      * @param stampEntity

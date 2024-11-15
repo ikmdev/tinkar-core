@@ -21,12 +21,7 @@ import com.google.auto.service.AutoService;
 import dev.ikm.tinkar.common.alert.AlertObject;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.service.CachingService;
-import dev.ikm.tinkar.common.service.DefaultDescriptionForNidService;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.PrimitiveDataRepair;
-import dev.ikm.tinkar.common.service.PublicIdService;
-import dev.ikm.tinkar.common.service.TinkExecutor;
+import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.util.broadcast.Broadcaster;
 import dev.ikm.tinkar.common.util.broadcast.SimpleBroadcaster;
 import dev.ikm.tinkar.common.util.broadcast.Subscriber;
@@ -103,7 +98,10 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         this.processor = new SimpleBroadcaster<>();
         // Ensure that the non-existent stamp is always available.
         // Write is idempotent, so writing each time should not cause any problems.
-        this.putEntity(StampRecord.nonExistentStamp());
+        // But we don't want to prevent starting the entity service if this.putEntity
+        // blocks for debugging or other reasons, so putting it in a virtual thread to
+        // allow completion of the constructor.
+        Thread.ofVirtual().start(() -> this.putEntity(StampRecord.nonExistentStamp(), DataActivity.INITIALIZE));
     }
 
     public void addSubscriberWithWeakReference(Subscriber<Integer> subscriber) {
@@ -211,49 +209,53 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     }
 
     @Override
-    public void putEntity(Entity entity) {
-        invalidateCaches(entity);
-        if (entity instanceof StampEntity stampEntity) {
-            STAMP_CACHE.put(stampEntity.nid(), stampEntity);
-            if (stampEntity.lastVersion().stateNid() == State.CANCELED.nid()) {
-                PrimitiveData.get().addCanceledStampNid(stampEntity.nid());
-            }
-        }
-        byte[] mergedEntityBytes;
-        if (entity instanceof SemanticEntity semanticEntity) {
-            mergedEntityBytes = PrimitiveData.get().merge(entity.nid(),
-                    semanticEntity.patternNid(),
-                    semanticEntity.referencedComponentNid(),
-                    entity.getBytes(), entity);
-        } else {
-            mergedEntityBytes = PrimitiveData.get().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, entity.getBytes(), entity);
-        }
-        ENTITY_CACHE.put(entity.nid(),  EntityRecordFactory.make(mergedEntityBytes));
-        processor.dispatch(entity.nid());
-        if (entity instanceof SemanticEntity semanticEntity) {
-            processor.dispatch(semanticEntity.referencedComponentNid());
-        }
+    public void putEntity(Entity entity, DataActivity activity) {
+        putEntity(entity, activity, true);
     }
 
     @Override
-    public void putEntityQuietly(Entity entity) {
+    public void putEntityQuietly(Entity entity, DataActivity activity) {
+        putEntity(entity, activity, false);
+    }
+
+    private void putEntity(Entity entity, DataActivity activity, boolean dispatch) {
         invalidateCaches(entity);
-        if (entity instanceof StampEntity stampEntity) {
-            STAMP_CACHE.put(stampEntity.nid(), stampEntity);
-            if (stampEntity.lastVersion().stateNid() == State.CANCELED.nid()) {
-                PrimitiveData.get().addCanceledStampNid(stampEntity.nid());
+        byte[] mergedEntityBytes = switch (entity) {
+            case ConceptEntity conceptEntity -> {
+                STRING_CACHE.put(conceptEntity.nid(), conceptEntity.asUuidList().toString());
+                yield PrimitiveData.get().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
+                        entity.getBytes(), entity, activity);
+            }
+            case PatternEntity patternEntity -> {
+                STRING_CACHE.put(patternEntity.nid(), patternEntity.asUuidList().toString());
+                yield PrimitiveData.get().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
+                        entity.getBytes(), entity, activity);
+            }
+            case SemanticEntity semanticEntity -> {
+                STRING_CACHE.put(semanticEntity.nid(), semanticEntity.asUuidList().toString());
+                yield PrimitiveData.get().merge(entity.nid(),
+                        semanticEntity.patternNid(),
+                        semanticEntity.referencedComponentNid(),
+                        entity.getBytes(), entity, activity);
+            }
+            case StampEntity stampEntity -> {
+                STAMP_CACHE.put(stampEntity.nid(), stampEntity);
+                if (stampEntity.lastVersion().stateNid() == State.CANCELED.nid()) {
+                    PrimitiveData.get().addCanceledStampNid(stampEntity.nid());
+                }
+                yield PrimitiveData.get().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
+                        entity.getBytes(), entity, activity);
+            }
+            default -> throw new IllegalStateException("Unexpected value: " + entity);
+        };
+
+        ENTITY_CACHE.put(entity.nid(),  EntityRecordFactory.make(mergedEntityBytes));
+        if (dispatch) {
+            processor.dispatch(entity.nid());
+            if (entity instanceof SemanticEntity semanticEntity) {
+                processor.dispatch(semanticEntity.referencedComponentNid());
             }
         }
-        byte[] mergedEntityBytes;
-        if (entity instanceof SemanticEntity semanticEntity) {
-            mergedEntityBytes = PrimitiveData.get().merge(entity.nid(),
-                    semanticEntity.patternNid(),
-                    semanticEntity.referencedComponentNid(),
-                    entity.getBytes(), entity);
-        } else {
-            mergedEntityBytes = PrimitiveData.get().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE, entity.getBytes(), entity);
-        }
-        ENTITY_CACHE.put(entity.nid(),  EntityRecordFactory.make(mergedEntityBytes));
     }
 
     @Override

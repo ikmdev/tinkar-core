@@ -22,5 +22,6 @@
         <module>entity-provider</module>
         <module>executor-provider</module>
         <module>search-provider</module>
+        <module>changeset-writer-provider</module>
     </modules>
 </project>
