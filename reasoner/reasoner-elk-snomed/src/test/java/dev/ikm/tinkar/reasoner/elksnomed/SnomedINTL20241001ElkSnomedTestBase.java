@@ -31,8 +31,8 @@ public class SnomedINTL20241001ElkSnomedTestBase extends ElkSnomedDataBuilderTes
 	private static final Logger LOG = LoggerFactory.getLogger(SnomedINTL20241001ElkSnomedTestBase.class);
 
 	static {
-		stated_count = 396532;
-		active_count = 369152;
+		stated_count = 396531;
+		active_count = 369151;
 		inactive_count = 27380;
 		test_case = "snomed-intl-20241001";
 	}

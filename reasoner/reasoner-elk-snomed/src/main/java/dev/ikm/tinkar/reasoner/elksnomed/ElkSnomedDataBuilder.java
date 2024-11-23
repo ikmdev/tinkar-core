@@ -142,6 +142,8 @@ public class ElkSnomedDataBuilder {
 	}
 
 	private void processDefinition(DiTreeEntity definition, int conceptNid) throws IllegalStateException {
+//		if (ElkSnomedData.getNid(1217386004) == conceptNid)
+//			LOG.info("Def: " + 1217386004 + "\n" + definition);
 		EntityVertex root = definition.root();
 		for (EntityVertex child : definition.successors(root)) {
 			switch (getMeaning(child)) {
@@ -309,7 +311,6 @@ public class ElkSnomedDataBuilder {
 	}
 
 	private ConcreteRole makeConcreteRole(EntityVertex node, DiTreeEntity definition) {
-//		int role_operator_nid = getNid(node, TinkarTerm.CONCRETE_DOMAIN_OPERATOR);
 		int role_type_nid = getNid(node, TinkarTerm.FEATURE_TYPE);
 		Object value = node.propertyFast(TinkarTerm.LITERAL_VALUE);
 		ValueType value_type = switch (value) {
@@ -320,6 +321,7 @@ public class ElkSnomedDataBuilder {
 		case String x -> ValueType.String;
 		default -> throw new UnsupportedOperationException("Value type: " + value.getClass().getName());
 		};
+//		int role_operator_nid = getNid(node, TinkarTerm.CONCRETE_DOMAIN_OPERATOR);
 //		LOG.info("[" + PrimitiveData.text(role_operator_nid) + "] " + PrimitiveData.text(role_type_nid) + ": " + value
 //				+ " [" + value_type + "]");
 		ConcreteRoleType role_type = data.getOrCreateConcreteRoleType(role_type_nid);

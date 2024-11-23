@@ -47,13 +47,13 @@ public class SnomedINTL20241001ElkSnomedClassifierTestIT extends SnomedINTL20241
 	@Test
 	public void supercs() throws Exception {
 		ArrayList<String> lines = runSnomedReasoner();
-		assertEquals(634059, lines.size());
+		assertEquals(601696, lines.size());
 	}
 
 	@Test
 	public void supercsService() throws Exception {
 		ArrayList<String> lines = runSnomedReasonerService();
-		assertEquals(634059, lines.size());
+		assertEquals(601696, lines.size());
 	}
 
 	private HashMap<Integer, Long> nid_sctid_map;
@@ -139,11 +139,11 @@ public class SnomedINTL20241001ElkSnomedClassifierTestIT extends SnomedINTL20241
 		LOG.error("Miss cnt: " + miss_cnt);
 		LOG.error("Pharma cnt: " + pharma_miss_cnt);
 		LOG.error("Other cnt: " + other_miss_cnt);
-		assertEquals(282, non_snomed_cnt);
+		assertEquals(281, non_snomed_cnt);
 		// TODO this should be 0 after all the data issues are fixed
-		assertEquals(21065, miss_cnt);
-		assertEquals(20815, pharma_miss_cnt);
-		assertEquals(194, other_miss_cnt);
+		assertEquals(3, miss_cnt);
+		assertEquals(0, pharma_miss_cnt);
+		assertEquals(3, other_miss_cnt);
 	}
 
 }

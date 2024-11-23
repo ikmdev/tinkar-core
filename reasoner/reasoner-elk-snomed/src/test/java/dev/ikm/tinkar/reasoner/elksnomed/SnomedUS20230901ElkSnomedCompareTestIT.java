@@ -23,6 +23,8 @@ import java.nio.file.Files;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -32,7 +34,10 @@ import dev.ikm.elk.snomed.SnomedDescriptions;
 import dev.ikm.elk.snomed.SnomedIds;
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.elk.snomed.model.Concept;
+import dev.ikm.elk.snomed.model.ConcreteRole;
+import dev.ikm.elk.snomed.model.ConcreteRoleType;
 import dev.ikm.elk.snomed.model.Definition;
+import dev.ikm.elk.snomed.model.Role;
 import dev.ikm.elk.snomed.model.RoleType;
 import dev.ikm.elk.snomed.owl.OwlTransformer;
 import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
@@ -49,6 +54,8 @@ public class SnomedUS20230901ElkSnomedCompareTestIT extends SnomedUS20230901ElkS
 		LOG.info("Files exist");
 		LOG.info("\t" + axioms_file);
 		LOG.info("\t" + rels_file);
+		// TODO back this out once Decimal is implemented
+		ConcreteRole.convert_to_float_for_compare = true;
 		ElkSnomedData data = buildSnomedData();
 		{
 			Concept us_con = data.getConcept(ElkSnomedData.getNid(SnomedIds.us_nlm_module));
@@ -64,18 +71,31 @@ public class SnomedUS20230901ElkSnomedCompareTestIT extends SnomedUS20230901ElkS
 			LOG.info(snomedOntology.getFsn(us_con.getId()));
 		}
 		for (RoleType role : snomedOntology.getRoleTypes()) {
+			role.setName(snomedOntology.getFsn(role.getId()));
 			int nid = ElkSnomedData.getNid(role.getId());
 			RoleType data_role = data.getRoleType(nid);
 			if (data_role == null)
 				continue;
 			data_role.setId(role.getId());
+			data_role.setName(role.getName());
+		}
+		for (ConcreteRoleType role : snomedOntology.getConcreteRoleTypes()) {
+			role.setName(snomedOntology.getFsn(role.getId()));
+			int nid = ElkSnomedData.getNid(role.getId());
+			ConcreteRoleType data_role = data.getConcreteRoleType(nid);
+			if (data_role == null)
+				continue;
+			data_role.setId(role.getId());
+			data_role.setName(role.getName());
 		}
 		for (Concept con : snomedOntology.getConcepts()) {
+			con.setName(snomedOntology.getFsn(con.getId()));
 			int nid = ElkSnomedData.getNid(con.getId());
 			Concept data_con = data.getConcept(nid);
 			if (data_con == null)
 				continue;
 			data_con.setId(con.getId());
+			data_con.setName(con.getName());
 		}
 		int missing_role_cnt = 0;
 		int missing_concept_cnt = 0;
@@ -115,7 +135,8 @@ public class SnomedUS20230901ElkSnomedCompareTestIT extends SnomedUS20230901ElkS
 		if (Objects.equals(expect, actual))
 			return true;
 		LOG.error(msg);
-		LOG.error("Expect: " + expect + " Actual: " + actual);
+		LOG.error("\tExpect: " + expect);
+		LOG.error("\tActual: " + actual);
 		return false;
 	}
 
@@ -129,9 +150,9 @@ public class SnomedUS20230901ElkSnomedCompareTestIT extends SnomedUS20230901ElkS
 	}
 
 	public boolean compare(Concept expect, Concept actual, SnomedOntology snomedOntology) {
-		compareDefinitions(expect.getDefinitions(), actual.getDefinitions(), "Definitions ", expect, snomedOntology);
-		compareDefinitions(expect.getGciDefinitions(), actual.getGciDefinitions(), "Gci Definitions ", expect,
-				snomedOntology);
+//		compareDefinitions(expect.getDefinitions(), actual.getDefinitions(), "Definitions ", expect, snomedOntology);
+//		compareDefinitions(expect.getGciDefinitions(), actual.getGciDefinitions(), "Gci Definitions ", expect,
+//				snomedOntology);
 		String con_msg = expect.getId() + " " + snomedOntology.getFsn(expect.getId());
 		return compareEquals(new HashSet<>(expect.getDefinitions()),
 				new HashSet<>(actual.getDefinitions().stream().map(x -> x.copy()).toList()), "Definitions " + con_msg)
@@ -140,17 +161,12 @@ public class SnomedUS20230901ElkSnomedCompareTestIT extends SnomedUS20230901ElkS
 						"Gci Definitions " + con_msg);
 	}
 
-	@Deprecated
-	public boolean compareDefinitions(List<Definition> expect, List<Definition> actual, String msg, Concept con,
-			SnomedOntology snomedOntology) {
-		if (expect.size() != actual.size()) {
-			LOG.error(msg + con.getId() + " " + snomedOntology.getFsn(con.getId()) + "\n" + "Expect " + expect.size()
-					+ " Actual " + actual.size() + "\n"
-					// + nid + " "
-					+ UuidUtil.fromSNOMED("" + con.getId()));
-			return false;
-		}
-		return true;
+	private String toString(Definition def, SnomedOntology snomedOntology) {
+		String str = "";
+		str += def.getDefinitionType() + "\n";
+		str += "Super concepts: " + String.join(", ",
+				def.getSuperConcepts().stream().map(x -> snomedOntology.getFsn(x.getId())).toList());
+		return str;
 	}
 
 }
