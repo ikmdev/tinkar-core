@@ -22,6 +22,7 @@
 
 import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.common.service.LoadDataFromFileController;
+import dev.ikm.tinkar.entity.ChangeSetWriterService;
 import dev.ikm.tinkar.provider.spinedarray.SpinedArrayNewController;
 import dev.ikm.tinkar.provider.spinedarray.SpinedArrayOpenController;
 
@@ -43,5 +44,6 @@ module dev.ikm.tinkar.provider.spinedarray {
             with SpinedArrayOpenController, SpinedArrayNewController;
 
     uses LoadDataFromFileController;
+    uses ChangeSetWriterService;
 
 }

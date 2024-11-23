@@ -373,10 +373,12 @@ public interface PrimitiveDataService {
      * If the specified nid (native identifier -- an int) is not already associated
      * with a value or is associated with null, associates it with the given non-null value.
      * Otherwise, replaces the associated value with the results of a remapping function
-     * (remapping function is provided the provider), or removes if the result is {@code null}.
+     * (the provider provides remapping function), or removes if the result is {@code null}.
      * This method may be of use when combining multiple mapped values for a nid.
      * For example, merging multiple versions of an entity, where each version is represented as a
      * byte[].
+     *
+     * Defaults to an activity of DataActivity.SYNCHRONIZABLE_EDIT.
      *
      * @param nid                    native identifier (an int) with which the resulting value is to be associated
      * @param patternNid
@@ -389,7 +391,30 @@ public interface PrimitiveDataService {
      * @return the new value associated with the specified nid, or null if no
      * value is associated with the nid
      */
-    byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject);
+    default byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject) {
+        return this.merge(nid, patternNid, referencedComponentNid, value, sourceObject, DataActivity.SYNCHRONIZABLE_EDIT);
+    }
+
+    /**
+     * If the specified nid (native identifier -- an int) is not already associated with a value or is associated
+     * with null, associates it with the given non-null value. Otherwise, replaces the associated value with the
+     * results of a remapping function (the provider provides remapping function), or removes if the result is
+     * null. This method may be of use when combining multiple mapped values for a nid. For example, merging multiple
+     * versions of an entity, where each version is represented as a byte[].
+     *
+     * @param nid Native identifier (an int) with which the resulting value is to be associated.
+     * @param patternNid Pattern native identifier.
+     * @param referencedComponentNid If the bytes are for a semantic, the referenced component nid,
+     *                               otherwise Integer.MAX_VALUE.
+     * @param value The non-null value to be merged with the existing value
+     *              associated with the nid or, if no existing value or a null value
+     *              is associated with the nid, to be associated with the nid.
+     * @param sourceObject Object that is the source of the bytes to merge.
+     * @param activity The data activity performed, classifying the type of database (and therefore change set) write.
+     * @return The new value associated with the specified nid, or null if no
+     *         value is associated with the nid.
+     */
+    byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject, DataActivity activity);
 
     PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception;
 

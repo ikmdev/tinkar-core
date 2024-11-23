@@ -102,7 +102,8 @@ public record StampRecord(
         StringBuilder sb = new StringBuilder();
         sb.append("StampRecord{");
         sb.append("<").append(nid);
-        sb.append("> [").append(publicId().asUuidList());
+        sb.append("> ").append(publicId().asUuidList());
+        sb.append(" versions=[");
         for (StampEntityVersion version : versions.toReversed()) {
             sb.append(version.describe()).append(", ");
         }

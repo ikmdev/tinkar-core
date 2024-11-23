@@ -90,6 +90,10 @@ public class EntityToTinkarSchemaTransformer {
         return INSTANCE;
     }
 
+    public static EntityToTinkarSchemaTransformer getIndependentInstance() {
+        return new EntityToTinkarSchemaTransformer();
+    }
+
     /**
      * This method takes in an entity and is matched on its entity type based on the type of message. It is then transformed into a PB message.
      * @param entity to be transformed to PB message

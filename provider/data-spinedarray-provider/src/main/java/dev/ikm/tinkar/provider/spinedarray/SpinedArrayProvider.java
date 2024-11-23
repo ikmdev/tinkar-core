@@ -21,26 +21,12 @@ import dev.ikm.tinkar.collection.SpinedIntIntMap;
 import dev.ikm.tinkar.collection.SpinedIntLongArrayMap;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.service.NidGenerator;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.PrimitiveDataRepair;
-import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
-import dev.ikm.tinkar.common.service.PrimitiveDataService;
-import dev.ikm.tinkar.common.service.ServiceKeys;
-import dev.ikm.tinkar.common.service.ServiceProperties;
-import dev.ikm.tinkar.common.service.TinkExecutor;
+import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
-import dev.ikm.tinkar.entity.ConceptEntity;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.entity.PatternEntity;
-import dev.ikm.tinkar.entity.SemanticEntity;
-import dev.ikm.tinkar.entity.StampEntity;
-import dev.ikm.tinkar.entity.StampRecord;
-import dev.ikm.tinkar.entity.StampVersionRecord;
+import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.provider.search.Indexer;
 import dev.ikm.tinkar.provider.search.Searcher;
@@ -71,6 +57,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ServiceLoader;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -115,6 +102,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     final Indexer indexer;
     final Searcher searcher;
     final String name;
+    final ImmutableList<ChangeSetWriterService> changeSetWriterServices;
 
     public SpinedArrayProvider() throws IOException {
         Stopwatch stopwatch = new Stopwatch();
@@ -154,7 +142,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             try {
                 this.entityToBytesMap.forEachParallel(uuidNidCollector);
                 this.uuidsLoadedLatch.countDown();
-                listAndCancelUncommittedStamps();
             } catch (ExecutionException | InterruptedException e) {
                 LOG.error(e.getLocalizedMessage(), e);
             } finally {
@@ -162,7 +149,16 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
                 LOG.info("Finished UUID strategy 2 in: " + uuidNidMapFromEntitiesStopwatch.durationString());
                 LOG.info(uuidNidCollector.report());
             }
+            Thread.ofVirtual().start(this::listAndCancelUncommittedStamps);
         });
+
+        ServiceLoader<ChangeSetWriterService> changeSetServiceLoader = PluggableService.load(ChangeSetWriterService.class);
+
+        MutableList<ChangeSetWriterService> changeSetWriters = Lists.mutable.empty();
+        changeSetServiceLoader.stream().forEach(changeSetProvider -> {
+            changeSetWriters.add(changeSetProvider.get());
+        });
+        this.changeSetWriterServices = changeSetWriters.toImmutable();
 
         stopwatch.stop();
         LOG.info("Opened SpinedArrayProvider in: " + stopwatch.durationString());
@@ -185,9 +181,9 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         for (int stampNid : stampNidArray) {
             StampRecord stamp = Entity.getStamp(stampNid);
             if (stamp.lastVersion() == null) {
-                LOG.debug("Null last version for stamp with nid: " + stampNid);
+                LOG.info("Null last version for stamp with nid: " + stampNid);
             } else {
-                LOG.debug("Stamp: " + stamp);
+                LOG.info("Stamp: " + stamp);
                 if (stamp.time() == Long.MAX_VALUE && Transaction.forStamp(stamp).isEmpty()) {
                     // Uncommitted stamp found outside a transaction on restart. Set to canceled.
                     cancelUncommittedStamp(stampNid, stamp);
@@ -219,11 +215,13 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     public void close() {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Closing SpinedArrayProvider");
+        this.changeSetWriterServices.forEach(changeSetWriter -> changeSetWriter.shutdown());
         try {
             save();
             listAndCancelUncommittedStamps();
             entityToBytesMap.close();
             SpinedArrayProvider.singleton = null;
+            this.changeSetWriterServices.forEach(ChangeSetWriterService::shutdown);
             this.indexer.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -344,7 +342,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     }
 
     @Override
-    public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject) {
+    public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject, DataActivity activity) {
         if (nid == Integer.MIN_VALUE) {
             LOG.error("NID should not be Integer.MIN_VALUE");
             throw new IllegalStateException("NID should not be Integer.MIN_VALUE");
@@ -368,7 +366,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             }
         }
         byte[] mergedBytes = this.entityToBytesMap.accumulateAndGet(nid, value, PrimitiveDataService::merge);
-        writeSequence.increment();
+        this.writeSequence.increment();
+        this.changeSetWriterServices.forEach(writerService -> writerService.writeToChangeSet((Entity) sourceObject, activity));
         this.indexer.index(sourceObject);
         return mergedBytes;
     }
@@ -528,13 +527,13 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     public void mergeThenErase(int nidToErase, int nidToMergeInto) {
 
 
-        byte[] mergedBytes = merge(PrimitiveData.get().getBytes(nidToMergeInto), PrimitiveData.get().getBytes(nidToErase));
+        byte[] mergedBytes = merge(PrimitiveData.get().getBytes(nidToMergeInto), PrimitiveData.get().getBytes(nidToErase), DataActivity.DATA_REPAIR);
         erase(nidToErase);
         put(nidToMergeInto, mergedBytes);
         EntityService.get().invalidateCaches(nidToErase, nidToMergeInto);
     }
 
-    byte[] merge(byte[] bytesToMergeInto, byte[] bytesToBeErased) {
+    byte[] merge(byte[] bytesToMergeInto, byte[] bytesToBeErased, DataActivity activity) {
         if (bytesToBeErased == null) {
             return bytesToMergeInto;
         }

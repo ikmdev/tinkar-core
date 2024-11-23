@@ -103,6 +103,12 @@ public class DateTimeUtil {
         return TIME_SIMPLE.format(ZonedDateTime.now());
     }
 
+    public static String nowInISO() {
+        return DateTimeFormatter.ISO_DATE_TIME.format(ZonedDateTime.now());
+    }
+    public static String nowWithZoneCompact() {
+        return COMPRESSED_DATE_TIME.format(ZonedDateTime.now());
+    }
     public static String nowWithZone() {
         return textFormatWithZone(ZonedDateTime.now());
     }
@@ -171,7 +177,7 @@ public class DateTimeUtil {
         if (instant.equals(PrimitiveData.PREMUNDANE_INSTANT)) {
             return PREMUNDANE;
         }
-        return formatter.format(instant);
+        return formatter.format(instant.atOffset(ZoneOffset.UTC));
     }
     public static String format(Instant instant) {
         return format(instant, FORMATTER);

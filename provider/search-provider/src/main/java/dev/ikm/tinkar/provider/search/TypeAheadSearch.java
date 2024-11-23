@@ -43,6 +43,9 @@ public class TypeAheadSearch {
     private FuzzySuggester fuzzySuggester;
     private DirectoryReader reader;
 
+    // TODO -- remove this flag once we add the necessary komet makes use of the bulk upload methods in EntityService
+    private boolean enabled = false;
+
     private static TypeAheadSearch typeAheadSearch = null;
     public static synchronized TypeAheadSearch get() {
         if (typeAheadSearch == null) {
@@ -51,9 +54,16 @@ public class TypeAheadSearch {
         return typeAheadSearch;
     }
 
-    private TypeAheadSearch() {}
+    private TypeAheadSearch() {
+        if (!enabled) {
+            LOG.warn("Type Ahead Suggesting is disabled.");
+        }
+    }
 
     public void buildSuggester() throws IOException {
+        if (!enabled) {
+            return;
+        }
         Stopwatch stopwatch = new Stopwatch();
         reader = DirectoryReader.open(Indexer.indexWriter());
         LuceneDictionary dict = new LuceneDictionary(reader, TEXT_FIELD_NAME);
