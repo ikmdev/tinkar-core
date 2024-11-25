@@ -16,12 +16,12 @@
 package dev.ikm.tinkar.reasoner.elksnomed;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.nio.file.Files;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
@@ -34,15 +34,13 @@ import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.elk.snomed.model.ConcreteRole;
 import dev.ikm.elk.snomed.model.ConcreteRoleType;
-import dev.ikm.elk.snomed.model.Definition;
 import dev.ikm.elk.snomed.model.RoleType;
 import dev.ikm.elk.snomed.owl.OwlTransformer;
 import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
-import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 
-public class SnomedINTL20241001ElkSnomedCompareTestIT extends SnomedINTL20241001ElkSnomedTestBase {
+public abstract class ElkSnomedCompareTestBase extends ElkSnomedTestBase {
 
-	private static final Logger LOG = LoggerFactory.getLogger(SnomedINTL20241001ElkSnomedCompareTestIT.class);
+	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedCompareTestBase.class);
 
 	@Test
 	public void compare() throws Exception {
@@ -56,7 +54,11 @@ public class SnomedINTL20241001ElkSnomedCompareTestIT extends SnomedINTL20241001
 		ElkSnomedData data = buildSnomedData();
 		{
 			Concept us_con = data.getConcept(ElkSnomedData.getNid(SnomedIds.us_nlm_module));
-			assertNull(us_con);
+			if (getEdition().startsWith("US")) {
+				assertNotNull(us_con);
+			} else {
+				assertNull(us_con);
+			}
 		}
 		SnomedOwlOntology ontology = SnomedOwlOntology.createOntology();
 		ontology.loadOntology(axioms_file);
@@ -64,7 +66,11 @@ public class SnomedINTL20241001ElkSnomedCompareTestIT extends SnomedINTL20241001
 		snomedOntology.setDescriptions(SnomedDescriptions.init(descriptions_file));
 		{
 			Concept us_con = snomedOntology.getConcept(SnomedIds.us_nlm_module);
-			assertNull(us_con);
+			if (getEdition().startsWith("US")) {
+				assertNotNull(us_con);
+			} else {
+				assertNull(us_con);
+			}
 		}
 		for (RoleType role : snomedOntology.getRoleTypes()) {
 			role.setName(snomedOntology.getFsn(role.getId()));
@@ -94,8 +100,10 @@ public class SnomedINTL20241001ElkSnomedCompareTestIT extends SnomedINTL20241001
 			data_con.setName(con.getName());
 		}
 		int missing_role_cnt = 0;
+		int missing_concrete_role_cnt = 0;
 		int missing_concept_cnt = 0;
 		int compare_role_cnt = 0;
+		int compare_concrete_role_cnt = 0;
 		int compare_concept_cnt = 0;
 		for (RoleType role : snomedOntology.getRoleTypes()) {
 			int nid = ElkSnomedData.getNid(role.getId());
@@ -107,6 +115,17 @@ public class SnomedINTL20241001ElkSnomedCompareTestIT extends SnomedINTL20241001
 			}
 			if (!compare(role, data_role, snomedOntology))
 				compare_role_cnt++;
+		}
+		for (ConcreteRoleType role : snomedOntology.getConcreteRoleTypes()) {
+			int nid = ElkSnomedData.getNid(role.getId());
+			ConcreteRoleType data_role = data.getConcreteRoleType(nid);
+			if (data_role == null) {
+				LOG.error("No role: " + role);
+				missing_concrete_role_cnt++;
+				continue;
+			}
+			if (!compare(role, data_role, snomedOntology))
+				compare_concrete_role_cnt++;
 		}
 		for (Concept con : snomedOntology.getConcepts()) {
 			int nid = ElkSnomedData.getNid(con.getId());
@@ -121,8 +140,10 @@ public class SnomedINTL20241001ElkSnomedCompareTestIT extends SnomedINTL20241001
 				compare_concept_cnt++;
 		}
 		assertEquals(0, missing_role_cnt);
+		assertEquals(0, missing_concrete_role_cnt);
 		assertEquals(0, missing_concept_cnt);
 		assertEquals(0, compare_role_cnt);
+		assertEquals(0, compare_concrete_role_cnt);
 		// TODO should be 1 when data issues are fixed - SNOMED root
 		assertEquals(2, compare_concept_cnt);
 	}
@@ -143,6 +164,12 @@ public class SnomedINTL20241001ElkSnomedCompareTestIT extends SnomedINTL20241001
 				& compareEquals(expect.isTransitive(), actual.isTransitive(), "Transitive " + con_msg)
 				& compareEquals(expect.getChained(), actual.getChained(), "Chained " + con_msg)
 				& compareEquals(expect.isReflexive(), actual.isReflexive(), "Reflexive " + con_msg);
+	}
+
+	public boolean compare(ConcreteRoleType expect, ConcreteRoleType actual, SnomedOntology snomedOntology) {
+		String con_msg = expect.getId() + " " + snomedOntology.getFsn(expect.getId());
+		return compareEquals(new HashSet<>(expect.getSuperConcreteRoleTypes()),
+				new HashSet<>(actual.getSuperConcreteRoleTypes()), "Super Concrete Role Types " + con_msg);
 	}
 
 	public boolean compare(Concept expect, Concept actual, SnomedOntology snomedOntology) {

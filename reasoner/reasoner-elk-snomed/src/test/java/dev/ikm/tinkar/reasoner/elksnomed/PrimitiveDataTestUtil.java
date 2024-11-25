@@ -39,9 +39,9 @@ import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculatorWithCache;
 
-public abstract class PrimitiveDataTestBase {
+public abstract class PrimitiveDataTestUtil {
 
-	private static final Logger LOG = LoggerFactory.getLogger(PrimitiveDataTestBase.class);
+	private static final Logger LOG = LoggerFactory.getLogger(PrimitiveDataTestUtil.class);
 
 	public static void copyDirectory(Path source_path, Path target_path) throws IOException {
 		Files.walkFileTree(source_path, new SimpleFileVisitor<Path>() {
@@ -89,7 +89,7 @@ public abstract class PrimitiveDataTestBase {
 		PrimitiveData.setController(dsc);
 	}
 
-	@AfterAll
+//	@AfterAll
 	public static void stopPrimitiveData() {
 		LOG.info("stopPrimitiveData");
 		PrimitiveData.stop();

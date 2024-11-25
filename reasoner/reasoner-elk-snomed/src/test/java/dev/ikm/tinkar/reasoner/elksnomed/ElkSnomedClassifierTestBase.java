@@ -40,20 +40,26 @@ import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 
-public class SnomedINTL20241001ElkSnomedClassifierTestIT extends SnomedINTL20241001ElkSnomedTestBase {
+public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 
-	private static final Logger LOG = LoggerFactory.getLogger(SnomedINTL20241001ElkSnomedClassifierTestIT.class);
+	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedClassifierTestBase.class);
+
+	protected int expected_supercs_cnt = -1;
+	protected int expected_non_snomed_cnt = 284;
+	protected int expected_miss_cnt = 0;
+	protected int expected_pharma_miss_cnt = 0;
+	protected int expected_other_miss_cnt = 0;
 
 	@Test
 	public void supercs() throws Exception {
 		ArrayList<String> lines = runSnomedReasoner();
-		assertEquals(601696, lines.size());
+		assertEquals(expected_supercs_cnt, lines.size());
 	}
 
 	@Test
 	public void supercsService() throws Exception {
 		ArrayList<String> lines = runSnomedReasonerService();
-		assertEquals(601696, lines.size());
+		assertEquals(expected_supercs_cnt, lines.size());
 	}
 
 	private HashMap<Integer, Long> nid_sctid_map;
@@ -135,15 +141,18 @@ public class SnomedINTL20241001ElkSnomedClassifierTestIT extends SnomedINTL20241
 					sup.removeAll(parents);
 					LOG.error("Sno:  " + par);
 					LOG.error("Elk:  " + sup);
+					if (sups.contains(null)) {
+						reasoner.getSuperConcepts(nid)
+								.forEach(sup_nid -> LOG.error("   :  " + PrimitiveData.text((sup_nid.intValue()))));
+					}
 				});
 		LOG.error("Miss cnt: " + miss_cnt);
 		LOG.error("Pharma cnt: " + pharma_miss_cnt);
 		LOG.error("Other cnt: " + other_miss_cnt);
-		assertEquals(281, non_snomed_cnt);
-		// TODO this should be 0 after all the data issues are fixed
-		assertEquals(3, miss_cnt);
-		assertEquals(0, pharma_miss_cnt);
-		assertEquals(3, other_miss_cnt);
+		assertEquals(expected_non_snomed_cnt, non_snomed_cnt);
+		assertEquals(expected_miss_cnt, miss_cnt);
+		assertEquals(expected_pharma_miss_cnt, pharma_miss_cnt);
+		assertEquals(expected_other_miss_cnt, other_miss_cnt);
 	}
 
 }

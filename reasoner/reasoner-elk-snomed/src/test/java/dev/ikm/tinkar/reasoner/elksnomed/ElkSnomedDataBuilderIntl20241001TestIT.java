@@ -16,58 +16,46 @@
 package dev.ikm.tinkar.reasoner.elksnomed;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
-public class SnomedINTL20241001ElkSnomedTestBase extends ElkSnomedDataBuilderTest {
+public class ElkSnomedDataBuilderIntl20241001TestIT extends ElkSnomedDataBuilderTestBase
+		implements SnomedVersionInternational {
 
 	@SuppressWarnings("unused")
-	private static final Logger LOG = LoggerFactory.getLogger(SnomedINTL20241001ElkSnomedTestBase.class);
+	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedDataBuilderIntl20241001TestIT.class);
 
 	static {
-		stated_count = 396531;
-		active_count = 369151;
-		inactive_count = 27380;
 		test_case = "snomed-intl-20241001";
 	}
 
-	public static final String db = "snomed-sa";
-
-	protected String getDir() {
-		return "target/data/snomed-test-data-" + getEditionDir() + "-" + getVersion();
+	{
+		stated_count = 396534;
+		active_count = 369154;
+		inactive_count = 27380;
 	}
 
-	protected String getEdition() {
-		return "INT";
-	}
-
-	protected String getEditionDir() {
-		return "intl";
-	}
-
-	protected String getVersion() {
+	@Override
+	public String getVersion() {
 		return "20241001";
 	}
 
-	protected Path axioms_file = Paths.get(getDir(),
-			"sct2_sRefset_OWLExpressionSnapshot_" + getEdition() + "_" + getVersion() + ".txt");
-
-	protected Path rels_file = Paths.get(getDir(),
-			"sct2_Relationship_Snapshot_" + getEdition() + "_" + getVersion() + ".txt");
-
-	protected Path descriptions_file = Paths.get(getDir(),
-			"sct2_Description_Snapshot-en_" + getEdition() + "_" + getVersion() + ".txt");
-
 	@BeforeAll
 	public static void startPrimitiveData() throws IOException {
-		setupPrimitiveData(db);
+		PrimitiveDataTestUtil.setupPrimitiveData(test_case + "-sa");
 		PrimitiveData.start();
+	}
+
+	@AfterAll
+	public static void stopPrimitiveData() {
+		LOG.info("stopPrimitiveData");
+		PrimitiveData.stop();
+		LOG.info("Stopped");
 	}
 
 }

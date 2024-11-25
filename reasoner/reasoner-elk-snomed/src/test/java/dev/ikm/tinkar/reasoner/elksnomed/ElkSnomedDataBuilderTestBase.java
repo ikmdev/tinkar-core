@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,19 +27,25 @@ import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.terms.TinkarTerm;
 
-public abstract class ElkSnomedDataBuilderTest extends ElkSnomedTestBase {
+public abstract class ElkSnomedDataBuilderTestBase extends ElkSnomedTestBase {
 
-	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedDataBuilderTest.class);
+	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedDataBuilderTestBase.class);
 
+	protected int stated_count = -1;
+	protected int active_count = -1;
+	protected int inactive_count = -1;
+
+	@Test
 	public void statedPattern() throws Exception {
-		ViewCalculator viewCalculator = getViewCalculator();
+		ViewCalculator viewCalculator = PrimitiveDataTestUtil.getViewCalculator();
 		LogicCoordinateRecord logicCoordinateRecord = viewCalculator.logicCalculator().logicCoordinateRecord();
 		assertEquals(TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
 				logicCoordinateRecord.statedAxiomsPatternNid());
 	}
 
+	@Test
 	public void count() throws Exception {
-		ViewCalculator viewCalculator = getViewCalculator();
+		ViewCalculator viewCalculator = PrimitiveDataTestUtil.getViewCalculator();
 		AtomicInteger cnt = new AtomicInteger();
 		AtomicInteger active_cnt = new AtomicInteger();
 		AtomicInteger inactive_cnt = new AtomicInteger();
@@ -60,6 +67,7 @@ public abstract class ElkSnomedDataBuilderTest extends ElkSnomedTestBase {
 		assertEquals(inactive_count, inactive_cnt.intValue());
 	}
 
+	@Test
 	public void build() throws Exception {
 		ElkSnomedData data = buildSnomedData();
 		assertEquals(active_count, data.getActiveConceptCount());
