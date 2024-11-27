@@ -46,6 +46,11 @@
 				<version>${ikm-reasoner.version}</version>
 			</dependency>
 			<dependency>
+				<groupId>dev.ikm.elk</groupId>
+				<artifactId>elk-snomed-owl-el</artifactId>
+				<version>${ikm-reasoner.version}</version>
+			</dependency>
+			<dependency>
 				<groupId>dev.ikm.hybrid-reasoner</groupId>
 				<artifactId>hybrid-reasoner-snomed</artifactId>
 				<version>${hybrid-reasoner.version}</version>

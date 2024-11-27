@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.ikm.elk.snomed.OwlElTransformer;
 import dev.ikm.elk.snomed.SnomedDescriptions;
 import dev.ikm.elk.snomed.SnomedIds;
 import dev.ikm.elk.snomed.SnomedOntology;
@@ -35,12 +36,14 @@ import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.elk.snomed.model.ConcreteRole;
 import dev.ikm.elk.snomed.model.ConcreteRoleType;
 import dev.ikm.elk.snomed.model.RoleType;
-import dev.ikm.elk.snomed.owl.OwlTransformer;
-import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
+import dev.ikm.elk.snomed.owlel.OwlElOntology;
 
 public abstract class ElkSnomedCompareTestBase extends ElkSnomedTestBase {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedCompareTestBase.class);
+	
+	protected int expected_compare_concept_cnt = 0;
+
 
 	@Test
 	public void compare() throws Exception {
@@ -60,9 +63,9 @@ public abstract class ElkSnomedCompareTestBase extends ElkSnomedTestBase {
 				assertNull(us_con);
 			}
 		}
-		SnomedOwlOntology ontology = SnomedOwlOntology.createOntology();
-		ontology.loadOntology(axioms_file);
-		SnomedOntology snomedOntology = new OwlTransformer().transform(ontology);
+		OwlElOntology ontology = new OwlElOntology();
+		ontology.load(axioms_file);
+		SnomedOntology snomedOntology = new OwlElTransformer().transform(ontology);
 		snomedOntology.setDescriptions(SnomedDescriptions.init(descriptions_file));
 		{
 			Concept us_con = snomedOntology.getConcept(SnomedIds.us_nlm_module);
@@ -144,8 +147,7 @@ public abstract class ElkSnomedCompareTestBase extends ElkSnomedTestBase {
 		assertEquals(0, missing_concept_cnt);
 		assertEquals(0, compare_role_cnt);
 		assertEquals(0, compare_concrete_role_cnt);
-		// TODO should be 1 when data issues are fixed - SNOMED root
-		assertEquals(2, compare_concept_cnt);
+		assertEquals(expected_compare_concept_cnt, compare_concept_cnt);
 	}
 
 	public boolean compareEquals(Object expect, Object actual, String msg) {

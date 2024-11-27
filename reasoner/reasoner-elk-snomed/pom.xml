@@ -40,10 +40,11 @@
 			<groupId>dev.ikm.elk</groupId>
 			<artifactId>elk-snomed</artifactId>
 		</dependency>
-		<!--		temp for test-->
 		<dependency>
 			<groupId>dev.ikm.elk</groupId>
-			<artifactId>elk-snomed-owl</artifactId>
+			<artifactId>elk-snomed-owl-el</artifactId>
+			<!-- TODO This should be test scoped, but the moduel system? -->
+			<!-- <scope>test</scope> -->
 		</dependency>
 	</dependencies>
 
