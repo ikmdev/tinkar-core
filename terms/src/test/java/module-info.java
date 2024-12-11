@@ -16,4 +16,6 @@
 module dev.ikm.tinkar.terms.test {
     requires org.junit.jupiter.api;
     requires dev.ikm.tinkar.terms;
+
+    opens dev.ikm.tinkar.terms.test;
 }
