@@ -184,6 +184,19 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
             return children(Atom.Connective.class);
         }
     }
+    
+    public static final class DataPropertySetAdaptor extends LogicalAxiomAdaptor implements LogicalAxiom.LogicalSet.DataPropertySet {
+
+        public DataPropertySetAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
+            super(enclosingExpression, vertexIndex);
+            assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(TinkarTerm.DATA_PROPERTY_SET);
+        }
+
+        @Override
+        public ImmutableSet<Atom.Connective> elements() {
+            return children(Atom.Connective.class);
+        }
+    }
 
     public static final class InclusionSetAdaptor extends LogicalAxiomAdaptor implements LogicalAxiom.LogicalSet.InclusionSet {
 

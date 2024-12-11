@@ -43,7 +43,7 @@
 		<dependency>
 			<groupId>dev.ikm.elk</groupId>
 			<artifactId>elk-snomed-owl-el</artifactId>
-			<!-- TODO This should be test scoped, but the moduel system? -->
+			<!-- TODO This should be test scoped, but the module system? -->
 			<!-- <scope>test</scope> -->
 		</dependency>
 	</dependencies>

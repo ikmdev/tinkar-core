@@ -211,6 +211,19 @@ public class LogicalExpressionBuilder {
         return new LogicalAxiomAdaptor.PropertySetAdaptor(logicalExpression, propertySet.vertexIndex());
     }
 
+    public LogicalAxiom.LogicalSet.DataPropertySet DataPropertySet(LogicalAxiom.Atom... elements) {
+        return DataPropertySet(UUID.randomUUID(), elements);
+    }
+    public LogicalAxiom.LogicalSet.DataPropertySet DataPropertySet(UUID vertexUuid, LogicalAxiom.Atom... elements) {
+        EntityVertex propertySet = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.DATA_PROPERTY_SET.nid);
+        builder.addVertex(propertySet);
+        builder.addEdge(propertySet.vertexIndex(), rootIndex);
+        for (LogicalAxiom.Atom element : elements) {
+            builder.addEdge(element.vertexIndex(), propertySet.vertexIndex());
+        }
+        return new LogicalAxiomAdaptor.DataPropertySetAdaptor(logicalExpression, propertySet.vertexIndex());
+    }
+
     public LogicalAxiom.Atom.Connective.And And(UUID vertexUuid, ImmutableList<? extends LogicalAxiom.Atom> atoms) {
         EntityVertex and = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.AND.nid);
         builder.addVertex(and);

@@ -28,16 +28,13 @@ import dev.ikm.elk.snomed.owlel.OwlElObjectFactory;
 import dev.ikm.elk.snomed.owlel.model.OwlElObject;
 import dev.ikm.elk.snomed.owlel.parser.SnomedOfsParser;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom.Atom;
-import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom.Atom.ConceptAxiom;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom.Atom.Connective.And;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpressionBuilder;
 import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
 
 public class OwlElExpressionToLogicalExpression {
@@ -147,8 +144,7 @@ public class OwlElExpressionToLogicalExpression {
 			exprs.add(builder.ConceptAxiom((int) sup.getId()));
 		}
 		And expr = builder.And(toArray(exprs));
-		// TODO Change to DATA_PROPERTY_SET
-		builder.PropertySet(expr);
+		builder.DataPropertySet(expr);
 	}
 
 	private void process(Concept con) {

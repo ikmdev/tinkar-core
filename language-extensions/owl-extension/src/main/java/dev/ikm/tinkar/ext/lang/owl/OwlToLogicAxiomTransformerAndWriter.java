@@ -15,10 +15,18 @@
  */
 package dev.ikm.tinkar.ext.lang.owl;
 
-import dev.ikm.elk.snomed.owlel.OwlElObjectFactory;
-import dev.ikm.elk.snomed.owlel.OwlElOntology;
-import dev.ikm.elk.snomed.owlel.model.OwlElObject;
-import dev.ikm.elk.snomed.owlel.parser.SnomedOfsParser;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.TreeSet;
+import java.util.UUID;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ImmutableList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -41,25 +49,12 @@ import dev.ikm.tinkar.entity.SemanticVersionRecordBuilder;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom;
-import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiomSemantic;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResults;
 import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResultsLeafHash;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
-import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.list.ImmutableList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.TreeSet;
-import java.util.UUID;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Pattern;
 
 public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> {
 
@@ -225,7 +220,6 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
 			} catch (Exception ex) {
 				LOG.error("Error: ", ex);
 			}
-			// End new
 			if (expression != null) {
 				if (expression.nodesOfType(LogicalAxiom.LogicalSet.NecessarySet.class).size() > 1) {
 					// Need to merge necessary sets.

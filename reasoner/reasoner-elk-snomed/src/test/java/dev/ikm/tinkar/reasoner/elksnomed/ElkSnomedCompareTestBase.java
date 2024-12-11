@@ -119,6 +119,13 @@ public abstract class ElkSnomedCompareTestBase extends ElkSnomedTestBase {
 			if (!compare(role, data_role, snomedOntology))
 				compare_role_cnt++;
 		}
+		for (RoleType data_role : data.getRoleTypes()) {
+			RoleType role = snomedOntology.getRoleType(data_role.getId());
+			if (role == null) {
+				LOG.error("Extra role: " + data_role);
+				continue;
+			}
+		}
 		for (ConcreteRoleType role : snomedOntology.getConcreteRoleTypes()) {
 			int nid = ElkSnomedData.getNid(role.getId());
 			ConcreteRoleType data_role = data.getConcreteRoleType(nid);

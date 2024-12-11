@@ -173,6 +173,9 @@ public class ElkSnomedDataBuilder {
 			case PROPERTY_SET -> {
 				processPropertySet(child, conceptNid, definition);
 			}
+			case DATA_PROPERTY_SET -> {
+				processDataPropertySet(child, conceptNid, definition);
+			}
 			default -> throw new IllegalArgumentException("Unexpected value: " + getMeaning(child));
 			}
 		}
@@ -209,22 +212,13 @@ public class ElkSnomedDataBuilder {
 			switch (getMeaning(node)) {
 			case CONCEPT -> {
 				ConceptFacade nodeConcept = node.propertyFast(TinkarTerm.CONCEPT_REFERENCE);
-				// This won't work if SNOMED introduces data property hierarchy
-//				LOG.info("UUID for " + SnomedIds.concept_model_data_attribute + " "
-//						+ UuidUtil.fromSNOMED("" + SnomedIds.concept_model_data_attribute));
-//				if (nodeConcept.nid() == ElkSnomedData.getNid(SnomedIds.concept_model_data_attribute)) {
-				if (nodeConcept.nid() == TinkarTerm.CONCEPT_MODEL_DATA_ATTRIBUTE.nid()) {
-					ConcreteRoleType roleType = data.getOrCreateConcreteRoleType(conceptNid);
-					roleType.addSuperConcreteRoleType(data.getOrCreateConcreteRoleType(nodeConcept.nid()));
+				RoleType roleType = data.getOrCreateRoleType(conceptNid);
+				if (nodeConcept.nid() == TinkarTerm.TRANSITIVE_PROPERTY.nid()) {
+					roleType.setTransitive(true);
+				} else if (nodeConcept.nid() == TinkarTerm.REFLEXIVE_PROPERTY.nid()) {
+					roleType.setReflexive(true);
 				} else {
-					RoleType roleType = data.getOrCreateRoleType(conceptNid);
-					if (nodeConcept.nid() == TinkarTerm.TRANSITIVE_PROPERTY.nid()) {
-						roleType.setTransitive(true);
-					} else if (nodeConcept.nid() == TinkarTerm.REFLEXIVE_PROPERTY.nid()) {
-						roleType.setReflexive(true);
-					} else {
-						roleType.addSuperRoleType(data.getOrCreateRoleType(nodeConcept.nid()));
-					}
+					roleType.addSuperRoleType(data.getOrCreateRoleType(nodeConcept.nid()));
 				}
 			}
 			case PROPERTY_PATTERN_IMPLICATION -> {
@@ -253,6 +247,28 @@ public class ElkSnomedDataBuilder {
 				roleType.setChained(prop2);
 //				LOG.info("PPI: " + PrimitiveData.text((int) prop1.getId()) + " -> "
 //						+ PrimitiveData.text((int) prop1.getChained().getId()));
+			}
+			default -> throw new UnsupportedOperationException("Can't handle: " + node + " in: " + definition);
+			}
+		}
+	}
+
+	private void processDataPropertySet(EntityVertex propertySetNode, int conceptNid, DiTreeEntity definition) {
+//		LOG.info("PropertySet: " + PrimitiveData.text(conceptNid) + " " + propertySetNode + "\n" + definition);
+		final ImmutableList<EntityVertex> children = definition.successors(propertySetNode);
+		if (children.size() != 1)
+			throw new IllegalStateException("DataPropertySetNode can only have one child. Concept: " + conceptNid
+					+ " definition: " + definition);
+		EntityVertex child = children.getFirst();
+		if (child.getMeaningNid() != TinkarTerm.AND.nid())
+			throw new IllegalStateException("PropertySetNode can only have AND for a child. Concept: " + conceptNid
+					+ " definition: " + definition);
+		for (EntityVertex node : definition.successors(child)) {
+			switch (getMeaning(node)) {
+			case CONCEPT -> {
+				ConceptFacade nodeConcept = node.propertyFast(TinkarTerm.CONCEPT_REFERENCE);
+				ConcreteRoleType roleType = data.getOrCreateConcreteRoleType(conceptNid);
+				roleType.addSuperConcreteRoleType(data.getOrCreateConcreteRoleType(nodeConcept.nid()));
 			}
 			default -> throw new UnsupportedOperationException("Can't handle: " + node + " in: " + definition);
 			}
