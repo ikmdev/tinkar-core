@@ -208,8 +208,8 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
 			LogicalExpression expression = null;
 			try {
 				// TODO fix these
-				owlExpressionsToProcess.removeIf(x -> x.startsWith("Ontology"));
-				owlExpressionsToProcess.removeIf(x -> x.startsWith("Prefix"));
+//				owlExpressionsToProcess.removeIf(x -> x.startsWith("Ontology"));
+//				owlExpressionsToProcess.removeIf(x -> x.startsWith("Prefix"));
 				OwlElExpressionToLogicalExpression transformer = new OwlElExpressionToLogicalExpression(
 						owlExpressionsToProcess, conceptNid);
 				if (build_and_log_prior_impl)

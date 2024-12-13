@@ -221,11 +221,11 @@ public class ElkSnomedDataBuilder {
 					roleType.addSuperRoleType(data.getOrCreateRoleType(nodeConcept.nid()));
 				}
 			}
-			case PROPERTY_PATTERN_IMPLICATION -> {
+			case PROPERTY_SEQUENCE_IMPLICATION -> {
 //				LOG.info("PropertySet: " + PrimitiveData.text(conceptNid) + " " + propertySetNode + "\n" + definition);
 				RoleType roleType = data.getOrCreateRoleType(conceptNid);
 				// TODO: update to new concept binding: Property sequence implication...
-				ConceptFacade ppi = node.propertyFast(TinkarTerm.PROPERTY_PATTERN_IMPLICATION);
+				ConceptFacade ppi = node.propertyFast(TinkarTerm.PROPERTY_SEQUENCE_IMPLICATION);
 				if (ppi.nid() != conceptNid)
 					throw new IllegalStateException(
 							"Property chain malformed. Concept: " + conceptNid + " definition: " + definition);

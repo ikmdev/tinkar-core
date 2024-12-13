@@ -56,7 +56,7 @@ public class LogicalExpression {
                     case FEATURE -> new LogicalAxiomAdaptor.FeatureAxiomAdaptor(this, i);
                     case NECESSARY_SET -> new LogicalAxiomAdaptor.NecessarySetAdaptor(this, i);
                     case OR -> new LogicalAxiomAdaptor.OrAdaptor(this, i);
-                    case PROPERTY_PATTERN_IMPLICATION -> new LogicalAxiomAdaptor.PropertyPatternImplicationAdaptor(this, i);
+                    case PROPERTY_SEQUENCE_IMPLICATION -> new LogicalAxiomAdaptor.PropertySequenceImplicationAdaptor(this, i);
                     case PROPERTY_SET -> new LogicalAxiomAdaptor.PropertySetAdaptor(this, i);
                     case ROLE -> new LogicalAxiomAdaptor.RoleAxiomAdaptor(this, i);
                     case SUFFICIENT_SET -> new LogicalAxiomAdaptor.SufficientSetAdaptor(this, i);

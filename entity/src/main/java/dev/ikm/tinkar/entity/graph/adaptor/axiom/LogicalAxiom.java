@@ -70,22 +70,22 @@ public sealed interface LogicalAxiom permits LogicalAxiom.Atom, LogicalAxiom.Def
 
 
         /**
-         * Property Pattern -> Implication is Tinkar class for implementing property chains.
+         * Property Sequence -> Implication is Tinkar class for implementing property chains.
          * <p>
          * A property chain is a rule that allows you to infer the existence of a property (the implication)
-         * from a chain of properties (the property pattern). For example, "x has parent y" and "y has parent z"
+         * from a chain of properties (the property sequence). For example, "x has parent y" and "y has parent z"
          * implies "x has grandparent z" (which may be written as |has parent|ο|has parent|→|has grandparent|).
          * SNOMED CT includes the property chain:
          * <p>
          * |direct substance|ο|has active ingredient|→|direct substance|
          */
-        sealed interface PropertyPatternImplication extends Atom permits LogicalAxiomAdaptor.PropertyPatternImplicationAdaptor {
-            ImmutableList<ConceptFacade> propertyPattern();
+        sealed interface PropertySequenceImplication extends Atom permits LogicalAxiomAdaptor.PropertySequenceImplicationAdaptor {
+            ImmutableList<ConceptFacade> propertySequence();
 
             ConceptFacade implication();
 
             default LogicalAxiomSemantic axiomSemantic() {
-                return LogicalAxiomSemantic.PROPERTY_PATTERN_IMPLICATION;
+                return LogicalAxiomSemantic.PROPERTY_SEQUENCE_IMPLICATION;
             }
 
         }

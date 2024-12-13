@@ -267,21 +267,21 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
         }
     }
 
-    public static final class PropertyPatternImplicationAdaptor extends LogicalAxiomAdaptor implements LogicalAxiom.Atom.PropertyPatternImplication {
+    public static final class PropertySequenceImplicationAdaptor extends LogicalAxiomAdaptor implements LogicalAxiom.Atom.PropertySequenceImplication {
 
-        public PropertyPatternImplicationAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
+        public PropertySequenceImplicationAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
             super(enclosingExpression, vertexIndex);
-            assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(TinkarTerm.PROPERTY_PATTERN_IMPLICATION);
+            assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(TinkarTerm.PROPERTY_SEQUENCE_IMPLICATION);
         }
 
         @Override
-        public ImmutableList<ConceptFacade> propertyPattern() {
+        public ImmutableList<ConceptFacade> propertySequence() {
             Optional<IntIdList> optionalPattern = this.adaptedExpression.sourceGraph.vertex(this.vertexIndex).property(TinkarTerm.PROPERTY_SET);
             if (optionalPattern.isPresent()) {
                 IntIdList pattern = optionalPattern.get();
                 return pattern.map(nid -> EntityProxy.Concept.make(nid));
             }
-            throw new IllegalStateException("No property pattern found... ");
+            throw new IllegalStateException("No property sequence found... ");
         }
 
         @Override
