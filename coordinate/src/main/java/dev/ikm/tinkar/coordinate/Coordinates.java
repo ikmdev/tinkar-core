@@ -184,6 +184,12 @@ public class Coordinates {
     }
 
     public static class Stamp {
+        public static StampCoordinateRecord DevelopmentLatestInactiveOnly() {
+            return StampCoordinateRecord.make(StateSet.INACTIVE,
+                    Position.LatestOnDevelopment(),
+                    IntIds.set.empty());
+        }
+
 
         public static StampCoordinateRecord DevelopmentLatest() {
             return StampCoordinateRecord.make(StateSet.ACTIVE_AND_INACTIVE,
