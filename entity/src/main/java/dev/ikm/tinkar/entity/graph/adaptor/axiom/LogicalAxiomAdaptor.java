@@ -276,7 +276,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
         @Override
         public ImmutableList<ConceptFacade> propertySequence() {
-            Optional<IntIdList> optionalPattern = this.adaptedExpression.sourceGraph.vertex(this.vertexIndex).property(TinkarTerm.PROPERTY_SET);
+            Optional<IntIdList> optionalPattern = this.adaptedExpression.sourceGraph.vertex(this.vertexIndex).property(TinkarTerm.PROPERTY_SEQUENCE);
             if (optionalPattern.isPresent()) {
                 IntIdList pattern = optionalPattern.get();
                 return pattern.map(nid -> EntityProxy.Concept.make(nid));

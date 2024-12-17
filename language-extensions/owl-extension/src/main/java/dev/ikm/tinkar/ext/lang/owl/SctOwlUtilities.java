@@ -44,6 +44,7 @@ import java.util.UUID;
 
 import static java.io.StreamTokenizer.*;
 
+@Deprecated
 public class SctOwlUtilities {
 
     private static final Logger LOG = LoggerFactory.getLogger(SctOwlUtilities.class);

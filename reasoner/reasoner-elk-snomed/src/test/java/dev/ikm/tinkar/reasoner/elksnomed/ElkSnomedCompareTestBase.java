@@ -41,9 +41,8 @@ import dev.ikm.elk.snomed.owlel.OwlElOntology;
 public abstract class ElkSnomedCompareTestBase extends ElkSnomedTestBase {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedCompareTestBase.class);
-	
-	protected int expected_compare_concept_cnt = 0;
 
+	protected int expected_compare_concept_cnt = 0;
 
 	@Test
 	public void compare() throws Exception {
@@ -116,6 +115,10 @@ public abstract class ElkSnomedCompareTestBase extends ElkSnomedTestBase {
 				missing_role_cnt++;
 				continue;
 			}
+			// Role group is in tinkar starter data as a concept
+			// Concept model data attribute is a concept but has a definition
+//			if (data.getConcept(nid) != null)
+//				LOG.warn("Role type is also a concept: " + role + " " + data.getConcept(nid));
 			if (!compare(role, data_role, snomedOntology))
 				compare_role_cnt++;
 		}
@@ -134,8 +137,18 @@ public abstract class ElkSnomedCompareTestBase extends ElkSnomedTestBase {
 				missing_concrete_role_cnt++;
 				continue;
 			}
+			// Concept model object attribute is a concept but has a definition
+//			if (data.getConcept(nid) != null)
+//				LOG.warn("Concrete role type is also a concept: " + role + " " + data.getConcept(nid));
 			if (!compare(role, data_role, snomedOntology))
 				compare_concrete_role_cnt++;
+		}
+		for (ConcreteRoleType data_role : data.getConcreteRoleTypes()) {
+			ConcreteRoleType role = snomedOntology.getConcreteRoleType(data_role.getId());
+			if (role == null) {
+				LOG.error("Extra concrete role: " + data_role);
+				continue;
+			}
 		}
 		for (Concept con : snomedOntology.getConcepts()) {
 			int nid = ElkSnomedData.getNid(con.getId());
@@ -145,7 +158,6 @@ public abstract class ElkSnomedCompareTestBase extends ElkSnomedTestBase {
 				missing_concept_cnt++;
 				continue;
 			}
-//			LOG.info(con.getId() + " " + snomedOntology.getFsn(con.getId()));
 			if (!compare(con, data_con, snomedOntology))
 				compare_concept_cnt++;
 		}
@@ -165,6 +177,10 @@ public abstract class ElkSnomedCompareTestBase extends ElkSnomedTestBase {
 		LOG.error("\tActual: " + actual);
 		return false;
 	}
+
+	// In these compare methods need to create new Sets and copy Concepts since we
+	// updated the ids. This update causes the hash codes to change and equals would
+	// fail otherwise.
 
 	public boolean compare(RoleType expect, RoleType actual, SnomedOntology snomedOntology) {
 		String con_msg = expect.getId() + " " + snomedOntology.getFsn(expect.getId());

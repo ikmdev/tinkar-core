@@ -131,7 +131,6 @@ public class OwlElExpressionToLogicalExpression {
 		if (role_type.getChained() != null) {
 			ImmutableList<ConceptFacade> chain = Lists.immutable.of(getConceptFacade(role_type.getId()),
 					getConceptFacade(role_type.getChained().getId()));
-			// TODO change to PropertySequenceImplicationAxiom
 			exprs.add(builder.PropertySequenceImplicationAxiom(chain, getConceptFacade(role_type.getId())));
 		}
 		And expr = builder.And(toArray(exprs));

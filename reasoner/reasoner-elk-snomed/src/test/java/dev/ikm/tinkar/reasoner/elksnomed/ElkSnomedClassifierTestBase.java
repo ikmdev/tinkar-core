@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.ikm.elk.snomed.SnomedDescriptions;
 import dev.ikm.elk.snomed.SnomedIds;
 import dev.ikm.elk.snomed.SnomedIsa;
 import dev.ikm.elk.snomed.SnomedOntology;
@@ -39,6 +40,7 @@ import dev.ikm.elk.snomed.SnomedOntologyReasoner;
 import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
+import dev.ikm.tinkar.terms.TinkarTerm;
 
 public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 
@@ -83,10 +85,13 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 		int pharma_miss_cnt = 0;
 		int other_miss_cnt = 0;
 		SnomedIsa isas = SnomedIsa.init(rels_file);
+		SnomedDescriptions descr = SnomedDescriptions.init(descriptions_file);
 		nid_sctid_map = new HashMap<>();
 		for (long sctid : isas.getOrderedConcepts()) {
 			int nid = ElkSnomedData.getNid(sctid);
 			nid_sctid_map.put(nid, sctid);
+			if (ontology.getConcept(nid) == null)
+				LOG.info("No concept for: " + sctid + " " + descr.getFsn(sctid));
 		}
 		for (Concept con : ontology.getConcepts()) {
 			long nid = con.getId();
@@ -99,6 +104,10 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 			Set<Long> parents = isas.getParents(sctid);
 			if (sctid == SnomedIds.root) {
 				assertTrue(parents.isEmpty());
+				// has a parent in the db
+				assertEquals(1, sups.size());
+				assertEquals(TinkarTerm.ROOT_VERTEX.nid(), reasoner.getSuperConcepts(nid).iterator().next());
+				continue;
 			} else {
 				assertNotNull(parents);
 			}

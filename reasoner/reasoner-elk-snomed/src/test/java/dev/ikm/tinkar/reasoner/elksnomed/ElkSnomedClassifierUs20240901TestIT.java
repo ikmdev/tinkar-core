@@ -33,11 +33,7 @@ public class ElkSnomedClassifierUs20240901TestIT extends ElkSnomedClassifierTest
 	}
 
 	{
-		expected_supercs_cnt = 614243;
-//		expected_non_snomed_cnt = 284;
-		expected_miss_cnt = 3;
-		expected_pharma_miss_cnt = 0;
-		expected_other_miss_cnt = 3;
+		expected_supercs_cnt = 614237;
 	}
 
 	@Override
