@@ -109,7 +109,7 @@
 
         <!-- JPMS Dependencies -->
         <tinkar-jpms-deps.groupId>dev.ikm.jpms</tinkar-jpms-deps.groupId>
-        <guava.version>33.3.0-jre-r2</guava.version>
+        <guava.version>33.3.0-jre-r3</guava.version>
         <jpms-auto-service.version>1.0.1-r7</jpms-auto-service.version>
         <jpms-record-builder-core.version>36-r7</jpms-record-builder-core.version>
         <eclipse-collections.version>11.1.0-r13</eclipse-collections.version>
