@@ -275,7 +275,9 @@ public class StampCalculatorWithCache implements StampCalculator {
                 .forEach(
                         (newVersionToTest) -> {
                             if (latestVersionSet.isEmpty()) {
-                                latestVersionSet.add((V) newVersionToTest);
+                                if (allowedStates.contains(newVersionToTest.state())) {
+                                    latestVersionSet.add((V) newVersionToTest);
+                                }
                             } else {
                                 handlePart(latestVersionSet, newVersionToTest);
                             }
