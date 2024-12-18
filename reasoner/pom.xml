@@ -22,8 +22,6 @@
 
 	<properties>
 		<hybrid-reasoner.version>1.0.3</hybrid-reasoner.version>
-		<ikm-reasoner.version>0.36.0</ikm-reasoner.version>
-		<owlapi.version>4.7.6</owlapi.version>
 		<reasoner-test-data.groupid>dev.ikm.reasoner-test-data</reasoner-test-data.groupid>
 		<skipITs>true</skipITs>
 		<snomed-test-data.groupid>dev.ikm.snomed</snomed-test-data.groupid>
@@ -36,44 +34,9 @@
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
-				<groupId>dev.ikm.elk</groupId>
-				<artifactId>elk-snomed</artifactId>
-				<version>${ikm-reasoner.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>dev.ikm.elk</groupId>
-				<artifactId>elk-snomed-owl</artifactId>
-				<version>${ikm-reasoner.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>dev.ikm.elk</groupId>
-				<artifactId>elk-snomed-owl-el</artifactId>
-				<version>${ikm-reasoner.version}</version>
-			</dependency>
-			<dependency>
 				<groupId>dev.ikm.hybrid-reasoner</groupId>
 				<artifactId>hybrid-reasoner-snomed</artifactId>
 				<version>${hybrid-reasoner.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>dev.ikm.owlapi</groupId>
-				<artifactId>owlapi-api</artifactId>
-				<version>${owlapi.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>dev.ikm.owlapi</groupId>
-				<artifactId>owlapi-apibinding</artifactId>
-				<version>${owlapi.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>dev.ikm.owlapi</groupId>
-				<artifactId>owlapi-impl</artifactId>
-				<version>${owlapi.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>dev.ikm.owlapi</groupId>
-				<artifactId>owlapi-parsers</artifactId>
-				<version>${owlapi.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>${project.groupId}</groupId>
