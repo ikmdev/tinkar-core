@@ -82,7 +82,7 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 
 	@Override
 	public void processIncremental(DiTreeEntity definition, int conceptNid) {
-		Concept concept = builder.processIncremental(definition, conceptNid);
+		Concept concept = builder.processIncremental(conceptNid, definition);
 		reasoner.process(concept);
 		reasoner.flush();
 	}

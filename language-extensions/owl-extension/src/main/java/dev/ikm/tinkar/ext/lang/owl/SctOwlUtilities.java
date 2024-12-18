@@ -44,6 +44,7 @@ import java.util.UUID;
 
 import static java.io.StreamTokenizer.*;
 
+@Deprecated
 public class SctOwlUtilities {
 
     private static final Logger LOG = LoggerFactory.getLogger(SctOwlUtilities.class);
@@ -425,7 +426,7 @@ public class SctOwlUtilities {
             for (int i = 0; i < propertyPattern.length; i++) {
                 propertyPattern[i] = propertyPatternList.get(i);
             }
-            return logicalExpressionBuilder.PropertyPatternImplicationAxiom(
+            return logicalExpressionBuilder.PropertySequenceImplicationAxiom(
                     Lists.immutable.of(propertyPattern),
                     propertyImplication);
         } else {

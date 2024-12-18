@@ -40,13 +40,10 @@ import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
 import dev.ikm.tinkar.terms.TinkarTerm;
 
-public abstract class ElkSnomedTestBase extends PrimitiveDataTestBase {
+public abstract class ElkSnomedTestBase extends SnomedTestBase {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedTestBase.class);
 
-	protected static int stated_count = Integer.MIN_VALUE;
-	protected static int active_count = Integer.MIN_VALUE;
-	protected static int inactive_count = Integer.MIN_VALUE;
 	protected static String test_case;
 
 	protected Path getWritePath(String filePart) throws IOException {
@@ -83,7 +80,7 @@ public abstract class ElkSnomedTestBase extends PrimitiveDataTestBase {
 
 	public ElkSnomedData buildSnomedData() throws Exception {
 		LOG.info("buildSnomedData");
-		ViewCalculator viewCalculator = getViewCalculator();
+		ViewCalculator viewCalculator = PrimitiveDataTestUtil.getViewCalculator();
 		ElkSnomedData data = new ElkSnomedData();
 		ElkSnomedDataBuilder builder = new ElkSnomedDataBuilder(viewCalculator,
 				TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, data);
@@ -124,7 +121,7 @@ public abstract class ElkSnomedTestBase extends PrimitiveDataTestBase {
 		ReasonerService rs = PluggableService.load(ReasonerService.class).stream()
 				.filter(x -> x.type().getSimpleName().equals(ElkSnomedReasonerService.class.getSimpleName())) //
 				.findFirst().get().get();
-		rs.init(getViewCalculator(), TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+		rs.init(PrimitiveDataTestUtil.getViewCalculator(), TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
 				TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
 		rs.setProgressUpdater(null);
 		return rs;

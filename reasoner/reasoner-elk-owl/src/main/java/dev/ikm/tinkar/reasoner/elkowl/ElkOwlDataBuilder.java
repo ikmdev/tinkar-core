@@ -342,7 +342,7 @@ public class ElkOwlDataBuilder {
 		case NECESSARY_SET:
 		case INCLUSION_SET:
 			throw new UnsupportedOperationException("Not expected here: " + logicVertex);
-		case PROPERTY_PATTERN_IMPLICATION:
+		case PROPERTY_SEQUENCE_IMPLICATION:
 			throw new UnsupportedOperationException();
 		}
 
@@ -377,7 +377,7 @@ public class ElkOwlDataBuilder {
 							axiomData.getRole(successorConcept.nid())));
 				}
 				break;
-			case PROPERTY_PATTERN_IMPLICATION:
+			case PROPERTY_SEQUENCE_IMPLICATION:
 //				LOG.info("PPI: " + PrimitiveData.text(conceptNid) + " " + definition);
 				final ConceptFacade pi = node.propertyFast(TinkarTerm.PROPERTY_PATTERN_IMPLICATION);
 				final IntIdList ps = node.propertyFast(TinkarTerm.PROPERTY_SET);
