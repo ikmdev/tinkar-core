@@ -211,6 +211,19 @@ public class LogicalExpressionBuilder {
         return new LogicalAxiomAdaptor.PropertySetAdaptor(logicalExpression, propertySet.vertexIndex());
     }
 
+    public LogicalAxiom.LogicalSet.DataPropertySet DataPropertySet(LogicalAxiom.Atom... elements) {
+        return DataPropertySet(UUID.randomUUID(), elements);
+    }
+    public LogicalAxiom.LogicalSet.DataPropertySet DataPropertySet(UUID vertexUuid, LogicalAxiom.Atom... elements) {
+        EntityVertex propertySet = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.DATA_PROPERTY_SET.nid);
+        builder.addVertex(propertySet);
+        builder.addEdge(propertySet.vertexIndex(), rootIndex);
+        for (LogicalAxiom.Atom element : elements) {
+            builder.addEdge(element.vertexIndex(), propertySet.vertexIndex());
+        }
+        return new LogicalAxiomAdaptor.DataPropertySetAdaptor(logicalExpression, propertySet.vertexIndex());
+    }
+
     public LogicalAxiom.Atom.Connective.And And(UUID vertexUuid, ImmutableList<? extends LogicalAxiom.Atom> atoms) {
         EntityVertex and = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.AND.nid);
         builder.addVertex(and);
@@ -364,33 +377,36 @@ public class LogicalExpressionBuilder {
         featureAxiom.commitProperties();
         return new LogicalAxiomAdaptor.FeatureAxiomAdaptor(logicalExpression, featureAxiom.vertexIndex());
     }
-    public LogicalAxiom.Atom.PropertyPatternImplication PropertyPatternImplicationAxiom(ImmutableList<ConceptFacade> propertyPattern,
+    
+    public LogicalAxiom.Atom.PropertySequenceImplication PropertySequenceImplicationAxiom(ImmutableList<ConceptFacade> propertySequence,
                                                                                         ConceptFacade implication) {
-        return PropertyPatternImplicationAxiom(UUID.randomUUID(), propertyPattern, implication);
+        return PropertySequenceImplicationAxiom(UUID.randomUUID(), propertySequence, implication);
     }
 
-    public LogicalAxiom.Atom.PropertyPatternImplication PropertyPatternImplicationAxiom(UUID vertexUuid,
-                                                                                            ImmutableList<ConceptFacade> propertyPattern,
-                                                                                        ConceptFacade implication) {
-        EntityVertex propertyPatternImplicationAxiom = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.PROPERTY_PATTERN_IMPLICATION.nid);
-        builder.addVertex(propertyPatternImplicationAxiom);
+	public LogicalAxiom.Atom.PropertySequenceImplication PropertySequenceImplicationAxiom(UUID vertexUuid,
+			ImmutableList<ConceptFacade> propertySequence, ConceptFacade implication) {
+		EntityVertex propertySequenceImplicationAxiom = EntityVertex.make(vertexUuid,
+				LogicalAxiomSemantic.PROPERTY_SEQUENCE_IMPLICATION.nid);
+		builder.addVertex(propertySequenceImplicationAxiom);
 
-        boolean isPropertySeqPresent = EntityService.get().getEntity(TinkarTerm.PROPERTY_SEQUENCE.publicId()).isPresent();
-        EntityProxy.Concept propertyGroupConcept = isPropertySeqPresent ? TinkarTerm.PROPERTY_SEQUENCE : TinkarTerm.PROPERTY_SET;
-        propertyPatternImplicationAxiom.putUncommittedProperty(propertyGroupConcept.nid(),
-                IntIds.list.of(propertyPattern.castToList(),  (ConceptFacade conceptFacade) -> conceptFacade.nid()));
-        propertyPatternImplicationAxiom.putUncommittedProperty(TinkarTerm.PROPERTY_PATTERN_IMPLICATION.nid(), implication);
+//        boolean isPropertySeqPresent = EntityService.get().getEntity(TinkarTerm.PROPERTY_SEQUENCE.publicId()).isPresent();
+//        EntityProxy.Concept propertyGroupConcept = isPropertySeqPresent ? TinkarTerm.PROPERTY_SEQUENCE : TinkarTerm.PROPERTY_SET;
+		propertySequenceImplicationAxiom.putUncommittedProperty(TinkarTerm.PROPERTY_SEQUENCE.nid(),
+				IntIds.list.of(propertySequence.castToList(), (ConceptFacade conceptFacade) -> conceptFacade.nid()));
+		propertySequenceImplicationAxiom.putUncommittedProperty(TinkarTerm.PROPERTY_SEQUENCE_IMPLICATION.nid(),
+				implication);
 
-        propertyPatternImplicationAxiom.commitProperties();
-        return new LogicalAxiomAdaptor.PropertyPatternImplicationAdaptor(logicalExpression, propertyPatternImplicationAxiom.vertexIndex());
-    }
+		propertySequenceImplicationAxiom.commitProperties();
+		return new LogicalAxiomAdaptor.PropertySequenceImplicationAdaptor(logicalExpression,
+				propertySequenceImplicationAxiom.vertexIndex());
+	}
 
     /**
      * Creates and returns a recursive clone of the given logical axiom node.
      *
      * @param rootToClone the root node to be cloned. The node can be of type And,
      *                    ConceptAxiom, DefinitionRoot, DisjointWithAxiom, Feature,
-     *                    NecessarySet, Or, PropertyPatternImplication, PropertySet,
+     *                    NecessarySet, Or, PropertySequenceImplication, PropertySet,
      *                    Role, or SufficientSet.
      * @param <A> the type of logical axiom to be returned, extending LogicalAxiom
      * @return a cloned copy of the provided logical axiom node along with its recursive structure added to
@@ -433,8 +449,8 @@ public class LogicalExpressionBuilder {
                 yield (A) Or(or.vertexUUID(), childElements.toArray(childElements.toArray(new LogicalAxiom.Atom[childElements.size()])));
             }
 
-            case LogicalAxiom.Atom.PropertyPatternImplication propertyPatternImplication ->
-                    (A) PropertyPatternImplicationAxiom(propertyPatternImplication.vertexUUID(), propertyPatternImplication.propertyPattern(), propertyPatternImplication.implication());
+            case LogicalAxiom.Atom.PropertySequenceImplication propertySequenceImplication ->
+                    (A) PropertySequenceImplicationAxiom(propertySequenceImplication.vertexUUID(), propertySequenceImplication.propertySequence(), propertySequenceImplication.implication());
 
             case LogicalAxiom.LogicalSet.PropertySet propertySet -> {
                 // TODO remove the AND from the set... Will make isomorphic calculations faster... ?
