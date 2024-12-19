@@ -15,12 +15,11 @@
  */
 package dev.ikm.tinkar.reasoner.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.terms.PatternFacade;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class ReasonerServiceBase implements ReasonerService {
 
@@ -78,6 +77,12 @@ public abstract class ReasonerServiceBase implements ReasonerService {
 		this.statedAxiomPattern = statedAxiomPattern;
 		this.inferredAxiomPattern = inferredAxiomPattern;
 		this.progressUpdater = null;
+	}
+
+	@Override
+	public ClassifierResults processResults(TrackingCallable<ClassifierResults> callable, boolean reinferAllHierarchy) throws Exception {
+		ProcessReasonerResults task = new ProcessReasonerResults(this, reinferAllHierarchy, callable);
+		return task.compute();
 	}
 
 }

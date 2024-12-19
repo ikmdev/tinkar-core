@@ -14,6 +14,13 @@
  * limitations under the License.
  */
 
+import dev.ikm.tinkar.common.service.CachingService;
+import dev.ikm.tinkar.common.service.DataServiceController;
+import dev.ikm.tinkar.common.service.DefaultDescriptionForNidService;
+import dev.ikm.tinkar.common.service.PublicIdService;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.StampService;
+
 open module dev.ikm.tinkar.integration.test {
     requires dev.ikm.tinkar.common;
     requires dev.ikm.tinkar.composer;
@@ -38,4 +45,15 @@ open module dev.ikm.tinkar.integration.test {
     requires dev.ikm.tinkar.ext.binding;
     requires dev.ikm.jpms.recordbuilder.core;
     requires java.compiler;
+    requires dev.ikm.tinkar.reasoner.elkowl;
+    requires dev.ikm.tinkar.reasoner.elksnomed;
+    requires dev.ikm.tinkar.reasoner.hybrid;
+    requires dev.ikm.tinkar.reasoner.service;
+
+    uses CachingService;
+    uses DataServiceController;
+    uses DefaultDescriptionForNidService;
+    uses EntityService;
+    uses PublicIdService;
+    uses StampService;
 }

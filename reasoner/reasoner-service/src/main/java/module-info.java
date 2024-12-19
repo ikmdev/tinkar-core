@@ -20,8 +20,11 @@ module dev.ikm.tinkar.reasoner.service {
 	requires dev.ikm.tinkar.coordinate;
 	requires dev.ikm.tinkar.terms;
 	requires dev.ikm.tinkar.common;
+	requires dev.ikm.jpms.eclipse.collections;
 	requires dev.ikm.jpms.eclipse.collections.api;
 	requires dev.ikm.tinkar.entity;
+	requires org.jgrapht.core;
+
 
 	exports dev.ikm.tinkar.reasoner.service;
 
