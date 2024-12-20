@@ -24,6 +24,7 @@ import dev.ikm.tinkar.component.graph.Vertex;
 import dev.ikm.tinkar.component.location.PlanarPoint;
 import dev.ikm.tinkar.component.location.SpatialPoint;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 import static dev.ikm.tinkar.common.service.PrimitiveDataService.STAMP_DATA_TYPE;
@@ -69,8 +70,9 @@ public enum FieldDataType {
     SPATIAL_POINT((byte) 24, SpatialPoint.class),
     STAMP_VERSION((byte) 25, Stamp.class),
 
-    FIELD_DEFINITION((byte) 26, FieldDefinition.class),
-    LONG((byte) 27, Long.class),
+	FIELD_DEFINITION((byte) 26, FieldDefinition.class),
+	LONG((byte) 27, Long.class),
+	DECIMAL((byte) 28, BigDecimal.class),
 
     // Identified thing needs to go last...
     IDENTIFIED_THING(Byte.MAX_VALUE, Component.class);
@@ -142,6 +144,8 @@ public enum FieldDataType {
                 return FIELD_DEFINITION;
             case 27:
                 return LONG;
+            case 28:
+                return DECIMAL;
 
             // Identified thing needs to go last...
             case Byte.MAX_VALUE:

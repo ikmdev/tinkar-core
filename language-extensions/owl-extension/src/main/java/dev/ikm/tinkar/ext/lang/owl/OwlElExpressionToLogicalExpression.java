@@ -1,6 +1,7 @@
 package dev.ikm.tinkar.ext.lang.owl;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -195,12 +196,11 @@ public class OwlElExpressionToLogicalExpression {
 		List<LogicalAxiom.Atom> exprs = new ArrayList<>();
 		for (ConcreteRole role : roles) {
 			Object value = switch (role.getValueType()) {
-			// TODO Use BigDecimal
-			case Decimal -> Double.parseDouble(role.getValue());
+			case Decimal -> new BigDecimal(role.getValue());
 			case Double -> Double.parseDouble(role.getValue());
 			case Float -> Float.parseFloat(role.getValue());
 			case Integer -> Integer.parseInt(role.getValue());
-			case String -> Float.parseFloat(role.getValue());
+			case String -> role.getValue();
 			};
 			exprs.add(builder.FeatureAxiom(getConceptFacade(role.getConcreteRoleType().getId()), TinkarTerm.EQUAL_TO,
 					value));

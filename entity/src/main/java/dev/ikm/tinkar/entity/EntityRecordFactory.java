@@ -46,6 +46,8 @@ import static dev.ikm.tinkar.component.FieldDataType.COMPONENT_ID_LIST;
 import static dev.ikm.tinkar.component.FieldDataType.SEMANTIC_CHRONOLOGY;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import java.math.BigDecimal;
+
 public class EntityRecordFactory {
     private static final Logger LOG = LoggerFactory.getLogger(EntityRecordFactory.class);
     public static final byte ENTITY_FORMAT_VERSION = 1;
@@ -206,6 +208,11 @@ public class EntityRecordFactory {
                     writeTokenAndField(writeBuf, FieldDataType.INTEGER, () -> writeBuf.writeInt(integerField));
             case Long longField ->
                     writeTokenAndField(writeBuf, FieldDataType.LONG, () -> writeBuf.writeLong(longField));
+			case BigDecimal decimalField -> writeTokenAndField(writeBuf, FieldDataType.DECIMAL, () -> {
+				byte[] bytes = decimalField.toString().getBytes(UTF_8);
+				writeBuf.writeInt(bytes.length);
+				writeBuf.write(bytes);
+			});
             case Instant instantField ->
                     writeTokenAndField(writeBuf, FieldDataType.INSTANT, () -> {
                         writeBuf.writeLong(instantField.getEpochSecond());
@@ -615,6 +622,7 @@ public class EntityRecordFactory {
             case COMPONENT_ID_LIST -> IntIds.list.of(readIntArray(readBuf));
             case COMPONENT_ID_SET -> IntIds.set.of(readIntArray(readBuf));
             case LONG -> readBuf.readLong();
+            case DECIMAL -> new BigDecimal(new String(readBytes(readBuf), UTF_8));
             default -> throw new UnsupportedOperationException("Can't handle field read of type: " + dataType);
         };
     }

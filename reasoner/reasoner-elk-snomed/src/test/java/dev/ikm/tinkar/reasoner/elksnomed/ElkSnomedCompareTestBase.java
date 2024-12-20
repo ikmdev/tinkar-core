@@ -51,8 +51,6 @@ public abstract class ElkSnomedCompareTestBase extends ElkSnomedTestBase {
 		LOG.info("Files exist");
 		LOG.info("\t" + axioms_file);
 		LOG.info("\t" + rels_file);
-		// TODO back this out once Decimal is implemented
-		ConcreteRole.convert_to_float_for_compare = true;
 		ElkSnomedData data = buildSnomedData();
 		{
 			Concept us_con = data.getConcept(ElkSnomedData.getNid(SnomedIds.us_nlm_module));
