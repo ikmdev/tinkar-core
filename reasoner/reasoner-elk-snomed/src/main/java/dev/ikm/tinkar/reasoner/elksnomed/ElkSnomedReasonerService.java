@@ -28,8 +28,10 @@ import org.slf4j.LoggerFactory;
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.elk.snomed.SnomedOntologyReasoner;
 import dev.ikm.elk.snomed.model.Concept;
+import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.reasoner.service.ClassifierResults;
 import dev.ikm.tinkar.reasoner.service.ReasonerServiceBase;
 import dev.ikm.tinkar.terms.PatternFacade;
 
@@ -82,7 +84,7 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 
 	@Override
 	public void processIncremental(DiTreeEntity definition, int conceptNid) {
-		Concept concept = builder.processIncremental(definition, conceptNid);
+		Concept concept = builder.processIncremental(conceptNid, definition);
 		reasoner.process(concept);
 		reasoner.flush();
 	}
@@ -124,5 +126,4 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 		Set<Long> subs = reasoner.getSubConcepts(id);
 		return toIntSet(subs);
 	}
-
 }

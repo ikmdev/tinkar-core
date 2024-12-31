@@ -45,6 +45,10 @@ open module dev.ikm.tinkar.integration.test {
     requires dev.ikm.tinkar.ext.binding;
     requires dev.ikm.jpms.recordbuilder.core;
     requires java.compiler;
+    requires dev.ikm.tinkar.reasoner.elkowl;
+    requires dev.ikm.tinkar.reasoner.elksnomed;
+    requires dev.ikm.tinkar.reasoner.hybrid;
+    requires dev.ikm.tinkar.reasoner.service;
 
     uses CachingService;
     uses DataServiceController;

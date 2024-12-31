@@ -15,9 +15,12 @@
  */
 package dev.ikm.tinkar.reasoner.elkowl;
 
-import java.util.HashSet;
-import java.util.Set;
-
+import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
+import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
+import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.reasoner.elkowl.ElkOwlDataBuilder.IncrementalChanges;
+import dev.ikm.tinkar.reasoner.service.ReasonerServiceBase;
+import dev.ikm.tinkar.terms.PatternFacade;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
@@ -27,12 +30,8 @@ import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
-import dev.ikm.tinkar.reasoner.elkowl.ElkOwlDataBuilder.IncrementalChanges;
-import dev.ikm.tinkar.reasoner.service.ReasonerServiceBase;
-import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import dev.ikm.tinkar.entity.graph.DiTreeEntity;
-import dev.ikm.tinkar.terms.PatternFacade;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ElkOwlReasonerService extends ReasonerServiceBase {
 
