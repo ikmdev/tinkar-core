@@ -37,6 +37,11 @@ module dev.ikm.tinkar.common {
 
     exports dev.ikm.tinkar.common.alert;
     exports dev.ikm.tinkar.common.binary;
+    exports dev.ikm.tinkar.common.bind;
+    exports dev.ikm.tinkar.common.bind.annotations;
+    exports dev.ikm.tinkar.common.bind.annotations.axioms;
+    exports dev.ikm.tinkar.common.bind.annotations.names;
+    exports dev.ikm.tinkar.common.bind.annotations.publicid;
     exports dev.ikm.tinkar.common.id;
     exports dev.ikm.tinkar.common.service;
     exports dev.ikm.tinkar.common.util.functional;
