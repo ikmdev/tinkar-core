@@ -26,7 +26,6 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 
 public class ElkSnomedDataBuilderUs20240901TestIT extends ElkSnomedDataBuilderTestBase implements SnomedVersionUs {
 
-	@SuppressWarnings("unused")
 	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedDataBuilderUs20240901TestIT.class);
 
 	static {
