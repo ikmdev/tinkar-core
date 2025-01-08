@@ -15,8 +15,12 @@
  */
 package dev.ikm.tinkar.provider.spinedarray;
 
-import com.google.auto.service.AutoService;
-import dev.ikm.tinkar.common.service.*;
+import dev.ikm.tinkar.common.service.DataServiceProperty;
+import dev.ikm.tinkar.common.service.DataUriOption;
+import dev.ikm.tinkar.common.service.LoadDataFromFileController;
+import dev.ikm.tinkar.common.service.PluggableService;
+import dev.ikm.tinkar.common.service.ServiceKeys;
+import dev.ikm.tinkar.common.service.ServiceProperties;
 import dev.ikm.tinkar.common.validation.ValidationRecord;
 import dev.ikm.tinkar.common.validation.ValidationSeverity;
 import dev.ikm.tinkar.entity.EntityCountSummary;
@@ -31,13 +35,10 @@ import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
-import dev.ikm.tinkar.common.service.PluggableService;
-
 import java.util.ServiceLoader;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-@AutoService(DataServiceController.class)
 public class SpinedArrayNewController extends SpinedArrayController {
 
     public static boolean loading = false;

@@ -17,11 +17,16 @@ package dev.ikm.tinkar.provider.entity;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.auto.service.AutoService;
 import dev.ikm.tinkar.common.alert.AlertObject;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.service.*;
+import dev.ikm.tinkar.common.service.CachingService;
+import dev.ikm.tinkar.common.service.DataActivity;
+import dev.ikm.tinkar.common.service.DefaultDescriptionForNidService;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.PrimitiveDataRepair;
+import dev.ikm.tinkar.common.service.PublicIdService;
+import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.util.broadcast.Broadcaster;
 import dev.ikm.tinkar.common.util.broadcast.SimpleBroadcaster;
 import dev.ikm.tinkar.common.util.broadcast.Subscriber;
@@ -249,7 +254,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
             default -> throw new IllegalStateException("Unexpected value: " + entity);
         };
 
-        ENTITY_CACHE.put(entity.nid(),  EntityRecordFactory.make(mergedEntityBytes));
+        ENTITY_CACHE.put(entity.nid(), EntityRecordFactory.make(mergedEntityBytes));
         if (dispatch) {
             processor.dispatch(entity.nid());
             if (entity instanceof SemanticEntity semanticEntity) {
@@ -384,7 +389,6 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         }
     }
 
-    @AutoService(CachingService.class)
     public static class CacheProvider implements CachingService {
 
         @Override
@@ -473,13 +477,14 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         }
         // At this point, all stamps represent distinct time, module, and path. We can just merge the versions.
         return switch (entityToMergeInto) {
-            case ConceptRecord conceptOneRecord when entityToMergeFrom instanceof ConceptRecord conceptTwoRecord
-                    -> mergeAllConceptVersions(conceptOneRecord, conceptTwoRecord);
-            case PatternRecord patternOneRecord when entityToMergeFrom instanceof PatternRecord patternTwoRecord
-                -> mergeAllPatternVersions(patternOneRecord, patternTwoRecord);
-            case SemanticRecord semanticOneRecord when entityToMergeFrom instanceof SemanticRecord semanticTwoRecord
-                    -> mergeAllSemanticVersions(semanticOneRecord, semanticTwoRecord);
-            default -> throw new IllegalStateException("Can't merge:\n" + entityToMergeInto + "\nand:\n" + entityToMergeFrom);
+            case ConceptRecord conceptOneRecord when entityToMergeFrom instanceof ConceptRecord conceptTwoRecord ->
+                    mergeAllConceptVersions(conceptOneRecord, conceptTwoRecord);
+            case PatternRecord patternOneRecord when entityToMergeFrom instanceof PatternRecord patternTwoRecord ->
+                    mergeAllPatternVersions(patternOneRecord, patternTwoRecord);
+            case SemanticRecord semanticOneRecord when entityToMergeFrom instanceof SemanticRecord semanticTwoRecord ->
+                    mergeAllSemanticVersions(semanticOneRecord, semanticTwoRecord);
+            default ->
+                    throw new IllegalStateException("Can't merge:\n" + entityToMergeInto + "\nand:\n" + entityToMergeFrom);
         };
     }
 
@@ -493,7 +498,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         additionalUuids.remove(new UUID(patternOneRecord.mostSignificantBits(), patternOneRecord.leastSignificantBits()));
         long[] additionalUuidLongs = null;
         if (additionalUuids.notEmpty()) {
-            additionalUuidLongs = UuidUtil.asArray(additionalUuids.toArray(new UUID[additionalUuids.size()] ));
+            additionalUuidLongs = UuidUtil.asArray(additionalUuids.toArray(new UUID[additionalUuids.size()]));
         }
         PatternRecordBuilder builder = patternOneRecord.with().versions(versionList).additionalUuidLongs(additionalUuidLongs);
         return new FutureTask<>(() -> builder.build());
@@ -509,9 +514,9 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         additionalUuids.remove(new UUID(semanticOneRecord.mostSignificantBits(), semanticOneRecord.leastSignificantBits()));
         long[] additionalUuidLongs = null;
         if (additionalUuids.notEmpty()) {
-            additionalUuidLongs = UuidUtil.asArray(additionalUuids.toArray(new UUID[additionalUuids.size()] ));
+            additionalUuidLongs = UuidUtil.asArray(additionalUuids.toArray(new UUID[additionalUuids.size()]));
         }
-       SemanticRecordBuilder builder = semanticOneRecord.with().versions(versionList).additionalUuidLongs(additionalUuidLongs);
+        SemanticRecordBuilder builder = semanticOneRecord.with().versions(versionList).additionalUuidLongs(additionalUuidLongs);
         return new FutureTask<>(() -> builder.build());
     }
 
@@ -525,7 +530,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         additionalUuids.remove(new UUID(conceptOneRecord.mostSignificantBits(), conceptOneRecord.leastSignificantBits()));
         long[] additionalUuidLongs = null;
         if (additionalUuids.notEmpty()) {
-            additionalUuidLongs = UuidUtil.asArray(additionalUuids.toArray(new UUID[additionalUuids.size()] ));
+            additionalUuidLongs = UuidUtil.asArray(additionalUuids.toArray(new UUID[additionalUuids.size()]));
         }
         ConceptRecordBuilder builder = conceptOneRecord.with().versions(versionList).additionalUuidLongs(additionalUuidLongs);
         return new FutureTask<>(() -> builder.build());

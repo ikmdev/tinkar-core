@@ -110,21 +110,20 @@
         <!-- JPMS Dependencies -->
         <tinkar-jpms-deps.groupId>dev.ikm.jpms</tinkar-jpms-deps.groupId>
         <guava.version>33.3.0-jre-r3</guava.version>
-		<jpms-auto-service.version>1.0.1-r7</jpms-auto-service.version>
-		<jpms-record-builder-core.version>36-r7</jpms-record-builder-core.version>
-		<eclipse-collections.version>11.1.0-r13</eclipse-collections.version>
-		<eclipse-collections-api.version>11.1.0-r11</eclipse-collections-api.version>
-		<jheaps.version>0.14-r6</jheaps.version>
-		<roaringbitmap.version>0.9.31-r8</roaringbitmap.version>
+        <jpms-record-builder-core.version>36-r7</jpms-record-builder-core.version>
+        <eclipse-collections.version>11.1.0-r13</eclipse-collections.version>
+        <eclipse-collections-api.version>11.1.0-r11</eclipse-collections-api.version>
+        <jheaps.version>0.14-r6</jheaps.version>
+        <roaringbitmap.version>0.9.31-r8</roaringbitmap.version>
 
-		<ikm-reasoner.version>0.36.0</ikm-reasoner.version>
-		<owlapi.version>4.7.6</owlapi.version>
+        <ikm-reasoner.version>0.36.0</ikm-reasoner.version>
+        <owlapi.version>4.7.6</owlapi.version>
     </properties>
 
-	<!-- All Dependencies and versions used in this project are pre-defined here for use in modules -->
+    <!-- All Dependencies and versions used in this project are pre-defined here for use in modules -->
     <dependencyManagement>
         <dependencies>
-			<!-- Submodules -->
+            <!-- Submodules -->
             <dependency>
                 <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>collection</artifactId>
@@ -223,19 +222,14 @@
                 <version>${project.version}</version>
             </dependency>
 
-			<!-- IKM Dependencies -->
+            <!-- IKM Dependencies -->
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>tinkar-schema</artifactId>
                 <version>${tinkar-schema.version}</version>
             </dependency>
 
-			<!-- JPMS Dependencies -->
-            <dependency>
-                <groupId>${tinkar-jpms-deps.groupId}</groupId>
-                <artifactId>auto-service</artifactId>
-                <version>${jpms-auto-service.version}</version>
-            </dependency>
+            <!-- JPMS Dependencies -->
 
             <dependency>
                 <groupId>${tinkar-jpms-deps.groupId}</groupId>
@@ -253,6 +247,12 @@
                 <groupId>${tinkar-jpms-deps.groupId}</groupId>
                 <artifactId>activej-bytebuf</artifactId>
                 <version>${activej-bytebuf.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>dev.ikm.jpms</groupId>
+                        <artifactId>auto-service</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>
@@ -303,7 +303,7 @@
                 <version>${guava.version}</version>
             </dependency>
 
-			<!-- Everything else -->
+            <!-- Everything else -->
             <dependency>
                 <groupId>org.jsonschema2pojo</groupId>
                 <artifactId>jsonschema2pojo-core</artifactId>
@@ -376,7 +376,7 @@
                 <version>${mockito.version}</version>
             </dependency>
 
-			<!-- https://mvnrepository.com/artifact/org.apache.lucene/lucene-queries -->
+            <!-- https://mvnrepository.com/artifact/org.apache.lucene/lucene-queries -->
             <dependency>
                 <groupId>org.apache.lucene</groupId>
                 <artifactId>lucene-queryparser</artifactId>
@@ -406,45 +406,45 @@
                 <artifactId>lucene-suggest</artifactId>
                 <version>${lucene-suggest.version}</version>
             </dependency>
-            
+
             <dependency>
-				<groupId>dev.ikm.owlapi</groupId>
-				<artifactId>owlapi-api</artifactId>
-				<version>${owlapi.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>dev.ikm.owlapi</groupId>
-				<artifactId>owlapi-apibinding</artifactId>
-				<version>${owlapi.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>dev.ikm.owlapi</groupId>
-				<artifactId>owlapi-impl</artifactId>
-				<version>${owlapi.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>dev.ikm.owlapi</groupId>
-				<artifactId>owlapi-parsers</artifactId>
-				<version>${owlapi.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>dev.ikm.elk</groupId>
-				<artifactId>elk-snomed</artifactId>
-				<version>${ikm-reasoner.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>dev.ikm.elk</groupId>
-				<artifactId>elk-snomed-owl</artifactId>
-				<version>${ikm-reasoner.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>dev.ikm.elk</groupId>
-				<artifactId>elk-snomed-owl-el</artifactId>
-				<version>${ikm-reasoner.version}</version>
-			</dependency>
+                <groupId>dev.ikm.owlapi</groupId>
+                <artifactId>owlapi-api</artifactId>
+                <version>${owlapi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.owlapi</groupId>
+                <artifactId>owlapi-apibinding</artifactId>
+                <version>${owlapi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.owlapi</groupId>
+                <artifactId>owlapi-impl</artifactId>
+                <version>${owlapi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.owlapi</groupId>
+                <artifactId>owlapi-parsers</artifactId>
+                <version>${owlapi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.elk</groupId>
+                <artifactId>elk-snomed</artifactId>
+                <version>${ikm-reasoner.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.elk</groupId>
+                <artifactId>elk-snomed-owl</artifactId>
+                <version>${ikm-reasoner.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.ikm.elk</groupId>
+                <artifactId>elk-snomed-owl-el</artifactId>
+                <version>${ikm-reasoner.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
-	<!-- Cross project dependencies -->
+    <!-- Cross project dependencies -->
     <dependencies>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -454,10 +454,6 @@
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j2-impl</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>${tinkar-jpms-deps.groupId}</groupId>
-            <artifactId>auto-service</artifactId>
         </dependency>
 
         <dependency>
@@ -502,7 +498,7 @@
         </plugins>
     </build>
 
-	<!-- for site generation -->
+    <!-- for site generation -->
     <reporting>
         <plugins>
             <plugin>
