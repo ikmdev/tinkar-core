@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed;
 
-import dev.ikm.tinkar.ext.lang.owl.OwlElExpressionToLogicalExpression;
 import java.util.List;
 import java.util.Set;
 
@@ -34,6 +33,7 @@ import dev.ikm.elk.snomed.model.Definition;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
+import dev.ikm.tinkar.ext.lang.owl.OwlElToLogicalExpression;
 import dev.ikm.tinkar.reasoner.service.ReasonerServiceBase;
 import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -142,7 +142,7 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	@Override
 	public LogicalExpression getNecessaryNormalForm(int id) {
 		Definition def = nnfb.getNecessaryNormalForm(id);
-		OwlElExpressionToLogicalExpression leb = new OwlElExpressionToLogicalExpression(null, 0);
+		OwlElToLogicalExpression leb = new OwlElToLogicalExpression();
 		try {
 			LogicalExpression nnf = leb.build(def);
 			return nnf;
