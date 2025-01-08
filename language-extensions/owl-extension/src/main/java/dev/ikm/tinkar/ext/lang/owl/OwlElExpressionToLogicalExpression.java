@@ -114,6 +114,12 @@ public class OwlElExpressionToLogicalExpression {
 		return builder.build();
 	}
 
+	public LogicalExpression build(Definition def) throws Exception {
+		builder = new LogicalExpressionBuilder();
+		processDefinition(def, false);
+		return builder.build();
+	}
+
 	private ConceptFacade getConceptFacade(long id) {
 		// TODO Maybe (ConceptFacade) EntityProxy.Concept.make((int) role_type.getId()
 		Optional<? extends ConceptFacade> role_type_cf = EntityService.get().getEntity((int) id);

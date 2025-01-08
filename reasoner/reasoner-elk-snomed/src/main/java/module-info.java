@@ -1,3 +1,4 @@
+
 /*
  * Copyright © 2015 Integrated Knowledge Management (support@ikm.dev)
  *
@@ -20,20 +21,20 @@ module dev.ikm.tinkar.reasoner.elksnomed {
 	requires dev.ikm.jpms.eclipse.collections;
 	requires dev.ikm.jpms.eclipse.collections.api;
 	requires org.slf4j;
-	
+
 	requires dev.ikm.tinkar.collection;
 	requires dev.ikm.tinkar.coordinate;
 	requires dev.ikm.tinkar.entity;
+	requires dev.ikm.tinkar.ext.lang.owl;
+	requires dev.ikm.tinkar.reasoner.service;
 
 	requires dev.ikm.elk.snomed;
 	requires dev.ikm.elk.snomed.owlel;
-	
-	requires dev.ikm.tinkar.reasoner.service;
 
 	exports dev.ikm.tinkar.reasoner.elksnomed;
 
 	provides ReasonerService with ElkSnomedReasonerService;
-	
+
 	// TODO needed for unit test
 	uses ReasonerService;
 

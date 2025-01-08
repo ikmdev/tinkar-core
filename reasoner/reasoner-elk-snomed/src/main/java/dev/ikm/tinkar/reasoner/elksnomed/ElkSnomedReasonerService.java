@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed;
 
+import dev.ikm.tinkar.ext.lang.owl.OwlElExpressionToLogicalExpression;
 import java.util.List;
 import java.util.Set;
 
@@ -25,15 +26,17 @@ import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.ikm.elk.snomed.NecessaryNormalFormBuilder;
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.elk.snomed.SnomedOntologyReasoner;
 import dev.ikm.elk.snomed.model.Concept;
-import dev.ikm.tinkar.common.service.TrackingCallable;
+import dev.ikm.elk.snomed.model.Definition;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
-import dev.ikm.tinkar.reasoner.service.ClassifierResults;
+import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.reasoner.service.ReasonerServiceBase;
 import dev.ikm.tinkar.terms.PatternFacade;
+import dev.ikm.tinkar.terms.TinkarTerm;
 
 public class ElkSnomedReasonerService extends ReasonerServiceBase {
 
@@ -46,6 +49,8 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	protected SnomedOntology ontology;
 
 	private SnomedOntologyReasoner reasoner;
+
+	private NecessaryNormalFormBuilder nnfb;
 
 	@Override
 	public void init(ViewCalculator viewCalculator, PatternFacade statedAxiomPattern,
@@ -90,6 +95,13 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	}
 
 	@Override
+	public void buildNecessaryNormalForm() {
+		nnfb = NecessaryNormalFormBuilder.create(ontology, reasoner.getSuperConcepts(),
+				reasoner.getSuperRoleTypes(false), TinkarTerm.ROOT_VERTEX.nid());
+		nnfb.generate();
+	}
+
+	@Override
 	public int getConceptCount() {
 		return data.getActiveConceptCount();
 	}
@@ -126,4 +138,17 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 		Set<Long> subs = reasoner.getSubConcepts(id);
 		return toIntSet(subs);
 	}
+
+	@Override
+	public LogicalExpression getNecessaryNormalForm(int id) {
+		Definition def = nnfb.getNecessaryNormalForm(id);
+		OwlElExpressionToLogicalExpression leb = new OwlElExpressionToLogicalExpression(null, 0);
+		try {
+			LogicalExpression nnf = leb.build(def);
+			return nnf;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 }

@@ -117,7 +117,7 @@
 		<jheaps.version>0.14-r6</jheaps.version>
 		<roaringbitmap.version>0.9.31-r8</roaringbitmap.version>
 
-		<ikm-reasoner.version>0.36.0</ikm-reasoner.version>
+		<ikm-reasoner.version>0.37.0-SNAPSHOT</ikm-reasoner.version>
 		<owlapi.version>4.7.6</owlapi.version>
     </properties>
 
@@ -205,13 +205,19 @@
                 <version>${project.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>dev.ikm.tinkar</groupId>
-                <artifactId>executor-provider</artifactId>
-                <version>${project.version}</version>
-            </dependency>
+			<dependency>
+				<groupId>dev.ikm.tinkar</groupId>
+				<artifactId>executor-provider</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 
-            <dependency>
+			<dependency>
+				<groupId>dev.ikm.tinkar.ext.owl</groupId>
+				<artifactId>owl-extension</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
                 <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>search-provider</artifactId>
                 <version>${project.version}</version>
