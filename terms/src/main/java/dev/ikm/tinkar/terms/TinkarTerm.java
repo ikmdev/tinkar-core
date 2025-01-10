@@ -261,7 +261,7 @@ public class TinkarTerm {
      */
     public static final EntityProxy.Pattern VALUE_CONSTRAINT_PATTERN =
             EntityProxy.Pattern.make("Value Constraint Pattern", UUID.fromString("922697f7-36ba-4afc-9dd5-f29d54b0fdec"));
-    
+
     /**
      * Java binding for the concept described as <strong><em>Acceptable (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -2551,6 +2551,15 @@ public class TinkarTerm {
      */
     public static final EntityProxy.Concept FLOAT_FIELD =
             EntityProxy.Concept.make("Float field (SOLOR)", UUID.fromString("6efe7087-3e3c-5b45-8109-90d7652b1506"));
+
+    /**
+     * Java binding for the concept described as <strong><em>Decimal</em></strong>;
+     * identified by UUID: {@code
+     * <a href="http://localhost:8080/terminology/rest/concept/dccb0476-3b63-3d48-b5a2-85bd0ad2fa61">
+     * dccb0476-3b63-3d48-b5a2-85bd0ad2fa61</a>}.
+     */
+    public static final EntityProxy.Concept DECIMAL =
+            EntityProxy.Concept.make("Decimal (SOLOR)", UUID.fromString("dccb0476-3b63-3d48-b5a2-85bd0ad2fa61"));
     /**
      * Java binding for the concept described as <strong><em>Float literal (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -6835,8 +6844,8 @@ public class TinkarTerm {
     public static final EntityProxy.Concept TINKAR_MODEL_CONCEPT =
             EntityProxy.Concept.make("Tinkar Model concept (SOLOR)", UUID.fromString("bc59d656-83d3-47d8-9507-0e656ea95463"));
 
-	public static final EntityProxy.Concept CONCEPT_MODEL_DATA_ATTRIBUTE = 
-			EntityProxy.Concept.make("Concept model data attribute (SOLOR)", UUID.fromString("e418d7a7-2760-3746-ba2e-253b5e383147"));
+    public static final EntityProxy.Concept CONCEPT_MODEL_DATA_ATTRIBUTE =
+            EntityProxy.Concept.make("Concept model data attribute (SOLOR)", UUID.fromString("e418d7a7-2760-3746-ba2e-253b5e383147"));
 
     public static final EntityProxy.Concept ANNOTATION_PROPERTY_SET =
             EntityProxy.Concept.make("Annotation property set (SOLOR)", UUID.fromString("cb9e33de-f82c-495d-89fa-69afecbcd47d"));
