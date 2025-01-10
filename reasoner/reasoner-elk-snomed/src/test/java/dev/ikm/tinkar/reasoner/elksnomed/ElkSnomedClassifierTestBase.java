@@ -74,6 +74,7 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 		int nid = ElkSnomedData.getNid(404785009);
 		LogicalExpression nnf = rs.getNecessaryNormalForm(nid);
 		LOG.info("NNF: " + nid + " " + nnf);
+		rs.writeInferredResults();
 	}
 
 	private HashMap<Integer, Long> nid_sctid_map;

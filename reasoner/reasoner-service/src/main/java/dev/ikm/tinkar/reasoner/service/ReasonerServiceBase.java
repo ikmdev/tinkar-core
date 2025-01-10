@@ -80,7 +80,14 @@ public abstract class ReasonerServiceBase implements ReasonerService {
 	}
 
 	@Override
-	public ClassifierResults processResults(TrackingCallable<ClassifierResults> callable, boolean reinferAllHierarchy) throws Exception {
+	public ClassifierResults writeInferredResults() {
+		InferredResultsWriter nnfw = new InferredResultsWriter(this);
+		 return nnfw.write();
+	}
+
+	@Override
+	public ClassifierResults processResults(TrackingCallable<ClassifierResults> callable, boolean reinferAllHierarchy)
+			throws Exception {
 		ProcessReasonerResults task = new ProcessReasonerResults(this, reinferAllHierarchy, callable);
 		return task.compute();
 	}

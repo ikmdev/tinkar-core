@@ -57,6 +57,8 @@ public interface ReasonerService {
 
 	public void buildNecessaryNormalForm();
 
+	public ClassifierResults writeInferredResults();
+
 	public int getConceptCount();
 
 	public ImmutableIntList getReasonerConceptSet();
@@ -69,6 +71,7 @@ public interface ReasonerService {
 
 	public LogicalExpression getNecessaryNormalForm(int id);
 
+	@Deprecated
 	public ClassifierResults processResults(TrackingCallable<ClassifierResults> trackingCallable,
 			boolean reinferAllHierarchy) throws Exception;
 
