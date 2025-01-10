@@ -2559,7 +2559,7 @@ public class TinkarTerm {
      * dccb0476-3b63-3d48-b5a2-85bd0ad2fa61</a>}.
      */
     public static final EntityProxy.Concept DECIMAL =
-            EntityProxy.Concept.make("Decimal", UUID.fromString("dccb0476-3b63-3d48-b5a2-85bd0ad2fa61"));
+            EntityProxy.Concept.make("Decimal (SOLOR)", UUID.fromString("dccb0476-3b63-3d48-b5a2-85bd0ad2fa61"));
     /**
      * Java binding for the concept described as <strong><em>Float literal (SOLOR)</em></strong>;
      * identified by UUID: {@code
