@@ -13,15 +13,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>entity</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
 			<artifactId>coordinate</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>entity-provider</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
@@ -29,8 +21,20 @@
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
+			<artifactId>entity</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>entity-provider</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>executor-provider</artifactId>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>dev.ikm.tinkar.ext.owl</groupId>
+			<artifactId>owl-extension</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>

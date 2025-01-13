@@ -205,13 +205,19 @@
                 <version>${project.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>dev.ikm.tinkar</groupId>
-                <artifactId>executor-provider</artifactId>
-                <version>${project.version}</version>
-            </dependency>
+			<dependency>
+				<groupId>dev.ikm.tinkar</groupId>
+				<artifactId>executor-provider</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 
-            <dependency>
+			<dependency>
+				<groupId>dev.ikm.tinkar.ext.owl</groupId>
+				<artifactId>owl-extension</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
                 <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>search-provider</artifactId>
                 <version>${project.version}</version>

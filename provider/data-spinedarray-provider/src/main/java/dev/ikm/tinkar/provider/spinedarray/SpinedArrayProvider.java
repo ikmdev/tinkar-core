@@ -183,7 +183,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             if (stamp.lastVersion() == null) {
                 LOG.info("Null last version for stamp with nid: " + stampNid);
             } else {
-                LOG.info("Stamp: " + stamp);
+//                LOG.info("Stamp: " + stamp);
                 if (stamp.time() == Long.MAX_VALUE && Transaction.forStamp(stamp).isEmpty()) {
                     // Uncommitted stamp found outside a transaction on restart. Set to canceled.
                     cancelUncommittedStamp(stampNid, stamp);

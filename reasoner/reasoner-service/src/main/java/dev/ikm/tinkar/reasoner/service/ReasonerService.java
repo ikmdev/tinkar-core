@@ -15,18 +15,20 @@
  */
 package dev.ikm.tinkar.reasoner.service;
 
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
+
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.terms.PatternFacade;
-import org.eclipse.collections.api.list.primitive.ImmutableIntList;
-import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 
 public interface ReasonerService {
 
 	public void init(ViewCalculator viewCalculator, PatternFacade statedAxiomPattern,
 			PatternFacade inferredAxiomPattern);
-	
+
 	public default String getName() {
 		return this.getClass().getSimpleName();
 	}
@@ -53,6 +55,10 @@ public interface ReasonerService {
 	// TODO Obtain conceptNid from DiTreeEntity?
 	public void processIncremental(DiTreeEntity definition, int conceptNid);
 
+	public void buildNecessaryNormalForm();
+
+	public ClassifierResults writeInferredResults();
+
 	public int getConceptCount();
 
 	public ImmutableIntList getReasonerConceptSet();
@@ -63,5 +69,10 @@ public interface ReasonerService {
 
 	public ImmutableIntSet getChildren(int id);
 
-	public ClassifierResults processResults(TrackingCallable<ClassifierResults> trackingCallable, boolean reinferAllHierarchy) throws Exception;
+	public LogicalExpression getNecessaryNormalForm(int id);
+
+	@Deprecated
+	public ClassifierResults processResults(TrackingCallable<ClassifierResults> trackingCallable,
+			boolean reinferAllHierarchy) throws Exception;
+
 }

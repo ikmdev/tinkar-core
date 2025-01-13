@@ -152,5 +152,15 @@ public abstract class ElkSnomedTestBase extends SnomedTestBase {
 		Files.write(path, lines);
 		return lines;
 	}
+	
+	public ReasonerService runReasonerServiceNNF() throws Exception {
+		LOG.info("runReasonerServiceNNF");
+		ReasonerService rs = initReasonerService();
+		rs.extractData();
+		rs.loadData();
+		rs.computeInferences();
+		rs.buildNecessaryNormalForm();
+		return rs;
+	}
 
 }
