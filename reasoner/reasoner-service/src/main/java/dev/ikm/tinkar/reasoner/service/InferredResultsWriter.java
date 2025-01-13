@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.time.MultipleEndpointTimer;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
@@ -61,6 +62,8 @@ public class InferredResultsWriter {
 
 	private AtomicInteger axiomDataNotFoundCounter;
 
+	private TrackingCallable<?> progressUpdater = null;
+
 	public InferredResultsWriter(ReasonerService rs) {
 		super();
 		this.rs = rs;
@@ -70,12 +73,24 @@ public class InferredResultsWriter {
 		return rs.getViewCalculator().viewCoordinateRecord();
 	}
 
+	public void setProgressUpdater(TrackingCallable<?> progressUpdater) {
+		this.progressUpdater = progressUpdater;
+	}
+
+	private void updateProgress(int count, int total) {
+		if (progressUpdater != null && count % 100 == 0)
+			progressUpdater.updateProgress(count, total);
+	}
+
 	private void processSemantic(Entity<? extends EntityVersion> entity) {
 		updateTransaction.addComponent(entity);
 		Entity.provider().putEntity(entity);
 	}
 
 	public ClassifierResults write() {
+		final int totalCount = rs.getReasonerConceptSet().size();
+		updateProgress(0, totalCount);
+		final AtomicInteger processedCount = new AtomicInteger();
 		updateTransaction = Transaction.make("Committing classification");
 		EntityService.get().beginLoadPhase();
 		try {
@@ -94,6 +109,7 @@ public class InferredResultsWriter {
 				updateEquivalentSets(conceptNid);
 				writeNNF(conceptNid);
 				writeNavigation(conceptNid);
+				updateProgress(processedCount.incrementAndGet(), totalCount);
 			});
 			updateTransaction.commit();
 		} finally {
