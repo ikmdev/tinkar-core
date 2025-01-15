@@ -15,13 +15,11 @@
  */
 package dev.ikm.tinkar.common.service;
 
-import com.google.auto.service.AutoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.ServiceConfigurationError;
-
 import java.util.ServiceLoader;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ScheduledExecutorService;
@@ -105,8 +103,6 @@ public class TinkExecutor {
         return executorSingleton.scheduled();
     }
 
-
-    @AutoService(CachingService.class)
     public static class CacheProvider implements CachingService {
 
         @Override

@@ -19,13 +19,13 @@
  * and open the template in the editor.
  */
 
-@SuppressWarnings("module") // 7 in HL7 is not a version reference
+@SuppressWarnings("module")
+        // 7 in HL7 is not a version reference
 module dev.ikm.tinkar.collection {
     requires transitive dev.ikm.tinkar.common;
     requires dev.ikm.jpms.eclipse.collections.api;
     requires dev.ikm.jpms.eclipse.collections;
     requires org.slf4j;
-    requires transitive static dev.ikm.jpms.auto.service;
 
     exports dev.ikm.tinkar.collection;
     opens dev.ikm.tinkar.collection to org.eclipse.collections.api, org.eclipse.collections;

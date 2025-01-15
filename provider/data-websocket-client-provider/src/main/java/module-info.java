@@ -23,7 +23,8 @@ import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.provider.websocket.client.WebsocketServiceController;
 
-@SuppressWarnings("module") // 7 in HL7 is not a version reference
+@SuppressWarnings("module")
+        // 7 in HL7 is not a version reference
 module dev.ikm.tinkar.provider.websocket.client {
     requires org.slf4j;
     requires dev.ikm.jpms.activej.bytebuf;
@@ -39,7 +40,6 @@ module dev.ikm.tinkar.provider.websocket.client {
     requires dev.ikm.tinkar.component;
     requires java.net.http;
     requires dev.ikm.tinkar.entity;
-    requires static transitive dev.ikm.jpms.auto.service;
 
     provides DataServiceController
             with WebsocketServiceController;

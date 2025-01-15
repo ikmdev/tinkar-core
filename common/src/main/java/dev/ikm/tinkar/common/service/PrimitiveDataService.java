@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.common.service;
 
-import com.google.auto.service.AutoService;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
@@ -89,12 +88,11 @@ public interface PrimitiveDataService {
                     foundValue = nid;
                 } else {
                     if (foundValue != nid) {
-                        StringBuilder sb = new StringBuilder();
-                        sb.append("Multiple nids for: ");
-                        sb.append(sortedUuidList);
-                        sb.append(" first value: ").append(foundValue);
-                        sb.append(" second value: ").append(nid);
-                        throw new IllegalStateException(sb.toString());
+                        String sb = "Multiple nids for: " +
+                                sortedUuidList +
+                                " first value: " + foundValue +
+                                " second value: " + nid;
+                        throw new IllegalStateException(sb);
                     }
                 }
             }
@@ -173,7 +171,7 @@ public interface PrimitiveDataService {
                             SEMANTIC_CHRONOLOGY((byte) 3, SemanticChronology.class),
                             STAMP(STAMP_DATA_TYPE, Stamp.class)
                         */
-                        case 1, 2, 3, STAMP_DATA_TYPE-> chronologyByteLists.add(versionBytes);
+                        case 1, 2, 3, STAMP_DATA_TYPE -> chronologyByteLists.add(versionBytes);
 
                         /*
                             CONCEPT_VERSION((byte) 4, ConceptVersion.class),
@@ -377,7 +375,7 @@ public interface PrimitiveDataService {
      * This method may be of use when combining multiple mapped values for a nid.
      * For example, merging multiple versions of an entity, where each version is represented as a
      * byte[].
-     *
+     * <p>
      * Defaults to an activity of DataActivity.SYNCHRONIZABLE_EDIT.
      *
      * @param nid                    native identifier (an int) with which the resulting value is to be associated
@@ -402,17 +400,17 @@ public interface PrimitiveDataService {
      * null. This method may be of use when combining multiple mapped values for a nid. For example, merging multiple
      * versions of an entity, where each version is represented as a byte[].
      *
-     * @param nid Native identifier (an int) with which the resulting value is to be associated.
-     * @param patternNid Pattern native identifier.
+     * @param nid                    Native identifier (an int) with which the resulting value is to be associated.
+     * @param patternNid             Pattern native identifier.
      * @param referencedComponentNid If the bytes are for a semantic, the referenced component nid,
      *                               otherwise Integer.MAX_VALUE.
-     * @param value The non-null value to be merged with the existing value
-     *              associated with the nid or, if no existing value or a null value
-     *              is associated with the nid, to be associated with the nid.
-     * @param sourceObject Object that is the source of the bytes to merge.
-     * @param activity The data activity performed, classifying the type of database (and therefore change set) write.
+     * @param value                  The non-null value to be merged with the existing value
+     *                               associated with the nid or, if no existing value or a null value
+     *                               is associated with the nid, to be associated with the nid.
+     * @param sourceObject           Object that is the source of the bytes to merge.
+     * @param activity               The data activity performed, classifying the type of database (and therefore change set) write.
      * @return The new value associated with the specified nid, or null if no
-     *         value is associated with the nid.
+     * value is associated with the nid.
      */
     byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject, DataActivity activity);
 
@@ -488,8 +486,6 @@ public interface PrimitiveDataService {
         }
     }
 
-
-    @AutoService(CachingService.class)
     class CacheProvider implements CachingService {
 
         @Override

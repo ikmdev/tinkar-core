@@ -15,13 +15,10 @@
  */
 package dev.ikm.tinkar.provider.spinedarray;
 
-import com.google.auto.service.AutoService;
-import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.common.service.DataUriOption;
 import dev.ikm.tinkar.common.service.ServiceKeys;
 import dev.ikm.tinkar.common.service.ServiceProperties;
 
-@AutoService(DataServiceController.class)
 public class SpinedArrayOpenController extends SpinedArrayController {
     public static String CONTROLLER_NAME = "Open SpinedArrayStore";
 
