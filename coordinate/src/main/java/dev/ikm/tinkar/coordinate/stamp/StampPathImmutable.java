@@ -15,23 +15,19 @@
  */
 package dev.ikm.tinkar.coordinate.stamp;
 
-
-import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
-import dev.ikm.tinkar.common.binary.Decoder;
-import dev.ikm.tinkar.common.binary.DecoderInput;
-import dev.ikm.tinkar.common.binary.Encodable;
-import dev.ikm.tinkar.common.binary.Encoder;
-import dev.ikm.tinkar.common.binary.EncoderOutput;
-import dev.ikm.tinkar.common.id.IntIds;
-import dev.ikm.tinkar.common.service.CachingService;
-import dev.ikm.tinkar.common.service.PrimitiveData;
+import com.google.auto.service.AutoService;
+import dev.ikm.tinkar.common.binary.*;
 import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
 import dev.ikm.tinkar.coordinate.PathService;
-import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.MutableSet;
+import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
+import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.service.CachingService;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.TinkarTerm;
 
 import java.util.Objects;
 
@@ -118,7 +114,7 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
         return this;
     }
 
-    public static StampCoordinateRecord getStampFilter(StampPath stampPath) {
+    public static final StampCoordinateRecord getStampFilter(StampPath stampPath) {
         return StampCoordinateRecord.make(StateSet.ACTIVE_AND_INACTIVE,
                 StampPositionRecord.make(Long.MAX_VALUE, stampPath.pathConceptNid()),
                 IntIds.set.empty());
@@ -149,12 +145,14 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
 
     @Override
     public String toString() {
-        String sb = "StampPathImmutable:{" +
-                PrimitiveData.text(this.pathConceptNid) +
-                " Origins: " + this.pathOrigins + "}";
-        return sb;
+        final StringBuilder sb = new StringBuilder();
+        sb.append("StampPathImmutable:{");
+        sb.append(PrimitiveData.text(this.pathConceptNid));
+        sb.append(" Origins: ").append(this.pathOrigins).append("}");
+        return sb.toString();
     }
 
+    @AutoService(CachingService.class)
     public static class CachingProvider implements CachingService {
 
         @Override

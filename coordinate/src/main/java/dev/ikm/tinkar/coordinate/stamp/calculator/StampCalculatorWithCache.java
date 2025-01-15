@@ -53,35 +53,9 @@ package dev.ikm.tinkar.coordinate.stamp.calculator;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
-import dev.ikm.tinkar.common.service.CachingService;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.util.functional.TriConsumer;
-import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
+import com.google.auto.service.AutoService;
 import dev.ikm.tinkar.coordinate.PathService;
-import dev.ikm.tinkar.coordinate.stamp.StampBranchRecord;
-import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
-import dev.ikm.tinkar.coordinate.stamp.StampPath;
-import dev.ikm.tinkar.coordinate.stamp.StampPathImmutable;
-import dev.ikm.tinkar.coordinate.stamp.StampPosition;
-import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
-import dev.ikm.tinkar.coordinate.stamp.StateSet;
-import dev.ikm.tinkar.entity.CacheInvalidationSubscriber;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityFactory;
-import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.entity.EntityVersion;
-import dev.ikm.tinkar.entity.Field;
-import dev.ikm.tinkar.entity.FieldDefinitionRecord;
-import dev.ikm.tinkar.entity.FieldRecord;
-import dev.ikm.tinkar.entity.PatternEntityVersion;
-import dev.ikm.tinkar.entity.SemanticEntity;
-import dev.ikm.tinkar.entity.SemanticEntityVersion;
-import dev.ikm.tinkar.entity.StampEntity;
-import dev.ikm.tinkar.entity.graph.DiTreeVersion;
-import dev.ikm.tinkar.entity.graph.VersionVertex;
-import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
+import dev.ikm.tinkar.coordinate.stamp.*;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.set.ImmutableSet;
@@ -89,19 +63,24 @@ import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
+import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
+import dev.ikm.tinkar.common.service.CachingService;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.util.functional.TriConsumer;
+import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
+import dev.ikm.tinkar.component.graph.DiTree;
+import dev.ikm.tinkar.coordinate.stamp.*;
+import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.entity.graph.DiTreeVersion;
+import dev.ikm.tinkar.entity.graph.VersionVertex;
+import dev.ikm.tinkar.terms.State;
+import dev.ikm.tinkar.terms.TinkarTerm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.OptionalInt;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -110,6 +89,8 @@ import java.util.stream.Stream;
 
 /**
  * The Class RelativePositionCalculator.
+ *
+ * 
  */
 public class StampCalculatorWithCache implements StampCalculator {
     /**
@@ -295,7 +276,7 @@ public class StampCalculatorWithCache implements StampCalculator {
                         (newVersionToTest) -> {
                             if (latestVersionSet.isEmpty()) {
                                 if (allowedStates.contains(newVersionToTest.state())) {
-                                    latestVersionSet.add(newVersionToTest);
+                                    latestVersionSet.add((V) newVersionToTest);
                                 }
                             } else {
                                 handlePart(latestVersionSet, newVersionToTest);
@@ -404,7 +385,7 @@ public class StampCalculatorWithCache implements StampCalculator {
                 (semanticEntityVersion, entityVersion) -> {
                     Latest<PatternEntityVersion> latestPatternEntityVersion = latestPatternEntityVersion(semanticEntityVersion.patternNid());
                     latestPatternEntityVersion.ifPresent(patternEntityVersion -> {
-                        procedure.accept(semanticEntityVersion, semanticEntityVersion.fields(patternEntityVersion), entityVersion);
+                        procedure.accept(semanticEntityVersion, semanticEntityVersion.fields((PatternVersionRecord) patternEntityVersion), entityVersion);
                     });
                 });
     }
@@ -1042,6 +1023,7 @@ public class StampCalculatorWithCache implements StampCalculator {
         return Latest.empty();
     }
 
+    @AutoService(CachingService.class)
     public static class CacheProvider implements CachingService {
         // TODO: this has implicit assumption that no one will hold on to a calculator... Should we be defensive?
         @Override

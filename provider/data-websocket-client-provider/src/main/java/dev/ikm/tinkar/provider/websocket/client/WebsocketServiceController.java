@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.provider.websocket.client;
 
-
+import com.google.auto.service.AutoService;
 import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.common.service.DataServiceProperty;
 import dev.ikm.tinkar.common.service.DataUriOption;
@@ -31,11 +31,11 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Locale;
 
+@AutoService(DataServiceController.class)
 public class WebsocketServiceController implements DataServiceController<PrimitiveDataService> {
     public static final String CONTROLLER_NAME = "Websocket";
     private static final DataServiceProperty passwordProperty = new DataServiceProperty("password", true, true);
     MutableMap<DataServiceProperty, String> providerProperties = Maps.mutable.empty();
-
     {
         providerProperties.put(new DataServiceProperty("username", false, false), null);
         providerProperties.put(passwordProperty, null);
@@ -46,38 +46,36 @@ public class WebsocketServiceController implements DataServiceController<Primiti
         try {
             return List.of(new DataUriOption("localhost websocket", new URI("ws://127.0.0.1:8080/")));
         } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
+           throw new RuntimeException(e);
         }
     }
 
     @Override
     public ValidationRecord[] validate(DataServiceProperty dataServiceProperty, Object value, Object target) {
         if (passwordProperty.equals(dataServiceProperty)) {
-            if (value instanceof String password) {
+            if (value instanceof String password)  {
                 if (password.isBlank()) {
-                    return new ValidationRecord[]{new ValidationRecord(ValidationSeverity.ERROR,
+                    return new ValidationRecord[] { new ValidationRecord(ValidationSeverity.ERROR,
                             "Password cannot be blank", target)};
-                } else if (password.length() < 5) {
-                    return new ValidationRecord[]{new ValidationRecord(ValidationSeverity.ERROR,
+                } else if (password.length() < 5)  {
+                    return new ValidationRecord[] { new ValidationRecord(ValidationSeverity.ERROR,
                             "Password cannot be less than 5 characters", target)};
                 } else if (password.length() < 8) {
-                    return new ValidationRecord[]{new ValidationRecord(ValidationSeverity.WARNING,
+                    return new ValidationRecord[] { new ValidationRecord(ValidationSeverity.WARNING,
                             "Password recommended to be 8 or more characters", target),
                             new ValidationRecord(ValidationSeverity.INFO,
                                     "Password is " + password.length() +
                                             " characters long", target),
                     };
                 } else {
-                    return new ValidationRecord[]{new ValidationRecord(ValidationSeverity.OK,
+                    return new ValidationRecord[] { new ValidationRecord(ValidationSeverity.OK,
                             "Password OK", target)};
                 }
             }
         }
         return new ValidationRecord[]{};
     }
-
     DataUriOption dataUriOption;
-
     @Override
     public String controllerName() {
         return CONTROLLER_NAME;
