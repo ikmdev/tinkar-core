@@ -15,15 +15,16 @@
  */
 package dev.ikm.tinkar.coordinate.logic.calculator;
 
-import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
-import dev.ikm.tinkar.common.service.CachingService;
-import dev.ikm.tinkar.common.service.PrimitiveData;
+import com.google.auto.service.AutoService;
 import dev.ikm.tinkar.common.service.PrimitiveDataRepair;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinate;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
 import dev.ikm.tinkar.coordinate.logic.PremiseType;
-import dev.ikm.tinkar.coordinate.stamp.StampCoordinate;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
+import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
+import dev.ikm.tinkar.common.service.CachingService;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.coordinate.stamp.StampCoordinate;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
@@ -44,6 +45,7 @@ public class LogicCalculatorWithCache implements LogicCalculator {
             new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
                     ConcurrentReferenceHashMap.ReferenceType.WEAK);
 
+    ;
     private final LogicCoordinateRecord logicCoordinateRecord;
     private final StampCoordinateRecord stampCoordinateRecord;
     private final StampCalculator stampCalculator;
@@ -70,6 +72,7 @@ public class LogicCalculatorWithCache implements LogicCalculator {
     record LogicAndStampCoordinate(LogicCoordinateRecord logicCoordinate, StampCoordinateRecord stampCoordinate) {
     }
 
+    @AutoService(CachingService.class)
     public static class CacheProvider implements CachingService {
         @Override
         public void reset() {
@@ -114,7 +117,7 @@ public class LogicCalculatorWithCache implements LogicCalculator {
                     if (PrimitiveData.get() instanceof PrimitiveDataRepair primitiveDataRepair) {
                         primitiveDataRepair.mergeThenErase(semanticNids[0], semanticNids[1]);
                         return hasSufficientSet(nid);
-                    }
+                    };
                 }
                 // TODO Raise an alert...
                 throw new IllegalStateException("More than one set of axioms for concept: " + Entity.getFast(nid));

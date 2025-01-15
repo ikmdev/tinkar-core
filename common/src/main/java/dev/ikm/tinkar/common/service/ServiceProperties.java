@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.common.service;
 
+import com.google.auto.service.AutoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,6 +67,8 @@ public class ServiceProperties {
         return Optional.ofNullable((T) propertyMap.get(enumKey));
     }
 
+
+    @AutoService(CachingService.class)
     public static class CacheProvider implements CachingService {
 
         @Override

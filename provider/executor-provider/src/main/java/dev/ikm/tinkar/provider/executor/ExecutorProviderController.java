@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.provider.executor;
 
+import com.google.auto.service.AutoService;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.ExecutorController;
 import org.slf4j.Logger;
@@ -22,9 +23,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicReference;
 
+@AutoService({ExecutorController.class})
 public class ExecutorProviderController implements ExecutorController {
     private static final Logger LOG = LoggerFactory.getLogger(ExecutorProviderController.class);
-    private static final AtomicReference<ExecutorProvider> providerReference = new AtomicReference<>();
+    private static AtomicReference<ExecutorProvider> providerReference = new AtomicReference<>();
 
     @Override
     public ExecutorProvider create() {
@@ -50,6 +52,8 @@ public class ExecutorProviderController implements ExecutorController {
         });
     }
 
+
+    @AutoService(CachingService.class)
     public static class CacheProvider implements CachingService {
         @Override
         public void reset() {

@@ -18,31 +18,23 @@ package dev.ikm.tinkar.coordinate.language.calculator;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.service.CachingService;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.coordinate.language.LanguageCoordinate;
+import com.google.auto.service.AutoService;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
-import dev.ikm.tinkar.entity.CacheInvalidationSubscriber;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.entity.EntityVersion;
-import dev.ikm.tinkar.entity.Field;
-import dev.ikm.tinkar.entity.PatternEntity;
-import dev.ikm.tinkar.entity.PatternEntityVersion;
-import dev.ikm.tinkar.entity.SemanticEntity;
-import dev.ikm.tinkar.entity.SemanticEntityVersion;
-import dev.ikm.tinkar.entity.SemanticVersionRecord;
-import dev.ikm.tinkar.terms.EntityFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
+import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
+import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.service.CachingService;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.coordinate.language.LanguageCoordinate;
+import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.terms.EntityFacade;
+import dev.ikm.tinkar.terms.TinkarTerm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,10 +86,11 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
         return stampCalculator.latestPatternEntityVersion(patternNid);
     }
 
-    private record StampLangRecord(StampCoordinateRecord stampFilter,
-                                   ImmutableList<LanguageCoordinateRecord> languageCoordinateList) {
+    private static record StampLangRecord(StampCoordinateRecord stampFilter,
+                                          ImmutableList<LanguageCoordinateRecord> languageCoordinateList) {
     }
 
+    @AutoService(CachingService.class)
     public static class CacheProvider implements CachingService {
         @Override
         public void reset() {
@@ -401,13 +394,14 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
             Latest<PatternEntityVersion> latestPatternVersion = stampCalculator.latestPatternEntityVersion(semanticEntity.patternNid());
             if (latestPatternVersion.isPresent()) {
                 PatternEntityVersion patternVersion = latestPatternVersion.get();
-                String sb = "[" + getPreferredDescriptionTextWithFallbackOrNid(patternVersion.semanticMeaningNid()) +
-                        "] of <" +
-                        getPreferredDescriptionTextWithFallbackOrNid(semanticEntity.referencedComponentNid()) +
-                        "> for [" +
-                        getPreferredDescriptionTextWithFallbackOrNid(patternVersion.semanticPurposeNid()) +
-                        "]";
-                return Optional.of(sb);
+                StringBuilder sb = new StringBuilder("[");
+                sb.append(getPreferredDescriptionTextWithFallbackOrNid(patternVersion.semanticMeaningNid()));
+                sb.append("] of <");
+                sb.append(getPreferredDescriptionTextWithFallbackOrNid(semanticEntity.referencedComponentNid()));
+                sb.append("> for [");
+                sb.append(getPreferredDescriptionTextWithFallbackOrNid(patternVersion.semanticPurposeNid()));
+                sb.append("]");
+                return Optional.of(sb.toString());
             }
         }
 

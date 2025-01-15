@@ -25,5 +25,6 @@ module dev.ikm.tinkar.terms {
     requires dev.ikm.jpms.eclipse.collections.api;
     requires dev.ikm.jpms.eclipse.collections;
     requires org.slf4j;
+    requires transitive static dev.ikm.jpms.auto.service;
     exports dev.ikm.tinkar.terms;
 }
