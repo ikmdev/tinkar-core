@@ -142,6 +142,8 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	@Override
 	public LogicalExpression getNecessaryNormalForm(int id) {
 		Definition def = nnfb.getNecessaryNormalForm(id);
+		if (def == null)
+			return null;
 		OwlElToLogicalExpression leb = new OwlElToLogicalExpression();
 		try {
 			LogicalExpression nnf = leb.build(def);
