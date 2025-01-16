@@ -138,6 +138,10 @@ public class InferredResultsWriter {
 
 	private void writeNNF(int conceptNid) {
 		LogicalExpression nnf = rs.getNecessaryNormalForm(conceptNid);
+		if (nnf == null) {
+			LOG.error("No NNF for " + conceptNid + " " + PrimitiveData.text(conceptNid));
+			return;
+		}
 		ImmutableList<Object> fields = Lists.immutable.of(nnf.sourceGraph());
 		int[] inferredSemanticNids = PrimitiveData.get().semanticNidsForComponentOfPattern(conceptNid,
 				inferredPatternNid);
