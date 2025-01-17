@@ -17,7 +17,7 @@ import java.lang.annotation.*;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
+@Target({ElementType.TYPE, ElementType.FIELD})
 @Repeatable(PublicIdAnnotation.class)
 public @interface UuidAnnotation {
     String value();
