@@ -17,24 +17,19 @@ package dev.ikm.tinkar.entity.graph.adaptor.axiom;
 
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
-import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResultsLeafHash;
 import dev.ikm.tinkar.entity.graph.isomorphic.SetElementKey;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Sets;
-import org.eclipse.collections.api.factory.primitive.IntLists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
-import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.MutableSet;
 
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -56,6 +51,7 @@ public class LogicalExpressionBuilder {
         new LogicalAxiomAdaptor.DefinitionRootAdaptor(logicalExpression, rootIndex);
 
     }
+
     public LogicalExpressionBuilder() {
         this(UUID.randomUUID());
     }
@@ -65,6 +61,7 @@ public class LogicalExpressionBuilder {
         this.rootIndex = logicalExpression.definitionRoot().vertexIndex();
         this.logicalExpression = new LogicalExpression(this.builder);
     }
+
     public LogicalExpressionBuilder(DiTreeEntity logicalExpressionTree) {
         this.builder = DiTreeEntity.builder(logicalExpressionTree);
         this.rootIndex = logicalExpressionTree.root().vertexIndex();
@@ -140,6 +137,7 @@ public class LogicalExpressionBuilder {
 
     /**
      * NOTE: Not thread safe...
+     *
      * @param axiomToRemove
      * @return A newly constructed logical expression with the axiom recursively removed.
      */
@@ -161,6 +159,7 @@ public class LogicalExpressionBuilder {
     public LogicalAxiom.LogicalSet.SufficientSet SufficientSet(LogicalAxiom.Atom... elements) {
         return SufficientSet(UUID.randomUUID(), elements);
     }
+
     public LogicalAxiom.LogicalSet.SufficientSet SufficientSet(UUID vertexUuid, LogicalAxiom.Atom... elements) {
         EntityVertex sufficientSet = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.SUFFICIENT_SET.nid);
         builder.addVertex(sufficientSet);
@@ -170,6 +169,7 @@ public class LogicalExpressionBuilder {
         }
         return new LogicalAxiomAdaptor.SufficientSetAdaptor(logicalExpression, sufficientSet.vertexIndex());
     }
+
     public LogicalAxiom.LogicalSet.NecessarySet NecessarySet(LogicalAxiom.Atom... elements) {
         return NecessarySet(UUID.randomUUID(), elements);
     }
@@ -187,6 +187,7 @@ public class LogicalExpressionBuilder {
     public LogicalAxiom.LogicalSet.InclusionSet InclusionSet(LogicalAxiom.Atom... elements) {
         return InclusionSet(UUID.randomUUID(), elements);
     }
+
     public LogicalAxiom.LogicalSet.InclusionSet InclusionSet(UUID vertexUuid, LogicalAxiom.Atom... elements) {
         EntityVertex propertySet = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.INCLUSION_SET.nid);
         builder.addVertex(propertySet);
@@ -201,6 +202,7 @@ public class LogicalExpressionBuilder {
     public LogicalAxiom.LogicalSet.PropertySet PropertySet(LogicalAxiom.Atom... elements) {
         return PropertySet(UUID.randomUUID(), elements);
     }
+
     public LogicalAxiom.LogicalSet.PropertySet PropertySet(UUID vertexUuid, LogicalAxiom.Atom... elements) {
         EntityVertex propertySet = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.PROPERTY_SET.nid);
         builder.addVertex(propertySet);
@@ -214,6 +216,7 @@ public class LogicalExpressionBuilder {
     public LogicalAxiom.LogicalSet.DataPropertySet DataPropertySet(LogicalAxiom.Atom... elements) {
         return DataPropertySet(UUID.randomUUID(), elements);
     }
+
     public LogicalAxiom.LogicalSet.DataPropertySet DataPropertySet(UUID vertexUuid, LogicalAxiom.Atom... elements) {
         EntityVertex propertySet = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.DATA_PROPERTY_SET.nid);
         builder.addVertex(propertySet);
@@ -247,7 +250,7 @@ public class LogicalExpressionBuilder {
         if (vertex.getMeaningNid() == TinkarTerm.AND.nid()) {
             return vertex.vertexIndex();
         } else {
-            for (int successorIndex: this.builder.successors(vertexIndex).toArray()) {
+            for (int successorIndex : this.builder.successors(vertexIndex).toArray()) {
                 int andIndex = findFirstAnd(successorIndex);
                 if (andIndex > -1) {
                     return andIndex;
@@ -262,7 +265,7 @@ public class LogicalExpressionBuilder {
         if (andIndex < 0) {
             throw new IllegalStateException("No and vertex at index or below. Index: " + vertexIndex + " in graph: " + this.builder.build());
         }
-        for (LogicalAxiom axiom: axioms) {
+        for (LogicalAxiom axiom : axioms) {
             this.builder.addEdge(axiom.vertexIndex(), andIndex);
         }
     }
@@ -280,6 +283,7 @@ public class LogicalExpressionBuilder {
         }
         return new LogicalAxiomAdaptor.AndAdaptor(logicalExpression, and.vertexIndex());
     }
+
     public LogicalAxiom.Atom.Connective.Or Or(LogicalAxiom.Atom... atoms) {
         return Or(UUID.randomUUID(), atoms);
     }
@@ -292,6 +296,7 @@ public class LogicalExpressionBuilder {
         }
         return new LogicalAxiomAdaptor.OrAdaptor(logicalExpression, or.vertexIndex());
     }
+
     public LogicalAxiom.Atom.TypedAtom.Role SomeRole(ConceptFacade roleType, LogicalAxiom.Atom restriction) {
         return SomeRole(UUID.randomUUID(), roleType, restriction);
     }
@@ -305,9 +310,11 @@ public class LogicalExpressionBuilder {
         builder.addEdge(restriction.vertexIndex(), someRole.vertexIndex());
         return new LogicalAxiomAdaptor.RoleAxiomAdaptor(logicalExpression, someRole.vertexIndex());
     }
+
     public LogicalAxiom.Atom.TypedAtom.Role AllRole(ConceptFacade roleType, LogicalAxiom.Atom restriction) {
         return AllRole(UUID.randomUUID(), roleType, restriction);
     }
+
     public LogicalAxiom.Atom.TypedAtom.Role AllRole(UUID vertexUuid, ConceptFacade roleType, LogicalAxiom.Atom restriction) {
         EntityVertex allRole = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.ROLE.nid);
         builder.addVertex(allRole);
@@ -335,9 +342,11 @@ public class LogicalExpressionBuilder {
     public LogicalAxiom.Atom.ConceptAxiom ConceptAxiom(int conceptNid) {
         return ConceptAxiom(UUID.randomUUID(), ConceptFacade.make(conceptNid));
     }
+
     public LogicalAxiom.Atom.ConceptAxiom ConceptAxiom(UUID vertexUuid, int conceptNid) {
         return ConceptAxiom(vertexUuid, ConceptFacade.make(conceptNid));
     }
+
     public LogicalAxiom.Atom.ConceptAxiom ConceptAxiom(ConceptFacade concept) {
         return ConceptAxiom(UUID.randomUUID(), concept);
     }
@@ -349,8 +358,9 @@ public class LogicalExpressionBuilder {
         conceptAxiom.commitProperties();
         return new LogicalAxiomAdaptor.ConceptAxiomAdaptor(logicalExpression, conceptAxiom.vertexIndex());
     }
+
     public LogicalAxiom.Atom.DisjointWithAxiom DisjointWithAxiom(ConceptFacade disjointConcept) {
-        return DisjointWithAxiom(UUID.randomUUID(),  disjointConcept);
+        return DisjointWithAxiom(UUID.randomUUID(), disjointConcept);
     }
 
     public LogicalAxiom.Atom.DisjointWithAxiom DisjointWithAxiom(UUID vertexUuid, ConceptFacade disjointConcept) {
@@ -377,29 +387,29 @@ public class LogicalExpressionBuilder {
         featureAxiom.commitProperties();
         return new LogicalAxiomAdaptor.FeatureAxiomAdaptor(logicalExpression, featureAxiom.vertexIndex());
     }
-    
+
     public LogicalAxiom.Atom.PropertySequenceImplication PropertySequenceImplicationAxiom(ImmutableList<ConceptFacade> propertySequence,
-                                                                                        ConceptFacade implication) {
+                                                                                          ConceptFacade implication) {
         return PropertySequenceImplicationAxiom(UUID.randomUUID(), propertySequence, implication);
     }
 
-	public LogicalAxiom.Atom.PropertySequenceImplication PropertySequenceImplicationAxiom(UUID vertexUuid,
-			ImmutableList<ConceptFacade> propertySequence, ConceptFacade implication) {
-		EntityVertex propertySequenceImplicationAxiom = EntityVertex.make(vertexUuid,
-				LogicalAxiomSemantic.PROPERTY_SEQUENCE_IMPLICATION.nid);
-		builder.addVertex(propertySequenceImplicationAxiom);
+    public LogicalAxiom.Atom.PropertySequenceImplication PropertySequenceImplicationAxiom(UUID vertexUuid,
+                                                                                          ImmutableList<ConceptFacade> propertySequence, ConceptFacade implication) {
+        EntityVertex propertySequenceImplicationAxiom = EntityVertex.make(vertexUuid,
+                LogicalAxiomSemantic.PROPERTY_SEQUENCE_IMPLICATION.nid);
+        builder.addVertex(propertySequenceImplicationAxiom);
 
 //        boolean isPropertySeqPresent = EntityService.get().getEntity(TinkarTerm.PROPERTY_SEQUENCE.publicId()).isPresent();
 //        EntityProxy.Concept propertyGroupConcept = isPropertySeqPresent ? TinkarTerm.PROPERTY_SEQUENCE : TinkarTerm.PROPERTY_SET;
-		propertySequenceImplicationAxiom.putUncommittedProperty(TinkarTerm.PROPERTY_SEQUENCE.nid(),
-				IntIds.list.of(propertySequence.castToList(), (ConceptFacade conceptFacade) -> conceptFacade.nid()));
-		propertySequenceImplicationAxiom.putUncommittedProperty(TinkarTerm.PROPERTY_SEQUENCE_IMPLICATION.nid(),
-				implication);
+        propertySequenceImplicationAxiom.putUncommittedProperty(TinkarTerm.PROPERTY_SEQUENCE.nid(),
+                IntIds.list.of(propertySequence.castToList(), (ConceptFacade conceptFacade) -> conceptFacade.nid()));
+        propertySequenceImplicationAxiom.putUncommittedProperty(TinkarTerm.PROPERTY_SEQUENCE_IMPLICATION.nid(),
+                implication);
 
-		propertySequenceImplicationAxiom.commitProperties();
-		return new LogicalAxiomAdaptor.PropertySequenceImplicationAdaptor(logicalExpression,
-				propertySequenceImplicationAxiom.vertexIndex());
-	}
+        propertySequenceImplicationAxiom.commitProperties();
+        return new LogicalAxiomAdaptor.PropertySequenceImplicationAdaptor(logicalExpression,
+                propertySequenceImplicationAxiom.vertexIndex());
+    }
 
     /**
      * Creates and returns a recursive clone of the given logical axiom node.
@@ -408,7 +418,7 @@ public class LogicalExpressionBuilder {
      *                    ConceptAxiom, DefinitionRoot, DisjointWithAxiom, Feature,
      *                    NecessarySet, Or, PropertySequenceImplication, PropertySet,
      *                    Role, or SufficientSet.
-     * @param <A> the type of logical axiom to be returned, extending LogicalAxiom
+     * @param <A>         the type of logical axiom to be returned, extending LogicalAxiom
      * @return a cloned copy of the provided logical axiom node along with its recursive structure added to
      * the logical expression.
      */
@@ -423,7 +433,8 @@ public class LogicalExpressionBuilder {
                 yield (A) And(and.vertexUUID(), childElements.toArray(new LogicalAxiom.Atom[childElements.size()]));
             }
 
-            case LogicalAxiom.Atom.ConceptAxiom conceptAxiom -> (A) ConceptAxiom(conceptAxiom.vertexUUID(), conceptAxiom.concept());
+            case LogicalAxiom.Atom.ConceptAxiom conceptAxiom ->
+                    (A) ConceptAxiom(conceptAxiom.vertexUUID(), conceptAxiom.concept());
 
             case LogicalAxiom.DefinitionRoot definitionRoot -> {
                 MutableList<LogicalAxiom.Atom> childSets = Lists.mutable.empty();
@@ -432,9 +443,11 @@ public class LogicalExpressionBuilder {
                 yield (A) logicalExpression.definitionRoot();
             }
 
-            case LogicalAxiom.Atom.DisjointWithAxiom disjointWithAxiom -> (A) DisjointWithAxiom(disjointWithAxiom.vertexUUID(), disjointWithAxiom.disjointWith());
+            case LogicalAxiom.Atom.DisjointWithAxiom disjointWithAxiom ->
+                    (A) DisjointWithAxiom(disjointWithAxiom.vertexUUID(), disjointWithAxiom.disjointWith());
 
-            case LogicalAxiom.Atom.TypedAtom.Feature feature -> (A) FeatureAxiom(feature.vertexUUID(), feature.type(), feature.concreteDomainOperator(), feature.literal());
+            case LogicalAxiom.Atom.TypedAtom.Feature feature ->
+                    (A) FeatureAxiom(feature.vertexUUID(), feature.type(), feature.concreteDomainOperator(), feature.literal());
 
             case LogicalAxiom.LogicalSet.NecessarySet necessarySet -> {
                 // TODO consider removing ANDs the set, and make the sets a connective... Will make isomorphic calculations faster... ?
@@ -459,7 +472,8 @@ public class LogicalExpressionBuilder {
                 yield (A) PropertySet(propertySet.vertexUUID(), childElements.toArray(new LogicalAxiom.Atom[childElements.size()]));
             }
 
-            case LogicalAxiom.Atom.TypedAtom.Role role -> (A) Role(role.vertexUUID(), role.roleOperator(), role.type(), addCloneOfNode(role.restriction()));
+            case LogicalAxiom.Atom.TypedAtom.Role role ->
+                    (A) Role(role.vertexUUID(), role.roleOperator(), role.type(), addCloneOfNode(role.restriction()));
 
             case LogicalAxiom.LogicalSet.SufficientSet sufficientSet -> {
                 // TODO remove the AND from the set... Will make isomorphic calculations faster... ?
@@ -474,7 +488,7 @@ public class LogicalExpressionBuilder {
     /**
      * Updates the concept reference within the specified concept axiom to the new concept reference.
      *
-     * @param conceptAxiom The concept axiom whose concept reference is to be updated.
+     * @param conceptAxiom        The concept axiom whose concept reference is to be updated.
      * @param newConceptReference The new concept reference to update within the concept axiom.
      */
     public void updateConceptReference(LogicalAxiom.Atom.ConceptAxiom conceptAxiom, ConceptFacade newConceptReference) {
@@ -488,7 +502,7 @@ public class LogicalExpressionBuilder {
      * Updates the concept reference within the specified concept vertex to the new concept reference.
      *
      * @param conceptReferenceVertex The entity vertex representing the concept reference to be updated.
-     * @param newConceptReference The new concept reference to update within the vertex.
+     * @param newConceptReference    The new concept reference to update within the vertex.
      */
     public void updateConceptReference(EntityVertex conceptReferenceVertex, ConceptFacade newConceptReference) {
         conceptReferenceVertex.putUncommittedProperty(TinkarTerm.CONCEPT_REFERENCE.nid(),
@@ -499,7 +513,7 @@ public class LogicalExpressionBuilder {
     /**
      * Updates the concept reference within the specified concept axiom to the new concept reference ID.
      *
-     * @param conceptAxiom The concept axiom whose concept reference is to be updated.
+     * @param conceptAxiom           The concept axiom whose concept reference is to be updated.
      * @param newConceptReferenceNid The new concept reference ID.
      */
     public void updateConceptReference(LogicalAxiom.Atom.ConceptAxiom conceptAxiom, int newConceptReferenceNid) {
@@ -510,7 +524,7 @@ public class LogicalExpressionBuilder {
     /**
      * Updates the role type of the specified role axiom.
      *
-     * @param roleAxiom The logical axiom representing the role whose type is to be updated.
+     * @param roleAxiom         The logical axiom representing the role whose type is to be updated.
      * @param conceptToChangeTo The new concept to which the role type will be updated.
      */
     public void updateRoleType(LogicalAxiom.Atom.TypedAtom.Role roleAxiom, ConceptFacade conceptToChangeTo) {
@@ -522,7 +536,7 @@ public class LogicalExpressionBuilder {
     /**
      * Updates the type of the specified feature axiom to a new type.
      *
-     * @param featureAxiom The logical feature axiom whose type is to be updated.
+     * @param featureAxiom      The logical feature axiom whose type is to be updated.
      * @param conceptToChangeTo The new concept to which the feature type will be changed.
      */
     public void updateFeatureType(LogicalAxiom.Atom.TypedAtom.Feature featureAxiom, ConceptFacade conceptToChangeTo) {
@@ -534,7 +548,7 @@ public class LogicalExpressionBuilder {
     /**
      * Updates the operator (equals, less than, greater than, ...) of a given feature axiom.
      *
-     * @param featureAxiom The logical feature axiom whose operator is to be updated.
+     * @param featureAxiom      The logical feature axiom whose operator is to be updated.
      * @param conceptToChangeTo The new concept to which the operator will be changed.
      */
     public void updateFeatureOperator(LogicalAxiom.Atom.TypedAtom.Feature featureAxiom, ConceptFacade conceptToChangeTo) {
@@ -546,7 +560,7 @@ public class LogicalExpressionBuilder {
     /**
      * Updates the concept restriction (universal or extensional) for a given role axiom.
      *
-     * @param roleAxiom The logical axiomatic role whose restriction is to be updated.
+     * @param roleAxiom         The logical axiomatic role whose restriction is to be updated.
      * @param conceptToChangeTo The new concept to which the restriction will be changed.
      */
     public void updateRoleRestriction(LogicalAxiom.Atom.TypedAtom.Role roleAxiom, ConceptFacade conceptToChangeTo) {
@@ -562,7 +576,7 @@ public class LogicalExpressionBuilder {
      * Changes the type of the specified logical set axiom to a new type (property set, necessary set, sufficient set,
      * inclusion set).
      *
-     * @param setAxiom the logical set axiom to be altered
+     * @param setAxiom          the logical set axiom to be altered
      * @param conceptToChangeTo the new concept to change the type to
      */
     public void changeSetType(LogicalAxiom.LogicalSet setAxiom, ConceptFacade conceptToChangeTo) {
