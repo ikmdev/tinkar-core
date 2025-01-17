@@ -65,6 +65,9 @@ public class ConceptToDataType {
         if (TinkarTerm.LONG.publicId().equals(dataTypeConcept.publicId())) {
             return FieldDataType.LONG;
         }
+        if (TinkarTerm.DECIMAL_FIELD.publicId().equals(dataTypeConcept.publicId())) {
+            return FieldDataType.DECIMAL;
+        }
 
         throw new UnsupportedOperationException("Can't handle: " + dataTypeConcept);
     }
