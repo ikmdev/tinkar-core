@@ -1,6 +1,6 @@
 package dev.ikm.tinkar.common.bind.annotations.axioms;
 
-import dev.ikm.tinkar.common.bind.ConceptClass;
+import dev.ikm.tinkar.common.bind.ClassConceptBinding;
 
 import java.lang.annotation.*;
 
@@ -36,7 +36,7 @@ import java.lang.annotation.*;
  * </ul>
  * </p>
  *
- * @see ConceptClass
+ * @see ClassConceptBinding
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -50,5 +50,5 @@ public @interface ParentConcept {
      * @return the parent {@code ConceptClass} object that this {@code ConceptClass} is
      * subsumed under.
      */
-    Class<? extends ConceptClass> value();
+    Class<? extends ClassConceptBinding> value();
 }
