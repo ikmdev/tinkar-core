@@ -143,8 +143,8 @@ public class TinkarTerm {
      * Java binding for the pattern described as <strong><em>Inferred Navigation Pattern</em></strong>;
      * identified by UUID: {@code a53cc42d-c07e-5934-96b3-2ede3264474e}.
      * <p> Used to specify the relationship origins and destinations for concepts based on inferred axioms.
-     * <p> Field 0 is a Component ID that represents Relationship Destination.
-     * <p> Field 1 is a Component ID that represents Relationship Origin.
+     * <p> Field 0 is a Component ID Set that represents Relationship Destinations.
+     * <p> Field 1 is a Component ID Set that represents Relationship Origins.
      */
     public static final EntityProxy.Pattern INFERRED_NAVIGATION_PATTERN =
             EntityProxy.Pattern.make("Inferred navigation", UUID.fromString("a53cc42d-c07e-5934-96b3-2ede3264474e"));
@@ -183,6 +183,15 @@ public class TinkarTerm {
             EntityProxy.Pattern.make("Version control path origin pattern", UUID.fromString("70f89dd5-2cdb-59bb-bbaa-98527513547c"));
 
     /**
+     * Java binding for the pattern described as <strong><em>Version control module origin pattern</em></strong>;
+     * identified by UUID: {@code 536b0ec4-4974-47ae-93a6-ae6c4d169780}.
+     * <p> Used to support module origin semantics.
+     * <p> Field 0 is a Component ID Set that represents the originating module (i.e., extended module) concept.
+     */
+    public static final EntityProxy.Pattern MODULE_ORIGINS_PATTERN =
+            EntityProxy.Pattern.make("Version control module origin pattern", UUID.fromString("536b0ec4-4974-47ae-93a6-ae6c4d169780"));
+
+    /**
      * Java binding for the pattern described as <strong><em>Version control path pattern</em></strong>;
      * identified by UUID: {@code add1db57-72fe-53c8-a528-1614bda20ec6}.
      * <p> Used to support path membership semantics.
@@ -217,8 +226,8 @@ public class TinkarTerm {
      * Java binding for the pattern described as <strong><em>Stated Navigation Pattern</em></strong>;
      * identified by UUID: {@code d02957d6-132d-5b3c-adba-505f5778d998}.
      * <p> Used to specify the relationship origins and destinations for concepts based on stated axioms.
-     * <p> Field 0 is a component ID for the relationship destination.
-     * <p> Field 1 is a component ID for the relationship origin
+     * <p> Field 0 is a Component ID Set for the relationship destinations.
+     * <p> Field 1 is a Component ID Set for the relationship origins.
      */
     public static final EntityProxy.Pattern STATED_NAVIGATION_PATTERN =
             EntityProxy.Pattern.make("Stated navigation", UUID.fromString("d02957d6-132d-5b3c-adba-505f5778d998"));
@@ -4491,7 +4500,14 @@ public class TinkarTerm {
      */
     public static final EntityProxy.Concept PATH_ORIGINS =
             EntityProxy.Concept.make("Path origins (SOLOR)", UUID.fromString("6e6a112e-7d8c-53c7-aaf1-c46e2d69743c"));
-
+    /**
+     * Java binding for the concept described as <strong><em>Module origins (SOLOR)</em></strong>;
+     * identified by UUID: {@code
+     * <a href="http://localhost:8080/terminology/rest/concept/462862d4-5df9-426e-b785-a1264e24769fc">
+     * 462862d4-5df9-426e-b785-a1264e24769fc</a>}.
+     */
+    public static final EntityProxy.Concept MODULE_ORIGINS =
+            EntityProxy.Concept.make("Module origins (SOLOR)", UUID.fromString("462862d4-5df9-426e-b785-a1264e24769f"));
     /**
      * Java binding for the concept described as <strong><em>Path origins for stamp path (SOLOR)</em></strong>;
      * identified by UUID: {@code
