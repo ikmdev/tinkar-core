@@ -71,6 +71,7 @@ public class Rf2OwlToLogicAxiomTransformer extends TrackingCallable<Void> {
 
     @Override
     protected Void compute() throws Exception {
+        EntityService.get().beginLoadPhase();
         updateMessage("Computing stated OWL expressions...");
         LOG.info("Computing stated OWL expressions...");
 
@@ -100,6 +101,7 @@ public class Rf2OwlToLogicAxiomTransformer extends TrackingCallable<Void> {
                 try {
                     transformerFuture.get();
                 } catch (InterruptedException | ExecutionException e) {
+                    EntityService.get().endLoadPhase();
                     throw new RuntimeException(e);
                 }
                 statedTransformList.clear();
@@ -125,6 +127,7 @@ public class Rf2OwlToLogicAxiomTransformer extends TrackingCallable<Void> {
         updateMessage("Completed transformation");
         LOG.info("Completed processing of {} stated OWL expressions...", count.get());
 
+        EntityService.get().endLoadPhase();
         return null;
     }
 }
