@@ -114,6 +114,15 @@ public class IntIdSetArray
     }
 
     @Override
+    public int hashCode() {
+        int h = 0;
+        for (int element : elements) {
+            h += element;
+        }
+        return h;
+    }
+
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("IntIdSet[");
         for (int i = 0; i < elements.length && i <= TO_STRING_LIMIT; i++) {
