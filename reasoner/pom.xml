@@ -27,7 +27,7 @@
 		<snomed-test-data.version>0.1.0</snomed-test-data.version>
 		<!-- other plugins -->
 		<tidy-maven-plugin.version>1.3.0</tidy-maven-plugin.version>
-		<versions-maven-plugin.version>2.15.0</versions-maven-plugin.version>
+		<!-- <versions-maven-plugin.version>2.15.0</versions-maven-plugin.version> -->
 	</properties>
 
 	<dependencyManagement>
@@ -74,7 +74,7 @@
 				<plugin>
 					<groupId>org.codehaus.mojo</groupId>
 					<artifactId>versions-maven-plugin</artifactId>
-					<version>${versions-maven-plugin.version}</version>
+					<version>${maven.versions.plugin}</version>
 				</plugin>
 			</plugins>
 		</pluginManagement>
@@ -126,7 +126,7 @@
 							<goal>display-dependency-updates</goal>
 							<goal>display-plugin-updates</goal>
 						</goals>
-						<configuration>
+						<!-- <configuration>
 							<ruleSet>
 								<ignoreVersions>
 									<ignoreVersion>
@@ -135,7 +135,7 @@
 									</ignoreVersion>
 								</ignoreVersions>
 							</ruleSet>
-						</configuration>
+						</configuration> -->
 					</execution>
 				</executions>
 			</plugin>
