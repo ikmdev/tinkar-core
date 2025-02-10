@@ -24,6 +24,7 @@ import dev.ikm.tinkar.schema.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.Disabled;
 
 import java.util.function.Consumer;
 
@@ -32,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Disabled("Java 23")
 public class TestProtobufToEntityFieldDefinitionTransform {
     @Test
     @DisplayName("Transform a Field Definition Transform With All Fields Present")

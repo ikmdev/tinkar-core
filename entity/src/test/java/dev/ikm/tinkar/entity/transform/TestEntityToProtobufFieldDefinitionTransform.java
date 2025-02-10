@@ -23,6 +23,7 @@ import dev.ikm.tinkar.schema.FieldDefinition;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.Disabled;
 
 import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.createPBPublicId;
 import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.openSession;
@@ -32,6 +33,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Disabled("Java 23")
 public class TestEntityToProtobufFieldDefinitionTransform {
 
     @Test
