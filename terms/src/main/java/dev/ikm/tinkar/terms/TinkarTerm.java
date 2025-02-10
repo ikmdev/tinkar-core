@@ -2553,6 +2553,16 @@ public class TinkarTerm {
             EntityProxy.Concept.make("Float field (SOLOR)", UUID.fromString("6efe7087-3e3c-5b45-8109-90d7652b1506"));
 
     /**
+     * Java binding for the concept described as <strong><em>Decimal field (SOLOR)</em></strong>;
+     * identified by UUID: {@code
+     * <a href="http://localhost:8080/terminology/rest/concept/b413fe94-4ada-4aee-96f9-22be19699d40">
+     * b413fe94-4ada-4aee-96f9-22be19699d40</a>}.
+     */
+    public static final EntityProxy.Concept DECIMAL_FIELD =
+            EntityProxy.Concept.make("Decimal field (SOLOR)", UUID.fromString("b413fe94-4ada-4aee-96f9-22be19699d40"));
+
+
+    /**
      * Java binding for the concept described as <strong><em>Decimal</em></strong>;
      * identified by UUID: {@code
      * <a href="http://localhost:8080/terminology/rest/concept/dccb0476-3b63-3d48-b5a2-85bd0ad2fa61">

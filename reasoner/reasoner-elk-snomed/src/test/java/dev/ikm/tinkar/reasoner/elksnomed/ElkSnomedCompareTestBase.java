@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.nio.file.Files;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
@@ -34,14 +35,14 @@ import dev.ikm.elk.snomed.SnomedIds;
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.elk.snomed.model.ConcreteRoleType;
+import dev.ikm.elk.snomed.model.Definition;
+import dev.ikm.elk.snomed.model.DefinitionType;
 import dev.ikm.elk.snomed.model.RoleType;
 import dev.ikm.elk.snomed.owlel.OwlElOntology;
 
 public abstract class ElkSnomedCompareTestBase extends ElkSnomedTestBase {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedCompareTestBase.class);
-
-	protected int expected_compare_concept_cnt = 0;
 
 	@Test
 	public void compare() throws Exception {
@@ -155,7 +156,22 @@ public abstract class ElkSnomedCompareTestBase extends ElkSnomedTestBase {
 				missing_concept_cnt++;
 				continue;
 			}
-			if (!compare(con, data_con, snomedOntology))
+			// This merges multiple subConcept definition into one
+			List<Definition> sc_defs = con.getDefinitions().stream()
+					.filter(def -> def.getDefinitionType() == DefinitionType.SubConcept).toList();
+			if (sc_defs.size() > 1) {
+				Definition merged_def = new Definition();
+				merged_def.setDefinitionType(DefinitionType.SubConcept);
+				sc_defs.forEach(sc_def -> {
+					sc_def.getSuperConcepts().forEach(merged_def::addSuperConcept);
+					sc_def.getUngroupedRoles().forEach(merged_def::addUngroupedRole);
+					sc_def.getUngroupedConcreteRoles().forEach(merged_def::addUngroupedConcreteRole);
+					sc_def.getRoleGroups().forEach(merged_def::addRoleGroup);
+				});
+				con.getDefinitions().removeAll(sc_defs);
+				con.addDefinition(merged_def);
+			}
+			if (!compare(con, data_con, snomedOntology) && con.getId() != SnomedIds.root)
 				compare_concept_cnt++;
 		}
 		assertEquals(0, missing_role_cnt);
@@ -163,7 +179,7 @@ public abstract class ElkSnomedCompareTestBase extends ElkSnomedTestBase {
 		assertEquals(0, missing_concept_cnt);
 		assertEquals(0, compare_role_cnt);
 		assertEquals(0, compare_concrete_role_cnt);
-		assertEquals(expected_compare_concept_cnt, compare_concept_cnt);
+		assertEquals(0, compare_concept_cnt);
 	}
 
 	public boolean compareEquals(Object expect, Object actual, String msg) {

@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>dev.ikm.tinkar</groupId>
 		<artifactId>reasoner</artifactId>
-		<version>1.82.0-SNAPSHOT</version>
+		<version>1.83.0-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>reasoner-elk-snomed</artifactId>
@@ -106,21 +106,21 @@
 									<groupId>${reasoner-test-data.groupid}</groupId>
 									<artifactId>
 										tinkar-test-data-build-snomed-intl-20240701</artifactId>
-									<version>2024.12.16</version>
+									<version>2025.01.28</version>
 									<type>zip</type>
 								</artifactItem>
 								<artifactItem>
 									<groupId>${reasoner-test-data.groupid}</groupId>
 									<artifactId>
 										tinkar-test-data-build-snomed-intl-20241001</artifactId>
-									<version>2024.12.16</version>
+									<version>2025.01.28</version>
 									<type>zip</type>
 								</artifactItem>
 								<artifactItem>
 									<groupId>${reasoner-test-data.groupid}</groupId>
 									<artifactId>
 										tinkar-test-data-build-snomed-us-20240901</artifactId>
-									<version>2024.12.16</version>
+									<version>2025.01.28</version>
 									<type>zip</type>
 								</artifactItem>
 							</artifactItems>
