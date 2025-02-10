@@ -272,28 +272,20 @@ public class StampCalculatorWithCache implements StampCalculator {
                 .stream()
                 .filter((newVersionToTest) -> (newVersionToTest.stamp().time() > Long.MIN_VALUE))
                 .filter((newVersionToTest) -> (onRoute(newVersionToTest.stamp())))
-                .forEach(
-                        (newVersionToTest) -> {
-                            if (latestVersionSet.isEmpty()) {
-                                if (allowedStates.contains(newVersionToTest.state())) {
-                                    latestVersionSet.add((V) newVersionToTest);
-                                }
-                            } else {
-                                handlePart(latestVersionSet, newVersionToTest);
-                            }
-                        });
+                .forEach((newVersionToTest) -> {
+                    if (latestVersionSet.isEmpty()) {
+                        latestVersionSet.add(newVersionToTest);
+                    } else {
+                        handlePart(latestVersionSet, newVersionToTest);
+                    }
+                });
 
-        if (this.filter.allowedStates().isActiveOnly()) {
-            final HashSet<EntityVersion> inactiveVersions = new HashSet<>();
+        final HashSet<EntityVersion> versionsWithoutSpecifiedStates = new HashSet<>();
 
-            latestVersionSet.stream()
-                    .forEach((version) -> {
-                        if (State.fromConceptNid(version.stamp().stateNid()) != State.ACTIVE) {
-                            inactiveVersions.add(version);
-                        }
-                    });
-            latestVersionSet.removeAll(inactiveVersions);
-        }
+        latestVersionSet.stream()
+                .filter((version) -> (!allowedStates.contains(version.state())))
+                .forEach(versionsWithoutSpecifiedStates::add);
+        latestVersionSet.removeAll(versionsWithoutSpecifiedStates);
 
         final List<EntityVersion> latestVersionList = new ArrayList<>(latestVersionSet);
 
