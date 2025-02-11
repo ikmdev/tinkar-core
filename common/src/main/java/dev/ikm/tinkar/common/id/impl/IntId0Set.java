@@ -35,6 +35,11 @@ public class IntId0Set extends IntId0 implements IntIdSet {
     }
 
     @Override
+    public int hashCode() {
+        return 0;
+    }
+
+    @Override
     public String toString() {
         return "IntIdSet[]";
     }

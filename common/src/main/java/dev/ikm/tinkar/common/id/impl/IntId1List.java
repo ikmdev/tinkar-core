@@ -42,6 +42,11 @@ public class IntId1List extends IntId1 implements IntIdList {
     }
 
     @Override
+    public int hashCode() {
+        return 31 + element;
+    }
+
+    @Override
     public String toString() {
         return "IntIdList[" + PrimitiveData.textWithNid(element) + "]";
     }

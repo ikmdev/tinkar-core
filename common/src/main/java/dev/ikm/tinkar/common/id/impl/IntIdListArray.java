@@ -89,6 +89,15 @@ public final class IntIdListArray
     }
 
     @Override
+    public int hashCode() {
+        int h = 1;
+        for(int element : elements) {
+            h = 31 * h + element;
+        }
+        return h;
+    }
+
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("IntIdList[");
         for (int i = 0; i < elements.length && i <= TO_STRING_LIMIT; i++) {

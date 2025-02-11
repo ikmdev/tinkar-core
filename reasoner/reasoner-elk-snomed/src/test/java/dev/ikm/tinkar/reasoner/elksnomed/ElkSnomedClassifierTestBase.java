@@ -40,7 +40,6 @@ import dev.ikm.elk.snomed.SnomedOntologyReasoner;
 import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
-import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
 import dev.ikm.tinkar.terms.TinkarTerm;
 
@@ -69,11 +68,6 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 	@Test
 	public void nnfService() throws Exception {
 		ReasonerService rs = runReasonerServiceNNF();
-		// 404785009 |Product containing precisely aspirin 300 milligram and codeine 8
-		// milligram/1 each conventional release oral tablet (clinical drug)|
-		int nid = ElkSnomedData.getNid(404785009);
-		LogicalExpression nnf = rs.getNecessaryNormalForm(nid);
-		LOG.info("NNF: " + nid + " " + nnf);
 		rs.writeInferredResults();
 	}
 

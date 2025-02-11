@@ -21,7 +21,6 @@
 	</modules>
 
 	<properties>
-		<hybrid-reasoner.version>1.0.3</hybrid-reasoner.version>
 		<reasoner-test-data.groupid>dev.ikm.reasoner-test-data</reasoner-test-data.groupid>
 		<skipITs>true</skipITs>
 		<snomed-test-data.groupid>dev.ikm.snomed</snomed-test-data.groupid>
