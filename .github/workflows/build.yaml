@@ -16,7 +16,7 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - name: Pull Request Version Validation
-        uses: ikmdev/maven-pull-request-version-validation-action@v1.0.0
+        uses: ikmdev/maven-pull-request-version-validation-action@v2
         
   build-job:
     name: Build Job
