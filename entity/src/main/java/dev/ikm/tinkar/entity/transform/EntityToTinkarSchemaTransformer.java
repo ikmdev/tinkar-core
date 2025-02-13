@@ -63,6 +63,7 @@ import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.map.primitive.ImmutableIntIntMap;
 import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -237,7 +238,8 @@ public class EntityToTinkarSchemaTransformer {
 //            case dev.ikm.tinkar.component.graph.Graph graph -> createGraph
             case IntIdList intIdList -> toPBPublicIdList(intIdList);
             case IntIdSet intIdSet -> toPBPublicIdList(intIdSet);
-            case null, default -> throw new IllegalStateException("Unknown or null field object for: " + obj);
+            case BigDecimal bigDecimal -> toPBBigDecimal(bigDecimal);
+            case null, default -> throw new IllegalStateException("Unknown or null field object for: " + obj + ", " +obj.getClass());
         };
     }
 
@@ -297,6 +299,10 @@ public class EntityToTinkarSchemaTransformer {
 
     protected Field toSpatialPoint(SpatialPoint value) {
         return Field.newBuilder().setSpatialPoint(createPBSpatialPoint(value)).build();
+    }
+
+    protected Field toPBBigDecimal(BigDecimal value) {
+        return Field.newBuilder().setBigDecimal(createPBBigDecimal(value)).build();
     }
 
     protected List<Field> createPBFields(ImmutableList<Object> objects){
@@ -441,4 +447,11 @@ public class EntityToTinkarSchemaTransformer {
                 .build();
     }
 
+    protected dev.ikm.tinkar.schema.BigDecimal createPBBigDecimal(BigDecimal bigDecimal) {
+        return dev.ikm.tinkar.schema.BigDecimal.newBuilder()
+                .setScale(bigDecimal.scale())
+                .setPrecision(bigDecimal.precision())
+                .setValue(bigDecimal.toPlainString())
+                .build();
+    }
 }
