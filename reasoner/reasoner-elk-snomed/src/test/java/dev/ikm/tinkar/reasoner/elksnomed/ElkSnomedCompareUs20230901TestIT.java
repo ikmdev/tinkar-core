@@ -31,11 +31,6 @@ public class ElkSnomedCompareUs20230901TestIT extends ElkSnomedCompareTestBase i
 		test_case = "snomed-us-20230901";
 	}
 
-	{
-		// TODO should be 1 when data issues are fixed - SNOMED root
-		expected_compare_concept_cnt = 24;
-	}
-
 	@Override
 	public String getVersion() {
 		return "20230901";
