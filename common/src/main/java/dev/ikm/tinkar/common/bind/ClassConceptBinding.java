@@ -167,8 +167,10 @@ public interface ClassConceptBinding {
      */
     static ImmutableList<String> fullyQualifiedNames(ClassConceptBinding theInstance, String simpleName, FullyQualifiedNames fullyQualifiedNamesAnnotation) {
         MutableList<String> fullyQualifiedNames = Lists.mutable.empty();
-        for (FullyQualifiedName fullyQualifiedName: fullyQualifiedNamesAnnotation.value()) {
-            fullyQualifiedNames.add(fullyQualifiedName.value());
+        if (fullyQualifiedNamesAnnotation != null && fullyQualifiedNamesAnnotation.value() != null) {
+            for (FullyQualifiedName fullyQualifiedName: fullyQualifiedNamesAnnotation.value()) {
+                fullyQualifiedNames.add(fullyQualifiedName.value());
+            }
         }
         if (fullyQualifiedNames.isEmpty()) {
             ImmutableList<String> regularNames = theInstance.regularNames();
@@ -214,8 +216,10 @@ public interface ClassConceptBinding {
      */
     static ImmutableList<String> regularNames(RegularNames regularNamesAnnotation, String simpleName) {
         MutableList<String> regularNames = Lists.mutable.empty();
-        for (RegularName regularName: regularNamesAnnotation.value()) {
-            regularNames.add(regularName.value());
+        if (regularNamesAnnotation != null && regularNamesAnnotation.value() != null) {
+            for (RegularName regularName: regularNamesAnnotation.value()) {
+                regularNames.add(regularName.value());
+            }
         }
         if (regularNames.isEmpty()) {
             regularNames.add(camelCaseToWords(simpleName));
@@ -282,7 +286,7 @@ public interface ClassConceptBinding {
     static PublicId publicId(String uniqueName, Supplier<PublicIdAnnotation> publicIdAnnotationSupplier) {
         MutableList<UUID> uuids = Lists.mutable.empty();
         PublicIdAnnotation publicIdAnnotation = publicIdAnnotationSupplier.get();
-        if (publicIdAnnotation != null) {
+        if (publicIdAnnotation != null && publicIdAnnotation.value() != null) {
             for (UuidAnnotation uuidAnnotation : publicIdAnnotation.value()) {
                 uuids.add(UUID.fromString(uuidAnnotation.value()));
             }
