@@ -16,8 +16,6 @@
 package dev.ikm.tinkar.ext.lang.owl;
 
 
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
@@ -28,6 +26,7 @@ import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
+import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
@@ -36,6 +35,8 @@ import dev.ikm.tinkar.entity.SemanticRecordBuilder;
 import dev.ikm.tinkar.entity.SemanticVersionRecordBuilder;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.StampEntityVersion;
+import dev.ikm.tinkar.entity.StampVersionRecord;
+import dev.ikm.tinkar.entity.StampVersionRecordBuilder;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
@@ -47,48 +48,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> {
 
     private static final Logger LOG = LoggerFactory.getLogger(OwlToLogicAxiomTransformerAndWriter.class);
-
-    /**
-     * The never role group set.
-     */
-    private final IntIdSet neverRoleGroupSet = IntIds.set.of(
-            TinkarTerm.PART_OF.nid(),
-            TinkarTerm.LATERALITY.nid(),
-            TinkarTerm.HAS_ACTIVE_INGREDIENT.nid(),
-            TinkarTerm.HAS_DOSE_FORM.nid()
-    );
-
-    private final IntIdSet definingCharacteristicSet = IntIds.set.of(
-            TinkarTerm.INFERRED_PREMISE_TYPE.nid(),
-            TinkarTerm.STATED_PREMISE_TYPE.nid()
-    );
 
     private final int destinationPatternNid;
     private final Semaphore writeSemaphore;
     private final List<TransformationGroup> transformationRecords;
     private Transaction transaction;
     private int authorNid = TinkarTerm.USER.nid();
-    private int moduleNid = TinkarTerm.SOLOR_OVERLAY_MODULE.nid();
-    private int pathNid = TinkarTerm.DEVELOPMENT_PATH.nid();
-
-    private final Map<UUID, IntIdSet> modulePrecedenceSetMap = new HashMap<>();
-    private final Map<UUID, IntIdList> modulePrecedenceListMap = new HashMap<>();
-    private final Map<String, StampPositionRecord> stampPositionRecordMap = new HashMap<>();
-
-    private static final AtomicInteger foundWatchCount = new AtomicInteger(0);
+    private int moduleNid = Integer.MAX_VALUE;
+    private int pathNid = Integer.MAX_VALUE;
 
     /**
 	 * @param transaction           - if supplied, this does NOT commit the
@@ -152,54 +128,6 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
         }
     }
 
-    private void populateMapsWithModulePrecedence(int stampNid) {
-        StampEntity<? extends StampEntityVersion> stamp = EntityService.get().getStampFast(stampNid);
-        UUID moduleKey = modulePrecedenceKey(stamp);
-        String stampPosKey = stampPositionKey(stamp);
-        if (modulePrecedenceListMap.containsKey(moduleKey) &&
-                modulePrecedenceSetMap.containsKey(moduleKey) &&
-                stampPositionRecordMap.containsKey(stampPosKey)) {
-            return;
-        }
-        List<Integer> modulesInPriorityOrder = new ArrayList<>();
-        StampPositionRecord stampPos = StampPositionRecord.make(stamp.time(), stamp.pathNid());
-        StampCoordinateRecord stampCoordinate = StampCoordinateRecord.make(StateSet.ACTIVE, stampPos);
-        StampCalculator stampCalc = stampCoordinate.stampCalculator();
-        // Aggregate Origin/Extended Modules
-        Stack<Integer> stack = new Stack<>(); // TODO: Convert to more efficient data structure (i.e., Deque / LinkedList)
-        stack.add(stamp.moduleNid());
-        while (!stack.isEmpty()) {
-            int currModuleNid = stack.pop();
-            if (modulesInPriorityOrder.contains(currModuleNid)) {
-                LOG.warn("Found Module_Origin cycle containing module: {}", EntityService.get().getEntityFast(currModuleNid).entityToString());
-                continue;
-            }
-            modulesInPriorityOrder.add(currModuleNid);
-            EntityService.get().forEachSemanticForComponentOfPattern(currModuleNid,
-                    TinkarTerm.MODULE_ORIGINS_PATTERN.nid(), (moduleOriginSemantic) -> {
-                        stampCalc.latest(moduleOriginSemantic).ifPresent(latestModuleOriginSemanticVersion -> {
-                            IntIdSet moduleOrigins = (IntIdSet) latestModuleOriginSemanticVersion.fieldValues().get(0);
-                            stack.addAll(moduleOrigins.mapToList(i -> i).reversed());
-                        });
-                    });
-        }
-        int[] modulesInPriorityOrderArr = modulesInPriorityOrder.stream().mapToInt(i -> i).toArray();
-        modulePrecedenceListMap.put(moduleKey, IntIds.list.of(modulesInPriorityOrderArr));
-        modulePrecedenceSetMap.put(moduleKey, IntIds.set.of(modulesInPriorityOrderArr));
-        stampPositionRecordMap.put(stampPosKey, stampPos);
-    }
-
-    private UUID modulePrecedenceKey(StampEntity stamp) {
-        // Only time, module, and path are necessary to determine Module Precedence
-        String keyString = String.valueOf(stamp.time()) + stamp.moduleNid() + stamp.pathNid();
-        return UUID.nameUUIDFromBytes(keyString.getBytes());
-    }
-
-    private String stampPositionKey(StampEntity stamp) {
-        // Only time and path are necessary to determine Stamp Position
-        return String.valueOf(stamp.time()) + stamp.pathNid();
-    }
-
     /**
      * Transform relationships.
      *
@@ -214,17 +142,25 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
         for (int owlNid : owlNids) {
             EntityService.get().getEntity(owlNid).ifPresent(owlSemantic -> {
                 owlEntitiesForConcept.add((SemanticEntity) owlSemantic);
-                owlSemantic.stampNids().forEach(this::populateMapsWithModulePrecedence);
             });
         }
 
         for (SemanticEntity<? extends SemanticEntityVersion> owlChronology : owlEntitiesForConcept) {
             for (int stampNid : owlChronology.stampNids().toArray()) {
                 StampEntity<? extends StampEntityVersion> stamp = EntityService.get().getStampFast(stampNid);
-                StampPositionRecord stampPos = stampPositionRecordMap.get(stampPositionKey(stamp));
+                StampPositionRecord stampPos = StampPositionRecord.make(stamp.time(), stamp.pathNid());
+                int[] moduleWithOrigins = StampCalculatorWithCache.getModuleWithOrigins(stampPos, stamp.moduleNid());
                 StampCoordinateRecord stampCoordinate = StampCoordinateRecord.make(StateSet.ACTIVE, stampPos)
-                        .withModuleNids(modulePrecedenceSetMap.get(modulePrecedenceKey(stamp)))
-                        .withModulePriorityNidList(modulePrecedenceListMap.get(modulePrecedenceKey(stamp)));
+                        .withModuleNids(IntIds.set.of(moduleWithOrigins))
+                        .withModulePriorityNidList(IntIds.list.of(moduleWithOrigins));
+                int writeModuleNid = (moduleNid != Integer.MAX_VALUE ? moduleNid : stamp.moduleNid());
+                int writePathNid = (pathNid != Integer.MAX_VALUE ? pathNid : stamp.pathNid());
+                StampVersionRecordBuilder writeStampBuilder = StampVersionRecordBuilder.builder()
+                        .stateNid(State.ACTIVE.nid())
+                        .time(stamp.time())
+                        .authorNid(authorNid)
+                        .moduleNid(writeModuleNid)
+                        .pathNid(writePathNid);
 
                 if (stampCoordinates.contains(stampCoordinate)) {
                     // Continue if the logical definition at this stamp has already been written
@@ -237,8 +173,9 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
                 if (logicalExpression == null) {
                     // When the logical expression is null, write a version with the STAMP's original (likely Inactive) status
                     stampCoordinate = StampCoordinateRecord.make(StateSet.of(stamp.state()), stampPos)
-                            .withModuleNids(modulePrecedenceSetMap.get(modulePrecedenceKey(stamp)))
-                            .withModulePriorityNidList(modulePrecedenceListMap.get(modulePrecedenceKey(stamp)));
+                            .withModuleNids(IntIds.set.of(moduleWithOrigins))
+                            .withModulePriorityNidList(IntIds.list.of(moduleWithOrigins));
+                    writeStampBuilder.stateNid(stamp.stateNid());
                     logicalExpression = generateLogicalExpression(conceptNid, owlEntitiesForConcept, stampCoordinate);
                 }
 
@@ -252,8 +189,8 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
                     // See if a semantic already exists in this pattern referencing this concept...
                     int[] destinationSemanticNids = EntityService.get().semanticNidsForComponentOfPattern(conceptNid, destinationPatternNid);
                     switch (destinationSemanticNids.length) {
-                        case 0 -> newSemanticWithVersion(conceptNid, logicalExpression, stampCoordinate, stamp.moduleNid());
-                        case 1 -> addSemanticVersionIfAbsent(conceptNid, logicalExpression, stampCoordinate, stamp.moduleNid(), destinationSemanticNids[0]);
+                        case 0 -> newSemanticWithVersion(conceptNid, logicalExpression, writeStampBuilder.build());
+                        case 1 -> addSemanticVersionIfAbsent(conceptNid, logicalExpression, writeStampBuilder.build(), stampCoordinate, destinationSemanticNids[0]);
                         default -> throw new IllegalStateException("To many graphs for component: " + PrimitiveData.text(conceptNid));
                     }
                 }
@@ -263,10 +200,11 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
 
     private LogicalExpression generateLogicalExpression(int ConceptNid, List<SemanticEntity> owlEntities, StampCoordinateRecord stampCoordinate) {
         List<String> owlExpressionsToProcess = new ArrayList<>();
+        StampCalculator stampCalc = stampCoordinate.stampCalculator();
+        int owlSyntaxIdx = stampCalc.getIndexForMeaning(TinkarTerm.OWL_AXIOM_SYNTAX_PATTERN.nid(), TinkarTerm.AXIOM_SYNTAX.nid()).orElse(0);
         for (SemanticEntity<SemanticEntityVersion> owlEntity : owlEntities) {
-            stampCoordinate.stampCalculator().latest(owlEntity).ifPresent(latestVersion -> {
-                // TODO use pattern to get field?
-                owlExpressionsToProcess.add((String) latestVersion.fieldValues().get(0));
+            stampCalc.latest(owlEntity).ifPresent(latestVersion -> {
+                owlExpressionsToProcess.add((String) latestVersion.fieldValues().get(owlSyntaxIdx));
             });
         }
         if (owlExpressionsToProcess.isEmpty()) {
@@ -284,7 +222,7 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
         return logicalExpression;
     }
 
-    private void newSemanticWithVersion(int conceptNid, LogicalExpression logicalExpression, StampCoordinateRecord stampCoordinate, int writeModuleNid) {
+    private void newSemanticWithVersion(int conceptNid, LogicalExpression logicalExpression, StampVersionRecord writeStamp) {
         // Create UUID from seed and assign SemanticBuilder the value
         UUID generartedSemanticUuid = UuidT5Generator.singleSemanticUuid(EntityService.get().getEntityFast(destinationPatternNid),
                 EntityService.get().getEntityFast(conceptNid));
@@ -297,44 +235,37 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
                 .nid(PrimitiveData.nid(generartedSemanticUuid))
                 .versions(Lists.immutable.empty());
 
-        addNewVersion(logicalExpression, newSemanticBuilder.build(), stampCoordinate, writeModuleNid);
+        addNewVersion(logicalExpression, newSemanticBuilder.build(), writeStamp);
     }
 
-    private void addSemanticVersionIfAbsent(int conceptNid, LogicalExpression logicalExpression,
-                                            StampCoordinateRecord stampCoordinate, int writeModuleNid, int semanticNid) {
+    private void addSemanticVersionIfAbsent(int conceptNid, LogicalExpression logicalExpression, StampVersionRecord writeStamp,
+                                            StampCoordinateRecord stampCoordinate, int semanticNid) {
         SemanticRecord existingSemantic = EntityService.get().getEntityFast(semanticNid);
         Latest<SemanticEntityVersion> latestSemanticVersion = stampCoordinate.stampCalculator().latest(semanticNid);
         if (latestSemanticVersion.isPresent()) {
-            StampEntity existingStamp = latestSemanticVersion.get().stamp();
-            if (existingStamp.time() == stampCoordinate.time() &&
-                    existingStamp.moduleNid() == writeModuleNid &&
-                    existingStamp.authorNid() == authorNid &&
-                    existingStamp.stateNid() == stampCoordinate.allowedStates().toArray()[0].nid() &&
-                    existingStamp.pathNid() == stampCoordinate.pathNidForFilter()) {
-                DiTreeEntity latestExpression = (DiTreeEntity) latestSemanticVersion.get().fieldValues().get(0);
-                LOG.warn("Skipping write of new version: Logical Definition Semantic Version with this STAMP already exists for Concept: {}\nExisting STAMP: {}\nExisting: {}\nNew STAMP: {}\nNew: {}",
-                        EntityService.get().getEntityFast(conceptNid).publicId().idString(), existingStamp.describe(), stampCoordinate, latestExpression, logicalExpression);
+            StampEntityVersion existingStampVer = latestSemanticVersion.get().stamp().lastVersion();
+            // Equal checks ordered for performance - time and module most likely to be unequal
+            if (existingStampVer.time() == writeStamp.time() &&
+                existingStampVer.moduleNid() == writeStamp.moduleNid() &&
+                existingStampVer.stateNid() == writeStamp.stateNid() &&
+                existingStampVer.authorNid() == writeStamp.authorNid() &&
+                existingStampVer.pathNid() == writeStamp.pathNid()) {
+                    DiTreeEntity latestExpression = (DiTreeEntity) latestSemanticVersion.get().fieldValues().get(0);
+                    LOG.warn("Skipping write of new version: Logical Definition Semantic Version with this STAMP already exists for Concept: {}\nExisting STAMP: {}\nExisting: {}\nNew STAMP: {}\nNew: {}",
+                            EntityService.get().getEntityFast(conceptNid).publicId().idString(), existingStampVer.describe(), stampCoordinate, latestExpression, logicalExpression);
             } else {
-                addNewVersion(logicalExpression, SemanticRecordBuilder.builder(existingSemantic).build(), stampCoordinate, writeModuleNid);
+                addNewVersion(logicalExpression, SemanticRecordBuilder.builder(existingSemantic).build(), writeStamp);
             }
         } else {
             // Add a new version if no version exists at or before the current STAMP - this case already guarantees there is no conflicting stamp / version
             // Possible when a Semantic Version with a later timestamp has already been written
-            addNewVersion(logicalExpression, SemanticRecordBuilder.builder(existingSemantic).build(), stampCoordinate, writeModuleNid);
+            addNewVersion(logicalExpression, SemanticRecordBuilder.builder(existingSemantic).build(), writeStamp);
         }
     }
 
-    private void addNewVersion(LogicalExpression logicalExpression,
-                               SemanticRecord semanticRecord, StampCoordinateRecord stampCoordinate, int writeModuleNid) {
-        // Allowed States should not have more than 1 element
-        State status = stampCoordinate.allowedStates().toArray()[0];
-        if (stampCoordinate.allowedStates().size() != 1) {
-            LOG.warn("\n\nMore than one state when writing Logical Definition Semantic below. " +
-                    "Using first available state {}\n{}\n\n", status, logicalExpression);
-        }
-        long time = stampCoordinate.time();
-        int pathNid = stampCoordinate.pathNidForFilter();
-        StampEntity transactionStamp = transaction.getStamp(status, time, authorNid, writeModuleNid, pathNid);
+    private void addNewVersion(LogicalExpression logicalExpression, SemanticRecord semanticRecord, StampVersionRecord writeStamp) {
+        State status = State.fromConceptNid(writeStamp.stateNid());
+        StampEntity transactionStamp = transaction.getStamp(status, writeStamp.time(), writeStamp.authorNid(), writeStamp.moduleNid(), writeStamp.pathNid());
 
         SemanticVersionRecordBuilder semanticVersionBuilder = SemanticVersionRecordBuilder.builder()
                 .fieldValues(Lists.immutable.of(logicalExpression.sourceGraph()))
@@ -342,6 +273,6 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
                 .chronology(semanticRecord);
 
         SemanticRecord newSemanticRecord = semanticRecord.analogueBuilder().with(semanticVersionBuilder.build()).build();
-        EntityService.get().putEntity(newSemanticRecord);
+        EntityService.get().putEntityQuietly(newSemanticRecord);
     }
 }

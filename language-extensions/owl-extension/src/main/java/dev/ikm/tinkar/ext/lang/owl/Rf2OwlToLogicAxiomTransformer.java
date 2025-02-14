@@ -46,8 +46,8 @@ public class Rf2OwlToLogicAxiomTransformer extends TrackingCallable<Void> {
     private final PatternFacade rf2OwlPattern;
     private final PatternFacade logicalAxiomPattern;
     private int authorNid = TinkarTerm.USER.nid();
-    private int moduleNid = TinkarTerm.SOLOR_OVERLAY_MODULE.nid();
-    private int pathNid = TinkarTerm.DEVELOPMENT_PATH.nid();
+    private int moduleNid = Integer.MAX_VALUE;
+    private int pathNid = Integer.MAX_VALUE;
 
     public Rf2OwlToLogicAxiomTransformer(Transaction transaction,
                                          PatternFacade rf2OwlPattern,
