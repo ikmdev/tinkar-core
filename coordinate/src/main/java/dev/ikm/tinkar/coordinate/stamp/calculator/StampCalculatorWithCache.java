@@ -54,6 +54,7 @@ package dev.ikm.tinkar.coordinate.stamp.calculator;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.auto.service.AutoService;
+import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.coordinate.PathService;
 import dev.ikm.tinkar.coordinate.stamp.*;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -238,6 +239,31 @@ public class StampCalculatorWithCache implements StampCalculator {
 //        final Optional<StampPathImmutable> stampPath = constructFromSemantics(pathConceptId);
 //
 //        return stampPath.isPresent();
+    }
+
+    public static int[] getModuleWithOrigins(StampPositionRecord stampPositionRecord, int moduleNid) {
+        StampCoordinateRecord stampCoordinate = StampCoordinateRecord.make(StateSet.ACTIVE, stampPositionRecord);
+        StampCalculator stampCalculator = stampCoordinate.stampCalculator();
+        List<Integer> modulesInPriorityOrder = new ArrayList<>();
+        // Aggregate Origin/Extended Modules
+        LinkedList<Integer> stack = new LinkedList<>();
+        stack.add(moduleNid);
+        while (!stack.isEmpty()) {
+            int currModuleNid = stack.pop();
+            if (modulesInPriorityOrder.contains(currModuleNid)) {
+                LOG.warn("Found Module_Origin cycle containing module: {}", EntityService.get().getEntityFast(currModuleNid).entityToString());
+                continue;
+            }
+            modulesInPriorityOrder.add(currModuleNid);
+            EntityService.get().forEachSemanticForComponentOfPattern(currModuleNid,
+                    TinkarTerm.MODULE_ORIGINS_PATTERN.nid(), (moduleOriginSemantic) -> {
+                        stampCalculator.latest(moduleOriginSemantic).ifPresent(latestModuleOriginSemanticVersion -> {
+                            IntIdSet moduleOrigins = (IntIdSet) latestModuleOriginSemanticVersion.fieldValues().get(0);
+                            stack.addAll(moduleOrigins.mapToList(i -> i).reversed());
+                        });
+                    });
+        }
+        return modulesInPriorityOrder.stream().mapToInt(i -> i).toArray();
     }
 
     @Override
