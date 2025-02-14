@@ -91,7 +91,7 @@
 						<configuration>
 							<rules>
 								<requireMavenVersion>
-									<version>3.8</version>
+									<version>3.9</version>
 								</requireMavenVersion>
 								<requireJavaVersion>
 									<version>${java.version}</version>
@@ -126,16 +126,6 @@
 							<goal>display-dependency-updates</goal>
 							<goal>display-plugin-updates</goal>
 						</goals>
-						<!-- <configuration>
-							<ruleSet>
-								<ignoreVersions>
-									<ignoreVersion>
-										<type>regex</type>
-										<version>.+(alpha|beta).*</version>
-									</ignoreVersion>
-								</ignoreVersions>
-							</ruleSet>
-						</configuration> -->
 					</execution>
 				</executions>
 			</plugin>
@@ -161,6 +151,7 @@
 					<useModulePath>true</useModulePath>
 					<forkCount>1</forkCount>
 					<reuseForks>false</reuseForks>
+					<argLine>${surefireArgLine}</argLine>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -171,6 +162,7 @@
 					<useModulePath>true</useModulePath>
 					<forkCount>1</forkCount>
 					<reuseForks>false</reuseForks>
+					<argLine>${failsafeArgLine}</argLine>
 				</configuration>
 				<executions>
 					<execution>
