@@ -69,7 +69,7 @@ public record ChangeChronology(int nid, ImmutableList<VersionChangeRecord> chang
                 } else if (fieldChange.currentValue().fieldDefinition().dataTypeNid() == TinkarTerm.CONCEPT_FIELD.nid() ||
                         fieldChange.currentValue().fieldDefinition().dataTypeNid() == TinkarTerm.COMPONENT_FIELD.nid()) {
                     formatFunction = value -> switch (value) {
-                        case ConceptFacade conceptFacade -> viewCalculator.getPreferredDescriptionStringOrNid(conceptFacade);
+                        case ConceptFacade conceptFacade -> viewCalculator.getPreferredDescriptionTextOrNid(conceptFacade);
                         default -> value.toString();
                     };
                 }
