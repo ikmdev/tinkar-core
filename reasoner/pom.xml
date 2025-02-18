@@ -27,7 +27,7 @@
 		<snomed-test-data.version>0.1.0</snomed-test-data.version>
 		<!-- other plugins -->
 		<tidy-maven-plugin.version>1.3.0</tidy-maven-plugin.version>
-		<versions-maven-plugin.version>2.15.0</versions-maven-plugin.version>
+		<!-- <versions-maven-plugin.version>2.15.0</versions-maven-plugin.version> -->
 	</properties>
 
 	<dependencyManagement>
@@ -74,7 +74,7 @@
 				<plugin>
 					<groupId>org.codehaus.mojo</groupId>
 					<artifactId>versions-maven-plugin</artifactId>
-					<version>${versions-maven-plugin.version}</version>
+					<version>${maven.versions.plugin}</version>
 				</plugin>
 			</plugins>
 		</pluginManagement>
@@ -91,7 +91,7 @@
 						<configuration>
 							<rules>
 								<requireMavenVersion>
-									<version>3.8</version>
+									<version>3.9</version>
 								</requireMavenVersion>
 								<requireJavaVersion>
 									<version>${java.version}</version>
@@ -126,16 +126,6 @@
 							<goal>display-dependency-updates</goal>
 							<goal>display-plugin-updates</goal>
 						</goals>
-						<configuration>
-							<ruleSet>
-								<ignoreVersions>
-									<ignoreVersion>
-										<type>regex</type>
-										<version>.+(alpha|beta).*</version>
-									</ignoreVersion>
-								</ignoreVersions>
-							</ruleSet>
-						</configuration>
 					</execution>
 				</executions>
 			</plugin>
@@ -161,6 +151,7 @@
 					<useModulePath>true</useModulePath>
 					<forkCount>1</forkCount>
 					<reuseForks>false</reuseForks>
+					<argLine>${surefireArgLine}</argLine>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -171,6 +162,7 @@
 					<useModulePath>true</useModulePath>
 					<forkCount>1</forkCount>
 					<reuseForks>false</reuseForks>
+					<argLine>${failsafeArgLine}</argLine>
 				</configuration>
 				<executions>
 					<execution>

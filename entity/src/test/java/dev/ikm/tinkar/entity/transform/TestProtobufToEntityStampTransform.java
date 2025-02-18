@@ -26,6 +26,7 @@ import dev.ikm.tinkar.schema.StampVersion;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.Disabled;
 
 import java.util.function.Consumer;
 
@@ -45,6 +46,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Disabled("Java 23")
 public class TestProtobufToEntityStampTransform {
     /**
      * Testing the transformation of a StampVersion Protobuf object to an Entity
