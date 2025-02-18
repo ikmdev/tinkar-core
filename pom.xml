@@ -11,7 +11,7 @@
 
     <groupId>dev.ikm.tinkar</groupId>
     <artifactId>tinkar-core</artifactId>
-    <version>1.85.0-SNAPSHOT</version>
+    <version>1.85.0-AR-299_Java23-Pt2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>IKM tinkar core</name>
