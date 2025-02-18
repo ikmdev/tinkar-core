@@ -273,6 +273,6 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
                 .chronology(semanticRecord);
 
         SemanticRecord newSemanticRecord = semanticRecord.analogueBuilder().with(semanticVersionBuilder.build()).build();
-        EntityService.get().putEntityQuietly(newSemanticRecord);
+        EntityService.get().putEntity(newSemanticRecord);
     }
 }
