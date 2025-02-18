@@ -100,7 +100,7 @@
         <sonar.language>java</sonar.language>
         <susel.version>0.1.2</susel.version>
         <maven-jxr-plugin.version>3.6.0</maven-jxr-plugin.version>
-        <tinkar-schema.version>1.37.0</tinkar-schema.version>
+        <tinkar-schema.version>1.38.0</tinkar-schema.version>
         <tinkar-bindings.version>1.4.0</tinkar-bindings.version>
         <udaychandra-susel.version>0.1.2</udaychandra-susel.version>
         <common-java5.version>3.5.2</common-java5.version>
