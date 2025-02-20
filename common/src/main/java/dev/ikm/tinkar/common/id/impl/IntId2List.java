@@ -55,6 +55,11 @@ public class IntId2List extends IntId2 implements IntIdList {
     }
 
     @Override
+    public int hashCode() {
+        return 31 * (31 + element) + element2;
+    }
+
+    @Override
     public String toString() {
         return "IntIdList[" + PrimitiveData.textWithNid(element) + ", " + PrimitiveData.textWithNid(element2) + "]";
     }

@@ -47,6 +47,11 @@ public class IntId2Set extends IntId2 implements IntIdSet {
     }
 
     @Override
+    public int hashCode() {
+        return element + element2;
+    }
+
+    @Override
     public String toString() {
         return "IntIdSet[" + PrimitiveData.textWithNid(element) + ", " + PrimitiveData.textWithNid(element2) + "]";
     }
