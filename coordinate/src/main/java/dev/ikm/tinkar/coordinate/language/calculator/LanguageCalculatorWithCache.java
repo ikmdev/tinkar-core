@@ -145,12 +145,6 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
 
 
     @Override
-    public Optional<String> getAnyName(int componentNid) {
-        return Optional.empty();
-    }
-
-
-    @Override
     public Optional<String> getDescriptionTextForComponentOfType(int entityNid, int descriptionTypeNid) {
         for (SemanticEntityVersion version : getDescriptionsForComponentOfType(entityNid, descriptionTypeNid)) {
             return getTextFromSemanticVersion(version);

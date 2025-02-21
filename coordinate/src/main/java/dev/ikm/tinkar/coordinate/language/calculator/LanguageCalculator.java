@@ -15,11 +15,8 @@
  */
 package dev.ikm.tinkar.coordinate.language.calculator;
 
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.component.Stamp;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinate;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
-import dev.ikm.tinkar.coordinate.stamp.StampCoordinate;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.entity.*;
 import org.eclipse.collections.api.factory.Lists;
@@ -35,10 +32,29 @@ import dev.ikm.tinkar.terms.*;
 import java.util.*;
 import java.util.function.Function;
 
+/**
+ * The LanguageCalculator class provides functionality for working with language coordinates
+ * and handling descriptions for various components. It includes methods for retrieving descriptions,
+ * preferred texts, fully qualified names, and semantic text for specified components or entities.
+ * Language preferences and type-specific filters can be applied to refine the retrieval of descriptions.
+ */
 public interface LanguageCalculator {
 
+    /**
+     * Retrieves a list of the language coordinate records of this calculator. The
+     * language coordinate records are used in list order to try and fulfil a request for a
+     * description in the proper language and dialect.
+     *
+     * @return an immutable list of language coordinate records
+     */
     ImmutableList<LanguageCoordinateRecord> languageCoordinateList();
 
+    /**
+     * Retrieves a list of semantic entities representing descriptions for the given component.
+     *
+     * @param entityFacade the entity facade representing the component for which descriptions are to be retrieved
+     * @return an immutable list of semantic entities corresponding to the descriptions for the specified component
+     */
     default ImmutableList<SemanticEntity> getDescriptionsForComponent(EntityFacade entityFacade) {
         return getDescriptionsForComponent(entityFacade.nid());
     }
@@ -54,18 +70,49 @@ public interface LanguageCalculator {
     ImmutableList<SemanticEntity> getDescriptionsForComponent(int componentNid);
 
 
+    /**
+     * Retrieves a list of descriptions associated with a specific component of the given type.
+     *
+     * @param entityFacade The entity representing the component for which descriptions are being retrieved.
+     * @param descriptionTypeFacade The type of descriptions to filter and retrieve for the given component.
+     * @return An immutable list of semantic entity versions representing the descriptions of the specified type for the component.
+     */
     default ImmutableList<SemanticEntityVersion> getDescriptionsForComponentOfType(EntityFacade entityFacade,
                                                                                    ConceptFacade descriptionTypeFacade) {
         return getDescriptionsForComponentOfType(entityFacade.nid(), descriptionTypeFacade.nid());
     }
 
+    /**
+     * Retrieves a list of SemanticEntityVersion objects that represent descriptions
+     * for a given component of a specified type.
+     *
+     * @param componentNid the identifier of the component for which descriptions are retrieved
+     * @param descriptionTypeNid the identifier of the description type to filter the results
+     * @return an immutable list of SemanticEntityVersion objects matching the specified component and description type
+     */
     ImmutableList<SemanticEntityVersion> getDescriptionsForComponentOfType(int componentNid,
                                                                            int descriptionTypeNid);
 
+    /**
+     * Retrieves a list of preferred description text for the specified components.
+     *
+     * @param ids the set of component identifiers for which the preferred descriptions are to be retrieved
+     * @return an immutable list of preferred description texts corresponding to the specified component identifiers
+     */
     default ImmutableList<String> getPreferredDescriptionTextListForComponents(IntIdSet ids) {
         return getPreferredDescriptionTextListForComponents(ids.toArray());
     }
 
+    /**
+     * Retrieves a list of preferred description texts for the specified components.
+     * This method processes each provided component identifier (nid) and retrieves
+     * its preferred description text. If a preferred description is not available,
+     * it falls back to an alternative or the nid itself.
+     *
+     * @param nids an array of component identifiers for which the preferred description texts
+     *             are to be retrieved.
+     * @return an immutable list of preferred description texts corresponding to the provided component identifiers.
+     */
     default ImmutableList<String> getPreferredDescriptionTextListForComponents(int... nids) {
         MutableList<String> descriptionTextList = Lists.mutable.ofInitialCapacity(nids.length);
         for (int nid : nids) {
@@ -90,14 +137,39 @@ public interface LanguageCalculator {
         return Integer.toString(nid);
     }
 
+    /**
+     * Retrieves the regular description text associated with the specified entity ID.
+     *
+     * @param entityNid the unique identifier of the entity whose description text is to be retrieved
+     * @return an Optional containing the regular description text if available; otherwise, an empty Optional
+     */
     Optional<String> getRegularDescriptionText(int entityNid);
 
+    /**
+     * Retrieves the fully qualified name text for a given component identified by its nid.
+     *
+     * @param componentNid the nid of the component for which the fully qualified name text is to be retrieved
+     * @return an Optional containing the fully qualified name text if available; otherwise, an empty Optional
+     */
     default Optional<String> getFullyQualifiedNameText(int componentNid) {
         return getDescriptionTextForComponentOfType(componentNid, TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid());
     }
 
+    /**
+     * Retrieves the semantic text for a given unique identifier.
+     *
+     * @param nid The unique identifier (nid) for which the semantic text needs to be fetched.
+     * @return An Optional containing the semantic text if present, or an empty Optional if no semantic text is available for the given nid.
+     */
     Optional<String> getSemanticText(int nid);
 
+    /**
+     * Retrieves the description text of a specific type for a given component.
+     *
+     * @param entityNid The identifier of the entity or component for which the description is being fetched.
+     * @param descriptionTypeNid The identifier of the description type to retrieve for the component.
+     * @return An {@link Optional} containing the description text if it exists, otherwise an empty {@link Optional}.
+     */
     Optional<String> getDescriptionTextForComponentOfType(int entityNid, int descriptionTypeNid);
 
     /**
@@ -107,12 +179,16 @@ public interface LanguageCalculator {
      * @param componentFacade the component to get a regular name for.
      * @return the regular name text
      */
-
-
     default Optional<String> getFullyQualifiedNameText(EntityFacade componentFacade) {
         return getFullyQualifiedNameText(componentFacade.nid());
     }
 
+    /**
+     * Retrieves a list of preferred description text for the given components.
+     *
+     * @param entities an array of EntityFacade objects for which preferred description texts should be retrieved
+     * @return an immutable list of preferred description texts, one for each provided component
+     */
     default ImmutableList<String> getPreferredDescriptionTextListForComponents(EntityFacade... entities) {
         MutableList<String> descriptionTextList = Lists.mutable.ofInitialCapacity(entities.length);
         for (EntityFacade entity : entities) {
@@ -121,10 +197,22 @@ public interface LanguageCalculator {
         return descriptionTextList.toImmutable();
     }
 
+    /**
+     * Retrieves the preferred description text for the provided entity, with fallback mechanisms, or returns the NID if no description is available.
+     *
+     * @param entityFacade the entity facade to retrieve the description text or NID for
+     * @return the preferred description text, a fallback description text, or the NID if no descriptions are available
+     */
     default String getPreferredDescriptionTextWithFallbackOrNid(EntityFacade entityFacade) {
         return getPreferredDescriptionTextWithFallbackOrNid(entityFacade.nid());
     }
 
+    /**
+     * Generates an immutable list of fully qualified text representations for the provided components.
+     *
+     * @param entities a variable number of EntityFacade objects for which fully qualified text needs to be generated
+     * @return an immutable list of strings representing the fully qualified text for the given entities
+     */
     default ImmutableList<String> getFullyQualifiedTextListForComponents(EntityFacade... entities) {
         MutableList<String> descriptionTextList = Lists.mutable.ofInitialCapacity(entities.length);
         for (EntityFacade entity : entities) {
@@ -133,10 +221,25 @@ public interface LanguageCalculator {
         return descriptionTextList.toImmutable();
     }
 
+    /**
+     * Retrieves the fully qualified name text or the NID (Numeric Identifier) for the given entity.
+     *
+     * @param entityFacade an instance of EntityFacade representing the entity for which the fully qualified name
+     *                     text or NID is to be retrieved.
+     * @return a string representing the fully qualified name text if available,
+     *         otherwise returns the NID of the provided entity.
+     */
     default String getFullyQualifiedNameTextOrNid(EntityFacade entityFacade) {
         return getFullyQualifiedNameTextOrNid(entityFacade.nid());
     }
 
+    /**
+     * Retrieves the fully qualified name (FQN) text for the specified component Nid.
+     * If no FQN text is available, the method returns the Nid as a string.
+     *
+     * @param componentNid the Nid of the component for which to retrieve the fully qualified name text
+     * @return the fully qualified name text if available; otherwise, the Nid as a string
+     */
     default String getFullyQualifiedNameTextOrNid(int componentNid) {
         Optional<String> optionalText = getDescriptionTextForComponentOfType(componentNid, TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid());
         if (optionalText.isPresent()) {
@@ -145,6 +248,13 @@ public interface LanguageCalculator {
         return Integer.toString(componentNid);
     }
 
+    /**
+     * Retrieves a list of description texts or NIDs for the provided components.
+     *
+     * @param entities an array of EntityFacade objects representing the components for which
+     *                 description texts or NIDs are to be retrieved
+     * @return an immutable list of description texts or NIDs corresponding to the provided components
+     */
     default ImmutableList<String> getDescriptionTextListForComponents(EntityFacade... entities) {
         MutableList<String> descriptionTextList = Lists.mutable.ofInitialCapacity(entities.length);
         for (EntityFacade entity : entities) {
@@ -153,10 +263,23 @@ public interface LanguageCalculator {
         return descriptionTextList.toImmutable();
     }
 
+    /**
+     * Retrieves the description text or nid (numeric identifier) for a given entity.
+     *
+     * @param entity The entity from which the description text or nid is to be retrieved.
+     * @return A string representation of the description text or nid associated with the entity.
+     */
     default String getDescriptionTextOrNid(EntityFacade entity) {
         return getDescriptionTextOrNid(entity.nid());
     }
 
+    /**
+     * Retrieves the description text for the given component ID (NID). If a description is not available,
+     * returns the string representation of the component NID.
+     *
+     * @param componentNid the unique identifier (NID) of the component for which the description is requested
+     * @return the description text if available, otherwise the string representation of the component NID
+     */
     default String getDescriptionTextOrNid(int componentNid) {
         Optional<String> text = getDescriptionText(componentNid);
         if (text.isPresent()) {
@@ -170,8 +293,6 @@ public interface LanguageCalculator {
      * @return Return the latestDescription according to the type and dialect preferences of this {@code LanguageCoordinate}.
      */
     Optional<String> getDescriptionText(int componentNid);
-
-    Optional<String> getAnyName(int componentNid);
 
     /*
     Allow the pattern to also define a pattern for user text.
@@ -256,22 +377,87 @@ public interface LanguageCalculator {
      */
     Latest<SemanticEntityVersion> getSpecifiedDescription(ImmutableList<SemanticEntity> descriptionList);
 
+    /**
+     * Extracts text content from a given semantic version entity.
+     *
+     * @param semanticEntityVersion the semantic entity version from which the text should be extracted
+     * @return an Optional containing the extracted text if present, or an empty Optional if no text is available
+     */
     Optional<String> getTextFromSemanticVersion(SemanticEntityVersion semanticEntityVersion);
 
+    /**
+     * Retrieves the textual representation associated with the given stamp Nid. The
+     * string representation for the given stamp is based on the
+     * description type preferences of the view coordinate.
+     * The returned string includes details such as state, time, author, module, and path.
+     *
+     * @param stampNid the unique identifier of the stamp for which the text is to be retrieved
+     * @return the text corresponding to the specified stamp Nid
+     */
+    default String getTextForStamp(int stampNid) {
+        return getTextForStamp(Entity.getStamp(stampNid));
+    }
+    /**
+     * Creates a string representation for the given stamp, based on the
+     * description type preferences of the view coordinate.
+     * The returned string includes details such as state, time, author, module, and path.
+     *
+     * @param stamp the StampEntity instance for which the text representation is to be generated
+     * @return a formatted string containing the state, time, author, module, and path details of the given stamp
+     */
+    default String getTextForStamp(StampEntity stamp) {
+        StampVersion lastVersion = stamp.lastVersion();
+        return "s:" + getDescriptionTextOrNid(lastVersion.stateNid()) +
+                " t:" + DateTimeUtil.format(lastVersion.time(), DateTimeUtil.SEC_FORMATTER) +
+                " a:" + getDescriptionTextOrNid(lastVersion.authorNid()) +
+                " m:" + getDescriptionTextOrNid(lastVersion.moduleNid()) +
+                " p:" + getDescriptionTextOrNid(lastVersion.pathNid());
+    }
+
+    /**
+     * Retrieves the preferred text associated with a given stamp identifier.
+     * The returned string includes details such as state, time, author, module, and path.
+     *
+     * @param stampNid the identifier of the stamp for which the preferred text is to be retrieved
+     * @return the preferred text corresponding to the specified stamp identifier
+     */
     default String getPreferredTextForStamp(int stampNid) {
         return getPreferredTextForStamp(Entity.getStamp(stampNid));
     }
+    /**
+     * Constructs a string representation of a {@link StampEntity}'s preferred text
+     * by appending information about its state, time, author, module, and path.
+     *
+     * @param stamp the {@link StampEntity} whose preferred text is to be constructed
+     * @return a concatenated string containing the state, time, author, module, and path
+     *         information of the given stamp in a preferred representation
+     */
     default String getPreferredTextForStamp(StampEntity stamp) {
         StampVersion lastVersion = stamp.lastVersion();
-        return "s:" + getPreferredDescriptionStringOrNid(lastVersion.stateNid()) +
+        return "s:" + getPreferredDescriptionTextOrNid(lastVersion.stateNid()) +
                 " t:" + DateTimeUtil.format(lastVersion.time(), DateTimeUtil.SEC_FORMATTER) +
-                " a:" + getPreferredDescriptionStringOrNid(lastVersion.authorNid()) +
-                " m:" + getPreferredDescriptionStringOrNid(lastVersion.moduleNid()) +
-                " p:" + getPreferredDescriptionStringOrNid(lastVersion.pathNid());
+                " a:" + getPreferredDescriptionTextOrNid(lastVersion.authorNid()) +
+                " m:" + getPreferredDescriptionTextOrNid(lastVersion.moduleNid()) +
+                " p:" + getPreferredDescriptionTextOrNid(lastVersion.pathNid());
     }
+    /**
+     * Retrieves the fully qualified text representation associated with the specified stamp identifier.
+     * The returned string includes details such as state, time, author, module, and path.
+     *
+     * @param stampNid the identifier of the stamp for which the fully qualified text is required
+     * @return the fully qualified text corresponding to the provided stamp identifier
+     */
     default String getFullyQualifiedTextForStamp(int stampNid) {
         return getFullyQualifiedTextForStamp(Entity.getStamp(stampNid));
     }
+    /**
+     * Generates a fully qualified text representation for the given stamp entity.
+     * The returned string includes details such as state, time, author, module, and path.
+     *
+     * @param stamp The StampEntity for which the fully qualified representation is to be generated.
+     * @return A string containing the fully qualified text representation of the stamp entity,
+     *         including its state, time, author, module, and path information.
+     */
     default String getFullyQualifiedTextForStamp(StampEntity stamp) {
         StampVersion lastVersion = stamp.lastVersion();
         StringBuilder sb = new StringBuilder();
@@ -286,6 +472,16 @@ public interface LanguageCalculator {
         return getFullyQualifiedDescriptionTextWithFallbackOrNid(entityFacade.nid());
     }
 
+    /**
+     * Retrieves the fully qualified description text for the given identifier (nid),
+     * with a fallback mechanism when the fully qualified name is not available.
+     * It attempts to retrieve a regular description text or semantic text if the
+     * fully qualified name is not found. If none are found, the nid is returned as a string.
+     *
+     * @param nid the identifier for which the fully qualified description text is to be retrieved
+     * @return the fully qualified description text, a regular description text, a semantic text,
+     *         or the nid as a string if no description is found
+     */
     default String getFullyQualifiedDescriptionTextWithFallbackOrNid(int nid) {
         Optional<String> optionalResult = getFullyQualifiedNameText(nid);
         if (optionalResult.isPresent()) {
@@ -302,10 +498,53 @@ public interface LanguageCalculator {
         return Integer.toString(nid);
     }
 
+    /**
+     * @deprecated use {@code getPreferredDescriptionTextOrNid}
+     */
+
+    @Deprecated
     default String getPreferredDescriptionStringOrNid(int nid) {
         return toEntityStringOrNid(nid, this::getRegularDescriptionText);
     }
 
+    /**
+     * @deprecated use {@code getPreferredDescriptionTextOrNid}
+     */
+    @Deprecated
+    default String getPreferredDescriptionStringOrNid(EntityFacade entityFacade) {
+        return toEntityStringOrNid(entityFacade, this::getRegularDescriptionText);
+    }
+
+    /**
+     * Retrieves the preferred description text or NID (numeric identifier) for a given entity.
+     * The preferred description text is obtained using the provided method reference.
+     *
+     * @param entityFacade the entity facade representing the entity to retrieve the description or NID for
+     * @return the preferred description text if available; otherwise, returns the NID of the entity
+     */
+    default String getPreferredDescriptionTextOrNid(EntityFacade entityFacade) {
+        return toEntityStringOrNid(entityFacade, this::getRegularDescriptionText);
+    }
+
+    /**
+     * Retrieves the preferred description text for the given nid. If no preferred description is found,
+     * the nid itself is returned as a string.
+     *
+     * @param nid the numerical identifier for which the preferred description is to be retrieved
+     * @return the preferred description text if available, otherwise the nid as a string
+     */
+    default String getPreferredDescriptionTextOrNid(int nid) {
+        return toEntityStringOrNid(nid, this::getRegularDescriptionText);
+    }
+
+    /**
+     * Converts the provided nid to its corresponding entity string using the given function.
+     * If no entity string is found, the nid is returned as a string.
+     *
+     * @param nid the numeric identifier to be converted
+     * @param toOptionalEntityString a function that takes an integer nid and returns an Optional containing the entity string if available
+     * @return the entity string corresponding to the nid if present, otherwise the nid itself as a string
+     */
     default String toEntityStringOrNid(int nid, Function<Integer, Optional<String>> toOptionalEntityString) {
         Optional<String> optionalEntityString = toOptionalEntityString.apply(nid);
         if (optionalEntityString.isPresent()) {
@@ -314,10 +553,14 @@ public interface LanguageCalculator {
         return Integer.toString(nid);
     }
 
-    default String getPreferredDescriptionStringOrNid(EntityFacade entityFacade) {
-        return toEntityStringOrNid(entityFacade, this::getRegularDescriptionText);
-    }
-
+    /**
+     * Converts the provided {@code entityFacade} to its corresponding entity string or returns its nid as a string
+     * if no string representation is available.
+     *
+     * @param entityFacade the entity facade to be converted to a string representation or nid
+     * @param toOptionalEntityString a function that attempts to obtain an optional string representation of the entity facade
+     * @return the string representation of the entity facade if available, otherwise the nid of the entity facade as a string
+     */
     default String toEntityStringOrNid(EntityFacade entityFacade, Function<EntityFacade, Optional<String>> toOptionalEntityString) {
         Optional<String> optionalEntityString = toOptionalEntityString.apply(entityFacade);
         if (optionalEntityString.isPresent()) {
@@ -326,6 +569,12 @@ public interface LanguageCalculator {
         return Integer.toString(entityFacade.nid());
     }
 
+    /**
+     * Retrieves the regular description text associated with the given entity.
+     *
+     * @param entity an EntityFacade representing the entity for which the description text is to be retrieved.
+     * @return an Optional containing the regular description text if available; otherwise, an empty Optional.
+     */
     default Optional<String> getRegularDescriptionText(EntityFacade entity) {
         return getRegularDescriptionText(entity.nid());
     }
@@ -341,6 +590,16 @@ public interface LanguageCalculator {
         return toEntityStringOrInputString(possibleEntityString, this::getRegularDescriptionText);
     }
 
+    /**
+     * Transforms a potentially entity-related string into its corresponding entity string or returns
+     * the input string if no valid entity transformation is possible.
+     *
+     * @param possibleEntityString the input string that may represent an entity.
+     * @param toOptionalEntityString a function that takes an entity identifier (nid) and returns an
+     *                               optional entity string corresponding to that identifier.
+     * @return the transformed entity string if the input string corresponds to a valid entity, or the
+     *         original input string if no transformation is possible.
+     */
     default String toEntityStringOrInputString(String possibleEntityString, Function<Integer, Optional<String>> toOptionalEntityString) {
         Optional<EntityProxy> optionalEntity = ProxyFactory.fromXmlFragmentOptional(possibleEntityString);
         if (optionalEntity.isPresent()) {
@@ -363,10 +622,33 @@ public interface LanguageCalculator {
         return toEntityStringOrInputString(possibleEntityString, this::getFullyQualifiedNameText);
     }
 
+    /**
+     * Converts the given EntityFacade instance into a string representation
+     * using its public identifier and NID. Allows customization of the
+     * description text through a provided function.
+     *
+     * @param entityFacade The EntityFacade instance that will be converted
+     *                     to a string representation.
+     * @return A string representing the entity using either its public
+     *         identifier and NID, or an appropriate description.
+     */
     default String toEntityStringOrPublicIdAndNid(EntityFacade entityFacade) {
         return toEntityStringOrPublicIdAndNid(entityFacade, this::getRegularDescriptionText);
     }
 
+    /**
+     * Converts the given {@code EntityFacade} to a string representation using the provided
+     * {@code toOptionalEntityString} function. If the function returns an empty {@code Optional},
+     * a default string format consisting of the public ID and the nid is used.
+     *
+     * @param entityFacade the entity facade to be converted into a string representation
+     * @param toOptionalEntityString a function that takes an {@code EntityFacade} and
+     *                                returns an {@code Optional<String>} containing a string
+     *                                representation of the entity, or an empty {@code Optional}
+     *                                if no representation is available
+     * @return a string representation of the entity using the provided function or,
+     *         if absent, a default format combining the public ID and the nid
+     */
     default String toEntityStringOrPublicIdAndNid(EntityFacade entityFacade, Function<EntityFacade, Optional<String>> toOptionalEntityString) {
         Optional<String> optionalEntityString = toOptionalEntityString.apply(entityFacade);
         if (optionalEntityString.isPresent()) {
@@ -375,12 +657,31 @@ public interface LanguageCalculator {
         return Entity.get(entityFacade).get().publicId().toString() + " <" + Integer.toString(entityFacade.nid()) + ">";
     }
 
+    /**
+     * Converts the given object into its string representation using the provided entity string conversion function.
+     *
+     * @param object the object to be converted to a string representation
+     * @param toEntityString a function that defines how an EntityFacade should be converted into a string
+     * @return the string representation of the given object
+     */
     default String toEntityString(Object object, Function<EntityFacade, String> toEntityString) {
         StringBuilder sb = new StringBuilder();
         toEntityString(object, toEntityString, sb);
         return sb.toString();
     }
 
+    /**
+     * Converts the given object into an entity string representation and appends the result to the provided
+     * {@code StringBuilder}. This method supports various input types such as {@link EntityFacade},
+     * collections, arrays, and strings, processing each type accordingly.
+     *
+     * @param object the input object to be converted to a string. Supported types include {@link EntityFacade},
+     *               collections, arrays, strings, and {@link Long}. If the provided object is null, no processing occurs.
+     * @param toEntityString a {@link Function} that converts an {@link EntityFacade} instance into its string representation.
+     *                       This function is used to determine how each {@link EntityFacade} is represented as a string.
+     * @param sb the {@link StringBuilder} used to accumulate the resulting string representation of the object.
+     *           This method appends the generated string directly to the builder.
+     */
     default void toEntityString(Object object, Function<EntityFacade, String> toEntityString, StringBuilder sb) {
         if (object == null) {
             return;
@@ -479,14 +780,37 @@ public interface LanguageCalculator {
         return getSpecifiedDescription(descriptionList, IntIds.list.of(TinkarTerm.DEFINITION_DESCRIPTION_TYPE.nid()));
     }
 
+    /**
+     * Retrieves the definition description text for a given entity.
+     *
+     * @param entityFacade the EntityFacade object representing the entity for which
+     *                     the definition description text is to be retrieved.
+     * @return an Optional containing the definition description text if available;
+     *         otherwise, an empty Optional.
+     */
     default Optional<String> getDefinitionDescriptionText(EntityFacade entityFacade) {
         return getDefinitionDescriptionText(entityFacade.nid());
     }
 
+    /**
+     * Retrieves the definition description text for a given entity identified by its nid.
+     * Utilizes a specific description type to fetch the corresponding text.
+     *
+     * @param entityNid the nid (numeric identifier) of the entity whose definition description text is to be retrieved
+     * @return an Optional containing the definition description text if available, otherwise an empty Optional
+     */
     default Optional<String> getDefinitionDescriptionText(int entityNid) {
         return getDescriptionTextForComponentOfType(entityNid, TinkarTerm.DEFINITION_DESCRIPTION_TYPE.nid());
     }
 
+    /**
+     * Retrieves the regular description for a given semantic entity.
+     *
+     * @param entity The {@code EntityFacade} representing the semantic entity for which
+     *               the regular description is being retrieved.
+     * @return A {@code Latest<SemanticEntityVersion>} containing the latest version of
+     *         the regular description for the specified semantic entity.
+     */
     default Latest<SemanticEntityVersion> getRegularDescription(EntityFacade entity) {
         return getRegularDescription(entity.nid());
     }
@@ -513,6 +837,12 @@ public interface LanguageCalculator {
         return getSpecifiedDescription(descriptionList, IntIds.list.of(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()));
     }
 
+    /**
+     * Retrieves the fully qualified description for the given entity.
+     *
+     * @param entityFacade The entity facade representing the entity for which the fully qualified description is to be obtained.
+     * @return The latest version of the fully qualified description encapsulated in a {@code Latest<SemanticEntityVersion>} object.
+     */
     default Latest<SemanticEntityVersion> getFullyQualifiedDescription(EntityFacade entityFacade) {
         return getFullyQualifiedDescription(entityFacade.nid());
     }
@@ -526,55 +856,6 @@ public interface LanguageCalculator {
      */
     default Latest<SemanticEntityVersion> getFullyQualifiedDescription(int conceptId) {
         return getSpecifiedDescription(getDescriptionsForComponent(conceptId), IntIds.list.of(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()));
-    }
-
-    /**
-     * Call getRegularName or getFullyQualifiedName for better quality names before calling this method.
-     *
-     * @param componentNid
-     * @param stampCoordinate
-     * @return
-     */
-    default String getAnyName(int componentNid, StampCoordinate stampCoordinate) {
-        throw new UnsupportedOperationException();
-//       switch (Get.identifierService().getObjectTypeForComponent(componentNid)) {
-//           case CONCEPT: {
-//               List<SemanticEntity> descriptions = Get.conceptService().getConceptDescriptions(componentNid);
-//               if (descriptions.isEmpty()) {
-//                   return "No descriptions for: " + Get.identifierService().getUuidPrimordialForNid(componentNid);
-//               }
-//               SemanticEntityVersion descriptionVersion = (SemanticEntityVersion) descriptions.get(0).getVersionList().get(0);
-//               return descriptionVersion.getText();
-//           }
-//           case SEMANTIC: {
-//               SemanticEntity sc = Get.assemblageService().getSemanticEntity(componentNid);
-//               if (sc.getVersionType() == VersionType.DESCRIPTION) {
-//                   LatestVersion<SemanticEntityVersion> latestDescription = sc.getLatestVersion(stampCoordinateRecord);
-//                   if (latestDescription.isPresent()) {
-//                       return latestDescription.get().getText();
-//                   }
-//                   return ((SemanticEntityVersion) sc.getVersionList().get(0)).getText();
-//               }
-//               return Get.assemblageService().getSemanticEntity(componentNid).toString();
-//           }
-//           case UNKNOWN:
-//           default:
-//               return "No name for: " + Get.identifierService().getUuidPrimordialForNid(componentNid);
-//       }
-    }
-
-    default OptionalInt getAcceptabilityNid(int descriptionNid, int dialectAssemblageNid, StampCoordinate stampCoordinate) {
-        throw new UnsupportedOperationException();
-//       ImmutableIntSet acceptabilityChronologyNids = Get.assemblageService().getSemanticNidsForComponentFromAssemblage(descriptionNid, dialectAssemblageNid);
-//
-//       for (int acceptabilityChronologyNid: acceptabilityChronologyNids.toArray()) {
-//           SemanticEntity acceptabilityChronology = Get.assemblageService().getSemanticEntity(acceptabilityChronologyNid);
-//               LatestVersion<ComponentNidVersion> latestAcceptability = acceptabilityChronology.getLatestVersion(stampCoordinateRecord);
-//               if (latestAcceptability.isPresent()) {
-//                   return OptionalInt.of(latestAcceptability.get().getComponentNid());
-//               }
-//       }
-//       return OptionalInt.empty();
     }
 
 }

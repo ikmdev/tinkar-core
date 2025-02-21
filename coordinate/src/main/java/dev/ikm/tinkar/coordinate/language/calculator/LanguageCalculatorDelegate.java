@@ -61,11 +61,6 @@ public interface LanguageCalculatorDelegate extends LanguageCalculator {
     }
 
     @Override
-    default Optional<String> getAnyName(int componentNid) {
-        return languageCalculator().getAnyName(componentNid);
-    }
-
-    @Override
     default Optional<String> getUserText() {
         return languageCalculator().getUserText();
     }
