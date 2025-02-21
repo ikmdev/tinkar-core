@@ -71,63 +71,62 @@ public class Rf2OwlToLogicAxiomTransformer extends TrackingCallable<Void> {
 
     @Override
     protected Void compute() throws Exception {
-        EntityService.get().beginLoadPhase();
         updateMessage("Computing stated OWL expressions...");
         LOG.info("Computing stated OWL expressions...");
-
         addToTotalWork(4);
         completedUnitOfWork();
-
-        List<TransformationGroup> statedTransformList = new ArrayList<>();
-
         updateMessage("Transforming stated OWL RF2 expressions...");
+        List<TransformationGroup> statedTransformList = new ArrayList<>();
         AtomicInteger count = new AtomicInteger();
         int rf2OwlPatternNid = rf2OwlPattern.nid();
-        PrimitiveData.get().forEachConceptNid(conceptNid -> {
-            int[] semanticNids = EntityService.get().semanticNidsForComponentOfPattern(conceptNid, rf2OwlPatternNid);
-            if (semanticNids != null) {
-                if (semanticNids.length > 0) {
-                    TransformationGroup tg = new TransformationGroup(conceptNid, semanticNids, PremiseType.STATED);
-                    statedTransformList.add(tg);
-                    count.incrementAndGet();
-                }
-            }
-            if (statedTransformList.size() == transformSize) {
-                List<TransformationGroup> listForTask = new ArrayList<>(statedTransformList);
-                OwlToLogicAxiomTransformerAndWriter transformer = new OwlToLogicAxiomTransformerAndWriter(
-                        transaction, listForTask, logicalAxiomPattern.nid(), writeSemaphore, authorNid, moduleNid, pathNid);
-                Future<Void> transformerFuture = TinkExecutor.threadPool().submit(transformer);
-                //TODO what do do with the future?
-                try {
-                    transformerFuture.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    EntityService.get().endLoadPhase();
-                    throw new RuntimeException(e);
-                }
-                statedTransformList.clear();
-            }
-        });
 
-        // pickup any items remaining in the list.
-        OwlToLogicAxiomTransformerAndWriter remainingStatedtransformer = new OwlToLogicAxiomTransformerAndWriter(
-                transaction, statedTransformList, logicalAxiomPattern.nid(), writeSemaphore, authorNid, moduleNid, pathNid);
-        Future<Void> transformerFuture = TinkExecutor.threadPool().submit(remainingStatedtransformer);
-        //TODO what do do with the future?
+        EntityService.get().beginLoadPhase();
         try {
-            transformerFuture.get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+            PrimitiveData.get().forEachConceptNid(conceptNid -> {
+                int[] semanticNids = EntityService.get().semanticNidsForComponentOfPattern(conceptNid, rf2OwlPatternNid);
+                if (semanticNids != null) {
+                    if (semanticNids.length > 0) {
+                        TransformationGroup tg = new TransformationGroup(conceptNid, semanticNids, PremiseType.STATED);
+                        statedTransformList.add(tg);
+                        count.incrementAndGet();
+                    }
+                }
+                if (statedTransformList.size() == transformSize) {
+                    List<TransformationGroup> listForTask = new ArrayList<>(statedTransformList);
+                    OwlToLogicAxiomTransformerAndWriter transformer = new OwlToLogicAxiomTransformerAndWriter(
+                            transaction, listForTask, logicalAxiomPattern.nid(), writeSemaphore, authorNid, moduleNid, pathNid);
+                    Future<Void> transformerFuture = TinkExecutor.threadPool().submit(transformer);
+                    //TODO what do do with the future?
+                    try {
+                        transformerFuture.get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        throw new RuntimeException(e);
+                    }
+                    statedTransformList.clear();
+                }
+            });
+
+            // pickup any items remaining in the list.
+            OwlToLogicAxiomTransformerAndWriter remainingStatedtransformer = new OwlToLogicAxiomTransformerAndWriter(
+                    transaction, statedTransformList, logicalAxiomPattern.nid(), writeSemaphore, authorNid, moduleNid, pathNid);
+            Future<Void> transformerFuture = TinkExecutor.threadPool().submit(remainingStatedtransformer);
+            //TODO what do do with the future?
+            try {
+                transformerFuture.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+
+            completedUnitOfWork();
+
+            writeSemaphore.acquireUninterruptibly(WRITE_PERMITS);
+            transaction.commit();
+            completedUnitOfWork();
+            updateMessage("Completed transformation");
+            LOG.info("Completed processing of {} stated OWL expressions...", count.get());
+        } finally {
+            EntityService.get().endLoadPhase();
         }
-
-        completedUnitOfWork();
-
-        writeSemaphore.acquireUninterruptibly(WRITE_PERMITS);
-        transaction.commit();
-        completedUnitOfWork();
-        updateMessage("Completed transformation");
-        LOG.info("Completed processing of {} stated OWL expressions...", count.get());
-
-        EntityService.get().endLoadPhase();
         return null;
     }
 }
