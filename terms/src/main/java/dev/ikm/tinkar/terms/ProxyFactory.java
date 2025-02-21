@@ -109,7 +109,7 @@ public class ProxyFactory {
         }
     }
 
-    static String toXmlFragment(EntityFacade facade) {
+    public static String toXmlFragment(EntityFacade facade) {
         StringBuilder sb = new StringBuilder("<");
         if (facade instanceof dev.ikm.tinkar.component.Concept) {
             sb.append(CONCEPT_ELEMENT).append(" " +
