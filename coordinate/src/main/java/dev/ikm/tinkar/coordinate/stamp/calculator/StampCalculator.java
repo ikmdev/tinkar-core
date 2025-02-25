@@ -71,6 +71,51 @@ public interface StampCalculator {
         return streamLatestVersionForPattern(patternFacade.nid());
     }
 
+    /**
+     * Determines the first stamp based only on time order from a given set of stamp identifiers.
+     * The method iterates through the provided stamp IDs and compares their relative time positions,
+     * identifying the one that occurs first in time.
+     *
+     * @param stampNids a set of integers representing stamp identifiers
+     * @return the integer stamp ID that occurs first based on time order
+     */
+    static int firstStampTimeOnly(IntIdSet stampNids) {
+        int[] stampNidsArray = stampNids.toArray();
+        int first = stampNidsArray[0];
+        for (int i = 1; i < stampNidsArray.length; i++) {
+            switch (getRelativePositionTimeOnly(first, stampNidsArray[i])) {
+                case BEFORE, EQUAL, CONTRADICTION, UNREACHABLE -> {}
+                case AFTER -> first = stampNidsArray[i];
+            }
+        }
+        return first;
+    }
+
+    /**
+     * Determines the relative position of two stamps based only on their time values.
+     *
+     * @param stampNid1 the identifier of the first stamp
+     * @param stampNid2 the identifier of the second stamp
+     * @return the relative position of the first stamp compared to the second stamp,
+     *         indicating whether the first stamp is BEFORE, AFTER, or EQUAL in terms of time.
+     */
+    static RelativePosition getRelativePositionTimeOnly(int stampNid1, int stampNid2) {
+        if (stampNid1 == stampNid2) {
+            return RelativePosition.EQUAL;
+        }
+        StampEntity stamp1 = Entity.getStamp(stampNid1);
+        StampEntity stamp2 = Entity.getStamp(stampNid2);
+        if (stamp1.time() < stamp2.time()) {
+            return RelativePosition.BEFORE;
+        }
+
+        if (stamp1.time() > stamp2.time()) {
+            return RelativePosition.AFTER;
+        }
+
+        return RelativePosition.EQUAL;
+    }
+
     Stream<Latest<SemanticEntityVersion>> streamLatestVersionForPattern(int patternNid);
 
     default Stream<SemanticEntityVersion> streamLatestActiveVersionForPattern(PatternFacade patternFacade) {
