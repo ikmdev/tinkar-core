@@ -26,17 +26,19 @@ import java.util.Objects;
  * TODO, create an entity data type that combines concept and FieldDataType like the Status enum?
  *
  * @param <T>
+ * @param nid
+ * @param versionStampNid
  */
 @RecordBuilder
-public record FieldRecord<T>(T value, int semanticNid, int semanticVersionStampNid,
+public record FieldRecord<T>(T value, int nid, int versionStampNid,
                              FieldDefinitionForEntity fieldDefinition)
         implements FieldDefinition, Field<T>,
                    ImmutableField<T>, FieldRecordBuilder.With {
 
 
     public FieldRecord {
-        Validator.notZero(semanticNid);
-        Validator.notZero(semanticVersionStampNid);
+        Validator.notZero(nid);
+        Validator.notZero(versionStampNid);
         Objects.requireNonNull(fieldDefinition);
     }
     @Override
@@ -61,8 +63,8 @@ public record FieldRecord<T>(T value, int semanticNid, int semanticVersionStampN
     @Override
     public String toString() {
         return "FieldRecord{value: " + value +
-                ", for semantic entity: " + PrimitiveData.textWithNid(semanticNid) +
-                " of version: " + Entity.getStamp(semanticVersionStampNid).lastVersion().describe() +
+                ", for entity: " + PrimitiveData.textWithNid(nid) +
+                " of version: " + Entity.getStamp(versionStampNid).lastVersion().describe() +
                 " with index: " + fieldIndex() +
                 ", defined as " + fieldDefinition +
                 '}';
