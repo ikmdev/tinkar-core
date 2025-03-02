@@ -15,11 +15,14 @@
  */
 package dev.ikm.tinkar.coordinate.edit;
 
-import com.google.auto.service.AutoService;
-import dev.ikm.tinkar.common.binary.*;
-import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
 import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
+import dev.ikm.tinkar.common.binary.Decoder;
+import dev.ikm.tinkar.common.binary.DecoderInput;
+import dev.ikm.tinkar.common.binary.Encodable;
+import dev.ikm.tinkar.common.binary.Encoder;
+import dev.ikm.tinkar.common.binary.EncoderOutput;
 import dev.ikm.tinkar.common.service.CachingService;
+import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.terms.ConceptFacade;
 
@@ -141,7 +144,6 @@ public record EditCoordinateRecord(int authorNid, int defaultModuleNid, int prom
         return this;
     }
 
-    @AutoService(CachingService.class)
     public static class CacheProvider implements CachingService {
         // TODO: this has implicit assumption that no one will hold on to a calculator... Should we be defensive?
         @Override
