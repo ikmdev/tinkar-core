@@ -848,7 +848,7 @@ public class TinkarTerm {
      * ba2efe6b-fe56-3d91-ae0f-3b389628f74c</a>}.
      */
     public static final EntityProxy.Concept CHINESE_LANGUAGE =
-            EntityProxy.Concept.make("Chinese language (SOLOR)", UUID.fromString("ba2efe6b-fe56-3d91-ae0f-3b389628f74c"), UUID.fromString("45022532-9567-11e5-8994-feff819cdc9f"));
+            EntityProxy.Concept.make("Chinese language (SOLOR)", UUID.fromString("ba2efe6b-fe56-3d91-ae0f-3b389628f74c"), UUID.fromString("45022532-9567-11e5-8994-feff819cdc9f"), UUID.fromString("aacbc859-e9a0-5e01-b6a9-9a255a47b0c9"));
     /**
      * Java binding for the concept described as <strong><em>Chronicle properties (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -1617,7 +1617,7 @@ public class TinkarTerm {
      * 7e462e33-6d94-38ae-a044-492a857a6853</a>}.
      */
     public static final EntityProxy.Concept DANISH_LANGUAGE =
-            EntityProxy.Concept.make("Danish language (SOLOR)", UUID.fromString("7e462e33-6d94-38ae-a044-492a857a6853"), UUID.fromString("45021f10-9567-11e5-8994-feff819cdc9f"));
+            EntityProxy.Concept.make("Danish language (SOLOR)", UUID.fromString("7e462e33-6d94-38ae-a044-492a857a6853"), UUID.fromString("45021f10-9567-11e5-8994-feff819cdc9f"), UUID.fromString("987681fb-f3ef-595d-90e2-067baf2bc71f"));
     /**
      * Java binding for the concept described as <strong><em>Database UUID (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -2021,7 +2021,7 @@ public class TinkarTerm {
      * 674ad858-0224-3f90-bcf0-bc4cab753d2d</a>}.
      */
     public static final EntityProxy.Concept DUTCH_LANGUAGE =
-            EntityProxy.Concept.make("Dutch language (SOLOR)", UUID.fromString("674ad858-0224-3f90-bcf0-bc4cab753d2d"), UUID.fromString("45022280-9567-11e5-8994-feff819cdc9f"));
+            EntityProxy.Concept.make("Dutch language (SOLOR)", UUID.fromString("674ad858-0224-3f90-bcf0-bc4cab753d2d"), UUID.fromString("45022280-9567-11e5-8994-feff819cdc9f"), UUID.fromString("21d11bd1-3dab-5034-9625-81b9ae2bd8e7"));
     /**
      * Java binding for the concept described as <strong><em>Dynamic assemblage definition panel (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -2239,7 +2239,7 @@ public class TinkarTerm {
      * 06d905ea-c647-3af9-bfe5-2514e135b558</a>}.
      */
     public static final EntityProxy.Concept ENGLISH_LANGUAGE =
-            EntityProxy.Concept.make("English language (SOLOR)", UUID.fromString("06d905ea-c647-3af9-bfe5-2514e135b558"), UUID.fromString("45021920-9567-11e5-8994-feff819cdc9f"));
+            EntityProxy.Concept.make("English language (SOLOR)", UUID.fromString("06d905ea-c647-3af9-bfe5-2514e135b558"), UUID.fromString("45021920-9567-11e5-8994-feff819cdc9f"), UUID.fromString("2018e5a-46ba-5297-92f1-6931b9f98a12"));
     /**
      * Java binding for the concept described as <strong><em>Entry sequence for component (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -2626,7 +2626,7 @@ public class TinkarTerm {
      * 8b23e636-a0bd-30fb-b8e2-1f77eaa3a87e</a>}.
      */
     public static final EntityProxy.Concept FRENCH_LANGUAGE =
-            EntityProxy.Concept.make("French language (SOLOR)", UUID.fromString("8b23e636-a0bd-30fb-b8e2-1f77eaa3a87e"), UUID.fromString("45021dbc-9567-11e5-8994-feff819cdc9f"));
+            EntityProxy.Concept.make("French language (SOLOR)", UUID.fromString("8b23e636-a0bd-30fb-b8e2-1f77eaa3a87e"), UUID.fromString("45021dbc-9567-11e5-8994-feff819cdc9f"), UUID.fromString("01707e47-5f6d-555e-80af-3c1ffb297eaa"));
     /**
      * Java binding for the concept described as <strong><em>Fully qualified name description type (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -2778,7 +2778,7 @@ public class TinkarTerm {
      * ee9ac5d2-a07c-3981-a57a-f7f26baf38d8</a>}.
      */
     public static final EntityProxy.Concept HEALTH_CONCEPT =
-            EntityProxy.Concept.make("Health concept (SOLOR)", UUID.fromString("ee9ac5d2-a07c-3981-a57a-f7f26baf38d8"), UUID.fromString("a892950a-0847-300c-b477-4e3cbb945225"));
+            EntityProxy.Concept.make("Health concept (SOLOR)", UUID.fromString("ee9ac5d2-a07c-3981-a57a-f7f26baf38d8"), UUID.fromString("a892950a-0847-300c-b477-4e3cbb945225"), UUID.fromString("f6daf03a-93d6-5bab-8dc9-f60c327cf012"));
     /**
      * Java binding for the concept described as <strong><em>Health risk (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -3218,7 +3218,7 @@ public class TinkarTerm {
      * aa789d52-2278-54cb-9a13-f41c36249f77</a>}.
      */
     public static final EntityProxy.Concept JAPANESE_LANGUAGE =
-            EntityProxy.Concept.make("Japanese language (SOLOR)", UUID.fromString("aa789d52-2278-54cb-9a13-f41c36249f77"), UUID.fromString("450226cc-9567-11e5-8994-feff819cdc9f"));
+            EntityProxy.Concept.make("Japanese language (SOLOR)", UUID.fromString("aa789d52-2278-54cb-9a13-f41c36249f77"), UUID.fromString("450226cc-9567-11e5-8994-feff819cdc9f"), UUID.fromString("7d090f5d-b7fb-5457-8183-da668d50a18e"));
     /**
      * Java binding for the concept described as <strong><em>Join query clause (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -3698,7 +3698,7 @@ public class TinkarTerm {
      * e9645d95-8a1f-3825-8feb-0bc2ee825694</a>}.
      */
     public static final EntityProxy.Concept LITHUANIAN_LANGUAGE =
-            EntityProxy.Concept.make("Lithuanian language (SOLOR)", UUID.fromString("e9645d95-8a1f-3825-8feb-0bc2ee825694"), UUID.fromString("45022410-9567-11e5-8994-feff819cdc9f"));
+            EntityProxy.Concept.make("Lithuanian language (SOLOR)", UUID.fromString("e9645d95-8a1f-3825-8feb-0bc2ee825694"), UUID.fromString("45022410-9567-11e5-8994-feff819cdc9f"), UUID.fromString("8fa63274-70e3-5b11-9669-1b7bdb372b1a"));
     /**
      * Java binding for the concept described as <strong><em>Logic assemblage (SOLOR)</em></strong>;
      * identified by UUID: {@code
@@ -5180,7 +5180,7 @@ public class TinkarTerm {
      * a63f4bf2-a040-11e5-8994-feff819cdc9f</a>}.
      */
     public static final EntityProxy.Concept ROLE_GROUP =
-            EntityProxy.Concept.make("Role group (SOLOR)", UUID.fromString("a63f4bf2-a040-11e5-8994-feff819cdc9f"), UUID.fromString("051fbfed-3c40-3130-8c09-889cb7b7b5b6"));
+            EntityProxy.Concept.make("Role group (SOLOR)", UUID.fromString("a63f4bf2-a040-11e5-8994-feff819cdc9f"), UUID.fromString("051fbfed-3c40-3130-8c09-889cb7b7b5b6"), UUID.fromString("f97abff6-a221-57a1-9cd6-e79e723bfe2a"));
     /**
      * Java binding for the concept described as <strong><em>Role operator (SOLOR)</em></strong>;
      * identified by UUID: {@code
