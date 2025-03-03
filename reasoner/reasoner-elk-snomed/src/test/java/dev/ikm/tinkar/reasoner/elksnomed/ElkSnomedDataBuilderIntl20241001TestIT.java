@@ -34,9 +34,9 @@ public class ElkSnomedDataBuilderIntl20241001TestIT extends ElkSnomedDataBuilder
 	}
 
 	{
-		stated_count = 396534;
-		active_count = 369154;
-		inactive_count = 27380;
+		stated_count = 396537;
+		active_count = 369156;
+		inactive_count = 27381;
 	}
 
 	@Override
