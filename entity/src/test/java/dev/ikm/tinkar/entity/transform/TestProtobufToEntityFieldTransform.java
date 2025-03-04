@@ -25,7 +25,7 @@ import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.openSes
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@Disabled("Java 23")
+// @Disabled("Java 23")
 public class TestProtobufToEntityFieldTransform {
     @Test
     @DisplayName("Transform a Field With a String Value Present")
