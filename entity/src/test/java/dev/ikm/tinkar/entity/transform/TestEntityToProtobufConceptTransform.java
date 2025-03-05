@@ -37,7 +37,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@Disabled("Java 23")
+// @Disabled("Java 23")
 public class TestEntityToProtobufConceptTransform {
 
     @Test

@@ -29,7 +29,7 @@ import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@Disabled("Java 23")
+// @Disabled("Java 23")
 public class TestProtobufToEntityPatternTransform {
     private PatternEntity mockPatternEntity;
 
