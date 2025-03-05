@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.coordinate.stamp.calculator;
 
+import dev.ikm.tinkar.coordinate.stamp.StampCoordinate;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import org.eclipse.collections.api.list.ImmutableList;
 import dev.ikm.tinkar.common.util.functional.TriConsumer;
@@ -48,6 +49,11 @@ public interface StampCalculatorDelegate extends StampCalculator {
     @Override
     default <V extends EntityVersion> Latest<V> latest(Entity<V> chronicle) {
         return stampCalculator().latest(chronicle);
+    }
+
+    @Override
+    default StampCoordinate stampCoordinate() {
+        return stampCalculator().stampCoordinate();
     }
 
     @Override
