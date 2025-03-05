@@ -807,6 +807,11 @@ public class StampCalculatorWithCache implements StampCalculator {
         return this.filter;
     }
 
+    @Override
+    public StampCoordinate stampCoordinate() {
+        return this.filter;
+    }
+
     /**
      * On route.
      *
