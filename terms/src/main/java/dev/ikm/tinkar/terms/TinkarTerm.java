@@ -5324,7 +5324,7 @@ public class TinkarTerm {
      * 0418a591-f75b-39ad-be2c-3ab849326da9</a>}.
      */
     public static final EntityProxy.Concept SCTID =
-            EntityProxy.Concept.make("SCTID (SOLOR)", UUID.fromString("0418a591-f75b-39ad-be2c-3ab849326da9"), UUID.fromString("87360947-e603-3397-804b-efd0fcc509b9"));
+            EntityProxy.Concept.make("SCTID (SOLOR)", UUID.fromString("0418a591-f75b-39ad-be2c-3ab849326da9"), UUID.fromString("87360947-e603-3397-804b-efd0fcc509b9"), UUID.fromString("ab9a0e0a-6359-5462-859c-96c3d4ef2341"));
     /**
      * Java binding for the concept described as <strong><em>SH profile (SOLOR)</em></strong>;
      * identified by UUID: {@code
