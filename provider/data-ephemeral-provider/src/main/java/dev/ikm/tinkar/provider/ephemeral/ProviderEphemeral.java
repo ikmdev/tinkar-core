@@ -21,10 +21,7 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
-import dev.ikm.tinkar.entity.ConceptEntity;
-import dev.ikm.tinkar.entity.PatternEntity;
-import dev.ikm.tinkar.entity.SemanticEntity;
-import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.provider.search.Indexer;
 import dev.ikm.tinkar.provider.search.Searcher;
 import org.eclipse.collections.api.block.procedure.Procedure2;
@@ -187,6 +184,15 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     @Override
     public PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception {
         return this.searcher.search(query, maxResultSize);
+    }
+
+    @Override
+    public void recreateLuceneIndex() throws Exception {
+        forEachSemanticNid(semanticNid  -> {
+            Entity.get(semanticNid).ifPresent(entity -> {
+                this.indexer.index(entity);
+            });
+        });
     }
 
     @Override
