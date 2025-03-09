@@ -57,6 +57,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.OptionalInt;
 import java.util.ServiceLoader;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -255,7 +256,11 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             if (uuids.length == 1) {
                 return uuidToNidMap.computeIfAbsent(uuids[0], uuidKey -> newNid());
             }
-            int nid = Integer.MAX_VALUE;
+
+            OptionalInt optionalNid = optionalNid(uuids);
+
+            int nid = optionalNid.isPresent() ? optionalNid.getAsInt(): Integer.MAX_VALUE;
+
             for (UUID uuid : uuids) {
                 if (nid == Integer.MAX_VALUE) {
                     nid = uuidToNidMap.computeIfAbsent(uuids[0], uuidKey -> newNid());
@@ -273,6 +278,15 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         }
     }
 
+    private OptionalInt optionalNid(UUID... uuids) {
+        for (UUID uuid : uuids) {
+            if (uuidToNidMap.containsKey(uuid)) {
+                return OptionalInt.of(uuidToNidMap.get(uuid));
+            }
+        }
+        return OptionalInt.empty();
+    }
+
     @Override
     public int newNid() {
         return nextNid.getAndIncrement();
@@ -285,7 +299,11 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             if (uuidList.size() == 1) {
                 return uuidToNidMap.computeIfAbsent(uuidList.get(0), uuidKey -> newNid());
             }
-            int nid = Integer.MAX_VALUE;
+
+            OptionalInt optionalNid = optionalNid(uuidList.toArray(new UUID[uuidList.size()]));
+
+            int nid = optionalNid.isPresent() ? optionalNid.getAsInt(): Integer.MAX_VALUE;
+
             for (UUID uuid : uuidList) {
                 if (nid == Integer.MAX_VALUE) {
                     nid = uuidToNidMap.computeIfAbsent(uuid, uuidKey -> newNid());
@@ -383,6 +401,16 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         return this.searcher.search(query, maxResultSize);
     }
 
+    @Override
+    public void recreateLuceneIndex() throws Exception {
+        forEachSemanticNid(semanticNid  -> {
+            Entity.get(semanticNid).ifPresent(entity -> {
+                this.indexer.index(entity);
+            });
+        });
+    }
+
+    @Override
     public int[] semanticNidsOfPattern(int patternNid) {
         IntSet elementNids = getElementNidsForPatternNid(patternNid);
         if (elementNids.notEmpty()) {
