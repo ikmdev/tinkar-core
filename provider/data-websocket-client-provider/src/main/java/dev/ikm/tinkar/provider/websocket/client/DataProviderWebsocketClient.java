@@ -20,6 +20,7 @@ import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
 import dev.ikm.tinkar.common.service.PrimitiveDataService;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
+import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityService;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
@@ -212,6 +213,11 @@ public class DataProviderWebsocketClient
 
     @Override
     public PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void recreateLuceneIndex() throws Exception {
         throw new UnsupportedOperationException();
     }
 

@@ -49,7 +49,7 @@ import static org.mockito.Mockito.when;
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@Disabled("Java 23")
+// @Disabled("Java 23")
 public class TestEntityToProtobufStampTransform {
 
     @Test

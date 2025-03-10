@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@Disabled("Java 23")
+// @Disabled("Java 23")
 public class TestProtobufToEntitySemanticTransform {
     private Semantic mockSemantic;
 

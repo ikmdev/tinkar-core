@@ -233,6 +233,15 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     }
 
     @Override
+    public void recreateLuceneIndex() throws Exception {
+        forEachSemanticNid(semanticNid  -> {
+            Entity.get(semanticNid).ifPresent(entity -> {
+                this.indexer.index(entity);
+            });
+        });
+    }
+
+    @Override
     public void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure) {
         Set<Integer> elementNids = getElementNidsForPatternNid(patternNid);
         if (elementNids != null && elementNids.size() > 0) {

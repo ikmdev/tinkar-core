@@ -416,6 +416,8 @@ public interface PrimitiveDataService {
 
     PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception;
 
+    void recreateLuceneIndex() throws Exception;
+
     /**
      * @param patternNid
      * @return
