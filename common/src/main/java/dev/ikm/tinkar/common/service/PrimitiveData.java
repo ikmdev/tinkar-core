@@ -135,9 +135,7 @@ public class PrimitiveData {
         int controllerCount = 0;
         ServiceLoader<DataServiceController> loader = PluggableService.load(DataServiceController.class);
         for (DataServiceController controller : loader) {
-        	System.out.println(">>>>> CONTROLLER NAME 1 " + controller.controllerName());
             if (PrimitiveDataService.class.isAssignableFrom(controller.serviceClass())) {
-            	System.out.println(">>>>> CONTROLLER ASSIGNED " + controller.controllerName());
                 controllerCount++;
                 int score = scorer.applyAsInt(controller);
                 if (score > topScore) {
@@ -147,7 +145,6 @@ public class PrimitiveData {
             }
         }
         if (topScore > -1) {
-        	System.out.println(">>>>> CONTROLLER IS SET " + topContender.controllerName());
             setController(topContender);
         } else {
             throw new IllegalStateException("No DataServiceController selected for provider. Tried " + controllerCount);
