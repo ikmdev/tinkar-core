@@ -62,6 +62,7 @@ import dev.ikm.tinkar.common.util.functional.TriConsumer;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.coordinate.PathService;
 import dev.ikm.tinkar.coordinate.stamp.StampBranchRecord;
+import dev.ikm.tinkar.coordinate.stamp.StampCoordinate;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.StampPath;
 import dev.ikm.tinkar.coordinate.stamp.StampPathImmutable;

@@ -36,5 +36,7 @@ module dev.ikm.tinkar.provider.executor {
 
     requires java.base;
     requires dev.ikm.tinkar.common;
+    
+    exports dev.ikm.tinkar.provider.executor;
 }
 
