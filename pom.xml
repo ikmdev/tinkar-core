@@ -11,7 +11,7 @@
 
     <groupId>dev.ikm.tinkar</groupId>
     <artifactId>tinkar-core</artifactId>
-    <version>1.91.0-SNAPSHOT</version>
+    <version>1.91.0-IKM-KEC-TRANSACTION-PERSIST-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>IKM tinkar core</name>
