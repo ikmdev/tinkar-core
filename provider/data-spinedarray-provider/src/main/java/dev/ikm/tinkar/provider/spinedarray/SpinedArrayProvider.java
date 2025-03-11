@@ -28,7 +28,9 @@ import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.transaction.Transaction;
+import dev.ikm.tinkar.entity.util.EntityProcessor;
 import dev.ikm.tinkar.provider.search.Indexer;
+import dev.ikm.tinkar.provider.search.RecreateIndex;
 import dev.ikm.tinkar.provider.search.Searcher;
 import dev.ikm.tinkar.provider.spinedarray.internal.Get;
 import dev.ikm.tinkar.provider.spinedarray.internal.Put;
@@ -62,6 +64,7 @@ import java.util.ServiceLoader;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
@@ -403,12 +406,12 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
 
     @Override
     public void recreateLuceneIndex() throws Exception {
-        forEachSemanticNid(semanticNid  -> {
-            Entity.get(semanticNid).ifPresent(entity -> {
-                this.indexer.index(entity);
-            });
-        });
+        RecreateIndex recreateIndexTask = new RecreateIndex(this.indexer);
+        Future<Void> indexFuture = TinkExecutor.threadPool().submit(recreateIndexTask);
+        indexFuture.get();
     }
+
+
 
     @Override
     public int[] semanticNidsOfPattern(int patternNid) {

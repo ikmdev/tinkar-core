@@ -24,6 +24,7 @@ import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.provider.mvstore.internal.Get;
 import dev.ikm.tinkar.provider.mvstore.internal.Put;
 import dev.ikm.tinkar.provider.search.Indexer;
+import dev.ikm.tinkar.provider.search.RecreateIndex;
 import dev.ikm.tinkar.provider.search.Searcher;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -40,6 +41,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
@@ -234,11 +236,9 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
 
     @Override
     public void recreateLuceneIndex() throws Exception {
-        forEachSemanticNid(semanticNid  -> {
-            Entity.get(semanticNid).ifPresent(entity -> {
-                this.indexer.index(entity);
-            });
-        });
+        RecreateIndex recreateIndexTask = new RecreateIndex(this.indexer);
+        Future<Void> indexFuture = TinkExecutor.threadPool().submit(recreateIndexTask);
+        indexFuture.get();
     }
 
     @Override

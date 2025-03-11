@@ -23,6 +23,7 @@ import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.provider.search.Indexer;
+import dev.ikm.tinkar.provider.search.RecreateIndex;
 import dev.ikm.tinkar.provider.search.Searcher;
 import org.eclipse.collections.api.block.procedure.Procedure2;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
@@ -188,11 +190,9 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
 
     @Override
     public void recreateLuceneIndex() throws Exception {
-        forEachSemanticNid(semanticNid  -> {
-            Entity.get(semanticNid).ifPresent(entity -> {
-                this.indexer.index(entity);
-            });
-        });
+        RecreateIndex recreateIndexTask = new RecreateIndex(this.indexer);
+        Future<Void> indexFuture = TinkExecutor.threadPool().submit(recreateIndexTask);
+        indexFuture.get();
     }
 
     @Override
