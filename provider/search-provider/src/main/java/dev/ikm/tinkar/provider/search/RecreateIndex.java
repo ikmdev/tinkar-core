@@ -53,29 +53,38 @@ public class RecreateIndex extends TrackingCallable<Void> {
      */
     @Override
     protected Void compute() throws Exception {
+        updateTitle("Indexing Semantics");
+        updateMessage("Initializing...");
+        updateProgress(-1,1);
 
         EntityService.get().beginLoadPhase();
-        LongAdder counter = new LongAdder();
+        LongAdder totalEntities = new LongAdder();
+        LongAdder processedEntities = new LongAdder();
         PrimitiveData.get().forEachParallel((bytes, nid) -> {
-            counter.increment();
+            totalEntities.increment();
         });
-        this.addToTotalWork(counter.longValue());
+        updateMessage("Generating Lucene Indexes...");
+        updateProgress(0, totalEntities.longValue()+1);
 
         PrimitiveData.get().forEachParallel((bytes, nid) -> {
-            Entity.get(nid).ifPresent(entity -> {
-                this.indexer.index(entity);
-            });
-            completedUnitOfWork();
+            Entity.get(nid).ifPresent(this.indexer::index);
+            processedEntities.increment();
+            if (updateIntervalElapsed()) {
+                updateProgress(processedEntities.longValue(), totalEntities.longValue());
+            }
         });
         this.indexer.commit();
         EntityService.get().endLoadPhase();
-        LOG.info("Recreate Lucene Index completed in " + this.durationString());
-        LOG.info("Building Type Ahead suggester. ");
-        TypeAheadSearch.get().buildSuggester();
+        LOG.info("Recreate Lucene Index completed in {}", this.durationString());
 
-        LOG.info("Type Ahead Suggester completed. Total duration:  " + this.durationString());
+        LOG.info("Building Type Ahead suggester.");
+        updateMessage("Building Type Ahead suggester...");
+        TypeAheadSearch.get().buildSuggester();
+        updateProgress(1,1);
+
+        LOG.info("Type Ahead Suggester completed. Total duration:  {}", this.durationString());
         this.updateTitle("Recreate Lucene Index Completed");
-        this.updateMessage("Index time : " + this.durationString());
+        this.updateMessage("Index time: " + this.durationString());
         return null;
     }
 }
