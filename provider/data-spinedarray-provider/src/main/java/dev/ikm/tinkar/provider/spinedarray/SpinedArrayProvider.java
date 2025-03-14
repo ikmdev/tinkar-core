@@ -405,10 +405,9 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     }
 
     @Override
-    public void recreateLuceneIndex() throws Exception {
+    public void recreateLuceneIndex() {
         RecreateIndex recreateIndexTask = new RecreateIndex(this.indexer);
-        Future<Void> indexFuture = TinkExecutor.threadPool().submit(recreateIndexTask);
-        indexFuture.get();
+        TinkExecutor.ioThreadPool().submit(recreateIndexTask);
     }
 
 

@@ -191,8 +191,7 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     @Override
     public void recreateLuceneIndex() throws Exception {
         RecreateIndex recreateIndexTask = new RecreateIndex(this.indexer);
-        Future<Void> indexFuture = TinkExecutor.threadPool().submit(recreateIndexTask);
-        indexFuture.get();
+        TinkExecutor.ioThreadPool().submit(recreateIndexTask);
     }
 
     @Override
