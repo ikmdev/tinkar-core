@@ -25,6 +25,7 @@ import dev.ikm.tinkar.common.util.functional.TriConsumer;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculator;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
+import dev.ikm.tinkar.coordinate.stamp.StampCoordinate;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.coordinate.stamp.change.ChangeChronology;
 import dev.ikm.tinkar.coordinate.stamp.change.FieldChangeRecord;
@@ -116,7 +117,10 @@ public interface StampCalculator {
         return RelativePosition.EQUAL;
     }
 
-    Stream<Latest<SemanticEntityVersion>> streamLatestVersionForPattern(int patternNid);
+    StampCoordinate stampCoordinate();
+
+
+        Stream<Latest<SemanticEntityVersion>> streamLatestVersionForPattern(int patternNid);
 
     default Stream<SemanticEntityVersion> streamLatestActiveVersionForPattern(PatternFacade patternFacade) {
         return streamLatestActiveVersionForPattern(patternFacade.nid());

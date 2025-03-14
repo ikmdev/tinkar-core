@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@Disabled("Java 23")
+// @Disabled("Java 23")
 public class TestEntityToProtobufSemanticTransform {
     @Test
     @DisplayName("Transform a Entity Semantic Chronology With Zero Versions/Values Present")
