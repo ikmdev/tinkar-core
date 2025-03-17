@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -116,7 +115,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                     }
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             updateTitle("Import Protobuf Data from " + importFile.getName() + " with error(s)");
             throw new RuntimeException(e);
         } finally {

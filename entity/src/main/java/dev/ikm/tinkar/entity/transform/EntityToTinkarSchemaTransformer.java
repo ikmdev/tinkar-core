@@ -451,7 +451,7 @@ public class EntityToTinkarSchemaTransformer {
         return dev.ikm.tinkar.schema.BigDecimal.newBuilder()
                 .setScale(bigDecimal.scale())
                 .setPrecision(bigDecimal.precision())
-                .setValue(bigDecimal.toPlainString())
+                .setValue(bigDecimal.unscaledValue().toString())
                 .build();
     }
 }
