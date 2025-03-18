@@ -88,11 +88,12 @@ public interface PrimitiveDataService {
                     foundValue = nid;
                 } else {
                     if (foundValue != nid) {
-                        String sb = "Multiple nids for: " +
-                                sortedUuidList +
-                                " first value: " + foundValue +
-                                " second value: " + nid;
-                        throw new IllegalStateException(sb);
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("Multiple nids for: ");
+                        sb.append(sortedUuidList);
+                        sb.append(" first value: ").append(foundValue);
+                        sb.append(" second value: ").append(nid);
+                        throw new IllegalStateException(sb.toString());
                     }
                 }
             }
