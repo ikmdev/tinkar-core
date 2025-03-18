@@ -47,6 +47,11 @@ public class TypeAheadSearch {
     public static synchronized TypeAheadSearch get() {
         if (typeAheadSearch == null) {
             typeAheadSearch = new TypeAheadSearch();
+            try {
+                typeAheadSearch.buildSuggester();
+            } catch (IOException e) {
+                LOG.error("Caught Exception building suggester for TypeAheadSearch {}", e.getMessage());
+            }
         }
         return typeAheadSearch;
     }
