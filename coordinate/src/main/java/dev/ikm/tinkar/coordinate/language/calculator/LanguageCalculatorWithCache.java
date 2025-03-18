@@ -94,7 +94,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
         return stampCalculator.latestPatternEntityVersion(patternNid);
     }
 
-    private record StampLangRecord(StampCoordinateRecord stampFilter,
+    private static record StampLangRecord(StampCoordinateRecord stampFilter,
                                           ImmutableList<LanguageCoordinateRecord> languageCoordinateList) {
     }
 
@@ -395,13 +395,14 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
             Latest<PatternEntityVersion> latestPatternVersion = stampCalculator.latestPatternEntityVersion(semanticEntity.patternNid());
             if (latestPatternVersion.isPresent()) {
                 PatternEntityVersion patternVersion = latestPatternVersion.get();
-                String sb = "[" + getPreferredDescriptionTextWithFallbackOrNid(patternVersion.semanticMeaningNid()) +
-                        "] of <" +
-                        getPreferredDescriptionTextWithFallbackOrNid(semanticEntity.referencedComponentNid()) +
-                        "> for [" +
-                        getPreferredDescriptionTextWithFallbackOrNid(patternVersion.semanticPurposeNid()) +
-                        "]";
-                return Optional.of(sb);
+                StringBuilder sb = new StringBuilder("[");
+                sb.append(getPreferredDescriptionTextWithFallbackOrNid(patternVersion.semanticMeaningNid()));
+                sb.append("] of <");
+                sb.append(getPreferredDescriptionTextWithFallbackOrNid(semanticEntity.referencedComponentNid()));
+                sb.append("> for [");
+                sb.append(getPreferredDescriptionTextWithFallbackOrNid(patternVersion.semanticPurposeNid()));
+                sb.append("]");
+                return Optional.of(sb.toString());
             }
         }
 
