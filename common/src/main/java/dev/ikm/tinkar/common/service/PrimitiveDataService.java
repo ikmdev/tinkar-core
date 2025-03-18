@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.common.service;
 
-import com.google.auto.service.AutoService;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
@@ -490,8 +489,6 @@ public interface PrimitiveDataService {
         }
     }
 
-
-    @AutoService(CachingService.class)
     class CacheProvider implements CachingService {
 
         @Override

@@ -5,7 +5,7 @@
     <parent>
         <groupId>dev.ikm.build</groupId>
         <artifactId>java-parent</artifactId>
-        <version>1.58.0</version>
+        <version>1.58.0</version>  
         <relativePath/>
     </parent>
 
@@ -403,14 +403,14 @@
 
             <dependency>
                 <groupId>org.apache.lucene</groupId>
-                <artifactId>lucene-suggest</artifactId>
-                <version>${lucene-suggest.version}</version>
+                <artifactId>lucene-backward-codecs</artifactId>
+                <version>${lucene-core.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.lucene</groupId>
-                <artifactId>lucene-backward-codecs</artifactId>
-                <version>${lucene-core.version}</version>
+                <artifactId>lucene-suggest</artifactId>
+                <version>${lucene-suggest.version}</version>
             </dependency>
             
             <dependency>

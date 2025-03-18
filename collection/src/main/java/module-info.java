@@ -25,8 +25,7 @@ module dev.ikm.tinkar.collection {
     requires dev.ikm.jpms.eclipse.collections.api;
     requires dev.ikm.jpms.eclipse.collections;
     requires org.slf4j;
-    requires transitive static dev.ikm.jpms.auto.service;
-
+   
     exports dev.ikm.tinkar.collection;
     opens dev.ikm.tinkar.collection to org.eclipse.collections.api, org.eclipse.collections;
     exports dev.ikm.tinkar.collection.store;

@@ -20,16 +20,17 @@
     <dependencies>
         <dependency>
             <groupId>${tinkar-jpms-deps.groupId}</groupId>
-            <artifactId>auto-service</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>roaringbitmap</artifactId>
         </dependency>
         <dependency>
             <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>activej-bytebuf</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>dev.ikm.jpms</groupId>
+                    <artifactId>auto-service</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>${tinkar-jpms-deps.groupId}</groupId>

@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.coordinate.logic.calculator;
 
-import com.google.auto.service.AutoService;
 import dev.ikm.tinkar.common.service.PrimitiveDataRepair;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinate;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
@@ -72,7 +71,6 @@ public class LogicCalculatorWithCache implements LogicCalculator {
     record LogicAndStampCoordinate(LogicCoordinateRecord logicCoordinate, StampCoordinateRecord stampCoordinate) {
     }
 
-    @AutoService(CachingService.class)
     public static class CacheProvider implements CachingService {
         @Override
         public void reset() {

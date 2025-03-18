@@ -15,19 +15,22 @@
  */
 package dev.ikm.tinkar.coordinate.stamp;
 
-import com.google.auto.service.AutoService;
-import dev.ikm.tinkar.common.binary.*;
-import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
-import dev.ikm.tinkar.coordinate.PathService;
-import org.eclipse.collections.api.factory.Sets;
-import org.eclipse.collections.api.set.ImmutableSet;
-import org.eclipse.collections.api.set.MutableSet;
 import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
+import dev.ikm.tinkar.common.binary.Decoder;
+import dev.ikm.tinkar.common.binary.DecoderInput;
+import dev.ikm.tinkar.common.binary.Encodable;
+import dev.ikm.tinkar.common.binary.Encoder;
+import dev.ikm.tinkar.common.binary.EncoderOutput;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
+import dev.ikm.tinkar.coordinate.PathService;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.TinkarTerm;
+import org.eclipse.collections.api.factory.Sets;
+import org.eclipse.collections.api.set.ImmutableSet;
+import org.eclipse.collections.api.set.MutableSet;
 
 import java.util.Objects;
 
@@ -152,7 +155,6 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
         return sb.toString();
     }
 
-    @AutoService(CachingService.class)
     public static class CachingProvider implements CachingService {
 
         @Override
