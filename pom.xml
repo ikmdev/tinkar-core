@@ -407,12 +407,6 @@
                 <artifactId>lucene-suggest</artifactId>
                 <version>${lucene-suggest.version}</version>
             </dependency>
-
-            <dependency>
-                <groupId>org.apache.lucene</groupId>
-                <artifactId>lucene-backward-codecs</artifactId>
-                <version>${lucene-backward-codecs.version}</version>
-            </dependency>
             
             <dependency>
 				<groupId>dev.ikm.owlapi</groupId>
