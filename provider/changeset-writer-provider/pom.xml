@@ -4,7 +4,7 @@
     <parent>
         <groupId>dev.ikm.tinkar</groupId>
         <artifactId>provider</artifactId>
-        <version>1.91.0-SNAPSHOT</version>
+        <version>1.91.0-IKM-PROP-PATTERN-FIX-SNAPSHOT</version>
     </parent>
 
     <artifactId>changeset-writer-provider</artifactId>
