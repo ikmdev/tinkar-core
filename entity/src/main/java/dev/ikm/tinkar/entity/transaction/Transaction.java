@@ -65,6 +65,19 @@ public class Transaction implements Comparable<Transaction>, Encodable {
     }
 
     /**
+     * Constructs a new Transaction instance with the specified UUID, name, and commit time.
+     * The created transaction is added to the list of active transactions.
+     *
+     * @param transactionUuid the unique identifier for this transaction
+     * @param transactionName the name associated with this transaction
+     * @param commitTime the commit time associated with this transaction
+     */
+    private Transaction(UUID transactionUuid, String transactionName, long commitTime) {
+        this(transactionUuid, transactionName);
+        this.commitTime = commitTime;
+    }
+
+    /**
      * Constructs a new Transaction instance with the specified transaction name.
      * A unique identifier is automatically generated for the transaction.
      *
@@ -484,7 +497,7 @@ public class Transaction implements Comparable<Transaction>, Encodable {
         int objectMarshalVersion = in.readInt();
         return switch (objectMarshalVersion) {
             case marshalVersion -> {
-                Transaction transaction = new Transaction(in.readUuid(), in.readString());
+                Transaction transaction = new Transaction(in.readUuid(), in.readString(), in.readLong());
                 int stampsInTransactionCount = in.readInt();
                 for (int i = 0; i < stampsInTransactionCount; i++) {
                     transaction.stampsInTransaction.add(in.readUuid());
