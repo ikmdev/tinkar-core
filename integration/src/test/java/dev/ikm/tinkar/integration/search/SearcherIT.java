@@ -84,10 +84,10 @@ public class SearcherIT {
         } catch (Exception ex) {
             LOG.error("Exception creating new IDENTIFIER_PATTERN: {}", ex.toString());
         }
-        rebulidTypeAheadSuggesterAndBlock();
+        rebuildTypeAheadSuggesterAndBlock();
     }
 
-    private void rebulidTypeAheadSuggesterAndBlock() {
+    private void rebuildTypeAheadSuggesterAndBlock() {
         try {
             TypeAheadSearch.get().buildSuggester().get();
         } catch (IOException | ExecutionException | InterruptedException ex) {
@@ -194,7 +194,7 @@ public class SearcherIT {
                 .fieldValues((MutableList<Object> values) -> values
                         .withAll(list))
         );
-        rebulidTypeAheadSuggesterAndBlock();
+        rebuildTypeAheadSuggesterAndBlock();
         concepts = TypeAheadSearch.get().typeAheadSuggestions("r", 50);
         assertEquals(41, concepts.size());
         AtomicInteger commentConcepts = new AtomicInteger();
