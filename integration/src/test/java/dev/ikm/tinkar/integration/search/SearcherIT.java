@@ -46,8 +46,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -79,8 +81,17 @@ public class SearcherIT {
                         .fieldDefinition(TinkarTerm.IDENTIFIER_VALUE, TinkarTerm.IDENTIFIER_VALUE, TinkarTerm.STRING)
                 );
             }
-        } catch (Exception e) {
-            LOG.error("Exception creating new IDENTIFIER_PATTERN");
+        } catch (Exception ex) {
+            LOG.error("Exception creating new IDENTIFIER_PATTERN: {}", ex.toString());
+        }
+        rebulidTypeAheadSuggesterAndBlock();
+    }
+
+    private void rebulidTypeAheadSuggesterAndBlock() {
+        try {
+            TypeAheadSearch.get().buildSuggester().get();
+        } catch (IOException | ExecutionException | InterruptedException ex) {
+            LOG.error("Exception building Type Ahead Suggester: {}", ex.toString());
         }
     }
 
@@ -165,7 +176,7 @@ public class SearcherIT {
     }
 
     @Test
-    public void typeAheadIndexerTest() throws Exception {
+    public void typeAheadIndexerTest() throws InterruptedException {
         var stampCoordinate = Coordinates.Stamp.DevelopmentLatestActiveOnly();
         var languageCoordinate = Coordinates.Language.UsEnglishRegularName();
         var navigationCoordinate = Coordinates.Navigation.inferred().toNavigationCoordinateRecord();
@@ -183,6 +194,7 @@ public class SearcherIT {
                 .fieldValues((MutableList<Object> values) -> values
                         .withAll(list))
         );
+        rebulidTypeAheadSuggesterAndBlock();
         concepts = TypeAheadSearch.get().typeAheadSuggestions("r", 50);
         assertEquals(41, concepts.size());
         AtomicInteger commentConcepts = new AtomicInteger();
