@@ -21,14 +21,31 @@ import dev.ikm.tinkar.collection.SpinedIntIntMap;
 import dev.ikm.tinkar.collection.SpinedIntLongArrayMap;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.service.*;
+import dev.ikm.tinkar.common.service.DataActivity;
+import dev.ikm.tinkar.common.service.NidGenerator;
+import dev.ikm.tinkar.common.service.PluggableService;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.PrimitiveDataRepair;
+import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
+import dev.ikm.tinkar.common.service.PrimitiveDataService;
+import dev.ikm.tinkar.common.service.ServiceKeys;
+import dev.ikm.tinkar.common.service.ServiceProperties;
+import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
+import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.ChangeSetWriterService;
+import dev.ikm.tinkar.entity.ConceptEntity;
+import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.PatternEntity;
+import dev.ikm.tinkar.entity.SemanticEntity;
+import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.StampRecord;
+import dev.ikm.tinkar.entity.StampVersionRecord;
 import dev.ikm.tinkar.entity.transaction.Transaction;
-import dev.ikm.tinkar.entity.util.EntityProcessor;
 import dev.ikm.tinkar.provider.search.Indexer;
 import dev.ikm.tinkar.provider.search.RecreateIndex;
 import dev.ikm.tinkar.provider.search.Searcher;
@@ -59,6 +76,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.OptionalInt;
 import java.util.ServiceLoader;
 import java.util.UUID;
@@ -108,14 +126,24 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     final String name;
     final ImmutableList<ChangeSetWriterService> changeSetWriterServices;
 
-    public SpinedArrayProvider() throws IOException {
+    public SpinedArrayProvider() throws IOException, ExecutionException, InterruptedException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening SpinedArrayProvider");
         File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
         name = configuredRoot.getName();
         configuredRoot.mkdirs();
-        File indexDir = new File(configuredRoot, "lucene");
-        this.indexer = new Indexer(indexDir.toPath());
+        Path indexPath = Path.of(configuredRoot.getPath(),"lucene");
+        boolean indexExists = Files.exists(indexPath);
+        Indexer indexer;
+        try {
+            indexer = new Indexer(indexPath);
+        } catch (IllegalArgumentException ex) {
+            // If Indexer Codec does not match, then delete and rebuild with new Codec
+            FileUtil.recursiveDelete(indexPath.toFile());
+            indexExists = Files.exists(indexPath);
+            indexer = new Indexer(indexPath);
+        }
+        this.indexer = indexer;
         this.searcher = new Searcher();
         SpinedArrayProvider.singleton = this;
         Get.singleton = this;
@@ -138,7 +166,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             String nextNidString = Files.readString(this.nextNidKeyFile.toPath());
             nextNid.set(Integer.valueOf(nextNidString));
         }
-        TinkExecutor.threadPool().execute(() -> {
+        TinkExecutor.threadPool().submit(() -> {
             Stopwatch uuidNidMapFromEntitiesStopwatch = new Stopwatch();
             LOG.info("Starting UUID strategy 2");
             UuidNidCollector uuidNidCollector = new UuidNidCollector(uuidToNidMap,
@@ -154,7 +182,15 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
                 LOG.info(uuidNidCollector.report());
             }
             Thread.ofVirtual().start(this::listAndCancelUncommittedStamps);
-        });
+        }).get();
+
+        if (!indexExists) {
+            try {
+                this.recreateLuceneIndex().get();
+            } catch (Exception e) {
+                LOG.error(e.getLocalizedMessage(), e);
+            }
+        }
 
         ServiceLoader<ChangeSetWriterService> changeSetServiceLoader = PluggableService.load(ChangeSetWriterService.class);
 

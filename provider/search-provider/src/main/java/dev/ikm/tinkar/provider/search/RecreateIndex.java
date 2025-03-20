@@ -74,15 +74,8 @@ public class RecreateIndex extends TrackingCallable<Void> {
             }
         });
         this.indexer.commit();
-        EntityService.get().endLoadPhase();
+        EntityService.get().endLoadPhase(); // Ending Load Phase triggers type ahead suggester build on background thread
         LOG.info("Recreate Lucene Index completed in {}", this.durationString());
-
-        LOG.info("Building Type Ahead suggester.");
-        updateMessage("Building Type Ahead suggester...");
-        TypeAheadSearch.get().buildSuggester();
-        updateProgress(1,1);
-
-        LOG.info("Type Ahead Suggester completed. Total duration:  {}", this.durationString());
         this.updateTitle("Recreate Lucene Index Completed");
         this.updateMessage("Index time: " + this.durationString());
         return null;

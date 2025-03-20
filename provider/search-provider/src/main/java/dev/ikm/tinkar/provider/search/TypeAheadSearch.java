@@ -16,7 +16,8 @@
 
 package dev.ikm.tinkar.provider.search;
 
-import dev.ikm.tinkar.common.util.time.Stopwatch;
+import dev.ikm.tinkar.common.service.TinkExecutor;
+import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.LatestVersionSearchResult;
 import dev.ikm.tinkar.terms.ConceptFacade;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 public class TypeAheadSearch {
@@ -54,13 +56,8 @@ public class TypeAheadSearch {
     private TypeAheadSearch() {
     }
 
-    public void buildSuggester() throws IOException {
-        Stopwatch stopwatch = new Stopwatch();
-        reader = DirectoryReader.open(Indexer.indexWriter());
-        LuceneDictionary dict = new LuceneDictionary(reader, TEXT_FIELD_NAME);
-        suggester = new AnalyzingSuggester(Indexer.indexDirectory(), "suggest", Indexer.analyzer());
-        suggester.build(dict);
-        LOG.debug("TypeAheadSearch index build duration: {}", stopwatch.durationString());
+    public Future<Void> buildSuggester() throws IOException {
+        return TinkExecutor.threadPool().submit(new BuildSuggester());
     }
 
     public void close() {
@@ -125,5 +122,39 @@ public class TypeAheadSearch {
 
         });
         return conceptList;
+    }
+
+    private class BuildSuggester extends TrackingCallable<Void> {
+
+        public BuildSuggester() {
+            super(false, true);
+            LOG.info("Building Type Ahead Suggester");
+            updateTitle("Building Type Ahead Suggester");
+        }
+
+        /**
+         * Executes the process of building the "Type Ahead" Search Suggester.
+         * The method manages progress tracking, lifecycle events, and logs the overall process duration.
+         *
+         * @return Returns {@code null} upon completion of the index rebuilding process.
+         * @throws Exception if an error occurs during the "Type Ahead" Search Suggestion building phase.
+         */
+        @Override
+        protected Void compute() throws IOException {
+            LOG.info("Build Type Ahead Suggester started");
+            updateMessage("Building Type Ahead Suggester...");
+            updateProgress(-1, 1);
+
+            reader = DirectoryReader.open(Indexer.indexWriter());
+            LuceneDictionary dict = new LuceneDictionary(reader, TEXT_FIELD_NAME);
+            suggester = new AnalyzingSuggester(Indexer.indexDirectory(), "suggest", Indexer.analyzer());
+            suggester.build(dict);
+
+            updateProgress(1, 1);
+
+            LOG.info("Type Ahead Suggester build completed. Total duration:  {}", this.durationString());
+            updateMessage("Build time: " + this.durationString());
+            return null;
+        }
     }
 }
