@@ -78,6 +78,7 @@ public class RecreateIndex extends TrackingCallable<Void> {
         LOG.info("Recreate Lucene Index completed in {}", this.durationString());
         this.updateTitle("Recreate Lucene Index Completed");
         this.updateMessage("Index time: " + this.durationString());
+        updateProgress(1,1);
         return null;
     }
 }

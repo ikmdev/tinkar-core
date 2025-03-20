@@ -208,13 +208,13 @@ public class SearcherIT {
     }
 
     @Test
-    public void typeAheadMaxResultsTest() throws Exception {
+    public void typeAheadMaxResultsTest() {
         List<ConceptFacade> concepts = TypeAheadSearch.get().typeAheadSuggestions("r", 20);
         assertEquals(20, concepts.size());
     }
 
     @Test
-    public void searchConceptsNonExistentMembershipSemantic() throws Exception {
+    public void searchConceptsNonExistentMembershipSemantic() {
         // test memberPatternId does not exist
         EntityProxy.Concept conceptProxy = EntityProxy.Concept.make(PublicIds.newRandom());
         List<PublicId> conceptIds = Searcher.membersOf(conceptProxy.publicId());
@@ -222,21 +222,21 @@ public class SearcherIT {
     }
 
     @Test
-    public void searchConceptsNonPatternMembershipSemantic() throws Exception {
+    public void searchConceptsNonPatternMembershipSemantic() {
         // test memberPatternId exists but is not a pattern
         List<PublicId> conceptIds = Searcher.membersOf(TinkarTerm.ROLE.publicId());
         assertTrue(conceptIds.isEmpty(), "memberPatternId exists but not a pattern, should return empty list");
     }
 
     @Test
-    public void searchConceptsNoTaggedMembershipSemantic() throws Exception {
+    public void searchConceptsNoTaggedMembershipSemantic() {
         // test memberPatternId with no tagged concepts
         List<PublicId> conceptIds = Searcher.membersOf(TinkarTerm.COMMENT_PATTERN);
         assertTrue(conceptIds.isEmpty(), "memberPatternId has no tagged concepts, should return empty list");
     }
 
     @Test
-    public void searchConceptsWithTaggedMembershipSemantic() throws Exception {
+    public void searchConceptsWithTaggedMembershipSemantic() {
         // test memberPatternId with tagged concepts
         List<PublicId> conceptIds = Searcher.membersOf(TinkarTerm.KOMET_BASE_MODEL_COMPONENT_PATTERN);
         assertEquals(1, conceptIds.size(), "there should be 1 tagged concept associated with this pattern");
@@ -245,7 +245,7 @@ public class SearcherIT {
     }
 
     @Test
-    public void searchExistingIdentifier() throws Exception {
+    public void searchExistingIdentifier() {
         //source: TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER
         //identifier: LANGUAGE_NID_FOR_LANGUAGE_COORDINATE
         Optional<PublicId> publicId = Searcher.getPublicId(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, TinkarTerm.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE.asUuidArray()[0].toString());
@@ -254,7 +254,7 @@ public class SearcherIT {
     }
 
     @Test
-    public void searchNonExistingIdentifier() throws Exception {
+    public void searchNonExistingIdentifier() {
         Optional<PublicId> publicId = Searcher.getPublicId(PublicIds.newRandom(), TinkarTerm.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE.asUuidArray()[0].toString());
         assertFalse(publicId.isPresent(), "Concept should be null for non-existing Identifier Source");
         publicId = Searcher.getPublicId(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "abcxyz");
