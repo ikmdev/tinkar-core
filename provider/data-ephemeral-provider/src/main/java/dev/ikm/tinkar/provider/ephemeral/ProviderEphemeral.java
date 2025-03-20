@@ -18,10 +18,17 @@ package dev.ikm.tinkar.provider.ephemeral;
 import dev.ikm.tinkar.collection.KeyType;
 import dev.ikm.tinkar.collection.SpinedIntIntMapAtomic;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.service.*;
+import dev.ikm.tinkar.common.service.DataActivity;
+import dev.ikm.tinkar.common.service.NidGenerator;
+import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
+import dev.ikm.tinkar.common.service.PrimitiveDataService;
+import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.ConceptEntity;
+import dev.ikm.tinkar.entity.PatternEntity;
+import dev.ikm.tinkar.entity.SemanticEntity;
+import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.provider.search.Indexer;
 import dev.ikm.tinkar.provider.search.RecreateIndex;
 import dev.ikm.tinkar.provider.search.Searcher;
@@ -189,9 +196,8 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     }
 
     @Override
-    public void recreateLuceneIndex() throws Exception {
-        RecreateIndex recreateIndexTask = new RecreateIndex(this.indexer);
-        TinkExecutor.ioThreadPool().submit(recreateIndexTask);
+    public Future<Void> recreateLuceneIndex() throws Exception {
+        return TinkExecutor.ioThreadPool().submit(new RecreateIndex(this.indexer));
     }
 
     @Override

@@ -16,7 +16,13 @@
 package dev.ikm.tinkar.provider.mvstore;
 
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.service.*;
+import dev.ikm.tinkar.common.service.DataActivity;
+import dev.ikm.tinkar.common.service.NidGenerator;
+import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
+import dev.ikm.tinkar.common.service.PrimitiveDataService;
+import dev.ikm.tinkar.common.service.ServiceKeys;
+import dev.ikm.tinkar.common.service.ServiceProperties;
+import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.entity.Entity;
@@ -235,9 +241,8 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     }
 
     @Override
-    public void recreateLuceneIndex() throws Exception {
-        RecreateIndex recreateIndexTask = new RecreateIndex(this.indexer);
-        TinkExecutor.ioThreadPool().submit(recreateIndexTask);
+    public Future<Void> recreateLuceneIndex() throws Exception {
+        return TinkExecutor.ioThreadPool().submit(new RecreateIndex(this.indexer));
     }
 
     @Override

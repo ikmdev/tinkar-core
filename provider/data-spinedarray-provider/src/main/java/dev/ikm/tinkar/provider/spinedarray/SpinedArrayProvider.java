@@ -405,12 +405,9 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     }
 
     @Override
-    public void recreateLuceneIndex() throws Exception {
-        RecreateIndex recreateIndexTask = new RecreateIndex(this.indexer);
-        TinkExecutor.ioThreadPool().submit(recreateIndexTask);
+    public Future<Void> recreateLuceneIndex() throws Exception {
+        return TinkExecutor.ioThreadPool().submit(new RecreateIndex(this.indexer));
     }
-
-
 
     @Override
     public int[] semanticNidsOfPattern(int patternNid) {
