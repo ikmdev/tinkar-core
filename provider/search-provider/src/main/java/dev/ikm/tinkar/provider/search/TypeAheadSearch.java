@@ -60,12 +60,16 @@ public class TypeAheadSearch {
     }
 
     public void buildSuggester() throws IOException {
-        Stopwatch stopwatch = new Stopwatch();
-        reader = DirectoryReader.open(Indexer.indexWriter());
-        LuceneDictionary dict = new LuceneDictionary(reader, TEXT_FIELD_NAME);
-        suggester = new AnalyzingSuggester(Indexer.indexDirectory(), "suggest", Indexer.analyzer());
-        suggester.build(dict);
-        LOG.debug("TypeAheadSearch index build duration: {}", stopwatch.durationString());
+        if (Indexer.indexWriter().isOpen()) {
+            Stopwatch stopwatch = new Stopwatch();
+            reader = DirectoryReader.open(Indexer.indexWriter());
+            LuceneDictionary dict = new LuceneDictionary(reader, TEXT_FIELD_NAME);
+            suggester = new AnalyzingSuggester(Indexer.indexDirectory(), "suggest", Indexer.analyzer());
+            suggester.build(dict);
+            LOG.debug("TypeAheadSearch index build duration: {}", stopwatch.durationString());
+        } else {
+            LOG.info("IndexWriter is already closed. Cannot build TypeAheadSearch suggester");
+        }
     }
 
     public void close() {
