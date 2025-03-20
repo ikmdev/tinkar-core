@@ -184,6 +184,13 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             Thread.ofVirtual().start(this::listAndCancelUncommittedStamps);
         }).get();
 
+        ServiceLoader<ChangeSetWriterService> changeSetServiceLoader = PluggableService.load(ChangeSetWriterService.class);
+        MutableList<ChangeSetWriterService> changeSetWriters = Lists.mutable.empty();
+        changeSetServiceLoader.stream().forEach(changeSetProvider -> {
+            changeSetWriters.add(changeSetProvider.get());
+        });
+        this.changeSetWriterServices = changeSetWriters.toImmutable();
+
         if (!indexExists) {
             try {
                 this.recreateLuceneIndex().get();
@@ -191,14 +198,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
                 LOG.error(e.getLocalizedMessage(), e);
             }
         }
-
-        ServiceLoader<ChangeSetWriterService> changeSetServiceLoader = PluggableService.load(ChangeSetWriterService.class);
-
-        MutableList<ChangeSetWriterService> changeSetWriters = Lists.mutable.empty();
-        changeSetServiceLoader.stream().forEach(changeSetProvider -> {
-            changeSetWriters.add(changeSetProvider.get());
-        });
-        this.changeSetWriterServices = changeSetWriters.toImmutable();
 
         stopwatch.stop();
         LOG.info("Opened SpinedArrayProvider in: " + stopwatch.durationString());
