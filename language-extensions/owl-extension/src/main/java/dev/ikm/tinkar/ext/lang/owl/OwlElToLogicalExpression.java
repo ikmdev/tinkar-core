@@ -126,10 +126,12 @@ public class OwlElToLogicalExpression {
 		List<LogicalAxiom.Atom> exprs = new ArrayList<>();
 		for (ConcreteRole role : roles) {
 			Object value = switch (role.getValueType()) {
+			case Boolean -> Boolean.parseBoolean(role.getValue());
 			case Decimal -> new BigDecimal(role.getValue());
 			case Double -> Double.parseDouble(role.getValue());
 			case Float -> Float.parseFloat(role.getValue());
 			case Integer -> Integer.parseInt(role.getValue());
+			case Long -> Long.parseLong(role.getValue());
 			case String -> role.getValue();
 			};
 			exprs.add(builder.FeatureAxiom(getConceptFacade(role.getConcreteRoleType().getId()), TinkarTerm.EQUAL_TO,

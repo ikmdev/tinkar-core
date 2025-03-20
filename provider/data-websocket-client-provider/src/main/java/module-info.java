@@ -39,7 +39,6 @@ module dev.ikm.tinkar.provider.websocket.client {
     requires dev.ikm.tinkar.component;
     requires java.net.http;
     requires dev.ikm.tinkar.entity;
-    requires static transitive dev.ikm.jpms.auto.service;
 
     provides DataServiceController
             with WebsocketServiceController;

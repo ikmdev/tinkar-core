@@ -49,6 +49,11 @@ public class TypeAheadSearch {
     public static synchronized TypeAheadSearch get() {
         if (typeAheadSearch == null) {
             typeAheadSearch = new TypeAheadSearch();
+            try {
+                typeAheadSearch.buildSuggester();
+            } catch (IOException e) {
+                LOG.error("Caught Exception building suggester for TypeAheadSearch {}", e.getMessage());
+            }
         }
         return typeAheadSearch;
     }
@@ -141,6 +146,10 @@ public class TypeAheadSearch {
          */
         @Override
         protected Void compute() throws IOException {
+            if (!Indexer.indexWriter().isOpen()) {
+                LOG.info("IndexWriter is already closed. Cannot build TypeAheadSearch suggester");
+                return null;
+            }
             LOG.info("Build Type Ahead Suggester started");
             updateMessage("Building Type Ahead Suggester...");
             updateProgress(-1, 1);

@@ -21,7 +21,6 @@ module dev.ikm.tinkar.provider.search {
     requires org.apache.lucene.queries;
     requires org.apache.lucene.highlighter;
     requires org.apache.lucene.core;
-    requires static transitive dev.ikm.jpms.auto.service;
     requires dev.ikm.tinkar.coordinate;
     requires dev.ikm.jpms.eclipse.collections;
     requires org.apache.lucene.suggest;

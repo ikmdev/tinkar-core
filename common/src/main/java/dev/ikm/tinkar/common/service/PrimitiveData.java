@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.common.service;
 
-import com.google.auto.service.AutoService;
 import dev.ikm.tinkar.common.alert.AlertObject;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.IntIdCollection;
@@ -47,7 +46,7 @@ public class PrimitiveData {
     private static DefaultDescriptionForNidService defaultDescriptionForNidServiceSingleton;
     private static PublicIdService publicIdServiceSingleton;
     private static PrimitiveData singleton;
-    private static CopyOnWriteArrayList<SaveState> statesToSave = new CopyOnWriteArrayList<>();
+    private static final CopyOnWriteArrayList<SaveState> statesToSave = new CopyOnWriteArrayList<>();
 
     static {
         try {
@@ -56,7 +55,8 @@ public class PrimitiveData {
             //TODO: Understand why.
             //throwable.printStackTrace();
             //We don't want to swallow exceptions...
-            throwable.printStackTrace();       }
+            throwable.printStackTrace();       
+          }
     }
 
     private PrimitiveData() {
@@ -238,8 +238,6 @@ public class PrimitiveData {
         return get().nidForUuids(uuids);
     }
 
-
-    @AutoService(CachingService.class)
     public static class CacheProvider implements CachingService {
 
         @Override

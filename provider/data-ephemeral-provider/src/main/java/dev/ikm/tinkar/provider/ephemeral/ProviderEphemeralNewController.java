@@ -15,8 +15,11 @@
  */
 package dev.ikm.tinkar.provider.ephemeral;
 
-import com.google.auto.service.AutoService;
-import dev.ikm.tinkar.common.service.*;
+import dev.ikm.tinkar.common.service.DataServiceController;
+import dev.ikm.tinkar.common.service.DataUriOption;
+import dev.ikm.tinkar.common.service.LoadDataFromFileController;
+import dev.ikm.tinkar.common.service.PluggableService;
+import dev.ikm.tinkar.common.service.PrimitiveDataService;
 import dev.ikm.tinkar.entity.EntityCountSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,11 +31,10 @@ import java.util.ServiceLoader;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-@AutoService(DataServiceController.class)
 public class ProviderEphemeralNewController implements DataServiceController<PrimitiveDataService> {
 
     public static String CONTROLLER_NAME = "Load Ephemeral Store";
-    private static Logger LOG = LoggerFactory.getLogger(ProviderEphemeralNewController.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ProviderEphemeralNewController.class);
     private DataUriOption dataUriOption;
 
     public List<DataUriOption> providerOptions() {
@@ -70,10 +72,7 @@ public class ProviderEphemeralNewController implements DataServiceController<Pri
     }
 
     public boolean running() {
-        if (ProviderEphemeral.singleton == null) {
-            return false;
-        }
-        return true;
+        return ProviderEphemeral.singleton != null;
     }
 
     @Override

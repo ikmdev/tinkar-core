@@ -15,9 +15,6 @@
  */
 package dev.ikm.tinkar.coordinate.view.calculator;
 
-import com.google.auto.service.AutoService;
-import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
-import org.eclipse.collections.api.list.ImmutableList;
 import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
@@ -33,6 +30,8 @@ import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithC
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorDelegate;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
+import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
+import org.eclipse.collections.api.list.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,7 +97,6 @@ public class ViewCalculatorWithCache implements ViewCalculator, StampCalculatorD
         return languageCalculator;
     }
 
-    @AutoService(CachingService.class)
     public static class CacheProvider implements CachingService {
         @Override
         public void reset() {

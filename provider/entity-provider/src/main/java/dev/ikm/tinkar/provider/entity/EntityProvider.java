@@ -17,7 +17,6 @@ package dev.ikm.tinkar.provider.entity;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.auto.service.AutoService;
 import dev.ikm.tinkar.common.alert.AlertObject;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
@@ -390,7 +389,6 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         }
     }
 
-    @AutoService(CachingService.class)
     public static class CacheProvider implements CachingService {
 
         @Override
