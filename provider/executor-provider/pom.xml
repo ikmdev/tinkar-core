@@ -5,7 +5,7 @@
     <parent>
         <groupId>dev.ikm.tinkar</groupId>
         <artifactId>provider</artifactId>
-        <version>1.93.0-SNAPSHOT</version>
+        <version>1.93.0-fix-suggester-build-SNAPSHOT</version>
     </parent>
 
     <artifactId>executor-provider</artifactId>
