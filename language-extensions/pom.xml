@@ -5,7 +5,7 @@
     <parent>
         <groupId>dev.ikm.tinkar</groupId>
         <artifactId>tinkar-core</artifactId>
-        <version>1.93.0-SNAPSHOT</version>
+        <version>1.93.0-update-threaded-broadcast-SNAPSHOT</version>
     </parent>
 
     <artifactId>language-extensions</artifactId>
