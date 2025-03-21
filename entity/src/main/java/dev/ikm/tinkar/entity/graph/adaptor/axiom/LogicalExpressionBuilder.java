@@ -540,9 +540,15 @@ public class LogicalExpressionBuilder {
      * @param conceptToChangeTo The new concept to which the feature type will be changed.
      */
     public void updateFeatureType(LogicalAxiom.Atom.TypedAtom.Feature featureAxiom, ConceptFacade conceptToChangeTo) {
-        EntityVertex roleVertex = this.builder.vertex(featureAxiom.vertexIndex());
-        roleVertex.putUncommittedProperty(TinkarTerm.FEATURE_TYPE.nid(), EntityProxy.Concept.make(conceptToChangeTo));
-        roleVertex.commitProperties();
+        EntityVertex vertex = this.builder.vertex(featureAxiom.vertexIndex());
+        vertex.putUncommittedProperty(TinkarTerm.FEATURE_TYPE.nid(), EntityProxy.Concept.make(conceptToChangeTo));
+        vertex.commitProperties();
+    }
+
+    public void updateFeatureLiteralValue(LogicalAxiom.Atom.TypedAtom.Feature featureAxiom, Object literalValue) {
+        EntityVertex vertex = this.builder.vertex(featureAxiom.vertexIndex());
+        vertex.putUncommittedProperty(TinkarTerm.LITERAL_VALUE.nid(), literalValue);
+        vertex.commitProperties();
     }
 
     /**
@@ -552,9 +558,9 @@ public class LogicalExpressionBuilder {
      * @param conceptToChangeTo The new concept to which the operator will be changed.
      */
     public void updateFeatureOperator(LogicalAxiom.Atom.TypedAtom.Feature featureAxiom, ConceptFacade conceptToChangeTo) {
-        EntityVertex roleVertex = this.builder.vertex(featureAxiom.vertexIndex());
-        roleVertex.putUncommittedProperty(TinkarTerm.CONCRETE_DOMAIN_OPERATOR.nid(), EntityProxy.Concept.make(conceptToChangeTo));
-        roleVertex.commitProperties();
+        EntityVertex vertex = this.builder.vertex(featureAxiom.vertexIndex());
+        vertex.putUncommittedProperty(TinkarTerm.CONCRETE_DOMAIN_OPERATOR.nid(), EntityProxy.Concept.make(conceptToChangeTo));
+        vertex.commitProperties();
     }
 
     /**
