@@ -41,8 +41,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
 import java.util.function.ObjIntConsumer;
 
 public interface PrimitiveDataService {
@@ -418,7 +418,7 @@ public interface PrimitiveDataService {
 
     PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception;
 
-    Future<Void> recreateLuceneIndex() throws Exception;
+    CompletableFuture<Void> recreateLuceneIndex() throws Exception;
 
     /**
      * @param patternNid

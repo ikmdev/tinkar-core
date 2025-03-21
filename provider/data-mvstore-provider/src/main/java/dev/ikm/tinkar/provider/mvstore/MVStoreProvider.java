@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.provider.mvstore;
 
+import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.NidGenerator;
@@ -47,7 +48,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
@@ -241,8 +244,16 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     }
 
     @Override
-    public Future<Void> recreateLuceneIndex() throws Exception {
-        return TinkExecutor.ioThreadPool().submit(new RecreateIndex(this.indexer));
+    public CompletableFuture<Void> recreateLuceneIndex() throws Exception {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return TinkExecutor.ioThreadPool().submit(new RecreateIndex(this.indexer)).get();
+            } catch (InterruptedException | ExecutionException ex) {
+                AlertStreams.dispatchToRoot(new CompletionException("Error encountered while creating Lucene indexes." +
+                        "Search and Type Ahead Suggestions may not function as expected.", ex));
+            }
+            return null;
+        });
     }
 
     @Override

@@ -44,7 +44,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.ObjIntConsumer;
@@ -217,7 +216,7 @@ public class DataProviderWebsocketClient
     }
 
     @Override
-    public Future<Void> recreateLuceneIndex() throws Exception {
+    public CompletableFuture<Void> recreateLuceneIndex() throws Exception {
         throw new UnsupportedOperationException();
     }
 

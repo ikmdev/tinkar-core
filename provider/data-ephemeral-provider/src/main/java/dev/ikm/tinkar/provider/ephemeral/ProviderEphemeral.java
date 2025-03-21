@@ -17,6 +17,7 @@ package dev.ikm.tinkar.provider.ephemeral;
 
 import dev.ikm.tinkar.collection.KeyType;
 import dev.ikm.tinkar.collection.SpinedIntIntMapAtomic;
+import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.NidGenerator;
@@ -44,8 +45,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.Future;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
@@ -196,8 +199,16 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     }
 
     @Override
-    public Future<Void> recreateLuceneIndex() throws Exception {
-        return TinkExecutor.ioThreadPool().submit(new RecreateIndex(this.indexer));
+    public CompletableFuture<Void> recreateLuceneIndex() throws Exception {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return TinkExecutor.ioThreadPool().submit(new RecreateIndex(this.indexer)).get();
+            } catch (InterruptedException | ExecutionException ex) {
+                AlertStreams.dispatchToRoot(new CompletionException("Error encountered while creating Lucene indexes." +
+                        "Search and Type Ahead Suggestions may not function as expected.", ex));
+            }
+            return null;
+        });
     }
 
     @Override
