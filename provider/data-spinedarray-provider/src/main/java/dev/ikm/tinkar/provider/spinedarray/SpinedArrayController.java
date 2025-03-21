@@ -19,6 +19,7 @@ import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.common.service.PrimitiveDataService;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 public abstract class SpinedArrayController implements DataServiceController<PrimitiveDataService> {
 
@@ -36,7 +37,7 @@ public abstract class SpinedArrayController implements DataServiceController<Pri
     public void start() {
         try {
             new SpinedArrayProvider();
-        } catch (IOException e) {
+        } catch (IOException | ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
