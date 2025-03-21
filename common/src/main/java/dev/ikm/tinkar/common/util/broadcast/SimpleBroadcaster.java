@@ -30,10 +30,8 @@ public class SimpleBroadcaster<T> implements Broadcaster<T>, Subscriber<T>{
     public void dispatch(T item) {
         subscriberWeakReferenceList.stream().parallel().forEach(subscriberWeakReference ->
                 Thread.ofVirtual().start(() -> {
-                    LOG.info("Thread name: {}", Thread.currentThread().getName());
                     try {
                         Subscriber<T> subscriber = subscriberWeakReference.get();
-                        LOG.info("Subscriber: {}", subscriber.getClass());
                         if (subscriber == null) {
                             subscriberWeakReferenceList.remove(subscriberWeakReference);
                         } else {
