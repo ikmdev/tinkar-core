@@ -25,24 +25,26 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class SimpleBroadcaster<T> implements Broadcaster<T>, Subscriber<T>{
 
     private static final Logger LOG = LoggerFactory.getLogger(SimpleBroadcaster.class);
-    final CopyOnWriteArrayList<WeakReference<Subscriber<T>>> subscriberWeakReferenceList = new CopyOnWriteArrayList();
+    final CopyOnWriteArrayList<WeakReference<Subscriber<T>>> subscriberWeakReferenceList = new CopyOnWriteArrayList<>();
 
     public void dispatch(T item) {
-        TinkExecutor.threadPool().submit(() -> {
-            for (WeakReference<Subscriber<T>> subscriberWeakReference : subscriberWeakReferenceList) {
-                try {
-                    Subscriber<T> subscriber = subscriberWeakReference.get();
-                    if (subscriber == null) {
+        subscriberWeakReferenceList.stream().parallel().forEach(subscriberWeakReference ->
+                Thread.ofVirtual().start(() -> {
+                    LOG.info("Thread name: {}", Thread.currentThread().getName());
+                    try {
+                        Subscriber<T> subscriber = subscriberWeakReference.get();
+                        LOG.info("Subscriber: {}", subscriber.getClass());
+                        if (subscriber == null) {
+                            subscriberWeakReferenceList.remove(subscriberWeakReference);
+                        } else {
+                            subscriber.onNext(item);
+                        }
+                    } catch (Throwable t) {
+                        LOG.error(t.getMessage(), t);
                         subscriberWeakReferenceList.remove(subscriberWeakReference);
-                    } else {
-                        subscriber.onNext(item);
                     }
-                } catch (Throwable t) {
-                    LOG.error(t.getMessage(), t);
-                    subscriberWeakReferenceList.remove(subscriberWeakReference);
-                }
-            }
-        });
+                })
+        );
     }
 
     @Override
