@@ -156,8 +156,9 @@ public class TypeAheadSearch {
 
             reader = DirectoryReader.open(Indexer.indexWriter());
             LuceneDictionary dict = new LuceneDictionary(reader, TEXT_FIELD_NAME);
-            suggester = new AnalyzingSuggester(Indexer.indexDirectory(), "suggest", Indexer.analyzer());
-            suggester.build(dict);
+            AnalyzingSuggester analyzingSuggester = new AnalyzingSuggester(Indexer.indexDirectory(), "suggest", Indexer.analyzer());
+            analyzingSuggester.build(dict);
+            suggester = analyzingSuggester;
 
             updateProgress(1, 1);
 
