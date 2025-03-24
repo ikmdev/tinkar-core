@@ -28,7 +28,7 @@ public class SimpleBroadcaster<T> implements Broadcaster<T>, Subscriber<T>{
     final CopyOnWriteArrayList<WeakReference<Subscriber<T>>> subscriberWeakReferenceList = new CopyOnWriteArrayList<>();
 
     public void dispatch(T item) {
-        subscriberWeakReferenceList.stream().parallel().forEach(subscriberWeakReference ->
+        subscriberWeakReferenceList.forEach(subscriberWeakReference ->
                 Thread.ofVirtual().start(() -> {
                     try {
                         Subscriber<T> subscriber = subscriberWeakReference.get();
