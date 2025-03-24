@@ -379,7 +379,17 @@ public class ElkOwlDataBuilder {
 				break;
 			case PROPERTY_SEQUENCE_IMPLICATION:
 //				LOG.info("PPI: " + PrimitiveData.text(conceptNid) + " " + definition);
-				final ConceptFacade pi = node.propertyFast(TinkarTerm.PROPERTY_PATTERN_IMPLICATION);
+				// TODO: Remove workaround for adding PROPERTY_SEQUENCE_IMPLICATION concept when starter set stable.
+				// TODO: Retire property pattern implication when starter set stable.
+				final ConceptFacade pi;
+				if (node.property(TinkarTerm.PROPERTY_PATTERN_IMPLICATION).isPresent()) {
+					pi = node.propertyFast(TinkarTerm.PROPERTY_PATTERN_IMPLICATION);
+				} else if (node.property(TinkarTerm.PROPERTY_SEQUENCE_IMPLICATION).isPresent()) {
+					pi = node.propertyFast(TinkarTerm.PROPERTY_SEQUENCE_IMPLICATION);
+				} else {
+					throw new IllegalStateException("PropertySequenceImplication must have a property sequence implication");
+				}
+
 				final IntIdList ps = node.propertyFast(TinkarTerm.PROPERTY_SET);
 				List<OWLObjectProperty> chain = ps.intStream().mapToObj(x -> axiomData.getRole(x)).toList();
 				OWLSubPropertyChainOfAxiom axiom = owlDataFactory.getOWLSubPropertyChainOfAxiom(chain,
