@@ -16,8 +16,11 @@
 package dev.ikm.tinkar.common.id;
 
 
-import dev.ikm.tinkar.common.id.impl.*;
-import dev.ikm.tinkar.common.id.impl.*;
+import dev.ikm.tinkar.common.id.impl.IntId0Set;
+import dev.ikm.tinkar.common.id.impl.IntId1Set;
+import dev.ikm.tinkar.common.id.impl.IntId2Set;
+import dev.ikm.tinkar.common.id.impl.IntIdSetArray;
+import dev.ikm.tinkar.common.id.impl.IntIdSetRoaring;
 
 import java.util.Arrays;
 
@@ -27,6 +30,7 @@ enum IntIdSetFactoryEnum implements IntIdSetFactory {
 
     @Override
     public IntIdSet of(IntIdSet idSet, int... elements) {
+        System.out.println("***JTD: IntIdSetFActoryEnum of " + idSet.size() + ", " + elements.length);
         int[] combined = new int[idSet.size() + elements.length];
         int[] listArray = idSet.toArray();
         int elementIndex = 0;

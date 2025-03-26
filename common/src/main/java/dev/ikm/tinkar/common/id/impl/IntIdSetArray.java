@@ -38,7 +38,6 @@ public class IntIdSetArray
     }
 
     public static IntIdSetArray newIntIdSet(int... newElements) {
-        Arrays.sort(newElements);
         return new IntIdSetArray(newElements);
     }
 
@@ -69,7 +68,9 @@ public class IntIdSetArray
             return false;
         }
 
-        return Arrays.binarySearch(elements, value) >= 0;
+        int[] clone = elements.clone();
+        Arrays.sort(clone);
+        return Arrays.binarySearch(clone, value) >= 0;
     }
 
     @Override
@@ -98,17 +99,18 @@ public class IntIdSetArray
             if (elements.length != intIdSet.size()) {
                 return false;
             }
+
+            int[] elements1 = elements.clone();
             int[] elements2;
             if (intIdSet instanceof IntIdSetArray intIdSetArray) {
-                elements2 = intIdSetArray.elements;
+                elements2 = intIdSetArray.elements.clone();
             } else {
-                elements2 = intIdSet.toArray();
-                Arrays.sort(elements2);
+                elements2 = intIdSet.toArray().clone();
             }
+            Arrays.sort(elements1);
+            Arrays.sort(elements2);
 
-            if (intIdSet.size() == elements.length && Arrays.equals(elements, elements2)) {
-                return true;
-            }
+            return Arrays.equals(elements1, elements2);
         }
         return false;
     }
