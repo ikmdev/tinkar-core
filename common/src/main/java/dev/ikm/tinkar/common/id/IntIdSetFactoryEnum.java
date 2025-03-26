@@ -30,7 +30,6 @@ enum IntIdSetFactoryEnum implements IntIdSetFactory {
 
     @Override
     public IntIdSet of(IntIdSet idSet, int... elements) {
-        System.out.println("***JTD: IntIdSetFActoryEnum of " + idSet.size() + ", " + elements.length);
         int[] combined = new int[idSet.size() + elements.length];
         int[] listArray = idSet.toArray();
         int elementIndex = 0;
