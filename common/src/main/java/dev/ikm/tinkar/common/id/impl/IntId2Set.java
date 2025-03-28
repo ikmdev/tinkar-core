@@ -38,10 +38,12 @@ public class IntId2Set extends IntId2 implements IntIdSet {
         if (this == obj) {
             return true;
         }
-        if (obj instanceof IntIdSet intIdSet) {
-            if (intIdSet.size() == 2 && Arrays.equals(this.toArray(), intIdSet.toArray())) {
-                return true;
-            }
+        if (obj instanceof IntIdSet intIdSet && intIdSet.size() == 2) {
+            int[] clone1 = this.toArray().clone();
+            int[] clone2 = intIdSet.toArray().clone();
+            Arrays.sort(clone1);
+            Arrays.sort(clone2);
+            return Arrays.equals(clone1, clone2);
         }
         return false;
     }

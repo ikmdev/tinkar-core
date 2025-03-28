@@ -19,9 +19,6 @@ package dev.ikm.tinkar.common.id.impl;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
-import java.util.Iterator;
-import java.util.Set;
-
 public class IntId1Set extends IntId1 implements IntIdSet {
     public IntId1Set(int element) {
         super(element);
@@ -33,9 +30,7 @@ public class IntId1Set extends IntId1 implements IntIdSet {
             return true;
         }
         if (obj instanceof IntIdSet intIdSet) {
-            if (intIdSet.size() == 1 && intIdSet.toArray()[0] == element) {
-                return true;
-            }
+            return intIdSet.size() == 1 && intIdSet.toArray()[0] == element;
         }
         return false;
     }
