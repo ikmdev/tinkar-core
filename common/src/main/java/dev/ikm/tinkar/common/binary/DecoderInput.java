@@ -15,9 +15,9 @@
  */
 package dev.ikm.tinkar.common.binary;
 
+import dev.ikm.tinkar.common.service.PluggableService;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import io.activej.bytebuf.ByteBuf;
-import io.activej.bytebuf.ByteBufPool;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -114,6 +114,15 @@ public class DecoderInput {
             nidArray[i] = readInt();
         }
         return nidArray;
+    }
+
+    public <T> T decode() {
+        try {
+            String objectClassString = readString();
+            return (T) Encodable.decode(PluggableService.forName(objectClassString), this);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Instant readInstant() {

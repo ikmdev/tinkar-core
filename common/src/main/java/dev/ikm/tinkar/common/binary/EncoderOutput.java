@@ -159,6 +159,11 @@ public class EncoderOutput {
         buf.writeInt(instant.getNano());
     }
 
+    public void write(Encodable encodable) {
+        this.writeString(encodable.getClass().getName());
+        encodable.encode(this);
+    }
+
     public void recycle() {
         buf.recycle();
     }

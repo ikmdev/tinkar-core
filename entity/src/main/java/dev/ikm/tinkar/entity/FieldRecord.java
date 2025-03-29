@@ -23,17 +23,16 @@ import io.soabase.recordbuilder.core.RecordBuilder;
 import java.util.Objects;
 
 /**
- * TODO, create an entity data type that combines concept and FieldDataType like the Status enum?
- *
- * @param <T>
+ * TODO: create an entity data type that combines concept and FieldDataType like the Status enum?
+ * @param <DT>
  * @param nid
  * @param versionStampNid
  */
 @RecordBuilder
-public record FieldRecord<T>(T value, int nid, int versionStampNid,
-                             FieldDefinitionForEntity fieldDefinition)
-        implements FieldDefinition, Field<T>,
-                   ImmutableField<T>, FieldRecordBuilder.With {
+public record FieldRecord<DT>(DT value, int nid, int versionStampNid,
+                              FieldDefinitionForEntity fieldDefinition)
+        implements FieldDefinition, Field<DT>,
+                   ImmutableField<DT>, FieldRecordBuilder.With {
 
 
     public FieldRecord {
@@ -41,6 +40,12 @@ public record FieldRecord<T>(T value, int nid, int versionStampNid,
         Validator.notZero(versionStampNid);
         Objects.requireNonNull(fieldDefinition);
     }
+
+    @Override
+    public FieldRecord<DT> with(DT value) {
+        return withValue(value);
+    }
+
     @Override
     public int meaningNid() {
         return fieldDefinition.meaningNid();
