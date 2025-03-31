@@ -24,21 +24,25 @@ import org.slf4j.LoggerFactory;
 
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
-public class ElkSnomedClassifierIntl20250101TestIT extends ElkSnomedClassifierTestBase
-		implements SnomedVersionInternational {
+public class ElkSnomedClassifierUs20250301TestIT extends ElkSnomedClassifierTestBase implements SnomedVersionUs {
 
-	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedClassifierIntl20250101TestIT.class);
+	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedClassifierUs20250301TestIT.class);
 
 	static {
-		test_case = "snomed-intl-20250101";
+		test_case = "snomed-us-20250301";
 	}
 
 	{
-		expected_supercs_cnt = 606778;
+		expected_supercs_cnt = 620224;
 	}
 
 	@Override
 	public String getVersion() {
+		return "20250301";
+	}
+
+	@Override
+	public String getInternationalVersion() {
 		return "20250101";
 	}
 

@@ -23,22 +23,22 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-public class ElkSnomedCompareUs20230901TestIT extends ElkSnomedCompareTestBase implements SnomedVersionUs {
+public class ElkSnomedCompareUs20250301TestIT extends ElkSnomedCompareTestBase implements SnomedVersionUs {
 
-	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedCompareUs20230901TestIT.class);
+	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedCompareUs20250301TestIT.class);
 
 	static {
-		test_case = "snomed-us-20230901";
+		test_case = "snomed-us-20250301";
 	}
 
 	@Override
 	public String getVersion() {
-		return "20230901";
+		return "20250301";
 	}
 
 	@Override
 	public String getInternationalVersion() {
-		return "20230630";
+		return "20250101";
 	}
 
 	@BeforeAll
