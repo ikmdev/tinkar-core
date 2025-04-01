@@ -50,7 +50,7 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 
 	private SnomedOntologyReasoner reasoner;
 
-	private NecessaryNormalFormBuilder nnfb;
+	protected NecessaryNormalFormBuilder nnfb;
 
 	@Override
 	public void init(ViewCalculator viewCalculator, PatternFacade statedAxiomPattern,

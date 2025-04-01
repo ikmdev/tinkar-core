@@ -23,6 +23,7 @@ import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.ikm.elk.snomed.NecessaryNormalFormBuilder;
 import dev.ikm.elk.snomed.SnomedIds;
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology;
@@ -86,9 +87,13 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 	@Override
 	public void processIncremental(DiTreeEntity definition, int conceptNid) {
 		throw new UnsupportedOperationException();
-//		Concept concept = builder.processIncremental(definition, conceptNid);
-//		reasoner.process(concept);
-//		reasoner.flush();
+	}
+
+	@Override
+	public void buildNecessaryNormalForm() {
+		nnfb = NecessaryNormalFormBuilder.create(sso.getOntology(), sso.getSuperConcepts(),
+				sso.getSuperRoleTypes(false), TinkarTerm.ROOT_VERTEX.nid());
+		nnfb.generate();
 	}
 
 	@Override

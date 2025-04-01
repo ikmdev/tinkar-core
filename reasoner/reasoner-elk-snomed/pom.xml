@@ -77,7 +77,7 @@
 								<artifactItem>
 									<groupId>${snomed-test-data.groupid}</groupId>
 									<artifactId>
-										snomed-test-data-intl-20241001</artifactId>
+										snomed-test-data-intl-20250101</artifactId>
 									<version>${snomed-test-data.version}</version>
 									<type>zip</type>
 								</artifactItem>
@@ -85,6 +85,13 @@
 									<groupId>${snomed-test-data.groupid}</groupId>
 									<artifactId>
 										snomed-test-data-us-20240901</artifactId>
+									<version>${snomed-test-data.version}</version>
+									<type>zip</type>
+								</artifactItem>
+								<artifactItem>
+									<groupId>${snomed-test-data.groupid}</groupId>
+									<artifactId>
+										snomed-test-data-us-20250301</artifactId>
 									<version>${snomed-test-data.version}</version>
 									<type>zip</type>
 								</artifactItem>
@@ -106,21 +113,28 @@
 									<groupId>${reasoner-test-data.groupid}</groupId>
 									<artifactId>
 										tinkar-test-data-build-snomed-intl-20240701</artifactId>
-									<version>2025.03.01</version>
+									<version>2025.03.28</version>
 									<type>zip</type>
 								</artifactItem>
 								<artifactItem>
 									<groupId>${reasoner-test-data.groupid}</groupId>
 									<artifactId>
-										tinkar-test-data-build-snomed-intl-20241001</artifactId>
-									<version>2025.03.01</version>
+										tinkar-test-data-build-snomed-intl-20250101</artifactId>
+									<version>2025.03.28</version>
 									<type>zip</type>
 								</artifactItem>
 								<artifactItem>
 									<groupId>${reasoner-test-data.groupid}</groupId>
 									<artifactId>
 										tinkar-test-data-build-snomed-us-20240901</artifactId>
-									<version>2025.03.01</version>
+									<version>2025.03.28</version>
+									<type>zip</type>
+								</artifactItem>
+								<artifactItem>
+									<groupId>${reasoner-test-data.groupid}</groupId>
+									<artifactId>
+										tinkar-test-data-build-snomed-us-20250301</artifactId>
+									<version>2025.03.28</version>
 									<type>zip</type>
 								</artifactItem>
 							</artifactItems>

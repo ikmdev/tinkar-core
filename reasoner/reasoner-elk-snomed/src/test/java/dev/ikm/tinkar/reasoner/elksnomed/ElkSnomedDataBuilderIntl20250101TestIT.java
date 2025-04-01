@@ -24,17 +24,24 @@ import org.slf4j.LoggerFactory;
 
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
-public class ElkSnomedCompareIntl20241001TestIT extends ElkSnomedCompareTestBase implements SnomedVersionInternational {
+public class ElkSnomedDataBuilderIntl20250101TestIT extends ElkSnomedDataBuilderTestBase
+		implements SnomedVersionInternational {
 
-	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedCompareIntl20241001TestIT.class);
+	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedDataBuilderIntl20250101TestIT.class);
 
 	static {
-		test_case = "snomed-intl-20241001";
+		test_case = "snomed-intl-20250101";
+	}
+
+	{
+		stated_count = 399061;
+		active_count = 371241;
+		inactive_count = 27820;
 	}
 
 	@Override
 	public String getVersion() {
-		return "20241001";
+		return "20250101";
 	}
 
 	@BeforeAll
