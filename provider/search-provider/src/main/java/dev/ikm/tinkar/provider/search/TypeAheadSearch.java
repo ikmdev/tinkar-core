@@ -34,7 +34,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 public class TypeAheadSearch {
@@ -46,6 +48,9 @@ public class TypeAheadSearch {
     private DirectoryReader reader;
 
     private static TypeAheadSearch typeAheadSearch = null;
+    private final AtomicLong lastBuildTime = new AtomicLong();
+    private final Object buildLock = new Object();
+
     public static synchronized TypeAheadSearch get() {
         if (typeAheadSearch == null) {
             typeAheadSearch = new TypeAheadSearch();
@@ -62,7 +67,20 @@ public class TypeAheadSearch {
     }
 
     public Future<Void> buildSuggester() throws IOException {
-        return TinkExecutor.threadPool().submit(new BuildSuggester());
+
+        if (System.currentTimeMillis() - lastBuildTime.get() > 5000) {
+            synchronized (buildLock) {
+                if (System.currentTimeMillis() - lastBuildTime.get() > 5000) {
+                    try {
+                        return TinkExecutor.threadPool().submit(new BuildSuggester());
+                    } finally {
+                        lastBuildTime.set(System.currentTimeMillis());
+                    }
+                }
+            }
+        }
+
+        return CompletableFuture.completedFuture(null);
     }
 
     public void close() {
