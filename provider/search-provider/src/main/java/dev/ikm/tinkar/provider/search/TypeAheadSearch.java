@@ -50,6 +50,7 @@ public class TypeAheadSearch {
     private static TypeAheadSearch typeAheadSearch = null;
     private final AtomicLong lastBuildTime = new AtomicLong();
     private final Object buildLock = new Object();
+    private final long BUILD_WAIT = 5000;
 
     public static synchronized TypeAheadSearch get() {
         if (typeAheadSearch == null) {
@@ -67,10 +68,9 @@ public class TypeAheadSearch {
     }
 
     public Future<Void> buildSuggester() throws IOException {
-
-        if (System.currentTimeMillis() - lastBuildTime.get() > 5000) {
+        if (System.currentTimeMillis() - lastBuildTime.get() > BUILD_WAIT) {
             synchronized (buildLock) {
-                if (System.currentTimeMillis() - lastBuildTime.get() > 5000) {
+                if (System.currentTimeMillis() - lastBuildTime.get() > BUILD_WAIT) {
                     try {
                         return TinkExecutor.threadPool().submit(new BuildSuggester());
                     } finally {
