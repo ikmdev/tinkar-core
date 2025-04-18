@@ -27,9 +27,7 @@ public class IntId0Set extends IntId0 implements IntIdSet {
             return true;
         }
         if (obj instanceof IntIdSet intIdSet) {
-            if (intIdSet.isEmpty()) {
-                return true;
-            }
+            return intIdSet.isEmpty();
         }
         return false;
     }
