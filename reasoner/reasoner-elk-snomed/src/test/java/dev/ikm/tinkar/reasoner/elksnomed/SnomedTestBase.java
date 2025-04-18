@@ -21,6 +21,9 @@ public abstract class SnomedTestBase implements SnomedVersion {
 	protected Path axioms_file = Paths.get(getDir(),
 			"sct2_sRefset_OWLExpressionSnapshot_" + getEdition() + "_" + getVersion() + ".txt");
 
+	protected Path concepts_file = Paths.get(getDir(),
+			"sct2_Concept_Snapshot_" + getEdition() + "_" + getVersion() + ".txt");
+
 	protected Path rels_file = Paths.get(getDir(),
 			"sct2_Relationship_Snapshot_" + getEdition() + "_" + getVersion() + ".txt");
 
@@ -33,12 +36,14 @@ public abstract class SnomedTestBase implements SnomedVersion {
 	@BeforeEach
 	protected void filesExist() {
 		assertTrue(Files.exists(axioms_file), "No file: " + axioms_file);
+		assertTrue(Files.exists(concepts_file), "No file: " + concepts_file);
 		assertTrue(Files.exists(rels_file), "No file: " + rels_file);
 		if (Integer.parseInt(getVersion()) >= 20210731)
 			assertTrue(Files.exists(values_file), "No file: " + values_file);
 		assertTrue(Files.exists(descriptions_file), "No file: " + descriptions_file);
 		LOG.info("Files exist");
 		LOG.info("\t" + axioms_file);
+		LOG.info("\t" + concepts_file);
 		LOG.info("\t" + rels_file);
 		LOG.info("\t" + values_file);
 		LOG.info("\t" + descriptions_file);
