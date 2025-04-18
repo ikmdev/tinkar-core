@@ -33,7 +33,7 @@ public class ElkSnomedClassifierUs20250301TestIT extends ElkSnomedClassifierTest
 	}
 
 	{
-		expected_supercs_cnt = 620224;
+		expected_supercs_cnt = 620178;
 	}
 
 	@Override

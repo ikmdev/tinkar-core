@@ -16,6 +16,8 @@
 package dev.ikm.tinkar.reasoner.elksnomed;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.collections.api.list.ImmutableList;
@@ -76,7 +78,7 @@ public class ElkSnomedDataBuilder {
 
 	private int computeTotalCount() {
 		AtomicInteger totalCounter = new AtomicInteger();
-		PrimitiveData.get().forEachSemanticNidOfPattern(statedAxiomPattern.nid(), i -> totalCounter.incrementAndGet());
+		PrimitiveData.get().forEachSemanticNidOfPattern(statedAxiomPattern.nid(), _ -> totalCounter.incrementAndGet());
 		return totalCounter.get();
 	}
 
@@ -88,7 +90,7 @@ public class ElkSnomedDataBuilder {
 		LogicCoordinateRecord logicCoordinate = viewCalculator.logicCalculator().logicCoordinateRecord();
 		AtomicInteger ex_cnt = new AtomicInteger();
 		viewCalculator.forEachSemanticVersionOfPatternParallel(logicCoordinate.statedAxiomsPatternNid(),
-				(semanticEntityVersion, patternEntityVersion) -> {
+				(semanticEntityVersion, _) -> {
 					try {
 						int conceptNid = semanticEntityVersion.referencedComponentNid();
 						if (viewCalculator.latestIsActive(conceptNid)) {
@@ -199,7 +201,8 @@ public class ElkSnomedDataBuilder {
 					"Role: " + PrimitiveData.text(role_operator_nid) + " not supported. ");
 	}
 
-	private void processDefinition(int conceptNid, DiTreeEntity definition) throws IllegalStateException {
+	public List<Concept> processDefinition(int conceptNid, DiTreeEntity definition) throws IllegalStateException {
+		List<Concept> ret = new ArrayList<>();
 		EntityVertex root = definition.root();
 		for (EntityVertex child : definition.successors(root)) {
 			switch (getMeaning(child)) {
@@ -209,6 +212,7 @@ public class ElkSnomedDataBuilder {
 				def.setDefinitionType(DefinitionType.EquivalentConcept);
 				processDefinition(def, child, definition);
 				concept.addDefinition(def);
+				ret.add(concept);
 			}
 			case NECESSARY_SET -> {
 				Concept concept = data.getOrCreateConcept(conceptNid);
@@ -216,6 +220,7 @@ public class ElkSnomedDataBuilder {
 				def.setDefinitionType(DefinitionType.SubConcept);
 				processDefinition(def, child, definition);
 				concept.addDefinition(def);
+				ret.add(concept);
 			}
 			case INCLUSION_SET -> {
 				Concept concept = data.getOrCreateConcept(conceptNid);
@@ -223,6 +228,7 @@ public class ElkSnomedDataBuilder {
 				def.setDefinitionType(DefinitionType.SubConcept);
 				processDefinition(def, child, definition);
 				concept.addGciDefinition(def);
+				ret.add(concept);
 			}
 			case PROPERTY_SET -> {
 				processPropertySet(conceptNid, child, definition);
@@ -233,6 +239,7 @@ public class ElkSnomedDataBuilder {
 			default -> throw new IllegalArgumentException("Unexpected value: " + getMeaning(child));
 			}
 		}
+		return ret;
 	}
 
 	private void processDefinition(Definition def, EntityVertex node, DiTreeEntity definition) {
@@ -351,11 +358,11 @@ public class ElkSnomedDataBuilder {
 		ConcreteRoleType role_type = data.getOrCreateConcreteRoleType(role_type_nid);
 		Object value = node.propertyFast(TinkarTerm.LITERAL_VALUE);
 		ValueType value_type = switch (value) {
-		case BigDecimal x -> ValueType.Decimal;
-		case Double x -> ValueType.Double;
-		case Float x -> ValueType.Float;
-		case Integer x -> ValueType.Integer;
-		case String x -> ValueType.String;
+		case BigDecimal _ -> ValueType.Decimal;
+		case Double _ -> ValueType.Double;
+		case Float _ -> ValueType.Float;
+		case Integer _ -> ValueType.Integer;
+		case String _ -> ValueType.String;
 		default -> throw new UnsupportedOperationException("Value type: " + value.getClass().getName());
 		};
 		return new ConcreteRole(role_type, value.toString(), value_type);

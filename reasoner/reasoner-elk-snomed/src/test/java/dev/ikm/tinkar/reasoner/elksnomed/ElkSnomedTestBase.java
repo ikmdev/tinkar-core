@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -25,8 +26,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,10 +35,16 @@ import org.slf4j.LoggerFactory;
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.elk.snomed.SnomedOntologyReasoner;
 import dev.ikm.elk.snomed.model.Concept;
+import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PluggableService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.PatternEntityVersion;
+import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
+import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
 
 public abstract class ElkSnomedTestBase extends SnomedTestBase {
@@ -107,7 +114,8 @@ public abstract class ElkSnomedTestBase extends SnomedTestBase {
 		LOG.info("runSnomedReasoner");
 		ElkSnomedData data = buildSnomedData();
 		LOG.info("Create ontology");
-		SnomedOntology ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(), List.of());
+		SnomedOntology ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(),
+				data.getConcreteRoleTypes());
 		LOG.info("Create reasoner");
 		SnomedOntologyReasoner reasoner = SnomedOntologyReasoner.create(ontology);
 		Files.createDirectories(getWritePath("supercs").getParent());
@@ -152,7 +160,7 @@ public abstract class ElkSnomedTestBase extends SnomedTestBase {
 		Files.write(path, lines);
 		return lines;
 	}
-	
+
 	public ReasonerService runReasonerServiceNNF() throws Exception {
 		LOG.info("runReasonerServiceNNF");
 		ReasonerService rs = initReasonerService();
@@ -161,6 +169,66 @@ public abstract class ElkSnomedTestBase extends SnomedTestBase {
 		rs.computeInferences();
 		rs.buildNecessaryNormalForm();
 		return rs;
+	}
+
+	public int getPrimordialCount() throws Exception {
+		ViewCalculator primordial_vc = PrimitiveDataTestUtil.getViewCalculatorPrimordial();
+		AtomicInteger cnt = new AtomicInteger();
+		AtomicInteger active_cnt = new AtomicInteger();
+		AtomicInteger inactive_cnt = new AtomicInteger();
+		primordial_vc.forEachSemanticVersionOfPattern(TinkarTerm.IDENTIFIER_PATTERN.nid(),
+				(semanticEntityVersion, _) -> {
+					int conceptNid = semanticEntityVersion.referencedComponentNid();
+					if (primordial_vc.latestIsActive(conceptNid)) {
+						active_cnt.incrementAndGet();
+					} else {
+						inactive_cnt.incrementAndGet();
+					}
+					cnt.incrementAndGet();
+				});
+		LOG.info("Primordial:");
+		LOG.info("\tCnt: " + cnt.intValue());
+		LOG.info("\tActive Cnt: " + active_cnt.intValue());
+		LOG.info("\tInactive Cnt: " + inactive_cnt.intValue());
+		assertEquals(0, inactive_cnt.intValue());
+		return cnt.intValue();
+	}
+
+	public int getPrimordialSctidCount() throws Exception {
+		ViewCalculator primordial_vc = PrimitiveDataTestUtil.getViewCalculatorPrimordial();
+		AtomicInteger cnt = new AtomicInteger();
+		primordial_vc.forEachSemanticVersionOfPattern(TinkarTerm.IDENTIFIER_PATTERN.nid(),
+				(semanticEntityVersion, _) -> {
+					int conceptNid = semanticEntityVersion.referencedComponentNid();
+					ViewCalculator vc = PrimitiveDataTestUtil.getViewCalculator();
+					Latest<PatternEntityVersion> latestIdPattern = vc
+							.latestPatternEntityVersion(TinkarTerm.IDENTIFIER_PATTERN);
+					EntityService.get().forEachSemanticForComponentOfPattern(conceptNid,
+							TinkarTerm.IDENTIFIER_PATTERN.nid(), (semanticEntity) -> {
+								if (vc.latest(semanticEntity).isPresent()) {
+									SemanticEntityVersion latestSemanticVersion = vc.latest(semanticEntity).get();
+									EntityProxy identifierSource = latestIdPattern.get()
+											.getFieldWithMeaning(TinkarTerm.IDENTIFIER_SOURCE, latestSemanticVersion);
+									boolean has_sctid = false;
+									if (PublicId.equals(identifierSource, TinkarTerm.SCTID)) {
+										// Just in case it has more than one sctid
+										if (!has_sctid)
+											cnt.incrementAndGet();
+										has_sctid = true;
+										String idSourceName = vc
+												.getPreferredDescriptionTextWithFallbackOrNid(identifierSource);
+										String idValue = latestIdPattern.get().getFieldWithMeaning(
+												TinkarTerm.IDENTIFIER_VALUE, latestSemanticVersion);
+										LOG.info("Primordial: " + conceptNid + " " + PrimitiveData.text(conceptNid));
+										LOG.info("ID: " + idSourceName + " " + idValue);
+									}
+								} else {
+									throw new RuntimeException(
+											"No latest for " + conceptNid + " " + PrimitiveData.text(conceptNid));
+								}
+							});
+				});
+		return cnt.intValue();
 	}
 
 }

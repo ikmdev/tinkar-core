@@ -10,6 +10,10 @@
 
 	<artifactId>reasoner-elk-snomed</artifactId>
 
+	<properties>
+		<failsafeArgLine>--enable-preview -Xmx12G</failsafeArgLine>
+	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>${project.groupId}</groupId>

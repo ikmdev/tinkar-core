@@ -29,14 +29,23 @@ import java.nio.file.attribute.BasicFileAttributes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.common.service.DataUriOption;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.Coordinates;
+import dev.ikm.tinkar.coordinate.Coordinates.Edit;
+import dev.ikm.tinkar.coordinate.Coordinates.Language;
+import dev.ikm.tinkar.coordinate.Coordinates.Logic;
+import dev.ikm.tinkar.coordinate.Coordinates.Navigation;
+import dev.ikm.tinkar.coordinate.Coordinates.Position;
+import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
+import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculatorWithCache;
+import dev.ikm.tinkar.terms.TinkarTerm;
 
 public abstract class PrimitiveDataTestUtil {
 
@@ -69,8 +78,12 @@ public abstract class PrimitiveDataTestUtil {
 	}
 
 	public static void setupPrimitiveData(String name) throws IOException {
+		setupPrimitiveData("db", name);
+	}
+
+	public static void setupPrimitiveData(String dir, String name) throws IOException {
 		LOG.info("Setup for: " + name);
-		Path target_path = Paths.get("target", "db", name).toAbsolutePath();
+		Path target_path = Paths.get("target", dir, name).toAbsolutePath();
 		LOG.info("Target: " + target_path);
 		// Temp until test data artifacts are in maven repo
 		assumeTrue(Files.exists(target_path));
@@ -97,6 +110,15 @@ public abstract class PrimitiveDataTestUtil {
 
 	public static ViewCalculator getViewCalculator() {
 		ViewCoordinateRecord vcr = Coordinates.View.DefaultView();
+		ViewCalculatorWithCache viewCalculator = ViewCalculatorWithCache.getCalculator(vcr);
+		return viewCalculator;
+	}
+
+	public static ViewCalculator getViewCalculatorPrimordial() {
+		StampCoordinateRecord scr = StampCoordinateRecord.make(StateSet.ACTIVE_AND_INACTIVE,
+				Position.LatestOnDevelopment(), IntIds.set.of(TinkarTerm.PRIMORDIAL_MODULE.nid()));
+		ViewCoordinateRecord vcr = ViewCoordinateRecord.make(scr, Language.UsEnglishRegularName(), Logic.ElPlusPlus(),
+				Navigation.inferred(), Edit.Default());
 		ViewCalculatorWithCache viewCalculator = ViewCalculatorWithCache.getCalculator(vcr);
 		return viewCalculator;
 	}
