@@ -67,6 +67,13 @@
     </issueManagement>
 
     <properties>
+
+<!--        <failsafeArgLine>&#45;&#45;enable-preview</failsafeArgLine>-->
+<!--        <surefireArgLine>&#45;&#45;enable-preview</surefireArgLine>-->
+        <failsafeArgLine></failsafeArgLine>
+        <surefireArgLine></surefireArgLine>
+
+
         <activej-bytebuf.version>4.3-r10</activej-bytebuf.version>
         <activej-common.version>4.3-r8</activej-common.version>
         <asm.version>9.1</asm.version>
@@ -489,6 +496,44 @@
         <pluginManagement>
             <plugins>
                 <plugin>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.2</version>
+                    <configuration>
+                        <useModulePath>true</useModulePath>
+                        <argLine></argLine>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>3.5.2</version>
+                    <configuration>
+                        <useModulePath>true</useModulePath>
+                        <argLine></argLine>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.13.0</version>
+                    <configuration>
+                        <release>23</release>
+                        <fork>true</fork>
+                        <compilerArgs combine.self="override">
+                            <arg></arg>
+                            <!-- Your specific compiler args or empty to clear them -->
+                        </compilerArgs>
+                        <annotationProcessorPaths>
+                            <annotationProcessorPath>
+                                <groupId>io.soabase.record-builder</groupId>
+                                <artifactId>record-builder-processor</artifactId>
+                                <version>34</version>
+                            </annotationProcessorPath>
+                        </annotationProcessorPaths>
+                        <annotationProcessors>
+                            <annotationProcessor>io.soabase.recordbuilder.processor.RecordBuilderProcessor</annotationProcessor>
+                        </annotationProcessors>
+                    </configuration>
+                </plugin>
+                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
                     <version>${maven.assembly.version}</version>
@@ -504,6 +549,28 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <release>23</release>
+                    <fork>true</fork>
+                    <compilerArgs combine.self="override">
+                        <arg></arg>
+                        <!-- Your specific compiler args or empty to clear them -->
+                    </compilerArgs>
+                    <annotationProcessorPaths>
+                        <annotationProcessorPath>
+                            <groupId>io.soabase.record-builder</groupId>
+                            <artifactId>record-builder-processor</artifactId>
+                            <version>34</version>
+                        </annotationProcessorPath>
+                    </annotationProcessorPaths>
+                    <annotationProcessors>
+                        <annotationProcessor>io.soabase.recordbuilder.processor.RecordBuilderProcessor</annotationProcessor>
+                    </annotationProcessors>
+                </configuration>
             </plugin>
         </plugins>
     </build>
