@@ -70,11 +70,33 @@ public abstract class PrimitiveDataTestUtil {
 		});
 	}
 
+	public static void deleteDirectory(Path path) throws IOException {
+		Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+
+			@Override
+			public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+				Files.delete(dir);
+				return FileVisitResult.CONTINUE;
+			}
+
+			@Override
+			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+				Files.delete(file);
+				return FileVisitResult.CONTINUE;
+			}
+		});
+	}
+
 	public static void copyDb(String source_name, String target_name) throws IOException {
 		Path source_path = Paths.get("target", "db", source_name).toAbsolutePath();
 		Path target_path = Paths.get("target", "db", target_name).toAbsolutePath();
 		assumeTrue(Files.exists(source_path));
 		copyDirectory(source_path, target_path);
+	}
+
+	public static void deleteDb(String name) throws IOException {
+		Path path = Paths.get("target", "db", name).toAbsolutePath();
+		deleteDirectory(path);
 	}
 
 	public static void setupPrimitiveData(String name) throws IOException {
@@ -101,7 +123,6 @@ public abstract class PrimitiveDataTestUtil {
 		PrimitiveData.setController(dsc);
 	}
 
-//	@AfterAll
 	public static void stopPrimitiveData() {
 		LOG.info("stopPrimitiveData");
 		PrimitiveData.stop();

@@ -25,20 +25,24 @@ import org.slf4j.LoggerFactory;
 
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
-public class ElkSnomedReasonerWriteIntl20250101TestIT extends ElkSnomedReasonerWriteTestBase
-		implements SnomedVersionInternational {
+public class ElkSnomedReasonerWriteUs20240901TestIT extends ElkSnomedReasonerWriteTestBase implements SnomedVersionUs {
 
-	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedReasonerWriteIntl20250101TestIT.class);
+	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedReasonerWriteUs20240901TestIT.class);
 
 	private static String write_db = "" + UUID.randomUUID();
 
 	static {
-		test_case = "snomed-intl-20250101";
+		test_case = "snomed-us-20240901";
 	}
 
 	@Override
 	public String getVersion() {
-		return "20250101";
+		return "20240901";
+	}
+
+	@Override
+	public String getInternationalVersion() {
+		return "20240701";
 	}
 
 	@BeforeAll
