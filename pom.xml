@@ -11,7 +11,7 @@
 
     <groupId>dev.ikm.tinkar</groupId>
     <artifactId>tinkar-core</artifactId>
-    <version>1.96.0-IKDT-938-Prime-TypeAheadSearch-SNAPSHOT</version>
+    <version>1.96.0-IKDT-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>IKM tinkar core</name>

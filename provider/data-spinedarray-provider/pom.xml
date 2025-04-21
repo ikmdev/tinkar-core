@@ -5,7 +5,7 @@
     <parent>
         <groupId>dev.ikm.tinkar</groupId>
         <artifactId>provider</artifactId>
-        <version>1.96.0-IKDT-938-Prime-TypeAheadSearch-SNAPSHOT</version>
+        <version>1.96.0-IKDT-SNAPSHOT</version>
     </parent>
 
     <artifactId>data-spinedarray-provider</artifactId>
