@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.HashSet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -142,6 +143,18 @@ public abstract class PrimitiveDataTestUtil {
 				Navigation.inferred(), Edit.Default());
 		ViewCalculatorWithCache viewCalculator = ViewCalculatorWithCache.getCalculator(vcr);
 		return viewCalculator;
+	}
+
+	public static HashSet<Integer> getPrimordialNids() throws Exception {
+		HashSet<Integer> nids = new HashSet<>();
+		ViewCalculator primordial_vc = PrimitiveDataTestUtil.getViewCalculatorPrimordial();
+		primordial_vc.forEachSemanticVersionOfPattern(TinkarTerm.IDENTIFIER_PATTERN.nid(),
+				(semanticEntityVersion, _) -> {
+					int conceptNid = semanticEntityVersion.referencedComponentNid();
+					if (primordial_vc.latestIsActive(conceptNid))
+						nids.add(conceptNid);
+				});
+		return nids;
 	}
 
 }

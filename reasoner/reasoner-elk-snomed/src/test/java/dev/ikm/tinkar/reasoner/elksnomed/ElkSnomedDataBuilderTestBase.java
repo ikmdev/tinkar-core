@@ -75,6 +75,7 @@ public abstract class ElkSnomedDataBuilderTestBase extends ElkSnomedTestBase {
 		assertEquals(stated_count, cnt.intValue());
 		assertEquals(active_count, active_cnt.intValue());
 		assertEquals(inactive_count, inactive_cnt.intValue());
+		assertEquals(primordial_cnt, PrimitiveDataTestUtil.getPrimordialNids().size());
 	}
 
 	@Test
