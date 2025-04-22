@@ -39,7 +39,6 @@ module dev.ikm.tinkar.common {
     requires dev.ikm.jpms.activej.common;
     requires dev.ikm.jpms.eclipse.collections;
     requires dev.ikm.jpms.eclipse.collections.api;
-    //requires dev.ikm.jpms.roaringbitmap;
     requires org.slf4j;
 
     requires roaringbitmap;
