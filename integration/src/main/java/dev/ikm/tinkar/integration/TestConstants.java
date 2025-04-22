@@ -25,7 +25,7 @@ public class TestConstants {
             createFilePathInTargetFromClassName = (clazz) -> createFilePathInTarget.apply("generated-datastores/%s".formatted(clazz.getSimpleName()));
 
     // IKM Test Data Files
-    public static final File PB_STARTER_DATA = createFilePathInTarget.apply("data/tinkar-starter-data-1.1.2-pb.zip");
+    public static final File PB_STARTER_DATA = createFilePathInTarget.apply("data/tinkar-starter-data-1.1.2-unreasoned-pb");
     public static final File PB_STARTER_DATA_REASONED = createFilePathInTarget.apply("data/tinkar-starter-data-1.1.2-reasoned-pb.zip");
 
     // Other Helper Files
