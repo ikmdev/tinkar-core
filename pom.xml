@@ -114,7 +114,7 @@
 		<eclipse-collections.version>11.1.0-r13</eclipse-collections.version>
 		<eclipse-collections-api.version>11.1.0-r11</eclipse-collections-api.version>
 		<jheaps.version>0.14-r6</jheaps.version>
-		<roaringbitmap.version>0.9.31-r8</roaringbitmap.version>
+		<roaringbitmap.version>1.4.0</roaringbitmap.version>
 
 		<hybrid-reasoner.version>1.0.12</hybrid-reasoner.version>
 		<ikm-reasoner.version>0.37.7</ikm-reasoner.version>
@@ -275,12 +275,6 @@
 
             <dependency>
                 <groupId>${tinkar-jpms-deps.groupId}</groupId>
-                <artifactId>roaringbitmap</artifactId>
-                <version>${roaringbitmap.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>${tinkar-jpms-deps.groupId}</groupId>
                 <artifactId>eclipse-collections</artifactId>
                 <version>${eclipse-collections.version}</version>
             </dependency>
@@ -304,6 +298,12 @@
             </dependency>
 
 			<!-- Everything else -->
+            <dependency>
+                <groupId>com.github.RoaringBitmap.RoaringBitmap</groupId>
+                <artifactId>roaringbitmap</artifactId>
+                <version>${roaringbitmap.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.jsonschema2pojo</groupId>
                 <artifactId>jsonschema2pojo-core</artifactId>
@@ -484,6 +484,13 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
 
     <build>
         <pluginManagement>

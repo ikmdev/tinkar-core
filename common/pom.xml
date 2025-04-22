@@ -19,7 +19,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <groupId>com.github.RoaringBitmap.RoaringBitmap</groupId>
             <artifactId>roaringbitmap</artifactId>
         </dependency>
         <dependency>
