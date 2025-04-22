@@ -183,7 +183,8 @@
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${project.build.directory}/data</outputDirectory>
-                                </artifactItem>                            </artifactItems>
+                                </artifactItem>                            
+                            </artifactItems>
                             <outputDirectory>${project.build.directory}/data</outputDirectory>
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>true</overWriteSnapshots>
