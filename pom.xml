@@ -273,12 +273,6 @@
                 <version>${caffeine.version}</version>
             </dependency>
 
-<!--            <dependency>-->
-<!--                <groupId>${tinkar-jpms-deps.groupId}</groupId>-->
-<!--                <artifactId>roaringbitmap</artifactId>-->
-<!--                <version>${roaringbitmap.version}</version>-->
-<!--            </dependency>-->
-
             <dependency>
                 <groupId>${tinkar-jpms-deps.groupId}</groupId>
                 <artifactId>eclipse-collections</artifactId>
