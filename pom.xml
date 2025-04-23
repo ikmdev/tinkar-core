@@ -67,13 +67,6 @@
     </issueManagement>
 
     <properties>
-
-<!--        <failsafeArgLine>&#45;&#45;enable-preview</failsafeArgLine>-->
-<!--        <surefireArgLine>&#45;&#45;enable-preview</surefireArgLine>-->
-        <failsafeArgLine></failsafeArgLine>
-        <surefireArgLine></surefireArgLine>
-
-
         <activej-bytebuf.version>4.3-r10</activej-bytebuf.version>
         <activej-common.version>4.3-r8</activej-common.version>
         <asm.version>9.1</asm.version>
@@ -98,7 +91,7 @@
         <log4j.version>3.0.0-alpha1</log4j.version>
         <testng.version>7.4.0</testng.version>
         <snomedct-data.version>2023.09.01</snomedct-data.version>
-        <tinkar-starter-data.version>1.0.0</tinkar-starter-data.version>
+        <tinkar-starter-data.version>1.1.2</tinkar-starter-data.version>
         <protobuf-java.version>3.22.0-r7</protobuf-java.version>
         <sonar.skip>false</sonar.skip>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml
@@ -121,10 +114,10 @@
 		<eclipse-collections.version>11.1.0-r13</eclipse-collections.version>
 		<eclipse-collections-api.version>11.1.0-r11</eclipse-collections-api.version>
 		<jheaps.version>0.14-r6</jheaps.version>
-		<roaringbitmap.version>0.9.31-r8</roaringbitmap.version>
+		<roaringbitmap.version>1.4.0</roaringbitmap.version>
 
 		<hybrid-reasoner.version>1.0.12</hybrid-reasoner.version>
-		<ikm-reasoner.version>0.37.6</ikm-reasoner.version>
+		<ikm-reasoner.version>0.37.7</ikm-reasoner.version>
 		<owlapi.version>4.8.2</owlapi.version>
     </properties>
 
@@ -282,12 +275,6 @@
 
             <dependency>
                 <groupId>${tinkar-jpms-deps.groupId}</groupId>
-                <artifactId>roaringbitmap</artifactId>
-                <version>${roaringbitmap.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>${tinkar-jpms-deps.groupId}</groupId>
                 <artifactId>eclipse-collections</artifactId>
                 <version>${eclipse-collections.version}</version>
             </dependency>
@@ -311,6 +298,12 @@
             </dependency>
 
 			<!-- Everything else -->
+            <dependency>
+                <groupId>com.github.RoaringBitmap.RoaringBitmap</groupId>
+                <artifactId>roaringbitmap</artifactId>
+                <version>${roaringbitmap.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.jsonschema2pojo</groupId>
                 <artifactId>jsonschema2pojo-core</artifactId>
@@ -492,47 +485,16 @@
         </dependency>
     </dependencies>
 
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
     <build>
         <pluginManagement>
             <plugins>
-                <plugin>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.5.2</version>
-                    <configuration>
-                        <useModulePath>true</useModulePath>
-                        <argLine></argLine>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-failsafe-plugin</artifactId>
-                    <version>3.5.2</version>
-                    <configuration>
-                        <useModulePath>true</useModulePath>
-                        <argLine></argLine>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.13.0</version>
-                    <configuration>
-                        <release>23</release>
-                        <fork>true</fork>
-                        <compilerArgs combine.self="override">
-                            <arg></arg>
-                            <!-- Your specific compiler args or empty to clear them -->
-                        </compilerArgs>
-                        <annotationProcessorPaths>
-                            <annotationProcessorPath>
-                                <groupId>io.soabase.record-builder</groupId>
-                                <artifactId>record-builder-processor</artifactId>
-                                <version>34</version>
-                            </annotationProcessorPath>
-                        </annotationProcessorPaths>
-                        <annotationProcessors>
-                            <annotationProcessor>io.soabase.recordbuilder.processor.RecordBuilderProcessor</annotationProcessor>
-                        </annotationProcessors>
-                    </configuration>
-                </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
@@ -549,28 +511,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
-                <configuration>
-                    <release>23</release>
-                    <fork>true</fork>
-                    <compilerArgs combine.self="override">
-                        <arg></arg>
-                        <!-- Your specific compiler args or empty to clear them -->
-                    </compilerArgs>
-                    <annotationProcessorPaths>
-                        <annotationProcessorPath>
-                            <groupId>io.soabase.record-builder</groupId>
-                            <artifactId>record-builder-processor</artifactId>
-                            <version>34</version>
-                        </annotationProcessorPath>
-                    </annotationProcessorPaths>
-                    <annotationProcessors>
-                        <annotationProcessor>io.soabase.recordbuilder.processor.RecordBuilderProcessor</annotationProcessor>
-                    </annotationProcessors>
-                </configuration>
             </plugin>
         </plugins>
     </build>
