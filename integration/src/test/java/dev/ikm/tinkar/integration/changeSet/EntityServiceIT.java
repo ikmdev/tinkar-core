@@ -59,9 +59,9 @@ class EntityServiceIT {
         assertNotNull(summary);
         // Add your assertions here based on the expected summary values
         // For example:
-        assertEquals(296, summary.conceptsCount());
-        assertEquals(3063, summary.semanticsCount());
-        assertEquals(16, summary.patternsCount());
+        assertEquals(316, summary.conceptsCount());
+        assertEquals(3223, summary.semanticsCount());
+        assertEquals(18, summary.patternsCount());
         assertEquals(2, summary.stampsCount());
     }
 

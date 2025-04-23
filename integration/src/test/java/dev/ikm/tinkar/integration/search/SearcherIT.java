@@ -241,7 +241,7 @@ public class SearcherIT {
         List<PublicId> conceptIds = Searcher.membersOf(TinkarTerm.KOMET_BASE_MODEL_COMPONENT_PATTERN);
         assertEquals(1, conceptIds.size(), "there should be 1 tagged concept associated with this pattern");
         conceptIds = Searcher.membersOf(TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
-        assertEquals(295, conceptIds.size(), "there should be 295 tagged concept associated with this pattern");
+        assertEquals(316, conceptIds.size(), "there should be 316 tagged concept associated with this pattern");
     }
 
     @Test
