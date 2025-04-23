@@ -192,6 +192,10 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             changeSetWriters.add(changeSetProvider.get());
         });
         this.changeSetWriterServices = changeSetWriters.toImmutable();
+        LOG.info("\n\nLoaded {} ChangeSetWriterService(s)\n\n", changeSetWriters.size());
+        if (this.changeSetWriterServices.notEmpty()) {
+            LOG.info("ChangeSetWriterService(s): ", changeSetWriters);
+        }
 
         if (!indexExists) {
             try {
@@ -258,13 +262,12 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     public void close() {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Closing SpinedArrayProvider");
-        this.changeSetWriterServices.forEach(changeSetWriter -> changeSetWriter.shutdown());
         try {
+            this.changeSetWriterServices.forEach(ChangeSetWriterService::shutdown);
             save();
             listAndCancelUncommittedStamps();
             entityToBytesMap.close();
             SpinedArrayProvider.singleton = null;
-            this.changeSetWriterServices.forEach(ChangeSetWriterService::shutdown);
             this.indexer.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
