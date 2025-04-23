@@ -184,6 +184,7 @@
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${project.build.directory}/data</outputDirectory>
                                 </artifactItem>
+                                
                                 <artifactItem>
                                     <groupId>dev.ikm.data.tinkar</groupId>
                                     <artifactId>tinkar-starter-data</artifactId>
