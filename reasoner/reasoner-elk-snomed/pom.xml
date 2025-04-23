@@ -5,10 +5,14 @@
 	<parent>
 		<groupId>dev.ikm.tinkar</groupId>
 		<artifactId>reasoner</artifactId>
-		<version>1.96.0-SNAPSHOT</version>
+		<version>1.97.0-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>reasoner-elk-snomed</artifactId>
+
+	<properties>
+		<failsafeArgLine>--enable-preview -Xmx12G</failsafeArgLine>
+	</properties>
 
 	<dependencies>
 		<dependency>

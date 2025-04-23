@@ -48,7 +48,7 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedClassifierTestBase.class);
 
 	protected int expected_supercs_cnt = -1;
-	protected int expected_non_snomed_cnt = 309;
+	protected int expected_non_snomed_cnt = 310;
 	protected int expected_miss_cnt = 0;
 	protected int expected_pharma_miss_cnt = 0;
 	protected int expected_other_miss_cnt = 0;

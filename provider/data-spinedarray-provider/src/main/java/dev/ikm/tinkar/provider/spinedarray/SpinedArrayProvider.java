@@ -49,6 +49,7 @@ import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.provider.search.Indexer;
 import dev.ikm.tinkar.provider.search.RecreateIndex;
 import dev.ikm.tinkar.provider.search.Searcher;
+import dev.ikm.tinkar.provider.search.TypeAheadSearch;
 import dev.ikm.tinkar.provider.spinedarray.internal.Get;
 import dev.ikm.tinkar.provider.spinedarray.internal.Put;
 import dev.ikm.tinkar.terms.State;
@@ -203,6 +204,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
                 LOG.error(e.getLocalizedMessage(), e);
             }
         }
+        // Prime TypeAheadSearch
+        TypeAheadSearch.get();
 
         stopwatch.stop();
         LOG.info("Opened SpinedArrayProvider in: " + stopwatch.durationString());
