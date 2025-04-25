@@ -5,7 +5,7 @@
     <parent>
         <groupId>dev.ikm.tinkar</groupId>
         <artifactId>provider</artifactId>
-        <version>1.98.0-IKDT-942-Force-UTC-time-when-no-time-given-SNAPSHOT</version>
+        <version>1.98.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>data-websocket-server-provider</artifactId>
