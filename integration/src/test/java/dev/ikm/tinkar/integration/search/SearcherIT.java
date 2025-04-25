@@ -66,24 +66,7 @@ public class SearcherIT {
     public void beforeAll() {
         TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
         TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
-        //JTD add code here to modify the specific artifacts used by the search*ExistingIdentifier tests
-        //    with the Composer API until we can get updated reasoned starter data
-        // temporarily update latest IDENTIFIER_PATTERN
-        try {
-            Latest<PatternEntityVersion> latestIdPattern = Calculators.View.Default().latestPatternEntityVersion(TinkarTerm.IDENTIFIER_PATTERN);
-            if ( latestIdPattern.get().fieldDefinitions().get(1).meaningNid() == TinkarTerm.IDENTIFIER_SOURCE.nid()) {
-                Session session = composer.open(State.ACTIVE, /*time,*/ TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-                session.compose((PatternAssembler patternAssembler) -> patternAssembler
-                        .pattern(TinkarTerm.IDENTIFIER_PATTERN)
-                        .meaning(TinkarTerm.IDENTIFIER_SOURCE)
-                        .purpose(TinkarTerm.IDENTIFIER_SOURCE)
-                        .fieldDefinition(TinkarTerm.IDENTIFIER_SOURCE, TinkarTerm.IDENTIFIER_SOURCE, TinkarTerm.COMPONENT_FIELD)
-                        .fieldDefinition(TinkarTerm.IDENTIFIER_VALUE, TinkarTerm.IDENTIFIER_VALUE, TinkarTerm.STRING)
-                );
-            }
-        } catch (Exception ex) {
-            LOG.error("Exception creating new IDENTIFIER_PATTERN: {}", ex.toString());
-        }
+
         rebuildTypeAheadSuggesterAndBlock();
     }
 
