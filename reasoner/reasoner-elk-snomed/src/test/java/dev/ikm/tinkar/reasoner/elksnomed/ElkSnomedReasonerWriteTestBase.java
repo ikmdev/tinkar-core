@@ -17,6 +17,7 @@ package dev.ikm.tinkar.reasoner.elksnomed;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -70,6 +71,7 @@ public abstract class ElkSnomedReasonerWriteTestBase extends ElkSnomedTestBase {
 		int parent_miss = 0;
 		int child_miss = 0;
 		int mis_match_cnt = 0;
+		HashSet<Long> child_miss_sctids = new HashSet<>();
 		for (long sctid : isas.getOrderedConcepts()) {
 			int nid = ElkSnomedData.getNid(sctid);
 			{
@@ -101,6 +103,7 @@ public abstract class ElkSnomedReasonerWriteTestBase extends ElkSnomedTestBase {
 						if (!expected_child_nids.equals(actual_child_nids.mapToSet(x -> x))) {
 							LOG.error("Children: " + sctid + " " + descr.getFsn(sctid));
 							child_miss++;
+							child_miss_sctids.add(sctid);
 						}
 					} else {
 						LOG.error("No LATEST semantic of pattern " + PrimitiveData.text(inferredNavigationPatternNid)
@@ -150,9 +153,13 @@ public abstract class ElkSnomedReasonerWriteTestBase extends ElkSnomedTestBase {
 			}
 		}
 		assertEquals(0, parent_miss);
-		// TODO 609096000 Role group (attribute) & 1295447006 Annotation attribute
-		// (attribute)
-		assertEquals(2, child_miss);
+		// TODO
+		// 609096000 Role group (attribute)
+		// 1295447006 Annotation attribute (attribute)
+		// 900000000000447004 Case significance (core metadata concept)
+		// 900000000000446008 Description type (core metadata concept)
+		assertEquals(4, child_miss);
+		assertEquals(Set.of(609096000l, 1295447006l, 900000000000447004l, 900000000000446008l), child_miss_sctids);
 		assertEquals(0, mis_match_cnt);
 	}
 

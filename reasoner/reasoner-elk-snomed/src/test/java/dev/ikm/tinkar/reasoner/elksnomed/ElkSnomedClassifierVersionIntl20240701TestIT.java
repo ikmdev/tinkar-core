@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.reasoner.elksnomed;
 
 import java.io.IOException;
+import java.time.Instant;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -23,19 +24,30 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
+import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 
-public class ElkSnomedCompareIntl20250101TestIT extends ElkSnomedCompareTestBase implements SnomedVersionInternational {
+public class ElkSnomedClassifierVersionIntl20240701TestIT extends ElkSnomedClassifierTestBase
+		implements SnomedVersionInternational {
 
-	@SuppressWarnings("unused")
-	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedCompareIntl20250101TestIT.class);
+	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedClassifierVersionIntl20240701TestIT.class);
 
 	static {
+		// Note this db is different than the Snomed version
 		test_case = "snomed-intl-20250101";
 	}
 
 	@Override
 	public String getVersion() {
-		return "20250101";
+		return "20240701";
+	}
+
+	@Override
+	protected ViewCalculator getViewCalculator() {
+		ViewCalculator viewCalculator = PrimitiveDataTestUtil.getViewCalculator(getVersion());
+		long time = ((StampCalculatorWithCache) viewCalculator.stampCalculator()).filter().time();
+		LOG.info("View calculator time: " + Instant.ofEpochMilli(time) + " " + time);
+		return viewCalculator;
 	}
 
 	@BeforeAll

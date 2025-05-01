@@ -27,6 +27,7 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 public class ElkSnomedDataBuilderIntl20250101TestIT extends ElkSnomedDataBuilderTestBase
 		implements SnomedVersionInternational {
 
+	@SuppressWarnings("unused")
 	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedDataBuilderIntl20250101TestIT.class);
 
 	static {
@@ -34,8 +35,6 @@ public class ElkSnomedDataBuilderIntl20250101TestIT extends ElkSnomedDataBuilder
 	}
 
 	{
-		stated_count = 399062;
-		active_count = 371242;
 		inactive_count = 27820;
 	}
 
@@ -52,9 +51,7 @@ public class ElkSnomedDataBuilderIntl20250101TestIT extends ElkSnomedDataBuilder
 
 	@AfterAll
 	public static void stopPrimitiveData() {
-		LOG.info("stopPrimitiveData");
-		PrimitiveData.stop();
-		LOG.info("Stopped");
+		PrimitiveDataTestUtil.stopPrimitiveData();
 	}
 
 }

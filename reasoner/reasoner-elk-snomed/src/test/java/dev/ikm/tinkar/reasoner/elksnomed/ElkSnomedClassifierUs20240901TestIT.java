@@ -26,14 +26,11 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 
 public class ElkSnomedClassifierUs20240901TestIT extends ElkSnomedClassifierTestBase implements SnomedVersionUs {
 
+	@SuppressWarnings("unused")
 	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedClassifierUs20240901TestIT.class);
 
 	static {
 		test_case = "snomed-us-20240901";
-	}
-
-	{
-		expected_supercs_cnt = 614264;
 	}
 
 	@Override
@@ -54,9 +51,7 @@ public class ElkSnomedClassifierUs20240901TestIT extends ElkSnomedClassifierTest
 
 	@AfterAll
 	public static void stopPrimitiveData() {
-		LOG.info("stopPrimitiveData");
-		PrimitiveData.stop();
-		LOG.info("Stopped");
+		PrimitiveDataTestUtil.stopPrimitiveData();
 	}
 
 }

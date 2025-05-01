@@ -25,12 +25,19 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.common.service.DataUriOption;
@@ -42,10 +49,16 @@ import dev.ikm.tinkar.coordinate.Coordinates.Logic;
 import dev.ikm.tinkar.coordinate.Coordinates.Navigation;
 import dev.ikm.tinkar.coordinate.Coordinates.Position;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
+import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
+import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculatorWithCache;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.PatternEntityVersion;
+import dev.ikm.tinkar.entity.SemanticEntityVersion;
+import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
 
 public abstract class PrimitiveDataTestUtil {
@@ -132,8 +145,21 @@ public abstract class PrimitiveDataTestUtil {
 
 	public static ViewCalculator getViewCalculator() {
 		ViewCoordinateRecord vcr = Coordinates.View.DefaultView();
-		ViewCalculatorWithCache viewCalculator = ViewCalculatorWithCache.getCalculator(vcr);
-		return viewCalculator;
+		ViewCalculatorWithCache vc = ViewCalculatorWithCache.getCalculator(vcr);
+		return vc;
+	}
+
+	public static ViewCalculator getViewCalculator(String time) {
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMdd");
+		Instant instant = LocalDate.parse(time, dtf).atStartOfDay().toInstant(ZoneOffset.UTC);
+		// workaround until db create issue fixed
+//		instant = instant.plus(4, ChronoUnit.HOURS);
+		StampPositionRecord pos = StampPositionRecord.make(instant, TinkarTerm.DEVELOPMENT_PATH);
+		StampCoordinateRecord scr = StampCoordinateRecord.make(StateSet.ACTIVE_AND_INACTIVE, pos, IntIds.set.empty());
+		ViewCoordinateRecord vcr = ViewCoordinateRecord.make(scr, Language.UsEnglishRegularName(), Logic.ElPlusPlus(),
+				Navigation.inferred(), Edit.Default());
+		ViewCalculatorWithCache vc = ViewCalculatorWithCache.getCalculator(vcr);
+		return vc;
 	}
 
 	public static ViewCalculator getViewCalculatorPrimordial() {
@@ -141,20 +167,51 @@ public abstract class PrimitiveDataTestUtil {
 				Position.LatestOnDevelopment(), IntIds.set.of(TinkarTerm.PRIMORDIAL_MODULE.nid()));
 		ViewCoordinateRecord vcr = ViewCoordinateRecord.make(scr, Language.UsEnglishRegularName(), Logic.ElPlusPlus(),
 				Navigation.inferred(), Edit.Default());
-		ViewCalculatorWithCache viewCalculator = ViewCalculatorWithCache.getCalculator(vcr);
-		return viewCalculator;
+		ViewCalculatorWithCache vc = ViewCalculatorWithCache.getCalculator(vcr);
+		return vc;
 	}
 
 	public static HashSet<Integer> getPrimordialNids() throws Exception {
 		HashSet<Integer> nids = new HashSet<>();
-		ViewCalculator primordial_vc = PrimitiveDataTestUtil.getViewCalculatorPrimordial();
-		primordial_vc.forEachSemanticVersionOfPattern(TinkarTerm.IDENTIFIER_PATTERN.nid(),
-				(semanticEntityVersion, _) -> {
-					int conceptNid = semanticEntityVersion.referencedComponentNid();
-					if (primordial_vc.latestIsActive(conceptNid))
-						nids.add(conceptNid);
-				});
+		ViewCalculator vc = PrimitiveDataTestUtil.getViewCalculatorPrimordial();
+		vc.forEachSemanticVersionOfPattern(TinkarTerm.IDENTIFIER_PATTERN.nid(), (semanticEntityVersion, _) -> {
+			int conceptNid = semanticEntityVersion.referencedComponentNid();
+			if (vc.latestIsActive(conceptNid))
+				nids.add(conceptNid);
+		});
 		return nids;
+	}
+
+	public static HashSet<Integer> getPrimordialNidsWithSctids() throws Exception {
+		ViewCalculator vc = getViewCalculator();
+		return getPrimordialNids().stream().filter(nid -> getSctid(nid, vc) != null)
+				.collect(Collectors.toCollection(HashSet::new));
+	}
+
+	public static String getSctid(int conceptNid, ViewCalculator vc) {
+		ArrayList<String> ret = new ArrayList<>();
+		Latest<PatternEntityVersion> latestIdPattern = vc.latestPatternEntityVersion(TinkarTerm.IDENTIFIER_PATTERN);
+		EntityService.get().forEachSemanticForComponentOfPattern(conceptNid, TinkarTerm.IDENTIFIER_PATTERN.nid(),
+				(semanticEntity) -> {
+					if (vc.latest(semanticEntity).isPresent()) {
+						SemanticEntityVersion latestSemanticVersion = vc.latest(semanticEntity).get();
+						EntityProxy identifierSource = latestIdPattern.get()
+								.getFieldWithMeaning(TinkarTerm.IDENTIFIER_SOURCE, latestSemanticVersion);
+						if (PublicId.equals(identifierSource, TinkarTerm.SCTID)) {
+//							String idSourceName = vc.getPreferredDescriptionTextWithFallbackOrNid(identifierSource);
+							String idValue = latestIdPattern.get().getFieldWithMeaning(TinkarTerm.IDENTIFIER_VALUE,
+									latestSemanticVersion);
+							ret.add(idValue);
+						}
+					}
+//					else {
+//						throw new RuntimeException(
+//								"No latest for " + conceptNid + " " + PrimitiveData.text(conceptNid));
+//					}
+				});
+		if (ret.isEmpty())
+			return null;
+		return ret.getFirst();
 	}
 
 }
