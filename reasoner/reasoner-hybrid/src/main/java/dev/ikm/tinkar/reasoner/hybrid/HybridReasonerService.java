@@ -15,14 +15,6 @@
  */
 package dev.ikm.tinkar.reasoner.hybrid;
 
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-
-import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import dev.ikm.elk.snomed.NecessaryNormalFormBuilder;
 import dev.ikm.elk.snomed.SnomedIds;
 import dev.ikm.elk.snomed.SnomedOntology;
@@ -35,6 +27,13 @@ import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedReasonerService;
 import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.terms.TinkarTerm;
+import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 public class HybridReasonerService extends ElkSnomedReasonerService {
 

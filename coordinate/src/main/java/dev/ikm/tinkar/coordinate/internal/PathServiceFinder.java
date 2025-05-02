@@ -15,13 +15,12 @@
  */
 package dev.ikm.tinkar.coordinate.internal;
 
+import dev.ikm.tinkar.common.service.PluggableService;
 import dev.ikm.tinkar.coordinate.PathService;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.ServiceLoader;
-
-import dev.ikm.tinkar.common.service.PluggableService;
 
 public enum PathServiceFinder {
     INSTANCE;

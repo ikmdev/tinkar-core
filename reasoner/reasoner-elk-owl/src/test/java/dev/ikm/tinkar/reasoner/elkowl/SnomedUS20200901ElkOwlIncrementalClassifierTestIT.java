@@ -15,18 +15,17 @@
  */
 package dev.ikm.tinkar.reasoner.elkowl;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.UUID;
-
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.reasoner.service.ReasonerService;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dev.ikm.tinkar.reasoner.service.ReasonerService;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.UUID;
 
 public class SnomedUS20200901ElkOwlIncrementalClassifierTestIT extends ElkOwlTestBase {
 

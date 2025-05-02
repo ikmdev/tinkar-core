@@ -16,14 +16,11 @@
 package dev.ikm.tinkar.coordinate.stamp.calculator;
 
 import com.github.benmanes.caffeine.cache.Cache;
-import dev.ikm.tinkar.common.alert.AlertObject;
-import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.util.broadcast.Subscriber;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.PatternEntity;
 
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Flow;
 
 public class CacheInvalidationIfPatternSubscriber implements Subscriber<Integer> {
     CopyOnWriteArrayList<Cache<? extends Object, ? extends Object>> cachesToManage = new CopyOnWriteArrayList<>();

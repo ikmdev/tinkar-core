@@ -1,11 +1,5 @@
 package dev.ikm.tinkar.reasoner.elksnomed;
 
-import java.util.HashMap;
-import java.util.HashSet;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.elk.snomed.model.ConcreteRole;
@@ -14,6 +8,11 @@ import dev.ikm.elk.snomed.model.Definition;
 import dev.ikm.elk.snomed.model.Role;
 import dev.ikm.elk.snomed.model.RoleGroup;
 import dev.ikm.elk.snomed.model.RoleType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.HashSet;
 
 public class NidToSctid {
 

@@ -15,9 +15,9 @@
  */
 package dev.ikm.tinkar.coordinate.navigation;
 
-import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.coordinate.stamp.StateSet;
 
 public interface NavigationCoordinateDelegate extends NavigationCoordinate {
     NavigationCoordinate navigationCoordinate();

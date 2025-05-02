@@ -20,11 +20,14 @@ import dev.ikm.tinkar.entity.FieldDefinitionRecord;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.StampEntityVersion;
-import dev.ikm.tinkar.schema.*;
+import dev.ikm.tinkar.schema.FieldDefinition;
+import dev.ikm.tinkar.schema.PatternChronology;
+import dev.ikm.tinkar.schema.PatternVersion;
+import dev.ikm.tinkar.schema.StampChronology;
+import dev.ikm.tinkar.schema.StampVersion;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.Disabled;
 
 import java.util.function.Consumer;
 

@@ -15,19 +15,12 @@
  */
 package dev.ikm.tinkar.reasoner.elkowl;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
+import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
 import dev.ikm.tinkar.common.service.PluggableService;
-import java.util.Set;
-
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
+import dev.ikm.tinkar.reasoner.service.ReasonerService;
+import dev.ikm.tinkar.terms.TinkarTerm;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -40,11 +33,17 @@ import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
-import dev.ikm.tinkar.reasoner.service.ReasonerService;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import dev.ikm.tinkar.terms.TinkarTerm;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public abstract class ElkOwlTestBase extends PrimitiveDataTestBase {
 

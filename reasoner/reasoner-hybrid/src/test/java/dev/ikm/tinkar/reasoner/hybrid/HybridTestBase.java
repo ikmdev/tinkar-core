@@ -15,8 +15,17 @@
  */
 package dev.ikm.tinkar.reasoner.hybrid;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import dev.ikm.elk.snomed.SnomedOntologyReasoner;
+import dev.ikm.elk.snomed.model.Concept;
+import dev.ikm.tinkar.common.service.PluggableService;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
+import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
+import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedDataBuilder;
+import dev.ikm.tinkar.reasoner.service.ReasonerService;
+import dev.ikm.tinkar.terms.TinkarTerm;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,18 +36,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import dev.ikm.elk.snomed.SnomedOntologyReasoner;
-import dev.ikm.elk.snomed.model.Concept;
-import dev.ikm.tinkar.common.service.PluggableService;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
-import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedDataBuilder;
-import dev.ikm.tinkar.reasoner.service.ReasonerService;
-import dev.ikm.tinkar.terms.TinkarTerm;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public abstract class HybridTestBase extends PrimitiveDataTestBase {
 

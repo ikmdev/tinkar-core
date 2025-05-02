@@ -15,9 +15,9 @@
  */
 package dev.ikm.tinkar.entity.graph.adaptor.axiom;
 
+import dev.ikm.tinkar.terms.ConceptFacade;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.set.ImmutableSet;
-import dev.ikm.tinkar.terms.ConceptFacade;
 
 import java.util.UUID;
 

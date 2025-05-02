@@ -15,8 +15,6 @@
  */
 package dev.ikm.tinkar.coordinate;
 
-import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.list.ImmutableList;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculatorWithCache;
 import dev.ikm.tinkar.coordinate.navigation.NavigationCoordinateRecord;
@@ -24,6 +22,8 @@ import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithC
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinate;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculatorWithCache;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ImmutableList;
 
 public class Calculators {
 

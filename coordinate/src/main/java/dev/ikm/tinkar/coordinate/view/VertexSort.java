@@ -16,14 +16,14 @@
 package dev.ikm.tinkar.coordinate.view;
 
 
-import org.eclipse.collections.api.collection.ImmutableCollection;
-import org.eclipse.collections.api.list.ImmutableList;
 import dev.ikm.tinkar.common.binary.Encodable;
 import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculator;
 import dev.ikm.tinkar.coordinate.navigation.calculator.Edge;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculator;
 import dev.ikm.tinkar.entity.Entity;
+import org.eclipse.collections.api.collection.ImmutableCollection;
+import org.eclipse.collections.api.list.ImmutableList;
 
 import java.util.UUID;
 

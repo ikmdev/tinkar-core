@@ -15,24 +15,6 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.eclipse.collections.api.list.ImmutableList;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import dev.ikm.elk.snomed.ConceptComparer;
 import dev.ikm.elk.snomed.SnomedConcreteRoles;
 import dev.ikm.elk.snomed.SnomedDescriptions;
@@ -56,6 +38,21 @@ import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
 import dev.ikm.tinkar.terms.TinkarTerm;
+import org.eclipse.collections.api.list.ImmutableList;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ElkSnomedReasonerWriteIntl20250101TestIT extends ElkSnomedTestBase implements SnomedVersionInternational {
 

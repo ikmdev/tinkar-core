@@ -18,15 +18,20 @@ package dev.ikm.tinkar.entity.transform;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.entity.PatternEntity;
-import dev.ikm.tinkar.schema.*;
+import dev.ikm.tinkar.schema.FieldDefinition;
+import dev.ikm.tinkar.schema.PatternChronology;
+import dev.ikm.tinkar.schema.PatternVersion;
+import dev.ikm.tinkar.schema.StampChronology;
+import dev.ikm.tinkar.schema.StampVersion;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.Disabled;
 
 import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 // @Disabled("Java 23")

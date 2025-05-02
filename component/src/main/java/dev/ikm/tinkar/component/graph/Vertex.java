@@ -15,9 +15,9 @@
  */
 package dev.ikm.tinkar.component.graph;
 
+import dev.ikm.tinkar.common.id.VertexId;
 import dev.ikm.tinkar.component.Concept;
 import org.eclipse.collections.api.RichIterable;
-import dev.ikm.tinkar.common.id.VertexId;
 
 import java.util.Optional;
 

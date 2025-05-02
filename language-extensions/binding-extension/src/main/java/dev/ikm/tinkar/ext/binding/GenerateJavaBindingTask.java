@@ -27,7 +27,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static dev.ikm.tinkar.ext.binding.JavaTemplates.*;
+import static dev.ikm.tinkar.ext.binding.JavaTemplates.JAVA_BINDING_TEMPLATE;
+import static dev.ikm.tinkar.ext.binding.JavaTemplates.JAVA_COMMENT_BLOCK_UUID_TEMPLATE;
+import static dev.ikm.tinkar.ext.binding.JavaTemplates.JAVA_CONCEPT_COMMENT_TEMPLATE;
+import static dev.ikm.tinkar.ext.binding.JavaTemplates.JAVA_PATTERN_COMMENT_TEMPLATE;
+import static dev.ikm.tinkar.ext.binding.JavaTemplates.JAVA_PATTERN_FIELD_DEFINITION_TEMPLATE;
 
 public class GenerateJavaBindingTask extends TrackingCallable<Void> {
 

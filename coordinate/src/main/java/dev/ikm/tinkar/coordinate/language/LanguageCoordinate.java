@@ -15,13 +15,13 @@
  */
 package dev.ikm.tinkar.coordinate.language;
 
-import org.eclipse.collections.api.list.ImmutableList;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.PatternFacade;
+import org.eclipse.collections.api.list.ImmutableList;
 
 import java.util.ArrayList;
 import java.util.UUID;

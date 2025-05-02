@@ -15,14 +15,13 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed;
 
-import java.io.IOException;
-
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dev.ikm.tinkar.common.service.PrimitiveData;
+import java.io.IOException;
 
 public class ElkSnomedClassifierUs20240901TestIT extends ElkSnomedClassifierTestBase implements SnomedVersionUs {
 

@@ -15,13 +15,12 @@
  */
 package dev.ikm.tinkar.entity.internal;
 
+import dev.ikm.tinkar.common.service.PluggableService;
 import dev.ikm.tinkar.entity.EntityService;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.ServiceLoader;
-
-import dev.ikm.tinkar.common.service.PluggableService;
 
 public enum EntityServiceFinder {
     INSTANCE;

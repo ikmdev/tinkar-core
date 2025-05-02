@@ -15,8 +15,8 @@
  */
 package dev.ikm.tinkar.common.id;
 
-import org.eclipse.collections.impl.utility.Iterate;
 import dev.ikm.tinkar.common.id.impl.PublicIdCollections;
+import org.eclipse.collections.impl.utility.Iterate;
 
 import java.util.Objects;
 
