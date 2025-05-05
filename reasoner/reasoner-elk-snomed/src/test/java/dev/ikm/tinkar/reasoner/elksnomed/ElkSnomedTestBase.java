@@ -122,10 +122,14 @@ public abstract class ElkSnomedTestBase extends SnomedTestBase {
 		return lines;
 	}
 
-	public ReasonerService initReasonerService() {
-		ReasonerService rs = PluggableService.load(ReasonerService.class).stream()
+	public static ReasonerService getElkSnomedReasonerService() {
+		return PluggableService.load(ReasonerService.class).stream()
 				.filter(x -> x.type().getSimpleName().equals(ElkSnomedReasonerService.class.getSimpleName())) //
 				.findFirst().get().get();
+	}
+
+	public ReasonerService initReasonerService() {
+		ReasonerService rs = getElkSnomedReasonerService();
 		rs.init(getViewCalculator(), TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
 				TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
 		rs.setProgressUpdater(null);
