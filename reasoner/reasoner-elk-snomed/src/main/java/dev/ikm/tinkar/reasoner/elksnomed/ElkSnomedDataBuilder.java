@@ -93,7 +93,7 @@ public class ElkSnomedDataBuilder {
 				(semanticEntityVersion, _) -> {
 					try {
 						int conceptNid = semanticEntityVersion.referencedComponentNid();
-						if (viewCalculator.latestIsActive(conceptNid)) {
+						if (semanticEntityVersion.active()) {
 							DiTreeEntity definition = (DiTreeEntity) semanticEntityVersion.fieldValues().get(0);
 							processDefinition(conceptNid, definition);
 							data.incrementActiveConceptCount();
@@ -108,6 +108,24 @@ public class ElkSnomedDataBuilder {
 						}
 					}
 				});
+		buildRoleConcepts();
+		data.initializeReasonerConceptSet();
+		for (Concept con : data.getConcepts()) {
+			if (con.getDefinitions().isEmpty())
+				LOG.warn("No definitions: " + con.getId() + " " + PrimitiveData.text((int) con.getId()));
+		}
+		updateProgress(totalCount, totalCount);
+		LOG.info("Total processed: " + totalCount + " " + processedCount.get());
+		LOG.info("Active concepts: " + data.getActiveConceptCount());
+		LOG.info("Inactive concepts: " + data.getInactiveConceptCount());
+		if (ex_cnt.get() != 0) {
+			String msg = "Exceptions: " + ex_cnt.get();
+			LOG.error(msg);
+			throw new Exception(msg);
+		}
+	}
+
+	private void buildRoleConcepts() {
 		// Create concepts for role types and concrete role types
 		// Should eventually do this in the write back of inferred
 		for (RoleType role : data.getRoleTypes()) {
@@ -145,21 +163,6 @@ public class ElkSnomedDataBuilder {
 				Concept sup_con = data.getOrCreateConcept((int) sup_role.getId());
 				def.addSuperConcept(sup_con);
 			}
-		}
-		data.initializeReasonerConceptSet();
-		for (Concept con : data.getConcepts()) {
-			if (con.getDefinitions().isEmpty())
-				LOG.warn("No definitions: " + con.getId() + " " + PrimitiveData.text((int) con.getId()));
-		}
-
-		updateProgress(totalCount, totalCount);
-		LOG.info("Total processed: " + totalCount + " " + processedCount.get());
-		LOG.info("Active concepts: " + data.getActiveConceptCount());
-		LOG.info("Inactive concepts: " + data.getInactiveConceptCount());
-		if (ex_cnt.get() != 0) {
-			String msg = "Exceptions: " + ex_cnt.get();
-			LOG.error(msg);
-			throw new Exception(msg);
 		}
 	}
 

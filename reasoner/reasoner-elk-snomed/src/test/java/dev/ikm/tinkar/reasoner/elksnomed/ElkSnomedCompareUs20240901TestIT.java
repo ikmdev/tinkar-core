@@ -26,6 +26,7 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 
 public class ElkSnomedCompareUs20240901TestIT extends ElkSnomedCompareTestBase implements SnomedVersionUs {
 
+	@SuppressWarnings("unused")
 	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedCompareUs20240901TestIT.class);
 
 	static {
@@ -50,9 +51,7 @@ public class ElkSnomedCompareUs20240901TestIT extends ElkSnomedCompareTestBase i
 
 	@AfterAll
 	public static void stopPrimitiveData() {
-		LOG.info("stopPrimitiveData");
-		PrimitiveData.stop();
-		LOG.info("Stopped");
+		PrimitiveDataTestUtil.stopPrimitiveData();
 	}
 
 }

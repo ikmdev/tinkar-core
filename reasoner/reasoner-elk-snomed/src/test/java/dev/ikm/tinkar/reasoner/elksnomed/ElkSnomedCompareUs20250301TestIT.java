@@ -25,6 +25,7 @@ import java.io.IOException;
 
 public class ElkSnomedCompareUs20250301TestIT extends ElkSnomedCompareTestBase implements SnomedVersionUs {
 
+	@SuppressWarnings("unused")
 	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedCompareUs20250301TestIT.class);
 
 	static {
@@ -49,9 +50,7 @@ public class ElkSnomedCompareUs20250301TestIT extends ElkSnomedCompareTestBase i
 
 	@AfterAll
 	public static void stopPrimitiveData() {
-		LOG.info("stopPrimitiveData");
-		PrimitiveData.stop();
-		LOG.info("Stopped");
+		PrimitiveDataTestUtil.stopPrimitiveData();
 	}
 
 }
