@@ -23,7 +23,6 @@ import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResults;
 import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResultsLeafHash;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import io.activej.bytebuf.ByteBuf;
-import org.eclipse.collections.api.block.function.primitive.IntFunction;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -39,9 +38,6 @@ import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 

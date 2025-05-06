@@ -28,14 +28,19 @@ import dev.ikm.tinkar.schema.StampChronology;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.Disabled;
 
 import java.util.List;
 
-import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.*;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.TEST_CONCEPT_NAME;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.createPBPublicId;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.openSession;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 // @Disabled("Java 23")

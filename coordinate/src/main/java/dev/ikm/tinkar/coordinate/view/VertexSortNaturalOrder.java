@@ -16,7 +16,11 @@
 package dev.ikm.tinkar.coordinate.view;
 
 
-import dev.ikm.tinkar.common.binary.*;
+import dev.ikm.tinkar.common.binary.Decoder;
+import dev.ikm.tinkar.common.binary.DecoderInput;
+import dev.ikm.tinkar.common.binary.Encodable;
+import dev.ikm.tinkar.common.binary.Encoder;
+import dev.ikm.tinkar.common.binary.EncoderOutput;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.text.NaturalOrder;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculator;

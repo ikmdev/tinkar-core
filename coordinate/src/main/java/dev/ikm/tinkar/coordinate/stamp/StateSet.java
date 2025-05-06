@@ -15,13 +15,23 @@
  */
 package dev.ikm.tinkar.coordinate.stamp;
 
-import dev.ikm.tinkar.common.binary.*;
-import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
 import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
+import dev.ikm.tinkar.common.binary.Decoder;
+import dev.ikm.tinkar.common.binary.DecoderInput;
+import dev.ikm.tinkar.common.binary.Encodable;
+import dev.ikm.tinkar.common.binary.Encoder;
+import dev.ikm.tinkar.common.binary.EncoderOutput;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
+import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
 import dev.ikm.tinkar.terms.State;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**

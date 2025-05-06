@@ -16,7 +16,6 @@
 package dev.ikm.tinkar.ext.lang.owl;
 
 import dev.ikm.tinkar.coordinate.logic.PremiseType;
-import dev.ikm.tinkar.terms.EntityProxy;
 
 import java.util.Arrays;
 import java.util.Objects;

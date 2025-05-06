@@ -21,7 +21,6 @@ import dev.ikm.tinkar.component.Concept;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.Disabled;
 
 import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.TEST_CONCEPT_NAME;
 import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.openSession;

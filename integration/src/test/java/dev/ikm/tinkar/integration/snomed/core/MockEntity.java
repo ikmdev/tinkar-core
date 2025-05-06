@@ -23,7 +23,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 
-import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.*;
+import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.SNOMED_CT_NAMESPACE;
+import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.TEST_SNOMEDCT_MOCK_DATA_JSON;
+import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.loadJsonData;
 
 /**
  * MockEntity class to mock the entity service. Loads the cache to store and get the data.

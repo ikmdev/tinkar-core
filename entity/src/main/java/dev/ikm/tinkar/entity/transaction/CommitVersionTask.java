@@ -15,7 +15,11 @@
  */
 package dev.ikm.tinkar.entity.transaction;
 
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.ConceptVersionRecord;
+import dev.ikm.tinkar.entity.EntityVersion;
+import dev.ikm.tinkar.entity.PatternVersionRecord;
+import dev.ikm.tinkar.entity.SemanticVersionRecord;
+import dev.ikm.tinkar.entity.StampVersionRecord;
 import dev.ikm.tinkar.terms.State;
 
 /**

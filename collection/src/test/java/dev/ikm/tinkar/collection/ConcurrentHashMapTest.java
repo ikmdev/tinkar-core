@@ -15,9 +15,6 @@
  */
 package dev.ikm.tinkar.collection;
 
-import java.util.Collections;
-import java.util.UUID;
-
 import org.eclipse.collections.api.bag.MutableBag;
 import org.eclipse.collections.api.block.function.Function;
 import org.eclipse.collections.api.block.function.Function2;
@@ -42,6 +39,9 @@ import org.eclipse.collections.impl.set.mutable.UnifiedSet;
 import org.eclipse.collections.impl.tuple.ImmutableEntry;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.util.Collections;
+import java.util.UUID;
 
 import static org.eclipse.collections.impl.factory.Iterables.iSet;
 

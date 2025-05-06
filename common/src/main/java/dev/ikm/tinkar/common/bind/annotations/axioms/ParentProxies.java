@@ -1,8 +1,10 @@
 package dev.ikm.tinkar.common.bind.annotations.axioms;
 
-import dev.ikm.tinkar.common.id.PublicId;
-
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * A container annotation that aggregates multiple {@link ParentProxy} annotations.

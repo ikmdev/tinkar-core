@@ -15,7 +15,11 @@
  */
 package dev.ikm.tinkar.common.alert;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 
 public class AlertObject implements Comparable<AlertObject> {

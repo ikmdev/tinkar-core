@@ -16,9 +16,9 @@
 package dev.ikm.tinkar.common.service;
 
 
+import dev.ikm.tinkar.common.validation.ValidationRecord;
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.map.ImmutableMap;
-import dev.ikm.tinkar.common.validation.ValidationRecord;
 
 import java.io.File;
 import java.util.ArrayList;

@@ -15,15 +15,14 @@
  */
 package dev.ikm.tinkar.reasoner.hybrid;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dev.ikm.tinkar.common.service.PrimitiveData;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class SnomedUS20230901HybridDataBuilderTestIT extends HybridDataBuilderTest {
 

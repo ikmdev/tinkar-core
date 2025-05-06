@@ -25,10 +25,19 @@ import dev.ikm.tinkar.schema.StampVersion;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.Disabled;
 
-import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.AUTHOR_CONCEPT_NAME;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.MODULE_CONCEPT_NAME;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.PATH_CONCEPT_NAME;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.STATUS_CONCEPT_NAME;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.TEST_CONCEPT_NAME;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.createPBPublicId;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.nid;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.nowTimestamp;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.openSession;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 // @Disabled("Java 23")

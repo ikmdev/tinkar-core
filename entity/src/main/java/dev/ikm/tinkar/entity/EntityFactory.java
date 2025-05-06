@@ -15,7 +15,12 @@
  */
 package dev.ikm.tinkar.entity;
 
-import dev.ikm.tinkar.component.*;
+import dev.ikm.tinkar.component.Chronology;
+import dev.ikm.tinkar.component.ConceptChronology;
+import dev.ikm.tinkar.component.FieldDataType;
+import dev.ikm.tinkar.component.PatternChronology;
+import dev.ikm.tinkar.component.SemanticChronology;
+import dev.ikm.tinkar.component.Stamp;
 import io.activej.bytebuf.ByteBuf;
 
 public class EntityFactory {

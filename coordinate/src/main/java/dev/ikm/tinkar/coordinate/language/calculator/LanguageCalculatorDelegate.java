@@ -15,12 +15,12 @@
  */
 package dev.ikm.tinkar.coordinate.language.calculator;
 
+import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
-import org.eclipse.collections.api.list.ImmutableList;
-import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
+import org.eclipse.collections.api.list.ImmutableList;
 
 import java.util.Optional;
 
