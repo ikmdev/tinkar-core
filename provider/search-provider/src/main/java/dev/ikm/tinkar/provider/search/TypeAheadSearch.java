@@ -34,12 +34,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class TypeAheadSearch {
     private static final Logger LOG = LoggerFactory.getLogger(TypeAheadSearch.class);
     private static final String TEXT_FIELD_NAME = "text";
+
+    private final ExecutorService suggesterExecutor = Executors.newSingleThreadExecutor();
 
     private AnalyzingSuggester suggester;
     private FuzzySuggester fuzzySuggester;
@@ -49,11 +54,6 @@ public class TypeAheadSearch {
     public static synchronized TypeAheadSearch get() {
         if (typeAheadSearch == null) {
             typeAheadSearch = new TypeAheadSearch();
-            try {
-                typeAheadSearch.buildSuggester();
-            } catch (IOException e) {
-                LOG.error("Caught Exception building suggester for TypeAheadSearch {}", e.getMessage());
-            }
         }
         return typeAheadSearch;
     }
@@ -62,16 +62,24 @@ public class TypeAheadSearch {
     }
 
     public Future<Void> buildSuggester() throws IOException {
-        return TinkExecutor.threadPool().submit(new BuildSuggester());
+        return suggesterExecutor.submit(new BuildSuggester());
     }
 
     public void close() {
-        if (reader != null) {
-            try {
-                reader.close();
-            } catch (IOException e) {
-                LOG.error("Caught Exception closing reader {}", e.getMessage());
+        try {
+            suggesterExecutor.shutdown();
+            if (suggesterExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
+                LOG.info("Suggester executor shutdown successfully");
             }
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    LOG.error("Caught Exception closing reader {}", e.getMessage());
+                }
+            }
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
         }
     }
 
