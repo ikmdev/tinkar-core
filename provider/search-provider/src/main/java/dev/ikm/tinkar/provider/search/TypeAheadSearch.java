@@ -44,7 +44,7 @@ public class TypeAheadSearch {
     private static final Logger LOG = LoggerFactory.getLogger(TypeAheadSearch.class);
     private static final String TEXT_FIELD_NAME = "text";
 
-    private final ExecutorService suggesterExecutor = Executors.newSingleThreadExecutor();
+    private static ExecutorService suggesterExecutor;
 
     private AnalyzingSuggester suggester;
     private FuzzySuggester fuzzySuggester;
@@ -54,6 +54,9 @@ public class TypeAheadSearch {
     public static synchronized TypeAheadSearch get() {
         if (typeAheadSearch == null) {
             typeAheadSearch = new TypeAheadSearch();
+        }
+        if (suggesterExecutor == null || suggesterExecutor.isShutdown()) {
+            suggesterExecutor = Executors.newSingleThreadExecutor();
         }
         return typeAheadSearch;
     }
