@@ -83,6 +83,7 @@ public class PrimitiveData {
         } finally {
             progressTask.finished();
         }
+        TinkExecutor.stop();
     }
 
     public static void save() {
