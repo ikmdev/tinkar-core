@@ -157,29 +157,43 @@ public class ExecutorProvider implements ExecutorService {
     protected void stop() {
         LOG.info("Stopping WorkExecutors thread pools. ");
 
-        if (this.forkJoinExecutor != null) {
-            this.forkJoinExecutor.shutdownNow();
-            this.forkJoinExecutor = null;
-        }
+        try {
+            if (this.forkJoinExecutor != null) {
+                this.forkJoinExecutor.shutdown();
+                if (this.forkJoinExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
+                    LOG.info("forkJoinExecutor terminated successfully");
+                }
+            }
 
-        if (this.blockingThreadPoolExecutor != null) {
-            this.blockingThreadPoolExecutor.shutdownNow();
-            this.blockingThreadPoolExecutor = null;
-        }
+            if (this.blockingThreadPoolExecutor != null) {
+                this.blockingThreadPoolExecutor.shutdown();
+                if (this.blockingThreadPoolExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
+                    LOG.info("blockingThreadPoolExecutor terminated successfully");
+                }
+            }
 
-        if (this.threadPoolExecutor != null) {
-            this.threadPoolExecutor.shutdownNow();
-            this.threadPoolExecutor = null;
-        }
+            if (this.threadPoolExecutor != null) {
+                this.threadPoolExecutor.shutdown();
+                if (this.threadPoolExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
+                    LOG.info("threadPoolExecutor terminated successfully");
+                }
+            }
 
-        if (this.ioThreadPoolExecutor != null) {
-            this.ioThreadPoolExecutor.shutdownNow();
-            this.ioThreadPoolExecutor = null;
-        }
+            if (this.ioThreadPoolExecutor != null) {
+                this.ioThreadPoolExecutor.shutdown();
+                if (this.ioThreadPoolExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
+                    LOG.info("ioThreadPoolExecutor terminated successfully");
+                }
+            }
 
-        if (this.scheduledExecutor != null) {
-            this.scheduledExecutor.shutdownNow();
-            this.scheduledExecutor = null;
+            if (this.scheduledExecutor != null) {
+                this.scheduledExecutor.shutdown();
+                if (this.scheduledExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
+                    LOG.info("scheduledExecutor terminated successfully");
+                }
+            }
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
         }
         LOG.info("Stopped WorkExecutors thread pools");
     }
