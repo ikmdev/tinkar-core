@@ -57,8 +57,6 @@ public abstract class ElkSnomedDataBuilderTestBase extends ElkSnomedTestBase {
 		AtomicInteger inactive_cnt = new AtomicInteger();
 		viewCalculator.forEachSemanticVersionOfPatternParallel(TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
 				(semanticEntityVersion, _) -> {
-					int conceptNid = semanticEntityVersion.referencedComponentNid();
-//					if (viewCalculator.latestIsActive(conceptNid)) {
 					if (semanticEntityVersion.active()) {
 						active_cnt.incrementAndGet();
 					} else {

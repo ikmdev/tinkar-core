@@ -117,7 +117,7 @@ public class ElkOwlDataBuilder {
 	public void build() throws Exception {
 //		AtomicInteger processedSemanticsCounter = axiomData.processedSemantics;
 		AtomicInteger totalCounter = new AtomicInteger();
-		PrimitiveData.get().forEachSemanticNidOfPattern(statedAxiomPattern.nid(), i -> totalCounter.incrementAndGet());
+		PrimitiveData.get().forEachSemanticNidOfPattern(statedAxiomPattern.nid(), _ -> totalCounter.incrementAndGet());
 		final int totalCount = totalCounter.get();
 		LOG.info("Total axioms: " + totalCount);
 		updateProgress(0, totalCount);
@@ -128,7 +128,7 @@ public class ElkOwlDataBuilder {
 		ConcurrentHashSet<Integer> includedConceptNids = new ConcurrentHashSet<>(totalCount);
 		AtomicInteger ex_cnt = new AtomicInteger();
 		viewCalculator.forEachSemanticVersionOfPatternParallel(logicCoordinate.statedAxiomsPatternNid(),
-				(semanticEntityVersion, patternEntityVersion) -> {
+				(semanticEntityVersion, _) -> {
 					try {
 						int conceptNid = semanticEntityVersion.referencedComponentNid();
 						// TODO: In some cases, may wish to classify axioms from inactive concepts. Put
@@ -379,7 +379,8 @@ public class ElkOwlDataBuilder {
 				break;
 			case PROPERTY_SEQUENCE_IMPLICATION:
 //				LOG.info("PPI: " + PrimitiveData.text(conceptNid) + " " + definition);
-				// TODO: Remove workaround for adding PROPERTY_SEQUENCE_IMPLICATION concept when starter set stable.
+				// TODO: Remove workaround for adding PROPERTY_SEQUENCE_IMPLICATION concept when
+				// starter set stable.
 				// TODO: Retire property pattern implication when starter set stable.
 				final ConceptFacade pi;
 				if (node.property(TinkarTerm.PROPERTY_PATTERN_IMPLICATION).isPresent()) {
@@ -387,7 +388,8 @@ public class ElkOwlDataBuilder {
 				} else if (node.property(TinkarTerm.PROPERTY_SEQUENCE_IMPLICATION).isPresent()) {
 					pi = node.propertyFast(TinkarTerm.PROPERTY_SEQUENCE_IMPLICATION);
 				} else {
-					throw new IllegalStateException("PropertySequenceImplication must have a property sequence implication");
+					throw new IllegalStateException(
+							"PropertySequenceImplication must have a property sequence implication");
 				}
 
 				final IntIdList ps = node.propertyFast(TinkarTerm.PROPERTY_SET);

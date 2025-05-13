@@ -48,14 +48,14 @@ public abstract class HybridDataBuilderTest extends HybridTestBase {
 		AtomicInteger active_cnt = new AtomicInteger();
 		AtomicInteger inactive_cnt = new AtomicInteger();
 		viewCalculator.forEachSemanticVersionOfPatternParallel(TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
-				(semanticEntityVersion, patternEntityVersion) -> {
-						int conceptNid = semanticEntityVersion.referencedComponentNid();
-						if (viewCalculator.latestIsActive(conceptNid)) {
-							active_cnt.incrementAndGet();
-						} else {
-							inactive_cnt.incrementAndGet();
-						}
-						cnt.incrementAndGet();
+				(semanticEntityVersion, _) -> {
+					int conceptNid = semanticEntityVersion.referencedComponentNid();
+					if (viewCalculator.latestIsActive(conceptNid)) {
+						active_cnt.incrementAndGet();
+					} else {
+						inactive_cnt.incrementAndGet();
+					}
+					cnt.incrementAndGet();
 				});
 		LOG.info("Cnt: " + cnt.intValue());
 		LOG.info("Active Cnt: " + active_cnt.intValue());
