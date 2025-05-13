@@ -73,6 +73,10 @@ public class ElkSnomedData {
 		return nidConceptMap.computeIfAbsent(conceptNid, Concept::new);
 	}
 
+	public Concept deleteConcept(int conceptNid) {
+		return nidConceptMap.remove(conceptNid);
+	}
+
 	public RoleType getRoleType(int roleNid) {
 		return nidRoleTypeMap.get(roleNid);
 	}
@@ -81,12 +85,20 @@ public class ElkSnomedData {
 		return nidRoleTypeMap.computeIfAbsent(roleNid, RoleType::new);
 	}
 
+	public RoleType deleteRoleType(int roleNid) {
+		return nidRoleTypeMap.remove(roleNid);
+	}
+
 	public ConcreteRoleType getConcreteRoleType(int roleNid) {
 		return nidConcreteRoleTypeMap.get(roleNid);
 	}
 
 	public ConcreteRoleType getOrCreateConcreteRoleType(int roleNid) {
 		return nidConcreteRoleTypeMap.computeIfAbsent(roleNid, ConcreteRoleType::new);
+	}
+
+	public ConcreteRoleType deleteConcreteRoleType(int roleNid) {
+		return nidConcreteRoleTypeMap.remove(roleNid);
 	}
 
 	public int getActiveConceptCount() {
@@ -112,6 +124,8 @@ public class ElkSnomedData {
 	public void initializeReasonerConceptSet() {
 		IntStream conceptNids = nidConceptMap.entrySet().stream().mapToInt(es -> (int) es.getKey()).sorted();
 		this.reasonerConceptSet = IntLists.immutable.ofAll(conceptNids);
+		// Reset this to handle incremental updates
+		this.activeConceptCount.set(reasonerConceptSet.size());
 	}
 
 	public void writeConcepts(Path path) throws Exception {

@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.reasoner.elksnomed;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -26,12 +27,21 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,27 +50,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dev.ikm.elk.snomed.SnomedIds;
+import dev.ikm.elk.snomed.SnomedIsa;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
+import dev.ikm.tinkar.reasoner.service.UnsupportedReasonerProcessIncremental;
 import dev.ikm.tinkar.terms.TinkarTerm;
 
 public class ElkSnomedIncrementalTestIT {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedIncrementalTestIT.class);
 
-	private static final int version_start = 20210731;
+	private static final int version_start = 20210731; // 20240101;
 
 	private static boolean includeVersion(String version) {
 		return Integer.parseInt(version) >= version_start;
 	}
-
-//	protected String getDir() {
-//		return System.getProperty("user.home")
-//				+ "/data/snomed/SnomedCT_InternationalRF2_PRODUCTION_20250101T120000Z/Full/Terminology";
-//	}
 
 	protected String getDir() {
 		return "target/data/snomed-test-data-" + getEditionDir() + "-full";
@@ -234,7 +242,10 @@ public class ElkSnomedIncrementalTestIT {
 	@Test
 	public void classify() throws Exception {
 		LOG.info("classify");
-		ReasonerService rs;
+		List<Long> full_times = new ArrayList<>();
+		List<Long> incr_times = new ArrayList<>();
+		List<Long> nnf_times = new ArrayList<>();
+		ReasonerService rs = null;
 		for (String effective_time : getEffectiveTimes()) {
 			if (!includeVersion(effective_time))
 				continue;
@@ -265,7 +276,113 @@ public class ElkSnomedIncrementalTestIT {
 					});
 			assertEquals(0, active.keySet().stream().filter(el -> inactive.keySet().contains(el)).count());
 			LOG.info("\tA: " + active.size() + " I: " + inactive.size());
+			{
+				// 1295448001 |Attribution (attribute)|
+				active.remove(ElkSnomedData.getNid(1295448001));
+				// 1295449009 |Additional relationship attribute (attribute)|
+				active.remove(ElkSnomedData.getNid(1295449009));
+			}
+			try {
+				long beg = System.currentTimeMillis();
+				rs.processIncremental(new ArrayList<>(inactive.keySet()), new ArrayList<>(active.values()));
+				incr_times.add(System.currentTimeMillis() - beg);
+			} catch (UnsupportedReasonerProcessIncremental ex) {
+				LOG.error(ex.getMessage());
+				Matcher m = Pattern.compile("-\\d+").matcher(ex.getMessage());
+				if (m.find()) {
+					String nid_str = m.group();
+					int nid = Integer.parseInt(nid_str);
+					LOG.error("\tSctid: " + PrimitiveDataTestUtil.getSctid(nid, vc));
+					LOG.error("\t" + nid_str + " " + PrimitiveData.text(nid));
+				}
+				long beg = System.currentTimeMillis();
+				rs = initReasonerService(effective_time);
+				full_times.add(System.currentTimeMillis() - beg);
+			}
+			long beg = System.currentTimeMillis();
+//			rs.buildNecessaryNormalForm();
+			nnf_times.add(System.currentTimeMillis() - beg);
+			checkParents(rs, Integer.parseInt(effective_time));
 		}
+		LOG.info("Full: " + full_times.size() + " " + full_times.stream().collect(Collectors.averagingLong(x -> x)));
+		LOG.info("Incr: " + incr_times.size() + " " + incr_times.stream().collect(Collectors.averagingLong(x -> x)));
+		LOG.info("NNF: " + nnf_times.size() + " " + nnf_times.stream().collect(Collectors.averagingLong(x -> x)));
+	}
+
+	private Set<Long> toSctids(ImmutableIntSet nids, HashMap<Integer, Long> nid_sctid_map) {
+		return Arrays.stream(nids.toArray()).mapToObj(nid -> nid_sctid_map.get(nid)).collect(Collectors.toSet());
+	}
+
+	private void checkParents(ReasonerService rs, int version) throws Exception {
+		TreeSet<Long> misses = new TreeSet<>();
+		TreeSet<Long> other_misses = new TreeSet<>();
+		int non_snomed_cnt = 0;
+		int miss_cnt = 0;
+		SnomedIsa isas = SnomedIsa.init(rels_file, version);
+//		SnomedDescriptions descr = SnomedDescriptions.init(descriptions_file);
+		HashMap<Integer, Long> nid_sctid_map = new HashMap<>();
+		for (long sctid : isas.getOrderedConcepts()) {
+			int nid = ElkSnomedData.getNid(sctid);
+			nid_sctid_map.put(nid, sctid);
+//			if (ontology.getConcept(nid) == null)
+//				LOG.info("No concept for: " + sctid + " " + descr.getFsn(sctid));
+		}
+		for (int nid : rs.getReasonerConceptSet().toArray()) {
+			Set<Long> sups = toSctids(rs.getParents(nid), nid_sctid_map);
+			Long sctid = nid_sctid_map.get((int) nid);
+			if (sctid == null) {
+				non_snomed_cnt++;
+				continue;
+			}
+//			// 361195001 |Pulmonary fibroplasia (disorder)|
+//			// 371931008 |Combined diagnostic and therapeutic procedure (procedure)|
+//			// 109998009 |Myelodysplastic syndrome with ring sideroblasts and single lineage
+//			// dysplasia (disorder)|
+//			// 19776001 |Decreased size (finding)|
+//			// 307511000 |Under-running of bleeding duodenal ulcer (procedure)|
+//			if (List.of(361195001l, 371931008l, 109998009l, 19776001l, 307511000l).contains(sctid))
+//				LOG.info("In reasoner concept set: " + sctid + " " + nid + " " + PrimitiveData.text(nid));
+			Set<Long> parents = isas.getParents(sctid);
+			if (sctid == SnomedIds.root) {
+				assertTrue(parents.isEmpty());
+				// has a parent in the db
+				assertEquals(1, sups.size());
+				assertEquals(TinkarTerm.ROOT_VERTEX.nid(), rs.getParents(nid).intIterator().next());
+				continue;
+			} else {
+				assertNotNull(parents);
+			}
+			if (!parents.equals(sups)) {
+				misses.add(sctid);
+				miss_cnt++;
+			}
+		}
+		isas.getOrderedConcepts().stream().filter(other_misses::contains) //
+				.limit(10) //
+				.forEach((sctid) -> {
+					UUID uuid = UuidUtil.fromSNOMED("" + sctid);
+					int nid = PrimitiveData.nid(uuid);
+					LOG.error("Miss: " + sctid + " " + PrimitiveData.text(nid));
+					Set<Long> sups = toSctids(rs.getParents(nid), nid_sctid_map);
+					Set<Long> parents = isas.getParents(sctid);
+					HashSet<Long> par = new HashSet<>(parents);
+					par.removeAll(sups);
+					HashSet<Long> sup = new HashSet<>(sups);
+					sup.removeAll(parents);
+					LOG.error("Sno:  " + par);
+					LOG.error("Elk:  " + sup);
+					if (sups.contains(null)) {
+						rs.getParents(nid).forEach(sup_nid -> LOG.error("   :  " + PrimitiveData.text((sup_nid))));
+					}
+				});
+		if (miss_cnt != 0)
+			LOG.error("Miss cnt: " + miss_cnt);
+		int expected_non_snomed_cnt = PrimitiveDataTestUtil.getPrimordialNids().size()
+				- PrimitiveDataTestUtil.getPrimordialNidsWithSctids().size();
+		if (expected_non_snomed_cnt != non_snomed_cnt)
+			LOG.error("Non-snomed: Expect: " + expected_non_snomed_cnt + " Actual: " + non_snomed_cnt);
+		assertEquals(0, miss_cnt);
+		assertEquals(expected_non_snomed_cnt, non_snomed_cnt);
 	}
 
 }

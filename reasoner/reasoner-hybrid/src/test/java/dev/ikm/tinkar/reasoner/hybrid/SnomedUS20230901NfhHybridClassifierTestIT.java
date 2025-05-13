@@ -67,7 +67,7 @@ public class SnomedUS20230901NfhHybridClassifierTestIT extends SnomedUS20230901H
 		LOG.info("Create reasoner");
 		for (long sctid : List.of(StatementSnomedOntology.swec_id, StatementSnomedOntology.finding_context_id,
 				StatementSnomedOntology.known_absent_id)) {
-			int nid = HybridReasonerService.getNid(sctid);
+			int nid = ElkSnomedData.getNid(sctid);
 			LOG.info(PrimitiveData.text(nid) + " " + nid + " " + sctid);
 		}
 		SwecIds swec_nids = HybridReasonerService.getSwecNids();
@@ -97,13 +97,13 @@ public class SnomedUS20230901NfhHybridClassifierTestIT extends SnomedUS20230901H
 			checkParents(160270001, Set.of(160273004l, 266882009l, 297250002l, 313342001l));
 			checkParents(160250007l, Set.of(313376005l));
 			assertEquals(11,
-					sso.getSubConcepts(HybridReasonerService.getNid(FamilyHistoryIds.no_family_history_swec)).size());
+					sso.getSubConcepts(ElkSnomedData.getNid(FamilyHistoryIds.no_family_history_swec)).size());
 		}
 	}
 
 	private void checkParents(long con, Set<Long> expect_parents) {
-		int con_nid = HybridReasonerService.getNid(con);
-		Set<Integer> expect_parents_nids = expect_parents.stream().map(HybridReasonerService::getNid)
+		int con_nid = ElkSnomedData.getNid(con);
+		Set<Integer> expect_parents_nids = expect_parents.stream().map(ElkSnomedData::getNid)
 				.collect(Collectors.toCollection(HashSet::new));
 		Set<Long> actual_parents = sso.getSuperConcepts(con_nid);
 		Set<Integer> actual_parents_nids = actual_parents.stream().map(Long::intValue)

@@ -50,7 +50,7 @@ public class SnomedUS20230901HybridClassifierTestIT extends SnomedUS20230901Hybr
 		LOG.info("Create reasoner");
 		for (long sctid : List.of(StatementSnomedOntology.swec_id, StatementSnomedOntology.finding_context_id,
 				StatementSnomedOntology.known_absent_id)) {
-			int nid = HybridReasonerService.getNid(sctid);
+			int nid = ElkSnomedData.getNid(sctid);
 			LOG.info(PrimitiveData.text(nid) + " " + nid + " " + sctid);
 		}
 		SwecIds swec_nids = HybridReasonerService.getSwecNids();
@@ -59,7 +59,7 @@ public class SnomedUS20230901HybridClassifierTestIT extends SnomedUS20230901Hybr
 			LOG.info(PrimitiveData.text((int) nid) + " " + nid);
 		}
 		{
-			int nid = HybridReasonerService.getNid(SnomedIds.root);
+			int nid = ElkSnomedData.getNid(SnomedIds.root);
 			LOG.info(PrimitiveData.text(nid) + " " + nid);
 		}
 		{

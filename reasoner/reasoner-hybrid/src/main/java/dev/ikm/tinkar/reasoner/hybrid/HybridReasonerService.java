@@ -15,9 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.hybrid;
 
-import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.slf4j.Logger;
@@ -28,10 +26,9 @@ import dev.ikm.elk.snomed.SnomedIds;
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology;
 import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology.SwecIds;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedReasonerService;
 import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -47,16 +44,10 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 	}
 
 	public static SwecIds getSwecNids() {
-		SwecIds swec_ids = new StatementSnomedOntology.SwecIds(getNid(StatementSnomedOntology.swec_id),
-				getNid(SnomedIds.root), getNid(StatementSnomedOntology.finding_context_id),
-				getNid(StatementSnomedOntology.known_absent_id));
+		SwecIds swec_ids = new StatementSnomedOntology.SwecIds(ElkSnomedData.getNid(StatementSnomedOntology.swec_id),
+				ElkSnomedData.getNid(SnomedIds.root), ElkSnomedData.getNid(StatementSnomedOntology.finding_context_id),
+				ElkSnomedData.getNid(StatementSnomedOntology.known_absent_id));
 		return swec_ids;
-	}
-
-	public static int getNid(long sctid) {
-		UUID uuid = UuidUtil.fromSNOMED("" + sctid);
-		int nid = PrimitiveData.nid(uuid);
-		return nid;
 	}
 
 	@Override
@@ -70,7 +61,7 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 	public void loadData() throws Exception {
 		progressUpdater.updateProgress(0, data.getActiveConceptCount());
 		LOG.info("Create ontology");
-		ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(), List.of());
+		ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(), data.getConcreteRoleTypes());
 	};
 
 	@Override

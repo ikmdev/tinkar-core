@@ -58,7 +58,8 @@ public abstract class ElkSnomedDataBuilderTestBase extends ElkSnomedTestBase {
 		viewCalculator.forEachSemanticVersionOfPatternParallel(TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
 				(semanticEntityVersion, _) -> {
 					int conceptNid = semanticEntityVersion.referencedComponentNid();
-					if (viewCalculator.latestIsActive(conceptNid)) {
+//					if (viewCalculator.latestIsActive(conceptNid)) {
+					if (semanticEntityVersion.active()) {
 						active_cnt.incrementAndGet();
 					} else {
 						inactive_cnt.incrementAndGet();
@@ -86,10 +87,11 @@ public abstract class ElkSnomedDataBuilderTestBase extends ElkSnomedTestBase {
 		SnomedConcepts snomed_concepts = SnomedConcepts.init(concepts_file);
 		int primordial_cnt = PrimitiveDataTestUtil.getPrimordialNids().size();
 		int primordial_sctid_cnt = PrimitiveDataTestUtil.getPrimordialNidsWithSctids().size();
+		// TODO +2 is for annotation properties
 		assertEquals(snomed_concepts.getActiveCount(),
-				data.getActiveConceptCount() - primordial_cnt + primordial_sctid_cnt);
+				data.getActiveConceptCount() - primordial_cnt + primordial_sctid_cnt + 2);
 		assertEquals(inactive_count, data.getInactiveConceptCount());
-//		assertEquals(data.getActiveConceptCount(), data.getConcepts().size());
+		assertEquals(data.getActiveConceptCount(), data.getConcepts().size());
 		assertEquals(data.getReasonerConceptSet().size(), data.getConcepts().size());
 		// TODO get these to work again
 //		Files.createDirectories(getWritePath("concepts").getParent());

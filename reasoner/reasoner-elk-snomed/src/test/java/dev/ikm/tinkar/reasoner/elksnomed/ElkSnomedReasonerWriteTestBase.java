@@ -18,7 +18,6 @@ package dev.ikm.tinkar.reasoner.elksnomed;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -39,7 +38,6 @@ import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
-import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
 import dev.ikm.tinkar.terms.TinkarTerm;
 
@@ -129,13 +127,9 @@ public abstract class ElkSnomedReasonerWriteTestBase extends ElkSnomedTestBase {
 					Latest<SemanticEntityVersion> latestInferredSemantic = rs.getViewCalculator()
 							.latest(inferredSemanticNids[0]);
 					if (latestInferredSemantic.isPresent()) {
-						ImmutableList<Object> latestInferredFields = latestInferredSemantic.get().fieldValues();
-						DiTreeEntity latestInferredTree = (DiTreeEntity) latestInferredFields.get(0);
 						ElkSnomedDataBuilder builder = new ElkSnomedDataBuilder(null, null, new ElkSnomedData());
-						List<Concept> concepts = builder.processDefinition(nid, latestInferredTree);
-						assertEquals(1, concepts.size());
-						Definition new_def = nid_to_sctid
-								.makeNewDefinition(concepts.getFirst().getDefinitions().getFirst());
+						Concept concept = builder.buildConcept(latestInferredSemantic.get());
+						Definition new_def = nid_to_sctid.makeNewDefinition(concept.getDefinitions().getFirst());
 						Concept new_concept = new Concept(sctid);
 						new_concept.addDefinition(new_def);
 						if (!cc.compare(new_concept)) {

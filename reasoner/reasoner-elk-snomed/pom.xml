@@ -11,7 +11,7 @@
 	<artifactId>reasoner-elk-snomed</artifactId>
 
 	<properties>
-		<failsafeArgLine>-Xmx12G</failsafeArgLine>
+		<failsafeArgLine>--enable-preview -Xmx12G</failsafeArgLine>
 	</properties>
 
 	<dependencies>
