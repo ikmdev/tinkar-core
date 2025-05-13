@@ -15,18 +15,19 @@
  */
 package dev.ikm.tinkar.reasoner.hybrid;
 
-import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
-import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
-import dev.ikm.tinkar.terms.TinkarTerm;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.nio.file.Files;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
+import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
+import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
+import dev.ikm.tinkar.terms.TinkarTerm;
 
 public abstract class HybridDataBuilderTest extends HybridTestBase {
 

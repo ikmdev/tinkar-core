@@ -15,20 +15,11 @@
  */
 package dev.ikm.tinkar.reasoner.elkowl;
 
-import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
-import dev.ikm.tinkar.common.alert.AlertStreams;
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.TrackingCallable;
-import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
-import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
-import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import dev.ikm.tinkar.entity.graph.DiTreeEntity;
-import dev.ikm.tinkar.entity.graph.EntityVertex;
-import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiomSemantic;
-import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -45,10 +36,20 @@ import org.semanticweb.owlapi.model.OWLSubPropertyChainOfAxiom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
+import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
+import dev.ikm.tinkar.common.alert.AlertStreams;
+import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.TrackingCallable;
+import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
+import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
+import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
+import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.entity.graph.EntityVertex;
+import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiomSemantic;
+import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.PatternFacade;
+import dev.ikm.tinkar.terms.TinkarTerm;
 
 public class ElkOwlDataBuilder {
 

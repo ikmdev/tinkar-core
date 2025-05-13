@@ -15,7 +15,8 @@
  */
 package dev.ikm.tinkar.reasoner.elkowl;
 
-import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -23,7 +24,7 @@ import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
 
 public class ElkOwlAxiomDataTest {
 

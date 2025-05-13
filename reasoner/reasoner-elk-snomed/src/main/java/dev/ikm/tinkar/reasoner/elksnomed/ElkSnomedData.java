@@ -15,14 +15,6 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed;
 
-import dev.ikm.elk.snomed.model.Concept;
-import dev.ikm.elk.snomed.model.ConcreteRoleType;
-import dev.ikm.elk.snomed.model.RoleType;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.util.uuid.UuidUtil;
-import org.eclipse.collections.api.list.primitive.ImmutableIntList;
-import org.eclipse.collections.impl.factory.primitive.IntLists;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -31,6 +23,15 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
+
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.impl.factory.primitive.IntLists;
+
+import dev.ikm.elk.snomed.model.Concept;
+import dev.ikm.elk.snomed.model.ConcreteRoleType;
+import dev.ikm.elk.snomed.model.RoleType;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 
 public class ElkSnomedData {
 

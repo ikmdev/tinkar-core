@@ -15,20 +15,9 @@
  */
 package dev.ikm.tinkar.reasoner.elkowl;
 
-import dev.ikm.elk.snomed.SnomedIds;
-import dev.ikm.elk.snomed.SnomedIsa;
-import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.util.uuid.UuidUtil;
-import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import dev.ikm.tinkar.terms.TinkarTerm;
-import org.junit.jupiter.api.Test;
-import org.semanticweb.owlapi.model.AxiomType;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,9 +26,21 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import org.semanticweb.owlapi.model.AxiomType;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import dev.ikm.elk.snomed.SnomedIds;
+import dev.ikm.elk.snomed.SnomedIsa;
+import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.util.uuid.UuidUtil;
+import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
+import dev.ikm.tinkar.terms.TinkarTerm;
 
 public class SnomedUS20230901ElkOwlClassifierTestIT extends SnomedUS20230901ElkOwlDataBuilderTestIT {
 

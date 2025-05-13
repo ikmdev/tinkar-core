@@ -1,17 +1,18 @@
 package dev.ikm.tinkar.reasoner.elksnomed;
 
-import dev.ikm.elk.snomed.SnomedDescriptions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import dev.ikm.elk.snomed.SnomedDescriptions;
 
 public abstract class SnomedTestBase implements SnomedVersion {
 
