@@ -1,17 +1,16 @@
 package dev.ikm.tinkar.ext.lang.owl;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.io.IOException;
-import java.util.UUID;
-
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dev.ikm.tinkar.common.service.PrimitiveData;
+import java.io.IOException;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class OwlExpressionToLogicalExpressionTestIT {
 

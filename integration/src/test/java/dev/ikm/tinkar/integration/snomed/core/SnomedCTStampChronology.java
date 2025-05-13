@@ -16,17 +16,25 @@
 package dev.ikm.tinkar.integration.snomed.core;
 
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.RecordListBuilder;
+import dev.ikm.tinkar.entity.StampRecord;
+import dev.ikm.tinkar.entity.StampRecordBuilder;
+import dev.ikm.tinkar.entity.StampVersionRecord;
+import dev.ikm.tinkar.entity.StampVersionRecordBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.*;
-import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.DEVELOPMENT_PATH_UUID;
-import static dev.ikm.tinkar.integration.snomed.core.SnomedCTHelper.*;
 import static dev.ikm.tinkar.integration.snomed.core.MockDataType.ENTITYREF;
 import static dev.ikm.tinkar.integration.snomed.core.MockDataType.MODULE;
+import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.ACTIVE_UUID;
+import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.DEVELOPMENT_PATH_UUID;
+import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.INACTIVE_UUID;
+import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.SNOMED_CT_AUTHOR_UUID;
+import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.SNOMED_CT_NAMESPACE_UUID;
+import static dev.ikm.tinkar.integration.snomed.core.SnomedCTHelper.loadSnomedFile;
 
 public class SnomedCTStampChronology {
 

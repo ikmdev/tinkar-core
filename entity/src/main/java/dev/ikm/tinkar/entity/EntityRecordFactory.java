@@ -15,17 +15,40 @@
  */
 package dev.ikm.tinkar.entity;
 
-import dev.ikm.tinkar.common.id.*;
+import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.PublicIdList;
+import dev.ikm.tinkar.common.id.PublicIdSet;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
-import dev.ikm.tinkar.component.*;
+import dev.ikm.tinkar.component.Chronology;
+import dev.ikm.tinkar.component.Component;
+import dev.ikm.tinkar.component.Concept;
+import dev.ikm.tinkar.component.ConceptChronology;
+import dev.ikm.tinkar.component.ConceptVersion;
+import dev.ikm.tinkar.component.FieldDataType;
+import dev.ikm.tinkar.component.Pattern;
+import dev.ikm.tinkar.component.PatternChronology;
+import dev.ikm.tinkar.component.PatternVersion;
+import dev.ikm.tinkar.component.Semantic;
+import dev.ikm.tinkar.component.SemanticChronology;
+import dev.ikm.tinkar.component.SemanticVersion;
+import dev.ikm.tinkar.component.Stamp;
+import dev.ikm.tinkar.component.Version;
 import dev.ikm.tinkar.component.graph.DiGraph;
 import dev.ikm.tinkar.component.graph.DiTree;
 import dev.ikm.tinkar.component.location.PlanarPoint;
 import dev.ikm.tinkar.component.location.SpatialPoint;
 import dev.ikm.tinkar.entity.graph.DiGraphEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
-import dev.ikm.tinkar.terms.*;
+import dev.ikm.tinkar.terms.ComponentWithNid;
+import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.EntityFacade;
+import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.PatternFacade;
+import dev.ikm.tinkar.terms.SemanticFacade;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.factory.Lists;
@@ -39,14 +62,13 @@ import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
 import static dev.ikm.tinkar.component.FieldDataType.COMPONENT_ID_LIST;
 import static dev.ikm.tinkar.component.FieldDataType.SEMANTIC_CHRONOLOGY;
 import static java.nio.charset.StandardCharsets.UTF_8;
-
-import java.math.BigDecimal;
 
 public class EntityRecordFactory {
     private static final Logger LOG = LoggerFactory.getLogger(EntityRecordFactory.class);

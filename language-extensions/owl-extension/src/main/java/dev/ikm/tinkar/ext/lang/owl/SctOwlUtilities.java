@@ -35,14 +35,15 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StreamTokenizer;
 import java.io.StringReader;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static java.io.StreamTokenizer.*;
+import static java.io.StreamTokenizer.TT_EOF;
+import static java.io.StreamTokenizer.TT_EOL;
+import static java.io.StreamTokenizer.TT_NUMBER;
+import static java.io.StreamTokenizer.TT_WORD;
 
 @Deprecated
 public class SctOwlUtilities {

@@ -17,7 +17,6 @@ package dev.ikm.tinkar.common.binary;
 
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import io.activej.bytebuf.ByteBuf;
-import io.activej.bytebuf.ByteBufPool;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;

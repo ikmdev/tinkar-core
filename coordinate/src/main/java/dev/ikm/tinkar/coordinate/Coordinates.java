@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.coordinate;
 
-import org.eclipse.collections.api.factory.Sets;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.coordinate.edit.EditCoordinateRecord;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
@@ -28,6 +27,7 @@ import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
 import dev.ikm.tinkar.terms.TinkarTerm;
+import org.eclipse.collections.api.factory.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

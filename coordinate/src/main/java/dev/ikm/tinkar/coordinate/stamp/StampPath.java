@@ -17,10 +17,10 @@ package dev.ikm.tinkar.coordinate.stamp;
 
 //~--- JDK imports ------------------------------------------------------------
 
-import org.eclipse.collections.api.set.ImmutableSet;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.terms.ConceptFacade;
+import org.eclipse.collections.api.set.ImmutableSet;
 
 import java.util.Arrays;
 

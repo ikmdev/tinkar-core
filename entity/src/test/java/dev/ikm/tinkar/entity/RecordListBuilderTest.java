@@ -22,11 +22,25 @@ import org.eclipse.collections.api.bag.MutableBag;
 import org.eclipse.collections.api.bag.MutableBagIterable;
 import org.eclipse.collections.api.bag.sorted.MutableSortedBag;
 import org.eclipse.collections.api.bimap.MutableBiMap;
-import org.eclipse.collections.api.collection.primitive.*;
+import org.eclipse.collections.api.collection.primitive.MutableBooleanCollection;
+import org.eclipse.collections.api.collection.primitive.MutableByteCollection;
+import org.eclipse.collections.api.collection.primitive.MutableCharCollection;
+import org.eclipse.collections.api.collection.primitive.MutableDoubleCollection;
+import org.eclipse.collections.api.collection.primitive.MutableFloatCollection;
+import org.eclipse.collections.api.collection.primitive.MutableIntCollection;
+import org.eclipse.collections.api.collection.primitive.MutableLongCollection;
+import org.eclipse.collections.api.collection.primitive.MutableShortCollection;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.list.ParallelListIterable;
-import org.eclipse.collections.api.list.primitive.*;
+import org.eclipse.collections.api.list.primitive.ImmutableBooleanList;
+import org.eclipse.collections.api.list.primitive.ImmutableByteList;
+import org.eclipse.collections.api.list.primitive.ImmutableCharList;
+import org.eclipse.collections.api.list.primitive.ImmutableDoubleList;
+import org.eclipse.collections.api.list.primitive.ImmutableFloatList;
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+import org.eclipse.collections.api.list.primitive.ImmutableShortList;
 import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.api.map.MutableMap;
 import org.eclipse.collections.api.map.MutableMapIterable;
@@ -44,10 +58,23 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.DoubleSummaryStatistics;
+import java.util.IntSummaryStatistics;
+import java.util.Iterator;
+import java.util.ListIterator;
+import java.util.LongSummaryStatistics;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Spliterator;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class RecordListBuilderTest {
 

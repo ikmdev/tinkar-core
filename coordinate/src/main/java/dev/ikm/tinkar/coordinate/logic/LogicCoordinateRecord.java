@@ -15,12 +15,16 @@
  */
 package dev.ikm.tinkar.coordinate.logic;
 
-import dev.ikm.tinkar.common.binary.*;
-import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
-import io.soabase.recordbuilder.core.RecordBuilder;
+import dev.ikm.tinkar.common.binary.Decoder;
+import dev.ikm.tinkar.common.binary.DecoderInput;
+import dev.ikm.tinkar.common.binary.Encodable;
+import dev.ikm.tinkar.common.binary.Encoder;
+import dev.ikm.tinkar.common.binary.EncoderOutput;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.PatternFacade;
+import io.soabase.recordbuilder.core.RecordBuilder;
 
 import java.util.Objects;
 

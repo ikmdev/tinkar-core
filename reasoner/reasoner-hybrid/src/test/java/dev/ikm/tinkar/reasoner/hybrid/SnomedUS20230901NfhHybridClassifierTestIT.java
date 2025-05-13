@@ -15,19 +15,6 @@
  */
 package dev.ikm.tinkar.reasoner.hybrid;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.reasoner.hybrid.snomed.FamilyHistoryIds;
 import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology;
@@ -35,6 +22,18 @@ import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology.SwecIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
 import dev.ikm.tinkar.terms.TinkarTerm;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SnomedUS20230901NfhHybridClassifierTestIT extends SnomedUS20230901HybridDataBuilderTestIT {
 

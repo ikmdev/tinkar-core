@@ -16,14 +16,18 @@
 package dev.ikm.tinkar.coordinate.view;
 
 
-import dev.ikm.tinkar.common.binary.*;
-import org.eclipse.collections.api.collection.ImmutableCollection;
-import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.list.ImmutableList;
+import dev.ikm.tinkar.common.binary.Decoder;
+import dev.ikm.tinkar.common.binary.DecoderInput;
+import dev.ikm.tinkar.common.binary.Encodable;
+import dev.ikm.tinkar.common.binary.Encoder;
+import dev.ikm.tinkar.common.binary.EncoderOutput;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculator;
 import dev.ikm.tinkar.coordinate.navigation.calculator.Edge;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculator;
+import org.eclipse.collections.api.collection.ImmutableCollection;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ImmutableList;
 
 import java.util.UUID;
 

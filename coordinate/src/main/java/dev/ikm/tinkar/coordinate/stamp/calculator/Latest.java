@@ -54,6 +54,10 @@ package dev.ikm.tinkar.coordinate.stamp.calculator;
 
 //~--- JDK imports ------------------------------------------------------------
 
+import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.entity.EntityVersion;
+import dev.ikm.tinkar.terms.State;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -62,10 +66,6 @@ import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.MutableSet;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
-import dev.ikm.tinkar.common.id.IntIdSet;
-import dev.ikm.tinkar.common.id.IntIds;
-import dev.ikm.tinkar.entity.EntityVersion;
-import dev.ikm.tinkar.terms.State;
 
 import java.util.Collection;
 import java.util.List;

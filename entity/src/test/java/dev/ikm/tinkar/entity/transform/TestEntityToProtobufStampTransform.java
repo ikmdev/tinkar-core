@@ -32,7 +32,6 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.Disabled;
 
 import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.AUTHOR_CONCEPT_NAME;
 import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.MODULE_CONCEPT_NAME;
@@ -40,7 +39,6 @@ import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.PATH_CO
 import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.TEST_CONCEPT_NAME;
 import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.createPBPublicId;
 import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.nowEpochMillis;
-import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.nowTimestamp;
 import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.openSession;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;

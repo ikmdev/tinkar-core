@@ -20,8 +20,10 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 
-import static dev.ikm.tinkar.common.util.time.DateTimeUtil.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static dev.ikm.tinkar.common.util.time.DateTimeUtil.CANCELED;
+import static dev.ikm.tinkar.common.util.time.DateTimeUtil.LATEST;
+import static dev.ikm.tinkar.common.util.time.DateTimeUtil.PREMUNDANE;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class DateTimeUtilTest {
 

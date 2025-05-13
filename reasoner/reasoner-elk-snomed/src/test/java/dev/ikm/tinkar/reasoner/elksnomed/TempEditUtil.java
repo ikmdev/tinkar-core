@@ -15,13 +15,6 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed;
 
-import java.util.UUID;
-
-import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.list.ImmutableList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.component.graph.DiTree;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
@@ -40,6 +33,12 @@ import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ImmutableList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.UUID;
 
 public class TempEditUtil {
 

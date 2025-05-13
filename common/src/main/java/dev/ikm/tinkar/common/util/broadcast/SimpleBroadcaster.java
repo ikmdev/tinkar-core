@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.common.util.broadcast;
 
-import dev.ikm.tinkar.common.service.TinkExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.coordinate.navigation.calculator;
 
-import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import dev.ikm.tinkar.common.id.IntIdSet;
 
 /**
