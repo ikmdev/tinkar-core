@@ -44,6 +44,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -144,7 +145,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             // Cleanup
             zos.finish();
         } catch (Throwable e) {
-            LOG.error("Caught " + e + " while Exporting Entities: " + Arrays.toString(e.getStackTrace()));
+            LOG.error("Caught " + e + " while Exporting Entities: " + Arrays.asList(e.getStackTrace()).stream().map(Objects::toString).collect(Collectors.joining("\n")));
             throw new RuntimeException(e);
         } finally {
             updateMessage("In " + durationString());
