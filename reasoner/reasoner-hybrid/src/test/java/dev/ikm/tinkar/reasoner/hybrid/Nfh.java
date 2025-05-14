@@ -17,13 +17,11 @@ package dev.ikm.tinkar.reasoner.hybrid;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,23 +34,11 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
 import dev.ikm.tinkar.terms.TinkarTerm;
 
-public class SnomedUS20230901NfhHybridClassifierTestIT extends SnomedUS20230901HybridDataBuilderTestIT {
+public abstract class Nfh extends HybridReasonerServiceTestBase {
 
-	private static final Logger LOG = LoggerFactory.getLogger(SnomedUS20230901NfhHybridClassifierTestIT.class);
+	private static final Logger LOG = LoggerFactory.getLogger(Nfh.class);
 
 	public static final String db = "SnomedCT_US_20230901_NFH_SpinedArray-20240920";
-
-	@BeforeAll
-	public static void startPrimitiveData() throws IOException {
-		setupPrimitiveData(db);
-		PrimitiveData.start();
-	}
-
-//	@Test
-	public void supercsService() throws Exception {
-		runSnomedReasonerService();
-//		compare("supercs");
-	}
 
 	private SnomedOntology ontology;
 
@@ -96,8 +82,7 @@ public class SnomedUS20230901NfhHybridClassifierTestIT extends SnomedUS20230901H
 			checkParents(408553000l, Set.of(704008007l, 408552005l));
 			checkParents(160270001, Set.of(160273004l, 266882009l, 297250002l, 313342001l));
 			checkParents(160250007l, Set.of(313376005l));
-			assertEquals(11,
-					sso.getSubConcepts(ElkSnomedData.getNid(FamilyHistoryIds.no_family_history_swec)).size());
+			assertEquals(11, sso.getSubConcepts(ElkSnomedData.getNid(FamilyHistoryIds.no_family_history_swec)).size());
 		}
 	}
 
