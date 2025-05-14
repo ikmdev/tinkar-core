@@ -41,7 +41,21 @@ import dev.ikm.tinkar.entity.StampVersionRecord;
 import dev.ikm.tinkar.entity.graph.DiGraphEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
-import dev.ikm.tinkar.schema.*;
+import dev.ikm.tinkar.schema.ConceptChronology;
+import dev.ikm.tinkar.schema.ConceptVersion;
+import dev.ikm.tinkar.schema.Field;
+import dev.ikm.tinkar.schema.FieldDefinition;
+import dev.ikm.tinkar.schema.IntToIntMap;
+import dev.ikm.tinkar.schema.IntToMultipleIntMap;
+import dev.ikm.tinkar.schema.PatternChronology;
+import dev.ikm.tinkar.schema.PatternVersion;
+import dev.ikm.tinkar.schema.PublicId;
+import dev.ikm.tinkar.schema.SemanticChronology;
+import dev.ikm.tinkar.schema.SemanticVersion;
+import dev.ikm.tinkar.schema.StampChronology;
+import dev.ikm.tinkar.schema.StampVersion;
+import dev.ikm.tinkar.schema.TinkarMsg;
+import dev.ikm.tinkar.schema.VertexUUID;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -225,6 +239,7 @@ public class EntityToTinkarSchemaTransformer {
             case IntIdList intIdList -> toPBPublicIdList(intIdList);
             case IntIdSet intIdSet -> toPBPublicIdList(intIdSet);
             case BigDecimal bigDecimal -> toPBBigDecimal(bigDecimal);
+            case Long l -> toPBLong(l);
             case null, default -> throw new IllegalStateException("Unknown or null field object for: " + obj + ", " +obj.getClass());
         };
     }
@@ -289,6 +304,10 @@ public class EntityToTinkarSchemaTransformer {
 
     protected Field toPBBigDecimal(BigDecimal value) {
         return Field.newBuilder().setBigDecimal(createPBBigDecimal(value)).build();
+    }
+
+    protected Field toPBLong(Long value) {
+        return Field.newBuilder().setLong(createPBLong(value)).build();
     }
 
     protected List<Field> createPBFields(ImmutableList<Object> objects){
@@ -438,6 +457,12 @@ public class EntityToTinkarSchemaTransformer {
                 .setScale(bigDecimal.scale())
                 .setPrecision(bigDecimal.precision())
                 .setValue(bigDecimal.unscaledValue().toString())
+                .build();
+    }
+
+    protected dev.ikm.tinkar.schema.Long createPBLong(Long value) {
+        return dev.ikm.tinkar.schema.Long.newBuilder()
+                .setValue(value)
                 .build();
     }
 }
