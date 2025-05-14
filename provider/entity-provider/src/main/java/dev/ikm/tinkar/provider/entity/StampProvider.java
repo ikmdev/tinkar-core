@@ -106,12 +106,10 @@ public class StampProvider extends EntityProcessor implements StampService, Subs
         return LongLists.immutable.ofAll(times);
     }
 
-
-
     @Override
     public void onNext(Integer nid) {
         Entity entity = Entity.provider().getEntityFast(nid);
-        if (entity instanceof StampEntity stampEntity) {
+        if (entity instanceof StampEntity stampEntity && nid != Integer.MIN_VALUE) {
             stamps.put(stampEntity.nid(), stampEntity);
             times.add(stampEntity.time());
             authors.add(stampEntity.authorNid());

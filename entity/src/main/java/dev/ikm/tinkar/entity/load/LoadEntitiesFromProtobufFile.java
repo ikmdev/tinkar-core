@@ -17,18 +17,14 @@ package dev.ikm.tinkar.entity.load;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
-import dev.ikm.tinkar.entity.ConceptEntity;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityCountSummary;
-import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.entity.EntityVersion;
-import dev.ikm.tinkar.entity.PatternEntity;
-import dev.ikm.tinkar.entity.SemanticEntity;
-import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.transform.TinkarSchemaToEntityTransformer;
 import dev.ikm.tinkar.schema.TinkarMsg;
+import dev.ikm.tinkar.terms.EntityFacade;
+import dev.ikm.tinkar.terms.EntityProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +32,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.jar.Manifest;
@@ -87,8 +84,8 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         try (ZipInputStream zis = new ZipInputStream(new FileInputStream(importFile))) {
             // Consumer to be run for each transformed Entity
             Consumer<Entity<? extends  EntityVersion>> entityConsumer = entity -> {
-                    EntityService.get().putEntityQuietly(entity);
-                    updateCounts(entity);
+                EntityService.get().putEntityQuietly(entity, DataActivity.LOADING_CHANGE_SET);
+				updateCounts(entity);
             };
 
             ZipEntry zipEntry;

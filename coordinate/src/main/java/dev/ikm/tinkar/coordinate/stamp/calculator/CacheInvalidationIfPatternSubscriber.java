@@ -36,10 +36,12 @@ public class CacheInvalidationIfPatternSubscriber implements Subscriber<Integer>
     @Override
     public void onNext(Integer nid) {
         // Do nothing with item, but request another...
-        Entity entity = Entity.provider().getEntityFast(nid);
-        if (entity instanceof PatternEntity) {
-            for (Cache<?, ?> cache : cachesToManage) {
-                cache.invalidateAll();
+        if (nid != Integer.MIN_VALUE) {
+            Entity entity = Entity.provider().getEntityFast(nid);
+            if (entity instanceof PatternEntity) {
+                for (Cache<?, ?> cache : cachesToManage) {
+                    cache.invalidateAll();
+                }
             }
         }
     }
