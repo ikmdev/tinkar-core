@@ -92,9 +92,9 @@ public abstract class ElkSnomedTestBase extends SnomedTestBase {
 		return data;
 	}
 
-	public ArrayList<String> getSupercs(ElkSnomedData data, SnomedOntologyReasoner reasoner) {
+	public ArrayList<String> getSupercs(SnomedOntologyReasoner reasoner) {
 		ArrayList<String> lines = new ArrayList<>();
-		for (Concept con : data.getConcepts()) {
+		for (Concept con : reasoner.getSnomedOntology().getConcepts()) {
 			int con_id = (int) con.getId();
 			String con_str = PrimitiveData.publicId(con_id).asUuidArray()[0] + "\t" + PrimitiveData.text(con_id);
 			for (Concept sup : reasoner.getSuperConcepts(con)) {
@@ -107,7 +107,13 @@ public abstract class ElkSnomedTestBase extends SnomedTestBase {
 		return lines;
 	}
 
-	public ArrayList<String> runSnomedReasoner() throws Exception {
+	public void writeSupercs(ArrayList<String> lines) throws Exception {
+		Files.createDirectories(getWritePath("supercs").getParent());
+		Path path = getWritePath("supercs");
+		Files.write(path, lines);
+	}
+
+	public SnomedOntologyReasoner runSnomedReasoner() throws Exception {
 		LOG.info("runSnomedReasoner");
 		ElkSnomedData data = buildSnomedData();
 		LOG.info("Create ontology");
@@ -115,11 +121,7 @@ public abstract class ElkSnomedTestBase extends SnomedTestBase {
 				data.getConcreteRoleTypes());
 		LOG.info("Create reasoner");
 		SnomedOntologyReasoner reasoner = SnomedOntologyReasoner.create(ontology);
-		Files.createDirectories(getWritePath("supercs").getParent());
-		Path path = getWritePath("supercs");
-		ArrayList<String> lines = getSupercs(data, reasoner);
-		Files.write(path, lines);
-		return lines;
+		return reasoner;
 	}
 
 	public static ReasonerService getElkSnomedReasonerService() {
@@ -149,17 +151,13 @@ public abstract class ElkSnomedTestBase extends SnomedTestBase {
 		return lines;
 	}
 
-	public ArrayList<String> runSnomedReasonerService() throws Exception {
+	public ReasonerService runSnomedReasonerService() throws Exception {
 		LOG.info("runSnomedReasonerService");
 		ReasonerService rs = initReasonerService();
 		rs.extractData();
 		rs.loadData();
 		rs.computeInferences();
-		Files.createDirectories(getWritePath("supercs").getParent());
-		Path path = getWritePath("supercs");
-		ArrayList<String> lines = getSupercs(rs);
-		Files.write(path, lines);
-		return lines;
+		return rs;
 	}
 
 	public ReasonerService runReasonerServiceNNF() throws Exception {

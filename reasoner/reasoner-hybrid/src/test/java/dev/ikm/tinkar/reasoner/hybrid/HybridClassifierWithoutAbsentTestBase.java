@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.reasoner.elksnomed;
+package dev.ikm.tinkar.reasoner.hybrid;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -35,29 +34,35 @@ import dev.ikm.elk.snomed.SnomedDescriptions;
 import dev.ikm.elk.snomed.SnomedIds;
 import dev.ikm.elk.snomed.SnomedIsa;
 import dev.ikm.elk.snomed.SnomedOntology;
-import dev.ikm.elk.snomed.SnomedOntologyReasoner;
 import dev.ikm.elk.snomed.model.Concept;
+import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
+import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
+import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
+import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedDataBuilder;
 import dev.ikm.tinkar.terms.TinkarTerm;
 
-public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
+public abstract class HybridClassifierWithoutAbsentTestBase extends SnomedTestBase {
 
-	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedClassifierTestBase.class);
+	private static final Logger LOG = LoggerFactory.getLogger(HybridClassifierWithoutAbsentTestBase.class);
 
-	@Test
-	public void supercsService() throws Exception {
-		ArrayList<String> lines = getSupercs(runSnomedReasoner());
-		ArrayList<String> lines_service = getSupercs(runSnomedReasonerService());
-		assertEquals(lines.size(), lines_service.size());
-		assertTrue(lines.equals(lines_service));
+	protected static String test_case;
+
+	// This is overridden in the version test cases
+	protected ViewCalculator getViewCalculator() {
+		return PrimitiveDataTestUtil.getViewCalculator();
 	}
 
-//	@Test
-//	public void nnfService() throws Exception {
-//		ReasonerService rs = runReasonerServiceNNF();
-//		rs.writeInferredResults();
-//	}
+	public ElkSnomedData buildSnomedData() throws Exception {
+		LOG.info("buildSnomedData");
+		ViewCalculator viewCalculator = getViewCalculator();
+		ElkSnomedData data = new ElkSnomedData();
+		ElkSnomedDataBuilder builder = new ElkSnomedDataBuilder(viewCalculator,
+				TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, data);
+		builder.build();
+		return data;
+	}
 
 	private HashMap<Integer, Long> nid_sctid_map;
 
@@ -65,6 +70,12 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 		return nids.stream().map(x -> nid_sctid_map.get(x.intValue())).collect(Collectors.toSet());
 	}
 
+	/**
+	 * Tests with useAbsent = false, so the results are expected to be same as
+	 * Snomed release
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	public void isas() throws Exception {
 		LOG.info("runSnomedReasoner");
@@ -73,7 +84,11 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 		SnomedOntology ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(),
 				data.getConcreteRoleTypes());
 		LOG.info("Create reasoner");
-		SnomedOntologyReasoner reasoner = SnomedOntologyReasoner.create(ontology);
+		// This tests structural, so useAbsent = false
+		// TODO create a method so that SwecIds aren't needed
+		StatementSnomedOntology sso = StatementSnomedOntology.create(ontology, false, HybridReasonerService.getRootId(),
+				HybridReasonerService.getSwecNids());
+		sso.classify();
 		TreeSet<Long> misses = new TreeSet<>();
 		int non_snomed_cnt = 0;
 		int miss_cnt = 0;
@@ -88,7 +103,7 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 		}
 		for (Concept con : ontology.getConcepts()) {
 			long nid = con.getId();
-			Set<Long> sups = toSctids(reasoner.getSuperConcepts(nid));
+			Set<Long> sups = toSctids(sso.getSuperConcepts(nid));
 			Long sctid = nid_sctid_map.get((int) nid);
 			if (sctid == null) {
 				non_snomed_cnt++;
@@ -99,7 +114,7 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 				assertTrue(parents.isEmpty());
 				// has a parent in the db
 				assertEquals(1, sups.size());
-				assertEquals(TinkarTerm.ROOT_VERTEX.nid(), reasoner.getSuperConcepts(nid).iterator().next());
+				assertEquals(TinkarTerm.ROOT_VERTEX.nid(), sso.getSuperConcepts(nid).iterator().next());
 				continue;
 			} else {
 				assertNotNull(parents);
@@ -115,7 +130,7 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 					UUID uuid = UuidUtil.fromSNOMED("" + sctid);
 					int nid = PrimitiveData.nid(uuid);
 					LOG.error("Miss: " + sctid + " " + PrimitiveData.text(nid));
-					Set<Long> sups = toSctids(reasoner.getSuperConcepts(nid));
+					Set<Long> sups = toSctids(sso.getSuperConcepts(nid));
 					Set<Long> parents = isas.getParents(sctid);
 					HashSet<Long> par = new HashSet<>(parents);
 					par.removeAll(sups);
@@ -124,7 +139,7 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 					LOG.error("Sno:  " + par);
 					LOG.error("Elk:  " + sup);
 					if (sups.contains(null)) {
-						reasoner.getSuperConcepts(nid)
+						sso.getSuperConcepts(nid)
 								.forEach(sup_nid -> LOG.error("   :  " + PrimitiveData.text((sup_nid.intValue()))));
 					}
 				});
