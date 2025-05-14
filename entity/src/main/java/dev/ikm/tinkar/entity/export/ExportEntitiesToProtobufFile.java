@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -143,8 +144,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             // Cleanup
             zos.finish();
         } catch (Throwable e) {
-            LOG.error("Caught " + e + " while Exporting Entities");
-            e.printStackTrace();
+            LOG.error("Caught " + e + " while Exporting Entities: " + Arrays.toString(e.getStackTrace()));
             throw new RuntimeException(e);
         } finally {
             updateMessage("In " + durationString());
