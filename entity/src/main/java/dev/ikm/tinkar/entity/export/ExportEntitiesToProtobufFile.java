@@ -143,6 +143,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             // Cleanup
             zos.finish();
         } catch (Throwable e) {
+            LOG.error("Caught " + e + " while Exporting Entities");
             throw new RuntimeException(e);
         } finally {
             updateMessage("In " + durationString());
