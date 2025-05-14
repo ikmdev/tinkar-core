@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.export;
 
+import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
@@ -40,11 +41,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -145,7 +144,8 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             // Cleanup
             zos.finish();
         } catch (Throwable e) {
-            LOG.error("Caught " + e + " while Exporting Entities: " + Arrays.asList(e.getStackTrace()).stream().map(Objects::toString).collect(Collectors.joining("\n")));
+            LOG.error("Caught " + e + " while Exporting Entities");
+            AlertStreams.dispatchToRoot(e);
             throw new RuntimeException(e);
         } finally {
             updateMessage("In " + durationString());
