@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.export;
 
+import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
@@ -143,6 +144,8 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             // Cleanup
             zos.finish();
         } catch (Throwable e) {
+            LOG.error("Caught " + e + " while Exporting Entities");
+            AlertStreams.dispatchToRoot(e);
             throw new RuntimeException(e);
         } finally {
             updateMessage("In " + durationString());

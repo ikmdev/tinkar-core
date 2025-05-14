@@ -24,13 +24,57 @@ import dev.ikm.tinkar.component.Component;
 import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.component.location.PlanarPoint;
 import dev.ikm.tinkar.component.location.SpatialPoint;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.ConceptEntity;
+import dev.ikm.tinkar.entity.ConceptEntityVersion;
+import dev.ikm.tinkar.entity.ConceptRecord;
+import dev.ikm.tinkar.entity.ConceptRecordBuilder;
+import dev.ikm.tinkar.entity.ConceptVersionRecord;
+import dev.ikm.tinkar.entity.ConceptVersionRecordBuilder;
+import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityRecordFactory;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityVersion;
+import dev.ikm.tinkar.entity.FieldDefinitionRecord;
+import dev.ikm.tinkar.entity.FieldDefinitionRecordBuilder;
+import dev.ikm.tinkar.entity.PatternEntity;
+import dev.ikm.tinkar.entity.PatternEntityVersion;
+import dev.ikm.tinkar.entity.PatternRecord;
+import dev.ikm.tinkar.entity.PatternRecordBuilder;
+import dev.ikm.tinkar.entity.PatternVersionRecord;
+import dev.ikm.tinkar.entity.PatternVersionRecordBuilder;
+import dev.ikm.tinkar.entity.RecordListBuilder;
+import dev.ikm.tinkar.entity.SemanticEntity;
+import dev.ikm.tinkar.entity.SemanticEntityVersion;
+import dev.ikm.tinkar.entity.SemanticRecord;
+import dev.ikm.tinkar.entity.SemanticRecordBuilder;
+import dev.ikm.tinkar.entity.SemanticVersionRecord;
+import dev.ikm.tinkar.entity.SemanticVersionRecordBuilder;
+import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.StampEntityVersion;
+import dev.ikm.tinkar.entity.StampRecord;
+import dev.ikm.tinkar.entity.StampRecordBuilder;
+import dev.ikm.tinkar.entity.StampVersionRecord;
+import dev.ikm.tinkar.entity.StampVersionRecordBuilder;
 import dev.ikm.tinkar.entity.graph.DiGraphEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
-import dev.ikm.tinkar.schema.*;
+import dev.ikm.tinkar.schema.ConceptChronology;
+import dev.ikm.tinkar.schema.ConceptVersion;
+import dev.ikm.tinkar.schema.DiGraph;
+import dev.ikm.tinkar.schema.DiTree;
 import dev.ikm.tinkar.schema.Field;
+import dev.ikm.tinkar.schema.FieldDefinition;
+import dev.ikm.tinkar.schema.IntToIntMap;
+import dev.ikm.tinkar.schema.IntToMultipleIntMap;
+import dev.ikm.tinkar.schema.PatternChronology;
+import dev.ikm.tinkar.schema.PatternVersion;
+import dev.ikm.tinkar.schema.SemanticChronology;
+import dev.ikm.tinkar.schema.SemanticVersion;
+import dev.ikm.tinkar.schema.StampChronology;
 import dev.ikm.tinkar.schema.StampVersion;
+import dev.ikm.tinkar.schema.TinkarMsg;
+import dev.ikm.tinkar.schema.Vertex;
+import dev.ikm.tinkar.schema.VertexUUID;
 import dev.ikm.tinkar.terms.EntityProxy;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -345,6 +389,7 @@ public class TinkarSchemaToEntityTransformer {
             case VERTEX_UUID -> transformVertexUUID(pbField.getVertexUuid());
             case VERTEX  -> transformVertexEntity(pbField.getVertex(), stampEntityConsumer);
             case BIG_DECIMAL -> transformBigDecimal(pbField.getBigDecimal());
+            case LONG -> transformLong(pbField.getLong());
         };
     }
     protected PublicId transformPublicId(dev.ikm.tinkar.schema.PublicId pbPublicId){
@@ -500,5 +545,9 @@ public class TinkarSchemaToEntityTransformer {
         return new BigDecimal(new BigInteger(bigDecimal.getValue()),
                 bigDecimal.getScale(),
                 new MathContext(bigDecimal.getPrecision()));
+    }
+
+    protected Long transformLong(dev.ikm.tinkar.schema.Long value) {
+        return value.getValue();
     }
 }
