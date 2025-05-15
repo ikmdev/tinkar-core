@@ -526,6 +526,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     @Override
     public void endLoadPhase() {
         loadPhase = false;
+        processor.dispatch(Integer.MIN_VALUE);
         // Now we build the AnalyzingSuggester Index
         try {
             TypeAheadSearch.get().buildSuggester();

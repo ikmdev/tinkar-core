@@ -17,6 +17,7 @@ package dev.ikm.tinkar.entity.load;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.entity.ConceptEntity;
@@ -87,8 +88,8 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         try (ZipInputStream zis = new ZipInputStream(new FileInputStream(importFile))) {
             // Consumer to be run for each transformed Entity
             Consumer<Entity<? extends  EntityVersion>> entityConsumer = entity -> {
-                    EntityService.get().putEntityQuietly(entity);
-                    updateCounts(entity);
+                EntityService.get().putEntityQuietly(entity, DataActivity.LOADING_CHANGE_SET);
+				updateCounts(entity);
             };
 
             ZipEntry zipEntry;
