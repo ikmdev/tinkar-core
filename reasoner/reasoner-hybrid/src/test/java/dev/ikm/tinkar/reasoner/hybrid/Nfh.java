@@ -15,6 +15,17 @@
  */
 package dev.ikm.tinkar.reasoner.hybrid;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.reasoner.hybrid.snomed.FamilyHistoryIds;
 import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology;
@@ -22,36 +33,12 @@ import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology.SwecIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
 import dev.ikm.tinkar.terms.TinkarTerm;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+public abstract class Nfh extends HybridReasonerServiceTestBase {
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-public class SnomedUS20230901NfhHybridClassifierTestIT extends SnomedUS20230901HybridDataBuilderTestIT {
-
-	private static final Logger LOG = LoggerFactory.getLogger(SnomedUS20230901NfhHybridClassifierTestIT.class);
+	private static final Logger LOG = LoggerFactory.getLogger(Nfh.class);
 
 	public static final String db = "SnomedCT_US_20230901_NFH_SpinedArray-20240920";
-
-	@BeforeAll
-	public static void startPrimitiveData() throws IOException {
-		setupPrimitiveData(db);
-		PrimitiveData.start();
-	}
-
-//	@Test
-	public void supercsService() throws Exception {
-		runSnomedReasonerService();
-//		compare("supercs");
-	}
 
 	private SnomedOntology ontology;
 
@@ -66,7 +53,7 @@ public class SnomedUS20230901NfhHybridClassifierTestIT extends SnomedUS20230901H
 		LOG.info("Create reasoner");
 		for (long sctid : List.of(StatementSnomedOntology.swec_id, StatementSnomedOntology.finding_context_id,
 				StatementSnomedOntology.known_absent_id)) {
-			int nid = HybridReasonerService.getNid(sctid);
+			int nid = ElkSnomedData.getNid(sctid);
 			LOG.info(PrimitiveData.text(nid) + " " + nid + " " + sctid);
 		}
 		SwecIds swec_nids = HybridReasonerService.getSwecNids();
@@ -95,14 +82,13 @@ public class SnomedUS20230901NfhHybridClassifierTestIT extends SnomedUS20230901H
 			checkParents(408553000l, Set.of(704008007l, 408552005l));
 			checkParents(160270001, Set.of(160273004l, 266882009l, 297250002l, 313342001l));
 			checkParents(160250007l, Set.of(313376005l));
-			assertEquals(11,
-					sso.getSubConcepts(HybridReasonerService.getNid(FamilyHistoryIds.no_family_history_swec)).size());
+			assertEquals(11, sso.getSubConcepts(ElkSnomedData.getNid(FamilyHistoryIds.no_family_history_swec)).size());
 		}
 	}
 
 	private void checkParents(long con, Set<Long> expect_parents) {
-		int con_nid = HybridReasonerService.getNid(con);
-		Set<Integer> expect_parents_nids = expect_parents.stream().map(HybridReasonerService::getNid)
+		int con_nid = ElkSnomedData.getNid(con);
+		Set<Integer> expect_parents_nids = expect_parents.stream().map(ElkSnomedData::getNid)
 				.collect(Collectors.toCollection(HashSet::new));
 		Set<Long> actual_parents = sso.getSuperConcepts(con_nid);
 		Set<Integer> actual_parents_nids = actual_parents.stream().map(Long::intValue)

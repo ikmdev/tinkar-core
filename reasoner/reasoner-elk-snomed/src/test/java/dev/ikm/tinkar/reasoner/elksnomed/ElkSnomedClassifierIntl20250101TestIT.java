@@ -15,25 +15,23 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed;
 
-import dev.ikm.tinkar.common.service.PrimitiveData;
+import java.io.IOException;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import dev.ikm.tinkar.common.service.PrimitiveData;
 
 public class ElkSnomedClassifierIntl20250101TestIT extends ElkSnomedClassifierTestBase
 		implements SnomedVersionInternational {
 
+	@SuppressWarnings("unused")
 	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedClassifierIntl20250101TestIT.class);
 
 	static {
 		test_case = "snomed-intl-20250101";
-	}
-
-	{
-		expected_supercs_cnt = 606779;
 	}
 
 	@Override
@@ -49,9 +47,7 @@ public class ElkSnomedClassifierIntl20250101TestIT extends ElkSnomedClassifierTe
 
 	@AfterAll
 	public static void stopPrimitiveData() {
-		LOG.info("stopPrimitiveData");
-		PrimitiveData.stop();
-		LOG.info("Stopped");
+		PrimitiveDataTestUtil.stopPrimitiveData();
 	}
 
 }

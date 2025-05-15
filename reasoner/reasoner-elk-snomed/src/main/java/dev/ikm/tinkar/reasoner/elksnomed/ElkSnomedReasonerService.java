@@ -15,18 +15,9 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed;
 
-import dev.ikm.elk.snomed.NecessaryNormalFormBuilder;
-import dev.ikm.elk.snomed.SnomedOntology;
-import dev.ikm.elk.snomed.SnomedOntologyReasoner;
-import dev.ikm.elk.snomed.model.Concept;
-import dev.ikm.elk.snomed.model.Definition;
-import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import dev.ikm.tinkar.entity.graph.DiTreeEntity;
-import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
-import dev.ikm.tinkar.ext.lang.owl.OwlElToLogicalExpression;
-import dev.ikm.tinkar.reasoner.service.ReasonerServiceBase;
-import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
+import java.util.List;
+import java.util.Set;
+
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
@@ -34,8 +25,21 @@ import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Set;
+import dev.ikm.elk.snomed.NecessaryNormalFormBuilder;
+import dev.ikm.elk.snomed.SnomedOntology;
+import dev.ikm.elk.snomed.SnomedOntologyReasoner;
+import dev.ikm.elk.snomed.model.Concept;
+import dev.ikm.elk.snomed.model.Definition;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
+import dev.ikm.tinkar.entity.SemanticEntityVersion;
+import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
+import dev.ikm.tinkar.ext.lang.owl.OwlElToLogicalExpression;
+import dev.ikm.tinkar.reasoner.service.ReasonerServiceBase;
+import dev.ikm.tinkar.reasoner.service.UnsupportedReasonerProcessIncremental;
+import dev.ikm.tinkar.terms.PatternFacade;
+import dev.ikm.tinkar.terms.TinkarTerm;
 
 public class ElkSnomedReasonerService extends ReasonerServiceBase {
 
@@ -88,9 +92,36 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 
 	@Override
 	public void processIncremental(DiTreeEntity definition, int conceptNid) {
-		Concept concept = builder.processIncremental(conceptNid, definition);
-		reasoner.process(concept);
-		reasoner.flush();
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void processIncremental(SemanticEntityVersion update) {
+		processIncremental(List.of(), List.of(update));
+	}
+
+	@Override
+	public void processIncremental(List<Integer> deletes, List<SemanticEntityVersion> updates) {
+		for (int delete : deletes) {
+			Concept concept = builder.processDelete(delete);
+			if (concept != null) {
+				reasoner.processDelete(concept);
+			} else {
+				LOG.error("No entity for: " + delete + " " + PrimitiveData.text(delete));
+			}
+		}
+		for (SemanticEntityVersion update : updates) {
+			Concept concept = builder.processUpdate(update);
+			ontology.addConcept(concept);
+			reasoner.processUpdate(concept);
+		}
+		data.initializeReasonerConceptSet();
+		try {
+			reasoner.flush();
+		} catch (Exception ex) {
+			LOG.error(ex.getMessage());
+			throw new UnsupportedReasonerProcessIncremental(ex);
+		}
 	}
 
 	@Override

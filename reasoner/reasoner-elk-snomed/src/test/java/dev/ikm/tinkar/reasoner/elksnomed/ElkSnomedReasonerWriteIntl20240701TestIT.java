@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.reasoner.elksnomed;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -24,29 +25,34 @@ import org.slf4j.LoggerFactory;
 
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
-public class ElkSnomedCompareIntl20250101TestIT extends ElkSnomedCompareTestBase implements SnomedVersionInternational {
+public class ElkSnomedReasonerWriteIntl20240701TestIT extends ElkSnomedReasonerWriteTestBase
+		implements SnomedVersionInternational {
 
-	@SuppressWarnings("unused")
-	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedCompareIntl20250101TestIT.class);
+	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedReasonerWriteIntl20240701TestIT.class);
+
+	private static String write_db = "" + UUID.randomUUID();
 
 	static {
-		test_case = "snomed-intl-20250101";
+		test_case = "snomed-intl-20240701";
 	}
 
 	@Override
 	public String getVersion() {
-		return "20250101";
+		return "20240701";
 	}
 
 	@BeforeAll
 	public static void startPrimitiveData() throws IOException {
-		PrimitiveDataTestUtil.setupPrimitiveData(test_case + "-sa");
+		LOG.info("Write: " + write_db);
+		PrimitiveDataTestUtil.copyDb(test_case + "-sa", write_db);
+		PrimitiveDataTestUtil.setupPrimitiveData(write_db);
 		PrimitiveData.start();
 	}
 
 	@AfterAll
-	public static void stopPrimitiveData() {
+	public static void stopPrimitiveData() throws IOException {
 		PrimitiveDataTestUtil.stopPrimitiveData();
+		PrimitiveDataTestUtil.deleteDb(write_db);
 	}
 
 }

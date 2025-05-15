@@ -15,6 +15,28 @@
  */
 package dev.ikm.tinkar.reasoner.service;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.MutableList;
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
+import org.eclipse.collections.impl.factory.primitive.IntLists;
+import org.eclipse.collections.impl.factory.primitive.IntSets;
+import org.jgrapht.Graph;
+import org.jgrapht.alg.isomorphism.AHURootedTreeIsomorphismInspector;
+import org.jgrapht.alg.isomorphism.IsomorphicGraphMapping;
+import org.jgrapht.graph.DefaultEdge;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
@@ -47,27 +69,6 @@ import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResults;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
-import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.MutableList;
-import org.eclipse.collections.api.list.primitive.ImmutableIntList;
-import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
-import org.eclipse.collections.impl.factory.primitive.IntLists;
-import org.eclipse.collections.impl.factory.primitive.IntSets;
-import org.jgrapht.Graph;
-import org.jgrapht.alg.isomorphism.AHURootedTreeIsomorphismInspector;
-import org.jgrapht.alg.isomorphism.IsomorphicGraphMapping;
-import org.jgrapht.graph.DefaultEdge;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.OptionalInt;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class ProcessReasonerResults {
 

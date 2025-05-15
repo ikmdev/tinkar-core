@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.reasoner.elksnomed;
+package dev.ikm.tinkar.reasoner.hybrid;
 
 import java.io.IOException;
 
@@ -24,10 +24,12 @@ import org.slf4j.LoggerFactory;
 
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
-public class ElkSnomedCompareIntl20250101TestIT extends ElkSnomedCompareTestBase implements SnomedVersionInternational {
+public class HybridClassifierWithoutAbsentSnomedIntl20250101TestIT extends HybridClassifierWithoutAbsentTestBase
+		implements SnomedVersionInternational {
 
 	@SuppressWarnings("unused")
-	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedCompareIntl20250101TestIT.class);
+	private static final Logger LOG = LoggerFactory
+			.getLogger(HybridClassifierWithoutAbsentSnomedIntl20250101TestIT.class);
 
 	static {
 		test_case = "snomed-intl-20250101";

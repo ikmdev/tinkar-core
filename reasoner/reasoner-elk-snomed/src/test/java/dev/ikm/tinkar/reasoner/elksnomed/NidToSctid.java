@@ -1,5 +1,11 @@
 package dev.ikm.tinkar.reasoner.elksnomed;
 
+import java.util.HashMap;
+import java.util.HashSet;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.elk.snomed.model.ConcreteRole;
@@ -8,11 +14,6 @@ import dev.ikm.elk.snomed.model.Definition;
 import dev.ikm.elk.snomed.model.Role;
 import dev.ikm.elk.snomed.model.RoleGroup;
 import dev.ikm.elk.snomed.model.RoleType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.HashSet;
 
 public class NidToSctid {
 
@@ -60,11 +61,13 @@ public class NidToSctid {
 			ConcreteRoleType new_role = new ConcreteRoleType(nid_to_sctid.get(nid));
 			new_concrete_roles.put(nid, new_role);
 		}
+		HashSet<Integer> primordial_nids = PrimitiveDataTestUtil.getPrimordialNids();
 		for (Concept concept : data.getConcepts()) {
 			long nid = concept.getId();
 			if (nid_to_sctid.get(nid) == null) {
-				LOG.error("None for: " + nid);
 				not_in_snomed.add(nid);
+				if (!primordial_nids.contains((int) nid))
+					LOG.error("None for: " + nid);
 				continue;
 			}
 			Concept new_concept = new Concept(nid_to_sctid.get(nid));

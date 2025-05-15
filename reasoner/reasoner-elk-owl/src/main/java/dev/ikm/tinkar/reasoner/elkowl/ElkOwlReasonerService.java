@@ -15,13 +15,10 @@
  */
 package dev.ikm.tinkar.reasoner.elkowl;
 
-import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
-import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import dev.ikm.tinkar.entity.graph.DiTreeEntity;
-import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
-import dev.ikm.tinkar.reasoner.elkowl.ElkOwlDataBuilder.IncrementalChanges;
-import dev.ikm.tinkar.reasoner.service.ReasonerServiceBase;
-import dev.ikm.tinkar.terms.PatternFacade;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
@@ -31,8 +28,14 @@ import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashSet;
-import java.util.Set;
+import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
+import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
+import dev.ikm.tinkar.entity.SemanticEntityVersion;
+import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
+import dev.ikm.tinkar.reasoner.elkowl.ElkOwlDataBuilder.IncrementalChanges;
+import dev.ikm.tinkar.reasoner.service.ReasonerServiceBase;
+import dev.ikm.tinkar.terms.PatternFacade;
 
 public class ElkOwlReasonerService extends ReasonerServiceBase {
 
@@ -91,6 +94,18 @@ public class ElkOwlReasonerService extends ReasonerServiceBase {
 		IncrementalChanges changes = builder.processIncremental(definition, conceptNid);
 		ontology.removeAxioms(new HashSet<>(changes.getDeletions().castToList()));
 		ontology.addAxioms(new HashSet<>(changes.getAdditions().castToList()));
+	}
+
+	@Override
+	public void processIncremental(SemanticEntityVersion semanticEntityVersion) {
+		// TODO easy to implement, but this module is on backlog
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void processIncremental(List<Integer> deletes, List<SemanticEntityVersion> updates) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

@@ -15,9 +15,11 @@
  */
 package dev.ikm.tinkar.reasoner.elkowl;
 
-import dev.ikm.tinkar.collection.SpinedIntObjectMap;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.semanticweb.owlapi.model.OWLAxiom;
@@ -25,10 +27,9 @@ import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import dev.ikm.tinkar.collection.SpinedIntObjectMap;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 
 public class ElkOwlData {
 

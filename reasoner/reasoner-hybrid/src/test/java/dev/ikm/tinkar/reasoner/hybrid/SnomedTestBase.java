@@ -1,4 +1,4 @@
-package dev.ikm.tinkar.reasoner.elksnomed;
+package dev.ikm.tinkar.reasoner.hybrid;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
