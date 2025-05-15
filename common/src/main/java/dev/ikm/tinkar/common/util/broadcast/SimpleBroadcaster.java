@@ -25,7 +25,7 @@ public class SimpleBroadcaster<T> implements Broadcaster<T>, Subscriber<T>{
 
     private static final Logger LOG = LoggerFactory.getLogger(SimpleBroadcaster.class);
     final CopyOnWriteArrayList<WeakReference<Subscriber<T>>> subscriberWeakReferenceList = new CopyOnWriteArrayList<>();
-
+    // TODO-aks8m: Address the issue of a race condition based on spawning threads that aren't blocking
     public void dispatch(T item) {
         subscriberWeakReferenceList.forEach(subscriberWeakReference ->
                 Thread.ofVirtual().start(() -> {
