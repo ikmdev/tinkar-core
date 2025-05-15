@@ -86,6 +86,14 @@ class SpinedArrayImportIT {
         // Query again and compare results
         String fqnAfterFromEntityFacade = viewCalc.getFullyQualifiedDescriptionTextWithFallbackOrNid(TinkarTerm.ACTIVE_STATE);
         String fqnAfterFromNid = viewCalc.getFullyQualifiedDescriptionTextWithFallbackOrNid(TinkarTerm.ACTIVE_STATE.nid());
+
+        // Adding sleep to account for delay in Real world user scenarios
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
         String otherAfterFromNid = viewCalc.getRegularDescriptionText(TinkarTerm.ACTIVE_STATE.nid()).get();
 
         //STAMP Changes
@@ -139,9 +147,15 @@ class SpinedArrayImportIT {
         var incorrectSemantic = viewCalc.latest(changedSemanticNid).get();  //Directly from the cache
         var correctSemantic = viewCalc.latest(Entity.get(changedSemanticNid).get()).get(); //iterating over the object
 
+        // Adding sleep to account for delay in Real world user scenarios
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
         // Query again and compare results
-        //TODO-aks8m: need to understand why this cache issue wasn't happening when calling FQN from viewCalc
-        String otherAfterFromNid = viewCalc.getRegularDescriptionText(TinkarTerm.ACTIVE_STATE.nid()).get();
+		String otherAfterFromNid = viewCalc.getRegularDescriptionText(TinkarTerm.ACTIVE_STATE.nid()).get();
 
         assertNotEquals(otherBeforeFromNid, otherAfterFromNid); //Wrong from a langcalc perspective
         assertEquals(incorrectSemantic, correctSemantic); //wrong from stampcalc perspective
