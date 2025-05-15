@@ -108,8 +108,11 @@ public class StampProvider extends EntityProcessor implements StampService, Subs
 
     @Override
     public void onNext(Integer nid) {
+        if ( nid == Integer.MIN_VALUE ) {
+            return;
+        }
         Entity entity = Entity.provider().getEntityFast(nid);
-        if (entity instanceof StampEntity stampEntity && nid != Integer.MIN_VALUE) {
+        if (entity instanceof StampEntity stampEntity) {
             stamps.put(stampEntity.nid(), stampEntity);
             times.add(stampEntity.time());
             authors.add(stampEntity.authorNid());
