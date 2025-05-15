@@ -5,7 +5,7 @@
     <parent>
         <groupId>dev.ikm.tinkar</groupId>
         <artifactId>tinkar-core</artifactId>
-        <version>1.102.0-SNAPSHOT</version>
+        <version>1.102.0-AR-000-fix-checkout-with-zip-resources-SNAPSHOT</version>
     </parent>
 
     <artifactId>integration</artifactId>
