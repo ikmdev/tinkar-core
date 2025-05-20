@@ -26,44 +26,14 @@ import org.slf4j.LoggerFactory;
 import dev.ikm.elk.snomed.SnomedIds;
 import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology;
 import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology.SwecIds;
-import dev.ikm.tinkar.common.service.PluggableService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
-import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedDataBuilder;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
 import dev.ikm.tinkar.terms.TinkarTerm;
 
-public abstract class HybridReasonerServiceTestBase extends SnomedTestBase {
+public abstract class HybridReasonerServiceTestBase extends HybridReasonerTestBase {
 
 	private static final Logger LOG = LoggerFactory.getLogger(HybridReasonerServiceTestBase.class);
-
-	protected static String test_case;
-
-	// This is overridden in the version test cases
-	protected ViewCalculator getViewCalculator() {
-		return PrimitiveDataTestUtil.getViewCalculator();
-	}
-
-	public ReasonerService initReasonerService() {
-		ReasonerService rs = PluggableService.load(ReasonerService.class).stream()
-				.filter(x -> x.type().getSimpleName().equals(HybridReasonerService.class.getSimpleName())) //
-				.findFirst().get().get();
-		rs.init(getViewCalculator(), TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
-				TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
-		rs.setProgressUpdater(null);
-		return rs;
-	}
-
-	public ElkSnomedData buildSnomedData() throws Exception {
-		LOG.info("buildSnomedData");
-		ViewCalculator viewCalculator = getViewCalculator();
-		ElkSnomedData data = new ElkSnomedData();
-		ElkSnomedDataBuilder builder = new ElkSnomedDataBuilder(viewCalculator,
-				TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, data);
-		builder.build();
-		return data;
-	}
 
 	@Test
 	public void runReasonerService() throws Exception {
@@ -99,7 +69,7 @@ public abstract class HybridReasonerServiceTestBase extends SnomedTestBase {
 			LOG.info(PrimitiveData.text(nid) + " " + nid);
 		}
 	}
-	
+
 	protected static int expected_swec_children = -1;
 
 	private void checkRoot(ReasonerService rs) {

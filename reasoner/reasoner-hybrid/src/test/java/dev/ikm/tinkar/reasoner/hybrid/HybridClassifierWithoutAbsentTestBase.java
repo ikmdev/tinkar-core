@@ -38,31 +38,12 @@ import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
-import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
-import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedDataBuilder;
 import dev.ikm.tinkar.terms.TinkarTerm;
 
-public abstract class HybridClassifierWithoutAbsentTestBase extends SnomedTestBase {
+public abstract class HybridClassifierWithoutAbsentTestBase extends HybridReasonerTestBase {
 
 	private static final Logger LOG = LoggerFactory.getLogger(HybridClassifierWithoutAbsentTestBase.class);
-
-	protected static String test_case;
-
-	// This is overridden in the version test cases
-	protected ViewCalculator getViewCalculator() {
-		return PrimitiveDataTestUtil.getViewCalculator();
-	}
-
-	public ElkSnomedData buildSnomedData() throws Exception {
-		LOG.info("buildSnomedData");
-		ViewCalculator viewCalculator = getViewCalculator();
-		ElkSnomedData data = new ElkSnomedData();
-		ElkSnomedDataBuilder builder = new ElkSnomedDataBuilder(viewCalculator,
-				TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, data);
-		builder.build();
-		return data;
-	}
 
 	private HashMap<Integer, Long> nid_sctid_map;
 
