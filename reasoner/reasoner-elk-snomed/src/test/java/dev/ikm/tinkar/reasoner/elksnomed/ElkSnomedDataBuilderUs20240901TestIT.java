@@ -15,16 +15,18 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed;
 
-import dev.ikm.tinkar.common.service.PrimitiveData;
+import java.io.IOException;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import dev.ikm.tinkar.common.service.PrimitiveData;
 
 public class ElkSnomedDataBuilderUs20240901TestIT extends ElkSnomedDataBuilderTestBase implements SnomedVersionUs {
 
+	@SuppressWarnings("unused")
 	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedDataBuilderUs20240901TestIT.class);
 
 	static {
@@ -32,8 +34,6 @@ public class ElkSnomedDataBuilderUs20240901TestIT extends ElkSnomedDataBuilderTe
 	}
 
 	{
-		stated_count = 402889;
-		active_count = 375966;
 		inactive_count = 26923;
 	}
 
@@ -55,9 +55,7 @@ public class ElkSnomedDataBuilderUs20240901TestIT extends ElkSnomedDataBuilderTe
 
 	@AfterAll
 	public static void stopPrimitiveData() {
-		LOG.info("stopPrimitiveData");
-		PrimitiveData.stop();
-		LOG.info("Stopped");
+		PrimitiveDataTestUtil.stopPrimitiveData();
 	}
 
 }

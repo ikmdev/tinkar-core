@@ -15,17 +15,18 @@
  */
 package dev.ikm.tinkar.reasoner.elkowl;
 
-import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
-import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import dev.ikm.tinkar.terms.TinkarTerm;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.nio.file.Files;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
+import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
+import dev.ikm.tinkar.terms.TinkarTerm;
 
 public abstract class ElkOwlDataBuilderTest extends ElkOwlTestBase {
 
@@ -46,7 +47,7 @@ public abstract class ElkOwlDataBuilderTest extends ElkOwlTestBase {
 		AtomicInteger active_cnt = new AtomicInteger();
 		AtomicInteger inactive_cnt = new AtomicInteger();
 		viewCalculator.forEachSemanticVersionOfPatternParallel(TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
-				(semanticEntityVersion, patternEntityVersion) -> {
+				(semanticEntityVersion, _) -> {
 					int conceptNid = semanticEntityVersion.referencedComponentNid();
 					if (viewCalculator.latestIsActive(conceptNid)) {
 						active_cnt.incrementAndGet();

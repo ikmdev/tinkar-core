@@ -15,20 +15,11 @@
  */
 package dev.ikm.tinkar.reasoner.elkowl;
 
-import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
-import dev.ikm.tinkar.common.alert.AlertStreams;
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.TrackingCallable;
-import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
-import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
-import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import dev.ikm.tinkar.entity.graph.DiTreeEntity;
-import dev.ikm.tinkar.entity.graph.EntityVertex;
-import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiomSemantic;
-import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -45,10 +36,20 @@ import org.semanticweb.owlapi.model.OWLSubPropertyChainOfAxiom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
+import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
+import dev.ikm.tinkar.common.alert.AlertStreams;
+import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.TrackingCallable;
+import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
+import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
+import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
+import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.entity.graph.EntityVertex;
+import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiomSemantic;
+import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.PatternFacade;
+import dev.ikm.tinkar.terms.TinkarTerm;
 
 public class ElkOwlDataBuilder {
 
@@ -116,7 +117,7 @@ public class ElkOwlDataBuilder {
 	public void build() throws Exception {
 //		AtomicInteger processedSemanticsCounter = axiomData.processedSemantics;
 		AtomicInteger totalCounter = new AtomicInteger();
-		PrimitiveData.get().forEachSemanticNidOfPattern(statedAxiomPattern.nid(), i -> totalCounter.incrementAndGet());
+		PrimitiveData.get().forEachSemanticNidOfPattern(statedAxiomPattern.nid(), _ -> totalCounter.incrementAndGet());
 		final int totalCount = totalCounter.get();
 		LOG.info("Total axioms: " + totalCount);
 		updateProgress(0, totalCount);
@@ -127,7 +128,7 @@ public class ElkOwlDataBuilder {
 		ConcurrentHashSet<Integer> includedConceptNids = new ConcurrentHashSet<>(totalCount);
 		AtomicInteger ex_cnt = new AtomicInteger();
 		viewCalculator.forEachSemanticVersionOfPatternParallel(logicCoordinate.statedAxiomsPatternNid(),
-				(semanticEntityVersion, patternEntityVersion) -> {
+				(semanticEntityVersion, _) -> {
 					try {
 						int conceptNid = semanticEntityVersion.referencedComponentNid();
 						// TODO: In some cases, may wish to classify axioms from inactive concepts. Put
@@ -378,7 +379,8 @@ public class ElkOwlDataBuilder {
 				break;
 			case PROPERTY_SEQUENCE_IMPLICATION:
 //				LOG.info("PPI: " + PrimitiveData.text(conceptNid) + " " + definition);
-				// TODO: Remove workaround for adding PROPERTY_SEQUENCE_IMPLICATION concept when starter set stable.
+				// TODO: Remove workaround for adding PROPERTY_SEQUENCE_IMPLICATION concept when
+				// starter set stable.
 				// TODO: Retire property pattern implication when starter set stable.
 				final ConceptFacade pi;
 				if (node.property(TinkarTerm.PROPERTY_PATTERN_IMPLICATION).isPresent()) {
@@ -386,7 +388,8 @@ public class ElkOwlDataBuilder {
 				} else if (node.property(TinkarTerm.PROPERTY_SEQUENCE_IMPLICATION).isPresent()) {
 					pi = node.propertyFast(TinkarTerm.PROPERTY_SEQUENCE_IMPLICATION);
 				} else {
-					throw new IllegalStateException("PropertySequenceImplication must have a property sequence implication");
+					throw new IllegalStateException(
+							"PropertySequenceImplication must have a property sequence implication");
 				}
 
 				final IntIdList ps = node.propertyFast(TinkarTerm.PROPERTY_SET);

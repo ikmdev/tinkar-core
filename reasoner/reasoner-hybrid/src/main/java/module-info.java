@@ -32,6 +32,7 @@ module dev.ikm.tinkar.reasoner.hybrid {
 
 	requires dev.ikm.tinkar.reasoner.service;
 	requires dev.ikm.tinkar.reasoner.elksnomed;
+	requires dev.ikm.tinkar.ext.lang.owl;
 
 	exports dev.ikm.tinkar.reasoner.hybrid;
 

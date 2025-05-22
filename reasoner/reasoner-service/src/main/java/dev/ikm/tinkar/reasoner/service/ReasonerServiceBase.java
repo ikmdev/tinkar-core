@@ -15,11 +15,12 @@
  */
 package dev.ikm.tinkar.reasoner.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.terms.PatternFacade;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public abstract class ReasonerServiceBase implements ReasonerService {
 

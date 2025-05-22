@@ -16,7 +16,7 @@ public class OwlExpressionToLogicalExpressionTestIT {
 
 	private static final Logger LOG = LoggerFactory.getLogger(OwlExpressionToLogicalExpressionTestIT.class);
 
-	private static String test_case = "snomed-intl-20241001";
+	private static String test_case = "snomed-intl-20250101";
 
 	@BeforeAll
 	public static void startPrimitiveData() throws IOException {

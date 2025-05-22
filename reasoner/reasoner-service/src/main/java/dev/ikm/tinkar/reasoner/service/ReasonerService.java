@@ -15,13 +15,17 @@
  */
 package dev.ikm.tinkar.reasoner.service;
 
+import java.util.List;
+
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
+
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
+import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.terms.PatternFacade;
-import org.eclipse.collections.api.list.primitive.ImmutableIntList;
-import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 
 public interface ReasonerService {
 
@@ -46,13 +50,16 @@ public interface ReasonerService {
 
 	public void loadData() throws Exception;
 
-	// TODO Maybe separate full from incremental
 	public void computeInferences();
 
 	public boolean isIncrementalReady();
 
-	// TODO Obtain conceptNid from DiTreeEntity?
+	@Deprecated
 	public void processIncremental(DiTreeEntity definition, int conceptNid);
+
+	public void processIncremental(SemanticEntityVersion update);
+
+	public void processIncremental(List<Integer> deletes, List<SemanticEntityVersion> updates);
 
 	public void buildNecessaryNormalForm();
 
