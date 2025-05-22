@@ -5,7 +5,7 @@
     <parent>
         <groupId>dev.ikm.tinkar</groupId>
         <artifactId>tinkar-core</artifactId>
-        <version>1.102.0-SNAPSHOT</version>
+        <version>1.104.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>integration</artifactId>
@@ -190,6 +190,15 @@
                                     <artifactId>tinkar-starter-data</artifactId>
                                     <version>${tinkar-starter-data.version}</version>
                                     <classifier>unreasoned-pb</classifier>
+                                    <type>zip</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${project.build.directory}/data</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>dev.ikm.data.tinkar</groupId>
+                                    <artifactId>tinkar-example-data</artifactId>
+                                    <version>1.2.0+1.1.5</version>
+                                    <classifier>reasoned-pb</classifier>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${project.build.directory}/data</outputDirectory>

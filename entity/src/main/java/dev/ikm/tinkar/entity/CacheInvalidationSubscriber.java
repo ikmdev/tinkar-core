@@ -18,6 +18,7 @@ package dev.ikm.tinkar.entity;
 import com.github.benmanes.caffeine.cache.Cache;
 import dev.ikm.tinkar.common.util.broadcast.Subscriber;
 
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -39,7 +40,11 @@ public class CacheInvalidationSubscriber implements Subscriber<Integer> {
     public void onNext(Integer nid) {
         // Do nothing with item, but request another...
         for (Cache<Integer, ?> cache : cachesToManage) {
-            cache.invalidate(nid);
+            if (nid == Integer.MIN_VALUE) {
+                cache.invalidateAll();
+            } else {
+                cache.invalidate(nid);
+            }
         }
     }
 }
