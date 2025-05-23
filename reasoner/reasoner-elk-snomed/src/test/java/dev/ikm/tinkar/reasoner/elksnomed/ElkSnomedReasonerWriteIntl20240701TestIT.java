@@ -23,6 +23,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.ikm.elk.snomed.test.SnomedVersionInternational;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
 public class ElkSnomedReasonerWriteIntl20240701TestIT extends ElkSnomedReasonerWriteTestBase

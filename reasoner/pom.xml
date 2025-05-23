@@ -16,6 +16,7 @@
 	<modules>
 		<module>reasoner-elk-owl</module>
 		<module>reasoner-elk-snomed</module>
+		<module>reasoner-elk-snomed-test</module>
 		<module>reasoner-hybrid</module>
 		<module>reasoner-service</module>
 	</modules>

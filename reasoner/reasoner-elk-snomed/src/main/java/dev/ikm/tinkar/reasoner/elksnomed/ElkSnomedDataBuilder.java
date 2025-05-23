@@ -241,7 +241,7 @@ public class ElkSnomedDataBuilder {
 	}
 
 	// This is just used to support the WriteTest ITs
-	Concept buildConcept(SemanticEntityVersion semanticEntityVersion) {
+	public Concept buildConcept(SemanticEntityVersion semanticEntityVersion) {
 		return (Concept) processDefinition(semanticEntityVersion);
 	}
 

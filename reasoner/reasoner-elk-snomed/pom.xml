@@ -54,6 +54,10 @@
 			<!-- TODO This should be test scoped, but the module system? -->
 			<!-- <scope>test</scope> -->
 		</dependency>
+		<dependency>
+			<groupId>dev.ikm.elk</groupId>
+			<artifactId>elk-snomed-test</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>

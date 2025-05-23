@@ -116,8 +116,8 @@
 		<jheaps.version>0.14-r6</jheaps.version>
 		<roaringbitmap.version>1.4.0</roaringbitmap.version>
 
-		<hybrid-reasoner.version>1.0.13</hybrid-reasoner.version>
-		<ikm-reasoner.version>0.37.9</ikm-reasoner.version>
+		<hybrid-reasoner.version>1.0.14-SNAPSHOT</hybrid-reasoner.version>
+		<ikm-reasoner.version>0.37.10-SNAPSHOT</ikm-reasoner.version>
 		<owlapi.version>4.8.3</owlapi.version>
     </properties>
 
@@ -448,7 +448,12 @@
 				<artifactId>elk-snomed-owl-el</artifactId>
 				<version>${ikm-reasoner.version}</version>
 			</dependency>
-        </dependencies>
+			<dependency>
+				<groupId>dev.ikm.elk</groupId>
+				<artifactId>elk-snomed-test</artifactId>
+				<version>${ikm-reasoner.version}</version>
+			</dependency>
+		</dependencies>
     </dependencyManagement>
 	<!-- Cross project dependencies -->
     <dependencies>

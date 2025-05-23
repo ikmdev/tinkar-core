@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package dev.ikm.tinkar.reasoner.elksnomed;
-
 import java.io.IOException;
 
 import org.junit.jupiter.api.AfterAll;
@@ -22,6 +21,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.ikm.elk.snomed.test.SnomedVersionInternational;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
 public class ElkSnomedCompareIntl20240701TestIT extends ElkSnomedCompareTestBase implements SnomedVersionInternational {

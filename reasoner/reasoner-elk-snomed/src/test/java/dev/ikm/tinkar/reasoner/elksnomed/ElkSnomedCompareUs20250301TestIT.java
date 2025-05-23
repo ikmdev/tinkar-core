@@ -22,6 +22,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.ikm.elk.snomed.test.SnomedVersionUs;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
 public class ElkSnomedCompareUs20250301TestIT extends ElkSnomedCompareTestBase implements SnomedVersionUs {
