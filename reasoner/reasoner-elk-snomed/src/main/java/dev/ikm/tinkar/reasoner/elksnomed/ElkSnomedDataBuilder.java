@@ -248,7 +248,7 @@ public class ElkSnomedDataBuilder {
 	private SnomedEntity processDefinition(SemanticEntityVersion semanticEntityVersion) {
 		SnomedEntity ret = null;
 		int conceptNid = semanticEntityVersion.referencedComponentNid();
-		DiTreeEntity definition = (DiTreeEntity) semanticEntityVersion.fieldValues().get(0);
+		DiTreeEntity definition = (DiTreeEntity) semanticEntityVersion.fieldValues().getFirst();
 		EntityVertex root = definition.root();
 		if (definition.successors(root).isEmpty()) {
 			LOG.warn("No definition for: " + PrimitiveData.text(conceptNid));
