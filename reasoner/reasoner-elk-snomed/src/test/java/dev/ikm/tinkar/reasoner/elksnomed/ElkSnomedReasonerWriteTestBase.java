@@ -21,7 +21,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.eclipse.collections.api.list.ImmutableList;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,10 +33,9 @@ import dev.ikm.elk.snomed.SnomedLoader;
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.elk.snomed.model.Definition;
-import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
+import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedUtil.SemanticStateException;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
 import dev.ikm.tinkar.terms.TinkarTerm;
 
@@ -53,7 +51,6 @@ public abstract class ElkSnomedReasonerWriteTestBase extends ElkSnomedTestBase {
 		rs.computeInferences();
 		rs.buildNecessaryNormalForm();
 		rs.writeInferredResults();
-		int inferredNavigationPatternNid = TinkarTerm.INFERRED_NAVIGATION_PATTERN.nid();
 		int inferredPatternNid = rs.getViewCalculator().viewCoordinateRecord().logicCoordinate()
 				.inferredAxiomsPatternNid();
 		SnomedIsa isas = SnomedIsa.init(rels_file);
@@ -81,36 +78,24 @@ public abstract class ElkSnomedReasonerWriteTestBase extends ElkSnomedTestBase {
 				}
 				Set<Integer> expected_child_nids = isas.getChildren(sctid).stream().map(ElkSnomedData::getNid)
 						.collect(Collectors.toSet());
-				int[] inferredNavigationNids = PrimitiveData.get().semanticNidsForComponentOfPattern(nid,
-						inferredNavigationPatternNid);
-				if (inferredNavigationNids.length == 0) {
-					LOG.error("No semantic of pattern " + PrimitiveData.text(inferredNavigationPatternNid)
-							+ " for component: " + PrimitiveData.text(nid));
-				} else if (inferredNavigationNids.length == 1) {
-					Latest<SemanticEntityVersion> latestInferredNavigationSemantic = rs.getViewCalculator()
-							.latest(inferredNavigationNids[0]);
-					if (latestInferredNavigationSemantic.isPresent()) {
-						ImmutableList<Object> latestInferredNavigationFields = latestInferredNavigationSemantic.get()
-								.fieldValues();
-						IntIdSet actual_child_nids = (IntIdSet) latestInferredNavigationFields.get(0);
-						IntIdSet actual_parent_nids = (IntIdSet) latestInferredNavigationFields.get(1);
-						if (!expected_parent_nids.equals(actual_parent_nids.mapToSet(x -> x))) {
-							LOG.error("Parents: " + sctid + " " + descr.getFsn(sctid));
-							parent_miss++;
-						}
-						if (!expected_child_nids.equals(actual_child_nids.mapToSet(x -> x))) {
-							LOG.error("Children: " + sctid + " " + descr.getFsn(sctid));
-							child_miss++;
-							child_miss_sctids.add(sctid);
-						}
-					} else {
-						LOG.error("No LATEST semantic of pattern " + PrimitiveData.text(inferredNavigationPatternNid)
-								+ " for component: " + PrimitiveData.text(nid));
+				try {
+					Set<Integer> actual_child_nids = ElkSnomedUtil.getInferredChildren(getViewCalculator(), sctid);
+					if (!expected_child_nids.equals(actual_child_nids)) {
+						LOG.error("Children: " + sctid + " " + descr.getFsn(sctid));
+						child_miss++;
+						child_miss_sctids.add(sctid);
 					}
-
-				} else {
-					LOG.error("More than one semantic of pattern " + PrimitiveData.text(inferredNavigationPatternNid)
-							+ " for component: " + PrimitiveData.text(nid));
+				} catch (SemanticStateException ex) {
+					LOG.error(ex.getMessage());
+				}
+				try {
+					Set<Integer> actual_parent_nids = ElkSnomedUtil.getInferredParents(getViewCalculator(), sctid);
+					if (!expected_parent_nids.equals(actual_parent_nids)) {
+						LOG.error("Parents: " + sctid + " " + descr.getFsn(sctid));
+						parent_miss++;
+					}
+				} catch (SemanticStateException ex) {
+					LOG.error(ex.getMessage());
 				}
 			}
 			{
@@ -118,31 +103,20 @@ public abstract class ElkSnomedReasonerWriteTestBase extends ElkSnomedTestBase {
 					LOG.warn("Skipping compare for " + sctid + " " + PrimitiveData.text(nid));
 					continue;
 				}
-				int[] inferredSemanticNids = PrimitiveData.get().semanticNidsForComponentOfPattern(nid,
-						inferredPatternNid);
-				if (inferredSemanticNids.length == 0) {
-					LOG.error("No semantic of pattern " + PrimitiveData.text(inferredPatternNid) + " for component: "
-							+ PrimitiveData.text(nid));
-				} else if (inferredSemanticNids.length == 1) {
-					Latest<SemanticEntityVersion> latestInferredSemantic = rs.getViewCalculator()
-							.latest(inferredSemanticNids[0]);
-					if (latestInferredSemantic.isPresent()) {
-						ElkSnomedDataBuilder builder = new ElkSnomedDataBuilder(null, null, new ElkSnomedData());
-						Concept concept = builder.buildConcept(latestInferredSemantic.get());
-						Definition new_def = nid_to_sctid.makeNewDefinition(concept.getDefinitions().getFirst());
-						Concept new_concept = new Concept(sctid);
-						new_concept.addDefinition(new_def);
-						if (!cc.compare(new_concept)) {
-							LOG.error("Mis match: " + new_concept);
-							mis_match_cnt++;
-						}
-					} else {
-						LOG.error("No LATEST semantic of pattern " + PrimitiveData.text(inferredNavigationPatternNid)
-								+ " for component: " + PrimitiveData.text(nid));
+				try {
+					SemanticEntityVersion sev = ElkSnomedUtil.getLatestSemantic(getViewCalculator(), inferredPatternNid,
+							nid);
+					ElkSnomedDataBuilder builder = new ElkSnomedDataBuilder(null, null, new ElkSnomedData());
+					Concept concept = builder.buildConcept(sev);
+					Definition new_def = nid_to_sctid.makeNewDefinition(concept.getDefinitions().getFirst());
+					Concept new_concept = new Concept(sctid);
+					new_concept.addDefinition(new_def);
+					if (!cc.compare(new_concept)) {
+						LOG.error("Mis match: " + new_concept);
+						mis_match_cnt++;
 					}
-				} else {
-					LOG.error("More than one semantic of pattern " + PrimitiveData.text(inferredPatternNid)
-							+ " for component: " + PrimitiveData.text(nid));
+				} catch (SemanticStateException ex) {
+					LOG.error(ex.getMessage());
 				}
 			}
 		}
