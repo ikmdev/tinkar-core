@@ -31,6 +31,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Generally available thread pools for doing background processing in an ISAAC application.
@@ -59,6 +60,9 @@ public class ExecutorProvider implements ExecutorService {
     private static final Logger LOG = LoggerFactory.getLogger(ExecutorProvider.class);
 
     private static final UncaughtExceptionAlertStreamer exceptionAlertStreamer = new UncaughtExceptionAlertStreamer();
+
+    private final AtomicBoolean started = new AtomicBoolean(false);
+
     /**
      * The fork join executor.
      */
@@ -88,66 +92,68 @@ public class ExecutorProvider implements ExecutorService {
      * Start me.
      */
     protected void start() {
-        if (forkJoinExecutor == null) {
-            LOG.info("Starting the WorkExecutors thread pools");
-
-            // The java default ForkJoinPool.commmonPool starts with only 1 thread, on 1 and 2 core systems, which can get us deadlocked pretty easily.
-            final int procCount = Runtime.getRuntime()
-                    .availableProcessors();
-            final int parallelism = ((procCount - 1) < 6 ? 6
-                    : procCount - 1);  // set between 6 and 1 less than proc count (not less than 6)
-
-            this.forkJoinExecutor = new ForkJoinPool(parallelism);
-
-            final int corePoolSize = 2;
-            final int maximumPoolSize = parallelism;
-            final int keepAliveTime = 60;
-            final TimeUnit timeUnit = TimeUnit.SECONDS;
-
-            // The blocking executor
-            this.blockingThreadPoolExecutor = new ThreadPoolExecutorFixed(corePoolSize,
-                    maximumPoolSize,
-                    keepAliveTime,
-                    timeUnit,
-                    new SynchronousQueue<>(),
-                    new NamedThreadFactory("Tinkar-B-work-thread", true));
-            this.blockingThreadPoolExecutor.setRejectedExecutionHandler((runnable, executor) -> {
-                try {
-                    executor.getQueue()
-                            .offer(runnable, Long.MAX_VALUE, TimeUnit.HOURS);
-                } catch (final Exception e) {
-                    throw new RejectedExecutionException("Interrupted while waiting to enqueue");
-                }
-            });
-
-            // The non-blocking executor - set core threads equal to max - otherwise, it will never increase the thread count
-            // with an unbounded queue.
-            this.threadPoolExecutor = new ThreadPoolExecutorFixed(maximumPoolSize,
-                    maximumPoolSize,
-                    keepAliveTime,
-                    timeUnit,
-                    new LinkedBlockingQueue<>(),
-                    new NamedThreadFactory("Tinkar-Q-work-thread", true));
-            this.threadPoolExecutor.allowCoreThreadTimeOut(true);
-
-            // The IO non-blocking executor - set core threads equal to max - otherwise, it will never increase the thread count
-            // with an unbounded queue.
-            this.ioThreadPoolExecutor = new TinkarThreadPoolExecutor(6,
-                    6,
-                    keepAliveTime,
-                    timeUnit,
-                    new LinkedBlockingQueue<>(),
-                    new NamedThreadFactory("Tinkar-IO-work-thread", true));
-            this.ioThreadPoolExecutor.allowCoreThreadTimeOut(true);
-
-            // Execute this once, early on, in a background thread - as randomUUID uses secure random - and the initial
-            // init of secure random can block on many systems that don't have enough entropy occuring.  The DB load process
-            // should provide enough entropy to get it initialized, so it doesn't pause things later when someone requests a random UUID.
-            threadPool().execute(() -> UUID.randomUUID());
-            this.scheduledExecutor = new TinkarScheduledExecutor(1,
-                    new NamedThreadFactory("Tinkar-Scheduled-Thread", true));
-            LOG.info("WorkExecutors thread pools ready");
+        if (!started.compareAndSet(false, true)) {
+            return; // Already started
         }
+
+        LOG.info("Starting the WorkExecutors thread pools");
+
+        // The java default ForkJoinPool.commmonPool starts with only 1 thread, on 1 and 2 core systems, which can get us deadlocked pretty easily.
+        final int procCount = Runtime.getRuntime()
+                .availableProcessors();
+        final int parallelism = ((procCount - 1) < 6 ? 6
+                : procCount - 1);  // set between 6 and 1 less than proc count (not less than 6)
+
+        this.forkJoinExecutor = new ForkJoinPool(parallelism);
+
+        final int corePoolSize = 2;
+        final int maximumPoolSize = parallelism;
+        final int keepAliveTime = 60;
+        final TimeUnit timeUnit = TimeUnit.SECONDS;
+
+        // The blocking executor
+        this.blockingThreadPoolExecutor = new ThreadPoolExecutorFixed(corePoolSize,
+                maximumPoolSize,
+                keepAliveTime,
+                timeUnit,
+                new SynchronousQueue<>(),
+                new NamedThreadFactory("Tinkar-B-work-thread", true));
+        this.blockingThreadPoolExecutor.setRejectedExecutionHandler((runnable, executor) -> {
+            try {
+                executor.getQueue()
+                        .offer(runnable, Long.MAX_VALUE, TimeUnit.HOURS);
+            } catch (final Exception e) {
+                throw new RejectedExecutionException("Interrupted while waiting to enqueue");
+            }
+        });
+
+        // The non-blocking executor - set core threads equal to max - otherwise, it will never increase the thread count
+        // with an unbounded queue.
+        this.threadPoolExecutor = new ThreadPoolExecutorFixed(maximumPoolSize,
+                maximumPoolSize,
+                keepAliveTime,
+                timeUnit,
+                new LinkedBlockingQueue<>(),
+                new NamedThreadFactory("Tinkar-Q-work-thread", true));
+        this.threadPoolExecutor.allowCoreThreadTimeOut(true);
+
+        // The IO non-blocking executor - set core threads equal to max - otherwise, it will never increase the thread count
+        // with an unbounded queue.
+        this.ioThreadPoolExecutor = new TinkarThreadPoolExecutor(6,
+                6,
+                keepAliveTime,
+                timeUnit,
+                new LinkedBlockingQueue<>(),
+                new NamedThreadFactory("Tinkar-IO-work-thread", true));
+        this.ioThreadPoolExecutor.allowCoreThreadTimeOut(true);
+
+        // Execute this once, early on, in a background thread - as randomUUID uses secure random - and the initial
+        // init of secure random can block on many systems that don't have enough entropy occuring.  The DB load process
+        // should provide enough entropy to get it initialized, so it doesn't pause things later when someone requests a random UUID.
+        threadPool().execute(() -> UUID.randomUUID());
+        this.scheduledExecutor = new TinkarScheduledExecutor(1,
+                new NamedThreadFactory("Tinkar-Scheduled-Thread", true));
+        LOG.info("WorkExecutors thread pools ready");
 
     }
 
@@ -155,6 +161,10 @@ public class ExecutorProvider implements ExecutorService {
      * Stop me.
      */
     protected void stop() {
+        if (!started.get()) {
+            return; // Not started
+        }
+
         LOG.info("Stopping WorkExecutors thread pools. ");
 
         try {
@@ -194,6 +204,8 @@ public class ExecutorProvider implements ExecutorService {
             }
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
+        } finally {
+            started.set(false);
         }
         LOG.info("Stopped WorkExecutors thread pools");
     }
