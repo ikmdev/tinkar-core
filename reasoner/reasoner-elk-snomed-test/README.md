@@ -29,6 +29,7 @@ and src/test/java/module-info.java is:
 open module dev.ikm.tinkar.reasoner.elksnomed.test2 {
 ...
 	requires transitive org.junit.jupiter.api;
+	requires transitive org.junit.jupiter.engine;
 ```
 
 Additionally, this project uses the JUnit5 API in src/main/java. The JUnit5 test runner in Eclipse runs in the unnamed module, and causes access violation errors with the platform module. Here is the workaround.
