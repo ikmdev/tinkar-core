@@ -11,7 +11,13 @@
 	<artifactId>reasoner-elk-snomed-test</artifactId>
 
 	<properties>
-		<failsafeArgLine>--enable-preview -Xmx12G</failsafeArgLine>
+		<failsafeArgLine>
+			--enable-preview -Xmx12G
+			--add-exports
+			org.junit.platform.commons/org.junit.platform.commons.util=ALL-UNNAMED
+			--add-exports
+			org.junit.platform.commons/org.junit.platform.commons.logging=ALL-UNNAMED
+</failsafeArgLine>
 	</properties>
 
 	<dependencies>
@@ -65,23 +71,17 @@
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
-			<!--			<scope>test</scope>-->
+			<!--<scope>test</scope>-->
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
-			<!--			<scope>test</scope>-->
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
 	<build>
 		<plugins>
-<!--			<plugin>-->
-<!--				<artifactId>maven-failsafe-plugin</artifactId>-->
-<!--				<configuration>-->
-<!--					<useModulePath>false</useModulePath>-->
-<!--				</configuration>-->
-<!--			</plugin>-->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>

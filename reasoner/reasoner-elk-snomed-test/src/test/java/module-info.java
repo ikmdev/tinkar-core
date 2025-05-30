@@ -4,6 +4,7 @@ open module dev.ikm.tinkar.reasoner.elksnomed.test2 {
 	requires dev.ikm.jpms.eclipse.collections;
 	requires dev.ikm.jpms.eclipse.collections.api;
 	requires transitive org.junit.jupiter.api;
+	requires transitive org.junit.jupiter.engine;
 	requires org.slf4j;
 
 	requires dev.ikm.tinkar.collection;
