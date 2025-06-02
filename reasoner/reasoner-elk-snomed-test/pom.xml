@@ -8,20 +8,22 @@
 		<version>1.104.0-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>reasoner-elk-owl</artifactId>
+	<artifactId>reasoner-elk-snomed-test</artifactId>
+
+	<properties>
+		<failsafeArgLine>
+			--enable-preview -Xmx12G
+			--add-exports
+			org.junit.platform.commons/org.junit.platform.commons.util=ALL-UNNAMED
+			--add-exports
+			org.junit.platform.commons/org.junit.platform.commons.logging=ALL-UNNAMED
+</failsafeArgLine>
+	</properties>
 
 	<dependencies>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>entity</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
 			<artifactId>coordinate</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>entity-provider</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
@@ -29,8 +31,24 @@
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
+			<artifactId>entity</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>entity-provider</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>executor-provider</artifactId>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>dev.ikm.tinkar.ext.owl</groupId>
+			<artifactId>owl-extension</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>reasoner-elk-snomed</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
@@ -42,15 +60,23 @@
 		</dependency>
 		<dependency>
 			<groupId>dev.ikm.elk</groupId>
-			<artifactId>elk-snomed-owl</artifactId>
+			<artifactId>elk-snomed-owl-el</artifactId>
+			<!-- TODO This should be test scoped, but the module system? -->
+			<!-- <scope>test</scope> -->
 		</dependency>
 		<dependency>
-			<groupId>${tinkar-jpms-deps.groupId}</groupId>
-			<artifactId>eclipse-collections</artifactId>
+			<groupId>dev.ikm.elk</groupId>
+			<artifactId>elk-snomed-test</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>${tinkar-jpms-deps.groupId}</groupId>
-			<artifactId>eclipse-collections-api</artifactId>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<!--<scope>test</scope>-->
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
@@ -60,6 +86,55 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
 				<executions>
+					<execution>
+						<id>unpack-test-data</id>
+						<phase>pre-integration-test</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<skip>${skipITs}</skip>
+							<artifactItems>
+								<artifactItem>
+									<groupId>${snomed-test-data.groupid}</groupId>
+									<artifactId>
+										snomed-test-data-intl-20240701</artifactId>
+									<version>${snomed-test-data.version}</version>
+									<type>zip</type>
+								</artifactItem>
+								<artifactItem>
+									<groupId>${snomed-test-data.groupid}</groupId>
+									<artifactId>
+										snomed-test-data-intl-20250101</artifactId>
+									<version>${snomed-test-data.version}</version>
+									<type>zip</type>
+								</artifactItem>
+								<artifactItem>
+									<groupId>${snomed-test-data.groupid}</groupId>
+									<artifactId>
+										snomed-test-data-us-20240901</artifactId>
+									<version>${snomed-test-data.version}</version>
+									<type>zip</type>
+								</artifactItem>
+								<artifactItem>
+									<groupId>${snomed-test-data.groupid}</groupId>
+									<artifactId>
+										snomed-test-data-us-20250301</artifactId>
+									<version>${snomed-test-data.version}</version>
+									<type>zip</type>
+								</artifactItem>
+								<artifactItem>
+									<groupId>${snomed-test-data.groupid}</groupId>
+									<artifactId>
+										snomed-test-data-intl-full</artifactId>
+									<version>${snomed-test-data.version}</version>
+									<type>zip</type>
+								</artifactItem>
+							</artifactItems>
+							<outputDirectory>
+								${project.build.directory}/data</outputDirectory>
+						</configuration>
+					</execution>
 					<execution>
 						<id>unpack-test-db</id>
 						<phase>pre-integration-test</phase>

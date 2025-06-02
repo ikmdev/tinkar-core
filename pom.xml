@@ -448,7 +448,12 @@
 				<artifactId>elk-snomed-owl-el</artifactId>
 				<version>${ikm-reasoner.version}</version>
 			</dependency>
-        </dependencies>
+			<dependency>
+				<groupId>dev.ikm.elk</groupId>
+				<artifactId>elk-snomed-test</artifactId>
+				<version>${ikm-reasoner.version}</version>
+			</dependency>
+		</dependencies>
     </dependencyManagement>
 	<!-- Cross project dependencies -->
     <dependencies>
