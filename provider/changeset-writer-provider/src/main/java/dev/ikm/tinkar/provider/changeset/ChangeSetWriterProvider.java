@@ -49,7 +49,7 @@ import java.util.zip.ZipOutputStream;
  */
 public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveState {
     private static final Logger LOG = LoggerFactory.getLogger(ChangeSetWriterProvider.class);
-    private static final int ALLOWED_WRITER_COUNT = 2;
+    private static final int ALLOWED_WRITER_COUNT = 1;
 
     /**
      * Represents the various states of the ChangeSetWriterProvider during its lifecycle.
@@ -195,7 +195,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
     private void startService() {
         Thread.ofVirtual().name("ChangeSetWriterProvider-ServiceThread").start(() -> {
             try {
-                changeSetWriters.acquireUninterruptibly();
+                changeSetWriters.acquireUninterruptibly(ALLOWED_WRITER_COUNT);
                 final MutableMultimap<Integer, Entity<EntityVersion>> uncommittedEntitiesByStamp = Multimaps.mutable.set.empty();
                 serviceThread.set(Thread.currentThread());
                 state.set(STATE.RUNNING);
@@ -393,7 +393,6 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
     public void shutdown() {
         LOG.info("Start shutdown of ChangeSetWriterProvider");
         checkpoint(false);
-        changeSetWriters.acquireUninterruptibly(ALLOWED_WRITER_COUNT);
         LOG.info("Finish shutdown of ChangeSetWriterProvider");
     }
 
@@ -409,7 +408,11 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      */
     private void checkpoint(boolean restart) {
         switch (serviceThread.get()) {
-            case Thread thread -> thread.interrupt();
+            case Thread thread -> {
+                thread.interrupt();
+                changeSetWriters.acquireUninterruptibly(ALLOWED_WRITER_COUNT);
+                changeSetWriters.release();
+            }
             case null -> {
             }
         }

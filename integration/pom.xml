@@ -33,6 +33,11 @@
             </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
+                <artifactId>changeset-writer-provider</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
                 <artifactId>composer</artifactId>
                 <version>${tinkar-composer.version}</version>
             </dependency>
@@ -147,6 +152,11 @@
         <dependency>
             <groupId>dev.ikm.tinkar</groupId>
             <artifactId>reasoner-hybrid</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>dev.ikm.tinkar</groupId>
+            <artifactId>changeset-writer-provider</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
