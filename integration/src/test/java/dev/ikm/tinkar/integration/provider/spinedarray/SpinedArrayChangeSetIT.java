@@ -22,7 +22,6 @@ import dev.ikm.tinkar.common.service.ServiceKeys;
 import dev.ikm.tinkar.common.service.ServiceProperties;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.composer.Composer;
-import dev.ikm.tinkar.composer.SemanticTemplate;
 import dev.ikm.tinkar.composer.Session;
 import dev.ikm.tinkar.composer.template.StatedAxiom;
 import dev.ikm.tinkar.entity.ChangeSetWriterService;
@@ -52,6 +51,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -81,7 +81,7 @@ class SpinedArrayChangeSetIT {
     }
 
     @Test
-    public void changesetWriterRaceCondition() throws InterruptedException {
+    public void changesetWriterRaceCondition() throws InterruptedException, ExecutionException {
         // Get ChangeSetFolder location
         Optional<File> optionalDataStoreRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT);
         assertFalse(optionalDataStoreRoot.isEmpty());
@@ -106,7 +106,7 @@ class SpinedArrayChangeSetIT {
         ChangeSetWriterService changeSetWriterService = PluggableService.first(ChangeSetWriterService.class);
         assertNotEquals(null, changeSetWriterService);
         if (changeSetWriterService instanceof SaveState savableChangeSetWriterService) {
-            savableChangeSetWriterService.save();
+            savableChangeSetWriterService.save().get();
         }
 
         // Waiting until the changeset writer closes will cause this test to pass

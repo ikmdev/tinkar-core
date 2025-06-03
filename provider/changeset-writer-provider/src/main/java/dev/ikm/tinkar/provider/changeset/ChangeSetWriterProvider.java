@@ -6,6 +6,7 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.SaveState;
 import dev.ikm.tinkar.common.service.ServiceKeys;
 import dev.ikm.tinkar.common.service.ServiceProperties;
+import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.entity.ChangeSetWriterService;
 import dev.ikm.tinkar.entity.ConceptEntity;
@@ -30,9 +31,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
@@ -49,7 +53,6 @@ import java.util.zip.ZipOutputStream;
  */
 public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveState {
     private static final Logger LOG = LoggerFactory.getLogger(ChangeSetWriterProvider.class);
-    private static final int ALLOWED_WRITER_COUNT = 1;
 
     /**
      * Represents the various states of the ChangeSetWriterProvider during its lifecycle.
@@ -77,7 +80,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
 
     final AtomicReference<STATE> state = new AtomicReference<>(STATE.INITIALIZING);
     final AtomicReference<Thread> serviceThread = new AtomicReference<>();
-    final Semaphore changeSetWriters = new Semaphore(ALLOWED_WRITER_COUNT);
+    private final Map<Thread, Semaphore> threadSemaphoreMap = new ConcurrentHashMap<>();
 
     /**
      * Initialization-on-demand holder idiom:
@@ -194,8 +197,10 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      */
     private void startService() {
         Thread.ofVirtual().name("ChangeSetWriterProvider-ServiceThread").start(() -> {
+            Semaphore changeSetWriter = new Semaphore(1);
+            changeSetWriter.acquireUninterruptibly();
+            threadSemaphoreMap.put(Thread.currentThread(), changeSetWriter);
             try {
-                changeSetWriters.acquireUninterruptibly(ALLOWED_WRITER_COUNT);
                 final MutableMultimap<Integer, Entity<EntityVersion>> uncommittedEntitiesByStamp = Multimaps.mutable.set.empty();
                 serviceThread.set(Thread.currentThread());
                 state.set(STATE.RUNNING);
@@ -274,7 +279,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                     }
                 }
             } finally {
-                changeSetWriters.release();
+                changeSetWriter.release();
             }
         });
 
@@ -372,8 +377,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      *   state. The reset writer will write to a new zip file.
      */
     @Override
-    public void save() {
-        checkpoint(true);
+    public CompletableFuture<Void> save() {
+        return checkpoint(true);
     }
 
     /**
@@ -406,22 +411,31 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      *                and a new service thread is started to continue operations.
      *                If {@code false}, the service state transitions to {@code STOPPED}.
      */
-    private void checkpoint(boolean restart) {
-        switch (serviceThread.get()) {
-            case Thread thread -> {
-                thread.interrupt();
-                changeSetWriters.acquireUninterruptibly(ALLOWED_WRITER_COUNT);
-                changeSetWriters.release();
+    private CompletableFuture<Void> checkpoint(boolean restart) {
+        return CompletableFuture.supplyAsync(() -> {
+            Thread interruptedThread = null;
+            switch (serviceThread.get()) {
+                case Thread thread -> {
+                    thread.interrupt();
+                    interruptedThread = thread;
+                }
+                case null -> {
+                }
             }
-            case null -> {
+            if (restart) {
+                state.set(STATE.ROTATING);
+                // start a new thread with a new file
+                startService();
+            } else {
+                state.set(STATE.STOPPED);
             }
-        }
-        if (restart) {
-            state.set(STATE.ROTATING);
-            // start a new thread with a new file
-            startService();
-        } else {
-            state.set(STATE.STOPPED);
-        }
+            if (interruptedThread != null) {
+                Semaphore changeSetWriter = threadSemaphoreMap.remove(interruptedThread);
+                if (changeSetWriter != null) {
+                    changeSetWriter.acquireUninterruptibly();
+                }
+            }
+            return null;
+        }, TinkExecutor.ioThreadPool());
     }
 }
