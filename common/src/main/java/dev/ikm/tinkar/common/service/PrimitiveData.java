@@ -75,7 +75,6 @@ public class PrimitiveData {
         TinkExecutor.threadPool().submit(progressTask);
         try {
             save();
-            TinkExecutor.stop();
             if (controllerSingleton != null) {
                 controllerSingleton.stop();
             }
@@ -83,6 +82,7 @@ public class PrimitiveData {
             LOG.error(ex.getLocalizedMessage(), ex);
         } finally {
             progressTask.finished();
+            TinkExecutor.stop();
         }
     }
 
