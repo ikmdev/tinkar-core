@@ -37,6 +37,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
@@ -397,7 +398,11 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
     @Override
     public void shutdown() {
         LOG.info("Start shutdown of ChangeSetWriterProvider");
-        checkpoint(false);
+        try {
+            checkpoint(false).get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
         LOG.info("Finish shutdown of ChangeSetWriterProvider");
     }
 
