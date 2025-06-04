@@ -100,7 +100,7 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 				assertTrue(parents.isEmpty());
 				// has a parent in the db
 				assertEquals(1, sups.size());
-				assertEquals(TinkarTerm.ROOT_VERTEX.nid(), reasoner.getSuperConcepts(nid).iterator().next());
+				assertEquals(TinkarTerm.PHENOMENON.nid(), reasoner.getSuperConcepts(nid).iterator().next());
 				continue;
 			} else {
 				assertNotNull(parents);
