@@ -148,13 +148,10 @@ public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 		int non_snomed_cnt = 0;
 		int miss_cnt = 0;
 		SnomedIsa isas = SnomedIsa.init(rels_file, version);
-//		SnomedDescriptions descr = SnomedDescriptions.init(descriptions_file);
 		HashMap<Integer, Long> nid_sctid_map = new HashMap<>();
 		for (long sctid : isas.getOrderedConcepts()) {
 			int nid = ElkSnomedData.getNid(sctid);
 			nid_sctid_map.put(nid, sctid);
-//			if (ontology.getConcept(nid) == null)
-//				LOG.info("No concept for: " + sctid + " " + descr.getFsn(sctid));
 		}
 		for (int nid : rs.getReasonerConceptSet().toArray()) {
 			Set<Long> sups = toSctids(rs.getParents(nid), nid_sctid_map);
@@ -163,20 +160,12 @@ public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 				non_snomed_cnt++;
 				continue;
 			}
-//			// 361195001 |Pulmonary fibroplasia (disorder)|
-//			// 371931008 |Combined diagnostic and therapeutic procedure (procedure)|
-//			// 109998009 |Myelodysplastic syndrome with ring sideroblasts and single lineage
-//			// dysplasia (disorder)|
-//			// 19776001 |Decreased size (finding)|
-//			// 307511000 |Under-running of bleeding duodenal ulcer (procedure)|
-//			if (List.of(361195001l, 371931008l, 109998009l, 19776001l, 307511000l).contains(sctid))
-//				LOG.info("In reasoner concept set: " + sctid + " " + nid + " " + PrimitiveData.text(nid));
 			Set<Long> parents = isas.getParents(sctid);
 			if (sctid == SnomedIds.root) {
 				assertTrue(parents.isEmpty());
 				// has a parent in the db
 				assertEquals(1, sups.size());
-				assertEquals(TinkarTerm.ROOT_VERTEX.nid(), rs.getParents(nid).intIterator().next());
+				assertEquals(TinkarTerm.PHENOMENON.nid(), rs.getParents(nid).intIterator().next());
 				continue;
 			} else {
 				assertNotNull(parents);
