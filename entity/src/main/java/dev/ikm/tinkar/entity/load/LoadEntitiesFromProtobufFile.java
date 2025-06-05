@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.load;
 
+import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.DataActivity;
@@ -117,8 +118,8 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                 }
             }
         } catch (Exception e) {
-            updateTitle("Import Protobuf Data from " + importFile.getName() + " with error(s)");
-            throw new RuntimeException(e);
+            updateTitle("Failed: Import Protobuf data from " + importFile.getName());
+            AlertStreams.dispatchToRoot(e);
         } finally {
             try {
                 EntityService.get().endLoadPhase();
@@ -130,7 +131,9 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         }
 
         if (importCount.get() != expectedImports) {
-            throw new IllegalStateException("ERROR: Expected " + expectedImports + " imported Entities, but imported " + importCount.get());
+            IllegalStateException e = new IllegalStateException("Import Failed: Expected " + expectedImports + " Entities, but imported " + importCount.get());
+            AlertStreams.dispatchToRoot(e);
+            throw e;
         }
         return summarize();
     }
