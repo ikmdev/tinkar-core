@@ -92,7 +92,7 @@ public class PrimitiveData {
         }
         for (SaveState state : statesToSave) {
             try {
-                state.save();
+                state.save().get();
             } catch (Exception e) {
                 AlertStreams.getRoot().dispatch(AlertObject.makeError(e));
             }

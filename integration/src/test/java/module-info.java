@@ -49,6 +49,7 @@ open module dev.ikm.tinkar.integration.test {
     requires dev.ikm.tinkar.reasoner.elksnomed;
     requires dev.ikm.tinkar.reasoner.hybrid;
     requires dev.ikm.tinkar.reasoner.service;
+    requires dev.ikm.tinkar.provider.changeset;
 
     uses CachingService;
     uses DataServiceController;

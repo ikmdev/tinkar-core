@@ -15,6 +15,8 @@
  */
 package dev.ikm.tinkar.common.service;
 
+import java.util.concurrent.CompletableFuture;
+
 public interface SaveState {
-    void save();
+    CompletableFuture<Void> save();
 }
