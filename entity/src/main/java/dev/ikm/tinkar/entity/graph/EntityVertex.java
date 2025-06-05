@@ -394,7 +394,7 @@ public class EntityVertex implements Vertex, VertexId {
 
     @Override
     public Concept meaning() {
-        return EntityService.get().getEntityFast(meaningNid);
+        return EntityProxy.Concept.make(meaningNid);
     }
 
     @Override
