@@ -40,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.zip.ZipEntry;
@@ -82,6 +83,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
     final AtomicReference<STATE> state = new AtomicReference<>(STATE.INITIALIZING);
     final AtomicReference<Thread> serviceThread = new AtomicReference<>();
     private final Map<Thread, Semaphore> threadSemaphoreMap = new ConcurrentHashMap<>();
+    private final Map<Thread, Boolean> threadContinueMap = new ConcurrentHashMap<>();
+
 
     /**
      * Initialization-on-demand holder idiom:
@@ -201,6 +204,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
             Semaphore changeSetWriter = new Semaphore(1);
             changeSetWriter.acquireUninterruptibly();
             threadSemaphoreMap.put(Thread.currentThread(), changeSetWriter);
+            threadContinueMap.put(Thread.currentThread(), Boolean.TRUE);
             try {
                 final MutableMultimap<Integer, Entity<EntityVersion>> uncommittedEntitiesByStamp = Multimaps.mutable.set.empty();
                 serviceThread.set(Thread.currentThread());
@@ -223,26 +227,27 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                     // Create a single entry for all changes in this zip file
                     final ZipEntry zipEntry = new ZipEntry("Entities");
                     zos.putNextEntry(zipEntry);
-                    try {
-                        while (state.get() == STATE.RUNNING) {
-                            final Entity<EntityVersion> entityToWrite = this.entitiesToWrite.take();
-                            if (entityToWrite.uncommitted()) {
-                                // We will write uncommitted versions at the end of the thread to prevent bloat from uncommitted changes,
-                                // unless they are committed before the thread stops.
-                                ImmutableIntList uncommittedStampNids = entityToWrite.uncommittedStampNids();
-                                uncommittedStampNids.forEach(stampNid -> uncommittedEntitiesByStamp.put(stampNid, entityToWrite));
-                            } else {
-                                writeEntity(entityCount, entityToWrite, conceptsCount, semanticsCount, patternsCount, stampsCount, moduleList, authorList, entityTransformer, zos);
-                                // If a committed stamp comes through, then see if any previously uncommitted versions for that stamp exist, and write them if so.
-                                if (entityToWrite instanceof StampEntity stampEntity && uncommittedEntitiesByStamp.containsKey(stampEntity.nid())) {
-                                    uncommittedEntitiesByStamp.removeAll(stampEntity.nid()).forEach(entity ->
-                                            writeEntity(entityCount, entity, conceptsCount, semanticsCount, patternsCount,
-                                                    stampsCount, moduleList, authorList, entityTransformer, zos));
+                    while (state.get() == STATE.RUNNING && threadContinueMap.get(Thread.currentThread())) {
+                        try {
+                            final Entity<EntityVersion> entityToWrite = this.entitiesToWrite.poll(250, TimeUnit.MILLISECONDS);
+                            if (entityToWrite != null) {
+                                if (entityToWrite.uncommitted()) {
+                                    // We will write uncommitted versions at the end of the thread to prevent bloat from uncommitted changes,
+                                    // unless they are committed before the thread stops.
+                                    ImmutableIntList uncommittedStampNids = entityToWrite.uncommittedStampNids();
+                                    uncommittedStampNids.forEach(stampNid -> uncommittedEntitiesByStamp.put(stampNid, entityToWrite));
+                                } else {
+                                    writeEntity(entityCount, entityToWrite, conceptsCount, semanticsCount, patternsCount, stampsCount, moduleList, authorList, entityTransformer, zos);
+                                    // If a committed stamp comes through, then see if any previously uncommitted versions for that stamp exist, and write them if so.
+                                    if (entityToWrite instanceof StampEntity stampEntity && uncommittedEntitiesByStamp.containsKey(stampEntity.nid())) {
+                                        uncommittedEntitiesByStamp.removeAll(stampEntity.nid()).forEach(entity ->
+                                                writeEntity(entityCount, entity, conceptsCount, semanticsCount, patternsCount,
+                                                        stampsCount, moduleList, authorList, entityTransformer, zos));
+                                    }
                                 }
                             }
+                        } catch (InterruptedException e) {
                         }
-                    } catch (InterruptedException e) {
-                        // Expected and supported.
                     }
                     // Write any uncommitted entities.
                     uncommittedEntitiesByStamp.forEachValue(entityToWrite ->
@@ -280,6 +285,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                     }
                 }
             } finally {
+                threadContinueMap.remove(Thread.currentThread());
                 changeSetWriter.release();
             }
         });
@@ -421,7 +427,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
             Thread interruptedThread = null;
             switch (serviceThread.get()) {
                 case Thread thread -> {
-                    thread.interrupt();
+                    threadContinueMap.put(thread, Boolean.FALSE);
                     interruptedThread = thread;
                 }
                 case null -> {
