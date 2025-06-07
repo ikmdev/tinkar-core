@@ -18,6 +18,8 @@ package dev.ikm.tinkar.entity;
 import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.component.SemanticVersion;
 import dev.ikm.tinkar.terms.EntityFacade;
+import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.PatternFacade;
 import org.eclipse.collections.api.list.ImmutableList;
 
 public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
@@ -35,15 +37,15 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
     SemanticEntity chronology();
 
     default EntityFacade referencedComponent() {
-        return Entity.provider().getEntityFast(referencedComponentNid());
+        return EntityFacade.make(referencedComponentNid());
     }
 
     default int referencedComponentNid() {
         return chronology().referencedComponentNid();
     }
 
-    default PatternEntity pattern() {
-        return Entity.provider().getEntityFast(patternNid());
+    default PatternFacade pattern() {
+        return EntityProxy.Pattern.make(patternNid());
     }
 
     default int patternNid() {

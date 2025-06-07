@@ -24,33 +24,9 @@ import java.time.Instant;
 /**
  * TODO should stamp become a chronology, so that uncommitted changes would use different versions of the same data
  * structure?
- *
+ * TODO: The component package should go away and just be replaced by the entities. Since migration to protobuf, the component package is legacy baggage.
  * 
  */
-public interface Stamp<T extends Stamp> extends Chronology<T>, Component, Version {
-
-    Concept state();
-
-    default Instant instant() {
-        return DateTimeUtil.epochMsToInstant(time());
-    }
-
-    long time();
-
-    Concept author();
-
-    Concept module();
-
-    Concept path();
-
-    @Override
-    default Stamp<T> stamp() {
-        return this;
-    }
-
-    @Override
-    default ImmutableList<T> versions() {
-        return (ImmutableList<T>) Lists.immutable.of(this);
-    }
+public interface Stamp<T extends Stamp> extends Component {
 
 }

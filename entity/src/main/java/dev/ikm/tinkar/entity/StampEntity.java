@@ -30,12 +30,11 @@ import static dev.ikm.tinkar.common.util.time.DateTimeUtil.SEC_FORMATTER;
 
 public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
         Stamp<V>, Component, Version {
-    @Override
+
     default State state() {
         return lastVersion().state();
     }
 
-    @Override
     default long time() {
         if (lastVersion() != null) {
             return lastVersion().time();
@@ -43,22 +42,18 @@ public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
         return Long.MIN_VALUE;
     }
 
-    @Override
     default ConceptFacade author() {
         return Entity.provider().getEntityFast(authorNid());
     }
 
-    @Override
     default ConceptFacade module() {
         return Entity.provider().getEntityFast(moduleNid());
     }
 
-    @Override
     default ConceptFacade path() {
         return Entity.provider().getEntityFast(pathNid());
     }
 
-    @Override
     StampEntity stamp();
 
     default int pathNid() {

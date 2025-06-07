@@ -223,8 +223,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
 
                 if (latestDescription.isPresent()) {
                     for (SemanticEntityVersion descriptionVersion : latestDescription.versionList()) {
-                        PatternEntity<PatternEntityVersion> patternEntity = descriptionVersion.pattern();
-                        PatternEntityVersion patternEntityVersion = stampCalculator.latest(patternEntity).get();
+                        PatternEntityVersion patternEntityVersion = stampCalculator.latestPatternEntityVersion(descriptionVersion.pattern()).get();
                         int languageIndex = patternEntityVersion.indexForMeaning(TinkarTerm.LANGUAGE_CONCEPT_NID_FOR_DESCRIPTION);
                         Object languageObject = descriptionVersion.fieldValues().get(languageIndex);
                         int descriptionTypeIndex = patternEntityVersion.indexForMeaning(TinkarTerm.DESCRIPTION_TYPE);
@@ -345,8 +344,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
 
     private String extractText(Latest<SemanticEntityVersion> latestDescription) {
         SemanticEntityVersion descriptionVersion = latestDescription.get();
-        PatternEntity<PatternEntityVersion> pattern = descriptionVersion.pattern();
-        PatternEntityVersion patternVersion = stampCalculator.latest(pattern).get();
+        PatternEntityVersion patternVersion = stampCalculator.latestPatternEntityVersion(descriptionVersion.pattern()).get();
         String descriptionText = (String) descriptionVersion.fieldValues().get(patternVersion.indexForMeaning(TinkarTerm.TEXT_FOR_DESCRIPTION));
         return descriptionText;
     }

@@ -27,7 +27,6 @@ import dev.ikm.tinkar.common.util.broadcast.SimpleBroadcaster;
 import dev.ikm.tinkar.common.util.broadcast.Subscriber;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.component.Chronology;
-import dev.ikm.tinkar.component.Stamp;
 import dev.ikm.tinkar.component.Version;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.ConceptRecord;
@@ -360,28 +359,6 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
             return Optional.empty();
         }
         return Optional.of((T) entity);
-    }
-
-    //TODO-aks8m:
-    // This seems to be counter intuitive when implementing protobuf transforms, or at least not straightforward when
-    // implementing. Suggest we refactor to just use Entity. The use of chronology seems to not be well conveyed, but
-    // only understood because I've been working with other versions of this code.
-    // KEC: the use of chronology was to make it transparent to put a DTO vs an entity. If we eliminate DTOs,
-    // then we can revise and potentially eliminate.
-    @Override
-    public <T extends Chronology<V>, V extends Version> void putChronology(T chronology) {
-        if (chronology instanceof Entity entity) {
-            putEntity(entity);
-        } else {
-            putEntity(EntityRecordFactory.make((Chronology<Version>) chronology));
-            for (Version version : chronology.versions()) {
-                Stamp stamp = version.stamp();
-                int nid = PrimitiveData.get().nidForUuids(stamp.publicId().asUuidArray());
-                if (PrimitiveData.get().getBytes(nid) == null) {
-                    putEntity(EntityRecordFactory.make(stamp));
-                }
-            }
-        }
     }
 
     @AutoService(CachingService.class)

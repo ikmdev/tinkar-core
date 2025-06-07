@@ -322,40 +322,6 @@ public class EntityRecordFactory {
         }
     }
 
-    public static <T extends Entity<V>, V extends EntityVersion> T make(Chronology<Version> chronology) {
-        int nid = Entity.nid(chronology.publicId());
-        ImmutableList<UUID> componentUuids = chronology.publicId().asUuidList();
-        UUID firstUuid = componentUuids.get(0);
-
-        long mostSignificantBits = firstUuid.getMostSignificantBits();
-        long leastSignificantBits = firstUuid.getLeastSignificantBits();
-        long[] additionalUuidLongs = processAdditionalUuids(componentUuids);
-        RecordListBuilder<? extends EntityVersion> versions = RecordListBuilder.make();
-        Entity<? extends EntityVersion> entity = switch (chronology) {
-            case ConceptChronology conceptChronology -> new ConceptRecord(mostSignificantBits, leastSignificantBits,
-                    additionalUuidLongs, nid, (ImmutableList<ConceptVersionRecord>) versions);
-
-            case PatternChronology patternChronology -> new PatternRecord(mostSignificantBits, leastSignificantBits,
-                    additionalUuidLongs, nid, (ImmutableList<PatternVersionRecord>) versions);
-
-            case SemanticChronology semanticChronology -> new SemanticRecord(mostSignificantBits, leastSignificantBits,
-                    additionalUuidLongs, nid,
-                    PrimitiveData.nid(semanticChronology.pattern().publicId()),
-                    PrimitiveData.nid(semanticChronology.referencedComponent().publicId()),
-                    (ImmutableList<SemanticVersionRecord>) versions);
-
-            case Stamp stamp -> new StampRecord(mostSignificantBits, leastSignificantBits,
-                    additionalUuidLongs, nid, (ImmutableList<StampVersionRecord>) versions);
-
-            default -> throw new IllegalStateException("Unexpected value: " + chronology);
-        };
-        for (Version version : chronology.versions()) {
-            versions.add(makeVersion(version, entity));
-        }
-        versions.build();
-        return (T) entity;
-    }
-
     private static long[] processAdditionalUuids(ImmutableList<UUID> componentUuids) {
         if (componentUuids.size() > 1) {
             long[] additionalUuidLongs = new long[(componentUuids.size() - 1) * 2];
@@ -367,22 +333,6 @@ public class EntityRecordFactory {
             return additionalUuidLongs;
         }
         return null;
-    }
-
-    private static <V extends EntityVersion> V makeVersion(Version version, Entity<? extends EntityVersion> entity) {
-        return (V) switch (version) {
-            case ConceptVersion conceptVersion -> new ConceptVersionRecord((ConceptRecord) entity, conceptVersion);
-            case PatternVersion patternVersion -> PatternVersionRecord.make((PatternRecord) entity, patternVersion);
-            case SemanticVersion semanticVersion -> new SemanticVersionRecord((SemanticRecord) entity, semanticVersion);
-            case Stamp stamp -> {
-                if (entity instanceof StampRecord stampRecord) {
-                    yield new StampVersionRecord(stampRecord, stamp);
-                }
-                throw new IllegalStateException("Stamp version for an entity of type: " + entity.getClass().getName());
-            }
-
-            default -> throw new IllegalStateException("Unexpected value: " + version);
-        };
     }
 
     public static void collectUuids(byte[] data, ConcurrentHashMap<Integer, ConcurrentHashSet<Integer>> patternElementNidsMap,

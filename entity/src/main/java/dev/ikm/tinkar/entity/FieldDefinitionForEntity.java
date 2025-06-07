@@ -16,6 +16,9 @@
 package dev.ikm.tinkar.entity;
 
 import dev.ikm.tinkar.component.FieldDefinition;
+import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.PatternFacade;
 
 public interface FieldDefinitionForEntity extends FieldDefinition {
 
@@ -40,8 +43,8 @@ public interface FieldDefinitionForEntity extends FieldDefinition {
      *
      * @return Concept designating the purpose of the defined field.
      */
-    default ConceptEntity purpose() {
-        return Entity.getFast(purposeNid());
+    default ConceptFacade purpose() {
+        return EntityProxy.Concept.make(purposeNid());
     }
 
     int purposeNid();
@@ -68,4 +71,12 @@ public interface FieldDefinitionForEntity extends FieldDefinition {
      * @return field index
      */
     int indexInPattern();
+
+    int patternNid();
+
+    default PatternFacade pattern() {
+        return EntityProxy.Pattern.make(patternNid());
+    }
+
+    int patternVersionStampNid();
 }

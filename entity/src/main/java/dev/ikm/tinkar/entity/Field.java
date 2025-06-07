@@ -15,13 +15,10 @@
  */
 package dev.ikm.tinkar.entity;
 
-import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.component.FieldDefinition;
 
-public interface Field<DT> extends FieldDefinition, Attribute<DT> {
-    default FieldDataType fieldDataType() {
-        return attributeDataType();
-    }
+public interface Field<DT> extends FieldDefinition {
 
+    DT value();
 
 }

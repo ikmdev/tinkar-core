@@ -38,7 +38,7 @@ public interface Entity<T extends EntityVersion>
         extends Chronology<T>,
         EntityFacade,
         IdentifierData {
-
+    // TODO: Make this and related interface sealed, but add ObservableEntity (or similarly named) as a non-sealed interface interface for extension
     Logger LOG = LoggerFactory.getLogger(Entity.class);
 
     static int nid(Component component) {

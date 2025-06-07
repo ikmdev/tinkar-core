@@ -16,22 +16,10 @@
 package dev.ikm.tinkar.entity;
 
 import dev.ikm.tinkar.component.*;
+import dev.ikm.tinkar.schema.StampChronology;
 import io.activej.bytebuf.ByteBuf;
 
 public class EntityFactory {
-
-    public static Entity make(Chronology chronology) {
-        if (chronology instanceof ConceptChronology conceptChronology) {
-            return EntityRecordFactory.make(conceptChronology);
-        } else if (chronology instanceof SemanticChronology semanticChronology) {
-            return EntityRecordFactory.make(semanticChronology);
-        } else if (chronology instanceof PatternChronology patternChronology) {
-            return EntityRecordFactory.make(patternChronology);
-        } else if (chronology instanceof Stamp stamp) {
-            return EntityRecordFactory.make(stamp);
-        }
-        throw new UnsupportedOperationException("Can't convert: " + chronology);
-    }
 
     public static <T extends Entity<V>, V extends EntityVersion> T make(byte[] data) {
         // TODO change to use DecoderInput instead of ByteBuf directly.

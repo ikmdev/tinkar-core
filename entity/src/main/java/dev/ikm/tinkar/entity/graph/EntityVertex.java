@@ -141,9 +141,8 @@ public class EntityVertex implements Vertex, VertexId {
                 return (T) object;
             }
             return (T) EntityProxy.Pattern.make(pattern.publicId());
-        } else if (object instanceof Stamp) {
-            Stamp stampValue = (Stamp) object;
-            return (T) createStampRecord(stampValue);
+        } else if (object instanceof StampEntity stampEntity) {
+            return (T) EntityProxy.Stamp.make(stampEntity);
         } else if (object instanceof Double) {
             object = ((Double) object).floatValue();
         } else if (object instanceof Integer) {
@@ -154,7 +153,7 @@ public class EntityVertex implements Vertex, VertexId {
         return (T) object;
     }
 
-    private static StampEntity<? extends StampEntityVersion> createStampRecord(Stamp stamp) {
+    private static StampEntity<? extends StampEntityVersion> createStampRecord(StampEntity stamp) {
         if(stamp.publicId() == null){
             throw new RuntimeException("Exception thrown, STAMP Public id is null.");
         }

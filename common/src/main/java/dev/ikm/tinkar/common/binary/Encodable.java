@@ -23,40 +23,41 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 
-
 /**
  * Template for marshalable class implementations classes
  * <p>
  * <p>
- * private static final int marshalVersion = 1;
- * <p>
- * // Using a static method rather than a constructor eliminates the need for
- * // a readResolve method, but allows the implementation to decide how
- * // to handle special cases.
  *
- * @Decoder public static decode(DecoderInput in) {
- * try {
- * int objectMarshalVersion = in.readInt();
- * switch (objectMarshalVersion) {
- * case marshalVersion:
- * throw new UnsupportedOperationException();
- * break;
- * default:
- * throw new UnsupportedOperationException("Unsupported version: " + objectMarshalVersion);
- * } catch (IOException ex) {
- * throw new UncheckedIOException(ex);
- * }
- * }
- * @Override
- * @Encoder public void encode(EncoderOutput out) {
- * try {
- * out.writeInt(marshalVersion);
- * throw new UnsupportedOperationException();
- * } catch (IOException ex) {
- * throw new UncheckedIOException(ex);
- * }
- * }
- */
+  <pre><code>
+
+ &#64;Decoder
+ public static ClassBeingDecoded decode(DecoderInput in) {
+    switch (Encodable.checkVersion(in)) {
+        // if special handling for particular versions, add case condition.
+        default -> {
+            // decode the input
+            throw new UnsupportedOperationException("Implement decoding");
+        }
+    }
+ }
+
+
+ &#64;Override
+ &#64;Encoder
+ public void encode(EncoderOutput out) {
+    try {
+        // Creation of the EncoderOutput class will handle writing version
+        // Writing the class name, if necessary, happens before this call.
+        // Just write the class data here.
+        throw new UnsupportedOperationException("Implement encoding");
+    } catch (IOException ex) {
+        throw new UncheckedIOException(ex);
+    }
+ }
+
+</code></pre>
+ *
+  */
 public interface Encodable {
 
     /**

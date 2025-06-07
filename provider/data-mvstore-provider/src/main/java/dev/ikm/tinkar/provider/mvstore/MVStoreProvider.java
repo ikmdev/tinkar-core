@@ -21,8 +21,6 @@ import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.PatternEntity;
-import dev.ikm.tinkar.provider.mvstore.internal.Get;
-import dev.ikm.tinkar.provider.mvstore.internal.Put;
 import dev.ikm.tinkar.provider.search.Indexer;
 import dev.ikm.tinkar.provider.search.Searcher;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
@@ -102,9 +100,6 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         } else {
             this.nextNid = new AtomicInteger(PrimitiveDataService.FIRST_NID);
         }
-
-        Get.singleton = this;
-        Put.singleton = this;
 
         MVStoreProvider.singleton = this;
         stopwatch.stop();

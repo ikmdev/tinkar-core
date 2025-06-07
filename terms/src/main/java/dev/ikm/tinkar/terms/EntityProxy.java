@@ -19,6 +19,7 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.component.Component;
+import dev.ikm.tinkar.component.Concept;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.slf4j.Logger;
@@ -235,6 +236,10 @@ public class EntityProxy implements EntityFacade, PublicId {
             return new Pattern(nid);
         }
 
+        public static Pattern make(PatternFacade facade) {
+            return new Pattern(facade.nid());
+        }
+
         public static Pattern make(String name, UUID... uuids) {
             return new Pattern(name, uuids);
         }
@@ -268,10 +273,51 @@ public class EntityProxy implements EntityFacade, PublicId {
             return new Semantic(nid);
         }
 
+        public static Semantic make(SemanticFacade semanticFacade) {
+            return new Semantic(semanticFacade.nid());
+        }
+
         public static Semantic make(String name, UUID... uuids) {
             return new Semantic(name, uuids);
         }
     }
+
+    public static class Stamp extends EntityProxy implements StampFacade {
+
+        private Stamp(String name, UUID... uuids) {
+            super(name, uuids);
+        }
+
+        private Stamp(int nid) {
+            super(nid);
+        }
+
+        private Stamp(String name, PublicId publicId) {
+            super(name, publicId);
+        }
+
+        public static Stamp make(String name, PublicId publicId) {
+            return new Stamp(name, publicId);
+        }
+
+        public static Stamp make(PublicId publicId) {
+            return new Stamp(null, publicId);
+        }
+
+        public static Stamp make(int nid) {
+            return new Stamp(nid);
+        }
+
+        public static Stamp make(StampFacade stampFacade) {
+            return new Stamp(stampFacade.nid());
+        }
+
+        public static Stamp make(String name, UUID... uuids) {
+            return new Stamp(name, uuids);
+        }
+
+    }
+
 
 
 }

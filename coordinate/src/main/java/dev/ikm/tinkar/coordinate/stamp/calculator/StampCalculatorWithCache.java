@@ -296,7 +296,7 @@ public class StampCalculatorWithCache implements StampCalculator {
 
         chronicle.versions()
                 .stream()
-                .filter((newVersionToTest) -> (newVersionToTest.stamp().time() > Long.MIN_VALUE))
+                .filter((newVersionToTest) -> (newVersionToTest.stamp() != null && newVersionToTest.stamp().time() > Long.MIN_VALUE))
                 .filter((newVersionToTest) -> (onRoute(newVersionToTest.stamp())))
                 .forEach((newVersionToTest) -> {
                     if (latestVersionSet.isEmpty()) {

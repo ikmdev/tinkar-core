@@ -18,6 +18,9 @@ package dev.ikm.tinkar.entity;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
 import dev.ikm.tinkar.component.FieldDefinition;
+import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.PatternFacade;
 import io.soabase.recordbuilder.core.RecordBuilder;
 
 import java.util.Objects;
@@ -31,7 +34,7 @@ import java.util.Objects;
 @RecordBuilder
 public record FieldRecord<DT>(DT value, int nid, int versionStampNid,
                               FieldDefinitionForEntity fieldDefinition)
-        implements FieldDefinition, Field<DT>,
+        implements FieldDefinitionForEntity, Field<DT>,
                    ImmutableField<DT>, FieldRecordBuilder.With {
 
 
@@ -41,9 +44,26 @@ public record FieldRecord<DT>(DT value, int nid, int versionStampNid,
         Objects.requireNonNull(fieldDefinition);
     }
 
-    @Override
     public FieldRecord<DT> with(DT value) {
         return withValue(value);
+    }
+
+    @Override
+    public int patternNid() {
+        return fieldDefinition.patternNid();
+    }
+
+    public PatternFacade pattern() {
+        return EntityProxy.Pattern.make(patternNid());
+    }
+
+    public ConceptFacade purpose() {
+        return EntityProxy.Concept.make(purposeNid());
+    }
+
+    @Override
+    public int patternVersionStampNid() {
+        return fieldDefinition.patternVersionStampNid();
     }
 
     @Override
@@ -61,7 +81,7 @@ public record FieldRecord<DT>(DT value, int nid, int versionStampNid,
         return fieldDefinition.dataTypeNid();
     }
 
-    public int fieldIndex() {
+    public int indexInPattern() {
         return fieldDefinition.indexInPattern();
     }
 
@@ -70,7 +90,7 @@ public record FieldRecord<DT>(DT value, int nid, int versionStampNid,
         return "FieldRecord{value: " + value +
                 ", for entity: " + PrimitiveData.textWithNid(nid) +
                 " of version: " + Entity.getStamp(versionStampNid).lastVersion().describe() +
-                " with index: " + fieldIndex() +
+                " with index: " + indexInPattern() +
                 ", defined as " + fieldDefinition +
                 '}';
     }

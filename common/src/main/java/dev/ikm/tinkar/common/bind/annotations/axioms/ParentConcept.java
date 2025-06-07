@@ -40,7 +40,7 @@ import java.lang.annotation.*;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
+@Target({ElementType.FIELD, ElementType.TYPE})
 @Repeatable(ParentConcepts.class)
 public @interface ParentConcept {
     /**
