@@ -202,10 +202,11 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
     private void startService() {
         Thread.ofVirtual().name("ChangeSetWriterProvider-ServiceThread").start(() -> {
             Semaphore changeSetWriter = new Semaphore(1);
-            changeSetWriter.acquireUninterruptibly();
-            threadSemaphoreMap.put(Thread.currentThread(), changeSetWriter);
-            threadContinueMap.put(Thread.currentThread(), Boolean.TRUE);
             try {
+                changeSetWriter.acquireUninterruptibly();
+                threadSemaphoreMap.put(Thread.currentThread(), changeSetWriter);
+                threadContinueMap.put(Thread.currentThread(), Boolean.TRUE);
+
                 final MutableMultimap<Integer, Entity<EntityVersion>> uncommittedEntitiesByStamp = Multimaps.mutable.set.empty();
                 serviceThread.set(Thread.currentThread());
                 state.set(STATE.RUNNING);
