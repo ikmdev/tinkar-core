@@ -224,8 +224,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                     // Create a single entry for all changes in this zip file
                     final ZipEntry zipEntry = new ZipEntry("Entities");
                     zos.putNextEntry(zipEntry);
-                    while (threadStateMap.get(Thread.currentThread()) == STATE.RUNNING) {
-                        try {
+                    try {
+                        while (threadStateMap.get(Thread.currentThread()) == STATE.RUNNING) {
                             final Entity<EntityVersion> entityToWrite = this.entitiesToWrite.poll(250, TimeUnit.MILLISECONDS);
                             if (entityToWrite != null) {
                                 if (entityToWrite.uncommitted()) {
@@ -243,8 +243,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                     }
                                 }
                             }
-                        } catch (InterruptedException e) {
                         }
+                    } catch (InterruptedException e) {
                     }
                     // Write any uncommitted entities.
                     uncommittedEntitiesByStamp.forEachValue(entityToWrite ->
