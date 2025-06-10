@@ -80,11 +80,9 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
         FAILED
     }
 
-    final AtomicReference<STATE> state = new AtomicReference<>(STATE.INITIALIZING);
     final AtomicReference<Thread> serviceThread = new AtomicReference<>();
     private final Map<Thread, Semaphore> threadSemaphoreMap = new ConcurrentHashMap<>();
-    private final Map<Thread, Boolean> threadContinueMap = new ConcurrentHashMap<>();
-
+    private final Map<Thread, STATE> threadStateMap = new ConcurrentHashMap<>();
 
     /**
      * Initialization-on-demand holder idiom:
@@ -205,11 +203,9 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
             try {
                 changeSetWriter.acquireUninterruptibly();
                 threadSemaphoreMap.put(Thread.currentThread(), changeSetWriter);
-                threadContinueMap.put(Thread.currentThread(), Boolean.TRUE);
-
                 final MutableMultimap<Integer, Entity<EntityVersion>> uncommittedEntitiesByStamp = Multimaps.mutable.set.empty();
                 serviceThread.set(Thread.currentThread());
-                state.set(STATE.RUNNING);
+                threadStateMap.put(Thread.currentThread(), STATE.RUNNING);
                 final LongAdder entityCount = new LongAdder();
                 final LongAdder conceptsCount = new LongAdder();
                 final LongAdder semanticsCount = new LongAdder();
@@ -228,7 +224,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                     // Create a single entry for all changes in this zip file
                     final ZipEntry zipEntry = new ZipEntry("Entities");
                     zos.putNextEntry(zipEntry);
-                    while (state.get() == STATE.RUNNING && threadContinueMap.get(Thread.currentThread())) {
+                    while (threadStateMap.get(Thread.currentThread()) == STATE.RUNNING) {
                         try {
                             final Entity<EntityVersion> entityToWrite = this.entitiesToWrite.poll(250, TimeUnit.MILLISECONDS);
                             if (entityToWrite != null) {
@@ -276,7 +272,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                     zos.finish();
 
                 } catch (IOException e) {
-                    state.set(STATE.FAILED);
+                    threadStateMap.put(Thread.currentThread(), STATE.FAILED);
                     throw new RuntimeException(e);
                 } finally {
                     if (zipfile.exists()) {
@@ -286,8 +282,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                     }
                 }
             } finally {
-                threadContinueMap.remove(Thread.currentThread());
                 changeSetWriter.release();
+                threadStateMap.remove(Thread.currentThread());
             }
         });
 
@@ -428,19 +424,19 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
             Thread interruptedThread = null;
             switch (serviceThread.get()) {
                 case Thread thread -> {
-                    threadContinueMap.put(thread, Boolean.FALSE);
                     interruptedThread = thread;
                 }
                 case null -> {
                 }
             }
+            if (interruptedThread != null) {
+                threadStateMap.put(interruptedThread, (restart?STATE.ROTATING:STATE.STOPPED));
+            }
             if (restart) {
-                state.set(STATE.ROTATING);
                 // start a new thread with a new file
                 startService();
-            } else {
-                state.set(STATE.STOPPED);
             }
+
             if (interruptedThread != null) {
                 Semaphore changeSetWriter = threadSemaphoreMap.remove(interruptedThread);
                 if (changeSetWriter != null) {
