@@ -665,7 +665,6 @@ public class EntityRecordFactory {
         return array;
     }
 
-
     public static Object externalToInternalObject(Object externalObject) {
         return switch (externalObject) {
             // no conversion
@@ -677,6 +676,7 @@ public class EntityRecordFactory {
             case Instant instantField -> instantField;
             case PlanarPoint planarPointField -> planarPointField;
             case SpatialPoint spatialPointField -> spatialPointField;
+            case BigDecimal bigDecimalField -> bigDecimalField;
             // conversions
             case Concept conceptField -> EntityProxy.Concept.make(Entity.nid(conceptField));
             case Semantic semanticField -> EntityProxy.Semantic.make(Entity.nid(semanticField));

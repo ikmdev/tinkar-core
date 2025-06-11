@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.coordinate.navigation.calculator;
 
 import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
+import dev.ikm.tinkar.common.id.IntIdCollection;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
@@ -270,7 +271,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
                         Latest<SemanticEntityVersion> latestNavigationSemantic = stampCalculator().latest(semantics[0]);
                         latestNavigationSemantic.ifPresent(semanticEntityVersion -> {
                             SemanticEntityVersion navigationSemantic = latestNavigationSemantic.get();
-                            IntIdSet intIdSet = (IntIdSet) navigationSemantic.fieldValues().get(indexForMeaning);
+                            IntIdCollection intIdSet = (IntIdCollection) navigationSemantic.fieldValues().get(indexForMeaning);
                             // Filter here by allowed vertex state...
                             if (versioned && states != StateSet.ACTIVE_INACTIVE_AND_WITHDRAWN) {
                                 intIdSet.forEach(nid ->
