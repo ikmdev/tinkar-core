@@ -80,7 +80,6 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
         FAILED
     }
 
-    //final AtomicReference<STATE> state = new AtomicReference<>(STATE.INITIALIZING);
     final AtomicReference<Thread> serviceThread = new AtomicReference<>();
     final Semaphore changeSetWriters = new Semaphore(ALLOWED_WRITER_COUNT);
     final Map<Thread, STATE> threadStateMap = new ConcurrentHashMap<>();
@@ -285,6 +284,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                 threadStateMap.remove(Thread.currentThread());
             }
         });
+
     }
 
     /**
