@@ -399,6 +399,10 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
     @Override
     public void shutdown() {
         LOG.info("Start shutdown of ChangeSetWriterProvider");
+        if (threadStateMap.isEmpty()) {
+            // prevent multiple calls to shutdown causing a thread hang
+            return;
+        }
         checkpoint(false);
         changeSetWriters.acquireUninterruptibly(ALLOWED_WRITER_COUNT);
         LOG.info("Finish shutdown of ChangeSetWriterProvider");
