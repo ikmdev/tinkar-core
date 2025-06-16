@@ -63,12 +63,14 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
     private final EntityAggregator entityAggregator;
 
 
-    private ExportEntitiesToProtobufFile(File file, EntityAggregator entityAggregator) {
+    public ExportEntitiesToProtobufFile(File file, EntityAggregator entityAggregator) {
         super(false, true);
         this.protobufFile = file;
         LOG.info("Exporting entities to: " + file);
         this.entityAggregator = entityAggregator;
-        updateTitle("Full Export to Protobuf");
+        if (getTitle()==null || getTitle().isBlank()) {
+            updateTitle("Export to Protobuf");
+        }
     }
 
     public ExportEntitiesToProtobufFile(File file) {
