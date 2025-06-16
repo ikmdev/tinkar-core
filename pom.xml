@@ -87,8 +87,6 @@
         <lucene-highlighter.version>9.12.1</lucene-highlighter.version>
         <lucene-suggest.version>9.12.1</lucene-suggest.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <slf4j.version>2.0.17</slf4j.version>
-        <log4j.version>3.0.0-alpha1</log4j.version>
         <testng.version>7.4.0</testng.version>
         <snomedct-data.version>2023.09.01</snomedct-data.version>
         <tinkar-starter-data.version>1.1.2</tinkar-starter-data.version>
@@ -320,18 +318,6 @@
                 <groupId>com.fasterxml.jackson.datatype</groupId>
                 <artifactId>jackson-datatype-jsr310</artifactId>
                 <version>${fasterxml-jackson-core.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>${slf4j.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-slf4j2-impl</artifactId>
-                <version>${log4j.version}</version>
             </dependency>
 
             <dependency>

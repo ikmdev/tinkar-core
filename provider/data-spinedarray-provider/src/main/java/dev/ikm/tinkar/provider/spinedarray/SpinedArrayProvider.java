@@ -134,6 +134,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
         name = configuredRoot.getName();
         configuredRoot.mkdirs();
+        LOG.info("Datastore root: " + configuredRoot.getParentFile().getParentFile().toPath().relativize(configuredRoot.toPath()));
         Path indexPath = Path.of(configuredRoot.getPath(),"lucene");
         boolean indexExists = Files.exists(indexPath);
         Indexer indexer;
