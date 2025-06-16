@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration;
 
+import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.CachingService;
@@ -191,6 +192,12 @@ public class DataIntegrity {
                         isNullReferences.get();
                 } else if (fieldVal instanceof IntIdSet nidSet) {
                     nidSet.forEach((nid) -> {
+                        if (referencedEntityIsNull(nid)) {
+                            isNullReferences.set(true);
+                        }
+                    });
+                } else if (fieldVal instanceof IntIdList nidList) {
+                    nidList.forEach((nid) -> {
                         if (referencedEntityIsNull(nid)) {
                             isNullReferences.set(true);
                         }
