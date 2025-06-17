@@ -102,7 +102,10 @@ public class PrimitiveData {
         for (SaveState state : statesToSave) {
             try {
                 if (wait) {
-                    futures.add(state.save());
+                    CompletableFuture<Void> savedState = state.save();
+                    if (savedState != null) {
+                        futures.add(savedState);
+                    }
                 } else {
                     state.save();
                 }
