@@ -95,15 +95,20 @@ public class PrimitiveData {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         for (SaveState state : statesToSave) {
             try {
-                futures.add(state.save());
+                CompletableFuture<Void> savedState = state.save();
+                if (savedState != null) {
+                    futures.add(savedState);
+                }
             } catch (Exception e) {
                 AlertStreams.getRoot().dispatch(AlertObject.makeError(e));
             }
         }
-        try {
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-        } catch (Exception e) {
-            AlertStreams.getRoot().dispatch(AlertObject.makeError(e));
+        if (!futures.isEmpty()) {
+            try {
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            } catch (Exception e) {
+                AlertStreams.getRoot().dispatch(AlertObject.makeError(e));
+            }
         }
     }
 
