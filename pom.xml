@@ -5,13 +5,13 @@
     <parent>
         <groupId>dev.ikm.build</groupId>
         <artifactId>java-parent</artifactId>
-        <version>1.59.0</version>  
+        <version>1.61.0</version>  
         <relativePath/>
     </parent>
 
     <groupId>dev.ikm.tinkar</groupId>
     <artifactId>tinkar-core</artifactId>
-    <version>1.104.0-SNAPSHOT</version>
+    <version>1.109.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>IKM tinkar core</name>
@@ -87,8 +87,6 @@
         <lucene-highlighter.version>9.12.1</lucene-highlighter.version>
         <lucene-suggest.version>9.12.1</lucene-suggest.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <slf4j.version>2.0.17</slf4j.version>
-        <log4j.version>3.0.0-alpha1</log4j.version>
         <testng.version>7.4.0</testng.version>
         <snomedct-data.version>2023.09.01</snomedct-data.version>
         <tinkar-starter-data.version>1.1.2</tinkar-starter-data.version>
@@ -100,7 +98,7 @@
         <sonar.language>java</sonar.language>
         <susel.version>0.1.2</susel.version>
         <maven-jxr-plugin.version>3.6.0</maven-jxr-plugin.version>
-        <tinkar-schema.version>1.39.0</tinkar-schema.version>
+        <tinkar-schema.version>1.40.0</tinkar-schema.version>
         <tinkar-bindings.version>1.4.0</tinkar-bindings.version>
         <udaychandra-susel.version>0.1.2</udaychandra-susel.version>
         <common-java5.version>3.5.3</common-java5.version>
@@ -117,7 +115,7 @@
 		<roaringbitmap.version>1.4.0</roaringbitmap.version>
 
 		<hybrid-reasoner.version>1.0.15</hybrid-reasoner.version>
-		<ikm-reasoner.version>0.38.1</ikm-reasoner.version>
+		<ikm-reasoner.version>0.39.0</ikm-reasoner.version>
 		<owlapi.version>4.8.3</owlapi.version>
     </properties>
 
@@ -323,18 +321,6 @@
             </dependency>
 
             <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>${slf4j.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-slf4j2-impl</artifactId>
-                <version>${log4j.version}</version>
-            </dependency>
-
-            <dependency>
                 <groupId>io.activej</groupId>
                 <artifactId>activej-launchers-http</artifactId>
                 <version>${activej-launchers.version}</version>
@@ -448,7 +434,12 @@
 				<artifactId>elk-snomed-owl-el</artifactId>
 				<version>${ikm-reasoner.version}</version>
 			</dependency>
-        </dependencies>
+			<dependency>
+				<groupId>dev.ikm.elk</groupId>
+				<artifactId>elk-snomed-test</artifactId>
+				<version>${ikm-reasoner.version}</version>
+			</dependency>
+		</dependencies>
     </dependencyManagement>
 	<!-- Cross project dependencies -->
     <dependencies>

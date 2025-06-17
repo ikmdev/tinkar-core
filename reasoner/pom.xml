@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>dev.ikm.tinkar</groupId>
 		<artifactId>tinkar-core</artifactId>
-		<version>1.104.0-SNAPSHOT</version>
+		<version>1.109.0-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>reasoner</artifactId>
@@ -16,6 +16,7 @@
 	<modules>
 		<module>reasoner-elk-owl</module>
 		<module>reasoner-elk-snomed</module>
+		<module>reasoner-elk-snomed-test</module>
 		<module>reasoner-hybrid</module>
 		<module>reasoner-service</module>
 	</modules>
@@ -25,6 +26,7 @@
 		<skipITs>true</skipITs>
 		<snomed-test-data.groupid>dev.ikm.snomed</snomed-test-data.groupid>
 		<snomed-test-data.version>0.1.0</snomed-test-data.version>
+		<tinkar-test-data.version>2025.06.02</tinkar-test-data.version>
 		<!-- other plugins -->
 		<tidy-maven-plugin.version>1.4.0</tidy-maven-plugin.version>
 		<!-- <versions-maven-plugin.version>2.15.0</versions-maven-plugin.version> -->
@@ -49,13 +51,6 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
-	<dependencies>
-		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-slf4j2-impl</artifactId>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
 
 	<build>
 		<pluginManagement>
