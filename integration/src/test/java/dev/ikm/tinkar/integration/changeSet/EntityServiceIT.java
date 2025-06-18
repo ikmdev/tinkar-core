@@ -62,7 +62,7 @@ class EntityServiceIT {
         assertEquals(316, summary.conceptsCount());
         assertEquals(3223, summary.semanticsCount());
         assertEquals(18, summary.patternsCount());
-        assertEquals(2, summary.stampsCount());
+        assertEquals(1, summary.stampsCount());
     }
 
 }
