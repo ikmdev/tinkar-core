@@ -25,10 +25,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.ToIntFunction;
 
@@ -90,9 +92,20 @@ public class PrimitiveData {
         if (controllerSingleton != null) {
             controllerSingleton.save();
         }
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
         for (SaveState state : statesToSave) {
             try {
-                state.save();
+                CompletableFuture<Void> savedState = state.save();
+                if (savedState != null) {
+                    futures.add(savedState);
+                }
+            } catch (Exception e) {
+                AlertStreams.getRoot().dispatch(AlertObject.makeError(e));
+            }
+        }
+        if (!futures.isEmpty()) {
+            try {
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
             } catch (Exception e) {
                 AlertStreams.getRoot().dispatch(AlertObject.makeError(e));
             }
