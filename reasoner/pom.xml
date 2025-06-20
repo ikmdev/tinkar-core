@@ -154,7 +154,7 @@
 					<forkCount>1</forkCount>
 					<reuseForks>false</reuseForks>
 					<argLine>@{surefireArgLine}</argLine> <!-- Sets the VM argument line used when unit tests are run.
-					 Since the Version 2.17 using an alternate syntax @{} for these properties,
+					 Since version 2.17 use @{} syntax for these properties,
 					 https://maven.apache.org/surefire/maven-surefire-plugin/faq.html#late-property-evaluation -->
 				</configuration>
 			</plugin>
@@ -167,7 +167,7 @@
 					<forkCount>1</forkCount>
 					<reuseForks>false</reuseForks>
 					<argLine>@{failsafeArgLine}</argLine> <!-- Sets the VM argument line used when integration tests are run.
-					 Since the Version 2.17 using an alternate syntax @{} for these properties,
+					 Since version 2.17 use @{} syntax for these properties,
 					 https://maven.apache.org/surefire/maven-surefire-plugin/faq.html#late-property-evaluation-->
 				</configuration>
 				<executions>
