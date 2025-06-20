@@ -88,6 +88,35 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>integration</artifactId>
         </dependency>
+
+        <!-- Reasoner Submodules (Start) -->
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>reasoner-elk-owl</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>reasoner-elk-snomed</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>reasoner-elk-snomed-test</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>reasoner-hybrid</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>reasoner-service</artifactId>
+        </dependency>
+
+        <!-- Reasoner Submodules (End) -->
     </dependencies>
 
     <build>

@@ -216,6 +216,40 @@
 				<version>${project.version}</version>
 			</dependency>
 
+            <!-- Reasoner Submodules (Start) -->
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>reasoner-elk-owl</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>reasoner-elk-snomed</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>reasoner-elk-snomed-test</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>reasoner-hybrid</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>reasoner-service</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Reasoner Submodules (End) -->
+
 			<dependency>
                 <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>search-provider</artifactId>
