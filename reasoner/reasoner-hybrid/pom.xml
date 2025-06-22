@@ -9,6 +9,7 @@
 	</parent>
 
 	<artifactId>reasoner-hybrid</artifactId>
+	<name>Reasoner Hybrid</name>
 
 	<dependencies>
 		<dependency>

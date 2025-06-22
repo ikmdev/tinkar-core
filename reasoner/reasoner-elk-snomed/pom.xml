@@ -9,6 +9,7 @@
 	</parent>
 
 	<artifactId>reasoner-elk-snomed</artifactId>
+	<name>Reasoner Elk Snomed</name>
 
 	<properties>
 		<failsafeArgLine>--enable-preview -Xmx12G</failsafeArgLine>

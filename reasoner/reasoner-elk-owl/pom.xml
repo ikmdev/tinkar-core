@@ -9,6 +9,7 @@
 	</parent>
 
 	<artifactId>reasoner-elk-owl</artifactId>
+	<name>Reasoner Elk Owl</name>
 
 	<dependencies>
 		<dependency>

@@ -9,6 +9,7 @@
 	</parent>
 
 	<artifactId>reasoner-elk-snomed-test</artifactId>
+	<name>Reasoner Elk Snomed Test</name>
 
 	<properties>
 		<failsafeArgLine>
