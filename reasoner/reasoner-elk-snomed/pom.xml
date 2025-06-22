@@ -9,6 +9,7 @@
 	</parent>
 
 	<artifactId>reasoner-elk-snomed</artifactId>
+
 	<name>Reasoner Elk Snomed</name>
 
 	<properties>

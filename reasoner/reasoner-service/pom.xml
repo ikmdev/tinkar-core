@@ -9,6 +9,7 @@
 	</parent>
 
 	<artifactId>reasoner-service</artifactId>
+
 	<name>Reasoner Service</name>
 
 	<dependencies>
