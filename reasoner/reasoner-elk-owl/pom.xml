@@ -10,6 +10,8 @@
 
 	<artifactId>reasoner-elk-owl</artifactId>
 
+	<name>Reasoner Elk Owl</name>
+
 	<dependencies>
 		<dependency>
 			<groupId>${project.groupId}</groupId>

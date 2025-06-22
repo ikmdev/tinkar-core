@@ -10,6 +10,8 @@
 
 	<artifactId>reasoner-elk-snomed-test</artifactId>
 
+	<name>Reasoner Elk Snomed Test</name>
+
 	<properties>
 		<failsafeArgLine>
 			--enable-preview -Xmx12G

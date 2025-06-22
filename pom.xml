@@ -120,7 +120,7 @@
 		<owlapi.version>4.8.3</owlapi.version>
     </properties>
 
-	<!-- All Dependencies and versions used in this project are pre-defined here for use in modules -->
+    <!-- All Dependencies and versions used in this project are pre-defined here for use in modules -->
     <dependencyManagement>
         <dependencies>
 			<!-- Submodules -->
@@ -476,7 +476,7 @@
 			</dependency>
 		</dependencies>
     </dependencyManagement>
-	<!-- Cross project dependencies -->
+    <!-- Cross project dependencies -->
     <dependencies>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -541,7 +541,7 @@
         </plugins>
     </build>
 
-	<!-- for site generation -->
+    <!-- for site generation -->
     <reporting>
         <plugins>
             <plugin>
