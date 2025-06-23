@@ -90,7 +90,7 @@
         <testng.version>7.4.0</testng.version>
         <snomedct-data.version>2023.09.01</snomedct-data.version>
         <tinkar-starter-data.version>1.1.2</tinkar-starter-data.version>
-        <tinkar-example-data.version>1.2.0+1.2.1</tinkar-example-data.version>
+        <tinkar-example-data.version>1.2.0+1.2.2</tinkar-example-data.version>
         <protobuf-java.version>4.30.2-r2</protobuf-java.version>
         <sonar.skip>false</sonar.skip>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml

@@ -48,6 +48,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -90,26 +91,22 @@ class ExportImportIT {
         EntityProxy.Concept COMPONENT_LIST_FIELD_MEANING = EntityProxy.Concept.make(PublicIds.of(UUID.fromString("f0847cd3-2034-43f5-b25f-2bd6e923d228")));
 
         PatternEntityVersion latestPattern = (PatternEntityVersion) Calculators.Stamp.DevelopmentLatest().latest(EXAMPLE_PATTERN_TWO).get();
+        AtomicReference<IntIdSetArray> intIdSet = new AtomicReference<>();
+        AtomicReference<IntIdListArray> intIdList = new AtomicReference<>();
 
         EntityService.get().forEachSemanticForComponentOfPattern(concept.nid(), EXAMPLE_PATTERN_TWO.nid(), semanticEntity -> {
             Latest<SemanticEntityVersion> latestActive = stampCalcActive.latest(semanticEntity);
 
             if (latestActive.isPresent()) {
-//                System.out.println("latestActive.isPresent()");
-//                System.out.println(latestPattern.getFieldWithMeaning(COMPONENT_SET_FIELD_MEANING, latestActive.get()) + "");
-//                System.out.println(latestPattern.getFieldWithMeaning(COMPONENT_LIST_FIELD_MEANING, latestActive.get()) + "");
-
-                IntIdListArray intIdSet = latestPattern.getFieldWithMeaning(COMPONENT_SET_FIELD_MEANING, latestActive.get());
+                intIdSet.set(latestPattern.getFieldWithMeaning(COMPONENT_SET_FIELD_MEANING, latestActive.get()));
                 // Reassign elements
-                int [] tempSetArray = intIdSet.toArray();
+                int [] tempSetArray = intIdSet.get().toArray();
                 tempSetArray [0] = TinkarTerm.ACTIVE_STATE.nid();
-//                System.out.println("newSetArray: "+ tempSetArray +"");
 
-                IntIdListArray intIdList = latestPattern.getFieldWithMeaning(COMPONENT_LIST_FIELD_MEANING, latestActive.get());
+                intIdList.set(latestPattern.getFieldWithMeaning(COMPONENT_LIST_FIELD_MEANING, latestActive.get()));
                 // Reassign elements
-                int [] tempListArray = intIdList.toArray();
+                int [] tempListArray = intIdList.get().toArray();
                 tempListArray [0] = TinkarTerm.ACTIVE_STATE.nid();
-//                System.out.println("newListArray: "+ tempListArray +"");
             }
 
         });
@@ -155,17 +152,13 @@ class ExportImportIT {
             Latest<SemanticEntityVersion> latestActive2 = stampCalcActive.latest(semanticEntity);
 
             if (latestActive2.isPresent()) {
-//                System.out.println("latestActive2.isPresent()");
-//                System.out.println(latestPattern.getFieldWithMeaning(COMPONENT_SET_FIELD_MEANING, latestActive2.get()) + "");
-//                System.out.println(latestPattern.getFieldWithMeaning(COMPONENT_LIST_FIELD_MEANING, latestActive2.get()) + "");
-
-                IntIdListArray intIdSet = latestPattern.getFieldWithMeaning(COMPONENT_SET_FIELD_MEANING, latestActive2.get());
-                // Assert elements
-                int [] tempSetArray2 = intIdSet.toArray();
+                intIdSet.set(latestPattern.getFieldWithMeaning(COMPONENT_SET_FIELD_MEANING, latestActive2.get()));
+                // Reassign elements
+                int [] tempSetArray2 = intIdSet.get().toArray();
                 assertEquals(TinkarTerm.ACTIVE_STATE.nid(), tempSetArray2 [0]);
 
-                IntIdListArray intIdList = latestPattern.getFieldWithMeaning(COMPONENT_LIST_FIELD_MEANING, latestActive2.get());
-                int [] tempListArray2 = intIdList.toArray();
+                intIdList.set(latestPattern.getFieldWithMeaning(COMPONENT_LIST_FIELD_MEANING, latestActive2.get()));
+                int [] tempListArray2 = intIdList.get().toArray();
                 assertEquals(TinkarTerm.ACTIVE_STATE.nid(), tempListArray2 [0]);
 
                 atomicBoolean.set(true);
