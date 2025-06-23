@@ -102,7 +102,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
     private ChangeSetWriterProvider() {
         Optional<File> optionalDataStoreRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT);
         if (optionalDataStoreRoot.isPresent()) {
-            this.changeSetFolder = new File(optionalDataStoreRoot.get(), "changeSets");
+            // TODO: Use Paths and Files classes to simplify code and handle file creation errors
+            this.changeSetFolder = optionalDataStoreRoot.get().toPath().resolve("changeSets", "src", "main", "resources").toFile();
             if (!changeSetFolder.exists()) {
                 changeSetFolder.mkdirs();
             }
