@@ -56,6 +56,7 @@
         <module>reasoner</module>
         <module>integration</module>
         <module>aggregator</module>
+        <module>events</module>
     </modules>
 
     <scm>
@@ -259,6 +260,12 @@
             <dependency>
                 <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>terms</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>events</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
