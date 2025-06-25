@@ -86,7 +86,7 @@ public class TypeAheadSearch {
      *
      * @param   userInput String userInput
      * @param   maxResults int maxResults
-     * @return  List of ConceptFacades
+     * @return  List of EntityFacades
      */
     public List<EntityFacade> typeAheadSuggestions(String userInput, int maxResults) {
         return typeAheadSuggestions(Searcher.defaultNavigationCalculator(), userInput, maxResults);
@@ -98,7 +98,7 @@ public class TypeAheadSearch {
      * @param   navCalc NavigationCalculator navCalc
      * @param   userInput String userInput
      * @param   maxResults int maxResults
-     * @return  List of ConceptFacades
+     * @return  List of EntityFacades
      */
     public List<EntityFacade> typeAheadSuggestions(NavigationCalculator navCalc, String userInput, int maxResults) {
 
