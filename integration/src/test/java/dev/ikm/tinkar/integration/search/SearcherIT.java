@@ -28,7 +28,7 @@ import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.provider.search.Searcher;
 import dev.ikm.tinkar.provider.search.TypeAheadSearch;
-import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -161,8 +161,8 @@ public class SearcherIT {
         var navigationCoordinate = Coordinates.Navigation.inferred().toNavigationCoordinateRecord();
         var navigationCalculator = NavigationCalculatorWithCache.getCalculator(stampCoordinate, Lists.immutable.of(languageCoordinate), navigationCoordinate);
 
-        List<ConceptFacade> concepts = TypeAheadSearch.get().typeAheadSuggestions(navigationCalculator, "r", 50);
-        assertEquals(40, concepts.size());
+        List<EntityFacade> entities = TypeAheadSearch.get().typeAheadSuggestions(navigationCalculator, "r", 50);
+        assertEquals(40, entities.size());
         // Add a new semantic
         MutableList<String> list = Lists.mutable.empty();
         list.add("rAdded");
@@ -174,22 +174,22 @@ public class SearcherIT {
                         .withAll(list))
         );
         rebuildTypeAheadSuggesterAndBlock();
-        concepts = TypeAheadSearch.get().typeAheadSuggestions("r", 50);
-        assertEquals(41, concepts.size());
+        entities = TypeAheadSearch.get().typeAheadSuggestions("r", 50);
+        assertEquals(41, entities.size());
         AtomicInteger commentConcepts = new AtomicInteger();
-        concepts.forEach(conceptFacade -> {
+        entities.forEach(conceptFacade -> {
             if (PublicId.equals(conceptFacade.publicId(), TinkarTerm.COMMENT)) {
                 commentConcepts.getAndIncrement();
             }
         });
-        assertTrue(concepts.contains(TinkarTerm.COMMENT));
+        assertTrue(entities.contains(TinkarTerm.COMMENT));
         assertEquals(1, commentConcepts.get());
     }
 
     @Test
     public void typeAheadMaxResultsTest() {
-        List<ConceptFacade> concepts = TypeAheadSearch.get().typeAheadSuggestions("r", 20);
-        assertEquals(20, concepts.size());
+        List<EntityFacade> entities = TypeAheadSearch.get().typeAheadSuggestions("r", 20);
+        assertEquals(20, entities.size());
     }
 
     @Test
