@@ -20,7 +20,7 @@ import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.LatestVersionSearchResult;
-import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.EntityFacade;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.search.spell.LuceneDictionary;
 import org.apache.lucene.search.suggest.Lookup;
@@ -86,9 +86,9 @@ public class TypeAheadSearch {
      *
      * @param   userInput String userInput
      * @param   maxResults int maxResults
-     * @return  List of ConceptFacades
+     * @return  List of EntityFacades
      */
-    public List<ConceptFacade> typeAheadSuggestions(String userInput, int maxResults) {
+    public List<EntityFacade> typeAheadSuggestions(String userInput, int maxResults) {
         return typeAheadSuggestions(Searcher.defaultNavigationCalculator(), userInput, maxResults);
     }
 
@@ -98,9 +98,9 @@ public class TypeAheadSearch {
      * @param   navCalc NavigationCalculator navCalc
      * @param   userInput String userInput
      * @param   maxResults int maxResults
-     * @return  List of ConceptFacades
+     * @return  List of EntityFacades
      */
-    public List<ConceptFacade> typeAheadSuggestions(NavigationCalculator navCalc, String userInput, int maxResults) {
+    public List<EntityFacade> typeAheadSuggestions(NavigationCalculator navCalc, String userInput, int maxResults) {
 
         List<String> suggestions = null;
         try {
@@ -110,15 +110,13 @@ public class TypeAheadSearch {
             return Collections.emptyList();
         }
 
-        List<ConceptFacade> conceptList = new ArrayList<>();
+        List<EntityFacade> entityList = new ArrayList<>();
         suggestions.forEach((suggestion) -> {
             try {
                 ImmutableList<LatestVersionSearchResult> results = navCalc.search(suggestion, 1);
                 results.forEach(latestVersionSearchResult -> {
                     latestVersionSearchResult.latestVersion().ifPresent(semanticEntityVersion -> {
-                        if (semanticEntityVersion.referencedComponent() instanceof ConceptFacade conceptFacade) {
-                            conceptList.add(conceptFacade);
-                        }
+                        entityList.add(semanticEntityVersion.referencedComponent());
                     });
                 });
             } catch (Exception e) {
@@ -126,7 +124,7 @@ public class TypeAheadSearch {
             }
 
         });
-        return conceptList;
+        return entityList;
     }
 
     private class BuildSuggester extends TrackingCallable<Void> {
