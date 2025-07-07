@@ -361,7 +361,6 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         return Optional.of((T) entity);
     }
 
-    @AutoService(CachingService.class)
     public static class CacheProvider implements CachingService {
 
         @Override

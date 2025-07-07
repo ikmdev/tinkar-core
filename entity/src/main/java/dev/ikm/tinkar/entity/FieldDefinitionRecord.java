@@ -17,13 +17,15 @@ package dev.ikm.tinkar.entity;
 
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
+import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.component.FieldDefinition;
+import dev.ikm.tinkar.terms.ConceptToDataType;
 import io.soabase.recordbuilder.core.RecordBuilder;
 
 @RecordBuilder
 public record FieldDefinitionRecord(int dataTypeNid, int purposeNid, int meaningNid, int patternVersionStampNid,
                                     int patternNid, int indexInPattern)
-        implements FieldDefinitionForEntity, ImmutableFieldDefinition, FieldDefinitionRecordBuilder.With {
+        implements FieldDefinitionForEntity, FieldDefinition, FieldDefinitionRecordBuilder.With {
 
     public FieldDefinitionRecord {
         Validator.notZero(dataTypeNid);
@@ -62,4 +64,5 @@ public record FieldDefinitionRecord(int dataTypeNid, int purposeNid, int meaning
                 ", for pattern: " + PrimitiveData.text(patternNid) + " [" + indexInPattern +
                 "]}";
     }
+
 }

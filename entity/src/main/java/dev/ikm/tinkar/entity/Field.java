@@ -16,8 +16,11 @@
 package dev.ikm.tinkar.entity;
 
 import dev.ikm.tinkar.component.FieldDefinition;
+import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 
-public interface Field<DT> extends FieldDefinition {
+public interface Field<DT> {
+
+    FieldDefinition fieldDefinition(StampCalculator stampCalculator);
 
     DT value();
 

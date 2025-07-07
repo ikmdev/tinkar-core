@@ -149,7 +149,6 @@ public class EncoderOutput {
 
     public void writeNid(int nid) {
         writePublicId(PrimitiveData.publicId(nid));
-        buf.writeInt(nid);
     }
 
     public void writePublicId(PublicId publicId) {

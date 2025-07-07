@@ -69,10 +69,7 @@ import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.functional.TriConsumer;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
-import dev.ikm.tinkar.component.graph.DiTree;
-import dev.ikm.tinkar.coordinate.stamp.*;
 import dev.ikm.tinkar.entity.*;
-import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeVersion;
 import dev.ikm.tinkar.entity.graph.VersionVertex;
 import dev.ikm.tinkar.terms.State;
@@ -403,7 +400,7 @@ public class StampCalculatorWithCache implements StampCalculator {
                 (semanticEntityVersion, entityVersion) -> {
                     Latest<PatternEntityVersion> latestPatternEntityVersion = latestPatternEntityVersion(semanticEntityVersion.patternNid());
                     latestPatternEntityVersion.ifPresent(patternEntityVersion -> {
-                        procedure.accept(semanticEntityVersion, semanticEntityVersion.fields((PatternVersionRecord) patternEntityVersion), entityVersion);
+                        procedure.accept(semanticEntityVersion, semanticEntityVersion.fields(), entityVersion);
                     });
                 });
     }
@@ -467,12 +464,12 @@ public class StampCalculatorWithCache implements StampCalculator {
                 int indexForCriterion = optionalIndex.getAsInt();
                 FieldDefinitionRecord fieldDef = (FieldDefinitionRecord) patternVersion.fieldDefinitions().get(indexForCriterion);
                 FieldRecord fieldRecord = new FieldRecord(semanticVersion.fieldValues().get(indexForCriterion),
-                        semanticVersion.nid(), semanticVersion.stampNid(), fieldDef);
+                        semanticVersion.nid(), semanticVersion.stampNid(), fieldDef.patternNid(), fieldDef.indexInPattern());
                 Latest<Field<T>> latestField = new Latest<>(fieldRecord);
                 for (SemanticEntityVersion semanticVersionContradiction : latestSemanticVersion.contradictions()) {
                     latestField.addLatest(
                             new FieldRecord(semanticVersionContradiction.fieldValues().get(indexForCriterion),
-                                    semanticVersionContradiction.nid(), semanticVersionContradiction.stampNid(), fieldDef));
+                                    semanticVersionContradiction.nid(), semanticVersionContradiction.stampNid(), fieldDef.patternNid(), fieldDef.indexInPattern()));
                 }
                 return latestField;
             } else {

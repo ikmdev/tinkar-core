@@ -159,4 +159,18 @@ public interface Encodable {
         return encoderOutput;
     }
 
+    static NullEncodable nullEncodable = new NullEncodable();
+
+    class NullEncodable implements Encodable {
+        @Override
+        public void encode(EncoderOutput out) {
+            //No data to write.
+        }
+        @Decoder
+        public static Object decode(DecoderInput in) {
+            Encodable.checkVersion(in);
+            return null;
+        }
+    }
+
 }

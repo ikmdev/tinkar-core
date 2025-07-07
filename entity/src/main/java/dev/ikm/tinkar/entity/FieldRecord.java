@@ -18,12 +18,13 @@ package dev.ikm.tinkar.entity;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
 import dev.ikm.tinkar.component.FieldDefinition;
+import dev.ikm.tinkar.component.PatternVersion;
+import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
+import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.PatternFacade;
 import io.soabase.recordbuilder.core.RecordBuilder;
-
-import java.util.Objects;
 
 /**
  * TODO: create an entity data type that combines concept and FieldDataType like the Status enum?
@@ -33,65 +34,36 @@ import java.util.Objects;
  */
 @RecordBuilder
 public record FieldRecord<DT>(DT value, int nid, int versionStampNid,
-                              FieldDefinitionForEntity fieldDefinition)
-        implements FieldDefinitionForEntity, Field<DT>,
-                   ImmutableField<DT>, FieldRecordBuilder.With {
+                              int patternNid, int indexInPattern)
+        implements Field<DT>, FieldRecordBuilder.With {
 
 
     public FieldRecord {
         Validator.notZero(nid);
         Validator.notZero(versionStampNid);
-        Objects.requireNonNull(fieldDefinition);
+        Validator.notZero(patternNid);
+        if (indexInPattern < 0) throw new IllegalStateException("Index must be >= 0");
+    }
+
+    @Override
+    public FieldDefinition fieldDefinition(StampCalculator stampCalculator) {
+        PatternEntity<PatternEntityVersion> patternEntity = Entity.getFast(patternNid());
+        Latest<PatternEntityVersion> patternVersion = stampCalculator.latest(patternEntity);
+        return patternVersion.get().fieldDefinitions().get(indexInPattern());
     }
 
     public FieldRecord<DT> with(DT value) {
         return withValue(value);
     }
 
-    @Override
-    public int patternNid() {
-        return fieldDefinition.patternNid();
-    }
-
-    public PatternFacade pattern() {
-        return EntityProxy.Pattern.make(patternNid());
-    }
-
-    public ConceptFacade purpose() {
-        return EntityProxy.Concept.make(purposeNid());
-    }
-
-    @Override
-    public int patternVersionStampNid() {
-        return fieldDefinition.patternVersionStampNid();
-    }
-
-    @Override
-    public int meaningNid() {
-        return fieldDefinition.meaningNid();
-    }
-
-    @Override
-    public int purposeNid() {
-        return fieldDefinition.purposeNid();
-    }
-
-    @Override
-    public int dataTypeNid() {
-        return fieldDefinition.dataTypeNid();
-    }
-
-    public int indexInPattern() {
-        return fieldDefinition.indexInPattern();
-    }
 
     @Override
     public String toString() {
         return "FieldRecord{value: " + value +
                 ", for entity: " + PrimitiveData.textWithNid(nid) +
                 " of version: " + Entity.getStamp(versionStampNid).lastVersion().describe() +
+                " in pattern: " + Entity.getFast(patternNid()) +
                 " with index: " + indexInPattern() +
-                ", defined as " + fieldDefinition +
                 '}';
     }
 

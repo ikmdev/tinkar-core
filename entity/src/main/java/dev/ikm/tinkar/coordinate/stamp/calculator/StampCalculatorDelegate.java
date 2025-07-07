@@ -19,10 +19,8 @@ import dev.ikm.tinkar.coordinate.stamp.StampCoordinate;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import org.eclipse.collections.api.list.ImmutableList;
 import dev.ikm.tinkar.common.util.functional.TriConsumer;
-import dev.ikm.tinkar.component.graph.DiTree;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.graph.DiTreeVersion;
-import dev.ikm.tinkar.entity.graph.VersionVertex;
 import dev.ikm.tinkar.terms.EntityFacade;
 
 import java.util.List;

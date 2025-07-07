@@ -77,6 +77,7 @@
         <caffeine.version>3.2.0</caffeine.version>
 
         <jackson.version>2.18.2</jackson.version>
+        <java.version>24</java.version>
         <jgrapht.version>1.5.0</jgrapht.version>
         <mockito.version>5.15.2</mockito.version>
         <mvstore.version>2.3.232-r1</mvstore.version>

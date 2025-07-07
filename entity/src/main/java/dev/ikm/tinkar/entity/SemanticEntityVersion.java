@@ -59,6 +59,6 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
     @Override
     ImmutableList<Object> fieldValues();
 
-    ImmutableList<? extends Field> fields(PatternEntityVersion patternVersion);
+    ImmutableList<? extends Field> fields();
 
 }

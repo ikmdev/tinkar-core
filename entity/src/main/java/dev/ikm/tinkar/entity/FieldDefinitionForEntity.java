@@ -15,8 +15,10 @@
  */
 package dev.ikm.tinkar.entity;
 
+import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.component.FieldDefinition;
 import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.ConceptToDataType;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.PatternFacade;
 
@@ -79,4 +81,9 @@ public interface FieldDefinitionForEntity extends FieldDefinition {
     }
 
     int patternVersionStampNid();
+
+    default FieldDataType fieldDataType() {
+        return ConceptToDataType.convert(dataType());
+    }
+
 }
