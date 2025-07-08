@@ -16,7 +16,7 @@
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <skip.unit.tests>false</skip.unit.tests>
         <skip.integration.tests>false</skip.integration.tests>
-        <tinkar-composer.version>1.4.0</tinkar-composer.version>
+        <tinkar-composer.version>1.8.0</tinkar-composer.version>
     </properties>
 
     <dependencyManagement>
