@@ -184,17 +184,14 @@ public class EntityToTinkarSchemaTransformer {
     }
 
     protected StampChronology createPBStampChronology(StampEntity<StampVersionRecord> stampEntity){
-        int stampEntityVersionSize = stampEntity.versions().size();
-        StampChronology.Builder stampBuilder = switch(stampEntityVersionSize) {
-            case 1 -> StampChronology.newBuilder().setPublicId(createPBPublicId(stampEntity.publicId()))
-                    .setFirstStampVersion(createPBStampVersion(stampEntity.versions().get(0)));
-
-            case 2 -> StampChronology.newBuilder().setPublicId(createPBPublicId(stampEntity.publicId()))
-                    .setFirstStampVersion(createPBStampVersion(stampEntity.versions().get(0)))
-                    .setSecondStampVersion(createPBStampVersion(stampEntity.versions().get(1)));
-
-            default -> throw new RuntimeException("Stamp Entity " + stampEntity + " has incorrect version size: " + stampEntityVersionSize);
-        };
+        StampChronology.Builder stampBuilder = StampChronology.newBuilder();
+        switch (stampEntity.versions().size()){
+            case 2: stampBuilder.setSecondStampVersion(createPBStampVersion(stampEntity.versions().get(1)));
+            case 1: stampBuilder.setFirstStampVersion(createPBStampVersion(stampEntity.versions().get(0)));
+                    break;
+            default: throw new RuntimeException("Unexpected number of version size: " + stampEntity.versions().size() +
+                    " for stamp entity: " + stampEntity.nid());
+        }
         return stampBuilder.build();
     }
 
