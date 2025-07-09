@@ -54,6 +54,32 @@ import static org.mockito.Mockito.when;
 public class TestEntityToProtobufConceptTransform {
 
     @Test
+    @DisplayName("createPBStampChronology function throws error When StampEntity is empty")
+    public void testStampEntityWithEmptyVersions() {
+        openSession(this, (mockedEntityService, conceptMap) -> {
+            PublicId randomPublicID = PublicIds.newRandom();
+
+            StampEntity<StampVersionRecord> mockedStampEntityVersion = mock(StampEntity.class);
+
+            StampRecord mockedStampChronology = mock(StampRecord.class);
+
+
+            ImmutableList<StampVersionRecord> versions = Lists.immutable.empty();
+
+            when(mockedStampChronology.versions()).thenReturn(versions);
+
+            when(mockedStampEntityVersion.asUuidList()).thenReturn(randomPublicID.asUuidList());
+            when(mockedStampEntityVersion.publicId()).thenReturn(randomPublicID);
+            when(mockedStampEntityVersion.versions()).thenReturn(versions);
+
+            assertThrows(RuntimeException.class, () -> EntityToTinkarSchemaTransformer.getInstance()
+                    .createPBStampChronology(mockedStampEntityVersion), "Stamp Entity " + mockedStampEntityVersion +
+                    " has incorrect version size: " +  mockedStampEntityVersion.versions().size());
+
+        });
+    }
+
+    @Test
     @DisplayName("createPBStampChronology function throws error When StampEntity has more than 2 Versions")
     public void testStampEntityWithMoreThanTwoVersions() {
         openSession(this, (mockedEntityService, conceptMap) -> {
@@ -88,7 +114,8 @@ public class TestEntityToProtobufConceptTransform {
             when(mockedStampEntityVersion.versions()).thenReturn(versions);
 
             assertThrows(RuntimeException.class, () -> EntityToTinkarSchemaTransformer.getInstance()
-                    .createPBStampChronology(mockedStampEntityVersion), "Stamp Entity " + mockedStampEntityVersion + " has too many versions: " + mockedStampEntityVersion.versions().size());
+                    .createPBStampChronology(mockedStampEntityVersion), "Stamp Entity " + mockedStampEntityVersion +
+                    " has too many versions: " + mockedStampEntityVersion.versions().size());
 
         });
     }

@@ -185,21 +185,19 @@ public class EntityToTinkarSchemaTransformer {
 
     protected StampChronology createPBStampChronology(StampEntity<StampVersionRecord> stampEntity){
         int stampEntityVersionSize = stampEntity.versions().size();
+        StampChronology.Builder stampBuilder = switch(stampEntityVersionSize) {
+            case 1 -> StampChronology.newBuilder().setPublicId(createPBPublicId(stampEntity.publicId()))
+                    .setFirstStampVersion(createPBStampVersion(stampEntity.versions().get(0)));
 
-        if (stampEntityVersionSize > 2) {
-            throw new RuntimeException("Stamp Entity " + stampEntity + " has too many versions: " + stampEntityVersionSize);
-        }
+            case 2 -> StampChronology.newBuilder().setPublicId(createPBPublicId(stampEntity.publicId()))
+                    .setFirstStampVersion(createPBStampVersion(stampEntity.versions().get(0)))
+                    .setSecondStampVersion(createPBStampVersion(stampEntity.versions().get(1)));
 
-        StampChronology.Builder stampBuilder = StampChronology.newBuilder()
-                .setPublicId(createPBPublicId(stampEntity.publicId()))
-                .setFirstStampVersion(createPBStampVersion(stampEntity.versions().get(0)));
-
-        if (stampEntityVersionSize == 2) {
-            stampBuilder.setSecondStampVersion(createPBStampVersion(stampEntity.versions().get(1)));
-        }
-
+            default -> throw new RuntimeException("Stamp Entity " + stampEntity + " has incorrect version size: " + stampEntityVersionSize);
+        };
         return stampBuilder.build();
     }
+
     // TODO: Check with Andrew, made this method return a singlar StampVersionRecord rather than a list
     protected StampVersion createPBStampVersion(StampVersionRecord stampVersionRecord){
         return StampVersion.newBuilder()
