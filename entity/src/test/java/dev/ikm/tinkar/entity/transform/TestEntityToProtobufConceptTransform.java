@@ -76,7 +76,7 @@ public class TestEntityToProtobufConceptTransform {
 
             assertThrows(RuntimeException.class, () -> EntityToTinkarSchemaTransformer.getInstance()
                     .createPBStampChronology(mockedStampEntityVersion), "Unexpected number of version size: 0 " +
-                    " for stamp entity: " + testNid);
+                    " for stamp entity: " + mockedStampEntityVersion.nid());
         });
     }
 
@@ -117,7 +117,7 @@ public class TestEntityToProtobufConceptTransform {
 
             assertThrows(RuntimeException.class, () -> EntityToTinkarSchemaTransformer.getInstance()
                     .createPBStampChronology(mockedStampEntityVersion), "Unexpected number of version size: 3" +
-                    " for stamp entity: " + testNid);
+                    " for stamp entity: " + mockedStampVersion.nid());
         });
     }
 
