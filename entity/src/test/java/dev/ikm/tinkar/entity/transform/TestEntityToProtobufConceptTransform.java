@@ -59,7 +59,6 @@ public class TestEntityToProtobufConceptTransform {
     public void testStampEntityWithEmptyVersions() {
         openSession(this, (mockedEntityService, conceptMap) -> {
             PublicId randomPublicID = PublicIds.newRandom();
-            int nid = PrimitiveData.nid(randomPublicID);
 
             StampEntity<StampVersionRecord> mockedStampEntityVersion = mock(StampEntity.class);
 
@@ -76,7 +75,7 @@ public class TestEntityToProtobufConceptTransform {
 
             assertThrows(RuntimeException.class, () -> EntityToTinkarSchemaTransformer.getInstance()
                     .createPBStampChronology(mockedStampEntityVersion), "Unexpected number of version size: 0 " +
-                    " for stamp entity: " + nid);
+                    " for stamp entity: " + randomPublicID);
         });
     }
 
@@ -86,7 +85,6 @@ public class TestEntityToProtobufConceptTransform {
         openSession(this, (mockedEntityService, conceptMap) -> {
             PublicId randomPublicID = PublicIds.newRandom();
             PublicId stampPublicID = PublicIds.newRandom();
-            int nid = PrimitiveData.nid(randomPublicID);
 
             long expectedTime = nowEpochMillis();
             Concept authorConcept = conceptMap.get(AUTHOR_CONCEPT_NAME);
@@ -117,7 +115,7 @@ public class TestEntityToProtobufConceptTransform {
 
             assertThrows(RuntimeException.class, () -> EntityToTinkarSchemaTransformer.getInstance()
                     .createPBStampChronology(mockedStampEntityVersion), "Unexpected number of version size: 3" +
-                    " for stamp entity: " + nid);
+                    " for stamp entity: " + randomPublicID);
         });
     }
 
