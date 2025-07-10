@@ -89,7 +89,7 @@ public class TestEntityToProtobufConceptTransform {
         openSession(this, (mockedEntityService, conceptMap) -> {
             PublicId randomPublicID = PublicIds.newRandom();
             PublicId stampPublicID = PublicIds.newRandom();
-            System.out.println(randomPublicID);
+            System.out.println("Public ID: " + randomPublicID);
 
 
             long expectedTime = nowEpochMillis();
