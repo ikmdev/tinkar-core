@@ -52,14 +52,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Semaphore;
 
 public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> {
 
     private static final Logger LOG = LoggerFactory.getLogger(OwlToLogicAxiomTransformerAndWriter.class);
 
     private final int destinationPatternNid;
-    private final Semaphore writeSemaphore;
     private final List<TransformationGroup> transformationRecords;
     private Transaction transaction;
     private int authorNid = TinkarTerm.USER.nid();
@@ -71,25 +69,21 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
 	 *                              transaction. If not supplied, this creates (and
 	 *                              commits) its own transaction.
      * @param transformationRecords
-     * @param writeSemaphore
      */
     public OwlToLogicAxiomTransformerAndWriter(Transaction transaction, List<TransformationGroup> transformationRecords,
-                                               int destinationPatternNid, Semaphore writeSemaphore) {
+                                               int destinationPatternNid) {
 
         this.transaction = transaction;
         this.transformationRecords = transformationRecords;
         this.destinationPatternNid = destinationPatternNid;
-        this.writeSemaphore = writeSemaphore;
-        this.writeSemaphore.acquireUninterruptibly();
         updateTitle("EL++ OWL transformation");
         updateMessage("");
         addToTotalWork(transformationRecords.size());
     }
 
     public OwlToLogicAxiomTransformerAndWriter(Transaction transaction, List<TransformationGroup> transformationRecords,
-                                               int destinationPatternNid, Semaphore writeSemaphore,
-                                               int authorNid, int moduleNid, int pathNid) {
-        this(transaction, transformationRecords, destinationPatternNid, writeSemaphore);
+                                               int destinationPatternNid, int authorNid, int moduleNid, int pathNid) {
+        this(transaction, transformationRecords, destinationPatternNid);
         this.authorNid = authorNid;
         this.moduleNid = moduleNid;
         this.pathNid = pathNid;
@@ -97,35 +91,31 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
 
     @Override
     public Void compute() throws Exception {
-        try {
-            boolean commitTransaction = this.transaction == null;
-            if (commitTransaction) {
-                this.transaction = Transaction.make("OwlTransformerAndWriter");
-            }
-            int count = 0;
-
-            LOG.debug("starting batch transform of {} records", transformationRecords.size());
-            for (TransformationGroup transformationGroup : transformationRecords) {
-                try {
-                    transformOwlExpressions(transformationGroup.conceptNid, transformationGroup.semanticNids, transformationGroup.getPremiseType());
-                } catch (Exception e) {
-                    LOG.error("Error in Owl Transform: ", e);
-                }
-                if (count % 1000 == 0) {
-                    updateMessage("Processing concept: " + PrimitiveData.text(transformationGroup.conceptNid));
-                    LOG.trace("Processing concept: {}", PrimitiveData.text(transformationGroup.conceptNid));
-                }
-                count++;
-                completedUnitOfWork();
-            }
-            if (commitTransaction) {
-                transaction.commit();
-            }
-            LOG.debug("Finished processing batch of: {}", count);
-            return null;
-        } finally {
-            this.writeSemaphore.release();
+        boolean commitTransaction = this.transaction == null;
+        if (commitTransaction) {
+            this.transaction = Transaction.make("OwlTransformerAndWriter");
         }
+        int count = 0;
+
+        LOG.debug("starting batch transform of {} records", transformationRecords.size());
+        for (TransformationGroup transformationGroup : transformationRecords) {
+            try {
+                transformOwlExpressions(transformationGroup.conceptNid, transformationGroup.semanticNids, transformationGroup.getPremiseType());
+            } catch (Exception e) {
+                LOG.error("Error in Owl Transform: ", e);
+            }
+            if (count % 1000 == 0) {
+                updateMessage("Processing concept: " + PrimitiveData.text(transformationGroup.conceptNid));
+                LOG.trace("Processing concept: {}", PrimitiveData.text(transformationGroup.conceptNid));
+            }
+            count++;
+            completedUnitOfWork();
+        }
+        if (commitTransaction) {
+            transaction.commit();
+        }
+        LOG.debug("Finished processing batch of: {}", count);
+        return null;
     }
 
     /**
@@ -251,8 +241,10 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
                 existingStampVer.authorNid() == writeStamp.authorNid() &&
                 existingStampVer.pathNid() == writeStamp.pathNid()) {
                     DiTreeEntity latestExpression = (DiTreeEntity) latestSemanticVersion.get().fieldValues().get(0);
-                    LOG.warn("Skipping write of new version: Logical Definition Semantic Version with this STAMP already exists for Concept: {}\nExisting STAMP: {}\nExisting: {}\nNew STAMP: {}\nNew: {}",
-                            EntityService.get().getEntityFast(conceptNid).publicId().idString(), existingStampVer.describe(), stampCoordinate, latestExpression, logicalExpression);
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Skipping write of new version: Logical Definition Semantic Version with this STAMP already exists for Concept: {}\nExisting STAMP: {}\nExisting: {}\nNew STAMP: {}\nNew: {}",
+                                EntityService.get().getEntityFast(conceptNid).publicId().idString(), existingStampVer.describe(), stampCoordinate, latestExpression, logicalExpression);
+                    }
             } else {
                 addNewVersion(logicalExpression, SemanticRecordBuilder.builder(existingSemantic).build(), writeStamp);
             }

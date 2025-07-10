@@ -17,6 +17,7 @@ package dev.ikm.tinkar.entity.graph.adaptor.axiom;
 
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.entity.graph.isomorphic.SetElementKey;
@@ -41,6 +42,10 @@ public class LogicalExpressionBuilder {
     DiTreeEntity.Builder builder;
     final int rootIndex;
 
+    static UUID generateRandomUuid() {
+        return UuidT5Generator.get(UUID.fromString(Thread.currentThread().getName()), String.valueOf(System.nanoTime()));
+    }
+
     public LogicalExpressionBuilder(UUID rootVertexUuid) {
         this.builder = DiTreeEntity.builder();
         this.logicalExpression = new LogicalExpression(builder);
@@ -53,7 +58,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalExpressionBuilder() {
-        this(UUID.randomUUID());
+        this(generateRandomUuid());
     }
 
     public LogicalExpressionBuilder(LogicalExpression logicalExpression) {
@@ -157,7 +162,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.LogicalSet.SufficientSet SufficientSet(LogicalAxiom.Atom... elements) {
-        return SufficientSet(UUID.randomUUID(), elements);
+        return SufficientSet(generateRandomUuid(), elements);
     }
 
     public LogicalAxiom.LogicalSet.SufficientSet SufficientSet(UUID vertexUuid, LogicalAxiom.Atom... elements) {
@@ -171,7 +176,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.LogicalSet.NecessarySet NecessarySet(LogicalAxiom.Atom... elements) {
-        return NecessarySet(UUID.randomUUID(), elements);
+        return NecessarySet(generateRandomUuid(), elements);
     }
 
     public LogicalAxiom.LogicalSet.NecessarySet NecessarySet(UUID vertexUuid, LogicalAxiom.Atom... elements) {
@@ -185,7 +190,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.LogicalSet.InclusionSet InclusionSet(LogicalAxiom.Atom... elements) {
-        return InclusionSet(UUID.randomUUID(), elements);
+        return InclusionSet(generateRandomUuid(), elements);
     }
 
     public LogicalAxiom.LogicalSet.InclusionSet InclusionSet(UUID vertexUuid, LogicalAxiom.Atom... elements) {
@@ -200,7 +205,7 @@ public class LogicalExpressionBuilder {
 
 
     public LogicalAxiom.LogicalSet.PropertySet PropertySet(LogicalAxiom.Atom... elements) {
-        return PropertySet(UUID.randomUUID(), elements);
+        return PropertySet(generateRandomUuid(), elements);
     }
 
     public LogicalAxiom.LogicalSet.PropertySet PropertySet(UUID vertexUuid, LogicalAxiom.Atom... elements) {
@@ -214,7 +219,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.LogicalSet.DataPropertySet DataPropertySet(LogicalAxiom.Atom... elements) {
-        return DataPropertySet(UUID.randomUUID(), elements);
+        return DataPropertySet(generateRandomUuid(), elements);
     }
 
     public LogicalAxiom.LogicalSet.DataPropertySet DataPropertySet(UUID vertexUuid, LogicalAxiom.Atom... elements) {
@@ -237,7 +242,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.Atom.Connective.And And(ImmutableList<? extends LogicalAxiom.Atom> atoms) {
-        return And(UUID.randomUUID(), atoms);
+        return And(generateRandomUuid(), atoms);
     }
 
 
@@ -272,7 +277,7 @@ public class LogicalExpressionBuilder {
 
 
     public LogicalAxiom.Atom.Connective.And And(LogicalAxiom.Atom... atoms) {
-        return And(UUID.randomUUID(), atoms);
+        return And(generateRandomUuid(), atoms);
     }
 
     public LogicalAxiom.Atom.Connective.And And(UUID vertexUuid, LogicalAxiom.Atom... atoms) {
@@ -285,7 +290,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.Atom.Connective.Or Or(LogicalAxiom.Atom... atoms) {
-        return Or(UUID.randomUUID(), atoms);
+        return Or(generateRandomUuid(), atoms);
     }
 
     public LogicalAxiom.Atom.Connective.Or Or(UUID vertexUuid, LogicalAxiom.Atom... atoms) {
@@ -298,7 +303,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.Atom.TypedAtom.Role SomeRole(ConceptFacade roleType, LogicalAxiom.Atom restriction) {
-        return SomeRole(UUID.randomUUID(), roleType, restriction);
+        return SomeRole(generateRandomUuid(), roleType, restriction);
     }
 
     public LogicalAxiom.Atom.TypedAtom.Role SomeRole(UUID vertexUuid, ConceptFacade roleType, LogicalAxiom.Atom restriction) {
@@ -312,7 +317,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.Atom.TypedAtom.Role AllRole(ConceptFacade roleType, LogicalAxiom.Atom restriction) {
-        return AllRole(UUID.randomUUID(), roleType, restriction);
+        return AllRole(generateRandomUuid(), roleType, restriction);
     }
 
     public LogicalAxiom.Atom.TypedAtom.Role AllRole(UUID vertexUuid, ConceptFacade roleType, LogicalAxiom.Atom restriction) {
@@ -326,7 +331,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.Atom.TypedAtom.Role Role(ConceptFacade roleOperator, ConceptFacade roleType, LogicalAxiom.Atom restriction) {
-        return Role(UUID.randomUUID(), roleOperator, roleType, restriction);
+        return Role(generateRandomUuid(), roleOperator, roleType, restriction);
     }
 
     public LogicalAxiom.Atom.TypedAtom.Role Role(UUID vertexUuid, ConceptFacade roleOperator, ConceptFacade roleType, LogicalAxiom.Atom restriction) {
@@ -340,7 +345,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.Atom.ConceptAxiom ConceptAxiom(int conceptNid) {
-        return ConceptAxiom(UUID.randomUUID(), ConceptFacade.make(conceptNid));
+        return ConceptAxiom(generateRandomUuid(), ConceptFacade.make(conceptNid));
     }
 
     public LogicalAxiom.Atom.ConceptAxiom ConceptAxiom(UUID vertexUuid, int conceptNid) {
@@ -348,7 +353,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.Atom.ConceptAxiom ConceptAxiom(ConceptFacade concept) {
-        return ConceptAxiom(UUID.randomUUID(), concept);
+        return ConceptAxiom(generateRandomUuid(), concept);
     }
 
     public LogicalAxiom.Atom.ConceptAxiom ConceptAxiom(UUID vertexUuid, ConceptFacade concept) {
@@ -360,7 +365,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.Atom.DisjointWithAxiom DisjointWithAxiom(ConceptFacade disjointConcept) {
-        return DisjointWithAxiom(UUID.randomUUID(), disjointConcept);
+        return DisjointWithAxiom(generateRandomUuid(), disjointConcept);
     }
 
     public LogicalAxiom.Atom.DisjointWithAxiom DisjointWithAxiom(UUID vertexUuid, ConceptFacade disjointConcept) {
@@ -373,7 +378,7 @@ public class LogicalExpressionBuilder {
 
     public LogicalAxiom.Atom.TypedAtom.Feature FeatureAxiom(ConceptFacade featureType, ConceptFacade concreteDomainOperator,
                                                             Object literalValue) {
-        return FeatureAxiom(UUID.randomUUID(), featureType, concreteDomainOperator, literalValue);
+        return FeatureAxiom(generateRandomUuid(), featureType, concreteDomainOperator, literalValue);
     }
 
     public LogicalAxiom.Atom.TypedAtom.Feature FeatureAxiom(UUID vertexUuid, ConceptFacade featureType, ConceptFacade concreteDomainOperator,
@@ -390,7 +395,7 @@ public class LogicalExpressionBuilder {
 
     public LogicalAxiom.Atom.PropertySequenceImplication PropertySequenceImplicationAxiom(ImmutableList<ConceptFacade> propertySequence,
                                                                                           ConceptFacade implication) {
-        return PropertySequenceImplicationAxiom(UUID.randomUUID(), propertySequence, implication);
+        return PropertySequenceImplicationAxiom(generateRandomUuid(), propertySequence, implication);
     }
 
     public LogicalAxiom.Atom.PropertySequenceImplication PropertySequenceImplicationAxiom(UUID vertexUuid,
@@ -590,6 +595,5 @@ public class LogicalExpressionBuilder {
         builder.setVertexIndex(changedSet, setAxiom.vertexIndex());
         builder.replaceVertex(changedSet);
     }
-
 
 }
