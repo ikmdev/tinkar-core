@@ -409,11 +409,11 @@ public class Transaction implements Comparable<Transaction>, Encodable {
     public int commit() {
         AtomicInteger stampCount = new AtomicInteger();
         this.commitTime = System.currentTimeMillis();
+        activeTransactions.remove(this);
         forEachStampInTransaction(stampUuid -> {
             commitStamp(stampUuid, this.commitTime);
             stampCount.incrementAndGet();
         });
-        activeTransactions.remove(this);
         Entity.provider().notifyRefreshRequired(this);
         return stampCount.get();
     }
