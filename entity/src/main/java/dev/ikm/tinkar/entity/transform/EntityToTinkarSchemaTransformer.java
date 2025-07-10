@@ -184,7 +184,8 @@ public class EntityToTinkarSchemaTransformer {
     }
 
     protected StampChronology createPBStampChronology(StampEntity<StampVersionRecord> stampEntity){
-        StampChronology.Builder stampBuilder = StampChronology.newBuilder();
+        StampChronology.Builder stampBuilder = StampChronology.newBuilder()
+                .setPublicId(createPBPublicId(stampEntity.publicId()));
         switch (stampEntity.versions().size()){
             case 2: stampBuilder.setSecondStampVersion(createPBStampVersion(stampEntity.versions().get(1)));
             case 1: stampBuilder.setFirstStampVersion(createPBStampVersion(stampEntity.versions().get(0)));
