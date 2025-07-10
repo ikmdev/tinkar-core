@@ -59,7 +59,8 @@ public class TestEntityToProtobufConceptTransform {
     public void testStampEntityWithEmptyVersions() {
         openSession(this, (mockedEntityService, conceptMap) -> {
             PublicId randomPublicID = PublicIds.newRandom();
-            int testNid = PrimitiveData.get().nidForPublicId(randomPublicID);
+
+
 
             StampEntity<StampVersionRecord> mockedStampEntityVersion = mock(StampEntity.class);
 
@@ -74,9 +75,11 @@ public class TestEntityToProtobufConceptTransform {
             when(mockedStampEntityVersion.publicId()).thenReturn(randomPublicID);
             when(mockedStampEntityVersion.versions()).thenReturn(versions);
 
+            //int testNid = PrimitiveData.get().nidForPublicId(mockedStampEntityVersion.publicId());
+
             assertThrows(RuntimeException.class, () -> EntityToTinkarSchemaTransformer.getInstance()
                     .createPBStampChronology(mockedStampEntityVersion), "Unexpected number of version size: 0 " +
-                    " for stamp entity: " + mockedStampEntityVersion.nid());
+                    " for stamp entity: " + randomPublicID);
         });
     }
 
@@ -86,7 +89,8 @@ public class TestEntityToProtobufConceptTransform {
         openSession(this, (mockedEntityService, conceptMap) -> {
             PublicId randomPublicID = PublicIds.newRandom();
             PublicId stampPublicID = PublicIds.newRandom();
-            int testNid = PrimitiveData.get().nidForPublicId(randomPublicID);
+            System.out.println(randomPublicID);
+
 
             long expectedTime = nowEpochMillis();
             Concept authorConcept = conceptMap.get(AUTHOR_CONCEPT_NAME);
@@ -115,9 +119,11 @@ public class TestEntityToProtobufConceptTransform {
             when(mockedStampEntityVersion.publicId()).thenReturn(randomPublicID);
             when(mockedStampEntityVersion.versions()).thenReturn(versions);
 
+            //int testNid = PrimitiveData.get().nidForPublicId(mockedStampEntityVersion.publicId());
+
             assertThrows(RuntimeException.class, () -> EntityToTinkarSchemaTransformer.getInstance()
                     .createPBStampChronology(mockedStampEntityVersion), "Unexpected number of version size: 3" +
-                    " for stamp entity: " + mockedStampVersion.nid());
+                    " for stamp entity: " + randomPublicID);
         });
     }
 
