@@ -205,8 +205,6 @@ public class TestEntityToProtobufStampTransform {
             Concept pathConcept = conceptMap.get(PATH_CONCEPT_NAME);
 
             StampEntity<StampVersionRecord> mockedStampEntityVersion = mock(StampEntity.class);
-            Entity<StampVersionRecord> entity = mock(Entity.class);
-            when(entity.publicId()).thenReturn(randomPublicID);
 
             StampRecord mockedStampChronology = mock(StampRecord.class);
 
@@ -228,8 +226,6 @@ public class TestEntityToProtobufStampTransform {
             when(mockedStampEntityVersion.asUuidList()).thenReturn(randomPublicID.asUuidList());
             when(mockedStampEntityVersion.publicId()).thenReturn(randomPublicID);
             when(mockedStampEntityVersion.versions()).thenReturn(new RecordListBuilder<StampVersionRecord>().addAndBuild(mockedStampVersion));
-            System.out.println("Uyi Mock Values");
-            System.out.println(mockedStampEntityVersion.versions());
 
             // When we perform the transform
             StampChronology actualPBStampChronology = EntityToTinkarSchemaTransformer.getInstance().createPBStampChronology(mockedStampEntityVersion);

@@ -224,7 +224,7 @@ public class TestProtobufToEntityStampTransform {
     @DisplayName("Transform a Stamp Chronology With One Version")
     public void stampChronologyTransformWithOneVersion(){
         openSession(this, (mockedEntityService, conceptMap) -> {
-            Consumer<StampEntity<StampEntityVersion>> stampConsumer = (c) -> {};
+            Consumer<StampEntity<StampEntityVersion>> stampConsumer = (c) -> { };
 
             // Given a PBStampChronology with a one Stamp Version present
             Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
@@ -243,7 +243,7 @@ public class TestProtobufToEntityStampTransform {
                     .build();
 
             StampChronology pbStampChronology = StampChronology.newBuilder()
-                    .setPublicId(createPBPublicId(testConcept))
+                    .setPublicId(createPBPublicId(conceptMap.get(TEST_CONCEPT_NAME)))
                     .setFirstStampVersion(pbStampVersion)
                     .build();
 
