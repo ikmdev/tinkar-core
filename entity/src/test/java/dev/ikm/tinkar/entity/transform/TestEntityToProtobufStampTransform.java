@@ -221,15 +221,12 @@ public class TestEntityToProtobufStampTransform {
             ImmutableList<StampVersionRecord> versions = Lists.immutable.of(mockedStampVersion);
             when(mockedStampChronology.versions()).thenReturn(versions);
 
-
-
             when(mockedStampEntityVersion.asUuidList()).thenReturn(randomPublicID.asUuidList());
             when(mockedStampEntityVersion.publicId()).thenReturn(randomPublicID);
             when(mockedStampEntityVersion.versions()).thenReturn(new RecordListBuilder<StampVersionRecord>().addAndBuild(mockedStampVersion));
 
             // When we perform the transform
             StampChronology actualPBStampChronology = EntityToTinkarSchemaTransformer.getInstance().createPBStampChronology(mockedStampEntityVersion);
-
 
             //TODO: Add in Mockito Verify statements here
 
