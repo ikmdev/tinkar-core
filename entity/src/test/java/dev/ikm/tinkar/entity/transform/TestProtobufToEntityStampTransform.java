@@ -225,7 +225,6 @@ public class TestProtobufToEntityStampTransform {
     public void stampChronologyTransformWithOneVersion(){
         openSession(this, (mockedEntityService, conceptMap) -> {
             Consumer<StampEntity<StampEntityVersion>> stampConsumer = (c) -> { };
-
             // Given a PBStampChronology with a one Stamp Version present
             Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
             Concept statusConcept = conceptMap.get(STATUS_CONCEPT_NAME);
