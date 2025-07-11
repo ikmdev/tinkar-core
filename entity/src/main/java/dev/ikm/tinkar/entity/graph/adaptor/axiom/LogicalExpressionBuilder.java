@@ -43,7 +43,7 @@ public class LogicalExpressionBuilder {
     final int rootIndex;
 
     static UUID generateRandomUuid() {
-        return UuidT5Generator.get(UuidT5Generator.STAMP_NAMESPACE, Thread.currentThread().getName() + System.nanoTime());
+        return UuidT5Generator.get(UuidT5Generator.STAMP_NAMESPACE, Thread.currentThread().threadId() + "-" + System.nanoTime());
     }
 
     public LogicalExpressionBuilder(UUID rootVertexUuid) {
