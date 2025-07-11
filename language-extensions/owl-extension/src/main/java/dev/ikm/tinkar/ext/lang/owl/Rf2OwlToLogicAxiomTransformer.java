@@ -19,6 +19,7 @@ package dev.ikm.tinkar.ext.lang.owl;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.service.TrackingCallable;
+import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.coordinate.logic.PremiseType;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.transaction.Transaction;
@@ -29,16 +30,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Rf2OwlToLogicAxiomTransformer extends TrackingCallable<Void> {
     private static final Logger LOG = LoggerFactory.getLogger(Rf2OwlToLogicAxiomTransformer.class);
-    private static final int WRITE_PERMITS = Runtime.getRuntime().availableProcessors() * 2;
-    // TODO consider replacing readSemaphore with TaskCountManager
-    protected final Semaphore writeSemaphore = new Semaphore(WRITE_PERMITS);
     final int transformSize = 10240;
     private final Transaction transaction;
 
@@ -70,6 +66,7 @@ public class Rf2OwlToLogicAxiomTransformer extends TrackingCallable<Void> {
 
     @Override
     protected Void compute() throws Exception {
+        Stopwatch stopwatch = new Stopwatch();
         updateMessage("Computing stated OWL expressions...");
         LOG.info("Computing stated OWL expressions...");
         addToTotalWork(4);
@@ -81,6 +78,8 @@ public class Rf2OwlToLogicAxiomTransformer extends TrackingCallable<Void> {
 
         EntityService.get().beginLoadPhase();
         try {
+            List<Callable<Void>> tasks = new ArrayList<>();
+
             PrimitiveData.get().forEachConceptNid(conceptNid -> {
                 int[] semanticNids = EntityService.get().semanticNidsForComponentOfPattern(conceptNid, rf2OwlPatternNid);
                 if (semanticNids != null) {
@@ -91,40 +90,33 @@ public class Rf2OwlToLogicAxiomTransformer extends TrackingCallable<Void> {
                     }
                 }
                 if (statedTransformList.size() == transformSize) {
-                    List<TransformationGroup> listForTask = new ArrayList<>(statedTransformList);
+                    List<TransformationGroup> listForTask = List.copyOf(statedTransformList);
                     OwlToLogicAxiomTransformerAndWriter transformer = new OwlToLogicAxiomTransformerAndWriter(
-                            transaction, listForTask, logicalAxiomPattern.nid(), writeSemaphore, authorNid, moduleNid, pathNid);
-                    Future<Void> transformerFuture = TinkExecutor.threadPool().submit(transformer);
-                    //TODO what do do with the future?
-                    try {
-                        transformerFuture.get();
-                    } catch (InterruptedException | ExecutionException e) {
-                        throw new RuntimeException(e);
-                    }
+                            transaction, listForTask, logicalAxiomPattern.nid(), authorNid, moduleNid, pathNid);
+                    tasks.add(transformer);
                     statedTransformList.clear();
                 }
             });
 
             // pickup any items remaining in the list.
-            OwlToLogicAxiomTransformerAndWriter remainingStatedtransformer = new OwlToLogicAxiomTransformerAndWriter(
-                    transaction, statedTransformList, logicalAxiomPattern.nid(), writeSemaphore, authorNid, moduleNid, pathNid);
-            Future<Void> transformerFuture = TinkExecutor.threadPool().submit(remainingStatedtransformer);
-            //TODO what do do with the future?
-            try {
-                transformerFuture.get();
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
+            if (!statedTransformList.isEmpty()) {
+                OwlToLogicAxiomTransformerAndWriter remainingStatedtransformer = new OwlToLogicAxiomTransformerAndWriter(
+                        transaction, statedTransformList, logicalAxiomPattern.nid(), authorNid, moduleNid, pathNid);
+                tasks.add(remainingStatedtransformer);
             }
+
+            LOG.info("Started processing {} batches", tasks.size());
+
+            TinkExecutor.threadPool().invokeAll(tasks);
 
             completedUnitOfWork();
 
-            writeSemaphore.acquireUninterruptibly(WRITE_PERMITS);
             transaction.commit();
             completedUnitOfWork();
             updateMessage("Completed transformation");
-            LOG.info("Completed processing of {} stated OWL expressions...", count.get());
         } finally {
             EntityService.get().endLoadPhase();
+            LOG.info("Completed processing of {} stated OWL expressions in {}", count.get(), stopwatch.durationString());
         }
         return null;
     }
