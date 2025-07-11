@@ -18,11 +18,7 @@ package dev.ikm.tinkar.entity.transform;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.component.Concept;
-import dev.ikm.tinkar.entity.ConceptRecord;
-import dev.ikm.tinkar.entity.RecordListBuilder;
-import dev.ikm.tinkar.entity.StampEntity;
-import dev.ikm.tinkar.entity.StampRecord;
-import dev.ikm.tinkar.entity.StampVersionRecord;
+import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.schema.StampChronology;
 import dev.ikm.tinkar.schema.StampVersion;
 import dev.ikm.tinkar.terms.ConceptFacade;
@@ -204,14 +200,11 @@ public class TestEntityToProtobufStampTransform {
             PublicId stampPublicID = PublicIds.newRandom();
 
             long expectedTime = nowEpochMillis();
-            Concept conceptPublicId = conceptMap.get(TEST_CONCEPT_NAME);
             Concept authorConcept = conceptMap.get(AUTHOR_CONCEPT_NAME);
             Concept moduleConcept = conceptMap.get(MODULE_CONCEPT_NAME);
             Concept pathConcept = conceptMap.get(PATH_CONCEPT_NAME);
 
             StampEntity<StampVersionRecord> mockedStampEntityVersion = mock(StampEntity.class);
-
-            ConceptRecord mockConceptChronology = mock(ConceptRecord.class);
 
             StampRecord mockedStampChronology = mock(StampRecord.class);
 
