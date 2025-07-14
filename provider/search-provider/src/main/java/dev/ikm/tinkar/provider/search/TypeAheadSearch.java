@@ -101,7 +101,16 @@ public class TypeAheadSearch {
      * @return  List of EntityFacades
      */
     public List<EntityFacade> typeAheadSuggestions(NavigationCalculator navCalc, String userInput, int maxResults) {
+        List<EntityFacade> entityList = searchInput(navCalc, userInput, maxResults);
 
+        if (entityList.isEmpty() && !userInput.endsWith("*")) {
+            // Attempt the same search with wildcard as the built-in search can miss with too few characters
+            entityList = searchInput(navCalc, userInput + "*", maxResults);
+        }
+        return entityList;
+    }
+
+    private List<EntityFacade> searchInput(NavigationCalculator navCalc, String userInput, int maxResults) {
         List<EntityFacade> entityList = new ArrayList<>();
         try {
             ImmutableList<LatestVersionSearchResult> results = navCalc.search(userInput, maxResults);
@@ -112,20 +121,6 @@ public class TypeAheadSearch {
             });
         } catch (Exception e) {
             LOG.error("Encountered exception {}", e.getMessage());
-        }
-
-        if (entityList.isEmpty() && !userInput.endsWith("*")) {
-            // Attempt the same search with wildcard as the built-in search can miss with too few characters
-            try {
-                ImmutableList<LatestVersionSearchResult> results = navCalc.search(userInput + "*", maxResults);
-                results.forEach(latestVersionSearchResult -> {
-                    latestVersionSearchResult.latestVersion().ifPresent(semanticEntityVersion -> {
-                        entityList.add(semanticEntityVersion.referencedComponent());
-                    });
-                });
-            } catch (Exception e) {
-                LOG.error("Encountered exception {}", e.getMessage());
-            }
         }
         return entityList;
     }
