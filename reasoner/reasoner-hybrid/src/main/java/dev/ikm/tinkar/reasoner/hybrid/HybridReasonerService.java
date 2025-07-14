@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dev.ikm.elk.snomed.NecessaryNormalFormBuilder;
-import dev.ikm.elk.snomed.SnomedIds;
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology;
 import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology.SwecIds;
@@ -43,11 +42,13 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 		return TinkarTerm.ROOT_VERTEX.nid();
 	}
 
+	private static final SwecIds swec_ids = StatementSnomedOntology.swec_nfh_sctids; // swec_sctids;
+
 	public static SwecIds getSwecNids() {
-		SwecIds swec_ids = new StatementSnomedOntology.SwecIds(ElkSnomedData.getNid(StatementSnomedOntology.swec_id),
-				ElkSnomedData.getNid(SnomedIds.root), ElkSnomedData.getNid(StatementSnomedOntology.finding_context_id),
-				ElkSnomedData.getNid(StatementSnomedOntology.known_absent_id));
-		return swec_ids;
+		SwecIds swec_nids = new StatementSnomedOntology.SwecIds(ElkSnomedData.getNid(swec_ids.swec()),
+				ElkSnomedData.getNid(swec_ids.swec_parent()), ElkSnomedData.getNid(swec_ids.findingContext()),
+				ElkSnomedData.getNid(swec_ids.knownAbsent()));
+		return swec_nids;
 	}
 
 	@Override

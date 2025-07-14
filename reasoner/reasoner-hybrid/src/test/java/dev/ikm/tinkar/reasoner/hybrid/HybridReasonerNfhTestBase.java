@@ -15,6 +15,8 @@
  */
 package dev.ikm.tinkar.reasoner.hybrid;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -44,6 +46,8 @@ import dev.ikm.tinkar.terms.TinkarTerm;
 public abstract class HybridReasonerNfhTestBase extends HybridReasonerTestBase {
 
 	private static final Logger LOG = LoggerFactory.getLogger(HybridReasonerNfhTestBase.class);
+	
+	protected int expected_child_miss = -1;
 
 	private void updateNfh() throws Exception {
 		ViewCalculator vc = PrimitiveDataTestUtil.getViewCalculator();
@@ -54,8 +58,8 @@ public abstract class HybridReasonerNfhTestBase extends HybridReasonerTestBase {
 		Definition def = nfh_con.getDefinitions().getFirst();
 		def.setDefinitionType(DefinitionType.SubConcept);
 		def.getSuperConcepts().clear();
-		Concept fh_con = ElkSnomedUtil.getConcept(vc, ElkSnomedData.getNid(FamilyHistoryIds.family_history_swec));
-		def.addSuperConcept(fh_con);
+		def.addSuperConcept(ElkSnomedUtil.getConcept(vc, ElkSnomedData.getNid(FamilyHistoryIds.family_history_swec)));
+		def.addSuperConcept(ElkSnomedUtil.getConcept(vc, ElkSnomedData.getNid(FamilyHistoryIds.finding_swec)));
 		def.getRoleGroups().clear();
 		LogicalExpression le = new OwlElToLogicalExpression().build(def);
 		LOG.info("LE:\n" + le);
@@ -70,13 +74,13 @@ public abstract class HybridReasonerNfhTestBase extends HybridReasonerTestBase {
 
 	private void updateParent(long sctid, long parent_sctid) throws Exception {
 		ViewCalculator vc = PrimitiveDataTestUtil.getViewCalculator();
-		Concept nfh_con = ElkSnomedUtil.getConcept(vc, ElkSnomedData.getNid(sctid));
-		Definition def = nfh_con.getDefinitions().getFirst();
+		Concept con = ElkSnomedUtil.getConcept(vc, ElkSnomedData.getNid(sctid));
+		Definition def = con.getDefinitions().getFirst();
 		def.getSuperConcepts().clear();
-		Concept fh_con = ElkSnomedUtil.getConcept(vc, ElkSnomedData.getNid(parent_sctid));
-		def.addSuperConcept(fh_con);
+		Concept parent_con = ElkSnomedUtil.getConcept(vc, ElkSnomedData.getNid(parent_sctid));
+		def.addSuperConcept(parent_con);
 		LogicalExpression le = new OwlElToLogicalExpression().build(def);
-		ElkSnomedUtil.updateStatedSemantic(vc, (int) nfh_con.getId(), le);
+		ElkSnomedUtil.updateStatedSemantic(vc, (int) con.getId(), le);
 	}
 
 	@Test
@@ -92,9 +96,12 @@ public abstract class HybridReasonerNfhTestBase extends HybridReasonerTestBase {
 		SnomedDescriptions descr = SnomedDescriptions.init(descriptions_file);
 		int parent_miss = 0;
 		int child_miss = 0;
-		int mis_match_cnt = 0;
 		HashSet<Long> child_miss_sctids = new HashSet<>();
 		for (long sctid : isas.getOrderedConcepts()) {
+			if (sctid == FamilyHistoryIds.no_family_history_swec)
+				continue;
+			if (isas.hasAncestor(sctid, FamilyHistoryIds.no_family_history_swec))
+				continue;
 			int nid = ElkSnomedData.getNid(sctid);
 			{
 				Set<Integer> expected_parent_nids = isas.getParents(sctid).stream().map(ElkSnomedData::getNid)
@@ -126,6 +133,8 @@ public abstract class HybridReasonerNfhTestBase extends HybridReasonerTestBase {
 				}
 			}
 		}
+		assertEquals(0, parent_miss);
+		assertEquals(expected_child_miss, child_miss);
 	}
 
 }
