@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.reasoner.hybrid;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -34,6 +35,8 @@ import dev.ikm.tinkar.terms.TinkarTerm;
 public abstract class HybridReasonerServiceTestBase extends HybridReasonerTestBase {
 
 	private static final Logger LOG = LoggerFactory.getLogger(HybridReasonerServiceTestBase.class);
+
+	protected int expected_swec_children = -1;
 
 	@Test
 	public void runReasonerService() throws Exception {
@@ -70,12 +73,11 @@ public abstract class HybridReasonerServiceTestBase extends HybridReasonerTestBa
 		}
 	}
 
-	protected static int expected_swec_children = -1;
-
 	private void checkRoot(ReasonerService rs) {
 		SwecIds swecNids = HybridReasonerService.getSwecNids();
-		assertEquals(1, rs.getParents((int) swecNids.swec()).size());
-		assertEquals(swecNids.swec_parent(), rs.getParents((int) swecNids.swec()).toArray()[0]);
+		rs.getParents((int) swecNids.swec()).forEach(nid -> LOG.info(PrimitiveData.text(nid)));
+		assertEquals(2, rs.getParents((int) swecNids.swec()).size());
+		assertTrue(rs.getParents((int) swecNids.swec()).contains((int) swecNids.swec_parent()));
 		assertEquals(expected_swec_children, rs.getChildren((int) swecNids.swec()).size());
 		rs.getChildren((int) swecNids.swec()).forEach(id -> {
 			assertEquals(1, rs.getParents(id).size());

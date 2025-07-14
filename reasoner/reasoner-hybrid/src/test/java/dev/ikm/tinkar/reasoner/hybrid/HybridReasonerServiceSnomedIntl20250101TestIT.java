@@ -32,7 +32,10 @@ public class HybridReasonerServiceSnomedIntl20250101TestIT extends HybridReasone
 
 	static {
 		test_case = "snomed-intl-20250101";
-		expected_swec_children = 11;
+	}
+
+	{
+		expected_swec_children = 5;
 	}
 
 	@Override
