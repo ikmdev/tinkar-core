@@ -102,18 +102,22 @@ public class TypeAheadSearch {
      */
     public List<EntityFacade> typeAheadSuggestions(NavigationCalculator navCalc, String userInput, int maxResults) {
 
-        List<String> suggestions = null;
+        List<EntityFacade> entityList = new ArrayList<>();
         try {
-            suggestions = suggest(userInput, maxResults);
-        } catch (IOException e) {
+            ImmutableList<LatestVersionSearchResult> results = navCalc.search(userInput, maxResults);
+            results.forEach(latestVersionSearchResult -> {
+                latestVersionSearchResult.latestVersion().ifPresent(semanticEntityVersion -> {
+                    entityList.add(semanticEntityVersion.referencedComponent());
+                });
+            });
+        } catch (Exception e) {
             LOG.error("Encountered exception {}", e.getMessage());
-            return Collections.emptyList();
         }
 
-        List<EntityFacade> entityList = new ArrayList<>();
-        suggestions.forEach((suggestion) -> {
+        if (entityList.isEmpty() && !userInput.endsWith("*")) {
+            // Attempt the same search with wildcard as the built-in search can miss with too few characters
             try {
-                ImmutableList<LatestVersionSearchResult> results = navCalc.search(suggestion, 1);
+                ImmutableList<LatestVersionSearchResult> results = navCalc.search(userInput + "*", maxResults);
                 results.forEach(latestVersionSearchResult -> {
                     latestVersionSearchResult.latestVersion().ifPresent(semanticEntityVersion -> {
                         entityList.add(semanticEntityVersion.referencedComponent());
@@ -122,8 +126,7 @@ public class TypeAheadSearch {
             } catch (Exception e) {
                 LOG.error("Encountered exception {}", e.getMessage());
             }
-
-        });
+        }
         return entityList;
     }
 

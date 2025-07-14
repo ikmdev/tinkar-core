@@ -162,7 +162,9 @@ public class SearcherIT {
         var navigationCalculator = NavigationCalculatorWithCache.getCalculator(stampCoordinate, Lists.immutable.of(languageCoordinate), navigationCoordinate);
 
         List<EntityFacade> entities = TypeAheadSearch.get().typeAheadSuggestions(navigationCalculator, "r", 50);
-        assertEquals(40, entities.size());
+        assertEquals(50, entities.size());
+        entities = TypeAheadSearch.get().typeAheadSuggestions(navigationCalculator, "rAdd", 50);
+        assertEquals(0, entities.size());
         // Add a new semantic
         MutableList<String> list = Lists.mutable.empty();
         list.add("rAdded");
@@ -174,8 +176,8 @@ public class SearcherIT {
                         .withAll(list))
         );
         rebuildTypeAheadSuggesterAndBlock();
-        entities = TypeAheadSearch.get().typeAheadSuggestions("r", 50);
-        assertEquals(41, entities.size());
+        entities = TypeAheadSearch.get().typeAheadSuggestions("rAdd", 50);
+        assertEquals(1, entities.size());
         AtomicInteger commentConcepts = new AtomicInteger();
         entities.forEach(conceptFacade -> {
             if (PublicId.equals(conceptFacade.publicId(), TinkarTerm.COMMENT)) {
