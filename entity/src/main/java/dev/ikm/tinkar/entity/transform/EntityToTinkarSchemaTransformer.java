@@ -184,11 +184,18 @@ public class EntityToTinkarSchemaTransformer {
     }
 
     protected StampChronology createPBStampChronology(StampEntity<StampVersionRecord> stampEntity){
-        return StampChronology.newBuilder()
-                .setPublicId(createPBPublicId(stampEntity.publicId()))
-                .setFirstStampVersion(createPBStampVersion(stampEntity.versions().get(0)))
-                .build();
+        StampChronology.Builder stampBuilder = StampChronology.newBuilder()
+                .setPublicId(createPBPublicId(stampEntity.publicId()));
+        switch (stampEntity.versions().size()){
+            case 2: stampBuilder.setSecondStampVersion(createPBStampVersion(stampEntity.versions().get(1)));
+            case 1: stampBuilder.setFirstStampVersion(createPBStampVersion(stampEntity.versions().get(0)));
+                    break;
+            default: throw new RuntimeException("Unexpected number of version size: " + stampEntity.versions().size() +
+                    " for stamp entity: " + stampEntity.nid());
+        }
+        return stampBuilder.build();
     }
+
     // TODO: Check with Andrew, made this method return a singlar StampVersionRecord rather than a list
     protected StampVersion createPBStampVersion(StampVersionRecord stampVersionRecord){
         return StampVersion.newBuilder()
