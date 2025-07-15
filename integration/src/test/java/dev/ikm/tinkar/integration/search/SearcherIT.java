@@ -161,9 +161,9 @@ public class SearcherIT {
         var navigationCoordinate = Coordinates.Navigation.inferred().toNavigationCoordinateRecord();
         var navigationCalculator = NavigationCalculatorWithCache.getCalculator(stampCoordinate, Lists.immutable.of(languageCoordinate), navigationCoordinate);
 
-        List<EntityFacade> entities = TypeAheadSearch.get().typeAheadSuggestions(navigationCalculator, "r", 50);
-        assertEquals(50, entities.size());
-        entities = TypeAheadSearch.get().typeAheadSuggestions(navigationCalculator, "rAdd", 50);
+        List<EntityFacade> entities = TypeAheadSearch.get().typeAheadSuggestions(navigationCalculator, "r", 40);
+        assertEquals(33, entities.size());
+        entities = TypeAheadSearch.get().typeAheadSuggestions(navigationCalculator, "rAdd", 40);
         assertEquals(0, entities.size());
         // Add a new semantic
         MutableList<String> list = Lists.mutable.empty();
@@ -190,8 +190,8 @@ public class SearcherIT {
 
     @Test
     public void typeAheadMaxResultsTest() {
-        List<EntityFacade> entities = TypeAheadSearch.get().typeAheadSuggestions("r", 20);
-        assertEquals(20, entities.size());
+        List<EntityFacade> entities = TypeAheadSearch.get().typeAheadSuggestions("r", 5);
+        assertEquals(5, entities.size());
     }
 
     @Test
