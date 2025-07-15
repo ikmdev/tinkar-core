@@ -116,7 +116,9 @@ public class TypeAheadSearch {
             ImmutableList<LatestVersionSearchResult> results = navCalc.search(userInput, maxResults);
             results.forEach(latestVersionSearchResult -> {
                 latestVersionSearchResult.latestVersion().ifPresent(semanticEntityVersion -> {
-                    entityList.add(semanticEntityVersion.referencedComponent());
+                    if (!entityList.contains(semanticEntityVersion.referencedComponent())) {
+                        entityList.add(semanticEntityVersion.referencedComponent());
+                    }
                 });
             });
         } catch (Exception e) {
