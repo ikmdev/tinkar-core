@@ -36,6 +36,7 @@ import dev.ikm.elk.snomed.SnomedIsa;
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology;
+import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology.SwecIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
@@ -67,8 +68,12 @@ public abstract class HybridClassifierWithoutAbsentTestBase extends HybridReason
 		LOG.info("Create reasoner");
 		// This tests structural, so useAbsent = false
 		// TODO create a method so that SwecIds aren't needed
+		SwecIds swec_ids = StatementSnomedOntology.swec_sctids;
+		SwecIds swec_nids = new StatementSnomedOntology.SwecIds(ElkSnomedData.getNid(swec_ids.swec()),
+				ElkSnomedData.getNid(swec_ids.swec_parent()), ElkSnomedData.getNid(swec_ids.findingContext()),
+				ElkSnomedData.getNid(swec_ids.knownAbsent()));
 		StatementSnomedOntology sso = StatementSnomedOntology.create(ontology, false, HybridReasonerService.getRootId(),
-				HybridReasonerService.getSwecNids());
+				swec_nids);
 		sso.classify();
 		TreeSet<Long> misses = new TreeSet<>();
 		int non_snomed_cnt = 0;
