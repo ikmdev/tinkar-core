@@ -5,7 +5,7 @@
     <parent>
         <groupId>dev.ikm.tinkar</groupId>
         <artifactId>provider</artifactId>
-        <version>1.117.0-SNAPSHOT</version>
+        <version>1.117.0</version>
     </parent>
 
     <artifactId>data-websocket-server-provider</artifactId>
