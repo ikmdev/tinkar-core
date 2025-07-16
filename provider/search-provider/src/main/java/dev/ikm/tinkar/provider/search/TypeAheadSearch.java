@@ -19,7 +19,9 @@ package dev.ikm.tinkar.provider.search;
 import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculator;
+import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.LatestVersionSearchResult;
+import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityFacade;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.search.spell.LuceneDictionary;
@@ -113,14 +115,16 @@ public class TypeAheadSearch {
     private List<EntityFacade> searchInput(NavigationCalculator navCalc, String userInput, int maxResults) {
         List<EntityFacade> entityList = new ArrayList<>();
         try {
-            ImmutableList<LatestVersionSearchResult> results = navCalc.search(userInput, maxResults);
-            results.forEach(latestVersionSearchResult -> {
-                latestVersionSearchResult.latestVersion().ifPresent(semanticEntityVersion -> {
-                    if (!entityList.contains(semanticEntityVersion.referencedComponent())) {
-                        entityList.add(semanticEntityVersion.referencedComponent());
+            ImmutableList<LatestVersionSearchResult> results = navCalc.search(userInput, Math.max(maxResults, 40));
+            for (LatestVersionSearchResult r : results) {
+                Latest<SemanticEntityVersion> latest = r.latestVersion();
+                if (latest.isPresent() && !entityList.contains(latest.get().referencedComponent())) {
+                    entityList.add(latest.get().referencedComponent());
+                    if (entityList.size() == maxResults) {
+                        break;
                     }
-                });
-            });
+                }
+            }
         } catch (Exception e) {
             LOG.error("Encountered exception {}", e.getMessage());
         }
