@@ -26,4 +26,5 @@ jobs:
         uses: ikmdev/maven-clean-install-build-action@v3
         with:
           branch_name: ${{github.ref_name}}
+          java_version: '24'
          
