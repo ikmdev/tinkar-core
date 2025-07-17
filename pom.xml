@@ -538,6 +538,40 @@
                     <artifactId>maven-assembly-plugin</artifactId>
                     <version>${maven.assembly.version}</version>
                 </plugin>
+                <!-- Maven Dependency Plugin Fix (Start) -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>analyze</id>
+                            <goals>
+                                <goal>analyze-only</goal>
+                            </goals>
+                            <configuration>
+                                <ignoredNonTestScopedDependencies>
+                                    <ignoredNonTestScopedDependency>org.slf4j:*</ignoredNonTestScopedDependency>
+                                </ignoredNonTestScopedDependencies>
+                                <ignoredUnusedDeclaredDependencies>
+                                    <ignoredUnusedDeclaredDependency>org.slf4j:*</ignoredUnusedDeclaredDependency>
+                                </ignoredUnusedDeclaredDependencies>
+                                <ignoreUnusedRuntime>true</ignoreUnusedRuntime>
+                                <ignoredUsedUndeclaredDependencies>
+                                    <ignoredUsedUndeclaredDependency>dev.ikm.jpms:eclipse-collections-api</ignoredUsedUndeclaredDependency>
+                                </ignoredUsedUndeclaredDependencies>
+                            </configuration>
+                        </execution>
+                    </executions>
+                    <dependencies>
+                        <!-- Necessary for JDK 24. Should be removed for updates of dependency plugin -->
+                        <dependency>
+                            <groupId>org.apache.maven.shared</groupId>
+                            <artifactId>maven-dependency-analyzer</artifactId>
+                            <version>${maven-dependency-analyzer.version}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+                <!-- Maven Dependency Plugin Fix (End) -->
             </plugins>
         </pluginManagement>
         <plugins>
