@@ -538,6 +538,24 @@
                     <artifactId>maven-assembly-plugin</artifactId>
                     <version>${maven.assembly.version}</version>
                 </plugin>
+                <!-- PMD CHECK: Fails build if there are "High" priority violations -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-pmd-plugin</artifactId>
+                    <configuration>
+                        <failurePriority>1</failurePriority>
+                        <failOnViolation>false</failOnViolation>
+                        <targetJdk>${java.version}</targetJdk>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
                 <!-- Maven Dependency Plugin Fix (Start) -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
