@@ -72,6 +72,7 @@
         <!-- Maven Dependency Analyzer Version -->
         <maven-dependency-analyzer.version>1.16.0</maven-dependency-analyzer.version>
         <maven-pmd-plugin.version>3.27.0</maven-pmd-plugin.version>
+        <jitpack.version>main-SNAPSHOT</jitpack.version>
 
         <activej-bytebuf.version>4.3-r10</activej-bytebuf.version>
         <activej-common.version>4.3-r8</activej-common.version>
@@ -128,7 +129,13 @@
 
     <!-- All Dependencies and versions used in this project are pre-defined here for use in modules -->
     <dependencyManagement>
+
         <dependencies>
+            <dependency>
+                <groupId>com.github.ikmdev</groupId>
+                <artifactId>tinkar-core</artifactId>
+                <version>${jitpack.version}</version>
+            </dependency>
 			<!-- Submodules -->
             <dependency>
                 <groupId>dev.ikm.tinkar</groupId>
@@ -490,6 +497,10 @@
     </dependencyManagement>
     <!-- Cross project dependencies -->
     <dependencies>
+        <dependency>
+            <groupId>com.github.ikmdev</groupId>
+            <artifactId>tinkar-core</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
