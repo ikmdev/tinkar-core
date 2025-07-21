@@ -40,7 +40,6 @@ import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpressionBuilder;
 import dev.ikm.tinkar.ext.lang.owl.OwlElToLogicalExpression;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedUtil;
-import dev.ikm.tinkar.reasoner.service.ReasonerService;
 import dev.ikm.tinkar.terms.ConceptFacade;
 
 public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestBase {
