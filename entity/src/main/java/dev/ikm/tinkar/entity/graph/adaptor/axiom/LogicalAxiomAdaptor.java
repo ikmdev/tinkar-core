@@ -198,6 +198,21 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
         }
     }
 
+	public static final class IntervalPropertySetAdaptor extends LogicalAxiomAdaptor
+			implements LogicalAxiom.LogicalSet.IntervalPropertySet {
+
+		public IntervalPropertySetAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
+			super(enclosingExpression, vertexIndex);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning()
+					.equals(TinkarTerm.INTERVAL_PROPERTY_SET);
+		}
+
+		@Override
+		public ImmutableSet<Atom.Connective> elements() {
+			return children(Atom.Connective.class);
+		}
+	}
+
     public static final class InclusionSetAdaptor extends LogicalAxiomAdaptor implements LogicalAxiom.LogicalSet.InclusionSet {
 
         public InclusionSetAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
@@ -243,6 +258,40 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
                     + PrimitiveData.textWithNid(type().nid()) + " " + restriction().toString() ;
         }
     }
+    
+    public static final class IntervalRoleAxiomAdaptor extends LogicalAxiomAdaptor implements LogicalAxiom.Atom.TypedAtom.IntervalRole {
+
+        public IntervalRoleAxiomAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
+            super(enclosingExpression, vertexIndex);
+            assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(TinkarTerm.INTERVAL_ROLE);
+        }
+
+        @Override
+        public ConceptFacade type() {
+            return property(TinkarTerm.ROLE_TYPE);
+        }
+
+        @Override
+        public ConceptFacade roleOperator() {
+            return property(TinkarTerm.ROLE_OPERATOR);
+        }
+
+        @Override
+        public Atom restriction() {
+            ImmutableSet<Atom> children = children(Atom.class);
+            if (children.size() != 1) {
+                throw new IllegalStateException("Should only be one child for restriction. Found: " + children);
+            }
+            return children.getOnly();
+        }
+
+        @Override
+        public String toString() {
+            return "RoleAxiomAdaptor: " + PrimitiveData.textWithNid(roleOperator().nid()) + " "
+                    + PrimitiveData.textWithNid(type().nid()) + " " + restriction().toString() ;
+        }
+    }
+
 
     public static final class FeatureAxiomAdaptor extends LogicalAxiomAdaptor implements LogicalAxiom.Atom.TypedAtom.Feature {
 

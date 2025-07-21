@@ -288,6 +288,12 @@ public class ElkSnomedDataBuilder {
 				processDataPropertySet(conceptNid, child, definition);
 				result = data.getConcreteRoleType(conceptNid);
 			}
+			case INTERVAL_PROPERTY_SET -> {
+				LOG.info("Interval PS: " + PrimitiveData.text(conceptNid) + "\n" + definition);
+				processDataPropertySet(conceptNid, child, definition);
+				data.addIntervalRoleType(data.getConcreteRoleType(conceptNid));
+				result = data.getConcreteRoleType(conceptNid);
+			}
 			default -> throw new IllegalArgumentException("Unexpected value: " + getMeaning(child));
 			}
 			if (ret == null)
@@ -396,6 +402,10 @@ public class ElkSnomedDataBuilder {
 				ConcreteRole role = makeConcreteRole(child, definition);
 				def.addUngroupedConcreteRole(role);
 			}
+			case INTERVAL_ROLE -> {
+				ConcreteRole role = makeIntervalRole(child, definition);
+				def.addUngroupedConcreteRole(role);
+			}
 			default -> throw new IllegalArgumentException("Unexpected value: " + getMeaning(child));
 			}
 		}
@@ -422,6 +432,19 @@ public class ElkSnomedDataBuilder {
 		default -> throw new UnsupportedOperationException("Value type: " + value.getClass().getName());
 		};
 		return new ConcreteRole(role_type, value.toString(), value_type);
+	}
+
+	private ConcreteRole makeIntervalRole(EntityVertex node, DiTreeEntity definition) {
+		int role_type_nid = getNid(node, TinkarTerm.INTERVAL_ROLE_TYPE);
+		ConcreteRoleType role_type = data.getOrCreateConcreteRoleType(role_type_nid);
+		data.addIntervalRoleType(role_type);
+		int lowerBound = node.propertyFast(TinkarTerm.INTERVAL_LOWER_BOUND);
+		boolean lowerOpen = node.propertyFast(TinkarTerm.INTERVAL_LOWER_BOUND_OPEN);
+		int upperBound = node.propertyFast(TinkarTerm.INTERVAL_UPPER_BOUND);
+		boolean upperOpen = node.propertyFast(TinkarTerm.INTERVAL_UPPER_BOUND_OPEN);
+		String interval = (lowerOpen ? "(" : "[") + lowerBound + "," + upperBound + (upperOpen ? ")" : "]");
+		LOG.info(">>>>>" + interval + " " + PrimitiveData.text(role_type_nid));
+		return new ConcreteRole(role_type, interval, ValueType.String);
 	}
 
 	private void processRoleGroup(Definition def, EntityVertex node, DiTreeEntity definition) {
@@ -459,6 +482,10 @@ public class ElkSnomedDataBuilder {
 			}
 			case FEATURE -> {
 				ConcreteRole role = makeConcreteRole(child, definition);
+				rg.addConcreteRole(role);
+			}
+			case INTERVAL_ROLE -> {
+				ConcreteRole role = makeIntervalRole(child, definition);
 				rg.addConcreteRole(role);
 			}
 			default -> throw new IllegalArgumentException("Unexpected value: " + getMeaning(child));

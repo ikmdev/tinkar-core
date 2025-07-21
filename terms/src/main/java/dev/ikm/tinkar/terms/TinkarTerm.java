@@ -6882,6 +6882,19 @@ public class TinkarTerm {
     public static final EntityProxy.Concept PROPERTY_SEQUENCE_IMPLICATION =
             EntityProxy.Concept.make("Property sequence implication (SOLOR)", UUID.fromString("9a47a5db-42a6-49ee-9083-54bc305a9456"));
 
+	public static final EntityProxy.Concept INTERVAL_PROPERTY_SET = FRENCH_LANGUAGE;
+
+	public static final EntityProxy.Concept INTERVAL_ROLE = CZECH_LANGUAGE;
+
+	public static final EntityProxy.Concept INTERVAL_ROLE_TYPE = DANISH_LANGUAGE;
+
+	public static final EntityProxy.Concept INTERVAL_LOWER_BOUND = POLISH_LANGUAGE;
+
+	public static final EntityProxy.Concept INTERVAL_LOWER_BOUND_OPEN = POLISH_DIALECT;
+
+	public static final EntityProxy.Concept INTERVAL_UPPER_BOUND = RUSSIAN_LANGUAGE;
+
+	public static final EntityProxy.Concept INTERVAL_UPPER_BOUND_OPEN = RUSSIAN_DIALECT;
 
     /**
      * ConceptProxy for: "Tinkar root concept".
