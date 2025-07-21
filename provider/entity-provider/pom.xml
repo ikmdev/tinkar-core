@@ -5,7 +5,7 @@
     <parent>
         <groupId>dev.ikm.tinkar</groupId>
         <artifactId>provider</artifactId>
-        <version>1.118.0-AR-578-update-changesetwriter-with-latest-version-SNAPSHOT</version>
+        <version>1.118.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>entity-provider</artifactId>
