@@ -4,8 +4,8 @@
 
     <parent>
         <groupId>dev.ikm.build</groupId>
-        <artifactId>gitub_actions_test_java-parent</artifactId>
-        <version>12.57.0</version>
+        <artifactId>java-parent</artifactId>
+        <version>1.63.0</version>
         <relativePath/>
     </parent>
 
