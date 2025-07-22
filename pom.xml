@@ -549,24 +549,6 @@
                     <artifactId>maven-assembly-plugin</artifactId>
                     <version>${maven.assembly.version}</version>
                 </plugin>
-                <!-- PMD CHECK: Fails build if there are "High" priority violations -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-pmd-plugin</artifactId>
-                    <configuration combine.self="override">
-                        <failurePriority>1</failurePriority>
-<!--                         <aggregate combine.self="override"></aggregate> -->
-                        <failOnViolation>false</failOnViolation>
-                        <targetJdk>${java.version}</targetJdk>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>check</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
 
                 <!-- Maven Dependency Plugin Fix (Start) -->
                 <plugin>
@@ -616,6 +598,36 @@
             </plugin>
         </plugins>
     </build>
+
+    <profile>
+            <!-- To disable this, use something like "mvn install -P!codeQuality" -->
+            <id>codeQuality</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                                    <!-- PMD CHECK: Fails build if there are "High" priority violations -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-pmd-plugin</artifactId>
+                    <configuration combine.self="override">
+                        <failurePriority>1</failurePriority>
+<!--                         <aggregate combine.self="override"></aggregate> -->
+                        <failOnViolation>false</failOnViolation>
+                        <targetJdk>${java.version}</targetJdk>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                </plugins>
+            </build>
+    </profile>
 
     <!-- for site generation -->
     <reporting>
