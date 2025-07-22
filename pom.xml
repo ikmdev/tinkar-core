@@ -550,11 +550,12 @@
                     <version>${maven.assembly.version}</version>
                 </plugin>
                 <!-- PMD CHECK: Fails build if there are "High" priority violations -->
-<!--                 <plugin>
+                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-pmd-plugin</artifactId>
                     <configuration combine.self="override">
                         <failurePriority>1</failurePriority>
+                        <aggregate></aggregate>
                         <failOnViolation>false</failOnViolation>
                         <targetJdk>${java.version}</targetJdk>
                     </configuration>
@@ -565,7 +566,7 @@
                             </goals>
                         </execution>
                     </executions>
-                </plugin> -->
+                </plugin>
 
                 <!-- Maven Dependency Plugin Fix (Start) -->
                 <plugin>
