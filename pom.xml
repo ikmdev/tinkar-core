@@ -613,7 +613,7 @@
                     <artifactId>maven-pmd-plugin</artifactId>
                     <configuration>
 <!--                         <failurePriority>1</failurePriority> -->
-                        <aggregate></aggregate>
+                        <aggregate combine.self="override"></aggregate>
 <!--                         <failOnViolation>false</failOnViolation> -->
                         <targetJdk>${java.version}</targetJdk>
                     </configuration>
