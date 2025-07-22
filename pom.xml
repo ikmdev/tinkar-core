@@ -598,7 +598,7 @@
             </plugin>
         </plugins>
     </build>
-
+    <profiles>
     <profile>
             <!-- To disable this, use something like "mvn install -P!codeQuality" -->
             <id>codeQuality</id>
@@ -628,6 +628,7 @@
                 </plugins>
             </build>
     </profile>
+    </profiles>
 
     <!-- for site generation -->
     <reporting>
