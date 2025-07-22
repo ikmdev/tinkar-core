@@ -611,19 +611,19 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-pmd-plugin</artifactId>
-                    <configuration combine.self="override">
-                        <failurePriority>1</failurePriority>
-<!--                         <aggregate combine.self="override"></aggregate> -->
-                        <failOnViolation>false</failOnViolation>
+                    <configuration>
+<!--                         <failurePriority>1</failurePriority> -->
+                        <aggregate></aggregate>
+<!--                         <failOnViolation>false</failOnViolation> -->
                         <targetJdk>${java.version}</targetJdk>
                     </configuration>
-                    <executions>
+<!--                     <executions>
                         <execution>
                             <goals>
                                 <goal>check</goal>
                             </goals>
                         </execution>
-                    </executions>
+                    </executions> -->
                 </plugin>
                 </plugins>
             </build>
