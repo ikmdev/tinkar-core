@@ -553,9 +553,9 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-pmd-plugin</artifactId>
-                    <configuration>
+                    <configuration combine.self="override">
                         <failurePriority>1</failurePriority>
-                        <aggregate combine.self="override"></aggregate>
+<!--                         <aggregate combine.self="override"></aggregate> -->
                         <failOnViolation>false</failOnViolation>
                         <targetJdk>${java.version}</targetJdk>
                     </configuration>
