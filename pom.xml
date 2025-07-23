@@ -491,10 +491,6 @@
     </dependencyManagement>
     <!-- Cross project dependencies -->
     <dependencies>
-<!--        <dependency>-->
-<!--            <groupId>com.github.ikmdev</groupId>-->
-<!--            <artifactId>tinkar-core</artifactId>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
