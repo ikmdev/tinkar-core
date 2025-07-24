@@ -23,7 +23,7 @@
 		<dependencies>
 			<dependency>
 				<groupId>${project.parent.groupId}</groupId>
-				<artifactId>coordinate</artifactId>
+				<artifactId>entity</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
@@ -52,7 +52,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>${project.parent.groupId}</groupId>
-			<artifactId>coordinate</artifactId>
+			<artifactId>entity</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>${project.parent.groupId}</groupId>

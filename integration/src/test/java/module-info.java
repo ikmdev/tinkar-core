@@ -27,7 +27,6 @@ open module dev.ikm.tinkar.integration.test {
     requires dev.ikm.tinkar.entity;
     requires dev.ikm.tinkar.provider.entity;
     requires dev.ikm.tinkar.terms;
-    requires dev.ikm.tinkar.coordinate;
     requires dev.ikm.jpms.protobuf;
     requires org.junit.jupiter.api;
     requires dev.ikm.tinkar.integration;
@@ -43,7 +42,6 @@ open module dev.ikm.tinkar.integration.test {
     requires org.apache.lucene.queryparser;
     requires org.apache.lucene.core;
     requires dev.ikm.tinkar.ext.binding;
-    requires dev.ikm.jpms.recordbuilder.core;
     requires java.compiler;
     requires dev.ikm.tinkar.reasoner.elkowl;
     requires dev.ikm.tinkar.reasoner.elksnomed;
