@@ -23,7 +23,6 @@ module dev.ikm.tinkar.reasoner.elkowl {
 	requires org.slf4j;
 
 	requires dev.ikm.tinkar.collection;
-	requires dev.ikm.tinkar.coordinate;
 	requires dev.ikm.tinkar.entity;
 
 	requires org.semanticweb.owlapi;

@@ -7,7 +7,6 @@ open module dev.ikm.tinkar.reasoner.elksnomed.test {
 	requires org.slf4j;
 
 	requires dev.ikm.tinkar.collection;
-	requires dev.ikm.tinkar.coordinate;
 	requires dev.ikm.tinkar.entity;
 	requires dev.ikm.tinkar.ext.lang.owl;
 	requires dev.ikm.tinkar.reasoner.service;

@@ -21,47 +21,79 @@
 
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.LoadDataFromFileController;
+import dev.ikm.tinkar.coordinate.PathService;
+import dev.ikm.tinkar.coordinate.edit.EditCoordinateRecord;
+import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculatorWithCache;
+import dev.ikm.tinkar.coordinate.logic.calculator.LogicCalculatorWithCache;
+import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
+import dev.ikm.tinkar.coordinate.stamp.StampPathImmutable;
+import dev.ikm.tinkar.coordinate.stamp.calculator.PathProvider;
+import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
+import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculatorWithCache;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.StampService;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromFileController;
 
-@SuppressWarnings("module")
-        // 7 in HL7 is not a version reference
 module dev.ikm.tinkar.entity {
-    requires transitive dev.ikm.tinkar.common;
-    requires transitive dev.ikm.tinkar.component;
-    requires transitive com.github.benmanes.caffeine;
-    requires transitive dev.ikm.tinkar.terms;
-
+    requires com.github.benmanes.caffeine;
+    requires dev.ikm.jpms.activej.bytebuf;
+    requires dev.ikm.jpms.protobuf;
+    requires dev.ikm.tinkar.collection;
+    requires dev.ikm.tinkar.schema;
+    requires java.logging;
+    requires java.xml;
+    requires org.jgrapht.core;
+    requires org.slf4j;
     requires static dev.ikm.jpms.recordbuilder.core;
     requires static java.compiler;
+    requires transitive dev.ikm.jpms.eclipse.collections.api;
+    requires transitive dev.ikm.jpms.eclipse.collections;
+    requires transitive dev.ikm.tinkar.common;
+    requires transitive dev.ikm.tinkar.component;
+    requires transitive dev.ikm.tinkar.terms;
 
-    requires org.slf4j;
-    requires dev.ikm.jpms.activej.bytebuf;
-    requires java.logging;
-    requires dev.ikm.jpms.eclipse.collections;
-    requires dev.ikm.jpms.eclipse.collections.api;
-    requires java.xml;
-    requires dev.ikm.tinkar.schema;
-    requires dev.ikm.jpms.protobuf;
-    requires org.jgrapht.core;
-    exports dev.ikm.tinkar.entity;
+    exports dev.ikm.tinkar.coordinate.edit;
+    exports dev.ikm.tinkar.coordinate.language.calculator;
+    exports dev.ikm.tinkar.coordinate.language;
+    exports dev.ikm.tinkar.coordinate.logic.calculator;
+    exports dev.ikm.tinkar.coordinate.logic;
+    exports dev.ikm.tinkar.coordinate.navigation.calculator;
+    exports dev.ikm.tinkar.coordinate.navigation;
+    exports dev.ikm.tinkar.coordinate.stamp.calculator;
+    exports dev.ikm.tinkar.coordinate.stamp.change;
+    exports dev.ikm.tinkar.coordinate.stamp;
+    exports dev.ikm.tinkar.coordinate.view.calculator;
+    exports dev.ikm.tinkar.coordinate.view;
+    exports dev.ikm.tinkar.coordinate;
     exports dev.ikm.tinkar.entity.aggregator;
-    exports dev.ikm.tinkar.entity.graph;
-    exports dev.ikm.tinkar.entity.util;
-    exports dev.ikm.tinkar.entity.load;
     exports dev.ikm.tinkar.entity.export;
+    exports dev.ikm.tinkar.entity.graph.adaptor.axiom;
+    exports dev.ikm.tinkar.entity.graph.isomorphic;
+    exports dev.ikm.tinkar.entity.graph;
+    exports dev.ikm.tinkar.entity.load;
     exports dev.ikm.tinkar.entity.transaction;
     exports dev.ikm.tinkar.entity.transform;
-    exports dev.ikm.tinkar.entity.graph.isomorphic;
-    exports dev.ikm.tinkar.entity.graph.adaptor.axiom;
+    exports dev.ikm.tinkar.entity.util;
+    exports dev.ikm.tinkar.entity;
 
     opens dev.ikm.tinkar.entity.graph.adaptor.axiom;
 
+    provides CachingService with
+            LanguageCalculatorWithCache.CacheProvider,
+            LogicCalculatorWithCache.CacheProvider,
+            NavigationCalculatorWithCache.CacheProvider,
+            StampCalculatorWithCache.CacheProvider,
+            ViewCalculatorWithCache.CacheProvider,
+            EditCoordinateRecord.CacheProvider,
+            StampPathImmutable.CachingProvider;
+
     provides LoadDataFromFileController
-            with LoadEntitiesFromFileController;
+             with LoadEntitiesFromFileController;
+
+    provides PathService with PathProvider;
 
     uses CachingService;
     uses EntityService;
+    uses PathService;
     uses StampService;
 }
