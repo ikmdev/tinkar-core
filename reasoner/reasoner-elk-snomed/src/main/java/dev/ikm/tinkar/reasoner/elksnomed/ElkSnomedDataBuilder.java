@@ -33,6 +33,7 @@ import dev.ikm.elk.snomed.model.Role;
 import dev.ikm.elk.snomed.model.RoleGroup;
 import dev.ikm.elk.snomed.model.RoleType;
 import dev.ikm.elk.snomed.model.SnomedEntity;
+import dev.ikm.reasoner.hybrid.snomed.Interval;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
@@ -215,7 +216,7 @@ public class ElkSnomedDataBuilder {
 		return LogicalAxiomSemantic.get(node.getMeaningNid());
 	}
 
-	private int getNid(EntityVertex node, dev.ikm.tinkar.terms.EntityProxy.Concept concept) {
+	private static int getNid(EntityVertex node, dev.ikm.tinkar.terms.EntityProxy.Concept concept) {
 		ConceptFacade cf = node.propertyFast(concept);
 		return cf.nid();
 	}
@@ -434,17 +435,29 @@ public class ElkSnomedDataBuilder {
 		return new ConcreteRole(role_type, value.toString(), value_type);
 	}
 
-	private ConcreteRole makeIntervalRole(EntityVertex node, DiTreeEntity definition) {
+	public static String getIntervalRoleString(ViewCalculator vc, EntityVertex node) {
 		int role_type_nid = getNid(node, TinkarTerm.INTERVAL_ROLE_TYPE);
-		ConcreteRoleType role_type = data.getOrCreateConcreteRoleType(role_type_nid);
-		data.addIntervalRoleType(role_type);
+		Interval interval = makeInterval(node);
+		return vc.getPreferredDescriptionTextWithFallbackOrNid(role_type_nid) + " \u2192 " + interval.toString(false)
+				+ " " + vc.getPreferredDescriptionTextWithFallbackOrNid((int) interval.getUnitOfMeasure());
+	}
+
+	public static Interval makeInterval(EntityVertex node) {
 		int lowerBound = node.propertyFast(TinkarTerm.INTERVAL_LOWER_BOUND);
 		boolean lowerOpen = node.propertyFast(TinkarTerm.INTERVAL_LOWER_BOUND_OPEN);
 		int upperBound = node.propertyFast(TinkarTerm.INTERVAL_UPPER_BOUND);
 		boolean upperOpen = node.propertyFast(TinkarTerm.INTERVAL_UPPER_BOUND_OPEN);
-		String interval = (lowerOpen ? "(" : "[") + lowerBound + "," + upperBound + (upperOpen ? ")" : "]");
-		LOG.info(">>>>>" + interval + " " + PrimitiveData.text(role_type_nid));
-		return new ConcreteRole(role_type, interval, ValueType.String);
+		int unit_nid = getNid(node, TinkarTerm.INTERVAL_UNIT_OF_MEASURE);
+		return new Interval(lowerBound, lowerOpen, upperBound, upperOpen, unit_nid);
+	}
+
+	private ConcreteRole makeIntervalRole(EntityVertex node, DiTreeEntity definition) {
+		int role_type_nid = getNid(node, TinkarTerm.INTERVAL_ROLE_TYPE);
+		ConcreteRoleType role_type = data.getOrCreateConcreteRoleType(role_type_nid);
+		data.addIntervalRoleType(role_type);
+		Interval interval = makeInterval(node);
+		LOG.info(">>>>>" + getIntervalRoleString(viewCalculator, node));
+		return new ConcreteRole(role_type, interval.toString(), ValueType.String);
 	}
 
 	private void processRoleGroup(Definition def, EntityVertex node, DiTreeEntity definition) {

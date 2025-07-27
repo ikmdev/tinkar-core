@@ -31,6 +31,7 @@ import dev.ikm.elk.snomed.model.Definition;
 import dev.ikm.elk.snomed.model.DefinitionType;
 import dev.ikm.reasoner.hybrid.snomed.Interval;
 import dev.ikm.reasoner.hybrid.snomed.IntervalReasoner;
+import dev.ikm.reasoner.hybrid.snomed.TemporalUnits;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
@@ -72,6 +73,8 @@ public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestB
 			long sctid = Long.parseLong(fields[0]);
 			int nid = ElkSnomedData.getNid(sctid);
 			Interval interval = Interval.fromString(fields[1]);
+			int units_nid = ElkSnomedData.getNid(interval.getUnitOfMeasure());
+			interval.setUnitOfMeasure(units_nid);
 			LOG.info("Interval: " + interval + " " + sctid + " " + PrimitiveData.text(nid));
 			SemanticEntityVersion sev = ElkSnomedUtil.getStatedSemantic(vc, nid);
 			LOG.info("SEV:\n" + sev);
@@ -86,7 +89,8 @@ public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestB
 			LogicalExpression le = new OwlElToLogicalExpression().build(def);
 			LogicalExpressionBuilder builder = new LogicalExpressionBuilder(le);
 			IntervalRole interval_role = builder.IntervalRole(ConceptFacade.make(duration_role_nid),
-					interval.getLowerBound(), interval.isLowerOpen(), interval.getUpperBound(), interval.isUpperOpen());
+					interval.getLowerBound(), interval.isLowerOpen(), interval.getUpperBound(), interval.isUpperOpen(),
+					ConceptFacade.make(units_nid));
 			builder.addToFirstAnd(0, interval_role);
 			le = builder.build();
 			LOG.info("ROLE:\n" + le);

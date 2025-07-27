@@ -6895,6 +6895,8 @@ public class TinkarTerm {
 	public static final EntityProxy.Concept INTERVAL_UPPER_BOUND = RUSSIAN_LANGUAGE;
 
 	public static final EntityProxy.Concept INTERVAL_UPPER_BOUND_OPEN = RUSSIAN_DIALECT;
+	
+	public static final EntityProxy.Concept INTERVAL_UNIT_OF_MEASURE = CZECH_DIALECT;
 
     /**
      * ConceptProxy for: "Tinkar root concept".

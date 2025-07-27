@@ -248,19 +248,21 @@ public class LogicalExpressionBuilder {
 	}
 
 	public LogicalAxiom.Atom.TypedAtom.IntervalRole IntervalRole(ConceptFacade intervalRoleType, int lowerBound,
-			boolean lowerOpen, int upperBound, boolean upperOpen) {
-		return IntervalRole(generateRandomUuid(), intervalRoleType, lowerBound, lowerOpen, upperBound, upperOpen);
+			boolean lowerOpen, int upperBound, boolean upperOpen, ConceptFacade units) {
+		return IntervalRole(generateRandomUuid(), intervalRoleType, lowerBound, lowerOpen, upperBound, upperOpen,
+				units);
 	}
 
-	public LogicalAxiom.Atom.TypedAtom.IntervalRole IntervalRole(UUID vertexUuid, ConceptFacade intervoralRoleType,
-			int lowerBound, boolean lowerOpen, int upperBound, boolean upperOpen) {
+	public LogicalAxiom.Atom.TypedAtom.IntervalRole IntervalRole(UUID vertexUuid, ConceptFacade intervalRoleType,
+			int lowerBound, boolean lowerOpen, int upperBound, boolean upperOpen, ConceptFacade units) {
 		EntityVertex intervalRole = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.INTERVAL_ROLE.nid);
 		builder.addVertex(intervalRole);
-		intervalRole.putUncommittedProperty(TinkarTerm.INTERVAL_ROLE_TYPE.nid(), intervoralRoleType);
+		intervalRole.putUncommittedProperty(TinkarTerm.INTERVAL_ROLE_TYPE.nid(), intervalRoleType);
 		intervalRole.putUncommittedProperty(TinkarTerm.INTERVAL_LOWER_BOUND.nid(), lowerBound);
 		intervalRole.putUncommittedProperty(TinkarTerm.INTERVAL_LOWER_BOUND_OPEN.nid(), lowerOpen);
 		intervalRole.putUncommittedProperty(TinkarTerm.INTERVAL_UPPER_BOUND.nid(), upperBound);
 		intervalRole.putUncommittedProperty(TinkarTerm.INTERVAL_UPPER_BOUND_OPEN.nid(), upperOpen);
+		intervalRole.putUncommittedProperty(TinkarTerm.INTERVAL_UNIT_OF_MEASURE.nid(), units);
 		intervalRole.commitProperties();
 		return new LogicalAxiomAdaptor.IntervalRoleAxiomAdaptor(logicalExpression, intervalRole.vertexIndex());
 	}

@@ -60,5 +60,9 @@
 			<groupId>dev.ikm.elk</groupId>
 			<artifactId>elk-snomed-test</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>dev.ikm.hybrid-reasoner</groupId>
+			<artifactId>hybrid-reasoner-snomed</artifactId>
+		</dependency>
 	</dependencies>
 </project>
