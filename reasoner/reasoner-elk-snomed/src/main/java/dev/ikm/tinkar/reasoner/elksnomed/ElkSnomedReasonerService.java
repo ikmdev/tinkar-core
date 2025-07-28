@@ -51,7 +51,7 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 
 	protected SnomedOntology ontology;
 
-	private SnomedOntologyReasoner reasoner;
+	protected SnomedOntologyReasoner reasoner;
 
 	protected NecessaryNormalFormBuilder nnfb;
 

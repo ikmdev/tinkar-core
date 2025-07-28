@@ -18,20 +18,16 @@ package dev.ikm.tinkar.reasoner.hybrid;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.elk.snomed.model.Concept;
-import dev.ikm.elk.snomed.model.ConcreteRoleType;
 import dev.ikm.elk.snomed.model.Definition;
 import dev.ikm.elk.snomed.model.DefinitionType;
 import dev.ikm.reasoner.hybrid.snomed.Interval;
 import dev.ikm.reasoner.hybrid.snomed.IntervalReasoner;
-import dev.ikm.reasoner.hybrid.snomed.TemporalUnits;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
@@ -41,7 +37,9 @@ import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpressionBuilder;
 import dev.ikm.tinkar.ext.lang.owl.OwlElToLogicalExpression;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedUtil;
+import dev.ikm.tinkar.reasoner.service.ReasonerService;
 import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.TinkarTerm;
 
 public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestBase {
 
@@ -99,19 +97,36 @@ public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestB
 		}
 	}
 
+	public ReasonerService initReasonerService() {
+		ReasonerService rs = new IntervalReasonerService();
+		rs.init(getViewCalculator(), TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+				TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
+		rs.setProgressUpdater(null);
+		return rs;
+	}
+
 	@Test
 	public void premature() throws Exception {
 		updatePremature();
-		ElkSnomedData data = buildSnomedData();
-		LOG.info("Create ontology");
-		SnomedOntology snomedOntology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(),
-				data.getConcreteRoleTypes());
-		List<ConcreteRoleType> intervalRoles = List.copyOf(data.getIntervalRoleTypes());
-		intervalRoles.forEach(x -> LOG.info("IR: " + PrimitiveData.text((int) x.getId())));
-		IntervalReasoner ir = IntervalReasoner.create(snomedOntology, intervalRoles);
-		// 395507008 |Premature infant (finding)|
-		int pi_nid = ElkSnomedData.getNid(395507008);
-		print(ir, pi_nid, 0);
+		ReasonerService rs = initReasonerService();
+		rs.extractData();
+		rs.loadData();
+		rs.computeInferences();
+		rs.buildNecessaryNormalForm();
+		rs.writeInferredResults();
+//		ElkSnomedData data = buildSnomedData();
+//		LOG.info("Create ontology");
+//		SnomedOntology snomedOntology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(),
+//				data.getConcreteRoleTypes());
+//		List<ConcreteRoleType> intervalRoles = List.copyOf(data.getIntervalRoleTypes());
+//		intervalRoles.forEach(x -> LOG.info("IR: " + PrimitiveData.text((int) x.getId())));
+//		IntervalReasoner ir = IntervalReasoner.create(snomedOntology, intervalRoles);
+//		// 395507008 |Premature infant (finding)|
+//		int pi_nid = ElkSnomedData.getNid(395507008);
+//		print(ir, pi_nid, 0);
+//		NecessaryNormalFormBuilder nnfb = NecessaryNormalFormBuilder.create(snomedOntology, ir.getSuperConcepts(),
+//				ir.getSuperRoleTypes(false), TinkarTerm.ROOT_VERTEX.nid());
+//		nnfb.generate();
 	}
 
 	private void print(IntervalReasoner ir, int nid, int i) {
