@@ -161,9 +161,9 @@ public class SearcherIT {
         var navigationCoordinate = Coordinates.Navigation.inferred().toNavigationCoordinateRecord();
         var navigationCalculator = NavigationCalculatorWithCache.getCalculator(stampCoordinate, Lists.immutable.of(languageCoordinate), navigationCoordinate);
 
-        List<EntityFacade> entities = TypeAheadSearch.get().typeAheadSuggestions(navigationCalculator, "r", 50);
-        assertEquals(50, entities.size());
-        entities = TypeAheadSearch.get().typeAheadSuggestions(navigationCalculator, "rAdd", 50);
+        List<EntityFacade> entities = TypeAheadSearch.get().typeAheadSuggestions(navigationCalculator, "r", 10);
+        assertEquals(10, entities.size());
+        entities = TypeAheadSearch.get().typeAheadSuggestions(navigationCalculator, "rAdd", 20);
         assertEquals(0, entities.size());
         // Add a new semantic
         MutableList<String> list = Lists.mutable.empty();
@@ -176,7 +176,7 @@ public class SearcherIT {
                         .withAll(list))
         );
         rebuildTypeAheadSuggesterAndBlock();
-        entities = TypeAheadSearch.get().typeAheadSuggestions("rAdd", 50);
+        entities = TypeAheadSearch.get().typeAheadSuggestions("rAdd", 10);
         assertEquals(1, entities.size());
         AtomicInteger commentConcepts = new AtomicInteger();
         entities.forEach(conceptFacade -> {
@@ -190,8 +190,8 @@ public class SearcherIT {
 
     @Test
     public void typeAheadMaxResultsTest() {
-        List<EntityFacade> entities = TypeAheadSearch.get().typeAheadSuggestions("r", 20);
-        assertEquals(20, entities.size());
+        List<EntityFacade> entities = TypeAheadSearch.get().typeAheadSuggestions("r", 30);
+        assertEquals(30, entities.size());
     }
 
     @Test

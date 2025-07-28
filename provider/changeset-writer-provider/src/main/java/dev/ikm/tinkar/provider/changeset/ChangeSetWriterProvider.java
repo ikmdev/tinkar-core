@@ -233,7 +233,10 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                     // We will write uncommitted versions at the end of the thread to prevent bloat from uncommitted changes,
                                     // unless they are committed before the thread stops.
                                     ImmutableIntList uncommittedStampNids = entityToWrite.uncommittedStampNids();
-                                    uncommittedStampNids.forEach(stampNid -> uncommittedEntitiesByStamp.put(stampNid, entityToWrite));
+                                    uncommittedStampNids.forEach(stampNid -> {
+                                        uncommittedEntitiesByStamp.remove(stampNid, entityToWrite);
+                                        uncommittedEntitiesByStamp.put(stampNid, entityToWrite);
+                                    });
                                 } else {
                                     writeEntity(entityCount, entityToWrite, conceptsCount, semanticsCount, patternsCount, stampsCount, moduleList, authorList, entityTransformer, zos);
                                     // If a committed stamp comes through, then see if any previously uncommitted versions for that stamp exist, and write them if so.
