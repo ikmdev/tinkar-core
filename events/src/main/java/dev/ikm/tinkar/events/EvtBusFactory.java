@@ -39,6 +39,11 @@ public class EvtBusFactory {
      */
     public static EvtBus getInstance(Class clazz) {
         if (null == evtBusMap.get(clazz.getSimpleName())) {
+            System.out.println("***JTD: EvtBus class loading " + clazz + ", cp " + Thread.currentThread().getContextClassLoader());
+            System.out.println("***JTD: DefaultEvtBus class loading " + new DefaultEvtBus().getClass().getClassLoader());
+
+            ServiceLoader serviceLoader = ServiceLoader.load(clazz);
+            //serviceLoader.reload();
             EvtBus bus = (EvtBus) ServiceLoader.load(clazz).findFirst().get();
             if (clazz == EvtBus.class) {
                 evtBusMap.put(clazz.getSimpleName(), bus);
