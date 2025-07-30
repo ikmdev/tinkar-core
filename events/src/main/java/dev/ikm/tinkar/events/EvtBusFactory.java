@@ -74,6 +74,6 @@ public class EvtBusFactory {
      * @return A default event bus implementation to be used.
      */
     public static EvtBus getDefaultEvtBus() {
-        return getInstance(DefaultEvtBus.class);
+        return getInstance(EvtBus.class);
     }
 }
