@@ -19,7 +19,6 @@ module dev.ikm.tinkar.ext.lang.owl {
 	requires dev.ikm.jpms.eclipse.collections.api;
 
 	requires dev.ikm.tinkar.common;
-	requires dev.ikm.tinkar.coordinate;
 	requires dev.ikm.tinkar.entity;
 
 	requires dev.ikm.elk.snomed;
