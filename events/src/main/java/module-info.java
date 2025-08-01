@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
+import dev.ikm.tinkar.events.EvtBus;
+
 open module dev.ikm.tinkar.events {
     exports dev.ikm.tinkar.events;
 
     requires dev.ikm.tinkar.entity;
     requires org.slf4j;
 
+
     provides dev.ikm.tinkar.events.EvtBus
             with dev.ikm.tinkar.events.DefaultEvtBus;
 
-    uses dev.ikm.tinkar.events.EvtBus;
+    uses dev.ikm.tinkar.events.DefaultEvtBus;
+    uses EvtBus;
 }
