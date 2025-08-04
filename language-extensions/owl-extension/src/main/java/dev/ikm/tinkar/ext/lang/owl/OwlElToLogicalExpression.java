@@ -1,5 +1,6 @@
 package dev.ikm.tinkar.ext.lang.owl;
 
+import dev.ikm.elk.snomed.interval.Interval;
 import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.elk.snomed.model.ConcreteRole;
 import dev.ikm.elk.snomed.model.ConcreteRoleType;
@@ -11,6 +12,7 @@ import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom.Atom;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom.Atom.Connective.And;
+import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom.Atom.TypedAtom.IntervalRole;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpressionBuilder;
 import dev.ikm.tinkar.terms.ConceptFacade;
@@ -33,8 +35,14 @@ public class OwlElToLogicalExpression {
 
 	protected LogicalExpressionBuilder builder;
 
+	private Set<ConcreteRoleType> intervalRoleTypes = Set.of();
+
 	public OwlElToLogicalExpression() {
 		super();
+	}
+
+	public OwlElToLogicalExpression(Set<ConcreteRoleType> intervalRoleTypes) {
+		this.intervalRoleTypes = intervalRoleTypes;
 	}
 
 	public LogicalExpression build(Definition def) throws Exception {
@@ -124,17 +132,25 @@ public class OwlElToLogicalExpression {
 	private List<Atom> buildConcreteRoles(Set<ConcreteRole> roles) {
 		List<LogicalAxiom.Atom> exprs = new ArrayList<>();
 		for (ConcreteRole role : roles) {
-			Object value = switch (role.getValueType()) {
-			case Boolean -> Boolean.parseBoolean(role.getValue());
-			case Decimal -> new BigDecimal(role.getValue());
-			case Double -> Double.parseDouble(role.getValue());
-			case Float -> Float.parseFloat(role.getValue());
-			case Integer -> Integer.parseInt(role.getValue());
-			case Long -> Long.parseLong(role.getValue());
-			case String -> role.getValue();
-			};
-			exprs.add(builder.FeatureAxiom(getConceptFacade(role.getConcreteRoleType().getId()), TinkarTerm.EQUAL_TO,
-					value));
+			if (intervalRoleTypes.contains(role.getConcreteRoleType())) {
+				Interval interval = Interval.fromString(role.getValue());
+				IntervalRole interval_role = builder.IntervalRole(getConceptFacade(role.getConcreteRoleType().getId()),
+						interval.getLowerBound(), interval.isLowerOpen(), interval.getUpperBound(),
+						interval.isUpperOpen(), getConceptFacade(interval.getUnitOfMeasure()));
+				exprs.add(interval_role);
+			} else {
+				Object value = switch (role.getValueType()) {
+				case Boolean -> Boolean.parseBoolean(role.getValue());
+				case Decimal -> new BigDecimal(role.getValue());
+				case Double -> Double.parseDouble(role.getValue());
+				case Float -> Float.parseFloat(role.getValue());
+				case Integer -> Integer.parseInt(role.getValue());
+				case Long -> Long.parseLong(role.getValue());
+				case String -> role.getValue();
+				};
+				exprs.add(builder.FeatureAxiom(getConceptFacade(role.getConcreteRoleType().getId()),
+						TinkarTerm.EQUAL_TO, value));
+			}
 		}
 		return exprs;
 	}

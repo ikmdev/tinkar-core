@@ -116,8 +116,8 @@
 		<jheaps.version>0.14-r6</jheaps.version>
 		<roaringbitmap.version>1.4.0</roaringbitmap.version>
 
-		<hybrid-reasoner.version>1.1.3</hybrid-reasoner.version>
-		<ikm-reasoner.version>0.39.2</ikm-reasoner.version>
+		<hybrid-reasoner.version>1.1.4</hybrid-reasoner.version>
+		<ikm-reasoner.version>0.39.3</ikm-reasoner.version>
 		<owlapi.version>4.8.4</owlapi.version>
     </properties>
 

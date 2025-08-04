@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dev.ikm.elk.snomed.SnomedIds;
+import dev.ikm.elk.snomed.interval.Interval;
 import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.elk.snomed.model.ConcreteRole;
 import dev.ikm.elk.snomed.model.ConcreteRole.ValueType;
@@ -33,7 +34,6 @@ import dev.ikm.elk.snomed.model.Role;
 import dev.ikm.elk.snomed.model.RoleGroup;
 import dev.ikm.elk.snomed.model.RoleType;
 import dev.ikm.elk.snomed.model.SnomedEntity;
-import dev.ikm.reasoner.hybrid.snomed.Interval;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;

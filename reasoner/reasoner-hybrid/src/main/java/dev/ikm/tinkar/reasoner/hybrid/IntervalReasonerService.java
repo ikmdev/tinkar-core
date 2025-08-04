@@ -22,12 +22,14 @@ import org.slf4j.LoggerFactory;
 
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.elk.snomed.model.ConcreteRoleType;
+import dev.ikm.reasoner.hybrid.snomed.IntervalNecessaryNormalFormBuilder;
 import dev.ikm.reasoner.hybrid.snomed.IntervalReasoner;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedReasonerService;
 import dev.ikm.tinkar.terms.PatternFacade;
+import dev.ikm.tinkar.terms.TinkarTerm;
 
 public class IntervalReasonerService extends ElkSnomedReasonerService {
 
@@ -65,6 +67,14 @@ public class IntervalReasonerService extends ElkSnomedReasonerService {
 	@Override
 	public void processIncremental(DiTreeEntity definition, int conceptNid) {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void buildNecessaryNormalForm() {
+		List<ConcreteRoleType> intervalRoles = List.copyOf(data.getIntervalRoleTypes());
+		nnfb = IntervalNecessaryNormalFormBuilder.create(ontology, reasoner.getSuperConcepts(),
+				reasoner.getSuperRoleTypes(false), TinkarTerm.ROOT_VERTEX.nid(), intervalRoles);
+		nnfb.generate();
 	}
 
 }
