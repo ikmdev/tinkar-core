@@ -53,7 +53,7 @@ public class HybridReasonerIntervalIntl20250101TestIT extends HybridReasonerInte
 	@AfterAll
 	public static void stopPrimitiveData() throws IOException {
 		PrimitiveDataTestUtil.stopPrimitiveData();
-//		PrimitiveDataTestUtil.deleteDb(write_db);
+		PrimitiveDataTestUtil.deleteDb(write_db);
 	}
 
 }

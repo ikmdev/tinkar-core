@@ -15,19 +15,25 @@
  */
 package dev.ikm.tinkar.reasoner.hybrid;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.ikm.elk.snomed.SnomedIds;
 import dev.ikm.elk.snomed.interval.Interval;
 import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.elk.snomed.model.Definition;
 import dev.ikm.elk.snomed.model.DefinitionType;
-import dev.ikm.reasoner.hybrid.snomed.IntervalReasoner;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
@@ -45,14 +51,16 @@ public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestB
 
 	private static final Logger LOG = LoggerFactory.getLogger(HybridReasonerIntervalTestBase.class);
 
+	// 395507008 |Premature infant (finding)|
+	private static final long premature_infant_sctid = 395507008l;
+
 	private void updatePremature() throws Exception {
 		ViewCalculator vc = PrimitiveDataTestUtil.getViewCalculator();
 		// 103335007 |Duration (attribute)|
 		int duration_role_nid = ElkSnomedData.getNid(103335007);
 		{
 			LogicalExpressionBuilder builder = new LogicalExpressionBuilder();
-			// 762706009 |Concept model data attribute (attribute)|
-			int attr_nid = ElkSnomedData.getNid(762706009);
+			int attr_nid = ElkSnomedData.getNid(SnomedIds.concept_model_data_attribute);
 			builder.IntervalPropertySet(builder.And(builder.ConceptAxiom(attr_nid)));
 			LogicalExpression le = builder.build();
 			LOG.info("IntervalPropertySet:\n" + le);
@@ -60,8 +68,7 @@ public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestB
 			SemanticEntityVersion sev = ElkSnomedUtil.getStatedSemantic(vc, duration_role_nid);
 			LOG.info("SEV:\n" + sev);
 		}
-		// 395507008 |Premature infant (finding)|
-		int pi_nid = ElkSnomedData.getNid(395507008);
+		int pi_nid = ElkSnomedData.getNid(premature_infant_sctid);
 		Concept pi_con = ElkSnomedUtil.getConcept(vc, pi_nid);
 		Path intervals_file = Paths.get("src/test/resources",
 				"intervals-" + getEditionDir() + "-" + getVersion() + ".txt");
@@ -105,6 +112,13 @@ public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestB
 		return rs;
 	}
 
+	private int getNid(String line, int field) {
+		String con = line.split("\t")[field];
+		String id = con.substring(con.indexOf("[") + 1, con.indexOf(" "));
+		long sctid = Long.parseLong(id);
+		return ElkSnomedData.getNid(sctid);
+	}
+
 	@Test
 	public void premature() throws Exception {
 		updatePremature();
@@ -114,24 +128,31 @@ public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestB
 		rs.computeInferences();
 		rs.buildNecessaryNormalForm();
 		rs.writeInferredResults();
-//		ElkSnomedData data = buildSnomedData();
-//		LOG.info("Create ontology");
-//		SnomedOntology snomedOntology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(),
-//				data.getConcreteRoleTypes());
-//		List<ConcreteRoleType> intervalRoles = List.copyOf(data.getIntervalRoleTypes());
-//		intervalRoles.forEach(x -> LOG.info("IR: " + PrimitiveData.text((int) x.getId())));
-//		IntervalReasoner ir = IntervalReasoner.create(snomedOntology, intervalRoles);
-//		// 395507008 |Premature infant (finding)|
-//		int pi_nid = ElkSnomedData.getNid(395507008);
-//		print(ir, pi_nid, 0);
-//		NecessaryNormalFormBuilder nnfb = NecessaryNormalFormBuilder.create(snomedOntology, ir.getSuperConcepts(),
-//				ir.getSuperRoleTypes(false), TinkarTerm.ROOT_VERTEX.nid());
-//		nnfb.generate();
+		int pi_nid = ElkSnomedData.getNid(premature_infant_sctid);
+		LOG.info("-".repeat(20));
+		print(rs, pi_nid, 0);
+		{
+			String file_name = "intervals-sups-" + getEditionDir() + "-" + getVersion() + ".txt";
+			List<String> expect_lines = Files.lines(Paths.get("src/test/resources", file_name)).toList();
+			HashMap<Integer, Set<Integer>> expect = new HashMap<>();
+			for (String line : expect_lines) {
+				int con = getNid(line, 0);
+				int sup = getNid(line, 1);
+				expect.putIfAbsent(con, new HashSet<>());
+				expect.get(con).add(sup);
+			}
+			for (int con : expect.keySet()) {
+				HashSet<Integer> sups = new HashSet<>();
+				rs.getParents(con).forEach(sups::add);
+				assertEquals(expect.get(con), sups);
+			}
+			assertEquals(22, expect.keySet().size());
+		}
 	}
 
-	private void print(IntervalReasoner ir, int nid, int i) {
+	private void print(ReasonerService rs, int nid, int i) {
 		LOG.info("\t".repeat(i) + PrimitiveData.text(nid));
-		ir.getSubConcepts(nid).forEach(x -> print(ir, x.intValue(), i + 1));
+		rs.getChildren(nid).forEach(x -> print(rs, x, i + 1));
 	}
 
 }
