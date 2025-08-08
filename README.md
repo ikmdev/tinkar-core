@@ -14,11 +14,13 @@ Data Team
 
 Follow the instructions below to set up the local environment for `tinkar-core`:
 
-1. Download and install Open JDK Java 19
+1. Download and install Open JDK Java 24
 
-2. Download and install Apache Maven 3.9 or greater
+2. Download and install Apache Maven 3.9.11 or greater
 
-3. There are dependencies to building `tinkar-core`. Please ensure you have a reliable internet connection when cloning and building to get all dependencies from mvn central.
+3. Download and install Git
+
+4. There are dependencies to building `tinkar-core`. Please ensure you have a reliable internet connection when cloning and building to get all dependencies from mvn central.
 
 ## Building and Running Tinkar Core
 

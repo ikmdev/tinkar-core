@@ -13,7 +13,7 @@
 	<name>Reasoner Elk Snomed</name>
 
 	<properties>
-		<failsafeArgLine>--enable-preview -Xmx12G</failsafeArgLine>
+		<failsafeArgLine>-Xmx12G</failsafeArgLine>
 	</properties>
 
 	<dependencies>
