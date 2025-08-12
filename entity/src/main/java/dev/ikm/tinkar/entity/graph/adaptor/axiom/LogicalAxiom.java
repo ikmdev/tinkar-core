@@ -105,9 +105,8 @@ public sealed interface LogicalAxiom permits LogicalAxiom.Atom, LogicalAxiom.Def
             }
             
             sealed interface IntervalRole extends TypedAtom permits LogicalAxiomAdaptor.IntervalRoleAxiomAdaptor {
-                ConceptFacade roleOperator();
 
-                Atom restriction();
+                String interval();
 
                 default LogicalAxiomSemantic axiomSemantic() {
                     return LogicalAxiomSemantic.INTERVAL_ROLE;

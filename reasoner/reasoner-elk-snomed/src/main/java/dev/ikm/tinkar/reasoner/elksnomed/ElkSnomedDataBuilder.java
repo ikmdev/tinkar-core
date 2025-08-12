@@ -43,6 +43,7 @@ import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiomSemantic;
+import dev.ikm.tinkar.ext.lang.owl.IntervalUtil;
 import dev.ikm.tinkar.reasoner.service.UnsupportedReasonerProcessIncremental;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.PatternFacade;
@@ -216,7 +217,7 @@ public class ElkSnomedDataBuilder {
 		return LogicalAxiomSemantic.get(node.getMeaningNid());
 	}
 
-	private static int getNid(EntityVertex node, dev.ikm.tinkar.terms.EntityProxy.Concept concept) {
+	public static int getNid(EntityVertex node, dev.ikm.tinkar.terms.EntityProxy.Concept concept) {
 		ConceptFacade cf = node.propertyFast(concept);
 		return cf.nid();
 	}
@@ -435,28 +436,12 @@ public class ElkSnomedDataBuilder {
 		return new ConcreteRole(role_type, value.toString(), value_type);
 	}
 
-	public static String getIntervalRoleString(ViewCalculator vc, EntityVertex node) {
-		int role_type_nid = getNid(node, TinkarTerm.INTERVAL_ROLE_TYPE);
-		Interval interval = makeInterval(node);
-		return vc.getPreferredDescriptionTextWithFallbackOrNid(role_type_nid) + " \u2192 " + interval.toString(false)
-				+ " " + vc.getPreferredDescriptionTextWithFallbackOrNid((int) interval.getUnitOfMeasure());
-	}
-
-	public static Interval makeInterval(EntityVertex node) {
-		int lowerBound = node.propertyFast(TinkarTerm.INTERVAL_LOWER_BOUND);
-		boolean lowerOpen = node.propertyFast(TinkarTerm.INTERVAL_LOWER_BOUND_OPEN);
-		int upperBound = node.propertyFast(TinkarTerm.INTERVAL_UPPER_BOUND);
-		boolean upperOpen = node.propertyFast(TinkarTerm.INTERVAL_UPPER_BOUND_OPEN);
-		int unit_nid = getNid(node, TinkarTerm.INTERVAL_UNIT_OF_MEASURE);
-		return new Interval(lowerBound, lowerOpen, upperBound, upperOpen, unit_nid);
-	}
-
 	private ConcreteRole makeIntervalRole(EntityVertex node, DiTreeEntity definition) {
 		int role_type_nid = getNid(node, TinkarTerm.INTERVAL_ROLE_TYPE);
 		ConcreteRoleType role_type = data.getOrCreateConcreteRoleType(role_type_nid);
 		data.addIntervalRoleType(role_type);
-		Interval interval = makeInterval(node);
-		LOG.info(">>>>>" + getIntervalRoleString(viewCalculator, node));
+		Interval interval = IntervalUtil.makeInterval(node);
+//		LOG.info(">>>>>" + getIntervalRoleString(viewCalculator, node));
 		return new ConcreteRole(role_type, interval.toString(), ValueType.String);
 	}
 

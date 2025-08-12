@@ -39,36 +39,38 @@ public class LogicalExpression {
         this.adaptors = adaptors.castToList();
     }
 
-    public LogicalExpression(DiTree<EntityVertex> sourceGraph) {
-        this.sourceGraph = sourceGraph;
-        int vertexCount = sourceGraph.vertexMap().size();
-        MutableList<LogicalAxiomAdaptor> mutableAdaptorList = Lists.mutable.ofInitialCapacity(vertexCount);
-        this.adaptors = mutableAdaptorList;
+	public LogicalExpression(DiTree<EntityVertex> sourceGraph) {
+		this.sourceGraph = sourceGraph;
+		int vertexCount = sourceGraph.vertexMap().size();
+		MutableList<LogicalAxiomAdaptor> mutableAdaptorList = Lists.mutable.ofInitialCapacity(vertexCount);
+		this.adaptors = mutableAdaptorList;
 
-        for (int i = 0; i < vertexCount; i++) {
-            EntityVertex vertex = sourceGraph.vertex(i);
-            if (vertex != null) {
-                switch (LogicalAxiomSemantic.get(vertex.getMeaningNid())) {
-                    case AND -> new LogicalAxiomAdaptor.AndAdaptor(this, i);
-                    case CONCEPT -> new LogicalAxiomAdaptor.ConceptAxiomAdaptor(this, i);
-                    case DEFINITION_ROOT -> new LogicalAxiomAdaptor.DefinitionRootAdaptor(this, i);
-                    case DISJOINT_WITH -> new LogicalAxiomAdaptor.DisjointWithAxiomAdaptor(this, i);
-                    case FEATURE -> new LogicalAxiomAdaptor.FeatureAxiomAdaptor(this, i);
-                    case NECESSARY_SET -> new LogicalAxiomAdaptor.NecessarySetAdaptor(this, i);
-                    case OR -> new LogicalAxiomAdaptor.OrAdaptor(this, i);
-                    case PROPERTY_SEQUENCE_IMPLICATION -> new LogicalAxiomAdaptor.PropertySequenceImplicationAdaptor(this, i);
-                    case PROPERTY_SET -> new LogicalAxiomAdaptor.PropertySetAdaptor(this, i);
-                    case DATA_PROPERTY_SET -> new LogicalAxiomAdaptor.DataPropertySetAdaptor(this, i);
-                    case INTERVAL_PROPERTY_SET -> new LogicalAxiomAdaptor.IntervalPropertySetAdaptor(this, i);
-                    case ROLE -> new LogicalAxiomAdaptor.RoleAxiomAdaptor(this, i);
-                    case SUFFICIENT_SET -> new LogicalAxiomAdaptor.SufficientSetAdaptor(this, i);
-                    case INCLUSION_SET -> new LogicalAxiomAdaptor.InclusionSetAdaptor(this, i);
-                }
-            } else {
-                mutableAdaptorList.add(null);
-            }
-        }
-    }
+		for (int i = 0; i < vertexCount; i++) {
+			EntityVertex vertex = sourceGraph.vertex(i);
+			if (vertex != null) {
+				switch (LogicalAxiomSemantic.get(vertex.getMeaningNid())) {
+				case AND -> new LogicalAxiomAdaptor.AndAdaptor(this, i);
+				case CONCEPT -> new LogicalAxiomAdaptor.ConceptAxiomAdaptor(this, i);
+				case DEFINITION_ROOT -> new LogicalAxiomAdaptor.DefinitionRootAdaptor(this, i);
+				case DISJOINT_WITH -> new LogicalAxiomAdaptor.DisjointWithAxiomAdaptor(this, i);
+				case FEATURE -> new LogicalAxiomAdaptor.FeatureAxiomAdaptor(this, i);
+				case NECESSARY_SET -> new LogicalAxiomAdaptor.NecessarySetAdaptor(this, i);
+				case OR -> new LogicalAxiomAdaptor.OrAdaptor(this, i);
+				case PROPERTY_SEQUENCE_IMPLICATION ->
+					new LogicalAxiomAdaptor.PropertySequenceImplicationAdaptor(this, i);
+				case PROPERTY_SET -> new LogicalAxiomAdaptor.PropertySetAdaptor(this, i);
+				case DATA_PROPERTY_SET -> new LogicalAxiomAdaptor.DataPropertySetAdaptor(this, i);
+				case INTERVAL_PROPERTY_SET -> new LogicalAxiomAdaptor.IntervalPropertySetAdaptor(this, i);
+				case ROLE -> new LogicalAxiomAdaptor.RoleAxiomAdaptor(this, i);
+				case INTERVAL_ROLE -> new LogicalAxiomAdaptor.IntervalRoleAxiomAdaptor(this, i);
+				case SUFFICIENT_SET -> new LogicalAxiomAdaptor.SufficientSetAdaptor(this, i);
+				case INCLUSION_SET -> new LogicalAxiomAdaptor.InclusionSetAdaptor(this, i);
+				}
+			} else {
+				mutableAdaptorList.add(null);
+			}
+		}
+	}
 
     public LogicalExpression build() {
         if (sourceGraph instanceof DiTreeEntity.Builder diTreeBuilder) {
