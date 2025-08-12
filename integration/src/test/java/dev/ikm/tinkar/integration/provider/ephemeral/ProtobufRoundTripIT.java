@@ -55,9 +55,10 @@ public class ProtobufRoundTripIT {
      * 5. Stop database.
      *
      * @throws IOException
+     * @throws InterruptedException 
      */
     @Test
-    public void roundTripTest() throws IOException {
+    public void roundTripTest() throws IOException, InterruptedException {
         // Given initial DTO data
         File file = TestConstants.PB_STARTER_DATA_REASONED;
         LoadEntitiesFromProtobufFile loadProto = new LoadEntitiesFromProtobufFile(file);

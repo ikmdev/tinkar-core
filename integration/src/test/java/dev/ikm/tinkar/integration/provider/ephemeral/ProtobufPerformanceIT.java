@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ProtobufPerformanceIT {
@@ -41,7 +42,7 @@ public class ProtobufPerformanceIT {
 
     @Test
     @Order(1)
-    public void roundTripPerformanceTest() {
+    public void roundTripPerformanceTest() throws InterruptedException, IOException {
         File starterDataFile = TestConstants.PB_STARTER_DATA_REASONED;
         long loadTimeBefore = System.currentTimeMillis();
         long expectedEntityCount = new LoadEntitiesFromProtobufFile(starterDataFile).compute().getTotalCount();

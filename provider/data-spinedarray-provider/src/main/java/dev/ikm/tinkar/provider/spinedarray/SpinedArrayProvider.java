@@ -320,7 +320,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             return nid;
         } catch (InterruptedException e) {
             LOG.error(e.getLocalizedMessage(), e);
-            throw new RuntimeException(e);
+            return -1;
+            //throw new RuntimeException(e);
         }
     }
 
@@ -507,7 +508,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             this.patternNids.forEach(patternNid -> procedure.accept(patternNid));
         } catch (InterruptedException e) {
             LOG.error(e.getLocalizedMessage(), e);
-            throw new RuntimeException(e);
+            Thread.currentThread().interrupt(); // preserve interrupt status
+            return; // throw new RuntimeException(e);
         }
     }
 
@@ -518,7 +520,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             this.conceptNids.forEach(conceptNid -> procedure.accept(conceptNid));
         } catch (InterruptedException e) {
             LOG.error(e.getLocalizedMessage(), e);
-            throw new RuntimeException(e);
+            Thread.currentThread().interrupt(); // preserve interrupt status
+            return; // throw new RuntimeException(e);
         }
     }
 
@@ -529,7 +532,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             this.stampNids.forEach(stampNid -> procedure.accept(stampNid));
         } catch (InterruptedException e) {
             LOG.error(e.getLocalizedMessage(), e);
-            throw new RuntimeException(e);
+            Thread.currentThread().interrupt(); // preserve interrupt status
+            return; // throw new RuntimeException(e);
         }
     }
 
@@ -539,9 +543,11 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             this.uuidsLoadedLatch.await();
             this.semanticNids.forEach(semanticNid -> procedure.accept(semanticNid));
         } catch (InterruptedException e) {
-            LOG.error(e.getLocalizedMessage(), e);
-            throw new RuntimeException(e);
+            LOG.error("Semantic iteration interrupted", e);
+            Thread.currentThread().interrupt(); // preserve interrupt status
+            return; // throw new RuntimeException("Export interrupted"); // Let caller handle it
         }
+
     }
 
     @Override

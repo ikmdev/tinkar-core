@@ -75,7 +75,7 @@ class ExportImportIT {
     }
 
     @Test
-    public void testFieldTypeSetToList() throws IOException {
+    public void testFieldTypeSetToList() throws IOException, InterruptedException {
         // Make the proper change to semantic (Test Pattern 2 or 3)
         // Examine the semantic field that was modified, type changes from Set to List
         EntityProxy.Concept concept = EntityProxy.Concept.make(PublicIds.of(UUID.fromString("dde159ca-415e-4947-9174-cae7e8e7202d")));

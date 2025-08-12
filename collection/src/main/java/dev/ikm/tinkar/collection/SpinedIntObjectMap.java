@@ -95,6 +95,12 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
     }
 
     private AtomicReferenceArray<E> getSpine(int spineIndex) {
+    	if (spineIndex < 0 || spineIndex >= maxSpineCount) {
+            String msg = "Requested spineIndex " + spineIndex + " out of bounds [0, " + maxSpineCount + ")";
+            LOG.error(msg, new ArrayIndexOutOfBoundsException(msg));
+            throw new ArrayIndexOutOfBoundsException(msg);
+        }    	
+    	
         int startSpineCount = spineCount.get();
         if (spineIndex < startSpineCount) {
             AtomicReferenceArray<E> spine = this.spines.get(spineIndex);
@@ -241,6 +247,7 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
         this.changedSpineIndexes[spineIndex] = true;
         return getSpine(spineIndex).getAndSet(toIndexInSpine(index), element);
     }
+
     private final int toSpineIndex(int index) {
         if (index == 0) {
             throw new IllegalStateException("Index cannot be 0...");
@@ -248,8 +255,16 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
         if (index < 0) {
             index = Integer.MAX_VALUE + index;
         }
-        return index / spineSize;
+        int spineIndex = index / spineSize;
+        if (spineIndex < 0 || spineIndex >= maxSpineCount) {
+            String msg = "Calculated spineIndex " + spineIndex + " from index " + index +
+                         " out of bounds [0, " + maxSpineCount + ")";
+            LOG.error(msg, new ArrayIndexOutOfBoundsException(msg));
+            throw new ArrayIndexOutOfBoundsException(msg);
+        }
+        return spineIndex;
     }
+
 
     private final int toIndexInSpine(int index) {
         if (index == 0) {

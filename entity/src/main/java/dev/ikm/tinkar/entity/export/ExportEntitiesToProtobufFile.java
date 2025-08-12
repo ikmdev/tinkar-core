@@ -89,37 +89,48 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
     }
 
     @Override
-    public EntityCountSummary compute() {
+    public EntityCountSummary compute() throws InterruptedException, IOException {
         updateMessage("Analyzing Entities...");
         updateProgress(-1, 1);
 
-        EntityCountSummary entityCountSummary;
+        EntityCountSummary entityCountSummary = null;
         updateMessage("Exporting Entities...");
         addToTotalWork(entityAggregator.totalCount());
 
-        try (FileOutputStream fos = new FileOutputStream(protobufFile);
-             BufferedOutputStream bos = new BufferedOutputStream(fos);
-             ZipOutputStream zos = new ZipOutputStream(bos)) {
-
+        FileOutputStream fos = new FileOutputStream(protobufFile);
+        BufferedOutputStream bos = new BufferedOutputStream(fos);
+        ZipOutputStream zos = new ZipOutputStream(bos);
+        		
+        try {
             // Create a single entry
             ZipEntry zipEntry = new ZipEntry(protobufFile.getName().replace(".zip", ""));
             zos.putNextEntry(zipEntry);
 
             IntConsumer exportNidConsumer = (nid) -> {
-                Entity<? extends EntityVersion> entity = EntityService.get().getEntityFast(nid);
-                // Store Module & Author Dependencies for Manifest
-                if (entity instanceof StampEntity stampEntity) {
-                    moduleList.add(stampEntity.module().publicId());
-                    authorList.add(stampEntity.author().publicId());
-                }
-                // Transform and Write data
-                TinkarMsg pbTinkarMsg = entityTransformer.transform(entity);
                 try {
-                    pbTinkarMsg.writeDelimitedTo(zos);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    Entity<? extends EntityVersion> entity = EntityService.get().getEntityFast(nid);
+                    // Store Module & Author Dependencies for Manifest
+                    if (entity instanceof StampEntity stampEntity) {
+                        if (stampEntity.module() == null) {
+                            Thread.currentThread().interrupt();
+                            return;
+                        } else {
+                            moduleList.add(stampEntity.module().publicId());
+                            authorList.add(stampEntity.author().publicId());
+                        }
+                    }
+                    // Transform and Write data
+                    TinkarMsg pbTinkarMsg = entityTransformer.transform(entity);
+                    try {
+                        pbTinkarMsg.writeDelimitedTo(zos);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    completedUnitOfWork();
+                } catch (ArrayIndexOutOfBoundsException ex) {
+                    LOG.warn("Skipping entity with invalid nid: " + nid, ex);
+                    // Optionally: completedUnitOfWork(); // If you want to count this as processed
                 }
-                completedUnitOfWork();
             };
 
             entityCountSummary = entityAggregator.aggregate(exportNidConsumer);
@@ -187,8 +198,22 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             String idString = publicId.asUuidList().stream()
                     .map(UUID::toString)
                     .collect(Collectors.joining(","));
-            // Get Description
-            Optional<Entity<EntityVersion>> entity = EntityService.get().getEntity(PrimitiveData.nid(publicId));
+            
+            Optional<Entity<EntityVersion>> entity = java.util.Optional.empty();
+            try {
+               // Get Description
+               entity = EntityService.get().getEntity(PrimitiveData.nid(publicId));
+            } catch (ArrayIndexOutOfBoundsException ex) {
+                LOG.warn("Skipping entity with invalid nid: " + ex);
+            } catch (RuntimeException e) {
+                if (e.getCause() instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                    LOG.warn("Thread interrupted during idsToManifestEntry", e);
+                    return; // Or handle as appropriate for the use case
+                }
+                throw e;
+            }
+            
             String manifestDescription = "Description Undefined";
             if (entity.isPresent()) {
                 manifestDescription = entity.get().description();

@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -81,7 +82,7 @@ public class EphemeralProtobufIT {
 
     @Test
     @Order(3)
-    public void exportEntitiesToProtobuf() {
+    public void exportEntitiesToProtobuf() throws InterruptedException, IOException {
         File file = TestConstants.PB_TEST_FILE;
         ExportEntitiesToProtobufFile exportEntitiesToProtobufFile = new ExportEntitiesToProtobufFile(file);
         EntityCountSummary entityCountSummary = exportEntitiesToProtobufFile.compute();
