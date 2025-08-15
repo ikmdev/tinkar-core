@@ -62,8 +62,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SpinedArrayIdentifierMergeIT {
     static final Logger LOG = LoggerFactory.getLogger(SpinedArrayIdentifierMergeIT.class);
 
-    static UUID namespace = UUID.randomUUID();
-
     @BeforeAll
     static void beforeAll() {
         File datastoreRoot = TestConstants.createFilePathInTargetFromClassName.apply(SpinedArrayIdentifierMergeIT.class);
@@ -82,6 +80,7 @@ class SpinedArrayIdentifierMergeIT {
 
     @Test
     public void testMergeIdentifiersCompoundPublicId_ExpectFailure() {
+        UUID namespace = UUID.randomUUID();
         Composer composer = new Composer("Snomed Starter Data Composer");
 
         EntityProxy.Concept author = EntityProxy.Concept.make("IHTSDO SNOMED CT Starter Data Author",
@@ -89,15 +88,18 @@ class SpinedArrayIdentifierMergeIT {
 
         Session session = composer.open(State.ACTIVE, author, TinkarTerm.PRIMORDIAL_MODULE, TinkarTerm.PRIMORDIAL_PATH);
 
-        EntityProxy.Concept sctId = createIdentifierSemantic(session, "SCTID");
-        EntityProxy.Concept gmdnTerms = createIdentifierSemantic(session, "GMDN Terms");
+        initializeAuthor(session, namespace, author);
+
+        EntityProxy.Concept sctId = createIdentifierSemantic(session, namespace, "SCTID");
+        EntityProxy.Concept gmdnTerms = createIdentifierSemantic(session, namespace, "GMDN Terms");
 
         //
 
         // 1. Create first concept
-        UUID snomedUuid = createConceptWithIdentifier(session, sctId, "725561007");
+        UUID snomedUuid = createConceptWithIdentifier(session, namespace, sctId, "725561007");
         // 2. Create second concept
-        UUID gmdnUuid = createConceptWithIdentifier(session, gmdnTerms, "62567");
+        UUID gmdnUuid = createConceptWithIdentifier(session, namespace, gmdnTerms, "62567");
+
         // 3. Create third concept with compound Public ID
         EntityProxy.Concept compoundConcept = EntityProxy.Concept.make(PublicIds.of(snomedUuid, gmdnUuid));
         session.compose((ConceptAssembler conceptAssembler) -> conceptAssembler
@@ -118,6 +120,7 @@ class SpinedArrayIdentifierMergeIT {
 
     @Test
     public void testMergeIdentifiersCompoundPublicId_Workaround() {
+        UUID namespace = UUID.randomUUID();
         Composer composer = new Composer("Snomed Starter Data Composer");
 
         EntityProxy.Concept author = EntityProxy.Concept.make("IHTSDO SNOMED CT Starter Data Author",
@@ -125,13 +128,15 @@ class SpinedArrayIdentifierMergeIT {
 
         Session session = composer.open(State.ACTIVE, author, TinkarTerm.PRIMORDIAL_MODULE, TinkarTerm.PRIMORDIAL_PATH);
 
-        EntityProxy.Concept sctId = createIdentifierSemantic(session, "SCTID");
-        EntityProxy.Concept gmdnTerms = createIdentifierSemantic(session, "GMDN Terms");
+        initializeAuthor(session, namespace, author);
+
+        EntityProxy.Concept sctId = createIdentifierSemantic(session, namespace, "SCTID");
+        EntityProxy.Concept gmdnTerms = createIdentifierSemantic(session, namespace, "GMDN Terms");
 
         //
 
         // 1. Create first concept
-        UUID gmdnUuid = createConceptWithIdentifier(session, gmdnTerms, "62567");
+        UUID gmdnUuid = createConceptWithIdentifier(session, namespace, gmdnTerms, "62567");
         // 2. Create third concept with compound Public ID, referencing first and second concepts
         UUID snomedUuid = UuidT5Generator.get(namespace, "725561007");
         EntityProxy.Concept compoundConcept = EntityProxy.Concept.make(PublicIds.of(snomedUuid, gmdnUuid));
@@ -139,7 +144,7 @@ class SpinedArrayIdentifierMergeIT {
                 .concept(compoundConcept)
         );
         // 3. Create second concept, using previously generated UUID
-        createConceptWithIdentifier(session, sctId, "725561007", snomedUuid);
+        createConceptWithIdentifier(session, namespace, sctId, "725561007", snomedUuid);
 
         //
 
@@ -156,7 +161,7 @@ class SpinedArrayIdentifierMergeIT {
         assertTrue(identifiers.contains("SCTID: 725561007"));
     }
 
-    private EntityProxy.Concept createIdentifierSemantic(Session session, String name) {
+    private EntityProxy.Concept createIdentifierSemantic(Session session, UUID namespace, String name) {
         EntityProxy.Concept snomedIdentifier = EntityProxy.Concept.make(name, UuidT5Generator.get(namespace, name));
         session.compose((ConceptAssembler concept) -> concept
                 .concept(snomedIdentifier)
@@ -186,12 +191,12 @@ class SpinedArrayIdentifierMergeIT {
         return snomedIdentifier;
     }
 
-    private UUID createConceptWithIdentifier(Session session, EntityProxy.Concept identifierSource, String identiferValue) {
+    private UUID createConceptWithIdentifier(Session session, UUID namespace, EntityProxy.Concept identifierSource, String identiferValue) {
         UUID uuid = UuidT5Generator.get(namespace, identiferValue);
-        return createConceptWithIdentifier(session, identifierSource, identiferValue, uuid);
+        return createConceptWithIdentifier(session, namespace, identifierSource, identiferValue, uuid);
     }
 
-    private UUID createConceptWithIdentifier(Session session, EntityProxy.Concept identifierSource, String identifierValue, UUID uuid) {
+    private UUID createConceptWithIdentifier(Session session, UUID namespace, EntityProxy.Concept identifierSource, String identifierValue, UUID uuid) {
         EntityProxy.Concept concept = EntityProxy.Concept.make(PublicIds.of(uuid));
         session.compose((ConceptAssembler conceptAssembler) -> conceptAssembler
                 .concept(concept)
@@ -205,6 +210,34 @@ class SpinedArrayIdentifierMergeIT {
                 )
         );
         return uuid;
+    }
+
+    private void initializeAuthor(Session session, UUID namespace, EntityProxy.Concept author) {
+        session.compose((ConceptAssembler concept) -> concept
+                .concept(author)
+                .attach((FullyQualifiedName fqn) -> fqn
+                        .language(ENGLISH_LANGUAGE)
+                        .text("IHTSDO SNOMED CT Starter Data Author")
+                        .caseSignificance(DESCRIPTION_NOT_CASE_SENSITIVE)
+                )
+                .attach((Synonym synonym) -> synonym
+                        .language(ENGLISH_LANGUAGE)
+                        .text("SNOMED CT Starter Data Author")
+                        .caseSignificance(DESCRIPTION_NOT_CASE_SENSITIVE)
+                )
+                .attach((Definition definition) -> definition
+                        .language(ENGLISH_LANGUAGE)
+                        .text("International Health Terminology Standards Development Organisation (IHTSDO) SNOMED CT Starter Data Author")
+                        .caseSignificance(DESCRIPTION_NOT_CASE_SENSITIVE)
+                )
+                .attach((Identifier identifier) -> identifier
+                        .source(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER)
+                        .identifier(author.asUuidArray()[0].toString())
+                )
+                .attach((StatedAxiom statedAxiom) -> statedAxiom
+                        .isA(TinkarTerm.USER)
+                )
+        );
     }
 
     private Set<String> extractIdentifiers(EntityProxy componentInDetailsViewer) {
