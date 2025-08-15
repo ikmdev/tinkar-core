@@ -107,7 +107,7 @@ public abstract class HybridReasonerNfhTestBase extends HybridReasonerTestBase {
 				Set<Integer> expected_parent_nids = isas.getParents(sctid).stream().map(ElkSnomedData::getNid)
 						.collect(Collectors.toSet());
 				if (sctid == SnomedIds.root) {
-					expected_parent_nids = Set.of(TinkarTerm.ROOT_VERTEX.nid());
+					expected_parent_nids = Set.of(TinkarTerm.PHENOMENON.nid());
 					LOG.warn("Reset expected for " + sctid + " " + PrimitiveData.text(nid));
 				}
 				Set<Integer> expected_child_nids = isas.getChildren(sctid).stream().map(ElkSnomedData::getNid)

@@ -84,6 +84,13 @@
 								<artifactItem>
 									<groupId>${snomed-test-data.groupid}</groupId>
 									<artifactId>
+										snomed-test-data-intl-20250801</artifactId>
+									<version>${snomed-test-data.version}</version>
+									<type>zip</type>
+								</artifactItem>
+								<artifactItem>
+									<groupId>${snomed-test-data.groupid}</groupId>
+									<artifactId>
 										snomed-test-data-us-20240901</artifactId>
 									<version>${snomed-test-data.version}</version>
 									<type>zip</type>
@@ -120,28 +127,35 @@
 									<groupId>${reasoner-test-data.groupid}</groupId>
 									<artifactId>
 										tinkar-test-data-build-snomed-intl-20240701</artifactId>
-									<version>2025.04.28</version>
+									<version>${tinkar-test-data.version}</version>
 									<type>zip</type>
 								</artifactItem>
 								<artifactItem>
 									<groupId>${reasoner-test-data.groupid}</groupId>
 									<artifactId>
 										tinkar-test-data-build-snomed-intl-20250101</artifactId>
-									<version>2025.04.28</version>
+									<version>${tinkar-test-data.version}</version>
+									<type>zip</type>
+								</artifactItem>
+								<artifactItem>
+									<groupId>${reasoner-test-data.groupid}</groupId>
+									<artifactId>
+										tinkar-test-data-build-snomed-intl-20250801</artifactId>
+									<version>${tinkar-test-data.version}</version>
 									<type>zip</type>
 								</artifactItem>
 								<artifactItem>
 									<groupId>${reasoner-test-data.groupid}</groupId>
 									<artifactId>
 										tinkar-test-data-build-snomed-us-20240901</artifactId>
-									<version>2025.04.28</version>
+									<version>${tinkar-test-data.version}</version>
 									<type>zip</type>
 								</artifactItem>
 								<artifactItem>
 									<groupId>${reasoner-test-data.groupid}</groupId>
 									<artifactId>
 										tinkar-test-data-build-snomed-us-20250301</artifactId>
-									<version>2025.04.28</version>
+									<version>${tinkar-test-data.version}</version>
 									<type>zip</type>
 								</artifactItem>
 							</artifactItems>
