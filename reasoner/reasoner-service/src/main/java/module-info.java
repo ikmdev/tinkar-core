@@ -17,7 +17,6 @@ module dev.ikm.tinkar.reasoner.service {
 
 	requires org.slf4j;
 
-	requires dev.ikm.tinkar.coordinate;
 	requires dev.ikm.tinkar.terms;
 	requires dev.ikm.tinkar.common;
 	requires dev.ikm.jpms.eclipse.collections;
