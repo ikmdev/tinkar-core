@@ -93,7 +93,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
         updateMessage("Analyzing Entities...");
         updateProgress(-1, 1);
 
-        EntityCountSummary entityCountSummary;
+        EntityCountSummary entityCountSummary = null;
         updateMessage("Exporting Entities...");
         addToTotalWork(entityAggregator.totalCount());
 
@@ -147,12 +147,14 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             zos.finish();
         } catch (Throwable e) {
             LOG.error("Caught " + e + " while Exporting Entities");
-            AlertStreams.dispatchToRoot(e);
-            throw new RuntimeException(e);
+            if (!(e instanceof RuntimeException rx && rx.getCause() instanceof InterruptedException)) {
+                AlertStreams.dispatchToRoot(e);
+                throw new RuntimeException(e);
+            }
         } finally {
             updateMessage("In " + durationString());
             updateProgress(1,1);
-        }
+        }    
 
         logCounts(entityCountSummary);
         return entityCountSummary;
