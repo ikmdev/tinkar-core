@@ -37,7 +37,6 @@ import dev.ikm.elk.snomed.model.Definition;
 import dev.ikm.elk.snomed.model.DefinitionType;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom.Atom.TypedAtom.IntervalRole;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
@@ -67,7 +66,7 @@ public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestB
 			LogicalExpression le = builder.build();
 //			LOG.info("IntervalPropertySet:\n" + le);
 			ElkSnomedUtil.updateStatedSemantic(vc, duration_role_nid, le);
-			SemanticEntityVersion sev = ElkSnomedUtil.getStatedSemantic(vc, duration_role_nid);
+//			SemanticEntityVersion sev = ElkSnomedUtil.getStatedSemantic(vc, duration_role_nid);
 //			LOG.info("SEV:\n" + sev);
 		}
 		int pi_nid = ElkSnomedData.getNid(premature_infant_sctid);
@@ -83,7 +82,7 @@ public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestB
 			int units_nid = ElkSnomedData.getNid(interval.getUnitOfMeasure());
 			interval.setUnitOfMeasure(units_nid);
 //			LOG.info("Interval: " + interval + " " + sctid + " " + PrimitiveData.text(nid));
-			SemanticEntityVersion sev = ElkSnomedUtil.getStatedSemantic(vc, nid);
+//			SemanticEntityVersion sev = ElkSnomedUtil.getStatedSemantic(vc, nid);
 //			LOG.info("SEV:\n" + sev);
 			Concept con = ElkSnomedUtil.getConcept(vc, nid);
 			Definition def = con.getDefinitions().getFirst();
