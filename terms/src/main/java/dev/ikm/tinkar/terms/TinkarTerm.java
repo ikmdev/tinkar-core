@@ -6882,6 +6882,82 @@ public class TinkarTerm {
     public static final EntityProxy.Concept PROPERTY_SEQUENCE_IMPLICATION =
             EntityProxy.Concept.make("Property sequence implication (SOLOR)", UUID.fromString("9a47a5db-42a6-49ee-9083-54bc305a9456"));
 
+	// Interval property set: [9afc988a-3724-4754-8b74-651426472b19]
+	/**
+	 * Java binding for the concept described as Interval property set and
+	 * identified by the following UUID(s):
+	 * <ul>
+	 * <li>9afc988a-3724-4754-8b74-651426472b19
+	 * </ul>
+	 */
+	public static final EntityProxy.Concept INTERVAL_PROPERTY_SET = EntityProxy.Concept.make("Interval property set",
+			UUID.fromString("9afc988a-3724-4754-8b74-651426472b19"));
+
+	// Interval role: [ed9d3506-65ad-48ea-bd01-95474fecdbc4]
+	/**
+	 * Java binding for the concept described as Interval role and identified by the
+	 * following UUID(s):
+	 * <ul>
+	 * <li>ed9d3506-65ad-48ea-bd01-95474fecdbc4
+	 * </ul>
+	 */
+	public static final EntityProxy.Concept INTERVAL_ROLE = EntityProxy.Concept.make("Interval role",
+			UUID.fromString("ed9d3506-65ad-48ea-bd01-95474fecdbc4"));
+
+	// Interval Role Type: [6fa58611-af37-402e-a0c2-6ee1d6068651]
+	/**
+	 * Java binding for the concept described as Interval Role Type and identified
+	 * by the following UUID(s):
+	 * <ul>
+	 * <li>6fa58611-af37-402e-a0c2-6ee1d6068651
+	 * </ul>
+	 */
+	public static final EntityProxy.Concept INTERVAL_ROLE_TYPE = EntityProxy.Concept.make("Interval Role Type",
+			UUID.fromString("6fa58611-af37-402e-a0c2-6ee1d6068651"));
+
+	// Interval Lower Bound: [52b3e38a-fccb-4779-aa61-4e87abd56419]
+	/**
+	 * Java binding for the concept described as Interval Lower Bound and identified
+	 * by the following UUID(s):
+	 * <ul>
+	 * <li>52b3e38a-fccb-4779-aa61-4e87abd56419
+	 * </ul>
+	 */
+	public static final EntityProxy.Concept INTERVAL_LOWER_BOUND = EntityProxy.Concept.make("Interval Lower Bound",
+			UUID.fromString("52b3e38a-fccb-4779-aa61-4e87abd56419"));
+
+	// Lower Bound Open: [a0096ba1-0718-4c03-ad8f-8143c44091e7]
+	// TODO rename
+	public static final EntityProxy.Concept INTERVAL_LOWER_BOUND_OPEN = EntityProxy.Concept.make("Lower Bound Open",
+			UUID.fromString("a0096ba1-0718-4c03-ad8f-8143c44091e7"));
+
+	// Interval Upper Bound: [6565f774-ff6c-4882-832f-31ddc462adf7]
+	/**
+	 * Java binding for the concept described as Interval Upper Bound and identified
+	 * by the following UUID(s):
+	 * <ul>
+	 * <li>6565f774-ff6c-4882-832f-31ddc462adf7
+	 * </ul>
+	 */
+	public static final EntityProxy.Concept INTERVAL_UPPER_BOUND = EntityProxy.Concept.make("Interval Upper Bound",
+			UUID.fromString("6565f774-ff6c-4882-832f-31ddc462adf7"));
+
+	// Upper Bound Open: [c20b3b1e-112f-4cb2-b901-4046db844629]
+	// TODO rename
+	public static final EntityProxy.Concept INTERVAL_UPPER_BOUND_OPEN = EntityProxy.Concept.make("Upper Bound Open",
+			UUID.fromString("c20b3b1e-112f-4cb2-b901-4046db844629"));
+
+	// Unit of Measure: [40afdda5-89d6-4b80-8181-1ddd6eb92dc8]
+	/**
+	 * Java binding for the concept described as Unit of Measure and identified by
+	 * the following UUID(s):
+	 * <ul>
+	 * <li>40afdda5-89d6-4b80-8181-1ddd6eb92dc8
+	 * </ul>
+	 */
+	// TODO rename
+	public static final EntityProxy.Concept INTERVAL_UNIT_OF_MEASURE = EntityProxy.Concept.make("Unit of Measure",
+			UUID.fromString("40afdda5-89d6-4b80-8181-1ddd6eb92dc8"));
 
     /**
      * ConceptProxy for: "Tinkar root concept".
