@@ -16,7 +16,7 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>dev.ikm.jpms</groupId>
+                <groupId>org.eclipse.collections</groupId>
                 <artifactId>eclipse-collections</artifactId>
                 <version>${eclipse-collections.version}</version>
             </dependency>
@@ -28,7 +28,7 @@
             <artifactId>common</artifactId>
         </dependency>
         <dependency>
-            <groupId>dev.ikm.jpms</groupId>
+            <groupId>org.eclipse.collections</groupId>
             <artifactId>eclipse-collections</artifactId>
         </dependency>
     </dependencies>

@@ -33,7 +33,8 @@ module dev.ikm.tinkar.provider.websocket.client {
     requires io.activej.launcher;
     requires io.activej.promise;
     requires io.activej.service;
-    requires dev.ikm.jpms.eclipse.collections.api;
+    requires org.eclipse.collections.api;
+    requires org.eclipse.collections.impl;
     requires java.base;
     requires dev.ikm.tinkar.common;
     requires dev.ikm.tinkar.component;

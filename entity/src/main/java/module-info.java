@@ -39,8 +39,8 @@ module dev.ikm.tinkar.entity {
     requires org.slf4j;
     requires dev.ikm.jpms.activej.bytebuf;
     requires java.logging;
-    requires dev.ikm.jpms.eclipse.collections;
-    requires dev.ikm.jpms.eclipse.collections.api;
+    requires org.eclipse.collections.api;
+    requires org.eclipse.collections.impl;
     requires java.xml;
     requires dev.ikm.tinkar.schema;
     requires dev.ikm.jpms.protobuf;

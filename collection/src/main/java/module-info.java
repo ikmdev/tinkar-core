@@ -22,8 +22,8 @@
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
 module dev.ikm.tinkar.collection {
     requires transitive dev.ikm.tinkar.common;
-    requires dev.ikm.jpms.eclipse.collections.api;
-    requires dev.ikm.jpms.eclipse.collections;
+    requires org.eclipse.collections.api;
+    requires org.eclipse.collections.impl;
     requires org.slf4j;
    
     exports dev.ikm.tinkar.collection;

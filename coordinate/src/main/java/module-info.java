@@ -52,8 +52,8 @@ module dev.ikm.tinkar.coordinate {
     requires static java.compiler;
     requires dev.ikm.tinkar.entity;
     requires org.slf4j;
-    requires dev.ikm.jpms.eclipse.collections.api;
-    requires dev.ikm.jpms.eclipse.collections;
+    requires org.eclipse.collections.api;
+    requires org.eclipse.collections.impl;
 
     provides CachingService with
             LanguageCalculatorWithCache.CacheProvider,

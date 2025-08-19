@@ -16,7 +16,8 @@
 module dev.ikm.tinkar.ext.lang.owl {
 	requires org.slf4j;
 
-	requires dev.ikm.jpms.eclipse.collections.api;
+    requires org.eclipse.collections.api;
+    requires org.eclipse.collections.impl;
 
 	requires dev.ikm.tinkar.common;
 	requires dev.ikm.tinkar.coordinate;
@@ -25,5 +26,5 @@ module dev.ikm.tinkar.ext.lang.owl {
 	requires dev.ikm.elk.snomed;
 	requires dev.ikm.elk.snomed.owlel;
 
-	exports dev.ikm.tinkar.ext.lang.owl;
+    exports dev.ikm.tinkar.ext.lang.owl;
 }

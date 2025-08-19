@@ -35,8 +35,8 @@ module dev.ikm.tinkar.provider.spinedarray {
     requires dev.ikm.tinkar.component;
     requires dev.ikm.tinkar.entity;
     requires dev.ikm.tinkar.provider.search;
-    requires dev.ikm.jpms.eclipse.collections.api;
-    requires dev.ikm.jpms.eclipse.collections;
+    requires org.eclipse.collections.api;
+    requires org.eclipse.collections.impl;
     requires dev.ikm.jpms.activej.bytebuf;
 
     provides DataServiceController

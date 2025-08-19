@@ -31,8 +31,8 @@ import dev.ikm.tinkar.provider.entity.StampProvider;
 module dev.ikm.tinkar.provider.entity {
     requires dev.ikm.tinkar.provider.search;
     requires org.slf4j;
-    requires dev.ikm.jpms.eclipse.collections;
-    requires dev.ikm.jpms.eclipse.collections.api;
+    requires org.eclipse.collections.api;
+    requires org.eclipse.collections.impl;
 
     provides EntityService
             with EntityServiceFactory;

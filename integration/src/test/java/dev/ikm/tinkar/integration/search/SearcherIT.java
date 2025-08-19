@@ -172,8 +172,7 @@ public class SearcherIT {
         session.compose((SemanticAssembler semanticAssembler) -> semanticAssembler
                 .pattern(TinkarTerm.COMMENT_PATTERN)
                 .reference(TinkarTerm.COMMENT)
-                .fieldValues((MutableList<Object> values) -> values
-                        .withAll(list))
+                .fieldValues((MutableList<Object> values) -> values.withAll(list))
         );
         rebuildTypeAheadSuggesterAndBlock();
         entities = TypeAheadSearch.get().typeAheadSuggestions("rAdd", 10);

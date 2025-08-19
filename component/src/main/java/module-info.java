@@ -18,8 +18,8 @@
 module dev.ikm.tinkar.component {
     requires java.base;
     requires dev.ikm.tinkar.common;
-    requires dev.ikm.jpms.eclipse.collections.api;
-    requires dev.ikm.jpms.eclipse.collections;
+    requires org.eclipse.collections.api;
+    requires org.eclipse.collections.impl;
     requires org.slf4j;
 
     exports dev.ikm.tinkar.component;

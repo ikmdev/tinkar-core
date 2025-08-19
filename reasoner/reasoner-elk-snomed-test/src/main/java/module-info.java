@@ -1,8 +1,8 @@
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
 
 open module dev.ikm.tinkar.reasoner.elksnomed.test {
-	requires dev.ikm.jpms.eclipse.collections;
-	requires dev.ikm.jpms.eclipse.collections.api;
+    requires org.eclipse.collections.api;
+    requires org.eclipse.collections.impl;
 	requires org.junit.jupiter.api;
 	requires org.slf4j;
 

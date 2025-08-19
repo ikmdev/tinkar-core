@@ -3043,6 +3043,11 @@ public class RLBTImpl {
         }
 
         @Override
+        public MutableMapIterable collectKeysUnique(Function2 function2) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public MutableMapIterable collect(Function2 function2) {
             return null;
         }
