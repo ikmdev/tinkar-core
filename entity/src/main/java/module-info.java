@@ -45,6 +45,7 @@ module dev.ikm.tinkar.entity {
     requires dev.ikm.tinkar.schema;
     requires dev.ikm.jpms.protobuf;
     requires org.jgrapht.core;
+    requires dev.ikm.tinkar.collection;
     exports dev.ikm.tinkar.entity;
     exports dev.ikm.tinkar.entity.aggregator;
     exports dev.ikm.tinkar.entity.graph;
@@ -55,8 +56,16 @@ module dev.ikm.tinkar.entity {
     exports dev.ikm.tinkar.entity.transform;
     exports dev.ikm.tinkar.entity.graph.isomorphic;
     exports dev.ikm.tinkar.entity.graph.adaptor.axiom;
+    exports dev.ikm.tinkar.coordinate;
 
     opens dev.ikm.tinkar.entity.graph.adaptor.axiom;
+    exports dev.ikm.tinkar.coordinate.navigation.calculator;
+    exports dev.ikm.tinkar.coordinate.stamp.calculator;
+    exports dev.ikm.tinkar.coordinate.language;
+    exports dev.ikm.tinkar.coordinate.navigation;
+    exports dev.ikm.tinkar.coordinate.stamp;
+    exports dev.ikm.tinkar.coordinate.view.calculator;
+    exports dev.ikm.tinkar.coordinate.logic;
 
     provides LoadDataFromFileController
             with LoadEntitiesFromFileController;

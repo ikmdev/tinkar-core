@@ -20,7 +20,6 @@ module dev.ikm.tinkar.provider.search {
     requires org.apache.lucene.queries;
     requires org.apache.lucene.highlighter;
     requires org.apache.lucene.core;
-    requires dev.ikm.tinkar.coordinate;
     requires org.eclipse.collections.api;
     requires org.eclipse.collections.impl;
     requires org.apache.lucene.suggest;
