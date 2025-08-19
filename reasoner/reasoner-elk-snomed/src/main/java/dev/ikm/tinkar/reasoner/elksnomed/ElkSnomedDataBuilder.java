@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dev.ikm.elk.snomed.SnomedIds;
+import dev.ikm.elk.snomed.interval.Interval;
 import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.elk.snomed.model.ConcreteRole;
 import dev.ikm.elk.snomed.model.ConcreteRole.ValueType;
@@ -42,6 +43,7 @@ import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiomSemantic;
+import dev.ikm.tinkar.ext.lang.owl.IntervalUtil;
 import dev.ikm.tinkar.reasoner.service.UnsupportedReasonerProcessIncremental;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.PatternFacade;
@@ -215,7 +217,7 @@ public class ElkSnomedDataBuilder {
 		return LogicalAxiomSemantic.get(node.getMeaningNid());
 	}
 
-	private int getNid(EntityVertex node, dev.ikm.tinkar.terms.EntityProxy.Concept concept) {
+	public static int getNid(EntityVertex node, dev.ikm.tinkar.terms.EntityProxy.Concept concept) {
 		ConceptFacade cf = node.propertyFast(concept);
 		return cf.nid();
 	}
@@ -286,6 +288,12 @@ public class ElkSnomedDataBuilder {
 			}
 			case DATA_PROPERTY_SET -> {
 				processDataPropertySet(conceptNid, child, definition);
+				result = data.getConcreteRoleType(conceptNid);
+			}
+			case INTERVAL_PROPERTY_SET -> {
+				LOG.info("Interval PS: " + PrimitiveData.text(conceptNid) + "\n" + definition);
+				processDataPropertySet(conceptNid, child, definition);
+				data.addIntervalRoleType(data.getConcreteRoleType(conceptNid));
 				result = data.getConcreteRoleType(conceptNid);
 			}
 			default -> throw new IllegalArgumentException("Unexpected value: " + getMeaning(child));
@@ -396,6 +404,10 @@ public class ElkSnomedDataBuilder {
 				ConcreteRole role = makeConcreteRole(child, definition);
 				def.addUngroupedConcreteRole(role);
 			}
+			case INTERVAL_ROLE -> {
+				ConcreteRole role = makeIntervalRole(child, definition);
+				def.addUngroupedConcreteRole(role);
+			}
 			default -> throw new IllegalArgumentException("Unexpected value: " + getMeaning(child));
 			}
 		}
@@ -422,6 +434,15 @@ public class ElkSnomedDataBuilder {
 		default -> throw new UnsupportedOperationException("Value type: " + value.getClass().getName());
 		};
 		return new ConcreteRole(role_type, value.toString(), value_type);
+	}
+
+	private ConcreteRole makeIntervalRole(EntityVertex node, DiTreeEntity definition) {
+		int role_type_nid = getNid(node, TinkarTerm.INTERVAL_ROLE_TYPE);
+		ConcreteRoleType role_type = data.getOrCreateConcreteRoleType(role_type_nid);
+		data.addIntervalRoleType(role_type);
+		Interval interval = IntervalUtil.makeInterval(node);
+//		LOG.info(">>>>>" + getIntervalRoleString(viewCalculator, node));
+		return new ConcreteRole(role_type, interval.toString(), ValueType.String);
 	}
 
 	private void processRoleGroup(Definition def, EntityVertex node, DiTreeEntity definition) {
@@ -459,6 +480,10 @@ public class ElkSnomedDataBuilder {
 			}
 			case FEATURE -> {
 				ConcreteRole role = makeConcreteRole(child, definition);
+				rg.addConcreteRole(role);
+			}
+			case INTERVAL_ROLE -> {
+				ConcreteRole role = makeIntervalRole(child, definition);
 				rg.addConcreteRole(role);
 			}
 			default -> throw new IllegalArgumentException("Unexpected value: " + getMeaning(child));

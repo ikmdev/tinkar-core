@@ -5,7 +5,7 @@
     <parent>
         <groupId>dev.ikm.build</groupId>
         <artifactId>java-parent</artifactId>
-        <version>1.63.0</version>
+        <version>1.64.0</version>
         <relativePath/>
     </parent>
 
@@ -114,10 +114,9 @@
 		<eclipse-collections-api.version>13.0.0</eclipse-collections-api.version>
 		<jheaps.version>0.14-r6</jheaps.version>
 		<roaringbitmap.version>1.4.0</roaringbitmap.version>
-
-		<hybrid-reasoner.version>1.1.5-eclipse-13.0.0-SNAPSHOT</hybrid-reasoner.version>
-		<ikm-reasoner.version>0.39.4-eclipse-13.0.0-SNAPSHOT</ikm-reasoner.version>
-		<owlapi.version>4.8.5-eclipse-13.0.0-SNAPSHOT</owlapi.version>
+		<hybrid-reasoner.version>1.1.4</hybrid-reasoner.version>
+		<ikm-reasoner.version>0.39.3</ikm-reasoner.version>
+		<owlapi.version>4.8.4</owlapi.version>
     </properties>
 
     <!-- All Dependencies and versions used in this project are pre-defined here for use in modules -->

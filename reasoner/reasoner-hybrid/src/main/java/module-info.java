@@ -26,6 +26,7 @@ module dev.ikm.tinkar.reasoner.hybrid {
 	requires dev.ikm.tinkar.entity;
 
 	requires dev.ikm.elk.snomed;
+	requires dev.ikm.elk.snomed.test;
 
 	requires dev.ikm.reasoner.hybrid.snomed;
 
