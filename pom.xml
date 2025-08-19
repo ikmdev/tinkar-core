@@ -48,7 +48,6 @@
         <module>collection</module>
         <module>common</module>
         <module>component</module>
-        <module>coordinate</module>
         <module>entity</module>
         <module>language-extensions</module>
         <module>terms</module>
@@ -149,12 +148,6 @@
                 <version>${project.version}</version>
                 <type>test-jar</type>
                 <classifier>tests</classifier>
-            </dependency>
-
-            <dependency>
-                <groupId>dev.ikm.tinkar</groupId>
-                <artifactId>coordinate</artifactId>
-                <version>${project.version}</version>
             </dependency>
 
             <dependency>
