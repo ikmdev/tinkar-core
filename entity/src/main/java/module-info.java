@@ -48,8 +48,6 @@ module dev.ikm.tinkar.entity {
     requires org.slf4j;
     requires static dev.ikm.jpms.recordbuilder.core;
     requires static java.compiler;
-    requires transitive dev.ikm.jpms.eclipse.collections.api;
-    requires transitive dev.ikm.jpms.eclipse.collections;
     requires transitive dev.ikm.tinkar.common;
     requires transitive dev.ikm.tinkar.component;
     requires transitive dev.ikm.tinkar.terms;
