@@ -51,7 +51,7 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 
 	protected SnomedOntology ontology;
 
-	private SnomedOntologyReasoner reasoner;
+	protected SnomedOntologyReasoner reasoner;
 
 	protected NecessaryNormalFormBuilder nnfb;
 
@@ -174,7 +174,7 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 		Definition def = nnfb.getNecessaryNormalForm(id);
 		if (def == null)
 			return null;
-		OwlElToLogicalExpression leb = new OwlElToLogicalExpression();
+		OwlElToLogicalExpression leb = new OwlElToLogicalExpression(data.getIntervalRoleTypes());
 		try {
 			LogicalExpression nnf = leb.build(def);
 			return nnf;

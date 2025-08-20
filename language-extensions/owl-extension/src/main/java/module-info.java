@@ -20,7 +20,6 @@ module dev.ikm.tinkar.ext.lang.owl {
     requires org.eclipse.collections.impl;
 
 	requires dev.ikm.tinkar.common;
-	requires dev.ikm.tinkar.coordinate;
 	requires dev.ikm.tinkar.entity;
 
 	requires dev.ikm.elk.snomed;

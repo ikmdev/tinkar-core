@@ -23,10 +23,10 @@ module dev.ikm.tinkar.reasoner.hybrid {
 	requires org.slf4j;
 
 	requires dev.ikm.tinkar.collection;
-	requires dev.ikm.tinkar.coordinate;
 	requires dev.ikm.tinkar.entity;
 
 	requires dev.ikm.elk.snomed;
+	requires dev.ikm.elk.snomed.test;
 
 	requires dev.ikm.reasoner.hybrid.snomed;
 

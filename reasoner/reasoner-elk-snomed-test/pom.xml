@@ -14,7 +14,7 @@
 
 	<properties>
 		<failsafeArgLine>
-			--enable-preview -Xmx12G
+			 -Xmx12G
 			--add-exports
 			org.junit.platform.commons/org.junit.platform.commons.util=ALL-UNNAMED
 			--add-exports
@@ -23,10 +23,6 @@
 	</properties>
 
 	<dependencies>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>coordinate</artifactId>
-		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>data-spinedarray-provider</artifactId>

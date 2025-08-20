@@ -23,30 +23,22 @@ import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dev.ikm.elk.snomed.test.SnomedVersionUs;
+import dev.ikm.elk.snomed.test.SnomedVersionInternational;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
-public class HybridReasonerNfhUs20250301TestIT extends HybridReasonerNfhTestBase implements SnomedVersionUs {
+public class HybridReasonerIntervalIntl20250101TestIT extends HybridReasonerIntervalTestBase
+		implements SnomedVersionInternational {
 
-	private static final Logger LOG = LoggerFactory.getLogger(HybridReasonerNfhUs20250301TestIT.class);
+	private static final Logger LOG = LoggerFactory.getLogger(HybridReasonerIntervalIntl20250101TestIT.class);
 
 	private static String write_db = "" + UUID.randomUUID();
 
 	static {
-		test_case = "snomed-us-20250301";
-	}
-
-	{
-		expected_child_miss = 6;
+		test_case = "snomed-intl-20250101";
 	}
 
 	@Override
 	public String getVersion() {
-		return "20250301";
-	}
-
-	@Override
-	public String getInternationalVersion() {
 		return "20250101";
 	}
 

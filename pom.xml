@@ -5,7 +5,7 @@
     <parent>
         <groupId>dev.ikm.build</groupId>
         <artifactId>java-parent</artifactId>
-        <version>1.63.0</version>
+        <version>1.64.0</version>
         <relativePath/>
     </parent>
 
@@ -48,7 +48,6 @@
         <module>collection</module>
         <module>common</module>
         <module>component</module>
-        <module>coordinate</module>
         <module>entity</module>
         <module>language-extensions</module>
         <module>terms</module>
@@ -116,9 +115,9 @@
 		<jheaps.version>0.14-r6</jheaps.version>
 		<roaringbitmap.version>1.4.0</roaringbitmap.version>
 
-		<hybrid-reasoner.version>1.1.5-eclipse-13.0.0-SNAPSHOT</hybrid-reasoner.version>
-		<ikm-reasoner.version>0.39.4-eclipse-13.0.0-SNAPSHOT</ikm-reasoner.version>
-		<owlapi.version>4.8.5-eclipse-13.0.0-SNAPSHOT</owlapi.version>
+		<hybrid-reasoner.version>1.1.5</hybrid-reasoner.version>
+		<ikm-reasoner.version>0.39.4</ikm-reasoner.version>
+		<owlapi.version>4.8.5</owlapi.version>
     </properties>
 
     <!-- All Dependencies and versions used in this project are pre-defined here for use in modules -->
@@ -149,12 +148,6 @@
                 <version>${project.version}</version>
                 <type>test-jar</type>
                 <classifier>tests</classifier>
-            </dependency>
-
-            <dependency>
-                <groupId>dev.ikm.tinkar</groupId>
-                <artifactId>coordinate</artifactId>
-                <version>${project.version}</version>
             </dependency>
 
             <dependency>

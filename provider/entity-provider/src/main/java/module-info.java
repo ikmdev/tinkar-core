@@ -29,21 +29,18 @@ import dev.ikm.tinkar.provider.entity.StampProvider;
 @SuppressWarnings("module")
 // 7 in HL7 is not a version reference
 module dev.ikm.tinkar.provider.entity {
-    requires dev.ikm.tinkar.provider.search;
-    requires org.slf4j;
+    requires com.github.benmanes.caffeine;
     requires org.eclipse.collections.api;
     requires org.eclipse.collections.impl;
+    requires dev.ikm.tinkar.common;
+    requires dev.ikm.tinkar.provider.search;
+    requires org.slf4j;
 
-    provides EntityService
-            with EntityServiceFactory;
-    provides PublicIdService
-            with PublicIdServiceFactory;
-    provides DefaultDescriptionForNidService
-            with DefaultDescriptionForNidServiceFactory;
-    provides StampService
-            with StampProvider;
-    provides CachingService
-            with EntityProvider.CacheProvider;
+    provides CachingService with EntityProvider.CacheProvider;
+    provides DefaultDescriptionForNidService with DefaultDescriptionForNidServiceFactory;
+    provides EntityService with EntityServiceFactory;
+    provides PublicIdService with PublicIdServiceFactory;
+    provides StampService with StampProvider;
 
 	uses PrimitiveDataService;
 }
