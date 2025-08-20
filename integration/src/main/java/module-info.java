@@ -29,6 +29,7 @@ open module dev.ikm.tinkar.integration {
     requires org.slf4j;
     requires org.eclipse.collections.api;
     requires org.eclipse.collections.impl;
+    requires dev.ikm.tinkar.provider.search;
 
     uses DataServiceController;
     uses DefaultDescriptionForNidService;

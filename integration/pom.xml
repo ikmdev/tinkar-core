@@ -40,6 +40,12 @@
                 <groupId>${project.groupId}</groupId>
                 <artifactId>composer</artifactId>
                 <version>${tinkar-composer.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>dev.ikm.jpms</groupId>
+                        <artifactId>eclipse-collections-api</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.collections</groupId>
