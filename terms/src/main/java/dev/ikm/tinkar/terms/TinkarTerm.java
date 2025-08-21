@@ -6927,8 +6927,7 @@ public class TinkarTerm {
 			UUID.fromString("52b3e38a-fccb-4779-aa61-4e87abd56419"));
 
 	// Lower Bound Open: [a0096ba1-0718-4c03-ad8f-8143c44091e7]
-	// TODO rename
-	public static final EntityProxy.Concept INTERVAL_LOWER_BOUND_OPEN = EntityProxy.Concept.make("Lower Bound Open",
+	public static final EntityProxy.Concept LOWER_BOUND_OPEN = EntityProxy.Concept.make("Lower Bound Open",
 			UUID.fromString("a0096ba1-0718-4c03-ad8f-8143c44091e7"));
 
 	// Interval Upper Bound: [6565f774-ff6c-4882-832f-31ddc462adf7]
@@ -6943,8 +6942,7 @@ public class TinkarTerm {
 			UUID.fromString("6565f774-ff6c-4882-832f-31ddc462adf7"));
 
 	// Upper Bound Open: [c20b3b1e-112f-4cb2-b901-4046db844629]
-	// TODO rename
-	public static final EntityProxy.Concept INTERVAL_UPPER_BOUND_OPEN = EntityProxy.Concept.make("Upper Bound Open",
+	public static final EntityProxy.Concept UPPER_BOUND_OPEN = EntityProxy.Concept.make("Upper Bound Open",
 			UUID.fromString("c20b3b1e-112f-4cb2-b901-4046db844629"));
 
 	// Unit of Measure: [40afdda5-89d6-4b80-8181-1ddd6eb92dc8]
@@ -6955,8 +6953,7 @@ public class TinkarTerm {
 	 * <li>40afdda5-89d6-4b80-8181-1ddd6eb92dc8
 	 * </ul>
 	 */
-	// TODO rename
-	public static final EntityProxy.Concept INTERVAL_UNIT_OF_MEASURE = EntityProxy.Concept.make("Unit of Measure",
+	public static final EntityProxy.Concept UNIT_OF_MEASURE = EntityProxy.Concept.make("Unit of Measure",
 			UUID.fromString("40afdda5-89d6-4b80-8181-1ddd6eb92dc8"));
 
     /**
