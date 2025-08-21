@@ -19,8 +19,8 @@ module dev.ikm.tinkar.reasoner.service {
 
 	requires dev.ikm.tinkar.terms;
 	requires dev.ikm.tinkar.common;
-	requires dev.ikm.jpms.eclipse.collections;
-	requires dev.ikm.jpms.eclipse.collections.api;
+    requires org.eclipse.collections.api;
+    requires org.eclipse.collections.impl;
 	requires dev.ikm.tinkar.entity;
 	requires org.jgrapht.core;
 

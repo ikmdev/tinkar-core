@@ -41,13 +41,13 @@ module dev.ikm.tinkar.entity {
     requires dev.ikm.tinkar.collection;
     requires dev.ikm.tinkar.schema;
     requires java.logging;
+    requires org.eclipse.collections.api;
+    requires org.eclipse.collections.impl;
     requires java.xml;
     requires org.jgrapht.core;
     requires org.slf4j;
     requires static dev.ikm.jpms.recordbuilder.core;
     requires static java.compiler;
-    requires transitive dev.ikm.jpms.eclipse.collections.api;
-    requires transitive dev.ikm.jpms.eclipse.collections;
     requires transitive dev.ikm.tinkar.common;
     requires transitive dev.ikm.tinkar.component;
     requires transitive dev.ikm.tinkar.terms;

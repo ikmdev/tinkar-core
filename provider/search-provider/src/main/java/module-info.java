@@ -16,12 +16,12 @@
 module dev.ikm.tinkar.provider.search {
     requires org.slf4j;
     requires transitive dev.ikm.tinkar.entity;
-    requires dev.ikm.jpms.eclipse.collections.api;
     requires org.apache.lucene.queryparser;
     requires org.apache.lucene.queries;
     requires org.apache.lucene.highlighter;
     requires org.apache.lucene.core;
-    requires dev.ikm.jpms.eclipse.collections;
+    requires org.eclipse.collections.api;
+    requires org.eclipse.collections.impl;
     requires org.apache.lucene.suggest;
     requires dev.ikm.tinkar.common;
     requires dev.ikm.tinkar.terms;

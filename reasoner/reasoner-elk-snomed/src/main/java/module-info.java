@@ -18,8 +18,8 @@ import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedReasonerService;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
 
 module dev.ikm.tinkar.reasoner.elksnomed {
-	requires dev.ikm.jpms.eclipse.collections;
-	requires dev.ikm.jpms.eclipse.collections.api;
+    requires org.eclipse.collections.api;
+    requires org.eclipse.collections.impl;
 	requires org.slf4j;
 
 	requires dev.ikm.tinkar.collection;

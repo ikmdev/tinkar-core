@@ -30,8 +30,8 @@ import dev.ikm.tinkar.provider.entity.StampProvider;
 // 7 in HL7 is not a version reference
 module dev.ikm.tinkar.provider.entity {
     requires com.github.benmanes.caffeine;
-    requires dev.ikm.jpms.eclipse.collections.api;
-    requires dev.ikm.jpms.eclipse.collections;
+    requires org.eclipse.collections.api;
+    requires org.eclipse.collections.impl;
     requires dev.ikm.tinkar.common;
     requires dev.ikm.tinkar.provider.search;
     requires org.slf4j;
