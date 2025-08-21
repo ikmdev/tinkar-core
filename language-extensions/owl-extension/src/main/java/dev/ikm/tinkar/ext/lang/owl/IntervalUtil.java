@@ -22,10 +22,10 @@ public class IntervalUtil {
 
 	public static Interval makeInterval(EntityVertex node) {
 		int lowerBound = node.propertyFast(TinkarTerm.INTERVAL_LOWER_BOUND);
-		boolean lowerOpen = node.propertyFast(TinkarTerm.INTERVAL_LOWER_BOUND_OPEN);
+		boolean lowerOpen = node.propertyFast(TinkarTerm.LOWER_BOUND_OPEN);
 		int upperBound = node.propertyFast(TinkarTerm.INTERVAL_UPPER_BOUND);
-		boolean upperOpen = node.propertyFast(TinkarTerm.INTERVAL_UPPER_BOUND_OPEN);
-		int unit_nid = getNid(node, TinkarTerm.INTERVAL_UNIT_OF_MEASURE);
+		boolean upperOpen = node.propertyFast(TinkarTerm.UPPER_BOUND_OPEN);
+		int unit_nid = getNid(node, TinkarTerm.UNIT_OF_MEASURE);
 		return new Interval(lowerBound, lowerOpen, upperBound, upperOpen, unit_nid);
 	}
 

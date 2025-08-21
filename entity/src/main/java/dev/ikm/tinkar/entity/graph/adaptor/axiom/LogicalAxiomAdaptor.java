@@ -281,10 +281,10 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		@Override
 		public String interval() {
-			return property(TinkarTerm.INTERVAL_LOWER_BOUND_OPEN) + " " + property(TinkarTerm.INTERVAL_LOWER_BOUND)
+			return property(TinkarTerm.LOWER_BOUND_OPEN) + " " + property(TinkarTerm.INTERVAL_LOWER_BOUND)
 					+ " , " + property(TinkarTerm.INTERVAL_UPPER_BOUND) + " "
-					+ property(TinkarTerm.INTERVAL_UPPER_BOUND_OPEN) + " "
-					+ property(TinkarTerm.INTERVAL_UNIT_OF_MEASURE);
+					+ property(TinkarTerm.UPPER_BOUND_OPEN) + " "
+					+ property(TinkarTerm.UNIT_OF_MEASURE);
 		}
 
 		@Override

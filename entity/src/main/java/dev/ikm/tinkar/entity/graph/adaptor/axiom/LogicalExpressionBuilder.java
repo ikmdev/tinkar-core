@@ -259,10 +259,10 @@ public class LogicalExpressionBuilder {
 		builder.addVertex(intervalRole);
 		intervalRole.putUncommittedProperty(TinkarTerm.INTERVAL_ROLE_TYPE.nid(), intervalRoleType);
 		intervalRole.putUncommittedProperty(TinkarTerm.INTERVAL_LOWER_BOUND.nid(), lowerBound);
-		intervalRole.putUncommittedProperty(TinkarTerm.INTERVAL_LOWER_BOUND_OPEN.nid(), lowerOpen);
+		intervalRole.putUncommittedProperty(TinkarTerm.LOWER_BOUND_OPEN.nid(), lowerOpen);
 		intervalRole.putUncommittedProperty(TinkarTerm.INTERVAL_UPPER_BOUND.nid(), upperBound);
-		intervalRole.putUncommittedProperty(TinkarTerm.INTERVAL_UPPER_BOUND_OPEN.nid(), upperOpen);
-		intervalRole.putUncommittedProperty(TinkarTerm.INTERVAL_UNIT_OF_MEASURE.nid(), units);
+		intervalRole.putUncommittedProperty(TinkarTerm.UPPER_BOUND_OPEN.nid(), upperOpen);
+		intervalRole.putUncommittedProperty(TinkarTerm.UNIT_OF_MEASURE.nid(), units);
 		intervalRole.commitProperties();
 		return new LogicalAxiomAdaptor.IntervalRoleAxiomAdaptor(logicalExpression, intervalRole.vertexIndex());
 	}
