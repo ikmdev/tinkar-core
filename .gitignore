@@ -226,3 +226,8 @@ Temporary Items
 # General
 ###################
 **.zip
+
+###################
+ # Develocity
+###################
+**.develocity/
