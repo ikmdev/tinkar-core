@@ -208,7 +208,7 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
                         "Search and Type Ahead Suggestions may not function as expected.", ex));
             }
             return null;
-        });
+        }, TinkExecutor.ioThreadPool());
     }
 
     @Override
