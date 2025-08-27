@@ -31,6 +31,13 @@ import dev.ikm.tinkar.collection.SpinedIntObjectMap;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 
+/**
+ * @deprecated
+ * No longer maintained.
+ * 
+ * Use dev.ikm.tinkar.reasoner.elksnomed
+ */
+@Deprecated
 public class ElkOwlData {
 
 	public final SpinedIntObjectMap<ImmutableList<OWLAxiom>> nidAxiomsMap = new SpinedIntObjectMap<>();

@@ -51,6 +51,13 @@ import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.terms.TinkarTerm;
 
+/**
+ * @deprecated
+ * No longer maintained.
+ * 
+ * Use dev.ikm.tinkar.reasoner.elksnomed
+ */
+@Deprecated
 public class ElkOwlDataBuilder {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ElkOwlDataBuilder.class);
