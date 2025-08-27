@@ -19,6 +19,13 @@ import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.PrefixManager;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
+/**
+ * @deprecated
+ * No longer maintained.
+ * 
+ * Use dev.ikm.tinkar.reasoner.elksnomed
+ */
+@Deprecated
 public class ElkOwlPrefixManager {
 
 	private ElkOwlPrefixManager() {

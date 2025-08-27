@@ -79,8 +79,8 @@ public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestB
 			long sctid = Long.parseLong(fields[0]);
 			int nid = ElkSnomedData.getNid(sctid);
 			Interval interval = Interval.fromString(fields[1]);
-			int units_nid = ElkSnomedData.getNid(interval.getUnitOfMeasure());
-			interval.setUnitOfMeasure(units_nid);
+			int units_nid = ElkSnomedData.getNid(interval.getUnitOfMeasure().getId());
+			interval.setUnitOfMeasure(new Concept(units_nid));
 //			LOG.info("Interval: " + interval + " " + sctid + " " + PrimitiveData.text(nid));
 //			SemanticEntityVersion sev = ElkSnomedUtil.getStatedSemantic(vc, nid);
 //			LOG.info("SEV:\n" + sev);

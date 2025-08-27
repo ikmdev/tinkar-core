@@ -37,6 +37,13 @@ import dev.ikm.tinkar.reasoner.elkowl.ElkOwlDataBuilder.IncrementalChanges;
 import dev.ikm.tinkar.reasoner.service.ReasonerServiceBase;
 import dev.ikm.tinkar.terms.PatternFacade;
 
+/**
+ * @deprecated
+ * No longer maintained.
+ * 
+ * Use dev.ikm.tinkar.reasoner.elksnomed
+ */
+@Deprecated
 public class ElkOwlReasonerService extends ReasonerServiceBase {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ElkOwlReasonerService.class);
