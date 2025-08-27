@@ -1,6 +1,7 @@
 package dev.ikm.tinkar.ext.lang.owl;
 
 import dev.ikm.elk.snomed.interval.Interval;
+import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.terms.ConceptFacade;
@@ -17,7 +18,7 @@ public class IntervalUtil {
 		int role_type_nid = getNid(node, TinkarTerm.INTERVAL_ROLE_TYPE);
 		Interval interval = makeInterval(node);
 		return vc.getPreferredDescriptionTextWithFallbackOrNid(role_type_nid) + " \u2192 " + interval.toString(false)
-				+ " " + vc.getPreferredDescriptionTextWithFallbackOrNid((int) interval.getUnitOfMeasure());
+				+ " " + vc.getPreferredDescriptionTextWithFallbackOrNid((int) interval.getUnitOfMeasure().getId());
 	}
 
 	public static Interval makeInterval(EntityVertex node) {
@@ -26,7 +27,7 @@ public class IntervalUtil {
 		int upperBound = node.propertyFast(TinkarTerm.INTERVAL_UPPER_BOUND);
 		boolean upperOpen = node.propertyFast(TinkarTerm.UPPER_BOUND_OPEN);
 		int unit_nid = getNid(node, TinkarTerm.UNIT_OF_MEASURE);
-		return new Interval(lowerBound, lowerOpen, upperBound, upperOpen, unit_nid);
+		return new Interval(lowerBound, lowerOpen, upperBound, upperOpen, new Concept(unit_nid));
 	}
 
 }

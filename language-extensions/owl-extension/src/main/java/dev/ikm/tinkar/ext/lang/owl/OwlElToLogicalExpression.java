@@ -136,7 +136,7 @@ public class OwlElToLogicalExpression {
 				Interval interval = Interval.fromString(role.getValue());
 				IntervalRole interval_role = builder.IntervalRole(getConceptFacade(role.getConcreteRoleType().getId()),
 						interval.getLowerBound(), interval.isLowerOpen(), interval.getUpperBound(),
-						interval.isUpperOpen(), getConceptFacade(interval.getUnitOfMeasure()));
+						interval.isUpperOpen(), getConceptFacade(interval.getUnitOfMeasure().getId()));
 				exprs.add(interval_role);
 			} else {
 				Object value = switch (role.getValueType()) {
