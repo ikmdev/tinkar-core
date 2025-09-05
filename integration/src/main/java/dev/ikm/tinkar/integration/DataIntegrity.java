@@ -23,8 +23,10 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.ServiceKeys;
 import dev.ikm.tinkar.common.service.ServiceProperties;
 import dev.ikm.tinkar.common.service.TinkExecutor;
+import dev.ikm.tinkar.component.Component;
 import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.component.graph.DiTree;
+import dev.ikm.tinkar.component.graph.Vertex;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
@@ -34,7 +36,6 @@ import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.ConceptEntityVersion;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.entity.FieldDefinitionForEntity;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.PatternEntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntity;
@@ -42,6 +43,7 @@ import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.StampEntityVersion;
 import dev.ikm.tinkar.terms.ConceptToDataType;
+import org.eclipse.collections.api.list.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -188,8 +190,33 @@ public class DataIntegrity {
                 if (fieldVal instanceof Instant ||
                     fieldVal instanceof String ||
                     fieldVal instanceof Long ||
-                    fieldVal instanceof DiTree) {
+                    fieldVal instanceof Integer) {
+                        // No references to check
                         isNullReferences.get();
+                } else if (fieldVal instanceof DiTree diTree) {
+                    List<Integer> diTreeRefs = new ArrayList<>();
+                    ImmutableList<Vertex> vertexList = diTree.vertexMap();
+                    vertexList.forEach(vertex -> {
+                        diTreeRefs.add(PrimitiveData.nid(vertex.meaning().publicId()));
+                        vertex.propertyKeys().forEach(propKey -> {
+                            diTreeRefs.add(PrimitiveData.nid(propKey.publicId()));
+                            // If present check only because a key does not always need a value
+                            vertex.property(propKey).ifPresent(propVal -> {
+                                if (propVal instanceof Integer propValInt) {
+                                    diTreeRefs.add(propValInt);
+                                } else if (propVal instanceof Component propValComponent) {
+                                    diTreeRefs.add(PrimitiveData.nid(propValComponent.publicId()));
+                                } else {
+                                    LOG.info("DiTree Property Value Type '{}' not handled: {}", propVal.getClass().getSimpleName(), propVal);
+                                }
+                            });
+                        });
+                    });
+                    diTreeRefs.forEach(nid -> {
+                        if (referencedEntityIsNull(nid)) {
+                            isNullReferences.set(true);
+                        }
+                    });
                 } else if (fieldVal instanceof IntIdSet nidSet) {
                     nidSet.forEach((nid) -> {
                         if (referencedEntityIsNull(nid)) {
@@ -209,7 +236,7 @@ public class DataIntegrity {
                         isNullReferences.set(true);
                     }
                 } else {
-                    LOG.info("Semantic Field Value not handled: " + ((FieldDefinitionForEntity) fieldVal).dataType());
+                    LOG.info("Semantic Field Value '{}' not handled: {}", fieldVal.getClass().getSimpleName(), fieldVal);
                 }
             });
         });
