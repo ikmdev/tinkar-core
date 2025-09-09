@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration;
 
+import dev.ikm.tinkar.common.id.IntIdCollection;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.PublicId;
@@ -202,12 +203,10 @@ public class DataIntegrity {
                             diTreeRefs.add(PrimitiveData.nid(propKey.publicId()));
                             // If present check only because a key does not always need a value
                             vertex.property(propKey).ifPresent(propVal -> {
-                                if (propVal instanceof Integer propValInt) {
-                                    diTreeRefs.add(propValInt);
-                                } else if (propVal instanceof Component propValComponent) {
+                                if (propVal instanceof Component propValComponent) {
                                     diTreeRefs.add(PrimitiveData.nid(propValComponent.publicId()));
-                                } else {
-                                    LOG.info("DiTree Property Value Type '{}' not handled: {}", propVal.getClass().getSimpleName(), propVal);
+                                } else if (propVal instanceof IntIdCollection intIdCollection) {
+                                    intIdCollection.forEach(diTreeRefs::add);
                                 }
                             });
                         });
