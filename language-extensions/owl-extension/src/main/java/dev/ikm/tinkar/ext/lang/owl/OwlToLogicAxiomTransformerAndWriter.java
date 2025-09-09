@@ -241,10 +241,13 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
                 existingStampVer.authorNid() == writeStamp.authorNid() &&
                 existingStampVer.pathNid() == writeStamp.pathNid()) {
                     DiTreeEntity latestExpression = (DiTreeEntity) latestSemanticVersion.get().fieldValues().get(0);
-                    if (LOG.isWarnEnabled()) {
-                        LOG.warn("Skipping write of new version: Logical Definition Semantic Version with this STAMP already exists for Concept: {}\nExisting STAMP: {}\nExisting: {}\nNew STAMP: {}\nNew: {}",
-                                EntityService.get().getEntityFast(conceptNid).publicId().idString(), existingStampVer.describe(), stampCoordinate, latestExpression, logicalExpression);
-                    }
+					/*
+					 * if (LOG.isWarnEnabled()) { LOG.
+					 * warn("Skipping write of new version: Logical Definition Semantic Version with this STAMP already exists for Concept: {}\nExisting STAMP: {}\nExisting: {}\nNew STAMP: {}\nNew: {}"
+					 * , EntityService.get().getEntityFast(conceptNid).publicId().idString(),
+					 * existingStampVer.describe(), stampCoordinate, latestExpression,
+					 * logicalExpression); }
+					 */
             } else {
                 addNewVersion(logicalExpression, SemanticRecordBuilder.builder(existingSemantic).build(), writeStamp);
             }
