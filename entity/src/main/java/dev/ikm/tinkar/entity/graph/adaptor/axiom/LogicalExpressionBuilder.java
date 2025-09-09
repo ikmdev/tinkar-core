@@ -572,6 +572,49 @@ public class LogicalExpressionBuilder {
         roleVertex.putUncommittedProperty(TinkarTerm.ROLE_TYPE.nid(), EntityProxy.Concept.make(conceptToChangeTo));
         roleVertex.commitProperties();
     }
+    
+	/**
+	 * Updates the interval role type of the specified interval role axiom.
+	 *
+	 * @param intervalRoleAxiom The logical axiom representing the role whose type
+	 *                          is to be updated.
+	 * @param conceptToChangeTo The new concept to which the role type will be
+	 *                          updated.
+	 */
+	public void updateIntervalRoleType(LogicalAxiom.Atom.TypedAtom.IntervalRole intervalRoleAxiom,
+			ConceptFacade conceptToChangeTo) {
+		EntityVertex roleVertex = this.builder.vertex(intervalRoleAxiom.vertexIndex());
+		roleVertex.putUncommittedProperty(TinkarTerm.INTERVAL_ROLE_TYPE.nid(),
+				EntityProxy.Concept.make(conceptToChangeTo));
+		roleVertex.commitProperties();
+	}
+
+	/**
+	 * Updates the interval role unit of measure of the specified interval role
+	 * axiom.
+	 *
+	 * @param intervalRoleAxiom The logical axiom representing the role whose type
+	 *                          is to be updated.
+	 * @param conceptToChangeTo The new concept to which the role type will be
+	 *                          updated.
+	 */
+	public void updateIntervalRoleUnitOfMeasure(LogicalAxiom.Atom.TypedAtom.IntervalRole intervalRoleAxiom,
+			ConceptFacade conceptToChangeTo) {
+		EntityVertex roleVertex = this.builder.vertex(intervalRoleAxiom.vertexIndex());
+		roleVertex.putUncommittedProperty(TinkarTerm.UNIT_OF_MEASURE.nid(),
+				EntityProxy.Concept.make(conceptToChangeTo));
+		roleVertex.commitProperties();
+	}
+
+	public void updateIntervalRoleValue(LogicalAxiom.Atom.TypedAtom.IntervalRole intervalRoleAxiom, int lowerBound,
+			boolean lowerOpen, int upperBound, boolean upperOpen) {
+		EntityVertex roleVertex = this.builder.vertex(intervalRoleAxiom.vertexIndex());
+		roleVertex.putUncommittedProperty(TinkarTerm.INTERVAL_LOWER_BOUND.nid(), lowerBound);
+		roleVertex.putUncommittedProperty(TinkarTerm.LOWER_BOUND_OPEN.nid(), lowerOpen);
+		roleVertex.putUncommittedProperty(TinkarTerm.INTERVAL_UPPER_BOUND.nid(), upperBound);
+		roleVertex.putUncommittedProperty(TinkarTerm.UPPER_BOUND_OPEN.nid(), upperOpen);
+		roleVertex.commitProperties();
+	}
 
     /**
      * Updates the type of the specified feature axiom to a new type.
