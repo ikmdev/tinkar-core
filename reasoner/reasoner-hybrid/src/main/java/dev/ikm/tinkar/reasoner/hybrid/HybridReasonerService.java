@@ -38,6 +38,11 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 
 	private StatementSnomedOntology sso;
 
+	@Override
+	public String getName() {
+		return "Absence Reasoner";
+	}
+
 	public static long getRootId() {
 		return TinkarTerm.ROOT_VERTEX.nid();
 	}

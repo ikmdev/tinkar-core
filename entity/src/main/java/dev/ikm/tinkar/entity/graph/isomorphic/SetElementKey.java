@@ -67,22 +67,28 @@ public class SetElementKey
      * @return the logical axiom semantic representing the enclosing set type
      * @throws IllegalStateException if the vertex is not contained within a known set type
      */
-    private LogicalAxiomSemantic getEnclosingSetType(int vertexIndex, DiTreeAbstract<EntityVertex> expression) {
-        if (expression.hasPredecessorVertexWithMeaning(vertexIndex, TinkarTerm.NECESSARY_SET.nid())) {
-            return LogicalAxiomSemantic.NECESSARY_SET;
-        }
-        if (expression.hasPredecessorVertexWithMeaning(vertexIndex, TinkarTerm.SUFFICIENT_SET.nid())) {
-            return LogicalAxiomSemantic.SUFFICIENT_SET;
-        }
-        if (expression.hasPredecessorVertexWithMeaning(vertexIndex, TinkarTerm.PROPERTY_SET.nid())) {
-            return LogicalAxiomSemantic.PROPERTY_SET;
-        }
-        if (expression.hasPredecessorVertexWithMeaning(vertexIndex, TinkarTerm.INCLUSION_SET.nid())) {
-            return LogicalAxiomSemantic.INCLUSION_SET;
-        }
-        throw new IllegalStateException("vertex " + vertexIndex +
-                " is not contained within a known set type: " + expression);
-    }
+	private LogicalAxiomSemantic getEnclosingSetType(int vertexIndex, DiTreeAbstract<EntityVertex> expression) {
+		if (expression.hasPredecessorVertexWithMeaning(vertexIndex, TinkarTerm.NECESSARY_SET.nid())) {
+			return LogicalAxiomSemantic.NECESSARY_SET;
+		}
+		if (expression.hasPredecessorVertexWithMeaning(vertexIndex, TinkarTerm.SUFFICIENT_SET.nid())) {
+			return LogicalAxiomSemantic.SUFFICIENT_SET;
+		}
+		if (expression.hasPredecessorVertexWithMeaning(vertexIndex, TinkarTerm.PROPERTY_SET.nid())) {
+			return LogicalAxiomSemantic.PROPERTY_SET;
+		}
+		if (expression.hasPredecessorVertexWithMeaning(vertexIndex, TinkarTerm.DATA_PROPERTY_SET.nid())) {
+			return LogicalAxiomSemantic.DATA_PROPERTY_SET;
+		}
+		if (expression.hasPredecessorVertexWithMeaning(vertexIndex, TinkarTerm.INTERVAL_PROPERTY_SET.nid())) {
+			return LogicalAxiomSemantic.INTERVAL_PROPERTY_SET;
+		}
+		if (expression.hasPredecessorVertexWithMeaning(vertexIndex, TinkarTerm.INCLUSION_SET.nid())) {
+			return LogicalAxiomSemantic.INCLUSION_SET;
+		}
+		throw new IllegalStateException(
+				"vertex " + vertexIndex + " is not contained within a known set type: " + expression);
+	}
 
     @Override
     public int hashCode() {

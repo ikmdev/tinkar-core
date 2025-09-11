@@ -36,6 +36,11 @@ public class IntervalReasonerService extends ElkSnomedReasonerService {
 	private static final Logger LOG = LoggerFactory.getLogger(IntervalReasonerService.class);
 
 	@Override
+	public String getName() {
+		return "Interval Reasoner";
+	}
+
+	@Override
 	public void init(ViewCalculator viewCalculator, PatternFacade statedAxiomPattern,
 			PatternFacade inferredAxiomPattern) {
 		super.init(viewCalculator, statedAxiomPattern, inferredAxiomPattern);

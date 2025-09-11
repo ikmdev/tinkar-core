@@ -56,6 +56,11 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	protected NecessaryNormalFormBuilder nnfb;
 
 	@Override
+	public String getName() {
+		return "Elk Snomed Reasoner";
+	}
+
+	@Override
 	public void init(ViewCalculator viewCalculator, PatternFacade statedAxiomPattern,
 			PatternFacade inferredAxiomPattern) {
 		super.init(viewCalculator, statedAxiomPattern, inferredAxiomPattern);
