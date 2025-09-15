@@ -70,7 +70,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @Disabled("Requires running test methods in order but in separate JVMs, which is not supported by Maven / JUnit configurations. \n" +
-        "To run these tests use IntelliJ with 'Fork Mode' set to 'method'")
+        "To run these tests use IntelliJ with 'Fork Mode' set to 'method' then add a changeset provider to the integration pom and module-info")
 public class CollectionOrderChangeSetRoundTripIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(CollectionOrderChangeSetRoundTripIT.class);

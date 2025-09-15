@@ -30,7 +30,6 @@ open module dev.ikm.tinkar.integration {
     requires org.eclipse.collections.api;
     requires org.eclipse.collections.impl;
     requires dev.ikm.tinkar.provider.search;
-    requires dev.ikm.tinkar.provider.changeset;
 
     uses DataServiceController;
     uses DefaultDescriptionForNidService;
