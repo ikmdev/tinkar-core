@@ -220,8 +220,7 @@ public class TinkarSchemaToEntityTransformer {
     protected SemanticVersionRecord transformSemanticVersion(SemanticVersion pbSemanticVersion, SemanticRecord semantic, Consumer<StampEntity<StampEntityVersion>> stampEntityConsumer){
         MutableList<Object> fieldValues = Lists.mutable.ofInitialCapacity(pbSemanticVersion.getFieldsCount());
         for(Field pbField : pbSemanticVersion.getFieldsList()){
-            Object transformedObject;
-            transformedObject = EntityRecordFactory.externalToInternalObject(transformField(pbField, stampEntityConsumer));
+            Object transformedObject = EntityRecordFactory.externalToInternalObject(transformField(pbField, stampEntityConsumer));
             fieldValues.add(transformedObject);
         }
         return SemanticVersionRecordBuilder.builder()
