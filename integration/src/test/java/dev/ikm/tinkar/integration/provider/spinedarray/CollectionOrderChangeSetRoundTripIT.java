@@ -18,6 +18,7 @@ package dev.ikm.tinkar.integration.provider.spinedarray;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.io.FileUtil;
@@ -156,14 +157,16 @@ public class CollectionOrderChangeSetRoundTripIT {
         EntityVersion synonym = stampCalc.latest(semanticProxy).get();
         assertNotEquals(Long.MAX_VALUE, synonym.stamp().time(), "Expected NewData to be committed after round trip but is still uncommitted.");
         Latest<Field<IntIdList>> transformedLatestField = stampCalc.getFieldForSemanticWithMeaning(semanticProxy, TinkarTerm.MEANING);
-        IntIdList transformedIdList = transformedLatestField.get().value();
+        IntIdList transformedIntIdList = transformedLatestField.get().value();
 
         // Then the PublicIdList will still be in the same order
-//        assertEquals(getOriginalIntIdList(), transformedIdList, "Transformed ID List does not match original");
         IntIdList originalIntIdList = getOriginalIntIdList();
         for (int i=0; i<originalIntIdList.size(); i++) {
-            assertEquals(originalIntIdList.toArray()[i], transformedIdList.toArray()[i],
-                    "Transformed ID Set does not match original:\nOriginal: "+originalIntIdList+"\nTransformed: "+transformedIdList);
+            PublicId originalPublicIdAtIndex = PrimitiveData.publicId(originalIntIdList.toArray()[i]);
+            PublicId transformedPublicIdAtIndex = PrimitiveData.publicId(transformedIntIdList.toArray()[i]);
+            assertEquals(originalPublicIdAtIndex, transformedPublicIdAtIndex,
+                    "Transformed ID List does not match original:"+originalPublicIdAtIndex+" ≠ "+transformedPublicIdAtIndex
+                            + "\nOriginal: "+originalIntIdList+"\nTransformed: "+transformedIntIdList);
         }
     }
 
@@ -237,13 +240,16 @@ public class CollectionOrderChangeSetRoundTripIT {
         EntityVersion synonym = stampCalc.latest(semanticProxy).get();
         assertNotEquals(Long.MAX_VALUE, synonym.stamp().time(), "Expected NewData to be committed after round trip but is still uncommitted.");
         Latest<Field<IntIdSet>> transformedLatestField = stampCalc.getFieldForSemanticWithMeaning(semanticProxy, TinkarTerm.MEANING);
-        IntIdSet transformedIdSet = transformedLatestField.get().value();
+        IntIdSet transformedIntIdSet = transformedLatestField.get().value();
 
         // Then the PublicIdSet will still be in the same order
         IntIdSet originalIntIdSet = getOriginalIntIdSet();
         for (int i=0; i<originalIntIdSet.size(); i++) {
-            assertEquals(originalIntIdSet.toArray()[i], transformedIdSet.toArray()[i],
-                    "Transformed ID Set does not match original:\nOriginal: "+originalIntIdSet+"\nTransformed: "+transformedIdSet);
+            PublicId originalPublicIdAtIndex = PrimitiveData.publicId(originalIntIdSet.toArray()[i]);
+            PublicId transformedPublicIdAtIndex = PrimitiveData.publicId(transformedIntIdSet.toArray()[i]);
+            assertEquals(originalPublicIdAtIndex, transformedPublicIdAtIndex,
+                    "Transformed ID List does not match original:"+originalPublicIdAtIndex+" ≠ "+transformedPublicIdAtIndex
+                    +"\nOriginal: "+originalIntIdSet+"\nTransformed: "+transformedIntIdSet);
         }
     }
 
