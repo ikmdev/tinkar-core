@@ -161,7 +161,6 @@
         <dependency>
             <groupId>dev.ikm.tinkar</groupId>
             <artifactId>changeset-writer-provider</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 
