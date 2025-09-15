@@ -15,14 +15,15 @@
  */
 package dev.ikm.tinkar.entity.transform;
 
+import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.id.PublicIdList;
-import dev.ikm.tinkar.common.id.PublicIdSet;
 import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.component.Component;
-import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.component.location.PlanarPoint;
 import dev.ikm.tinkar.component.location.SpatialPoint;
 import dev.ikm.tinkar.entity.ConceptEntity;
@@ -219,13 +220,7 @@ public class TinkarSchemaToEntityTransformer {
     protected SemanticVersionRecord transformSemanticVersion(SemanticVersion pbSemanticVersion, SemanticRecord semantic, Consumer<StampEntity<StampEntityVersion>> stampEntityConsumer){
         MutableList<Object> fieldValues = Lists.mutable.ofInitialCapacity(pbSemanticVersion.getFieldsCount());
         for(Field pbField : pbSemanticVersion.getFieldsList()){
-            Object transformedObject;
-            if(pbField.hasPublicId()){
-                Concept concept = EntityProxy.Concept.make((PublicId) transformField(pbField, stampEntityConsumer));
-                transformedObject = EntityRecordFactory.externalToInternalObject(concept);
-            } else{
-                transformedObject = EntityRecordFactory.externalToInternalObject(transformField(pbField, stampEntityConsumer));
-            }
+            Object transformedObject = EntityRecordFactory.externalToInternalObject(transformField(pbField, stampEntityConsumer));
             fieldValues.add(transformedObject);
         }
         return SemanticVersionRecordBuilder.builder()
@@ -402,25 +397,26 @@ public class TinkarSchemaToEntityTransformer {
                 .map(UUID::fromString)
                 .toList());
     }
-    protected PublicIdList transformPublicIdList(dev.ikm.tinkar.schema.PublicIdList pbPublicIdList) {
+    protected IntIdList transformPublicIdList(dev.ikm.tinkar.schema.PublicIdList pbPublicIdList) {
         if(pbPublicIdList.getPublicIdsCount() == 0){
-            return PublicIds.list.empty();
+            return IntIds.list.empty();
         }
-        PublicId[] publicIds = new PublicId[pbPublicIdList.getPublicIdsCount()];
+        int[] nids = new int[pbPublicIdList.getPublicIdsCount()];
         for(int i = 0; i < pbPublicIdList.getPublicIdsCount(); i++) {
-            publicIds[i] = transformPublicId(pbPublicIdList.getPublicIds(i));
+            nids[i] = PrimitiveData.nid(transformPublicId(pbPublicIdList.getPublicIds(i)));
         }
-        return PublicIds.list.of(publicIds);
+        return IntIds.list.of(nids);
     }
-    protected PublicIdSet transformPublicIdSet(dev.ikm.tinkar.schema.PublicIdSet pbPublicIdSet) {
+    protected IntIdSet transformPublicIdSet(dev.ikm.tinkar.schema.PublicIdSet pbPublicIdSet) {
         if(pbPublicIdSet.getPublicIdsCount() == 0){
-            return PublicIds.set.empty();
+            return IntIds.set.empty();
         }
-        PublicId[] publicIds = new PublicId[pbPublicIdSet.getPublicIdsCount()];
+        int[] nids = new int[pbPublicIdSet.getPublicIdsCount()];
         for(int i = 0; i < pbPublicIdSet.getPublicIdsCount(); i++) {
-            publicIds[i] = transformPublicId(pbPublicIdSet.getPublicIds(i));
+            nids[i] = PrimitiveData.nid(transformPublicId(pbPublicIdSet.getPublicIds(i)));
+
         }
-        return PublicIds.set.of(publicIds);
+        return IntIds.set.of(nids);
     }
     protected UUID transformVertexUUID(VertexUUID vertexUUID) {
         return UUID.fromString(vertexUUID.getUuid());
