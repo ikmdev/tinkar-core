@@ -14,7 +14,7 @@
     <version>1.125.0-gudid-db-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>IKM tinkar core</name>
+    <name>IKM tinkar core ${project.version}</name>
     <description>
         Tinkar-core is a java software project that aims to provides a reference implementation
         for the open-source HL7 Tinkar informational Ballot.
@@ -69,7 +69,7 @@
     <properties>
         <activej-bytebuf.version>4.3-r10</activej-bytebuf.version>
         <activej-common.version>4.3-r8</activej-common.version>
-        <asm.version>9.1</asm.version>
+        <asm.version>9.8</asm.version>
         <jsonschema2pojo-core.version>1.2.2</jsonschema2pojo-core.version>
         <commons-lang3.version>3.14.0</commons-lang3.version>
         <commons-text.version>1.12.0</commons-text.version>
@@ -77,15 +77,21 @@
         <caffeine.version>3.2.0</caffeine.version>
 
         <jackson.version>2.19.0</jackson.version>
+        <java.version>25</java.version>
+        <maven.compiler.release>25</maven.compiler.release>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
+
         <jgrapht.version>1.5.0</jgrapht.version>
         <mockito.version>5.19.0</mockito.version>
         <mvstore.version>2.3.232-r2</mvstore.version>
         <io.smallrye.reactive.version>1.3.1</io.smallrye.reactive.version>
-        <lucene-core.version>9.12.1</lucene-core.version>
-        <lucene-queryparser.version>9.12.1</lucene-queryparser.version>
-        <lucene-queries.version>9.12.1</lucene-queries.version>
-        <lucene-highlighter.version>9.12.1</lucene-highlighter.version>
-        <lucene-suggest.version>9.12.1</lucene-suggest.version>
+        <lucene-core.version>10.3.0</lucene-core.version>
+        <lucene-queryparser.version>10.3.0</lucene-queryparser.version>
+        <lucene-queries.version>10.3.0</lucene-queries.version>
+        <lucene-highlighter.version>10.3.0</lucene-highlighter.version>
+        <lucene-suggest.version>10.3.0</lucene-suggest.version>
+        <maven-assembly-plugin.version>3.7.1</maven-assembly-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <testng.version>7.4.0</testng.version>
         <snomedct-data.version>2023.09.01</snomedct-data.version>
@@ -474,7 +480,28 @@
 				<artifactId>elk-snomed-test</artifactId>
 				<version>${ikm-reasoner.version}</version>
 			</dependency>
-		</dependencies>
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm</artifactId>
+                <version>${asm.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm-commons</artifactId>
+                <version>${asm.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm-tree</artifactId>
+                <version>${asm.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm-util</artifactId>
+                <version>${asm.version}</version>
+            </dependency>
+
+        </dependencies>
     </dependencyManagement>
     <!-- Cross project dependencies -->
     <dependencies>
@@ -525,6 +552,36 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
                     <version>${maven.assembly.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.14.0</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.ow2.asm</groupId>
+                            <artifactId>asm</artifactId>
+                            <version>${asm.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.ow2.asm</groupId>
+                            <artifactId>asm-commons</artifactId>
+                            <version>${asm.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.ow2.asm</groupId>
+                            <artifactId>asm-tree</artifactId>
+                            <version>${asm.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.ow2.asm</groupId>
+                            <artifactId>asm-util</artifactId>
+                            <version>${asm.version}</version>
+                        </dependency>
+                    </dependencies>
+                    <configuration>
+                        <release>25</release>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

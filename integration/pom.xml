@@ -16,7 +16,7 @@
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <skip.unit.tests>false</skip.unit.tests>
         <skip.integration.tests>false</skip.integration.tests>
-        <tinkar-composer.version>1.9.0</tinkar-composer.version>
+        <tinkar-composer.version>1.10.0-eclipse-13.0.0-SNAPSHOT</tinkar-composer.version>
     </properties>
 
     <dependencyManagement>
@@ -111,6 +111,10 @@
             <groupId>org.eclipse.collections</groupId>
             <artifactId>eclipse-collections-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.eclipse.collections</groupId>
+            <artifactId>eclipse-collections</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -180,48 +184,57 @@
                         <artifactId>maven-dependency-plugin</artifactId>
                         <executions>
                             <execution>
+                                <id>analyze</id>
+                                <goals>
+                                    <goal>analyze-only</goal>
+                                </goals>
+                                <configuration combine.self="override">
+                                    <!-- your desired config; no ignoredUsedUndeclaredDependencies -->
+                                    <ignoreUnusedRuntime>true</ignoreUnusedRuntime>
+                                </configuration>
+                            </execution>
+                            <execution>
                                 <id>copy</id>
                                 <phase>process-test-resources</phase>
                                 <goals>
                                     <goal>copy</goal>
                                 </goals>
+                                <configuration>
+                                    <artifactItems>
+                                        <artifactItem>
+                                            <groupId>dev.ikm.data.tinkar</groupId>
+                                            <artifactId>tinkar-starter-data</artifactId>
+                                            <version>${tinkar-starter-data.version}</version>
+                                            <classifier>reasoned-pb</classifier>
+                                            <type>zip</type>
+                                            <overWrite>false</overWrite>
+                                            <outputDirectory>${project.build.directory}/data</outputDirectory>
+                                        </artifactItem>
+                                        <artifactItem>
+                                            <groupId>dev.ikm.data.tinkar</groupId>
+                                            <artifactId>tinkar-starter-data</artifactId>
+                                            <version>${tinkar-starter-data.version}</version>
+                                            <classifier>unreasoned-pb</classifier>
+                                            <type>zip</type>
+                                            <overWrite>false</overWrite>
+                                            <outputDirectory>${project.build.directory}/data</outputDirectory>
+                                        </artifactItem>
+                                        <artifactItem>
+                                            <groupId>dev.ikm.data.tinkar</groupId>
+                                            <artifactId>tinkar-example-data</artifactId>
+                                            <version>${tinkar-example-data.version}</version>
+                                            <classifier>reasoned-pb</classifier>
+                                            <type>zip</type>
+                                            <overWrite>false</overWrite>
+                                            <outputDirectory>${project.build.directory}/data</outputDirectory>
+                                        </artifactItem>
+                                    </artifactItems>
+                                    <outputDirectory>${project.build.directory}/data</outputDirectory>
+                                    <overWriteReleases>false</overWriteReleases>
+                                    <overWriteSnapshots>true</overWriteSnapshots>
+                                </configuration>
                             </execution>
                         </executions>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>dev.ikm.data.tinkar</groupId>
-                                    <artifactId>tinkar-starter-data</artifactId>
-                                    <version>${tinkar-starter-data.version}</version>
-                                    <classifier>reasoned-pb</classifier>
-                                    <type>zip</type>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${project.build.directory}/data</outputDirectory>
-                                </artifactItem>
-                                
-                                <artifactItem>
-                                    <groupId>dev.ikm.data.tinkar</groupId>
-                                    <artifactId>tinkar-starter-data</artifactId>
-                                    <version>${tinkar-starter-data.version}</version>
-                                    <classifier>unreasoned-pb</classifier>
-                                    <type>zip</type>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${project.build.directory}/data</outputDirectory>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>dev.ikm.data.tinkar</groupId>
-                                    <artifactId>tinkar-example-data</artifactId>
-                                    <version>${tinkar-example-data.version}</version>
-                                    <classifier>reasoned-pb</classifier>
-                                    <type>zip</type>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${project.build.directory}/data</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                            <outputDirectory>${project.build.directory}/data</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>true</overWriteSnapshots>
-                        </configuration>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>

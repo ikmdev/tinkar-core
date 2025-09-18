@@ -28,6 +28,9 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
 
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
+import static dev.ikm.tinkar.terms.TinkarTermV2.STAMP_PATTERN;
+
 @RecordBuilder
 public record StampRecord(
         long mostSignificantBits, long leastSignificantBits,
@@ -60,14 +63,19 @@ public record StampRecord(
 
     public static StampRecord make(UUID stampUuid, State state, long time, PublicId authorId, PublicId moduleId, PublicId pathId) {
         RecordListBuilder<StampVersionRecord> versionRecords = RecordListBuilder.make();
-        StampRecord stampEntity = new StampRecord(stampUuid.getMostSignificantBits(),
-                stampUuid.getLeastSignificantBits(), null, PrimitiveData.nid(stampUuid),
-                versionRecords);
 
-        StampVersionRecord stampVersion = new StampVersionRecord(stampEntity, state.nid(), time, PrimitiveData.nid(authorId),
-                PrimitiveData.nid(moduleId), PrimitiveData.nid(pathId));
-        versionRecords.add(stampVersion);
-        versionRecords.build();
+        int stampNid = ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, STAMP_PATTERN)
+                .call(() -> PrimitiveData.nid(stampUuid));
+
+    StampRecord stampEntity = new StampRecord(stampUuid.getMostSignificantBits(),
+            stampUuid.getLeastSignificantBits(), null, stampNid,
+            versionRecords);
+
+    StampVersionRecord stampVersion = new StampVersionRecord(stampEntity, state.nid(), time, PrimitiveData.nid(authorId),
+            PrimitiveData.nid(moduleId), PrimitiveData.nid(pathId));
+            versionRecords.add(stampVersion);
+            versionRecords.build();
         return stampEntity;
     }
 

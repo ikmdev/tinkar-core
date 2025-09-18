@@ -281,13 +281,12 @@ public class Transaction implements Comparable<Transaction>, Encodable {
         checkState(state, time, authorId == null, moduleId == null, pathId == null);
         UUID stampUuid = UuidT5Generator.forTransaction(transactionUuid, state.publicId(), time, authorId, moduleId, pathId);
         stampsInTransaction.add(stampUuid);
-        Optional<StampEntity> optionalStamp = Entity.get(PrimitiveData.nid(stampUuid));
-        if (optionalStamp.isEmpty()) {
-            StampEntity stamp = StampRecord.make(stampUuid, state, time, authorId, moduleId, pathId);
-            Entity.provider().putEntity(stamp);
-            return stamp;
+        if (PrimitiveData.get().hasUuid(stampUuid)) {
+            return Entity.getStamp(PrimitiveData.nid(stampUuid));
         }
-        return optionalStamp.get();
+        StampEntity stamp = StampRecord.make(stampUuid, state, time, authorId, moduleId, pathId);
+        Entity.provider().putEntity(stamp);
+        return stamp;
     }
 
     /**
