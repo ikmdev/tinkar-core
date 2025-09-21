@@ -344,6 +344,7 @@ public class EntityRecordFactory {
         }
     }
 
+    // TODO: I think Chronology is from DTOs, and we can remove or update this method to entities when removing other vestigals.
     public static <T extends Entity<V>, V extends EntityVersion> T make(Chronology<Version> chronology) {
         int nid = Entity.nid(chronology.publicId());
         ImmutableList<UUID> componentUuids = chronology.publicId().asUuidList();
@@ -354,19 +355,27 @@ public class EntityRecordFactory {
         long[] additionalUuidLongs = processAdditionalUuids(componentUuids);
         RecordListBuilder<? extends EntityVersion> versions = RecordListBuilder.make();
         Entity<? extends EntityVersion> entity = switch (chronology) {
-            case ConceptChronology conceptChronology -> new ConceptRecord(mostSignificantBits, leastSignificantBits,
+            case ConceptChronology _ -> new ConceptRecord(mostSignificantBits, leastSignificantBits,
                     additionalUuidLongs, nid, (ImmutableList<ConceptVersionRecord>) versions);
 
-            case PatternChronology patternChronology -> new PatternRecord(mostSignificantBits, leastSignificantBits,
+            case PatternChronology _ -> new PatternRecord(mostSignificantBits, leastSignificantBits,
                     additionalUuidLongs, nid, (ImmutableList<PatternVersionRecord>) versions);
 
-            case SemanticChronology semanticChronology -> new SemanticRecord(mostSignificantBits, leastSignificantBits,
-                    additionalUuidLongs, nid,
-                    PrimitiveData.nid(semanticChronology.pattern().publicId()),
-                    PrimitiveData.nid(semanticChronology.referencedComponent().publicId()),
-                    (ImmutableList<SemanticVersionRecord>) versions);
+            case SemanticChronology semanticChronology -> {
+                // TODO: Simplify/remove after compound key/public id change.
+                if (!PrimitiveData.get().hasUuid(semanticChronology.pattern().publicId().asUuidArray()[0]) ||
+                        !PrimitiveData.get().hasUuid(semanticChronology.referencedComponent().publicId().asUuidArray()[0])) {
+                    throw new IllegalStateException("Ids should already be in the database: " + semanticChronology.pattern().publicId() + ", " + semanticChronology.referencedComponent().publicId() + ".");
+                }
 
-            case Stamp stamp -> new StampRecord(mostSignificantBits, leastSignificantBits,
+                int patternNid = PrimitiveData.nid(semanticChronology.pattern().publicId());
+                int referencedComponentNid = PrimitiveData.nid(semanticChronology.referencedComponent().publicId());
+                yield new SemanticRecord(mostSignificantBits, leastSignificantBits,
+                    additionalUuidLongs, nid, patternNid, referencedComponentNid,
+                    (ImmutableList<SemanticVersionRecord>) versions);
+            }
+
+            case Stamp _ -> new StampRecord(mostSignificantBits, leastSignificantBits,
                     additionalUuidLongs, nid, (ImmutableList<StampVersionRecord>) versions);
 
             default -> throw new IllegalStateException("Unexpected value: " + chronology);

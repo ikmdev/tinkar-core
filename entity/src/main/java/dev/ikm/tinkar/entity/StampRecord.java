@@ -68,11 +68,11 @@ public record StampRecord(
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, STAMP_PATTERN)
                 .call(() -> PrimitiveData.nid(stampUuid));
 
-    StampRecord stampEntity = new StampRecord(stampUuid.getMostSignificantBits(),
+        StampRecord stampEntity = new StampRecord(stampUuid.getMostSignificantBits(),
             stampUuid.getLeastSignificantBits(), null, stampNid,
             versionRecords);
 
-    StampVersionRecord stampVersion = new StampVersionRecord(stampEntity, state.nid(), time, PrimitiveData.nid(authorId),
+        StampVersionRecord stampVersion = new StampVersionRecord(stampEntity, state.nid(), time, PrimitiveData.nid(authorId),
             PrimitiveData.nid(moduleId), PrimitiveData.nid(pathId));
             versionRecords.add(stampVersion);
             versionRecords.build();
