@@ -5,7 +5,7 @@
     <parent>
         <groupId>dev.ikm.tinkar</groupId>
         <artifactId>tinkar-core</artifactId>
-        <version>1.125.0-SNAPSHOT</version>
+        <version>1.126.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>integration</artifactId>
@@ -16,7 +16,7 @@
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <skip.unit.tests>false</skip.unit.tests>
         <skip.integration.tests>false</skip.integration.tests>
-        <tinkar-composer.version>1.9.0</tinkar-composer.version>
+        <tinkar-composer.version>1.12.0</tinkar-composer.version>
     </properties>
 
     <dependencyManagement>
