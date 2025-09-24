@@ -387,6 +387,9 @@ public class StampCalculatorWithCache implements StampCalculator {
 
                 Latest<? extends EntityVersion> latestSemanticVersion =
                         latestCache.get(nid, integer -> {
+                            if (bytes == null) {
+                                return Latest.empty();
+                            }
                             Entity<EntityVersion> semanticRecord = EntityFactory.make(bytes);
                             return latest(semanticRecord);
                         });
