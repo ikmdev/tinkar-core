@@ -27,20 +27,10 @@ public class IntervalUtil {
 				+ " " + vc.getPreferredDescriptionTextWithFallbackOrNid((int) interval.getUnitOfMeasure().getId());
 	}
 
-	private static int toInt(Object object) {
-		return switch (object) {
-		case Integer x -> x;
-		case Long x -> x.intValue();
-		default -> throw new IllegalArgumentException(object + " " + object.getClass());
-		};
-	}
-
 	public static Interval makeInterval(EntityVertex node) {
-		Object lb = node.propertyFast(TinkarTerm.INTERVAL_LOWER_BOUND);
-		int lowerBound = toInt(lb);
+		int lowerBound = node.propertyFast(TinkarTerm.INTERVAL_LOWER_BOUND);
 		boolean lowerOpen = node.propertyFast(TinkarTerm.LOWER_BOUND_OPEN);
-		Object ub = node.propertyFast(TinkarTerm.INTERVAL_UPPER_BOUND);
-		int upperBound = toInt(ub);
+		int upperBound = node.propertyFast(TinkarTerm.INTERVAL_UPPER_BOUND);
 		boolean upperOpen = node.propertyFast(TinkarTerm.UPPER_BOUND_OPEN);
 		int unit_nid = getNid(node, TinkarTerm.UNIT_OF_MEASURE);
 		return new Interval(lowerBound, lowerOpen, upperBound, upperOpen, new Concept(unit_nid));

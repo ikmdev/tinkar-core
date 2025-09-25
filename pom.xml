@@ -5,16 +5,16 @@
     <parent>
         <groupId>dev.ikm.build</groupId>
         <artifactId>java-parent</artifactId>
-        <version>1.64.0</version>
+        <version>1.65.0</version>
         <relativePath/>
     </parent>
 
     <groupId>dev.ikm.tinkar</groupId>
     <artifactId>tinkar-core</artifactId>
-    <version>1.125.0-gudid-db-SNAPSHOT</version>
+    <version>1.126.0-gudid-db-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>IKM tinkar core ${project.version}</name>
+    <name>IKM tinkar core</name>
     <description>
         Tinkar-core is a java software project that aims to provides a reference implementation
         for the open-source HL7 Tinkar informational Ballot.
