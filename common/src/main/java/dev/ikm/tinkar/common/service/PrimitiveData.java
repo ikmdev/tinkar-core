@@ -245,6 +245,18 @@ public class PrimitiveData {
 
     public static final ScopedValue<PublicId> SCOPED_PATTERN_PUBLICID_FOR_NID = ScopedValue.newInstance();
 
+    /**
+     * Example call when resolving via RocksDB:
+     *
+     * <pre>{@code
+     * int nid = ScopedValue
+     *         .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternFacade.publicId())
+     *         .call(() -> PrimitiveData.nid(semanticUUID));
+     * }</pre>
+     *
+     * @param uuids one or more UUIDs that identify the component
+     * @return the nid corresponding to the provided UUIDs
+     */
     public static int nid(UUID... uuids) {
         return get().nidForUuids(uuids);
     }

@@ -43,12 +43,7 @@ import dev.ikm.tinkar.component.location.PlanarPoint;
 import dev.ikm.tinkar.component.location.SpatialPoint;
 import dev.ikm.tinkar.entity.graph.DiGraphEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
-import dev.ikm.tinkar.terms.ComponentWithNid;
-import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.EntityFacade;
-import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.SemanticFacade;
+import dev.ikm.tinkar.terms.*;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.factory.Lists;
@@ -66,6 +61,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 import static dev.ikm.tinkar.component.FieldDataType.COMPONENT_ID_LIST;
 import static dev.ikm.tinkar.component.FieldDataType.SEMANTIC_CHRONOLOGY;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -367,7 +363,6 @@ public class EntityRecordFactory {
                         !PrimitiveData.get().hasUuid(semanticChronology.referencedComponent().publicId().asUuidArray()[0])) {
                     throw new IllegalStateException("Ids should already be in the database: " + semanticChronology.pattern().publicId() + ", " + semanticChronology.referencedComponent().publicId() + ".");
                 }
-
                 int patternNid = PrimitiveData.nid(semanticChronology.pattern().publicId());
                 int referencedComponentNid = PrimitiveData.nid(semanticChronology.referencedComponent().publicId());
                 yield new SemanticRecord(mostSignificantBits, leastSignificantBits,

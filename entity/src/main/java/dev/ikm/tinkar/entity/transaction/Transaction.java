@@ -34,6 +34,7 @@ import dev.ikm.tinkar.entity.StampEntityVersion;
 import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.entity.StampVersionRecord;
 import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.State;
 import io.activej.bytebuf.ByteBuf;
@@ -50,6 +51,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 
 /**
  * Represents a transaction managing various components and stamps.
@@ -431,7 +434,10 @@ public class Transaction implements Comparable<Transaction>, Encodable {
      * @param commitTime  The timestamp to be associated with the stamp upon commitment.
      */
     private void commitStamp(UUID stampUuid, long commitTime) {
-        StampRecord stampEntity = Entity.getStamp(PrimitiveData.nid(stampUuid));
+        int stampNid = ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern().publicId())
+                .call(() -> PrimitiveData.nid(stampUuid));
+        StampRecord stampEntity = Entity.getStamp(stampNid);
         StampEntityVersion stampVersion = stampEntity.lastVersion();
         if (stampVersion.time() == Long.MAX_VALUE) {
             StampAnalogueBuilder newStampBuilder = stampEntity.analogueBuilder();
@@ -472,12 +478,15 @@ public class Transaction implements Comparable<Transaction>, Encodable {
     public int cancel() {
         AtomicInteger stampCount = new AtomicInteger();
         forEachStampInTransaction(stampUuid -> {
-            StampRecord stampRecord = Entity.getStamp(PrimitiveData.nid(stampUuid));
-            StampEntityVersion stampVersion = stampRecord.lastVersion();
+            int stampNid = ScopedValue
+                    .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern().publicId())
+                    .call(() -> PrimitiveData.nid(stampUuid));
+            StampRecord stampEntity = Entity.getStamp(stampNid);
+            StampEntityVersion stampVersion = stampEntity.lastVersion();
             if (stampVersion.time() == Long.MIN_VALUE) {
                 // already canceled.
             } else {
-                StampAnalogueBuilder newStampBuilder = stampRecord.analogueBuilder();
+                StampAnalogueBuilder newStampBuilder = stampEntity.analogueBuilder();
                 newStampBuilder.add(new StampVersionRecord(newStampBuilder.analogue(),
                         State.CANCELED.nid(),
                         Long.MIN_VALUE, stampVersion.authorNid(), stampVersion.moduleNid(), stampVersion.pathNid()));

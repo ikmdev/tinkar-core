@@ -70,10 +70,14 @@ public record SemanticRecord(
                                        StampEntityVersion stampVersion,
                                        ImmutableList<Object> fields) {
         RecordListBuilder<SemanticVersionRecord> versionRecords = RecordListBuilder.make();
+        int semanticNid = ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, Entity.getFast(patternNid))
+                .call(() -> PrimitiveData.nid(semanticUuid));
+
         SemanticRecord semanticRecord = SemanticRecordBuilder.builder()
                 .leastSignificantBits(semanticUuid.getLeastSignificantBits())
                 .mostSignificantBits(semanticUuid.getMostSignificantBits())
-                .nid(PrimitiveData.nid(semanticUuid))
+                .nid(semanticNid)
                 .patternNid(patternNid)
                 .referencedComponentNid(referencedComponentNid)
                 .versions(versionRecords).build();
