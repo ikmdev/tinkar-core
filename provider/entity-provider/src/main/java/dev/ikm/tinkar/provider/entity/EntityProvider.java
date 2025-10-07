@@ -84,7 +84,9 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         // But we don't want to prevent starting the entity service if this.putEntity
         // blocks for debugging or other reasons, so putting it in a virtual thread to
         // allow completion of the constructor.
-        Thread.ofVirtual().start(() -> this.putEntity(StampRecord.nonExistentStamp(), DataActivity.INITIALIZE));
+        Thread.ofVirtual().start(() -> {
+            this.putEntity(StampRecord.nonExistentStamp(), DataActivity.INITIALIZE);
+        });
     }
 
     public void addSubscriberWithWeakReference(Subscriber<Integer> subscriber) {

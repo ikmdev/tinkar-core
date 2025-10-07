@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
+<project xmlns="http://maven.apache.org/POM/4.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  xsi:schemaLocation="http://maven.apache.org/POM/4.1.0 https://maven.apache.org/xsd/maven-4.1.0.xsd">
+    <modelVersion>4.1.0</modelVersion>
     <parent>
         <groupId>dev.ikm.tinkar</groupId>
         <artifactId>tinkar-core</artifactId>
-        <version>1.126.0-gudid-db-SNAPSHOT</version>
     </parent>
 
     <artifactId>common</artifactId>
@@ -13,10 +11,9 @@
 
     <name>TINKAR Common</name>
 
-<!--    <properties>-->
+    <!--    <properties>-->
 <!--        <plugin-boot-layer-module.version>1.0-SNAPSHOT</plugin-boot-layer-module.version>-->
 <!--    </properties>-->
-
     <dependencies>
         <dependency>
             <groupId>com.github.RoaringBitmap.RoaringBitmap</groupId>
@@ -25,12 +22,6 @@
         <dependency>
             <groupId>${tinkar-jpms-deps.groupId}</groupId>
             <artifactId>activej-bytebuf</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>dev.ikm.jpms</groupId>
-                    <artifactId>auto-service</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>${tinkar-jpms-deps.groupId}</groupId>
@@ -48,6 +39,7 @@
         </dependency>
         
     </dependencies>
+
     <build>
         <plugins>
             <plugin>
