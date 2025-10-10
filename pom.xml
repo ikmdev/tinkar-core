@@ -372,6 +372,12 @@
                 <groupId>org.jgrapht</groupId>
                 <artifactId>jgrapht-core</artifactId>
                 <version>${jgrapht.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apfloat</groupId>
+                        <artifactId>apfloat</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>
