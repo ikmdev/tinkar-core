@@ -152,9 +152,7 @@
 					<useModulePath>false</useModulePath>
 					<forkCount>1</forkCount>
 					<reuseForks>false</reuseForks>
-					<argLine>@{surefireArgLine}</argLine> <!-- Sets the VM argument line used when unit tests are run.
-					 Since version 2.17 use @{} syntax for these properties,
-					 https://maven.apache.org/surefire/maven-surefire-plugin/faq.html#late-property-evaluation -->
+					<argLine>${surefire.args}</argLine>
 				</configuration>
 			</plugin>
 			<plugin>
