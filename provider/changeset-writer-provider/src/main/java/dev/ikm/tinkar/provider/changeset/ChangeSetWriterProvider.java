@@ -41,6 +41,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.zip.ZipEntry;
@@ -55,6 +56,7 @@ import java.util.zip.ZipOutputStream;
  */
 public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveState {
     private static final Logger LOG = LoggerFactory.getLogger(ChangeSetWriterProvider.class);
+    private static final long INACTIVITY_THRESHOLD_MILLIS = TimeUnit.MINUTES.toMillis(5);
 
     /**
      * Represents the various states of the ChangeSetWriterProvider during its lifecycle.
@@ -132,7 +134,10 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
     public void writeToChangeSet(Entity entity, DataActivity activity) {
         try {
             switch (activity) {
-                case SYNCHRONIZABLE_EDIT -> this.entitiesToWrite.put(entity);
+                case SYNCHRONIZABLE_EDIT -> {
+                    this.entitiesToWrite.put(entity);
+                    LOG.trace("ChangeSetWriterProvider queued entity for changeset write: {}", entity);
+                }
                 case LOADING_CHANGE_SET, INITIALIZE, LOCAL_EDIT, DATA_REPAIR -> {
                 }
             }
@@ -200,6 +205,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      */
     private void startService() {
         Thread.ofVirtual().name("ChangeSetWriterProvider-ServiceThread").start(() -> {
+            LOG.trace("Starting ChangeSetWriterProvider on service thread: {}", Thread.currentThread());
             Semaphore changeSetWriter = new Semaphore(1);
             try {
                 changeSetWriter.acquireUninterruptibly();
@@ -219,6 +225,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                         EntityToTinkarSchemaTransformer.getInstance();
 
                 final File zipfile = newZipFile();
+                LOG.trace("ChangeSetWriterProvider starting new zip file: {}", zipfile.getAbsolutePath());
                 try (FileOutputStream fos = new FileOutputStream(zipfile);
                      BufferedOutputStream bos = new BufferedOutputStream(fos);
                      ZipOutputStream zos = new ZipOutputStream(bos)) {
@@ -226,14 +233,17 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                     final ZipEntry zipEntry = new ZipEntry("Entities");
                     zos.putNextEntry(zipEntry);
                     try {
+                        AtomicLong lastWriteTimeMillis = new AtomicLong(System.currentTimeMillis());
                         while (threadStateMap.get(Thread.currentThread()) == STATE.RUNNING) {
                             final Entity<EntityVersion> entityToWrite = this.entitiesToWrite.poll(250, TimeUnit.MILLISECONDS);
                             if (entityToWrite != null) {
+                                lastWriteTimeMillis.set(System.currentTimeMillis());
                                 if (entityToWrite.uncommitted()) {
                                     // We will write uncommitted versions at the end of the thread to prevent bloat from uncommitted changes,
                                     // unless they are committed before the thread stops.
                                     ImmutableIntList uncommittedStampNids = entityToWrite.uncommittedStampNids();
                                     uncommittedStampNids.forEach(stampNid -> {
+                                        LOG.trace("ChangeSetWriterProvider caching uncommitted entity for stampNid {}:\n{}", stampNid, entityToWrite);
                                         uncommittedEntitiesByStamp.remove(stampNid, entityToWrite);
                                         uncommittedEntitiesByStamp.put(stampNid, entityToWrite);
                                     });
@@ -247,6 +257,11 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                     }
                                 }
                             }
+                            if (System.currentTimeMillis() - lastWriteTimeMillis.get() > INACTIVITY_THRESHOLD_MILLIS) {
+                                LOG.info("Rotating ChangeSetWriterProvider, no activity for {} minutes.",
+                                        TimeUnit.MILLISECONDS.toMinutes(INACTIVITY_THRESHOLD_MILLIS));
+                                TinkExecutor.threadPool().submit(this::save);
+                            }
                         }
                     } catch (InterruptedException e) {
                     }
@@ -256,8 +271,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                     stampsCount, moduleList, authorList, entityTransformer, zos));
                     zos.closeEntry();
                     if (entityCount.sum() > 0) {
-                        LOG.info("Data zipEntry size: " + zipEntry.getSize());
-                        LOG.info("Data zipEntry compressed size: " + zipEntry.getCompressedSize());
+                        LOG.debug("Data zipEntry size: " + zipEntry.getSize());
+                        LOG.debug("Data zipEntry compressed size: " + zipEntry.getCompressedSize());
 
                         // Write Manifest File
                         final ZipEntry manifestEntry = new ZipEntry("META-INF/MANIFEST.MF");
@@ -270,9 +285,9 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                 moduleList,
                                 authorList).getBytes(StandardCharsets.UTF_8));
                         zos.closeEntry();
-                        zos.flush();
                     }
                     // Cleanup
+                    zos.flush();
                     zos.finish();
 
                 } catch (IOException e) {
@@ -280,7 +295,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                     throw new RuntimeException(e);
                 } finally {
                     if (zipfile.exists()) {
-                        if (zipfile.length() == 0 || entityCount.sum() == 0) {
+                        if (entityCount.sum() == 0) {
                             zipfile.delete();
                         }
                     }
@@ -338,7 +353,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
         try {
             TinkarMsg tinkarMsg = entityTransformer.transform(entityToWrite);
             tinkarMsg.writeDelimitedTo(zos);
-            LOG.info("Wrote: {}", entityToWrite);
+            LOG.debug("ChangeSetWriterProvider wrote Entity:\n{}", entityToWrite);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -386,6 +401,9 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      */
     @Override
     public CompletableFuture<Void> save() {
+        if (serviceThread.get() != null) {
+            LOG.trace("Rotating ChangeSetWriterProvider on service thread: {}", serviceThread.get());
+        }
         return checkpoint(true);
     }
 
@@ -434,6 +452,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                 }
             }
             if (interruptedThread != null) {
+                LOG.trace("Stopping ChangeSetWriterProvider on service thread: {}", interruptedThread);
                 threadStateMap.put(interruptedThread, (restart?STATE.ROTATING:STATE.STOPPED));
             }
             if (restart) {
@@ -445,6 +464,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                 Semaphore changeSetWriter = threadSemaphoreMap.remove(interruptedThread);
                 if (changeSetWriter != null) {
                     changeSetWriter.acquireUninterruptibly();
+                    LOG.trace("Stopped ChangeSetWriterProvider on service thread: {}", interruptedThread);
                 }
             }
             return null;
