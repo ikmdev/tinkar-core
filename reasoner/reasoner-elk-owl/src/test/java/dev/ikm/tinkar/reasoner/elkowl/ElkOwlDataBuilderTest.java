@@ -47,7 +47,7 @@ public abstract class ElkOwlDataBuilderTest extends ElkOwlTestBase {
 		AtomicInteger active_cnt = new AtomicInteger();
 		AtomicInteger inactive_cnt = new AtomicInteger();
 		viewCalculator.forEachSemanticVersionOfPatternParallel(TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
-				(semanticEntityVersion, patternEntityVersion) -> {
+				(semanticEntityVersion, _) -> {
 					int conceptNid = semanticEntityVersion.referencedComponentNid();
 					if (viewCalculator.latestIsActive(conceptNid)) {
 						active_cnt.incrementAndGet();

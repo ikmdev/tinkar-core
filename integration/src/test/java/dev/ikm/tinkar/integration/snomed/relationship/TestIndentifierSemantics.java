@@ -25,7 +25,6 @@ import java.util.List;
 import static dev.ikm.tinkar.integration.snomed.core.MockEntity.getNid;
 import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.RELATIONSHIP_PATTERN;
 import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.RELATIONSHIP_PATTERN_UUID;
-
 import static dev.ikm.tinkar.integration.snomed.core.SnomedCTHelper.openSession;
 import static dev.ikm.tinkar.integration.snomed.core.SnomedCTIdentifierSemantic.createIdentifierSemantics;
 import static org.junit.jupiter.api.Assertions.assertEquals;

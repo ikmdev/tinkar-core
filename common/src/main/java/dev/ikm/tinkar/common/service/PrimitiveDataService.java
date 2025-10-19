@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.common.service;
 
-import com.google.auto.service.AutoService;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
@@ -42,6 +41,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.ObjIntConsumer;
 
@@ -418,7 +418,7 @@ public interface PrimitiveDataService {
 
     PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception;
 
-    void recreateLuceneIndex() throws Exception;
+    CompletableFuture<Void> recreateLuceneIndex() throws Exception;
 
     /**
      * @param patternNid
@@ -490,8 +490,6 @@ public interface PrimitiveDataService {
         }
     }
 
-
-    @AutoService(CachingService.class)
     class CacheProvider implements CachingService {
 
         @Override

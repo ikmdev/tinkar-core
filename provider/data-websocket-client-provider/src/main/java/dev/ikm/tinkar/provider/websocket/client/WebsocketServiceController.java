@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.provider.websocket.client;
 
-import com.google.auto.service.AutoService;
 import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.common.service.DataServiceProperty;
 import dev.ikm.tinkar.common.service.DataUriOption;
@@ -31,7 +30,6 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Locale;
 
-@AutoService(DataServiceController.class)
 public class WebsocketServiceController implements DataServiceController<PrimitiveDataService> {
     public static final String CONTROLLER_NAME = "Websocket";
     private static final DataServiceProperty passwordProperty = new DataServiceProperty("password", true, true);

@@ -16,7 +16,13 @@
 package dev.ikm.tinkar.integration.snomed.relationship;
 
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.RecordListBuilder;
+import dev.ikm.tinkar.entity.SemanticRecord;
+import dev.ikm.tinkar.entity.SemanticRecordBuilder;
+import dev.ikm.tinkar.entity.SemanticVersionRecord;
+import dev.ikm.tinkar.entity.SemanticVersionRecordBuilder;
+import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.integration.snomed.core.SnomedCTData;
 import org.eclipse.collections.api.list.MutableList;
 
@@ -28,8 +34,10 @@ import java.util.UUID;
 import static dev.ikm.tinkar.integration.snomed.core.MockEntity.getEntity;
 import static dev.ikm.tinkar.integration.snomed.core.MockEntity.putEntity;
 import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.SNOMED_CT_NAMESPACE_UUID;
-import static dev.ikm.tinkar.integration.snomed.core.SnomedCTHelper.*;
+import static dev.ikm.tinkar.integration.snomed.core.SnomedCTHelper.getPatternTypeUUID;
 import static dev.ikm.tinkar.integration.snomed.core.SnomedCTHelper.getReferenceComponentUUID;
+import static dev.ikm.tinkar.integration.snomed.core.SnomedCTHelper.getSemanticUUID;
+import static dev.ikm.tinkar.integration.snomed.core.SnomedCTHelper.loadSnomedFile;
 import static dev.ikm.tinkar.integration.snomed.core.SnomedCTStampChronology.createSTAMPChronology;
 
 public class SnomedCTRelationshipSemantic {

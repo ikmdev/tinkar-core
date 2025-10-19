@@ -2,7 +2,12 @@ package dev.ikm.tinkar.common.bind.annotations.axioms;
 
 import dev.ikm.tinkar.common.bind.ClassConceptBinding;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * An annotation used to specify the parent concept for a class implementing the {@code ConceptClass} interface.

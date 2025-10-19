@@ -23,8 +23,10 @@ import org.junit.jupiter.api.TestInstance;
 import java.util.List;
 
 import static dev.ikm.tinkar.integration.snomed.core.MockEntity.getNid;
-import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.*;
+import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.DEVELOPMENT_PATH_UUID;
 import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.INACTIVE_UUID;
+import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.SNOMED_CT_AUTHOR_UUID;
+import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.SNOMED_TEXT_MODULE_ID_UUID;
 import static dev.ikm.tinkar.integration.snomed.core.SnomedCTHelper.openSession;
 import static dev.ikm.tinkar.integration.snomed.core.SnomedCTStampChronology.createSTAMPChronologyForAllRecords;
 import static org.junit.jupiter.api.Assertions.assertEquals;

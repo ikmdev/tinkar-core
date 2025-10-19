@@ -15,8 +15,6 @@
  */
 package dev.ikm.tinkar.collection;
 
-import java.util.*;
-
 import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.api.map.MapIterable;
@@ -37,6 +35,12 @@ import org.eclipse.collections.impl.tuple.Tuples;
 import org.eclipse.collections.impl.utility.Iterate;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.eclipse.collections.impl.factory.Iterables.iMap;
 import static org.eclipse.collections.impl.factory.Iterables.mList;

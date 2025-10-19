@@ -32,14 +32,17 @@ import dev.ikm.elk.snomed.model.DefinitionType;
 import dev.ikm.elk.snomed.model.Role;
 import dev.ikm.elk.snomed.model.RoleGroup;
 import dev.ikm.elk.snomed.model.RoleType;
+import dev.ikm.elk.snomed.model.SnomedEntity;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
+import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiomSemantic;
+import dev.ikm.tinkar.reasoner.service.UnsupportedReasonerProcessIncremental;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -76,7 +79,7 @@ public class ElkSnomedDataBuilder {
 
 	private int computeTotalCount() {
 		AtomicInteger totalCounter = new AtomicInteger();
-		PrimitiveData.get().forEachSemanticNidOfPattern(statedAxiomPattern.nid(), i -> totalCounter.incrementAndGet());
+		PrimitiveData.get().forEachSemanticNidOfPattern(statedAxiomPattern.nid(), _ -> totalCounter.incrementAndGet());
 		return totalCounter.get();
 	}
 
@@ -88,12 +91,10 @@ public class ElkSnomedDataBuilder {
 		LogicCoordinateRecord logicCoordinate = viewCalculator.logicCalculator().logicCoordinateRecord();
 		AtomicInteger ex_cnt = new AtomicInteger();
 		viewCalculator.forEachSemanticVersionOfPatternParallel(logicCoordinate.statedAxiomsPatternNid(),
-				(semanticEntityVersion, patternEntityVersion) -> {
+				(semanticEntityVersion, _) -> {
 					try {
-						int conceptNid = semanticEntityVersion.referencedComponentNid();
-						if (viewCalculator.latestIsActive(conceptNid)) {
-							DiTreeEntity definition = (DiTreeEntity) semanticEntityVersion.fieldValues().get(0);
-							processDefinition(conceptNid, definition);
+						if (semanticEntityVersion.active()) {
+							processDefinition(semanticEntityVersion);
 							data.incrementActiveConceptCount();
 						} else {
 							data.incrementInactiveConceptCount();
@@ -106,6 +107,24 @@ public class ElkSnomedDataBuilder {
 						}
 					}
 				});
+		buildRoleConcepts();
+		data.initializeReasonerConceptSet();
+		for (Concept con : data.getConcepts()) {
+			if (con.getDefinitions().isEmpty())
+				LOG.warn("No definitions: " + con.getId() + " " + PrimitiveData.text((int) con.getId()));
+		}
+		updateProgress(totalCount, totalCount);
+		LOG.info("Total processed: " + totalCount + " " + processedCount.get());
+		LOG.info("Active concepts: " + data.getActiveConceptCount());
+		LOG.info("Inactive concepts: " + data.getInactiveConceptCount());
+		if (ex_cnt.get() != 0) {
+			String msg = "Exceptions: " + ex_cnt.get();
+			LOG.error(msg);
+			throw new Exception(msg);
+		}
+	}
+
+	private void buildRoleConcepts() {
 		// Create concepts for role types and concrete role types
 		// Should eventually do this in the write back of inferred
 		for (RoleType role : data.getRoleTypes()) {
@@ -144,30 +163,52 @@ public class ElkSnomedDataBuilder {
 				def.addSuperConcept(sup_con);
 			}
 		}
-		data.initializeReasonerConceptSet();
-		for (Concept con : data.getConcepts()) {
-			if (con.getDefinitions().isEmpty())
-				LOG.warn("No definitions: " + con.getId() + " " + PrimitiveData.text((int) con.getId()));
-		}
-
-		updateProgress(totalCount, totalCount);
-		LOG.info("Total processed: " + totalCount + " " + processedCount.get());
-		LOG.info("Active concepts: " + data.getActiveConceptCount());
-		LOG.info("Inactive concepts: " + data.getInactiveConceptCount());
-		if (ex_cnt.get() != 0) {
-			String msg = "Exceptions: " + ex_cnt.get();
-			LOG.error(msg);
-			throw new Exception(msg);
-		}
 	}
 
-	public Concept processIncremental(int conceptNid, DiTreeEntity definition) {
-		Concept concept = data.getOrCreateConcept(conceptNid);
-		concept.removeAllDefinitions();
-		concept.removeAllGciDefinitions();
-		processDefinition(conceptNid, definition);
-		// TODO update active concept count etc. ??
-		return concept;
+	public Concept processDelete(int nid) {
+		if (data.getConcept(nid) != null) {
+			return data.deleteConcept(nid);
+		}
+		if (data.getRoleType(nid) != null) {
+			RoleType role = data.getRoleType(nid);
+			role.setName(PrimitiveData.text(nid));
+			throw new UnsupportedReasonerProcessIncremental("Delete: " + role.getClass() + " " + role);
+		}
+		if (data.getConcreteRoleType(nid) != null) {
+			ConcreteRoleType role = data.getConcreteRoleType(nid);
+			role.setName(PrimitiveData.text(nid));
+			throw new UnsupportedReasonerProcessIncremental("Delete: " + role.getClass() + " " + role);
+		}
+		return null;
+	}
+
+	public Concept processUpdate(SemanticEntityVersion update) {
+		int nid = update.referencedComponentNid();
+		{
+			Concept concept = data.getConcept(nid);
+			if (concept != null) {
+				concept.removeAllDefinitions();
+				concept.removeAllGciDefinitions();
+			}
+		}
+		SnomedEntity entity = processDefinition(update);
+		if (entity == null) {
+			LOG.error("\n" + PrimitiveData.text(nid) + "\n" + update);
+			throw new UnsupportedReasonerProcessIncremental("processDefinition failed: " + PrimitiveData.text(nid));
+		}
+		return switch (entity) {
+		case Concept concept -> concept;
+		case RoleType role -> {
+			role.setName(PrimitiveData.text(nid));
+			throw new UnsupportedReasonerProcessIncremental("Update: " + role);
+		}
+		case ConcreteRoleType role -> {
+			role.setName(PrimitiveData.text(nid));
+			throw new UnsupportedReasonerProcessIncremental("Update: " + role);
+		}
+		default -> throw new IllegalArgumentException("Unexpected value: " + entity);
+		};
+
 	}
 
 	private LogicalAxiomSemantic getMeaning(EntityVertex node) {
@@ -199,9 +240,21 @@ public class ElkSnomedDataBuilder {
 					"Role: " + PrimitiveData.text(role_operator_nid) + " not supported. ");
 	}
 
-	private void processDefinition(int conceptNid, DiTreeEntity definition) throws IllegalStateException {
+	// This is just used to support the WriteTest ITs
+	public Concept buildConcept(SemanticEntityVersion semanticEntityVersion) {
+		return (Concept) processDefinition(semanticEntityVersion);
+	}
+
+	private SnomedEntity processDefinition(SemanticEntityVersion semanticEntityVersion) {
+		SnomedEntity ret = null;
+		int conceptNid = semanticEntityVersion.referencedComponentNid();
+		DiTreeEntity definition = (DiTreeEntity) semanticEntityVersion.fieldValues().getFirst();
 		EntityVertex root = definition.root();
+		if (definition.successors(root).isEmpty()) {
+			LOG.warn("No definition for: " + PrimitiveData.text(conceptNid));
+		}
 		for (EntityVertex child : definition.successors(root)) {
+			SnomedEntity result = null;
 			switch (getMeaning(child)) {
 			case SUFFICIENT_SET -> {
 				Concept concept = data.getOrCreateConcept(conceptNid);
@@ -209,6 +262,7 @@ public class ElkSnomedDataBuilder {
 				def.setDefinitionType(DefinitionType.EquivalentConcept);
 				processDefinition(def, child, definition);
 				concept.addDefinition(def);
+				result = concept;
 			}
 			case NECESSARY_SET -> {
 				Concept concept = data.getOrCreateConcept(conceptNid);
@@ -216,6 +270,7 @@ public class ElkSnomedDataBuilder {
 				def.setDefinitionType(DefinitionType.SubConcept);
 				processDefinition(def, child, definition);
 				concept.addDefinition(def);
+				result = concept;
 			}
 			case INCLUSION_SET -> {
 				Concept concept = data.getOrCreateConcept(conceptNid);
@@ -223,16 +278,24 @@ public class ElkSnomedDataBuilder {
 				def.setDefinitionType(DefinitionType.SubConcept);
 				processDefinition(def, child, definition);
 				concept.addGciDefinition(def);
+				result = concept;
 			}
 			case PROPERTY_SET -> {
 				processPropertySet(conceptNid, child, definition);
+				result = data.getRoleType(conceptNid);
 			}
 			case DATA_PROPERTY_SET -> {
 				processDataPropertySet(conceptNid, child, definition);
+				result = data.getConcreteRoleType(conceptNid);
 			}
 			default -> throw new IllegalArgumentException("Unexpected value: " + getMeaning(child));
 			}
+			if (ret == null)
+				ret = result;
+			if (ret != result)
+				throw new IllegalStateException("Expect " + ret.getClass() + " was " + result.getClass());
 		}
+		return ret;
 	}
 
 	private void processDefinition(Definition def, EntityVertex node, DiTreeEntity definition) {
@@ -351,11 +414,11 @@ public class ElkSnomedDataBuilder {
 		ConcreteRoleType role_type = data.getOrCreateConcreteRoleType(role_type_nid);
 		Object value = node.propertyFast(TinkarTerm.LITERAL_VALUE);
 		ValueType value_type = switch (value) {
-		case BigDecimal x -> ValueType.Decimal;
-		case Double x -> ValueType.Double;
-		case Float x -> ValueType.Float;
-		case Integer x -> ValueType.Integer;
-		case String x -> ValueType.String;
+		case BigDecimal _ -> ValueType.Decimal;
+		case Double _ -> ValueType.Double;
+		case Float _ -> ValueType.Float;
+		case Integer _ -> ValueType.Integer;
+		case String _ -> ValueType.String;
 		default -> throw new UnsupportedOperationException("Value type: " + value.getClass().getName());
 		};
 		return new ConcreteRole(role_type, value.toString(), value_type);

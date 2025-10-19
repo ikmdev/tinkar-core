@@ -15,11 +15,7 @@
  */
 package dev.ikm.tinkar.provider.spinedarray;
 
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.PrimitiveDataRepair;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class PrimitiveDataRepairTest {
     /**

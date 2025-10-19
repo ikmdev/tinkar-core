@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.component;
 
-import org.eclipse.collections.impl.list.mutable.primitive.ByteArrayList;
 import dev.ikm.tinkar.common.id.IdList;
 import dev.ikm.tinkar.common.id.IdSet;
 import dev.ikm.tinkar.component.graph.DiGraph;
@@ -23,6 +22,7 @@ import dev.ikm.tinkar.component.graph.DiTree;
 import dev.ikm.tinkar.component.graph.Vertex;
 import dev.ikm.tinkar.component.location.PlanarPoint;
 import dev.ikm.tinkar.component.location.SpatialPoint;
+import org.eclipse.collections.impl.list.mutable.primitive.ByteArrayList;
 
 import java.math.BigDecimal;
 import java.time.Instant;

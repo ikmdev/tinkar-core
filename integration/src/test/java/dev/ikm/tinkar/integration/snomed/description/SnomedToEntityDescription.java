@@ -16,7 +16,16 @@
 package dev.ikm.tinkar.integration.snomed.description;
 
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.RecordListBuilder;
+import dev.ikm.tinkar.entity.SemanticRecord;
+import dev.ikm.tinkar.entity.SemanticRecordBuilder;
+import dev.ikm.tinkar.entity.SemanticVersionRecord;
+import dev.ikm.tinkar.entity.SemanticVersionRecordBuilder;
+import dev.ikm.tinkar.entity.StampRecord;
+import dev.ikm.tinkar.entity.StampRecordBuilder;
+import dev.ikm.tinkar.entity.StampVersionRecord;
+import dev.ikm.tinkar.entity.StampVersionRecordBuilder;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -24,7 +33,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.UUID;
 
-import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.*;
+import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.ACTIVE;
+import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.DESCRIPTION_PATTERN;
+import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.DEVELOPMENT_PATH;
+import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.ENGLISH_LANGUAGE;
+import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.INACTIVE;
+import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.SNOMED_CT_AUTHOR;
+import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.SNOMED_CT_NAMESPACE;
 
 public class SnomedToEntityDescription {
 

@@ -32,7 +32,6 @@ package dev.ikm.tinkar.common.validation;
  */
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;

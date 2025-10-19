@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.entity.export;
 
-import com.google.auto.service.AutoService;
 import dev.ikm.tinkar.common.service.TinkExecutor;
 
 import java.io.File;
@@ -23,7 +22,6 @@ import java.util.concurrent.Future;
 
 import static dev.ikm.tinkar.entity.Entity.LOG;
 
-@AutoService(ExportEntitiesController.class)
 public class ExportEntitiesController {
     public Future<?> export(File pbFile) {
         if (pbFile.getName().toLowerCase().contains("tinkar-export")) {

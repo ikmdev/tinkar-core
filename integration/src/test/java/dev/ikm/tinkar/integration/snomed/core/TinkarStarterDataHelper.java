@@ -23,7 +23,12 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 
 import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.loadJsonData;

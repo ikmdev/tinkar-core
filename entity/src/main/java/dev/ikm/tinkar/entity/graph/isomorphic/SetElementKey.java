@@ -17,9 +17,7 @@ package dev.ikm.tinkar.entity.graph.isomorphic;
 
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIds;
-import dev.ikm.tinkar.component.graph.DiTree;
 import dev.ikm.tinkar.entity.graph.DiTreeAbstract;
-import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiomSemantic;
 import dev.ikm.tinkar.terms.TinkarTerm;

@@ -19,13 +19,23 @@ import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.component.Semantic;
 import dev.ikm.tinkar.entity.SemanticEntity;
-import dev.ikm.tinkar.schema.*;
+import dev.ikm.tinkar.schema.Field;
+import dev.ikm.tinkar.schema.SemanticChronology;
+import dev.ikm.tinkar.schema.SemanticVersion;
+import dev.ikm.tinkar.schema.StampChronology;
+import dev.ikm.tinkar.schema.StampVersion;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.Disabled;
 
-import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.*;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.AUTHOR_CONCEPT_NAME;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.MODULE_CONCEPT_NAME;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.PATH_CONCEPT_NAME;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.STATUS_CONCEPT_NAME;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.TEST_CONCEPT_NAME;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.createPBPublicId;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.nowTimestamp;
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.openSession;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 

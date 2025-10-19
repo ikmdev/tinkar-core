@@ -30,7 +30,12 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.StringReader;
 
-import static dev.ikm.tinkar.terms.ProxyFactory.*;
+import static dev.ikm.tinkar.terms.ProxyFactory.CONCEPT_ELEMENT;
+import static dev.ikm.tinkar.terms.ProxyFactory.DESCRIPTION_ATTRIBUTE;
+import static dev.ikm.tinkar.terms.ProxyFactory.ENTITY_ELEMENT;
+import static dev.ikm.tinkar.terms.ProxyFactory.PATTERN_ELEMENT;
+import static dev.ikm.tinkar.terms.ProxyFactory.SEMANTIC_ELEMENT;
+import static dev.ikm.tinkar.terms.ProxyFactory.UUIDS_ATTRIBUTE;
 
 public class VersionProxyFactory {
     public static final String STAMP_UUIDS_ATTRIBUTE = "stamp";

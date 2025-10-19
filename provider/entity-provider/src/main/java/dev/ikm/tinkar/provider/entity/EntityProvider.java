@@ -17,40 +17,23 @@ package dev.ikm.tinkar.provider.entity;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.auto.service.AutoService;
 import dev.ikm.tinkar.common.alert.AlertObject;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.service.*;
+import dev.ikm.tinkar.common.service.CachingService;
+import dev.ikm.tinkar.common.service.DataActivity;
+import dev.ikm.tinkar.common.service.DefaultDescriptionForNidService;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.PrimitiveDataRepair;
+import dev.ikm.tinkar.common.service.PublicIdService;
+import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.util.broadcast.Broadcaster;
 import dev.ikm.tinkar.common.util.broadcast.SimpleBroadcaster;
 import dev.ikm.tinkar.common.util.broadcast.Subscriber;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.component.Chronology;
 import dev.ikm.tinkar.component.Version;
-import dev.ikm.tinkar.entity.ConceptEntity;
-import dev.ikm.tinkar.entity.ConceptRecord;
-import dev.ikm.tinkar.entity.ConceptRecordBuilder;
-import dev.ikm.tinkar.entity.ConceptVersionRecord;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityDataRepair;
-import dev.ikm.tinkar.entity.EntityMergeServiceFinder;
-import dev.ikm.tinkar.entity.EntityRecordFactory;
-import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.entity.EntityVersion;
-import dev.ikm.tinkar.entity.PatternEntity;
-import dev.ikm.tinkar.entity.PatternEntityVersion;
-import dev.ikm.tinkar.entity.PatternRecord;
-import dev.ikm.tinkar.entity.PatternRecordBuilder;
-import dev.ikm.tinkar.entity.PatternVersionRecord;
-import dev.ikm.tinkar.entity.RecordListBuilder;
-import dev.ikm.tinkar.entity.SemanticEntity;
-import dev.ikm.tinkar.entity.SemanticEntityVersion;
-import dev.ikm.tinkar.entity.SemanticRecord;
-import dev.ikm.tinkar.entity.SemanticRecordBuilder;
-import dev.ikm.tinkar.entity.SemanticVersionRecord;
-import dev.ikm.tinkar.entity.StampEntity;
-import dev.ikm.tinkar.entity.StampRecord;
+import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.provider.search.TypeAheadSearch;
 import dev.ikm.tinkar.terms.EntityFacade;
@@ -238,7 +221,6 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                         entity.getBytes(), entity, activity);
             }
             case StampEntity stampEntity -> {
-                STAMP_CACHE.put(stampEntity.nid(), stampEntity);
                 if (stampEntity.lastVersion().stateNid() == State.CANCELED.nid()) {
                     PrimitiveData.get().addCanceledStampNid(stampEntity.nid());
                 }
@@ -359,6 +341,28 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
             return Optional.empty();
         }
         return Optional.of((T) entity);
+    }
+
+    //TODO-aks8m:
+    // This seems to be counter intuitive when implementing protobuf transforms, or at least not straightforward when
+    // implementing. Suggest we refactor to just use Entity. The use of chronology seems to not be well conveyed, but
+    // only understood because I've been working with other versions of this code.
+    // KEC: the use of chronology was to make it transparent to put a DTO vs an entity. If we eliminate DTOs,
+    // then we can revise and potentially eliminate.
+    @Override
+    public <T extends Chronology<V>, V extends Version> void putChronology(T chronology) {
+        if (chronology instanceof Entity entity) {
+            putEntity(entity);
+        } else {
+            putEntity(EntityRecordFactory.make((Chronology<Version>) chronology));
+            for (Version version : chronology.versions()) {
+                Stamp stamp = version.stamp();
+                int nid = PrimitiveData.get().nidForUuids(stamp.publicId().asUuidArray());
+                if (PrimitiveData.get().getBytes(nid) == null) {
+                    putEntity(EntityRecordFactory.make(stamp));
+                }
+            }
+        }
     }
 
     public static class CacheProvider implements CachingService {
@@ -520,6 +524,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     @Override
     public void endLoadPhase() {
         loadPhase = false;
+        processor.dispatch(Integer.MIN_VALUE);
         // Now we build the AnalyzingSuggester Index
         try {
             TypeAheadSearch.get().buildSuggester();

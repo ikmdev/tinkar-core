@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.reasoner.elkowl;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
@@ -29,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
+import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.reasoner.elkowl.ElkOwlDataBuilder.IncrementalChanges;
@@ -92,6 +94,18 @@ public class ElkOwlReasonerService extends ReasonerServiceBase {
 		IncrementalChanges changes = builder.processIncremental(definition, conceptNid);
 		ontology.removeAxioms(new HashSet<>(changes.getDeletions().castToList()));
 		ontology.addAxioms(new HashSet<>(changes.getAdditions().castToList()));
+	}
+
+	@Override
+	public void processIncremental(SemanticEntityVersion semanticEntityVersion) {
+		// TODO easy to implement, but this module is on backlog
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void processIncremental(List<Integer> deletes, List<SemanticEntityVersion> updates) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

@@ -20,19 +20,15 @@ import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.composer.Composer;
 import dev.ikm.tinkar.composer.Session;
-import dev.ikm.tinkar.composer.assembler.PatternAssembler;
 import dev.ikm.tinkar.composer.assembler.SemanticAssembler;
-import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
-import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
-import dev.ikm.tinkar.entity.PatternEntityVersion;
 import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.provider.search.Searcher;
 import dev.ikm.tinkar.provider.search.TypeAheadSearch;
-import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -46,8 +42,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -64,23 +62,15 @@ public class SearcherIT {
     public void beforeAll() {
         TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
         TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
-        //JTD add code here to modify the specific artifacts used by the search*ExistingIdentifier tests
-        //    with the Composer API until we can get updated reasoned starter data
-        // temporarily update latest IDENTIFIER_PATTERN
+
+        rebuildTypeAheadSuggesterAndBlock();
+    }
+
+    private void rebuildTypeAheadSuggesterAndBlock() {
         try {
-            Latest<PatternEntityVersion> latestIdPattern = Calculators.View.Default().latestPatternEntityVersion(TinkarTerm.IDENTIFIER_PATTERN);
-            if ( latestIdPattern.get().fieldDefinitions().get(1).meaningNid() == TinkarTerm.IDENTIFIER_SOURCE.nid()) {
-                Session session = composer.open(State.ACTIVE, /*time,*/ TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-                session.compose((PatternAssembler patternAssembler) -> patternAssembler
-                        .pattern(TinkarTerm.IDENTIFIER_PATTERN)
-                        .meaning(TinkarTerm.IDENTIFIER_SOURCE)
-                        .purpose(TinkarTerm.IDENTIFIER_SOURCE)
-                        .fieldDefinition(TinkarTerm.IDENTIFIER_SOURCE, TinkarTerm.IDENTIFIER_SOURCE, TinkarTerm.COMPONENT_FIELD)
-                        .fieldDefinition(TinkarTerm.IDENTIFIER_VALUE, TinkarTerm.IDENTIFIER_VALUE, TinkarTerm.STRING)
-                );
-            }
-        } catch (Exception e) {
-            LOG.error("Exception creating new IDENTIFIER_PATTERN");
+            TypeAheadSearch.get().buildSuggester().get();
+        } catch (IOException | ExecutionException | InterruptedException ex) {
+            LOG.error("Exception building Type Ahead Suggester: {}", ex.toString());
         }
     }
 
@@ -165,14 +155,16 @@ public class SearcherIT {
     }
 
     @Test
-    public void typeAheadIndexerTest() throws Exception {
+    public void typeAheadIndexerTest() throws InterruptedException {
         var stampCoordinate = Coordinates.Stamp.DevelopmentLatestActiveOnly();
         var languageCoordinate = Coordinates.Language.UsEnglishRegularName();
         var navigationCoordinate = Coordinates.Navigation.inferred().toNavigationCoordinateRecord();
         var navigationCalculator = NavigationCalculatorWithCache.getCalculator(stampCoordinate, Lists.immutable.of(languageCoordinate), navigationCoordinate);
 
-        List<ConceptFacade> concepts = TypeAheadSearch.get().typeAheadSuggestions(navigationCalculator, "r", 50);
-        assertEquals(40, concepts.size());
+        List<EntityFacade> entities = TypeAheadSearch.get().typeAheadSuggestions(navigationCalculator, "r", 10);
+        assertEquals(10, entities.size());
+        entities = TypeAheadSearch.get().typeAheadSuggestions(navigationCalculator, "rAdd", 20);
+        assertEquals(0, entities.size());
         // Add a new semantic
         MutableList<String> list = Lists.mutable.empty();
         list.add("rAdded");
@@ -183,26 +175,27 @@ public class SearcherIT {
                 .fieldValues((MutableList<Object> values) -> values
                         .withAll(list))
         );
-        concepts = TypeAheadSearch.get().typeAheadSuggestions("r", 50);
-        assertEquals(41, concepts.size());
+        rebuildTypeAheadSuggesterAndBlock();
+        entities = TypeAheadSearch.get().typeAheadSuggestions("rAdd", 10);
+        assertEquals(1, entities.size());
         AtomicInteger commentConcepts = new AtomicInteger();
-        concepts.forEach(conceptFacade -> {
+        entities.forEach(conceptFacade -> {
             if (PublicId.equals(conceptFacade.publicId(), TinkarTerm.COMMENT)) {
                 commentConcepts.getAndIncrement();
             }
         });
-        assertTrue(concepts.contains(TinkarTerm.COMMENT));
+        assertTrue(entities.contains(TinkarTerm.COMMENT));
         assertEquals(1, commentConcepts.get());
     }
 
     @Test
-    public void typeAheadMaxResultsTest() throws Exception {
-        List<ConceptFacade> concepts = TypeAheadSearch.get().typeAheadSuggestions("r", 20);
-        assertEquals(20, concepts.size());
+    public void typeAheadMaxResultsTest() {
+        List<EntityFacade> entities = TypeAheadSearch.get().typeAheadSuggestions("r", 30);
+        assertEquals(30, entities.size());
     }
 
     @Test
-    public void searchConceptsNonExistentMembershipSemantic() throws Exception {
+    public void searchConceptsNonExistentMembershipSemantic() {
         // test memberPatternId does not exist
         EntityProxy.Concept conceptProxy = EntityProxy.Concept.make(PublicIds.newRandom());
         List<PublicId> conceptIds = Searcher.membersOf(conceptProxy.publicId());
@@ -210,30 +203,30 @@ public class SearcherIT {
     }
 
     @Test
-    public void searchConceptsNonPatternMembershipSemantic() throws Exception {
+    public void searchConceptsNonPatternMembershipSemantic() {
         // test memberPatternId exists but is not a pattern
         List<PublicId> conceptIds = Searcher.membersOf(TinkarTerm.ROLE.publicId());
         assertTrue(conceptIds.isEmpty(), "memberPatternId exists but not a pattern, should return empty list");
     }
 
     @Test
-    public void searchConceptsNoTaggedMembershipSemantic() throws Exception {
+    public void searchConceptsNoTaggedMembershipSemantic() {
         // test memberPatternId with no tagged concepts
         List<PublicId> conceptIds = Searcher.membersOf(TinkarTerm.COMMENT_PATTERN);
         assertTrue(conceptIds.isEmpty(), "memberPatternId has no tagged concepts, should return empty list");
     }
 
     @Test
-    public void searchConceptsWithTaggedMembershipSemantic() throws Exception {
+    public void searchConceptsWithTaggedMembershipSemantic() {
         // test memberPatternId with tagged concepts
         List<PublicId> conceptIds = Searcher.membersOf(TinkarTerm.KOMET_BASE_MODEL_COMPONENT_PATTERN);
         assertEquals(1, conceptIds.size(), "there should be 1 tagged concept associated with this pattern");
         conceptIds = Searcher.membersOf(TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
-        assertEquals(295, conceptIds.size(), "there should be 295 tagged concept associated with this pattern");
+        assertEquals(316, conceptIds.size(), "there should be 316 tagged concept associated with this pattern");
     }
 
     @Test
-    public void searchExistingIdentifier() throws Exception {
+    public void searchExistingIdentifier() {
         //source: TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER
         //identifier: LANGUAGE_NID_FOR_LANGUAGE_COORDINATE
         Optional<PublicId> publicId = Searcher.getPublicId(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, TinkarTerm.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE.asUuidArray()[0].toString());
@@ -242,7 +235,7 @@ public class SearcherIT {
     }
 
     @Test
-    public void searchNonExistingIdentifier() throws Exception {
+    public void searchNonExistingIdentifier() {
         Optional<PublicId> publicId = Searcher.getPublicId(PublicIds.newRandom(), TinkarTerm.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE.asUuidArray()[0].toString());
         assertFalse(publicId.isPresent(), "Concept should be null for non-existing Identifier Source");
         publicId = Searcher.getPublicId(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "abcxyz");

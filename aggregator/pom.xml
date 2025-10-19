@@ -5,7 +5,7 @@
     <parent>
         <groupId>dev.ikm.tinkar</groupId>
         <artifactId>tinkar-core</artifactId>
-        <version>1.91.0-SNAPSHOT</version>
+        <version>1.119.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>aggregator</artifactId>
@@ -88,6 +88,35 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>integration</artifactId>
         </dependency>
+
+        <!-- Reasoner Submodules (Start) -->
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>reasoner-elk-owl</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>reasoner-elk-snomed</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>reasoner-elk-snomed-test</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>reasoner-hybrid</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>reasoner-service</artifactId>
+        </dependency>
+
+        <!-- Reasoner Submodules (End) -->
     </dependencies>
 
     <build>
@@ -102,6 +131,12 @@
                         <goals>
                             <goal>report-aggregate</goal>
                         </goals>
+                        <configuration>
+                            <dataFileIncludes>
+                                <dataFileInclude>**/jacoco-combined.exec</dataFileInclude>
+                            </dataFileIncludes>
+                            <outputDirectory>${project.reporting.outputDirectory}/jacoco-aggregate</outputDirectory>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

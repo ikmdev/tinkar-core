@@ -15,12 +15,12 @@
  */
 package dev.ikm.tinkar.common.id;
 
-import org.eclipse.collections.api.list.ImmutableList;
 import dev.ikm.tinkar.common.id.impl.PublicId1;
 import dev.ikm.tinkar.common.id.impl.PublicId2;
 import dev.ikm.tinkar.common.id.impl.PublicId3;
 import dev.ikm.tinkar.common.id.impl.PublicIdN;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
+import org.eclipse.collections.api.list.ImmutableList;
 
 import java.util.Arrays;
 import java.util.List;

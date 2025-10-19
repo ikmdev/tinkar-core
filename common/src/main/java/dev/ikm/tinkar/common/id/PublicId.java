@@ -15,9 +15,9 @@
  */
 package dev.ikm.tinkar.common.id;
 
+import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
-import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 
 import java.util.Arrays;
 import java.util.UUID;

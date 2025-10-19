@@ -26,6 +26,7 @@ import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.SemanticFacade;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.slf4j.Logger;
@@ -34,8 +35,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.Optional;
 
-public interface Entity<T extends EntityVersion>
-        extends Chronology<T>,
+public interface Entity<V extends EntityVersion>
+        extends Chronology<V>,
         EntityFacade,
         IdentifierData {
     // TODO: Make this and related interface sealed, but add ObservableEntity (or similarly named) as a non-sealed interface interface for extension
@@ -74,7 +75,7 @@ public interface Entity<T extends EntityVersion>
     }
 
     @Override
-    ImmutableList<T> versions();
+    ImmutableList<V> versions();
 
     static Optional<ConceptEntity> getConceptForSemantic(int semanticNid) {
         Optional<? extends Entity<? extends EntityVersion>> optionalEntity = get(semanticNid);
@@ -119,12 +120,12 @@ public interface Entity<T extends EntityVersion>
         return EntityService.get().getStampFast(nid);
     }
 
-    default Optional<T> getVersion(int stampNid) {
+    default Optional<V> getVersion(int stampNid) {
         return Optional.ofNullable(getVersionFast(stampNid));
     }
 
-    default T getVersionFast(int stampNid) {
-        for (T version : versions()) {
+    default V getVersionFast(int stampNid) {
+        for (V version : versions()) {
             if (version.stampNid() == stampNid) {
                 return version;
             }
@@ -132,13 +133,13 @@ public interface Entity<T extends EntityVersion>
         return null;
     }
 
-    default Optional<T> getVersion(PublicId stampId) {
+    default Optional<V> getVersion(PublicId stampId) {
         return Optional.ofNullable(getVersionFast(stampId));
     }
 
-    default T getVersionFast(PublicId stampId) {
+    default V getVersionFast(PublicId stampId) {
         int stampNid = nid(stampId);
-        for (T version : versions()) {
+        for (V version : versions()) {
             if (version.stampNid() == stampNid) {
                 return version;
             }
@@ -214,5 +215,19 @@ public interface Entity<T extends EntityVersion>
         }
         return true;
     }
+
+    default boolean committed() {
+        return !uncommitted();
+    }
+
+    default boolean uncommitted() {
+        return versions().stream().anyMatch(v -> v.uncommitted());
+    }
+
+    default ImmutableIntList uncommittedStampNids() {
+        return IntLists.immutable.of(versions().stream()
+                .filter(v -> v.uncommitted()).mapToInt(v -> v.stampNid()).toArray());
+    }
+
 
 }

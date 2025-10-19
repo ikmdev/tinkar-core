@@ -25,7 +25,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import dev.ikm.tinkar.common.service.PluggableService;
 import java.util.Set;
 
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
@@ -41,9 +40,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
-import dev.ikm.tinkar.reasoner.service.ReasonerService;
+import dev.ikm.tinkar.common.service.PluggableService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
+import dev.ikm.tinkar.reasoner.service.ReasonerService;
 import dev.ikm.tinkar.terms.TinkarTerm;
 
 public abstract class ElkOwlTestBase extends PrimitiveDataTestBase {

@@ -17,7 +17,12 @@ package dev.ikm.tinkar.common.util.time;
 
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
-import java.time.*;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
@@ -47,6 +52,8 @@ public class DateTimeUtil {
     public static final DateTimeFormatter TEXT_FORMAT_WITH_ZONE = DateTimeFormatter.ofPattern("MMM dd, yyyy; hh:mm:ss a zzz");
     public static final DateTimeFormatter TIME_SIMPLE = DateTimeFormatter.ofPattern("HH:mm:ss");
     public static final DateTimeFormatter COMPRESSED_DATE_TIME = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssz");
+    public static final DateTimeFormatter COMPRESSED_DATE = DateTimeFormatter.ofPattern("yyyyMMdd");
+
     public static final String LATEST = "Latest";
     public static final String CANCELED = "Canceled";
     public static final String PREMUNDANE = "Premundane";
@@ -70,10 +77,6 @@ public class DateTimeUtil {
         }
         return instant.toEpochMilli();
     }
-
-
-
-
 
     public static ZonedDateTime epochToZonedDateTime(long epochMilliSecond) {
         return Instant.ofEpochMilli(epochMilliSecond).atZone(ZoneOffset.UTC);
@@ -133,6 +136,7 @@ public class DateTimeUtil {
         }
         return ZonedDateTime.parse(dateTime, ZONE_FORMATTER).toInstant().toEpochMilli();
     }
+
     /**
      *
      * @param dateTime yyyyMMdd'T'HHmmssz
@@ -150,6 +154,25 @@ public class DateTimeUtil {
         }
         return LocalDateTime.parse(dateTime, COMPRESSED_DATE_TIME).atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
     }
+
+    /**
+     *
+     * @param date yyyyMMdd
+     * @return Epoch millisecond of the date time...
+     */
+    public static long compressedDateParse(String date) {
+        if (date.equalsIgnoreCase(LATEST)) {
+            return Long.MAX_VALUE;
+        }
+        if (date.equalsIgnoreCase(CANCELED)) {
+            return Long.MIN_VALUE;
+        }
+        if (date.equalsIgnoreCase(PREMUNDANE)) {
+            return PrimitiveData.PREMUNDANE_TIME;
+        }
+        return LocalDate.parse(date, COMPRESSED_DATE).atStartOfDay().atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
+    }
+
     /**
      *
      * @param dateTime yyyy-MM-dd HH:mm

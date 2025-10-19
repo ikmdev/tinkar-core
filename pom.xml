@@ -5,13 +5,13 @@
     <parent>
         <groupId>dev.ikm.build</groupId>
         <artifactId>java-parent</artifactId>
-        <version>1.58.0</version>
+        <version>1.63.0</version>
         <relativePath/>
     </parent>
 
     <groupId>dev.ikm.tinkar</groupId>
     <artifactId>tinkar-core</artifactId>
-    <version>1.91.0-SNAPSHOT</version>
+    <version>1.119.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>IKM tinkar core</name>
@@ -56,6 +56,7 @@
         <module>reasoner</module>
         <module>integration</module>
         <module>aggregator</module>
+        <module>events</module>
     </modules>
 
     <scm>
@@ -76,11 +77,10 @@
         <commons-io.version>2.16.1</commons-io.version>
         <caffeine.version>3.2.0</caffeine.version>
 
-        <jackson.version>2.18.2</jackson.version>
-        <java.version>24</java.version>
+        <jackson.version>2.19.0</jackson.version>
         <jgrapht.version>1.5.0</jgrapht.version>
-        <mockito.version>5.15.2</mockito.version>
-        <mvstore.version>2.3.232-r1</mvstore.version>
+        <mockito.version>5.17.0</mockito.version>
+        <mvstore.version>2.3.232-r2</mvstore.version>
         <io.smallrye.reactive.version>1.3.1</io.smallrye.reactive.version>
         <lucene-core.version>9.12.1</lucene-core.version>
         <lucene-queryparser.version>9.12.1</lucene-queryparser.version>
@@ -88,12 +88,11 @@
         <lucene-highlighter.version>9.12.1</lucene-highlighter.version>
         <lucene-suggest.version>9.12.1</lucene-suggest.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <slf4j.version>2.0.16</slf4j.version>
-        <log4j.version>3.0.0-alpha1</log4j.version>
         <testng.version>7.4.0</testng.version>
         <snomedct-data.version>2023.09.01</snomedct-data.version>
-        <tinkar-starter-data.version>1.0.0</tinkar-starter-data.version>
-        <protobuf-java.version>3.22.0-r7</protobuf-java.version>
+        <tinkar-starter-data.version>1.1.2</tinkar-starter-data.version>
+        <tinkar-example-data.version>1.2.0+1.2.2</tinkar-example-data.version>
+        <protobuf-java.version>4.30.2-r2</protobuf-java.version>
         <sonar.skip>false</sonar.skip>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
@@ -101,28 +100,28 @@
         <sonar.language>java</sonar.language>
         <susel.version>0.1.2</susel.version>
         <maven-jxr-plugin.version>3.6.0</maven-jxr-plugin.version>
-        <tinkar-schema.version>1.38.0</tinkar-schema.version>
+        <tinkar-schema.version>1.40.0</tinkar-schema.version>
         <tinkar-bindings.version>1.4.0</tinkar-bindings.version>
         <udaychandra-susel.version>0.1.2</udaychandra-susel.version>
-        <common-java5.version>3.5.2</common-java5.version>
-        <fasterxml-jackson-core.version>2.17.0</fasterxml-jackson-core.version>
+        <common-java5.version>3.5.3</common-java5.version>
+        <fasterxml-jackson-core.version>2.19.0</fasterxml-jackson-core.version>
         <activej-launchers.version>4.3.1</activej-launchers.version>
 
         <!-- JPMS Dependencies -->
         <tinkar-jpms-deps.groupId>dev.ikm.jpms</tinkar-jpms-deps.groupId>
-		<jpms-auto-service.version>1.0.1-r7</jpms-auto-service.version>
-		<jpms-record-builder-core.version>36-r7</jpms-record-builder-core.version>
-		<eclipse-collections.version>11.1.0-r13</eclipse-collections.version>
-		<eclipse-collections-api.version>11.1.0-r11</eclipse-collections-api.version>
+		<jpms-auto-service.version>1.1.1-r2</jpms-auto-service.version>
+		<jpms-record-builder-core.version>44-r1</jpms-record-builder-core.version>
+		<eclipse-collections.version>12.0.0.M3-r2</eclipse-collections.version>
+		<eclipse-collections-api.version>12.0.0.M3-r2</eclipse-collections-api.version>
 		<jheaps.version>0.14-r6</jheaps.version>
-		<roaringbitmap.version>0.9.31-r8</roaringbitmap.version>
+		<roaringbitmap.version>1.4.0</roaringbitmap.version>
 
-		<hybrid-reasoner.version>1.0.8</hybrid-reasoner.version>
-		<ikm-reasoner.version>0.37.5</ikm-reasoner.version>
-		<owlapi.version>4.8.2</owlapi.version>
+		<hybrid-reasoner.version>1.1.2</hybrid-reasoner.version>
+		<ikm-reasoner.version>0.39.2</ikm-reasoner.version>
+		<owlapi.version>4.8.4</owlapi.version>
     </properties>
 
-	<!-- All Dependencies and versions used in this project are pre-defined here for use in modules -->
+    <!-- All Dependencies and versions used in this project are pre-defined here for use in modules -->
     <dependencyManagement>
         <dependencies>
 			<!-- Submodules -->
@@ -218,6 +217,40 @@
 				<version>${project.version}</version>
 			</dependency>
 
+            <!-- Reasoner Submodules (Start) -->
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>reasoner-elk-owl</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>reasoner-elk-snomed</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>reasoner-elk-snomed-test</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>reasoner-hybrid</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>reasoner-service</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Reasoner Submodules (End) -->
+
 			<dependency>
                 <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>search-provider</artifactId>
@@ -227,6 +260,12 @@
             <dependency>
                 <groupId>dev.ikm.tinkar</groupId>
                 <artifactId>terms</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>events</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -276,12 +315,6 @@
 
             <dependency>
                 <groupId>${tinkar-jpms-deps.groupId}</groupId>
-                <artifactId>roaringbitmap</artifactId>
-                <version>${roaringbitmap.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>${tinkar-jpms-deps.groupId}</groupId>
                 <artifactId>eclipse-collections</artifactId>
                 <version>${eclipse-collections.version}</version>
             </dependency>
@@ -306,6 +339,12 @@
 
 			<!-- Everything else -->
             <dependency>
+                <groupId>com.github.RoaringBitmap.RoaringBitmap</groupId>
+                <artifactId>roaringbitmap</artifactId>
+                <version>${roaringbitmap.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.jsonschema2pojo</groupId>
                 <artifactId>jsonschema2pojo-core</artifactId>
                 <version>${jsonschema2pojo-core.version}</version>
@@ -321,18 +360,6 @@
                 <groupId>com.fasterxml.jackson.datatype</groupId>
                 <artifactId>jackson-datatype-jsr310</artifactId>
                 <version>${fasterxml-jackson-core.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>${slf4j.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-slf4j2-impl</artifactId>
-                <version>${log4j.version}</version>
             </dependency>
 
             <dependency>
@@ -404,14 +431,14 @@
 
             <dependency>
                 <groupId>org.apache.lucene</groupId>
-                <artifactId>lucene-suggest</artifactId>
-                <version>${lucene-suggest.version}</version>
+                <artifactId>lucene-backward-codecs</artifactId>
+                <version>${lucene-core.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.lucene</groupId>
-                <artifactId>lucene-backward-codecs</artifactId>
-                <version>${lucene-core.version}</version>
+                <artifactId>lucene-suggest</artifactId>
+                <version>${lucene-suggest.version}</version>
             </dependency>
             
             <dependency>
@@ -449,9 +476,14 @@
 				<artifactId>elk-snomed-owl-el</artifactId>
 				<version>${ikm-reasoner.version}</version>
 			</dependency>
-        </dependencies>
+			<dependency>
+				<groupId>dev.ikm.elk</groupId>
+				<artifactId>elk-snomed-test</artifactId>
+				<version>${ikm-reasoner.version}</version>
+			</dependency>
+		</dependencies>
     </dependencyManagement>
-	<!-- Cross project dependencies -->
+    <!-- Cross project dependencies -->
     <dependencies>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -486,6 +518,13 @@
         </dependency>
     </dependencies>
 
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
     <build>
         <pluginManagement>
             <plugins>
@@ -509,7 +548,7 @@
         </plugins>
     </build>
 
-	<!-- for site generation -->
+    <!-- for site generation -->
     <reporting>
         <plugins>
             <plugin>

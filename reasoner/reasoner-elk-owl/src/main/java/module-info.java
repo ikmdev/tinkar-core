@@ -1,3 +1,4 @@
+
 /*
  * Copyright © 2015 Integrated Knowledge Management (support@ikm.dev)
  *
@@ -40,7 +41,7 @@ module dev.ikm.tinkar.reasoner.elkowl {
 	exports dev.ikm.tinkar.reasoner.elkowl;
 
 	provides ReasonerService with ElkOwlReasonerService;
-	
+
 	// TODO needed for unit test
 	uses ReasonerService;
 

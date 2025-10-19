@@ -15,13 +15,16 @@
  */
 package dev.ikm.tinkar.provider.entity;
 
-import com.google.auto.service.AutoService;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.broadcast.Subscriber;
 import dev.ikm.tinkar.component.FieldDataType;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityRecordFactory;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.StampService;
 import dev.ikm.tinkar.entity.util.EntityProcessor;
 import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 import org.eclipse.collections.impl.factory.primitive.LongLists;
@@ -47,7 +50,6 @@ import java.util.concurrent.ConcurrentSkipListSet;
  * at java.base/jdk.internal.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
  */
 
-@AutoService({StampService.class})
 public class StampProvider extends EntityProcessor implements StampService, Subscriber<Integer> {
     private static final Logger LOG = LoggerFactory.getLogger(StampProvider.class);
 
@@ -104,10 +106,11 @@ public class StampProvider extends EntityProcessor implements StampService, Subs
         return LongLists.immutable.ofAll(times);
     }
 
-
-
     @Override
     public void onNext(Integer nid) {
+        if ( nid == Integer.MIN_VALUE ) {
+            return;
+        }
         Entity entity = Entity.provider().getEntityFast(nid);
         if (entity instanceof StampEntity stampEntity) {
             stamps.put(stampEntity.nid(), stampEntity);

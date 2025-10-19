@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.entity.transform;
 
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.PublicIdList;
 import dev.ikm.tinkar.common.id.PublicIdSet;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
@@ -368,7 +369,7 @@ public class TinkarSchemaToEntityTransformer {
     //Field Transformation
     //TODO: Use generics in transformField class rather than returning an object
     protected Object transformField(Field pbField, Consumer<StampEntity<StampEntityVersion>> stampEntityConsumer){
-        return switch (pbField.getValueCase()){
+        return switch (pbField.getValueCase()) {
             case BOOLEAN_VALUE -> pbField.getBooleanValue();
             case BYTES_VALUE -> pbField.getBytesValue().toByteArray();
             case FLOAT_VALUE -> pbField.getFloatValue();
@@ -383,12 +384,14 @@ public class TinkarSchemaToEntityTransformer {
             case GRAPH -> throw new UnsupportedOperationException("createGraphEntity not implemented");
             case PUBLIC_ID -> transformPublicId(pbField.getPublicId());
             case PUBLIC_IDS -> transformPublicIdList(pbField.getPublicIds());
+            case PUBLIC_IDSET -> transformPublicIdSet(pbField.getPublicIdset());
             case INT_TO_INT_MAP -> parsePredecessors(Collections.singletonList(pbField.getIntToIntMap()));
             case INT_TO_MULTIPLE_INT_MAP -> parseSuccessors(Collections.singletonList(pbField.getIntToMultipleIntMap()));
             case VALUE_NOT_SET -> throw new IllegalStateException("PBField value not set");
             case VERTEX_UUID -> transformVertexUUID(pbField.getVertexUuid());
             case VERTEX  -> transformVertexEntity(pbField.getVertex(), stampEntityConsumer);
             case BIG_DECIMAL -> transformBigDecimal(pbField.getBigDecimal());
+            case LONG -> transformLong(pbField.getLong());
         };
     }
     protected PublicId transformPublicId(dev.ikm.tinkar.schema.PublicId pbPublicId){
@@ -399,13 +402,23 @@ public class TinkarSchemaToEntityTransformer {
                 .map(UUID::fromString)
                 .toList());
     }
-    protected PublicIdSet transformPublicIdList(dev.ikm.tinkar.schema.PublicIdList pbPublicIdList) {
+    protected PublicIdList transformPublicIdList(dev.ikm.tinkar.schema.PublicIdList pbPublicIdList) {
         if(pbPublicIdList.getPublicIdsCount() == 0){
-            return PublicIds.set.empty();
+            return PublicIds.list.empty();
         }
         PublicId[] publicIds = new PublicId[pbPublicIdList.getPublicIdsCount()];
         for(int i = 0; i < pbPublicIdList.getPublicIdsCount(); i++) {
             publicIds[i] = transformPublicId(pbPublicIdList.getPublicIds(i));
+        }
+        return PublicIds.list.of(publicIds);
+    }
+    protected PublicIdSet transformPublicIdSet(dev.ikm.tinkar.schema.PublicIdSet pbPublicIdSet) {
+        if(pbPublicIdSet.getPublicIdsCount() == 0){
+            return PublicIds.set.empty();
+        }
+        PublicId[] publicIds = new PublicId[pbPublicIdSet.getPublicIdsCount()];
+        for(int i = 0; i < pbPublicIdSet.getPublicIdsCount(); i++) {
+            publicIds[i] = transformPublicId(pbPublicIdSet.getPublicIds(i));
         }
         return PublicIds.set.of(publicIds);
     }
@@ -544,5 +557,9 @@ public class TinkarSchemaToEntityTransformer {
         return new BigDecimal(new BigInteger(bigDecimal.getValue()),
                 bigDecimal.getScale(),
                 new MathContext(bigDecimal.getPrecision()));
+    }
+
+    protected Long transformLong(dev.ikm.tinkar.schema.Long value) {
+        return value.getValue();
     }
 }

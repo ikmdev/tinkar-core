@@ -30,6 +30,7 @@ module dev.ikm.tinkar.reasoner.elksnomed {
 
 	requires dev.ikm.elk.snomed;
 	requires dev.ikm.elk.snomed.owlel;
+	requires dev.ikm.elk.snomed.test;
 
 	exports dev.ikm.tinkar.reasoner.elksnomed;
 

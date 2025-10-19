@@ -16,18 +16,22 @@
 package dev.ikm.tinkar.coordinate.navigation;
 
 
-import dev.ikm.tinkar.common.binary.*;
+import dev.ikm.tinkar.common.binary.Decoder;
+import dev.ikm.tinkar.common.binary.DecoderInput;
+import dev.ikm.tinkar.common.binary.Encodable;
+import dev.ikm.tinkar.common.binary.Encoder;
+import dev.ikm.tinkar.common.binary.EncoderOutput;
+import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinate;
 import dev.ikm.tinkar.coordinate.logic.PremiseType;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
-import io.soabase.recordbuilder.core.RecordBuilder;
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
-import dev.ikm.tinkar.common.id.IntIds;
-import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.terms.TinkarTerm;
+import io.soabase.recordbuilder.core.RecordBuilder;
 
 import java.util.Objects;
 

@@ -19,6 +19,7 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.EntityCountSummary;
 import dev.ikm.tinkar.entity.EntityService;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -47,9 +48,7 @@ public class TemporalEntityAggregator extends EntityAggregator {
             });
         });
 
-        // Aggregate stamps that meet filter conditions
-        stampsAggregatedCount.set(filteredStampNids.size());
-        filteredStampNids.forEach(nidConsumer::accept);
+        List<Integer> stampsToExport = new ArrayList<>();
 
         // Aggregate concepts with a filtered stamp
         PrimitiveData.get().forEachConceptNid((conceptNid) -> {
@@ -59,6 +58,7 @@ public class TemporalEntityAggregator extends EntityAggregator {
                 if (!Collections.disjoint(filteredStampNids, conceptStampNidList)) {
                     conceptsAggregatedCount.incrementAndGet();
                     nidConsumer.accept(conceptNid);
+                    stampsToExport.addAll(conceptStampNidList);
                 }
             });
         });
@@ -71,6 +71,7 @@ public class TemporalEntityAggregator extends EntityAggregator {
                 if (!Collections.disjoint(filteredStampNids, semanticStampNidList)) {
                     semanticsAggregatedCount.incrementAndGet();
                     nidConsumer.accept(semanticNid);
+                    stampsToExport.addAll(semanticStampNidList);
                 }
             });
         });
@@ -83,9 +84,15 @@ public class TemporalEntityAggregator extends EntityAggregator {
                 if (!Collections.disjoint(filteredStampNids, patternStampNidList)) {
                     patternsAggregatedCount.incrementAndGet();
                     nidConsumer.accept(patternNid);
+                    stampsToExport.addAll(patternStampNidList);
                 }
             });
         });
+
+        // Deduplicate and Export Aggregated stamps
+        Set<Integer> deduplicatedStampsToExport = new HashSet<>(stampsToExport);
+        stampsAggregatedCount.set(deduplicatedStampsToExport.size());
+        deduplicatedStampsToExport.forEach(nidConsumer::accept);
 
         return summarize();
     }

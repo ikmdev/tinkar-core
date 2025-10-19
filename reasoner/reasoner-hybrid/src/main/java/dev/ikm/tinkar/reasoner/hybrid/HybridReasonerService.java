@@ -15,22 +15,19 @@
  */
 package dev.ikm.tinkar.reasoner.hybrid;
 
-import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dev.ikm.elk.snomed.SnomedIds;
+import dev.ikm.elk.snomed.NecessaryNormalFormBuilder;
 import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology;
 import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology.SwecIds;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedReasonerService;
 import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -45,17 +42,13 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 		return TinkarTerm.ROOT_VERTEX.nid();
 	}
 
-	public static SwecIds getSwecNids() {
-		SwecIds swec_ids = new StatementSnomedOntology.SwecIds(getNid(StatementSnomedOntology.swec_id),
-				getNid(SnomedIds.root), getNid(StatementSnomedOntology.finding_context_id),
-				getNid(StatementSnomedOntology.known_absent_id));
-		return swec_ids;
-	}
+	private static final SwecIds swec_ids = StatementSnomedOntology.swec_nfh_sctids; // swec_sctids;
 
-	public static int getNid(long sctid) {
-		UUID uuid = UuidUtil.fromSNOMED("" + sctid);
-		int nid = PrimitiveData.nid(uuid);
-		return nid;
+	public static SwecIds getSwecNids() {
+		SwecIds swec_nids = new StatementSnomedOntology.SwecIds(ElkSnomedData.getNid(swec_ids.swec()),
+				ElkSnomedData.getNid(swec_ids.swec_parent()), ElkSnomedData.getNid(swec_ids.findingContext()),
+				ElkSnomedData.getNid(swec_ids.knownAbsent()));
+		return swec_nids;
 	}
 
 	@Override
@@ -69,7 +62,7 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 	public void loadData() throws Exception {
 		progressUpdater.updateProgress(0, data.getActiveConceptCount());
 		LOG.info("Create ontology");
-		ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(), List.of());
+		ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(), data.getConcreteRoleTypes());
 	};
 
 	@Override
@@ -86,9 +79,13 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 	@Override
 	public void processIncremental(DiTreeEntity definition, int conceptNid) {
 		throw new UnsupportedOperationException();
-//		Concept concept = builder.processIncremental(definition, conceptNid);
-//		reasoner.process(concept);
-//		reasoner.flush();
+	}
+
+	@Override
+	public void buildNecessaryNormalForm() {
+		nnfb = NecessaryNormalFormBuilder.create(sso.getOntology(), sso.getSuperConcepts(),
+				sso.getSuperRoleTypes(false), TinkarTerm.ROOT_VERTEX.nid());
+		nnfb.generate();
 	}
 
 	@Override

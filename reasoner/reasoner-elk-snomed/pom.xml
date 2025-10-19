@@ -5,10 +5,16 @@
 	<parent>
 		<groupId>dev.ikm.tinkar</groupId>
 		<artifactId>reasoner</artifactId>
-		<version>1.91.0-SNAPSHOT</version>
+		<version>1.119.0-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>reasoner-elk-snomed</artifactId>
+
+	<name>Reasoner Elk Snomed</name>
+
+	<properties>
+		<failsafeArgLine>--enable-preview -Xmx12G</failsafeArgLine>
+	</properties>
 
 	<dependencies>
 		<dependency>
@@ -50,86 +56,9 @@
 			<!-- TODO This should be test scoped, but the module system? -->
 			<!-- <scope>test</scope> -->
 		</dependency>
+		<dependency>
+			<groupId>dev.ikm.elk</groupId>
+			<artifactId>elk-snomed-test</artifactId>
+		</dependency>
 	</dependencies>
-
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>unpack-test-data</id>
-						<phase>pre-integration-test</phase>
-						<goals>
-							<goal>unpack</goal>
-						</goals>
-						<configuration>
-							<skip>${skipITs}</skip>
-							<artifactItems>
-								<artifactItem>
-									<groupId>${snomed-test-data.groupid}</groupId>
-									<artifactId>
-										snomed-test-data-intl-20240701</artifactId>
-									<version>${snomed-test-data.version}</version>
-									<type>zip</type>
-								</artifactItem>
-								<artifactItem>
-									<groupId>${snomed-test-data.groupid}</groupId>
-									<artifactId>
-										snomed-test-data-intl-20241001</artifactId>
-									<version>${snomed-test-data.version}</version>
-									<type>zip</type>
-								</artifactItem>
-								<artifactItem>
-									<groupId>${snomed-test-data.groupid}</groupId>
-									<artifactId>
-										snomed-test-data-us-20240901</artifactId>
-									<version>${snomed-test-data.version}</version>
-									<type>zip</type>
-								</artifactItem>
-							</artifactItems>
-							<outputDirectory>
-								${project.build.directory}/data</outputDirectory>
-						</configuration>
-					</execution>
-					<execution>
-						<id>unpack-test-db</id>
-						<phase>pre-integration-test</phase>
-						<goals>
-							<goal>unpack</goal>
-						</goals>
-						<configuration>
-							<skip>${skipITs}</skip>
-							<artifactItems>
-								<artifactItem>
-									<groupId>${reasoner-test-data.groupid}</groupId>
-									<artifactId>
-										tinkar-test-data-build-snomed-intl-20240701</artifactId>
-									<version>2025.03.01</version>
-									<type>zip</type>
-								</artifactItem>
-								<artifactItem>
-									<groupId>${reasoner-test-data.groupid}</groupId>
-									<artifactId>
-										tinkar-test-data-build-snomed-intl-20241001</artifactId>
-									<version>2025.03.01</version>
-									<type>zip</type>
-								</artifactItem>
-								<artifactItem>
-									<groupId>${reasoner-test-data.groupid}</groupId>
-									<artifactId>
-										tinkar-test-data-build-snomed-us-20240901</artifactId>
-									<version>2025.03.01</version>
-									<type>zip</type>
-								</artifactItem>
-							</artifactItems>
-							<outputDirectory>
-								${project.build.directory}/db</outputDirectory>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
 </project>

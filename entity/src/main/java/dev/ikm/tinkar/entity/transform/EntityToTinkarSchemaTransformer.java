@@ -19,6 +19,7 @@ import com.google.protobuf.ByteString;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.PublicIdList;
+import dev.ikm.tinkar.common.id.PublicIdSet;
 import dev.ikm.tinkar.common.id.VertexId;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.component.Component;
@@ -183,11 +184,18 @@ public class EntityToTinkarSchemaTransformer {
     }
 
     protected StampChronology createPBStampChronology(StampEntity<StampVersionRecord> stampEntity){
-        return StampChronology.newBuilder()
-                .setPublicId(createPBPublicId(stampEntity.publicId()))
-                .setFirstStampVersion(createPBStampVersion(stampEntity.versions().get(0)))
-                .build();
+        StampChronology.Builder stampBuilder = StampChronology.newBuilder()
+                .setPublicId(createPBPublicId(stampEntity.publicId()));
+        switch (stampEntity.versions().size()){
+            case 2: stampBuilder.setSecondStampVersion(createPBStampVersion(stampEntity.versions().get(1)));
+            case 1: stampBuilder.setFirstStampVersion(createPBStampVersion(stampEntity.versions().get(0)));
+                    break;
+            default: throw new RuntimeException("Unexpected number of version size: " + stampEntity.versions().size() +
+                    " for stamp entity: " + stampEntity.nid());
+        }
+        return stampBuilder.build();
     }
+
     // TODO: Check with Andrew, made this method return a singlar StampVersionRecord rather than a list
     protected StampVersion createPBStampVersion(StampVersionRecord stampVersionRecord){
         return StampVersion.newBuilder()
@@ -229,6 +237,7 @@ public class EntityToTinkarSchemaTransformer {
             case VertexId vertexUUID -> toVertexUUID(vertexUUID);
             case dev.ikm.tinkar.common.id.PublicId publicId -> toPBPublicId(publicId);
             case PublicIdList publicIdList -> toPBPublicIdList(publicIdList);
+            case PublicIdSet publicIdSet -> toPBPublicIdSet(publicIdSet);
             case DiTree diTree -> toPBDiTree(diTree);
             case DiGraph diGraph -> toPBDiGraph(diGraph);
             case Vertex vertex -> toVertex(vertex);
@@ -237,8 +246,9 @@ public class EntityToTinkarSchemaTransformer {
             //TODO: we do not have a create undirected graph method [Ask Andrew]
 //            case dev.ikm.tinkar.component.graph.Graph graph -> createGraph
             case IntIdList intIdList -> toPBPublicIdList(intIdList);
-            case IntIdSet intIdSet -> toPBPublicIdList(intIdSet);
+            case IntIdSet intIdSet -> toPBPublicIdSet(intIdSet);
             case BigDecimal bigDecimal -> toPBBigDecimal(bigDecimal);
+            case Long l -> toPBLong(l);
             case null, default -> throw new IllegalStateException("Unknown or null field object for: " + obj + ", " +obj.getClass());
         };
     }
@@ -265,6 +275,9 @@ public class EntityToTinkarSchemaTransformer {
     protected Field toPBPublicIdList(PublicIdList value) {
         return Field.newBuilder().setPublicIds(createPBPublicIdList(value)).build();
     }
+    protected Field toPBPublicIdSet(PublicIdSet value) {
+        return Field.newBuilder().setPublicIdset(createPBPublicIdSet(value)).build();
+    }
     protected Field toPBString(String value) {
         return Field.newBuilder().setStringValue(value).build();
     }
@@ -275,8 +288,8 @@ public class EntityToTinkarSchemaTransformer {
         //TODO: Figure out what are the Int ID's getting written
         return Field.newBuilder().setPublicIds(createPBPublicIdList(value)).build();
     }
-    protected Field toPBPublicIdList(IntIdSet value) {
-        return Field.newBuilder().setPublicIds(createPBPublicIdList(value)).build();
+    protected Field toPBPublicIdSet(IntIdSet value) {
+        return Field.newBuilder().setPublicIdset(createPBPublicIdSet(value)).build();
     }
     protected Field toPBDiTree(DiTree value) {
         return Field.newBuilder().setDiTree(createPBDiTree((DiTreeEntity) value)).build();
@@ -303,6 +316,10 @@ public class EntityToTinkarSchemaTransformer {
 
     protected Field toPBBigDecimal(BigDecimal value) {
         return Field.newBuilder().setBigDecimal(createPBBigDecimal(value)).build();
+    }
+
+    protected Field toPBLong(Long value) {
+        return Field.newBuilder().setLong(createPBLong(value)).build();
     }
 
     protected List<Field> createPBFields(ImmutableList<Object> objects){
@@ -341,6 +358,16 @@ public class EntityToTinkarSchemaTransformer {
                 .build();
     }
 
+    protected dev.ikm.tinkar.schema.PublicIdSet createPBPublicIdSet(PublicIdSet publicIdSet){
+        ArrayList<PublicId> pbPublicIds = new ArrayList<>();
+        for(dev.ikm.tinkar.common.id.PublicId publicId : publicIdSet.toIdArray()){
+            pbPublicIds.add(createPBPublicId(publicId));
+        }
+        return dev.ikm.tinkar.schema.PublicIdSet.newBuilder()
+                .addAllPublicIds(pbPublicIds)
+                .build();
+    }
+
     protected dev.ikm.tinkar.schema.PublicIdList createPBPublicIdList(IntIdList intIdList){
         List<PublicId> pbPublicIds = new ArrayList<>();
         intIdList.forEach(nid -> pbPublicIds.add(createPBPublicId(EntityService.get().getEntityFast(nid).publicId())));
@@ -349,10 +376,10 @@ public class EntityToTinkarSchemaTransformer {
                 .build();
     }
 
-    protected dev.ikm.tinkar.schema.PublicIdList createPBPublicIdList(IntIdSet intIdSet){
-        ArrayList<PublicId> pbPublicIds = new ArrayList<>();
+    protected dev.ikm.tinkar.schema.PublicIdSet createPBPublicIdSet(IntIdSet intIdSet){
+        List<PublicId> pbPublicIds = new ArrayList<>();
         intIdSet.forEach(nid -> pbPublicIds.add(createPBPublicId(EntityService.get().getEntityFast(nid).publicId())));
-        return dev.ikm.tinkar.schema.PublicIdList.newBuilder()
+        return dev.ikm.tinkar.schema.PublicIdSet.newBuilder()
                 .addAllPublicIds(pbPublicIds)
                 .build();
     }
@@ -451,7 +478,13 @@ public class EntityToTinkarSchemaTransformer {
         return dev.ikm.tinkar.schema.BigDecimal.newBuilder()
                 .setScale(bigDecimal.scale())
                 .setPrecision(bigDecimal.precision())
-                .setValue(bigDecimal.toPlainString())
+                .setValue(bigDecimal.unscaledValue().toString())
+                .build();
+    }
+
+    protected dev.ikm.tinkar.schema.Long createPBLong(Long value) {
+        return dev.ikm.tinkar.schema.Long.newBuilder()
+                .setValue(value)
                 .build();
     }
 }

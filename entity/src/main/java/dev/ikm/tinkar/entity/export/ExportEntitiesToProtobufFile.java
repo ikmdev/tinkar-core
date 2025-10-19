@@ -15,10 +15,15 @@
  */
 package dev.ikm.tinkar.entity.export;
 
+import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityCountSummary;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityVersion;
+import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.aggregator.DefaultEntityAggregator;
 import dev.ikm.tinkar.entity.aggregator.EntityAggregator;
 import dev.ikm.tinkar.entity.aggregator.MembershipEntityAggregator;
@@ -36,7 +41,12 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -53,12 +63,14 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
     private final EntityAggregator entityAggregator;
 
 
-    private ExportEntitiesToProtobufFile(File file, EntityAggregator entityAggregator) {
+    public ExportEntitiesToProtobufFile(File file, EntityAggregator entityAggregator) {
         super(false, true);
         this.protobufFile = file;
         LOG.info("Exporting entities to: " + file);
         this.entityAggregator = entityAggregator;
-        updateTitle("Full Export to Protobuf");
+        if (getTitle()==null || getTitle().isBlank()) {
+            updateTitle("Export to Protobuf");
+        }
     }
 
     public ExportEntitiesToProtobufFile(File file) {
@@ -134,6 +146,8 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             // Cleanup
             zos.finish();
         } catch (Throwable e) {
+            LOG.error("Caught " + e + " while Exporting Entities");
+            AlertStreams.dispatchToRoot(e);
             throw new RuntimeException(e);
         } finally {
             updateMessage("In " + durationString());

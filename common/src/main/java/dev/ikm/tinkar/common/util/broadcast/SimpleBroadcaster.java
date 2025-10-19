@@ -24,13 +24,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class SimpleBroadcaster<T> implements Broadcaster<T>, Subscriber<T>{
 
     private static final Logger LOG = LoggerFactory.getLogger(SimpleBroadcaster.class);
-    final CopyOnWriteArrayList<WeakReference<Subscriber<T>>> subscriberWeakReferenceList = new CopyOnWriteArrayList();
-
+    final CopyOnWriteArrayList<WeakReference<Subscriber<T>>> subscriberWeakReferenceList = new CopyOnWriteArrayList<>();
+    // TODO-aks8m: Address the issue of a race condition based on spawning threads that aren't blocking
     public void dispatch(T item) {
-        for (WeakReference<Subscriber<T>> subscriberWeakReference: subscriberWeakReferenceList) {
-            try  {
+        subscriberWeakReferenceList.forEach(subscriberWeakReference -> {
+            try {
                 Subscriber<T> subscriber = subscriberWeakReference.get();
-                if (subscriber == null) {
+                if (subscriber==null) {
                     subscriberWeakReferenceList.remove(subscriberWeakReference);
                 } else {
                     subscriber.onNext(item);
@@ -39,7 +39,7 @@ public class SimpleBroadcaster<T> implements Broadcaster<T>, Subscriber<T>{
                 LOG.error(t.getMessage(), t);
                 subscriberWeakReferenceList.remove(subscriberWeakReference);
             }
-        }
+        });
     }
 
     @Override

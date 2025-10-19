@@ -15,7 +15,16 @@
  */
 package dev.ikm.tinkar.ext.lang.owl;
 
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import dev.ikm.tinkar.common.service.CachingService;
+import dev.ikm.tinkar.common.service.DataServiceController;
+import dev.ikm.tinkar.common.service.DataUriOption;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.coordinate.Coordinates;
+import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
+import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
+import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculatorWithCache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -26,17 +35,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import dev.ikm.tinkar.common.service.CachingService;
-import dev.ikm.tinkar.common.service.DataServiceController;
-import dev.ikm.tinkar.common.service.DataUriOption;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.coordinate.Coordinates;
-import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
-import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculatorWithCache;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public abstract class PrimitiveDataTestUtil {
 

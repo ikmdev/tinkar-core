@@ -16,10 +16,13 @@
 
 package dev.ikm.tinkar.provider.search;
 
-import dev.ikm.tinkar.common.util.time.Stopwatch;
+import dev.ikm.tinkar.common.service.TinkExecutor;
+import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculator;
+import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.LatestVersionSearchResult;
-import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.entity.SemanticEntityVersion;
+import dev.ikm.tinkar.terms.EntityFacade;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.search.spell.LuceneDictionary;
 import org.apache.lucene.search.suggest.Lookup;
@@ -33,6 +36,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 public class TypeAheadSearch {
@@ -47,6 +51,11 @@ public class TypeAheadSearch {
     public static synchronized TypeAheadSearch get() {
         if (typeAheadSearch == null) {
             typeAheadSearch = new TypeAheadSearch();
+            try {
+                typeAheadSearch.buildSuggester();
+            } catch (IOException e) {
+                LOG.error("Caught Exception building suggester for TypeAheadSearch {}", e.getMessage());
+            }
         }
         return typeAheadSearch;
     }
@@ -54,13 +63,8 @@ public class TypeAheadSearch {
     private TypeAheadSearch() {
     }
 
-    public void buildSuggester() throws IOException {
-        Stopwatch stopwatch = new Stopwatch();
-        reader = DirectoryReader.open(Indexer.indexWriter());
-        LuceneDictionary dict = new LuceneDictionary(reader, TEXT_FIELD_NAME);
-        suggester = new AnalyzingSuggester(Indexer.indexDirectory(), "suggest", Indexer.analyzer());
-        suggester.build(dict);
-        LOG.debug("TypeAheadSearch index build duration: {}", stopwatch.durationString());
+    public Future<Void> buildSuggester() throws IOException {
+        return TinkExecutor.threadPool().submit(new BuildSuggester());
     }
 
     public void close() {
@@ -84,9 +88,9 @@ public class TypeAheadSearch {
      *
      * @param   userInput String userInput
      * @param   maxResults int maxResults
-     * @return  List of ConceptFacades
+     * @return  List of EntityFacades
      */
-    public List<ConceptFacade> typeAheadSuggestions(String userInput, int maxResults) {
+    public List<EntityFacade> typeAheadSuggestions(String userInput, int maxResults) {
         return typeAheadSuggestions(Searcher.defaultNavigationCalculator(), userInput, maxResults);
     }
 
@@ -96,34 +100,73 @@ public class TypeAheadSearch {
      * @param   navCalc NavigationCalculator navCalc
      * @param   userInput String userInput
      * @param   maxResults int maxResults
-     * @return  List of ConceptFacades
+     * @return  List of EntityFacades
      */
-    public List<ConceptFacade> typeAheadSuggestions(NavigationCalculator navCalc, String userInput, int maxResults) {
+    public List<EntityFacade> typeAheadSuggestions(NavigationCalculator navCalc, String userInput, int maxResults) {
+        List<EntityFacade> entityList = searchInput(navCalc, userInput, maxResults);
 
-        List<String> suggestions = null;
+        if (entityList.isEmpty() && !userInput.endsWith("*")) {
+            // Attempt the same search with wildcard as the built-in search can miss with too few characters
+            entityList = searchInput(navCalc, userInput + "*", maxResults);
+        }
+        return entityList;
+    }
+
+    private List<EntityFacade> searchInput(NavigationCalculator navCalc, String userInput, int maxResults) {
+        List<EntityFacade> entityList = new ArrayList<>();
         try {
-            suggestions = suggest(userInput, maxResults);
-        } catch (IOException e) {
+            ImmutableList<LatestVersionSearchResult> results = navCalc.search(userInput, Math.max(maxResults, 40));
+            for (LatestVersionSearchResult r : results) {
+                Latest<SemanticEntityVersion> latest = r.latestVersion();
+                if (latest.isPresent() && !entityList.contains(latest.get().referencedComponent())) {
+                    entityList.add(latest.get().referencedComponent());
+                    if (entityList.size() == maxResults) {
+                        break;
+                    }
+                }
+            }
+        } catch (Exception e) {
             LOG.error("Encountered exception {}", e.getMessage());
-            return Collections.emptyList();
+        }
+        return entityList;
+    }
+
+    private class BuildSuggester extends TrackingCallable<Void> {
+
+        public BuildSuggester() {
+            super(false, true);
+            LOG.info("Building Type Ahead Suggester");
+            updateTitle("Building Type Ahead Suggester");
         }
 
-        List<ConceptFacade> conceptList = new ArrayList<>();
-        suggestions.forEach((suggestion) -> {
-            try {
-                ImmutableList<LatestVersionSearchResult> results = navCalc.search(suggestion, 1);
-                results.forEach(latestVersionSearchResult -> {
-                    latestVersionSearchResult.latestVersion().ifPresent(semanticEntityVersion -> {
-                        if (semanticEntityVersion.referencedComponent() instanceof ConceptFacade conceptFacade) {
-                            conceptList.add(conceptFacade);
-                        }
-                    });
-                });
-            } catch (Exception e) {
-                LOG.error("Encountered exception {}", e.getMessage());
+        /**
+         * Executes the process of building the "Type Ahead" Search Suggester.
+         * The method manages progress tracking, lifecycle events, and logs the overall process duration.
+         *
+         * @return Returns {@code null} upon completion of the index rebuilding process.
+         * @throws Exception if an error occurs during the "Type Ahead" Search Suggestion building phase.
+         */
+        @Override
+        protected Void compute() throws IOException {
+            if (!Indexer.indexWriter().isOpen()) {
+                LOG.info("IndexWriter is already closed. Cannot build TypeAheadSearch suggester");
+                return null;
             }
+            LOG.info("Build Type Ahead Suggester started");
+            updateMessage("Building Type Ahead Suggester...");
+            updateProgress(-1, 1);
 
-        });
-        return conceptList;
+            reader = DirectoryReader.open(Indexer.indexWriter());
+            LuceneDictionary dict = new LuceneDictionary(reader, TEXT_FIELD_NAME);
+            AnalyzingSuggester analyzingSuggester = new AnalyzingSuggester(Indexer.indexDirectory(), "suggest", Indexer.analyzer());
+            analyzingSuggester.build(dict);
+            suggester = analyzingSuggester;
+
+            updateProgress(1, 1);
+
+            LOG.info("Type Ahead Suggester build completed. Total duration:  {}", this.durationString());
+            updateMessage("Build time: " + this.durationString());
+            return null;
+        }
     }
 }

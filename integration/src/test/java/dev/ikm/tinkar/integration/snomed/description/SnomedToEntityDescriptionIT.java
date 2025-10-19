@@ -16,9 +16,22 @@
 package dev.ikm.tinkar.integration.snomed.description;
 
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.RecordListBuilder;
+import dev.ikm.tinkar.entity.SemanticRecord;
+import dev.ikm.tinkar.entity.SemanticVersionRecord;
+import dev.ikm.tinkar.entity.StampRecord;
+import dev.ikm.tinkar.entity.StampRecordBuilder;
+import dev.ikm.tinkar.entity.StampVersionRecord;
+import dev.ikm.tinkar.entity.StampVersionRecordBuilder;
 import dev.ikm.tinkar.integration.snomed.core.MockEntity;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestMethodOrder;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -29,10 +42,24 @@ import java.util.List;
 import java.util.UUID;
 
 import static dev.ikm.tinkar.integration.snomed.core.MockDataType.ENTITYREF;
-import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.*;
+import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.ACTIVE;
+import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.DESCRIPTION_PATTERN;
+import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.DEVELOPMENT_PATH;
+import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.ENGLISH_LANGUAGE;
+import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.INACTIVE;
+import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.SNOMED_CT_AUTHOR;
+import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.SNOMED_CT_NAMESPACE;
+import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.SNOMED_TEXT_MODULE_ID;
+import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.loadSnomedFile;
 import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterDataHelper.openSession;
-import static dev.ikm.tinkar.integration.snomed.description.SnomedToEntityDescription.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static dev.ikm.tinkar.integration.snomed.description.SnomedToEntityDescription.CASE_SIGNIFICANCE_ID_INDEX;
+import static dev.ikm.tinkar.integration.snomed.description.SnomedToEntityDescription.CONCEPT_ID_INDEX;
+import static dev.ikm.tinkar.integration.snomed.description.SnomedToEntityDescription.ID_INDEX;
+import static dev.ikm.tinkar.integration.snomed.description.SnomedToEntityDescription.TERM_INDEX;
+import static dev.ikm.tinkar.integration.snomed.description.SnomedToEntityDescription.TYPE_ID_INDEX;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Disabled("Stale")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

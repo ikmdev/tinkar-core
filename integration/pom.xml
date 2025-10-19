@@ -5,7 +5,7 @@
     <parent>
         <groupId>dev.ikm.tinkar</groupId>
         <artifactId>tinkar-core</artifactId>
-        <version>1.91.0-SNAPSHOT</version>
+        <version>1.119.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>integration</artifactId>
@@ -16,7 +16,7 @@
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <skip.unit.tests>false</skip.unit.tests>
         <skip.integration.tests>false</skip.integration.tests>
-        <tinkar-composer.version>1.4.0</tinkar-composer.version>
+        <tinkar-composer.version>1.8.0</tinkar-composer.version>
     </properties>
 
     <dependencyManagement>
@@ -29,6 +29,11 @@
             <dependency>
                 <groupId>dev.ikm.tinkar.ext.binding</groupId>
                 <artifactId>binding-extension</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>changeset-writer-provider</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -66,7 +71,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>composer</artifactId>
-
         </dependency>
 
         <dependency>
@@ -149,6 +153,11 @@
             <artifactId>reasoner-hybrid</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>dev.ikm.tinkar</groupId>
+            <artifactId>changeset-writer-provider</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <profiles>
@@ -176,19 +185,29 @@
                         <configuration>
                             <artifactItems>
                                 <artifactItem>
-                                    <groupId>dev.ikm.tinkar.data</groupId>
+                                    <groupId>dev.ikm.data.tinkar</groupId>
                                     <artifactId>tinkar-starter-data</artifactId>
                                     <version>${tinkar-starter-data.version}</version>
-                                    <classifier>pb</classifier>
+                                    <classifier>reasoned-pb</classifier>
+                                    <type>zip</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${project.build.directory}/data</outputDirectory>
+                                </artifactItem>
+                                
+                                <artifactItem>
+                                    <groupId>dev.ikm.data.tinkar</groupId>
+                                    <artifactId>tinkar-starter-data</artifactId>
+                                    <version>${tinkar-starter-data.version}</version>
+                                    <classifier>unreasoned-pb</classifier>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${project.build.directory}/data</outputDirectory>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>dev.ikm.tinkar.data</groupId>
-                                    <artifactId>tinkar-starter-data-reasoned</artifactId>
-                                    <version>${tinkar-starter-data.version}</version>
-                                    <classifier>pb</classifier>
+                                    <groupId>dev.ikm.data.tinkar</groupId>
+                                    <artifactId>tinkar-example-data</artifactId>
+                                    <version>${tinkar-example-data.version}</version>
+                                    <classifier>reasoned-pb</classifier>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${project.build.directory}/data</outputDirectory>
@@ -198,6 +217,29 @@
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>true</overWriteSnapshots>
                         </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>rename-file</id>
+                                <phase>process-test-resources</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <move file="${project.build.directory}/data/tinkar-starter-data-${tinkar-starter-data.version}-unreasoned-pb.zip"
+                                              tofile="${project.build.directory}/data/tinkar-starter-data-unreasoned-pb.zip" />
+                                        <move file="${project.build.directory}/data/tinkar-starter-data-${tinkar-starter-data.version}-reasoned-pb.zip"
+                                              tofile="${project.build.directory}/data/tinkar-starter-data-reasoned-pb.zip" />
+                                        <move file="${project.build.directory}/data/tinkar-example-data-${tinkar-example-data.version}-reasoned-pb.zip"
+                                              tofile="${project.build.directory}/data/tinkar-example-data-reasoned-pb.zip" />
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>

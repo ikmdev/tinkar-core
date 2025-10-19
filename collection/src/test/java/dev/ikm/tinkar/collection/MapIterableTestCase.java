@@ -15,9 +15,6 @@
  */
 package dev.ikm.tinkar.collection;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.eclipse.collections.api.BooleanIterable;
 import org.eclipse.collections.api.ByteIterable;
 import org.eclipse.collections.api.CharIterable;
@@ -80,7 +77,13 @@ import org.eclipse.collections.impl.tuple.Tuples;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import static org.eclipse.collections.impl.factory.Iterables.iBag;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.eclipse.collections.impl.factory.Iterables.iSet;
 
 public abstract class MapIterableTestCase

@@ -15,9 +15,14 @@
  */
 package dev.ikm.tinkar.integration;
 
+import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.service.*;
+import dev.ikm.tinkar.common.service.CachingService;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.ServiceKeys;
+import dev.ikm.tinkar.common.service.ServiceProperties;
+import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.component.graph.DiTree;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
@@ -25,7 +30,17 @@ import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.ConceptEntity;
+import dev.ikm.tinkar.entity.ConceptEntityVersion;
+import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.FieldDefinitionForEntity;
+import dev.ikm.tinkar.entity.PatternEntity;
+import dev.ikm.tinkar.entity.PatternEntityVersion;
+import dev.ikm.tinkar.entity.SemanticEntity;
+import dev.ikm.tinkar.entity.SemanticEntityVersion;
+import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.StampEntityVersion;
 import dev.ikm.tinkar.terms.ConceptToDataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -177,6 +192,12 @@ public class DataIntegrity {
                         isNullReferences.get();
                 } else if (fieldVal instanceof IntIdSet nidSet) {
                     nidSet.forEach((nid) -> {
+                        if (referencedEntityIsNull(nid)) {
+                            isNullReferences.set(true);
+                        }
+                    });
+                } else if (fieldVal instanceof IntIdList nidList) {
+                    nidList.forEach((nid) -> {
                         if (referencedEntityIsNull(nid)) {
                             isNullReferences.set(true);
                         }

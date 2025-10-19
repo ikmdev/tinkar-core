@@ -16,13 +16,17 @@
 package dev.ikm.tinkar.integration.snomed.relationship;
 
 import dev.ikm.tinkar.entity.StampRecord;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
-import java.io.IOException;
 import java.util.List;
 
 import static dev.ikm.tinkar.integration.snomed.core.MockEntity.getNid;
-import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.*;
+import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.ACTIVE_UUID;
+import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.DEVELOPMENT_PATH_UUID;
+import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.SNOMED_CT_AUTHOR_UUID;
+import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.SNOMED_TEXT_MODULE_ID_UUID;
 import static dev.ikm.tinkar.integration.snomed.core.SnomedCTHelper.openSession;
 import static dev.ikm.tinkar.integration.snomed.core.SnomedCTStampChronology.createSTAMPChronologyForAllRecords;
 import static org.junit.jupiter.api.Assertions.assertEquals;

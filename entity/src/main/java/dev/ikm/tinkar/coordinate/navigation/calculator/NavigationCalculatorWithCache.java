@@ -15,7 +15,13 @@
  */
 package dev.ikm.tinkar.coordinate.navigation.calculator;
 
-import com.google.auto.service.AutoService;
+import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
+import dev.ikm.tinkar.common.id.IntIdCollection;
+import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.service.CachingService;
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculator;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculatorWithCache;
@@ -26,22 +32,16 @@ import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import dev.ikm.tinkar.coordinate.view.VertexSortNaturalOrder;
+import dev.ikm.tinkar.entity.PatternEntityVersion;
+import dev.ikm.tinkar.entity.SemanticEntityVersion;
+import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
-import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
-import dev.ikm.tinkar.common.id.IntIds;
-import dev.ikm.tinkar.common.service.CachingService;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.entity.PatternEntityVersion;
-import dev.ikm.tinkar.entity.SemanticEntityVersion;
-import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -271,7 +271,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
                         Latest<SemanticEntityVersion> latestNavigationSemantic = stampCalculator().latest(semantics[0]);
                         latestNavigationSemantic.ifPresent(semanticEntityVersion -> {
                             SemanticEntityVersion navigationSemantic = latestNavigationSemantic.get();
-                            IntIdSet intIdSet = (IntIdSet) navigationSemantic.fieldValues().get(indexForMeaning);
+                            IntIdCollection intIdSet = (IntIdCollection) navigationSemantic.fieldValues().get(indexForMeaning);
                             // Filter here by allowed vertex state...
                             if (versioned && states != StateSet.ACTIVE_INACTIVE_AND_WITHDRAWN) {
                                 intIdSet.forEach(nid ->
@@ -292,7 +292,6 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         return stampCalculator;
     }
 
-    @AutoService(CachingService.class)
     public static class CacheProvider implements CachingService {
         // TODO: this has implicit assumption that no one will hold on to a calculator... Should we be defensive?
         @Override
@@ -301,7 +300,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         }
     }
 
-    private static record StampLangNavRecord(StampCoordinateRecord stampFilter,
+    private record StampLangNavRecord(StampCoordinateRecord stampFilter,
                                              ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
                                              NavigationCoordinateRecord navigationCoordinate) {
     }

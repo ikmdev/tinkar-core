@@ -19,9 +19,23 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.VertexId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
-import dev.ikm.tinkar.component.*;
+import dev.ikm.tinkar.component.Concept;
+import dev.ikm.tinkar.component.FieldDataType;
+import dev.ikm.tinkar.component.Pattern;
+import dev.ikm.tinkar.component.Semantic;
+import dev.ikm.tinkar.component.Stamp;
 import dev.ikm.tinkar.component.graph.Vertex;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.ConceptEntity;
+import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityRecordFactory;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.RecordListBuilder;
+import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.StampEntityVersion;
+import dev.ikm.tinkar.entity.StampRecord;
+import dev.ikm.tinkar.entity.StampRecordBuilder;
+import dev.ikm.tinkar.entity.StampVersionRecord;
+import dev.ikm.tinkar.entity.StampVersionRecordBuilder;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
@@ -379,7 +393,7 @@ public class EntityVertex implements Vertex, VertexId {
 
     @Override
     public Concept meaning() {
-        return EntityService.get().getEntityFast(meaningNid);
+        return EntityProxy.Concept.make(meaningNid);
     }
 
     @Override

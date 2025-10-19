@@ -20,7 +20,16 @@
  */
 
 import dev.ikm.tinkar.common.alert.AlertReportingService;
-import dev.ikm.tinkar.common.service.*;
+import dev.ikm.tinkar.common.service.CachingService;
+import dev.ikm.tinkar.common.service.DataServiceController;
+import dev.ikm.tinkar.common.service.DefaultDescriptionForNidService;
+import dev.ikm.tinkar.common.service.ExecutorController;
+import dev.ikm.tinkar.common.service.PluginServiceLoader;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.PrimitiveDataService;
+import dev.ikm.tinkar.common.service.PublicIdService;
+import dev.ikm.tinkar.common.service.ServiceProperties;
+import dev.ikm.tinkar.common.service.TinkExecutor;
 
 @SuppressWarnings("module")
         // 7 in HL7 is not a version reference
@@ -30,10 +39,9 @@ module dev.ikm.tinkar.common {
     requires dev.ikm.jpms.activej.common;
     requires dev.ikm.jpms.eclipse.collections;
     requires dev.ikm.jpms.eclipse.collections.api;
-    requires dev.ikm.jpms.roaringbitmap;
     requires org.slf4j;
-    requires static dev.ikm.jpms.auto.service;
 
+    requires roaringbitmap;
 
     exports dev.ikm.tinkar.common.alert;
     exports dev.ikm.tinkar.common.binary;
