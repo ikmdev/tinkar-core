@@ -55,7 +55,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
-        });
+        }, TinkExecutor.ioThreadPool());
     }
 
     default CompletableFuture<EntityCountSummary> temporalExport(File file, long fromEpoch, long toEpoch) {
@@ -65,7 +65,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
-        });
+        }, TinkExecutor.ioThreadPool());
     }
 
     default CompletableFuture<EntityCountSummary> membershipExport(File file, List<PublicId> membershipTags) {
@@ -75,7 +75,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
-        });
+        }, TinkExecutor.ioThreadPool());
     }
 
     default CompletableFuture<EntityCountSummary> loadData(File file) {
@@ -85,7 +85,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
-        });
+        }, TinkExecutor.ioThreadPool());
     }
 
     @Override

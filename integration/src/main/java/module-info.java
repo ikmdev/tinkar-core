@@ -25,10 +25,11 @@ open module dev.ikm.tinkar.integration {
     requires dev.ikm.tinkar.entity;
     requires dev.ikm.tinkar.provider.entity;
     requires dev.ikm.tinkar.terms;
-    requires dev.ikm.tinkar.coordinate;
     requires dev.ikm.jpms.protobuf;
     requires org.slf4j;
-    requires dev.ikm.jpms.eclipse.collections.api;
+    requires org.eclipse.collections.api;
+    requires org.eclipse.collections.impl;
+    requires dev.ikm.tinkar.provider.search;
 
     uses DataServiceController;
     uses DefaultDescriptionForNidService;

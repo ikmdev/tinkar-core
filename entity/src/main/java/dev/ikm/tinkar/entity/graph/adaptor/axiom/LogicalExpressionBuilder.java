@@ -232,6 +232,41 @@ public class LogicalExpressionBuilder {
         return new LogicalAxiomAdaptor.DataPropertySetAdaptor(logicalExpression, propertySet.vertexIndex());
     }
 
+	public LogicalAxiom.LogicalSet.IntervalPropertySet IntervalPropertySet(LogicalAxiom.Atom... elements) {
+		return IntervalPropertySet(generateRandomUuid(), elements);
+	}
+
+	public LogicalAxiom.LogicalSet.IntervalPropertySet IntervalPropertySet(UUID vertexUuid,
+			LogicalAxiom.Atom... elements) {
+		EntityVertex propertySet = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.INTERVAL_PROPERTY_SET.nid);
+		builder.addVertex(propertySet);
+		builder.addEdge(propertySet.vertexIndex(), rootIndex);
+		for (LogicalAxiom.Atom element : elements) {
+			builder.addEdge(element.vertexIndex(), propertySet.vertexIndex());
+		}
+		return new LogicalAxiomAdaptor.IntervalPropertySetAdaptor(logicalExpression, propertySet.vertexIndex());
+	}
+
+	public LogicalAxiom.Atom.TypedAtom.IntervalRole IntervalRole(ConceptFacade intervalRoleType, int lowerBound,
+			boolean lowerOpen, int upperBound, boolean upperOpen, ConceptFacade units) {
+		return IntervalRole(generateRandomUuid(), intervalRoleType, lowerBound, lowerOpen, upperBound, upperOpen,
+				units);
+	}
+
+	public LogicalAxiom.Atom.TypedAtom.IntervalRole IntervalRole(UUID vertexUuid, ConceptFacade intervalRoleType,
+			int lowerBound, boolean lowerOpen, int upperBound, boolean upperOpen, ConceptFacade units) {
+		EntityVertex intervalRole = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.INTERVAL_ROLE.nid);
+		builder.addVertex(intervalRole);
+		intervalRole.putUncommittedProperty(TinkarTerm.INTERVAL_ROLE_TYPE.nid(), intervalRoleType);
+		intervalRole.putUncommittedProperty(TinkarTerm.INTERVAL_LOWER_BOUND.nid(), lowerBound);
+		intervalRole.putUncommittedProperty(TinkarTerm.LOWER_BOUND_OPEN.nid(), lowerOpen);
+		intervalRole.putUncommittedProperty(TinkarTerm.INTERVAL_UPPER_BOUND.nid(), upperBound);
+		intervalRole.putUncommittedProperty(TinkarTerm.UPPER_BOUND_OPEN.nid(), upperOpen);
+		intervalRole.putUncommittedProperty(TinkarTerm.UNIT_OF_MEASURE.nid(), units);
+		intervalRole.commitProperties();
+		return new LogicalAxiomAdaptor.IntervalRoleAxiomAdaptor(logicalExpression, intervalRole.vertexIndex());
+	}
+
     public LogicalAxiom.Atom.Connective.And And(UUID vertexUuid, ImmutableList<? extends LogicalAxiom.Atom> atoms) {
         EntityVertex and = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.AND.nid);
         builder.addVertex(and);
@@ -537,6 +572,49 @@ public class LogicalExpressionBuilder {
         roleVertex.putUncommittedProperty(TinkarTerm.ROLE_TYPE.nid(), EntityProxy.Concept.make(conceptToChangeTo));
         roleVertex.commitProperties();
     }
+    
+	/**
+	 * Updates the interval role type of the specified interval role axiom.
+	 *
+	 * @param intervalRoleAxiom The logical axiom representing the role whose type
+	 *                          is to be updated.
+	 * @param conceptToChangeTo The new concept to which the role type will be
+	 *                          updated.
+	 */
+	public void updateIntervalRoleType(LogicalAxiom.Atom.TypedAtom.IntervalRole intervalRoleAxiom,
+			ConceptFacade conceptToChangeTo) {
+		EntityVertex roleVertex = this.builder.vertex(intervalRoleAxiom.vertexIndex());
+		roleVertex.putUncommittedProperty(TinkarTerm.INTERVAL_ROLE_TYPE.nid(),
+				EntityProxy.Concept.make(conceptToChangeTo));
+		roleVertex.commitProperties();
+	}
+
+	/**
+	 * Updates the interval role unit of measure of the specified interval role
+	 * axiom.
+	 *
+	 * @param intervalRoleAxiom The logical axiom representing the role whose type
+	 *                          is to be updated.
+	 * @param conceptToChangeTo The new concept to which the role type will be
+	 *                          updated.
+	 */
+	public void updateIntervalRoleUnitOfMeasure(LogicalAxiom.Atom.TypedAtom.IntervalRole intervalRoleAxiom,
+			ConceptFacade conceptToChangeTo) {
+		EntityVertex roleVertex = this.builder.vertex(intervalRoleAxiom.vertexIndex());
+		roleVertex.putUncommittedProperty(TinkarTerm.UNIT_OF_MEASURE.nid(),
+				EntityProxy.Concept.make(conceptToChangeTo));
+		roleVertex.commitProperties();
+	}
+
+	public void updateIntervalRoleValue(LogicalAxiom.Atom.TypedAtom.IntervalRole intervalRoleAxiom, int lowerBound,
+			boolean lowerOpen, int upperBound, boolean upperOpen) {
+		EntityVertex roleVertex = this.builder.vertex(intervalRoleAxiom.vertexIndex());
+		roleVertex.putUncommittedProperty(TinkarTerm.INTERVAL_LOWER_BOUND.nid(), lowerBound);
+		roleVertex.putUncommittedProperty(TinkarTerm.LOWER_BOUND_OPEN.nid(), lowerOpen);
+		roleVertex.putUncommittedProperty(TinkarTerm.INTERVAL_UPPER_BOUND.nid(), upperBound);
+		roleVertex.putUncommittedProperty(TinkarTerm.UPPER_BOUND_OPEN.nid(), upperOpen);
+		roleVertex.commitProperties();
+	}
 
     /**
      * Updates the type of the specified feature axiom to a new type.

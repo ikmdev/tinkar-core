@@ -228,6 +228,4 @@ public interface Entity<V extends EntityVersion>
         return IntLists.immutable.of(versions().stream()
                 .filter(v -> v.uncommitted()).mapToInt(v -> v.stampNid()).toArray());
     }
-
-
 }

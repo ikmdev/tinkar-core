@@ -15,18 +15,19 @@
  * limitations under the License.
  */
 import dev.ikm.tinkar.reasoner.hybrid.HybridReasonerService;
+import dev.ikm.tinkar.reasoner.hybrid.IntervalReasonerService;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
 
 module dev.ikm.tinkar.reasoner.hybrid {
-	requires dev.ikm.jpms.eclipse.collections;
-	requires dev.ikm.jpms.eclipse.collections.api;
+	requires org.eclipse.collections.api;
+	requires org.eclipse.collections.impl;
 	requires org.slf4j;
 
 	requires dev.ikm.tinkar.collection;
-	requires dev.ikm.tinkar.coordinate;
 	requires dev.ikm.tinkar.entity;
 
 	requires dev.ikm.elk.snomed;
+	requires dev.ikm.elk.snomed.test;
 
 	requires dev.ikm.reasoner.hybrid.snomed;
 
@@ -36,6 +37,6 @@ module dev.ikm.tinkar.reasoner.hybrid {
 
 	exports dev.ikm.tinkar.reasoner.hybrid;
 
-	provides ReasonerService with HybridReasonerService;
+	provides ReasonerService with HybridReasonerService, IntervalReasonerService;
 
 }

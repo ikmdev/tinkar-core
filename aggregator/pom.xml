@@ -5,7 +5,6 @@
     <parent>
         <groupId>dev.ikm.tinkar</groupId>
         <artifactId>tinkar-core</artifactId>
-        <version>1.119.0-kl-merge-SNAPSHOT</version>
     </parent>
 
     <artifactId>aggregator</artifactId>
@@ -27,11 +26,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>component</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>coordinate</artifactId>
         </dependency>
 
         <dependency>

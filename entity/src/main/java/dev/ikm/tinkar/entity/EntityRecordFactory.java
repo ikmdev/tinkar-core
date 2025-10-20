@@ -43,12 +43,7 @@ import dev.ikm.tinkar.component.location.PlanarPoint;
 import dev.ikm.tinkar.component.location.SpatialPoint;
 import dev.ikm.tinkar.entity.graph.DiGraphEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
-import dev.ikm.tinkar.terms.ComponentWithNid;
-import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.EntityFacade;
-import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.SemanticFacade;
+import dev.ikm.tinkar.terms.*;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.factory.Lists;
@@ -66,6 +61,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 import static dev.ikm.tinkar.component.FieldDataType.COMPONENT_ID_LIST;
 import static dev.ikm.tinkar.component.FieldDataType.SEMANTIC_CHRONOLOGY;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -627,11 +623,14 @@ public class EntityRecordFactory {
             case PlanarPoint planarPointField -> planarPointField;
             case SpatialPoint spatialPointField -> spatialPointField;
             case BigDecimal bigDecimalField -> bigDecimalField;
+            case IntIdSet intIdSet -> intIdSet;
+            case IntIdList intIdList -> intIdList;
             // conversions
             case Concept conceptField -> EntityProxy.Concept.make(Entity.nid(conceptField));
             case Semantic semanticField -> EntityProxy.Semantic.make(Entity.nid(semanticField));
             case Pattern patternField -> EntityProxy.Pattern.make(Entity.nid(patternField));
             case Component componentField -> EntityProxy.make(Entity.nid(componentField));
+            case PublicId publicId -> EntityProxy.make(Entity.nid(publicId));
             case DiTree diTreeField -> DiTreeEntity.make(diTreeField);
             case DiGraph diGraphField -> DiGraphEntity.make(diGraphField);
             case PublicIdSet publicIdSetField -> {

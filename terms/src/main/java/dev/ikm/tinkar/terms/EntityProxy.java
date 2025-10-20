@@ -29,6 +29,8 @@ import java.util.Arrays;
 import java.util.UUID;
 import java.util.function.LongConsumer;
 
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
+
 public class EntityProxy implements EntityFacade, PublicId {
     private static final Logger log = LoggerFactory.getLogger(EntityProxy.class);
     /**
@@ -136,7 +138,12 @@ public class EntityProxy implements EntityFacade, PublicId {
             if (uuids == null) {
                 throw new IllegalStateException("Nid and UUIDs not initialized");
             }
-            cachedNid = PrimitiveData.get().nidForUuids(uuids);
+            if (this instanceof EntityProxy.Concept) {
+                ScopedValue.where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern().publicId()).run(() ->
+                        cachedNid = PrimitiveData.nid(this.publicId()));
+            } else {
+                cachedNid = PrimitiveData.get().nidForUuids(uuids);
+            }
         }
         return cachedNid;
     }

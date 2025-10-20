@@ -18,12 +18,15 @@ package dev.ikm.tinkar.entity;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
+import dev.ikm.tinkar.terms.EntityBinding;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.list.ImmutableList;
 
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
+
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 
 @RecordBuilder
 public record ConceptRecord(
@@ -42,10 +45,14 @@ public record ConceptRecord(
 
     public static ConceptRecord build(UUID conceptUuid, StampEntityVersion stampVersion) {
         RecordListBuilder<ConceptVersionRecord> versionRecords = RecordListBuilder.make();
+        int conceptNid = ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern().publicId())
+                .call(() -> PrimitiveData.nid(conceptUuid));
+
         ConceptRecord conceptRecord = ConceptRecordBuilder.builder()
                 .leastSignificantBits(conceptUuid.getLeastSignificantBits())
                 .mostSignificantBits(conceptUuid.getMostSignificantBits())
-                .nid(PrimitiveData.nid(conceptUuid))
+                .nid(conceptNid)
                 .versions(versionRecords).build();
         versionRecords.addAndBuild(new ConceptVersionRecord(conceptRecord, stampVersion.stampNid()));
         return conceptRecord;

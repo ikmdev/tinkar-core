@@ -17,13 +17,19 @@
 import dev.ikm.tinkar.reasoner.elkowl.ElkOwlReasonerService;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
 
+/**
+ * @deprecated
+ * No longer maintained.
+ * 
+ * Use dev.ikm.tinkar.reasoner.elksnomed
+ */
+@Deprecated
 module dev.ikm.tinkar.reasoner.elkowl {
-	requires dev.ikm.jpms.eclipse.collections;
-	requires dev.ikm.jpms.eclipse.collections.api;
+    requires org.eclipse.collections.api;
+    requires org.eclipse.collections.impl;
 	requires org.slf4j;
 
 	requires dev.ikm.tinkar.collection;
-	requires dev.ikm.tinkar.coordinate;
 	requires dev.ikm.tinkar.entity;
 
 	requires org.semanticweb.owlapi;

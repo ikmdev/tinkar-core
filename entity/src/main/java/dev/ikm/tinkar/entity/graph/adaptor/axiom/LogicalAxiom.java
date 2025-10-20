@@ -103,6 +103,16 @@ public sealed interface LogicalAxiom permits LogicalAxiom.Atom, LogicalAxiom.Def
                 }
 
             }
+            
+            sealed interface IntervalRole extends TypedAtom permits LogicalAxiomAdaptor.IntervalRoleAxiomAdaptor {
+
+                String interval();
+
+                default LogicalAxiomSemantic axiomSemantic() {
+                    return LogicalAxiomSemantic.INTERVAL_ROLE;
+                }
+
+            }
 
             sealed interface Feature extends TypedAtom permits LogicalAxiomAdaptor.FeatureAxiomAdaptor {
 
@@ -156,6 +166,13 @@ public sealed interface LogicalAxiom permits LogicalAxiom.Atom, LogicalAxiom.Def
         sealed interface DataPropertySet extends LogicalSet permits LogicalAxiomAdaptor.DataPropertySetAdaptor {
             default LogicalAxiomSemantic axiomSemantic() {
                 return LogicalAxiomSemantic.DATA_PROPERTY_SET;
+            }
+        }
+
+        
+        sealed interface IntervalPropertySet extends LogicalSet permits LogicalAxiomAdaptor.IntervalPropertySetAdaptor {
+            default LogicalAxiomSemantic axiomSemantic() {
+                return LogicalAxiomSemantic.INTERVAL_PROPERTY_SET;
             }
         }
 

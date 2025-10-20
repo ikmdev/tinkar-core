@@ -15,9 +15,8 @@
  */
 module dev.ikm.tinkar.ext.binding {
     requires dev.ikm.tinkar.entity;
-    requires dev.ikm.tinkar.coordinate;
-    requires dev.ikm.jpms.eclipse.collections.api;
-    requires dev.ikm.tinkar.common;
+    requires org.eclipse.collections.api;
+    requires org.eclipse.collections.impl;
 
     exports dev.ikm.tinkar.ext.binding;
 }

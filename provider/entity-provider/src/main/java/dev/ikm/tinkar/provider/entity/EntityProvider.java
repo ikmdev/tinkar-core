@@ -83,7 +83,9 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         // But we don't want to prevent starting the entity service if this.putEntity
         // blocks for debugging or other reasons, so putting it in a virtual thread to
         // allow completion of the constructor.
-        Thread.ofVirtual().start(() -> this.putEntity(StampRecord.nonExistentStamp(), DataActivity.INITIALIZE));
+        Thread.ofVirtual().start(() -> {
+            this.putEntity(StampRecord.nonExistentStamp(), DataActivity.INITIALIZE);
+        });
     }
 
     public void addSubscriberWithWeakReference(Subscriber<Integer> subscriber) {
@@ -153,11 +155,35 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         return Optional.of((T) entity);
     }
 
+    /**
+     * Example call when resolving via RocksDB:
+     *
+     * <pre>{@code
+     * int nid = ScopedValue
+     *         .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternFacade.publicId())
+     *         .call(() -> PrimitiveData.nid(semanticUUID));
+     * }</pre>
+     *
+     * @param uuids one or more UUIDs that identify the component
+     * @return the nid corresponding to the provided UUIDs
+     */
     @Override
     public int nidForUuids(UUID... uuids) {
         return PrimitiveData.get().nidForUuids(uuids);
     }
 
+    /**
+     * Example call when resolving via RocksDB:
+     *
+     * <pre>{@code
+     * int nid = ScopedValue
+     *         .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternFacade.publicId())
+     *         .call(() -> PrimitiveData.nid(semanticUUID));
+     * }</pre>
+     *
+     * @param publicId for the component to obtain the nid for.
+     * @return the nid corresponding to the provided UUIDs
+     */
     @Override
     public int nidForPublicId(PublicId publicId) {
         return PrimitiveData.get().nidForUuids(publicId.asUuidArray());

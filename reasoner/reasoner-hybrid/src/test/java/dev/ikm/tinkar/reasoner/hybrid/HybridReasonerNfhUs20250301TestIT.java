@@ -23,6 +23,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.ikm.elk.snomed.test.SnomedVersionUs;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
 public class HybridReasonerNfhUs20250301TestIT extends HybridReasonerNfhTestBase implements SnomedVersionUs {
@@ -60,7 +61,7 @@ public class HybridReasonerNfhUs20250301TestIT extends HybridReasonerNfhTestBase
 	@AfterAll
 	public static void stopPrimitiveData() throws IOException {
 		PrimitiveDataTestUtil.stopPrimitiveData();
-//		PrimitiveDataTestUtil.deleteDb(write_db);
+		PrimitiveDataTestUtil.deleteDb(write_db);
 	}
 
 }

@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -52,6 +53,8 @@ public class ElkSnomedData {
 	private final AtomicInteger inactiveConceptCount = new AtomicInteger();
 
 	private ImmutableIntList reasonerConceptSet;
+
+	private final Set<ConcreteRoleType> intervalRoleTypes = ConcurrentHashMap.newKeySet();
 
 	public Collection<Concept> getConcepts() {
 		return Collections.unmodifiableCollection(nidConceptMap.values());
@@ -119,6 +122,14 @@ public class ElkSnomedData {
 
 	public ImmutableIntList getReasonerConceptSet() {
 		return reasonerConceptSet;
+	}
+
+	public Set<ConcreteRoleType> getIntervalRoleTypes() {
+		return intervalRoleTypes;
+	}
+
+	public boolean addIntervalRoleType(ConcreteRoleType roleType) {
+		return intervalRoleTypes.add(roleType);
 	}
 
 	public void initializeReasonerConceptSet() {

@@ -679,7 +679,7 @@ public class DataIntegrityIT {
         );
 
         ImmutableList<Object> semanticFieldValues = Lists.immutable.of(
-                instantArr
+                (Object) instantArr
         );
 
         int referencedComponentNid = TinkarTerm.ANONYMOUS_CONCEPT.nid();

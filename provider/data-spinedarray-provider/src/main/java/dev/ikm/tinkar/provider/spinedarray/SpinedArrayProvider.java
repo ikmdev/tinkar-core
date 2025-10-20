@@ -84,7 +84,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
 
@@ -99,7 +101,24 @@ import java.util.function.ObjIntConsumer;
 public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, PrimitiveDataRepair {
     private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayProvider.class);
     protected static final File defaultDataDirectory = new File("target/spinedarrays/");
-    protected static SpinedArrayProvider singleton;
+
+    public enum Lifecycle {
+        UNINITIALIZED, STARTING, RUNNING, STOPPING, STOPPED
+    }
+
+    public static AtomicReference<Lifecycle> lifecycle = new AtomicReference<>(Lifecycle.UNINITIALIZED);
+
+    private static final StableValue<SpinedArrayProvider> spinedArrayProvider = StableValue.of();
+    public static SpinedArrayProvider get() {
+        return spinedArrayProvider.orElseSet(() -> {
+            try {
+                return new SpinedArrayProvider();
+            } catch (IOException | ExecutionException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
     protected static LongAdder writeSequence = new LongAdder();
     protected final CountDownLatch uuidsLoadedLatch = new CountDownLatch(1);
     final AtomicInteger nextNid = new AtomicInteger(PrimitiveDataService.FIRST_NID);
@@ -127,7 +146,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     final String name;
     final ImmutableList<ChangeSetWriterService> changeSetWriterServices;
 
-    public SpinedArrayProvider() throws IOException, ExecutionException, InterruptedException {
+    private SpinedArrayProvider() throws IOException, ExecutionException, InterruptedException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening SpinedArrayProvider");
         File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
@@ -147,8 +166,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         }
         this.indexer = indexer;
         this.searcher = new Searcher();
-        SpinedArrayProvider.singleton = this;
-        Get.singleton = this;
 
         this.nidToPatternNidMapDirectory = new File(configuredRoot, "nidToPatternNidMap");
         this.nidToPatternNidMapDirectory.mkdirs();
@@ -198,7 +215,9 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
 
         if (!indexExists) {
             try {
-                this.recreateLuceneIndex().get();
+                LOG.info("Lucene index does not exist, creating...");
+                //this.recreateLuceneIndex().get();
+                LOG.info("Recreated Lucene index successfully...");
             } catch (Exception e) {
                 LOG.error(e.getLocalizedMessage(), e);
             }
@@ -257,22 +276,27 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         return writeSequence.sum();
     }
 
-    @Override
+     @Override
     public void close() {
-        Stopwatch stopwatch = new Stopwatch();
-        LOG.info("Closing SpinedArrayProvider");
-        try {
-            this.changeSetWriterServices.forEach(ChangeSetWriterService::shutdown);
-            save();
-            listAndCancelUncommittedStamps();
-            entityToBytesMap.close();
-            SpinedArrayProvider.singleton = null;
-            this.indexer.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            stopwatch.stop();
-            LOG.info("Closed SpinedArrayProvider in: " + stopwatch.durationString());
+        if (lifecycle.compareAndSet(Lifecycle.RUNNING, Lifecycle.STOPPING) ||
+            lifecycle.compareAndSet(Lifecycle.STARTING, Lifecycle.STOPPING)) {
+            Stopwatch stopwatch = new Stopwatch();
+            LOG.info("Closing SpinedArrayProvider");
+            try {
+                this.changeSetWriterServices.forEach(ChangeSetWriterService::shutdown);
+                save();
+                listAndCancelUncommittedStamps();
+                entityToBytesMap.close();
+                this.indexer.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } finally {
+                lifecycle.set(Lifecycle.STOPPED);
+                stopwatch.stop();
+                LOG.info("Closed SpinedArrayProvider in: " + stopwatch.durationString());
+            }
+        } else {
+            LOG.warn("SpinedArrayProvider is not running, cannot close: " + lifecycle.get());
         }
     }
 

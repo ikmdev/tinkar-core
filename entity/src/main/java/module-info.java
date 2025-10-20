@@ -34,24 +34,21 @@ import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.StampService;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromFileController;
 
-@SuppressWarnings("module")
-        // 7 in HL7 is not a version reference
 module dev.ikm.tinkar.entity {
-
+    requires com.github.benmanes.caffeine;
     requires dev.ikm.jpms.activej.bytebuf;
-    requires dev.ikm.jpms.eclipse.collections.api;
-    requires dev.ikm.jpms.eclipse.collections;
     requires dev.ikm.jpms.protobuf;
     requires dev.ikm.tinkar.collection;
-    requires dev.ikm.tinkar.common;
     requires dev.ikm.tinkar.schema;
     requires java.logging;
+    requires org.eclipse.collections.api;
+    requires org.eclipse.collections.impl;
     requires java.xml;
     requires org.jgrapht.core;
     requires org.slf4j;
     requires static dev.ikm.jpms.recordbuilder.core;
     requires static java.compiler;
-    requires transitive com.github.benmanes.caffeine;
+    requires transitive dev.ikm.tinkar.common;
     requires transitive dev.ikm.tinkar.component;
     requires transitive dev.ikm.tinkar.terms;
 
@@ -81,9 +78,6 @@ module dev.ikm.tinkar.entity {
 
     opens dev.ikm.tinkar.entity.graph.adaptor.axiom;
 
-    provides LoadDataFromFileController
-            with LoadEntitiesFromFileController;
-
     provides CachingService with
             LanguageCalculatorWithCache.CacheProvider,
             LogicCalculatorWithCache.CacheProvider,
@@ -93,10 +87,13 @@ module dev.ikm.tinkar.entity {
             EditCoordinateRecord.CacheProvider,
             StampPathImmutable.CachingProvider;
 
+    provides LoadDataFromFileController
+             with LoadEntitiesFromFileController;
+
     provides PathService with PathProvider;
+
     uses CachingService;
     uses EntityService;
-    uses StampService;
     uses PathService;
-
+    uses StampService;
 }
