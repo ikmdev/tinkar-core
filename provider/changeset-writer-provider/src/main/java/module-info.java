@@ -8,6 +8,7 @@ module dev.ikm.tinkar.provider.changeset {
     requires dev.ikm.jpms.eclipse.collections.api;
 
     requires org.slf4j;
+    requires dev.ikm.tinkar.common;
     exports dev.ikm.tinkar.provider.changeset;
 
     provides ChangeSetWriterService with ChangeSetWriterProvider;

@@ -51,7 +51,6 @@ import dev.ikm.tinkar.provider.search.RecreateIndex;
 import dev.ikm.tinkar.provider.search.Searcher;
 import dev.ikm.tinkar.provider.search.TypeAheadSearch;
 import dev.ikm.tinkar.provider.spinedarray.internal.Get;
-import dev.ikm.tinkar.provider.spinedarray.internal.Put;
 import dev.ikm.tinkar.terms.State;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
@@ -150,7 +149,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         this.searcher = new Searcher();
         SpinedArrayProvider.singleton = this;
         Get.singleton = this;
-        Put.singleton = this;
 
         this.nidToPatternNidMapDirectory = new File(configuredRoot, "nidToPatternNidMap");
         this.nidToPatternNidMapDirectory.mkdirs();
