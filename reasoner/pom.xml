@@ -22,6 +22,7 @@
 	</modules>
 
 	<properties>
+		<maven-assembly-plugin.version>3.7.1</maven-assembly-plugin.version>
 		<reasoner-test-data.groupid>dev.ikm.reasoner-test-data</reasoner-test-data.groupid>
 		<skipITs>true</skipITs>
 		<snomed-test-data.groupid>dev.ikm.snomed</snomed-test-data.groupid>
