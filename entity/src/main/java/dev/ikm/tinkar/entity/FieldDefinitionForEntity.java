@@ -30,7 +30,7 @@ public interface FieldDefinitionForEntity extends FieldDefinition {
      * @return Concept designating the data type of the defined field.
      */
     default ConceptEntity dataType() {
-        return Entity.getFast(dataTypeNid());
+        return EntityHandle.getConceptOrThrow(dataTypeNid());
     }
 
     int dataTypeNid();
@@ -45,8 +45,8 @@ public interface FieldDefinitionForEntity extends FieldDefinition {
      *
      * @return Concept designating the purpose of the defined field.
      */
-    default ConceptFacade purpose() {
-        return EntityProxy.Concept.make(purposeNid());
+    default ConceptEntity purpose() {
+        return EntityHandle.getConceptOrThrow(purposeNid());
     }
 
     int purposeNid();
@@ -63,7 +63,7 @@ public interface FieldDefinitionForEntity extends FieldDefinition {
      * @return Concept designating the meaning (symbolic value) of this field.
      */
     default ConceptEntity meaning() {
-        return Entity.getFast(meaningNid());
+        return EntityHandle.getConceptOrThrow(meaningNid());
     }
 
     int meaningNid();

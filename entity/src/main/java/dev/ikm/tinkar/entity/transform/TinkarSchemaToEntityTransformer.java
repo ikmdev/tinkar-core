@@ -77,6 +77,7 @@ import dev.ikm.tinkar.schema.StampVersion;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import dev.ikm.tinkar.schema.Vertex;
 import dev.ikm.tinkar.schema.VertexUUID;
+import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityProxy;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -100,6 +101,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
+
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 
 public class TinkarSchemaToEntityTransformer {
     private static TinkarSchemaToEntityTransformer INSTANCE;
@@ -297,21 +300,23 @@ public class TinkarSchemaToEntityTransformer {
         PublicId stampPublicId = transformPublicId(stampChronology.getPublicId());
         StampRecord stampRecord;
         if (stampPublicId.uuidCount() > 0) {
-            int conceptNid = Entity.nid(stampPublicId);
+            int stampNid = ScopedValue
+                    .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern())
+                    .call(() -> PrimitiveData.nid(stampPublicId));
             if (stampPublicId.uuidCount() > 1) {
                 stampRecord = StampRecordBuilder.builder()
                         .leastSignificantBits(stampPublicId.asUuidArray()[0].getLeastSignificantBits())
                         .mostSignificantBits(stampPublicId.asUuidArray()[0].getMostSignificantBits())
                         .additionalUuidLongs(UuidUtil.asArray(Arrays.copyOfRange(stampPublicId.asUuidArray(),
                                 1, stampPublicId.uuidCount())))
-                        .nid(conceptNid)
+                        .nid(stampNid)
                         .versions(stampVersions)
                         .build();
             } else {
                 stampRecord = StampRecordBuilder.builder()
                         .leastSignificantBits(stampPublicId.asUuidArray()[0].getLeastSignificantBits())
                         .mostSignificantBits(stampPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .nid(conceptNid)
+                        .nid(stampNid)
                         .versions(stampVersions)
                         .build();
             }

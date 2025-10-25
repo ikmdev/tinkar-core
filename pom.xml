@@ -5,13 +5,12 @@
     <parent>
         <groupId>dev.ikm.build</groupId>
         <artifactId>java-parent</artifactId>
-        <version>1.67.0-dist-SNAPSHOT</version>
-        <relativePath/>
+        <version>1.67.0</version>
     </parent>
 
     <groupId>dev.ikm.tinkar</groupId>
     <artifactId>tinkar-core</artifactId>
-    <version>1.126.0-SNAPSHOT</version>
+    <version>1.126.0-kl-merge-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>IKM tinkar core</name>
@@ -107,6 +106,7 @@
         <sonar.language>java</sonar.language>
         <susel.version>0.1.2</susel.version>
         <maven-jxr-plugin.version>3.6.0</maven-jxr-plugin.version>
+        <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
         <tinkar-schema.version>1.42.0</tinkar-schema.version>
         <tinkar-bindings.version>1.4.0</tinkar-bindings.version>
         <udaychandra-susel.version>0.1.2</udaychandra-susel.version>
@@ -553,13 +553,12 @@
             <plugins>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-assembly-plugin</artifactId>
-                    <version>${maven.assembly.version}</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.14.0</version>
+                    <version>${maven.compiler-plugin.version}</version>
+                    <configuration>
+                        <release>${java.version}</release>
+                        <compilerArgs>${compiler.args}</compilerArgs>
+                    </configuration>
                     <dependencies>
                         <dependency>
                             <groupId>org.ow2.asm</groupId>
@@ -582,9 +581,11 @@
                             <version>${asm.version}</version>
                         </dependency>
                     </dependencies>
-                    <configuration>
-                        <release>25</release>
-                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>${maven.assembly.version}</version>
                 </plugin>
             </plugins>
         </pluginManagement>
