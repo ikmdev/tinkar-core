@@ -106,53 +106,137 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
 
     int nidForPublicId(PublicId publicId);
 
-    default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(Component component) {
-        return getEntity(nidForPublicId(component.publicId()));
-    }
-    default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(PublicId publicId) {
-        return getEntity(nidForPublicId(publicId));
-    }
-
-    default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(int nid) {
-        T entity = getEntityFast(nid);
-        if (entity == null || entity.canceled()) {
-            return Optional.empty();
+        default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(Component component) {
+            return getEntity(nidForPublicId(component.publicId()));
         }
-        return Optional.of(entity);
-    }
 
-    <T extends Entity<V>, V extends EntityVersion> T getEntityFast(int nid);
+        /**
+         * @deprecated Use {@link EntityHandle#get(PublicId)} instead.
+         * <p>
+         * This method is being phased out in favor of the fluent {@link EntityHandle} API,
+         * which provides better type safety, null handling, and composability.
+         * <p>
+         * <b>Migration:</b>
+         * <pre>{@code
+         * // Old (deprecated):
+         * Optional<Entity> entity = EntityService.get().getEntity(publicId);
+         *
+         * // New (recommended):
+         * EntityHandle handle = EntityHandle.get(publicId);
+         * Optional<Entity<?>> entity = handle.entity();
+         * }</pre>
+         *
+         * @see EntityHandle#get(PublicId)
+         */
+        @Deprecated(since = "Current", forRemoval = true)
+        default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(PublicId publicId) {
+            return getEntity(nidForPublicId(publicId));
+        }
 
-    default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(ImmutableList<UUID> uuidList) {
-        return getEntity(nidForUuids(uuidList));
-    }
+        /**
+         * @deprecated Use {@link EntityHandle#get(int)} instead.
+         * <p>
+         * This method is being phased out in favor of the fluent {@link EntityHandle} API,
+         * which provides better type safety, null handling, and composability.
+         * <p>
+         * <b>Migration:</b>
+         * <pre>{@code
+         * // Old (deprecated):
+         * Optional<Entity> entity = EntityService.get().getEntity(nid);
+         *
+         * // New (recommended):
+         * EntityHandle handle = EntityHandle.get(nid);
+         * Optional<Entity<?>> entity = handle.entity();
+         *
+         * // Or with type safety:
+         * ConceptEntity concept = EntityHandle.getConceptOrThrow(nid);
+         * }</pre>
+         *
+         * @see EntityHandle#get(int)
+         * @see EntityHandle#getConceptOrThrow(int)
+         * @see EntityHandle#getSemanticOrThrow(int)
+         * @see EntityHandle#getPatternOrThrow(int)
+         * @see EntityHandle#getStampOrThrow(int)
+         */
+        @Deprecated(since = "Current", forRemoval = true)
+        default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(int nid) {
+            T entity = getEntityFast(nid);
+            if (entity == null || entity.canceled()) {
+                return Optional.empty();
+            }
+            return Optional.of(entity);
+        }
+
+        <T extends Entity<V>, V extends EntityVersion> T getEntityFast(int nid);
+
+        default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(ImmutableList<UUID> uuidList) {
+            return getEntity(nidForUuids(uuidList));
+        }
 
 
-    default int nidForUuids(ImmutableList<UUID> uuidList) {
-        return nidForPublicId(PublicIds.of(uuidList.toArray(new UUID[uuidList.size()])));
-    }
+        default int nidForUuids(ImmutableList<UUID> uuidList) {
+            return nidForPublicId(PublicIds.of(uuidList.toArray(new UUID[uuidList.size()])));
+        }
 
-    default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(UUID... uuids) {
-        return getEntity(nidForUuids(uuids));
-    }
+        /**
+         * @deprecated Use {@link EntityHandle#get(PublicId)} instead.
+         * <p>
+         * This method is being phased out in favor of the fluent {@link EntityHandle} API,
+         * which provides better type safety, null handling, and composability.
+         * <p>
+         * <b>Migration:</b>
+         * <pre>{@code
+         * // Old (deprecated):
+         * Optional<Entity> entity = EntityService.get().getEntity(uuids);
+         *
+         * // New (recommended):
+         * EntityHandle handle = EntityHandle.get(PublicIds.of(uuids));
+         * Optional<Entity<?>> entity = handle.entity();
+         * }</pre>
+         *
+         * @see EntityHandle#get(PublicId)
+         */
+        @Deprecated(since = "Current", forRemoval = true)
+        default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(UUID... uuids) {
+            return getEntity(nidForUuids(uuids));
+        }
 
-    default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(EntityFacade entityFacade) {
-        return getEntity(entityFacade.nid());
-    }
+        /**
+         * @deprecated Use {@link EntityHandle#get(EntityFacade)} instead.
+         * <p>
+         * This method is being phased out in favor of the fluent {@link EntityHandle} API,
+         * which provides better type safety, null handling, and composability.
+         * <p>
+         * <b>Migration:</b>
+         * <pre>{@code
+         * // Old (deprecated):
+         * Optional<Entity> entity = EntityService.get().getEntity(entityFacade);
+         *
+         * // New (recommended):
+         * EntityHandle handle = EntityHandle.get(entityFacade);
+         * Optional<Entity<?>> entity = handle.entity();
+         * }</pre>
+         *
+         * @see EntityHandle#get(EntityFacade)
+         */
+        @Deprecated(since = "Current", forRemoval = true)
+        default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(EntityFacade entityFacade) {
+            return getEntity(entityFacade.nid());
+        }
 
-    default <T extends Entity<V>, V extends EntityVersion> T getEntityFast(ImmutableList<UUID> uuidList) {
-        return getEntityFast(nidForUuids(uuidList));
-    }
+        default <T extends Entity<V>, V extends EntityVersion> T getEntityFast(ImmutableList<UUID> uuidList) {
+            return getEntityFast(nidForUuids(uuidList));
+        }
 
-    default <T extends Entity<V>, V extends EntityVersion> T getEntityFast(UUID... uuids) {
-        return getEntityFast(nidForUuids(uuids));
-    }
+        default <T extends Entity<V>, V extends EntityVersion> T getEntityFast(UUID... uuids) {
+            return getEntityFast(nidForUuids(uuids));
+        }
 
-    default <T extends Entity<V>, V extends EntityVersion> T getEntityFast(EntityFacade entityFacade) {
-        return getEntityFast(entityFacade.nid());
-    }
+        default <T extends Entity<V>, V extends EntityVersion> T getEntityFast(EntityFacade entityFacade) {
+            return getEntityFast(entityFacade.nid());
+        }
 
-    default Optional<StampEntity<StampEntityVersion>> getStamp(Component component) {
+        default Optional<StampEntity<StampEntityVersion>> getStamp(Component component) {
         return getStamp(nidForPublicId(component.publicId()));
     }
 
