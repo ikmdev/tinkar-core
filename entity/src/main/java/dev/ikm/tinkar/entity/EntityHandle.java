@@ -276,7 +276,7 @@ public interface EntityHandle {
      * @return an EntityHandle representing the entity, or an empty EntityHandle if absent.
       */
     static EntityHandle get(int nid) {
-        Entity entity = Entity.getFast(nid);
+        Entity entity = Entity.packagePrivateGetFast(nid);
         if (entity != null) {
             return of(entity);
         }

@@ -266,6 +266,14 @@ public interface Entity<V extends EntityVersion>
     }
 
     /**
+     * Package-private method for internal use by EntityHandle.
+     * External code should use {@link EntityHandle#get(int)}.
+     */
+    static <T extends Entity<V>, V extends EntityVersion> Optional<T> packagePrivateGet(int nid) {
+        return EntityService.get().getEntity(nid);
+    }
+
+    /**
      * @deprecated Use {@link EntityHandle#get(int)} instead.
      * <p>
      * This static accessor method is being phased out in favor of the fluent
@@ -286,7 +294,15 @@ public interface Entity<V extends EntityVersion>
      */
     @Deprecated(since = "Current", forRemoval = true)
     static <T extends Entity<V>, V extends EntityVersion> Optional<T> get(int nid) {
-        return EntityService.get().getEntity(nid);
+        return packagePrivateGet(nid);
+    }
+
+    /**
+     * Package-private method for internal use by EntityHandle.
+     * External code should use {@link EntityHandle#getConceptOrThrow(int)} or type-specific methods.
+     */
+    static <T extends Entity<V>, V extends EntityVersion> T packagePrivateGetOrThrow(int nid) {
+        return (T) EntityService.get().getEntity(nid).get();
     }
 
     /**
@@ -313,7 +329,15 @@ public interface Entity<V extends EntityVersion>
      */
     @Deprecated(since = "Current", forRemoval = true)
     static <T extends Entity<V>, V extends EntityVersion> T getOrThrow(int nid) {
-        return (T) EntityService.get().getEntity(nid).get();
+        return packagePrivateGetOrThrow(nid);
+    }
+
+    /**
+     * Package-private method for internal use by EntityHandle.
+     * External code should use {@link EntityHandle#get(EntityFacade)}.
+     */
+    static <T extends Entity<V>, V extends EntityVersion> Optional<T> packagePrivateGet(EntityFacade facade) {
+        return EntityService.get().getEntity(facade.nid());
     }
 
     /**
@@ -326,7 +350,15 @@ public interface Entity<V extends EntityVersion>
      */
     @Deprecated(since = "Current", forRemoval = true)
     static <T extends Entity<V>, V extends EntityVersion> Optional<T> get(EntityFacade facade) {
-        return EntityService.get().getEntity(facade.nid());
+        return packagePrivateGet(facade);
+    }
+
+    /**
+     * Package-private method for internal use by EntityHandle.
+     * External code should use {@link EntityHandle#getConceptOrThrow(EntityFacade)} or type-specific methods.
+     */
+    static <T extends Entity<V>, V extends EntityVersion> T packagePrivateGetOrThrow(EntityFacade facade) {
+        return (T) EntityService.get().getEntity(facade.nid()).get();
     }
 
     /**
@@ -342,7 +374,7 @@ public interface Entity<V extends EntityVersion>
      */
     @Deprecated(since = "Current", forRemoval = true)
     static <T extends Entity<V>, V extends EntityVersion> T getOrThrow(EntityFacade facade) {
-        return (T) EntityService.get().getEntity(facade.nid()).get();
+        return packagePrivateGetOrThrow(facade);
     }
 
     /**
@@ -367,7 +399,23 @@ public interface Entity<V extends EntityVersion>
      */
     @Deprecated(since = "Current", forRemoval = true)
     static <T extends Entity<V>, V extends EntityVersion> T getFast(int nid) {
+        return packagePrivateGetFast(nid);
+    }
+
+    /**
+     * Package-private method for internal use by EntityHandle.
+     * External code should use {@link EntityHandle#get(int)}.
+     */
+    static <T extends Entity<V>, V extends EntityVersion> T packagePrivateGetFast(int nid) {
         return EntityService.get().getEntityFast(nid);
+    }
+
+    /**
+     * Package-private method for internal use by EntityHandle.
+     * External code should use {@link EntityHandle#get(EntityFacade)}.
+     */
+    static <T extends Entity<V>, V extends EntityVersion> T packagePrivateGetFast(EntityFacade facade) {
+        return EntityService.get().getEntityFast(facade.nid());
     }
 
     /**
@@ -380,7 +428,7 @@ public interface Entity<V extends EntityVersion>
      */
     @Deprecated(since = "Current", forRemoval = true)
     static <T extends Entity<V>, V extends EntityVersion> T getFast(EntityFacade facade) {
-        return EntityService.get().getEntityFast(facade.nid());
+        return packagePrivateGetFast(facade);
     }
 
     static <T extends StampEntity<? extends StampEntityVersion>> T getStamp(int nid) {
