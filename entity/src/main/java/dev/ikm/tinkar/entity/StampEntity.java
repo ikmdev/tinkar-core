@@ -21,6 +21,7 @@ import dev.ikm.tinkar.component.Component;
 import dev.ikm.tinkar.component.Stamp;
 import dev.ikm.tinkar.component.Version;
 import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.StampFacade;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
@@ -29,7 +30,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 import static dev.ikm.tinkar.common.util.time.DateTimeUtil.SEC_FORMATTER;
 
 public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
-        Stamp<V>, Component, Version {
+        Stamp, Component, Version {
 
     default State state() {
         return lastVersion().state();

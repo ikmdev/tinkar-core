@@ -27,6 +27,6 @@ import java.time.Instant;
  * TODO: The component package should go away and just be replaced by the entities. Since migration to protobuf, the component package is legacy baggage.
  * 
  */
-public interface Stamp<T extends Stamp> extends Component {
+public interface Stamp extends Component {
 
 }

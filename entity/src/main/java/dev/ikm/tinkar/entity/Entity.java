@@ -268,6 +268,8 @@ public interface Entity<V extends EntityVersion>
     /**
      * Package-private method for internal use by EntityHandle.
      * External code should use {@link EntityHandle#get(int)}.
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
      */
     static <T extends Entity<V>, V extends EntityVersion> Optional<T> packagePrivateGet(int nid) {
         return EntityService.get().getEntity(nid);
@@ -291,6 +293,8 @@ public interface Entity<V extends EntityVersion>
      * }</pre>
      *
      * @see EntityHandle#get(int)
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
      */
     @Deprecated(since = "Current", forRemoval = true)
     static <T extends Entity<V>, V extends EntityVersion> Optional<T> get(int nid) {
@@ -300,6 +304,8 @@ public interface Entity<V extends EntityVersion>
     /**
      * Package-private method for internal use by EntityHandle.
      * External code should use {@link EntityHandle#getConceptOrThrow(int)} or type-specific methods.
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
      */
     static <T extends Entity<V>, V extends EntityVersion> T packagePrivateGetOrThrow(int nid) {
         return (T) EntityService.get().getEntity(nid).get();
@@ -326,6 +332,8 @@ public interface Entity<V extends EntityVersion>
      * @see EntityHandle#getSemanticOrThrow(int)
      * @see EntityHandle#getPatternOrThrow(int)
      * @see EntityHandle#getStampOrThrow(int)
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
      */
     @Deprecated(since = "Current", forRemoval = true)
     static <T extends Entity<V>, V extends EntityVersion> T getOrThrow(int nid) {
@@ -336,8 +344,8 @@ public interface Entity<V extends EntityVersion>
      * Package-private method for internal use by EntityHandle.
      * External code should use {@link EntityHandle#get(EntityFacade)}.
      */
-    static <T extends Entity<V>, V extends EntityVersion> Optional<T> packagePrivateGet(EntityFacade facade) {
-        return EntityService.get().getEntity(facade.nid());
+    static Optional<Entity<?>> packagePrivateGet(EntityFacade facade) {
+        return EntityService.get().packagePrivateGetEntity(facade.nid());
     }
 
     /**
@@ -347,18 +355,20 @@ public interface Entity<V extends EntityVersion>
      * {@link EntityHandle} API. This method will be made module-internal in a future release.
      *
      * @see EntityHandle#get(EntityFacade)
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
      */
     @Deprecated(since = "Current", forRemoval = true)
     static <T extends Entity<V>, V extends EntityVersion> Optional<T> get(EntityFacade facade) {
-        return packagePrivateGet(facade);
+        return (Optional<T>) packagePrivateGet(facade);
     }
 
     /**
      * Package-private method for internal use by EntityHandle.
      * External code should use {@link EntityHandle#getConceptOrThrow(EntityFacade)} or type-specific methods.
      */
-    static <T extends Entity<V>, V extends EntityVersion> T packagePrivateGetOrThrow(EntityFacade facade) {
-        return (T) EntityService.get().getEntity(facade.nid()).get();
+    static  Entity<?> packagePrivateGetOrThrow(EntityFacade facade) {
+        return EntityService.get().getEntity(facade.nid()).get();
     }
 
     /**
@@ -371,10 +381,12 @@ public interface Entity<V extends EntityVersion>
      * @see EntityHandle#getSemanticOrThrow(EntityFacade)
      * @see EntityHandle#getPatternOrThrow(EntityFacade)
      * @see EntityHandle#getStampOrThrow(EntityFacade)
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
      */
     @Deprecated(since = "Current", forRemoval = true)
     static <T extends Entity<V>, V extends EntityVersion> T getOrThrow(EntityFacade facade) {
-        return packagePrivateGetOrThrow(facade);
+        return (T) packagePrivateGetOrThrow(facade);
     }
 
     /**
@@ -396,17 +408,19 @@ public interface Entity<V extends EntityVersion>
      *
      * @see EntityHandle#get(int)
      * @see EntityHandle#getConceptOrThrow(int)
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
      */
     @Deprecated(since = "Current", forRemoval = true)
     static <T extends Entity<V>, V extends EntityVersion> T getFast(int nid) {
-        return packagePrivateGetFast(nid);
+        return (T) packagePrivateGetFast(nid);
     }
 
     /**
      * Package-private method for internal use by EntityHandle.
      * External code should use {@link EntityHandle#get(int)}.
      */
-    static <T extends Entity<V>, V extends EntityVersion> T packagePrivateGetFast(int nid) {
+    static Entity<?> packagePrivateGetFast(int nid) {
         return EntityService.get().getEntityFast(nid);
     }
 
@@ -414,7 +428,7 @@ public interface Entity<V extends EntityVersion>
      * Package-private method for internal use by EntityHandle.
      * External code should use {@link EntityHandle#get(EntityFacade)}.
      */
-    static <T extends Entity<V>, V extends EntityVersion> T packagePrivateGetFast(EntityFacade facade) {
+    static Entity<?> packagePrivateGetFast(EntityFacade facade) {
         return EntityService.get().getEntityFast(facade.nid());
     }
 
@@ -425,10 +439,12 @@ public interface Entity<V extends EntityVersion>
      * {@link EntityHandle} API. This method will be made module-internal in a future release.
      *
      * @see EntityHandle#get(EntityFacade)
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
      */
     @Deprecated(since = "Current", forRemoval = true)
     static <T extends Entity<V>, V extends EntityVersion> T getFast(EntityFacade facade) {
-        return packagePrivateGetFast(facade);
+        return (T) packagePrivateGetFast(facade);
     }
 
     static <T extends StampEntity<? extends StampEntityVersion>> T getStamp(int nid) {

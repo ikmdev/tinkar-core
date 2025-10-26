@@ -24,7 +24,7 @@ import dev.ikm.tinkar.terms.State;
 
 import java.time.Instant;
 
-public interface VersionData extends Version, Stamp<StampEntityVersion> {
+public interface VersionData extends Version, Stamp {
 
     Entity entity();
 

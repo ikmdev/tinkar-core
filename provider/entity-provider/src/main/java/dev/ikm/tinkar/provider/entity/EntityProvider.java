@@ -189,6 +189,17 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         return PrimitiveData.get().nidForUuids(publicId.asUuidArray());
     }
 
+    /**
+     *
+     * @param nid
+     * @return
+     * @param <T>
+     * @param <V>
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
+     * @deprecated Use {@link EntityHandle#get(int)} instead.
+     */
+    @Deprecated(since = "Current", forRemoval = true)
     public <T extends Entity<V>, V extends EntityVersion> T getEntityFast(int nid) {
         return (T) ENTITY_CACHE.get(nid, entityNid -> {
             byte[] bytes = PrimitiveData.get().getBytes(nid);

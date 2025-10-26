@@ -106,6 +106,15 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
 
     int nidForPublicId(PublicId publicId);
 
+    /**
+     *
+     * @param component
+     * @return
+     * @param <T>
+     * @param <V>
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
+     */
         default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(Component component) {
             return getEntity(nidForPublicId(component.publicId()));
         }
@@ -127,6 +136,8 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
          * }</pre>
          *
          * @see EntityHandle#get(PublicId)
+         * TODO: We should search for all methods that do this silent type casting, and replace them with
+         * a fluent API that better manages type determination.
          */
         @Deprecated(since = "Current", forRemoval = true)
         default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(PublicId publicId) {
@@ -157,6 +168,8 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
          * @see EntityHandle#getSemanticOrThrow(int)
          * @see EntityHandle#getPatternOrThrow(int)
          * @see EntityHandle#getStampOrThrow(int)
+         * TODO: We should search for all methods that do this silent type casting, and replace them with
+         * a fluent API that better manages type determination.
          */
         @Deprecated(since = "Current", forRemoval = true)
         default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(int nid) {
@@ -166,9 +179,37 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
             }
             return Optional.of(entity);
         }
-
+    default Optional<Entity<?>> packagePrivateGetEntity(int nid) {
+        Entity<?> entity = getEntityFast(nid);
+        if (entity == null || entity.canceled()) {
+            return Optional.empty();
+        }
+        return Optional.of(entity);
+    }
+    /**
+     *
+     * @param nid
+     * @return
+     * @param <T>
+     * @param <V>
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
+     * @deprecated Use {@link EntityHandle#get(int)} instead.
+     */
+    @Deprecated(since = "Current", forRemoval = true)
         <T extends Entity<V>, V extends EntityVersion> T getEntityFast(int nid);
 
+    /**
+     *
+     * @param uuidList
+     * @return
+     * @param <T>
+     * @param <V>
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
+     * @deprecated Use {@link EntityHandle#get(PublicId)} instead.
+     */
+    @Deprecated(since = "Current", forRemoval = true)
         default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(ImmutableList<UUID> uuidList) {
             return getEntity(nidForUuids(uuidList));
         }
@@ -195,6 +236,9 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
          * }</pre>
          *
          * @see EntityHandle#get(PublicId)
+         * TODO: We should search for all methods that do this silent type casting, and replace them with
+         * a fluent API that better manages type determination.
+         * @deprecated Use {@link EntityHandle#get(PublicId)} instead.
          */
         @Deprecated(since = "Current", forRemoval = true)
         default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(UUID... uuids) {
@@ -218,20 +262,56 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
          * }</pre>
          *
          * @see EntityHandle#get(EntityFacade)
+         * TODO: We should search for all methods that do this silent type casting, and replace them with
+         * a fluent API that better manages type determination.
+         * @deprecated Use {@link EntityHandle#get(EntityFacade)} instead.
          */
         @Deprecated(since = "Current", forRemoval = true)
         default <T extends Entity<V>, V extends EntityVersion> Optional<T> getEntity(EntityFacade entityFacade) {
             return getEntity(entityFacade.nid());
         }
 
+    /**
+     *
+     * @param uuidList
+     * @return
+     * @param <T>
+     * @param <V>
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
+     * @deprecated Use {@link EntityHandle#get(PublicId)} instead.
+     */
+    @Deprecated(since = "Current", forRemoval = true)
         default <T extends Entity<V>, V extends EntityVersion> T getEntityFast(ImmutableList<UUID> uuidList) {
             return getEntityFast(nidForUuids(uuidList));
         }
 
+    /**
+     *
+     * @param uuids
+     * @return
+     * @param <T>
+     * @param <V>
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
+     * @deprecated Use {@link EntityHandle#get(PublicId)} instead.
+     */
+    @Deprecated(since = "Current", forRemoval = true)
         default <T extends Entity<V>, V extends EntityVersion> T getEntityFast(UUID... uuids) {
             return getEntityFast(nidForUuids(uuids));
         }
 
+    /**
+     *
+     * @param entityFacade
+     * @return
+     * @param <T>
+     * @param <V>
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
+     * @deprecated Use {@link EntityHandle#get(EntityFacade)} instead.
+     */
+    @Deprecated(since = "Current", forRemoval = true)
         default <T extends Entity<V>, V extends EntityVersion> T getEntityFast(EntityFacade entityFacade) {
             return getEntityFast(entityFacade.nid());
         }

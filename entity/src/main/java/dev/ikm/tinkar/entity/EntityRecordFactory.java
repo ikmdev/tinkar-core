@@ -390,6 +390,15 @@ public class EntityRecordFactory {
         }
     }
 
+    /**
+     *
+     * @param data
+     * @return
+     * @param <T>
+     * @param <V>
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
+     */
     public static <T extends Entity<V>, V extends EntityVersion> T make(byte[] data) {
         // TODO change to use DecoderInput instead of ByteBuf directly.
         // TODO remove the parts where it computes size.
@@ -401,11 +410,32 @@ public class EntityRecordFactory {
         return make(buf, formatVersion);
     }
 
+    /**
+     *
+     * @param readBuf
+     * @param entityFormatVersion
+     * @return
+     * @param <T>
+     * @param <V>
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
+     */
     public static <T extends Entity<V>, V extends EntityVersion> T make(ByteBuf readBuf, byte entityFormatVersion) {
         FieldDataType fieldDataType = FieldDataType.fromToken(readBuf.readByte());
         return make(readBuf, entityFormatVersion, fieldDataType);
     }
 
+    /**
+     *
+     * @param readBuf
+     * @param entityFormatVersion
+     * @param fieldDataType
+     * @return
+     * @param <T>
+     * @param <V>
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
+     */
     public static <T extends Entity<V>, V extends EntityVersion> T make(ByteBuf readBuf, byte entityFormatVersion, FieldDataType fieldDataType) {
 
         if (entityFormatVersion != ENTITY_FORMAT_VERSION) {

@@ -24,7 +24,7 @@ import dev.ikm.tinkar.terms.State;
 
 import java.time.Instant;
 
-public interface StampVersion extends Stamp<StampEntityVersion>, VersionData {
+public interface StampVersion extends Stamp, VersionData {
     default String describe() {
         return "s:" + PrimitiveData.text(stateNid()) +
                 " t:" + DateTimeUtil.format(time(), DateTimeUtil.SEC_FORMATTER) +

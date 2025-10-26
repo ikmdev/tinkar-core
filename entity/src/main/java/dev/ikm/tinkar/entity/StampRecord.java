@@ -19,6 +19,7 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
 import dev.ikm.tinkar.component.FieldDataType;
+import dev.ikm.tinkar.terms.StampFacade;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import io.soabase.recordbuilder.core.RecordBuilder;
@@ -36,7 +37,8 @@ public record StampRecord(
         long mostSignificantBits, long leastSignificantBits,
         long[] additionalUuidLongs, int nid,
         ImmutableList<StampVersionRecord> versions)
-        implements StampEntity<StampVersionRecord>, ImmutableEntity<StampVersionRecord>, IdentifierData, StampRecordBuilder.With {
+        implements StampEntity<StampVersionRecord>, ImmutableEntity<StampVersionRecord>,
+                   StampFacade, IdentifierData, StampRecordBuilder.With {
 
     private static StampRecord nonExistentStamp;
     public StampRecord {
