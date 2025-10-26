@@ -35,6 +35,179 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.Optional;
 
+/**
+ * Immutable, thread-safe representation of a Tinkar entity providing the foundation for terminology
+ * management, semantic modeling, and knowledge representation.
+ * <p>
+ * {@code Entity} is the core abstraction in Tinkar, representing versioned knowledge artifacts that
+ * maintain their identity across time while supporting multiple versions, collaborative editing, and
+ * distributed synchronization. Entities are fully immutable, making them safe for concurrent access,
+ * caching, and use in calculations or background processing.
+ *
+ * <h2>What is an Entity?</h2>
+ * <p>
+ * An {@code Entity} is an <b>immutable, versioned knowledge artifact</b> that provides:
+ * <ul>
+ *   <li><b>Immutability:</b> Once created, entity data never changes - updates create new versions</li>
+ *   <li><b>Thread Safety:</b> Can be safely accessed from any thread without synchronization</li>
+ *   <li><b>Version History:</b> Maintains complete chronology of all changes via {@link EntityVersion}s</li>
+ *   <li><b>Unique Identity:</b> Identified by NID (native identifier) and {@link PublicId} (universally unique)</li>
+ * </ul>
+ *
+ * <h2>Four Entity Types</h2>
+ * <p>
+ * This interface has four primary implementations representing different knowledge artifact types:
+ * <ul>
+ *   <li>{@link ConceptEntity} - Represents a concept (idea, term, or classification)</li>
+ *   <li>{@link SemanticEntity} - Represents semantic annotations or relationships attached to other entities</li>
+ *   <li>{@link PatternEntity} - Defines the structure/schema for semantic entities</li>
+ *   <li>{@link StampEntity} - Represents change metadata (Status, Time, Author, Module, Path)</li>
+ * </ul>
+ *
+ * <h2>⚠️ How to Access: Use EntityHandle</h2>
+ * <p>
+ * <b>DO NOT</b> call the static {@code get()}, {@code getOrThrow()}, or {@code getFast()} methods on this
+ * interface directly. They are deprecated and will be made module-internal in a future release. Instead,
+ * use {@link EntityHandle}, which provides a fluent, type-safe API for accessing entities.
+ *
+ * <h3>Why Use EntityHandle?</h3>
+ * <ul>
+ *   <li><b>Type Safety:</b> Compile-time checks ensure you're working with the correct entity type
+ *       (Concept, Semantic, Pattern, or Stamp)</li>
+ *   <li><b>Null Safety:</b> Explicit handling of absent entities via {@link java.util.Optional} or
+ *       fluent conditional methods</li>
+ *   <li><b>Composability:</b> Chain operations fluently without manual type checks or casts</li>
+ *   <li><b>Three Access Patterns:</b> Side effects ({@code ifXxx}), safe extraction ({@code asXxx}),
+ *       or direct assertion ({@code expectXxx}) - choose the right pattern for your use case</li>
+ *   <li><b>Flexible Identifiers:</b> Accept NID (int), {@link PublicId}, or {@link EntityFacade} interchangeably</li>
+ * </ul>
+ *
+ * <h3>Correct Usage Examples</h3>
+ * <pre>{@code
+ * // ✅ CORRECT: Use EntityHandle for type-safe access
+ * ConceptEntity concept = EntityHandle.getConceptOrThrow(conceptNid);
+ * String description = concept.description();
+ *
+ * // ✅ CORRECT: Fluent API with type checking
+ * EntityHandle.get(nid)
+ *     .ifConcept(concept -> processConcept(concept))
+ *     .ifSemantic(semantic -> processSemantic(semantic))
+ *     .ifAbsent(() -> LOG.warn("Entity {} not found", nid));
+ *
+ * // ✅ CORRECT: Safe Optional-based extraction
+ * EntityHandle.get(userInputNid)
+ *     .asConcept()
+ *     .ifPresent(concept -> displayConcept(concept));
+ *
+ * // ✅ CORRECT: Works with PublicId and EntityFacade too
+ * ConceptEntity concept = EntityHandle.getConceptOrThrow(publicId);
+ * SemanticEntity semantic = EntityHandle.getSemanticOrThrow(entityFacade);
+ *
+ * // ❌ WRONG: Direct static method (deprecated, will be removed)
+ * Optional<Entity> entity = Entity.get(nid); // DON'T DO THIS
+ * Entity entity = Entity.getFast(nid);        // DON'T DO THIS
+ * }</pre>
+ *
+ * <h2>When to Use Entity vs ObservableEntity</h2>
+ * <table border="1" cellpadding="5">
+ * <caption>Entity vs ObservableEntity Comparison</caption>
+ * <tr>
+ *   <th>Use Case</th>
+ *   <th>Use Entity</th>
+ *   <th>Use ObservableEntity</th>
+ * </tr>
+ * <tr>
+ *   <td><b>Calculations/Logic</b></td>
+ *   <td>✅ Preferred - immutable, efficient</td>
+ *   <td>❌ Unnecessary overhead</td>
+ * </tr>
+ * <tr>
+ *   <td><b>Background Processing</b></td>
+ *   <td>✅ Thread-safe, any thread</td>
+ *   <td>❌ Requires JavaFX thread</td>
+ * </tr>
+ * <tr>
+ *   <td><b>Immutability</b></td>
+ *   <td>✅ Fully immutable</td>
+ *   <td>⚠️ Mutable wrapper</td>
+ * </tr>
+ * <tr>
+ *   <td><b>Caching</b></td>
+ *   <td>✅ Safe to cache indefinitely</td>
+ *   <td>⚠️ Canonical pool only</td>
+ * </tr>
+ * <tr>
+ *   <td><b>UI Binding</b></td>
+ *   <td>❌ Not reactive</td>
+ *   <td>✅ Direct JavaFX property binding</td>
+ * </tr>
+ * <tr>
+ *   <td><b>Change Notifications</b></td>
+ *   <td>❌ Manual polling</td>
+ *   <td>✅ Automatic listeners</td>
+ * </tr>
+ * </table>
+ *
+ * <h2>Version Management</h2>
+ * <p>
+ * Each entity maintains a complete version history accessed via {@link #versions()}. Versions are
+ * ordered chronologically and include all changes made to the entity over time. Each version is
+ * associated with a {@link StampEntity} that records who made the change, when, in what module,
+ * and on what development path.
+ *
+ * <pre>{@code
+ * ConceptEntity concept = EntityHandle.getConceptOrThrow(nid);
+ * ImmutableList<ConceptEntityVersion> versions = concept.versions();
+ * 
+ * // Get latest version
+ * ConceptEntityVersion latest = versions.get(versions.size() - 1);
+ * 
+ * // Iterate through history
+ * for (ConceptEntityVersion version : versions) {
+ *     StampEntity stamp = EntityHandle.getStampOrThrow(version.stampNid());
+ *     System.out.println("Changed at: " + stamp.time());
+ * }
+ * }</pre>
+ *
+ * <h2>Identity and Identification</h2>
+ * <p>
+ * Entities can be identified in three ways, all supported by {@link EntityHandle}:
+ * <ul>
+ *   <li><b>NID (Native ID):</b> Integer identifier unique within this system (int)</li>
+ *   <li><b>PublicId:</b> Universally unique identifier for cross-system synchronization (UUIDs)</li>
+ *   <li><b>EntityFacade:</b> Interface providing access to both NID and PublicId</li>
+ * </ul>
+ *
+ * <pre>{@code
+ * // All three approaches work with EntityHandle
+ * ConceptEntity c1 = EntityHandle.getConceptOrThrow(nid);
+ * ConceptEntity c2 = EntityHandle.getConceptOrThrow(publicId);
+ * ConceptEntity c3 = EntityHandle.getConceptOrThrow(entityFacade);
+ * }</pre>
+ *
+ * <h2>Thread Safety and Performance</h2>
+ * <p>
+ * {@code Entity} instances are fully immutable and thread-safe. They can be:
+ * <ul>
+ *   <li>Safely shared across threads without synchronization</li>
+ *   <li>Cached indefinitely (they never change)</li>
+ *   <li>Used in parallel streams and concurrent collections</li>
+ *   <li>Passed between background tasks and UI threads</li>
+ * </ul>
+ * <p>
+ * For best performance in tight loops or frequent access, use {@link EntityService#getEntityFast(int)}
+ * via {@link EntityHandle} methods, which skip Optional wrapping. For most use cases, the standard
+ * {@link EntityHandle} API provides the best balance of safety and performance.
+ *
+ * @param <V> the version type ({@link ConceptEntityVersion}, {@link SemanticEntityVersion},
+ *           {@link PatternEntityVersion}, or {@link StampEntityVersion})
+ * @see EntityHandle
+ * @see ConceptEntity
+ * @see SemanticEntity
+ * @see PatternEntity
+ * @see StampEntity
+ * @see EntityVersion
+ */
 public interface Entity<V extends EntityVersion>
         extends Chronology<V>,
         EntityFacade,
@@ -92,26 +265,120 @@ public interface Entity<V extends EntityVersion>
         return Optional.empty();
     }
 
+    /**
+     * @deprecated Use {@link EntityHandle#get(int)} instead.
+     * <p>
+     * This static accessor method is being phased out in favor of the fluent
+     * {@link EntityHandle} API, which provides better type safety, null handling,
+     * and composability. This method will be made module-internal in a future release.
+     * <p>
+     * <b>Migration:</b>
+     * <pre>{@code
+     * // Old (deprecated):
+     * Optional<Entity> entity = Entity.get(nid);
+     *
+     * // New (recommended):
+     * EntityHandle handle = EntityHandle.get(nid);
+     * Optional<Entity<?>> entity = handle.entity();
+     * }</pre>
+     *
+     * @see EntityHandle#get(int)
+     */
+    @Deprecated(since = "Current", forRemoval = true)
     static <T extends Entity<V>, V extends EntityVersion> Optional<T> get(int nid) {
         return EntityService.get().getEntity(nid);
     }
 
+    /**
+     * @deprecated Use {@link EntityHandle#getConceptOrThrow(int)} or type-specific methods instead.
+     * <p>
+     * This static accessor method is being phased out in favor of the fluent
+     * {@link EntityHandle} API, which provides better type safety and composability.
+     * This method will be made module-internal in a future release.
+     * <p>
+     * <b>Migration:</b>
+     * <pre>{@code
+     * // Old (deprecated):
+     * Entity entity = Entity.getOrThrow(nid);
+     *
+     * // New (recommended - type-safe):
+     * ConceptEntity concept = EntityHandle.getConceptOrThrow(nid);
+     * SemanticEntity semantic = EntityHandle.getSemanticOrThrow(nid);
+     * }</pre>
+     *
+     * @see EntityHandle#getConceptOrThrow(int)
+     * @see EntityHandle#getSemanticOrThrow(int)
+     * @see EntityHandle#getPatternOrThrow(int)
+     * @see EntityHandle#getStampOrThrow(int)
+     */
+    @Deprecated(since = "Current", forRemoval = true)
     static <T extends Entity<V>, V extends EntityVersion> T getOrThrow(int nid) {
         return (T) EntityService.get().getEntity(nid).get();
     }
 
+    /**
+     * @deprecated Use {@link EntityHandle#get(EntityFacade)} instead.
+     * <p>
+     * This static accessor method is being phased out in favor of the fluent
+     * {@link EntityHandle} API. This method will be made module-internal in a future release.
+     *
+     * @see EntityHandle#get(EntityFacade)
+     */
+    @Deprecated(since = "Current", forRemoval = true)
     static <T extends Entity<V>, V extends EntityVersion> Optional<T> get(EntityFacade facade) {
         return EntityService.get().getEntity(facade.nid());
     }
 
+    /**
+     * @deprecated Use {@link EntityHandle#getConceptOrThrow(EntityFacade)} or type-specific methods instead.
+     * <p>
+     * This static accessor method is being phased out in favor of the fluent
+     * {@link EntityHandle} API. This method will be made module-internal in a future release.
+     *
+     * @see EntityHandle#getConceptOrThrow(EntityFacade)
+     * @see EntityHandle#getSemanticOrThrow(EntityFacade)
+     * @see EntityHandle#getPatternOrThrow(EntityFacade)
+     * @see EntityHandle#getStampOrThrow(EntityFacade)
+     */
+    @Deprecated(since = "Current", forRemoval = true)
     static <T extends Entity<V>, V extends EntityVersion> T getOrThrow(EntityFacade facade) {
         return (T) EntityService.get().getEntity(facade.nid()).get();
     }
 
+    /**
+     * @deprecated Use {@link EntityHandle#get(int)} instead.
+     * <p>
+     * This static accessor method is being phased out in favor of the fluent
+     * {@link EntityHandle} API. This method will be made module-internal in a future release.
+     * <p>
+     * <b>Migration:</b>
+     * <pre>{@code
+     * // Old (deprecated):
+     * Entity entity = Entity.getFast(nid);
+     *
+     * // New (recommended):
+     * Entity entity = EntityHandle.get(nid).orNull();
+     * // Or with type safety:
+     * ConceptEntity concept = EntityHandle.getConceptOrThrow(nid);
+     * }</pre>
+     *
+     * @see EntityHandle#get(int)
+     * @see EntityHandle#getConceptOrThrow(int)
+     */
+    @Deprecated(since = "Current", forRemoval = true)
     static <T extends Entity<V>, V extends EntityVersion> T getFast(int nid) {
         return EntityService.get().getEntityFast(nid);
     }
 
+    /**
+     * @deprecated Use {@link EntityHandle#get(EntityFacade)} instead.
+     * <p>
+     * This static accessor method is being phased out in favor of the fluent
+     * {@link EntityHandle} API. This method will be made module-internal in a future release.
+     *
+     * @see EntityHandle#get(EntityFacade)
+     */
+    @Deprecated(since = "Current", forRemoval = true)
     static <T extends Entity<V>, V extends EntityVersion> T getFast(EntityFacade facade) {
         return EntityService.get().getEntityFast(facade.nid());
     }

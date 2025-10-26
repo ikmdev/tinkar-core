@@ -1,5 +1,9 @@
 package dev.ikm.tinkar.entity;
 
+import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.terms.EntityFacade;
+
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -10,6 +14,54 @@ import java.util.function.Supplier;
  * <p>
  * Provides three complementary patterns for type-safe entity processing without manual
  * instanceof checks or casts. Choose the right pattern based on your use case.
+ *
+ * <h2>Flexible Entity Access</h2>
+ * <p>
+ * Entities can be accessed using three different identifier types, providing flexibility
+ * across different contexts and API boundaries:
+ *
+ * <table border="1" cellpadding="5">
+ * <caption>Entity Access Methods</caption>
+ * <tr>
+ *   <th>Identifier Type</th>
+ *   <th>Use When</th>
+ *   <th>Example</th>
+ * </tr>
+ * <tr>
+ *   <td><b>int nid</b></td>
+ *   <td>Internal processing, performance-critical paths</td>
+ *   <td>{@code EntityHandle.get(123)}</td>
+ * </tr>
+ * <tr>
+ *   <td><b>PublicId</b></td>
+ *   <td>External APIs, UUID-based identification, persistence</td>
+ *   <td>{@code EntityHandle.get(publicId)}</td>
+ * </tr>
+ * <tr>
+ *   <td><b>EntityFacade</b></td>
+ *   <td>Working with facades, proxy objects, component abstractions</td>
+ *   <td>{@code EntityHandle.get(entityFacade)}</td>
+ * </tr>
+ * </table>
+ *
+ * <p>
+ * All three access methods are available for every API method that accepts an entity identifier:
+ *
+ * <pre>{@code
+ * // Using nid (native identifier)
+ * ConceptEntity concept1 = EntityHandle.getConceptOrThrow(123);
+ * EntityHandle.get(123).ifConcept(c -> process(c));
+ *
+ * // Using PublicId (UUID-based public identifier)
+ * PublicId publicId = PublicIds.of(uuid);
+ * ConceptEntity concept2 = EntityHandle.getConceptOrThrow(publicId);
+ * EntityHandle.get(publicId).ifConcept(c -> process(c));
+ *
+ * // Using EntityFacade (facade/proxy)
+ * EntityFacade facade = EntityProxy.make(nid);
+ * ConceptEntity concept3 = EntityHandle.getConceptOrThrow(facade);
+ * EntityHandle.get(facade).ifConcept(c -> process(c));
+ * }</pre>
  *
  * <h2>The Three Patterns: When to Use Each</h2>
  *
@@ -212,7 +264,7 @@ public interface EntityHandle {
      */
     Optional<Entity<?>> entity();
 
-    // ========== Static Factory Method ==========
+    // ========== Static Factory Methods ==========
 
     /**
      * Retrieves an entity by nid and returns a fluent handle for type-safe processing.
@@ -229,6 +281,30 @@ public interface EntityHandle {
             return of(entity);
         }
         return AbsentHandle.INSTANCE;
+    }
+
+    /**
+     * Retrieves an entity by PublicId and returns a fluent handle for type-safe processing.
+     * <p>
+     * Converts the PublicId to nid and retrieves the entity.
+     *
+     * @param publicId the public identifier
+     * @return an EntityHandle representing the entity, or an empty EntityHandle if absent.
+     */
+    static EntityHandle get(PublicId publicId) {
+        return get(PrimitiveData.nid(publicId));
+    }
+
+    /**
+     * Retrieves an entity by EntityFacade and returns a fluent handle for type-safe processing.
+     * <p>
+     * Extracts the nid from the EntityFacade and retrieves the entity.
+     *
+     * @param entityFacade the entity facade
+     * @return an EntityHandle representing the entity, or an empty EntityHandle if absent.
+     */
+    static EntityHandle get(EntityFacade entityFacade) {
+        return get(entityFacade.nid());
     }
 
     /**
@@ -450,6 +526,28 @@ public interface EntityHandle {
     }
 
     /**
+     * Gets entity by PublicId and returns it as a {@link ConceptEntity}, throwing if absent or wrong type.
+     *
+     * @param publicId the entity public identifier
+     * @return the ConceptEntity (never null)
+     * @throws IllegalStateException if entity is absent or not a concept
+     */
+    static ConceptEntity getConceptOrThrow(PublicId publicId) {
+        return get(publicId).expectConcept();
+    }
+
+    /**
+     * Gets entity by EntityFacade and returns it as a {@link ConceptEntity}, throwing if absent or wrong type.
+     *
+     * @param entityFacade the entity facade
+     * @return the ConceptEntity (never null)
+     * @throws IllegalStateException if entity is absent or not a concept
+     */
+    static ConceptEntity getConceptOrThrow(EntityFacade entityFacade) {
+        return get(entityFacade).expectConcept();
+    }
+
+    /**
      * Gets entity by nid and returns it as a {@link SemanticEntity}, throwing if absent or wrong type.
      * <p>
      * Convenience method equivalent to {@code get(nid).expectSemantic()}.
@@ -460,6 +558,28 @@ public interface EntityHandle {
      */
     static SemanticEntity getSemanticOrThrow(int nid) {
         return get(nid).expectSemantic();
+    }
+
+    /**
+     * Gets entity by PublicId and returns it as a {@link SemanticEntity}, throwing if absent or wrong type.
+     *
+     * @param publicId the entity public identifier
+     * @return the SemanticEntity (never null)
+     * @throws IllegalStateException if entity is absent or not a semantic
+     */
+    static SemanticEntity getSemanticOrThrow(PublicId publicId) {
+        return get(publicId).expectSemantic();
+    }
+
+    /**
+     * Gets entity by EntityFacade and returns it as a {@link SemanticEntity}, throwing if absent or wrong type.
+     *
+     * @param entityFacade the entity facade
+     * @return the SemanticEntity (never null)
+     * @throws IllegalStateException if entity is absent or not a semantic
+     */
+    static SemanticEntity getSemanticOrThrow(EntityFacade entityFacade) {
+        return get(entityFacade).expectSemantic();
     }
 
     /**
@@ -476,6 +596,28 @@ public interface EntityHandle {
     }
 
     /**
+     * Gets entity by PublicId and returns it as a {@link PatternEntity}, throwing if absent or wrong type.
+     *
+     * @param publicId the entity public identifier
+     * @return the PatternEntity (never null)
+     * @throws IllegalStateException if entity is absent or not a pattern
+     */
+    static PatternEntity getPatternOrThrow(PublicId publicId) {
+        return get(publicId).expectPattern();
+    }
+
+    /**
+     * Gets entity by EntityFacade and returns it as a {@link PatternEntity}, throwing if absent or wrong type.
+     *
+     * @param entityFacade the entity facade
+     * @return the PatternEntity (never null)
+     * @throws IllegalStateException if entity is absent or not a pattern
+     */
+    static PatternEntity getPatternOrThrow(EntityFacade entityFacade) {
+        return get(entityFacade).expectPattern();
+    }
+
+    /**
      * Gets entity by nid and returns it as a {@link StampEntity}, throwing if absent or wrong type.
      * <p>
      * Convenience method equivalent to {@code get(nid).expectStamp()}.
@@ -486,6 +628,28 @@ public interface EntityHandle {
      */
     static StampEntity getStampOrThrow(int nid) {
         return get(nid).expectStamp();
+    }
+
+    /**
+     * Gets entity by PublicId and returns it as a {@link StampEntity}, throwing if absent or wrong type.
+     *
+     * @param publicId the entity public identifier
+     * @return the StampEntity (never null)
+     * @throws IllegalStateException if entity is absent or not a stamp
+     */
+    static StampEntity getStampOrThrow(PublicId publicId) {
+        return get(publicId).expectStamp();
+    }
+
+    /**
+     * Gets entity by EntityFacade and returns it as a {@link StampEntity}, throwing if absent or wrong type.
+     *
+     * @param entityFacade the entity facade
+     * @return the StampEntity (never null)
+     * @throws IllegalStateException if entity is absent or not a stamp
+     */
+    static StampEntity getStampOrThrow(EntityFacade entityFacade) {
+        return get(entityFacade).expectStamp();
     }
 
     // ========== Default Implementation: Type Extraction Methods (Optional) ==========
