@@ -23,6 +23,7 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.component.Chronology;
 import dev.ikm.tinkar.component.Component;
 import dev.ikm.tinkar.component.FieldDataType;
+import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.SemanticFacade;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -34,6 +35,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Optional;
+
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 
 /**
  * Immutable, thread-safe representation of a Tinkar entity providing the foundation for terminology
@@ -225,6 +228,27 @@ public interface Entity<V extends EntityVersion>
 
     static int nid(PublicId publicId) {
         return provider().nidForPublicId(publicId);
+    }
+
+
+    static int nidFor(int patternNid, PublicId entityPublicId) {
+        return provider().nidFor(patternNid, entityPublicId);
+    }
+
+    static int nidForSemantic(PublicId patternPublicId, PublicId semanticPublicId) {
+        return provider().nidForSemantic(patternPublicId, semanticPublicId);
+    }
+
+    static int nidForPattern(PublicId patternPublicId) {
+        return provider().nidForPattern(patternPublicId);
+    }
+
+    static int nidForStamp(PublicId stampPublicId) {
+        return provider().nidForStamp(stampPublicId);
+    }
+
+    static int nidForConcept(PublicId conceptPublicId) {
+        return provider().nidForConcept(conceptPublicId);
     }
 
     static Optional<ConceptEntity> getConceptForSemantic(SemanticFacade semanticFacade) {

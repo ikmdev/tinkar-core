@@ -24,6 +24,7 @@ import dev.ikm.tinkar.schema.SemanticChronology;
 import dev.ikm.tinkar.schema.SemanticVersion;
 import dev.ikm.tinkar.schema.StampChronology;
 import dev.ikm.tinkar.schema.StampVersion;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -63,6 +64,7 @@ public class TestProtobufToEntitySemanticTransform {
     }
     @Test
     @DisplayName("Transform a Semantic Chronology With One Version Present")
+    @Disabled("Need entity provider and integration test DB")
     public void semanticChronologyTransformWithOneVersion(){
         openSession(this, (mockedEntityService, conceptMap) -> {
             // Given a PBSemanticChronology with a no Semantic Versions present
@@ -91,6 +93,7 @@ public class TestProtobufToEntitySemanticTransform {
                     .addFields(pbFieldString)
                     .build();
 
+            // The new way of assigning nids requres the referenced component to be known and in the database.
             SemanticChronology pbSemanticChronology = SemanticChronology.newBuilder()
                     .setPublicId(createPBPublicId(conceptMap.get(TEST_CONCEPT_NAME)))
                     .setReferencedComponentPublicId(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))

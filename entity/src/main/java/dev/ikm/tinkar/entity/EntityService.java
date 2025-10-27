@@ -19,6 +19,7 @@ import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.DataActivity;
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.util.broadcast.Broadcaster;
 import dev.ikm.tinkar.component.Chronology;
@@ -30,6 +31,7 @@ import dev.ikm.tinkar.entity.internal.EntityServiceFinder;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.ComponentWithNid;
+import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityFacade;
 import org.eclipse.collections.api.list.ImmutableList;
 
@@ -42,6 +44,8 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
+
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 
 public interface EntityService extends ChronologyService, Broadcaster<Integer> {
     static EntityService get() {
@@ -449,4 +453,36 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
     void endLoadPhase();
 
     void beginLoadPhase();
+
+
+    default int nidFor(int patternNid, PublicId entityPublicId) {
+        PublicId patternPublicId = EntityHandle.get(patternNid).expectEntity().publicId();
+        return ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternPublicId)
+                .call(() -> nidForPublicId(entityPublicId));
+    }
+
+    default int nidForSemantic(PublicId patternPublicId, PublicId semanticPublicId) {
+        return ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternPublicId)
+                .call(() -> nidForPublicId(semanticPublicId));
+    }
+
+    default int nidForPattern(PublicId patternPublicId) {
+        return ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Pattern.pattern())
+                .call(() -> nidForPublicId(patternPublicId));
+    }
+
+    default int nidForStamp(PublicId stampPublicId) {
+        return ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern())
+                .call(() -> nidForPublicId(stampPublicId));
+    }
+
+    default int nidForConcept(PublicId conceptPublicId) {
+        return ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern())
+                .call(() -> nidForPublicId(conceptPublicId));
+    }
 }

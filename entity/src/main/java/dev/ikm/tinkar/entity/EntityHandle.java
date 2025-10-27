@@ -15,6 +15,66 @@ import java.util.function.Supplier;
  * Provides three complementary patterns for type-safe entity processing without manual
  * instanceof checks or casts. Choose the right pattern based on your use case.
  *
+ * <h2>Design Symmetry: Type-Specific and Entity-Level Methods</h2>
+ * <p>
+ * This interface provides <b>symmetric method patterns</b> at two levels of abstraction:
+ *
+ * <table border="1" cellpadding="5">
+ * <caption>Method Symmetry Matrix</caption>
+ * <tr>
+ *   <th>Pattern</th>
+ *   <th>Entity-Level (Any Type)</th>
+ *   <th>Type-Specific Examples</th>
+ * </tr>
+ * <tr>
+ *   <td><b>Side Effects</b></td>
+ *   <td>{@code ifEntity(Consumer<Entity<?>>)}</td>
+ *   <td>{@code ifConcept()}, {@code ifSemantic()}, {@code ifPattern()}, {@code ifStamp()}</td>
+ * </tr>
+ * <tr>
+ *   <td><b>Safe Extraction</b></td>
+ *   <td>{@code asEntity() → Optional<Entity<?>>}</td>
+ *   <td>{@code asConcept()}, {@code asSemantic()}, {@code asPattern()}, {@code asStamp()}</td>
+ * </tr>
+ * <tr>
+ *   <td><b>Assertion</b></td>
+ *   <td>{@code expectEntity() → Entity<?>}<br>{@code expectEntity(String)}</td>
+ *   <td>{@code expectConcept()}, {@code expectSemantic()}, {@code expectPattern()}, {@code expectStamp()}</td>
+ * </tr>
+ * <tr>
+ *   <td><b>Static Convenience</b></td>
+ *   <td>{@code getEntityOrThrow(nid/PublicId/EntityFacade)}</td>
+ *   <td>{@code getConceptOrThrow()}, {@code getSemanticOrThrow()}, etc.</td>
+ * </tr>
+ * </table>
+ *
+ * <h3>When to Use Entity-Level vs Type-Specific Methods</h3>
+ * <ul>
+ *   <li><b>Use Entity-Level Methods ({@code ifEntity}, {@code asEntity}, {@code expectEntity})</b> when:
+ *     <ul>
+ *       <li>You need to work with common entity properties (nid, publicId, versions) regardless of type</li>
+ *       <li>You're implementing generic entity caching, logging, or indexing operations</li>
+ *       <li>You're validating entity existence but don't care about specific type</li>
+ *       <li>You're building type-agnostic infrastructure code</li>
+ *     </ul>
+ *   </li>
+ *   <li><b>Use Type-Specific Methods ({@code ifConcept}, {@code asConcept}, {@code expectConcept})</b> when:
+ *     <ul>
+ *       <li>You need to access type-specific properties or methods</li>
+ *       <li>Your business logic depends on entity type distinctions</li>
+ *       <li>You're implementing type-aware workflows or transformations</li>
+ *       <li>Wrong type would indicate a data model violation</li>
+ *     </ul>
+ *   </li>
+ * </ul>
+ *
+ * <h3>Symmetry with ObservableEntityHandle</h3>
+ * <p>
+ * This interface maintains complete method symmetry with {@code dev.ikm.komet.framework.observable.ObservableEntityHandle},
+ * ensuring consistent API patterns across both immutable entities ({@code Entity}) and observable entities
+ * ({@code ObservableEntity}). The only differences are return types ({@code Entity<?>} vs {@code ObservableEntity<?>})
+ * and thread safety characteristics (thread-safe vs JavaFX-thread-only).
+ *
  * <h2>Flexible Entity Access</h2>
  * <p>
  * Entities can be accessed using three different identifier types, providing flexibility
@@ -49,18 +109,21 @@ import java.util.function.Supplier;
  *
  * <pre>{@code
  * // Using nid (native identifier)
+ * Entity<?> entity1 = EntityHandle.getEntityOrThrow(123);
  * ConceptEntity concept1 = EntityHandle.getConceptOrThrow(123);
- * EntityHandle.get(123).ifConcept(c -> process(c));
+ * EntityHandle.get(123).ifEntity(e -> process(e));
  *
  * // Using PublicId (UUID-based public identifier)
  * PublicId publicId = PublicIds.of(uuid);
+ * Entity<?> entity2 = EntityHandle.getEntityOrThrow(publicId);
  * ConceptEntity concept2 = EntityHandle.getConceptOrThrow(publicId);
- * EntityHandle.get(publicId).ifConcept(c -> process(c));
+ * EntityHandle.get(publicId).ifEntity(e -> process(e));
  *
  * // Using EntityFacade (facade/proxy)
  * EntityFacade facade = EntityProxy.make(nid);
+ * Entity<?> entity3 = EntityHandle.getEntityOrThrow(facade);
  * ConceptEntity concept3 = EntityHandle.getConceptOrThrow(facade);
- * EntityHandle.get(facade).ifConcept(c -> process(c));
+ * EntityHandle.get(facade).ifEntity(e -> process(e));
  * }</pre>
  *
  * <h2>The Three Patterns: When to Use Each</h2>
@@ -292,7 +355,7 @@ public interface EntityHandle {
      * @return an EntityHandle representing the entity, or an empty EntityHandle if absent.
      */
     static EntityHandle get(PublicId publicId) {
-        return get(PrimitiveData.nid(publicId));
+        return get(Entity.nid(publicId));
     }
 
     /**
@@ -332,6 +395,37 @@ public interface EntityHandle {
     }
 
     // ========== Default Implementation: Fluent Type Matching ==========
+
+    /**
+     * If entity is present (any type), executes the consumer with the entity.
+     * <p>
+     * Use this when you want to perform operations that work on any entity type,
+     * such as logging, caching, or accessing common entity properties (nid, publicId, versions).
+     *
+     * <h3>Usage Examples:</h3>
+     * <pre>{@code
+     * // Log any entity
+     * EntityHandle.get(nid)
+     *     .ifEntity(entity -> LOG.info("Found entity: {}", entity.nid()));
+     *
+     * // Cache any entity type
+     * EntityHandle.get(nid)
+     *     .ifEntity(entity -> cache.put(entity.nid(), entity))
+     *     .ifAbsent(() -> LOG.warn("Entity {} not found", nid));
+     *
+     * // Access common properties
+     * EntityHandle.get(nid)
+     *     .ifEntity(entity -> System.out.println("PublicId: " + entity.publicId()));
+     * }</pre>
+     *
+     * @param consumer the action to perform on the entity
+     * @return this handle for chaining
+     */
+    default EntityHandle ifEntity(Consumer<Entity<?>> consumer) {
+        entity().ifPresent(consumer);
+        return this;
+    }
+
 
     /**
      * If entity is present and is a {@link ConceptEntity}, executes the consumer.
@@ -511,6 +605,43 @@ public interface EntityHandle {
     // ========== Static Convenience Methods ==========
 
     /**
+     * Gets entity by nid and returns it as an {@link Entity}, throwing if absent.
+     * <p>
+     * Convenience method equivalent to {@code get(nid).expectEntity()}.
+     * Use when you need to fetch any entity type and assert it exists.
+     *
+     * @param nid the entity nid
+     * @return the Entity (never null)
+     * @throws IllegalStateException if entity is absent
+     * @see #expectEntity()
+     */
+    static Entity<?> getEntityOrThrow(int nid) {
+        return get(nid).expectEntity();
+    }
+
+    /**
+     * Gets entity by PublicId and returns it as an {@link Entity}, throwing if absent.
+     *
+     * @param publicId the entity public identifier
+     * @return the Entity (never null)
+     * @throws IllegalStateException if entity is absent
+     */
+    static Entity<?> getEntityOrThrow(PublicId publicId) {
+        return get(publicId).expectEntity();
+    }
+
+    /**
+     * Gets entity by EntityFacade and returns it as an {@link Entity}, throwing if absent.
+     *
+     * @param entityFacade the entity facade
+     * @return the Entity (never null)
+     * @throws IllegalStateException if entity is absent
+     */
+    static Entity<?> getEntityOrThrow(EntityFacade entityFacade) {
+        return get(entityFacade).expectEntity();
+    }
+
+    /**
      * Gets entity by nid and returns it as a {@link ConceptEntity}, throwing if absent or wrong type.
      * <p>
      * Convenience method equivalent to {@code get(nid).expectConcept()}.
@@ -655,6 +786,48 @@ public interface EntityHandle {
     // ========== Default Implementation: Type Extraction Methods (Optional) ==========
 
     /**
+     * Returns this handle's entity as an {@link Optional}.
+     * <p>
+     * This is a convenience method that simply returns {@link #entity()}, providing symmetry
+     * with the {@code asXxx()} pattern used for type-specific extraction. Use this when you
+     * want Optional-based extraction of the entity regardless of type.
+     *
+     * <h3>Usage Examples:</h3>
+     * <pre>{@code
+     * // Extract entity with Optional chaining
+     * Optional<Entity<?>> maybeEntity = EntityHandle.get(nid).asEntity();
+     * maybeEntity.ifPresent(entity -> process(entity));
+     *
+     * // Filter and map
+     * String description = EntityHandle.get(nid)
+     *     .asEntity()
+     *     .filter(entity -> entity.versions().size() > 1)
+     *     .map(entity -> "Multi-version entity: " + entity.nid())
+     *     .orElse("Single or no version");
+     *
+     * // Extract entity or provide default
+     * Entity<?> entity = EntityHandle.get(nid)
+     *     .asEntity()
+     *     .orElseThrow(() -> new IllegalStateException("Entity required"));
+     *
+     * // Stream processing
+     * List<Entity<?>> entities = nids.stream()
+     *     .map(EntityHandle::get)
+     *     .map(handle -> handle.asEntity())
+     *     .flatMap(Optional::stream)
+     *     .toList();
+     * }</pre>
+     *
+     * @return Optional containing the entity if present, empty otherwise
+     * @see #entity() for direct access to the same Optional
+     * @see #expectEntity() for assertion-based access that throws if absent
+     * @see #ifEntity(Consumer) for side-effect operations
+     */
+    default Optional<Entity<?>> asEntity() {
+        return entity();
+    }
+
+    /**
      * Returns this entity as a {@link ConceptEntity} if it is one.
      * <p>
      * Use this method when you need to extract and return the concept, or when you
@@ -779,6 +952,67 @@ public interface EntityHandle {
     }
 
     // ========== Default Implementation: Type Assertion Methods (Direct) ==========
+
+    /**
+     * Returns the entity or throws if absent, regardless of specific type.
+     * <p>
+     * Use this when you know an entity must exist but don't need a specific type.
+     * Throws {@link IllegalStateException} if the entity is not found.
+     *
+     * <h3>Common Use Cases:</h3>
+     * <ul>
+     *   <li>Validating that an entity exists before processing</li>
+     *   <li>Working with entity properties common to all types (nid, publicId, versions)</li>
+     *   <li>Generic entity caching or indexing operations</li>
+     *   <li>Any context where absence means data integrity violation but type doesn't matter</li>
+     * </ul>
+     *
+     * <h3>Usage Examples:</h3>
+     * <pre>{@code
+     * // Validate entity exists
+     * Entity<?> entity = EntityHandle.get(nid).expectEntity();
+     * LOG.info("Entity nid: {}, type: {}", entity.nid(), entity.getClass().getSimpleName());
+     *
+     * // Use common entity operations
+     * Entity<?> entity = EntityHandle.get(nid).expectEntity();
+     * ImmutableList<?> versions = entity.versions();
+     *
+     * // Cache any entity type
+     * public void cacheEntity(int nid) {
+     *     Entity<?> entity = EntityHandle.get(nid).expectEntity();
+     *     cache.put(nid, entity);
+     * }
+     * }</pre>
+     *
+     * @return the entity (never null)
+     * @throws IllegalStateException if entity is absent
+     * @see #asEntity() for safe Optional-based extraction when absence is valid
+     * @see #ifEntity(Consumer) for side-effect operations
+     */
+    default Entity<?> expectEntity() {
+        return entity().orElseThrow(() ->
+            new IllegalStateException("Expected entity to be present but entity was absent")
+        );
+    }
+
+    /**
+     * Returns the entity or throws with a custom message if absent.
+     * <p>
+     * Use this when you want more descriptive error messages for debugging.
+     *
+     * <h3>Usage Example:</h3>
+     * <pre>{@code
+     * Entity<?> entity = EntityHandle.get(nid)
+     *     .expectEntity("Required entity for initialization not found");
+     * }</pre>
+     *
+     * @param errorMessage the exception message if entity is absent
+     * @return the entity (never null)
+     * @throws IllegalStateException if the entity is absent
+     */
+    default Entity<?> expectEntity(String errorMessage) {
+        return entity().orElseThrow(() -> new IllegalStateException(errorMessage));
+    }
 
     /**
      * Returns this entity as a {@link ConceptEntity}, throwing an exception if absent or wrong type.

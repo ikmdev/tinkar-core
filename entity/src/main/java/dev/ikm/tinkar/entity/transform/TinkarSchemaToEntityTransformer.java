@@ -26,37 +26,7 @@ import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.component.Component;
 import dev.ikm.tinkar.component.location.PlanarPoint;
 import dev.ikm.tinkar.component.location.SpatialPoint;
-import dev.ikm.tinkar.entity.ConceptEntity;
-import dev.ikm.tinkar.entity.ConceptEntityVersion;
-import dev.ikm.tinkar.entity.ConceptRecord;
-import dev.ikm.tinkar.entity.ConceptRecordBuilder;
-import dev.ikm.tinkar.entity.ConceptVersionRecord;
-import dev.ikm.tinkar.entity.ConceptVersionRecordBuilder;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityRecordFactory;
-import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.entity.EntityVersion;
-import dev.ikm.tinkar.entity.FieldDefinitionRecord;
-import dev.ikm.tinkar.entity.FieldDefinitionRecordBuilder;
-import dev.ikm.tinkar.entity.PatternEntity;
-import dev.ikm.tinkar.entity.PatternEntityVersion;
-import dev.ikm.tinkar.entity.PatternRecord;
-import dev.ikm.tinkar.entity.PatternRecordBuilder;
-import dev.ikm.tinkar.entity.PatternVersionRecord;
-import dev.ikm.tinkar.entity.PatternVersionRecordBuilder;
-import dev.ikm.tinkar.entity.RecordListBuilder;
-import dev.ikm.tinkar.entity.SemanticEntity;
-import dev.ikm.tinkar.entity.SemanticEntityVersion;
-import dev.ikm.tinkar.entity.SemanticRecord;
-import dev.ikm.tinkar.entity.SemanticRecordBuilder;
-import dev.ikm.tinkar.entity.SemanticVersionRecord;
-import dev.ikm.tinkar.entity.SemanticVersionRecordBuilder;
-import dev.ikm.tinkar.entity.StampEntity;
-import dev.ikm.tinkar.entity.StampEntityVersion;
-import dev.ikm.tinkar.entity.StampRecord;
-import dev.ikm.tinkar.entity.StampRecordBuilder;
-import dev.ikm.tinkar.entity.StampVersionRecord;
-import dev.ikm.tinkar.entity.StampVersionRecordBuilder;
+import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.graph.DiGraphEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
@@ -79,6 +49,7 @@ import dev.ikm.tinkar.schema.Vertex;
 import dev.ikm.tinkar.schema.VertexUUID;
 import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.PatternFacade;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -96,10 +67,8 @@ import org.eclipse.collections.impl.map.mutable.primitive.IntObjectHashMap;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
@@ -138,31 +107,27 @@ public class TinkarSchemaToEntityTransformer {
         if(pbConceptChronology.getConceptVersionsCount() == 0){
             throw new RuntimeException("Exception thrown, Concept Chronology can't contain zero versions");
         }
-        RecordListBuilder<ConceptVersionRecord> conceptVersions = RecordListBuilder.make();
+        int conceptNid = nidForConcept(pbConceptChronology.getPublicId());
         PublicId conceptPublicId = transformPublicId(pbConceptChronology.getPublicId());
-        ConceptRecord conceptRecord;
-        if (conceptPublicId.uuidCount() > 0) {
-            int conceptNid = Entity.nid(conceptPublicId);
-            if (conceptPublicId.uuidCount() > 1) {
-                conceptRecord = ConceptRecordBuilder.builder()
-                        .leastSignificantBits(conceptPublicId.asUuidArray()[0].getLeastSignificantBits())
-                        .mostSignificantBits(conceptPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .additionalUuidLongs(UuidUtil.asArray(Arrays.copyOfRange(conceptPublicId.asUuidArray(),
-                                1, conceptPublicId.uuidCount())))
-                        .nid(conceptNid)
-                        .versions(conceptVersions)
-                        .build();
-            } else {
-                conceptRecord = ConceptRecordBuilder.builder()
-                        .leastSignificantBits(conceptPublicId.asUuidArray()[0].getLeastSignificantBits())
-                        .mostSignificantBits(conceptPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .nid(conceptNid)
-                        .versions(conceptVersions)
-                        .build();
-            }
-        } else {
-            throw new IllegalStateException("missing primordial UUID");
-        }
+        RecordListBuilder<ConceptVersionRecord> conceptVersions = RecordListBuilder.make();
+        ConceptRecord conceptRecord = switch (conceptPublicId.uuidCount()) {
+            case 0 -> throw new IllegalStateException("No UUIDs in PublicId.");
+            case 1 -> ConceptRecordBuilder.builder()
+                    .leastSignificantBits(conceptPublicId.asUuidArray()[0].getLeastSignificantBits())
+                    .mostSignificantBits(conceptPublicId.asUuidArray()[0].getMostSignificantBits())
+                    .nid(conceptNid)
+                    .versions(conceptVersions)
+                    .build();
+            default -> ConceptRecordBuilder.builder()
+                    .leastSignificantBits(conceptPublicId.asUuidArray()[0].getLeastSignificantBits())
+                    .mostSignificantBits(conceptPublicId.asUuidArray()[0].getMostSignificantBits())
+                    .additionalUuidLongs(UuidUtil.asArray(Arrays.copyOfRange(conceptPublicId.asUuidArray(),
+                            1, conceptPublicId.uuidCount())))
+                    .nid(conceptNid)
+                    .versions(conceptVersions)
+                    .build();
+        };
+
         for (ConceptVersion pbConceptVersion : pbConceptChronology.getConceptVersionsList()) {
             conceptVersions.add(transformConceptVersion(pbConceptVersion, conceptRecord, stampEntityConsumer));
         }
@@ -171,25 +136,40 @@ public class TinkarSchemaToEntityTransformer {
     protected ConceptVersionRecord transformConceptVersion(ConceptVersion pbConceptVersion, ConceptRecord concept, Consumer<StampEntity<StampEntityVersion>> stampEntityConsumer) {
         return ConceptVersionRecordBuilder.builder()
                 .chronology(concept)
-                .stampNid(Entity.nid(transformPublicId(pbConceptVersion.getStampChronologyPublicId())))
+                .stampNid(nidForStamp(pbConceptVersion.getStampChronologyPublicId()))
                 .build();
     }
+
     protected SemanticEntity<? extends SemanticEntityVersion> transformSemanticChronology(SemanticChronology pbSemanticChronology){
         return transformSemanticChronology(pbSemanticChronology, null);
     }
+
     protected SemanticEntity<? extends SemanticEntityVersion> transformSemanticChronology(SemanticChronology pbSemanticChronology, Consumer<StampEntity<StampEntityVersion>> stampEntityConsumer){
         if(pbSemanticChronology.getSemanticVersionsCount() == 0){
             throw new RuntimeException("Exception thrown, Semantic Chronology can't contain zero versions");
         }
         RecordListBuilder<SemanticVersionRecord> semanticVersions = RecordListBuilder.make();
+
         PublicId semanticPublicId = transformPublicId(pbSemanticChronology.getPublicId());
         PublicId patternPublicId = transformPublicId(pbSemanticChronology.getPatternForSemanticPublicId());
         PublicId referencedComponentPublicId = transformPublicId(pbSemanticChronology.getReferencedComponentPublicId());
+
         SemanticRecord semanticRecord;
-        int patternNid = Entity.nid(patternPublicId);
-        int referencedComponentNid = Entity.nid(referencedComponentPublicId);
+        int patternNid = nidForPattern(patternPublicId);
+
+
+        // Hope that the referenced component was created before the semantic and is already in the database.
+        // If not, we'll have to do late binding somehow, or do a two pass...
+        int referencedComponentNid = 0;
+        try {
+            referencedComponentNid = EntityHandle.getEntityOrThrow(referencedComponentPublicId).nid();
+        } catch (Exception e) {
+            System.out.println("Referenced component not found in database, doing late binding.");
+            throw e;
+        }
+
         if (semanticPublicId.uuidCount() > 0) {
-            int semanticNid = Entity.nid(semanticPublicId);
+            int semanticNid = nidForSemantic(patternPublicId, semanticPublicId);
             if (semanticPublicId.uuidCount() > 1) {
                 semanticRecord = SemanticRecordBuilder.builder()
                         .leastSignificantBits(semanticPublicId.asUuidArray()[0].getLeastSignificantBits())
@@ -229,7 +209,7 @@ public class TinkarSchemaToEntityTransformer {
         return SemanticVersionRecordBuilder.builder()
                 .chronology(semantic)
                 //TODO: Need to add the stamp consumer here
-                .stampNid(Entity.nid(transformPublicId(pbSemanticVersion.getStampChronologyPublicId())))
+                .stampNid(nidForStamp(pbSemanticVersion.getStampChronologyPublicId()))
                 .fieldValues(fieldValues.toImmutable())
                 .build();
     }
@@ -250,7 +230,7 @@ public class TinkarSchemaToEntityTransformer {
                 patternRecord = PatternRecordBuilder.builder()
                         .leastSignificantBits(patternPublicId.asUuidArray()[0].getLeastSignificantBits())
                         .mostSignificantBits(patternPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .nid(Entity.nid(patternPublicId))
+                        .nid(nidForPattern(patternPublicId))
                         .additionalUuidLongs(UuidUtil.asArray(Arrays.copyOfRange(patternPublicId.asUuidArray(),
                                 1, patternPublicId.uuidCount())))
                         .versions(patternVersions)
@@ -259,7 +239,7 @@ public class TinkarSchemaToEntityTransformer {
                 patternRecord = PatternRecordBuilder.builder()
                         .leastSignificantBits(patternPublicId.asUuidArray()[0].getLeastSignificantBits())
                         .mostSignificantBits(patternPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .nid(Entity.nid(patternPublicId))
+                        .nid(nidForPattern(patternPublicId))
                         .versions(patternVersions)
                         .build();
             }
@@ -276,9 +256,9 @@ public class TinkarSchemaToEntityTransformer {
                 .withInitialCapacity(pbPatternVersion.getFieldDefinitionsCount());
         //TODO: Is this a proper way to grab NID?
         int patternNid = pattern.nid();
-        int patternStampNid = (Entity.nid(transformPublicId(pbPatternVersion.getStampChronologyPublicId())));
-        int semanticPurposeNid = Entity.nid(transformPublicId(pbPatternVersion.getReferencedComponentPurposePublicId()));
-        int semanticMeaningNid = Entity.nid(transformPublicId(pbPatternVersion.getReferencedComponentMeaningPublicId()));
+        int patternStampNid = nidForStamp(pbPatternVersion.getStampChronologyPublicId());
+        int semanticPurposeNid = nidForConcept(pbPatternVersion.getReferencedComponentPurposePublicId());
+        int semanticMeaningNid = nidForConcept(pbPatternVersion.getReferencedComponentMeaningPublicId());
         for(FieldDefinition pbFieldDefinition : pbPatternVersion.getFieldDefinitionsList()){
             fieldDefinition.add(transformFieldDefinitionRecord(pbFieldDefinition, patternStampNid, patternNid));
         }
@@ -300,9 +280,7 @@ public class TinkarSchemaToEntityTransformer {
         PublicId stampPublicId = transformPublicId(stampChronology.getPublicId());
         StampRecord stampRecord;
         if (stampPublicId.uuidCount() > 0) {
-            int stampNid = ScopedValue
-                    .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern())
-                    .call(() -> PrimitiveData.nid(stampPublicId));
+            int stampNid = nidForStamp(stampChronology.getPublicId());
             if (stampPublicId.uuidCount() > 1) {
                 stampRecord = StampRecordBuilder.builder()
                         .leastSignificantBits(stampPublicId.asUuidArray()[0].getLeastSignificantBits())
@@ -339,22 +317,22 @@ public class TinkarSchemaToEntityTransformer {
         return (StampRecord) stampEntity;
     }
     protected StampVersionRecord transformStampVersion(StampVersion pbStampVersion, StampRecord stampRecord){
-        return StampVersionRecordBuilder.builder()
+         return StampVersionRecordBuilder.builder()
                 .chronology(stampRecord)
-                .stateNid(Entity.nid(transformPublicId(pbStampVersion.getStatusPublicId())))
+                .stateNid(nidForConcept(pbStampVersion.getStatusPublicId()))
                 .time(pbStampVersion.getTime())
-                .authorNid(Entity.nid(transformPublicId(pbStampVersion.getAuthorPublicId())))
-                .moduleNid(Entity.nid(transformPublicId(pbStampVersion.getModulePublicId())))
-                .pathNid(Entity.nid(transformPublicId(pbStampVersion.getPathPublicId())))
+                .authorNid(nidForConcept(pbStampVersion.getAuthorPublicId()))
+                .moduleNid(nidForConcept(pbStampVersion.getModulePublicId()))
+                .pathNid(nidForConcept(pbStampVersion.getPathPublicId()))
                 .build();
     }
     //Field Definition Transformation
     //This creates PBFieldDefinition (line 256 in Tinkar.proto)
     protected FieldDefinitionRecord transformFieldDefinitionRecord(FieldDefinition pbFieldDefinition,
                                                                    int patternVersionStampNid, int patternNid) {
-        int meaningNid = Entity.nid(transformPublicId(pbFieldDefinition.getMeaningPublicId()));
-        int purposeNid = Entity.nid(transformPublicId(pbFieldDefinition.getPurposePublicId()));
-        int dataTypeNid = Entity.nid(transformPublicId(pbFieldDefinition.getDataTypePublicId()));
+        int meaningNid = nidForConcept(pbFieldDefinition.getMeaningPublicId());
+        int purposeNid = nidForConcept(pbFieldDefinition.getPurposePublicId());
+        int dataTypeNid = nidForConcept(pbFieldDefinition.getDataTypePublicId());
         return FieldDefinitionRecordBuilder.builder()
                 .meaningNid(meaningNid)
                 .purposeNid(purposeNid)
@@ -509,7 +487,7 @@ public class TinkarSchemaToEntityTransformer {
         ConceptRecord conceptRecord;
 
         if (conceptPublicId.uuidCount() > 0) {
-            int conceptNid = Entity.nid(conceptPublicId);
+            int conceptNid = nidForConcept(conceptPublicId);
             if (conceptPublicId.uuidCount() > 1) {
                 conceptRecord = ConceptRecordBuilder.builder()
                         .leastSignificantBits(conceptPublicId.asUuidArray()[0].getLeastSignificantBits())
@@ -537,9 +515,6 @@ public class TinkarSchemaToEntityTransformer {
         return conceptRecord;
     }
 
-    protected int testMockEntityService(Component component){
-        return Entity.nid(component);
-    }
     protected PlanarPoint transformPlanarPoint(dev.ikm.tinkar.schema.PlanarPoint planarPoint){
         return new PlanarPoint(
                 planarPoint.getX(),
@@ -562,5 +537,79 @@ public class TinkarSchemaToEntityTransformer {
 
     protected Long transformLong(dev.ikm.tinkar.schema.Long value) {
         return value.getValue();
+    }
+
+    /**
+     * Generates a nid for a component within a pattern context (protobuf version).
+     *
+     * @param patternNid the pattern nid providing context
+     * @param pbPublicId protobuf PublicId of the component
+     * @return the generated nid
+     */
+    protected int nidFor(int patternNid, dev.ikm.tinkar.schema.PublicId pbPublicId) {
+        PublicId patternPublicId = EntityHandle.get(patternNid).expectEntity().publicId();
+        PublicId componentPublicId = transformPublicId(pbPublicId);
+        return ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternPublicId)
+                .call(() -> PrimitiveData.nid(componentPublicId));
+    }
+
+    /**
+     * Generates a nid for a component within a pattern context (protobuf version).
+     *
+     * @param patternPublicId the pattern PublicId providing context
+     * @param pbPublicId protobuf PublicId of the component
+     * @return the generated nid
+     */
+    protected int nidForSemantic(PublicId patternPublicId, dev.ikm.tinkar.schema.PublicId pbPublicId) {
+        PublicId componentPublicId = transformPublicId(pbPublicId);
+        return ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternPublicId)
+                .call(() -> Entity.nid(componentPublicId));
+    }
+
+    protected int nidForSemantic(PublicId patternPublicId, PublicId semanticPublicId) {
+        return ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternPublicId)
+                .call(() -> Entity.nid(semanticPublicId));
+    }
+
+    protected int nidForPattern(dev.ikm.tinkar.schema.PublicId pbPublicId) {
+        PublicId componentPublicId = transformPublicId(pbPublicId);
+        return ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Pattern.pattern())
+                .call(() -> Entity.nid(componentPublicId));
+    }
+
+    protected int nidForPattern(PublicId patternPublicId) {
+        return ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Pattern.pattern())
+                .call(() -> Entity.nid(patternPublicId));
+    }
+
+    protected int nidForStamp(dev.ikm.tinkar.schema.PublicId pbPublicId) {
+        PublicId componentPublicId = transformPublicId(pbPublicId);
+        return ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern())
+                .call(() -> Entity.nid(componentPublicId));
+    }
+
+    protected int nidForStamp(PublicId stampPublicId) {
+        return ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern())
+                .call(() -> Entity.nid(stampPublicId));
+    }
+
+    protected int nidForConcept(dev.ikm.tinkar.schema.PublicId pbPublicId) {
+        PublicId componentPublicId = transformPublicId(pbPublicId);
+        return ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern())
+                .call(() -> Entity.nid(componentPublicId));
+    }
+
+    protected int nidForConcept(PublicId conceptPublicId) {
+        return ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern())
+                .call(() -> Entity.nid(conceptPublicId));
     }
 }

@@ -36,6 +36,7 @@ import dev.ikm.tinkar.component.Version;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.provider.search.TypeAheadSearch;
+import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -55,6 +56,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.function.Consumer;
 
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 import static dev.ikm.tinkar.terms.TinkarTerm.DESCRIPTION_PATTERN;
 
 //@AutoService({EntityService.class, PublicIdService.class, DefaultDescriptionForNidService.class})
