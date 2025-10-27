@@ -231,12 +231,16 @@ public interface Entity<V extends EntityVersion>
     }
 
 
-    static int nidFor(int patternNid, PublicId entityPublicId) {
+    static int nidForSemantic(int patternNid, PublicId entityPublicId) {
         return provider().nidFor(patternNid, entityPublicId);
     }
 
     static int nidForSemantic(PublicId patternPublicId, PublicId semanticPublicId) {
         return provider().nidForSemantic(patternPublicId, semanticPublicId);
+    }
+
+    static int nidForSemantic(EntityFacade patternFacade, PublicId semanticPublicId) {
+        return provider().nidForSemantic(patternFacade.publicId(), semanticPublicId);
     }
 
     static int nidForPattern(PublicId patternPublicId) {
