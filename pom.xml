@@ -5,7 +5,7 @@
     <parent>
         <groupId>dev.ikm.build</groupId>
         <artifactId>java-parent</artifactId>
-        <version>1.67.0</version>
+        <version>1.69.0</version>
     </parent>
 
     <groupId>dev.ikm.tinkar</groupId>
@@ -119,7 +119,7 @@
 		<jpms-record-builder-core.version>44-r2</jpms-record-builder-core.version>
 		<eclipse-collections.version>13.0.0</eclipse-collections.version>
 		<eclipse-collections-api.version>13.0.0</eclipse-collections-api.version>
-		<jheaps.version>0.14-r11-fix-module-name-SNAPSHOT</jheaps.version>
+		<jheaps.version>0.14-r16</jheaps.version>
 		<roaringbitmap.version>1.5.3</roaringbitmap.version>
 
 		<hybrid-reasoner.version>1.1.7</hybrid-reasoner.version>
