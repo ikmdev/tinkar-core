@@ -3,6 +3,7 @@ package dev.ikm.tinkar.reasoner.service;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import dev.ikm.tinkar.terms.EntityBinding;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
@@ -36,6 +37,8 @@ import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResults;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
+
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 
 public class InferredResultsWriter {
 
@@ -149,10 +152,16 @@ public class InferredResultsWriter {
 					Entity.getFast(conceptNid));
 			// Create new semantic...
 			RecordListBuilder<SemanticVersionRecord> versionRecords = RecordListBuilder.make();
+
+			int semanticNid = ScopedValue
+					.where(SCOPED_PATTERN_PUBLICID_FOR_NID, Entity.getFast(inferredPatternNid))
+					.call(() -> PrimitiveData.nid(uuidForSemantic));
+
 			SemanticRecord semanticRecord = SemanticRecordBuilder.builder()
+					.nid(semanticNid)
+					.referencedComponentNid(conceptNid)
 					.leastSignificantBits(uuidForSemantic.getLeastSignificantBits())
 					.mostSignificantBits(uuidForSemantic.getMostSignificantBits())
-					.nid(PrimitiveData.nid(uuidForSemantic)).referencedComponentNid(conceptNid)
 					.patternNid(inferredPatternNid).versions(versionRecords).build();
 			versionRecords.add(new SemanticVersionRecord(semanticRecord, updateStampNid, fields));
 			processSemantic(semanticRecord);
@@ -194,10 +203,15 @@ public class InferredResultsWriter {
 						Entity.getFast(conceptNid));
 				// Create new semantic...
 				RecordListBuilder<SemanticVersionRecord> versionRecords = RecordListBuilder.make();
+				int semanticNid = ScopedValue
+						.where(SCOPED_PATTERN_PUBLICID_FOR_NID, Entity.getFast(inferredNavigationPatternNid))
+						.call(() -> PrimitiveData.nid(uuidForSemantic));
+
 				SemanticRecord navigationRecord = SemanticRecordBuilder.builder()
+						.nid(semanticNid)
+						.referencedComponentNid(conceptNid)
 						.leastSignificantBits(uuidForSemantic.getLeastSignificantBits())
 						.mostSignificantBits(uuidForSemantic.getMostSignificantBits())
-						.nid(PrimitiveData.nid(uuidForSemantic)).referencedComponentNid(conceptNid)
 						.patternNid(inferredNavigationPatternNid).versions(versionRecords).build();
 				IntIdSet parentIds = IntIds.set.of(parentNids.toArray());
 				IntIdSet childrenIds = IntIds.set.of(childNids.toArray());

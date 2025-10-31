@@ -30,31 +30,28 @@ public abstract class SpinedArrayController implements DataServiceController<Pri
 
     @Override
     public boolean running() {
-        return SpinedArrayProvider.singleton != null;
+        return SpinedArrayProvider.lifecycle.get() == SpinedArrayProvider.Lifecycle.RUNNING;
     }
 
     @Override
     public void start() {
-        try {
-            new SpinedArrayProvider();
-        } catch (IOException | ExecutionException | InterruptedException e) {
-            throw new RuntimeException(e);
+        if (SpinedArrayProvider.lifecycle.compareAndSet(SpinedArrayProvider.Lifecycle.UNINITIALIZED, SpinedArrayProvider.Lifecycle.STARTING)) {
+            SpinedArrayProvider.get();
+        } else {
+            throw new IllegalStateException("SpinedArrayProvider is already started: " +
+                    SpinedArrayProvider.lifecycle.get());
         }
+
     }
 
     @Override
     public void stop() {
-        if (SpinedArrayProvider.singleton != null) {
-            SpinedArrayProvider.singleton.close();
-            SpinedArrayProvider.singleton = null;
-        }
+        SpinedArrayProvider.get().close();
     }
 
     @Override
     public void save() {
-        if (SpinedArrayProvider.singleton != null) {
-            SpinedArrayProvider.singleton.save();
-        }
+        SpinedArrayProvider.get().save();
     }
 
     @Override
@@ -64,10 +61,10 @@ public abstract class SpinedArrayController implements DataServiceController<Pri
 
     @Override
     public PrimitiveDataService provider() {
-        if (SpinedArrayProvider.singleton == null) {
+        if (SpinedArrayProvider.lifecycle.get() == SpinedArrayProvider.Lifecycle.UNINITIALIZED) {
             start();
         }
-        return SpinedArrayProvider.singleton;
+        return SpinedArrayProvider.get();
     }
 
     @Override

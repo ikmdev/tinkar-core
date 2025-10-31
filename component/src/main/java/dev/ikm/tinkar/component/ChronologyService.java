@@ -33,5 +33,4 @@ public interface ChronologyService {
 
     <T extends Chronology<V>, V extends Version> Optional<T> getChronology(PublicId publicId);
 
-    <T extends Chronology<V>, V extends Version> void putChronology(T chronology);
 }

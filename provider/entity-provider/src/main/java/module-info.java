@@ -35,6 +35,7 @@ module dev.ikm.tinkar.provider.entity {
     requires dev.ikm.tinkar.common;
     requires dev.ikm.tinkar.provider.search;
     requires org.slf4j;
+    requires dev.ikm.tinkar.terms;
 
     provides CachingService with EntityProvider.CacheProvider;
     provides DefaultDescriptionForNidService with DefaultDescriptionForNidServiceFactory;

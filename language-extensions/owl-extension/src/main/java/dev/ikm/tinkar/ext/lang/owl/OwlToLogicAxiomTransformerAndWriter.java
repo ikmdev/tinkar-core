@@ -27,20 +27,12 @@ import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
-import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.entity.SemanticEntity;
-import dev.ikm.tinkar.entity.SemanticEntityVersion;
-import dev.ikm.tinkar.entity.SemanticRecord;
-import dev.ikm.tinkar.entity.SemanticRecordBuilder;
-import dev.ikm.tinkar.entity.SemanticVersionRecordBuilder;
-import dev.ikm.tinkar.entity.StampEntity;
-import dev.ikm.tinkar.entity.StampEntityVersion;
-import dev.ikm.tinkar.entity.StampVersionRecord;
-import dev.ikm.tinkar.entity.StampVersionRecordBuilder;
+import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.entity.transaction.Transaction;
+import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
@@ -52,6 +44,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 
 public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> {
 
@@ -214,15 +208,19 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
 
     private void newSemanticWithVersion(int conceptNid, LogicalExpression logicalExpression, StampVersionRecord writeStamp) {
         // Create UUID from seed and assign SemanticBuilder the value
-        UUID generartedSemanticUuid = UuidT5Generator.singleSemanticUuid(EntityService.get().getEntityFast(destinationPatternNid),
+        Entity<EntityVersion> patternEntity = EntityService.get().getEntityFast(destinationPatternNid);
+        UUID generartedSemanticUuid = UuidT5Generator.singleSemanticUuid(patternEntity,
                 EntityService.get().getEntityFast(conceptNid));
+        int semanticNid = ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternEntity.publicId())
+                .call(() -> PrimitiveData.nid(generartedSemanticUuid));
 
         SemanticRecordBuilder newSemanticBuilder = SemanticRecordBuilder.builder()
+                .nid(semanticNid)
                 .mostSignificantBits(generartedSemanticUuid.getMostSignificantBits())
                 .leastSignificantBits(generartedSemanticUuid.getLeastSignificantBits())
                 .patternNid(destinationPatternNid)
                 .referencedComponentNid(conceptNid)
-                .nid(PrimitiveData.nid(generartedSemanticUuid))
                 .versions(Lists.immutable.empty());
 
         addNewVersion(logicalExpression, newSemanticBuilder.build(), writeStamp);

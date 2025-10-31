@@ -431,6 +431,7 @@ public class ElkSnomedDataBuilder {
 		case Float _ -> ValueType.Float;
 		case Integer _ -> ValueType.Integer;
 		case String _ -> ValueType.String;
+        case Long _ -> ValueType.Long;
 		default -> throw new UnsupportedOperationException("Value type: " + value.getClass().getName());
 		};
 		return new ConcreteRole(role_type, value.toString(), value_type);

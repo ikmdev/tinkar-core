@@ -23,6 +23,8 @@ import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
+
 public interface ConceptEnumerationFacade<E extends Enum<E>>
         extends ConceptFacade, Encodable {
     ConceptFacade conceptForEnum();
@@ -34,7 +36,9 @@ public interface ConceptEnumerationFacade<E extends Enum<E>>
     }
 
     default int nid() {
-        return PrimitiveData.nid(this.conceptForEnum().publicId());
+        return ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern())
+                .call(() -> PrimitiveData.nid(this.conceptForEnum().publicId()));
     }
 
     default E enumValue() {

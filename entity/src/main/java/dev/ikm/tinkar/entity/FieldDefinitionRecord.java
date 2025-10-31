@@ -23,7 +23,7 @@ import io.soabase.recordbuilder.core.RecordBuilder;
 @RecordBuilder
 public record FieldDefinitionRecord(int dataTypeNid, int purposeNid, int meaningNid, int patternVersionStampNid,
                                     int patternNid, int indexInPattern)
-        implements FieldDefinitionForEntity, ImmutableFieldDefinition, FieldDefinitionRecordBuilder.With {
+        implements FieldDefinitionForEntity, FieldDefinitionRecordBuilder.With, FieldDefinition {
 
     public FieldDefinitionRecord {
         Validator.notZero(dataTypeNid);
@@ -62,4 +62,5 @@ public record FieldDefinitionRecord(int dataTypeNid, int purposeNid, int meaning
                 ", for pattern: " + PrimitiveData.text(patternNid) + " [" + indexInPattern +
                 "]}";
     }
+
 }

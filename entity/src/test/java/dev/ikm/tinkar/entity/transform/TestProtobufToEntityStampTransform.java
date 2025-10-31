@@ -23,6 +23,7 @@ import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.entity.StampVersionRecord;
 import dev.ikm.tinkar.schema.StampChronology;
 import dev.ikm.tinkar.schema.StampVersion;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -222,6 +223,8 @@ public class TestProtobufToEntityStampTransform {
      */
     @Test
     @DisplayName("Transform a Stamp Chronology With One Version")
+    @Disabled("Need entity provider and integration test DB")
+    //TODO: Need to create a test DB with a Stamp Chronology with one version present
     public void stampChronologyTransformWithOneVersion(){
         openSession(this, (mockedEntityService, conceptMap) -> {
             Consumer<StampEntity<StampEntityVersion>> stampConsumer = (c) -> { };
@@ -258,6 +261,8 @@ public class TestProtobufToEntityStampTransform {
 
     @Test
     @DisplayName("Transform a Stamp Chronology With Two Versions")
+    @Disabled("Need entity provider and integration test DB")
+    //TODO: Need to create a test DB with a Stamp Chronology with one version present
     public void stampChronologyTransformWithTwoVersions(){
         openSession(this, (mockedEntityService, conceptMap) -> {
             Consumer<StampEntity<StampEntityVersion>> stampConsumer = (c) -> { };

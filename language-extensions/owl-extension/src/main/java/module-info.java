@@ -24,6 +24,7 @@ module dev.ikm.tinkar.ext.lang.owl {
 
 	requires dev.ikm.elk.snomed;
 	requires dev.ikm.elk.snomed.owlel;
+    requires dev.ikm.tinkar.terms;
 
     exports dev.ikm.tinkar.ext.lang.owl;
 }

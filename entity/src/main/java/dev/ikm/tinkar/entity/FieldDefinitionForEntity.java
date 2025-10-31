@@ -15,7 +15,12 @@
  */
 package dev.ikm.tinkar.entity;
 
+import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.component.FieldDefinition;
+import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.ConceptToDataType;
+import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.PatternFacade;
 
 public interface FieldDefinitionForEntity extends FieldDefinition {
 
@@ -25,7 +30,7 @@ public interface FieldDefinitionForEntity extends FieldDefinition {
      * @return Concept designating the data type of the defined field.
      */
     default ConceptEntity dataType() {
-        return Entity.getFast(dataTypeNid());
+        return EntityHandle.getConceptOrThrow(dataTypeNid());
     }
 
     int dataTypeNid();
@@ -41,7 +46,7 @@ public interface FieldDefinitionForEntity extends FieldDefinition {
      * @return Concept designating the purpose of the defined field.
      */
     default ConceptEntity purpose() {
-        return Entity.getFast(purposeNid());
+        return EntityHandle.getConceptOrThrow(purposeNid());
     }
 
     int purposeNid();
@@ -58,7 +63,7 @@ public interface FieldDefinitionForEntity extends FieldDefinition {
      * @return Concept designating the meaning (symbolic value) of this field.
      */
     default ConceptEntity meaning() {
-        return Entity.getFast(meaningNid());
+        return EntityHandle.getConceptOrThrow(meaningNid());
     }
 
     int meaningNid();
@@ -68,4 +73,17 @@ public interface FieldDefinitionForEntity extends FieldDefinition {
      * @return field index
      */
     int indexInPattern();
+
+    int patternNid();
+
+    default PatternFacade pattern() {
+        return EntityProxy.Pattern.make(patternNid());
+    }
+
+    int patternVersionStampNid();
+
+    default FieldDataType fieldDataType() {
+        return ConceptToDataType.convert(dataType());
+    }
+
 }

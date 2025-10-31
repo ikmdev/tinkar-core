@@ -21,6 +21,7 @@ import dev.ikm.tinkar.component.Component;
 import dev.ikm.tinkar.component.Stamp;
 import dev.ikm.tinkar.component.Version;
 import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.StampFacade;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
@@ -29,13 +30,12 @@ import org.eclipse.collections.api.list.ImmutableList;
 import static dev.ikm.tinkar.common.util.time.DateTimeUtil.SEC_FORMATTER;
 
 public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
-        Stamp<V>, Component, Version {
-    @Override
+        Stamp, Component, Version {
+
     default State state() {
         return lastVersion().state();
     }
 
-    @Override
     default long time() {
         if (lastVersion() != null) {
             return lastVersion().time();
@@ -43,22 +43,18 @@ public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
         return Long.MIN_VALUE;
     }
 
-    @Override
     default ConceptFacade author() {
         return Entity.provider().getEntityFast(authorNid());
     }
 
-    @Override
     default ConceptFacade module() {
         return Entity.provider().getEntityFast(moduleNid());
     }
 
-    @Override
     default ConceptFacade path() {
         return Entity.provider().getEntityFast(pathNid());
     }
 
-    @Override
     StampEntity stamp();
 
     default int pathNid() {

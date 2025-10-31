@@ -18,55 +18,52 @@ package dev.ikm.tinkar.entity;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
 import dev.ikm.tinkar.component.FieldDefinition;
+import dev.ikm.tinkar.component.PatternVersion;
+import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
+import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
+import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.PatternFacade;
 import io.soabase.recordbuilder.core.RecordBuilder;
 
-import java.util.Objects;
-
 /**
- * TODO, create an entity data type that combines concept and FieldDataType like the Status enum?
- *
- * @param <T>
+ * TODO: create an entity data type that combines concept and FieldDataType like the Status enum?
+ * @param <DT>
  * @param nid
  * @param versionStampNid
  */
 @RecordBuilder
-public record FieldRecord<T>(T value, int nid, int versionStampNid,
-                             FieldDefinitionForEntity fieldDefinition)
-        implements FieldDefinition, Field<T>,
-                   ImmutableField<T>, FieldRecordBuilder.With {
+public record FieldRecord<DT>(DT value, int nid, int versionStampNid,
+                              int patternNid, int indexInPattern)
+        implements Field<DT>, FieldRecordBuilder.With {
 
 
     public FieldRecord {
         Validator.notZero(nid);
         Validator.notZero(versionStampNid);
-        Objects.requireNonNull(fieldDefinition);
-    }
-    @Override
-    public int meaningNid() {
-        return fieldDefinition.meaningNid();
+        Validator.notZero(patternNid);
+        if (indexInPattern < 0) throw new IllegalStateException("Index must be >= 0");
     }
 
     @Override
-    public int purposeNid() {
-        return fieldDefinition.purposeNid();
+    public FieldDefinition fieldDefinition(StampCalculator stampCalculator) {
+        PatternEntity<PatternEntityVersion> patternEntity = Entity.getFast(patternNid());
+        Latest<PatternEntityVersion> patternVersion = stampCalculator.latest(patternEntity);
+        return patternVersion.get().fieldDefinitions().get(indexInPattern());
     }
 
-    @Override
-    public int dataTypeNid() {
-        return fieldDefinition.dataTypeNid();
+    public FieldRecord<DT> with(DT value) {
+        return withValue(value);
     }
 
-    public int fieldIndex() {
-        return fieldDefinition.indexInPattern();
-    }
 
     @Override
     public String toString() {
         return "FieldRecord{value: " + value +
                 ", for entity: " + PrimitiveData.textWithNid(nid) +
                 " of version: " + Entity.getStamp(versionStampNid).lastVersion().describe() +
-                " with index: " + fieldIndex() +
-                ", defined as " + fieldDefinition +
+                " in pattern: " + Entity.getFast(patternNid()) +
+                " with index: " + indexInPattern() +
                 '}';
     }
 

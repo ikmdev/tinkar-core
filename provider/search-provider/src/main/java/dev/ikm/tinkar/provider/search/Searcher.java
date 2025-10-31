@@ -56,11 +56,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public class Searcher {
     private static final Logger LOG = LoggerFactory.getLogger(Searcher.class);
@@ -105,16 +101,32 @@ public class Searcher {
                     ScoreDoc[] hits = indexSearcher.search(query, maxResultSize).scoreDocs;
                     results = new PrimitiveDataSearchResult[hits.length];
                     for (int i = 0; i < hits.length; i++) {
-                        Document hitDoc = indexSearcher.doc(hits[i].doc);
+                        int docId = hits[i].doc;
+                        // Load only needed stored fields to avoid reading all fields
+                        Set<String> fieldsToLoad = Set.of(
+                                Indexer.NID,
+                                Indexer.PATTERN_NID,
+                                Indexer.RC_NID,
+                                Indexer.FIELD_INDEX,
+                                Indexer.TEXT_FIELD_NAME
+                        );
+                        Document hitDoc = indexSearcher.storedFields().document(docId, fieldsToLoad);
                         StoredField nidField = (StoredField) hitDoc.getField(Indexer.NID);
                         StoredField patternNidField = (StoredField) hitDoc.getField(Indexer.PATTERN_NID);
                         StoredField rcNidField = (StoredField) hitDoc.getField(Indexer.RC_NID);
                         StoredField fieldIndexField = (StoredField) hitDoc.getField(Indexer.FIELD_INDEX);
                         StoredField textField = (StoredField) hitDoc.getField(Indexer.TEXT_FIELD_NAME);
-                        String highlightedString = highlighter.getBestFragment(Indexer.analyzer(), Indexer.TEXT_FIELD_NAME, textField.stringValue());
+                        String highlightedString = highlighter.getBestFragment(
+                                Indexer.analyzer(), Indexer.TEXT_FIELD_NAME, textField.stringValue());
 
-                        results[i] = new PrimitiveDataSearchResult(nidField.numericValue().intValue(), rcNidField.numericValue().intValue(),
-                                patternNidField.numericValue().intValue(), fieldIndexField.numericValue().intValue(), hits[i].score, highlightedString);
+                        results[i] = new PrimitiveDataSearchResult(
+                                nidField.numericValue().intValue(),
+                                rcNidField.numericValue().intValue(),
+                                patternNidField.numericValue().intValue(),
+                                fieldIndexField.numericValue().intValue(),
+                                hits[i].score,
+                                highlightedString
+                        );
                     }
                 return results;
             }

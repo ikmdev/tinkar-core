@@ -15,13 +15,16 @@
  */
 package dev.ikm.tinkar.entity;
 
+import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.component.Stamp;
 import dev.ikm.tinkar.component.Version;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.State;
 
-public interface VersionData extends Version, Stamp<StampEntityVersion> {
+import java.time.Instant;
+
+public interface VersionData extends Version, Stamp {
 
     Entity entity();
 
@@ -72,7 +75,7 @@ public interface VersionData extends Version, Stamp<StampEntityVersion> {
     }
 
     default boolean canceled() {
-        return stamp().state().nid() == State.CANCELED.nid();
+        return (stamp().state() != null) ? stamp().state().nid() == State.CANCELED.nid() : true;
     }
 
 
@@ -96,4 +99,9 @@ public interface VersionData extends Version, Stamp<StampEntityVersion> {
     }
 
     Entity chronology();
+
+    default Instant instant() {
+        return DateTimeUtil.epochMsToInstant(time());
+    }
+
 }

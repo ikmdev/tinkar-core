@@ -83,6 +83,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         LOG.info(expectedImports + " Entities to process...");
         updateProgress(0, expectedImports);
         updateMessage("Importing Protobuf Data...");
+        LOG.debug("Expected imports: " + expectedImports);
 
         // Process Protobuf Entry
         EntityService.get().beginLoadPhase();
@@ -109,7 +110,11 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                     }
 
                     // TODO: Remove need for Stamp Consumer since Stamps are now consumed by Entity Consumer
-                    entityTransformer.transform(pbTinkarMsg, entityConsumer, (stampEntity) -> {});
+                    try {
+                        entityTransformer.transform(pbTinkarMsg, entityConsumer, (stampEntity) -> {});
+                    } catch (Exception e) {
+                        LOG.error("Encountered exception {}", e.getMessage());
+                    }
 
                     // Batch progress updates to prevent hanging the UI thread
                     if (importCount.incrementAndGet() % 1000 == 0) {
@@ -118,6 +123,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                 }
             }
         } catch (Exception e) {
+            LOG.error("Encountered exception {}", e.getMessage());
             updateTitle("Failed: Import Protobuf data from " + importFile.getName());
             AlertStreams.dispatchToRoot(e);
         } finally {

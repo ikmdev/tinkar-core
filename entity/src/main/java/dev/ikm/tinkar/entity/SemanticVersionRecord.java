@@ -25,6 +25,7 @@ import dev.ikm.tinkar.terms.EntityFacade;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.MutableList;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -191,30 +192,12 @@ public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
     }
 
     @Override
-    public ImmutableList<FieldRecord> fields(PatternEntityVersion patternVersion) {
-//        switch (patternVersion) {
-//            case PatternVersionRecord patternVersionRecord -> {
-//                FieldRecord[] fieldArray = new FieldRecord[fieldValues().size()];
-//                for (int i = 0; i < fieldArray.length; i++) {
-//                    Object value = fieldValues().get(i);
-//                    FieldDefinitionRecord fieldDef = patternVersionRecord.fieldDefinitions().get(i);
-//                    fieldArray[i] = new FieldRecord(value, patternVersion.nid(), patternVersion.stampNid(), fieldDef);
-//                }
-//                return Lists.immutable.of(fieldArray);
-//            }
-//            default -> {
-//                PatternRecord patternRecord = Entity.getFast(patternVersion.nid());
-//                for (PatternVersionRecord patternVersionRecord : patternRecord.versions()) {
-//                    if (patternVersionRecord.stampNid() == patternVersion.stampNid()) {
-//                        return fields(patternVersionRecord);
-//                    }
-//                }
-//                throw new IllegalStateException("Can't find pattern version: " + patternVersion +
-//                        "\n in pattern: " + patternRecord);
-                throw new IllegalStateException("Can't find pattern version: " + patternVersion +
-                "\n in pattern: " );
-//            }
-//        }
+    public ImmutableList<FieldRecord> fields() {
+        MutableList<FieldRecord> fieldRecords = Lists.mutable.empty();
+        for (int i = 0; i < fieldValues.size(); i++) {
+            fieldRecords.add(new FieldRecord(fieldValues.get(i), nid(), stampNid,
+            patternNid(), i));
+        }
+        return fieldRecords.toImmutable();
     }
-
 }

@@ -33,4 +33,33 @@ public interface PatternEntity<T extends PatternEntityVersion>
     default FieldDataType versionDataType() {
         return FieldDataType.PATTERN_VERSION;
     }
+
+
+    /**
+     * Last version by time, for use in select circumstances when a stamp calculator is not attainable.
+     * Use of the stamp calculator is strongly preferred.
+     * @return
+     */
+    default PatternEntityVersion lastVersion() {
+        if (versions().size() == 1) {
+            return versions().get(0);
+        }
+        PatternEntityVersion latest = null;
+        for (PatternEntityVersion version : versions()) {
+            if (version.time() == Long.MIN_VALUE) {
+                // if canceled (Long.MIN_VALUE), latest is canceled.
+                return version;
+            } else if (latest == null) {
+                latest = version;
+            } else if (latest.time() == Long.MAX_VALUE) {
+                latest = version;
+            } else if (version.time() == Long.MAX_VALUE) {
+                // ignore uncommitted version;
+            } else if (latest.time() < version.time()) {
+                latest = version;
+            }
+        }
+        return latest;
+    }
+
 }

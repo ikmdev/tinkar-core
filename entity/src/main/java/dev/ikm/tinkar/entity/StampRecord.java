@@ -19,6 +19,7 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
 import dev.ikm.tinkar.component.FieldDataType;
+import dev.ikm.tinkar.terms.StampFacade;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import io.soabase.recordbuilder.core.RecordBuilder;
@@ -28,12 +29,16 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
 
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
+import static dev.ikm.tinkar.terms.TinkarTermV2.STAMP_PATTERN;
+
 @RecordBuilder
 public record StampRecord(
         long mostSignificantBits, long leastSignificantBits,
         long[] additionalUuidLongs, int nid,
         ImmutableList<StampVersionRecord> versions)
-        implements StampEntity<StampVersionRecord>, ImmutableEntity<StampVersionRecord>, IdentifierData, StampRecordBuilder.With {
+        implements StampEntity<StampVersionRecord>, ImmutableEntity<StampVersionRecord>,
+                   StampFacade, IdentifierData, StampRecordBuilder.With {
 
     private static StampRecord nonExistentStamp;
     public StampRecord {
@@ -60,14 +65,19 @@ public record StampRecord(
 
     public static StampRecord make(UUID stampUuid, State state, long time, PublicId authorId, PublicId moduleId, PublicId pathId) {
         RecordListBuilder<StampVersionRecord> versionRecords = RecordListBuilder.make();
+
+        int stampNid = ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, STAMP_PATTERN)
+                .call(() -> PrimitiveData.nid(stampUuid));
+
         StampRecord stampEntity = new StampRecord(stampUuid.getMostSignificantBits(),
-                stampUuid.getLeastSignificantBits(), null, PrimitiveData.nid(stampUuid),
-                versionRecords);
+            stampUuid.getLeastSignificantBits(), null, stampNid,
+            versionRecords);
 
         StampVersionRecord stampVersion = new StampVersionRecord(stampEntity, state.nid(), time, PrimitiveData.nid(authorId),
-                PrimitiveData.nid(moduleId), PrimitiveData.nid(pathId));
-        versionRecords.add(stampVersion);
-        versionRecords.build();
+            PrimitiveData.nid(moduleId), PrimitiveData.nid(pathId));
+            versionRecords.add(stampVersion);
+            versionRecords.build();
         return stampEntity;
     }
 

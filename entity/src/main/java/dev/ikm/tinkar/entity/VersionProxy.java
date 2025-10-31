@@ -19,13 +19,12 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.component.Stamp;
 import dev.ikm.tinkar.component.Version;
-import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.SemanticFacade;
+import dev.ikm.tinkar.terms.*;
 
 import java.util.Arrays;
 import java.util.UUID;
+
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 
 public class VersionProxy extends EntityProxy implements Version {
     private UUID[] stampUuids;
@@ -65,7 +64,9 @@ public class VersionProxy extends EntityProxy implements Version {
 
     public final int stampNid() {
         if (cachedStampNid == 0) {
-            cachedStampNid = PrimitiveData.get().nidForUuids(stampUuids);
+            cachedStampNid = ScopedValue
+                    .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern().publicId())
+                    .call(() -> PrimitiveData.nid(stampUuids));
         }
         return cachedStampNid;
     }

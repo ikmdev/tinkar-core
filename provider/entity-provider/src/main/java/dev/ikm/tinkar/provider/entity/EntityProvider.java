@@ -32,11 +32,11 @@ import dev.ikm.tinkar.common.util.broadcast.SimpleBroadcaster;
 import dev.ikm.tinkar.common.util.broadcast.Subscriber;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.component.Chronology;
-import dev.ikm.tinkar.component.Stamp;
 import dev.ikm.tinkar.component.Version;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.provider.search.TypeAheadSearch;
+import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -56,6 +56,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.function.Consumer;
 
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 import static dev.ikm.tinkar.terms.TinkarTerm.DESCRIPTION_PATTERN;
 
 //@AutoService({EntityService.class, PublicIdService.class, DefaultDescriptionForNidService.class})
@@ -84,7 +85,9 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         // But we don't want to prevent starting the entity service if this.putEntity
         // blocks for debugging or other reasons, so putting it in a virtual thread to
         // allow completion of the constructor.
-        Thread.ofVirtual().start(() -> this.putEntity(StampRecord.nonExistentStamp(), DataActivity.INITIALIZE));
+        Thread.ofVirtual().start(() -> {
+            this.putEntity(StampRecord.nonExistentStamp(), DataActivity.INITIALIZE);
+        });
     }
 
     public void addSubscriberWithWeakReference(Subscriber<Integer> subscriber) {
@@ -154,16 +157,51 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         return Optional.of((T) entity);
     }
 
+    /**
+     * Example call when resolving via RocksDB:
+     *
+     * <pre>{@code
+     * int nid = ScopedValue
+     *         .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternFacade.publicId())
+     *         .call(() -> PrimitiveData.nid(semanticUUID));
+     * }</pre>
+     *
+     * @param uuids one or more UUIDs that identify the component
+     * @return the nid corresponding to the provided UUIDs
+     */
     @Override
     public int nidForUuids(UUID... uuids) {
         return PrimitiveData.get().nidForUuids(uuids);
     }
 
+    /**
+     * Example call when resolving via RocksDB:
+     *
+     * <pre>{@code
+     * int nid = ScopedValue
+     *         .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternFacade.publicId())
+     *         .call(() -> PrimitiveData.nid(semanticUUID));
+     * }</pre>
+     *
+     * @param publicId for the component to obtain the nid for.
+     * @return the nid corresponding to the provided UUIDs
+     */
     @Override
     public int nidForPublicId(PublicId publicId) {
         return PrimitiveData.get().nidForUuids(publicId.asUuidArray());
     }
 
+    /**
+     *
+     * @param nid
+     * @return
+     * @param <T>
+     * @param <V>
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
+     * @deprecated Use {@link EntityHandle#get(int)} instead.
+     */
+    @Deprecated(since = "Current", forRemoval = true)
     public <T extends Entity<V>, V extends EntityVersion> T getEntityFast(int nid) {
         return (T) ENTITY_CACHE.get(nid, entityNid -> {
             byte[] bytes = PrimitiveData.get().getBytes(nid);
@@ -342,28 +380,6 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
             return Optional.empty();
         }
         return Optional.of((T) entity);
-    }
-
-    //TODO-aks8m:
-    // This seems to be counter intuitive when implementing protobuf transforms, or at least not straightforward when
-    // implementing. Suggest we refactor to just use Entity. The use of chronology seems to not be well conveyed, but
-    // only understood because I've been working with other versions of this code.
-    // KEC: the use of chronology was to make it transparent to put a DTO vs an entity. If we eliminate DTOs,
-    // then we can revise and potentially eliminate.
-    @Override
-    public <T extends Chronology<V>, V extends Version> void putChronology(T chronology) {
-        if (chronology instanceof Entity entity) {
-            putEntity(entity);
-        } else {
-            putEntity(EntityRecordFactory.make((Chronology<Version>) chronology));
-            for (Version version : chronology.versions()) {
-                Stamp stamp = version.stamp();
-                int nid = PrimitiveData.get().nidForUuids(stamp.publicId().asUuidArray());
-                if (PrimitiveData.get().getBytes(nid) == null) {
-                    putEntity(EntityRecordFactory.make(stamp));
-                }
-            }
-        }
     }
 
     public static class CacheProvider implements CachingService {

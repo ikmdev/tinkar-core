@@ -53,7 +53,8 @@ public class ProviderEphemeralNewController implements DataServiceController<Pri
 
     @Override
     public boolean isValidDataLocation(String name) {
-        return name.toLowerCase().endsWith(".zip") && name.toLowerCase().contains("tink");
+        return name.toLowerCase().endsWith("pb.zip") ||
+                (name.toLowerCase().endsWith(".zip") && name.toLowerCase().contains("tink"));
     }
 
     @Override

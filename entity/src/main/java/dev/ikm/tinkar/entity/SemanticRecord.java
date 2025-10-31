@@ -27,6 +27,9 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
 
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
+import static dev.ikm.tinkar.terms.TinkarTermV2.STAMP_PATTERN;
+
 @RecordBuilder
 public record SemanticRecord(
         long mostSignificantBits, long leastSignificantBits,
@@ -51,7 +54,11 @@ public record SemanticRecord(
     public static SemanticRecord makeNew(PublicId publicId, int patternNid, int referencedComponentNid,
                                          RecordListBuilder versionListBuilder) {
         PublicIdentifierRecord publicIdRecord = PublicIdentifierRecord.make(publicId);
-        int nid = PrimitiveData.nid(publicId);
+
+        int nid = ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, PrimitiveData.publicId(patternNid))
+                .call(() -> PrimitiveData.nid(publicId));
+
         return new SemanticRecord(publicIdRecord.mostSignificantBits(), publicIdRecord.leastSignificantBits(),
                 publicIdRecord.additionalUuidLongs(), nid, patternNid, referencedComponentNid,
                 versionListBuilder);
@@ -63,10 +70,14 @@ public record SemanticRecord(
                                        StampEntityVersion stampVersion,
                                        ImmutableList<Object> fields) {
         RecordListBuilder<SemanticVersionRecord> versionRecords = RecordListBuilder.make();
+        int semanticNid = ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, Entity.getFast(patternNid))
+                .call(() -> PrimitiveData.nid(semanticUuid));
+
         SemanticRecord semanticRecord = SemanticRecordBuilder.builder()
                 .leastSignificantBits(semanticUuid.getLeastSignificantBits())
                 .mostSignificantBits(semanticUuid.getMostSignificantBits())
-                .nid(PrimitiveData.nid(semanticUuid))
+                .nid(semanticNid)
                 .patternNid(patternNid)
                 .referencedComponentNid(referencedComponentNid)
                 .versions(versionRecords).build();
