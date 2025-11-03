@@ -1194,6 +1194,125 @@ public interface EntityHandle {
         return asStamp().orElseThrow(() -> new IllegalStateException(errorMessage));
     }
 
+    // ========== Record-Specific Expect Methods ==========
+
+    /**
+     * Returns this entity as a {@link ConceptRecord}, throwing an exception if absent or wrong type.
+     * <p>
+     * <b>Use this method when:</b> You need the concrete {@link ConceptRecord} type for builder operations.
+     * This is especially useful when creating new versions via the builder pattern.
+     *
+     * <h3>Usage Example:</h3>
+     * <pre>{@code
+     * // Creating a new concept version with updated stamp
+     * ConceptRecord conceptRecord = EntityHandle.get(conceptNid).expectConceptRecord();
+     * ConceptVersionRecord newVersion = ConceptVersionRecord.build(conceptRecord, newStampNid);
+     * ConceptRecord updatedConcept = conceptRecord.with(newVersion).build();
+     * Entity.provider().putEntity(updatedConcept);
+     * }</pre>
+     *
+     * @return the ConceptRecord (never null)
+     * @throws IllegalStateException if entity is absent, not a concept, or not a ConceptRecord
+     * @see #expectConcept() for getting the ConceptEntity interface
+     */
+    default ConceptRecord expectConceptRecord() {
+        ConceptEntity concept = expectConcept();
+        if (concept instanceof ConceptRecord conceptRecord) {
+            return conceptRecord;
+        }
+        throw new IllegalStateException(
+            "Expected ConceptRecord but was " + concept.getClass().getSimpleName() +
+            " with nid: " + concept.nid() + " (" + concept.publicId() + ")"
+        );
+    }
+
+    /**
+     * Returns this entity as a {@link PatternRecord}, throwing an exception if absent or wrong type.
+     * <p>
+     * <b>Use this method when:</b> You need the concrete {@link PatternRecord} type for builder operations.
+     *
+     * <h3>Usage Example:</h3>
+     * <pre>{@code
+     * // Creating a new pattern version with updated stamp
+     * PatternRecord patternRecord = EntityHandle.get(patternNid).expectPatternRecord();
+     * PatternVersionRecord currentVersion = (PatternVersionRecord) patternRecord.versions().getLast();
+     * PatternVersionRecord newVersion = currentVersion.withStampNid(newStampNid);
+     * PatternRecord updatedPattern = patternRecord.with(newVersion).build();
+     * Entity.provider().putEntity(updatedPattern);
+     * }</pre>
+     *
+     * @return the PatternRecord (never null)
+     * @throws IllegalStateException if entity is absent, not a pattern, or not a PatternRecord
+     * @see #expectPattern() for getting the PatternEntity interface
+     */
+    default PatternRecord expectPatternRecord() {
+        PatternEntity pattern = expectPattern();
+        if (pattern instanceof PatternRecord patternRecord) {
+            return patternRecord;
+        }
+        throw new IllegalStateException(
+            "Expected PatternRecord but was " + pattern.getClass().getSimpleName() +
+            " with nid: " + pattern.nid() + " (" + pattern.publicId() + ")"
+        );
+    }
+
+    /**
+     * Returns this entity as a {@link SemanticRecord}, throwing an exception if absent or wrong type.
+     * <p>
+     * <b>Use this method when:</b> You need the concrete {@link SemanticRecord} type for builder operations.
+     *
+     * <h3>Usage Example:</h3>
+     * <pre>{@code
+     * // Creating a new semantic version with updated stamp
+     * SemanticRecord semanticRecord = EntityHandle.get(semanticNid).expectSemanticRecord();
+     * SemanticVersionRecord currentVersion = (SemanticVersionRecord) semanticRecord.versions().getLast();
+     * SemanticVersionRecord newVersion = currentVersion.withStampNid(newStampNid);
+     * SemanticRecord updatedSemantic = semanticRecord.with(newVersion).build();
+     * Entity.provider().putEntity(updatedSemantic);
+     * }</pre>
+     *
+     * @return the SemanticRecord (never null)
+     * @throws IllegalStateException if entity is absent, not a semantic, or not a SemanticRecord
+     * @see #expectSemantic() for getting the SemanticEntity interface
+     */
+    default SemanticRecord expectSemanticRecord() {
+        SemanticEntity semantic = expectSemantic();
+        if (semantic instanceof SemanticRecord semanticRecord) {
+            return semanticRecord;
+        }
+        throw new IllegalStateException(
+            "Expected SemanticRecord but was " + semantic.getClass().getSimpleName() +
+            " with nid: " + semantic.nid() + " (" + semantic.publicId() + ")"
+        );
+    }
+
+    /**
+     * Returns this entity as a {@link StampRecord}, throwing an exception if absent or wrong type.
+     * <p>
+     * <b>Use this method when:</b> You need the concrete {@link StampRecord} type for builder operations.
+     *
+     * <h3>Usage Example:</h3>
+     * <pre>{@code
+     * // Getting a StampRecord for stamp-based operations
+     * StampRecord stampRecord = EntityHandle.get(stampNid).expectStampRecord();
+     * // Use stampRecord for operations that require the concrete Record type
+     * }</pre>
+     *
+     * @return the StampRecord (never null)
+     * @throws IllegalStateException if entity is absent, not a stamp, or not a StampRecord
+     * @see #expectStamp() for getting the StampEntity interface
+     */
+    default StampRecord expectStampRecord() {
+        StampEntity stamp = expectStamp();
+        if (stamp instanceof StampRecord stampRecord) {
+            return stampRecord;
+        }
+        throw new IllegalStateException(
+            "Expected StampRecord but was " + stamp.getClass().getSimpleName() +
+            " with nid: " + stamp.nid() + " (" + stamp.publicId() + ")"
+        );
+    }
+
     // ========== Default Implementation: Query Methods ==========
 
     /**
