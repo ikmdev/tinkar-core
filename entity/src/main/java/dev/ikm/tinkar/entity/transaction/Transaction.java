@@ -372,6 +372,9 @@ public class Transaction implements Comparable<Transaction>, Encodable {
      * @throws IllegalStateException if the nid of the provided entity is 0
      */
     public void addComponent(EntityFacade entity) {
+        if (entity == null) {
+            return; // Allow null for new entities that don't exist yet
+        }
         if (entity.nid() == 0) {
             throw new IllegalStateException("Entity nid cannot = 0: " + entity);
         }

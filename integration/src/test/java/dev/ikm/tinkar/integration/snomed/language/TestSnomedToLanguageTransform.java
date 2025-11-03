@@ -18,6 +18,7 @@ package dev.ikm.tinkar.integration.snomed.language;
 import dev.ikm.tinkar.entity.SemanticRecord;
 import dev.ikm.tinkar.entity.SemanticVersionRecord;
 import dev.ikm.tinkar.entity.StampRecord;
+import dev.ikm.tinkar.integration.TinkarProviderExtension;
 import dev.ikm.tinkar.integration.snomed.core.MockEntity;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.junit.jupiter.api.DisplayName;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.List;
 import java.util.UUID;
@@ -44,6 +46,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@ExtendWith(TinkarProviderExtension.class)
 public class TestSnomedToLanguageTransform {
 
     @Test

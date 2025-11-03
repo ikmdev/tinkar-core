@@ -17,11 +17,16 @@ package dev.ikm.tinkar.provider.spinedarray;
 
 import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.common.service.PrimitiveDataService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 public abstract class SpinedArrayController implements DataServiceController<PrimitiveDataService> {
+    private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayController.class);
+    private static final long STARTUP_TIMEOUT_SECONDS = 30;
 
     @Override
     public Class<? extends PrimitiveDataService> serviceClass() {
@@ -33,15 +38,29 @@ public abstract class SpinedArrayController implements DataServiceController<Pri
         return SpinedArrayProvider.lifecycle.get() == SpinedArrayProvider.Lifecycle.RUNNING;
     }
 
+
     @Override
     public void start() {
-        if (SpinedArrayProvider.lifecycle.compareAndSet(SpinedArrayProvider.Lifecycle.UNINITIALIZED, SpinedArrayProvider.Lifecycle.STARTING)) {
-            SpinedArrayProvider.get();
-        } else {
-            throw new IllegalStateException("SpinedArrayProvider is already started: " +
-                    SpinedArrayProvider.lifecycle.get());
-        }
+        LOG.info("SpinedArrayController.start() called on thread: {}", Thread.currentThread().getName());
 
+        // Simply call get() - it handles all synchronization via StableValue.orElseSet()
+        // Multiple threads can safely call this; orElseSet() ensures only one initialization
+        try {
+            SpinedArrayProvider provider = SpinedArrayProvider.get();
+            LOG.info("SpinedArrayProvider.get() returned successfully, lifecycle: {}",
+                    SpinedArrayProvider.lifecycle.get());
+
+            // Double-check that initialization completed properly
+            if (SpinedArrayProvider.lifecycle.get() != SpinedArrayProvider.Lifecycle.RUNNING) {
+                throw new IllegalStateException(
+                    "SpinedArrayProvider initialized but not in RUNNING state: " +
+                    SpinedArrayProvider.lifecycle.get()
+                );
+            }
+        } catch (Exception e) {
+            LOG.error("Failed to start SpinedArrayProvider", e);
+            throw new RuntimeException("Failed to start SpinedArrayProvider", e);
+        }
     }
 
     @Override

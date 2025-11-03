@@ -16,9 +16,11 @@
 package dev.ikm.tinkar.integration.snomed.relationship;
 
 import dev.ikm.tinkar.entity.StampRecord;
+import dev.ikm.tinkar.integration.TinkarProviderExtension;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.List;
 
@@ -32,6 +34,7 @@ import static dev.ikm.tinkar.integration.snomed.core.SnomedCTStampChronology.cre
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@ExtendWith(TinkarProviderExtension.class)
 public class TestInactiveRelationship {
 
     @Test
