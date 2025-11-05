@@ -17,6 +17,7 @@ package dev.ikm.tinkar.entity;
 
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.Nid;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
@@ -36,7 +37,7 @@ public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
         implements SemanticEntityVersion, ImmutableVersion, SemanticVersionRecordBuilder.With {
 
     public SemanticVersionRecord {
-        Validator.notZero(stampNid);
+        Nid.validate(stampNid);
         Objects.requireNonNull(chronology);
         Objects.requireNonNull(fieldValues);
     }
@@ -127,7 +128,9 @@ public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
                     sb.append(fieldString);
                 }
                 sb.append("› ");
-                sb.append(field.getClass().getSimpleName());
+                if (field != null) {
+                    sb.append(field.getClass().getSimpleName());
+                }
 
             }
         } else {

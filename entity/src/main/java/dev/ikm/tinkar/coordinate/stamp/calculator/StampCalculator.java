@@ -306,6 +306,12 @@ public interface StampCalculator {
         return latest(semanticNid);
     }
 
+    default Latest<SemanticEntityVersion> latestSemanticVersion(SemanticEntity<?> semanticEntity) {
+        return (Latest<SemanticEntityVersion>) latest(semanticEntity);
+    }
+
+
+
     OptionalInt getIndexForMeaning(int patternNid, int meaningNid);
 
     OptionalInt getIndexForPurpose(int patternNid, int meaningNid);

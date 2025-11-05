@@ -35,13 +35,53 @@ public record ConceptRecord(
         ImmutableList<ConceptVersionRecord> versions)
         implements ConceptEntity<ConceptVersionRecord>, ImmutableEntity<ConceptVersionRecord>, ConceptRecordBuilder.With {
 
-
     public ConceptRecord {
         Validator.notZero(mostSignificantBits);
         Validator.notZero(leastSignificantBits);
         Validator.notZero(nid);
         Objects.requireNonNull(versions);
     }
+
+    public static ConceptRecord makeNew(PublicId publicId, RecordListBuilder versionListBuilder) {
+        PublicIdentifierRecord publicIdRecord = PublicIdentifierRecord.make(publicId);
+
+        int nid = ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern().publicId())
+                .call(() -> PrimitiveData.nid(publicId));
+
+        return new ConceptRecord(publicIdRecord.mostSignificantBits(), publicIdRecord.leastSignificantBits(),
+                publicIdRecord.additionalUuidLongs(), nid, versionListBuilder);
+    }
+
+    public static ConceptRecord makeNew(UUID conceptUuid, RecordListBuilder versionListBuilder) {
+        int nid = ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern().publicId())
+                .call(() -> PrimitiveData.nid(conceptUuid));
+        return new ConceptRecord(conceptUuid.getMostSignificantBits(), conceptUuid.getLeastSignificantBits(),
+                null, nid, versionListBuilder);
+    }
+    public static ConceptRecord build(PublicId publicId, StampEntityVersion stampVersion) {
+        RecordListBuilder<ConceptVersionRecord> versionRecords = RecordListBuilder.make();
+        int conceptNid = ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern().publicId())
+                .call(() -> PrimitiveData.nid(publicId));
+
+        ConceptRecord conceptRecord = switch (publicId.uuidCount()) {
+            case 1 -> ConceptRecordBuilder.builder()
+                    .leastSignificantBits(publicId.asUuidArray()[0].getLeastSignificantBits())
+                    .mostSignificantBits(publicId.asUuidArray()[0].getMostSignificantBits())
+                    .nid(conceptNid)
+                    .versions(versionRecords).build();
+            case 2 -> ConceptRecordBuilder.builder()
+                    .leastSignificantBits(publicId.asUuidArray()[0].getLeastSignificantBits())
+                    .mostSignificantBits(publicId.asUuidArray()[0].getMostSignificantBits())
+                    .additionalUuidLongs(publicId.additionalUuidLongs()).build();
+            default -> throw new IllegalStateException("Unexpected value: " + publicId.uuidCount());
+        };
+        versionRecords.addAndBuild(new ConceptVersionRecord(conceptRecord, stampVersion.stampNid()));
+        return conceptRecord;
+    }
+
 
     public static ConceptRecord build(UUID conceptUuid, StampEntityVersion stampVersion) {
         RecordListBuilder<ConceptVersionRecord> versionRecords = RecordListBuilder.make();

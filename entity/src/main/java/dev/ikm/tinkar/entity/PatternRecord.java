@@ -17,12 +17,16 @@ package dev.ikm.tinkar.entity;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
+import dev.ikm.tinkar.terms.EntityBinding;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.list.ImmutableList;
 
 import java.util.Arrays;
 import java.util.Objects;
+
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 
 @RecordBuilder
 public record PatternRecord(
@@ -36,6 +40,17 @@ public record PatternRecord(
         Validator.notZero(leastSignificantBits);
         Validator.notZero(nid);
         Objects.requireNonNull(versions);
+    }
+
+    public static PatternRecord makeNew(PublicId publicId, RecordListBuilder versionListBuilder) {
+        PublicIdentifierRecord publicIdRecord = PublicIdentifierRecord.make(publicId);
+
+        int nid = ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Pattern.pattern().publicId())
+                .call(() -> PrimitiveData.nid(publicId));
+
+        return new PatternRecord(publicIdRecord.mostSignificantBits(), publicIdRecord.leastSignificantBits(),
+                publicIdRecord.additionalUuidLongs(), nid, versionListBuilder);
     }
 
     @Override

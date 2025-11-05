@@ -1080,7 +1080,10 @@ public interface EntityHandle {
      * @throws IllegalStateException if entity is absent or not a concept
      */
     default ConceptEntity expectConcept(String errorMessage) {
-        return asConcept().orElseThrow(() -> new IllegalStateException(errorMessage));
+        return asConcept().orElseThrow(() -> new IllegalStateException(errorMessage +
+                entity().map(e -> "Expected concept but was " + e.getClass().getSimpleName() +
+                                " with nid: " + e.nid() + " (" + e.publicId() + ")")
+                        .orElse("Expected Concept but entity was absent")));
     }
 
     /**
@@ -1117,7 +1120,10 @@ public interface EntityHandle {
      * @throws IllegalStateException if entity is absent or not a semantic
      */
     default SemanticEntity expectSemantic(String errorMessage) {
-        return asSemantic().orElseThrow(() -> new IllegalStateException(errorMessage));
+        return asSemantic().orElseThrow(() -> new IllegalStateException(errorMessage +
+                entity().map(e -> "Expected SemanticEntity but was " + e.getClass().getSimpleName() +
+                                " with nid: " + e.nid() + " (" + e.publicId() + ")")
+                        .orElse("Expected SemanticEntity but entity was absent")));
     }
 
     /**
@@ -1154,7 +1160,10 @@ public interface EntityHandle {
      * @throws IllegalStateException if entity is absent or not a pattern
      */
     default PatternEntity expectPattern(String errorMessage) {
-        return asPattern().orElseThrow(() -> new IllegalStateException(errorMessage));
+        return asPattern().orElseThrow(() -> new IllegalStateException(errorMessage +
+                entity().map(e -> "Expected PatternEntity but was " + e.getClass().getSimpleName() +
+                                " with nid: " + e.nid() + " (" + e.publicId() + ")")
+                        .orElse("Expected PatternEntity but entity was absent")));
     }
 
     /**
@@ -1191,7 +1200,10 @@ public interface EntityHandle {
      * @throws IllegalStateException if entity is absent or not a stamp
      */
     default StampEntity expectStamp(String errorMessage) {
-        return asStamp().orElseThrow(() -> new IllegalStateException(errorMessage));
+        return asStamp().orElseThrow(() -> new IllegalStateException(errorMessage +
+                entity().map(e -> "Expected stamp but was " + e.getClass().getSimpleName() +
+                                " with nid: " + e.nid() + " (" + e.publicId() + ")")
+                        .orElse("Expected StampEntity but entity was absent")));
     }
 
     // ========== Record-Specific Expect Methods ==========

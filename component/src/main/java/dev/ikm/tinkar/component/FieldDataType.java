@@ -40,7 +40,8 @@ import static dev.ikm.tinkar.common.service.PrimitiveDataService.STAMP_DATA_TYPE
  * agreed business need and use case are identified..
  */
 public enum FieldDataType {
-    // Changing CONCEPT_CHRONOLOGY token to 1 so that reading a default 0 throws an error...
+    // Changing CONCEPT_CHRONOLOGY token to 1 so that reading
+    // a default 0 throws an error...
     CONCEPT_CHRONOLOGY((byte) 1, ConceptChronology.class),
     PATTERN_CHRONOLOGY((byte) 2, PatternChronology.class),
     SEMANTIC_CHRONOLOGY((byte) 3, SemanticChronology.class),

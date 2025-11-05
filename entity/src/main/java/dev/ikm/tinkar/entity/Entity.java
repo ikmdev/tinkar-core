@@ -522,33 +522,39 @@ public interface Entity<V extends EntityVersion>
 
     default String entityToString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(this.getClass().getSimpleName());
-        sb.append("{");
         try {
-            Optional<String> stringOptional = PrimitiveData.textOptional(this.nid());
-            if (stringOptional.isPresent()) {
-                sb.append(stringOptional.get());
-                sb.append(' ');
-            }
-        } catch (Throwable t) {
-            AlertStreams.dispatchToRoot(t);
-        }
-        sb.append("<");
-        sb.append(nid());
-        sb.append("> ");
-        sb.append(Arrays.toString(publicId().asUuidArray()));
-        sb.append(", ");
-        sb.append(entityToStringExtras());
-        for (EntityVersion version : versions()) {
+            sb.append(this.getClass().getSimpleName());
+            sb.append("{");
             try {
-                sb.append("\nv: ").append(version).append(",");
-            } catch (Throwable e) {
-                LOG.error("Error creating string for <" + version.nid() + ">", e);
-                sb.append("<").append(version.nid()).append(">,");
+                Optional<String> stringOptional = PrimitiveData.textOptional(this.nid());
+                if (stringOptional.isPresent()) {
+                    sb.append(stringOptional.get());
+                    sb.append(' ');
+                }
+            } catch (Throwable t) {
+                AlertStreams.dispatchToRoot(t);
             }
+            sb.append("<");
+            sb.append(nid());
+            sb.append("> ");
+            sb.append(Arrays.toString(publicId().asUuidArray()));
+            sb.append(", ");
+            sb.append(entityToStringExtras());
+            for (EntityVersion version : versions()) {
+                try {
+                    sb.append("\nv: ").append(version).append(",");
+                } catch (Throwable e) {
+                    LOG.error("Error creating string for <" + version.nid() + ">", e);
+                    sb.append("<").append(version.nid()).append(">,");
+                }
+            }
+            sb.deleteCharAt(sb.length() - 1);
+            sb.append('}');
+            return sb.toString();
+        } catch (Exception e) {
+            LOG.error("Error creating string for <" + nid() + ">", e);
+
         }
-        sb.deleteCharAt(sb.length() - 1);
-        sb.append('}');
         return sb.toString();
     }
 

@@ -92,14 +92,23 @@ public record SemanticRecord(
 
     @Override
     public String entityToStringExtras() {
+
+            String patternUuidStr = EntityHandle.get(patternNid).isPresent()
+            ? PrimitiveData.publicId(patternNid).toString()
+            : "not found";
+
+        String refCompUuidStr = EntityHandle.get(referencedComponentNid).isPresent()
+                ? PrimitiveData.publicId(referencedComponentNid).toString()
+                : "not found";
+
         return "of pattern: «" + PrimitiveData.text(patternNid) +
                 " <" +
                 patternNid +
-                "> " + Entity.getFast(patternNid).publicId().asUuidList() +
+                "> " + patternUuidStr +
                 "», rc: «" + PrimitiveData.text(referencedComponentNid) +
                 " <" +
                 referencedComponentNid +
-                "> " + Entity.getFast(referencedComponentNid).publicId().asUuidList() +
+                "> " + refCompUuidStr +
                 "»,";
     }
 
