@@ -182,6 +182,8 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <argLine>--enable-preview</argLine>
+                    <forkCount>1</forkCount>
+                    <reuseForks>false</reuseForks>  <!-- CRITICAL: Fresh JVM per test class -->
                 </configuration>
             </plugin>
         </plugins>

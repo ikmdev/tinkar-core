@@ -15,10 +15,14 @@
  */
 package dev.ikm.tinkar.integration;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.ServiceKeys;
+import dev.ikm.tinkar.entity.EntityRecordFactory;
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
+import dev.ikm.tinkar.provider.entity.EntityProvider;
 import dev.ikm.tinkar.provider.ephemeral.constants.EphemeralStoreControllerName;
 import dev.ikm.tinkar.provider.spinedarray.constants.SpinedArrayControllerNames;
 import org.junit.jupiter.api.extension.AfterAllCallback;
@@ -29,7 +33,15 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.*;
+import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,7 +83,12 @@ public class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCal
     private static final Logger LOG = LoggerFactory.getLogger(KeyValueProviderExtension.class);
     private static final Object LOCK = new Object();
     private static int referenceCount = 0;
-
+    
+    // Add tracking for JVM reuse detection
+    private static final String JVM_INIT_MARKER = "tinkar.jvm.initialized";
+    private static final AtomicBoolean JVM_ALREADY_USED = new AtomicBoolean(false);
+    private static final Set<String> INITIALIZED_TEST_CLASSES = ConcurrentHashMap.newKeySet();
+    
     /**
      * Configuration container resolved from {@link WithKeyValueProvider} or defaults.
      */
@@ -129,18 +146,32 @@ public class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCal
 
         return new Config(controllerName, dataPath, cleanOnStart, importPath);
     }
+
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
         Config cfg = resolveConfig(context);
+        String testClassName = context.getRequiredTestClass().getName();
 
         synchronized (LOCK) {
+            // SAFETY CHECK 1: Detect JVM reuse across test classes
+            detectUnsafeJVMReuse(context, testClassName);
+            
+            // SAFETY CHECK 2: Verify Maven failsafe configuration
+            verifyFailsafeConfiguration();
+            
+            // SAFETY CHECK 3: Check for static state pollution
+            checkStaticStatePollution();
+            
             referenceCount++;
             if (referenceCount == 1) {
+                // Mark this JVM as having been initialized
+                System.setProperty(JVM_INIT_MARKER, "true");
+                JVM_ALREADY_USED.set(true);
+                
                 // Determine controller and data path defaults
                 applyDefaultsAndEnvironment(cfg);
-
                 LOG.info("Initializing Tinkar provider for tests with controller: {}", cfg.controllerName);
-
+                
                 // Set data store root for non-ephemeral controllers
                 if (!isEphemeralController(cfg.controllerName)) {
                     if (cfg.cleanOnStart) {
@@ -179,6 +210,149 @@ public class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCal
             } else {
                 LOG.info("Provider already initialized (reference count: {})", referenceCount);
             }
+            
+            // Track this test class
+            INITIALIZED_TEST_CLASSES.add(testClassName);
+        }
+    }
+
+    /**
+     * Detects if this JVM has been reused for multiple test classes.
+     * This is UNSAFE for Tinkar tests due to static state pollution.
+     */
+    private void detectUnsafeJVMReuse(ExtensionContext context, String testClassName) {
+        String previousInit = System.getProperty(JVM_INIT_MARKER);
+        
+        if (previousInit != null && referenceCount == 0) {
+            // JVM was used before but reference count is 0 = JVM reuse across test classes
+            String error = String.format(
+                "UNSAFE TEST CONFIGURATION DETECTED!\n" +
+                "════════════════════════════\n" +
+                "Test class '%s' \nis running in a JVM that was previously\n" +
+                "used by another test class. This causes static state pollution.\n" +
+                "\n" +
+                "Previously initialized test classes:\n" +
+                "%s\n" +
+                "\n" +
+                "WHY THIS IS DANGEROUS:\n" +
+                "- Static caches (EntityProvider.ENTITY_CACHE, etc.) retain old data\n" +
+                "- ByteBuf pools contain residual data from previous tests\n" +
+                "- EntityRecordFactory.MAX_ENTITY_SIZE may be modified\n" +
+                "- Data store locks may be held\n" +
+                "- This causes 'Wrong token type' errors and data corruption\n" +
+                "\n" +
+                "REQUIRED FIX:\n" +
+                "Add to your pom.xml <maven-failsafe-plugin> configuration:\n" +
+                "  <configuration>\n" +
+                "    <forkCount>1</forkCount>\n" +
+                "    <reuseForks>false</reuseForks>  <!-- CRITICAL: Fresh JVM per test class -->\n" +
+                "  </configuration>\n" +
+                "\n" +
+                "Or ensure your test class name ends in *IT.java or *ITestFX.java\n" +
+                "to match the safe configuration in your parent POM.\n" +
+                "════════════════════════════",
+                testClassName,
+                String.join("\n  - ", INITIALIZED_TEST_CLASSES)
+            );
+            
+            LOG.error(error);
+            throw new IllegalStateException(error);
+        }
+    }
+
+    /**
+     * Verifies that Maven Failsafe is configured correctly for safe test execution.
+     */
+    private void verifyFailsafeConfiguration() {
+        // Check system properties set by Maven Surefire/Failsafe
+        String reuseForks = System.getProperty("failsafe.reuseForks");
+        String forkNumber = System.getProperty("surefire.forkNumber");
+        
+        // If we can detect the configuration, verify it's safe
+        if (reuseForks != null && !"false".equalsIgnoreCase(reuseForks)) {
+            String warning = String.format(
+                "POTENTIALLY UNSAFE TEST CONFIGURATION!\n" +
+                "═══════════════════════════════════════════════════════════════\n" +
+                "Maven Failsafe property 'failsafe.reuseForks' = '%s'\n" +
+                "\n" +
+                "RECOMMENDED: Set to 'false' to prevent JVM reuse between test classes.\n" +
+                "\n" +
+                "Current fork number: %s\n" +
+                "═══════════════════════════════════════════════════════════════",
+                reuseForks,
+                forkNumber
+            );
+            LOG.warn(warning);
+        }
+        
+        // Log the fork configuration for diagnostics
+        LOG.info("Test execution environment: forkNumber={}, reuseForks={}, test.class={}", 
+            forkNumber, reuseForks, System.getProperty("test.class"));
+    }
+
+    /**
+     * Checks for evidence of static state pollution from previous test runs.
+     */
+    private void checkStaticStatePollution() {
+        List<String> pollutionWarnings = new ArrayList<>();
+        
+        // Check EntityRecordFactory static state
+        int currentMaxEntitySize = EntityRecordFactory.MAX_ENTITY_SIZE;
+        int currentMaxVersionSize = EntityRecordFactory.MAX_VERSION_SIZE;
+        
+        if (currentMaxEntitySize != EntityRecordFactory.DEFAULT_ENTITY_SIZE) {
+            pollutionWarnings.add(String.format(
+                "EntityRecordFactory.MAX_ENTITY_SIZE = %d (expected %d)",
+                currentMaxEntitySize, EntityRecordFactory.DEFAULT_ENTITY_SIZE
+            ));
+        }
+        
+        if (currentMaxVersionSize != EntityRecordFactory.DEFAULT_VERSION_SIZE) {
+            pollutionWarnings.add(String.format(
+                "EntityRecordFactory.MAX_VERSION_SIZE = %d (expected %d)",
+                currentMaxVersionSize, EntityRecordFactory.DEFAULT_VERSION_SIZE
+            ));
+        }
+        
+        // Check if EntityProvider caches have content
+        try {
+            EntityService service = EntityService.get();
+            if (service instanceof EntityProvider provider) {
+                // Use reflection to check cache sizes (they're private)
+                Field entityCacheField = EntityProvider.class.getDeclaredField("ENTITY_CACHE");
+                entityCacheField.setAccessible(true);
+                Cache<?, ?> entityCache = (Cache<?, ?>) entityCacheField.get(null);
+                long cacheSize = entityCache.estimatedSize();
+                
+                if (cacheSize > 0) {
+                    pollutionWarnings.add(String.format(
+                        "EntityProvider.ENTITY_CACHE contains %d entries (expected 0)",
+                        cacheSize
+                    ));
+                }
+            }
+        } catch (Exception e) {
+            LOG.debug("Could not check EntityProvider cache state: {}", e.getMessage());
+        }
+        
+        // Check if PrimitiveData is already running
+        if (PrimitiveData.running()) {
+            pollutionWarnings.add("PrimitiveData is already running (expected: not started yet)");
+        }
+        
+        // Report any pollution detected
+        if (!pollutionWarnings.isEmpty() && referenceCount == 0) {
+            String warning = String.format(
+                "STATIC STATE POLLUTION DETECTED!\n" +
+                "═══════════════════════════════════════════════════════════════\n" +
+                "Evidence of previous test execution in this JVM:\n\n" +
+                "%s\n\n" +
+                "This indicates JVM reuse between test classes, which is UNSAFE.\n" +
+                "═══════════════════════════════════════════════════════════════",
+                String.join("\n  - ", pollutionWarnings)
+            );
+            LOG.error(warning);
+            throw new IllegalStateException(warning);
         }
     }
 
@@ -320,9 +494,15 @@ public class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCal
         synchronized (LOCK) {
             referenceCount--;
             LOG.info("KeyValueProviderExtension.afterAll - referenceCount now: {}", referenceCount);
-            // Don't stop the provider between test classes - let it stay running
-            // The provider will be stopped when the JVM exits
-            // This prevents Lucene lock issues when test classes share the same provider instance
+            
+            // If this was the last test class in this JVM, log final state
+            if (referenceCount == 0) {
+                LOG.info("All test classes completed in this JVM fork. Final state:");
+                LOG.info("  - Initialized test classes: {}", INITIALIZED_TEST_CLASSES);
+                LOG.info("  - EntityRecordFactory.MAX_ENTITY_SIZE: {}", EntityRecordFactory.MAX_ENTITY_SIZE);
+                LOG.info("  - EntityRecordFactory.MAX_VERSION_SIZE: {}", EntityRecordFactory.MAX_VERSION_SIZE);
+                LOG.info("Provider will stop when JVM exits.");
+            }
         }
     }
 }

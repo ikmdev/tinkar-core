@@ -71,8 +71,8 @@ public class EntityRecordFactory {
     public static final byte ENTITY_FORMAT_VERSION = 1;
     public static final int DEFAULT_ENTITY_SIZE = 32767;
     public static final int DEFAULT_VERSION_SIZE = 16384;
-    public static int MAX_ENTITY_SIZE = DEFAULT_ENTITY_SIZE;
-    public static int MAX_VERSION_SIZE = DEFAULT_VERSION_SIZE;
+    public static volatile int MAX_ENTITY_SIZE = DEFAULT_ENTITY_SIZE;
+    public static volatile int MAX_VERSION_SIZE = DEFAULT_VERSION_SIZE;
 
     public static byte[] getBytes(Entity<? extends EntityVersion> entity) {
         // TODO: write directly to a single ByteBuf, rather that the approach below.
