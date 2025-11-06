@@ -6,7 +6,7 @@ module dev.ikm.tinkar.provider.changeset {
     requires dev.ikm.tinkar.schema;
     requires org.eclipse.collections.api;
     requires org.eclipse.collections.impl;
-
+    requires com.fasterxml.jackson.databind;
     requires org.slf4j;
     exports dev.ikm.tinkar.provider.changeset;
 

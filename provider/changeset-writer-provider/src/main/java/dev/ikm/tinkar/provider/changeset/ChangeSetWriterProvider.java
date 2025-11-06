@@ -26,8 +26,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
@@ -223,12 +225,18 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                 final Set<PublicId> authorList = new HashSet<>();
                 final EntityToTinkarSchemaTransformer entityTransformer =
                         EntityToTinkarSchemaTransformer.getInstance();
+                final EntityToJsonTransformer jsonTransformer =
+                        EntityToJsonTransformer.getInstance();
 
                 final File zipfile = newZipFile();
+                final File jsonfile = new File(zipfile.getAbsolutePath().replace(".pb.zip", ".json").replace(" ike-cs.zip", ".json"));
                 LOG.trace("ChangeSetWriterProvider starting new zip file: {}", zipfile.getAbsolutePath());
+                LOG.trace("ChangeSetWriterProvider starting new json file: {}", jsonfile.getAbsolutePath());
                 try (FileOutputStream fos = new FileOutputStream(zipfile);
                      BufferedOutputStream bos = new BufferedOutputStream(fos);
-                     ZipOutputStream zos = new ZipOutputStream(bos)) {
+                     ZipOutputStream zos = new ZipOutputStream(bos);
+                     FileWriter fw = new FileWriter(jsonfile);
+                     BufferedWriter jsonWriter = new BufferedWriter(fw)) {
                     // Create a single entry for all changes in this zip file
                     final ZipEntry zipEntry = new ZipEntry("Entities");
                     zos.putNextEntry(zipEntry);
@@ -248,12 +256,12 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                         uncommittedEntitiesByStamp.put(stampNid, entityToWrite);
                                     });
                                 } else {
-                                    writeEntity(entityCount, entityToWrite, conceptsCount, semanticsCount, patternsCount, stampsCount, moduleList, authorList, entityTransformer, zos);
+                                    writeEntity(entityCount, entityToWrite, conceptsCount, semanticsCount, patternsCount, stampsCount, moduleList, authorList, entityTransformer, zos, jsonTransformer, jsonWriter);
                                     // If a committed stamp comes through, then see if any previously uncommitted versions for that stamp exist, and write them if so.
                                     if (entityToWrite instanceof StampEntity stampEntity && uncommittedEntitiesByStamp.containsKey(stampEntity.nid())) {
                                         uncommittedEntitiesByStamp.removeAll(stampEntity.nid()).forEach(entity ->
                                                 writeEntity(entityCount, entity, conceptsCount, semanticsCount, patternsCount,
-                                                        stampsCount, moduleList, authorList, entityTransformer, zos));
+                                                        stampsCount, moduleList, authorList, entityTransformer, zos, jsonTransformer, jsonWriter));
                                     }
                                 }
                             }
@@ -268,7 +276,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                     // Write any uncommitted entities.
                     uncommittedEntitiesByStamp.forEachValue(entityToWrite ->
                             writeEntity(entityCount, entityToWrite, conceptsCount, semanticsCount, patternsCount,
-                                    stampsCount, moduleList, authorList, entityTransformer, zos));
+                                    stampsCount, moduleList, authorList, entityTransformer, zos, jsonTransformer, jsonWriter));
                     zos.closeEntry();
                     if (entityCount.sum() > 0) {
                         LOG.debug("Data zipEntry size: " + zipEntry.getSize());
@@ -289,14 +297,18 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                     // Cleanup
                     zos.flush();
                     zos.finish();
+                    jsonWriter.flush();
 
                 } catch (IOException e) {
                     threadStateMap.put(Thread.currentThread(), STATE.FAILED);
                     throw new RuntimeException(e);
                 } finally {
-                    if (zipfile.exists()) {
-                        if (entityCount.sum() == 0) {
+                    if (entityCount.sum() == 0) {
+                        if (zipfile.exists()) {
                             zipfile.delete();
+                        }
+                        if (jsonfile.exists()) {
+                            jsonfile.delete();
                         }
                     }
                 }
@@ -323,6 +335,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      * @param authorList the set to collect author public IDs for manifest generation
      * @param entityTransformer the transformer used to convert entities to Tinkar schema messages
      * @param zos the ZIP output stream to write the entity data into
+     * @param jsonTransformer the transformer used to convert entities to JSON
+     * @param jsonWriter the buffered writer to write JSON data into
      */
     private static void writeEntity(LongAdder entityCount,
                                     Entity<EntityVersion> entityToWrite,
@@ -333,7 +347,9 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                     Set<PublicId> moduleList,
                                     Set<PublicId> authorList,
                                     EntityToTinkarSchemaTransformer entityTransformer,
-                                    ZipOutputStream zos) {
+                                    ZipOutputStream zos,
+                                    EntityToJsonTransformer jsonTransformer,
+                                    BufferedWriter jsonWriter) {
         entityCount.increment();
         switch (entityToWrite) {
             case ConceptEntity _ -> conceptsCount.increment();
@@ -349,11 +365,17 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                 throw new IllegalStateException("Unexpected value: " + entityToWrite);
             }
         }
-        // Transform and write data
+        // Transform and write data to protobuf
         try {
             TinkarMsg tinkarMsg = entityTransformer.transform(entityToWrite);
             tinkarMsg.writeDelimitedTo(zos);
-            LOG.debug("ChangeSetWriterProvider wrote Entity:\n{}", entityToWrite);
+            LOG.debug("ChangeSetWriterProvider wrote Entity to protobuf:\n{}", entityToWrite);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        // Transform and write data to JSON
+        try {
+            jsonTransformer.writeEntity(entityToWrite, jsonWriter);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
