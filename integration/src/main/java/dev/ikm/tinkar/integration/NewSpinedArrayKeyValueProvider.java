@@ -15,16 +15,27 @@
  */
 package dev.ikm.tinkar.integration;
 
+import org.junit.jupiter.api.extension.ExtensionContext;
+
 /**
- * JUnit 5 extension that initializes the Tinkar entity provider using
- * the New SpinedArrayStore controller.
+ * Type-safe JUnit 5 extension for creating a NEW SpinedArray store.
  * <p>
- * Usage: Add {@code @ExtendWith(NewSpinedArrayKeyValueProvider.class)} to test classes.
+ * Prefer this class when you want discoverable, IDE-friendly configuration via
+ * {@code @ExtendWith(NewSpinedArrayKeyValueProvider.class)}. You can still
+ * refine behavior with {@link WithKeyValueProvider} on the test class
+ * (e.g., to set {@code dataPath}, {@code cleanOnStart}, or {@code importPath}).
+ * <p>
+ * Defaults:
+ * - Forces controller {@code TestConstants.NEW_SPINED_ARRAY_STORE}
+ * - Does not set a specific dataPath; falls back to {@code WithKeyValueProvider} or
+ *   {@link KeyValueProviderExtension} default {@code target/key-value-store} unless overridden.
  */
 public class NewSpinedArrayKeyValueProvider extends KeyValueProviderExtension {
 
     @Override
-    protected String getControllerName() {
-        return TestConstants.NEW_SPINED_ARRAY_STORE;
+    protected Config resolveConfig(ExtensionContext context) {
+        Config cfg = super.resolveConfig(context);
+        cfg.controllerName = TestConstants.NEW_SPINED_ARRAY_STORE;
+        return cfg;
     }
 }

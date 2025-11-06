@@ -1,30 +1,29 @@
-/*
- * Copyright © 2015 Integrated Knowledge Management (support@ikm.dev)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package dev.ikm.tinkar.integration;
 
+import org.junit.jupiter.api.extension.ExtensionContext;
+
 /**
- * JUnit 5 extension that initializes the Tinkar entity provider using
- * the Open SpinedArrayStore controller.
+ * Type-safe JUnit 5 extension for opening an existing SpinedArray store.
  * <p>
- * Usage: Add {@code @ExtendWith(OpenSpinedArrayKeyValueProvider.class)} to test classes.
+ * Prefer this class when you want discoverable, IDE-friendly configuration via
+ * {@code @ExtendWith(OpenSpinedArrayKeyValueProvider.class)}. You can still
+ * refine behavior with {@link WithKeyValueProvider} on the test class
+ * (e.g., to set {@code dataPath}, {@code cleanOnStart}, or {@code importPath}).
+ * <p>
+ * Defaults:
+ * - Forces controller {@code TestConstants.OPEN_SPINED_ARRAY_STORE}
+ * - Defaults {@code dataPath} to {@code target/spinedarrays} if not specified
  */
 public class OpenSpinedArrayKeyValueProvider extends KeyValueProviderExtension {
 
     @Override
-    protected String getControllerName() {
-        return TestConstants.OPEN_SPINED_ARRAY_STORE;
+    protected Config resolveConfig(ExtensionContext context) {
+        Config cfg = super.resolveConfig(context);
+        // Force OPEN controller; keep any test-level overrides for dataPath/cleanOnStart/importPath
+        cfg.controllerName = TestConstants.OPEN_SPINED_ARRAY_STORE;
+        if (cfg.dataPath == null || cfg.dataPath.isBlank()) {
+            cfg.dataPath = "target/spinedarrays";
+        }
+        return cfg;
     }
 }

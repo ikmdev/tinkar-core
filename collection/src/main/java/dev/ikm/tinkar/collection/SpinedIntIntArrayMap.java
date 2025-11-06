@@ -215,9 +215,9 @@ public class SpinedIntIntArrayMap implements IntObjectMap<int[]> {
     }
 
     /**
-     * Gets the.
+     * Gets the value spliterator supplier.
      *
-     * @return the supplier<? extends spliterator. of int>
+     * @return the {@code Supplier<? extends Spliterator<int[]>}}
      */
     protected Supplier<? extends Spliterator<int[]>> get() {
         return new SpliteratorSupplier();

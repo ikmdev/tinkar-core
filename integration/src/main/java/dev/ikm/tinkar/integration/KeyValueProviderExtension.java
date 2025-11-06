@@ -18,6 +18,9 @@ package dev.ikm.tinkar.integration;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.ServiceKeys;
+import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
+import dev.ikm.tinkar.provider.ephemeral.constants.EphemeralStoreControllerName;
+import dev.ikm.tinkar.provider.spinedarray.constants.SpinedArrayControllerNames;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -26,38 +29,133 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
- * Abstract JUnit 5 extension that initializes the Tinkar entity provider for tests.
+ * JUnit 5 extension that initializes the Tinkar key-value provider for tests.
  * <p>
- * This extension solves the "No provider. Call Select provider prior to get()" error
- * by ensuring the Tinkar entity provider is initialized before tests run.
+ * It prevents the common "No provider. Call Select provider prior to get()" error by
+ * ensuring the provider is selected and started before any tests that access entities run.
  * <p>
- * Subclasses specify which controller to use via {@link #getControllerName()}.
+ * Usage options (hybrid approach):
+ * <ul>
+ *   <li>Annotation-driven: annotate test classes with {@link WithKeyValueProvider} to configure
+ *   controller, data path, clean-on-start, and optional imports.</li>
+ *   <li>Type-safe subclasses: use predefined providers (e.g., {@link NewSpinedArrayKeyValueProvider},
+ *   {@link OpenSpinedArrayKeyValueProvider}, {@link StarterDataSpinedArrayProvider}, etc.) for
+ *   discoverable, IDE-friendly defaults. You can still refine behavior by adding
+ *   {@link WithKeyValueProvider} on the test class.</li>
+ * </ul>
  * <p>
- * Usage: Add {@code @ExtendWith(OpenSpinedArrayKeyValueProvider.class)} or another
- * concrete subclass to test classes that access Tinkar entities.
+ * Configuration precedence (highest to lowest):
+ * <ol>
+ *   <li>Test class-level {@link WithKeyValueProvider} annotation</li>
+ *   <li>Predefined provider subclass via {@link #resolveConfig(ExtensionContext)} override</li>
+ *   <li>Sensible defaults (controller = automatic NEW/OPEN selection; dataPath = "target/key-value-store")</li>
+ * </ol>
+ * <p>
+ * Defaults and smart behavior:
+ * <ul>
+ *   <li>If {@code controllerName="default"} or empty, a Spined Array controller is selected automatically:
+ *     OPEN if {@code dataPath} exists and has content; NEW otherwise.</li>
+ *   <li>For non-ephemeral controllers, {@code dataPath} defaults to {@code target/key-value-store}.</li>
+ *   <li>{@code cleanOnStart=true} removes any existing files under {@code dataPath} prior to startup.</li>
+ *   <li>{@code importPath} supports single file, glob(s), and comma-separated patterns.</li>
+ * </ul>
  */
-public abstract class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCallback {
-    private static final Logger LOG = LoggerFactory.getLogger(OpenSpinedArrayKeyValueProvider.class);
+public class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCallback {
+    private static final Logger LOG = LoggerFactory.getLogger(KeyValueProviderExtension.class);
     private static final Object LOCK = new Object();
     private static int referenceCount = 0;
 
     /**
-     * Returns the controller name to be used for this provider.
-     * 
-     * @return the controller name (e.g., "Open SpinedArrayStore")
+     * Configuration container resolved from {@link WithKeyValueProvider} or defaults.
      */
-    protected abstract String getControllerName();
+    protected static class Config {
+        String controllerName;
+        String dataPath;
+        boolean cleanOnStart;
+        String importPath;
 
+        Config(String controllerName, String dataPath, boolean cleanOnStart, String importPath) {
+            this.controllerName = controllerName;
+            this.dataPath = dataPath;
+            this.cleanOnStart = cleanOnStart;
+            this.importPath = importPath;
+        }
+    }
+
+    /**
+     * Override to supply a configuration programmatically (for backward-compatible concrete extensions).
+     * Default implementation reads {@link WithKeyValueProvider} annotation or uses sensible defaults.
+     */
+    protected Config resolveConfig(ExtensionContext context) {
+        Class<?> testClass = context.getRequiredTestClass();
+
+        // First, check if the test class itself has @WithKeyValueProvider
+        WithKeyValueProvider testAnnotation = testClass.getAnnotation(WithKeyValueProvider.class);
+
+        // Second, check if the extension class has @WithKeyValueProvider (for predefined providers)
+        WithKeyValueProvider providerAnnotation = this.getClass().getAnnotation(WithKeyValueProvider.class);
+
+        // Test annotation overrides provider annotation
+        WithKeyValueProvider effective = testAnnotation != null ? testAnnotation : providerAnnotation;
+
+        if (effective == null) {
+            // No annotation found - use defaults
+            return new Config("default", "", false, "");
+        }
+
+        // If test has annotation, it can override provider's settings
+        String controllerName = testAnnotation != null && !testAnnotation.controllerName().isEmpty()
+                ? testAnnotation.controllerName()
+                : (providerAnnotation != null ? providerAnnotation.controllerName() : "default");
+
+        String dataPath = testAnnotation != null && !testAnnotation.dataPath().isEmpty()
+                ? testAnnotation.dataPath()
+                : (providerAnnotation != null ? providerAnnotation.dataPath() : "");
+
+        boolean cleanOnStart = testAnnotation != null
+                ? testAnnotation.cleanOnStart()
+                : (providerAnnotation != null && providerAnnotation.cleanOnStart());
+
+        String importPath = testAnnotation != null && !testAnnotation.importPath().isEmpty()
+                ? testAnnotation.importPath()
+                : (providerAnnotation != null ? providerAnnotation.importPath() : "");
+
+        return new Config(controllerName, dataPath, cleanOnStart, importPath);
+    }
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
+        Config cfg = resolveConfig(context);
+
         synchronized (LOCK) {
             referenceCount++;
             if (referenceCount == 1) {
-                LOG.info("Initializing Tinkar provider for tests with controller: {}", getControllerName());
+                // Determine controller and data path defaults
+                applyDefaultsAndEnvironment(cfg);
+
+                LOG.info("Initializing Tinkar provider for tests with controller: {}", cfg.controllerName);
+
+                // Set data store root for non-ephemeral controllers
+                if (!isEphemeralController(cfg.controllerName)) {
+                    if (cfg.cleanOnStart) {
+                        cleanDirectory(cfg.dataPath);
+                    }
+                    // Ensure directory exists for NEW controller case
+                    File dataRoot = new File(cfg.dataPath);
+                    if (!dataRoot.exists()) {
+                        boolean created = dataRoot.mkdirs();
+                        if (!created) {
+                            LOG.warn("Failed to create data directory: {}", dataRoot);
+                        }
+                    }
+                    System.setProperty(ServiceKeys.DATA_STORE_ROOT.name(), dataRoot.getAbsolutePath());
+                }
 
                 // Clean up any stale lock files from previous test runs
                 cleanupStaleLocks();
@@ -66,17 +164,110 @@ public abstract class KeyValueProviderExtension implements BeforeAllCallback, Af
                 CachingService.clearAll();
 
                 // Select and start provider
-                PrimitiveData.selectControllerByName(getControllerName());
+                PrimitiveData.selectControllerByName(cfg.controllerName);
 
                 // Only start if not already running
                 if (!PrimitiveData.running()) {
                     PrimitiveData.start();
-                    LOG.info(getControllerName() + " provider started successfully with controller: {}", getControllerName());
+                    LOG.info("{} provider started successfully.", cfg.controllerName);
                 } else {
-                    LOG.info(getControllerName() + " provider already running, skipping start");
+                    LOG.info("{} provider already running, skipping start", cfg.controllerName);
                 }
+
+                // Import any specified protobuf files
+                importIfRequested(cfg);
             } else {
-                LOG.info(getControllerName() + " provider already initialized (reference count: {})", referenceCount);
+                LOG.info("Provider already initialized (reference count: {})", referenceCount);
+            }
+        }
+    }
+
+    private void applyDefaultsAndEnvironment(Config cfg) {
+        // Default data path for non-ephemeral controllers
+        if (cfg.dataPath == null || cfg.dataPath.isBlank()) {
+            cfg.dataPath = "target/key-value-store";
+        }
+
+        // Resolve controller if default
+        if (cfg.controllerName == null || cfg.controllerName.equalsIgnoreCase("default")) {
+            // If import requested but ephemeral is desired? Keep spinedarray by default.
+            File dir = new File(cfg.dataPath);
+            boolean exists = dir.exists() && dir.isDirectory() && dir.list() != null && dir.list().length > 0;
+            cfg.controllerName = exists ? SpinedArrayControllerNames.OPEN_CONTROLLER_NAME
+                    : SpinedArrayControllerNames.NEW_CONTROLLER_NAME;
+        }
+    }
+
+    private boolean isEphemeralController(String controllerName) {
+        return EphemeralStoreControllerName.NEW_CONTROLLER_NAME.equals(controllerName);
+    }
+
+    private void cleanDirectory(String pathStr) {
+        if (pathStr == null || pathStr.isBlank()) return;
+        Path path = Path.of(pathStr);
+        if (!Files.exists(path)) return;
+        try {
+            Files.walkFileTree(path, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    Files.deleteIfExists(file);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                    Files.deleteIfExists(dir);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException e) {
+            LOG.warn("Failed to clean directory: {}", pathStr, e);
+        }
+    }
+
+    private void importIfRequested(Config cfg) {
+        if (cfg.importPath == null || cfg.importPath.isBlank()) return;
+        List<String> patterns = new ArrayList<>();
+        for (String token : Arrays.asList(cfg.importPath.split(","))) {
+            String t = token.trim();
+            if (!t.isEmpty()) patterns.add(t);
+        }
+        List<Path> filesToImport = new ArrayList<>();
+        for (String pattern : patterns) {
+            Path p = Path.of(pattern);
+            if (Files.exists(p) && Files.isRegularFile(p)) {
+                filesToImport.add(p.toAbsolutePath());
+                continue;
+            }
+            // Treat as glob. Base directory is either explicit parent or project root
+            Path baseDir = p.getParent() != null ? p.getParent() : Path.of(".");
+            String glob = p.getFileName() != null ? p.getFileName().toString() : "*";
+            PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + glob);
+            try {
+                if (Files.exists(baseDir)) {
+                    try (DirectoryStream<Path> stream = Files.newDirectoryStream(baseDir)) {
+                        for (Path child : stream) {
+                            if (Files.isRegularFile(child) && matcher.matches(child.getFileName())) {
+                                filesToImport.add(child.toAbsolutePath());
+                            }
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                LOG.warn("Failed expanding glob pattern: {}", pattern, e);
+            }
+        }
+        if (filesToImport.isEmpty()) {
+            LOG.info("No import files matched for pattern(s): {}", cfg.importPath);
+            return;
+        }
+        filesToImport.sort(null);
+        for (Path file : filesToImport) {
+            try {
+                LOG.info("Importing protobuf file: {}", file);
+                new LoadEntitiesFromProtobufFile(file.toFile()).compute();
+            } catch (Exception e) {
+                LOG.warn("Failed to import file: {}", file, e);
             }
         }
     }

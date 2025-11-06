@@ -20,18 +20,17 @@ import java.text.StringCharacterIterator;
 
 public class EscapeUtil {
     /**
-     Escape characters for text appearing as XML data, between tags.
-
-     <P>The following characters are replaced with corresponding character entities :
-     <table border='1' cellpadding='3' cellspacing='0'>
-     <tr><th> Character </th><th> Encoding </th></tr>
-     <tr><td> < </td><td> &lt; </td></tr>
-     <tr><td> > </td><td> &gt; </td></tr>
-     <tr><td> & </td><td> &amp; </td></tr>
-     <tr><td> " </td><td> &quot;</td></tr>
-     <tr><td> ' </td><td> &#039;</td></tr>
-     </table>
-
+     * Escape characters for text appearing as XML data, between tags.
+     *
+     * <p>The following characters are replaced with corresponding character entities:</p>
+     * <table border='1' cellpadding='3' cellspacing='0'>
+     * <tr><th> Character </th><th> Encoding </th></tr>
+     * <tr><td> &lt; </td><td> &amp;lt; </td></tr>
+     * <tr><td> &gt; </td><td> &amp;gt; </td></tr>
+     * <tr><td> &amp; </td><td> &amp;amp; </td></tr>
+     * <tr><td> &quot; </td><td> &amp;quot;</td></tr>
+     * <tr><td> &#039; </td><td> &amp;#039;</td></tr>
+     * </table>
      */
     public static String forXML(String aText){
         final StringBuilder result = new StringBuilder();

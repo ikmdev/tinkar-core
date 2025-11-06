@@ -44,7 +44,7 @@ public class TaskCountManager {
     /**
      * Provides a standard manager for concurrent additions to queues for multi-threaded tasks. The size prevents
      * the queues from being overwhelmed, but also is large enough to keep the CPU occupied.
-     * @return TaskCountManager with count = Runtime.getRuntime().availableProcessors() * 2
+     * Creates a TaskCountManager with count = Runtime.getRuntime().availableProcessors() * 2.
      */
     public TaskCountManager() {
         this(Runtime.getRuntime().availableProcessors() * 2);

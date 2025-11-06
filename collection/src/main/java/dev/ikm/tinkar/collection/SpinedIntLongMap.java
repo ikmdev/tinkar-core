@@ -123,9 +123,9 @@ public class SpinedIntLongMap {
    }
 
    /**
-    * Gets the.
+    * Gets the value spliterator supplier.
     *
-    * @return the supplier<? extends spliterator. of int>
+    * @return the {@code Supplier<? extends Spliterator.OfLong}}
     */
    protected Supplier<? extends Spliterator.OfLong> get() {
       return new SpliteratorSupplier();

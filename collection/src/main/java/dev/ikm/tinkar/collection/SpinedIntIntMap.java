@@ -230,9 +230,9 @@ public class SpinedIntIntMap {
     }
 
     /**
-     * Gets the value spliterator.
+     * Gets the value spliterator supplier.
      *
-     * @return the supplier<? extends spliterator. of int>
+     * @return the {@code Supplier<? extends Spliterator.OfInt}}
      */
     protected Supplier<? extends Spliterator.OfInt> getValueSpliterator() {
         return new ValueSpliteratorSupplier();

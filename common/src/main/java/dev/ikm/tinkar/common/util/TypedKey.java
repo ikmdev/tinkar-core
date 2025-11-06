@@ -176,7 +176,7 @@ import java.util.Objects;
  * </tr>
  * <tr>
  *   <td>ViewModel properties</td>
- *   <td>{@link dev.ikm.komet.framework.property.TypedProperty}</td>
+ *   <td>{@code dev.ikm.komet.framework.property.TypedProperty}</td>
  *   <td>Specialized for Cognitive framework integration</td>
  * </tr>
  * <tr>
@@ -223,7 +223,7 @@ import java.util.Objects;
  * </ul>
  *
  * @param <T> the type of value associated with this key
- * @see dev.ikm.komet.framework.property.TypedProperty for ViewModel-specific properties
+ * See also: {@code dev.ikm.komet.framework.property.TypedProperty} for ViewModel-specific properties
  */
 public interface TypedKey<T> {
 
