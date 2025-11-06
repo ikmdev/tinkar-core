@@ -41,9 +41,10 @@ import java.util.ServiceLoader;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import static dev.ikm.tinkar.provider.spinedarray.constants.SpinedArrayControllerNames.NEW_CONTROLLER_NAME;
+
 public class SpinedArrayNewController extends SpinedArrayController {
     private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayNewController.class);
-    public static String CONTROLLER_NAME = "New Spined Array Store";
     String importDataFileString;
     DataServiceProperty newFolderProperty = new DataServiceProperty("New folder name", false, true);
     MutableMap<DataServiceProperty, String> providerProperties = Maps.mutable.empty();
@@ -113,7 +114,7 @@ public class SpinedArrayNewController extends SpinedArrayController {
 
     @Override
     public String controllerName() {
-        return CONTROLLER_NAME;
+        return NEW_CONTROLLER_NAME;
     }
 
     @Override

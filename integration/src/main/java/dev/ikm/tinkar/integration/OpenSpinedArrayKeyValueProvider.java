@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.integration.snomed.core;
+package dev.ikm.tinkar.integration;
 
-import java.io.File;
-import java.util.function.Function;
+/**
+ * JUnit 5 extension that initializes the Tinkar entity provider using
+ * the Open SpinedArrayStore controller.
+ * <p>
+ * Usage: Add {@code @ExtendWith(OpenSpinedArrayKeyValueProvider.class)} to test classes.
+ */
+public class OpenSpinedArrayKeyValueProvider extends KeyValueProviderExtension {
 
-public class TestConstants {
-
-    public static final Function<String, File> createFilePathInTarget = (pathName) -> new File("%s/target/%s".formatted(System.getProperty("user.dir"), pathName));
-
-    public static final Function<Class,File>
-            createFilePathInTargetFromClassName = (clazz) -> createFilePathInTarget.apply("generated-datastores/%s".formatted(clazz.getSimpleName()));
-
+    @Override
+    protected String getControllerName() {
+        return TestConstants.OPEN_SPINED_ARRAY_STORE;
+    }
 }

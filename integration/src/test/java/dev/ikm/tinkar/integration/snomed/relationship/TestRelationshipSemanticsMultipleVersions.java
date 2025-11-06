@@ -17,7 +17,8 @@ package dev.ikm.tinkar.integration.snomed.relationship;
 
 import dev.ikm.tinkar.entity.SemanticRecord;
 import dev.ikm.tinkar.entity.SemanticVersionRecord;
-import dev.ikm.tinkar.integration.TinkarProviderExtension;
+import dev.ikm.tinkar.integration.KeyValueProviderExtension;
+import dev.ikm.tinkar.integration.OpenSpinedArrayKeyValueProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@ExtendWith(TinkarProviderExtension.class)
+@ExtendWith(OpenSpinedArrayKeyValueProvider.class)
 public class TestRelationshipSemanticsMultipleVersions {
 
     @Test

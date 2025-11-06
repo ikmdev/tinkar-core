@@ -16,7 +16,8 @@
 package dev.ikm.tinkar.integration.snomed.relationship;
 
 import dev.ikm.tinkar.entity.SemanticRecord;
-import dev.ikm.tinkar.integration.TinkarProviderExtension;
+import dev.ikm.tinkar.integration.KeyValueProviderExtension;
+import dev.ikm.tinkar.integration.OpenSpinedArrayKeyValueProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -32,7 +33,7 @@ import static dev.ikm.tinkar.integration.snomed.core.SnomedCTIdentifierSemantic.
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@ExtendWith(TinkarProviderExtension.class)
+@ExtendWith(OpenSpinedArrayKeyValueProvider.class)
 public class TestIndentifierSemantics {
 
     @Test

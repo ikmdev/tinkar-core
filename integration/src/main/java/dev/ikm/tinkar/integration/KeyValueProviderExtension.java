@@ -30,27 +30,34 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * JUnit 5 extension that initializes the Tinkar entity provider for tests.
+ * Abstract JUnit 5 extension that initializes the Tinkar entity provider for tests.
  * <p>
  * This extension solves the "No provider. Call Select provider prior to get()" error
  * by ensuring the Tinkar entity provider is initialized before tests run.
  * <p>
- * Uses an ephemeral (in-memory) data store suitable for testing.
+ * Subclasses specify which controller to use via {@link #getControllerName()}.
  * <p>
- * Usage: Add {@code @ExtendWith(TinkarProviderExtension.class)} to test classes that
- * access Tinkar entities.
+ * Usage: Add {@code @ExtendWith(OpenSpinedArrayKeyValueProvider.class)} or another
+ * concrete subclass to test classes that access Tinkar entities.
  */
-public class TinkarProviderExtension implements BeforeAllCallback, AfterAllCallback {
-    private static final Logger LOG = LoggerFactory.getLogger(TinkarProviderExtension.class);
+public abstract class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCallback {
+    private static final Logger LOG = LoggerFactory.getLogger(OpenSpinedArrayKeyValueProvider.class);
     private static final Object LOCK = new Object();
     private static int referenceCount = 0;
+
+    /**
+     * Returns the controller name to be used for this provider.
+     * 
+     * @return the controller name (e.g., "Open SpinedArrayStore")
+     */
+    protected abstract String getControllerName();
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
         synchronized (LOCK) {
             referenceCount++;
             if (referenceCount == 1) {
-                LOG.info("Initializing Tinkar provider for tests");
+                LOG.info("Initializing Tinkar provider for tests with controller: {}", getControllerName());
 
                 // Clean up any stale lock files from previous test runs
                 cleanupStaleLocks();
@@ -58,18 +65,18 @@ public class TinkarProviderExtension implements BeforeAllCallback, AfterAllCallb
                 // Clear any existing caches
                 CachingService.clearAll();
 
-                // Select and start provider (in-memory for testing)
-                PrimitiveData.selectControllerByName("Open SpinedArrayStore");
+                // Select and start provider
+                PrimitiveData.selectControllerByName(getControllerName());
 
                 // Only start if not already running
                 if (!PrimitiveData.running()) {
                     PrimitiveData.start();
-                    LOG.info("Tinkar provider started successfully");
+                    LOG.info(getControllerName() + " provider started successfully with controller: {}", getControllerName());
                 } else {
-                    LOG.info("Tinkar provider already running, skipping start");
+                    LOG.info(getControllerName() + " provider already running, skipping start");
                 }
             } else {
-                LOG.info("Tinkar provider already initialized (reference count: {})", referenceCount);
+                LOG.info(getControllerName() + " provider already initialized (reference count: {})", referenceCount);
             }
         }
     }
@@ -121,7 +128,7 @@ public class TinkarProviderExtension implements BeforeAllCallback, AfterAllCallb
     public void afterAll(ExtensionContext context) throws Exception {
         synchronized (LOCK) {
             referenceCount--;
-            LOG.info("TinkarProviderExtension.afterAll - referenceCount now: {}", referenceCount);
+            LOG.info("KeyValueProviderExtension.afterAll - referenceCount now: {}", referenceCount);
             // Don't stop the provider between test classes - let it stay running
             // The provider will be stopped when the JVM exits
             // This prevents Lucene lock issues when test classes share the same provider instance

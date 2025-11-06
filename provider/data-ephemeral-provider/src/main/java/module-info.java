@@ -39,7 +39,8 @@ module dev.ikm.tinkar.provider.ephemeral {
     provides DataServiceController
             with ProviderEphemeralNewController;
 
-    exports dev.ikm.tinkar.provider.ephemeral;
+    exports dev.ikm.tinkar.provider.ephemeral.constants;
+
     uses LoadDataFromFileController;
 
 }

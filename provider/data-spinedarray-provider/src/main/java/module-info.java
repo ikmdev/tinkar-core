@@ -39,6 +39,8 @@ module dev.ikm.tinkar.provider.spinedarray {
     requires org.eclipse.collections.impl;
     requires dev.ikm.jpms.activej.bytebuf;
 
+    exports dev.ikm.tinkar.provider.spinedarray.constants;
+
     provides DataServiceController
             with SpinedArrayOpenController, SpinedArrayNewController;
 

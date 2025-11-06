@@ -39,6 +39,8 @@ module dev.ikm.tinkar.provider.mvstore {
     requires dev.ikm.jpms.h2.mvstore;
     requires org.slf4j;
 
+    exports dev.ikm.tinkar.provider.mvstore.constants;
+
     uses LoadDataFromFileController;
 
     provides DataServiceController

@@ -38,8 +38,9 @@ import java.util.ServiceLoader;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import static dev.ikm.tinkar.provider.mvstore.constants.MvStoreControllerNames.NEW_CONTROLLER_NAME;
+
 public class MvStoreNewController extends MvStoreController {
-    public static String CONTROLLER_NAME = "New MV Store";
     String importDataFileString;
     DataServiceProperty newFolderProperty = new DataServiceProperty("New folder name", false, true);
     MutableMap<DataServiceProperty, String> providerProperties = Maps.mutable.empty();
@@ -103,7 +104,7 @@ public class MvStoreNewController extends MvStoreController {
 
     @Override
     public String controllerName() {
-        return CONTROLLER_NAME;
+        return NEW_CONTROLLER_NAME;
     }
 
     @Override

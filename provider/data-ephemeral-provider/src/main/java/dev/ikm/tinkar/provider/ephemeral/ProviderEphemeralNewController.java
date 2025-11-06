@@ -31,9 +31,10 @@ import java.util.ServiceLoader;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import static dev.ikm.tinkar.provider.ephemeral.constants.EphemeralStoreControllerName.NEW_CONTROLLER_NAME;
+
 public class ProviderEphemeralNewController implements DataServiceController<PrimitiveDataService> {
 
-    public static String CONTROLLER_NAME = "Load Ephemeral Store";
     private static final Logger LOG = LoggerFactory.getLogger(ProviderEphemeralNewController.class);
     private DataUriOption dataUriOption;
 
@@ -64,7 +65,7 @@ public class ProviderEphemeralNewController implements DataServiceController<Pri
 
     @Override
     public String controllerName() {
-        return CONTROLLER_NAME;
+        return NEW_CONTROLLER_NAME;
     }
 
     @Override
@@ -114,6 +115,6 @@ public class ProviderEphemeralNewController implements DataServiceController<Pri
 
     @Override
     public String toString() {
-        return CONTROLLER_NAME;
+        return NEW_CONTROLLER_NAME;
     }
 }

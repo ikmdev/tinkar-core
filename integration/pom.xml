@@ -115,7 +115,7 @@
             <artifactId>eclipse-collections</artifactId>
         </dependency>
 
-        <!-- JUnit Jupiter API for TinkarProviderExtension (test fixture in src/main) -->
+        <!-- JUnit Jupiter API for KeyValueProviderExtension (test fixture in src/main) -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
