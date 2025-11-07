@@ -4,7 +4,7 @@
 
 STAMP coordinates answer: *"When am I looking, and from which branch?"*
 
-STAMP = *S*tatus + *T*ime + *A*uthor + *M*odule + *P*ath
+STAMP = **S**tatus + **T**ime + **A**uthor + **M**odule + **P**ath
 
 Every piece of content carries STAMP metadata. STAMP coordinates tell the system which versions to show you.
 

@@ -9,11 +9,11 @@ This document describes the IKE Coordinate System (Integrated Knowledge Ecosyste
 
 STAMP coordinates control *temporal versioning* and *provenance tracking* in the IKE Coordinate System. STAMP is an acronym for:
 
-* *S*tatus - Lifecycle state (ACTIVE or INACTIVE)
-* *T*ime - When the version was created
-* *A*uthor - Who made the change
-* *M*odule - Which organizational unit owns the content
-* *P*ath - Which development branch contains the version
+* **S**tatus - Lifecycle state (ACTIVE or INACTIVE)
+* **T**ime - When the version was created
+* **A**uthor - Who made the change
+* **M**odule - Which organizational unit owns the content
+* **P**ath - Which development branch contains the version
 
 Every version of every entity in the IKE Coordinate System carries STAMP metadata. STAMP coordinates specify which versions you want to see.
 
