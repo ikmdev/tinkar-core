@@ -31,6 +31,9 @@ open module dev.ikm.tinkar.integration {
     requires org.eclipse.collections.impl;
     requires dev.ikm.tinkar.provider.search;
 
+    requires com.fasterxml.jackson.core;
+    requires com.fasterxml.jackson.databind;
+
     uses DataServiceController;
     uses DefaultDescriptionForNidService;
     uses EntityService;
