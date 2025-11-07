@@ -1,8 +1,13 @@
 = STAMP Coordinates
 
+[NOTE]
+====
+This document describes the IKE Coordinate System (Integrated Knowledge Ecosystem), based on the HL7 TINKAR specification. Technical references use "Tinkar" in code for backward compatibility.
+====
+
 == Overview
 
-STAMP coordinates control *temporal versioning* and *provenance tracking* in Tinkar. STAMP is an acronym for:
+STAMP coordinates control *temporal versioning* and *provenance tracking* in the IKE Coordinate System. STAMP is an acronym for:
 
 * *S*tatus - Lifecycle state (ACTIVE or INACTIVE)
 * *T*ime - When the version was created
@@ -10,7 +15,7 @@ STAMP coordinates control *temporal versioning* and *provenance tracking* in Tin
 * *M*odule - Which organizational unit owns the content
 * *P*ath - Which development branch contains the version
 
-Every version of every entity in Tinkar carries STAMP metadata. STAMP coordinates specify which versions you want to see.
+Every version of every entity in the IKE Coordinate System carries STAMP metadata. STAMP coordinates specify which versions you want to see.
 
 == The STAMP Hierarchy
 

@@ -1,5 +1,10 @@
 = Practical Examples
 
+[NOTE]
+====
+This document describes the IKE Coordinate System (Integrated Knowledge Ecosystem), based on the HL7 TINKAR specification. Technical references use "Tinkar" in code for backward compatibility.
+====
+
 == Overview
 
 This section provides real-world examples of coordinate configuration for common scenarios. Each example shows complete code and explains the rationale behind coordinate choices.

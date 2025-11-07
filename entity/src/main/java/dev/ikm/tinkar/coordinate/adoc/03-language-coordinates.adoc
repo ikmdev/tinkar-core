@@ -1,5 +1,10 @@
 = Language Coordinates
 
+[NOTE]
+====
+This document describes the IKE Coordinate System (Integrated Knowledge Ecosystem), based on the HL7 TINKAR specification. Technical references use "Tinkar" in code for backward compatibility.
+====
+
 == Overview
 
 Language coordinates specify how to retrieve and display human-readable descriptions for concepts and other entities. They control:

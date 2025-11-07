@@ -1,4 +1,4 @@
-= Tinkar Coordinate System - Getting Started Guide
+= IKE Coordinate System - Developer's Guide
 :toc: left
 :toclevels: 3
 :sectnums:
@@ -8,12 +8,14 @@
 
 [abstract]
 --
-A comprehensive guide to understanding and using the Tinkar Coordinate System for managing temporal, versioned knowledge graphs. This guide covers all five coordinate types (STAMP, Language, Logic, Navigation, and Edit) and shows how to configure them for different use cases.
+A comprehensive guide to understanding and using the IKE Coordinate System (Integrated Knowledge Ecosystem) for managing temporal, versioned knowledge graphs. This guide covers all five coordinate types (STAMP, Language, Logic, Navigation, and Edit) and shows how to configure them for different use cases.
+
+_Note: This coordinate system was originally published as part of the HL7 Terminology Knowledge Architecture (TINKAR) ballot. While TINKAR remains the historical and technical foundation, the open-source community now refers to this collaborative framework as the Integrated Knowledge Ecosystem (IKE)._
 --
 
 == Document Overview
 
-This Getting Started Guide provides Java developers and users with practical knowledge of the Tinkar Coordinate System. The guide is organized into the following sections:
+This Getting Started Guide provides Java developers and users with practical knowledge of the IKE Coordinate System. The guide is organized into the following sections:
 
 * *Introduction* - What coordinates are and why they matter
 * *STAMP Coordinates* - Temporal versioning and provenance
@@ -29,10 +31,10 @@ This Getting Started Guide provides Java developers and users with practical kno
 
 This guide is designed for:
 
-* *Java Developers* building applications on Tinkar
+* *Java Developers* building applications on the IKE platform
 * *Knowledge Engineers* configuring terminology systems
 * *System Administrators* managing knowledge bases
-* *Integration Specialists* connecting Tinkar to other systems
+* *Integration Specialists* connecting IKE to other systems
 
 == Prerequisites
 
@@ -60,7 +62,7 @@ If you need assistance:
 * Review the JavaDoc in the `dev.ikm.tinkar.coordinate` package
 * Check the code examples in each section
 * Consult the API reference for detailed method signatures
-* Reach out to the Tinkar community for support
+* Reach out to the IKE community for support
 
 == Document Sections
 

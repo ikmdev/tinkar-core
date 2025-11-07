@@ -1,8 +1,13 @@
 = Best Practices
 
+[NOTE]
+====
+This document describes the IKE Coordinate System (Integrated Knowledge Ecosystem), based on the HL7 TINKAR specification. Technical references use "Tinkar" in code for backward compatibility.
+====
+
 == Overview
 
-This section provides guidance on effectively using coordinates in Tinkar applications. Following these practices will help you build robust, performant, and maintainable systems.
+This section provides guidance on effectively using coordinates in IKE applications. Following these practices will help you build robust, performant, and maintainable systems.
 
 == Coordinate Creation and Management
 

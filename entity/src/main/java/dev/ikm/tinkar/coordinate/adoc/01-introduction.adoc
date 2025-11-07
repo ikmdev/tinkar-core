@@ -2,7 +2,7 @@
 
 == What Are Coordinates?
 
-In Tinkar, a *coordinate* is a specification that describes *how* to access and interpret knowledge at a specific point in time, in a specific language, using specific reasoning rules, and through a specific navigational structure.
+In the IKE Coordinate System, a *coordinate* is a specification that describes *how* to access and interpret knowledge at a specific point in time, in a specific language, using specific reasoning rules, and through a specific navigational structure.
 
 Think of coordinates like viewing settings for a knowledge graph:
 
@@ -13,6 +13,17 @@ Think of coordinates like viewing settings for a knowledge graph:
 * An Edit coordinate is like setting your author identity
 
 Together, these coordinates provide a complete context for accessing versioned, multilingual, logic-enabled knowledge.
+
+== About IKE and TINKAR
+
+The *IKE Coordinate System* is the collaborative, open-source framework developed by our independent community for managing complex knowledge at scale. The architecture is based on the HL7 Terminology Knowledge Architecture (TINKAR), which was formally balloted by HL7. While *TINKAR* remains valid as the historical and technical foundation, we use *IKE (Integrated Knowledge Ecosystem)* to emphasize:
+
+* *Collaborative*: Multiple organizations and individuals contributing together
+* *Open-source*: Transparent development and freely available implementations
+* *Ecosystem*: A comprehensive environment for knowledge curation at scale
+* *Independent*: Community-driven rather than single-organization controlled
+
+Throughout this documentation, you may see references to "Tinkar" in package names (`dev.ikm.tinkar.*`) and code—this reflects the historical naming and maintains backward compatibility.
 
 == Why Coordinates Matter
 

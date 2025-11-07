@@ -1,5 +1,10 @@
 = View Coordinates
 
+[NOTE]
+====
+This document describes the IKE Coordinate System (Integrated Knowledge Ecosystem), based on the HL7 TINKAR specification. Technical references use "Tinkar" in code for backward compatibility.
+====
+
 == Overview
 
 View coordinates unify all five coordinate types into a single, cohesive specification. Instead of managing STAMP, Language, Logic, Navigation, and Edit coordinates separately, a view coordinate provides:
