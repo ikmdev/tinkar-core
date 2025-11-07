@@ -8,6 +8,7 @@ module dev.ikm.tinkar.provider.changeset {
     requires org.eclipse.collections.impl;
     requires com.fasterxml.jackson.databind;
     requires org.slf4j;
+    requires dev.ikm.jpms.protobuf;
     exports dev.ikm.tinkar.provider.changeset;
 
     provides ChangeSetWriterService with ChangeSetWriterProvider;
