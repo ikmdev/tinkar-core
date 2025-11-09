@@ -84,7 +84,6 @@ public class EntityVertex implements Vertex, VertexId {
 	/**
 	 * A copy constructor
 	 * @param another the vertex to copy
-	 * @return a copy of this vertex .
 	 */
 	public EntityVertex(EntityVertex another) {
 		fill(another);

@@ -358,7 +358,7 @@ public class StampCalculatorWithCache implements StampCalculator {
      * Relative position.
      *
      * @param stampNid the stamp sequence 1
-     * @param stampNid the stamp sequence 2
+     * @param stampNid2 the stamp sequence 2
      * @return the relative position
      */
     public RelativePosition relativePosition(int stampNid, int stampNid2) {

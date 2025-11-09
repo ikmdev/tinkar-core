@@ -18,7 +18,7 @@ package dev.ikm.tinkar.entity;
 /**
  * Parent interface for all <code>ImmutableEntity</code> classes.
  *
- * @TODO consider removing the Entity interface and working directly with the records.
+ * TODO: consider removing the Entity interface and working directly with the records.
  * Except the ObservableEntity implements the interface, so need to consider how we best approach.
  * Maybe this current approach is optimal.
  */

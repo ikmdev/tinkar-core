@@ -38,14 +38,14 @@ public interface SemanticEntity<T extends SemanticEntityVersion> extends Entity<
 
     @Override
     default Entity referencedComponent() {
-        return Entity.provider().getEntityFast(referencedComponentNid());
+        return EntityHandle.getEntityOrThrow(referencedComponentNid());
     }
 
     int referencedComponentNid();
 
     @Override
     default PatternEntity pattern() {
-        return Entity.provider().getEntityFast(patternNid());
+        return EntityHandle.getPatternOrThrow(patternNid());
     }
 
     int patternNid();
@@ -55,9 +55,9 @@ public interface SemanticEntity<T extends SemanticEntityVersion> extends Entity<
     }
 
     default Entity<? extends EntityVersion> topEnclosingComponent() {
-        Entity<? extends EntityVersion> referencedComponent = Entity.getFast(referencedComponentNid());
+        Entity<? extends EntityVersion> referencedComponent = EntityHandle.getEntityOrThrow(referencedComponentNid());
         while (referencedComponent instanceof SemanticEntity parentSemantic) {
-            referencedComponent = Entity.getFast(parentSemantic.referencedComponentNid());
+            referencedComponent = EntityHandle.getEntityOrThrow(parentSemantic.referencedComponentNid());
         }
         return referencedComponent;
     }

@@ -64,7 +64,7 @@ import static dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResults.EndPoints
  * To minimise confusion between other uses of Node (javafx.scene.Node), we preferentially use
  * Vertexes and Edges to describe the Graphs.
  * <p>
- * https://digitalcommons.calpoly.edu/cgi/viewcontent.cgi?article=3437&context=theses
+ * https://digitalcommons.calpoly.edu/cgi/viewcontent.cgi?article=3437&amp;context=theses
  * <p>
  * VF2++ — An Improved Subgraph Isomorphism Algorithm
  * Alpar Juttner and Peter Madarasi

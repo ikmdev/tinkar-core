@@ -17,7 +17,7 @@ package dev.ikm.tinkar.entity;
 
 /**
  * Parent interface for all <code>ImmutableVersion</code> objects.
- * @TODO consider removing the EntityVersion interface and working directly with the records.
+ * TODO: consider removing the EntityVersion interface and working directly with the records.
  * Except the observable versions use the interface, so need to consider how we best approach.
  * Maybe this current approach is optimal.
  */
