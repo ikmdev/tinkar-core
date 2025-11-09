@@ -65,7 +65,7 @@ public interface LanguageCoordinate {
     IntIdList descriptionTypePreferenceNidList();
 
     /**
-     * Gets the dialect assemblage preference nid array.
+     * Gets the dialect pattern preference nid array.
      *
      * @return the dialect pattern preference nid array
      */
