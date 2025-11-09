@@ -72,7 +72,7 @@ public record StampVersionRecord(StampRecord chronology,
 
     @Override
     public String toString() {
-        return "sv: ≤" + describe() + "≥";
+        return "sv: ≤" + describe() + " nid: " + nid() + "≥";
     }
 
     @Override

@@ -210,6 +210,9 @@ public class EntityRecordFactory {
      * @param field
      */
     public static void writeField(ByteBuf writeBuf, Object field) {
+        if (field == null) {
+            throw new IllegalArgumentException("Field value cannot be null. Semantic field values must be initialized before serialization.");
+        }
         switch (field) {
             case Boolean booleanField ->
                     writeTokenAndField(writeBuf, FieldDataType.BOOLEAN, () -> writeBuf.writeBoolean(booleanField));

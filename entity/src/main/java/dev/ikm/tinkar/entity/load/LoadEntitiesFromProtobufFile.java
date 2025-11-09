@@ -38,6 +38,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.jar.Manifest;
@@ -60,11 +61,29 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
     private final AtomicLong importSemanticCount = new AtomicLong();
     private final AtomicLong importPatternCount = new AtomicLong();
     private final AtomicLong importStampCount = new AtomicLong();
+    
+    private final AtomicLong identifierCount = new AtomicLong();
+    private final boolean useMultiPassImport;
 
+    /**
+     * Create a loader with default multi-pass import mode.
+     * @param importFile the protobuf file to import
+     */
     public LoadEntitiesFromProtobufFile(File importFile) {
+        this(importFile, true);
+    }
+
+    /**
+     * Create a loader with configurable pass mode.
+     * @param importFile the protobuf file to import
+     * @param useMultiPassImport if true, use multi-pass import (default); if false, use 1-pass import
+     */
+    public LoadEntitiesFromProtobufFile(File importFile, boolean useMultiPassImport) {
         super(false, true);
         this.importFile = importFile;
-        LOG.info("Loading entities from: " + importFile.getAbsolutePath());
+        this.useMultiPassImport = useMultiPassImport;
+        LOG.info("Loading entities from: " + importFile.getAbsolutePath() + " using " +
+                (useMultiPassImport ? "multi-pass" : "1-pass") + " import mode");
     }
 
     /**
@@ -81,51 +100,148 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         // Analyze Manifest and update tracking callable
         long expectedImports = analyzeManifest();
         LOG.info(expectedImports + " Entities to process...");
-        updateProgress(0, expectedImports);
-        updateMessage("Importing Protobuf Data...");
-        LOG.debug("Expected imports: " + expectedImports);
 
-        // Process Protobuf Entry
-        EntityService.get().beginLoadPhase();
+        if (useMultiPassImport) {
+            return computeMultiPass(expectedImports);
+        } else {
+            return computeOnePass(expectedImports);
+        }
+    }
+
+    /**
+     * Multi-pass import: Imports entities in dependency order to handle forward references.
+     * Pass 1: Import non-semantics (Concepts, Patterns, Stamps) - these have no referenced components
+     * Pass 2+: Import semantics whose referenced components now exist in the database
+     * Repeats until all semantics are successfully imported or no progress is made.
+     */
+    private EntityCountSummary computeMultiPass(long expectedImports) {
+        updateMessage("Starting multi-pass import...");
+
+        // Read all messages from the file into memory first
+        Map<String, TinkarMsg> allMessages = new HashMap<>();
         try (ZipInputStream zis = new ZipInputStream(new FileInputStream(importFile))) {
-            // Consumer to be run for each transformed Entity
-            Consumer<Entity<? extends  EntityVersion>> entityConsumer = entity -> {
-                EntityService.get().putEntityQuietly(entity, DataActivity.LOADING_CHANGE_SET);
-				updateCounts(entity);
-            };
-
             ZipEntry zipEntry;
+            int messageIndex = 0;
             while ((zipEntry = zis.getNextEntry()) != null) {
                 if (zipEntry.getName().equals(MANIFEST_RELPATH)) {
                     continue;
                 }
+
                 while (zis.available() > 0) {
-                    // zis.available returns 1 until AFTER EOF has been reached
-                    // Protobuf parser reads the data UP TO EOF, so zis.available
-                    // will return 1 when the only thing left is EOF
-                    // pbTinkarMsg should be null for this last entry
                     TinkarMsg pbTinkarMsg = TinkarMsg.parseDelimitedFrom(zis);
-                    if (pbTinkarMsg == null) {
-                        continue;
-                    }
-
-                    // TODO: Remove need for Stamp Consumer since Stamps are now consumed by Entity Consumer
-                    try {
-                        entityTransformer.transform(pbTinkarMsg, entityConsumer, (stampEntity) -> {});
-                    } catch (Exception e) {
-                        LOG.error("Encountered exception {}", e.getMessage());
-                    }
-
-                    // Batch progress updates to prevent hanging the UI thread
-                    if (importCount.incrementAndGet() % 1000 == 0) {
-                        updateProgress(importCount.get(), expectedImports);
+                    if (pbTinkarMsg != null) {
+                        allMessages.put("msg_" + messageIndex++, pbTinkarMsg);
                     }
                 }
             }
+            LOG.info("Read {} messages from changeset", allMessages.size());
         } catch (Exception e) {
-            LOG.error("Encountered exception {}", e.getMessage());
+            LOG.error("Failed to read messages from file", e);
+            AlertStreams.dispatchToRoot(e);
+            throw new RuntimeException("Failed to read changeset file", e);
+        }
+
+        EntityService.get().beginLoadPhase();
+
+        // Consumer to be run for each transformed Entity
+        Consumer<Entity<? extends EntityVersion>> entityConsumer = entity -> {
+            EntityService.get().putEntityQuietly(entity, DataActivity.LOADING_CHANGE_SET);
+            updateCounts(entity);
+        };
+
+        try {
+            // PASS 1: Import all non-semantics (Concepts, Patterns, Stamps)
+            updateMessage("Pass 1: Importing Concepts, Patterns, and Stamps...");
+            Map<String, TinkarMsg> remainingMessages = new HashMap<>();
+
+            for (Map.Entry<String, TinkarMsg> entry : allMessages.entrySet()) {
+                TinkarMsg msg = entry.getValue();
+                boolean isSemantic = msg.getValueCase() == TinkarMsg.ValueCase.SEMANTIC_CHRONOLOGY;
+
+                if (!isSemantic) {
+                    // Import non-semantics immediately - they have no referenced components
+                    try {
+                        entityTransformer.transform(msg, entityConsumer, (stampEntity) -> {});
+                        importCount.incrementAndGet();
+                    } catch (Exception e) {
+                        LOG.error("Pass 1 - Failed to import non-semantic: {}", e.getMessage());
+                        throw e;
+                    }
+                } else {
+                    // Defer semantics for later passes
+                    remainingMessages.put(entry.getKey(), msg);
+                }
+
+                // Progress update
+                if (importCount.get() % 1000 == 0) {
+                    updateProgress(importCount.get(), expectedImports);
+                }
+            }
+
+            LOG.info("Pass 1 complete: Imported {} non-semantics, {} semantics remaining",
+                    importCount.get(), remainingMessages.size());
+
+            // PASS 2+: Import semantics in multiple passes until all are imported
+            int passNumber = 2;
+            int maxPasses = 100; // Safety limit to prevent infinite loops
+
+            while (!remainingMessages.isEmpty() && passNumber <= maxPasses) {
+                updateMessage(String.format("Pass %d: Importing semantics (%d remaining)...",
+                        passNumber, remainingMessages.size()));
+
+                Map<String, TinkarMsg> stillRemaining = new HashMap<>();
+                long importedThisPass = 0;
+
+                for (Map.Entry<String, TinkarMsg> entry : remainingMessages.entrySet()) {
+                    TinkarMsg msg = entry.getValue();
+
+                    try {
+                        entityTransformer.transform(msg, entityConsumer, (stampEntity) -> {});
+                        importCount.incrementAndGet();
+                        importedThisPass++;
+
+                        // Progress update
+                        if (importCount.get() % 1000 == 0) {
+                            updateProgress(importCount.get(), expectedImports);
+                        }
+                    } catch (Exception e) {
+                        // Referenced component not found yet - defer to next pass
+                        stillRemaining.put(entry.getKey(), msg);
+                    }
+                }
+
+                LOG.info("Pass {} complete: Imported {} semantics, {} remaining",
+                        passNumber, importedThisPass, stillRemaining.size());
+
+                // Check for progress
+                if (importedThisPass == 0 && !stillRemaining.isEmpty()) {
+                    // No progress made - we have circular dependencies or missing references
+                    LOG.error("Unable to import {} semantics due to unresolved references after {} passes",
+                            stillRemaining.size(), passNumber);
+                    throw new IllegalStateException(
+                            String.format("Unable to resolve %d semantics after %d passes. " +
+                                    "Possible circular dependencies or missing referenced components.",
+                                    stillRemaining.size(), passNumber));
+                }
+
+                remainingMessages = stillRemaining;
+                passNumber++;
+            }
+
+            if (!remainingMessages.isEmpty()) {
+                throw new IllegalStateException(
+                        String.format("Exceeded maximum passes (%d). %d semantics still unresolved.",
+                                maxPasses, remainingMessages.size()));
+            }
+
+            LOG.info("Multi-pass import complete: {} passes, {} entities imported",
+                    passNumber - 1, importCount.get());
+
+        } catch (Exception e) {
+            LOG.error("Multi-pass import failed", e);
             updateTitle("Failed: Import Protobuf data from " + importFile.getName());
             AlertStreams.dispatchToRoot(e);
+            throw new RuntimeException("Multi-pass import failed", e);
         } finally {
             try {
                 EntityService.get().endLoadPhase();
@@ -133,7 +249,74 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                 LOG.error("Encountered exception {}", e.getMessage());
             }
             updateMessage("In " + durationString());
-            updateProgress(1,1);
+            updateProgress(1, 1);
+        }
+
+        if (importCount.get() != expectedImports) {
+            IllegalStateException e = new IllegalStateException(
+                    String.format("Import Failed: Expected %d entities, but imported %d",
+                            expectedImports, importCount.get()));
+            AlertStreams.dispatchToRoot(e);
+            throw e;
+        }
+        return summarize();
+    }
+
+    /**
+     * One-pass import: Load entities directly without pre-registering NIDs.
+     * This may fail if the changeset contains forward references.
+     */
+    private EntityCountSummary computeOnePass(long expectedImports) {
+        updateMessage("Importing Protobuf Data (1-pass mode)...");
+        LOG.debug("Expected imports: " + expectedImports);
+
+        EntityService.get().beginLoadPhase();
+        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(importFile))) {
+            // Consumer to be run for each transformed Entity
+            Consumer<Entity<? extends EntityVersion>> entityConsumer = entity -> {
+                EntityService.get().putEntityQuietly(entity, DataActivity.LOADING_CHANGE_SET);
+                updateCounts(entity);
+            };
+
+            ZipEntry zipEntry;
+            while ((zipEntry = zis.getNextEntry()) != null) {
+                if (zipEntry.getName().equals(MANIFEST_RELPATH)) {
+                    continue;
+                }
+
+                while (zis.available() > 0) {
+                    TinkarMsg pbTinkarMsg = TinkarMsg.parseDelimitedFrom(zis);
+                    if (pbTinkarMsg == null) {
+                        continue;
+                    }
+
+                    // Transform without pre-registered NIDs - may fail on forward references
+                    try {
+                        entityTransformer.transform(pbTinkarMsg, entityConsumer, (stampEntity) -> {});
+                    } catch (Exception e) {
+                        LOG.error("1-pass - Error transforming message: {}", e.getMessage(), e);
+                        throw e; // Re-throw to fail the test
+                    }
+
+                    // Batch progress updates
+                    if (importCount.incrementAndGet() % 1000 == 0) {
+                        updateProgress(importCount.get(), expectedImports);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOG.error("1-pass - Entity loading failed", e);
+            updateTitle("Failed: Import Protobuf data from " + importFile.getName());
+            AlertStreams.dispatchToRoot(e);
+            throw new RuntimeException("1-pass failed", e);
+        } finally {
+            try {
+                EntityService.get().endLoadPhase();
+            } catch (Exception e) {
+                LOG.error("Encountered exception {}", e.getMessage());
+            }
+            updateMessage("In " + durationString());
+            updateProgress(1, 1);
         }
 
         if (importCount.get() != expectedImports) {
@@ -142,6 +325,47 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             throw e;
         }
         return summarize();
+    }
+
+    /**
+     * Generate NID for a protobuf message to register the entity in the datastore.
+     * This allows Pass 2 to resolve references.
+     */
+    private int makeNidForMessage(TinkarMsg pbTinkarMsg) {
+        return switch (pbTinkarMsg.getValueCase()) {
+            case CONCEPT_CHRONOLOGY -> 
+                Entity.nidForConcept(getEntityPublicId(pbTinkarMsg.getConceptChronology().getPublicId()));
+            case SEMANTIC_CHRONOLOGY -> {
+                var semanticChronology = pbTinkarMsg.getSemanticChronology();
+                PublicId patternPublicId = getEntityPublicId(semanticChronology.getPatternForSemanticPublicId());
+                PublicId semanticPublicId = getEntityPublicId(semanticChronology.getPublicId());
+                yield Entity.nidForSemantic(patternPublicId, semanticPublicId);
+            }
+            case PATTERN_CHRONOLOGY ->
+                Entity.nidForPattern(getEntityPublicId(pbTinkarMsg.getPatternChronology().getPublicId()));
+            case STAMP_CHRONOLOGY ->
+                Entity.nidForStamp(getEntityPublicId(pbTinkarMsg.getStampChronology().getPublicId()));
+            case VALUE_NOT_SET ->
+                throw new IllegalStateException("Tinkar message value not set");
+        };
+    }
+
+    /**
+     * Extract PublicId from protobuf PublicId message.
+     */
+    private static PublicId getEntityPublicId(dev.ikm.tinkar.schema.PublicId pbPublicId) {
+        return PublicIds.of(pbPublicId.getUuidsList().stream()
+                .map(UUID::fromString)
+                .toList());
+    }
+
+    protected void initCounts() {
+        identifierCount.set(0);
+        importCount.set(0);
+        importConceptCount.set(0);
+        importSemanticCount.set(0);
+        importPatternCount.set(0);
+        importStampCount.set(0);
     }
 
     private void updateCounts(Entity entity){
@@ -162,14 +386,6 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                 importPatternCount.get(),
                 importStampCount.get()
         );
-    }
-
-    protected void initCounts() {
-        importCount.set(0);
-        importConceptCount.set(0);
-        importSemanticCount.set(0);
-        importPatternCount.set(0);
-        importStampCount.set(0);
     }
 
     private long analyzeManifest() {

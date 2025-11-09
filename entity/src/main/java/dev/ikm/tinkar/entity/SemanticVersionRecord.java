@@ -64,8 +64,8 @@ public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("≤");
-        sb.append(Entity.getStamp(stampNid).describe());
-        Entity pattern = Entity.getFast(this.chronology().patternNid());
+        sb.append(Entity.getStamp(stampNid).describe() + " nid: " + stampNid);
+        PatternEntity<?> pattern = EntityHandle.getPatternOrThrow(this.chronology().patternNid());
         if (pattern instanceof PatternRecord patternEntity) {
             // TODO get proper version after relative position computer available.
             // Maybe put stamp coordinate on thread, or relative position computer on thread

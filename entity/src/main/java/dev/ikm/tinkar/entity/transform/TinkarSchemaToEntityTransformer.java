@@ -160,15 +160,7 @@ public class TinkarSchemaToEntityTransformer {
 
         // Hope that the referenced component was created before the semantic and is already in the database.
         // If not, we'll have to do late binding somehow, or do a two pass...
-        int referencedComponentNid = 0;
-        try {
-            referencedComponentNid = EntityHandle.getEntityOrThrow(referencedComponentPublicId).nid();
-        } catch (Exception e) {
-            // System.out.println("Referenced component not found in database, doing late binding.");
-            // throw e; TODO: Only a problem for the RocksDB.
-        }
-
-        referencedComponentNid = Entity.nid(referencedComponentPublicId);
+        final int referencedComponentNid  = EntityHandle.getEntityOrThrow(referencedComponentPublicId).nid();
 
         if (semanticPublicId.uuidCount() > 0) {
             int semanticNid = nidForSemantic(patternPublicId, semanticPublicId);
