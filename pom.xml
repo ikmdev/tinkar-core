@@ -589,6 +589,15 @@
                     <artifactId>maven-assembly-plugin</artifactId>
                     <version>${maven.assembly.version}</version>
                 </plugin>
+                <!-- This plugin is provided to help with feature development and releasing -->
+                <plugin>
+                    <groupId>dev.ikm</groupId>
+                    <artifactId>gitflow-maven-plugin</artifactId>
+                    <version>${maven.github-flow.version}</version>
+                    <configuration>
+                        <versionsMavenPluginVersion>${maven.versions.plugin}</versionsMavenPluginVersion>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
