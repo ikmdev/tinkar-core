@@ -10,7 +10,7 @@
 
     <groupId>dev.ikm.tinkar</groupId>
     <artifactId>tinkar-core</artifactId>
-    <version>1.126.3-kl-merge-SNAPSHOT</version>
+    <version>1.126.3-gudid-db-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>IKM tinkar core</name>
