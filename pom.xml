@@ -595,6 +595,8 @@
                     <artifactId>gitflow-maven-plugin</artifactId>
                     <version>${maven.github-flow.version}</version>
                     <configuration>
+                        <tychoBuild>true</tychoBuild>
+                        <tychoVersionsPluginVersion>5.0.0</tychoVersionsPluginVersion>
                         <versionsMavenPluginVersion>${maven.versions.plugin}</versionsMavenPluginVersion>
                     </configuration>
                 </plugin>
