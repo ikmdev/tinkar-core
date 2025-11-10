@@ -125,6 +125,7 @@
 		<hybrid-reasoner.version>1.1.7</hybrid-reasoner.version>
 		<ikm-reasoner.version>0.39.6</ikm-reasoner.version>
 		<owlapi.version>4.8.7</owlapi.version>
+        <maven.github-flow.version>1.21.1-r11</maven.github-flow.version>
     </properties>
 
     <!-- All Dependencies and versions used in this project are pre-defined here for use in modules -->
