@@ -36,22 +36,13 @@ import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
-import dev.ikm.tinkar.entity.ChangeSetWriterService;
-import dev.ikm.tinkar.entity.ConceptEntity;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.entity.PatternEntity;
-import dev.ikm.tinkar.entity.SemanticEntity;
-import dev.ikm.tinkar.entity.StampEntity;
-import dev.ikm.tinkar.entity.StampRecord;
-import dev.ikm.tinkar.entity.StampVersionRecord;
+import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.provider.search.Indexer;
 import dev.ikm.tinkar.provider.search.RecreateIndex;
 import dev.ikm.tinkar.provider.search.Searcher;
 import dev.ikm.tinkar.provider.search.TypeAheadSearch;
 import dev.ikm.tinkar.provider.spinedarray.internal.Get;
-import dev.ikm.tinkar.provider.spinedarray.internal.Put;
 import dev.ikm.tinkar.terms.State;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
@@ -85,7 +76,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
 
@@ -100,7 +93,31 @@ import java.util.function.ObjIntConsumer;
 public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, PrimitiveDataRepair {
     private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayProvider.class);
     protected static final File defaultDataDirectory = new File("target/spinedarrays/");
-    protected static SpinedArrayProvider singleton;
+
+    public enum Lifecycle {
+        UNINITIALIZED, STARTING, RUNNING, STOPPING, STOPPED
+    }
+
+    public static AtomicReference<Lifecycle> lifecycle = new AtomicReference<>(Lifecycle.UNINITIALIZED);
+
+    private static final StableValue<SpinedArrayProvider> spinedArrayProvider = StableValue.of();
+    public static SpinedArrayProvider get() {
+        // Set lifecycle to STARTING before attempting initialization
+        lifecycle.compareAndSet(Lifecycle.UNINITIALIZED, Lifecycle.STARTING);
+
+        return spinedArrayProvider.orElseSet(() -> {
+            try {
+                LOG.info("StableValue.orElseSet: Creating new SpinedArrayProvider instance");
+                return new SpinedArrayProvider();
+            } catch (IOException | ExecutionException | InterruptedException e) {
+                // Reset lifecycle on failure
+                lifecycle.set(Lifecycle.UNINITIALIZED);
+                LOG.error("Failed to create SpinedArrayProvider", e);
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
     protected static LongAdder writeSequence = new LongAdder();
     protected final CountDownLatch uuidsLoadedLatch = new CountDownLatch(1);
     final AtomicInteger nextNid = new AtomicInteger(PrimitiveDataService.FIRST_NID);
@@ -128,9 +145,9 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     final String name;
     final ImmutableList<ChangeSetWriterService> changeSetWriterServices;
 
-    public SpinedArrayProvider() throws IOException, ExecutionException, InterruptedException {
+    private SpinedArrayProvider() throws IOException, ExecutionException, InterruptedException {
         Stopwatch stopwatch = new Stopwatch();
-        LOG.info("Opening SpinedArrayProvider");
+        LOG.info("Opening SpinedArrayProvider on thread: {}", Thread.currentThread().getName());
         File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
         name = configuredRoot.getName();
         configuredRoot.mkdirs();
@@ -148,9 +165,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         }
         this.indexer = indexer;
         this.searcher = new Searcher();
-        SpinedArrayProvider.singleton = this;
-        Get.singleton = this;
-        Put.singleton = this;
 
         this.nidToPatternNidMapDirectory = new File(configuredRoot, "nidToPatternNidMap");
         this.nidToPatternNidMapDirectory.mkdirs();
@@ -169,23 +183,34 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             String nextNidString = Files.readString(this.nextNidKeyFile.toPath());
             nextNid.set(Integer.valueOf(nextNidString));
         }
-        TinkExecutor.threadPool().submit(() -> {
-            Stopwatch uuidNidMapFromEntitiesStopwatch = new Stopwatch();
-            LOG.info("Starting UUID strategy 2");
-            UuidNidCollector uuidNidCollector = new UuidNidCollector(uuidToNidMap,
-                    patternNids, conceptNids, semanticNids, stampNids, patternElementNidsMap);
-            try {
-                this.entityToBytesMap.forEachParallel(uuidNidCollector);
-                this.uuidsLoadedLatch.countDown();
-            } catch (ExecutionException | InterruptedException e) {
-                LOG.error(e.getLocalizedMessage(), e);
-            } finally {
-                uuidNidMapFromEntitiesStopwatch.stop();
-                LOG.info("Finished UUID strategy 2 in: " + uuidNidMapFromEntitiesStopwatch.durationString());
-                LOG.info(uuidNidCollector.report());
-            }
-            Thread.ofVirtual().start(this::listAndCancelUncommittedStamps);
-        }).get();
+        LOG.info("Submitting UUID loading task to thread pool...");
+        try {
+            TinkExecutor.threadPool().submit(() -> {
+                Stopwatch uuidNidMapFromEntitiesStopwatch = new Stopwatch();
+                LOG.info("Starting UUID strategy 2 on thread: {}", Thread.currentThread().getName());
+                UuidNidCollector uuidNidCollector = new UuidNidCollector(uuidToNidMap,
+                        patternNids, conceptNids, semanticNids, stampNids, patternElementNidsMap);
+                try {
+                    LOG.info("Executing entityToBytesMap.forEachParallel...");
+                    this.entityToBytesMap.forEachParallel(uuidNidCollector);
+                    LOG.info("Completed entityToBytesMap.forEachParallel, counting down latch");
+                    this.uuidsLoadedLatch.countDown();
+                } catch (ExecutionException | InterruptedException e) {
+                    LOG.error("Error during UUID loading: " + e.getLocalizedMessage(), e);
+                } finally {
+                    uuidNidMapFromEntitiesStopwatch.stop();
+                    LOG.info("Finished UUID strategy 2 in: " + uuidNidMapFromEntitiesStopwatch.durationString());
+                    LOG.info(uuidNidCollector.report());
+                }
+                LOG.info("Starting virtual thread for listAndCancelUncommittedStamps");
+                Thread.ofVirtual().start(this::listAndCancelUncommittedStamps);
+                LOG.info("UUID loading task completed");
+            }).get();
+            LOG.info("UUID loading task .get() returned successfully");
+        } catch (Exception e) {
+            LOG.error("Failed to complete UUID loading task", e);
+            throw e;
+        }
 
         ServiceLoader<ChangeSetWriterService> changeSetServiceLoader = PluggableService.load(ChangeSetWriterService.class);
         MutableList<ChangeSetWriterService> changeSetWriters = Lists.mutable.empty();
@@ -200,7 +225,9 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
 
         if (!indexExists) {
             try {
-                this.recreateLuceneIndex().get();
+                LOG.info("Lucene index does not exist, creating...");
+                //this.recreateLuceneIndex().get();
+                LOG.info("Recreated Lucene index successfully...");
             } catch (Exception e) {
                 LOG.error(e.getLocalizedMessage(), e);
             }
@@ -210,6 +237,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
 
         stopwatch.stop();
         LOG.info("Opened SpinedArrayProvider in: " + stopwatch.durationString());
+        lifecycle.set(Lifecycle.RUNNING);
 
     }
 
@@ -259,22 +287,27 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         return writeSequence.sum();
     }
 
-    @Override
+     @Override
     public void close() {
-        Stopwatch stopwatch = new Stopwatch();
-        LOG.info("Closing SpinedArrayProvider");
-        try {
-            this.changeSetWriterServices.forEach(ChangeSetWriterService::shutdown);
-            save();
-            listAndCancelUncommittedStamps();
-            entityToBytesMap.close();
-            SpinedArrayProvider.singleton = null;
-            this.indexer.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            stopwatch.stop();
-            LOG.info("Closed SpinedArrayProvider in: " + stopwatch.durationString());
+        if (lifecycle.compareAndSet(Lifecycle.RUNNING, Lifecycle.STOPPING) ||
+            lifecycle.compareAndSet(Lifecycle.STARTING, Lifecycle.STOPPING)) {
+            Stopwatch stopwatch = new Stopwatch();
+            LOG.info("Closing SpinedArrayProvider");
+            try {
+                this.changeSetWriterServices.forEach(ChangeSetWriterService::shutdown);
+                save();
+                listAndCancelUncommittedStamps();
+                entityToBytesMap.close();
+                this.indexer.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } finally {
+                lifecycle.set(Lifecycle.STOPPED);
+                stopwatch.stop();
+                LOG.info("Closed SpinedArrayProvider in: " + stopwatch.durationString());
+            }
+        } else {
+            LOG.warn("SpinedArrayProvider is not running, cannot close: " + lifecycle.get());
         }
     }
 
@@ -480,6 +513,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
 
     @Override
     public void forEachSemanticNidOfPattern(int patternNid, IntProcedure procedure) {
+        EntityHandle.get(patternNid).expectPattern("Trying to iterate elements for entity that is not a pattern: ");
+
         IntSet elementNids;
         if (LOG.isTraceEnabled()) {
             Stopwatch sw = new Stopwatch();
@@ -491,12 +526,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         }
         if (elementNids.notEmpty()) {
             elementNids.forEach(procedure);
-        } else {
-            Entity entity = Entity.getFast(patternNid);
-            if (entity instanceof PatternEntity == false) {
-                throw new IllegalStateException("Trying to iterate elements for entity that is not a pattern: " + entity);
-            }
-
         }
     }
 

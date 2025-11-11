@@ -20,9 +20,6 @@ import java.util.function.Function;
 
 public class TestConstants {
 
-    public static final String LOAD_EPHEMERAL_STORE = "Load Ephemeral Store";
-    public static final String OPEN_SPINED_ARRAY_STORE = "Open SpinedArrayStore";
-
     public static final Function<String, File> createFilePathInTarget = (pathName) -> new File("%s/target/%s".formatted(System.getProperty("user.dir"), pathName));
 
     public static final Function<Class,File>

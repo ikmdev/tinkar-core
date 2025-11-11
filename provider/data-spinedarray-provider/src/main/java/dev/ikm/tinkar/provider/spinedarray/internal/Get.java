@@ -15,8 +15,10 @@
  */
 package dev.ikm.tinkar.provider.spinedarray.internal;
 
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.component.Stamp;
 import dev.ikm.tinkar.entity.ConceptEntity;
+import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityRecordFactory;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.provider.spinedarray.SpinedArrayProvider;
@@ -25,21 +27,24 @@ import org.eclipse.collections.api.list.ImmutableList;
 import java.util.UUID;
 
 public class Get {
-    public static SpinedArrayProvider singleton;
 
     public static ConceptEntity concept(int nid) {
-        return EntityRecordFactory.make(singleton.getBytes(nid));
+        return EntityRecordFactory.make(SpinedArrayProvider.get().getBytes(nid));
     }
 
     public static StampEntity stamp(int nid) {
-        return EntityRecordFactory.make(singleton.getBytes(nid));
+        return EntityRecordFactory.make(SpinedArrayProvider.get().getBytes(nid));
     }
 
     public static int nidForUuids(ImmutableList<UUID> uuidList) {
-        return singleton.nidForUuids(uuidList);
+        return SpinedArrayProvider.get().nidForUuids(uuidList);
     }
 
     public static int stampNid(Stamp stamp) {
-        throw new UnsupportedOperationException();
+        return switch (stamp) {
+            case StampEntity stampEntity -> stampEntity.nid();
+            case Stamp stampComponent -> Entity.getFast(PrimitiveData.nid(stampComponent.publicId())).nid();
+            case null -> throw new IllegalArgumentException("Stamp cannot be null");
+        };
     }
 }

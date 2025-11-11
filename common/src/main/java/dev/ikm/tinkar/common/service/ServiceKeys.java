@@ -17,7 +17,7 @@ package dev.ikm.tinkar.common.service;
 
 public enum ServiceKeys {
     /**
-     * Folder containing data store files & folders
+     * Folder containing data store files &amp; folders
      */
     DATA_STORE_ROOT,
     /**

@@ -43,12 +43,7 @@ import dev.ikm.tinkar.component.location.PlanarPoint;
 import dev.ikm.tinkar.component.location.SpatialPoint;
 import dev.ikm.tinkar.entity.graph.DiGraphEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
-import dev.ikm.tinkar.terms.ComponentWithNid;
-import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.EntityFacade;
-import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.SemanticFacade;
+import dev.ikm.tinkar.terms.*;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.factory.Lists;
@@ -66,6 +61,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 import static dev.ikm.tinkar.component.FieldDataType.COMPONENT_ID_LIST;
 import static dev.ikm.tinkar.component.FieldDataType.SEMANTIC_CHRONOLOGY;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -75,8 +71,8 @@ public class EntityRecordFactory {
     public static final byte ENTITY_FORMAT_VERSION = 1;
     public static final int DEFAULT_ENTITY_SIZE = 32767;
     public static final int DEFAULT_VERSION_SIZE = 16384;
-    public static int MAX_ENTITY_SIZE = DEFAULT_ENTITY_SIZE;
-    public static int MAX_VERSION_SIZE = DEFAULT_VERSION_SIZE;
+    public static volatile int MAX_ENTITY_SIZE = DEFAULT_ENTITY_SIZE;
+    public static volatile int MAX_VERSION_SIZE = DEFAULT_VERSION_SIZE;
 
     public static byte[] getBytes(Entity<? extends EntityVersion> entity) {
         // TODO: write directly to a single ByteBuf, rather that the approach below.
@@ -214,6 +210,9 @@ public class EntityRecordFactory {
      * @param field
      */
     public static void writeField(ByteBuf writeBuf, Object field) {
+        if (field == null) {
+            throw new IllegalArgumentException("Field value cannot be null. Semantic field values must be initialized before serialization.");
+        }
         switch (field) {
             case Boolean booleanField ->
                     writeTokenAndField(writeBuf, FieldDataType.BOOLEAN, () -> writeBuf.writeBoolean(booleanField));
@@ -344,40 +343,6 @@ public class EntityRecordFactory {
         }
     }
 
-    public static <T extends Entity<V>, V extends EntityVersion> T make(Chronology<Version> chronology) {
-        int nid = Entity.nid(chronology.publicId());
-        ImmutableList<UUID> componentUuids = chronology.publicId().asUuidList();
-        UUID firstUuid = componentUuids.get(0);
-
-        long mostSignificantBits = firstUuid.getMostSignificantBits();
-        long leastSignificantBits = firstUuid.getLeastSignificantBits();
-        long[] additionalUuidLongs = processAdditionalUuids(componentUuids);
-        RecordListBuilder<? extends EntityVersion> versions = RecordListBuilder.make();
-        Entity<? extends EntityVersion> entity = switch (chronology) {
-            case ConceptChronology conceptChronology -> new ConceptRecord(mostSignificantBits, leastSignificantBits,
-                    additionalUuidLongs, nid, (ImmutableList<ConceptVersionRecord>) versions);
-
-            case PatternChronology patternChronology -> new PatternRecord(mostSignificantBits, leastSignificantBits,
-                    additionalUuidLongs, nid, (ImmutableList<PatternVersionRecord>) versions);
-
-            case SemanticChronology semanticChronology -> new SemanticRecord(mostSignificantBits, leastSignificantBits,
-                    additionalUuidLongs, nid,
-                    PrimitiveData.nid(semanticChronology.pattern().publicId()),
-                    PrimitiveData.nid(semanticChronology.referencedComponent().publicId()),
-                    (ImmutableList<SemanticVersionRecord>) versions);
-
-            case Stamp stamp -> new StampRecord(mostSignificantBits, leastSignificantBits,
-                    additionalUuidLongs, nid, (ImmutableList<StampVersionRecord>) versions);
-
-            default -> throw new IllegalStateException("Unexpected value: " + chronology);
-        };
-        for (Version version : chronology.versions()) {
-            versions.add(makeVersion(version, entity));
-        }
-        versions.build();
-        return (T) entity;
-    }
-
     private static long[] processAdditionalUuids(ImmutableList<UUID> componentUuids) {
         if (componentUuids.size() > 1) {
             long[] additionalUuidLongs = new long[(componentUuids.size() - 1) * 2];
@@ -389,22 +354,6 @@ public class EntityRecordFactory {
             return additionalUuidLongs;
         }
         return null;
-    }
-
-    private static <V extends EntityVersion> V makeVersion(Version version, Entity<? extends EntityVersion> entity) {
-        return (V) switch (version) {
-            case ConceptVersion conceptVersion -> new ConceptVersionRecord((ConceptRecord) entity, conceptVersion);
-            case PatternVersion patternVersion -> PatternVersionRecord.make((PatternRecord) entity, patternVersion);
-            case SemanticVersion semanticVersion -> new SemanticVersionRecord((SemanticRecord) entity, semanticVersion);
-            case Stamp stamp -> {
-                if (entity instanceof StampRecord stampRecord) {
-                    yield new StampVersionRecord(stampRecord, stamp);
-                }
-                throw new IllegalStateException("Stamp version for an entity of type: " + entity.getClass().getName());
-            }
-
-            default -> throw new IllegalStateException("Unexpected value: " + version);
-        };
     }
 
     public static void collectUuids(byte[] data, ConcurrentHashMap<Integer, ConcurrentHashSet<Integer>> patternElementNidsMap,
@@ -444,6 +393,15 @@ public class EntityRecordFactory {
         }
     }
 
+    /**
+     *
+     * @param data
+     * @return
+     * @param <T>
+     * @param <V>
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
+     */
     public static <T extends Entity<V>, V extends EntityVersion> T make(byte[] data) {
         // TODO change to use DecoderInput instead of ByteBuf directly.
         // TODO remove the parts where it computes size.
@@ -455,11 +413,32 @@ public class EntityRecordFactory {
         return make(buf, formatVersion);
     }
 
+    /**
+     *
+     * @param readBuf
+     * @param entityFormatVersion
+     * @return
+     * @param <T>
+     * @param <V>
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
+     */
     public static <T extends Entity<V>, V extends EntityVersion> T make(ByteBuf readBuf, byte entityFormatVersion) {
         FieldDataType fieldDataType = FieldDataType.fromToken(readBuf.readByte());
         return make(readBuf, entityFormatVersion, fieldDataType);
     }
 
+    /**
+     *
+     * @param readBuf
+     * @param entityFormatVersion
+     * @param fieldDataType
+     * @return
+     * @param <T>
+     * @param <V>
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
+     */
     public static <T extends Entity<V>, V extends EntityVersion> T make(ByteBuf readBuf, byte entityFormatVersion, FieldDataType fieldDataType) {
 
         if (entityFormatVersion != ENTITY_FORMAT_VERSION) {

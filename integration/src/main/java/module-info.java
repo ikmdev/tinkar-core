@@ -30,6 +30,10 @@ open module dev.ikm.tinkar.integration {
     requires org.eclipse.collections.api;
     requires org.eclipse.collections.impl;
     requires dev.ikm.tinkar.provider.search;
+    requires org.junit.jupiter.api;
+    requires dev.ikm.tinkar.provider.ephemeral;
+    requires dev.ikm.tinkar.provider.spinedarray;
+    requires com.github.benmanes.caffeine;
 
     uses DataServiceController;
     uses DefaultDescriptionForNidService;

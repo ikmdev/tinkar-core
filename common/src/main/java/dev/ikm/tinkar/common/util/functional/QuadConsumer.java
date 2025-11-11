@@ -25,7 +25,7 @@ public interface QuadConsumer<A, B, C, D> {
      * @param a the first input argument
      * @param b the second input argument
      * @param c the third input argument
-     * @param c the fourth input argument
+     * @param d the fourth input argument
      */
     void accept(A a, B b, C c, D d);
 

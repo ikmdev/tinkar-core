@@ -35,16 +35,16 @@ import java.util.Set;
  * A filter that operates in coordinate with path coordinate and the version computer. After the version computer computes the
  * latest versions at a point on a path, the filter provides a non-interfering, stateless predicate to apply to each element
  * to determine if it should be included in the results set.
- * <p\>
+ * <p>
  * Filters must be immutable.
- * <p\>
+ * <p>
  * q: How does the stamp coordinate relate to a Stamp?
- * <p\>
+ * <p>
  * a: A Stamp is a unique combination of Status, Time, Author, Module, and Path...
  * A stamp coordinate specifies a position on a  path, with a particular set of modules, and allowed state values.
  * Author constraints are not handled by the stamp filter. If necessary, results can be post-processed.
  * <p>
- * <p\>
+ * <p>
  * Created by kec on 2/16/15.
  */
 

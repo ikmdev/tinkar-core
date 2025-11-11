@@ -17,11 +17,16 @@ package dev.ikm.tinkar.provider.spinedarray;
 
 import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.common.service.PrimitiveDataService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 public abstract class SpinedArrayController implements DataServiceController<PrimitiveDataService> {
+    private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayController.class);
+    private static final long STARTUP_TIMEOUT_SECONDS = 30;
 
     @Override
     public Class<? extends PrimitiveDataService> serviceClass() {
@@ -30,31 +35,42 @@ public abstract class SpinedArrayController implements DataServiceController<Pri
 
     @Override
     public boolean running() {
-        return SpinedArrayProvider.singleton != null;
+        return SpinedArrayProvider.lifecycle.get() == SpinedArrayProvider.Lifecycle.RUNNING;
     }
+
 
     @Override
     public void start() {
+        LOG.info("SpinedArrayController.start() called on thread: {}", Thread.currentThread().getName());
+
+        // Simply call get() - it handles all synchronization via StableValue.orElseSet()
+        // Multiple threads can safely call this; orElseSet() ensures only one initialization
         try {
-            new SpinedArrayProvider();
-        } catch (IOException | ExecutionException | InterruptedException e) {
-            throw new RuntimeException(e);
+            SpinedArrayProvider provider = SpinedArrayProvider.get();
+            LOG.info("SpinedArrayProvider.get() returned successfully, lifecycle: {}",
+                    SpinedArrayProvider.lifecycle.get());
+
+            // Double-check that initialization completed properly
+            if (SpinedArrayProvider.lifecycle.get() != SpinedArrayProvider.Lifecycle.RUNNING) {
+                throw new IllegalStateException(
+                    "SpinedArrayProvider initialized but not in RUNNING state: " +
+                    SpinedArrayProvider.lifecycle.get()
+                );
+            }
+        } catch (Exception e) {
+            LOG.error("Failed to start SpinedArrayProvider", e);
+            throw new RuntimeException("Failed to start SpinedArrayProvider", e);
         }
     }
 
     @Override
     public void stop() {
-        if (SpinedArrayProvider.singleton != null) {
-            SpinedArrayProvider.singleton.close();
-            SpinedArrayProvider.singleton = null;
-        }
+        SpinedArrayProvider.get().close();
     }
 
     @Override
     public void save() {
-        if (SpinedArrayProvider.singleton != null) {
-            SpinedArrayProvider.singleton.save();
-        }
+        SpinedArrayProvider.get().save();
     }
 
     @Override
@@ -64,10 +80,10 @@ public abstract class SpinedArrayController implements DataServiceController<Pri
 
     @Override
     public PrimitiveDataService provider() {
-        if (SpinedArrayProvider.singleton == null) {
+        if (SpinedArrayProvider.lifecycle.get() == SpinedArrayProvider.Lifecycle.UNINITIALIZED) {
             start();
         }
-        return SpinedArrayProvider.singleton;
+        return SpinedArrayProvider.get();
     }
 
     @Override

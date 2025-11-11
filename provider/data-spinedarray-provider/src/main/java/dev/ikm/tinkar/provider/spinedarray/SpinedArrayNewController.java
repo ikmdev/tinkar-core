@@ -24,10 +24,12 @@ import dev.ikm.tinkar.common.service.ServiceProperties;
 import dev.ikm.tinkar.common.validation.ValidationRecord;
 import dev.ikm.tinkar.common.validation.ValidationSeverity;
 import dev.ikm.tinkar.entity.EntityCountSummary;
-import dev.ikm.tinkar.provider.spinedarray.internal.Get;
+import dev.ikm.tinkar.provider.spinedarray.SpinedArrayProvider.Lifecycle;
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.api.map.MutableMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,10 +41,10 @@ import java.util.ServiceLoader;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-public class SpinedArrayNewController extends SpinedArrayController {
+import static dev.ikm.tinkar.provider.spinedarray.constants.SpinedArrayControllerNames.NEW_CONTROLLER_NAME;
 
-    public static boolean loading = false;
-    public static String CONTROLLER_NAME = "New Spined Array Store";
+public class SpinedArrayNewController extends SpinedArrayController {
+    private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayNewController.class);
     String importDataFileString;
     DataServiceProperty newFolderProperty = new DataServiceProperty("New folder name", false, true);
     MutableMap<DataServiceProperty, String> providerProperties = Maps.mutable.empty();
@@ -97,7 +99,8 @@ public class SpinedArrayNewController extends SpinedArrayController {
 
     @Override
     public boolean isValidDataLocation(String name) {
-        return name.toLowerCase().endsWith(".zip") && name.toLowerCase().contains("tink");
+        return name.toLowerCase().endsWith("pb.zip") ||
+                (name.toLowerCase().endsWith(".zip") && name.toLowerCase().contains("tink"));
     }
 
     @Override
@@ -111,33 +114,33 @@ public class SpinedArrayNewController extends SpinedArrayController {
 
     @Override
     public String controllerName() {
-        return CONTROLLER_NAME;
+        return NEW_CONTROLLER_NAME;
     }
 
     @Override
     public void start() {
-        if (SpinedArrayProvider.singleton == null) {
-            SpinedArrayNewController.loading = true;
-            try {
+        if (SpinedArrayProvider.lifecycle.compareAndSet(Lifecycle.UNINITIALIZED, Lifecycle.STARTING)) {
+         try {
                 File rootFolder = new File(System.getProperty("user.home"), "Solor");
                 File dataDirectory = new File(rootFolder, providerProperties.get(newFolderProperty));
                 ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, dataDirectory);
-                new SpinedArrayProvider();
+                SpinedArrayProvider.get();
 
                 ServiceLoader<LoadDataFromFileController> controllerFinder = PluggableService.load(LoadDataFromFileController.class);
                 LoadDataFromFileController loader = controllerFinder.findFirst().get();
                 Future<EntityCountSummary> loadFuture = (Future<EntityCountSummary>) loader.load(new File(importDataFileString));
                 EntityCountSummary count = loadFuture.get();
-                Get.singleton.save();
-            } catch (InterruptedException | IOException | ExecutionException e) {
+                LOG.info("Spined array loaded: " + count.toString() + "");
+                SpinedArrayProvider.get().save();
+                SpinedArrayProvider.lifecycle.set(Lifecycle.RUNNING);
+            } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }
-            SpinedArrayNewController.loading = false;
         }
     }
 
     @Override
     public boolean loading() {
-        return SpinedArrayNewController.loading;
+        return SpinedArrayProvider.lifecycle.get() == Lifecycle.STARTING;
     }
 }

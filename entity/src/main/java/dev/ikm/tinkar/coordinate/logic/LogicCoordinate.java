@@ -90,7 +90,7 @@ public interface LogicCoordinate {
     int inferredAxiomsPatternNid();
 
     /**
-     * @return the nid for the assemblage within which the concepts to be classified are defined within.
+     * @return the nid for the pattern within which the concepts to be classified are defined through semantic entities.
      */
     int conceptMemberPatternNid();
 

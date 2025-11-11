@@ -79,7 +79,7 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
      * @return the referenced component as an {@link EntityFacade}
      */
     default EntityFacade referencedComponent() {
-        return Entity.provider().getEntityFast(referencedComponentNid());
+        return EntityFacade.make(referencedComponentNid());
     }
 
     /**
@@ -136,10 +136,9 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
      * Returns the field objects for this version, aligned with the supplied pattern version.
      * The supplied {@code patternVersion} is used to interpret and label the values from {@link #fieldValues()}.
      *
-     * @param patternVersion the pattern version that defines and orders the fields
      * @return an immutable list of fields corresponding to this semantic version
      */
-    ImmutableList<? extends Field> fields(PatternEntityVersion patternVersion);
+    ImmutableList<? extends Field> fields();
 
 
 /**

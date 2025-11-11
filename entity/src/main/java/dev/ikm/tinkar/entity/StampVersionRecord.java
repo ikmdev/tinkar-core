@@ -46,17 +46,7 @@ public record StampVersionRecord(StampRecord chronology,
                 Entity.nid(version.module()),
                 Entity.nid(version.path()));
     }
-
-    public StampVersionRecord(StampRecord chronology,
-                              Stamp version) {
-        this(chronology,
-                Entity.nid(version.state()),
-                version.time(),
-                Entity.nid(version.author()),
-                Entity.nid(version.module()),
-                Entity.nid(version.path()));
-    }
-
+    
     @Override
     public StampRecord entity() {
         return chronology;
@@ -82,7 +72,7 @@ public record StampVersionRecord(StampRecord chronology,
 
     @Override
     public String toString() {
-        return "sv: ≤" + describe() + "≥";
+        return "sv: ≤" + describe() + " nid: " + nid() + "≥";
     }
 
     @Override

@@ -36,10 +36,7 @@ import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.entity.StampRecordBuilder;
 import dev.ikm.tinkar.entity.StampVersionRecord;
 import dev.ikm.tinkar.entity.StampVersionRecordBuilder;
-import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.EntityFacade;
-import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.PatternFacade;
+import dev.ikm.tinkar.terms.*;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.RichIterable;
@@ -87,7 +84,6 @@ public class EntityVertex implements Vertex, VertexId {
 	/**
 	 * A copy constructor
 	 * @param another the vertex to copy
-	 * @return a copy of this vertex .
 	 */
 	public EntityVertex(EntityVertex another) {
 		fill(another);
@@ -147,7 +143,7 @@ public class EntityVertex implements Vertex, VertexId {
 		case Semantic semantic -> EntityProxy.Semantic.make(semantic.publicId());
 		case EntityProxy.Pattern pattern -> pattern;
 		case Pattern pattern -> EntityProxy.Pattern.make(pattern.publicId());
-		case Stamp<?> stamp -> createStampRecord(stamp);
+		case StampEntity stamp -> createStampRecord(stamp);
 		case Double double_ -> double_.floatValue();
 		case Integer integer -> integer;
 		case byte[] byteArray -> new ByteArrayList(byteArray);
@@ -155,7 +151,7 @@ public class EntityVertex implements Vertex, VertexId {
 		};
 	}
 
-	private static StampEntity<? extends StampEntityVersion> createStampRecord(Stamp stamp) {
+	private static StampEntity<? extends StampEntityVersion> createStampRecord(StampEntity stamp) {
 		if (stamp.publicId() == null) {
 			throw new RuntimeException("Exception thrown, STAMP Public id is null.");
 		}

@@ -19,6 +19,8 @@ import dev.ikm.tinkar.common.service.DataUriOption;
 import dev.ikm.tinkar.common.service.ServiceKeys;
 import dev.ikm.tinkar.common.service.ServiceProperties;
 
+import static dev.ikm.tinkar.provider.spinedarray.constants.SpinedArrayControllerNames.OPEN_CONTROLLER_NAME;
+
 public class SpinedArrayOpenController extends SpinedArrayController {
     public static String CONTROLLER_NAME = "Open SpinedArrayStore";
 
@@ -34,7 +36,7 @@ public class SpinedArrayOpenController extends SpinedArrayController {
 
     @Override
     public String controllerName() {
-        return CONTROLLER_NAME;
+        return OPEN_CONTROLLER_NAME;
     }
 
 

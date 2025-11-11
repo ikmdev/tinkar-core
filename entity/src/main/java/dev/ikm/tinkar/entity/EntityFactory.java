@@ -15,29 +15,21 @@
  */
 package dev.ikm.tinkar.entity;
 
-import dev.ikm.tinkar.component.Chronology;
-import dev.ikm.tinkar.component.ConceptChronology;
-import dev.ikm.tinkar.component.FieldDataType;
-import dev.ikm.tinkar.component.PatternChronology;
-import dev.ikm.tinkar.component.SemanticChronology;
-import dev.ikm.tinkar.component.Stamp;
+import dev.ikm.tinkar.component.*;
+import dev.ikm.tinkar.schema.StampChronology;
 import io.activej.bytebuf.ByteBuf;
 
 public class EntityFactory {
 
-    public static Entity make(Chronology chronology) {
-        if (chronology instanceof ConceptChronology conceptChronology) {
-            return EntityRecordFactory.make(conceptChronology);
-        } else if (chronology instanceof SemanticChronology semanticChronology) {
-            return EntityRecordFactory.make(semanticChronology);
-        } else if (chronology instanceof PatternChronology patternChronology) {
-            return EntityRecordFactory.make(patternChronology);
-        } else if (chronology instanceof Stamp stamp) {
-            return EntityRecordFactory.make(stamp);
-        }
-        throw new UnsupportedOperationException("Can't convert: " + chronology);
-    }
-
+    /**
+     *
+     * @param data
+     * @return
+     * @param <T>
+     * @param <V>
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
+     */
     public static <T extends Entity<V>, V extends EntityVersion> T make(byte[] data) {
         // TODO change to use DecoderInput instead of ByteBuf directly.
         // TODO remove the parts where it computes size.
@@ -49,6 +41,16 @@ public class EntityFactory {
         return make(buf, formatVersion);
     }
 
+    /**
+     *
+     * @param readBuf
+     * @param entityFormatVersion
+     * @return
+     * @param <T>
+     * @param <V>
+     * TODO: We should search for all methods that do this silent type casting, and replace them with
+     * a fluent API that better manages type determination.
+     */
     public static <T extends Entity<V>, V extends EntityVersion> T make(ByteBuf readBuf, byte entityFormatVersion) {
 
         FieldDataType fieldDataType = FieldDataType.fromToken(readBuf.readByte());

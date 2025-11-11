@@ -38,6 +38,7 @@ public class ProxyFactory {
     public static final String CONCEPT_ELEMENT = "concept";
     public static final String SEMANTIC_ELEMENT = "semantic";
     public static final String PATTERN_ELEMENT = "pattern";
+    public static final String STAMP_ELEMENT = "stamp";
     public static final String ENTITY_ELEMENT = "entity";
     public static final String UUIDS_ATTRIBUTE = "uuids";
     public static final String DESCRIPTION_ATTRIBUTE = "desc";
@@ -76,19 +77,18 @@ public class ProxyFactory {
     }
 
     public static <T extends EntityProxy> T fromFacade(EntityFacade facade) {
-        if (facade instanceof EntityProxy proxy) {
-            return (T) proxy;
-        }
-        if (facade instanceof dev.ikm.tinkar.component.Concept) {
-            return (T) EntityProxy.Concept.make(facade.nid());
-        }
-        if (facade instanceof dev.ikm.tinkar.component.Pattern) {
-            return (T) EntityProxy.Pattern.make(facade.nid());
-        }
-        if (facade instanceof dev.ikm.tinkar.component.Semantic) {
-            return (T) EntityProxy.Semantic.make(facade.nid());
-        }
-        throw new UnsupportedOperationException("Can't handle: " + facade);
+        return switch (facade) {
+            case EntityProxy proxy -> (T) proxy;
+            case ConceptFacade concept -> (T) EntityProxy.Concept.make(concept);
+            case PatternFacade pattern -> (T) EntityProxy.Pattern.make(pattern.nid());
+            case SemanticFacade semantic -> (T) EntityProxy.Semantic.make(semantic.nid());
+            case StampFacade stamp -> (T) EntityProxy.Stamp.make(stamp.nid());
+            default -> {
+                IllegalStateException ex = new IllegalStateException("Unexpected value: " + facade);
+                AlertStreams.dispatchToRoot(ex);
+                throw new UnsupportedOperationException("Can't handle: " + facade);
+            }
+        };
     }
 
     public static <T extends EntityProxy> T fromXmlFragment(String xmlString) {
@@ -102,6 +102,7 @@ public class ProxyFactory {
                 case PATTERN_ELEMENT -> EntityProxy.Pattern.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
                 case SEMANTIC_ELEMENT -> EntityProxy.Semantic.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
                 case CONCEPT_ELEMENT -> EntityProxy.Concept.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
+                case STAMP_ELEMENT -> EntityProxy.Stamp.make(desc.getValue(), UuidUtil.fromString(uuids.getValue()));
                 default -> throw new IllegalStateException("Unexpected value: " + element.getTagName());
             };
         } catch (SAXException | IOException e) {
@@ -111,18 +112,21 @@ public class ProxyFactory {
 
     public static String toXmlFragment(EntityFacade facade) {
         StringBuilder sb = new StringBuilder("<");
-        if (facade instanceof dev.ikm.tinkar.component.Concept) {
-            sb.append(CONCEPT_ELEMENT).append(" " +
+        switch (facade) {
+            case ConceptFacade concept -> sb.append(CONCEPT_ELEMENT).append(" " +
                     DESCRIPTION_ATTRIBUTE + "=\"");
-        } else if (facade instanceof dev.ikm.tinkar.component.Semantic) {
-            sb.append(SEMANTIC_ELEMENT).append(" " +
+            case PatternFacade pattern -> sb.append(PATTERN_ELEMENT).append(" " +
                     DESCRIPTION_ATTRIBUTE + "=\"");
-        } else if (facade instanceof dev.ikm.tinkar.component.Pattern) {
-            sb.append(PATTERN_ELEMENT).append(" " +
+            case SemanticFacade semantic -> sb.append(SEMANTIC_ELEMENT).append(" " +
                     DESCRIPTION_ATTRIBUTE + "=\"");
-        } else {
-            sb.append(ENTITY_ELEMENT).append(" " +
+            case StampFacade stamp -> sb.append(STAMP_ELEMENT).append(" " +
                     DESCRIPTION_ATTRIBUTE + "=\"");
+            case EntityProxy proxy -> sb.append(ENTITY_ELEMENT).append(" " +
+                    DESCRIPTION_ATTRIBUTE + "=\"");
+            default -> {
+                sb.append(ENTITY_ELEMENT).append(" " +
+                        DESCRIPTION_ATTRIBUTE + "=\"");
+            }
         }
         sb.append(EscapeUtil.forXML(facade.description())).append("\" " +
                 UUIDS_ATTRIBUTE + "=\"");

@@ -15,16 +15,24 @@
  */
 package dev.ikm.tinkar.common.binary;
 
+import dev.ikm.tinkar.common.id.*;
+import dev.ikm.tinkar.common.service.PluggableService;
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import io.activej.bytebuf.ByteBuf;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.factory.primitive.IntLists;
+import org.eclipse.collections.api.list.MutableList;
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.UUID;
 
 public class DecoderInput {
-    int encodingFormatVersion;
-    ByteBuf buf;
+    final int encodingFormatVersion;
+    final ByteBuf buf;
 
     public DecoderInput(ByteBuf buf) {
         this.buf = buf;
@@ -104,15 +112,42 @@ public class DecoderInput {
         return buf.readVarLong();
     }
 
-    public int readNid() {return buf.readInt();};
+
+    public int readNid() {return PrimitiveData.nid(readPublicId());}
+
+    public PublicId readPublicId() {
+        int uuidListSize = readVarInt();
+        UUID[] uuidList = new UUID[uuidListSize];
+        for (int i = 0; i < uuidListSize; i++) {
+            uuidList[i] = readUuid();
+        }
+        return PublicIds.of(uuidList);
+    }
 
     public int[] readNidArray() {
-        int arraySize = buf.readVarInt();
-        int[] nidArray = new int[arraySize];
-        for (int i = 0; i < nidArray.length; i++) {
-            nidArray[i] = readInt();
+        return readNidList().toArray();
+    }
+
+    public IntIdList readIntIdList() {
+        return IntIds.list.of(readNidArray());
+    }
+
+    public ImmutableIntList readNidList() {
+        int listSize = readVarInt();
+        MutableList<PublicId> publidIdList = Lists.mutable.ofInitialCapacity(listSize);
+        for (int i = 0; i < listSize; i++) {
+            publidIdList.add(readPublicId());
         }
-        return nidArray;
+        return publidIdList.collectInt(publicId -> PrimitiveData.nid(publicId)).toImmutable();
+    }
+
+    public <T extends Encodable> T decode() {
+        try {
+            String objectClassString = readString();
+            return (T) Encodable.decode(PluggableService.forName(objectClassString), this);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Instant readInstant() {

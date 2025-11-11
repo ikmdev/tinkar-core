@@ -70,6 +70,8 @@ import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
 
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
+
 public class ProcessReasonerResults {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ProcessReasonerResults.class);
@@ -274,10 +276,16 @@ public class ProcessReasonerResults {
 										Entity.getFast(inferredPatternNid), Entity.getFast(conceptNid));
 								// Create new semantic...
 								RecordListBuilder<SemanticVersionRecord> versionRecords = RecordListBuilder.make();
+
+								int semanticNid = ScopedValue
+										.where(SCOPED_PATTERN_PUBLICID_FOR_NID, Entity.getFast(inferredPatternNid))
+										.call(() -> PrimitiveData.nid(uuidForSemantic));
+
 								SemanticRecord semanticRecord = SemanticRecordBuilder.builder()
+										.nid(semanticNid)
+										.referencedComponentNid(conceptNid)
 										.leastSignificantBits(uuidForSemantic.getLeastSignificantBits())
 										.mostSignificantBits(uuidForSemantic.getMostSignificantBits())
-										.nid(PrimitiveData.nid(uuidForSemantic)).referencedComponentNid(conceptNid)
 										.patternNid(inferredPatternNid).versions(versionRecords).build();
 								versionRecords.add(new SemanticVersionRecord(semanticRecord, updateStampNid, fields));
 								processSemantic(semanticRecord, updateTransaction);
@@ -429,10 +437,15 @@ public class ProcessReasonerResults {
 							Entity.getFast(inferredNavigationPatternNid), Entity.getFast(conceptNid));
 					// Create new semantic...
 					RecordListBuilder<SemanticVersionRecord> versionRecords = RecordListBuilder.make();
+					int semanticNid = ScopedValue
+							.where(SCOPED_PATTERN_PUBLICID_FOR_NID, Entity.getFast(inferredNavigationPatternNid))
+							.call(() -> PrimitiveData.nid(uuidForSemantic));
+
 					SemanticRecord navigationRecord = SemanticRecordBuilder.builder()
+							.nid(semanticNid)
+							.referencedComponentNid(conceptNid)
 							.leastSignificantBits(uuidForSemantic.getLeastSignificantBits())
 							.mostSignificantBits(uuidForSemantic.getMostSignificantBits())
-							.nid(PrimitiveData.nid(uuidForSemantic)).referencedComponentNid(conceptNid)
 							.patternNid(inferredNavigationPatternNid).versions(versionRecords).build();
 					IntIdSet parentIds = IntIds.set.of(parentNids.toArray());
 					IntIdSet childrenIds = IntIds.set.of(childNids.toArray());

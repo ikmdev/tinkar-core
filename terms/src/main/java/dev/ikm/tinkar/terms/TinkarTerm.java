@@ -4740,7 +4740,7 @@ public class TinkarTerm {
      * bfbced4b-ad7d-30aa-ae5c-f848ccebd45b</a>}.
      */
     public static final EntityProxy.Concept PROCEDURE =
-            EntityProxy.Concept.make("Procedure (SOLOR)", UUID.fromString("bfbced4b-ad7d-30aa-ae5c-f848ccebd45b"));
+            EntityProxy.Concept.make("Procedure (SOLOR)", UUID.fromString("fe927a8b-bb07-5aa5-89c3-896fe3ce7e9c"));
     /**
      * Java binding for the concept described as <strong><em>Promotion destination path (SOLOR)</em></strong>;
      * identified by UUID: {@code

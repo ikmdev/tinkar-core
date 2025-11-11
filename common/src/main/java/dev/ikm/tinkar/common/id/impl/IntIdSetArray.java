@@ -26,8 +26,8 @@ import java.util.stream.IntStream;
  * https://dirtyhandscoding.wordpress.com/2017/08/25/performance-comparison-linear-search-vs-binary-search/
  * <p>
  * The cost of setting up a sort, or a branching structure for a binary search, or a set structure for small sets
- * is greater than just iterating through an array. So I chose to use direct iteration for lookup for lists < 32 elements
- * in size. I don’t think there will ever be a case when the public id has > 32 UUIDs inside.
+ * is greater than just iterating through an array. So I chose to use direct iteration for lookup for lists &lt; 32 elements
+ * in size. I don’t think there will ever be a case when the public id has &gt; 32 UUIDs inside.
  */
 public class IntIdSetArray
         implements IntIdSet {

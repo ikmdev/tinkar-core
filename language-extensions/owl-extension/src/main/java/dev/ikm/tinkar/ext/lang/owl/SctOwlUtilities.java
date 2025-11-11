@@ -21,11 +21,13 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.ConceptEntityVersion;
+import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpressionBuilder;
 import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.slf4j.Logger;
@@ -40,6 +42,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
+import static dev.ikm.tinkar.terms.TinkarTermV2.STAMP_PATTERN;
 import static java.io.StreamTokenizer.TT_EOF;
 import static java.io.StreamTokenizer.TT_EOL;
 import static java.io.StreamTokenizer.TT_NUMBER;
@@ -193,8 +197,10 @@ public class SctOwlUtilities {
             throw new IllegalStateException("Expecting ':' found: " + t.ttype + " " + t.sval);
         }
         if (t.nextToken() == '[') {
-            return logicalExpressionBuilder.ConceptAxiom(
-                    PrimitiveData.nid(processPublicId(t, original)));
+            int subclassConceptNid = ScopedValue
+                    .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern())
+                    .call(() -> PrimitiveData.nid(processPublicId(t, original)));
+            return logicalExpressionBuilder.ConceptAxiom(subclassConceptNid);
         } else {
             throwIllegalStateException("Expecting concept identifier. ", t, original);
         }
@@ -345,8 +351,10 @@ public class SctOwlUtilities {
                                     if (tokenizer.nextToken() != '[') {
                                         throwIllegalStateException("Expecting PublicId.", tokenizer, original);
                                     }
-                                    andList.add(logicalExpressionBuilder.ConceptAxiom(
-                                            PrimitiveData.nid(processPublicId(tokenizer, original))));
+                                    int conceptNid = ScopedValue
+                                            .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern())
+                                            .call(() -> PrimitiveData.nid(processPublicId(tokenizer, original)));
+                                    andList.add(logicalExpressionBuilder.ConceptAxiom(conceptNid));
                                     parseToCloseParen(tokenizer);
 
                                     break;
@@ -398,8 +406,10 @@ public class SctOwlUtilities {
             if (tokenizer.nextToken() != '[') {
                 throwIllegalStateException("Expected PublicId.", tokenizer, original);
             }
-            Optional<? extends ConceptFacade> optionalPatternPart = EntityService.get().getEntity(
-                    PrimitiveData.nid(processPublicId(tokenizer, original)));
+            int conceptNid = ScopedValue
+                    .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern())
+                    .call(() -> PrimitiveData.nid(processPublicId(tokenizer, original)));
+            Optional<? extends ConceptFacade> optionalPatternPart = EntityService.get().getEntity(conceptNid);
 
             if (optionalPatternPart.isPresent()) {
                 propertyPatternList.add(optionalPatternPart.get());
@@ -417,8 +427,9 @@ public class SctOwlUtilities {
         if (tokenizer.nextToken() != '[') {
             throwIllegalStateException("Expected PublicId.", tokenizer, original);
         }
-        int propertyImplicationNid = PrimitiveData.nid(processPublicId(tokenizer, original));
-
+        int propertyImplicationNid = ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern())
+                .call(() -> PrimitiveData.nid(processPublicId(tokenizer, original)));
         Optional<ConceptEntity<ConceptEntityVersion>> optionalPropertyImplication
                 = EntityService.get().getEntity(propertyImplicationNid);
         if (optionalPropertyImplication.isPresent()) {
@@ -546,7 +557,10 @@ public class SctOwlUtilities {
             // the identifier for the concept being defined.
             throwIllegalStateException("Expecting PublicId.", tokenizer, original);
         }
-        return logicalExpressionBuilder.ConceptAxiom(PrimitiveData.nid(processPublicId(tokenizer, original)));
+        int conceptNid = ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern())
+                .call(() -> PrimitiveData.nid(processPublicId(tokenizer, original)));
+        return logicalExpressionBuilder.ConceptAxiom(conceptNid);
     }
 
     private static LogicalAxiom.Atom.TypedAtom.Role getSomeRole(LogicalExpressionBuilder logicalExpressionBuilder, StreamTokenizer tokenizer, String original) throws IOException {
@@ -562,8 +576,11 @@ public class SctOwlUtilities {
             // the identifier for the concept being defined.
             throwIllegalStateException("Expecting PublicId String.", tokenizer, original);
         }
-        Optional<? extends ConceptFacade> optionalRoleType = EntityService.get().getEntity(
-                PrimitiveData.nid(processPublicId(tokenizer, original)));
+        int roleType = ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern())
+                .call(() -> PrimitiveData.nid(processPublicId(tokenizer, original)));
+
+        Optional<? extends ConceptFacade> optionalRoleType = EntityService.get().getEntity(roleType);
 
         if (optionalRoleType.isPresent()) {
             LogicalAxiom.Atom.TypedAtom.Role someRole = logicalExpressionBuilder.SomeRole(optionalRoleType.get(), getRestriction(logicalExpressionBuilder, tokenizer, original));
@@ -592,8 +609,11 @@ public class SctOwlUtilities {
             // the identifier for the concept being defined.
             throwIllegalStateException("Expecting PublicId String.", tokenizer, original);
         }
-        Optional<? extends ConceptFacade> optionalDataType = EntityService.get().getEntity(
-                PrimitiveData.nid(processPublicId(tokenizer, original)));
+        int conceptNid = ScopedValue
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern())
+                .call(() -> PrimitiveData.nid(processPublicId(tokenizer, original)));
+
+        Optional<? extends ConceptFacade> optionalDataType = EntityService.get().getEntity(conceptNid);
 
         if (optionalDataType.isPresent()) {
             // ConceptFacade featureType, ConceptFacade concreteDomainOperator,

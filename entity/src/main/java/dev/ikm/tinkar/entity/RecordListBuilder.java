@@ -109,8 +109,8 @@ import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 public class RecordListBuilder<T> implements ImmutableList<T> {
-    ImmutableList<T> immutableList;
-    MutableList<T> mutableList = Lists.mutable.withInitialCapacity(2);
+    private volatile ImmutableList<T> immutableList;
+    private volatile MutableList<T> mutableList = Lists.mutable.withInitialCapacity(2);
 
     public static RecordListBuilder make() {
         return new RecordListBuilder();

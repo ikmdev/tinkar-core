@@ -22,6 +22,7 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
 import dev.ikm.tinkar.common.util.functional.QuadConsumer;
 import dev.ikm.tinkar.common.util.functional.TriConsumer;
+import dev.ikm.tinkar.component.ConceptVersion;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculator;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
@@ -30,22 +31,10 @@ import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.coordinate.stamp.change.ChangeChronology;
 import dev.ikm.tinkar.coordinate.stamp.change.FieldChangeRecord;
 import dev.ikm.tinkar.coordinate.stamp.change.VersionChangeRecord;
-import dev.ikm.tinkar.entity.ConceptEntity;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.entity.EntityVersion;
-import dev.ikm.tinkar.entity.Field;
-import dev.ikm.tinkar.entity.FieldDefinitionForEntity;
-import dev.ikm.tinkar.entity.FieldRecord;
-import dev.ikm.tinkar.entity.PatternEntityVersion;
-import dev.ikm.tinkar.entity.SemanticEntity;
-import dev.ikm.tinkar.entity.SemanticEntityVersion;
-import dev.ikm.tinkar.entity.SemanticRecord;
-import dev.ikm.tinkar.entity.SemanticVersionRecord;
-import dev.ikm.tinkar.entity.StampEntity;
-import dev.ikm.tinkar.entity.StampRecord;
+import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.graph.DiTreeVersion;
 import dev.ikm.tinkar.entity.graph.VersionVertex;
+import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.PatternFacade;
 import org.eclipse.collections.api.factory.Lists;
@@ -138,7 +127,7 @@ public interface StampCalculator {
 
     default Stream<Entity> streamReferencedComponentIfSemanticActiveForPattern(int patternNid) {
         return streamLatestActiveVersionForPattern(patternNid)
-                .map(semanticEntityVersion -> Entity.getFast(semanticEntityVersion.referencedComponentNid()));
+                .map(semanticEntityVersion -> EntityHandle.get(semanticEntityVersion.referencedComponentNid()).expectEntity());
     }
 
     default List<ConceptEntity> referencedConceptsIfSemanticActiveForPattern(PatternFacade patternFacade) {
@@ -175,7 +164,7 @@ public interface StampCalculator {
      * and manage associated transaction.
      */
     default Optional<SemanticRecord> updateIfFieldsChanged(int semanticNid, ImmutableList<Object> fields, int stampNid) {
-        return updateIfFieldsChanged(Entity.getFast(semanticNid), fields, stampNid);
+        return updateIfFieldsChanged(EntityHandle.get(semanticNid).expectSemanticRecord(), fields, stampNid);
     }
 
     /**
@@ -198,7 +187,7 @@ public interface StampCalculator {
     }
 
     default SemanticRecord updateFields(int semanticNid, ImmutableList<Object> fields, int stampNid) {
-        return updateFields(Entity.getFast(semanticNid), fields, stampNid);
+        return updateFields(EntityHandle.get(semanticNid).expectSemanticRecord(), fields, stampNid);
     }
 
     // TODO: maybe change references to Fields to SemanticFields in API? STAMP VALUES may also be considered fields.
@@ -209,7 +198,7 @@ public interface StampCalculator {
     <V extends EntityVersion> Latest<V> latest(Entity<V> chronicle);
 
     default Optional<SemanticRecord> updateIfFieldsChanged(int semanticNid, ImmutableList<Object> fields, StampEntity stampEntity) {
-        return updateIfFieldsChanged(Entity.getFast(semanticNid), fields, stampEntity.nid());
+        return updateIfFieldsChanged(EntityHandle.get(semanticNid).expectSemanticRecord(), fields, stampEntity.nid());
     }
 
     StateSet allowedStates();
@@ -278,7 +267,7 @@ public interface StampCalculator {
     }
 
     default void forEachSemanticVersionWithFieldsOfPattern(int patternNid, TriConsumer<SemanticEntityVersion, ImmutableList<? extends Field>, PatternEntityVersion> procedure) {
-        forEachSemanticVersionOfPattern(patternNid, (semanticEntityVersion, patternVersion) -> procedure.accept(semanticEntityVersion, semanticEntityVersion.fields(patternVersion), patternVersion));
+        forEachSemanticVersionOfPattern(patternNid, (semanticEntityVersion, patternVersion) -> procedure.accept(semanticEntityVersion, semanticEntityVersion.fields(), patternVersion));
     }
 
     default void forEachSemanticVersionWithFieldsForComponentOfPattern(EntityFacade component,
@@ -288,7 +277,7 @@ public interface StampCalculator {
     }
 
     default void forEachSemanticVersionWithFieldsForComponentOfPattern(int componentNid, int patternNid, QuadConsumer<SemanticEntityVersion, ImmutableList<? extends Field>, EntityVersion, PatternEntityVersion> procedure) {
-        forEachSemanticVersionForComponentOfPattern(componentNid, patternNid, (semanticEntityVersion, entityVersion, patternEntityVersion) -> procedure.accept(semanticEntityVersion, semanticEntityVersion.fields(patternEntityVersion), entityVersion, patternEntityVersion));
+        forEachSemanticVersionForComponentOfPattern(componentNid, patternNid, (semanticEntityVersion, entityVersion, patternEntityVersion) -> procedure.accept(semanticEntityVersion, semanticEntityVersion.fields(), entityVersion, patternEntityVersion));
     }
 
     default void forEachSemanticVersionWithFieldsForComponent(EntityFacade component,
@@ -304,6 +293,24 @@ public interface StampCalculator {
     }
 
     Latest<PatternEntityVersion> latestPatternEntityVersion(int patternNid);
+
+    default Latest<ConceptEntityVersion> latestConceptVersion(ConceptFacade conceptFacade) {
+        return latest(conceptFacade.nid());
+    }
+
+    default Latest<ConceptEntityVersion> latestConceptVersion(int conceptNid) {
+        return latest(conceptNid);
+    }
+
+    default Latest<SemanticEntityVersion> latestSemanticVersion(int semanticNid) {
+        return latest(semanticNid);
+    }
+
+    default Latest<SemanticEntityVersion> latestSemanticVersion(SemanticEntity<?> semanticEntity) {
+        return (Latest<SemanticEntityVersion>) latest(semanticEntity);
+    }
+
+
 
     OptionalInt getIndexForMeaning(int patternNid, int meaningNid);
 
@@ -480,7 +487,7 @@ public interface StampCalculator {
      * @return the ChangeChronology
      */
     default ChangeChronology changeChronology(int nid) {
-        return changeChronology(EntityService.get().getEntityFast(nid));
+        return changeChronology(EntityHandle.getEntityOrThrow(nid));
     }
 
     /**
@@ -508,6 +515,7 @@ public interface StampCalculator {
 
         return new ChangeChronology(entity.nid(), versionChangeRecords.toImmutable());
     }
+
     private static void processVersionRecursive(DiTreeVersion<EntityVersion> versionGraph, int nodeIndexToProcess,
                                                 MutableList<VersionChangeRecord> versionChangeRecords,
                                                 PatternEntityVersion latestPatternForStamp,
@@ -574,12 +582,11 @@ public interface StampCalculator {
                                                            FieldDefinitionForEntity fieldDefinitionRecord,
                                                            Object priorVersionValue, StampEntity predecessorStamp) {
         FieldRecord currentStatusRecord = new FieldRecord(newVersionValue,
-                newVersion.nid(), newVersion.stampNid(), fieldDefinitionRecord);
+                newVersion.nid(), newVersion.stampNid(), fieldDefinitionRecord.patternNid(), fieldDefinitionRecord.indexInPattern());
         FieldRecord predecessorStatusRecord = new FieldRecord(priorVersionValue,
-                newVersion.nid(), predecessorStamp.nid(), fieldDefinitionRecord);
+                newVersion.nid(), predecessorStamp.nid(), fieldDefinitionRecord.patternNid(), fieldDefinitionRecord.indexInPattern());
         return new FieldChangeRecord(predecessorStatusRecord, currentStatusRecord);
     }
-
 
     enum FieldCriterion {MEANING, PURPOSE}
 }

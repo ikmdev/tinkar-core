@@ -426,9 +426,9 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
     }
 
     /**
-     * Gets the.
+     * Gets the value spliterator supplier.
      *
-     * @return the supplier<? extends spliterator. of int>
+     * @return the {@code Supplier<? extends Spliterator<E>>}
      */
     protected Supplier<? extends Spliterator<E>> get() {
         return new SpliteratorSupplier();

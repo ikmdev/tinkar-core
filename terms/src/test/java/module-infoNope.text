@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.entity;
+module dev.ikm.tinkar.terms.test {
+    requires org.junit.jupiter.api;
+    requires dev.ikm.tinkar.terms;
 
-public sealed interface ImmutableField<T> extends Field<T>, ImmutableFieldDefinition
-    permits FieldRecord {
+    opens dev.ikm.tinkar.terms.test;
 }

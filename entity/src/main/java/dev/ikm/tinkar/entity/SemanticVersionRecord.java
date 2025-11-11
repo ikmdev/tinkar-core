@@ -17,6 +17,7 @@ package dev.ikm.tinkar.entity;
 
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.id.Nid;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
@@ -25,6 +26,7 @@ import dev.ikm.tinkar.terms.EntityFacade;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.MutableList;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -35,7 +37,7 @@ public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
         implements SemanticEntityVersion, ImmutableVersion, SemanticVersionRecordBuilder.With {
 
     public SemanticVersionRecord {
-        Validator.notZero(stampNid);
+        Nid.validate(stampNid);
         Objects.requireNonNull(chronology);
         Objects.requireNonNull(fieldValues);
     }
@@ -62,8 +64,8 @@ public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("≤");
-        sb.append(Entity.getStamp(stampNid).describe());
-        Entity pattern = Entity.getFast(this.chronology().patternNid());
+        sb.append(Entity.getStamp(stampNid).describe() + " nid: " + stampNid);
+        PatternEntity<?> pattern = EntityHandle.getPatternOrThrow(this.chronology().patternNid());
         if (pattern instanceof PatternRecord patternEntity) {
             // TODO get proper version after relative position computer available.
             // Maybe put stamp coordinate on thread, or relative position computer on thread
@@ -126,7 +128,9 @@ public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
                     sb.append(fieldString);
                 }
                 sb.append("› ");
-                sb.append(field.getClass().getSimpleName());
+                if (field != null) {
+                    sb.append(field.getClass().getSimpleName());
+                }
 
             }
         } else {
@@ -191,30 +195,12 @@ public record SemanticVersionRecord(SemanticRecord chronology, int stampNid,
     }
 
     @Override
-    public ImmutableList<FieldRecord> fields(PatternEntityVersion patternVersion) {
-//        switch (patternVersion) {
-//            case PatternVersionRecord patternVersionRecord -> {
-//                FieldRecord[] fieldArray = new FieldRecord[fieldValues().size()];
-//                for (int i = 0; i < fieldArray.length; i++) {
-//                    Object value = fieldValues().get(i);
-//                    FieldDefinitionRecord fieldDef = patternVersionRecord.fieldDefinitions().get(i);
-//                    fieldArray[i] = new FieldRecord(value, patternVersion.nid(), patternVersion.stampNid(), fieldDef);
-//                }
-//                return Lists.immutable.of(fieldArray);
-//            }
-//            default -> {
-//                PatternRecord patternRecord = Entity.getFast(patternVersion.nid());
-//                for (PatternVersionRecord patternVersionRecord : patternRecord.versions()) {
-//                    if (patternVersionRecord.stampNid() == patternVersion.stampNid()) {
-//                        return fields(patternVersionRecord);
-//                    }
-//                }
-//                throw new IllegalStateException("Can't find pattern version: " + patternVersion +
-//                        "\n in pattern: " + patternRecord);
-                throw new IllegalStateException("Can't find pattern version: " + patternVersion +
-                "\n in pattern: " );
-//            }
-//        }
+    public ImmutableList<FieldRecord> fields() {
+        MutableList<FieldRecord> fieldRecords = Lists.mutable.empty();
+        for (int i = 0; i < fieldValues.size(); i++) {
+            fieldRecords.add(new FieldRecord(fieldValues.get(i), nid(), stampNid,
+            patternNid(), i));
+        }
+        return fieldRecords.toImmutable();
     }
-
 }

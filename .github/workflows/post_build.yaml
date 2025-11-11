@@ -27,7 +27,7 @@ jobs:
           
       - name: IKMDEV Post Build Action
         id: ikmdev_post_build
-        uses: ikmdev/maven-post-build-action@v3.3.0
+        uses: ikmdev/maven-post-build-action@v4.0.4
         with:
             nexus_repo_url: ${{secrets.NEXUS_URL}}
             nexus_repo_username: ${{secrets.NEXUS_USER}}

@@ -119,7 +119,10 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Jason T. Greene
  * @param <K> the type of keys maintained by this map
  * @param <V> the type of mapped values
+ *
+ * @deprecated Replace with Caffeine.newBuilder().weakValues().build();
  */
+@Deprecated
 public class ConcurrentReferenceHashMap<K, V>
         extends AbstractMap<K, V>
         implements java.util.concurrent.ConcurrentMap<K, V>, Serializable {

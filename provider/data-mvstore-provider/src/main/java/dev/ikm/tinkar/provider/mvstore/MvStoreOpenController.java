@@ -21,8 +21,9 @@ import dev.ikm.tinkar.common.service.ServiceProperties;
 
 import java.io.IOException;
 
+import static dev.ikm.tinkar.provider.mvstore.constants.MvStoreControllerNames.OPEN_CONTROLLER_NAME;
+
 public class MvStoreOpenController extends MvStoreController {
-    public static String CONTROLLER_NAME = "Open MV Store";
 
     @Override
     public void setDataUriOption(DataUriOption option) {
@@ -31,7 +32,7 @@ public class MvStoreOpenController extends MvStoreController {
 
     @Override
     public String controllerName() {
-        return CONTROLLER_NAME;
+        return OPEN_CONTROLLER_NAME;
     }
 
     @Override

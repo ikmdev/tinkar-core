@@ -61,20 +61,20 @@ public record ChangeChronology(int nid, ImmutableList<VersionChangeRecord> chang
             for (FieldChangeRecord fieldChange: changeRecord.changes()) {
                 sb.append("\n   ");
                 Function<Object, String> formatFunction = value -> value.toString();
-                if (fieldChange.currentValue().fieldDefinition().meaningNid() == TinkarTerm.TIME_FOR_VERSION.nid()) {
+                if (fieldChange.currentValue().fieldDefinition(viewCalculator).meaningNid() == TinkarTerm.TIME_FOR_VERSION.nid()) {
                     formatFunction = value -> switch (value) {
                         case Long epochMs -> DateTimeUtil.format(epochMs);
                         case NonExistentValue nonExistentValue -> nonExistentValue.toString();
                         default -> value.toString();
                     };
-                } else if (fieldChange.currentValue().fieldDefinition().dataTypeNid() == TinkarTerm.CONCEPT_FIELD.nid() ||
-                        fieldChange.currentValue().fieldDefinition().dataTypeNid() == TinkarTerm.COMPONENT_FIELD.nid()) {
+                } else if (fieldChange.currentValue().fieldDefinition(viewCalculator).dataTypeNid() == TinkarTerm.CONCEPT_FIELD.nid() ||
+                        fieldChange.currentValue().fieldDefinition(viewCalculator).dataTypeNid() == TinkarTerm.COMPONENT_FIELD.nid()) {
                     formatFunction = value -> switch (value) {
                         case ConceptFacade conceptFacade -> viewCalculator.getPreferredDescriptionTextOrNid(conceptFacade);
                         default -> value.toString();
                     };
                 }
-                sb.append(viewCalculator.getPreferredDescriptionStringOrNid(fieldChange.currentValue().meaningNid())).append(": ");
+                sb.append(viewCalculator.getPreferredDescriptionStringOrNid(fieldChange.currentValue().fieldDefinition(viewCalculator).meaningNid())).append(": ");
                 if (showPriorValue) {
                     sb.append(formatFunction.apply(fieldChange.priorValue().value())).append(" ").append(HEAVY_TRIANGLE_HEADED_RIGHTWARDS_ARROW).append(" ");
                 }

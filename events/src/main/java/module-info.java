@@ -19,6 +19,7 @@ open module dev.ikm.tinkar.events {
 
     requires dev.ikm.tinkar.entity;
     requires org.slf4j;
+    requires dev.ikm.tinkar.common;
 
     provides dev.ikm.tinkar.events.EvtBus
             with dev.ikm.tinkar.events.DefaultEvtBus;

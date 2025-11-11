@@ -24,7 +24,6 @@ import dev.ikm.tinkar.common.service.ServiceProperties;
 import dev.ikm.tinkar.common.validation.ValidationRecord;
 import dev.ikm.tinkar.common.validation.ValidationSeverity;
 import dev.ikm.tinkar.entity.EntityCountSummary;
-import dev.ikm.tinkar.provider.mvstore.internal.Get;
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.api.map.MutableMap;
@@ -39,8 +38,9 @@ import java.util.ServiceLoader;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import static dev.ikm.tinkar.provider.mvstore.constants.MvStoreControllerNames.NEW_CONTROLLER_NAME;
+
 public class MvStoreNewController extends MvStoreController {
-    public static String CONTROLLER_NAME = "New MV Store";
     String importDataFileString;
     DataServiceProperty newFolderProperty = new DataServiceProperty("New folder name", false, true);
     MutableMap<DataServiceProperty, String> providerProperties = Maps.mutable.empty();
@@ -104,7 +104,7 @@ public class MvStoreNewController extends MvStoreController {
 
     @Override
     public String controllerName() {
-        return CONTROLLER_NAME;
+        return NEW_CONTROLLER_NAME;
     }
 
     @Override
@@ -120,8 +120,6 @@ public class MvStoreNewController extends MvStoreController {
                 LoadDataFromFileController loader = controllerFinder.findFirst().get();
                 Future<EntityCountSummary> loadFuture = (Future<EntityCountSummary>) loader.load(new File(importDataFileString));
                 EntityCountSummary entityCountSummary = loadFuture.get();
-
-                Get.singleton.save();
             } catch (InterruptedException | ExecutionException | IOException e) {
                 e.printStackTrace();
             }
@@ -131,6 +129,7 @@ public class MvStoreNewController extends MvStoreController {
 
     @Override
     public boolean isValidDataLocation(String name) {
-        return name.toLowerCase().endsWith(".zip") && name.toLowerCase().contains("tink");
+        return name.toLowerCase().endsWith("pb.zip") ||
+                (name.toLowerCase().endsWith(".zip") && name.toLowerCase().contains("tink"));
     }
 }

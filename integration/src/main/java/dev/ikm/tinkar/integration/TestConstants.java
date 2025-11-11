@@ -15,10 +15,17 @@
  */
 package dev.ikm.tinkar.integration;
 
+import dev.ikm.tinkar.provider.ephemeral.constants.EphemeralStoreControllerName;
+import dev.ikm.tinkar.provider.spinedarray.constants.SpinedArrayControllerNames;
+
 import java.io.File;
 import java.util.function.Function;
 
 public class TestConstants {
+    public static final String LOAD_EPHEMERAL_STORE = EphemeralStoreControllerName.NEW_CONTROLLER_NAME;
+    public static final String OPEN_SPINED_ARRAY_STORE = SpinedArrayControllerNames.OPEN_CONTROLLER_NAME;
+    public static final String NEW_SPINED_ARRAY_STORE = SpinedArrayControllerNames.NEW_CONTROLLER_NAME;
+
     public static final Function<String,File> createFilePathInTarget = (pathName) -> new File("%s/target/%s".formatted(System.getProperty("user.dir"), pathName));
 
     public static final Function<Class,File>

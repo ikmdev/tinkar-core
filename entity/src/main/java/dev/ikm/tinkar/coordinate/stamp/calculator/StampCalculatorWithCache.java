@@ -348,7 +348,7 @@ public class StampCalculatorWithCache implements StampCalculator {
 
         return (Latest<V>) new Latest<>(latestVersionList.get(0), latestVersionList.subList(1, latestVersionList.size()));
     }
-    
+
     @Override
     public StateSet allowedStates() {
         return allowedStates;
@@ -358,7 +358,7 @@ public class StampCalculatorWithCache implements StampCalculator {
      * Relative position.
      *
      * @param stampNid the stamp sequence 1
-     * @param stampNid the stamp sequence 2
+     * @param stampNid2 the stamp sequence 2
      * @return the relative position
      */
     public RelativePosition relativePosition(int stampNid, int stampNid2) {
@@ -387,6 +387,9 @@ public class StampCalculatorWithCache implements StampCalculator {
 
                 Latest<? extends EntityVersion> latestSemanticVersion =
                         latestCache.get(nid, integer -> {
+                            if (bytes == null) {
+                                return Latest.empty();
+                            }
                             Entity<EntityVersion> semanticRecord = EntityFactory.make(bytes);
                             return latest(semanticRecord);
                         });
@@ -426,7 +429,7 @@ public class StampCalculatorWithCache implements StampCalculator {
                 (semanticEntityVersion, entityVersion) -> {
                     Latest<PatternEntityVersion> latestPatternEntityVersion = latestPatternEntityVersion(semanticEntityVersion.patternNid());
                     latestPatternEntityVersion.ifPresent(patternEntityVersion -> {
-                        procedure.accept(semanticEntityVersion, semanticEntityVersion.fields(patternEntityVersion), entityVersion);
+                        procedure.accept(semanticEntityVersion, semanticEntityVersion.fields(), entityVersion);
                     });
                 });
     }
@@ -490,12 +493,12 @@ public class StampCalculatorWithCache implements StampCalculator {
                 int indexForCriterion = optionalIndex.getAsInt();
                 FieldDefinitionRecord fieldDef = (FieldDefinitionRecord) patternVersion.fieldDefinitions().get(indexForCriterion);
                 FieldRecord fieldRecord = new FieldRecord(semanticVersion.fieldValues().get(indexForCriterion),
-                        semanticVersion.nid(), semanticVersion.stampNid(), fieldDef);
+                        semanticVersion.nid(), semanticVersion.stampNid(), fieldDef.patternNid(), fieldDef.indexInPattern());
                 Latest<Field<T>> latestField = new Latest<>(fieldRecord);
                 for (SemanticEntityVersion semanticVersionContradiction : latestSemanticVersion.contradictions()) {
                     latestField.addLatest(
                             new FieldRecord(semanticVersionContradiction.fieldValues().get(indexForCriterion),
-                                    semanticVersionContradiction.nid(), semanticVersionContradiction.stampNid(), fieldDef));
+                                    semanticVersionContradiction.nid(), semanticVersionContradiction.stampNid(), fieldDef.patternNid(), fieldDef.indexInPattern()));
                 }
                 return latestField;
             } else {

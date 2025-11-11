@@ -113,7 +113,7 @@ public class NamedThreadFactory
                 : new Thread(this.threadGroup, r);
 
         t.setName(((this.threadNamePrefix == null) ? ""
-                : this.threadNamePrefix + " ") + t.getId());
+                : this.threadNamePrefix + " ") + t.threadId());
         t.setPriority(this.threadPriority);
         t.setDaemon(this.daemon);
         t.setUncaughtExceptionHandler((t1, e) -> AlertStreams.getRoot().dispatch(AlertObject.makeError(e)));

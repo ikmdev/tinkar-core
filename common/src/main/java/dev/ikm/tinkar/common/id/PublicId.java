@@ -54,6 +54,17 @@ public interface PublicId extends Comparable<PublicId> {
         return Lists.immutable.of(asUuidArray());
     }
 
+    default long[] additionalUuidLongs() {
+        long[] additionalLongs = new long[(uuidCount() * 2) - 2];
+        int index = 0;
+        for (int i = 1; i < uuidCount(); i++) {
+            UUID uuid = asUuidArray()[i];
+            additionalLongs[index++] = uuid.getMostSignificantBits();
+            additionalLongs[index++] = uuid.getLeastSignificantBits();
+        }
+        return additionalLongs.length == 0 ? null : additionalLongs;
+    }
+
     /**
      * Presents ordered list of longs, from the UUIDs in the order: msb, lsb, msb, lsb, ...
      *

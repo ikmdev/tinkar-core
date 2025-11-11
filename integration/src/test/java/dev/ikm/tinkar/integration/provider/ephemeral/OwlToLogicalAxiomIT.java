@@ -31,6 +31,7 @@ import dev.ikm.tinkar.ext.lang.owl.SctOwlUtilities;
 import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
+import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -44,6 +45,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class OwlToLogicalAxiomIT {
@@ -85,8 +87,11 @@ public class OwlToLogicalAxiomIT {
                         Entity conceptEntity = ConceptRecord.build(uuid, defaultStamp);
                         if (uuid.equals(UUID.fromString("051fbfed-3c40-3130-8c09-889cb7b7b5b6"))) {
                             RecordListBuilder<ConceptVersionRecord> versions = RecordListBuilder.make();
+                            int conceptNid = ScopedValue
+                                    .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern().publicId())
+                                    .call(() -> PrimitiveData.nid(uuid));
                             ConceptRecord conceptRecord = ConceptRecordBuilder.builder()
-                                    .nid(PrimitiveData.nid(uuid))
+                                    .nid(conceptNid)
                                     .mostSignificantBits(uuid.getMostSignificantBits())
                                     .leastSignificantBits(uuid.getLeastSignificantBits())
                                     .additionalUuidLongs(new long[] {

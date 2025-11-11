@@ -22,7 +22,9 @@ import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
 
-public interface StampVersion extends Stamp<StampEntityVersion>, VersionData {
+import java.time.Instant;
+
+public interface StampVersion extends Stamp, VersionData {
     default String describe() {
         return "s:" + PrimitiveData.text(stateNid()) +
                 " t:" + DateTimeUtil.format(time(), DateTimeUtil.SEC_FORMATTER) +
@@ -57,4 +59,7 @@ public interface StampVersion extends Stamp<StampEntityVersion>, VersionData {
         return EntityProxy.Concept.make(pathNid());
     }
 
+    default Instant instant() {
+        return DateTimeUtil.epochMsToInstant(time());
+    }
 }
