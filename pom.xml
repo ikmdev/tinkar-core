@@ -10,7 +10,7 @@
 
     <groupId>dev.ikm.tinkar</groupId>
     <artifactId>tinkar-core</artifactId>
-    <version>1.126.0-various-maven4-updates-SNAPSHOT</version>
+    <version>1.126.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>IKM tinkar core</name>
