@@ -29,8 +29,7 @@ import dev.ikm.tinkar.terms.ConceptFacade;
 import java.util.Objects;
 
 
-public record EditCoordinateRecord(int authorNid, int defaultModuleNid, int promotionPathNid,
-                                   int defaultPathNid, int destinationModuleNid)
+public record EditCoordinateRecord(int authorNid, int defaultModuleNid, int destinationModuleNid, int defaultPathNid, int promotionPathNid)
         implements EditCoordinate, ImmutableCoordinate {
 
     private static final ConcurrentReferenceHashMap<EditCoordinateRecord, EditCoordinateRecord> SINGLETONS =
@@ -104,7 +103,7 @@ public record EditCoordinateRecord(int authorNid, int defaultModuleNid, int prom
 
     @Override
     public int hashCode() {
-        return Objects.hash(getAuthorNidForChanges(), getDefaultModuleNid(), getPromotionPathNid(), getDestinationModuleNid());
+        return Objects.hash(getAuthorNidForChanges(), getDefaultModuleNid(), getDestinationModuleNid(), getDefaultPathNid(), getPromotionPathNid());
     }
 
     @Override
