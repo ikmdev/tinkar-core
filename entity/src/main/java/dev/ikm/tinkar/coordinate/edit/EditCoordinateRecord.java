@@ -91,22 +91,6 @@ public record EditCoordinateRecord(int authorNid, int defaultModuleNid, int dest
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof EditCoordinateRecord that)) return false;
-        return getAuthorNidForChanges() == that.getAuthorNidForChanges() &&
-                getDefaultModuleNid() == that.getDefaultModuleNid() &&
-                getDestinationModuleNid() == that.getDestinationModuleNid() &&
-                getDefaultPathNid() == that.getDefaultPathNid() &&
-                getPromotionPathNid() == that.getPromotionPathNid();
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getAuthorNidForChanges(), getDefaultModuleNid(), getDestinationModuleNid(), getDefaultPathNid(), getPromotionPathNid());
-    }
-
-    @Override
     public String toString() {
         return "EditCoordinateRecord{" +
                 toUserString() +
