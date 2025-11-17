@@ -45,7 +45,7 @@ public class ProtobufToJsonConverterTool {
 
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
-                if (entry.getName().equals("Entities")) {
+                if (!entry.getName().equals("META-INF")) {
                     LOG.debug("Processing Entities entry from zip file");
 
                     while (zis.available() > 0) {
