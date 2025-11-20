@@ -18,7 +18,6 @@ package dev.ikm.tinkar.integration.provider.spinedarray;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.id.impl.IntIdListArray;
 import dev.ikm.tinkar.common.id.impl.IntIdSetArray;
-import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.Coordinates;
@@ -31,7 +30,6 @@ import dev.ikm.tinkar.entity.EntityCountSummary;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.PatternEntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
-import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
@@ -45,7 +43,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -53,20 +50,32 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class ExportImportIT {
-    private static final Logger LOG = LoggerFactory.getLogger(ExportImportIT.class);
+/**
+ * Part 2 of the Export/Import test - Imports data from protobuf.
+ * This test class runs second (alphabetically after ExportDataIT).
+ * It starts a fresh database, loads the exported protobuf file, and validates the data.
+ */
+class ImportDataIT {
+    private static final Logger LOG = LoggerFactory.getLogger(ImportDataIT.class);
     private static final File DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
-            ExportImportIT.class);
+            ImportDataIT.class);
 
     @BeforeAll
     static void beforeAll() {
         FileUtil.recursiveDelete(DATASTORE_ROOT);
         TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
-        File file = TestConstants.PB_EXAMPLE_DATA_REASONED;
 
+        // Load the original example data first
+        File file = TestConstants.PB_EXAMPLE_DATA_REASONED;
         LoadEntitiesFromProtobufFile loadProto = new LoadEntitiesFromProtobufFile(file);
         EntityCountSummary count = loadProto.compute();
         LOG.info(count + " entitles loaded from file: " + loadProto.summarize() + "\n\n");
+
+        // Load the exported pb file from the ExportDataIT test
+        File fileProtobuf = TestConstants.PB_TEST_FILE;
+        loadProto = new LoadEntitiesFromProtobufFile(fileProtobuf);
+        count = loadProto.compute();
+        LOG.info(count + " entitles loaded from exported file: " + loadProto.summarize() + "\n\n");
     }
 
     @AfterAll
@@ -75,9 +84,7 @@ class ExportImportIT {
     }
 
     @Test
-    public void testFieldTypeSetToList() throws IOException {
-        // Make the proper change to semantic (Test Pattern 2 or 3)
-        // Examine the semantic field that was modified, type changes from Set to List
+    public void testImportFieldTypeSetToList() {
         EntityProxy.Concept concept = EntityProxy.Concept.make(PublicIds.of(UUID.fromString("dde159ca-415e-4947-9174-cae7e8e7202d")));
         StateSet stateActive = StateSet.ACTIVE;
         StampCalculator stampCalcActive = StampCalculatorWithCache
@@ -93,57 +100,6 @@ class ExportImportIT {
         PatternEntityVersion latestPattern = (PatternEntityVersion) Calculators.Stamp.DevelopmentLatest().latest(EXAMPLE_PATTERN_TWO).get();
         AtomicReference<IntIdSetArray> intIdSet = new AtomicReference<>();
         AtomicReference<IntIdListArray> intIdList = new AtomicReference<>();
-
-        EntityService.get().forEachSemanticForComponentOfPattern(concept.nid(), EXAMPLE_PATTERN_TWO.nid(), semanticEntity -> {
-            Latest<SemanticEntityVersion> latestActive = stampCalcActive.latest(semanticEntity);
-
-            if (latestActive.isPresent()) {
-                intIdSet.set(latestPattern.getFieldWithMeaning(COMPONENT_SET_FIELD_MEANING, latestActive.get()));
-                // Reassign elements
-                int [] tempSetArray = intIdSet.get().toArray();
-                tempSetArray [0] = TinkarTerm.ACTIVE_STATE.nid();
-
-                intIdList.set(latestPattern.getFieldWithMeaning(COMPONENT_LIST_FIELD_MEANING, latestActive.get()));
-                // Reassign elements
-                int [] tempListArray = intIdList.get().toArray();
-                tempListArray [0] = TinkarTerm.ACTIVE_STATE.nid();
-            }
-
-        });
-
-
-
-        // When we export Entities data to protobuf
-        File fileProtobuf = TestConstants.PB_TEST_FILE;
-        boolean pbZipFileSuccess = true;
-        if (fileProtobuf.exists()) {
-            pbZipFileSuccess = fileProtobuf.delete();
-        }
-
-        pbZipFileSuccess = fileProtobuf.createNewFile();
-        if (!pbZipFileSuccess) {
-            throw new RuntimeException("Round trip test has failed setup to begin test. Unable to delete or create " + fileProtobuf.getName() + " to begin.");
-        }
-        ExportEntitiesToProtobufFile exportEntitiesToProtobufFile = new ExportEntitiesToProtobufFile(fileProtobuf);
-        long actualProtobufExportCount = exportEntitiesToProtobufFile.compute().getTotalCount();
-        LOG.info("Entities exported to protobuf: " + actualProtobufExportCount);
-
-        TestHelper.stopDatabase();
-        CachingService.clearAll();
-
-
-
-        // Start the original database
-        TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
-        File file2 = TestConstants.PB_EXAMPLE_DATA_REASONED;
-        LoadEntitiesFromProtobufFile loadProto2 = new LoadEntitiesFromProtobufFile(file2);
-        EntityCountSummary count2 = loadProto2.compute();
-        LOG.info(count2 + " entitles loaded from file: " + loadProto2.summarize() + "\n\n");
-
-        // Load Exported pb file
-        loadProto2 = new LoadEntitiesFromProtobufFile(fileProtobuf); // Loads Exported pb file
-        count2 = loadProto2.compute();
-        LOG.info(count2 + " entitles loaded from file: " + loadProto2.summarize() + "\n\n");
 
         AtomicBoolean atomicBoolean = new AtomicBoolean(false);
 

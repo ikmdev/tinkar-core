@@ -16,19 +16,14 @@
 package dev.ikm.tinkar.integration.provider.spinedarray;
 
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
-import dev.ikm.tinkar.entity.EntityCountSummary;
-import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.entity.util.EntityCounter;
 import dev.ikm.tinkar.entity.util.EntityProcessor;
 import dev.ikm.tinkar.entity.util.EntityRealizer;
 import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
@@ -36,46 +31,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.Arrays;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class SpinedArrayProviderIT {
-    private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayProviderIT.class);
+class SpinedArrayProviderPerformanceIT {
+    private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayProviderPerformanceIT.class);
     private static final File DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
-            SpinedArrayProviderIT.class);
+            SpinedArrayProviderPerformanceIT.class);
 
-    @BeforeAll
-    static void beforeAll() {
+    @Test
+    public void openAndClose() {
+        LOG.info("Starting open and close. ");
+        if (PrimitiveData.running()) {
+            Stopwatch closingStopwatch = new Stopwatch();
+            PrimitiveData.stop();
+            closingStopwatch.end();
+            LOG.info("SAP Closed in: " + closingStopwatch.durationString() + "\n\n");
+        }
+        LOG.info("Reloading Spined Array Provider");
+        Stopwatch reloadStopwatch = new Stopwatch();
         TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
-    }
-
-    @Test
-    @Order(1)
-    public void loadChronologies() {
-        File file = TestConstants.PB_STARTER_DATA_REASONED;
-        LoadEntitiesFromProtobufFile loadProto = new LoadEntitiesFromProtobufFile(file);
-        EntityCountSummary count = loadProto.compute();
-        LOG.info(count + " entitles loaded from file: " + loadProto.summarize() + "\n\n");
-    }
-
-    @Test
-    @Order(2)
-    public void count() {
-        LOG.info("Starting count. ");
-        if (!PrimitiveData.running()) {
-            LOG.info("Reloading Spined Array Provider");
-            Stopwatch reloadStopwatch = new Stopwatch();
-            PrimitiveData.start();
-            LOG.info("Reloading in: " + reloadStopwatch.durationString() + "\n\n");
-        }
-        try {
-            PrimitiveDataSearchResult[] results = PrimitiveData.get().search("occupation", 50);
-            LOG.info("Search results: \n" + Arrays.toString(results) + "\n\n");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+        LOG.info("SAP Reloading in: " + reloadStopwatch.durationString() + "\n\n");
         EntityProcessor processor = new EntityCounter();
         PrimitiveData.get().forEach(processor);
         LOG.info("SAP Sequential count: \n" + processor.report() + "\n\n");
@@ -94,6 +70,7 @@ class SpinedArrayProviderIT {
         processor = new EntityRealizer();
         PrimitiveData.get().forEachParallel(processor);
         LOG.info("SAP Parallel realization: \n" + processor.report() + "\n\n");
+        PrimitiveData.get().close();
     }
 
 }

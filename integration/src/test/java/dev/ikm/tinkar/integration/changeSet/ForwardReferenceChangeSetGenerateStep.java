@@ -17,53 +17,63 @@ package dev.ikm.tinkar.integration.changeSet;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
-import dev.ikm.tinkar.entity.*;
-import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
+import dev.ikm.tinkar.entity.ConceptRecord;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.SemanticRecord;
+import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.entity.transform.EntityToTinkarSchemaTransformer;
 import dev.ikm.tinkar.integration.StarterDataEphemeralProvider;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.UUID;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static dev.ikm.tinkar.integration.TestConstants.createFilePathInTarget;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Integration test for forward reference handling in changeset imports.
- * Tests the multi-pass import mechanism that resolves forward references where
- * a semantic references a concept that appears later in the changeset.
+ * Integration test that generates a changeset file with a forward reference.
+ * This test runs in a separate JVM/datastore from the import tests.
  *
- * The multi-pass algorithm:
- * - Pass 1: Imports all non-semantics (Concepts, Patterns, Stamps)
- * - Pass 2+: Imports semantics whose referenced components exist in the database
- * - Repeats until all semantics are imported or no progress is made
+ * The generated changeset contains:
+ * 1. A description semantic (written FIRST)
+ * 2. A concept that the semantic references (written SECOND)
  *
- * Tests are ordered to ensure the 1-pass test runs first (before entities exist in datastore).
+ * This creates a forward reference scenario where the semantic references
+ * a concept that doesn't exist yet in the changeset.
+ *
+ * Outputs:
+ * - forward-reference-changeset.zip: The changeset file
+ *
+ * UUIDs:
+ * Uses deterministic UUID generation (UUID.nameUUIDFromBytes) so both
+ * generation and import tests use the same UUIDs without needing a shared file.
  */
 @ExtendWith(StarterDataEphemeralProvider.class)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class ForwardReferenceChangeSetIT {
+class ForwardReferenceChangeSetGenerateStep {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ForwardReferenceChangeSetIT.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ForwardReferenceChangeSetGenerateStep.class);
 
-    @TempDir
-    Path tempDir;
+    // Public constants so ForwardReferenceChangeSetIT can reference them
+    public static final File CHANGESET_FILE = createFilePathInTarget.apply("data/generated-forward-reference-changeset.zip");
+    public static final UUID CONCEPT_UUID = UUID.nameUUIDFromBytes("forward-ref-test-concept".getBytes());
+    public static final UUID SEMANTIC_UUID = UUID.nameUUIDFromBytes("forward-ref-test-semantic".getBytes());
 
     private File changesetFile;
     private PublicId newConceptPublicId;
@@ -71,90 +81,27 @@ class ForwardReferenceChangeSetIT {
     private StampEntity testStamp;
 
     @BeforeEach
-    void setUp() {
-        // Just create unique IDs - entities will be created when changeset is generated
-        newConceptPublicId = PublicIds.of(UUID.randomUUID());
-        descriptionSemanticPublicId = PublicIds.of(UUID.randomUUID());
-    }
+    void beforeEach() {
+        changesetFile = CHANGESET_FILE;
+        newConceptPublicId = PublicIds.of(CONCEPT_UUID);
+        descriptionSemanticPublicId = PublicIds.of(SEMANTIC_UUID);
 
-    @AfterEach
-    void tearDown() {
-        if (changesetFile != null && changesetFile.exists()) {
-            changesetFile.delete();
-        }
+        LOG.info("Will generate changeset at: {}", changesetFile.getAbsolutePath());
+        LOG.info("Using concept UUID: {}", CONCEPT_UUID);
+        LOG.info("Using semantic UUID: {}", SEMANTIC_UUID);
     }
 
     /**
-     * Test that 1-pass import fails when encountering a forward reference.
-     * The semantic is written before the concept it references, causing
-     * the transformer to fail when trying to resolve the concept.
-     *
-     * This test runs first to ensure the entities don't exist in the datastore yet.
+     * Generates a changeset file with forward reference.
      */
     @Test
-    @Order(1)
-    @DisplayName("1-pass import should fail with forward reference")
-    void testOnePassImportFailsWithForwardReference() throws IOException {
-        LOG.info("Testing 1-pass import with forward reference - expecting failure");
+    @DisplayName("Generate changeset with forward reference")
+    void testGenerateChangeSetWithForwardReference() throws IOException {
+        LOG.info("Starting changeset generation with forward reference");
+        LOG.info("Concept UUID: {}", CONCEPT_UUID);
+        LOG.info("Semantic UUID: {}", SEMANTIC_UUID);
 
-        // Create the changeset file with forward reference
-        changesetFile = createChangeSetWithForwardReference();
-
-        // Create loader with 1-pass mode (useTwoPassImport = false)
-        LoadEntitiesFromProtobufFile loader = new LoadEntitiesFromProtobufFile(changesetFile, false);
-
-        // Should throw exception when trying to resolve the concept that doesn't exist yet
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            loader.compute();
-        });
-
-        LOG.info("1-pass import failed as expected: {}", exception.getMessage());
-        assertNotNull(exception);
-    }
-
-    /**
-     * Test that multi-pass import succeeds with forward references.
-     * Pass 1: Imports all non-semantics (concept exists)
-     * Pass 2: Imports the semantic that references the now-existing concept
-     *
-     * This test runs second, after the 1-pass test has demonstrated the failure scenario.
-     */
-    @Test
-    @Order(2)
-    @DisplayName("Multi-pass import should succeed with forward reference")
-    void testMultiPassImportSucceedsWithForwardReference() throws IOException {
-        LOG.info("Testing multi-pass import with forward reference - expecting success");
-
-        // Create the changeset file with forward reference
-        changesetFile = createChangeSetWithForwardReference();
-
-        // Create loader with multi-pass mode (default)
-        LoadEntitiesFromProtobufFile loader = new LoadEntitiesFromProtobufFile(changesetFile, true);
-
-        // Should succeed - Pass 1 imports concept, Pass 2 imports semantic
-        var summary = loader.compute();
-
-        LOG.info("Multi-pass import succeeded: {}", summary);
-        assertNotNull(summary);
-
-        // Verify both entities were loaded using EntityHandle
-        ConceptEntity loadedConcept = EntityHandle.get(newConceptPublicId).expectConcept();
-        SemanticEntity loadedSemantic = EntityHandle.get(descriptionSemanticPublicId).expectSemantic();
-
-        assertNotNull(loadedConcept, "New concept should be loaded");
-        assertNotNull(loadedSemantic, "Description semantic should be loaded");
-
-        LOG.info("Successfully loaded concept: {}", loadedConcept);
-        LOG.info("Successfully loaded semantic: {}", loadedSemantic);
-    }
-
-    /**
-     * Creates a protobuf changeset file with a forward reference scenario.
-     * The semantic description is written BEFORE the concept it references,
-     * simulating a forward reference issue.
-     */
-    private File createChangeSetWithForwardReference() throws IOException {
-        // Create a test stamp - now that the datastore is initialized
+        // Create the test stamp
         testStamp = StampRecord.make(
                 UUID.randomUUID(),
                 State.ACTIVE,
@@ -165,8 +112,21 @@ class ForwardReferenceChangeSetIT {
         );
         EntityService.get().putEntity(testStamp);
 
-        File changesetFile = tempDir.resolve("forward-reference-changeset.zip").toFile();
+        // Generate the changeset file
+        createChangeSetWithForwardReference();
 
+        // Verify file was created
+        assertTrue(changesetFile.exists(), "Changeset file should be created");
+
+        LOG.info("Successfully generated changeset: {}", changesetFile.getAbsolutePath());
+    }
+
+    /**
+     * Creates a protobuf changeset file with a forward reference scenario.
+     * The semantic description is written BEFORE the concept it references,
+     * simulating a forward reference issue.
+     */
+    private void createChangeSetWithForwardReference() throws IOException {
         try (FileOutputStream fos = new FileOutputStream(changesetFile);
              ZipOutputStream zos = new ZipOutputStream(fos)) {
 
@@ -179,14 +139,22 @@ class ForwardReferenceChangeSetIT {
 
             EntityToTinkarSchemaTransformer transformer = EntityToTinkarSchemaTransformer.getInstance();
 
-            // FORWARD REFERENCE: Write description semantic BEFORE the concept
+            // Prepare data for writing to changeset
+            ConceptRecord newConcept = createNewConcept();
             SemanticRecord descriptionSemantic = createDescriptionSemantic();
+
+            // Put entities into EntityService so transformer can resolve references
+            // Note: We're putting them in the datastore here, but we'll write them to
+            // the changeset in forward reference order (semantic before concept)
+            EntityService.get().putEntity(newConcept);
+            EntityService.get().putEntity(descriptionSemantic);
+
+            // FORWARD REFERENCE: Write description semantic BEFORE the concept
             TinkarMsg semanticMsg = transformer.transform(descriptionSemantic);
             semanticMsg.writeDelimitedTo(zos);
             LOG.info("Wrote description semantic BEFORE concept (forward reference)");
 
             // Write the new concept AFTER the semantic that references it
-            ConceptRecord newConcept = createNewConcept();
             TinkarMsg conceptMsg = transformer.transform(newConcept);
             conceptMsg.writeDelimitedTo(zos);
             LOG.info("Wrote concept AFTER description semantic");
@@ -195,7 +163,6 @@ class ForwardReferenceChangeSetIT {
         }
 
         LOG.info("Created changeset with forward reference at: {}", changesetFile.getAbsolutePath());
-        return changesetFile;
     }
 
     /**
@@ -223,7 +190,7 @@ class ForwardReferenceChangeSetIT {
         );
 
         // Note: We need to get the NID for the concept that doesn't exist yet
-        // This will be registered in Pass 1 of the 2-pass import
+        // This will be registered in Pass 1 of the multi-pass import
         int conceptNid = EntityService.get().nidForPublicId(newConceptPublicId);
 
         return SemanticRecord.build(
@@ -249,3 +216,4 @@ class ForwardReferenceChangeSetIT {
         zos.closeEntry();
     }
 }
+
