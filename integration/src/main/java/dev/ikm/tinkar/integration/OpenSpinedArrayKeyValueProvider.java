@@ -12,7 +12,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
  * <p>
  * Defaults:
  * - Forces controller {@code TestConstants.OPEN_SPINED_ARRAY_STORE}
- * - Defaults {@code dataPath} to {@code target/spinedarrays} if not specified
+ * - Defaults {@code dataPath} to {@code target/spinedarrays/{TestClassName}} if not specified
  */
 public class OpenSpinedArrayKeyValueProvider extends KeyValueProviderExtension {
 
@@ -22,7 +22,8 @@ public class OpenSpinedArrayKeyValueProvider extends KeyValueProviderExtension {
         // Force OPEN controller; keep any test-level overrides for dataPath/cleanOnStart/importPath
         cfg.controllerName = TestConstants.OPEN_SPINED_ARRAY_STORE;
         if (cfg.dataPath == null || cfg.dataPath.isBlank()) {
-            cfg.dataPath = "target/spinedarrays";
+            String testClassName = context.getRequiredTestClass().getSimpleName();
+            cfg.dataPath = "target/spinedarrays/" + testClassName;
         }
         return cfg;
     }
