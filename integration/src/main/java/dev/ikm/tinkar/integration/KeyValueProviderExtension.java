@@ -202,6 +202,9 @@ public class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCal
                 if (!PrimitiveData.running()) {
                     PrimitiveData.start();
                     LOG.info("{} provider started successfully.", cfg.controllerName);
+                    if (isEphemeralController(cfg.controllerName)) {
+                        Thread.sleep(10000);
+                    }
                 } else {
                     LOG.info("{} provider already running, skipping start", cfg.controllerName);
                 }
