@@ -27,14 +27,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -57,33 +56,69 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * Tests are ordered to ensure the 1-pass test runs first (before entities exist in datastore).
  */
 @ExtendWith(StarterDataEphemeralProvider.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class ForwardReferenceChangeSetIngestStep {
+class ForwardReferenceChangeSetIngestIT {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ForwardReferenceChangeSetIngestStep.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ForwardReferenceChangeSetIngestIT.class);
+    private static final File CHANGESET_LOCK_FILE = ForwardReferenceChangeSetGenerateIT.CHANGESET_LOCK_FILE;
+    private static final long LOCK_FILE_TIMEOUT_MS = 10_000; // 10 seconds timeout
 
-    @TempDir
-    Path tempDir;
-
-    private final File changesetFile = ForwardReferenceChangeSetGenerateStep.CHANGESET_FILE;
+    private final File changesetFile = ForwardReferenceChangeSetGenerateIT.CHANGESET_FILE;
     private PublicId newConceptPublicId;
     private PublicId descriptionSemanticPublicId;
 
     @BeforeEach
     void beforeEach() {
+        waitForGenerationToComplete();
+
         // Load the pre-generated changeset file from test resources
         if (!changesetFile.exists()) {
             throw new IllegalStateException(
-                    "Changeset file not found. Run ForwardReferenceChangeSetGenerateIT first.");
+                    "Changeset file not found. Run ForwardReferenceChangeSetGenerateStep first.");
         }
 
         // Use the same UUIDs that were used in generation test
-        newConceptPublicId = PublicIds.of(ForwardReferenceChangeSetGenerateStep.CONCEPT_UUID);
-        descriptionSemanticPublicId = PublicIds.of(ForwardReferenceChangeSetGenerateStep.SEMANTIC_UUID);
+        newConceptPublicId = PublicIds.of(ForwardReferenceChangeSetGenerateIT.CONCEPT_UUID);
+        descriptionSemanticPublicId = PublicIds.of(ForwardReferenceChangeSetGenerateIT.SEMANTIC_UUID);
 
         LOG.info("Loaded changeset file: {}", changesetFile.getAbsolutePath());
-        LOG.info("Using concept UUID: {}", ForwardReferenceChangeSetGenerateStep.CONCEPT_UUID);
-        LOG.info("Using semantic UUID: {}", ForwardReferenceChangeSetGenerateStep.SEMANTIC_UUID);
+        LOG.info("Using concept UUID: {}", ForwardReferenceChangeSetGenerateIT.CONCEPT_UUID);
+        LOG.info("Using semantic UUID: {}", ForwardReferenceChangeSetGenerateIT.SEMANTIC_UUID);
+    }
+
+    /**
+     * Waits for the lock file to be deleted by ForwardReferenceChangeSetGenerateStep.
+     * This ensures that the generation test has completed before ingest begins.
+     * Will wait up to LOCK_FILE_TIMEOUT_MS milliseconds before proceeding.
+     */
+    private void waitForGenerationToComplete() {
+        if (CHANGESET_LOCK_FILE.exists()) {
+            LOG.info("Lock file exists. Waiting for ForwardReferenceChangeSetGenerateStep to complete...");
+            long startTime = System.currentTimeMillis();
+
+            while (CHANGESET_LOCK_FILE.exists()) {
+                long elapsedTime = System.currentTimeMillis() - startTime;
+                if (elapsedTime > LOCK_FILE_TIMEOUT_MS) {
+                    LOG.error("Timeout waiting for lock file to be deleted after " + LOCK_FILE_TIMEOUT_MS + "ms");
+                    break;
+                }
+
+                try {
+                    Thread.sleep(100); // Check every 100ms
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    LOG.error("Interrupted while waiting for lock file", e);
+                    break;
+                }
+            }
+
+            if (!CHANGESET_LOCK_FILE.exists()) {
+                LOG.info("Lock file deleted. ForwardReferenceChangeSetGenerateStep has completed.");
+            }
+        } else {
+            LOG.info("No lock file found. ForwardReferenceChangeSetGenerateStep may have already completed.");
+        }
     }
 
     /**

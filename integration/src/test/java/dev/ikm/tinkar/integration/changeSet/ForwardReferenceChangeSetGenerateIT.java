@@ -31,6 +31,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,14 +67,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * generation and import tests use the same UUIDs without needing a shared file.
  */
 @ExtendWith(StarterDataEphemeralProvider.class)
-class ForwardReferenceChangeSetGenerateStep {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class ForwardReferenceChangeSetGenerateIT {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ForwardReferenceChangeSetGenerateStep.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ForwardReferenceChangeSetGenerateIT.class);
 
-    // Public constants so ForwardReferenceChangeSetIT can reference them
+    // Public constants so ForwardReferenceChangeSetIngestStep can reference them
     public static final File CHANGESET_FILE = createFilePathInTarget.apply("data/generated-forward-reference-changeset.zip");
     public static final UUID CONCEPT_UUID = UUID.nameUUIDFromBytes("forward-ref-test-concept".getBytes());
     public static final UUID SEMANTIC_UUID = UUID.nameUUIDFromBytes("forward-ref-test-semantic".getBytes());
+    public static final File CHANGESET_LOCK_FILE = createFilePathInTarget.apply("data/generated-forward-reference-changeset.lock");
 
     private File changesetFile;
     private PublicId newConceptPublicId;
@@ -82,6 +85,8 @@ class ForwardReferenceChangeSetGenerateStep {
 
     @BeforeEach
     void beforeEach() {
+        createLockFile();
+
         changesetFile = CHANGESET_FILE;
         newConceptPublicId = PublicIds.of(CONCEPT_UUID);
         descriptionSemanticPublicId = PublicIds.of(SEMANTIC_UUID);
@@ -119,6 +124,37 @@ class ForwardReferenceChangeSetGenerateStep {
         assertTrue(changesetFile.exists(), "Changeset file should be created");
 
         LOG.info("Successfully generated changeset: {}", changesetFile.getAbsolutePath());
+
+        deleteLockFile();
+    }
+
+    /**
+     * Creates a lock file to prevent ForwardReferenceChangeSetIngestStep from starting until generation is complete.
+     */
+    private void createLockFile() {
+        try {
+            CHANGESET_LOCK_FILE.getParentFile().mkdirs(); // Ensure parent directory exists
+            if (!CHANGESET_LOCK_FILE.createNewFile() && !CHANGESET_LOCK_FILE.exists()) {
+                LOG.warn("Could not create lock file: " + CHANGESET_LOCK_FILE.getAbsolutePath());
+            } else {
+                LOG.info("Created lock file: " + CHANGESET_LOCK_FILE.getAbsolutePath());
+            }
+        } catch (IOException e) {
+            LOG.error("Failed to create lock file", e);
+        }
+    }
+
+    /**
+     * Deletes the lock file to signal that changeset generation is complete.
+     */
+    private void deleteLockFile() {
+        if (CHANGESET_LOCK_FILE.exists()) {
+            if (CHANGESET_LOCK_FILE.delete()) {
+                LOG.info("Deleted lock file: " + CHANGESET_LOCK_FILE.getAbsolutePath());
+            } else {
+                LOG.warn("Failed to delete lock file: " + CHANGESET_LOCK_FILE.getAbsolutePath());
+            }
+        }
     }
 
     /**
