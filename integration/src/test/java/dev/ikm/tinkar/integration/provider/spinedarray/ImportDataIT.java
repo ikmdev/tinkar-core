@@ -59,9 +59,13 @@ class ImportDataIT {
     private static final Logger LOG = LoggerFactory.getLogger(ImportDataIT.class);
     private static final File DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
             ImportDataIT.class);
+    private static final File EXPORT_LOCK_FILE = ExportDataIT.EXPORT_LOCK_FILE;
+    private static final long LOCK_FILE_TIMEOUT_MS = 10_000; // 10 seconds timeout
 
     @BeforeAll
     static void beforeAll() {
+        waitForExportToComplete();
+
         FileUtil.recursiveDelete(DATASTORE_ROOT);
         TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
 
@@ -81,6 +85,40 @@ class ImportDataIT {
     @AfterAll
     static void afterAll() {
         TestHelper.stopDatabase();
+    }
+
+    /**
+     * Waits for the lock file to be deleted by ExportDataIT.
+     * This ensures that the export test has completed before import begins.
+     * Will wait up to LOCK_FILE_TIMEOUT_MS milliseconds before proceeding.
+     */
+    private static void waitForExportToComplete() {
+        if (EXPORT_LOCK_FILE.exists()) {
+            LOG.info("Lock file exists. Waiting for ExportDataIT to complete...");
+            long startTime = System.currentTimeMillis();
+
+            while (EXPORT_LOCK_FILE.exists()) {
+                long elapsedTime = System.currentTimeMillis() - startTime;
+                if (elapsedTime > LOCK_FILE_TIMEOUT_MS) {
+                    LOG.error("Timeout waiting for lock file to be deleted after " + LOCK_FILE_TIMEOUT_MS + "ms");
+                    break;
+                }
+
+                try {
+                    Thread.sleep(100); // Check every 100ms
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    LOG.error("Interrupted while waiting for lock file", e);
+                    break;
+                }
+            }
+
+            if (!EXPORT_LOCK_FILE.exists()) {
+                LOG.info("Lock file deleted. ExportDataIT has completed.");
+            }
+        } else {
+            LOG.info("No lock file found. ExportDataIT may have already completed.");
+        }
     }
 
     @Test

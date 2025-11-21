@@ -57,9 +57,12 @@ class ExportDataIT {
     private static final Logger LOG = LoggerFactory.getLogger(ExportDataIT.class);
     private static final File DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
             ExportDataIT.class);
+    public static final File EXPORT_LOCK_FILE = new File(DATASTORE_ROOT, "export.lock");
 
     @BeforeAll
     static void beforeAll() {
+        createLockFile();
+
         FileUtil.recursiveDelete(DATASTORE_ROOT);
         TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
         File file = TestConstants.PB_EXAMPLE_DATA_REASONED;
@@ -72,6 +75,36 @@ class ExportDataIT {
     @AfterAll
     static void afterAll() {
         TestHelper.stopDatabase();
+        deleteLockFile();
+    }
+
+    /**
+     * Creates a lock file to prevent ImportDataIT from starting until export is complete.
+     */
+    private static void createLockFile() {
+        try {
+            EXPORT_LOCK_FILE.getParentFile().mkdirs(); // Ensure parent directory exists
+            if (!EXPORT_LOCK_FILE.createNewFile() && !EXPORT_LOCK_FILE.exists()) {
+                LOG.warn("Could not create lock file: " + EXPORT_LOCK_FILE.getAbsolutePath());
+            } else {
+                LOG.info("Created lock file: " + EXPORT_LOCK_FILE.getAbsolutePath());
+            }
+        } catch (IOException e) {
+            LOG.error("Failed to create lock file", e);
+        }
+    }
+
+    /**
+     * Deletes the lock file to signal that export is complete.
+     */
+    private static void deleteLockFile() {
+        if (EXPORT_LOCK_FILE.exists()) {
+            if (EXPORT_LOCK_FILE.delete()) {
+                LOG.info("Deleted lock file: " + EXPORT_LOCK_FILE.getAbsolutePath());
+            } else {
+                LOG.warn("Failed to delete lock file: " + EXPORT_LOCK_FILE.getAbsolutePath());
+            }
+        }
     }
 
     @Test
