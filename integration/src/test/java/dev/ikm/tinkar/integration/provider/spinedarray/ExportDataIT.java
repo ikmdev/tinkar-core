@@ -55,8 +55,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 class ExportDataIT {
     private static final Logger LOG = LoggerFactory.getLogger(ExportDataIT.class);
-    private static final File DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
-            ExportDataIT.class);
+    private static final File DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(ExportDataIT.class);
     public static final File EXPORT_LOCK_FILE = new File(DATASTORE_ROOT, "export.lock");
 
     @BeforeAll

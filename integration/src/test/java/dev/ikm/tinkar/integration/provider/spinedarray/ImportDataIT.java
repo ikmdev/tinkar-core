@@ -92,6 +92,11 @@ class ImportDataIT {
      * Will wait up to LOCK_FILE_TIMEOUT_MS milliseconds before proceeding.
      */
     private static void waitForExportToComplete() {
+        try {
+            Thread.sleep(500); // Small delay to ensure file system stability
+        } catch (InterruptedException e) {
+            LOG.warn("Interrupted while waiting for lock file", e);
+        }
         if (EXPORT_LOCK_FILE.exists()) {
             LOG.info("Lock file exists. Waiting for ExportDataIT to complete...");
             long startTime = System.currentTimeMillis();
