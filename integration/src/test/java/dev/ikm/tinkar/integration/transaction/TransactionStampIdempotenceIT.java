@@ -23,14 +23,21 @@ import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.integration.StarterDataEphemeralProvider;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 /**
  * Integration tests for Transaction stamp creation idempotence.
@@ -39,6 +46,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * canonical ObservableStamp instances and preventing duplicate versions.
  */
 @ExtendWith(StarterDataEphemeralProvider.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class TransactionStampIdempotenceIT {
 
