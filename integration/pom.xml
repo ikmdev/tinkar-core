@@ -218,7 +218,7 @@
             <id>internal-integration-test-data</id>
             <activation>
                 <property>
-                    <name>!stageOSSRH</name>
+                    <name>!stageMavenCentralRepository</name>
                 </property>
             </activation>
             <build>
