@@ -81,10 +81,17 @@ class ForwardReferenceChangeSetIngestIT {
         // Use the same UUIDs that were used in generation test
         newConceptPublicId = PublicIds.of(ForwardReferenceChangeSetGenerateIT.CONCEPT_UUID);
         descriptionSemanticPublicId = PublicIds.of(ForwardReferenceChangeSetGenerateIT.SEMANTIC_UUID);
-
-        LOG.info("Loaded changeset file: {}", changesetFile.getAbsolutePath());
         LOG.info("Using concept UUID: {}", ForwardReferenceChangeSetGenerateIT.CONCEPT_UUID);
         LOG.info("Using semantic UUID: {}", ForwardReferenceChangeSetGenerateIT.SEMANTIC_UUID);
+
+        LOG.info("Finding changeset file: {}", changesetFile.getAbsolutePath());
+        waitForGenerationToComplete();
+
+        // Load the pre-generated changeset file from test resources
+        if (!changesetFile.exists()) {
+            throw new IllegalStateException(
+                    "Changeset file not found. Run ForwardReferenceChangeSetGenerateStep first.");
+        }
     }
 
     /**
@@ -93,6 +100,11 @@ class ForwardReferenceChangeSetIngestIT {
      * Will wait up to LOCK_FILE_TIMEOUT_MS milliseconds before proceeding.
      */
     private void waitForGenerationToComplete() {
+        try {
+            Thread.sleep(500); // Small delay to ensure file system stability
+        } catch (InterruptedException e) {
+            LOG.warn("Interrupted while waiting for lock file", e);
+        }
         if (CHANGESET_LOCK_FILE.exists()) {
             LOG.info("Lock file exists. Waiting for ForwardReferenceChangeSetGenerateStep to complete...");
             long startTime = System.currentTimeMillis();
