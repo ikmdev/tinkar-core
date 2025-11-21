@@ -64,8 +64,6 @@ class ImportDataIT {
 
     @BeforeAll
     static void beforeAll() {
-        waitForExportToComplete();
-
         FileUtil.recursiveDelete(DATASTORE_ROOT);
         TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
 
@@ -76,6 +74,7 @@ class ImportDataIT {
         LOG.info(count + " entitles loaded from file: " + loadProto.summarize() + "\n\n");
 
         // Load the exported pb file from the ExportDataIT test
+        waitForExportToComplete();
         File fileProtobuf = TestConstants.PB_TEST_FILE;
         loadProto = new LoadEntitiesFromProtobufFile(fileProtobuf);
         count = loadProto.compute();
