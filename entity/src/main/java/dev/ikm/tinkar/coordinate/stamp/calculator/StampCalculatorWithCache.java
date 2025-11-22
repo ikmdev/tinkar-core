@@ -68,18 +68,7 @@ import dev.ikm.tinkar.coordinate.stamp.StampPathImmutable;
 import dev.ikm.tinkar.coordinate.stamp.StampPosition;
 import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
-import dev.ikm.tinkar.entity.CacheInvalidationSubscriber;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityFactory;
-import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.entity.EntityVersion;
-import dev.ikm.tinkar.entity.Field;
-import dev.ikm.tinkar.entity.FieldDefinitionRecord;
-import dev.ikm.tinkar.entity.FieldRecord;
-import dev.ikm.tinkar.entity.PatternEntityVersion;
-import dev.ikm.tinkar.entity.SemanticEntity;
-import dev.ikm.tinkar.entity.SemanticEntityVersion;
-import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.graph.DiTreeVersion;
 import dev.ikm.tinkar.entity.graph.VersionVertex;
 import dev.ikm.tinkar.terms.State;
@@ -301,6 +290,15 @@ public class StampCalculatorWithCache implements StampCalculator {
         return (Latest<V>) latestCache.get(nid, latestNid -> this.latest(Entity.getFast(latestNid)));
     }
 
+    @Override
+    public <V extends EntityVersion> Latest<V> latestNoCache(int nid) {
+        EntityHandle entityHandle = EntityHandle.get(nid);
+        if (entityHandle.isPresent()) {
+            return (Latest<V>) this.latest(entityHandle.expectEntity());
+        }
+        return Latest.empty();
+    }
+
     public <V extends EntityVersion> List<DiTreeVersion<V>> getVersionGraphList(Entity<V> chronicle) {
         return getVersionGraphList(chronicle.versions());
     }
@@ -371,29 +369,24 @@ public class StampCalculatorWithCache implements StampCalculator {
 
     @Override
     public void forEachSemanticVersionOfPattern(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
-        Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
+        Latest<PatternEntityVersion> latestPatternVersion = this.latestNoCache(patternNid);
         latestPatternVersion.ifPresent(patternEntityVersion -> PrimitiveData.get().forEachSemanticNidOfPattern(patternNid, semanticNid -> {
-            Latest<SemanticEntityVersion> latestSemanticVersion = this.latestIfPattern(semanticNid, patternNid);
+            Latest<SemanticEntityVersion> latestSemanticVersion = this.latestIfSemanticOfPattern(semanticNid, patternNid);
             latestSemanticVersion.ifPresent(semanticEntityVersion -> procedure.accept(semanticEntityVersion, patternEntityVersion));
         }));
     }
 
     @Override
     public void forEachSemanticVersionOfPatternParallel(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
-        Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
+        Latest<PatternEntityVersion> latestPatternVersion = this.latestNoCache(patternNid);
         latestPatternVersion.ifPresent(patternEntityVersion -> {
             int[] semanticNidsOfPattern = PrimitiveData.get().semanticNidsOfPattern(patternNid);
             PrimitiveData.get().forEachParallel(IntLists.immutable.of(semanticNidsOfPattern), (byte[] bytes, int nid) -> {
-
-                Latest<? extends EntityVersion> latestSemanticVersion =
-                        latestCache.get(nid, integer -> {
-                            if (bytes == null) {
-                                return Latest.empty();
-                            }
-                            Entity<EntityVersion> semanticRecord = EntityFactory.make(bytes);
-                            return latest(semanticRecord);
-                        });
-                latestSemanticVersion.ifPresent(semanticVersion -> procedure.accept((SemanticEntityVersion) semanticVersion, patternEntityVersion));
+                if (bytes != null) {
+                    Entity<EntityVersion> semanticRecord = EntityFactory.make(bytes);
+                    Latest<EntityVersion> latestSemanticVersion = latest(semanticRecord);
+                    latestSemanticVersion.ifPresent(semanticVersion -> procedure.accept((SemanticEntityVersion) semanticVersion, patternEntityVersion));
+                }
             });
         });
     }
@@ -1061,12 +1054,13 @@ public class StampCalculatorWithCache implements StampCalculator {
         return getResults(stampsForPosition);
     }
 
-    public <V extends EntityVersion> Latest<V> latestIfPattern(int nid, int patternNid) {
+    private <V extends EntityVersion> Latest<V> latestIfSemanticOfPattern(int nid, int patternNid) {
 
-        Entity entity = EntityService.get().getEntityFast(nid);
-        if (entity instanceof SemanticEntity semanticEntity) {
-            if (semanticEntity.patternNid() == patternNid) {
-                return (Latest<V>) latestCache.get(nid, latestNid -> this.latest(Entity.getFast(latestNid)));
+        EntityHandle handle = EntityHandle.get(nid);
+        if (handle.isPresent() && handle.isSemantic()) {
+            var semantic = handle.expectSemantic();
+            if (semantic.patternNid() == patternNid) {
+                return latest(semantic);
             }
         }
         return Latest.empty();

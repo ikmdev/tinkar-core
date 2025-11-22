@@ -339,11 +339,14 @@ public interface EntityHandle {
      * @return an EntityHandle representing the entity, or an empty EntityHandle if absent.
       */
     static EntityHandle get(int nid) {
+        if (nid == Integer.MIN_VALUE || nid == Integer.MAX_VALUE || nid == 0) {
+            return absent();
+        }
         Entity entity = Entity.packagePrivateGetFast(nid);
         if (entity != null) {
             return of(entity);
         }
-        return AbsentHandle.INSTANCE;
+        return absent();
     }
 
     /**
@@ -355,6 +358,9 @@ public interface EntityHandle {
      * @return an EntityHandle representing the entity, or an empty EntityHandle if absent.
      */
     static EntityHandle get(PublicId publicId) {
+        if (publicId == null) {
+            return absent();
+        }
         return get(Entity.nid(publicId));
     }
 
@@ -367,6 +373,9 @@ public interface EntityHandle {
      * @return an EntityHandle representing the entity, or an empty EntityHandle if absent.
      */
     static EntityHandle get(EntityFacade entityFacade) {
+        if (entityFacade == null) {
+            return absent();
+        }
         return get(entityFacade.nid());
     }
 

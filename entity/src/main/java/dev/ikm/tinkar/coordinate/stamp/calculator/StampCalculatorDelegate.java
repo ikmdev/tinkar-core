@@ -44,6 +44,11 @@ public interface StampCalculatorDelegate extends StampCalculator {
     }
 
     @Override
+    default <V extends EntityVersion> Latest<V> latestNoCache(int nid) {
+        return stampCalculator().latestNoCache(nid);
+    }
+
+    @Override
     default <V extends EntityVersion> List<DiTreeVersion<V>> getVersionGraphList(Entity<V> chronicle) {
         return stampCalculator().getVersionGraphList(chronicle);
     }

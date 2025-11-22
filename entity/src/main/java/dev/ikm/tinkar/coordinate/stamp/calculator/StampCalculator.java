@@ -152,7 +152,34 @@ public interface StampCalculator {
         return false;
     }
 
+
+    /**
+     * Calculates the latest version of the component identified by the nid, potentially caching
+     * the result.
+     * <p>
+     * This method is optimal for random access or repeated access to the same components
+     * (e.g. UI rendering, specific logic checks) where the working set fits within the cache.
+     *
+     * @param nid the nid of the component to calculate the latest version for
+     * @param <V> the type of EntityVersion
+     * @return the calculated latest version
+     */
     <V extends EntityVersion> Latest<V> latest(int nid);
+
+    /**
+     * Calculates the latest version of the component identified by the nid without caching the result.
+     * <p>
+     * This method should be used for large iterations (e.g. processing all concepts, all inferred semantics,
+     * all stated semantics, or navigation semantics) where the number of components exceeds the cache size.
+     * <p>
+     * In such large iteration scenarios, using the cache causes high eviction rates ("thrashing") and
+     * synchronization overhead with no benefit, as entries are unlikely to be reused before evection.
+     *
+     * @param nid the nid of the component to calculate the latest version for
+     * @param <V> the type of EntityVersion
+     * @return the calculated latest version
+     */
+    <V extends EntityVersion> Latest<V> latestNoCache(int nid);
 
     <V extends EntityVersion> List<DiTreeVersion<V>> getVersionGraphList(Entity<V> chronicle);
 
