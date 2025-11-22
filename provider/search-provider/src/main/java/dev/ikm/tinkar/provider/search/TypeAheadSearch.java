@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class TypeAheadSearch {
@@ -63,7 +63,8 @@ public class TypeAheadSearch {
     }
 
     public Future<Void> buildSuggester() throws IOException {
-        return TinkExecutor.threadPool().submit(new BuildSuggester());
+        return CompletableFuture.completedFuture(null);
+        // TinkExecutor.threadPool().submit(new BuildSuggester());
     }
 
     public void close() {

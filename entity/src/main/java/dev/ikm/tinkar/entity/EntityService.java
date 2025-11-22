@@ -46,6 +46,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
+import static dev.ikm.tinkar.entity.Entity.LOG;
 
 public interface EntityService extends ChronologyService, Broadcaster<Integer> {
     static EntityService get() {
@@ -330,6 +331,73 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
             return Optional.empty();
         }
         return Optional.of(entity);
+    }
+
+    /**
+     * Iterates through all stamp entities in the system and applies the given consumer function to each stamp entity.
+     * The method retrieves all stamp NIDs, resolves them to their respective entities, and processes them if they
+     * are instances of {@code StampEntity}. Any unexpected entity types are logged as errors.
+     *
+     * @param consumer a {@code Consumer} that processes each {@code StampEntity} encountered during the iteration.
+     *                 The consumer is invoked for each valid {@code StampEntity} found.
+     */
+    default void forEachStampEntity(Consumer<StampEntity<StampEntityVersion>> consumer) {
+        PrimitiveData.get().forEachStampNid(nid -> {
+            EntityHandle.get(nid).ifPresent(entity -> {
+                switch (entity) {
+                    case StampEntity stampEntity -> consumer.accept(stampEntity);
+                    case ConceptEntity conceptEntity -> LOG.error("Unexpected concept entity in stamp iteration: {}", conceptEntity);
+                    case PatternEntity patternEntity -> LOG.error("Unexpected pattern entity in stamp iteration: {}", patternEntity);
+                    case SemanticEntity semanticEntity -> LOG.error("Unexpected semantic entity in stamp iteration: {}", semanticEntity);
+                    default -> throw new IllegalStateException("Unexpected value: " + entity);
+                }
+            });
+        });
+    }
+
+    /**
+     * Iterates over all concept entities and applies the given consumer to each entity.
+     * This method retrieves all concept entity identifiers, resolves them to entity objects,
+     * and applies the specified processing logic via the provided {@code Consumer}.
+     * Non-concept entities are logged as unexpected occurrences.
+     *
+     * @param consumer the consumer to process each {@code ConceptEntity}. The consumer will
+     *                 receive each resolved concept entity during the iteration.
+     */
+    default void forEachConceptEntity(Consumer<ConceptEntity<ConceptEntityVersion>> consumer) {
+        PrimitiveData.get().forEachConceptNid(nid -> {
+            EntityHandle.get(nid).ifPresent(entity -> {
+                switch (entity) {
+                    case ConceptEntity conceptEntity -> consumer.accept(conceptEntity);
+                    case StampEntity stampEntity -> LOG.error("Unexpected stamp entity in concept iteration: {}", stampEntity);
+                    case PatternEntity patternEntity -> LOG.error("Unexpected pattern entity in concept iteration: {}", patternEntity);
+                    case SemanticEntity semanticEntity -> LOG.error("Unexpected semantic entity in concept iteration: {}", semanticEntity);
+                    default -> throw new IllegalStateException("Unexpected value: " + entity);
+                }
+            });
+        });
+    }
+
+    /**
+     * Iterates over all pattern entities and applies the specified {@code consumer} function to each one.
+     * This method retrieves pattern entities using their pattern NIDs and processes them if they are of the
+     * correct entity type. It logs errors for unexpected entity types encountered during iteration.
+     *
+     * @param consumer a {@link Consumer} functional interface to process each {@link PatternEntity}
+     *                 with its associated {@link PatternEntityVersion}
+     */
+    default void forEachPatternEntity(Consumer<PatternEntity<PatternEntityVersion>> consumer) {
+        PrimitiveData.get().forEachPatternNid(nid -> {
+            EntityHandle.get(nid).ifPresent(entity -> {
+                switch (entity) {
+                    case PatternEntity patternEntity -> consumer.accept(patternEntity);
+                    case StampEntity stampEntity -> LOG.error("Unexpected stamp entity in pattern iteration: {}", stampEntity);
+                    case ConceptEntity conceptEntity -> LOG.error("Unexpected concept entity in pattern iteration: {}", conceptEntity);
+                    case SemanticEntity semanticEntity -> LOG.error("Unexpected semantic entity in pattern iteration: {}", semanticEntity);
+                    default -> throw new IllegalStateException("Unexpected value: " + entity);
+                }
+            });
+        });
     }
 
     default Optional<StampEntity<StampEntityVersion>> getStamp(ImmutableList<UUID> uuidList) {

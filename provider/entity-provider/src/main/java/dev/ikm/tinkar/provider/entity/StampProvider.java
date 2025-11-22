@@ -1,3 +1,4 @@
+
 /*
  * Copyright © 2015 Integrated Knowledge Management (support@ikm.dev)
  *
@@ -19,12 +20,7 @@ import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.broadcast.Subscriber;
-import dev.ikm.tinkar.component.FieldDataType;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityRecordFactory;
-import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.entity.StampEntity;
-import dev.ikm.tinkar.entity.StampService;
+import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.util.EntityProcessor;
 import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 import org.eclipse.collections.impl.factory.primitive.LongLists;
@@ -50,75 +46,97 @@ import java.util.concurrent.ConcurrentSkipListSet;
  * at java.base/jdk.internal.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
  */
 
-public class StampProvider extends EntityProcessor implements StampService, Subscriber<Integer> {
+public class StampProvider extends EntityProcessor<StampEntity<StampEntityVersion>, StampEntityVersion>
+        implements StampService, Subscriber<Integer> {
     private static final Logger LOG = LoggerFactory.getLogger(StampProvider.class);
 
+    //TODO: Revisit these field type choices...
     final ConcurrentHashMap<Integer, StampEntity> stamps = new ConcurrentHashMap<>();
     final ConcurrentSkipListSet<Long> times = new ConcurrentSkipListSet<>();
     final ConcurrentSkipListSet<Integer> authors = new ConcurrentSkipListSet<>();
     final ConcurrentSkipListSet<Integer> modules = new ConcurrentSkipListSet<>();
     final ConcurrentSkipListSet<Integer> paths = new ConcurrentSkipListSet<>();
     final ConcurrentSkipListSet<Integer> stampNids = new ConcurrentSkipListSet<>();
+    
+    private volatile boolean initialized = false;
+    private volatile boolean subscribed = false;
 
     public StampProvider() {
-        EntityService.get().addSubscriberWithWeakReference(this);
-        PrimitiveData.get().forEachParallel(this);
+        // Empty constructor - ServiceLoader requirement
     }
 
-    @Override
-    public void processBytesForType(FieldDataType componentType, byte[] bytes) {
-        if (componentType == FieldDataType.STAMP) {
-            StampEntity stampEntity = EntityRecordFactory.make(bytes);
-            stamps.put(stampEntity.nid(), stampEntity);
-            times.add(stampEntity.time());
-            authors.add(stampEntity.authorNid());
-            modules.add(stampEntity.moduleNid());
-            paths.add(stampEntity.pathNid());
-            stampNids.add(stampEntity.nid());
+    private void ensureInitialized() {
+        if (!initialized) {
+            synchronized (this) {
+                if (!initialized) {
+                    // Only subscribe once per instance
+                    if (!subscribed) {
+                        try {
+                            EntityService.get().addSubscriberWithWeakReference(this);
+                            subscribed = true;
+                        } catch (IllegalStateException e) {
+                            // Already subscribed - this is fine
+                            LOG.debug("Subscriber already registered: {}", this, e);
+                            subscribed = true;
+                        }
+                    }
+                    EntityService.get().forEachStampEntity(this);
+                    initialized = true;
+                }
+            }
         }
     }
 
+    @Override
+    protected void process(StampEntity<StampEntityVersion> stampEntity) {
+        stamps.put(stampEntity.nid(), stampEntity);
+        times.add(stampEntity.time());
+        authors.add(stampEntity.authorNid());
+        modules.add(stampEntity.moduleNid());
+        paths.add(stampEntity.pathNid());
+        stampNids.add(stampEntity.nid());
+    }
+
     public IntIdSet stampNids() {
+        ensureInitialized();
         return IntIds.set.of(stampNids.stream().mapToInt(wrappedPath -> (int) wrappedPath).toArray());
     }
 
     public ImmutableLongList timesInUse() {
+        ensureInitialized();
         return LongLists.immutable.of(times.stream().mapToLong(wrappedTime -> wrappedTime.longValue()).toArray());
     }
 
     @Override
     public IntIdSet getAuthorNidsInUse() {
+        ensureInitialized();
         return IntIds.set.of(authors, nid -> nid);
     }
 
     @Override
     public IntIdSet getModuleNidsInUse() {
+        ensureInitialized();
         return IntIds.set.of(modules, nid -> nid);
     }
 
     @Override
     public IntIdSet getPathNidsInUse() {
+        ensureInitialized();
         return IntIds.set.of(paths, nid -> nid);
     }
 
     @Override
     public ImmutableLongList getTimesInUse() {
+        ensureInitialized();
         return LongLists.immutable.ofAll(times);
     }
 
     @Override
     public void onNext(Integer nid) {
-        if ( nid == Integer.MIN_VALUE ) {
+        ensureInitialized();
+        if (nid == Integer.MIN_VALUE) {
             return;
         }
-        Entity entity = Entity.provider().getEntityFast(nid);
-        if (entity instanceof StampEntity stampEntity) {
-            stamps.put(stampEntity.nid(), stampEntity);
-            times.add(stampEntity.time());
-            authors.add(stampEntity.authorNid());
-            modules.add(stampEntity.moduleNid());
-            paths.add(stampEntity.pathNid());
-            stampNids.add(stampEntity.nid());
-        }
+        EntityHandle.get(nid).ifStamp(this::process);
     }
 }
