@@ -109,7 +109,6 @@ public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestB
 		ReasonerService rs = new IntervalReasonerService();
 		rs.init(getViewCalculator(), TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
 				TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
-		rs.setProgressUpdater(null);
 		return rs;
 	}
 

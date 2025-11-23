@@ -261,6 +261,39 @@ public class PrimitiveData {
         return get().nidForUuids(uuids);
     }
 
+
+    /**
+     * Calculate optimal chunk size for RocksDB iteration with parallel processing
+     *
+     * @param totalItems Total number of items to process
+     * @return Optimal chunk size balancing parallelism and iterator overhead
+     */
+    public static int calculateOptimalChunkSize(int totalItems) {
+        int numCores = Runtime.getRuntime().availableProcessors();
+
+        // Target: 3-4x more chunks than cores for work stealing
+        int targetChunks = numCores * 4;
+
+        // Minimum chunk size to amortize RocksDB iterator overhead
+        int minChunkSize;
+        if (totalItems < 10_000) {
+            minChunkSize = 1_000;      // Small datasets: reduce overhead tolerance
+        } else if (totalItems < 100_000) {
+            minChunkSize = 5_000;      // Medium datasets
+        } else {
+            minChunkSize = 25_000;     // Large datasets: prioritize amortizing overhead
+        }
+
+        // Maximum chunk size to ensure parallelism
+        int maxChunkSize = 100_000;
+
+        // Calculate chunk size
+        int chunkSize = Math.max(minChunkSize, totalItems / targetChunks);
+        chunkSize = Math.min(maxChunkSize, chunkSize);
+
+        // Ensure at least 1 chunk
+        return Math.max(1, chunkSize);
+    }
     public static class CacheProvider implements CachingService {
 
         @Override

@@ -68,7 +68,6 @@ public class ReasonerIT {
             LOG.info("Reasoner service: " + rs);
 
             rs.init(Calculators.View.Default(), TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
-            rs.setProgressUpdater(null);
             // Extract
             rs.extractData();
             // Load
@@ -76,7 +75,7 @@ public class ReasonerIT {
             // Compute
             rs.computeInferences();
             // Process Results
-            ClassifierResults results = rs.processResults(null, false);
+            ClassifierResults results = rs.processResults(false, null);
 
             LOG.info("After Size of ConceptSet: " + rs.getReasonerConceptSet().size());
             LOG.info("ClassifierResults: inferred changes size " + results.getConceptsWithInferredChanges().size());

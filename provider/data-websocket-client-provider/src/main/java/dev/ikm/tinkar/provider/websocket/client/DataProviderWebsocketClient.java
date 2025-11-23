@@ -173,6 +173,11 @@ public class DataProviderWebsocketClient
     }
 
     @Override
+    public void forEach(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public byte[] getBytes(int nid) {
 
         ByteBuf buf = ByteBufPool.allocate(32);

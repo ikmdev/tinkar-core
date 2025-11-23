@@ -137,7 +137,6 @@ public abstract class ElkSnomedTestBase extends SnomedTestBase {
 		ReasonerService rs = getElkSnomedReasonerService();
 		rs.init(getViewCalculator(), TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
 				TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
-		rs.setProgressUpdater(null);
 		return rs;
 	}
 

@@ -18,6 +18,7 @@ package dev.ikm.tinkar.reasoner.elksnomed;
 import java.util.List;
 import java.util.Set;
 
+import dev.ikm.tinkar.common.service.TrackingCallable;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
@@ -69,24 +70,23 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	}
 
 	@Override
-	public void extractData() throws Exception {
+	public void extractData(TrackingCallable<?> progressTracker) throws Exception {
 		data = new ElkSnomedData();
 		builder = new ElkSnomedDataBuilder(viewCalculator, statedAxiomPattern, data);
-		builder.setProgressUpdater(progressUpdater);
+		builder.setProgressUpdater(progressTracker);
 		builder.build();
 	};
 
 	@Override
-	public void loadData() throws Exception {
-		progressUpdater.updateProgress(0, data.getActiveConceptCount());
+	public void loadData(TrackingCallable<?> progressTracker) throws Exception {
 		LOG.info("Create ontology");
 		ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(), List.of());
 		LOG.info("Create reasoner");
 		reasoner = SnomedOntologyReasoner.create(ontology);
-	};
+	}
 
 	@Override
-	public void computeInferences() {
+	public void computeInferences(TrackingCallable<?> progressTracker) {
 		// Already done in SnomedOntologyReasoner.create
 	}
 
@@ -96,17 +96,22 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	}
 
 	@Override
-	public void processIncremental(DiTreeEntity definition, int conceptNid) {
+	public void processIncremental(DiTreeEntity definition, int conceptNid, TrackingCallable<?> progressUpdater) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void processIncremental(SemanticEntityVersion update) {
-		processIncremental(List.of(), List.of(update));
+	public void processIncremental(SemanticEntityVersion update, TrackingCallable<?> progressUpdater) {
+		processIncremental(List.of(), List.of(update), new TrackingCallable<Object>() {
+			@Override
+			protected Object compute() throws Exception {
+				return null;
+			}
+		});
 	}
 
 	@Override
-	public void processIncremental(List<Integer> deletes, List<SemanticEntityVersion> updates) {
+	public void processIncremental(List<Integer> deletes, List<SemanticEntityVersion> updates, TrackingCallable<?> progressUpdater) {
 		for (int delete : deletes) {
 			Concept concept = builder.processDelete(delete);
 			if (concept != null) {
@@ -130,7 +135,7 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	}
 
 	@Override
-	public void buildNecessaryNormalForm() {
+	public void buildNecessaryNormalForm(TrackingCallable<?> progressUpdater) {
 		nnfb = NecessaryNormalFormBuilder.create(ontology, reasoner.getSuperConcepts(),
 				reasoner.getSuperRoleTypes(false), TinkarTerm.ROOT_VERTEX.nid());
 		nnfb.generate();

@@ -225,7 +225,7 @@ public class StampCalculatorWithCache implements StampCalculator {
         }
 
         throw new IllegalStateException("No path for: " + stampPathNid + " " +
-                EntityService.get().getEntityFast(stampPathNid));
+                EntityHandle.get(stampPathNid).entity());
     }
 
     private static Optional<StampPathImmutable> constructFromSemantics(int stampPathNid) {
@@ -263,7 +263,7 @@ public class StampCalculatorWithCache implements StampCalculator {
         while (!stack.isEmpty()) {
             int currModuleNid = stack.pop();
             if (modulesInPriorityOrder.contains(currModuleNid)) {
-                LOG.warn("Found Module_Origin cycle containing module: {}", EntityService.get().getEntityFast(currModuleNid).entityToString());
+                LOG.warn("Found Module_Origin cycle containing module: {}", EntityHandle.get(currModuleNid).expectEntity().entityToString());
                 continue;
             }
             modulesInPriorityOrder.add(currModuleNid);
@@ -287,7 +287,12 @@ public class StampCalculatorWithCache implements StampCalculator {
 
     @Override
     public <V extends EntityVersion> Latest<V> latest(int nid) {
-        return (Latest<V>) latestCache.get(nid, latestNid -> this.latest(Entity.getFast(latestNid)));
+        EntityHandle entityHandle = EntityHandle.get(nid);
+        if (entityHandle.isPresent()) {
+            return (Latest<V>) latestCache.get(nid, latestNid ->
+                     this.latest((Entity<EntityVersion>) entityHandle.expectEntity()));
+        }
+        return Latest.empty();
     }
 
     @Override
@@ -369,7 +374,7 @@ public class StampCalculatorWithCache implements StampCalculator {
 
     @Override
     public void forEachSemanticVersionOfPattern(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
-        Latest<PatternEntityVersion> latestPatternVersion = this.latestNoCache(patternNid);
+        Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
         latestPatternVersion.ifPresent(patternEntityVersion -> PrimitiveData.get().forEachSemanticNidOfPattern(patternNid, semanticNid -> {
             Latest<SemanticEntityVersion> latestSemanticVersion = this.latestIfSemanticOfPattern(semanticNid, patternNid);
             latestSemanticVersion.ifPresent(semanticEntityVersion -> procedure.accept(semanticEntityVersion, patternEntityVersion));
@@ -378,18 +383,38 @@ public class StampCalculatorWithCache implements StampCalculator {
 
     @Override
     public void forEachSemanticVersionOfPatternParallel(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
-        Latest<PatternEntityVersion> latestPatternVersion = this.latestNoCache(patternNid);
+        // latest() when providing a nid does use the cache. It's ok to get the pattern from the cache, not the individual entities
+        Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
         latestPatternVersion.ifPresent(patternEntityVersion -> {
             int[] semanticNidsOfPattern = PrimitiveData.get().semanticNidsOfPattern(patternNid);
             PrimitiveData.get().forEachParallel(IntLists.immutable.of(semanticNidsOfPattern), (byte[] bytes, int nid) -> {
                 if (bytes != null) {
                     Entity<EntityVersion> semanticRecord = EntityFactory.make(bytes);
+                    // latest() when providing an entity does not use the cache.
                     Latest<EntityVersion> latestSemanticVersion = latest(semanticRecord);
                     latestSemanticVersion.ifPresent(semanticVersion -> procedure.accept((SemanticEntityVersion) semanticVersion, patternEntityVersion));
                 }
             });
         });
     }
+
+    @Override
+    public void forEachSemanticVersionInSetOfPatternParallel(ImmutableIntSet semanticNidSet, int patternNid,
+                                                             BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
+        // latest() when providing a nid does use the cache. It's ok to get the pattern from the cache, not the individual entities
+        Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
+        latestPatternVersion.ifPresent(patternEntityVersion -> {
+            PrimitiveData.get().forEachParallel(semanticNidSet.toSortedList().toImmutable(), (byte[] bytes, int nid) -> {
+                if (bytes != null) {
+                    Entity<EntityVersion> semanticRecord = EntityFactory.make(bytes);
+                    // latest() when providing an entity does not use the cache.
+                    Latest<EntityVersion> latestSemanticVersion = latest(semanticRecord);
+                    latestSemanticVersion.ifPresent(semanticVersion -> procedure.accept((SemanticEntityVersion) semanticVersion, patternEntityVersion));
+                }
+            });
+        });
+    }
+
 
     @Override
     public void forEachSemanticVersionForComponent(int componentNid,

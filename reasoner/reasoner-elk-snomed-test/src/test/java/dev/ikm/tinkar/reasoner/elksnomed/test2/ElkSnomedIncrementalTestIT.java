@@ -61,7 +61,6 @@ public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 		ViewCalculator vc = PrimitiveDataTestUtil.getViewCalculator(version);
 		ReasonerService rs = ElkSnomedTestBase.getElkSnomedReasonerService();
 		rs.init(vc, TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
-		rs.setProgressUpdater(null);
 		rs.extractData();
 		rs.loadData();
 		rs.computeInferences();

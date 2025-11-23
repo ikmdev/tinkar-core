@@ -34,6 +34,7 @@ import dev.ikm.tinkar.terms.ComponentWithNid;
 import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityFacade;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 
 import java.io.File;
 import java.util.Arrays;
@@ -375,6 +376,13 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
                     default -> throw new IllegalStateException("Unexpected value: " + entity);
                 }
             });
+        });
+    }
+
+    default void forEachEntity(ImmutableIntList entityNids, Consumer<Entity<?>> consumer) {
+        PrimitiveData.get().forEach(entityNids, (bytes, _) -> {
+            Entity<EntityVersion> entity = EntityRecordFactory.make(bytes);
+            consumer.accept(entity);
         });
     }
 

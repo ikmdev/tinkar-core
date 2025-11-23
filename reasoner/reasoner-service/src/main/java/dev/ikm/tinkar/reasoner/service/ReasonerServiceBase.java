@@ -15,25 +15,17 @@
  */
 package dev.ikm.tinkar.reasoner.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.terms.PatternFacade;
 
 public abstract class ReasonerServiceBase implements ReasonerService {
 
-	@SuppressWarnings("unused")
-	private static final Logger LOG = LoggerFactory.getLogger(ReasonerServiceBase.class);
-
 	protected ViewCalculator viewCalculator;
 
 	protected PatternFacade statedAxiomPattern;
 
 	protected PatternFacade inferredAxiomPattern;
-
-	protected TrackingCallable<?> progressUpdater;
 
 	@Override
 	public ViewCalculator getViewCalculator() {
@@ -51,44 +43,21 @@ public abstract class ReasonerServiceBase implements ReasonerService {
 	}
 
 	@Override
-	public TrackingCallable<?> getProgressUpdater() {
-		return progressUpdater;
-	}
-
-	private static class NoopTrackingCallable extends TrackingCallable<Void> {
-
-		@Override
-		protected Void compute() throws Exception {
-			return null;
-		}
-
-	}
-
-	@Override
-	public void setProgressUpdater(TrackingCallable<?> progressUpdater) {
-		if (progressUpdater == null)
-			progressUpdater = new NoopTrackingCallable();
-		this.progressUpdater = progressUpdater;
-	};
-
-	@Override
 	public void init(ViewCalculator viewCalculator, PatternFacade statedAxiomPattern,
 			PatternFacade inferredAxiomPattern) {
 		this.viewCalculator = viewCalculator;
 		this.statedAxiomPattern = statedAxiomPattern;
 		this.inferredAxiomPattern = inferredAxiomPattern;
-		this.progressUpdater = null;
 	}
 
 	@Override
-	public ClassifierResults writeInferredResults() {
-		InferredResultsWriter nnfw = new InferredResultsWriter(this);
-		nnfw.setProgressUpdater(progressUpdater);
+	public ClassifierResults writeInferredResults(TrackingCallable<?> progressUpdater) {
+		InferredResultsWriter nnfw = new InferredResultsWriter(this, progressUpdater);
 		return nnfw.write();
 	}
 
 	@Override
-	public ClassifierResults processResults(TrackingCallable<ClassifierResults> callable, boolean reinferAllHierarchy)
+	public ClassifierResults processResults(boolean reinferAllHierarchy, TrackingCallable<ClassifierResults> callable)
 			throws Exception {
 		ProcessReasonerResults task = new ProcessReasonerResults(this, reinferAllHierarchy, callable);
 		return task.compute();
