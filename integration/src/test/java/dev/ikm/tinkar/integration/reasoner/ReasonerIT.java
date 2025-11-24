@@ -17,6 +17,7 @@ package dev.ikm.tinkar.integration.reasoner;
 
 import dev.ikm.tinkar.common.service.PluggableService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.integration.TestConstants;
@@ -69,9 +70,19 @@ public class ReasonerIT {
 
             rs.init(Calculators.View.Default(), TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
             // Extract
-            rs.extractData();
+            rs.extractData(new TrackingCallable<Object>() {
+                @Override
+                protected Object compute() throws Exception {
+                    return null;
+                }
+            });
             // Load
-            rs.loadData();
+            rs.loadData(new TrackingCallable<Object>() {
+                @Override
+                protected Object compute() throws Exception {
+                    return null;
+                }
+            });
             // Compute
             rs.computeInferences();
             // Process Results

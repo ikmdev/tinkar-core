@@ -1,20 +1,25 @@
 package dev.ikm.tinkar.reasoner.service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.StructuredTaskScope;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.*;
+import org.eclipse.collections.api.IntIterable;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.api.list.primitive.IntList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
@@ -67,10 +72,6 @@ public class InferredResultsWriter {
 
 	private ConcurrentHashSet<ImmutableIntList> equivalentSets;
 
-	private ConcurrentHashSet<Integer> conceptsWithInferredChanges;
-
-	private ConcurrentHashSet<Integer> conceptsWithNavigationChanges;
-
 	private AtomicInteger axiomDataNotFoundCounter;
 
 	private final TrackingCallable<?> progressUpdater;
@@ -90,15 +91,16 @@ public class InferredResultsWriter {
 			long now = System.currentTimeMillis();
 			long elapsed = now - startTime;
 
-			String msg = String.format("Processing inferred results: %,d/%,d", count, total);;
+			String msg = String.format("Processing  %,d inferred result items", total);
+			;
 
 			if (elapsed > 0 && count > 0) {
 				double rate = (double) count / elapsed;
 				double remainingItems = total - count;
 				long remainingMillis = (long) (remainingItems / rate);
-				int percent = (int) ((count / (double) total) * 100);
-				msg = String.format("Processing inferred results: %d/%d (%d%%) - ETA: %s",
-						count, total, percent, formatDuration(remainingMillis));
+				double percent = (count / (double) total) * 100;
+				msg = String.format("Processing inferred results: %,.2f%% - ETA: %s",
+						percent, formatDuration(remainingMillis));
 			}
 
 			if (progressUpdater != null) {
@@ -129,18 +131,63 @@ public class InferredResultsWriter {
 		Entity.provider().putEntity(entity);
 	}
 
-	private record SemanticToProcess(long semanticMsb, long semanticLsb, int semanticNid, int referencedComponentNid) {
+	private StructuredTaskScope.Joiner<MutableIntList, Void> createAccumulatingJoiner(MutableIntList accumulator) {
+		return new StructuredTaskScope.Joiner<MutableIntList, Void>() {
+			@Override
+			public Void result() {
+				return null;
+			}
 
-		public SemanticToProcess(UUID semanticUuid, int semanticNid, int referencedComponentNid) {
-			this(semanticUuid.getMostSignificantBits(), semanticUuid.getLeastSignificantBits(), semanticNid, referencedComponentNid);
-		}
+			@Override
+			public boolean onComplete(StructuredTaskScope.Subtask<? extends MutableIntList> subtask) {
+				if (subtask.state() == StructuredTaskScope.Subtask.State.SUCCESS) {
+					accumulator.addAll(subtask.get());
+				}
+				return false; // Continue processing all tasks
+			}
 
-		public UUID semanticUuid() {
-			return new UUID(semanticMsb, semanticLsb);
+			@Override
+			public boolean onFork(StructuredTaskScope.Subtask<? extends MutableIntList> subtask) {
+				return false; // Don't short-circuit on fork
+			}
+		};
+	}
+
+	private MutableIntList processEntitiesInScope(
+			IntList nids,
+			String logMessage,
+			BiConsumer<Entity<? extends EntityVersion>, MutableIntList> processor,
+			Semaphore permits
+	) throws InterruptedException {
+		MutableIntList changedConcepts = IntLists.mutable.empty();
+		int chunkSize = calculateOptimalChunkSize(nids.size());
+		LOG.info(logMessage, nids.size(), chunkSize);
+
+		try (var scope = StructuredTaskScope.open(createAccumulatingJoiner(changedConcepts))) {
+			for (int i = 0; i < nids.size(); i += chunkSize) {
+				int start = i;
+				int end = Math.min(i + chunkSize, nids.size());
+				ImmutableIntList chunk = getSubList(nids, start, end);
+				permits.acquireUninterruptibly();
+				scope.fork(() -> {
+					try {
+						MutableIntList localChanges = IntLists.mutable.empty();
+						EntityService.get().forEachEntity(chunk, entity -> processor.accept(entity, localChanges));
+						return localChanges;
+					} finally {
+						permits.release();
+					}
+				});
+			}
+			scope.join();
 		}
+		return changedConcepts;
 	}
 	public ClassifierResults write() {
 		ImmutableIntList conceptsToUpdate = rs.getReasonerConceptSet();
+		MutableIntList conceptsWithInferredChanges = IntLists.mutable.withInitialCapacity(conceptsToUpdate.size());
+		MutableIntList conceptsWithNavigationChanges = IntLists.mutable.withInitialCapacity(conceptsToUpdate.size());
+
 		final int totalCount = conceptsToUpdate.size() * 2;
 		final long startTime = System.currentTimeMillis();
 		updateProgress(0, totalCount, startTime);
@@ -156,8 +203,6 @@ public class InferredResultsWriter {
 			inferredNavigationPattern = EntityHandle.getPatternOrThrow(TinkarTerm.INFERRED_NAVIGATION_PATTERN.nid());
 			multipleEndpointTimer = new MultipleEndpointTimer<>(IsomorphicResults.EndPoints.class);
 			equivalentSets = new ConcurrentHashSet<>();
-			conceptsWithInferredChanges = new ConcurrentHashSet<>();
-			conceptsWithNavigationChanges = new ConcurrentHashSet<>();
 			axiomDataNotFoundCounter = new AtomicInteger();
 
 			// Create more chunks than cores for work stealing
@@ -166,45 +211,116 @@ public class InferredResultsWriter {
 			LOG.info("Starting inferred results write. Total concepts: {}, Total tasks (NNF+Nav): {}, Chunk size: {}",
 					conceptsToUpdate.size(), totalCount, chunkSize);
 
-			// Use ForkJoinPool's work-stealing capabilities via StructuredTaskScope
-			try (var scope = StructuredTaskScope.open()) {
+			MutableIntList inferredSemanticNids = IntLists.mutable.empty();
+			MutableIntList noInferredSemanticConcepts = IntLists.mutable.empty();
+			MutableIntList navigationSemanticNids = IntLists.mutable.empty();
+			MutableIntList noNavigationSemanticConcepts = IntLists.mutable.empty();
 
-				for (int i = 0; i < conceptsToUpdate.size(); i += chunkSize) {
-					int start = i;
-					int end = Math.min(i + chunkSize, conceptsToUpdate.size());
-					ImmutableIntList chunk = getSubList(conceptsToUpdate, start, end);
+			// Record to hold results from each task
+			record ChunkResults(
+					MutableIntList inferredExists,
+					MutableIntList inferredMissing,
+					MutableIntList navExists,
+					MutableIntList navMissing
+			) {
+			}
 
-					scope.fork(() -> {
-						processChunk(chunk, inferredPattern.publicId(), semanticToProcess -> {
-							writeNNF(semanticToProcess);
-							updateProgress(processedCount.incrementAndGet(), totalCount, startTime);
-						});
-						return null;
-					});
-					scope.fork(() -> {
-						processChunk(chunk, inferredNavigationPattern.publicId(), semanticToProcess -> {
-							writeNavigation(semanticToProcess);
-							updateProgress(processedCount.incrementAndGet(), totalCount, startTime);
-						});
-						return null;
-					});
-					scope.fork(() -> {
-						chunk.forEach(this::updateEquivalentSets);
-						return null;
-					});
+			// Custom joiner that accumulates results as tasks complete
+			StructuredTaskScope.Joiner<ChunkResults, Void> accumulatingJoiner = new StructuredTaskScope.Joiner<>() {
+				@Override
+				public Void result() {
+					return null; // No final result needed
 				}
 
-				// Java 25: join() throws if any subtask failed (ShutdownOnFailure behavior implied by context/usage)
-				scope.join();
-
-			} catch (Exception ex) {
-				if (ex instanceof InterruptedException) {
-					Thread.currentThread().interrupt();
+				@Override
+				public boolean onComplete(StructuredTaskScope.Subtask<? extends ChunkResults> subtask) {
+					if (subtask.state() == StructuredTaskScope.Subtask.State.SUCCESS) {
+						ChunkResults results = subtask.get();
+						// Add to master lists immediately as each task completes
+						inferredSemanticNids.addAll(results.inferredExists);
+						noInferredSemanticConcepts.addAll(results.inferredMissing);
+						navigationSemanticNids.addAll(results.navExists);
+						noNavigationSemanticConcepts.addAll(results.navMissing);
+					} else if (subtask.state() == StructuredTaskScope.Subtask.State.FAILED) {
+						LOG.error("Task failed", subtask.exception());
+					}
+					return false; // Continue processing remaining tasks
 				}
-				LOG.error("Error during concurrent inferred results writing", ex);
-				throw new RuntimeException("Update interrupted or failed", ex);
+
+				@Override
+				public boolean onFork(StructuredTaskScope.Subtask<? extends ChunkResults> subtask) {
+					return false; // Don't short-circuit on fork
+				}
+			};
+			try {
+
+				Semaphore permits = new Semaphore(Runtime.getRuntime().availableProcessors() * 20);
+
+				conceptsWithInferredChanges.addAll(
+						processEntitiesInScope(
+								inferredSemanticNids,
+								"Processing updates to {} inferred semantic nids in chunks of {}",
+								(entity, changedConcepts) -> {
+									if (entity instanceof SemanticEntity<?> semanticEntity) {
+										updateNNF(semanticEntity, changedConcepts);
+									} else {
+										LOG.error("Unexpected entity type: {}", entity.getClass());
+									}
+								},
+								permits
+						)
+				);
+
+				conceptsWithNavigationChanges.addAll(
+						processEntitiesInScope(
+								navigationSemanticNids,
+								"Processing updates to {} navigation semantic nids in chunks of {}",
+								(entity, changedConcepts) -> {
+									if (entity instanceof SemanticEntity<?> semanticEntity) {
+										updateNavigation(semanticEntity, changedConcepts);
+									} else {
+										LOG.error("Unexpected entity type: {}", entity.getClass());
+									}
+								},
+								permits
+						)
+				);
+
+				conceptsWithNavigationChanges.addAll(
+						processEntitiesInScope(
+								navigationSemanticNids,
+								"Processing updates to {} navigation semantic nids in chunks of {}",
+								(entity, changedConcepts) -> {
+									if (entity instanceof SemanticEntity<?> semanticEntity) {
+										updateNavigation(semanticEntity, changedConcepts);
+									} else {
+										LOG.error("Unexpected entity type: {}", entity.getClass());
+									}
+								},
+								permits
+						)
+				);
+
+				conceptsWithInferredChanges.addAll(
+						processEntitiesInScope(
+								noInferredSemanticConcepts,
+								"Processing {} new inferred semantic nids in chunks of {}",
+								(entity, changedConcepts) -> {
+									changedConcepts.add(entity.nid());
+									if (entity instanceof ConceptEntity<?> conceptEntity) {
+										newNNF(conceptEntity);
+									} else {
+										LOG.error("Unexpected entity type: {}", entity.getClass());
+									}
+								},
+								permits
+						)
+				);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			}
 			updateTransaction.commit();
+
 		} finally {
 			EntityService.get().endLoadPhase();
 		}
@@ -213,27 +329,14 @@ public class InferredResultsWriter {
 		LOG.info("NavigationSemantics processed not in AxiomData: " + axiomDataNotFoundCounter.get());
 		ViewCoordinateRecord commitCoordinate = getViewCoordinateRecord().withStampCoordinate(
 				getViewCoordinateRecord().stampCoordinate().withStampPositionTime(updateTransaction.commitTime()));
+
 		return new ClassifierResults(rs.getReasonerConceptSet(),
-				IntLists.immutable.ofAll(conceptsWithInferredChanges.stream().sorted().mapToInt(Integer::intValue)),
-				IntLists.immutable.ofAll(conceptsWithNavigationChanges.stream().sorted().mapToInt(Integer::intValue)),
+				conceptsWithInferredChanges.toImmutable(),
+				conceptsWithNavigationChanges.toImmutable(),
 				equivalentSets, commitCoordinate);
 	}
 
-	private void processChunk(ImmutableIntList chunk, PublicId patternPublicId, Consumer<SemanticToProcess> processor) {
-		EntityService.get().forEachEntity(chunk, entity -> {
-			UUID semanticUuid = UuidT5Generator.singleSemanticUuid(patternPublicId,
-					entity.publicId());
-			if (PrimitiveData.get().hasUuid(semanticUuid)) {
-				processor.accept(new SemanticToProcess(semanticUuid, PrimitiveData.nid(semanticUuid),
-						entity.nid()));
-			} else {
-				processor.accept(new SemanticToProcess(semanticUuid, Integer.MAX_VALUE,
-						entity.nid()));
-			}
-		});
-	}
-
-	private ImmutableIntList getSubList(ImmutableIntList list, int start, int end) {
+	private ImmutableIntList getSubList(IntList list, int start, int end) {
 		if (start == end) {
 			return IntLists.immutable.empty();
 		}
@@ -255,110 +358,106 @@ public class InferredResultsWriter {
 		}
 	}
 
-	private void writeNNF(SemanticToProcess semanticToProcess) {
-		LogicalExpression nnf = rs.getNecessaryNormalForm(semanticToProcess.referencedComponentNid);
-		if (nnf == null) {
-			LOG.error("No NNF for " + EntityHandle.get(semanticToProcess.referencedComponentNid)
-					+ " " + PrimitiveData.text(semanticToProcess.referencedComponentNid));
-			return;
+	public void updateNNF(SemanticEntity<?> semanticEntity, MutableIntList changedConcepts) {
+		Objects.nonNull(semanticEntity);
+		Latest<SemanticEntityVersion> latestInferredSemantic = (Latest<SemanticEntityVersion>) rs.getViewCalculator()
+				.latest(semanticEntity);
+		LogicalExpression nnf = rs.getNecessaryNormalForm(semanticEntity.referencedComponentNid());
+		boolean changed = true;
+		if (latestInferredSemantic.isPresent()) {
+			ImmutableList<Object> latestInferredFields = latestInferredSemantic.get().fieldValues();
+			DiTreeEntity latestInferredTree = (DiTreeEntity) latestInferredFields.get(0);
+			DiTreeEntity correlatedTree = latestInferredTree.makeCorrelatedTree((DiTreeEntity) nnf.sourceGraph(),
+					semanticEntity.referencedComponentNid(), multipleEndpointTimer.startNew());
+			changed = correlatedTree.equals(latestInferredTree);
 		}
+		if (changed) {
 		ImmutableList<Object> fields = Lists.immutable.of(nnf.sourceGraph());
-		int[] inferredSemanticNids = PrimitiveData.get().semanticNidsForComponentOfPattern(semanticToProcess.referencedComponentNid,
-				inferredPattern.nid());
-		if (inferredSemanticNids.length == 0) {
-			// Create new semantic...
-			RecordListBuilder<SemanticVersionRecord> versionRecords = RecordListBuilder.make();
-
-			int semanticNid = ScopedValue
-					.where(SCOPED_PATTERN_PUBLICID_FOR_NID, inferredPattern.publicId())
-					.call(() -> PrimitiveData.nid(semanticToProcess.semanticUuid()));
-
-			SemanticRecord semanticRecord = SemanticRecordBuilder.builder()
-					.nid(semanticNid)
-					.referencedComponentNid(semanticToProcess.referencedComponentNid)
-					.leastSignificantBits(semanticToProcess.semanticLsb)
-					.mostSignificantBits(semanticToProcess.semanticMsb)
-					.patternNid(inferredPattern.nid()).versions(versionRecords).build();
-			versionRecords.add(new SemanticVersionRecord(semanticRecord, updateStampNid, fields));
-			processSemantic(semanticRecord);
-			conceptsWithInferredChanges.add(semanticToProcess.referencedComponentNid);
-		} else if (inferredSemanticNids.length == 1) {
-			Latest<SemanticEntityVersion> latestInferredSemantic = rs.getViewCalculator()
-					.latest(inferredSemanticNids[0]);
-			boolean changed = true;
-			if (latestInferredSemantic.isPresent()) {
-				ImmutableList<Object> latestInferredFields = latestInferredSemantic.get().fieldValues();
-				DiTreeEntity latestInferredTree = (DiTreeEntity) latestInferredFields.get(0);
-				DiTreeEntity correlatedTree = latestInferredTree.makeCorrelatedTree((DiTreeEntity) nnf.sourceGraph(),
-						semanticToProcess.referencedComponentNid, multipleEndpointTimer.startNew());
-				changed = correlatedTree != latestInferredTree;
-			}
-			if (changed) {
-				processSemantic(rs.getViewCalculator().updateFields(inferredSemanticNids[0], fields, updateStampNid));
-				conceptsWithInferredChanges.add(semanticToProcess.referencedComponentNid);
-			}
-		} else {
-			throw new IllegalStateException("More than one inferred semantic of pattern "
-					+ PrimitiveData.text(inferredPattern.nid()) + "for component: " + PrimitiveData.text(semanticToProcess.referencedComponentNid));
+			processSemantic(rs.getViewCalculator().updateFields(semanticEntity.nid(), fields, updateStampNid));
+			changedConcepts.add(semanticEntity.referencedComponentNid());
 		}
 	}
 
-	private void writeNavigation(SemanticToProcess semanticToProcess) {
-		ImmutableIntSet parentNids = rs.getParents(semanticToProcess.referencedComponentNid);
-		ImmutableIntSet childNids = rs.getChildren(semanticToProcess.referencedComponentNid);
+	public void newNNF(ConceptEntity concept) {
+		LogicalExpression nnf = rs.getNecessaryNormalForm(concept.nid());
+		ImmutableList<Object> fields = Lists.immutable.of(nnf.sourceGraph());
+		UUID inferredSemanticUuid = UuidT5Generator.singleSemanticUuid(inferredPattern,
+				concept.publicId());
+		// Create a new semantic...
+		RecordListBuilder<SemanticVersionRecord> versionRecords = RecordListBuilder.make();
+
+		int semanticNid = ScopedValue
+				.where(SCOPED_PATTERN_PUBLICID_FOR_NID, inferredPattern.publicId())
+				.call(() -> PrimitiveData.nid(inferredSemanticUuid));
+
+		SemanticRecord semanticRecord = SemanticRecordBuilder.builder()
+				.nid(semanticNid)
+				.referencedComponentNid(concept.nid())
+				.leastSignificantBits(inferredSemanticUuid.getLeastSignificantBits())
+				.mostSignificantBits(inferredSemanticUuid.getMostSignificantBits())
+				.patternNid(inferredPattern.nid()).versions(versionRecords).build();
+		versionRecords.add(new SemanticVersionRecord(semanticRecord, updateStampNid, fields));
+		processSemantic(semanticRecord);
+	}
+
+	private void updateNavigation(SemanticEntity<?> semanticEntity, MutableIntList changedConcepts) {
+		ImmutableIntSet parentNids = rs.getParents(semanticEntity.referencedComponentNid());
+		ImmutableIntSet childNids = rs.getChildren(semanticEntity.referencedComponentNid());
 		if (parentNids == null) {
 			parentNids = IntSets.immutable.of();
 			childNids = IntSets.immutable.of();
 			axiomDataNotFoundCounter.incrementAndGet();
 		}
-		int[] inferredNavigationNids = PrimitiveData.get().semanticNidsForComponentOfPattern(semanticToProcess.referencedComponentNid,
-				inferredNavigationPattern.nid());
-		if (inferredNavigationNids.length == 0) {
-			if (parentNids.notEmpty() || childNids.notEmpty()) {
-				// Create new semantic...
-				RecordListBuilder<SemanticVersionRecord> versionRecords = RecordListBuilder.make();
-				int semanticNid = ScopedValue
-						.where(SCOPED_PATTERN_PUBLICID_FOR_NID, inferredNavigationPattern.publicId())
-						.call(() -> PrimitiveData.nid(semanticToProcess.semanticUuid()));
+		Latest<SemanticEntityVersion> latestInferredNavigationSemantic = rs.getViewCalculator()
+				.latest((Entity<SemanticEntityVersion>) semanticEntity);
+		boolean navigationChanged = true;
+		if (latestInferredNavigationSemantic.isPresent()) {
+			ImmutableList<Object> latestInferredNavigationFields = latestInferredNavigationSemantic.get()
+					.fieldValues();
+			IntIdSet childIds = (IntIdSet) latestInferredNavigationFields.get(0);
+			IntIdSet parentIds = (IntIdSet) latestInferredNavigationFields.get(1);
+			if (parentNids.equals(IntSets.immutable.of(parentIds.toArray()))
+					&& childNids.equals(IntSets.immutable.of(childIds.toArray()))) {
+				navigationChanged = false;
+			}
+		}
+		if (navigationChanged) {
+			IntIdSet newParentIds = IntIds.set.of(parentNids.toArray());
+			IntIdSet newChildIds = IntIds.set.of(childNids.toArray());
+			processSemantic(rs.getViewCalculator().updateFields(semanticEntity.nid(),
+					Lists.immutable.of(newChildIds, newParentIds), updateStampNid));
+			changedConcepts.add(semanticEntity.referencedComponentNid());
+		}
+	}
 
-				SemanticRecord navigationRecord = SemanticRecordBuilder.builder()
-						.nid(semanticNid)
-						.referencedComponentNid(semanticToProcess.referencedComponentNid)
-						.leastSignificantBits(semanticToProcess.semanticLsb)
-						.mostSignificantBits(semanticToProcess.semanticMsb)
-						.patternNid(inferredNavigationPattern.nid()).versions(versionRecords).build();
-				IntIdSet parentIds = IntIds.set.of(parentNids.toArray());
-				IntIdSet childrenIds = IntIds.set.of(childNids.toArray());
-				versionRecords.add(new SemanticVersionRecord(navigationRecord, updateStampNid,
-						Lists.immutable.of(childrenIds, parentIds)));
-				processSemantic(navigationRecord);
-				conceptsWithNavigationChanges.add(semanticToProcess.referencedComponentNid);
-			}
-		} else if (inferredNavigationNids.length == 1) {
-			Latest<SemanticEntityVersion> latestInferredNavigationSemantic = rs.getViewCalculator()
-					.latest(inferredNavigationNids[0]);
-			boolean navigationChanged = true;
-			if (latestInferredNavigationSemantic.isPresent()) {
-				ImmutableList<Object> latestInferredNavigationFields = latestInferredNavigationSemantic.get()
-						.fieldValues();
-				IntIdSet childIds = (IntIdSet) latestInferredNavigationFields.get(0);
-				IntIdSet parentIds = (IntIdSet) latestInferredNavigationFields.get(1);
-				if (parentNids.equals(IntSets.immutable.of(parentIds.toArray()))
-						&& childNids.equals(IntSets.immutable.of(childIds.toArray()))) {
-					navigationChanged = false;
-				}
-			}
-			if (navigationChanged) {
-				IntIdSet newParentIds = IntIds.set.of(parentNids.toArray());
-				IntIdSet newChildIds = IntIds.set.of(childNids.toArray());
-				processSemantic(rs.getViewCalculator().updateFields(inferredNavigationNids[0],
-						Lists.immutable.of(newChildIds, newParentIds), updateStampNid));
-				conceptsWithNavigationChanges.add(semanticToProcess.referencedComponentNid);
-			}
-		} else {
-			throw new IllegalStateException(
-					"More than one semantic of pattern " + PrimitiveData.text(inferredNavigationPattern.nid())
-							+ "for component: " + PrimitiveData.text(semanticToProcess.referencedComponentNid));
+	private void writeNavigation(ConceptEntity concept) {
+		UUID inferredNavigationUuid = UuidT5Generator.singleSemanticUuid(inferredNavigationPattern,
+				concept.publicId());
+		ImmutableIntSet parentNids = rs.getParents(concept.nid());
+		ImmutableIntSet childNids = rs.getChildren(concept.nid());
+		if (parentNids == null) {
+			parentNids = IntSets.immutable.of();
+			childNids = IntSets.immutable.of();
+			axiomDataNotFoundCounter.incrementAndGet();
+		}
+		if (parentNids.notEmpty() || childNids.notEmpty()) {
+			// Create new semantic...
+			RecordListBuilder<SemanticVersionRecord> versionRecords = RecordListBuilder.make();
+			int semanticNid = ScopedValue
+					.where(SCOPED_PATTERN_PUBLICID_FOR_NID, inferredNavigationPattern.publicId())
+					.call(() -> PrimitiveData.nid(inferredNavigationUuid));
+
+			SemanticRecord navigationRecord = SemanticRecordBuilder.builder()
+					.nid(semanticNid)
+					.referencedComponentNid(concept.nid())
+					.leastSignificantBits(inferredNavigationUuid.getLeastSignificantBits())
+					.mostSignificantBits(inferredNavigationUuid.getMostSignificantBits())
+					.patternNid(inferredNavigationPattern.nid()).versions(versionRecords).build();
+			IntIdSet parentIds = IntIds.set.of(parentNids.toArray());
+			IntIdSet childrenIds = IntIds.set.of(childNids.toArray());
+			versionRecords.add(new SemanticVersionRecord(navigationRecord, updateStampNid,
+					Lists.immutable.of(childrenIds, parentIds)));
+			processSemantic(navigationRecord);
 		}
 	}
 

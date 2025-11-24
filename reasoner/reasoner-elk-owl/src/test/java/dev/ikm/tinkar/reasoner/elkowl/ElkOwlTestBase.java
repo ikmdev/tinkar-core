@@ -167,8 +167,18 @@ public abstract class ElkOwlTestBase extends PrimitiveDataTestBase {
 	public void runElkOwlReasonerService() throws Exception {
 		LOG.info("runElkOwlReasonerService");
 		ReasonerService rs = initReasonerService();
-		rs.extractData();
-		rs.loadData();
+		rs.extractData(new TrackingCallable<Object>() {
+			@Override
+			protected Object compute() throws Exception {
+				return null;
+			}
+		});
+		rs.loadData(new TrackingCallable<Object>() {
+			@Override
+			protected Object compute() throws Exception {
+				return null;
+			}
+		});
 		rs.computeInferences(new TrackingCallable<Object>() {
 			@Override
 			protected Object compute() throws Exception {

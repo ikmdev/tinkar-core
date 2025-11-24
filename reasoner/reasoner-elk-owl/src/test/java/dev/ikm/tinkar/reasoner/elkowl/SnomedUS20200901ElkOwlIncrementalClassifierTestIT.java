@@ -62,8 +62,18 @@ public class SnomedUS20200901ElkOwlIncrementalClassifierTestIT extends ElkOwlTes
 		PrimitiveData.start();
 		ReasonerService rs = initReasonerService();
 		makeEquivalent(rs);
-		rs.extractData();
-		rs.loadData();
+		rs.extractData(new TrackingCallable<Object>() {
+			@Override
+			protected Object compute() throws Exception {
+				return null;
+			}
+		});
+		rs.loadData(new TrackingCallable<Object>() {
+			@Override
+			protected Object compute() throws Exception {
+				return null;
+			}
+		});
 		rs.computeInferences(progressUpdater);
 		ArrayList<String> lines = getSupercs(rs);
 		return lines;
@@ -81,8 +91,18 @@ public class SnomedUS20200901ElkOwlIncrementalClassifierTestIT extends ElkOwlTes
 		setupPrimitiveData(db_inc);
 		PrimitiveData.start();
 		ReasonerService rs = initReasonerService();
-		rs.extractData();
-		rs.loadData();
+		rs.extractData(new TrackingCallable<Object>() {
+			@Override
+			protected Object compute() throws Exception {
+				return null;
+			}
+		});
+		rs.loadData(new TrackingCallable<Object>() {
+			@Override
+			protected Object compute() throws Exception {
+				return null;
+			}
+		});
 		rs.computeInferences(progressUpdater);
 		DiTreeEntity def = makeEquivalent(rs);
 		int cldNid = PrimitiveData.nid(ChronicLungDiseaseUuid);
