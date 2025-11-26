@@ -161,14 +161,14 @@ public class InferredResultsWriter {
 	) throws InterruptedException {
 		MutableIntList changedConcepts = IntLists.mutable.empty();
 		int chunkSize = calculateOptimalChunkSize(nids.size());
-		LOG.info(logMessage, nids.size(), chunkSize);
+		LOG.info(logMessage, String.format("%,d", nids.size()), String.format("%,d", chunkSize));
 
 		try (var scope = StructuredTaskScope.open(createAccumulatingJoiner(changedConcepts))) {
 			for (int i = 0; i < nids.size(); i += chunkSize) {
 				int start = i;
 				int end = Math.min(i + chunkSize, nids.size());
 				ImmutableIntList chunk = getSubList(nids, start, end);
-				permits.acquireUninterruptibly();
+				permits.acquire();
 				scope.fork(() -> {
 					try {
 						MutableIntList localChanges = IntLists.mutable.empty();
@@ -218,11 +218,17 @@ public class InferredResultsWriter {
 
 			// Record to hold results from each task
 			record ChunkResults(
-					MutableIntList inferredExists,
-					MutableIntList inferredMissing,
-					MutableIntList navExists,
-					MutableIntList navMissing
-			) {
+					MutableIntList inferredSemanticToUpdate,
+					MutableIntList conceptForNewInferredSemantic,
+					MutableIntList navSemanticToUpdate,
+					MutableIntList conceptForNewNavSemantic) {
+
+				ChunkResults(int chunkCount) {
+						this(IntLists.mutable.withInitialCapacity(chunkCount),
+								IntLists.mutable.withInitialCapacity(chunkCount),
+								IntLists.mutable.withInitialCapacity(chunkCount),
+								IntLists.mutable.withInitialCapacity(chunkCount));
+					}
 			}
 
 			// Custom joiner that accumulates results as tasks complete
@@ -237,10 +243,10 @@ public class InferredResultsWriter {
 					if (subtask.state() == StructuredTaskScope.Subtask.State.SUCCESS) {
 						ChunkResults results = subtask.get();
 						// Add to master lists immediately as each task completes
-						inferredSemanticNids.addAll(results.inferredExists);
-						noInferredSemanticConcepts.addAll(results.inferredMissing);
-						navigationSemanticNids.addAll(results.navExists);
-						noNavigationSemanticConcepts.addAll(results.navMissing);
+						inferredSemanticNids.addAll(results.inferredSemanticToUpdate);
+						noInferredSemanticConcepts.addAll(results.conceptForNewInferredSemantic);
+						navigationSemanticNids.addAll(results.navSemanticToUpdate);
+						noNavigationSemanticConcepts.addAll(results.conceptForNewNavSemantic);
 					} else if (subtask.state() == StructuredTaskScope.Subtask.State.FAILED) {
 						LOG.error("Task failed", subtask.exception());
 					}
@@ -252,9 +258,55 @@ public class InferredResultsWriter {
 					return false; // Don't short-circuit on fork
 				}
 			};
-			try {
 
-				Semaphore permits = new Semaphore(Runtime.getRuntime().availableProcessors() * 20);
+			Semaphore permits = new Semaphore(Runtime.getRuntime().availableProcessors() * 20);
+
+// Process all concepts in chunks to categorize them
+			try (var scope = StructuredTaskScope.open(accumulatingJoiner)) {
+				for (int i = 0; i < conceptsToUpdate.size(); i += chunkSize) {
+					int start = i;
+					int end = Math.min(i + chunkSize, conceptsToUpdate.size());
+					ImmutableIntList conceptChunk = getSubList(conceptsToUpdate, start, end);
+
+					permits.acquire();
+					scope.fork(() -> {
+                        try {
+                            ChunkResults results = new ChunkResults(chunkSize);
+
+                            EntityService.get().forEachEntity(conceptChunk, concept -> {
+                                UUID inferredSemanticUuid = UuidT5Generator.singleSemanticUuid(inferredPattern,
+                                        concept.publicId());
+                                if (PrimitiveData.get().hasUuid(inferredSemanticUuid)) {
+                                    results.inferredSemanticToUpdate.add(PrimitiveData.nid(inferredSemanticUuid));
+                                } else {
+                                    results.conceptForNewInferredSemantic.add(concept.nid());
+                                }
+
+                                UUID inferredNavigationUuid = UuidT5Generator.singleSemanticUuid(inferredNavigationPattern,
+                                        concept.publicId());
+                                if (PrimitiveData.get().hasUuid(inferredNavigationUuid)) {
+                                    results.navSemanticToUpdate.add(PrimitiveData.nid(inferredNavigationUuid));
+                                } else {
+                                    results.conceptForNewNavSemantic.add(concept.nid());
+                                }
+                            });
+
+                            return results;
+                        } finally {
+							permits.release();
+                        }
+                    });
+				}
+				scope.join();
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
+			LOG.info("Inferred semantics to update: " + String.format("%,d", inferredSemanticNids.size()));
+			LOG.info("Concepts needing new inferred semantics: " + String.format("%,d", noInferredSemanticConcepts.size()));
+			LOG.info("Navigation semantics to update: " + String.format("%,d", navigationSemanticNids.size()));
+			LOG.info("Concepts needing new navigation semantics: " + String.format("%,d", noNavigationSemanticConcepts.size()));
+
+			try {
 
 				conceptsWithInferredChanges.addAll(
 						processEntitiesInScope(
@@ -270,41 +322,12 @@ public class InferredResultsWriter {
 								permits
 						)
 				);
-
-				conceptsWithNavigationChanges.addAll(
-						processEntitiesInScope(
-								navigationSemanticNids,
-								"Processing updates to {} navigation semantic nids in chunks of {}",
-								(entity, changedConcepts) -> {
-									if (entity instanceof SemanticEntity<?> semanticEntity) {
-										updateNavigation(semanticEntity, changedConcepts);
-									} else {
-										LOG.error("Unexpected entity type: {}", entity.getClass());
-									}
-								},
-								permits
-						)
-				);
-
-				conceptsWithNavigationChanges.addAll(
-						processEntitiesInScope(
-								navigationSemanticNids,
-								"Processing updates to {} navigation semantic nids in chunks of {}",
-								(entity, changedConcepts) -> {
-									if (entity instanceof SemanticEntity<?> semanticEntity) {
-										updateNavigation(semanticEntity, changedConcepts);
-									} else {
-										LOG.error("Unexpected entity type: {}", entity.getClass());
-									}
-								},
-								permits
-						)
-				);
+				LOG.info("Updated inferred semantics.");
 
 				conceptsWithInferredChanges.addAll(
 						processEntitiesInScope(
 								noInferredSemanticConcepts,
-								"Processing {} new inferred semantic nids in chunks of {}",
+								"Processing {} new inferred semantics in chunks of {}",
 								(entity, changedConcepts) -> {
 									changedConcepts.add(entity.nid());
 									if (entity instanceof ConceptEntity<?> conceptEntity) {
@@ -316,6 +339,41 @@ public class InferredResultsWriter {
 								permits
 						)
 				);
+				LOG.info("Created new inferred semantics.");
+
+				conceptsWithNavigationChanges.addAll(
+						processEntitiesInScope(
+								navigationSemanticNids,
+								"Processing updates to {} navigation semantic nids in chunks of {}",
+								(entity, changedConcepts) -> {
+									if (entity instanceof SemanticEntity<?> semanticEntity) {
+										updateNavigation(semanticEntity, changedConcepts);
+									} else {
+										LOG.error("Unexpected entity type: {}", entity.getClass());
+									}
+								},
+								permits
+						)
+				);
+				LOG.info("Updated navigation semantics.");
+
+				conceptsWithNavigationChanges.addAll(
+						processEntitiesInScope(
+								noNavigationSemanticConcepts,
+								"Processing {} new navigation semantics in chunks of {}",
+								(entity, changedConcepts) -> {
+									changedConcepts.add(entity.nid());
+									if (entity instanceof ConceptEntity<?> conceptEntity) {
+										newNavigation(conceptEntity);
+									} else {
+										LOG.error("Unexpected entity type: {}", entity.getClass());
+									}
+								},
+								permits
+						)
+				);
+				LOG.info("Created new navigation semantics.");
+
 			} catch (InterruptedException e) {
 				throw new RuntimeException(e);
 			}
@@ -430,18 +488,20 @@ public class InferredResultsWriter {
 		}
 	}
 
-	private void writeNavigation(ConceptEntity concept) {
+	private void newNavigation(ConceptEntity concept) {
 		UUID inferredNavigationUuid = UuidT5Generator.singleSemanticUuid(inferredNavigationPattern,
 				concept.publicId());
 		ImmutableIntSet parentNids = rs.getParents(concept.nid());
 		ImmutableIntSet childNids = rs.getChildren(concept.nid());
 		if (parentNids == null) {
 			parentNids = IntSets.immutable.of();
-			childNids = IntSets.immutable.of();
 			axiomDataNotFoundCounter.incrementAndGet();
 		}
+		if (childNids == null) {
+			childNids = IntSets.immutable.of();
+		}
 		if (parentNids.notEmpty() || childNids.notEmpty()) {
-			// Create new semantic...
+			// Create a new semantic...
 			RecordListBuilder<SemanticVersionRecord> versionRecords = RecordListBuilder.make();
 			int semanticNid = ScopedValue
 					.where(SCOPED_PATTERN_PUBLICID_FOR_NID, inferredNavigationPattern.publicId())

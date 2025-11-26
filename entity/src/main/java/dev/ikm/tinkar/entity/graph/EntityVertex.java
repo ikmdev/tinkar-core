@@ -64,7 +64,7 @@ import static dev.ikm.tinkar.entity.EntityRecordFactory.ENTITY_FORMAT_VERSION;
 
 public class EntityVertex implements Vertex, VertexId {
 	private static final Logger LOG = LoggerFactory.getLogger(EntityVertex.class);
-	private static final int DEFAULT_SIZE = 64;
+	private static final int DEFAULT_SIZE = 128;
 	protected long mostSignificantBits;
 	protected long leastSignificantBits;
 	protected int vertexIndex = -1;
