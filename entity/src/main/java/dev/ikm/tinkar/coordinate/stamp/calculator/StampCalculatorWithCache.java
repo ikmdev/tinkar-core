@@ -73,7 +73,9 @@ import dev.ikm.tinkar.entity.graph.DiTreeVersion;
 import dev.ikm.tinkar.entity.graph.VersionVertex;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
+import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
@@ -315,31 +317,30 @@ public class StampCalculatorWithCache implements StampCalculator {
      * @return the latest version
      */
     public <V extends EntityVersion> Latest<V> latest(Entity<V> chronicle) {
-        final HashSet<EntityVersion> latestVersionSet = new HashSet<>();
         if (chronicle == null) {
             return Latest.empty();
         }
 
-        chronicle.versions()
-                .stream()
-                .filter((newVersionToTest) -> (newVersionToTest.stamp() != null && newVersionToTest.stamp().time() > Long.MIN_VALUE))
-                .filter((newVersionToTest) -> (onRoute(newVersionToTest.stamp())))
-                .forEach((newVersionToTest) -> {
-                    if (latestVersionSet.isEmpty()) {
-                        latestVersionSet.add(newVersionToTest);
-                    } else {
-                        handlePart(latestVersionSet, newVersionToTest);
-                    }
-                });
+        final ImmutableList<V> versions = chronicle.versions();
 
-        final HashSet<EntityVersion> versionsWithoutSpecifiedStates = new HashSet<>();
+        if (versions.isEmpty()) {
+            throw new IllegalStateException("No versions for: " + chronicle.entityToString());
+        }
 
-        latestVersionSet.stream()
-                .filter((version) -> (!allowedStates.contains(version.state())))
-                .forEach(versionsWithoutSpecifiedStates::add);
-        latestVersionSet.removeAll(versionsWithoutSpecifiedStates);
+        final MutableList<EntityVersion> latestVersionList = Lists.mutable.ofInitialCapacity(Math.min(versions.size(), 4));
 
-        final List<EntityVersion> latestVersionList = new ArrayList<>(latestVersionSet);
+        for (V newVersionToTest : versions) {
+            StampEntity stamp = newVersionToTest.stamp();
+            if (stamp != null && stamp.time() > Long.MIN_VALUE && onRoute(stamp)) {
+                if (latestVersionList.isEmpty()) {
+                    latestVersionList.add(newVersionToTest);
+                } else {
+                    handlePart(latestVersionList, newVersionToTest);
+                }
+            }
+        }
+
+        latestVersionList.removeIf(version -> !allowedStates.contains(version.state()));
 
         if (latestVersionList.isEmpty()) {
             return new Latest<>();
@@ -588,37 +589,30 @@ public class StampCalculatorWithCache implements StampCalculator {
      * @param partsForPosition the parts for position
      * @param part             the part
      */
-    private void handlePart(HashSet<EntityVersion> partsForPosition, EntityVersion part) {
-        // create a list of values so we don't have any
-        // concurrent modification issues with removing/adding
-        // items to the partsForPosition.
-        final List<EntityVersion> partsToCompare = new ArrayList<>(partsForPosition);
-
-        for (final EntityVersion prevPartToTest : partsToCompare) {
+    private void handlePart(List<EntityVersion> partsForPosition, EntityVersion part) {
+        // iterate backwards so we can remove items as we go.
+        for (int i = partsForPosition.size() - 1; i >= 0; i--) {
+            EntityVersion prevPartToTest = partsForPosition.get(i);
             switch (fastRelativePosition(part, prevPartToTest)) {
                 case AFTER:
-                    partsForPosition.remove(prevPartToTest);
-                    partsForPosition.add(part);
+                    partsForPosition.remove(i);
                     break;
 
                 case BEFORE:
-                    break;
+                    return;
 
                 case CONTRADICTION:
-                    partsForPosition.add(part);
                     break;
 
                 case EQUAL:
-
                     if (prevPartToTest.equals(part)) {
                         // part already added from another position.
                         // No need to add again.
-                        break;
+                        return;
                     }
 
                     if (prevPartToTest.uncommitted() && part.uncommitted()) {
                         // Uncommitted parts should be treated as CONTRADICTION.
-                        partsForPosition.add(part);
                         break;
                     }
                     // Can only have one part per time/path
@@ -631,16 +625,15 @@ public class StampCalculatorWithCache implements StampCalculator {
                         LOG.warn("EQUAL indicates that data is malformed. Stamp: " + part.stamp() +
                                 " Part:\n" + part + " \n  Part to test: \n" + prevPartToTest + "\n");
                     }
-
-                    break;
+                    return;
 
                 case UNREACHABLE:
-
                     // Should have failed mapper.onRoute(part)
                     // above.
                     throw new RuntimeException(RelativePosition.UNREACHABLE + " should never happen.");
             }
         }
+        partsForPosition.add(part);
     }
 
     /**

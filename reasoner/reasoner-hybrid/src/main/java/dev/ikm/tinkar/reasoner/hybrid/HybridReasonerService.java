@@ -89,7 +89,8 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 	@Override
 	public void buildNecessaryNormalForm(TrackingCallable<?> progressUpdater) {
 		nnfb = NecessaryNormalFormBuilder.create(sso.getOntology(), sso.getSuperConcepts(),
-				sso.getSuperRoleTypes(false), TinkarTerm.ROOT_VERTEX.nid());
+				sso.getSuperRoleTypes(false), TinkarTerm.ROOT_VERTEX.nid(),
+				(workDone, max) -> progressUpdater.updateProgress(workDone, max));
 		nnfb.generate();
 	}
 
