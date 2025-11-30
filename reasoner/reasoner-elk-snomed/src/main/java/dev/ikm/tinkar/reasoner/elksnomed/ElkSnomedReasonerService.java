@@ -137,7 +137,7 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	@Override
 	public void buildNecessaryNormalForm(TrackingCallable<?> progressUpdater) {
 		nnfb = NecessaryNormalFormBuilder.create(ontology, reasoner.getSuperConcepts(),
-				reasoner.getSuperRoleTypes(false), TinkarTerm.ROOT_VERTEX.nid());
+				reasoner.getSuperRoleTypes(false), TinkarTerm.ROOT_VERTEX.nid(), (int workDone, int max) -> progressUpdater.updateProgress(workDone, max));
 		nnfb.generate();
 	}
 

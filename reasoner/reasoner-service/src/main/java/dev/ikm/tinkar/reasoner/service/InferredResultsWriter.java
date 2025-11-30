@@ -208,8 +208,8 @@ public class InferredResultsWriter {
 			// Create more chunks than cores for work stealing
 			int chunkSize = PrimitiveData.calculateOptimalChunkSize(conceptsToUpdate.size());
 
-			LOG.info("Starting inferred results write. Total concepts: {}, Total tasks (NNF+Nav): {}, Chunk size: {}",
-					conceptsToUpdate.size(), totalCount, chunkSize);
+			LOG.info(String.format("Starting inferred results write. Total concepts: %,d, Total tasks (NNF+Nav): %,d, Chunk size: %,d",
+					conceptsToUpdate.size(), totalCount, chunkSize));
 
 			MutableIntList inferredSemanticNids = IntLists.mutable.empty();
 			MutableIntList noInferredSemanticConcepts = IntLists.mutable.empty();
@@ -421,18 +421,18 @@ public class InferredResultsWriter {
 		Latest<SemanticEntityVersion> latestInferredSemantic = (Latest<SemanticEntityVersion>) rs.getViewCalculator()
 				.latest(semanticEntity);
 		LogicalExpression nnf = rs.getNecessaryNormalForm(semanticEntity.referencedComponentNid());
-		boolean changed = true;
+		boolean same = true;
 		if (latestInferredSemantic.isPresent()) {
 			ImmutableList<Object> latestInferredFields = latestInferredSemantic.get().fieldValues();
 			DiTreeEntity latestInferredTree = (DiTreeEntity) latestInferredFields.get(0);
 			DiTreeEntity correlatedTree = latestInferredTree.makeCorrelatedTree((DiTreeEntity) nnf.sourceGraph(),
 					semanticEntity.referencedComponentNid(), multipleEndpointTimer.startNew());
-			changed = correlatedTree.equals(latestInferredTree);
+            same = correlatedTree.equals(latestInferredTree);
 		}
-		if (changed) {
-		ImmutableList<Object> fields = Lists.immutable.of(nnf.sourceGraph());
-			processSemantic(rs.getViewCalculator().updateFields(semanticEntity.nid(), fields, updateStampNid));
-			changedConcepts.add(semanticEntity.referencedComponentNid());
+		if (!same) {
+		    ImmutableList<Object> fields = Lists.immutable.of(nnf.sourceGraph());
+			    processSemantic(rs.getViewCalculator().updateFields(semanticEntity.nid(), fields, updateStampNid));
+			    changedConcepts.add(semanticEntity.referencedComponentNid());
 		}
 	}
 

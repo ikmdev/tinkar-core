@@ -94,6 +94,7 @@ public interface ReasonerService {
 	}
 
 	void buildNecessaryNormalForm(TrackingCallable<?> progressUpdater);
+
 	default void buildNecessaryNormalForm() {
 		this.buildNecessaryNormalForm(new TrackingCallable<Object>() {
 			@Override

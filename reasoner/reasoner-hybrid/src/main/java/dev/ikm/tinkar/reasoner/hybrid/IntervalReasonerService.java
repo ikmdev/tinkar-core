@@ -78,7 +78,8 @@ public class IntervalReasonerService extends ElkSnomedReasonerService {
 	public void buildNecessaryNormalForm(TrackingCallable<?> progressUpdater) {
 		List<ConcreteRoleType> intervalRoles = List.copyOf(data.getIntervalRoleTypes());
 		nnfb = IntervalNecessaryNormalFormBuilder.create(ontology, reasoner.getSuperConcepts(),
-				reasoner.getSuperRoleTypes(false), TinkarTerm.ROOT_VERTEX.nid(), intervalRoles);
+				reasoner.getSuperRoleTypes(false), TinkarTerm.ROOT_VERTEX.nid(), intervalRoles,
+				(workDone, max) -> progressUpdater.updateProgress(workDone, max));
 		nnfb.generate();
 	}
 
