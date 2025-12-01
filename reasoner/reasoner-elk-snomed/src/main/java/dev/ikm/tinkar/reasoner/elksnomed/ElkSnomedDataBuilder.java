@@ -117,9 +117,9 @@ public class ElkSnomedDataBuilder {
 				LOG.warn("No definitions: " + con.getId() + " " + PrimitiveData.text((int) con.getId()));
 		}
 		updateProgress(totalCount, totalCount);
-		this.progressUpdater.updateMessage("Total processed: " + processedCount.get() + " Active concepts: " + data.getActiveConceptCount());
+		this.progressUpdater.updateMessage(String.format("Total processed: %,d Active concepts: %,d ", processedCount.get(), data.getActiveConceptCount()));
 
-		LOG.info("Total processed: " + totalCount + " " + processedCount.get());
+		LOG.info("Total processed: " + totalCount);
 		LOG.info("Active concepts: " + data.getActiveConceptCount());
 		LOG.info("Inactive concepts: " + data.getInactiveConceptCount());
 		if (ex_cnt.get() != 0) {

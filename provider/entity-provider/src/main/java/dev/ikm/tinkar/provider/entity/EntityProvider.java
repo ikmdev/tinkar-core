@@ -99,15 +99,18 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
             String anyString = null;
             String fqnString = null;
             for (int semanticNid : semanticNids) {
-                Entity descriptionSemanticEntity = Entity.getFast(semanticNid);
-                if (descriptionSemanticEntity instanceof SemanticEntity descriptionSemantic) {
-                    Entity entity = Entity.getFast(descriptionSemantic.patternNid());
-                    if (entity instanceof PatternEntity pattern) {
+                EntityHandle descriptionSemanticHandle = EntityHandle.get(semanticNid);
+                if (descriptionSemanticHandle.isSemantic() && descriptionSemanticHandle.expectEntity() instanceof SemanticEntity<?> descriptionSemantic) {
+                    EntityHandle patternHandle = EntityHandle.get(descriptionSemantic.patternNid());
+                    if (patternHandle.isPattern() && patternHandle.expectEntity() instanceof PatternEntity<?> pattern) {
                         // TODO: use version computer to get version
-                        PatternEntityVersion patternEntityVersion = (PatternEntityVersion) pattern.versions().get(0);
+                        PatternEntityVersion patternEntityVersion = pattern.versions().get(0);
                         SemanticEntityVersion version = (SemanticEntityVersion) descriptionSemantic.versions().get(0);
                         int indexForMeaning = patternEntityVersion.indexForMeaning(TinkarTerm.DESCRIPTION_TYPE);
                         int indexForText = patternEntityVersion.indexForMeaning(TinkarTerm.TEXT_FOR_DESCRIPTION);
+                        if (indexForMeaning == -1 || indexForText == -1) {
+                            throw new IllegalStateException("Expecting a pattern entity with description and text fields. Found: " + patternEntityVersion);
+                        }
                         if (version.fieldValues().get(indexForMeaning).equals(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE)) {
                             return (String) version.fieldValues().get(indexForText);
                         }
@@ -116,13 +119,15 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                         }
                         anyString = (String) version.fieldValues().get(indexForText);
                     } else {
+                        Entity<?> entity = patternHandle.expectEntity();
                         anyString = " <" + entity.nid() + ">" + entity.asUuidList().toString();
                         // Added in case entity.toString() itself throws an exception, at least get a UUID for the problem.
                         AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a pattern entity. Found entity with id:  " + anyString)));
                         AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a pattern entity. Found: " + entity)));
                     }
                 } else {
-                    anyString = " <" + descriptionSemanticEntity.nid() + "> " + descriptionSemanticEntity.asUuidList().toString();
+                    Entity<?> entity = descriptionSemanticHandle.expectEntity();
+                    anyString = " <" + entity.nid() + "> " + entity.asUuidList().toString();
                     LOG.error("ERROR getting string for nid: " + anyString);
                     LOG.error("ERROR Nid - 2: <" + (nid - 2) + "> " + getChronology(nid - 2));
                     LOG.error("ERROR Nid - 1: <" + (nid - 1) + "> " + getChronology(nid - 1));
@@ -133,7 +138,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                     // Added in case entity.toString() itself throws an exception, at least get a UUID for the problem.
                     AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a description semantic entity from list: " +
                             Arrays.toString(semanticNids) + "\n Found entity with id:  " + anyString)));
-                    AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a description semantic. Found: " + descriptionSemanticEntity)));
+                    AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a description semantic. Found: " + entity)));
                 }
             }
             if (fqnString != null) {
@@ -227,15 +232,23 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
     @Override
     public void putEntity(Entity entity, DataActivity activity) {
-        putEntity(entity, activity, true);
+        putEntity(entity, activity, true, true);
     }
 
     @Override
     public void putEntityQuietly(Entity entity, DataActivity activity) {
-        putEntity(entity, activity, false);
+        putEntity(entity, activity, false, true);
     }
 
-    private void putEntity(Entity entity, DataActivity activity, boolean dispatch) {
+    public void putEntityNoCache(Entity entity, DataActivity activity) {
+        putEntityNoCache(entity, activity, true);
+    }
+
+    private void putEntityNoCache(Entity entity, DataActivity activity, boolean dispatch) {
+        putEntity(entity, activity, dispatch, false);
+    }
+
+    private void putEntity(Entity entity, DataActivity activity, boolean dispatch, boolean addToCache) {
         invalidateCaches(entity);
         byte[] mergedEntityBytes = switch (entity) {
             case ConceptEntity conceptEntity -> {
@@ -265,7 +278,9 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
             default -> throw new IllegalStateException("Unexpected value: " + entity);
         };
 
-        ENTITY_CACHE.put(entity.nid(),  EntityRecordFactory.make(mergedEntityBytes));
+        if (addToCache) {
+            ENTITY_CACHE.put(entity.nid(),  EntityRecordFactory.make(mergedEntityBytes));
+        }
         if (dispatch) {
             processor.dispatch(entity.nid());
             if (entity instanceof SemanticEntity semanticEntity) {

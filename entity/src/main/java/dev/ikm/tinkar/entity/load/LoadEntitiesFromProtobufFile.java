@@ -178,8 +178,8 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                 }
             }
 
-            LOG.info("Pass 1 complete: Imported {} non-semantics, {} semantics remaining",
-                    importCount.get(), remainingMessages.size());
+            LOG.info(String.format("Pass 1 complete: Imported %,d non-semantics, %,d semantics remaining",
+                    importCount.get(), remainingMessages.size()));
 
             // PASS 2+: Import semantics in multiple passes until all are imported
             int passNumber = 2;

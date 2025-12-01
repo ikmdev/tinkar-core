@@ -86,7 +86,7 @@ public class ReasonerIT {
             // Compute
             rs.computeInferences();
             // Process Results
-            ClassifierResults results = rs.processResults(false, null);
+            ClassifierResults results = rs.writeInferredResults();
 
             LOG.info("After Size of ConceptSet: " + rs.getReasonerConceptSet().size());
             LOG.info("ClassifierResults: inferred changes size " + results.getConceptsWithInferredChanges().size());

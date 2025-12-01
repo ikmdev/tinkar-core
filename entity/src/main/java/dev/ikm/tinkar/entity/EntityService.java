@@ -449,6 +449,12 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      */
     void putEntity(Entity entity, DataActivity activity);
 
+    default void putEntityNoCache(Entity entity) {
+        putEntityNoCache(entity, DataActivity.SYNCHRONIZABLE_EDIT);
+    }
+
+    void putEntityNoCache(Entity entity, DataActivity activity);
+
     /**
      * Each time an entity is put via this method, Flow.Subscriber
      * is not notified that the entity may have changed.

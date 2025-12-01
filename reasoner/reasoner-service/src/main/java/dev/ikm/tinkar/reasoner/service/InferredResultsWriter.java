@@ -128,7 +128,7 @@ public class InferredResultsWriter {
 
 	private void processSemantic(Entity<? extends EntityVersion> entity) {
 		updateTransaction.addComponent(entity);
-		Entity.provider().putEntity(entity);
+		Entity.provider().putEntityNoCache(entity);
 	}
 
 	private StructuredTaskScope.Joiner<MutableIntList, Void> createAccumulatingJoiner(MutableIntList accumulator) {
@@ -188,11 +188,12 @@ public class InferredResultsWriter {
 		MutableIntList conceptsWithInferredChanges = IntLists.mutable.withInitialCapacity(conceptsToUpdate.size());
 		MutableIntList conceptsWithNavigationChanges = IntLists.mutable.withInitialCapacity(conceptsToUpdate.size());
 
-		final int totalCount = conceptsToUpdate.size() * 2;
+		final int totalCount = conceptsToUpdate.size();
 		final long startTime = System.currentTimeMillis();
 		updateProgress(0, totalCount, startTime);
+		progressUpdater.updateMessage("Categorizing inferred results.");
 		final AtomicInteger processedCount = new AtomicInteger();
-		updateTransaction = Transaction.make("Committing classification");
+		updateTransaction = Transaction.make("Reasoner results transaction");
 		EntityService.get().beginLoadPhase();
 		try {
 			StampEntity<?> updateStamp = updateTransaction.getStamp(State.ACTIVE,
@@ -207,9 +208,6 @@ public class InferredResultsWriter {
 
 			// Create more chunks than cores for work stealing
 			int chunkSize = PrimitiveData.calculateOptimalChunkSize(conceptsToUpdate.size());
-
-			LOG.info(String.format("Starting inferred results write. Total concepts: %,d, Total tasks (NNF+Nav): %,d, Chunk size: %,d",
-					conceptsToUpdate.size(), totalCount, chunkSize));
 
 			MutableIntList inferredSemanticNids = IntLists.mutable.empty();
 			MutableIntList noInferredSemanticConcepts = IntLists.mutable.empty();
@@ -258,8 +256,13 @@ public class InferredResultsWriter {
 					return false; // Don't short-circuit on fork
 				}
 			};
+			final int totalWork = inferredSemanticNids.size() + noInferredSemanticConcepts.size() + navigationSemanticNids.size() + noNavigationSemanticConcepts.size();
+					LOG.info(String.format("Starting inferred results write. Total concepts: %,d, Total tasks (NNF+Nav): %,d, Chunk size: %,d",
+							conceptsToUpdate.size(), totalWork, chunkSize));
+
 
 			Semaphore permits = new Semaphore(Runtime.getRuntime().availableProcessors() * 20);
+
 
 // Process all concepts in chunks to categorize them
 			try (var scope = StructuredTaskScope.open(accumulatingJoiner)) {
@@ -274,6 +277,7 @@ public class InferredResultsWriter {
                             ChunkResults results = new ChunkResults(chunkSize);
 
                             EntityService.get().forEachEntity(conceptChunk, concept -> {
+								progressUpdater.completedUnitOfWork();
                                 UUID inferredSemanticUuid = UuidT5Generator.singleSemanticUuid(inferredPattern,
                                         concept.publicId());
                                 if (PrimitiveData.get().hasUuid(inferredSemanticUuid)) {
@@ -307,6 +311,7 @@ public class InferredResultsWriter {
 			LOG.info("Concepts needing new navigation semantics: " + String.format("%,d", noNavigationSemanticConcepts.size()));
 
 			try {
+				progressUpdater.updateMessage("Processing updates to inferred semantics");
 
 				conceptsWithInferredChanges.addAll(
 						processEntitiesInScope(
@@ -314,6 +319,7 @@ public class InferredResultsWriter {
 								"Processing updates to {} inferred semantic nids in chunks of {}",
 								(entity, changedConcepts) -> {
 									if (entity instanceof SemanticEntity<?> semanticEntity) {
+										progressUpdater.completedUnitOfWork();
 										updateNNF(semanticEntity, changedConcepts);
 									} else {
 										LOG.error("Unexpected entity type: {}", entity.getClass());
@@ -324,6 +330,7 @@ public class InferredResultsWriter {
 				);
 				LOG.info("Updated inferred semantics.");
 
+				progressUpdater.updateMessage("Processing new inferred semantics");
 				conceptsWithInferredChanges.addAll(
 						processEntitiesInScope(
 								noInferredSemanticConcepts,
@@ -331,6 +338,7 @@ public class InferredResultsWriter {
 								(entity, changedConcepts) -> {
 									changedConcepts.add(entity.nid());
 									if (entity instanceof ConceptEntity<?> conceptEntity) {
+										progressUpdater.completedUnitOfWork();
 										newNNF(conceptEntity);
 									} else {
 										LOG.error("Unexpected entity type: {}", entity.getClass());
@@ -341,11 +349,13 @@ public class InferredResultsWriter {
 				);
 				LOG.info("Created new inferred semantics.");
 
+				progressUpdater.updateMessage("Processing updates to navigation semantics");
 				conceptsWithNavigationChanges.addAll(
 						processEntitiesInScope(
 								navigationSemanticNids,
 								"Processing updates to {} navigation semantic nids in chunks of {}",
 								(entity, changedConcepts) -> {
+									progressUpdater.completedUnitOfWork();
 									if (entity instanceof SemanticEntity<?> semanticEntity) {
 										updateNavigation(semanticEntity, changedConcepts);
 									} else {
@@ -357,6 +367,7 @@ public class InferredResultsWriter {
 				);
 				LOG.info("Updated navigation semantics.");
 
+				progressUpdater.updateMessage("Processing updates to navigation semantics");
 				conceptsWithNavigationChanges.addAll(
 						processEntitiesInScope(
 								noNavigationSemanticConcepts,
@@ -364,6 +375,7 @@ public class InferredResultsWriter {
 								(entity, changedConcepts) -> {
 									changedConcepts.add(entity.nid());
 									if (entity instanceof ConceptEntity<?> conceptEntity) {
+										progressUpdater.completedUnitOfWork();
 										newNavigation(conceptEntity);
 									} else {
 										LOG.error("Unexpected entity type: {}", entity.getClass());
@@ -388,6 +400,7 @@ public class InferredResultsWriter {
 		ViewCoordinateRecord commitCoordinate = getViewCoordinateRecord().withStampCoordinate(
 				getViewCoordinateRecord().stampCoordinate().withStampPositionTime(updateTransaction.commitTime()));
 
+		progressUpdater.updateMessage("Wrote inferred results in " + progressUpdater.durationString());
 		return new ClassifierResults(rs.getReasonerConceptSet(),
 				conceptsWithInferredChanges.toImmutable(),
 				conceptsWithNavigationChanges.toImmutable(),

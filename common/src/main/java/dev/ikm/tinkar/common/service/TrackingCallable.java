@@ -20,9 +20,13 @@ import dev.ikm.tinkar.common.util.time.Stopwatch;
 
 import java.time.Duration;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.DoubleAdder;
 
 public abstract class TrackingCallable<V> implements Callable<V> {
+    private static final long DEFAULT_UI_UPDATE_TIMEOUT_SECONDS = 5;
+    
     final boolean allowUserCancel;
     final boolean retainWhenComplete;
     Stopwatch stopwatch = new Stopwatch();
@@ -34,6 +38,11 @@ public abstract class TrackingCallable<V> implements Callable<V> {
     String message;
     V value;
     boolean isCancelled = false;
+    
+    /**
+     * Optional UI thread executor for blocking message updates.
+     */
+    private UiThreadExecutor uiThreadExecutor;
 
     public TrackingCallable() {
         this.allowUserCancel = true;
@@ -156,6 +165,16 @@ public abstract class TrackingCallable<V> implements Callable<V> {
         }
     }
 
+    /**
+     * Sets the UI thread executor for this task.
+     * This allows the task to perform blocking UI updates without depending on a specific UI framework.
+     * 
+     * @param executor the UI thread executor
+     */
+    public void setUiThreadExecutor(UiThreadExecutor executor) {
+        this.uiThreadExecutor = executor;
+    }
+
     public void updateMessage(String message) {
         if (message != null && this.message == null) {
             if (listener != null) {
@@ -165,6 +184,46 @@ public abstract class TrackingCallable<V> implements Callable<V> {
             listener.updateMessage(message);
         }
         this.message = message;
+    }
+
+    /**
+     * Updates the message and blocks until the UI thread has processed the update.
+     * This is useful for ensuring final status messages are displayed before a task completes,
+     * especially for very fast tasks that might complete in microseconds.
+     * <p>
+     * Requires a UiThreadExecutor to be set via setUiThreadExecutor().
+     * If no executor is set, falls back to regular updateMessage().
+     * 
+     * @param message the message to set
+     * @throws InterruptedException if interrupted while waiting for the UI update
+     */
+    public void updateMessageAndBlock(String message) throws InterruptedException {
+        updateMessageAndBlock(message, DEFAULT_UI_UPDATE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Updates the message and blocks until the UI thread has processed the update.
+     * 
+     * @param message the message to set
+     * @param timeout the maximum time to wait
+     * @param unit the time unit of the timeout argument
+     * @throws InterruptedException if interrupted while waiting for the UI update
+     */
+    public void updateMessageAndBlock(String message, long timeout, TimeUnit unit) throws InterruptedException {
+        if (uiThreadExecutor == null || listener == null) {
+            // No UI executor set, just update directly
+            updateMessage(message);
+            return;
+        }
+
+        // Use the UI thread executor to run and wait
+        CountDownLatch latch = new CountDownLatch(1);
+        uiThreadExecutor.executeAndSignal(() -> updateMessage(message), latch);
+
+        if (!latch.await(timeout, unit)) {
+            // Timeout occurred - update internal state anyway
+            this.message = message;
+        }
     }
 
     public void updateTitle(String title) {
@@ -205,5 +264,21 @@ public abstract class TrackingCallable<V> implements Callable<V> {
 
     public void updateProgress(long workDone, long maxWork) {
         updateProgress((double) workDone, (double) maxWork);
+    }
+
+    /**
+     * Interface for executing runnables on a UI thread.
+     * Implementations should execute the runnable on the appropriate UI thread
+     * and signal the latch when complete.
+     */
+    @FunctionalInterface
+    public interface UiThreadExecutor {
+        /**
+         * Executes the given runnable on the UI thread and counts down the latch when complete.
+         * 
+         * @param runnable the code to execute
+         * @param completionSignal the latch to count down after execution
+         */
+        void executeAndSignal(Runnable runnable, CountDownLatch completionSignal);
     }
 }
