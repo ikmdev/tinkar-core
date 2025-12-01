@@ -23,7 +23,9 @@ import dev.ikm.tinkar.entity.SemanticRecord;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.entity.transform.EntityToTinkarSchemaTransformer;
-import dev.ikm.tinkar.integration.StarterDataEphemeralProvider;
+import dev.ikm.tinkar.integration.OpenSpinedArrayKeyValueProvider;
+import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -66,7 +68,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Uses deterministic UUID generation (UUID.nameUUIDFromBytes) so both
  * generation and import tests use the same UUIDs without needing a shared file.
  */
-@ExtendWith(StarterDataEphemeralProvider.class)
+@ExtendWith(OpenSpinedArrayKeyValueProvider.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ForwardReferenceChangeSetGenerateIT {
 
@@ -94,6 +96,7 @@ class ForwardReferenceChangeSetGenerateIT {
         LOG.info("Will generate changeset at: {}", changesetFile.getAbsolutePath());
         LOG.info("Using concept UUID: {}", CONCEPT_UUID);
         LOG.info("Using semantic UUID: {}", SEMANTIC_UUID);
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
     }
 
     /**

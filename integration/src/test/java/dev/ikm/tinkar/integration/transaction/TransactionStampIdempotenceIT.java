@@ -20,7 +20,9 @@ import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.transaction.Transaction;
-import dev.ikm.tinkar.integration.StarterDataEphemeralProvider;
+import dev.ikm.tinkar.integration.OpenSpinedArrayKeyValueProvider;
+import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.Disabled;
@@ -45,7 +47,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
  * return the same stamp entity, which is critical for maintaining
  * canonical ObservableStamp instances and preventing duplicate versions.
  */
-@ExtendWith(StarterDataEphemeralProvider.class)
+@ExtendWith(OpenSpinedArrayKeyValueProvider.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class TransactionStampIdempotenceIT {
@@ -56,6 +58,7 @@ class TransactionStampIdempotenceIT {
     @Order(1)
     @DisplayName("getStamp() should be idempotent with same parameters")
     void testGetStampIsIdempotent() {
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
         LOG.info("Test that Transaction.getStamp() is idempotent with same parameters");
 
         // Create a single transaction

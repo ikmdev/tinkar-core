@@ -21,7 +21,9 @@ import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
-import dev.ikm.tinkar.integration.StarterDataEphemeralProvider;
+import dev.ikm.tinkar.integration.OpenSpinedArrayKeyValueProvider;
+import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.integration.helper.TestHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -55,7 +57,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  *
  * Tests are ordered to ensure the 1-pass test runs first (before entities exist in datastore).
  */
-@ExtendWith(StarterDataEphemeralProvider.class)
+@ExtendWith(OpenSpinedArrayKeyValueProvider.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ForwardReferenceChangeSetIngestIT {
@@ -70,14 +72,6 @@ class ForwardReferenceChangeSetIngestIT {
 
     @BeforeEach
     void beforeEach() {
-        waitForGenerationToComplete();
-
-        // Load the pre-generated changeset file from test resources
-        if (!changesetFile.exists()) {
-            throw new IllegalStateException(
-                    "Changeset file not found. Run ForwardReferenceChangeSetGenerateStep first.");
-        }
-
         // Use the same UUIDs that were used in generation test
         newConceptPublicId = PublicIds.of(ForwardReferenceChangeSetGenerateIT.CONCEPT_UUID);
         descriptionSemanticPublicId = PublicIds.of(ForwardReferenceChangeSetGenerateIT.SEMANTIC_UUID);
@@ -92,6 +86,7 @@ class ForwardReferenceChangeSetIngestIT {
             throw new IllegalStateException(
                     "Changeset file not found. Run ForwardReferenceChangeSetGenerateStep first.");
         }
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
     }
 
     /**
