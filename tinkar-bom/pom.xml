@@ -42,32 +42,19 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!-- Lock Log4j to 3.0.0-beta3 -->
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>${log4j-api.version}</version>
+                <!-- TODO: There is no 3.0.0-beta3 for log4j-api -->
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-slf4j2-impl</artifactId>
+                <version>${log4j-slf4j2-impl.version}</version>
+                <!-- TODO: There is no 3.0.0-beta3 for log4j-slf4j2-impl -->
+            </dependency>
         </dependencies>
     </dependencyManagement>
-
-    <dependencies>
-        <!-- Lock Log4j to 3.0.0-beta3 -->
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-api</artifactId>
-            <version>${log4j-api.version}</version>
-            <!-- TODO: There is no 3.0.0-beta3 for log4j-api -->
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-            <version>${log4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-plugins</artifactId>
-            <version>${log4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-slf4j2-impl</artifactId>
-            <version>${log4j-slf4j2-impl.version}</version>
-            <!-- TODO: There is no 3.0.0-beta3 for log4j-slf4j2-impl -->
-        </dependency>
-    </dependencies>
 </project>
