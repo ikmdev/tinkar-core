@@ -9,10 +9,6 @@
 
     <name>TINKAR Provider Data - Ephemeral</name>
 
-    <properties>
-        <compiler.args>--enable-preview</compiler.args>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
