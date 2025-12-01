@@ -50,13 +50,15 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
 
 
 public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(ProviderEphemeral.class);
-    protected static final StableValue<ProviderEphemeral> singleton = StableValue.of();
+    protected static AtomicReference<ProviderEphemeral> providerReference = new AtomicReference<>();
+    protected static ProviderEphemeral singleton;
     protected static LongAdder writeSequence = new LongAdder();
     // TODO I don't think the spines need to be atomic for this use case of nids -> elementIndices.
     //  There is no update after initial value set...
@@ -83,14 +85,20 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     }
 
     public static PrimitiveDataService provider() {
-        return singleton.orElseSet(() -> {
-            try {
-                return new ProviderEphemeral();
-            } catch (IOException e) {
-                LOG.error("Error starting ProviderEphemeral", e);
-                throw new RuntimeException(e);
-            }
-        });
+        if (singleton == null) {
+            singleton = providerReference.updateAndGet(providerEphemeral -> {
+                if (providerEphemeral == null) {
+                    try {
+                        return new ProviderEphemeral();
+                    } catch (IOException e) {
+                        LOG.error("Error starting ProviderEphemeral", e);
+                        throw new RuntimeException(e);
+                    }
+                }
+                return providerEphemeral;
+            });
+        }
+        return singleton;
     }
 
     @Override
@@ -101,6 +109,8 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     @Override
     public void close() {
         try {
+            this.providerReference.set(null);
+            this.singleton = null;
             this.indexer.commit();
             this.indexer.close();
         } catch (IOException e) {
