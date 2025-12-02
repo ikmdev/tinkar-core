@@ -60,9 +60,8 @@ class ExportDataIT {
 
     @BeforeAll
     static void beforeAll() {
-        createLockFile();
-
         FileUtil.recursiveDelete(DATASTORE_ROOT);
+        createLockFile();
         TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
         File file = TestConstants.PB_EXAMPLE_DATA_REASONED;
 
