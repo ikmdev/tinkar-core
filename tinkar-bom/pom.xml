@@ -11,7 +11,10 @@
     <description>Centralized dependency versions for Tinkar subprojects</description>
 
     <properties>
+        <junit.version>6.0.0</junit.version>
         <log4j.version>3.0.0-beta3</log4j.version>
+        <log4j-api.version>3.0.0-beta2</log4j-api.version>
+        <log4j-slf4j2-impl.version>3.0.0-beta2</log4j-slf4j2-impl.version>
         <slf4j.version>2.0.17</slf4j.version>
     </properties>
 
@@ -21,7 +24,7 @@
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>6.0.0</version>
+                <version>${junit.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -39,32 +42,19 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!-- Lock Log4j to 3.0.0-beta3 -->
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>${log4j-api.version}</version>
+                <!-- TODO: There is no 3.0.0-beta3 for log4j-api -->
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-slf4j2-impl</artifactId>
+                <version>${log4j-slf4j2-impl.version}</version>
+                <!-- TODO: There is no 3.0.0-beta3 for log4j-slf4j2-impl -->
+            </dependency>
         </dependencies>
     </dependencyManagement>
-
-    <dependencies>
-        <!-- Lock Log4j to 3.0.0-beta3 -->
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-api</artifactId>
-            <version>3.0.0-beta2</version>
-            <!-- TODO: There is no 3.0.0-beta3 for log4j-api -->
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-            <version>${log4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-plugins</artifactId>
-            <version>${log4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-slf4j2-impl</artifactId>
-            <version>3.0.0-beta2</version>
-            <!-- TODO: There is no 3.0.0-beta3 for log4j-slf4j2-impl -->
-        </dependency>
-    </dependencies>
 </project>

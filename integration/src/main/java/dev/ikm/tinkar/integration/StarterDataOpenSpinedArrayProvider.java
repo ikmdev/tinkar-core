@@ -8,7 +8,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
  * <p>
  * Store Type: SpinedArray (persistent, file-based)
  * Data Loaded: tinkar-starter-data-reasoned-pb.zip
- * Storage Location (default): target/spinedarrays
+ * Storage Location (default): target/spinedarrays/{TestClassName}
  * <p>
  * You can still override behavior on a per-test basis using {@link WithKeyValueProvider}
  * for custom {@code dataPath}, {@code cleanOnStart}, or {@code importPath}.
@@ -21,7 +21,8 @@ public class StarterDataOpenSpinedArrayProvider extends OpenSpinedArrayKeyValueP
         // Ensure we are using OPEN spined array and set friendly defaults for starter data
         cfg.controllerName = TestConstants.OPEN_SPINED_ARRAY_STORE;
         if (cfg.dataPath == null || cfg.dataPath.isBlank()) {
-            cfg.dataPath = "target/spinedarrays";
+            String testClassName = context.getRequiredTestClass().getSimpleName();
+            cfg.dataPath = "target/spinedarrays/" + testClassName;
         }
         if (cfg.importPath == null || cfg.importPath.isBlank()) {
             cfg.importPath = "target/data/tinkar-starter-data-reasoned-pb.zip";

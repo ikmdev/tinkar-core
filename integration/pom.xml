@@ -13,6 +13,14 @@
         <skip.unit.tests>false</skip.unit.tests>
         <skip.integration.tests>false</skip.integration.tests>
         <tinkar-composer.version>1.12.0</tinkar-composer.version>
+        <failsafeArgLine>
+            --enable-preview
+            -Xmx12G
+        </failsafeArgLine>
+        <surefireArgLine>
+            --enable-preview
+            -Xmx12G
+        </surefireArgLine>
     </properties>
 
     <dependencyManagement>
@@ -103,6 +111,17 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>search-provider</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>changeset-writer-provider</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>terms</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.eclipse.collections</groupId>
             <artifactId>eclipse-collections-api</artifactId>
@@ -151,23 +170,18 @@
         </dependency>
 
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>reasoner-elk-owl</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>reasoner-elk-snomed</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>reasoner-hybrid</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>dev.ikm.tinkar</groupId>
-            <artifactId>changeset-writer-provider</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -178,7 +192,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <argLine>--enable-preview</argLine>
                     <forkCount>1</forkCount>
                     <reuseForks>false</reuseForks>  <!-- CRITICAL: Fresh JVM per test class -->
                 </configuration>
@@ -191,7 +204,7 @@
             <id>internal-integration-test-data</id>
             <activation>
                 <property>
-                    <name>!stageOSSRH</name>
+                    <name>!stageMavenCentralRepository</name>
                 </property>
             </activation>
             <build>

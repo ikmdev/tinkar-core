@@ -59,10 +59,12 @@ class EntityServiceIT {
         assertNotNull(summary);
         // Add your assertions here based on the expected summary values
         // For example:
-        assertEquals(316, summary.conceptsCount());
-        assertEquals(3223, summary.semanticsCount());
+        assertEquals(319, summary.conceptsCount());
+        assertEquals(3253, summary.semanticsCount());
         assertEquals(18, summary.patternsCount());
-        assertEquals(1, summary.stampsCount());
+        assertEquals(45, summary.stampsCount());
+        // To ensure exports are self-contained, when a Component has a version in the specified time range, all its versions
+        // are exported with the specified stamp. Therefore, many stamps are expected to be exported here.
     }
 
 }

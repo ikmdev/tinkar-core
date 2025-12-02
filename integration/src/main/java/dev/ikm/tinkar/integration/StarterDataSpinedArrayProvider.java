@@ -19,7 +19,8 @@ public class StarterDataSpinedArrayProvider extends NewSpinedArrayKeyValueProvid
         // Ensure we are using NEW spined array and set defaults suitable for starter data
         cfg.controllerName = TestConstants.NEW_SPINED_ARRAY_STORE;
         if (cfg.dataPath == null || cfg.dataPath.isBlank()) {
-            cfg.dataPath = "target/spinedarrays";
+            String testClassName = context.getRequiredTestClass().getSimpleName();
+            cfg.dataPath = "target/spinedarrays/" + testClassName;
         }
         if (cfg.importPath == null || cfg.importPath.isBlank()) {
             cfg.importPath = "target/data/tinkar-starter-data-reasoned-pb.zip";

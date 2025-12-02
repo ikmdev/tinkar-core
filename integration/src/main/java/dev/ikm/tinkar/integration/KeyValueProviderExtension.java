@@ -19,6 +19,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.ServiceKeys;
+import dev.ikm.tinkar.common.service.ServiceProperties;
 import dev.ikm.tinkar.entity.EntityRecordFactory;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
@@ -34,18 +35,20 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.nio.file.*;
-import java.util.Set;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * JUnit 5 extension that initializes the Tinkar key-value provider for tests.
@@ -67,14 +70,14 @@ import java.util.List;
  * <ol>
  *   <li>Test class-level {@link WithKeyValueProvider} annotation</li>
  *   <li>Predefined provider subclass via {@link #resolveConfig(ExtensionContext)} override</li>
- *   <li>Sensible defaults (controller = automatic NEW/OPEN selection; dataPath = "target/key-value-store")</li>
+ *   <li>Sensible defaults (controller = automatic NEW/OPEN selection; dataPath = "target/key-value-store/{TestClassName}")</li>
  * </ol>
  * <p>
  * Defaults and smart behavior:
  * <ul>
  *   <li>If {@code controllerName="default"} or empty, a Spined Array controller is selected automatically:
  *     OPEN if {@code dataPath} exists and has content; NEW otherwise.</li>
- *   <li>For non-ephemeral controllers, {@code dataPath} defaults to {@code target/key-value-store}.</li>
+ *   <li>For non-ephemeral controllers, {@code dataPath} defaults to {@code target/test-data/{TestClassName}} for automatic test isolation.</li>
  *   <li>{@code cleanOnStart=true} removes any existing files under {@code dataPath} prior to startup.</li>
  *   <li>{@code importPath} supports single file, glob(s), and comma-separated patterns.</li>
  * </ul>
@@ -169,27 +172,25 @@ public class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCal
                 JVM_ALREADY_USED.set(true);
                 
                 // Determine controller and data path defaults
-                applyDefaultsAndEnvironment(cfg);
+                String testClassSimpleName = context.getRequiredTestClass().getSimpleName();
+                applyDefaultsAndEnvironment(cfg, testClassSimpleName);
                 LOG.info("Initializing Tinkar provider for tests with controller: {}", cfg.controllerName);
                 
-                // Set data store root for non-ephemeral controllers
-                if (!isEphemeralController(cfg.controllerName)) {
-                    if (cfg.cleanOnStart) {
-                        cleanDirectory(cfg.dataPath);
-                    }
-                    // Ensure directory exists for NEW controller case
-                    File dataRoot = new File(cfg.dataPath);
-                    if (!dataRoot.exists()) {
-                        boolean created = dataRoot.mkdirs();
-                        if (!created) {
-                            LOG.warn("Failed to create data directory: {}", dataRoot);
-                        }
-                    }
-                    System.setProperty(ServiceKeys.DATA_STORE_ROOT.name(), dataRoot.getAbsolutePath());
+                if (cfg.cleanOnStart) {
+                    cleanDirectory(cfg.dataPath);
                 }
+                // Ensure directory exists for NEW controller case
+                File dataRoot = new File(cfg.dataPath);
+                if (!dataRoot.exists()) {
+                    boolean created = dataRoot.mkdirs();
+                    if (!created) {
+                        LOG.warn("Failed to create data directory: {}", dataRoot);
+                    }
+                }
+                ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, dataRoot);
 
                 // Clean up any stale lock files from previous test runs
-                cleanupStaleLocks();
+                cleanupStaleLocks(dataRoot);
 
                 // Clear any existing caches
                 CachingService.clearAll();
@@ -356,10 +357,18 @@ public class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCal
         }
     }
 
-    private void applyDefaultsAndEnvironment(Config cfg) {
-        // Default data path for non-ephemeral controllers
-        if (cfg.dataPath == null || cfg.dataPath.isBlank()) {
-            cfg.dataPath = "target/key-value-store";
+    private void applyDefaultsAndEnvironment(Config cfg, String testClassName) {
+        String dataPathOverride = System.getProperty(ServiceKeys.DATA_STORE_ROOT.name());
+        if (dataPathOverride != null && !dataPathOverride.isBlank()) {
+            // Environment override present - respect it
+            LOG.info("Environment override detected for DATA_STORE_ROOT: {}", dataPathOverride);
+            cfg.dataPath = dataPathOverride;
+        } else {
+            // Default data path for non-ephemeral controllers
+            // Use test class name by default to provide automatic test isolation
+            if (cfg.dataPath == null || cfg.dataPath.isBlank()) {
+                cfg.dataPath = "target/key-value-store/" + testClassName;
+            }
         }
 
         // Resolve controller if default
@@ -450,24 +459,8 @@ public class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCal
      * Removes stale Lucene lock files from previous test runs.
      * This prevents LockObtainFailedException when tests don't shut down cleanly.
      */
-    private void cleanupStaleLocks() {
+    private void cleanupStaleLocks(File dataRoot) {
         try {
-            // Try to get the configured data root, but don't set a default yet
-            String dataRootPath = System.getProperty(ServiceKeys.DATA_STORE_ROOT.name());
-
-            if (dataRootPath == null) {
-                // Check common test locations
-                File targetDir = new File("target/spinedarrays");
-                if (targetDir.exists()) {
-                    dataRootPath = targetDir.getAbsolutePath();
-                    LOG.info("Using detected data root: {}", dataRootPath);
-                } else {
-                    LOG.debug("No data root configured yet, skipping lock cleanup");
-                    return;
-                }
-            }
-
-            File dataRoot = new File(dataRootPath);
             Path lucenePath = Path.of(dataRoot.getPath(), "lucene");
             Path lockFile = lucenePath.resolve("write.lock");
 

@@ -121,12 +121,11 @@ public class SearcherIT {
         var stampCoordinate = Coordinates.Stamp.DevelopmentLatestActiveOnly();
 
         //When I search "Component" for only the descendants of Role
-        var searchResults = stampCoordinate.stampCalculator().searchDescendants(TinkarTerm.ROLE, "Component", 100);
+        var searchResults = stampCoordinate.stampCalculator().searchDescendants(TinkarTerm.ROLE, "Feature", 100);
 
-        //Then there should only be 6 LatestVersionSearchResults, a grouping of FQN, SYN, DEF for the following concepts:
-        // 1) Refrenced component subtype restriction
-        // 2) Refrenced component type restriction
-        assertEquals(6, searchResults.size(), "Exactly 6 search results should be returned");
+        //Then there should only be 2 LatestVersionSearchResults, a grouping of FQN, SYN for the following concepts:
+        // 1) Feature Role Type
+        assertEquals(2, searchResults.size(), "Exactly 2 search results should be returned");
     }
 
     @Test
@@ -146,12 +145,11 @@ public class SearcherIT {
         var navigationCalculator = NavigationCalculatorWithCache.getCalculator(stampCoordinate, Lists.immutable.of(languageCoordinate), navigationCoordinate);
 
         //When I search "Component" for only the descendants of Role
-        var searchResults = stampCoordinate.stampCalculator().searchDescendants(navigationCalculator, TinkarTerm.ROLE, "Component", 100);
+        var searchResults = stampCoordinate.stampCalculator().searchDescendants(navigationCalculator, TinkarTerm.ROLE, "Feature", 100);
 
-        //Then there should only be 6 LatestVersionSearchResults, a grouping of FQN, SYN, DEF for the following concepts:
-        // 1) Referenced component subtype restriction
-        // 2) Referenced component type restriction
-        assertEquals(6, searchResults.size(), "Exactly 6 search results should be returned");
+        //Then there should only be 2 LatestVersionSearchResults, a grouping of FQN, SYN for the following concepts:
+        // 1) Feature Role Type
+        assertEquals(2, searchResults.size(), "Exactly 2 search results should be returned");
     }
 
     @Test
@@ -189,8 +187,8 @@ public class SearcherIT {
 
     @Test
     public void typeAheadMaxResultsTest() {
-        List<EntityFacade> entities = TypeAheadSearch.get().typeAheadSuggestions("r", 30);
-        assertEquals(30, entities.size());
+        List<EntityFacade> entities = TypeAheadSearch.get().typeAheadSuggestions("r", 20);
+        assertEquals(20, entities.size());
     }
 
     @Test
@@ -219,9 +217,9 @@ public class SearcherIT {
     public void searchConceptsWithTaggedMembershipSemantic() {
         // test memberPatternId with tagged concepts
         List<PublicId> conceptIds = Searcher.membersOf(TinkarTerm.KOMET_BASE_MODEL_COMPONENT_PATTERN);
-        assertEquals(1, conceptIds.size(), "there should be 1 tagged concept associated with this pattern");
+        assertEquals(6, conceptIds.size(), "there should be 6 tagged concept associated with this pattern");
         conceptIds = Searcher.membersOf(TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
-        assertEquals(316, conceptIds.size(), "there should be 316 tagged concept associated with this pattern");
+        assertEquals(379, conceptIds.size(), "there should be 379 tagged concept associated with this pattern");
     }
 
     @Test
