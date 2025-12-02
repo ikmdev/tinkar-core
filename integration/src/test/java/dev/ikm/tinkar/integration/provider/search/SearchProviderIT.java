@@ -22,6 +22,7 @@ import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.provider.search.Searcher;
 import dev.ikm.tinkar.terms.TinkarTerm;
+import dev.ikm.tinkar.terms.TinkarTermV2;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -59,7 +60,9 @@ public class SearchProviderIT {
                 TinkarTerm.KOMET_USER_LIST.publicId(),
                 TinkarTerm.MODULE_FOR_USER.publicId(),
                 TinkarTerm.PATH_FOR_USER.publicId(),
-                TinkarTerm.STARTER_DATA_AUTHORING.publicId()
+                TinkarTerm.STARTER_DATA_AUTHORING.publicId(),
+                TinkarTermV2.TINKAR_STARTER_DATA_AUTHOR_OPENPARENTHESIS_USER_CLOSEPARENTHESIS_.publicId(),
+                TinkarTermV2.GRETEL_OPENPARENTHESIS_USER_CLOSEPARENTHESIS_.publicId()
         );
 
         List<PublicId> actualUserChildren = Searcher.childrenOf(TinkarTerm.USER.publicId());
@@ -77,15 +80,11 @@ public class SearchProviderIT {
     @Test
     public void getDescendantsIT() {
         List<PublicId> expectedUserDescendants = Arrays.asList(
-                // Children of Role
-                TinkarTerm.ROLE_OPERATOR.publicId(),
                 TinkarTerm.ROLE_TYPE.publicId(),
                 TinkarTerm.ROLE_RESTRICTION.publicId(),
-                // Children of Role Operator
-                TinkarTerm.REFERENCED_COMPONENT_SUBTYPE_RESTRICTION.publicId(),
-                TinkarTerm.REFERENCED_COMPONENT_TYPE_RESTRICTION.publicId(),
-                TinkarTerm.UNIVERSAL_RESTRICTION.publicId(),
-                TinkarTerm.EXISTENTIAL_RESTRICTION.publicId()
+                TinkarTerm.INTERVAL_ROLE.publicId(),
+                TinkarTerm.INTERVAL_ROLE_TYPE.publicId(),
+                TinkarTermV2.FEATURE_ROLE_TYPE.publicId()
         );
 
         List<PublicId> actualUserDescendants = Searcher.descendantsOf(TinkarTerm.ROLE.publicId());

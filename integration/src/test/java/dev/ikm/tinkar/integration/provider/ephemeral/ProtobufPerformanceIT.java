@@ -41,7 +41,7 @@ public class ProtobufPerformanceIT {
 
     @Test
     @Order(1)
-    public void roundTripPerformanceTest() {
+    public void roundTripPerformanceTest() throws InterruptedException {
         File starterDataFile = TestConstants.PB_STARTER_DATA_REASONED;
         long loadTimeBefore = System.currentTimeMillis();
         long expectedEntityCount = new LoadEntitiesFromProtobufFile(starterDataFile).compute().getTotalCount();
@@ -62,6 +62,7 @@ public class ProtobufPerformanceIT {
         //Stopping and starting the database
         TestHelper.stopDatabase();
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
+        Thread.sleep(3000);
 
         long loadRoundTripFileTimeBefore = System.currentTimeMillis();
         long actualProtobufImportCount = new LoadEntitiesFromProtobufFile(roundTripFile).compute().getTotalCount();

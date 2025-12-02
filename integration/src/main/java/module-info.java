@@ -16,6 +16,7 @@
 import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.common.service.DefaultDescriptionForNidService;
 import dev.ikm.tinkar.common.service.PublicIdService;
+import dev.ikm.tinkar.entity.ChangeSetWriterService;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.StampService;
 
@@ -23,16 +24,17 @@ open module dev.ikm.tinkar.integration {
     exports dev.ikm.tinkar.integration;
     requires dev.ikm.tinkar.common;
     requires dev.ikm.tinkar.entity;
-    requires dev.ikm.tinkar.provider.entity;
     requires dev.ikm.tinkar.terms;
+    requires dev.ikm.tinkar.provider.entity;
+    requires dev.ikm.tinkar.provider.ephemeral;
+    requires dev.ikm.tinkar.provider.spinedarray;
+    requires dev.ikm.tinkar.provider.changeset;
+    requires dev.ikm.tinkar.provider.search;
     requires dev.ikm.jpms.protobuf;
     requires org.slf4j;
     requires org.eclipse.collections.api;
     requires org.eclipse.collections.impl;
-    requires dev.ikm.tinkar.provider.search;
     requires org.junit.jupiter.api;
-    requires dev.ikm.tinkar.provider.ephemeral;
-    requires dev.ikm.tinkar.provider.spinedarray;
     requires com.github.benmanes.caffeine;
 
     uses DataServiceController;
@@ -40,4 +42,5 @@ open module dev.ikm.tinkar.integration {
     uses EntityService;
     uses PublicIdService;
     uses StampService;
+    uses ChangeSetWriterService;
 }

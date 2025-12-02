@@ -1,5 +1,5 @@
 import dev.ikm.tinkar.entity.ChangeSetWriterService;
-import dev.ikm.tinkar.provider.changeset.ChangeSetWriterProvider;
+import dev.ikm.tinkar.provider.changeset.ChangeSetWriterServiceFactory;
 
 module dev.ikm.tinkar.provider.changeset {
     requires dev.ikm.tinkar.entity;
@@ -11,5 +11,5 @@ module dev.ikm.tinkar.provider.changeset {
     requires dev.ikm.tinkar.common;
     exports dev.ikm.tinkar.provider.changeset;
 
-    provides ChangeSetWriterService with ChangeSetWriterProvider;
+    provides ChangeSetWriterService with ChangeSetWriterServiceFactory;
 }

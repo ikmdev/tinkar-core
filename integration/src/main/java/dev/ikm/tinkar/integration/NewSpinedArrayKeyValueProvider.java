@@ -27,8 +27,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
  * <p>
  * Defaults:
  * - Forces controller {@code TestConstants.NEW_SPINED_ARRAY_STORE}
- * - Does not set a specific dataPath; falls back to {@code WithKeyValueProvider} or
- *   {@link KeyValueProviderExtension} default {@code target/key-value-store} unless overridden.
+ * - Defaults {@code dataPath} to {@code target/spinedarrays/{TestClassName}} if not specified
  */
 public class NewSpinedArrayKeyValueProvider extends KeyValueProviderExtension {
 
@@ -36,6 +35,10 @@ public class NewSpinedArrayKeyValueProvider extends KeyValueProviderExtension {
     protected Config resolveConfig(ExtensionContext context) {
         Config cfg = super.resolveConfig(context);
         cfg.controllerName = TestConstants.NEW_SPINED_ARRAY_STORE;
+        if (cfg.dataPath == null || cfg.dataPath.isBlank()) {
+            String testClassName = context.getRequiredTestClass().getSimpleName();
+            cfg.dataPath = "target/spinedarrays/" + testClassName;
+        }
         return cfg;
     }
 }
