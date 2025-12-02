@@ -36,9 +36,6 @@ open module dev.ikm.tinkar.integration {
     requires org.eclipse.collections.impl;
     requires org.junit.jupiter.api;
     requires com.github.benmanes.caffeine;
-    requires org.junit.platform.suite;
-    requires org.junit.platform.suite.api;
-    requires org.junit.platform.suite.engine;
 
     uses DataServiceController;
     uses DefaultDescriptionForNidService;
