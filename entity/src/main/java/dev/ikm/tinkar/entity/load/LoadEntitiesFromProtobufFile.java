@@ -186,7 +186,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             int maxPasses = 100; // Safety limit to prevent infinite loops
 
             while (!remainingMessages.isEmpty() && passNumber <= maxPasses) {
-                updateMessage(String.format("Pass %,d: Importing semantics (%,d remaining)...",
+                updateMessage(String.format("Pass %d: Importing semantics (%d remaining)...",
                         passNumber, remainingMessages.size()));
 
                 Map<String, TinkarMsg> stillRemaining = new HashMap<>();
@@ -203,8 +203,6 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                         // Progress update
                         if (importCount.get() % 1000 == 0) {
                             updateProgress(importCount.get(), expectedImports);
-                            updateMessage(String.format("Pass %d: Importing semantics (%,d remaining)...",
-                                    passNumber, remainingMessages.size()));
                         }
                     } catch (Exception e) {
                         // Referenced component not found yet - defer to next pass
@@ -221,7 +219,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                     LOG.error("Unable to import {} semantics due to unresolved references after {} passes",
                             stillRemaining.size(), passNumber);
                     throw new IllegalStateException(
-                            String.format("Unable to resolve %,d semantics after %d passes. " +
+                            String.format("Unable to resolve %d semantics after %d passes. " +
                                     "Possible circular dependencies or missing referenced components.",
                                     stillRemaining.size(), passNumber));
                 }
@@ -232,7 +230,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
 
             if (!remainingMessages.isEmpty()) {
                 throw new IllegalStateException(
-                        String.format("Exceeded maximum passes (%d). %,d semantics still unresolved.",
+                        String.format("Exceeded maximum passes (%d). %d semantics still unresolved.",
                                 maxPasses, remainingMessages.size()));
             }
 
@@ -256,7 +254,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
 
         if (importCount.get() != expectedImports) {
             IllegalStateException e = new IllegalStateException(
-                    String.format("Import Failed: Expected %,d entities, but imported %,d",
+                    String.format("Import Failed: Expected %d entities, but imported %d",
                             expectedImports, importCount.get()));
             AlertStreams.dispatchToRoot(e);
             throw e;

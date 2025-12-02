@@ -17,7 +17,6 @@ package dev.ikm.tinkar.integration.reasoner;
 
 import dev.ikm.tinkar.common.service.PluggableService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.integration.TestConstants;
@@ -69,24 +68,15 @@ public class ReasonerIT {
             LOG.info("Reasoner service: " + rs);
 
             rs.init(Calculators.View.Default(), TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
+            rs.setProgressUpdater(null);
             // Extract
-            rs.extractData(new TrackingCallable<Object>() {
-                @Override
-                protected Object compute() throws Exception {
-                    return null;
-                }
-            });
+            rs.extractData();
             // Load
-            rs.loadData(new TrackingCallable<Object>() {
-                @Override
-                protected Object compute() throws Exception {
-                    return null;
-                }
-            });
+            rs.loadData();
             // Compute
             rs.computeInferences();
             // Process Results
-            ClassifierResults results = rs.processResults(false, null);
+            ClassifierResults results = rs.processResults(null, false);
 
             LOG.info("After Size of ConceptSet: " + rs.getReasonerConceptSet().size());
             LOG.info("ClassifierResults: inferred changes size " + results.getConceptsWithInferredChanges().size());

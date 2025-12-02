@@ -32,7 +32,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import dev.ikm.tinkar.common.service.TrackingCallable;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -62,18 +61,9 @@ public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 		ViewCalculator vc = PrimitiveDataTestUtil.getViewCalculator(version);
 		ReasonerService rs = ElkSnomedTestBase.getElkSnomedReasonerService();
 		rs.init(vc, TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
-		rs.extractData(new TrackingCallable<Object>() {
-			@Override
-			protected Object compute() throws Exception {
-				return null;
-			}
-		});
-		rs.loadData(new TrackingCallable<Object>() {
-			@Override
-			protected Object compute() throws Exception {
-				return null;
-			}
-		});
+		rs.setProgressUpdater(null);
+		rs.extractData();
+		rs.loadData();
 		rs.computeInferences();
 		return rs;
 	}

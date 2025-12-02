@@ -43,9 +43,8 @@ module dev.ikm.tinkar.reasoner.elkowl {
 	requires dev.ikm.elk.snomed.owl;
 
 	requires dev.ikm.tinkar.reasoner.service;
-    requires dev.ikm.tinkar.common;
 
-    exports dev.ikm.tinkar.reasoner.elkowl;
+	exports dev.ikm.tinkar.reasoner.elkowl;
 
 	provides ReasonerService with ElkOwlReasonerService;
 

@@ -325,7 +325,7 @@ public interface EntityHandle {
      *
      * @return Optional containing the entity, or empty if absent
      */
-    Optional<Entity<? extends EntityVersion>> entity();
+    Optional<Entity<?>> entity();
 
     // ========== Static Factory Methods ==========
 
@@ -339,14 +339,11 @@ public interface EntityHandle {
      * @return an EntityHandle representing the entity, or an empty EntityHandle if absent.
       */
     static EntityHandle get(int nid) {
-        if (nid == Integer.MIN_VALUE || nid == Integer.MAX_VALUE || nid == 0) {
-            return absent();
-        }
         Entity entity = Entity.packagePrivateGetFast(nid);
         if (entity != null) {
             return of(entity);
         }
-        return absent();
+        return AbsentHandle.INSTANCE;
     }
 
     /**
@@ -358,9 +355,6 @@ public interface EntityHandle {
      * @return an EntityHandle representing the entity, or an empty EntityHandle if absent.
      */
     static EntityHandle get(PublicId publicId) {
-        if (publicId == null) {
-            return absent();
-        }
         return get(Entity.nid(publicId));
     }
 
@@ -373,9 +367,6 @@ public interface EntityHandle {
      * @return an EntityHandle representing the entity, or an empty EntityHandle if absent.
      */
     static EntityHandle get(EntityFacade entityFacade) {
-        if (entityFacade == null) {
-            return absent();
-        }
         return get(entityFacade.nid());
     }
 
@@ -539,7 +530,7 @@ public interface EntityHandle {
      * @return this handle for chaining
      */
     default EntityHandle ifSemanticOrElse(Consumer<SemanticEntity> consumer, Runnable elseAction) {
-        Optional<Entity<? extends EntityVersion>> opt = entity();
+        Optional<Entity<?>> opt = entity();
         if (opt.isPresent() && opt.get() instanceof SemanticEntity semantic) {
             consumer.accept(semantic);
         } else {
@@ -556,7 +547,7 @@ public interface EntityHandle {
      * @return this handle for chaining
      */
     default EntityHandle ifPatternOrElse(Consumer<PatternEntity> consumer, Runnable elseAction) {
-        Optional<Entity<? extends EntityVersion>> opt = entity();
+        Optional<Entity<?>> opt = entity();
         if (opt.isPresent() && opt.get() instanceof PatternEntity pattern) {
             consumer.accept(pattern);
         } else {
@@ -573,7 +564,7 @@ public interface EntityHandle {
      * @return this handle for chaining
      */
     default EntityHandle ifStampOrElse(Consumer<StampEntity> consumer, Runnable elseAction) {
-        Optional<Entity<? extends EntityVersion>> opt = entity();
+        Optional<Entity<?>> opt = entity();
         if (opt.isPresent() && opt.get() instanceof StampEntity stamp) {
             consumer.accept(stamp);
         } else {
@@ -624,7 +615,7 @@ public interface EntityHandle {
      * @throws IllegalStateException if entity is absent
      * @see #expectEntity()
      */
-    static Entity<? extends EntityVersion> getEntityOrThrow(int nid) {
+    static Entity<?> getEntityOrThrow(int nid) {
         return get(nid).expectEntity();
     }
 
@@ -635,7 +626,7 @@ public interface EntityHandle {
      * @return the Entity (never null)
      * @throws IllegalStateException if entity is absent
      */
-    static Entity<? extends EntityVersion> getEntityOrThrow(PublicId publicId) {
+    static Entity<?> getEntityOrThrow(PublicId publicId) {
         return get(publicId).expectEntity();
     }
 
@@ -646,7 +637,7 @@ public interface EntityHandle {
      * @return the Entity (never null)
      * @throws IllegalStateException if entity is absent
      */
-    static Entity<? extends EntityVersion> getEntityOrThrow(EntityFacade entityFacade) {
+    static Entity<?> getEntityOrThrow(EntityFacade entityFacade) {
         return get(entityFacade).expectEntity();
     }
 
@@ -832,7 +823,7 @@ public interface EntityHandle {
      * @see #expectEntity() for assertion-based access that throws if absent
      * @see #ifEntity(Consumer) for side-effect operations
      */
-    default Optional<Entity<? extends EntityVersion>> asEntity() {
+    default Optional<Entity<?>> asEntity() {
         return entity();
     }
 
@@ -998,7 +989,7 @@ public interface EntityHandle {
      * @see #asEntity() for safe Optional-based extraction when absence is valid
      * @see #ifEntity(Consumer) for side-effect operations
      */
-    default Entity<? extends EntityVersion> expectEntity() {
+    default Entity<?> expectEntity() {
         return entity().orElseThrow(() ->
             new IllegalStateException("Expected entity to be present but entity was absent")
         );
@@ -1019,7 +1010,7 @@ public interface EntityHandle {
      * @return the entity (never null)
      * @throws IllegalStateException if the entity is absent
      */
-    default Entity<? extends EntityVersion> expectEntity(String errorMessage) {
+    default Entity<?> expectEntity(String errorMessage) {
         return entity().orElseThrow(() -> new IllegalStateException(errorMessage));
     }
 
@@ -1422,7 +1413,7 @@ public interface EntityHandle {
      *
      * @param entityValue the entity being handled (never null)
      */
-    record PresentHandle(Entity<? extends EntityVersion> entityValue) implements EntityHandle {
+    record PresentHandle(Entity<?> entityValue) implements EntityHandle {
         /**
          * Compact constructor validates entity is non-null.
          */
@@ -1433,7 +1424,7 @@ public interface EntityHandle {
         }
 
         @Override
-        public Optional<Entity<? extends EntityVersion>> entity() {
+        public Optional<Entity<?>> entity() {
             return Optional.of(entityValue);
         }
     }
@@ -1453,7 +1444,7 @@ public interface EntityHandle {
         private AbsentHandle() {}
 
         @Override
-        public Optional<Entity<? extends EntityVersion>> entity() {
+        public Optional<Entity<?>> entity() {
             return Optional.empty();
         }
 

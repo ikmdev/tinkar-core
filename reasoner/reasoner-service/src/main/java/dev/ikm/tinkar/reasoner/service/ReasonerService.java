@@ -29,114 +29,56 @@ import dev.ikm.tinkar.terms.PatternFacade;
 
 public interface ReasonerService {
 
-	void init(ViewCalculator viewCalculator, PatternFacade statedAxiomPattern,
+	public void init(ViewCalculator viewCalculator, PatternFacade statedAxiomPattern,
 			PatternFacade inferredAxiomPattern);
 
-	default String getName() {
+	public default String getName() {
 		return this.getClass().getSimpleName();
 	}
 
-	ViewCalculator getViewCalculator();
+	public ViewCalculator getViewCalculator();
 
-	PatternFacade getStatedAxiomPattern();
+	public PatternFacade getStatedAxiomPattern();
 
-	PatternFacade getInferredAxiomPattern();
+	public PatternFacade getInferredAxiomPattern();
 
-	void extractData(TrackingCallable<?> progressTracker) throws Exception;
+	public TrackingCallable<?> getProgressUpdater();
 
-	void loadData(TrackingCallable<?> progressTracker) throws Exception;
+	public void setProgressUpdater(TrackingCallable<?> progressUpdater);
 
-	void computeInferences(TrackingCallable<?> progressTracker);
+	public void extractData() throws Exception;
 
-	default void computeInferences() {
-		computeInferences(new TrackingCallable<Object>() {
-			@Override
-			protected Object compute() throws Exception {
-				return null;
-			}
-		});
-	}
+	public void loadData() throws Exception;
 
-	boolean isIncrementalReady();
+	public void computeInferences();
+
+	public boolean isIncrementalReady();
 
 	@Deprecated
-	void processIncremental(DiTreeEntity definition, int conceptNid, TrackingCallable<?> progressUpdater);
+	public void processIncremental(DiTreeEntity definition, int conceptNid);
 
-	default void processIncremental(DiTreeEntity definition, int conceptNid) {
-		processIncremental(definition, conceptNid, new TrackingCallable<Object>() {
-			@Override
-			protected Object compute() throws Exception {
-				return null;
-			}
-		});
-	}
+	public void processIncremental(SemanticEntityVersion update);
 
-	void processIncremental(SemanticEntityVersion update, TrackingCallable<?> progressUpdater);
+	public void processIncremental(List<Integer> deletes, List<SemanticEntityVersion> updates);
 
-	default void processIncremental(SemanticEntityVersion update) {
-		processIncremental(update, new TrackingCallable<Object>() {
-			@Override
-			protected Object compute() throws Exception {
-				return null;
-			}
-		});
-	}
+	public void buildNecessaryNormalForm();
 
-	void processIncremental(List<Integer> deletes, List<SemanticEntityVersion> updates, TrackingCallable<?> progressUpdater);
+	public ClassifierResults writeInferredResults();
 
-	default void processIncremental(List<Integer> deletes, List<SemanticEntityVersion> updates) {
-		this.processIncremental(deletes, updates, new TrackingCallable<Object>() {
-			@Override
-			protected Object compute() throws Exception {
-				return null;
-			}
-		});
-	}
+	public int getConceptCount();
 
-	void buildNecessaryNormalForm(TrackingCallable<?> progressUpdater);
+	public ImmutableIntList getReasonerConceptSet();
 
-	default void buildNecessaryNormalForm() {
-		this.buildNecessaryNormalForm(new TrackingCallable<Object>() {
-			@Override
-			protected Object compute() throws Exception {
-				return null;
-			}
-		});
-	}
+	public ImmutableIntSet getEquivalent(int id);
 
-	ClassifierResults writeInferredResults(TrackingCallable<?> progressUpdater);
-	default ClassifierResults writeInferredResults() {
-		return writeInferredResults(new TrackingCallable<Object>() {
-			@Override
-			protected Object compute() throws Exception {
-				return null;
-			}
-		});
-	}
+	public ImmutableIntSet getParents(int id);
 
-	int getConceptCount();
+	public ImmutableIntSet getChildren(int id);
 
-	ImmutableIntList getReasonerConceptSet();
-
-	ImmutableIntSet getEquivalent(int id);
-
-	ImmutableIntSet getParents(int id);
-
-	ImmutableIntSet getChildren(int id);
-
-	LogicalExpression getNecessaryNormalForm(int id);
+	public LogicalExpression getNecessaryNormalForm(int id);
 
 	@Deprecated
-	ClassifierResults processResults(boolean reinferAllHierarchy, TrackingCallable<ClassifierResults> trackingCallable) throws Exception;
-
-	@Deprecated
-	default ClassifierResults processResults(boolean reinferAllHierarchy) throws Exception {
-		return processResults(reinferAllHierarchy, new TrackingCallable<ClassifierResults>() {
-			@Override
-			protected ClassifierResults compute() throws Exception {
-				return null;
-			}
-		});
-	}
+	public ClassifierResults processResults(TrackingCallable<ClassifierResults> trackingCallable,
+			boolean reinferAllHierarchy) throws Exception;
 
 }

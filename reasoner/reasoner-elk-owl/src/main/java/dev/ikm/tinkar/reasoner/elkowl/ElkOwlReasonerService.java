@@ -19,8 +19,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import dev.ikm.tinkar.common.service.TrackingCallable;
-import dev.ikm.tinkar.common.util.time.Stopwatch;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
@@ -66,30 +64,28 @@ public class ElkOwlReasonerService extends ReasonerServiceBase {
 	}
 
 	@Override
-	public void extractData(TrackingCallable<?> progressTracker) throws Exception {
+	public void extractData() throws Exception {
 		ontology = SnomedOwlOntology.createOntology();
 		axiomData = new ElkOwlData(ontology.getDataFactory());
 		builder = new ElkOwlDataBuilder(viewCalculator, statedAxiomPattern, axiomData, ontology.getDataFactory());
+		builder.setProgressUpdater(progressUpdater);
 		builder.build();
 	};
 
 	@Override
-	public void loadData(TrackingCallable<?> progressTracker) throws Exception {
+	public void loadData() throws Exception {
 		int axiomCount = this.axiomData.processedSemantics.get();
+		progressUpdater.updateProgress(0, axiomCount);
 		LOG.info("Create ontology");
 		LOG.info("Add axioms");
 		ontology.addAxioms(axiomData.axiomsSet);
 	};
 
-	public void computeInferences(TrackingCallable<?> progressTracker) {
+	public void computeInferences() {
 		if (!computedInferences) {
-			Stopwatch stopwatch = new Stopwatch();
-			progressTracker.updateMessage("Computing inferences");
 			ontology.classify();
 			computedInferences = true;
-			progressTracker.updateMessage("Inferences computed in " + stopwatch.durationString());
 		} else {
-			progressTracker.updateMessage("Adding precomputed inferences to reasoner");
 			ontology.getReasoner().flush();
 			ontology.getReasoner().precomputeInferences(InferenceType.CLASS_HIERARCHY);
 		}
@@ -101,26 +97,26 @@ public class ElkOwlReasonerService extends ReasonerServiceBase {
 	}
 
 	@Override
-	public void processIncremental(DiTreeEntity definition, int conceptNid, TrackingCallable<?> progressUpdater) {
+	public void processIncremental(DiTreeEntity definition, int conceptNid) {
 		IncrementalChanges changes = builder.processIncremental(definition, conceptNid);
 		ontology.removeAxioms(new HashSet<>(changes.getDeletions().castToList()));
 		ontology.addAxioms(new HashSet<>(changes.getAdditions().castToList()));
 	}
 
 	@Override
-	public void processIncremental(SemanticEntityVersion semanticEntityVersion, TrackingCallable<?> progressUpdater) {
+	public void processIncremental(SemanticEntityVersion semanticEntityVersion) {
 		// TODO easy to implement, but this module is on backlog
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void processIncremental(List<Integer> deletes, List<SemanticEntityVersion> updates, TrackingCallable<?> progressUpdater) {
+	public void processIncremental(List<Integer> deletes, List<SemanticEntityVersion> updates) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void buildNecessaryNormalForm(TrackingCallable<?> progressUpdater) {
+	public void buildNecessaryNormalForm() {
 		throw new UnsupportedOperationException();
 	}
 

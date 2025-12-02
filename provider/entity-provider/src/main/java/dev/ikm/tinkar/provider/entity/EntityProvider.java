@@ -35,6 +35,8 @@ import dev.ikm.tinkar.component.Chronology;
 import dev.ikm.tinkar.component.Version;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.transaction.Transaction;
+import dev.ikm.tinkar.provider.search.TypeAheadSearch;
+import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -46,6 +48,7 @@ import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
@@ -53,6 +56,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.function.Consumer;
 
+import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 import static dev.ikm.tinkar.terms.TinkarTerm.DESCRIPTION_PATTERN;
 
 //@AutoService({EntityService.class, PublicIdService.class, DefaultDescriptionForNidService.class})
@@ -354,7 +358,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     @Override
     public void notifyRefreshRequired(Transaction transaction) {
         transaction.forEachComponentInTransaction(nid -> {
-            EntityHandle.get(nid).ifPresent(entity -> invalidateCaches(entity));
+            Entity.get(nid).ifPresent(entity -> invalidateCaches(entity));
             this.processor.dispatch(nid);
         });
     }
@@ -538,5 +542,11 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     public void endLoadPhase() {
         loadPhase = false;
         processor.dispatch(Integer.MIN_VALUE);
+        // Now we build the AnalyzingSuggester Index
+        try {
+            TypeAheadSearch.get().buildSuggester();
+        } catch (IOException e) {
+            LOG.error("Encountered exception {}", e.getMessage());
+        }
     }
 }

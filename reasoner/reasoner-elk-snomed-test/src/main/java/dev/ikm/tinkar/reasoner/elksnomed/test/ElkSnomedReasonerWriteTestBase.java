@@ -21,7 +21,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import dev.ikm.tinkar.common.service.TrackingCallable;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,18 +49,8 @@ public abstract class ElkSnomedReasonerWriteTestBase extends ElkSnomedTestBase {
 	@Test
 	public void reasonerWrite() throws Exception {
 		ReasonerService rs = initReasonerService();
-		rs.extractData(new TrackingCallable<Object>() {
-			@Override
-			protected Object compute() throws Exception {
-				return null;
-			}
-		});
-		rs.loadData(new TrackingCallable<Object>() {
-			@Override
-			protected Object compute() throws Exception {
-				return null;
-			}
-		});
+		rs.extractData();
+		rs.loadData();
 		rs.computeInferences();
 		rs.buildNecessaryNormalForm();
 		rs.writeInferredResults();

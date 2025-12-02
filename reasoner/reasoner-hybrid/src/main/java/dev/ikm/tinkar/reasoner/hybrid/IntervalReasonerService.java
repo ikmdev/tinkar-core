@@ -17,7 +17,6 @@ package dev.ikm.tinkar.reasoner.hybrid;
 
 import java.util.List;
 
-import dev.ikm.tinkar.common.service.TrackingCallable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +48,8 @@ public class IntervalReasonerService extends ElkSnomedReasonerService {
 	}
 
 	@Override
-	public void loadData(TrackingCallable<?> progressTracker) throws Exception {
+	public void loadData() throws Exception {
+		progressUpdater.updateProgress(0, data.getActiveConceptCount());
 		LOG.info("Create ontology");
 		ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(), List.of());
 		LOG.info("Create reasoner");
@@ -70,16 +70,15 @@ public class IntervalReasonerService extends ElkSnomedReasonerService {
 	}
 
 	@Override
-	public void processIncremental(DiTreeEntity definition, int conceptNid, TrackingCallable<?> progressUpdater) {
+	public void processIncremental(DiTreeEntity definition, int conceptNid) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void buildNecessaryNormalForm(TrackingCallable<?> progressUpdater) {
+	public void buildNecessaryNormalForm() {
 		List<ConcreteRoleType> intervalRoles = List.copyOf(data.getIntervalRoleTypes());
 		nnfb = IntervalNecessaryNormalFormBuilder.create(ontology, reasoner.getSuperConcepts(),
-				reasoner.getSuperRoleTypes(false), TinkarTerm.ROOT_VERTEX.nid(), intervalRoles,
-				(workDone, max) -> progressUpdater.updateProgress(workDone, max));
+				reasoner.getSuperRoleTypes(false), TinkarTerm.ROOT_VERTEX.nid(), intervalRoles);
 		nnfb.generate();
 	}
 

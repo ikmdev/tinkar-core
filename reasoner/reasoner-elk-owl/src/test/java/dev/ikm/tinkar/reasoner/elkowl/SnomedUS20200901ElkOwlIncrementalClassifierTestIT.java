@@ -20,7 +20,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.UUID;
 
-import dev.ikm.tinkar.common.service.TrackingCallable;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,64 +49,32 @@ public class SnomedUS20200901ElkOwlIncrementalClassifierTestIT extends ElkOwlTes
 	}
 
 	public ArrayList<String> classifyAll() throws Exception {
-		TrackingCallable<?> progressUpdater = new TrackingCallable<Object>() {
-			@Override
-			protected Object compute() throws Exception {
-				return null;
-			}
-		};
 		String db_all = db + "-all";
 		copyDb(db, db_all);
 		setupPrimitiveData(db_all);
 		PrimitiveData.start();
 		ReasonerService rs = initReasonerService();
 		makeEquivalent(rs);
-		rs.extractData(new TrackingCallable<Object>() {
-			@Override
-			protected Object compute() throws Exception {
-				return null;
-			}
-		});
-		rs.loadData(new TrackingCallable<Object>() {
-			@Override
-			protected Object compute() throws Exception {
-				return null;
-			}
-		});
-		rs.computeInferences(progressUpdater);
+		rs.extractData();
+		rs.loadData();
+		rs.computeInferences();
 		ArrayList<String> lines = getSupercs(rs);
 		return lines;
 	}
 
 	public ArrayList<String> classifyInc() throws Exception {
-		TrackingCallable<?> progressUpdater = new TrackingCallable<Object>() {
-			@Override
-			protected Object compute() throws Exception {
-				return null;
-			}
-		};
 		String db_inc = db + "-inc";
 		copyDb(db, db_inc);
 		setupPrimitiveData(db_inc);
 		PrimitiveData.start();
 		ReasonerService rs = initReasonerService();
-		rs.extractData(new TrackingCallable<Object>() {
-			@Override
-			protected Object compute() throws Exception {
-				return null;
-			}
-		});
-		rs.loadData(new TrackingCallable<Object>() {
-			@Override
-			protected Object compute() throws Exception {
-				return null;
-			}
-		});
-		rs.computeInferences(progressUpdater);
+		rs.extractData();
+		rs.loadData();
+		rs.computeInferences();
 		DiTreeEntity def = makeEquivalent(rs);
 		int cldNid = PrimitiveData.nid(ChronicLungDiseaseUuid);
-		rs.processIncremental(def, cldNid, progressUpdater);
-		rs.computeInferences(progressUpdater);
+		rs.processIncremental(def, cldNid);
+		rs.computeInferences();
 		ArrayList<String> lines = getSupercs(rs);
 		return lines;
 	}

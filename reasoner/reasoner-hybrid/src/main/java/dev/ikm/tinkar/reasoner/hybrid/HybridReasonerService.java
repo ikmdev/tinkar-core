@@ -17,7 +17,6 @@ package dev.ikm.tinkar.reasoner.hybrid;
 
 import java.util.Set;
 
-import dev.ikm.tinkar.common.service.TrackingCallable;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,13 +64,14 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 	}
 
 	@Override
-	public void loadData(TrackingCallable<?> progressTracker) throws Exception {
+	public void loadData() throws Exception {
+		progressUpdater.updateProgress(0, data.getActiveConceptCount());
 		LOG.info("Create ontology");
 		ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(), data.getConcreteRoleTypes());
 	};
 
 	@Override
-	public void computeInferences(TrackingCallable<?> progressTracker) {
+	public void computeInferences() {
 		sso = StatementSnomedOntology.create(ontology, HybridReasonerService.getRootId(), getSwecNids());
 		sso.classify();
 	}
@@ -82,15 +82,14 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 	}
 
 	@Override
-	public void processIncremental(DiTreeEntity definition, int conceptNid, TrackingCallable<?> progressUpdater) {
+	public void processIncremental(DiTreeEntity definition, int conceptNid) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void buildNecessaryNormalForm(TrackingCallable<?> progressUpdater) {
+	public void buildNecessaryNormalForm() {
 		nnfb = NecessaryNormalFormBuilder.create(sso.getOntology(), sso.getSuperConcepts(),
-				sso.getSuperRoleTypes(false), TinkarTerm.ROOT_VERTEX.nid(),
-				(workDone, max) -> progressUpdater.updateProgress(workDone, max));
+				sso.getSuperRoleTypes(false), TinkarTerm.ROOT_VERTEX.nid());
 		nnfb.generate();
 	}
 

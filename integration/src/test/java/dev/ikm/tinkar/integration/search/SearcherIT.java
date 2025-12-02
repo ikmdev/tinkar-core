@@ -19,15 +19,21 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.composer.Composer;
+import dev.ikm.tinkar.composer.Session;
+import dev.ikm.tinkar.composer.assembler.SemanticAssembler;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
 import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.provider.search.Searcher;
+import dev.ikm.tinkar.provider.search.TypeAheadSearch;
+import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.MutableList;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -36,8 +42,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -53,6 +62,16 @@ public class SearcherIT {
     public void beforeAll() {
         TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
         TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
+
+        rebuildTypeAheadSuggesterAndBlock();
+    }
+
+    private void rebuildTypeAheadSuggesterAndBlock() {
+        try {
+            TypeAheadSearch.get().buildSuggester().get();
+        } catch (IOException | ExecutionException | InterruptedException ex) {
+            LOG.error("Exception building Type Ahead Suggester: {}", ex.toString());
+        }
     }
 
     @AfterAll
@@ -133,6 +152,45 @@ public class SearcherIT {
         // 1) Referenced component subtype restriction
         // 2) Referenced component type restriction
         assertEquals(6, searchResults.size(), "Exactly 6 search results should be returned");
+    }
+
+    @Test
+    public void typeAheadIndexerTest() throws InterruptedException {
+        var stampCoordinate = Coordinates.Stamp.DevelopmentLatestActiveOnly();
+        var languageCoordinate = Coordinates.Language.UsEnglishRegularName();
+        var navigationCoordinate = Coordinates.Navigation.inferred().toNavigationCoordinateRecord();
+        var navigationCalculator = NavigationCalculatorWithCache.getCalculator(stampCoordinate, Lists.immutable.of(languageCoordinate), navigationCoordinate);
+
+        List<EntityFacade> entities = TypeAheadSearch.get().typeAheadSuggestions(navigationCalculator, "r", 10);
+        assertEquals(10, entities.size());
+        entities = TypeAheadSearch.get().typeAheadSuggestions(navigationCalculator, "rAdd", 20);
+        assertEquals(0, entities.size());
+        // Add a new semantic
+        MutableList<String> list = Lists.mutable.empty();
+        list.add("rAdded");
+        Session session = composer.open(State.ACTIVE, TinkarTerm.USER, TinkarTerm.SOLOR_OVERLAY_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+        session.compose((SemanticAssembler semanticAssembler) -> semanticAssembler
+                .pattern(TinkarTerm.COMMENT_PATTERN)
+                .reference(TinkarTerm.COMMENT)
+                .fieldValues((MutableList<Object> values) -> values.withAll(list))
+        );
+        rebuildTypeAheadSuggesterAndBlock();
+        entities = TypeAheadSearch.get().typeAheadSuggestions("rAdd", 10);
+        assertEquals(1, entities.size());
+        AtomicInteger commentConcepts = new AtomicInteger();
+        entities.forEach(conceptFacade -> {
+            if (PublicId.equals(conceptFacade.publicId(), TinkarTerm.COMMENT)) {
+                commentConcepts.getAndIncrement();
+            }
+        });
+        assertTrue(entities.contains(TinkarTerm.COMMENT));
+        assertEquals(1, commentConcepts.get());
+    }
+
+    @Test
+    public void typeAheadMaxResultsTest() {
+        List<EntityFacade> entities = TypeAheadSearch.get().typeAheadSuggestions("r", 30);
+        assertEquals(30, entities.size());
     }
 
     @Test
