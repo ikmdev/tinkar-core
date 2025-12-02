@@ -88,7 +88,7 @@ public class SnomedUS20230901ElkOwlClassifierTestIT extends SnomedUS20230901ElkO
 		int other_miss_cnt = 0;
 		SnomedIsa isas = SnomedIsa.init(rels_file);
 		nid_sctid_map = new HashMap<>();
-		for (long sctid : isas.getOrderedConcepts()) {
+		for (long sctid : isas.getOrderedConcepts().toArray()) {
 			UUID uuid = UuidUtil.fromSNOMED("" + sctid);
 			int nid = PrimitiveData.nid(uuid);
 			nid_sctid_map.put(nid, sctid);
@@ -104,7 +104,8 @@ public class SnomedUS20230901ElkOwlClassifierTestIT extends SnomedUS20230901ElkO
 //				LOG.error("No concept: " + nid + " " + PrimitiveData.text((int) nid));
 				continue;
 			}
-			Set<Long> parents = isas.getParents(sctid);
+			Set<Long> parents = new HashSet<>();
+			isas.getParents(sctid).forEach(parents::add);
 			if (sctid == SnomedIds.root) {
 				assertTrue(parents.isEmpty());
 			} else {
@@ -135,14 +136,15 @@ public class SnomedUS20230901ElkOwlClassifierTestIT extends SnomedUS20230901ElkO
 				}
 			}
 		}
-		isas.getOrderedConcepts().stream().filter(other_misses::contains)
+		isas.getOrderedConcepts().boxed().stream().filter(other_misses::contains)
 //		.limit(10)
 		.forEach((sctid) -> {
 			UUID uuid = UuidUtil.fromSNOMED("" + sctid);
 			int nid = PrimitiveData.nid(uuid);
 			LOG.error("Miss: " + sctid + " " + PrimitiveData.text(nid));
 			Set<Long> sups = toSctids(ontology.getSuperClasses(nid));
-			Set<Long> parents = isas.getParents(sctid);
+			Set<Long> parents = new HashSet<>();
+			isas.getParents(sctid).forEach(parents::add);
 			HashSet<Long> par = new HashSet<>(parents);
 			par.removeAll(sups);
 			HashSet<Long> sup = new HashSet<>(sups);

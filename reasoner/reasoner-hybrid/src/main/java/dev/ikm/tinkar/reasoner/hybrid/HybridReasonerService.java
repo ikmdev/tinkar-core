@@ -15,10 +15,17 @@
  */
 package dev.ikm.tinkar.reasoner.hybrid;
 
+import java.util.HashMap;
 import java.util.Set;
 
 import dev.ikm.tinkar.common.service.TrackingCallable;
+import org.eclipse.collections.api.factory.primitive.IntSets;
+import org.eclipse.collections.api.factory.primitive.LongObjectMaps;
+import org.eclipse.collections.api.factory.primitive.LongSets;
+import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,31 +92,58 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 	public void processIncremental(DiTreeEntity definition, int conceptNid, TrackingCallable<?> progressUpdater) {
 		throw new UnsupportedOperationException();
 	}
-
 	@Override
 	public void buildNecessaryNormalForm(TrackingCallable<?> progressUpdater) {
-		nnfb = NecessaryNormalFormBuilder.create(sso.getOntology(), sso.getSuperConcepts(),
-				sso.getSuperRoleTypes(false), TinkarTerm.ROOT_VERTEX.nid(),
+		//TODO: refactor to use primitive collections directly.
+		nnfb = NecessaryNormalFormBuilder.create(sso.getOntology(),
+				convertToLongMap(sso.getSuperConcepts()),
+				convertToLongMap(sso.getSuperRoleTypes(false)),
+				TinkarTerm.ROOT_VERTEX.nid(),
 				(workDone, max) -> progressUpdater.updateProgress(workDone, max));
 		nnfb.generate();
+	}
+
+	/**
+	 * Converts boxed HashMap to primitive Eclipse Collections map.
+	 * Transforms HashMap<Long, Set<Long>> to MutableLongObjectMap<MutableLongSet>
+	 * for better performance with primitive types.
+	 *
+	 * @param source the boxed map to convert
+	 * @return a primitive map with primitive long sets as values
+	 * TODO: refactor to use primitive collections directly.
+	 */
+	private MutableLongObjectMap<MutableLongSet> convertToLongMap(HashMap<Long, Set<Long>> source) {
+		MutableLongObjectMap<MutableLongSet> result = LongObjectMaps.mutable.withInitialCapacity(source.size());
+		source.forEach((key, values) -> {
+			MutableLongSet primitiveValues = LongSets.mutable.withInitialCapacity(values.size());
+			values.forEach(primitiveValues::add);
+			result.put(key, primitiveValues);
+		});
+		return result;
 	}
 
 	@Override
 	public ImmutableIntSet getEquivalent(int id) {
 		Set<Long> eqs = sso.getEquivalentConcepts(id);
-		return toIntSet(eqs);
+		MutableIntSet eqsInt = IntSets.mutable.empty();
+		eqs.stream().mapToInt(Long::intValue).forEach(eqsInt::add);
+		return eqsInt.toImmutable();
 	}
 
 	@Override
 	public ImmutableIntSet getParents(int id) {
 		Set<Long> supers = sso.getSuperConcepts(id);
-		return toIntSet(supers);
+		MutableIntSet eqsInt = IntSets.mutable.empty();
+		supers.stream().mapToInt(Long::intValue).forEach(eqsInt::add);
+		return eqsInt.toImmutable();
 	}
 
 	@Override
 	public ImmutableIntSet getChildren(int id) {
 		Set<Long> subs = sso.getSubConcepts(id);
-		return toIntSet(subs);
+		MutableIntSet eqsInt = IntSets.mutable.empty();
+		subs.stream().mapToInt(Long::intValue).forEach(eqsInt::add);
+		return eqsInt.toImmutable();
 	}
 
 }

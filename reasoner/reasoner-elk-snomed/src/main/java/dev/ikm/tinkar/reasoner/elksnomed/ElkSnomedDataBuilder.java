@@ -88,7 +88,7 @@ public class ElkSnomedDataBuilder {
 	public void build() throws Exception {
 		final int totalCount = computeTotalCount();
 		LOG.info("Total axioms: " + totalCount);
-		this.progressUpdater.updateMessage("Total axioms: " + totalCount);
+		this.progressUpdater.updateMessage(String.format("Total axioms: %,d", totalCount));
 		updateProgress(0, totalCount);
 		final AtomicInteger processedCount = new AtomicInteger();
 		LogicCoordinateRecord logicCoordinate = viewCalculator.logicCalculator().logicCoordinateRecord();

@@ -15,13 +15,18 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
 import dev.ikm.tinkar.common.service.TrackingCallable;
+import org.eclipse.collections.api.factory.primitive.LongObjectMaps;
+import org.eclipse.collections.api.factory.primitive.LongSets;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
+import org.eclipse.collections.api.set.primitive.MutableLongSet;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,9 +141,25 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 
 	@Override
 	public void buildNecessaryNormalForm(TrackingCallable<?> progressUpdater) {
-		nnfb = NecessaryNormalFormBuilder.create(ontology, reasoner.getSuperConcepts(),
-				reasoner.getSuperRoleTypes(false), TinkarTerm.ROOT_VERTEX.nid(), (int workDone, int max) -> progressUpdater.updateProgress(workDone, max));
+		// Convert Set<Long> to MutableLongSet
+		MutableLongObjectMap<MutableLongSet> superConcepts = reasoner.getSuperConcepts();
+		MutableLongObjectMap<MutableLongSet> superRoleTypes = reasoner.getSuperRoleTypes(false);
+		
+		nnfb = NecessaryNormalFormBuilder.create(ontology, superConcepts, superRoleTypes, 
+			TinkarTerm.ROOT_VERTEX.nid(), 
+			(int workDone, int max) -> progressUpdater.updateProgress(workDone, max));
 		nnfb.generate();
+	}
+
+	// Helper method to convert boxed collections to primitive
+	private MutableLongObjectMap<MutableLongSet> convertToLongMap(HashMap<Long, Set<Long>> source) {
+		MutableLongObjectMap<MutableLongSet> result = LongObjectMaps.mutable.withInitialCapacity(source.size());
+		source.forEach((key, values) -> {
+			MutableLongSet primitiveValues = LongSets.mutable.withInitialCapacity(values.size());
+			values.forEach(primitiveValues::add);
+			result.put(key, primitiveValues);
+		});
+		return result;
 	}
 
 	@Override
@@ -151,11 +172,11 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 		return data.getReasonerConceptSet();
 	}
 
-	protected ImmutableIntSet toIntSet(Set<Long> classes) {
+	protected ImmutableIntSet toIntSet(MutableLongSet classes) {
 		if (classes == null)
 			return null;
 		MutableIntSet parentNids = IntSets.mutable.withInitialCapacity(classes.size());
-		for (long parent : classes) {
+		for (long parent : classes.toArray()) {
 			parentNids.add((int) parent);
 		}
 		return parentNids.toImmutable();
@@ -163,19 +184,19 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 
 	@Override
 	public ImmutableIntSet getEquivalent(int id) {
-		Set<Long> eqs = reasoner.getEquivalentConcepts(id);
+		MutableLongSet eqs = reasoner.getEquivalentConcepts(id);
 		return toIntSet(eqs);
 	}
 
 	@Override
 	public ImmutableIntSet getParents(int id) {
-		Set<Long> supers = reasoner.getSuperConcepts(id);
+		MutableLongSet supers = reasoner.getSuperConcepts(id);
 		return toIntSet(supers);
 	}
 
 	@Override
 	public ImmutableIntSet getChildren(int id) {
-		Set<Long> subs = reasoner.getSubConcepts(id);
+		MutableLongSet subs = reasoner.getSubConcepts(id);
 		return toIntSet(subs);
 	}
 

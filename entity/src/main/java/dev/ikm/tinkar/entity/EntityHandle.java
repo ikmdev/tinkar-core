@@ -5,6 +5,7 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.terms.EntityFacade;
 
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -362,6 +363,20 @@ public interface EntityHandle {
             return absent();
         }
         return get(Entity.nid(publicId));
+    }
+
+    /**
+     * Retrieves an EntityHandle based on the provided array of UUIDs.
+     *
+     * @param uuids an array of UUIDs used to locate the corresponding entity;
+     *              if null, an absent EntityHandle is returned.
+     * @return the EntityHandle associated with the provided UUIDs, or an absent EntityHandle if the input is null.
+     */
+    static EntityHandle get(UUID... uuids) {
+        if (uuids == null) {
+            return absent();
+        }
+        return get(PrimitiveData.nid(uuids));
     }
 
     /**
