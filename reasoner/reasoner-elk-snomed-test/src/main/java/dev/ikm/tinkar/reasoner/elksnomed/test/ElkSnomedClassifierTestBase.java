@@ -27,6 +27,7 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,7 +82,7 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 		SnomedIsa isas = SnomedIsa.init(rels_file);
 		SnomedDescriptions descr = SnomedDescriptions.init(descriptions_file);
 		nid_sctid_map = new HashMap<>();
-		for (long sctid : isas.getOrderedConcepts()) {
+		for (long sctid : isas.getOrderedConcepts().toArray()) {
 			int nid = ElkSnomedData.getNid(sctid);
 			nid_sctid_map.put(nid, sctid);
 			if (ontology.getConcept(nid) == null)
@@ -89,18 +90,18 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 		}
 		for (Concept con : ontology.getConcepts()) {
 			long nid = con.getId();
-			Set<Long> sups = toSctids(reasoner.getSuperConcepts(nid));
+			Set<Long> sups = toSctids(reasoner.getSuperConcepts(nid).boxed());
 			Long sctid = nid_sctid_map.get((int) nid);
 			if (sctid == null) {
 				non_snomed_cnt++;
 				continue;
 			}
-			Set<Long> parents = isas.getParents(sctid);
+			Set<Long> parents = isas.getParents(sctid).toSet().boxed();
 			if (sctid == SnomedIds.root) {
 				assertTrue(parents.isEmpty());
 				// has a parent in the db
 				assertEquals(1, sups.size());
-				assertEquals(TinkarTerm.PHENOMENON.nid(), reasoner.getSuperConcepts(nid).iterator().next());
+				assertEquals(TinkarTerm.PHENOMENON.nid(), reasoner.getSuperConcepts(nid).toArray()[0]);
 				continue;
 			} else {
 				assertNotNull(parents);
@@ -110,14 +111,16 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 				miss_cnt++;
 			}
 		}
-		isas.getOrderedConcepts().stream().filter(misses::contains) //
-				.limit(10) //
-				.forEach((sctid) -> {
+		MutableLongList selectedIds = isas.getOrderedConcepts().select(id -> misses.contains(id));
+		int limit = Math.min(10, selectedIds.size());
+
+		for (int i = 0; i < limit; i++) {
+			long sctid = selectedIds.get(i);
 					UUID uuid = UuidUtil.fromSNOMED("" + sctid);
 					int nid = PrimitiveData.nid(uuid);
 					LOG.error("Miss: " + sctid + " " + PrimitiveData.text(nid));
-					Set<Long> sups = toSctids(reasoner.getSuperConcepts(nid));
-					Set<Long> parents = isas.getParents(sctid);
+					Set<Long> sups = toSctids(reasoner.getSuperConcepts(nid).boxed());
+					Set<Long> parents = isas.getParents(sctid).toSet().boxed();
 					HashSet<Long> par = new HashSet<>(parents);
 					par.removeAll(sups);
 					HashSet<Long> sup = new HashSet<>(sups);
@@ -126,9 +129,9 @@ public abstract class ElkSnomedClassifierTestBase extends ElkSnomedTestBase {
 					LOG.error("Elk:  " + sup);
 					if (sups.contains(null)) {
 						reasoner.getSuperConcepts(nid)
-								.forEach(sup_nid -> LOG.error("   :  " + PrimitiveData.text((sup_nid.intValue()))));
+								.forEach(sup_nid -> LOG.error("   :  " + PrimitiveData.text((int) sup_nid)));
 					}
-				});
+		}
 		LOG.error("Miss cnt: " + miss_cnt);
 		int expected_non_snomed_cnt = PrimitiveDataTestUtil.getPrimordialNids().size()
 				- PrimitiveDataTestUtil.getPrimordialNidsWithSctids().size();
