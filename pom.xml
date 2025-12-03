@@ -122,8 +122,8 @@
 		<jheaps.version>0.14-r16</jheaps.version>
 		<roaringbitmap.version>1.5.3</roaringbitmap.version>
 
-		<hybrid-reasoner.version>1.1.7</hybrid-reasoner.version>
-		<ikm-reasoner.version>0.39.7-SNAPSHOT</ikm-reasoner.version>
+		<hybrid-reasoner.version>1.1.9</hybrid-reasoner.version>
+		<ikm-reasoner.version>0.39.7</ikm-reasoner.version>
 		<owlapi.version>4.8.7</owlapi.version>
         <maven.github-flow.version>1.21.1-r11</maven.github-flow.version>
         <maven.versions.plugin>2.19.1</maven.versions.plugin>
