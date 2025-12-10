@@ -32,18 +32,23 @@ import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import dev.ikm.tinkar.coordinate.view.VertexSortNaturalOrder;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.PatternEntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
+import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.UUID;
 
 
 /**
@@ -263,8 +268,49 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
                     int indexForMeaning = patternEntityVersion.indexForMeaning(fieldMeaning);
                     int[] semantics = PrimitiveData.get().semanticNidsForComponentOfPattern(referencedComponentNid, patternNid);
                     if (semantics.length > 1) {
-                        throw new IllegalStateException("More than one navigation semantic for concept: " +
-                                PrimitiveData.text(referencedComponentNid) + " in " + PrimitiveData.text(patternNid));
+                        LOG.warn("More than one navigation semantic for concept: " +
+                                PrimitiveData.text(referencedComponentNid) + " in " + PrimitiveData.text(patternNid) +
+                                ". Using semantic with correct single semantic UUID.");
+
+                        // Generate the correct single semantic UUID
+                        UUID expectedUuid = dev.ikm.tinkar.common.util.uuid.UuidT5Generator.singleSemanticUuid(
+                                EntityHandle.get(patternNid).expectPattern(),
+                                EntityHandle.get(referencedComponentNid).expectEntity()
+                        );
+
+                        // Find the semantic with the matching UUID
+                        int correctSemanticNid = -1;
+                        MutableIntList incorrectSemanticNids = IntLists.mutable.empty();
+                        for (int semanticNid : semantics) {
+                            if (EntityHandle.get(semanticNid).expectSemantic().publicId().contains(expectedUuid)) {
+                                correctSemanticNid = semanticNid;
+                            } else {
+                                incorrectSemanticNids.add(semanticNid);
+                            }
+                        }
+
+                        incorrectSemanticNids.forEach(incorrectSemanticNid -> {
+                            LOG.warn("Ignoring incorrect (wrong semantic single uuid generation) semantic: " + EntityHandle.get(incorrectSemanticNid));
+                        });
+
+                        if (correctSemanticNid != -1) {
+                            Latest<SemanticEntityVersion> latestNavigationSemantic = stampCalculator().latest(correctSemanticNid);
+                            latestNavigationSemantic.ifPresent(semanticEntityVersion -> {
+                                LOG.warn("Processing correct semantic: " + semanticEntityVersion);
+                                SemanticEntityVersion navigationSemantic = latestNavigationSemantic.get();
+                                IntIdCollection intIdSet = (IntIdCollection) navigationSemantic.fieldValues().get(indexForMeaning);
+                                // Filter here by allowed vertex state...
+                                if (versioned && states != StateSet.ACTIVE_INACTIVE_AND_WITHDRAWN) {
+                                    intIdSet.forEach(nid ->
+                                            vertexStampCalculator.latest(nid).ifPresent(entityVersion -> nidsInList.add(entityVersion.nid())));
+                                } else {
+                                    nidsInList.addAll(intIdSet.toArray());
+                                }
+                            });
+                        } else {
+                            LOG.error("Could not find semantic with expected UUID: " + expectedUuid +
+                                    " for concept: " + PrimitiveData.text(referencedComponentNid));
+                        }
                     } else if (semantics.length == 0) {
                         // Nothing to add...
                     } else {
@@ -301,8 +347,8 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
     }
 
     private record StampLangNavRecord(StampCoordinateRecord stampFilter,
-                                             ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
-                                             NavigationCoordinateRecord navigationCoordinate) {
+                                      ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
+                                      NavigationCoordinateRecord navigationCoordinate) {
     }
 
     record MutableEdge(MutableIntSet types, int destinationNid, LanguageCalculator languageCalculator) {
