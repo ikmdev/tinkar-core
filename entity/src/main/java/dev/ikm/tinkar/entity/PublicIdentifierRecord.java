@@ -18,6 +18,9 @@ package dev.ikm.tinkar.entity;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.util.Validator;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
+import org.eclipse.collections.api.factory.primitive.LongLists;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
 
 import java.util.UUID;
 
@@ -26,7 +29,7 @@ import java.util.UUID;
  */
 public record PublicIdentifierRecord(long mostSignificantBits,
                                      long leastSignificantBits,
-                                     long[] additionalUuidLongs) {
+                                     ImmutableLongList additionalUuidLongs) {
 
     public PublicIdentifierRecord {
         Validator.notZero(mostSignificantBits);
@@ -36,12 +39,12 @@ public record PublicIdentifierRecord(long mostSignificantBits,
         UUID[] uuids = publicId.asUuidArray();
 
         if (uuids.length > 1) {
-            UUID[] additionalUuids = new UUID[uuids.length - 1];
+            MutableLongList additionalUuidLongs = LongLists.mutable.empty();
             for (int i = 1; i < uuids.length; i++) {
-                additionalUuids[i - 1] = uuids[i];
+                additionalUuidLongs.add(uuids[i].getMostSignificantBits());
+                additionalUuidLongs.add(uuids[i].getLeastSignificantBits());
             }
-            long[] additionalUuidLongs = UuidUtil.asArray(additionalUuids);
-            return new PublicIdentifierRecord(uuids[0].getMostSignificantBits(), uuids[0].getLeastSignificantBits(), additionalUuidLongs);
+            return new PublicIdentifierRecord(uuids[0].getMostSignificantBits(), uuids[0].getLeastSignificantBits(), additionalUuidLongs.toImmutable());
         }
         return new PublicIdentifierRecord(uuids[0].getMostSignificantBits(), uuids[0].getLeastSignificantBits(), null);
     }

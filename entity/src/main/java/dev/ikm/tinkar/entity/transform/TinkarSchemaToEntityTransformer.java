@@ -23,7 +23,6 @@ import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
-import dev.ikm.tinkar.component.Component;
 import dev.ikm.tinkar.component.location.PlanarPoint;
 import dev.ikm.tinkar.component.location.SpatialPoint;
 import dev.ikm.tinkar.entity.*;
@@ -49,7 +48,6 @@ import dev.ikm.tinkar.schema.Vertex;
 import dev.ikm.tinkar.schema.VertexUUID;
 import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.PatternFacade;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -68,7 +66,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
@@ -121,7 +118,7 @@ public class TinkarSchemaToEntityTransformer {
             default -> ConceptRecordBuilder.builder()
                     .leastSignificantBits(conceptPublicId.asUuidArray()[0].getLeastSignificantBits())
                     .mostSignificantBits(conceptPublicId.asUuidArray()[0].getMostSignificantBits())
-                    .additionalUuidLongs(UuidUtil.asArray(Arrays.copyOfRange(conceptPublicId.asUuidArray(),
+                    .additionalUuidLongs(UuidUtil.asImmutableLongList(Arrays.copyOfRange(conceptPublicId.asUuidArray(),
                             1, conceptPublicId.uuidCount())))
                     .nid(conceptNid)
                     .versions(conceptVersions)
@@ -168,7 +165,7 @@ public class TinkarSchemaToEntityTransformer {
                 semanticRecord = SemanticRecordBuilder.builder()
                         .leastSignificantBits(semanticPublicId.asUuidArray()[0].getLeastSignificantBits())
                         .mostSignificantBits(semanticPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .additionalUuidLongs(UuidUtil.asArray(Arrays.copyOfRange(semanticPublicId.asUuidArray(),
+                        .additionalUuidLongs(UuidUtil.asImmutableLongList(Arrays.copyOfRange(semanticPublicId.asUuidArray(),
                                 1, semanticPublicId.uuidCount())))
                         .nid(semanticNid)
                         .patternNid(patternNid)
@@ -225,7 +222,7 @@ public class TinkarSchemaToEntityTransformer {
                         .leastSignificantBits(patternPublicId.asUuidArray()[0].getLeastSignificantBits())
                         .mostSignificantBits(patternPublicId.asUuidArray()[0].getMostSignificantBits())
                         .nid(nidForPattern(patternPublicId))
-                        .additionalUuidLongs(UuidUtil.asArray(Arrays.copyOfRange(patternPublicId.asUuidArray(),
+                        .additionalUuidLongs(UuidUtil.asImmutableLongList(Arrays.copyOfRange(patternPublicId.asUuidArray(),
                                 1, patternPublicId.uuidCount())))
                         .versions(patternVersions)
                         .build();
@@ -279,7 +276,7 @@ public class TinkarSchemaToEntityTransformer {
                 stampRecord = StampRecordBuilder.builder()
                         .leastSignificantBits(stampPublicId.asUuidArray()[0].getLeastSignificantBits())
                         .mostSignificantBits(stampPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .additionalUuidLongs(UuidUtil.asArray(Arrays.copyOfRange(stampPublicId.asUuidArray(),
+                        .additionalUuidLongs(UuidUtil.asImmutableLongList(Arrays.copyOfRange(stampPublicId.asUuidArray(),
                                 1, stampPublicId.uuidCount())))
                         .nid(stampNid)
                         .versions(stampVersions)
@@ -486,7 +483,7 @@ public class TinkarSchemaToEntityTransformer {
                 conceptRecord = ConceptRecordBuilder.builder()
                         .leastSignificantBits(conceptPublicId.asUuidArray()[0].getLeastSignificantBits())
                         .mostSignificantBits(conceptPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .additionalUuidLongs(UuidUtil.asArray(Arrays.copyOfRange(conceptPublicId.asUuidArray(),
+                        .additionalUuidLongs(UuidUtil.asImmutableLongList(Arrays.copyOfRange(conceptPublicId.asUuidArray(),
                                 1, conceptPublicId.uuidCount())))
                         .nid(conceptNid)
                         .versions(conceptVersionRecords)

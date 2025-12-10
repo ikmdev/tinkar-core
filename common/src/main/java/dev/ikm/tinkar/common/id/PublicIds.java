@@ -20,6 +20,7 @@ import dev.ikm.tinkar.common.id.impl.PublicId2;
 import dev.ikm.tinkar.common.id.impl.PublicId3;
 import dev.ikm.tinkar.common.id.impl.PublicIdN;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
+import org.eclipse.collections.api.factory.primitive.LongLists;
 import org.eclipse.collections.api.list.ImmutableList;
 
 import java.util.Arrays;
@@ -87,7 +88,7 @@ public class PublicIds {
         if (uuidParts.length == 6) {
             return new PublicId3(uuidParts[0], uuidParts[1], uuidParts[2], uuidParts[3], uuidParts[4], uuidParts[5]);
         }
-        return new PublicIdN(uuidParts);
+        return new PublicIdN(LongLists.immutable.of(uuidParts));
     }
 
     public static final PublicId singleSemanticId(PublicId patternId, PublicId referencedComponentId) {

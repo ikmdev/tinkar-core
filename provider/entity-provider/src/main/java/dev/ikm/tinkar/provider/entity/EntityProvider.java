@@ -41,6 +41,7 @@ import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.factory.primitive.IntSets;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 import org.eclipse.collections.api.set.MutableSet;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.slf4j.Logger;
@@ -499,9 +500,9 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         MutableSet<UUID> additionalUuids = Sets.mutable.ofAll(patternOneRecord.asUuidList());
         additionalUuids.addAll(patternTwoRecord.asUuidList().castToList());
         additionalUuids.remove(new UUID(patternOneRecord.mostSignificantBits(), patternOneRecord.leastSignificantBits()));
-        long[] additionalUuidLongs = null;
+        ImmutableLongList additionalUuidLongs = null;
         if (additionalUuids.notEmpty()) {
-            additionalUuidLongs = UuidUtil.asArray(additionalUuids.toArray(new UUID[additionalUuids.size()] ));
+            additionalUuidLongs = UuidUtil.asImmutableLongList(additionalUuids.toArray(new UUID[additionalUuids.size()] ));
         }
         PatternRecordBuilder builder = patternOneRecord.with().versions(versionList).additionalUuidLongs(additionalUuidLongs);
         return new FutureTask<>(() -> builder.build());
@@ -515,9 +516,9 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         MutableSet<UUID> additionalUuids = Sets.mutable.ofAll(semanticOneRecord.asUuidList());
         additionalUuids.addAll(semanticTwoRecord.asUuidList().castToList());
         additionalUuids.remove(new UUID(semanticOneRecord.mostSignificantBits(), semanticOneRecord.leastSignificantBits()));
-        long[] additionalUuidLongs = null;
+        ImmutableLongList additionalUuidLongs = null;
         if (additionalUuids.notEmpty()) {
-            additionalUuidLongs = UuidUtil.asArray(additionalUuids.toArray(new UUID[additionalUuids.size()] ));
+            additionalUuidLongs = UuidUtil.asImmutableLongList(additionalUuids.toArray(new UUID[additionalUuids.size()] ));
         }
        SemanticRecordBuilder builder = semanticOneRecord.with().versions(versionList).additionalUuidLongs(additionalUuidLongs);
         return new FutureTask<>(() -> builder.build());
@@ -531,9 +532,9 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
         MutableSet<UUID> additionalUuids = Sets.mutable.ofAll(conceptOneRecord.asUuidList());
         additionalUuids.addAll(conceptTwoRecord.asUuidList().castToList());
         additionalUuids.remove(new UUID(conceptOneRecord.mostSignificantBits(), conceptOneRecord.leastSignificantBits()));
-        long[] additionalUuidLongs = null;
+        ImmutableLongList additionalUuidLongs = null;
         if (additionalUuids.notEmpty()) {
-            additionalUuidLongs = UuidUtil.asArray(additionalUuids.toArray(new UUID[additionalUuids.size()] ));
+            additionalUuidLongs = UuidUtil.asImmutableLongList(additionalUuids.toArray(new UUID[additionalUuids.size()] ));
         }
         ConceptRecordBuilder builder = conceptOneRecord.with().versions(versionList).additionalUuidLongs(additionalUuidLongs);
         return new FutureTask<>(() -> builder.build());

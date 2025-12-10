@@ -33,6 +33,8 @@ import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.TinkarTerm;
+import org.eclipse.collections.api.factory.primitive.LongLists;
+import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -94,10 +96,9 @@ public class OwlToLogicalAxiomIT {
                                     .nid(conceptNid)
                                     .mostSignificantBits(uuid.getMostSignificantBits())
                                     .leastSignificantBits(uuid.getLeastSignificantBits())
-                                    .additionalUuidLongs(new long[] {
-                                            TinkarTerm.ROLE_GROUP.asUuidArray()[0].getMostSignificantBits(),
-                                            TinkarTerm.ROLE_GROUP.asUuidArray()[0].getLeastSignificantBits()
-                                    })
+                                    .additionalUuidLongs
+                                            (LongLists.immutable.of(TinkarTerm.ROLE_GROUP.asUuidArray()[0].getMostSignificantBits(),
+                                                    TinkarTerm.ROLE_GROUP.asUuidArray()[0].getLeastSignificantBits()))
                                     .versions(versions.toImmutable())
                                     .build();
 

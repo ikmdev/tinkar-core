@@ -18,6 +18,9 @@ package dev.ikm.tinkar.common.id;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
+import org.eclipse.collections.impl.factory.primitive.LongLists;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -42,7 +45,15 @@ public interface PublicId extends Comparable<PublicId> {
         });
     }
 
-    UUID[] asUuidArray();
+    /**
+     *
+     * @return
+     * @deprecated use additionalUuidLongs for thread safety.
+     */
+    @Deprecated
+    default UUID[] asUuidArray() {
+        return asUuidList().toArray(new UUID[uuidCount()]);
+    }
 
     int uuidCount();
 
@@ -50,19 +61,16 @@ public interface PublicId extends Comparable<PublicId> {
         return (asUuidList().contains(uuid));
     }
 
-    default ImmutableList<UUID> asUuidList() {
-        return Lists.immutable.of(asUuidArray());
-    }
+    ImmutableList<UUID> asUuidList();
 
-    default long[] additionalUuidLongs() {
-        long[] additionalLongs = new long[(uuidCount() * 2) - 2];
-        int index = 0;
+    default ImmutableLongList additionalUuidLongs() {
+        MutableLongList additionalLongs = LongLists.mutable.withInitialCapacity((uuidCount() * 2) - 2);
         for (int i = 1; i < uuidCount(); i++) {
             UUID uuid = asUuidArray()[i];
-            additionalLongs[index++] = uuid.getMostSignificantBits();
-            additionalLongs[index++] = uuid.getLeastSignificantBits();
+            additionalLongs.add(uuid.getMostSignificantBits());
+            additionalLongs.add(uuid.getLeastSignificantBits());
         }
-        return additionalLongs.length == 0 ? null : additionalLongs;
+        return additionalLongs.isEmpty() ? null : additionalLongs.toImmutable();
     }
 
     /**

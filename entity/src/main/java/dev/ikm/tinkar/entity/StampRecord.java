@@ -24,6 +24,7 @@ import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -35,7 +36,7 @@ import static dev.ikm.tinkar.terms.TinkarTermV2.STAMP_PATTERN;
 @RecordBuilder
 public record StampRecord(
         long mostSignificantBits, long leastSignificantBits,
-        long[] additionalUuidLongs, int nid,
+        ImmutableLongList additionalUuidLongs, int nid,
         ImmutableList<StampVersionRecord> versions)
         implements StampEntity<StampVersionRecord>, ImmutableEntity<StampVersionRecord>,
                    StampFacade, IdentifierData, StampRecordBuilder.With {
@@ -88,7 +89,7 @@ public record StampRecord(
         return mostSignificantBits == that.mostSignificantBits &&
                 leastSignificantBits == that.leastSignificantBits &&
                 nid == that.nid &&
-                Arrays.equals(additionalUuidLongs, that.additionalUuidLongs) &&
+                Objects.equals(additionalUuidLongs, that.additionalUuidLongs) &&
                 versions.equals(that.versions);
     }
 

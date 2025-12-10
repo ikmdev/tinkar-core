@@ -17,6 +17,11 @@ package dev.ikm.tinkar.entity;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.iterator.LongIterator;
+import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.MutableList;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 
 import java.util.UUID;
 import java.util.function.LongConsumer;
@@ -25,26 +30,31 @@ public interface IdentifierData extends PublicId {
 
     long mostSignificantBits();
     long leastSignificantBits();
-    long[] additionalUuidLongs();
+    ImmutableLongList additionalUuidLongs();
     int nid();
 
     @Override
     default UUID[] asUuidArray() {
-        UUID[] uuidArray = new UUID[uuidCount()];
-        uuidArray[0] = new UUID(mostSignificantBits(), leastSignificantBits());
-        long[] additionalUuidLongs = additionalUuidLongs();
-        if (additionalUuidLongs != null) {
-            for (int i = 1; i < uuidArray.length; i++) {
-                uuidArray[i] = new UUID(additionalUuidLongs[((i - 1) * 2)], additionalUuidLongs[((i - 1) * 2) + 1]);
+        return asUuidList().toArray(new UUID[uuidCount()]);
+    }
+
+    @Override
+    default ImmutableList<UUID> asUuidList() {
+        MutableList<UUID> uuidList = Lists.mutable.withInitialCapacity(uuidCount());
+        uuidList.add(new UUID(mostSignificantBits(), leastSignificantBits()));
+        if (additionalUuidLongs() != null) {
+            LongIterator iterator = additionalUuidLongs().longIterator();
+            while (iterator.hasNext()) {
+                uuidList.add(new UUID(iterator.next(), iterator.next()));
             }
         }
-        return uuidArray;
+        return uuidList.toImmutable();
     }
 
     @Override
     default int uuidCount() {
         if (additionalUuidLongs() != null) {
-            return (additionalUuidLongs().length / 2) + 1;
+            return (additionalUuidLongs().size() / 2) + 1;
         }
         return 1;
     }
@@ -54,13 +64,11 @@ public interface IdentifierData extends PublicId {
         consumer.accept(mostSignificantBits());
         consumer.accept(leastSignificantBits());
         if (additionalUuidLongs() != null) {
-            for (long uuidPart : additionalUuidLongs()) {
-                consumer.accept(uuidPart);
-            }
+            additionalUuidLongs().forEach(each -> consumer.accept(each));
         }
     }
 
     default PublicId publicId() {
-        return PublicIds.of(asUuidArray());
+        return PublicIds.of(asUuidList());
     }
 }

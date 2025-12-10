@@ -33,6 +33,8 @@ import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
+import org.eclipse.collections.impl.factory.Lists;
+import org.eclipse.collections.impl.factory.primitive.LongLists;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -158,7 +160,7 @@ class SpinedArrayEntityCacheIT {
                 .nid(concept.nid())
                 .leastSignificantBits(primordialUUID.getLeastSignificantBits())
                 .mostSignificantBits(primordialUUID.getMostSignificantBits())
-                .additionalUuidLongs(additionalLongs)
+                .additionalUuidLongs(LongLists.immutable.of(additionalLongs))
                 .versions(versions)
                 .build();
 

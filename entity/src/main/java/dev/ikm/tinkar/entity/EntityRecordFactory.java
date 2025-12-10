@@ -53,6 +53,7 @@ import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
+import org.eclipse.collections.impl.factory.primitive.LongLists;
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,7 +93,7 @@ public class EntityRecordFactory {
                 //byte[14-21]
                 byteBuf.writeLong(entity.leastSignificantBits());
 
-                long[] additionalUuidLongs = entity.additionalUuidLongs();
+                long[] additionalUuidLongs = entity.additionalUuidLongs().toArray();
                 if (additionalUuidLongs == null) {
                     //byte[22]
                     byteBuf.writeByte((byte) 0);
@@ -463,7 +464,7 @@ public class EntityRecordFactory {
                 versionCount = readBuf.readInt();
                 RecordListBuilder<ConceptVersionRecord> versions = RecordListBuilder.make();
                 ConceptRecord conceptRecord = new ConceptRecord(mostSignificantBits, leastSignificantBits,
-                        additionalUuidLongs, nid, versions);
+                        LongLists.immutable.of(additionalUuidLongs), nid, versions);
                 for (int i = 0; i < versionCount; i++) {
                     ConceptVersionRecord version = (ConceptVersionRecord) makeVersion(readBuf, entityFormatVersion, conceptRecord);
                     if (!PrimitiveData.get().isCanceledStampNid(version.stampNid())) {
@@ -479,7 +480,7 @@ public class EntityRecordFactory {
                 versionCount = readBuf.readInt();
                 RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
                 SemanticRecord semanticRecord = new SemanticRecord(mostSignificantBits, leastSignificantBits,
-                        additionalUuidLongs, nid, patternNid, referencedComponentNid,
+                        LongLists.immutable.of(additionalUuidLongs), nid, patternNid, referencedComponentNid,
                         versions);
                 for (int i = 0; i < versionCount; i++) {
                     SemanticVersionRecord version = (SemanticVersionRecord) makeVersion(readBuf, entityFormatVersion, semanticRecord);
@@ -496,7 +497,7 @@ public class EntityRecordFactory {
                 versionCount = readBuf.readInt();
                 RecordListBuilder<PatternVersionRecord> versions = RecordListBuilder.make();
                 PatternRecord patternRecord = new PatternRecord(mostSignificantBits, leastSignificantBits,
-                        additionalUuidLongs, nid, versions);
+                        LongLists.immutable.of(additionalUuidLongs), nid, versions);
                 for (int i = 0; i < versionCount; i++) {
                     PatternVersionRecord version = (PatternVersionRecord) makeVersion(readBuf, entityFormatVersion, patternRecord);
                     if (!PrimitiveData.get().isCanceledStampNid(version.stampNid())) {
@@ -512,7 +513,7 @@ public class EntityRecordFactory {
                 versionCount = readBuf.readInt();
                 RecordListBuilder<StampVersionRecord> versions = RecordListBuilder.make();
                 StampRecord stampRecord = new StampRecord(mostSignificantBits, leastSignificantBits,
-                        additionalUuidLongs, nid, versions);
+                        LongLists.immutable.of(additionalUuidLongs), nid, versions);
                 for (int i = 0; i < versionCount; i++) {
                     versions.add((StampVersionRecord) makeVersion(readBuf, entityFormatVersion, stampRecord));
                 }

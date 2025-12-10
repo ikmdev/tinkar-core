@@ -17,9 +17,11 @@ package dev.ikm.tinkar.common.util.uuid;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.factory.primitive.LongLists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.ListIterable;
 import org.eclipse.collections.api.list.MutableList;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -115,6 +117,24 @@ public class UuidUtil {
             values[(i * 2) + 1] = uuids[i].getLeastSignificantBits();
         }
         return values;
+    }
+
+    public static ImmutableLongList asImmutableLongList(UUID... uuids) {
+        Arrays.sort(uuids);
+        long[] values = new long[uuids.length * 2];
+        for (int i = 0; i < uuids.length; i++) {
+            values[i * 2] = uuids[i].getMostSignificantBits();
+            values[(i * 2) + 1] = uuids[i].getLeastSignificantBits();
+        }
+        return LongLists.immutable.of(values);
+    }
+
+    public static ImmutableList<UUID> toList(ImmutableLongList longList) {
+        MutableList<UUID> uuidList = Lists.mutable.ofInitialCapacity(longList.size() / 2);
+        for (int i = 0; i < longList.size() / 2; i++) {
+            uuidList.add(new UUID(longList.get(i * 2), longList.get(i * 2 + 1)));
+        }
+        return uuidList.toImmutable();
     }
 
     public static long[] asArray(ListIterable<UUID> uuidList) {
