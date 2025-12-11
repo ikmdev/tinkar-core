@@ -95,7 +95,7 @@ public class EntityRecordFactory {
                 byteBuf.writeLong(entity.leastSignificantBits());
 
                 ImmutableLongList additionalUuidLongs = entity.additionalUuidLongs();
-                if (additionalUuidLongs == null && additionalUuidLongs.isEmpty()) {
+                if (additionalUuidLongs == null || additionalUuidLongs.isEmpty()) {
                     //byte[22]
                     byteBuf.writeByte((byte) 0);
                 } else {
