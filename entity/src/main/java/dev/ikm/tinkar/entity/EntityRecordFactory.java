@@ -49,6 +49,7 @@ import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
@@ -93,18 +94,15 @@ public class EntityRecordFactory {
                 //byte[14-21]
                 byteBuf.writeLong(entity.leastSignificantBits());
 
-                long[] additionalUuidLongs = entity.additionalUuidLongs().toArray();
-                if (additionalUuidLongs == null) {
+                ImmutableLongList additionalUuidLongs = entity.additionalUuidLongs();
+                if (additionalUuidLongs == null && additionalUuidLongs.isEmpty()) {
                     //byte[22]
                     byteBuf.writeByte((byte) 0);
                 } else {
                     //byte[22]
-                    byteBuf.writeByte((byte) additionalUuidLongs.length);
-
-                    for (int i = 0; i < additionalUuidLongs.length; i++) {
-                        //byte[23 + (8*i) -> byte[30 + (8*i)]
-                        byteBuf.writeLong(additionalUuidLongs[i]);
-                    }
+                    byteBuf.writeByte((byte) additionalUuidLongs.size());
+                    //byte[23 + (8*i) -> byte[30 + (8*i)]
+                    additionalUuidLongs.forEach(byteBuf::writeLong);
                 }
                 switch (entity) {
                     case SemanticEntity semanticEntity:
