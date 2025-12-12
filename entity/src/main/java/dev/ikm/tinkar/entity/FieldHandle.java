@@ -4,6 +4,7 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.component.graph.DiGraph;
 import dev.ikm.tinkar.component.graph.DiTree;
 import dev.ikm.tinkar.component.graph.Vertex;
+import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityFacade;
@@ -71,28 +72,32 @@ import java.util.function.Supplier;
  * reducing boilerplate code:
  * <pre>{@code
  * SemanticEntityVersion version = ...;
- * 
+ * StampCalculator stampCalculator = ...;
+ *
  * // By index (when you know the position):
  * ConceptFacade concept = FieldHandle.of(version, 0).expectConcept();
- * 
+ *
  * // By meaning (when you know the semantic meaning):
- * ConceptFacade caseSig = FieldHandle.of(version, TinkarTerm.DESCRIPTION_CASE_SIGNIFICANCE)
+ * ConceptFacade caseSig = FieldHandle.of(version, TinkarTerm.DESCRIPTION_CASE_SIGNIFICANCE, stampCalculator)
  *     .expectConcept();
- * 
+ *
  * // By purpose (when you want to find by purpose):
- * String text = FieldHandle.ofPurpose(version, TinkarTerm.TEXT_FOR_DESCRIPTION)
+ * String text = FieldHandle.ofPurpose(version, TinkarTerm.TEXT_FOR_DESCRIPTION, stampCalculator)
  *     .expectString();
- * 
+ *
  * // Compared to the verbose alternative:
- * PatternEntityVersion pattern = version.pattern().lastVersion();
+ * PatternEntityVersion pattern = stampCalculator.latestPatternEntityVersion(version.pattern())
+ *     .orElseThrow(() -> new IllegalStateException("No latest pattern version for: " + version.pattern()));
  * int index = pattern.indexForMeaning(TinkarTerm.DESCRIPTION_CASE_SIGNIFICANCE);
- * ConceptFacade caseSig = FieldHandle.of(version.fieldValues().get(index)).expectConcept();
+ * ConceptFacade caseSig2 = FieldHandle.of(version.fieldValues().get(index)).expectConcept();
  * }</pre>
  *
  * <h2>Usage Example</h2>
  * <pre>{@code
+ * StampCalculator stampCalculator = ...;
+ *
  * // Pattern 1: Side effects
- * FieldHandle.of(version, meaningConcept)
+ * FieldHandle.of(version, meaningConcept, stampCalculator)
  *     .ifConcept(concept -> process(concept))
  *     .ifString(string -> log.info(string));
  *
@@ -100,7 +105,7 @@ import java.util.function.Supplier;
  * Optional<ConceptEntity> maybeConcept = FieldHandle.of(version, 2).asConcept();
  *
  * // Pattern 3: Assertion (when pattern guarantees type)
- * ConceptFacade caseSig = FieldHandle.of(version, caseMeaningConcept).expectConcept();
+ * ConceptFacade caseSig = FieldHandle.of(version, caseMeaningConcept, stampCalculator).expectConcept();
  * }</pre>
  *
  * @see EntityHandle for the entity-level equivalent
@@ -134,7 +139,7 @@ public interface FieldHandle {
      * <pre>{@code
      * // Instead of:
      * FieldHandle.of(version.fieldValues().get(index))
-     * 
+     *
      * // You can write:
      * FieldHandle.of(version, index)
      * }</pre>
@@ -158,18 +163,21 @@ public interface FieldHandle {
      * // Instead of:
      * int index = patternVersion.indexForMeaning(TinkarTerm.DESCRIPTION_CASE_SIGNIFICANCE);
      * FieldHandle.of(version.fieldValues().get(index))
-     * 
+     *
      * // You can write:
-     * FieldHandle.of(version, TinkarTerm.DESCRIPTION_CASE_SIGNIFICANCE)
+     * FieldHandle.of(version, TinkarTerm.DESCRIPTION_CASE_SIGNIFICANCE, stampCalculator)
      * }</pre>
      *
      * @param version the semantic version containing the field
      * @param meaning the concept representing the semantic meaning of the field
+     * @param stampCalculator calculator used to determine the latest pattern version (path precedence + time)
      * @return a FieldHandle wrapping the field value with the specified meaning
      * @throws IllegalArgumentException if no field with the specified meaning exists
+     * @throws IllegalStateException if no latest pattern version can be determined
      */
-    static FieldHandle of(SemanticEntityVersion version, ConceptFacade meaning) {
-        PatternEntityVersion patternVersion = version.pattern().lastVersion();
+    static FieldHandle of(SemanticEntityVersion version, ConceptFacade meaning, StampCalculator stampCalculator) {
+        PatternEntityVersion patternVersion = stampCalculator.latestPatternEntityVersion(version.pattern())
+                .orElseThrow(() -> new IllegalStateException("No latest pattern version for: " + version.pattern()));
         int index = patternVersion.indexForMeaning(meaning);
         if (index < 0) {
             throw new IllegalArgumentException(
@@ -187,18 +195,21 @@ public interface FieldHandle {
      * // Instead of:
      * int index = patternVersion.indexForMeaning(meaningNid);
      * FieldHandle.of(version.fieldValues().get(index))
-     * 
+     *
      * // You can write:
-     * FieldHandle.of(version, meaningNid)
+     * FieldHandle.ofMeaning(version, meaningNid, stampCalculator)
      * }</pre>
      *
      * @param version the semantic version containing the field
      * @param meaningNid the NID of the concept representing the semantic meaning of the field
+     * @param stampCalculator calculator used to determine the latest pattern version (path precedence + time)
      * @return a FieldHandle wrapping the field value with the specified meaning
      * @throws IllegalArgumentException if no field with the specified meaning NID exists
+     * @throws IllegalStateException if no latest pattern version can be determined
      */
-    static FieldHandle ofMeaning(SemanticEntityVersion version, int meaningNid) {
-        PatternEntityVersion patternVersion = version.pattern().lastVersion();
+    static FieldHandle ofMeaning(SemanticEntityVersion version, int meaningNid, StampCalculator stampCalculator) {
+        PatternEntityVersion patternVersion = stampCalculator.latestPatternEntityVersion(version.pattern())
+                .orElseThrow(() -> new IllegalStateException("No latest pattern version for: " + version.pattern()));
         int index = patternVersion.indexForMeaning(meaningNid);
         if (index < 0) {
             throw new IllegalArgumentException(
@@ -214,16 +225,19 @@ public interface FieldHandle {
      * then retrieves the field value. This is useful when you want to find a field by its purpose
      * rather than its semantic meaning:
      * <pre>{@code
-     * FieldHandle.ofPurpose(version, TinkarTerm.REFERENCED_COMPONENT_PURPOSE)
+     * FieldHandle.ofPurpose(version, TinkarTerm.REFERENCED_COMPONENT_PURPOSE, stampCalculator)
      * }</pre>
      *
      * @param version the semantic version containing the field
      * @param purpose the concept representing the purpose of the field
+     * @param stampCalculator calculator used to determine the latest pattern version (path precedence + time)
      * @return a FieldHandle wrapping the field value with the specified purpose
      * @throws IllegalArgumentException if no field with the specified purpose exists
+     * @throws IllegalStateException if no latest pattern version can be determined
      */
-    static FieldHandle ofPurpose(SemanticEntityVersion version, ConceptFacade purpose) {
-        PatternEntityVersion patternVersion = version.pattern().lastVersion();
+    static FieldHandle ofPurpose(SemanticEntityVersion version, ConceptFacade purpose, StampCalculator stampCalculator) {
+        PatternEntityVersion patternVersion = stampCalculator.latestPatternEntityVersion(version.pattern())
+                .orElseThrow(() -> new IllegalStateException("No latest pattern version for: " + version.pattern()));
         int index = patternVersion.indexForPurpose(purpose);
         if (index < 0) {
             throw new IllegalArgumentException(
@@ -238,16 +252,19 @@ public interface FieldHandle {
      * This method looks up the field index using the pattern's {@code indexForPurpose} method
      * with the purpose NID, then retrieves the field value:
      * <pre>{@code
-     * FieldHandle.ofPurpose(version, purposeNid)
+     * FieldHandle.ofPurpose(version, purposeNid, stampCalculator)
      * }</pre>
      *
      * @param version the semantic version containing the field
      * @param purposeNid the NID of the concept representing the purpose of the field
+     * @param stampCalculator calculator used to determine the latest pattern version (path precedence + time)
      * @return a FieldHandle wrapping the field value with the specified purpose
      * @throws IllegalArgumentException if no field with the specified purpose NID exists
+     * @throws IllegalStateException if no latest pattern version can be determined
      */
-    static FieldHandle ofPurpose(SemanticEntityVersion version, int purposeNid) {
-        PatternEntityVersion patternVersion = version.pattern().lastVersion();
+    static FieldHandle ofPurpose(SemanticEntityVersion version, int purposeNid, StampCalculator stampCalculator) {
+        PatternEntityVersion patternVersion = stampCalculator.latestPatternEntityVersion(version.pattern())
+                .orElseThrow(() -> new IllegalStateException("No latest pattern version for: " + version.pattern()));
         int index = patternVersion.indexForPurpose(purposeNid);
         if (index < 0) {
             throw new IllegalArgumentException(
