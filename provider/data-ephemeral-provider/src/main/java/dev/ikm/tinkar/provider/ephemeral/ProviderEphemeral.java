@@ -159,11 +159,6 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     }
 
     @Override
-    public void forEach(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public byte[] getBytes(int nid) {
         return nidComponentMap.get(nid);
     }

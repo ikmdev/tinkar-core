@@ -365,10 +365,7 @@ public interface PrimitiveDataService {
 
     void forEachParallel(ObjIntConsumer<byte[]> action);
 
-    void forEach(ImmutableIntList nids, ObjIntConsumer<byte[]> action);
-
     void forEachParallel(ImmutableIntList nids, ObjIntConsumer<byte[]> action);
-
 
     byte[] getBytes(int nid);
 

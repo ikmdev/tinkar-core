@@ -41,6 +41,8 @@ import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.provider.search.Indexer;
 import dev.ikm.tinkar.provider.search.RecreateIndex;
 import dev.ikm.tinkar.provider.search.Searcher;
+import dev.ikm.tinkar.provider.search.TypeAheadSearch;
+import dev.ikm.tinkar.provider.spinedarray.internal.Get;
 import dev.ikm.tinkar.terms.State;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
@@ -74,6 +76,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
@@ -229,6 +232,9 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
                 LOG.error(e.getLocalizedMessage(), e);
             }
         }
+        // Prime TypeAheadSearch
+        TypeAheadSearch.get();
+
         stopwatch.stop();
         LOG.info("Opened SpinedArrayProvider in: " + stopwatch.durationString());
         lifecycle.set(Lifecycle.RUNNING);
@@ -426,16 +432,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             AlertStreams.dispatchToRoot(e);
         }
     }
-
-    @Override
-    public void forEach(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
-        try {
-            this.entityToBytesMap.forEach(nids, action);
-        } catch (ExecutionException | InterruptedException e) {
-            AlertStreams.dispatchToRoot(e);
-        }
-    }
-
 
     @Override
     public byte[] getBytes(int nid) {

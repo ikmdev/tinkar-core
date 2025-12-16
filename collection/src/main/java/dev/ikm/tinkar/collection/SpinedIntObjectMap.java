@@ -345,14 +345,6 @@ public class SpinedIntObjectMap<E> implements IntObjectMap<E> {
         }
     }
 
-    public final void forEach(ImmutableIntList nids, ObjIntConsumer<E> consumer) throws ExecutionException, InterruptedException {
-        Stopwatch sw = new Stopwatch();
-        int[][] nidLists = new int[1][];
-        nidLists[0] = nids.toArray();
-        doParallelWork(consumer, nidLists);
-        LOG.info("forEach time: " + sw.durationString());
-    }
-
     public final void forEachParallel(ImmutableIntList nids, ObjIntConsumer<E> consumer) throws ExecutionException, InterruptedException {
         Stopwatch sw = new Stopwatch();
         int[][] nidLists = splitIntoArrayOfArrays(nids);

@@ -39,8 +39,8 @@ public interface StampService {
      */
     default IntIdSet getStampNids() {
         StampRealizer stampRealizer = new StampRealizer();
-        EntityService.get().forEachStampEntity(stampRealizer);
-         return stampRealizer.stampNids();
+        PrimitiveData.get().forEach(stampRealizer);
+        return stampRealizer.stampNids();
     }
 
     default ImmutableSet<ConceptFacade> getAuthorsInUse() {

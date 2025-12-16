@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import dev.ikm.tinkar.common.service.TrackingCallable;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -110,6 +109,7 @@ public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestB
 		ReasonerService rs = new IntervalReasonerService();
 		rs.init(getViewCalculator(), TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
 				TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
+		rs.setProgressUpdater(null);
 		return rs;
 	}
 
@@ -124,18 +124,8 @@ public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestB
 	public void premature() throws Exception {
 		updatePremature();
 		ReasonerService rs = initReasonerService();
-		rs.extractData(new TrackingCallable<Object>() {
-			@Override
-			protected Object compute() throws Exception {
-				return null;
-			}
-		});
-		rs.loadData(new TrackingCallable<Object>() {
-			@Override
-			protected Object compute() throws Exception {
-				return null;
-			}
-		});
+		rs.extractData();
+		rs.loadData();
 		rs.computeInferences();
 		rs.buildNecessaryNormalForm();
 		rs.writeInferredResults();

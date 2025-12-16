@@ -26,7 +26,6 @@ import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.graph.DiTreeVersion;
 import dev.ikm.tinkar.terms.EntityFacade;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 
 import java.util.List;
 import java.util.OptionalInt;
@@ -42,11 +41,6 @@ public interface StampCalculatorDelegate extends StampCalculator {
     @Override
     default <V extends EntityVersion> Latest<V> latest(int nid) {
         return stampCalculator().latest(nid);
-    }
-
-    @Override
-    default <V extends EntityVersion> Latest<V> latestNoCache(int nid) {
-        return stampCalculator().latestNoCache(nid);
     }
 
     @Override
@@ -82,11 +76,6 @@ public interface StampCalculatorDelegate extends StampCalculator {
     @Override
     default void forEachSemanticVersionOfPatternParallel(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
         stampCalculator().forEachSemanticVersionOfPatternParallel(patternNid, procedure);
-    }
-
-    @Override
-    default void forEachSemanticVersionInSetOfPatternParallel(ImmutableIntSet semanticNidSet, int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
-        stampCalculator().forEachSemanticVersionInSetOfPatternParallel(semanticNidSet, patternNid, procedure);
     }
 
     @Override

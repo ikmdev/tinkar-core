@@ -15,9 +15,8 @@ open module dev.ikm.tinkar.reasoner.elksnomed.test {
 	requires dev.ikm.elk.snomed;
 	requires dev.ikm.elk.snomed.owlel;
 	requires dev.ikm.elk.snomed.test;
-    requires dev.ikm.tinkar.common;
 
-    exports dev.ikm.tinkar.reasoner.elksnomed.test;
+	exports dev.ikm.tinkar.reasoner.elksnomed.test;
 
 	// TODO
 	uses ReasonerService;
