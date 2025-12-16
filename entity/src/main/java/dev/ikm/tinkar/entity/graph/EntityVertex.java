@@ -23,7 +23,6 @@ import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.component.Pattern;
 import dev.ikm.tinkar.component.Semantic;
-import dev.ikm.tinkar.component.Stamp;
 import dev.ikm.tinkar.component.graph.Vertex;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.Entity;
@@ -41,6 +40,7 @@ import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
 import org.eclipse.collections.api.map.primitive.IntObjectMap;
@@ -64,7 +64,7 @@ import static dev.ikm.tinkar.entity.EntityRecordFactory.ENTITY_FORMAT_VERSION;
 
 public class EntityVertex implements Vertex, VertexId {
 	private static final Logger LOG = LoggerFactory.getLogger(EntityVertex.class);
-	private static final int DEFAULT_SIZE = 64;
+	private static final int DEFAULT_SIZE = 128;
 	protected long mostSignificantBits;
 	protected long leastSignificantBits;
 	protected int vertexIndex = -1;
@@ -79,6 +79,11 @@ public class EntityVertex implements Vertex, VertexId {
 		this.mostSignificantBits = uuid.getMostSignificantBits();
 		this.leastSignificantBits = uuid.getLeastSignificantBits();
 		this.meaningNid = meaningNid;
+	}
+
+	@Override
+	public ImmutableList<UUID> asUuidList() {
+		return Lists.immutable.of(new UUID(mostSignificantBits, leastSignificantBits));
 	}
 
 	/**
@@ -165,7 +170,7 @@ public class EntityVertex implements Vertex, VertexId {
 				stampRecord = StampRecordBuilder.builder()
 						.leastSignificantBits(stampPublicId.asUuidArray()[0].getLeastSignificantBits())
 						.mostSignificantBits(stampPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .additionalUuidLongs(UuidUtil.asArray(Arrays.copyOfRange(stampPublicId.asUuidArray(),
+                        .additionalUuidLongs(UuidUtil.asImmutableLongList(Arrays.copyOfRange(stampPublicId.asUuidArray(),
                                 1, stampPublicId.uuidCount())))
                         .nid(conceptNid)
                         .versions(stampVersions)

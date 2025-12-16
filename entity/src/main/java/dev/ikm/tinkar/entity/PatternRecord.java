@@ -22,6 +22,7 @@ import dev.ikm.tinkar.common.util.Validator;
 import dev.ikm.tinkar.terms.EntityBinding;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -31,7 +32,7 @@ import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICI
 @RecordBuilder
 public record PatternRecord(
         long mostSignificantBits, long leastSignificantBits,
-        long[] additionalUuidLongs, int nid,
+        ImmutableLongList additionalUuidLongs, int nid,
         ImmutableList<PatternVersionRecord> versions)
         implements PatternEntity<PatternVersionRecord>, ImmutableEntity<PatternVersionRecord>, PatternRecordBuilder.With {
 
@@ -84,7 +85,7 @@ public record PatternRecord(
         PatternRecord that = (PatternRecord) o;
         return mostSignificantBits == that.mostSignificantBits &&
                 leastSignificantBits == that.leastSignificantBits &&
-                nid == that.nid && Arrays.equals(additionalUuidLongs, that.additionalUuidLongs) &&
+                nid == that.nid && Objects.equals(additionalUuidLongs, that.additionalUuidLongs) &&
                 versions.equals(that.versions);
     }
 
@@ -116,6 +117,6 @@ public record PatternRecord(
     }
 
     public PublicId publicId() {
-        return PublicIds.of(asUuidArray());
+        return PublicIds.of(asUuidList());
     }
 }

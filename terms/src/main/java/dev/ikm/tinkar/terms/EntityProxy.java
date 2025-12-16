@@ -36,12 +36,11 @@ public class EntityProxy implements EntityFacade, PublicId {
     /**
      * Universal identifiers for the concept proxied by the this object.
      */
-    private UUID[] uuids;
+    private volatile ImmutableList<UUID> uuidList;
 
-    private int cachedNid = 0;
+    private volatile int cachedNid = 0;
 
     private String description;
-
 
     /**
      * Initialization using nid is lazy, and description and UUIDs are only returned if
@@ -54,29 +53,43 @@ public class EntityProxy implements EntityFacade, PublicId {
     }
 
     protected EntityProxy(String description, UUID[] uuids) {
-        this.uuids = uuids;
-        Arrays.sort(this.uuids);
+        this.uuidList = Lists.immutable.of(uuids).toSortedList().toImmutableList();
+        this.description = description;
+    }
+
+    protected EntityProxy(String description, ImmutableList<UUID> uuidList) {
+        this.uuidList = uuidList;
         this.description = description;
     }
 
     protected EntityProxy(String description, PublicId publicId) {
-        this.uuids = publicId.asUuidArray();
+        this.uuidList = publicId.asUuidList();
         this.description = description;
     }
 
-    public UUID[] uuids() {
-        if (uuids == null) {
-            if (cachedNid == 0) {
-                throw new IllegalStateException("Nid and UUIDs not initialized");
-            } else {
-                uuids = PrimitiveData.publicId(nid()).asUuidArray();
+    private ImmutableList<UUID> getUuidList() {
+        ImmutableList<UUID> result = uuidList;
+        if (result == null) {
+            synchronized (this) {
+                result = uuidList;
+                if (result == null) {
+                    if (cachedNid == 0) {
+                        throw new IllegalStateException("Nid and UUIDs not initialized");
+                    }
+                    result = PrimitiveData.publicId(nid()).asUuidList();
+                    uuidList = result;
+                }
             }
         }
-        return uuids;
+        return result;
+    }
+
+    public UUID[] uuids() {
+        return getUuidList().toArray(new UUID[0]);
     }
 
     public static EntityProxy make(String description, PublicId publicId) {
-        return new EntityProxy(description, publicId.asUuidArray());
+        return new EntityProxy(description, publicId);
     }
 
     public static EntityProxy make(int nid) {
@@ -88,7 +101,7 @@ public class EntityProxy implements EntityFacade, PublicId {
     }
 
     public PublicId publicId() {
-        return PublicIds.of(uuids());
+        return PublicIds.of(getUuidList());
     }
 
     @Override
@@ -101,7 +114,7 @@ public class EntityProxy implements EntityFacade, PublicId {
         if (this == o) return true;
         if (o instanceof EntityProxy other) {
             if (this.cachedNid == 0 && other.cachedNid == 0) {
-                return Arrays.equals(this.uuids, other.uuids);
+                return this.getUuidList().equals(other.getUuidList());
             }
         }
         if (o instanceof ComponentWithNid componentWithNid) {
@@ -120,7 +133,7 @@ public class EntityProxy implements EntityFacade, PublicId {
     public String toString() {
         return this.getClass().getSimpleName() + "{"
                 + description() +
-                " " + Arrays.toString(uuids) +
+                " " + getUuidList() +
                 "<" + cachedNid +
                 ">}";
     }
@@ -134,28 +147,34 @@ public class EntityProxy implements EntityFacade, PublicId {
 
     @Override
     public final int nid() {
-        if (cachedNid == 0) {
-            if (uuids == null) {
-                throw new IllegalStateException("Nid and UUIDs not initialized");
-            }
-            if (this instanceof EntityProxy.Concept) {
-                ScopedValue.where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern().publicId()).run(() ->
-                        cachedNid = PrimitiveData.nid(this.publicId()));
-            } else {
-                cachedNid = PrimitiveData.get().nidForUuids(uuids);
+        int result = cachedNid;
+        if (result == 0) {
+            synchronized (this) {
+                result = cachedNid;
+                if (result == 0) {
+                    ImmutableList<UUID> list = getUuidList();
+                    if (this instanceof EntityProxy.Concept) {
+                        ScopedValue.where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern().publicId()).run(() ->
+                                cachedNid = PrimitiveData.nid(this.publicId()));
+                        result = cachedNid;
+                    } else {
+                        result = PrimitiveData.get().nidForUuids(list.toArray(new UUID[0]));
+                        cachedNid = result;
+                    }
+                }
             }
         }
-        return cachedNid;
+        return result;
     }
 
     @Override
     public ImmutableList<UUID> asUuidList() {
-        return Lists.immutable.of(uuids());
+        return getUuidList();
     }
 
     @Override
     public UUID[] asUuidArray() {
-        return publicId().asUuidArray();
+        return getUuidList().toArray(new UUID[0]);
     }
 
     @Override
@@ -324,7 +343,4 @@ public class EntityProxy implements EntityFacade, PublicId {
         }
 
     }
-
-
-
 }

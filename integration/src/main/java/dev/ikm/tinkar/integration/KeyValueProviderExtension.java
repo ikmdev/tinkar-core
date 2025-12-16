@@ -303,14 +303,14 @@ public class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCal
         
         if (currentMaxEntitySize != EntityRecordFactory.DEFAULT_ENTITY_SIZE) {
             pollutionWarnings.add(String.format(
-                "EntityRecordFactory.MAX_ENTITY_SIZE = %d (expected %d)",
+                "EntityRecordFactory.MAX_ENTITY_SIZE = %,d (expected %,d)",
                 currentMaxEntitySize, EntityRecordFactory.DEFAULT_ENTITY_SIZE
             ));
         }
         
         if (currentMaxVersionSize != EntityRecordFactory.DEFAULT_VERSION_SIZE) {
             pollutionWarnings.add(String.format(
-                "EntityRecordFactory.MAX_VERSION_SIZE = %d (expected %d)",
+                "EntityRecordFactory.MAX_VERSION_SIZE = %,d (expected %,d)",
                 currentMaxVersionSize, EntityRecordFactory.DEFAULT_VERSION_SIZE
             ));
         }
@@ -327,7 +327,7 @@ public class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCal
                 
                 if (cacheSize > 0) {
                     pollutionWarnings.add(String.format(
-                        "EntityProvider.ENTITY_CACHE contains %d entries (expected 0)",
+                        "EntityProvider.ENTITY_CACHE contains %,d entries (expected 0)",
                         cacheSize
                     ));
                 }

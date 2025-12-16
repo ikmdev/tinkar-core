@@ -17,6 +17,8 @@ package dev.ikm.tinkar.common.id.impl;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.VertexId;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ImmutableList;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -35,6 +37,11 @@ public class PublicId1 extends PublicIdA implements VertexId {
     public PublicId1(long msb, long lsb) {
         this.msb = msb;
         this.lsb = lsb;
+    }
+
+    @Override
+    public ImmutableList<UUID> asUuidList() {
+        return Lists.immutable.of(new UUID(msb, lsb));
     }
 
     @Override

@@ -22,18 +22,18 @@ import dev.ikm.tinkar.common.util.Validator;
 import dev.ikm.tinkar.terms.PatternFacade;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
 
 import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
-import static dev.ikm.tinkar.terms.TinkarTermV2.STAMP_PATTERN;
 
 @RecordBuilder
 public record SemanticRecord(
         long mostSignificantBits, long leastSignificantBits,
-        long[] additionalUuidLongs, int nid, int patternNid, int referencedComponentNid,
+        ImmutableLongList additionalUuidLongs, int nid, int patternNid, int referencedComponentNid,
         ImmutableList<SemanticVersionRecord> versions)
         implements SemanticEntity<SemanticVersionRecord>, ImmutableEntity<SemanticVersionRecord>, SemanticRecordBuilder.With {
 
@@ -120,7 +120,7 @@ public record SemanticRecord(
                 leastSignificantBits == that.leastSignificantBits &&
                 nid == that.nid && patternNid == that.patternNid &&
                 referencedComponentNid == that.referencedComponentNid &&
-                Arrays.equals(additionalUuidLongs, that.additionalUuidLongs) &&
+                Objects.equals(additionalUuidLongs, that.additionalUuidLongs) &&
                 versions.equals(that.versions);
     }
 
@@ -163,7 +163,7 @@ public record SemanticRecord(
     }
 
     public PublicId publicId() {
-        return PublicIds.of(asUuidArray());
+        return PublicIds.of(asUuidList());
     }
 
 }

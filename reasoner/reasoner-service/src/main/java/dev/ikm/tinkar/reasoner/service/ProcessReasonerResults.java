@@ -106,9 +106,9 @@ public class ProcessReasonerResults {
 
 
 	protected ClassifierResults compute() throws Exception {
-		callable.ifPresent(tracking -> tracking.updateMessage("Getting classified results"));
-		LOG.info("Getting classified results...");
-		Transaction updateTransaction = Transaction.make("Committing classification");
+		callable.ifPresent(tracking -> tracking.updateMessage("Getting reasoner results"));
+		LOG.info("Getting reasoner results...");
+		Transaction updateTransaction = Transaction.make("Committing reasoner results");
 		ClassifierResults classifierResults = null;
 		EntityService.get().beginLoadPhase();
 		try {

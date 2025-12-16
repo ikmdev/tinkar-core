@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import dev.ikm.tinkar.common.service.TrackingCallable;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,8 +88,18 @@ public abstract class HybridReasonerNfhTestBase extends HybridReasonerTestBase {
 	public void nfh() throws Exception {
 		updateNfh();
 		ReasonerService rs = initReasonerService();
-		rs.extractData();
-		rs.loadData();
+		rs.extractData(new TrackingCallable<Object>() {
+			@Override
+			protected Object compute() throws Exception {
+				return null;
+			}
+		});
+		rs.loadData(new TrackingCallable<Object>() {
+			@Override
+			protected Object compute() throws Exception {
+				return null;
+			}
+		});
 		rs.computeInferences();
 		rs.buildNecessaryNormalForm();
 		rs.writeInferredResults();
@@ -97,21 +108,21 @@ public abstract class HybridReasonerNfhTestBase extends HybridReasonerTestBase {
 		int parent_miss = 0;
 		int child_miss = 0;
 		HashSet<Long> child_miss_sctids = new HashSet<>();
-		for (long sctid : isas.getOrderedConcepts()) {
+		for (long sctid : isas.getOrderedConcepts().toArray()) {
 			if (sctid == FamilyHistoryIds.no_family_history_swec)
 				continue;
 			if (isas.hasAncestor(sctid, FamilyHistoryIds.no_family_history_swec))
 				continue;
 			int nid = ElkSnomedData.getNid(sctid);
 			{
-				Set<Integer> expected_parent_nids = isas.getParents(sctid).stream().map(ElkSnomedData::getNid)
-						.collect(Collectors.toSet());
+				Set<Integer> expected_parent_nids = isas.getParents(sctid)
+						.collect(ElkSnomedData::getNid)
+						.toSet();
 				if (sctid == SnomedIds.root) {
 					expected_parent_nids = Set.of(TinkarTerm.PHENOMENON.nid());
 					LOG.warn("Reset expected for " + sctid + " " + PrimitiveData.text(nid));
 				}
-				Set<Integer> expected_child_nids = isas.getChildren(sctid).stream().map(ElkSnomedData::getNid)
-						.collect(Collectors.toSet());
+				Set<Integer> expected_child_nids = isas.getChildren(sctid).collect(ElkSnomedData::getNid).toSet();
 				try {
 					Set<Integer> actual_child_nids = ElkSnomedUtil.getInferredChildren(getViewCalculator(), sctid);
 					if (!expected_child_nids.equals(actual_child_nids)) {

@@ -30,11 +30,7 @@ import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithC
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.entity.EntityVersion;
-import dev.ikm.tinkar.entity.PatternEntity;
-import dev.ikm.tinkar.entity.PatternEntityVersion;
-import dev.ikm.tinkar.entity.SemanticEntityVersion;
+import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.apache.lucene.document.Document;
@@ -175,7 +171,7 @@ public class Searcher {
         List<PublicId> childIds = new ArrayList<>();
         int[] childNidList = navCalc.childrenOf(EntityService.get().nidForPublicId(parentConceptId)).toArray();
         for (int childNid : childNidList) {
-            EntityService.get().getEntity(childNid).ifPresent((entity) -> childIds.add(entity.publicId()));
+            EntityHandle.get(childNid).ifPresent((entity) -> childIds.add(entity.publicId()));
         }
         return childIds;
     }
@@ -206,7 +202,7 @@ public class Searcher {
         List<PublicId> descendantIds = new ArrayList<>();
         int[] descendantNidList = navCalc.descendentsOf(EntityService.get().nidForPublicId(ancestorConceptId)).toArray();
         for (int descendantNid : descendantNidList) {
-            EntityService.get().getEntity(descendantNid).ifPresent((entity) -> descendantIds.add(entity.publicId()));
+            EntityHandle.get(descendantNid).ifPresent((entity) -> descendantIds.add(entity.publicId()));
         }
         return descendantIds;
     }
@@ -256,7 +252,7 @@ public class Searcher {
     public static List<PublicId> getLidrRecordSemanticsFromTestKit(PublicId testKitId){
         List<PublicId> lidrRecordSemanticIds = new ArrayList<>();
 
-        EntityService.get().getEntity(testKitId.asUuidArray()).ifPresent((testKitEntity) -> {
+        EntityHandle.get(testKitId).ifPresent((testKitEntity) -> {
             EntityService.get().forEachSemanticForComponentOfPattern(testKitEntity.nid(), DIAGNOSTIC_DEVICE_PATTERN.nid(), diagnosticDeviceSemantic -> {
                 EntityService.get().forEachSemanticForComponentOfPattern(diagnosticDeviceSemantic.nid(), LIDR_RECORD_PATTERN.nid(), lidrRecordSemantic -> {
                     lidrRecordSemanticIds.add(lidrRecordSemantic.publicId());
@@ -314,16 +310,14 @@ public class Searcher {
      */
     public static List<PublicId> getResultConformancesFromLidrRecord(NavigationCalculator navCalc, PublicId lidrRecordId) {
         List<PublicId> resultConformanceList = new ArrayList<>();
-        EntityService.get().getEntity(lidrRecordId.asUuidArray()).ifPresent((lidrRecordEntity) -> {
-            navCalc.stampCalculator().latest(lidrRecordEntity)
-                    .ifPresent((lidrRecordVersion) -> {
-                        SemanticEntityVersion lidrRecordSemanticVersion = (SemanticEntityVersion) lidrRecordVersion;
-                        int idxResultConformances = 5;
-                        ((IntIdSet) lidrRecordSemanticVersion.fieldValues().get(idxResultConformances))
-                                .map(PrimitiveData::publicId)
-                                .forEach(resultConformanceList::add);
-                    });
-        });
+        EntityHandle.get(lidrRecordId).ifPresent((lidrRecordEntity) -> navCalc.stampCalculator().latest(lidrRecordEntity)
+                .ifPresent((lidrRecordVersion) -> {
+                    SemanticEntityVersion lidrRecordSemanticVersion = (SemanticEntityVersion) lidrRecordVersion;
+                    int idxResultConformances = 5;
+                    ((IntIdSet) lidrRecordSemanticVersion.fieldValues().get(idxResultConformances))
+                            .map(PrimitiveData::publicId)
+                            .forEach(resultConformanceList::add);
+                }));
         return resultConformanceList;
     }
 
@@ -351,23 +345,19 @@ public class Searcher {
         int resultConformanceNid = EntityService.get().nidForPublicId(resultConformanceId);
 
         EntityService.get().forEachSemanticForComponentOfPattern(resultConformanceNid, QUANTITATIVE_ALLOWED_RESULT_SET_PATTERN.nid(),
-                (quantitativeResultSet) -> {
-                    navCalc.stampCalculator().latest(quantitativeResultSet)
-                            .ifPresent((latestQuantitativeResultSet) -> {
-                                ((IntIdSet) latestQuantitativeResultSet.fieldValues().get(0))
-                                        .map(PrimitiveData::publicId)
-                                        .forEach(allowedResultsList::add);
-                            });
-                });
+                (quantitativeResultSet) -> navCalc.stampCalculator().latest(quantitativeResultSet)
+                        .ifPresent((latestQuantitativeResultSet) -> {
+                            ((IntIdSet) latestQuantitativeResultSet.fieldValues().get(0))
+                                    .map(PrimitiveData::publicId)
+                                    .forEach(allowedResultsList::add);
+                        }));
         EntityService.get().forEachSemanticForComponentOfPattern(resultConformanceNid, QUALITATIVE_ALLOWED_RESULT_SET_PATTERN.nid(),
-                (qualitativeResultSet) -> {
-                    navCalc.stampCalculator().latest(qualitativeResultSet)
-                            .ifPresent((latestQualitativeResultSet) -> {
-                                ((IntIdSet) latestQualitativeResultSet.fieldValues().get(0))
-                                        .map(PrimitiveData::publicId)
-                                        .forEach(allowedResultsList::add);
-                            });
-                });
+                (qualitativeResultSet) -> navCalc.stampCalculator().latest(qualitativeResultSet)
+                        .ifPresent((latestQualitativeResultSet) -> {
+                            ((IntIdSet) latestQualitativeResultSet.fieldValues().get(0))
+                                    .map(PrimitiveData::publicId)
+                                    .forEach(allowedResultsList::add);
+                        }));
         return allowedResultsList;
     }
 
@@ -380,7 +370,7 @@ public class Searcher {
     public static List<PublicId> membersOf(PublicId memberPatternId) {
         if (PrimitiveData.get().hasPublicId(memberPatternId)) {
             List<PublicId> conceptIds = new ArrayList<>();
-            EntityService.get().getEntity(memberPatternId.asUuidArray()).ifPresent((e) -> {
+            EntityHandle.get(memberPatternId).ifPresent((e) -> {
                 if (e instanceof PatternEntity<?> patternEntity) {
                     EntityService.get().forEachSemanticOfPattern(patternEntity.nid(), (semanticEntityOfPattern) ->
                         conceptIds.add(semanticEntityOfPattern.referencedComponent().publicId()));

@@ -32,6 +32,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import dev.ikm.tinkar.common.service.TrackingCallable;
+import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -61,9 +63,18 @@ public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 		ViewCalculator vc = PrimitiveDataTestUtil.getViewCalculator(version);
 		ReasonerService rs = ElkSnomedTestBase.getElkSnomedReasonerService();
 		rs.init(vc, TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
-		rs.setProgressUpdater(null);
-		rs.extractData();
-		rs.loadData();
+		rs.extractData(new TrackingCallable<Object>() {
+			@Override
+			protected Object compute() throws Exception {
+				return null;
+			}
+		});
+		rs.loadData(new TrackingCallable<Object>() {
+			@Override
+			protected Object compute() throws Exception {
+				return null;
+			}
+		});
 		rs.computeInferences();
 		return rs;
 	}
@@ -149,7 +160,7 @@ public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 		int miss_cnt = 0;
 		SnomedIsa isas = SnomedIsa.init(rels_file, version);
 		HashMap<Integer, Long> nid_sctid_map = new HashMap<>();
-		for (long sctid : isas.getOrderedConcepts()) {
+		for (long sctid : isas.getOrderedConcepts().toArray()) {
 			int nid = ElkSnomedData.getNid(sctid);
 			nid_sctid_map.put(nid, sctid);
 		}
@@ -160,7 +171,7 @@ public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 				non_snomed_cnt++;
 				continue;
 			}
-			Set<Long> parents = isas.getParents(sctid);
+			Set<Long> parents = isas.getParents(sctid).toSet().boxed();
 			if (sctid == SnomedIds.root) {
 				assertTrue(parents.isEmpty());
 				// has a parent in the db
@@ -175,14 +186,16 @@ public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 				miss_cnt++;
 			}
 		}
-		isas.getOrderedConcepts().stream().filter(other_misses::contains) //
-				.limit(10) //
-				.forEach((sctid) -> {
+		MutableLongList selectedIds = isas.getOrderedConcepts().select(id -> misses.contains(id));
+		int limit = Math.min(10, selectedIds.size());
+
+		for (int i = 0; i < limit; i++) {
+			long sctid = selectedIds.get(i);
 					UUID uuid = UuidUtil.fromSNOMED("" + sctid);
 					int nid = PrimitiveData.nid(uuid);
 					LOG.error("Miss: " + sctid + " " + PrimitiveData.text(nid));
 					Set<Long> sups = toSctids(rs.getParents(nid), nid_sctid_map);
-					Set<Long> parents = isas.getParents(sctid);
+					Set<Long> parents = isas.getParents(sctid).toSet().boxed();
 					HashSet<Long> par = new HashSet<>(parents);
 					par.removeAll(sups);
 					HashSet<Long> sup = new HashSet<>(sups);
@@ -192,7 +205,7 @@ public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 					if (sups.contains(null)) {
 						rs.getParents(nid).forEach(sup_nid -> LOG.error("   :  " + PrimitiveData.text((sup_nid))));
 					}
-				});
+		}
 		if (miss_cnt != 0)
 			LOG.error("Miss cnt: " + miss_cnt);
 		int expected_non_snomed_cnt = PrimitiveDataTestUtil.getPrimordialNids().size()

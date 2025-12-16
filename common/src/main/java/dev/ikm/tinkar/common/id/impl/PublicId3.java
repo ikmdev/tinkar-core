@@ -16,6 +16,8 @@
 package dev.ikm.tinkar.common.id.impl;
 
 import dev.ikm.tinkar.common.id.PublicId;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ImmutableList;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -66,6 +68,11 @@ public class PublicId3 extends PublicIdA {
     @Override
     public UUID[] asUuidArray() {
         return new UUID[]{new UUID(msb, lsb), new UUID(msb2, lsb2), new UUID(msb3, lsb3)};
+    }
+
+    @Override
+    public ImmutableList<UUID> asUuidList() {
+        return Lists.immutable.of(new UUID(msb, lsb), new UUID(msb2, lsb2), new UUID(msb3, lsb3));
     }
 
     @Override

@@ -381,7 +381,7 @@ public abstract class IsomorphicResultsAbstract<VVD extends VertexVisitData>
             String formatString = "[%2d";
             String nullString = " " + NULL_SIGN + " ";
             if (this.referenceToComparisonIndexCorrelation.solution().size() < 10) {
-                formatString = "[%d";
+                formatString = "[%,d";
                 nullString = " " + NULL_SIGN + " ";
             }
             if (this.referenceToComparisonIndexCorrelation.solution().size() > 99) {

@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
+import dev.ikm.tinkar.common.service.TrackingCallable;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,8 +43,18 @@ public abstract class HybridReasonerServiceTestBase extends HybridReasonerTestBa
 	public void runReasonerService() throws Exception {
 		LOG.info("runReasonerService");
 		ReasonerService rs = initReasonerService();
-		rs.extractData();
-		rs.loadData();
+		rs.extractData(new TrackingCallable<Object>() {
+			@Override
+			protected Object compute() throws Exception {
+				return null;
+			}
+		});
+		rs.loadData(new TrackingCallable<Object>() {
+			@Override
+			protected Object compute() throws Exception {
+				return null;
+			}
+		});
 		rs.computeInferences();
 		rs.buildNecessaryNormalForm();
 		rs.getReasonerConceptSet().forEach(rs::getParents);

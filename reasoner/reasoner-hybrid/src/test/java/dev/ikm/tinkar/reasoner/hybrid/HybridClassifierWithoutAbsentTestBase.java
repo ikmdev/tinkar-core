@@ -26,6 +26,8 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.eclipse.collections.api.list.primitive.MutableLongList;
+import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,7 +83,7 @@ public abstract class HybridClassifierWithoutAbsentTestBase extends HybridReason
 		SnomedIsa isas = SnomedIsa.init(rels_file);
 		SnomedDescriptions descr = SnomedDescriptions.init(descriptions_file);
 		nid_sctid_map = new HashMap<>();
-		for (long sctid : isas.getOrderedConcepts()) {
+		for (long sctid : isas.getOrderedConcepts().toArray()) {
 			int nid = ElkSnomedData.getNid(sctid);
 			nid_sctid_map.put(nid, sctid);
 			if (ontology.getConcept(nid) == null)
@@ -95,7 +97,8 @@ public abstract class HybridClassifierWithoutAbsentTestBase extends HybridReason
 				non_snomed_cnt++;
 				continue;
 			}
-			Set<Long> parents = isas.getParents(sctid);
+			Set<Long> parents = new HashSet<>();
+			isas.getParents(sctid).forEach(parents::add);
 			if (sctid == SnomedIds.root) {
 				assertTrue(parents.isEmpty());
 				// has a parent in the db
@@ -110,25 +113,32 @@ public abstract class HybridClassifierWithoutAbsentTestBase extends HybridReason
 				miss_cnt++;
 			}
 		}
-		isas.getOrderedConcepts().stream().filter(misses::contains) //
-				.limit(10) //
-				.forEach((sctid) -> {
-					UUID uuid = UuidUtil.fromSNOMED("" + sctid);
-					int nid = PrimitiveData.nid(uuid);
-					LOG.error("Miss: " + sctid + " " + PrimitiveData.text(nid));
-					Set<Long> sups = toSctids(sso.getSuperConcepts(nid));
-					Set<Long> parents = isas.getParents(sctid);
-					HashSet<Long> par = new HashSet<>(parents);
-					par.removeAll(sups);
-					HashSet<Long> sup = new HashSet<>(sups);
-					sup.removeAll(parents);
-					LOG.error("Sno:  " + par);
-					LOG.error("Elk:  " + sup);
-					if (sups.contains(null)) {
-						sso.getSuperConcepts(nid)
-								.forEach(sup_nid -> LOG.error("   :  " + PrimitiveData.text((sup_nid.intValue()))));
-					}
-				});
+		MutableLongList selectedIds = isas.getOrderedConcepts().select(id -> misses.contains(id));
+		int limit = Math.min(10, selectedIds.size());
+
+		for (int i = 0; i < limit; i++) {
+			long sctid = selectedIds.get(i);
+			UUID uuid = UuidUtil.fromSNOMED("" + sctid);
+			int nid = PrimitiveData.nid(uuid);
+			LOG.error("Miss: " + sctid + " " + PrimitiveData.text(nid));
+			Set<Long> sups = toSctids(sso.getSuperConcepts(nid));
+
+			// Convert ImmutableLongSet to Set<Long>
+			ImmutableLongSet parentsSet = isas.getParents(sctid);
+			Set<Long> parents = new HashSet<>();
+			parentsSet.forEach(parents::add);
+
+			HashSet<Long> par = new HashSet<>(parents);
+			par.removeAll(sups);
+			HashSet<Long> sup = new HashSet<>(sups);
+			sup.removeAll(parents);
+			LOG.error("Sno:  " + par);
+			LOG.error("Elk:  " + sup);
+			if (sups.contains(null)) {
+				sso.getSuperConcepts(nid)
+						.forEach(sup_nid -> LOG.error("   :  " + PrimitiveData.text((sup_nid.intValue()))));
+			}
+		}
 		LOG.error("Miss cnt: " + miss_cnt);
 		int expected_non_snomed_cnt = PrimitiveDataTestUtil.getPrimordialNids().size()
 				- PrimitiveDataTestUtil.getPrimordialNidsWithSctids().size();

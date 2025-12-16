@@ -88,6 +88,7 @@ public class ElkSnomedDataBuilder {
 	public void build() throws Exception {
 		final int totalCount = computeTotalCount();
 		LOG.info("Total axioms: " + totalCount);
+		this.progressUpdater.updateMessage(String.format("Total axioms: %,d", totalCount));
 		updateProgress(0, totalCount);
 		final AtomicInteger processedCount = new AtomicInteger();
 		LogicCoordinateRecord logicCoordinate = viewCalculator.logicCalculator().logicCoordinateRecord();
@@ -116,7 +117,9 @@ public class ElkSnomedDataBuilder {
 				LOG.warn("No definitions: " + con.getId() + " " + PrimitiveData.text((int) con.getId()));
 		}
 		updateProgress(totalCount, totalCount);
-		LOG.info("Total processed: " + totalCount + " " + processedCount.get());
+		this.progressUpdater.updateMessage(String.format("Total processed: %,d Active concepts: %,d ", processedCount.get(), data.getActiveConceptCount()));
+
+		LOG.info("Total processed: " + totalCount);
 		LOG.info("Active concepts: " + data.getActiveConceptCount());
 		LOG.info("Inactive concepts: " + data.getInactiveConceptCount());
 		if (ex_cnt.get() != 0) {
