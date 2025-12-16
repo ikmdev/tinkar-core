@@ -207,6 +207,11 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     }
 
     @Override
+    public void forEach(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public byte[] getBytes(int nid) {
         return this.nidToComponentMap.get(nid);
     }

@@ -21,7 +21,6 @@ module dev.ikm.tinkar.provider.search {
     requires org.apache.lucene.highlighter;
     requires org.apache.lucene.queries;
     requires org.apache.lucene.queryparser;
-    requires org.apache.lucene.suggest;
     requires org.eclipse.collections.api;
     requires org.eclipse.collections.impl;
     requires org.slf4j;

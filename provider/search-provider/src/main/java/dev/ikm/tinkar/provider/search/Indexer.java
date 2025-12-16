@@ -109,7 +109,6 @@ public class Indexer {
         LOG.info("Closing lucene index");
         Indexer.indexReader.close();
         Indexer.indexWriter.close();
-        TypeAheadSearch.get().close();
         stopwatch.stop();
         LOG.info("Closed lucene index in: " + stopwatch.durationString());
     }
@@ -169,9 +168,6 @@ public class Indexer {
             }
             try {
                 long addSequence = indexWriter.addDocument(document);
-                if (!EntityService.get().isLoadPhase()) {
-                    TypeAheadSearch.get().buildSuggester();
-                }
             } catch (IOException e) {
                 LOG.error("Exception writing: " + object);
             }

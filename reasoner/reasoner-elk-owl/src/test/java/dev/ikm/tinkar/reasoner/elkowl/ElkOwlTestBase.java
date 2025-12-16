@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import dev.ikm.tinkar.common.service.TrackingCallable;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -147,7 +148,6 @@ public abstract class ElkOwlTestBase extends PrimitiveDataTestBase {
 				.findFirst().get().get();
 		rs.init(getViewCalculator(), TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
 				TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
-		rs.setProgressUpdater(null);
 		return rs;
 	}
 
@@ -167,9 +167,24 @@ public abstract class ElkOwlTestBase extends PrimitiveDataTestBase {
 	public void runElkOwlReasonerService() throws Exception {
 		LOG.info("runElkOwlReasonerService");
 		ReasonerService rs = initReasonerService();
-		rs.extractData();
-		rs.loadData();
-		rs.computeInferences();
+		rs.extractData(new TrackingCallable<Object>() {
+			@Override
+			protected Object compute() throws Exception {
+				return null;
+			}
+		});
+		rs.loadData(new TrackingCallable<Object>() {
+			@Override
+			protected Object compute() throws Exception {
+				return null;
+			}
+		});
+		rs.computeInferences(new TrackingCallable<Object>() {
+			@Override
+			protected Object compute() throws Exception {
+				return null;
+			}
+		});
 		Files.createDirectories(getWritePath("supercs").getParent());
 		Path path = getWritePath("supercs");
 		ArrayList<String> lines = getSupercs(rs);
