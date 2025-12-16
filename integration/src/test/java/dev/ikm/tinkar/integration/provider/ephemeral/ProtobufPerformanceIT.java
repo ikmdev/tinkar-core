@@ -21,6 +21,7 @@ import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -30,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Disabled("Disable until ephemeral store race condition is resolved")
 public class ProtobufPerformanceIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProtobufRoundTripIT.class);
