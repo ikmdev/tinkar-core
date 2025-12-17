@@ -43,7 +43,6 @@ import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
 import org.slf4j.Logger;
@@ -60,7 +59,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Disabled("Disabled until underlying issue with semantic record interface is resolved in tinkar-composer")
 class SpinedArrayIdentifierMergeIT {
     static final Logger LOG = LoggerFactory.getLogger(SpinedArrayIdentifierMergeIT.class);
 
