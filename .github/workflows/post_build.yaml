@@ -39,3 +39,5 @@ jobs:
             gpg_key: ${{secrets.GPG_KEY}}
             gpg_passphrase: ${{secrets.GPG_PASSPHRASE}}
             sonarcloud_token: ${{ secrets.SONAR_TOKEN }}
+            sonarcloud_java_binaries: ${{ '' }}
+            sonarcloud_tests: ${{ '' }}
