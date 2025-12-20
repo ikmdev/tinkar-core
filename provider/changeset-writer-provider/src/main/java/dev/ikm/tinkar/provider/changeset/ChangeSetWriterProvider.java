@@ -256,11 +256,19 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                                         stampsCount, moduleList, authorList, entityTransformer, zos));
                                     }
                                 }
-                            }
-                            if (System.currentTimeMillis() - lastWriteTimeMillis.get() > INACTIVITY_THRESHOLD_MILLIS) {
-                                LOG.info("Rotating ChangeSetWriterProvider, no activity for {} minutes.",
-                                        TimeUnit.MILLISECONDS.toMinutes(INACTIVITY_THRESHOLD_MILLIS));
-                                TinkExecutor.threadPool().submit(this::save);
+                            } else {
+                                // If we polled null, it means there was no activity in the last 250ms.
+                                // We check if the total inactivity duration exceeds INACTIVITY_THRESHOLD_MILLIS.
+                                if (System.currentTimeMillis() - lastWriteTimeMillis.get() > INACTIVITY_THRESHOLD_MILLIS) {
+                                    long inactivityDurationMillis = System.currentTimeMillis() - lastWriteTimeMillis.get();
+                                    LOG.info("Rotating ChangeSetWriterProvider, no activity for {}.",
+                                            DateTimeUtil.format(inactivityDurationMillis));
+                                    // Trigger the save and rotation.
+                                    TinkExecutor.threadPool().submit(this::save);
+                                    // We break the loop so this specific service thread terminates immediately,
+                                    // allowing the new thread started by save() to take over.
+                                    break;
+                                }
                             }
                         }
                     } catch (InterruptedException e) {

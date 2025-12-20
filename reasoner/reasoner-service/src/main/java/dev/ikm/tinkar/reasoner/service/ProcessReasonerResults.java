@@ -92,7 +92,8 @@ public class ProcessReasonerResults {
 	// PrimitiveData.nid(UUID.fromString("c6dfb251-a75f-547e-944a-3fd2d115ceb2"));
 
 	// Chronic lung disease: [23e07078-f1e2-3f6a-9b7a-9397bcd91cfe]
-	private final int watchNid = PrimitiveData.nid(UUID.fromString("23e07078-f1e2-3f6a-9b7a-9397bcd91cfe"));
+	// regression test: c06f68e8-9700-4992-9277-e0cc2ea23b4d
+	private final int watchNid = PrimitiveData.nid(UUID.fromString("c06f68e8-9700-4992-9277-e0cc2ea23b4d"));
 	private final boolean reinferAllHierarchy;
 
 	public ProcessReasonerResults(ReasonerService reasonerService, boolean reinferAllHierarchy, TrackingCallable<ClassifierResults> callable) {
