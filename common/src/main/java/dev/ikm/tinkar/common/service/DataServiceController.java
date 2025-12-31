@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public interface DataServiceController<T> {
+public interface DataServiceController<P> {
 
     /** Properties that are necessary to configure the service. */
     default ImmutableMap<DataServiceProperty, String> providerProperties() {
@@ -61,17 +61,28 @@ public interface DataServiceController<T> {
         return dataUriOptions;
     }
 
-    boolean isValidDataLocation(String name);
-
+    /**
+     * Sets the data URI option for the provider.
+     * @param option the data URI option
+     */
     void setDataUriOption(DataUriOption option);
+
+    /**
+     * Checks if a given name represents a valid data location for this provider.
+     * @param name the name to check
+     * @return true if valid, false otherwise
+     */
+    default boolean isValidDataLocation(String name) {
+        return true;
+    }
     String controllerName();
-    Class<? extends T> serviceClass();
+    Class<? extends P> serviceClass();
     boolean running();
     void start();
     void stop();
     void save();
     void reload();
-    T provider();
+    P provider();
 
     /**
      *

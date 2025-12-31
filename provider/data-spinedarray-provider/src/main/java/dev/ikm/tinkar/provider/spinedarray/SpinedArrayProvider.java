@@ -21,16 +21,7 @@ import dev.ikm.tinkar.collection.SpinedIntIntMap;
 import dev.ikm.tinkar.collection.SpinedIntLongArrayMap;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.service.DataActivity;
-import dev.ikm.tinkar.common.service.NidGenerator;
-import dev.ikm.tinkar.common.service.PluggableService;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.PrimitiveDataRepair;
-import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
-import dev.ikm.tinkar.common.service.PrimitiveDataService;
-import dev.ikm.tinkar.common.service.ServiceKeys;
-import dev.ikm.tinkar.common.service.ServiceProperties;
-import dev.ikm.tinkar.common.service.TinkExecutor;
+import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.common.util.io.FileUtil;
@@ -67,6 +58,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.ServiceLoader;
 import java.util.UUID;
@@ -744,4 +736,109 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     public void put(int nid, byte[] bytesToOverwrite) {
         this.entityToBytesMap.put(nid, bytesToOverwrite);
     }
+
+
+    /**
+     * Controller for SpinedArrayProvider lifecycle management.
+     * <p>
+     * Handles heavyweight initialization including data loading, indexing, and UUID mapping.
+     * </p>
+     */
+    public static class Controller extends ProviderController<SpinedArrayProvider>
+            implements DataServiceController<PrimitiveDataService> {
+
+        @Override
+        public void setDataUriOption(DataUriOption option) {
+            super.setDataUriOption(option);
+            if (option != null) {
+                ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, option.toFile());
+            }
+        }
+
+        @Override
+        protected SpinedArrayProvider createProvider() throws Exception {
+            return new SpinedArrayProvider();
+        }
+
+        @Override
+        protected void startProvider(SpinedArrayProvider provider) {
+            // SpinedArrayProvider starts itself in constructor
+            // Just wait for it to be ready
+            lifecycle.set(Lifecycle.RUNNING);
+        }
+
+        @Override
+        protected void stopProvider(SpinedArrayProvider provider) {
+            provider.close();
+        }
+
+        @Override
+        protected void cleanupProvider(SpinedArrayProvider provider) throws Exception {
+            // Additional cleanup if needed
+            provider.save();
+        }
+
+        @Override
+        protected String getProviderName() {
+            return "SpinedArrayProvider";
+        }
+
+        @Override
+        public ServiceLifecyclePhase getLifecyclePhase() {
+            return ServiceLifecyclePhase.DATA_STORAGE;
+        }
+
+        @Override
+        public Optional<ServiceExclusionGroup> getMutualExclusionGroup() {
+            return Optional.of(ServiceExclusionGroup.DATA_PROVIDER);
+        }
+
+        // ========== DataServiceController Implementation ==========
+
+        @Override
+        public Class<? extends PrimitiveDataService> serviceClass() {
+            return PrimitiveDataService.class;
+        }
+
+        @Override
+        public String controllerName() {
+            return "SpinedArray";
+        }
+
+        @Override
+        public boolean running() {
+            return getProvider() != null && lifecycle.get() == Lifecycle.RUNNING;
+        }
+
+        @Override
+        public void start() {
+            startup();
+        }
+
+        @Override
+        public void stop() {
+            shutdown();
+        }
+
+        @Override
+        public void save() {
+            SpinedArrayProvider provider = getProvider();
+            if (provider != null) {
+                provider.save();
+            }
+        }
+
+        @Override
+        public void reload() {
+            throw new UnsupportedOperationException("Reload not yet supported");
+        }
+
+        @Override
+        public PrimitiveDataService provider() {
+            return requireProvider();
+        }
+    }
 }
+
+
+

@@ -21,18 +21,18 @@
 
 import dev.ikm.tinkar.common.alert.AlertReportingService;
 import dev.ikm.tinkar.common.service.CachingService;
-import dev.ikm.tinkar.common.service.ExecutorController;
 import dev.ikm.tinkar.provider.executor.AlertLogSubscriber;
-import dev.ikm.tinkar.provider.executor.ExecutorProviderController;
+import dev.ikm.tinkar.provider.executor.ExecutorProvider;
 
-@SuppressWarnings("module")
-        // 7 in HL7 is not a version reference
 module dev.ikm.tinkar.provider.executor {
     requires org.slf4j;
     
     provides AlertReportingService with AlertLogSubscriber;
-    provides CachingService with ExecutorProviderController.CacheProvider;
-    provides ExecutorController with ExecutorProviderController;
+    provides CachingService with ExecutorProvider.CacheProvider;
+    provides dev.ikm.tinkar.common.service.ExecutorController 
+        with dev.ikm.tinkar.provider.executor.ExecutorProvider.Controller;
+    provides dev.ikm.tinkar.common.service.ServiceLifecycle 
+        with dev.ikm.tinkar.provider.executor.ExecutorProvider.Controller;
 
     requires java.base;
     requires dev.ikm.tinkar.common;

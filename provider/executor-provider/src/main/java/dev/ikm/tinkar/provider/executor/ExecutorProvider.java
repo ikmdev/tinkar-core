@@ -16,12 +16,13 @@
 package dev.ikm.tinkar.provider.executor;
 
 import dev.ikm.tinkar.common.alert.UncaughtExceptionAlertStreamer;
-import dev.ikm.tinkar.common.service.ExecutorService;
+import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.util.thread.NamedThreadFactory;
 import dev.ikm.tinkar.common.util.thread.ThreadPoolExecutorFixed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -34,11 +35,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Generally available thread pools for doing background processing in an ISAAC application.
+ * Generally available thread pools for doing background processing in an IKM application.
  * <p>
  * The {@link #forkJoinThreadPool()} that this provides is identical to the @{link {@link ForkJoinPool#commonPool()}
  * with the exception that it will bottom out at 6 processing threads, rather than 1, to help prevent
- * deadlock situations in common ISAAC usage patterns.  This has an unbounded queue depth, and LIFO behavior.
+ * deadlock situations in common IKM usage patterns.  This has an unbounded queue depth, and LIFO behavior.
  * <p>
  * The {@link #blockingThreadPool()} that this provides is a standard thread pool with (up to) the same number of threads
  * as there are cores present on the computer - with a minimum of 6 threads.  This executor has no queue - internally
@@ -269,5 +270,75 @@ public class ExecutorProvider implements ExecutorService {
     @Override
     public ScheduledExecutorService scheduled() {
         return this.scheduledExecutor;
+    }
+
+    /**
+     * Controller for ExecutorProvider lifecycle management.
+     * <p>
+     * Integrates with {@link ServiceLifecycleManager} and provides
+     * {@link ExecutorController} interface for programmatic access.
+     * </p>
+     */
+    public static class Controller extends ProviderController<ExecutorProvider>
+            implements ExecutorController {
+
+        @Override
+        protected ExecutorProvider createProvider() {
+            return new ExecutorProvider();
+        }
+
+        @Override
+        protected void startProvider(ExecutorProvider provider) {
+            provider.start();
+        }
+
+        @Override
+        protected void stopProvider(ExecutorProvider provider) {
+            provider.stop();
+        }
+
+        @Override
+        protected String getProviderName() {
+            return "ExecutorProvider";
+        }
+
+        @Override
+        public ServiceLifecyclePhase getLifecyclePhase() {
+            return ServiceLifecyclePhase.INFRASTRUCTURE;
+        }
+
+        @Override
+        public int getSubPriority() {
+            return 10; // Start early
+        }
+
+        @Override
+        public Optional<ServiceExclusionGroup> getMutualExclusionGroup() {
+            return Optional.of(ServiceExclusionGroup.EXECUTOR_PROVIDER);
+        }
+
+        // ========== ExecutorController Implementation ==========
+
+        @Override
+        public dev.ikm.tinkar.common.service.ExecutorService create() {
+            return getOrCreateProvider();
+        }
+
+        @Override
+        public void stop() {
+            shutdown();
+        }
+    }
+
+    /**
+     * Nested CacheProvider for integration with caching service.
+     */
+    public static class CacheProvider implements CachingService {
+        @Override
+        public void reset() {
+            // Access the singleton controller instance and reset
+            Controller controller = PluggableService.first(Controller.class);
+            controller.shutdown();
+        }
     }
 }
