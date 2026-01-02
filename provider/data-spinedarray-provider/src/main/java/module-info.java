@@ -22,9 +22,9 @@
 
 import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.common.service.LoadDataFromFileController;
+import dev.ikm.tinkar.common.service.ServiceLifecycle;
 import dev.ikm.tinkar.entity.ChangeSetWriterService;
-import dev.ikm.tinkar.provider.spinedarray.SpinedArrayNewController;
-import dev.ikm.tinkar.provider.spinedarray.SpinedArrayOpenController;
+import dev.ikm.tinkar.provider.spinedarray.SpinedArrayProvider;
 
 @SuppressWarnings("module")
         // 7 in HL7 is not a version reference
@@ -39,10 +39,13 @@ module dev.ikm.tinkar.provider.spinedarray {
     requires org.eclipse.collections.impl;
     requires dev.ikm.jpms.activej.bytebuf;
 
+    exports dev.ikm.tinkar.provider.spinedarray;
     exports dev.ikm.tinkar.provider.spinedarray.constants;
 
     provides DataServiceController
-            with SpinedArrayOpenController, SpinedArrayNewController;
+            with SpinedArrayProvider.OpenController, SpinedArrayProvider.NewController;
+    provides ServiceLifecycle
+            with SpinedArrayProvider.OpenController, SpinedArrayProvider.NewController;
 
     uses LoadDataFromFileController;
     uses ChangeSetWriterService;

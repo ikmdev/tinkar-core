@@ -19,7 +19,7 @@ public class StarterDataOpenSpinedArrayProvider extends OpenSpinedArrayKeyValueP
     protected Config resolveConfig(ExtensionContext context) {
         Config cfg = super.resolveConfig(context);
         // Ensure we are using OPEN spined array and set friendly defaults for starter data
-        cfg.controllerName = TestConstants.OPEN_SPINED_ARRAY_STORE;
+        cfg.controllerClass = TestConstants.OPEN_SPINED_ARRAY_STORE;
         if (cfg.dataPath == null || cfg.dataPath.isBlank()) {
             String testClassName = context.getRequiredTestClass().getSimpleName();
             cfg.dataPath = "target/spinedarrays/" + testClassName;

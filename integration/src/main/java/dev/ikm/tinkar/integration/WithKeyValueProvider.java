@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration;
 
+import dev.ikm.tinkar.common.service.DataServiceController;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.lang.annotation.ElementType;
@@ -25,14 +26,25 @@ import java.lang.annotation.Target;
 /**
  * Parameterized JUnit 5 annotation to initialize a key-value provider for tests.
  * <p>
- * Example usage:
+ * Example usage (type-safe, preferred):
  * <pre>
  * {@code
  * @WithKeyValueProvider(
- *     controllerName = "OPEN_SPINED_ARRAY_STORE",
+ *     controllerClass = SpinedArrayProvider.OpenController.class,
  *     dataPath = "target/key-value-store",
  *     cleanOnStart = true,
  *     importPath = "target/data/*-pb.zip"
+ * )
+ * class MyTest { ... }
+ * }
+ * </pre>
+ *
+ * Legacy example (string-based, deprecated):
+ * <pre>
+ * {@code
+ * @WithKeyValueProvider(
+ *     controllerName = "OPEN_SPINED_ARRAY_STORE",  // deprecated
+ *     dataPath = "target/key-value-store"
  * )
  * class MyTest { ... }
  * }
@@ -43,9 +55,28 @@ import java.lang.annotation.Target;
 @ExtendWith(KeyValueProviderExtension.class)
 public @interface WithKeyValueProvider {
     /**
+     * Type-safe controller class to use (preferred over {@link #controllerName()}).
+     * <p>
+     * Provides compile-time safety by requiring an actual controller class reference.
+     * If not specified (defaults to DataServiceController.class as sentinel), falls back to
+     * {@link #controllerName()} or auto-selection based on filesystem state.
+     * </p>
+     *
+     * Example:
+     * <pre>{@code
+     * @WithKeyValueProvider(controllerClass = ProviderEphemeral.NewController.class)
+     * }</pre>
+     */
+    @SuppressWarnings("rawtypes")
+    Class<? extends DataServiceController> controllerClass() default DataServiceController.class;
+
+    /**
      * Name of the controller to use. If set to "default" the extension will
      * choose an appropriate controller based on other parameters and filesystem state.
+     *
+     * @deprecated Use {@link #controllerClass()} instead for compile-time safety
      */
+    @Deprecated
     String controllerName() default "default";
 
     /**

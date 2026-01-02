@@ -22,8 +22,8 @@
 
 import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.common.service.LoadDataFromFileController;
-import dev.ikm.tinkar.provider.mvstore.MvStoreNewController;
-import dev.ikm.tinkar.provider.mvstore.MvStoreOpenController;
+import dev.ikm.tinkar.common.service.ServiceLifecycle;
+import dev.ikm.tinkar.provider.mvstore.MVStoreProvider;
 
 @SuppressWarnings("module")
         // 7 in HL7 is not a version reference
@@ -44,5 +44,7 @@ module dev.ikm.tinkar.provider.mvstore {
     uses LoadDataFromFileController;
 
     provides DataServiceController
-            with MvStoreOpenController, MvStoreNewController;
+            with MVStoreProvider.OpenController, MVStoreProvider.NewController;
+    provides ServiceLifecycle
+            with MVStoreProvider.OpenController, MVStoreProvider.NewController;
 }

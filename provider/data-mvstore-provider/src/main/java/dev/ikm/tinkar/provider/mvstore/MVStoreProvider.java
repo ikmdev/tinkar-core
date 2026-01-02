@@ -17,23 +17,23 @@ package dev.ikm.tinkar.provider.mvstore;
 
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.service.DataActivity;
-import dev.ikm.tinkar.common.service.NidGenerator;
-import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
-import dev.ikm.tinkar.common.service.PrimitiveDataService;
-import dev.ikm.tinkar.common.service.ServiceKeys;
-import dev.ikm.tinkar.common.service.ServiceProperties;
-import dev.ikm.tinkar.common.service.TinkExecutor;
+import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
+import dev.ikm.tinkar.common.validation.ValidationRecord;
+import dev.ikm.tinkar.common.validation.ValidationSeverity;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityCountSummary;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.provider.search.Indexer;
 import dev.ikm.tinkar.provider.search.RecreateIndex;
 import dev.ikm.tinkar.provider.search.Searcher;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
+import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.api.map.ImmutableMap;
+import org.eclipse.collections.api.map.MutableMap;
 import org.eclipse.collections.api.tuple.Pair;
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.h2.mvstore.MVMap;
@@ -44,11 +44,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Set;
-import java.util.UUID;
+import java.io.UncheckedIOException;
+import java.net.MalformedURLException;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
@@ -327,5 +329,237 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     @Override
     public String name() {
         return name;
+    }
+
+    /**
+     * Base Controller for MVStoreProvider lifecycle management.
+     * <p>
+     * Handles heavyweight initialization including data loading and indexing.
+     * </p>
+     */
+    public abstract static class Controller extends ProviderController<MVStoreProvider>
+            implements DataServiceController<PrimitiveDataService> {
+
+        @Override
+        protected MVStoreProvider createProvider() throws Exception {
+            return new MVStoreProvider();
+        }
+
+        @Override
+        protected void startProvider(MVStoreProvider provider) {
+            // Provider starts itself in constructor
+        }
+
+        @Override
+        protected void stopProvider(MVStoreProvider provider) {
+            provider.close();
+        }
+
+        @Override
+        protected void cleanupProvider(MVStoreProvider provider) throws Exception {
+            provider.save();
+        }
+
+        @Override
+        protected String getProviderName() {
+            return "MVStoreProvider";
+        }
+
+        @Override
+        public ServiceLifecyclePhase getLifecyclePhase() {
+            return ServiceLifecyclePhase.DATA_STORAGE;
+        }
+
+        @Override
+        public Optional<ServiceExclusionGroup> getMutualExclusionGroup() {
+            return Optional.of(ServiceExclusionGroup.DATA_PROVIDER);
+        }
+
+        // ========== DataServiceController Implementation ==========
+
+        @Override
+        public Class<? extends PrimitiveDataService> serviceClass() {
+            return PrimitiveDataService.class;
+        }
+
+        @Override
+        public boolean running() {
+            return getProvider() != null && MVStoreProvider.singleton != null;
+        }
+
+        @Override
+        public void start() {
+            startup();
+        }
+
+        @Override
+        public void stop() {
+            shutdown();
+        }
+
+        @Override
+        public void save() {
+            MVStoreProvider provider = getProvider();
+            if (provider != null) {
+                provider.save();
+            }
+        }
+
+        @Override
+        public void reload() {
+            throw new UnsupportedOperationException("Reload not yet supported");
+        }
+
+        @Override
+        public PrimitiveDataService provider() {
+            return requireProvider();
+        }
+    }
+
+    /**
+     * Controller for opening an existing MVStore database.
+     */
+    public static class OpenController extends Controller {
+        public static final String CONTROLLER_NAME = "Open MVStore";
+
+        @Override
+        public void setDataUriOption(DataUriOption option) {
+            super.setDataUriOption(option);
+            if (option != null) {
+                ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, option.toFile());
+            }
+        }
+
+        @Override
+        public boolean isValidDataLocation(String name) {
+            return name.equals("mvstore.dat");
+        }
+
+        @Override
+        public String controllerName() {
+            return CONTROLLER_NAME;
+        }
+
+        @Override
+        public int getSubPriority() {
+            return 20; // After SpinedArray
+        }
+    }
+
+    /**
+     * Controller for creating a new MVStore database and importing data.
+     */
+    public static class NewController extends Controller {
+        public static final String CONTROLLER_NAME = "New MVStore";
+        private static final DataServiceProperty NEW_FOLDER_PROPERTY =
+                new DataServiceProperty("New folder name", false, true);
+
+        private final MutableMap<DataServiceProperty, String> providerProperties = Maps.mutable.empty();
+        private String importDataFileString;
+
+        public NewController() {
+            providerProperties.put(NEW_FOLDER_PROPERTY, null);
+        }
+
+        @Override
+        public ImmutableMap<DataServiceProperty, String> providerProperties() {
+            return providerProperties.toImmutable();
+        }
+
+        @Override
+        public void setDataServiceProperty(DataServiceProperty key, String value) {
+            providerProperties.put(key, value);
+        }
+
+        @Override
+        public ValidationRecord[] validate(DataServiceProperty dataServiceProperty, Object value, Object target) {
+            if (NEW_FOLDER_PROPERTY.equals(dataServiceProperty)) {
+                File rootFolder = new File(System.getProperty("user.home"), "Solor");
+                if (value instanceof String fileName) {
+                    if (fileName.isBlank()) {
+                        return new ValidationRecord[]{new ValidationRecord(ValidationSeverity.ERROR,
+                                "Directory name cannot be blank", target)};
+                    } else {
+                        File possibleFile = new File(rootFolder, fileName);
+                        if (possibleFile.exists()) {
+                            return new ValidationRecord[]{new ValidationRecord(ValidationSeverity.ERROR,
+                                    "Directory already exists", target)};
+                        }
+                    }
+                }
+            }
+            return new ValidationRecord[]{};
+        }
+
+        @Override
+        public List<DataUriOption> providerOptions() {
+            List<DataUriOption> dataUriOptions = new ArrayList<>();
+            File rootFolder = new File(System.getProperty("user.home"), "Solor");
+            if (!rootFolder.exists()) {
+                rootFolder.mkdirs();
+            }
+            File[] files = rootFolder.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    if (isValidDataLocation(f.getName())) {
+                        dataUriOptions.add(new DataUriOption(f.getName(), f.toURI()));
+                    }
+                }
+            }
+            return dataUriOptions;
+        }
+
+        @Override
+        public void setDataUriOption(DataUriOption option) {
+            super.setDataUriOption(option);
+            if (option != null) {
+                try {
+                    importDataFileString = option.uri().toURL().getFile();
+                } catch (MalformedURLException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+        }
+
+        @Override
+        protected void initializeProvider(MVStoreProvider provider) throws Exception {
+            // Set up the data directory from properties
+            File rootFolder = new File(System.getProperty("user.home"), "Solor");
+            File dataDirectory = new File(rootFolder, providerProperties.get(NEW_FOLDER_PROPERTY));
+            ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, dataDirectory);
+
+            // Load data from file if specified
+            if (importDataFileString != null) {
+                ServiceLoader<LoadDataFromFileController> controllerFinder =
+                        PluggableService.load(LoadDataFromFileController.class);
+                LoadDataFromFileController loader = controllerFinder.findFirst()
+                        .orElseThrow(() -> new IllegalStateException("No LoadDataFromFileController found"));
+                Future<EntityCountSummary> loadFuture =
+                        (Future<EntityCountSummary>) loader.load(new File(importDataFileString));
+                EntityCountSummary entityCountSummary = loadFuture.get();
+                LOG.info("Loaded data: " + entityCountSummary);
+            }
+        }
+
+        @Override
+        public boolean isValidDataLocation(String name) {
+            return name.toLowerCase().endsWith("pb.zip") ||
+                    (name.toLowerCase().endsWith(".zip") && name.toLowerCase().contains("tink"));
+        }
+
+        @Override
+        public String controllerName() {
+            return CONTROLLER_NAME;
+        }
+
+        @Override
+        public int getSubPriority() {
+            return 21; // After Open
+        }
+
+        @Override
+        public boolean loading() {
+            return importDataFileString != null && !running();
+        }
     }
 }

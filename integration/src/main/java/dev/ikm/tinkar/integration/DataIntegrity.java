@@ -36,6 +36,7 @@ import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.ConceptEntityVersion;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.PatternEntityVersion;
@@ -89,7 +90,7 @@ public class DataIntegrity {
         aggregatedNullNidList.stream().map(String::valueOf).forEach(LOG::info);
     }
 
-    public static void startup(File datastoreRootLocation){
+    public static void startup(File datastoreRootLocation) {
         LOG.info("Datastore location: " + datastoreRootLocation);
         CachingService.clearAll();
         ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, datastoreRootLocation);
@@ -97,21 +98,24 @@ public class DataIntegrity {
         PrimitiveData.start();
     }
 
-    public static void breakdown(){
+    public static void breakdown() {
         PrimitiveData.stop();
     }
 
-    public static List<StampEntity> validateStampReferences(List<Integer> nullNidList) {
+    public static List<Entity> validateStampReferences(List<Integer> nullNidList) {
         LOG.info("Validating Stamp References");
-        List<StampEntity> listMisconfiguredStamps = new ArrayList<>();
+        List<Entity> listMisconfiguredStamps = new ArrayList<>();
         PrimitiveData.get().forEachStampNid((stampNid) -> {
-            EntityService.get().getEntity(stampNid).ifPresentOrElse((entity) -> {
-                if (entity instanceof StampEntity stampEntity) {
-                    if (isMisconfiguredStamp(stampEntity)) {
-                        listMisconfiguredStamps.add(stampEntity);
-                    }
+            EntityHandle handle = EntityHandle.get(stampNid);
+            if (handle.isPresent()) {
+                try {
+                    isMisconfiguredStamp(handle.expectStamp());
+                } catch (Exception e) {
+                    listMisconfiguredStamps.add(handle.expectEntity());
                 }
-            }, () -> {nullNidList.add(stampNid);});
+            } else {
+                nullNidList.add(stampNid);
+            }
         });
         return listMisconfiguredStamps;
     }
@@ -120,10 +124,10 @@ public class DataIntegrity {
         AtomicBoolean isNullReferences = new AtomicBoolean(false);
         stampEntity.versions().stream().forEach((version) -> {
             if (referencedEntityIsNull(version.stateNid()) ||
-                referencedEntityIsNull(version.authorNid()) ||
-                referencedEntityIsNull(version.moduleNid()) ||
-                referencedEntityIsNull(version.pathNid())) {
-                    isNullReferences.set(true);
+                    referencedEntityIsNull(version.authorNid()) ||
+                    referencedEntityIsNull(version.moduleNid()) ||
+                    referencedEntityIsNull(version.pathNid())) {
+                isNullReferences.set(true);
             }
         });
         return isNullReferences.get();
@@ -134,15 +138,7 @@ public class DataIntegrity {
         List<Entity> listMisconfiguredConcepts = new ArrayList<>();
         PrimitiveData.get().forEachConceptNid((conceptNid) -> {
             try {
-                EntityService.get().getEntity(conceptNid).ifPresentOrElse((entity) -> {
-                    if (entity instanceof ConceptEntity conceptEntity) {
-                        if (isMisconfiguredConcept(conceptEntity)) {
-                            listMisconfiguredConcepts.add(conceptEntity);
-                        }
-                    }
-                }, () -> {
-                    nullNidList.add(conceptNid);
-                });
+                EntityHandle.get(conceptNid).expectConcept();
             } catch (Exception e) {
                 e.printStackTrace();
                 nullNidList.add(conceptNid);
@@ -155,8 +151,8 @@ public class DataIntegrity {
         AtomicBoolean isNullReferences = new AtomicBoolean(false);
         conceptEntity.versions().stream().forEach((version) -> {
             if (referencedEntityIsNull(version.nid()) ||
-                referencedEntityIsNull(version.stampNid())) {
-                    isNullReferences.set(true);
+                    referencedEntityIsNull(version.stampNid())) {
+                isNullReferences.set(true);
             }
         });
         return isNullReferences.get();
@@ -166,13 +162,16 @@ public class DataIntegrity {
         LOG.info("Validating Semantics References");
         List<Entity> listMisconfiguredSemantics = new ArrayList<>();
         PrimitiveData.get().forEachSemanticNid((semanticNid) -> {
-            EntityService.get().getEntity(semanticNid).ifPresentOrElse((entity) -> {
-                if (entity instanceof SemanticEntity semanticEntity) {
-                    if (isMisconfiguredSemantic(semanticEntity)) {
-                        listMisconfiguredSemantics.add(semanticEntity);
-                    }
+            EntityHandle entityHandle = EntityHandle.get(semanticNid);
+            if (entityHandle.isPresent()) {
+                try {
+                    isMisconfiguredSemantic(entityHandle.expectSemantic());
+                } catch (Exception e) {
+                    listMisconfiguredSemantics.add(entityHandle.expectEntity());
                 }
-            }, () -> {nullNidList.add(semanticNid);});
+            } else {
+                nullNidList.add(semanticNid);
+            }
         });
         return listMisconfiguredSemantics;
     }
@@ -181,19 +180,19 @@ public class DataIntegrity {
         AtomicBoolean isNullReferences = new AtomicBoolean(false);
         semanticEntity.versions().stream().forEach((version) -> {
             if (referencedEntityIsNull(version.nid()) ||
-                referencedEntityIsNull(version.stampNid()) ||
-                referencedEntityIsNull(version.patternNid()) ||
-                referencedEntityIsNull(version.referencedComponentNid())) {
-                    isNullReferences.set(true);
+                    referencedEntityIsNull(version.stampNid()) ||
+                    referencedEntityIsNull(version.patternNid()) ||
+                    referencedEntityIsNull(version.referencedComponentNid())) {
+                isNullReferences.set(true);
             }
 
             version.fieldValues().forEach((fieldVal) -> {
                 if (fieldVal instanceof Instant ||
-                    fieldVal instanceof String ||
-                    fieldVal instanceof Long ||
-                    fieldVal instanceof Integer) {
-                        // No references to check
-                        isNullReferences.get();
+                        fieldVal instanceof String ||
+                        fieldVal instanceof Long ||
+                        fieldVal instanceof Integer) {
+                    // No references to check
+                    isNullReferences.get();
                 } else if (fieldVal instanceof DiTree diTree) {
                     List<Integer> diTreeRefs = new ArrayList<>();
                     ImmutableList<Vertex> vertexList = diTree.vertexMap();
@@ -229,11 +228,7 @@ public class DataIntegrity {
                         }
                     });
                 } else if (fieldVal instanceof PublicId pubId) {
-                    try {
-                        EntityService.get().getEntity(pubId.asUuidList()).ifPresentOrElse((ignored)->{}, () -> {isNullReferences.set(true);});
-                    } catch (NullPointerException e) {
-                        isNullReferences.set(true);
-                    }
+                    isNullReferences.set(EntityHandle.get(pubId).isPresent());
                 } else {
                     LOG.info("Semantic Field Value '{}' not handled: {}", fieldVal.getClass().getSimpleName(), fieldVal);
                 }
@@ -246,13 +241,16 @@ public class DataIntegrity {
         LOG.info("Validating Pattern References");
         List<Entity> listMisconfiguredPatterns = new ArrayList<>();
         PrimitiveData.get().forEachPatternNid((patternNid) -> {
-            EntityService.get().getEntity(patternNid).ifPresentOrElse((entity) -> {
-                if (entity instanceof PatternEntity patternEntity) {
-                    if (isMisconfiguredPattern(patternEntity)) {
-                        listMisconfiguredPatterns.add(patternEntity);
-                    }
+            EntityHandle handle = EntityHandle.get(patternNid);
+            if (handle.isPresent()) {
+                try {
+                    isMisconfiguredPattern(handle.expectPattern());
+                } catch (Exception e) {
+                    listMisconfiguredPatterns.add(handle.expectEntity());
                 }
-            }, () -> {nullNidList.add(patternNid);});
+            } else {
+                nullNidList.add(patternNid);
+            }
         });
         return listMisconfiguredPatterns;
     }
@@ -261,17 +259,17 @@ public class DataIntegrity {
         AtomicBoolean isNullReferences = new AtomicBoolean(false);
         patternEntity.versions().stream().forEach((version) -> {
             if (referencedEntityIsNull(version.nid()) ||
-                referencedEntityIsNull(version.stampNid()) ||
-                referencedEntityIsNull(version.semanticMeaningNid()) ||
-                referencedEntityIsNull(version.semanticPurposeNid())) {
-                    isNullReferences.set(true);
+                    referencedEntityIsNull(version.stampNid()) ||
+                    referencedEntityIsNull(version.semanticMeaningNid()) ||
+                    referencedEntityIsNull(version.semanticPurposeNid())) {
+                isNullReferences.set(true);
             }
 
             version.fieldDefinitions().forEach((fieldDef) -> {
                 if (referencedEntityIsNull(fieldDef.dataTypeNid()) ||
-                    referencedEntityIsNull(fieldDef.meaningNid()) ||
-                    referencedEntityIsNull(fieldDef.purposeNid())) {
-                        isNullReferences.set(true);
+                        referencedEntityIsNull(fieldDef.meaningNid()) ||
+                        referencedEntityIsNull(fieldDef.purposeNid())) {
+                    isNullReferences.set(true);
                 }
             });
         });
@@ -281,7 +279,7 @@ public class DataIntegrity {
     public static boolean referencedEntityIsNull(int nid) {
         AtomicBoolean result = new AtomicBoolean(true);
         try {
-            EntityService.get().getEntity(nid).ifPresent((ignored) -> {
+            EntityHandle.get(nid).ifPresent((ignored) -> {
                 result.set(false);
             });
         } catch (Throwable t) {
@@ -294,7 +292,7 @@ public class DataIntegrity {
         LOG.info("Validating Semantic Field Values align with Pattern Field Definitions");
         List<SemanticEntity> misconfiguredSemanticsSet = new ArrayList<>();
         PrimitiveData.get().forEachSemanticNid((semanticNid) -> {
-            EntityService.get().getEntity(semanticNid).ifPresent((entity) -> {
+            EntityHandle.get(semanticNid).ifPresent((entity) -> {
                 if (entity instanceof SemanticEntity semanticEntity) {
                     if (!validateSemanticFieldDataType(semanticEntity)) {
                         misconfiguredSemanticsSet.add(semanticEntity);
@@ -338,7 +336,7 @@ public class DataIntegrity {
         patternEntityVersion.fieldDefinitions().forEachWithIndex((fieldDef, i) -> {
             FieldDataType fieldDefDataType = ConceptToDataType.convert(fieldDef.dataType());
             FieldDataType semanticDefDataType = semanticEntityVersion.fieldDataType(i);
-            if(semanticDefDataType != fieldDefDataType) {
+            if (semanticDefDataType != fieldDefDataType) {
                 if (!(fieldDefDataType.clazz.isAssignableFrom(semanticDefDataType.clazz))) {
                     check.set(false);
                 }

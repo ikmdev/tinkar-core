@@ -20,8 +20,9 @@
  */
 
 import dev.ikm.tinkar.common.service.DataServiceController;
+import dev.ikm.tinkar.common.service.ServiceLifecycle;
 import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.provider.websocket.client.WebsocketServiceController;
+import dev.ikm.tinkar.provider.websocket.client.DataProviderWebsocketClient;
 
 @SuppressWarnings("module") // 7 in HL7 is not a version reference
 module dev.ikm.tinkar.provider.websocket.client {
@@ -42,7 +43,9 @@ module dev.ikm.tinkar.provider.websocket.client {
     requires dev.ikm.tinkar.entity;
 
     provides DataServiceController
-            with WebsocketServiceController;
+            with DataProviderWebsocketClient.Controller;
+    provides ServiceLifecycle
+            with DataProviderWebsocketClient.Controller;
 
     uses EntityService;
     opens dev.ikm.tinkar.provider.websocket.client

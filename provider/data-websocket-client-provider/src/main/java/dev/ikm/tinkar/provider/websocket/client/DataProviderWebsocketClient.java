@@ -16,10 +16,10 @@
 package dev.ikm.tinkar.provider.websocket.client;
 
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.service.DataActivity;
-import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
-import dev.ikm.tinkar.common.service.PrimitiveDataService;
+import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
+import dev.ikm.tinkar.common.validation.ValidationRecord;
+import dev.ikm.tinkar.common.validation.ValidationSeverity;
 import dev.ikm.tinkar.entity.EntityService;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
@@ -34,12 +34,19 @@ import io.activej.inject.module.Module;
 import io.activej.launcher.Launcher;
 import io.activej.service.ServiceGraphModule;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
+import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.api.map.ImmutableMap;
+import org.eclipse.collections.api.map.MutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -297,5 +304,164 @@ public class DataProviderWebsocketClient
                     }
                 }
         );
+    }
+
+    /**
+     * Controller for DataProviderWebsocketClient lifecycle management.
+     * <p>
+     * Handles websocket-based remote data provider connection.
+     * </p>
+     */
+    public static class Controller extends ProviderController<DataProviderWebsocketClient>
+            implements DataServiceController<PrimitiveDataService> {
+
+        public static final String CONTROLLER_NAME = "Websocket";
+        private static final DataServiceProperty PASSWORD_PROPERTY =
+                new DataServiceProperty("password", true, true);
+        private static final DataServiceProperty USERNAME_PROPERTY =
+                new DataServiceProperty("username", false, false);
+
+        private final MutableMap<DataServiceProperty, String> providerProperties = Maps.mutable.empty();
+        private DataUriOption dataUriOption;
+
+        public Controller() {
+            providerProperties.put(USERNAME_PROPERTY, null);
+            providerProperties.put(PASSWORD_PROPERTY, null);
+        }
+
+        @Override
+        protected DataProviderWebsocketClient createProvider() throws Exception {
+            if (dataUriOption == null) {
+                throw new IllegalStateException("DataUriOption must be set before creating provider");
+            }
+            return new DataProviderWebsocketClient(dataUriOption.uri());
+        }
+
+        @Override
+        protected void startProvider(DataProviderWebsocketClient provider) throws Exception {
+            provider.launch(new String[]{});
+        }
+
+        @Override
+        protected void stopProvider(DataProviderWebsocketClient provider) {
+            // Websocket client cleanup
+        }
+
+        @Override
+        protected String getProviderName() {
+            return "DataProviderWebsocketClient";
+        }
+
+        @Override
+        public ServiceLifecyclePhase getLifecyclePhase() {
+            return ServiceLifecyclePhase.DATA_STORAGE;
+        }
+
+        @Override
+        public int getSubPriority() {
+            return 50; // After local providers
+        }
+
+        @Override
+        public Optional<ServiceExclusionGroup> getMutualExclusionGroup() {
+            return Optional.of(ServiceExclusionGroup.DATA_PROVIDER);
+        }
+
+        // ========== DataServiceController Implementation ==========
+
+        @Override
+        public ImmutableMap<DataServiceProperty, String> providerProperties() {
+            return providerProperties.toImmutable();
+        }
+
+        @Override
+        public void setDataServiceProperty(DataServiceProperty key, String value) {
+            providerProperties.put(key, value);
+        }
+
+        @Override
+        public ValidationRecord[] validate(DataServiceProperty dataServiceProperty, Object value, Object target) {
+            if (PASSWORD_PROPERTY.equals(dataServiceProperty)) {
+                if (value instanceof String password) {
+                    if (password.isBlank()) {
+                        return new ValidationRecord[]{new ValidationRecord(ValidationSeverity.ERROR,
+                                "Password cannot be blank", target)};
+                    } else if (password.length() < 5) {
+                        return new ValidationRecord[]{new ValidationRecord(ValidationSeverity.ERROR,
+                                "Password cannot be less than 5 characters", target)};
+                    } else if (password.length() < 8) {
+                        return new ValidationRecord[]{
+                                new ValidationRecord(ValidationSeverity.WARNING,
+                                        "Password recommended to be 8 or more characters", target),
+                                new ValidationRecord(ValidationSeverity.INFO,
+                                        "Password is " + password.length() + " characters long", target)
+                        };
+                    } else {
+                        return new ValidationRecord[]{new ValidationRecord(ValidationSeverity.OK,
+                                "Password OK", target)};
+                    }
+                }
+            }
+            return new ValidationRecord[]{};
+        }
+
+        @Override
+        public List<DataUriOption> providerOptions() {
+            try {
+                return List.of(new DataUriOption("localhost websocket", new URI("ws://127.0.0.1:8080/")));
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public boolean isValidDataLocation(String name) {
+            return name.toLowerCase(Locale.ROOT).startsWith("ws://");
+        }
+
+        @Override
+        public void setDataUriOption(DataUriOption dataUriOption) {
+            this.dataUriOption = dataUriOption;
+        }
+
+        @Override
+        public String controllerName() {
+            return CONTROLLER_NAME;
+        }
+
+        @Override
+        public Class<? extends PrimitiveDataService> serviceClass() {
+            return DataProviderWebsocketClient.class;
+        }
+
+        @Override
+        public boolean running() {
+            return getProvider() != null;
+        }
+
+        @Override
+        public void start() {
+            startup();
+        }
+
+        @Override
+        public void stop() {
+            shutdown();
+        }
+
+        @Override
+        public void save() {
+            // Nothing to save for websocket client
+        }
+
+        @Override
+        public void reload() {
+            throw new UnsupportedOperationException("Reload not supported for websocket client");
+        }
+
+        @Override
+        public PrimitiveDataService provider() {
+            return requireProvider();
+        }
     }
 }

@@ -34,7 +34,8 @@ public class NewSpinedArrayKeyValueProvider extends KeyValueProviderExtension {
     @Override
     protected Config resolveConfig(ExtensionContext context) {
         Config cfg = super.resolveConfig(context);
-        cfg.controllerName = TestConstants.NEW_SPINED_ARRAY_STORE;
+        // Use type-safe controller class
+        cfg.controllerClass = TestConstants.NEW_SPINED_ARRAY_STORE;
         if (cfg.dataPath == null || cfg.dataPath.isBlank()) {
             String testClassName = context.getRequiredTestClass().getSimpleName();
             cfg.dataPath = "target/spinedarrays/" + testClassName;
