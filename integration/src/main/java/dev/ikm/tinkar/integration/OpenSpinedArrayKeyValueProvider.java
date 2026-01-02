@@ -19,8 +19,8 @@ public class OpenSpinedArrayKeyValueProvider extends KeyValueProviderExtension {
     @Override
     protected Config resolveConfig(ExtensionContext context) {
         Config cfg = super.resolveConfig(context);
-        // Force OPEN controller; keep any test-level overrides for dataPath/cleanOnStart/importPath
-        cfg.controllerName = TestConstants.OPEN_SPINED_ARRAY_STORE;
+        // Use type-safe controller class; keep any test-level overrides for dataPath/cleanOnStart/importPath
+        cfg.controllerClass = TestConstants.OPEN_SPINED_ARRAY_STORE;
         if (cfg.dataPath == null || cfg.dataPath.isBlank()) {
             String testClassName = context.getRequiredTestClass().getSimpleName();
             cfg.dataPath = "target/spinedarrays/" + testClassName;

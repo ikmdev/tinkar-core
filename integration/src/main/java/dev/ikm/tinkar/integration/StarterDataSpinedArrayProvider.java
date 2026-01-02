@@ -17,7 +17,7 @@ public class StarterDataSpinedArrayProvider extends NewSpinedArrayKeyValueProvid
     protected Config resolveConfig(ExtensionContext context) {
         Config cfg = super.resolveConfig(context);
         // Ensure we are using NEW spined array and set defaults suitable for starter data
-        cfg.controllerName = TestConstants.NEW_SPINED_ARRAY_STORE;
+        cfg.controllerClass = TestConstants.NEW_SPINED_ARRAY_STORE;
         if (cfg.dataPath == null || cfg.dataPath.isBlank()) {
             String testClassName = context.getRequiredTestClass().getSimpleName();
             cfg.dataPath = "target/spinedarrays/" + testClassName;

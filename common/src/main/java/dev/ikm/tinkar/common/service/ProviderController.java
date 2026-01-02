@@ -227,4 +227,21 @@ public abstract class ProviderController<P> implements ServiceLifecycle {
             }
         });
     }
+
+    /**
+     * Returns a user-friendly string representation for UI display.
+     * <p>
+     * For DataServiceControllers, this returns the controller name.
+     * Otherwise, it returns the provider name.
+     * </p>
+     *
+     * @return user-friendly display name
+     */
+    @Override
+    public String toString() {
+        if (this instanceof DataServiceController<?> dsc) {
+            return dsc.controllerName();
+        }
+        return getProviderName();
+    }
 }

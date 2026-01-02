@@ -40,9 +40,9 @@ public class NewEphemeralKeyValueProvider extends KeyValueProviderExtension {
         // First check if test class has annotation override
         Config cfg = super.resolveConfig(context);
 
-        // Apply subclass defaults if not overridden
-        if (cfg.controllerName == null || cfg.controllerName.equals("default")) {
-            cfg.controllerName = TestConstants.LOAD_EPHEMERAL_STORE;
+        // Apply subclass defaults if not overridden (prefer class-based)
+        if (cfg.controllerClass == null && (cfg.controllerName == null || cfg.controllerName.equals("default"))) {
+            cfg.controllerClass = TestConstants.LOAD_EPHEMERAL_STORE;
         }
 
         // Allow subclasses to add import path

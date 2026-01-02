@@ -744,7 +744,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
      * Handles heavyweight initialization including data loading, indexing, and UUID mapping.
      * </p>
      */
-    public static class Controller extends ProviderController<SpinedArrayProvider>
+    public abstract static class Controller extends ProviderController<SpinedArrayProvider>
             implements DataServiceController<PrimitiveDataService> {
 
         @Override
@@ -801,11 +801,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         }
 
         @Override
-        public String controllerName() {
-            return "SpinedArray";
-        }
-
-        @Override
         public boolean running() {
             return getProvider() != null && lifecycle.get() == Lifecycle.RUNNING;
         }
@@ -836,6 +831,34 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         @Override
         public PrimitiveDataService provider() {
             return requireProvider();
+        }
+    }
+
+    public static class OpenController extends Controller {
+        public static final String CONTROLLER_NAME = "Open SpinedArray";
+
+        @Override
+        public String controllerName() {
+            return CONTROLLER_NAME;
+        }
+
+        @Override
+        public int getSubPriority() {
+            return 30;
+        }
+    }
+
+    public static class NewController extends Controller {
+        public static final String CONTROLLER_NAME = "New SpinedArray";
+
+        @Override
+        public String controllerName() {
+            return CONTROLLER_NAME;
+        }
+
+        @Override
+        public int getSubPriority() {
+            return 31;
         }
     }
 }

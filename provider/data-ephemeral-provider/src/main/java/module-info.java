@@ -21,7 +21,8 @@
 
 import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.common.service.LoadDataFromFileController;
-import dev.ikm.tinkar.provider.ephemeral.ProviderEphemeralNewController;
+import dev.ikm.tinkar.common.service.ServiceLifecycle;
+import dev.ikm.tinkar.provider.ephemeral.ProviderEphemeral;
 
 @SuppressWarnings("module")
         // 7 in HL7 is not a version reference
@@ -37,8 +38,11 @@ module dev.ikm.tinkar.provider.ephemeral {
     requires java.logging;
     requires dev.ikm.tinkar.entity;
     provides DataServiceController
-            with ProviderEphemeralNewController;
+            with ProviderEphemeral.NewController;
+    provides ServiceLifecycle
+            with ProviderEphemeral.NewController;
 
+    exports dev.ikm.tinkar.provider.ephemeral;
     exports dev.ikm.tinkar.provider.ephemeral.constants;
 
     uses LoadDataFromFileController;

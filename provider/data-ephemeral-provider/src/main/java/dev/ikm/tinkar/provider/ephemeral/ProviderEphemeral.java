@@ -19,17 +19,10 @@ import dev.ikm.tinkar.collection.KeyType;
 import dev.ikm.tinkar.collection.SpinedIntIntMapAtomic;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.service.DataActivity;
-import dev.ikm.tinkar.common.service.NidGenerator;
-import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
-import dev.ikm.tinkar.common.service.PrimitiveDataService;
-import dev.ikm.tinkar.common.service.TinkExecutor;
+import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
-import dev.ikm.tinkar.entity.ConceptEntity;
-import dev.ikm.tinkar.entity.PatternEntity;
-import dev.ikm.tinkar.entity.SemanticEntity;
-import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.provider.search.Indexer;
 import dev.ikm.tinkar.provider.search.RecreateIndex;
 import dev.ikm.tinkar.provider.search.Searcher;
@@ -41,14 +34,13 @@ import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.ExecutionException;
+import java.io.UncheckedIOException;
+import java.net.MalformedURLException;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
@@ -278,5 +270,158 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     @Override
     public int newNid() {
         return nextNid.getAndIncrement();
+    }
+
+    /**
+     * Controller for ProviderEphemeral lifecycle management (creating new ephemeral database with data import).
+     * <p>
+     * Ephemeral provider is in-memory only and typically used for creating new databases.
+     * </p>
+     */
+    public static class NewController extends ProviderController<ProviderEphemeral>
+            implements DataServiceController<PrimitiveDataService> {
+
+        public static final String CONTROLLER_NAME = "New Ephemeral";
+        private DataUriOption dataUriOption;
+        private String importDataFileString;
+        private final AtomicBoolean loading = new AtomicBoolean(false);
+
+        @Override
+        protected ProviderEphemeral createProvider() throws Exception {
+            return ProviderEphemeral.provider() instanceof ProviderEphemeral p ? p : null;
+        }
+
+        @Override
+        protected void startProvider(ProviderEphemeral provider) {
+            // Provider starts itself
+        }
+
+        @Override
+        protected void stopProvider(ProviderEphemeral provider) {
+            provider.close();
+        }
+
+        @Override
+        protected String getProviderName() {
+            return "ProviderEphemeral";
+        }
+
+        @Override
+        protected void initializeProvider(ProviderEphemeral provider) throws Exception {
+            // Load data from file if specified
+            if (importDataFileString != null) {
+                try {
+                    loading.set(true);
+                    ServiceLoader<LoadDataFromFileController> controllerFinder =
+                            PluggableService.load(LoadDataFromFileController.class);
+                    LoadDataFromFileController loader = controllerFinder.findFirst()
+                            .orElseThrow(() -> new IllegalStateException("No LoadDataFromFileController found"));
+                    Future<EntityCountSummary> loadFuture =
+                            (Future<EntityCountSummary>) loader.load(new File(importDataFileString));
+                    EntityCountSummary entityCountSummary = loadFuture.get();
+                    LOG.info("Loaded ephemeral data: " + entityCountSummary);
+                } finally {
+                    loading.set(false);
+                }
+            }
+        }
+
+        @Override
+        public ServiceLifecyclePhase getLifecyclePhase() {
+            return ServiceLifecyclePhase.DATA_STORAGE;
+        }
+
+        @Override
+        public int getSubPriority() {
+            return 40; // After persistent providers
+        }
+
+        @Override
+        public Optional<ServiceExclusionGroup> getMutualExclusionGroup() {
+            return Optional.of(ServiceExclusionGroup.DATA_PROVIDER);
+        }
+
+        // ========== DataServiceController Implementation ==========
+
+        @Override
+        public List<DataUriOption> providerOptions() {
+            List<DataUriOption> dataUriOptions = new ArrayList<>();
+            File rootFolder = new File(System.getProperty("user.home"), "Solor");
+            if (!rootFolder.exists()) {
+                rootFolder.mkdirs();
+            }
+            File[] files = rootFolder.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    if (isValidDataLocation(f.getName())) {
+                        dataUriOptions.add(new DataUriOption(f.getName(), f.toURI()));
+                    }
+                }
+            }
+            return dataUriOptions;
+        }
+
+        @Override
+        public boolean isValidDataLocation(String name) {
+            return name.toLowerCase().endsWith("pb.zip") ||
+                    (name.toLowerCase().endsWith(".zip") && name.toLowerCase().contains("tink"));
+        }
+
+        @Override
+        public void setDataUriOption(DataUriOption dataUriOption) {
+            this.dataUriOption = dataUriOption;
+            if (dataUriOption != null) {
+                try {
+                    importDataFileString = dataUriOption.uri().toURL().getFile();
+                } catch (MalformedURLException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+        }
+
+        @Override
+        public String controllerName() {
+            return CONTROLLER_NAME;
+        }
+
+        @Override
+        public Class<? extends PrimitiveDataService> serviceClass() {
+            return PrimitiveDataService.class;
+        }
+
+        @Override
+        public boolean running() {
+            return ProviderEphemeral.singleton != null;
+        }
+
+        @Override
+        public void start() {
+            startup();
+        }
+
+        @Override
+        public void stop() {
+            shutdown();
+        }
+
+        @Override
+        public void save() {
+            // Nothing to save for ephemeral provider
+        }
+
+        @Override
+        public void reload() {
+            throw new UnsupportedOperationException("Can't reload ephemeral provider");
+        }
+
+        @Override
+        public PrimitiveDataService provider() {
+            return requireProvider();
+        }
+
+        @Override
+        public boolean loading() {
+            return loading.get();
+        }
     }
 }

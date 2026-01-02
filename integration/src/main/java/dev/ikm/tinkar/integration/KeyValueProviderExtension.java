@@ -24,8 +24,9 @@ import dev.ikm.tinkar.entity.EntityRecordFactory;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.provider.entity.EntityProvider;
+import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.provider.ephemeral.constants.EphemeralStoreControllerName;
-import dev.ikm.tinkar.provider.spinedarray.constants.SpinedArrayControllerNames;
+import dev.ikm.tinkar.provider.spinedarray.SpinedArrayProvider;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -96,11 +97,37 @@ public class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCal
      * Configuration container resolved from {@link WithKeyValueProvider} or defaults.
      */
     protected static class Config {
+        /**
+         * @deprecated Use {@link #controllerClass} for compile-time safety
+         */
+        @Deprecated
         String controllerName;
+
+        /**
+         * Type-safe controller class reference. Preferred over controllerName.
+         */
+        @SuppressWarnings("rawtypes")
+        Class<? extends DataServiceController> controllerClass;
+
         String dataPath;
         boolean cleanOnStart;
         String importPath;
 
+        /**
+         * Constructor using type-safe controller class (preferred).
+         */
+        @SuppressWarnings("rawtypes")
+        Config(Class<? extends DataServiceController> controllerClass, String dataPath, boolean cleanOnStart, String importPath) {
+            this.controllerClass = controllerClass;
+            this.dataPath = dataPath;
+            this.cleanOnStart = cleanOnStart;
+            this.importPath = importPath;
+        }
+
+        /**
+         * @deprecated Use constructor with {@link Class} parameter for compile-time safety
+         */
+        @Deprecated
         Config(String controllerName, String dataPath, boolean cleanOnStart, String importPath) {
             this.controllerName = controllerName;
             this.dataPath = dataPath;
@@ -126,14 +153,28 @@ public class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCal
         WithKeyValueProvider effective = testAnnotation != null ? testAnnotation : providerAnnotation;
 
         if (effective == null) {
-            // No annotation found - use defaults
-            return new Config("default", "", false, "");
+            // No annotation found - use defaults (will auto-select controller)
+            return new Config((Class<? extends DataServiceController>) null, "", false, "");
         }
 
-        // If test has annotation, it can override provider's settings
-        String controllerName = testAnnotation != null && !testAnnotation.controllerName().isEmpty()
-                ? testAnnotation.controllerName()
-                : (providerAnnotation != null ? providerAnnotation.controllerName() : "default");
+        // Resolve controllerClass (prefer class-based over name-based)
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        Class<? extends DataServiceController> controllerClass = null;
+        if (testAnnotation != null && testAnnotation.controllerClass() != DataServiceController.class) {
+            // Test annotation specifies a controller class
+            controllerClass = testAnnotation.controllerClass();
+        } else if (providerAnnotation != null && providerAnnotation.controllerClass() != DataServiceController.class) {
+            // Provider annotation specifies a controller class
+            controllerClass = providerAnnotation.controllerClass();
+        }
+
+        // Fallback to name-based (deprecated) if no class specified
+        String controllerName = null;
+        if (controllerClass == null) {
+            controllerName = testAnnotation != null && !testAnnotation.controllerName().isEmpty()
+                    ? testAnnotation.controllerName()
+                    : (providerAnnotation != null ? providerAnnotation.controllerName() : "default");
+        }
 
         String dataPath = testAnnotation != null && !testAnnotation.dataPath().isEmpty()
                 ? testAnnotation.dataPath()
@@ -147,7 +188,12 @@ public class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCal
                 ? testAnnotation.importPath()
                 : (providerAnnotation != null ? providerAnnotation.importPath() : "");
 
-        return new Config(controllerName, dataPath, cleanOnStart, importPath);
+        // Use new constructor if we have a class, old constructor if we have a name
+        if (controllerClass != null) {
+            return new Config(controllerClass, dataPath, cleanOnStart, importPath);
+        } else {
+            return new Config(controllerName, dataPath, cleanOnStart, importPath);
+        }
     }
 
     @Override
@@ -195,15 +241,31 @@ public class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCal
                 // Clear any existing caches
                 CachingService.clearAll();
 
-                // Select and start provider
-                PrimitiveData.selectControllerByName(cfg.controllerName);
+                // Select and start provider (prefer class-based selection for compile-time safety)
+                if (cfg.controllerClass != null) {
+                    LOG.info("Selecting controller by class: {}", cfg.controllerClass.getSimpleName());
+                    @SuppressWarnings("unchecked")
+                    Class<? extends DataServiceController<?>> controllerClass = (Class<? extends DataServiceController<?>>) cfg.controllerClass;
+                    PrimitiveData.selectControllerByClass(controllerClass);
+                } else if (cfg.controllerName != null) {
+                    LOG.info("Selecting controller by name: {}", cfg.controllerName);
+                    PrimitiveData.selectControllerByName(cfg.controllerName);
+                } else {
+                    throw new IllegalStateException("No controller specified (neither controllerClass nor controllerName)");
+                }
 
                 // Only start if not already running
                 if (!PrimitiveData.running()) {
                     PrimitiveData.start();
-                    LOG.info("{} provider started successfully.", cfg.controllerName);
+                    String controllerDesc = cfg.controllerClass != null
+                        ? cfg.controllerClass.getSimpleName()
+                        : cfg.controllerName;
+                    LOG.info("{} provider started successfully.", controllerDesc);
                 } else {
-                    LOG.info("{} provider already running, skipping start", cfg.controllerName);
+                    String controllerDesc = cfg.controllerClass != null
+                        ? cfg.controllerClass.getSimpleName()
+                        : cfg.controllerName;
+                    LOG.info("{} provider already running, skipping start", controllerDesc);
                 }
 
                 // Import any specified protobuf files
@@ -371,13 +433,13 @@ public class KeyValueProviderExtension implements BeforeAllCallback, AfterAllCal
             }
         }
 
-        // Resolve controller if default
-        if (cfg.controllerName == null || cfg.controllerName.equalsIgnoreCase("default")) {
-            // If import requested but ephemeral is desired? Keep spinedarray by default.
+        // Resolve controller if default (prefer class-based, fallback to name-based)
+        if (cfg.controllerClass == null && (cfg.controllerName == null || cfg.controllerName.equalsIgnoreCase("default"))) {
+            // Auto-select: OPEN if data exists, NEW otherwise
             File dir = new File(cfg.dataPath);
             boolean exists = dir.exists() && dir.isDirectory() && dir.list() != null && dir.list().length > 0;
-            cfg.controllerName = exists ? SpinedArrayControllerNames.OPEN_CONTROLLER_NAME
-                    : SpinedArrayControllerNames.NEW_CONTROLLER_NAME;
+            cfg.controllerClass = exists ? SpinedArrayProvider.OpenController.class
+                    : SpinedArrayProvider.NewController.class;
         }
     }
 

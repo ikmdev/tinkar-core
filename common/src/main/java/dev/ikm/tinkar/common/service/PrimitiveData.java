@@ -138,6 +138,26 @@ public class PrimitiveData {
         });
     }
 
+    /**
+     * Selects a controller by class. Provides compile-time safety.
+     * <p>
+     * This method provides type safety over {@link #selectControllerByName(String)}
+     * by requiring the actual controller class at compile time, preventing runtime
+     * errors from typos or references to non-existent controllers.
+     * </p>
+     *
+     * @param controllerClass the controller class to select (e.g., {@code ProviderEphemeral.NewController.class})
+     * @throws IllegalStateException if no matching controller is found
+     */
+    public static void selectControllerByClass(Class<? extends DataServiceController<?>> controllerClass) {
+        PrimitiveData.selectController((dataServiceController) -> {
+            if (controllerClass.isInstance(dataServiceController)) {
+                return 1;
+            }
+            return -1;
+        });
+    }
+
     public static void selectController(ToIntFunction<DataServiceController<?>> scorer) {
         DataServiceController<PrimitiveDataService> topContender = null;
         int topScore = -1;
