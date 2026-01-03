@@ -72,7 +72,7 @@ public class ServiceLifecycleManager {
      * Internal lifecycle states for the manager itself.
      */
     public enum State {
-        UNINITIALIZED, DISCOVERED, STARTING, RUNNING, SHUTTING_DOWN, SHUTDOWN
+        UNINITIALIZED, DISCOVERED, PREPARED, STARTING, RUNNING, SHUTTING_DOWN, SHUTDOWN
     }
 
     private final Map<Class<?>, ServiceLifecycle> discoveredServices = new ConcurrentHashMap<>();
@@ -281,10 +281,34 @@ public class ServiceLifecycleManager {
 
         if (successCount > 0) {
             logMutualExclusionGroups();
-            resolveGroupSelections();
-            applyActivationFilters();
-            logStartupPlan();
         }
+    }
+
+    /**
+     * Prepares for startup by resolving group selections and applying activation filters.
+     * <p>
+     * This must be called after discovery and after any programmatic selections have been made,
+     * but before startServices(). It can be called multiple times - subsequent calls are no-ops.
+     * </p>
+     * <p>
+     * Note: startServices() automatically calls this method if not already called.
+     * </p>
+     */
+    public synchronized void prepareStartup() {
+        if (state == State.PREPARED) {
+            LOG.debug("Startup already prepared, ignoring duplicate call");
+            return;
+        }
+
+        if (state != State.DISCOVERED) {
+            throw new IllegalStateException(
+                    "Cannot prepare startup in state: " + state + ". Must call discoverServices() first.");
+        }
+
+        resolveGroupSelections();
+        applyActivationFilters();
+        logStartupPlan();
+        state = State.PREPARED;
     }
 
     /**
@@ -561,10 +585,16 @@ public class ServiceLifecycleManager {
      * @throws IllegalStateException if services have not been discovered
      */
     public synchronized void startServices() {
-        if (state != State.DISCOVERED) {
+        if (state != State.DISCOVERED && state != State.PREPARED) {
             throw new IllegalStateException(
                     "Cannot start services in state: " + state +
                             ". Call discoverServices() first.");
+        }
+
+        // Automatically prepare startup (resolve selections, apply filters) before starting
+        // This happens after discovery and after any GUI/programmatic selections have been made
+        if (state == State.DISCOVERED) {
+            prepareStartup();
         }
 
         if (activeServices.isEmpty()) {
@@ -811,6 +841,22 @@ public class ServiceLifecycleManager {
     }
 
     /**
+     * Returns whether services have been discovered.
+     */
+    public boolean isDiscovered() {
+        return state != State.UNINITIALIZED;
+    }
+
+    /**
+     * Returns an immutable collection of all discovered service instances.
+     * This is useful for GUI components that need to present service options
+     * before services are started.
+     */
+    public Collection<ServiceLifecycle> getAllServices() {
+        return Collections.unmodifiableCollection(discoveredServices.values());
+    }
+
+    /**
      * Returns an immutable view of mutual exclusion groups.
      */
     public Map<String, List<String>> getMutualExclusionGroups() {
@@ -821,5 +867,81 @@ public class ServiceLifecycleManager {
                                 .map(info -> info.serviceClass.getSimpleName())
                                 .collect(Collectors.toList())
                 ));
+    }
+
+    /**
+     * Retrieves a running service by type.
+     * <p>
+     * Searches through active services for one that provides a service instance
+     * matching the requested type. The search strategy is:
+     * </p>
+     * <ol>
+     *   <li>First checks {@link ProviderController} instances via {@link ProviderController#serviceClasses()}
+     *       and {@link ProviderController#provider()} - the preferred, type-safe approach</li>
+     *   <li>Falls back to checking {@link ServiceLifecycle#getService()} for non-ProviderController services</li>
+     * </ol>
+     * <p>
+     * This method should only be called after services have been started
+     * (state == RUNNING). If called earlier, it will return empty and log a warning.
+     * </p>
+     * <p>
+     * Example usage:
+     * <pre>{@code
+     * // Discover SearchService (provided by SearchProvider via ProviderController)
+     * SearchService searchService = ServiceLifecycleManager.get()
+     *     .getRunningService(SearchService.class)
+     *     .orElseThrow(() -> new IllegalStateException("SearchService not available"));
+     *
+     * // Discover PrimitiveDataService (provided by RocksProvider or other data provider)
+     * PrimitiveDataService dataService = ServiceLifecycleManager.get()
+     *     .getRunningService(PrimitiveDataService.class)
+     *     .orElseThrow();
+     * }</pre>
+     * </p>
+     *
+     * @param serviceType the type of service to retrieve
+     * @param <T> the service type
+     * @return Optional containing the service instance if found and running
+     * @see ProviderController#serviceClasses()
+     * @see ProviderController#provider()
+     */
+    public <T> Optional<T> getRunningService(Class<T> serviceType) {
+        if (state != State.RUNNING) {
+            LOG.warn("getRunningService() called in state {} - services may not be fully initialized", state);
+            return Optional.empty();
+        }
+
+        // Check ProviderControllers first (more specific via serviceClasses())
+        for (ServiceLifecycle lifecycle : activeServices.values()) {
+            if (lifecycle instanceof ProviderController<?> controller) {
+                // Check if any of the service classes matches the requested type
+                for (Class<?> serviceClass : controller.serviceClasses()) {
+                    if (serviceType.isAssignableFrom(serviceClass)) {
+                        try {
+                            Object service = controller.provider();
+                            if (serviceType.isInstance(service)) {
+                                return Optional.of(serviceType.cast(service));
+                            }
+                        } catch (IllegalStateException e) {
+                            LOG.debug("Provider not available from controller: {}", controller.getClass().getSimpleName());
+                        }
+                        break; // Found matching service class, no need to check others for this controller
+                    }
+                }
+            }
+        }
+
+        // Fallback to generic getService() check for non-ProviderController services
+        for (ServiceLifecycle lifecycle : activeServices.values()) {
+            Optional<Object> serviceOpt = lifecycle.getService();
+            if (serviceOpt.isPresent()) {
+                Object service = serviceOpt.get();
+                if (serviceType.isInstance(service)) {
+                    return Optional.of(serviceType.cast(service));
+                }
+            }
+        }
+
+        return Optional.empty();
     }
 }

@@ -107,8 +107,19 @@ public class Indexer {
     public void close() throws IOException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Closing lucene index");
-        Indexer.indexReader.close();
-        Indexer.indexWriter.close();
+        if (Indexer.indexReader != null) {
+            Indexer.indexReader.close();
+            Indexer.indexReader = null;
+        }
+        if (Indexer.indexWriter != null) {
+            Indexer.indexWriter.close();
+            Indexer.indexWriter = null;
+        }
+        if (Indexer.indexDirectory != null) {
+            Indexer.indexDirectory.close();
+            Indexer.indexDirectory = null;
+        }
+        Indexer.analyzer = null;
         stopwatch.stop();
         LOG.info("Closed lucene index in: " + stopwatch.durationString());
     }

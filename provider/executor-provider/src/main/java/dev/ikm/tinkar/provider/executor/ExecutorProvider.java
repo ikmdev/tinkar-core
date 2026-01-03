@@ -19,6 +19,8 @@ import dev.ikm.tinkar.common.alert.UncaughtExceptionAlertStreamer;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.util.thread.NamedThreadFactory;
 import dev.ikm.tinkar.common.util.thread.ThreadPoolExecutorFixed;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -300,6 +302,13 @@ public class ExecutorProvider implements ExecutorService {
         @Override
         protected String getProviderName() {
             return "ExecutorProvider";
+        }
+
+        @Override
+        public ImmutableList<Class<?>> serviceClasses() {
+            // ExecutorProvider (the generic type parameter P) implements ExecutorService
+            // This establishes the contract: ProviderController<ExecutorProvider> provides ExecutorService
+            return Lists.immutable.of(dev.ikm.tinkar.common.service.ExecutorService.class);
         }
 
         @Override

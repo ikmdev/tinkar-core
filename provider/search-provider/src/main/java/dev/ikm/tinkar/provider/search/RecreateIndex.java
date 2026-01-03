@@ -68,7 +68,10 @@ public class RecreateIndex extends TrackingCallable<Void> {
             updateProgress(0, totalEntities.longValue()+1);
 
             PrimitiveData.get().forEachParallel((bytes, nid) -> {
-                Entity.get(nid).ifPresent(this.indexer::index);
+                Entity<?> entity = Entity.getFast(nid);
+                if (entity != null) {
+                    this.indexer.index(entity);
+                }
                 processedEntities.increment();
                 if (updateIntervalElapsed()) {
                     updateProgress(processedEntities.longValue(), totalEntities.longValue());

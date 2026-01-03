@@ -1,6 +1,7 @@
 
 package dev.ikm.tinkar.common.service;
 
+import org.eclipse.collections.api.list.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,12 +21,58 @@ import java.util.function.Supplier;
  *   <li>How to create the provider instance</li>
  *   <li>How to start the provider</li>
  *   <li>How to stop the provider</li>
+ *   <li>What service interface(s) the provider implements</li>
  *   <li>Lifecycle phase and priority</li>
  *   <li>Mutual exclusion group (if applicable)</li>
  * </ul>
  * </p>
  *
- * @param <P> the provider type managed by this controller
+ * <h2>Type Parameter Relationship</h2>
+ * <p>
+ * The generic type parameter {@code P} represents the <b>concrete provider implementation class</b>
+ * (e.g., {@code SearchProvider}, {@code RocksProvider}). This provider class must implement
+ * ALL service interfaces returned by {@link #serviceClasses()}.
+ * </p>
+ * <p>
+ * <b>Contract:</b> For each {@code Class<?>} in {@code serviceClasses()}, the provider type {@code P}
+ * must be assignable to that class. The compiler cannot enforce this relationship due to type erasure,
+ * so implementers must ensure correctness.
+ * </p>
+ * <p>
+ * Example:
+ * <pre>{@code
+ * // SearchProvider implements SearchService
+ * public class Controller extends ProviderController<SearchProvider> {
+ *     @Override
+ *     public ImmutableList<Class<?>> serviceClasses() {
+ *         return Lists.immutable.of(SearchService.class);
+ *     }
+ *     // SearchProvider MUST implement SearchService
+ * }
+ *
+ * // RocksProvider implements PrimitiveDataService
+ * public class Controller extends ProviderController<RocksProvider> {
+ *     @Override
+ *     public ImmutableList<Class<?>> serviceClasses() {
+ *         return Lists.immutable.of(PrimitiveDataService.class);
+ *     }
+ *     // RocksProvider MUST implement PrimitiveDataService
+ * }
+ *
+ * // Hypothetical multi-service provider
+ * // MultiProvider implements both SearchService and IndexService
+ * public class Controller extends ProviderController<MultiProvider> {
+ *     @Override
+ *     public ImmutableList<Class<?>> serviceClasses() {
+ *         return Lists.immutable.of(SearchService.class, IndexService.class);
+ *     }
+ *     // MultiProvider MUST implement BOTH SearchService AND IndexService
+ * }
+ * }</pre>
+ * </p>
+ *
+ * @param <P> the concrete provider implementation class that implements the service interface(s)
+ *           declared in {@link #serviceClasses()}
  *
  * @see ServiceLifecycle
  * @see ExecutorController
@@ -125,6 +172,74 @@ public abstract class ProviderController<P> implements ServiceLifecycle {
      */
     protected abstract String getProviderName();
 
+    /**
+     * Returns the list of service interface classes that this provider implements.
+     * <p>
+     * This enables consistent service discovery across all providers, whether they are
+     * user-selectable data sources or automatic background services. Providers can implement
+     * multiple service interfaces, giving flexibility for evolution and composition.
+     * </p>
+     *
+     * <h3>Implementation Contract</h3>
+     * <p>
+     * <b>CRITICAL:</b> The provider type {@code P} (the generic parameter of {@code ProviderController<P>})
+     * MUST implement ALL service interfaces returned by this method. This is a runtime contract
+     * that cannot be enforced by the compiler due to type erasure.
+     * </p>
+     * <p>
+     * For example, if {@code ProviderController<SearchProvider>} returns
+     * {@code Lists.immutable.of(SearchService.class)}, then {@code SearchProvider} must
+     * implement {@code SearchService}.
+     * </p>
+     *
+     * <h3>Discovery</h3>
+     * <p>
+     * Other services discover this provider by calling:
+     * <pre>{@code
+     * SearchService service = ServiceLifecycleManager.get()
+     *     .getRunningService(SearchService.class)
+     *     .orElseThrow();
+     * }</pre>
+     * The lifecycle manager will iterate through all {@code ProviderController} instances,
+     * check their {@code serviceClasses()}, and return the provider if it declares the
+     * requested service interface.
+     * </p>
+     *
+     * <h3>Examples</h3>
+     * <pre>{@code
+     * // Single service interface
+     * public class SearchProvider implements SearchService { ... }
+     * public class Controller extends ProviderController<SearchProvider> {
+     *     public ImmutableList<Class<?>> serviceClasses() {
+     *         return Lists.immutable.of(SearchService.class);
+     *     }
+     * }
+     *
+     * // Single service interface (data provider)
+     * public class RocksProvider implements PrimitiveDataService { ... }
+     * public class Controller extends ProviderController<RocksProvider> {
+     *     public ImmutableList<Class<?>> serviceClasses() {
+     *         return Lists.immutable.of(PrimitiveDataService.class);
+     *     }
+     * }
+     *
+     * // Multiple service interfaces
+     * public class MultiProvider implements SearchService, IndexService { ... }
+     * public class Controller extends ProviderController<MultiProvider> {
+     *     public ImmutableList<Class<?>> serviceClasses() {
+     *         return Lists.immutable.of(
+     *             SearchService.class,
+     *             IndexService.class
+     *         );
+     *     }
+     * }
+     * }</pre>
+     *
+     * @return immutable list of service interface classes that the provider type {@code P} implements;
+     *         must not be null or empty
+     */
+    public abstract ImmutableList<Class<?>> serviceClasses();
+
     // ========== Hook Methods (Optional Override) ==========
 
     /**
@@ -172,7 +287,42 @@ public abstract class ProviderController<P> implements ServiceLifecycle {
         return Optional.empty(); // Override if provider is mutually exclusive
     }
 
-    // ========== Protected Accessor ==========
+    // ========== Provider Access ==========
+
+    /**
+     * Gets the current provider instance for external consumption.
+     * <p>
+     * This is the public API for accessing the provider service. Other services should
+     * discover and access this controller's provider through this method.
+     * </p>
+     * <p>
+     * The returned provider instance {@code P} implements all service interfaces declared
+     * by {@link #serviceClasses()}. Callers typically discover this controller via
+     * {@link ServiceLifecycleManager#getRunningService(Class)} and then access the provider
+     * through this method.
+     * </p>
+     * <p>
+     * Example usage:
+     * <pre>{@code
+     * // Discovery via ServiceLifecycleManager
+     * SearchService searchService = ServiceLifecycleManager.get()
+     *     .getRunningService(SearchService.class)
+     *     .orElseThrow();
+     *
+     * // The lifecycle manager internally does:
+     * // 1. Finds ProviderController with SearchService.class in serviceClasses()
+     * // 2. Calls controller.provider() to get the SearchProvider instance
+     * // 3. Returns it cast to SearchService
+     * }</pre>
+     * </p>
+     *
+     * @return the provider instance that implements the service interface(s) declared
+     *         by {@link #serviceClasses()}
+     * @throws IllegalStateException if provider is not started
+     */
+    public final P provider() {
+        return requireProvider();
+    }
 
     /**
      * Gets the current provider instance.

@@ -560,7 +560,9 @@
                     <version>${maven.compiler-plugin.version}</version>
                     <configuration>
                         <release>${java.version}</release>
-                        <compilerArgs>${compiler.args}</compilerArgs>
+                        <compilerArgs>
+                            <arg>--enable-preview</arg>
+                        </compilerArgs>
                     </configuration>
                     <dependencies>
                         <dependency>

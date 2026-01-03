@@ -23,11 +23,10 @@ import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.entity.*;
-import dev.ikm.tinkar.provider.search.Indexer;
-import dev.ikm.tinkar.provider.search.RecreateIndex;
-import dev.ikm.tinkar.provider.search.Searcher;
+import dev.ikm.tinkar.provider.search.SearchService;
 import org.eclipse.collections.api.block.procedure.Procedure2;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
+import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
@@ -60,8 +59,6 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
      */
     final ConcurrentHashMap<Integer, long[]> nidToCitingComponentsNidMap = ConcurrentHashMap.newMap();
     final ConcurrentHashMap<Integer, ConcurrentSkipListSet<Integer>> patternToElementNidsMap = ConcurrentHashMap.newMap();
-    final Indexer indexer;
-    final Searcher searcher;
     final ConcurrentHashSet<Integer> patternNids = new ConcurrentHashSet();
     final ConcurrentHashSet<Integer> conceptNids = new ConcurrentHashSet();
     final ConcurrentHashSet<Integer> semanticNids = new ConcurrentHashSet();
@@ -69,23 +66,17 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     private final ConcurrentHashMap<Integer, byte[]> nidComponentMap = ConcurrentHashMap.newMap();
     private final ConcurrentHashMap<UUID, Integer> uuidNidMap = new ConcurrentHashMap<>();
     private final AtomicInteger nextNid = new AtomicInteger(PrimitiveDataService.FIRST_NID);
+    final StableValue<SearchService> searchService = StableValue.of();
 
-    private ProviderEphemeral() throws IOException {
+    private ProviderEphemeral() {
         LOG.info("Constructing ProviderEphemeral");
-        this.indexer = new Indexer();
-        this.searcher = new Searcher();
     }
 
     public static PrimitiveDataService provider() {
         if (singleton == null) {
             singleton = providerReference.updateAndGet(providerEphemeral -> {
                 if (providerEphemeral == null) {
-                    try {
-                        return new ProviderEphemeral();
-                    } catch (IOException e) {
-                        LOG.error("Error starting ProviderEphemeral", e);
-                        throw new RuntimeException(e);
-                    }
+                    return new ProviderEphemeral();
                 }
                 return providerEphemeral;
             });
@@ -100,14 +91,8 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
 
     @Override
     public void close() {
-        try {
-            this.providerReference.set(null);
-            this.singleton = null;
-            this.indexer.commit();
-            this.indexer.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        this.providerReference.set(null);
+        this.singleton = null;
     }
 
     @Override
@@ -186,26 +171,34 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
         }
         byte[] mergedBytes = nidComponentMap.merge(nid, value, PrimitiveDataService::merge);
         writeSequence.increment();
-        indexer.index(sourceObject);
+
+        // Delegate indexing to SearchProvider
+        try {
+            getSearchService().index(sourceObject);
+        } catch (Exception e) {
+            // Search service may not be available yet during startup
+            LOG.debug("SearchService not available for indexing", e);
+        }
+
         return mergedBytes;
+    }
+
+    private SearchService getSearchService() {
+        return searchService.orElseSet(() ->
+            ServiceLifecycleManager.get()
+                .getRunningService(SearchService.class)
+                .orElseThrow(() -> new IllegalStateException("SearchService not available - ensure services are started"))
+        );
     }
 
     @Override
     public PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception {
-        return this.searcher.search(query, maxResultSize);
+        return getSearchService().search(query, maxResultSize);
     }
 
     @Override
     public CompletableFuture<Void> recreateLuceneIndex() throws Exception {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                return TinkExecutor.ioThreadPool().submit(new RecreateIndex(this.indexer)).get();
-            } catch (InterruptedException | ExecutionException ex) {
-                AlertStreams.dispatchToRoot(new CompletionException("Error encountered while creating Lucene indexes." +
-                        "Search and Type Ahead Suggestions may not function as expected.", ex));
-            }
-            return null;
-        }, TinkExecutor.ioThreadPool());
+        return getSearchService().recreateIndex();
     }
 
     @Override
@@ -385,8 +378,10 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
         }
 
         @Override
-        public Class<? extends PrimitiveDataService> serviceClass() {
-            return PrimitiveDataService.class;
+        public ImmutableList<Class<?>> serviceClasses() {
+            // ProviderEphemeral (the generic type parameter P) implements PrimitiveDataService
+            // This establishes the contract: ProviderController<ProviderEphemeral> provides PrimitiveDataService
+            return Lists.immutable.of(PrimitiveDataService.class);
         }
 
         @Override
@@ -414,10 +409,7 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
             throw new UnsupportedOperationException("Can't reload ephemeral provider");
         }
 
-        @Override
-        public PrimitiveDataService provider() {
-            return requireProvider();
-        }
+        // Note: provider() method is inherited from ProviderController base class
 
         @Override
         public boolean loading() {
