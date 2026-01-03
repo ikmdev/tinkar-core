@@ -29,9 +29,7 @@ import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.transaction.Transaction;
-import dev.ikm.tinkar.provider.search.Indexer;
-import dev.ikm.tinkar.provider.search.RecreateIndex;
-import dev.ikm.tinkar.provider.search.Searcher;
+import dev.ikm.tinkar.provider.search.SearchService;
 import dev.ikm.tinkar.terms.State;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
@@ -129,8 +127,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     final File nidToByteArrayMapDirectory;
     final File nidToCitingComponentNidMapDirectory;
     final File nextNidKeyFile;
-    final Indexer indexer;
-    final Searcher searcher;
+    final StableValue<SearchService> searchService = StableValue.of();
     final String name;
     final ImmutableList<ChangeSetWriterService> changeSetWriterServices;
 
@@ -141,19 +138,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         name = configuredRoot.getName();
         configuredRoot.mkdirs();
         LOG.info("Datastore root: " + configuredRoot.getAbsolutePath());
-        Path indexPath = Path.of(configuredRoot.getPath(),"lucene");
-        boolean indexExists = Files.exists(indexPath);
-        Indexer indexer;
-        try {
-            indexer = new Indexer(indexPath);
-        } catch (IllegalArgumentException ex) {
-            // If Indexer Codec does not match, then delete and rebuild with new Codec
-            FileUtil.recursiveDelete(indexPath.toFile());
-            indexExists = Files.exists(indexPath);
-            indexer = new Indexer(indexPath);
-        }
-        this.indexer = indexer;
-        this.searcher = new Searcher();
 
         this.nidToPatternNidMapDirectory = new File(configuredRoot, "nidToPatternNidMap");
         this.nidToPatternNidMapDirectory.mkdirs();
@@ -212,15 +196,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             LOG.info("ChangeSetWriterService(s): ", changeSetWriters);
         }
 
-        if (!indexExists) {
-            try {
-                LOG.info("Lucene index does not exist, creating...");
-                //this.recreateLuceneIndex().get();
-                LOG.info("Recreated Lucene index successfully...");
-            } catch (Exception e) {
-                LOG.error(e.getLocalizedMessage(), e);
-            }
-        }
+        // Index recreation is now handled by SearchProvider in INDEXING phase
         stopwatch.stop();
         LOG.info("Opened SpinedArrayProvider in: " + stopwatch.durationString());
         lifecycle.set(Lifecycle.RUNNING);
@@ -284,9 +260,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
                 save();
                 listAndCancelUncommittedStamps();
                 entityToBytesMap.close();
-                this.indexer.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            } catch (Exception e) {
+                LOG.error("Error closing SpinedArrayProvider", e);
             } finally {
                 lifecycle.set(Lifecycle.STOPPED);
                 stopwatch.stop();
@@ -305,9 +280,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             nidToPatternNidMap.write(this.nidToPatternNidMapDirectory);
             this.entityToBytesMap.write();
             this.nidToCitingComponentsNidMap.write();
-            this.indexer.commit();
-        } catch (IOException e) {
-            LOG.error(e.getLocalizedMessage(), e);
+        } catch (Exception e) {
+            LOG.error("Error saving SpinedArrayProvider", e);
         } finally {
             stopwatch.stop();
             LOG.info("Save SpinedArrayProvider in: " + stopwatch.durationString());
@@ -461,8 +435,24 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         byte[] mergedBytes = this.entityToBytesMap.accumulateAndGet(nid, value, PrimitiveDataService::merge);
         this.writeSequence.increment();
         this.changeSetWriterServices.forEach(writerService -> writerService.writeToChangeSet((Entity) sourceObject, activity));
-        this.indexer.index(sourceObject);
+
+        // Delegate indexing to SearchProvider
+        try {
+            getSearchService().index(sourceObject);
+        } catch (Exception e) {
+            // Search service may not be available yet during startup
+            LOG.debug("SearchService not available for indexing", e);
+        }
+
         return mergedBytes;
+    }
+
+    private SearchService getSearchService() {
+        return searchService.orElseSet(() ->
+            ServiceLifecycleManager.get()
+                .getRunningService(SearchService.class)
+                .orElseThrow(() -> new IllegalStateException("SearchService not available - ensure services are started"))
+        );
     }
 
     public boolean addToPatternElementSet(int patternNid, int elementNid) {
@@ -473,20 +463,12 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
 
     @Override
     public PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception {
-        return this.searcher.search(query, maxResultSize);
+        return getSearchService().search(query, maxResultSize);
     }
 
     @Override
     public CompletableFuture<Void> recreateLuceneIndex() {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                return TinkExecutor.ioThreadPool().submit(new RecreateIndex(this.indexer)).get();
-            } catch (InterruptedException | ExecutionException ex) {
-                AlertStreams.dispatchToRoot(new CompletionException("Error encountered while creating Lucene indexes." +
-                        "Search and Type Ahead Suggestions may not function as expected.", ex));
-            }
-            return null;
-        }, TinkExecutor.ioThreadPool());
+        return getSearchService().recreateIndex();
     }
 
     @Override
@@ -796,8 +778,10 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         // ========== DataServiceController Implementation ==========
 
         @Override
-        public Class<? extends PrimitiveDataService> serviceClass() {
-            return PrimitiveDataService.class;
+        public ImmutableList<Class<?>> serviceClasses() {
+            // SpinedArrayProvider (the generic type parameter P) implements PrimitiveDataService
+            // This establishes the contract: ProviderController<SpinedArrayProvider> provides PrimitiveDataService
+            return Lists.immutable.of(PrimitiveDataService.class);
         }
 
         @Override
@@ -828,10 +812,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             throw new UnsupportedOperationException("Reload not yet supported");
         }
 
-        @Override
-        public PrimitiveDataService provider() {
-            return requireProvider();
-        }
+        // Note: provider() method is inherited from ProviderController base class
     }
 
     public static class OpenController extends Controller {

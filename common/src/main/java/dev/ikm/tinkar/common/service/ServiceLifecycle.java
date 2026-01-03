@@ -198,6 +198,51 @@ public interface ServiceLifecycle {
         return Optional.empty();
     }
 
+    /**
+     * Returns the service instance managed by this lifecycle service.
+     * <p>
+     * This method allows other services to discover and access services managed by
+     * lifecycle controllers. It is intended for services that provide functionality
+     * needed by other components (e.g., SearchService, ExecutorService).
+     * </p>
+     * <p>
+     * <b>Note:</b> For services that extend {@link ProviderController}, discovery should
+     * use the {@link ProviderController#serviceClasses()} and {@link ProviderController#provider()}
+     * methods, which provide a more type-safe approach. This method serves as a fallback
+     * for services that don't extend ProviderController.
+     * </p>
+     * <p>
+     * Most services don't provide anything to others and should return {@code Optional.empty()}.
+     * Only services that are explicitly designed to be discovered by other services
+     * should implement this method.
+     * </p>
+     * <p>
+     * Example usage:
+     * <pre>{@code
+     * // Preferred approach for ProviderController-based services:
+     * SearchService searchService = ServiceLifecycleManager.get()
+     *     .getRunningService(SearchService.class)
+     *     .orElseThrow();
+     * // This internally uses serviceClasses() and provider() from ProviderController
+     *
+     * // Legacy approach for non-ProviderController services:
+     * @Override
+     * public Optional<Object> getService() {
+     *     return Optional.of(myServiceInstance);
+     * }
+     * }</pre>
+     * </p>
+     *
+     * @return the service instance if this lifecycle manages a discoverable service,
+     *         or {@code Optional.empty()} if this service doesn't provide anything to others
+     * @see ProviderController#serviceClasses()
+     * @see ProviderController#provider()
+     * @see ServiceLifecycleManager#getRunningService(Class)
+     */
+    default Optional<Object> getService() {
+        return Optional.empty();
+    }
+
     // Static facade methods for simplified access
 
     /**

@@ -25,6 +25,38 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Interface for controllers that manage user-selectable data service providers.
+ * <p>
+ * This interface extends the capabilities of {@link ProviderController} by adding
+ * UI-specific methods for data source selection, configuration, and validation.
+ * It is intended for controllers that need to be selected by users through a UI
+ * (e.g., "Open Rocks KB", "New Ephemeral", etc.).
+ * </p>
+ *
+ * <h2>Relationship with ProviderController</h2>
+ * <p>
+ * Controllers implementing this interface should extend {@link ProviderController},
+ * which provides the core lifecycle management and service discovery capabilities:
+ * </p>
+ * <ul>
+ *   <li>{@link ProviderController#serviceClasses()} - declares what service interfaces the provider implements</li>
+ *   <li>{@link ProviderController#provider()} - provides access to the provider instance</li>
+ *   <li>Lifecycle management (startup, shutdown, cleanup)</li>
+ * </ul>
+ *
+ * <h2>When to Use</h2>
+ * <ul>
+ *   <li><b>Use DataServiceController</b> for user-selectable data sources that need UI integration
+ *       (e.g., RocksDB, MVStore, Ephemeral providers)</li>
+ *   <li><b>Use ProviderController only</b> for automatic background services that don't need
+ *       user selection (e.g., SearchProvider, ExecutorProvider)</li>
+ * </ul>
+ *
+ * @param <P> the service interface type provided by this controller
+ * @see ProviderController
+ * @see ServiceLifecycle
+ */
 public interface DataServiceController<P> {
 
     /** Properties that are necessary to configure the service. */
@@ -75,14 +107,15 @@ public interface DataServiceController<P> {
     default boolean isValidDataLocation(String name) {
         return true;
     }
+
     String controllerName();
-    Class<? extends P> serviceClass();
     boolean running();
     void start();
     void stop();
     void save();
     void reload();
-    P provider();
+
+    // Note: serviceClasses() and provider() are inherited from ProviderController base class
 
     /**
      *

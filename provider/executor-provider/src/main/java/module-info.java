@@ -26,17 +26,18 @@ import dev.ikm.tinkar.provider.executor.ExecutorProvider;
 
 module dev.ikm.tinkar.provider.executor {
     requires org.slf4j;
-    
+    requires org.eclipse.collections.api;
+
     provides AlertReportingService with AlertLogSubscriber;
     provides CachingService with ExecutorProvider.CacheProvider;
-    provides dev.ikm.tinkar.common.service.ExecutorController 
+    provides dev.ikm.tinkar.common.service.ExecutorController
         with dev.ikm.tinkar.provider.executor.ExecutorProvider.Controller;
-    provides dev.ikm.tinkar.common.service.ServiceLifecycle 
+    provides dev.ikm.tinkar.common.service.ServiceLifecycle
         with dev.ikm.tinkar.provider.executor.ExecutorProvider.Controller;
 
     requires java.base;
     requires dev.ikm.tinkar.common;
-    
+
     exports dev.ikm.tinkar.provider.executor;
 }
 

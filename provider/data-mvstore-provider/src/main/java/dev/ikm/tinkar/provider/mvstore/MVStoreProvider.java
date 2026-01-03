@@ -25,10 +25,9 @@ import dev.ikm.tinkar.common.validation.ValidationSeverity;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityCountSummary;
 import dev.ikm.tinkar.entity.PatternEntity;
-import dev.ikm.tinkar.provider.search.Indexer;
-import dev.ikm.tinkar.provider.search.RecreateIndex;
-import dev.ikm.tinkar.provider.search.Searcher;
+import dev.ikm.tinkar.provider.search.SearchService;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
+import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
@@ -76,11 +75,10 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
      */
     final MVMap<Integer, long[]> nidToCitingComponentsNidMap;
     final MVMap<Integer, int[]> patternToElementNidsMap;
-    final Indexer indexer;
-    final Searcher searcher;
     final String name;
     protected LongAdder writeSequence = new LongAdder();
     ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Integer>> patternElementNidsMap = ConcurrentHashMap.newMap();
+    final StableValue<SearchService> searchService = StableValue.of();
 
 
     public MVStoreProvider() throws IOException {
@@ -117,10 +115,6 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         MVStoreProvider.singleton = this;
         stopwatch.stop();
         LOG.info("Opened MVStoreProvider in: " + stopwatch.durationString());
-
-        File indexDir = new File(configuredRoot, "lucene");
-        this.indexer = new Indexer(indexDir.toPath());
-        this.searcher = new Searcher();
     }
 
     public boolean addToElementSet(int patternNid, int elementNid) {
@@ -143,10 +137,9 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         LOG.info("Closing MVStoreProvider");
         try {
             save();
-            this.indexer.close();
             this.store.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            LOG.error("Error closing MVStoreProvider", e);
         } finally {
             stopwatch.stop();
             LOG.info("Closed MVStoreProvider in: " + stopwatch.durationString());
@@ -156,21 +149,15 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     public void save() {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Saving MVStoreProvider");
-        try {
-            this.uuidToNidMap.put(nextNidKey, nextNid.get());
-            for (Pair<Integer, ConcurrentHashMap<Integer, Integer>> keyValue : patternElementNidsMap.keyValuesView()) {
-                patternToElementNidsMap.put(keyValue.getOne(), keyValue.getTwo().keySet()
-                        .stream().mapToInt(value -> (int) value).toArray());
-            }
-            this.store.commit();
-            this.offHeap.sync();
-            this.indexer.commit();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            stopwatch.stop();
-            LOG.info("Saved MVStoreProvider in: " + stopwatch.durationString());
+        this.uuidToNidMap.put(nextNidKey, nextNid.get());
+        for (Pair<Integer, ConcurrentHashMap<Integer, Integer>> keyValue : patternElementNidsMap.keyValuesView()) {
+            patternToElementNidsMap.put(keyValue.getOne(), keyValue.getTwo().keySet()
+                    .stream().mapToInt(value -> (int) value).toArray());
         }
+        this.store.commit();
+        this.offHeap.sync();
+        stopwatch.stop();
+        LOG.info("Saved MVStoreProvider in: " + stopwatch.durationString());
     }
 
     @Override
@@ -236,26 +223,34 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         }
         byte[] mergedBytes = nidToComponentMap.merge(nid, value, PrimitiveDataService::merge);
         writeSequence.increment();
-        this.indexer.index(sourceObject);
+
+        // Delegate indexing to SearchProvider
+        try {
+            getSearchService().index(sourceObject);
+        } catch (Exception e) {
+            // Search service may not be available yet during startup
+            LOG.debug("SearchService not available for indexing", e);
+        }
+
         return mergedBytes;
+    }
+
+    private SearchService getSearchService() {
+        return searchService.orElseSet(() ->
+            ServiceLifecycleManager.get()
+                .getRunningService(SearchService.class)
+                .orElseThrow(() -> new IllegalStateException("SearchService not available - ensure services are started"))
+        );
     }
 
     @Override
     public PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception {
-        return this.searcher.search(query, maxResultSize);
+        return getSearchService().search(query, maxResultSize);
     }
 
     @Override
     public CompletableFuture<Void> recreateLuceneIndex() throws Exception {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                return TinkExecutor.ioThreadPool().submit(new RecreateIndex(this.indexer)).get();
-            } catch (InterruptedException | ExecutionException ex) {
-                AlertStreams.dispatchToRoot(new CompletionException("Error encountered while creating Lucene indexes." +
-                        "Search and Type Ahead Suggestions may not function as expected.", ex));
-            }
-            return null;
-        }, TinkExecutor.ioThreadPool());
+        return getSearchService().recreateIndex();
     }
 
     @Override
@@ -357,7 +352,7 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
 
         @Override
         protected void cleanupProvider(MVStoreProvider provider) throws Exception {
-            provider.save();
+            // save() is already called in close(), no need to call it again
         }
 
         @Override
@@ -378,8 +373,10 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         // ========== DataServiceController Implementation ==========
 
         @Override
-        public Class<? extends PrimitiveDataService> serviceClass() {
-            return PrimitiveDataService.class;
+        public ImmutableList<Class<?>> serviceClasses() {
+            // MVStoreProvider (the generic type parameter P) implements PrimitiveDataService
+            // This establishes the contract: ProviderController<MVStoreProvider> provides PrimitiveDataService
+            return Lists.immutable.of(PrimitiveDataService.class);
         }
 
         @Override
@@ -410,10 +407,7 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
             throw new UnsupportedOperationException("Reload not yet supported");
         }
 
-        @Override
-        public PrimitiveDataService provider() {
-            return requireProvider();
-        }
+        // Note: provider() method is inherited from ProviderController base class
     }
 
     /**

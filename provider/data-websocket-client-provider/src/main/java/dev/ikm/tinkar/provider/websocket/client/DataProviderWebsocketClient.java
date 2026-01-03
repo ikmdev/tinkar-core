@@ -34,6 +34,7 @@ import io.activej.inject.module.Module;
 import io.activej.launcher.Launcher;
 import io.activej.service.ServiceGraphModule;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
+import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
@@ -430,8 +431,10 @@ public class DataProviderWebsocketClient
         }
 
         @Override
-        public Class<? extends PrimitiveDataService> serviceClass() {
-            return DataProviderWebsocketClient.class;
+        public ImmutableList<Class<?>> serviceClasses() {
+            // DataProviderWebsocketClient (the generic type parameter P) implements PrimitiveDataService
+            // This establishes the contract: ProviderController<DataProviderWebsocketClient> provides PrimitiveDataService
+            return Lists.immutable.of(PrimitiveDataService.class);
         }
 
         @Override
@@ -459,9 +462,6 @@ public class DataProviderWebsocketClient
             throw new UnsupportedOperationException("Reload not supported for websocket client");
         }
 
-        @Override
-        public PrimitiveDataService provider() {
-            return requireProvider();
-        }
+        // Note: provider() method is inherited from ProviderController base class
     }
 }

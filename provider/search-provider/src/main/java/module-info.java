@@ -27,4 +27,7 @@ module dev.ikm.tinkar.provider.search {
     requires transitive dev.ikm.tinkar.entity;
 
     exports dev.ikm.tinkar.provider.search;
+
+    provides dev.ikm.tinkar.common.service.ServiceLifecycle
+            with dev.ikm.tinkar.provider.search.SearchProvider.Controller;
 }

@@ -58,6 +58,20 @@ public enum ServiceLifecyclePhase {
     INFRASTRUCTURE(0),
 
     /**
+     * Configuration phase - user selections, provider choices, settings.
+     * <p>
+     * This phase allows for interactive or programmatic configuration after
+     * infrastructure is ready but before data services start. Group selections
+     * for mutual exclusion groups are resolved during this phase.
+     * </p>
+     * <p>
+     * Examples: Configuration UI, provider selection dialogs, settings managers
+     * </p>
+     * <p>Base value: 50</p>
+     */
+    CONFIGURATION(50),
+
+    /**
      * Data storage initialization - database connections, file systems.
      * <p>
      * Examples: SpinedArrayProvider, MVStore, RocksDB initialization
