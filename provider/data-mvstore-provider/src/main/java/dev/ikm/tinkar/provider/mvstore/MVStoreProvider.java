@@ -414,7 +414,7 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
      * Controller for opening an existing MVStore database.
      */
     public static class OpenController extends Controller {
-        public static final String CONTROLLER_NAME = "Open MVStore";
+        public static final String CONTROLLER_NAME = "Open MV Store";
 
         @Override
         public void setDataUriOption(DataUriOption option) {
@@ -444,7 +444,7 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
      * Controller for creating a new MVStore database and importing data.
      */
     public static class NewController extends Controller {
-        public static final String CONTROLLER_NAME = "New MVStore";
+        public static final String CONTROLLER_NAME = "New MV Store";
         private static final DataServiceProperty NEW_FOLDER_PROPERTY =
                 new DataServiceProperty("New folder name", false, true);
 
