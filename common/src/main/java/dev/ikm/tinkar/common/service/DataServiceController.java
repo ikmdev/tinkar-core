@@ -31,7 +31,7 @@ import java.util.Optional;
  * This interface extends the capabilities of {@link ProviderController} by adding
  * UI-specific methods for data source selection, configuration, and validation.
  * It is intended for controllers that need to be selected by users through a UI
- * (e.g., "Open Rocks KB", "New Ephemeral", etc.).
+ * (e.g., "Open Rocks KB", "Load Ephemeral Store", etc.).
  * </p>
  *
  * <h2>Relationship with ProviderController</h2>

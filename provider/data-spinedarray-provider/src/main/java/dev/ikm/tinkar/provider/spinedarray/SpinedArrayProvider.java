@@ -816,7 +816,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     }
 
     public static class OpenController extends Controller {
-        public static final String CONTROLLER_NAME = "Open SpinedArray";
+        public static final String CONTROLLER_NAME = "Open SpinedArrayStore";
 
         @Override
         public String controllerName() {
@@ -830,7 +830,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     }
 
     public static class NewController extends Controller {
-        public static final String CONTROLLER_NAME = "New SpinedArray";
+        public static final String CONTROLLER_NAME = "New SpinedArrayStore";
 
         @Override
         public String controllerName() {

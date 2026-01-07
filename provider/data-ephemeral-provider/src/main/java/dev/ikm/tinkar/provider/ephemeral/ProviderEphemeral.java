@@ -274,7 +274,7 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     public static class NewController extends ProviderController<ProviderEphemeral>
             implements DataServiceController<PrimitiveDataService> {
 
-        public static final String CONTROLLER_NAME = "New Ephemeral";
+        public static final String CONTROLLER_NAME = "Load Ephemeral Store";
         private DataUriOption dataUriOption;
         private String importDataFileString;
         private final AtomicBoolean loading = new AtomicBoolean(false);
