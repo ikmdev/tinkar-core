@@ -19,14 +19,20 @@ package dev.ikm.tinkar.provider.entity;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.ProviderController;
+import dev.ikm.tinkar.common.service.ServiceExclusionGroup;
+import dev.ikm.tinkar.common.service.ServiceLifecyclePhase;
 import dev.ikm.tinkar.common.util.broadcast.Subscriber;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.util.EntityProcessor;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 import org.eclipse.collections.impl.factory.primitive.LongLists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
@@ -138,5 +144,61 @@ public class StampProvider extends EntityProcessor<StampEntity<StampEntityVersio
             return;
         }
         EntityHandle.get(nid).ifStamp(this::process);
+    }
+
+    /**
+     * Controller for StampProvider lifecycle management.
+     * <p>
+     * Integrates with {@link dev.ikm.tinkar.common.service.ServiceLifecycleManager} and provides
+     * service discovery for StampService. Depends on EntityProvider being started first.
+     * </p>
+     */
+    public static class Controller extends ProviderController<StampProvider> {
+
+        @Override
+        protected StampProvider createProvider() {
+            return new StampProvider();
+        }
+
+        @Override
+        protected void startProvider(StampProvider provider) {
+            // Initialize the provider by ensuring it subscribes to EntityService
+            // and processes existing stamps
+            provider.ensureInitialized();
+        }
+
+        @Override
+        protected void stopProvider(StampProvider provider) {
+            // StampProvider has no explicit shutdown logic
+            // Subscriber cleanup happens automatically via weak references
+        }
+
+        @Override
+        protected String getProviderName() {
+            return "StampProvider";
+        }
+
+        @Override
+        public ImmutableList<Class<?>> serviceClasses() {
+            // StampProvider implements StampService
+            return Lists.immutable.of(StampService.class);
+        }
+
+        @Override
+        public ServiceLifecyclePhase getLifecyclePhase() {
+            return ServiceLifecyclePhase.ENTITIES;
+        }
+
+        @Override
+        public int getSubPriority() {
+            // Start after EntityProvider (which has subpriority 10)
+            // StampProvider depends on EntityService being available
+            return 20;
+        }
+
+        @Override
+        public Optional<ServiceExclusionGroup> getMutualExclusionGroup() {
+            return Optional.empty(); // Not mutually exclusive
+        }
     }
 }

@@ -18,12 +18,10 @@ import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.DefaultDescriptionForNidService;
 import dev.ikm.tinkar.common.service.PrimitiveDataService;
 import dev.ikm.tinkar.common.service.PublicIdService;
+import dev.ikm.tinkar.common.service.ServiceLifecycle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.StampService;
-import dev.ikm.tinkar.provider.entity.DefaultDescriptionForNidServiceFactory;
 import dev.ikm.tinkar.provider.entity.EntityProvider;
-import dev.ikm.tinkar.provider.entity.EntityServiceFactory;
-import dev.ikm.tinkar.provider.entity.PublicIdServiceFactory;
 import dev.ikm.tinkar.provider.entity.StampProvider;
 
 @SuppressWarnings("module")
@@ -39,10 +37,7 @@ module dev.ikm.tinkar.provider.entity {
     requires dev.ikm.tinkar.terms;
 
     provides CachingService with EntityProvider.CacheProvider;
-    provides DefaultDescriptionForNidService with DefaultDescriptionForNidServiceFactory;
-    provides EntityService with EntityServiceFactory;
-    provides PublicIdService with PublicIdServiceFactory;
-    provides StampService with StampProvider;
+    provides ServiceLifecycle with EntityProvider.Controller, StampProvider.Controller;
 
 	uses PrimitiveDataService;
 }

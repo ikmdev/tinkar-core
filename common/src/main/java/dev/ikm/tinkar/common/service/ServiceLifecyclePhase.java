@@ -81,6 +81,19 @@ public enum ServiceLifecyclePhase {
     DATA_STORAGE(100),
 
     /**
+     * Entity services - entity management, identity resolution, stamp management.
+     * <p>
+     * Services that provide access to entities, public IDs, descriptions, and stamps.
+     * These services depend on data storage but are needed before indexing.
+     * </p>
+     * <p>
+     * Examples: EntityService, PublicIdService, StampService, DefaultDescriptionForNidService
+     * </p>
+     * <p>Base value: 150</p>
+     */
+    ENTITIES(150),
+
+    /**
      * Indexing services - search indexes, caches that depend on data storage.
      * <p>
      * Examples: Lucene indexer, cache managers
