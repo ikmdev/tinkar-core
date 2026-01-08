@@ -20,6 +20,7 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.ServiceLifecycleManager;
 import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.util.broadcast.Broadcaster;
 import dev.ikm.tinkar.component.Chronology;
@@ -27,7 +28,6 @@ import dev.ikm.tinkar.component.ChronologyService;
 import dev.ikm.tinkar.component.Component;
 import dev.ikm.tinkar.component.Version;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
-import dev.ikm.tinkar.entity.internal.EntityServiceFinder;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.ComponentWithNid;
@@ -51,7 +51,10 @@ import static dev.ikm.tinkar.entity.Entity.LOG;
 
 public interface EntityService extends ChronologyService, Broadcaster<Integer> {
     static EntityService get() {
-        return EntityServiceFinder.INSTANCE.get();
+        return ServiceLifecycleManager.get()
+                .getRunningService(EntityService.class)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "No EntityService found. Ensure ServiceLifecycleManager has started services."));
     }
 
     default CompletableFuture<EntityCountSummary> fullExport(File file) {

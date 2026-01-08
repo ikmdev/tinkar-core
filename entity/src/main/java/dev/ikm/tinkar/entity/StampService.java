@@ -17,7 +17,7 @@ package dev.ikm.tinkar.entity;
 
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.entity.internal.StampServiceFinder;
+import dev.ikm.tinkar.common.service.ServiceLifecycleManager;
 import dev.ikm.tinkar.entity.util.StampRealizer;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
@@ -26,10 +26,15 @@ import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.MutableSet;
 
+import java.util.NoSuchElementException;
+
 public interface StampService {
 
     static StampService get() {
-        return StampServiceFinder.INSTANCE.get();
+        return ServiceLifecycleManager.get()
+                .getRunningService(StampService.class)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "No StampService found. Ensure ServiceLifecycleManager has started services."));
     }
 
     /**
