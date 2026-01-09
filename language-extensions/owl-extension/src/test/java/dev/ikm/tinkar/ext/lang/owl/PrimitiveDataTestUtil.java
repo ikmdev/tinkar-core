@@ -80,11 +80,14 @@ public abstract class PrimitiveDataTestUtil {
 //		}
 		CachingService.clearAll();
 		PrimitiveData.selectControllerByName("Open SpinedArrayStore");
-		DataServiceController<?> dsc = PrimitiveData.getController();
+		// Get the controller from the options to set its data URI
+		DataServiceController<?> dsc = PrimitiveData.getControllerOptions().stream()
+			.filter(c -> "Open SpinedArrayStore".equals(c.controllerName()))
+			.findFirst()
+			.orElseThrow(() -> new IllegalStateException("SpinedArrayStore controller not found"));
 		DataUriOption duo = new DataUriOption(name, target_path.toUri());
 		LOG.info("PrimitiveData: " + dsc + " " + duo + " " + duo.uri());
 		dsc.setDataUriOption(duo);
-		PrimitiveData.setController(dsc);
 	}
 
 //	@AfterAll

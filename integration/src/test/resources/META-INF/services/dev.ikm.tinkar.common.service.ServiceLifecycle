@@ -3,3 +3,6 @@ dev.ikm.tinkar.provider.spinedarray.SpinedArrayProvider$NewController
 dev.ikm.tinkar.provider.ephemeral.ProviderEphemeral$NewController
 dev.ikm.tinkar.provider.mvstore.MVStoreProvider$OpenController
 dev.ikm.tinkar.provider.mvstore.MVStoreProvider$NewController
+dev.ikm.tinkar.provider.entity.EntityProvider$Controller
+dev.ikm.tinkar.provider.entity.StampProvider$Controller
+dev.ikm.tinkar.provider.executor.ExecutorProvider$Controller

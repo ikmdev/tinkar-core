@@ -180,7 +180,7 @@ public class ServiceLifecycleManager {
             throw new IllegalStateException("Cannot select group services after startup");
         }
         groupSelections.put(group, serviceClass);
-        LOG.info("Programmatically selected {} for group {}", serviceClass.getSimpleName(), group.getGroupName());
+        LOG.info("Programmatically selected {} for group {}", getServiceName(serviceClass), group.getGroupName());
     }
 
     /**
@@ -249,7 +249,7 @@ public class ServiceLifecycleManager {
                             .map(g -> ", group=" + g.getGroupName())
                             .orElse("");
                     LOG.debug("Discovered: {} [phase={}, sub={}, effective={}, source={}{}]",
-                            serviceClass.getSimpleName(),
+                            getServiceName(serviceClass),
                             priority.phase.name(),
                             priority.subPriority,
                             priority.effectivePriority,
@@ -330,7 +330,7 @@ public class ServiceLifecycleManager {
             LOG.info("───────────────────────────────────────────────────────────");
             services.forEach(info ->
                     LOG.info("  • {} (phase={}, sub={})",
-                            info.serviceClass.getSimpleName(),
+                            getServiceName(info.serviceClass),
                             info.priority.phase.name(),
                             info.priority.subPriority));
         });
@@ -352,7 +352,7 @@ public class ServiceLifecycleManager {
                 Class<?> selected = services.get(0).serviceClass;
                 groupSelections.put(group, selected);
                 LOG.info("Auto-selected {} for group {} (only candidate)",
-                        selected.getSimpleName(), group.getGroupName());
+                        getServiceName(selected), group.getGroupName());
                 continue;
             }
 
@@ -362,7 +362,7 @@ public class ServiceLifecycleManager {
 
             if (selectedName != null) {
                 Optional<ServiceInfo> found = services.stream()
-                        .filter(info -> info.serviceClass.getSimpleName().equals(selectedName))
+                        .filter(info -> getServiceName(info.serviceClass).equals(selectedName))
                         .findFirst();
 
                 if (found.isPresent()) {
@@ -373,7 +373,7 @@ public class ServiceLifecycleManager {
                     LOG.warn("Command-line selection '{}' not found in group {}. Available: {}",
                             selectedName, group.getGroupName(),
                             services.stream()
-                                    .map(info -> info.serviceClass.getSimpleName())
+                                    .map(info -> getServiceName(info.serviceClass))
                                     .collect(Collectors.joining(", ")));
                 }
             }
@@ -396,7 +396,7 @@ public class ServiceLifecycleManager {
                 if (selected != null) {
                     groupSelections.put(group, selected);
                     LOG.info("Callback selected {} for group {}",
-                            selected.getSimpleName(), group.getGroupName());
+                            getServiceName(selected), group.getGroupName());
                     continue;
                 }
             }
@@ -408,7 +408,7 @@ public class ServiceLifecycleManager {
 
             groupSelections.put(group, defaultSelection.serviceClass);
             LOG.warn("No selection specified for group {}. Defaulting to {} (lowest priority)",
-                    group.getGroupName(), defaultSelection.serviceClass.getSimpleName());
+                    group.getGroupName(), getServiceName(defaultSelection.serviceClass));
         }
     }
 
@@ -427,7 +427,7 @@ public class ServiceLifecycleManager {
         for (Map.Entry<Class<?>, ServiceLifecycle> entry : discoveredServices.entrySet()) {
             Class<?> serviceClass = entry.getKey();
             ServiceLifecycle service = entry.getValue();
-            String serviceName = serviceClass.getSimpleName();
+            String serviceName = getServiceName(serviceClass);
 
             // Check mutual exclusion group
             Optional<ServiceExclusionGroup> groupOpt = service.getMutualExclusionGroup();
@@ -499,7 +499,7 @@ public class ServiceLifecycleManager {
 
             String overrideMarker = priority.source.equals("override") ? " [OVERRIDDEN]" : "";
             LOG.info("  • {} (sub={}, effective={}){}",
-                    serviceClass.getSimpleName(),
+                    getServiceName(serviceClass),
                     priority.subPriority,
                     priority.effectivePriority,
                     overrideMarker);
@@ -515,7 +515,7 @@ public class ServiceLifecycleManager {
      */
     private ServicePriority determinePriority(ServiceLifecycle service) {
         Class<?> serviceClass = service.getClass();
-        String className = serviceClass.getSimpleName();
+        String className = getServiceName(serviceClass);
 
         // Check for command-line override first
         String phaseOverride = System.getProperty(PHASE_OVERRIDE_PREFIX + className);
@@ -662,7 +662,8 @@ public class ServiceLifecycleManager {
 
     private void startService(ServiceLifecycle service, Class<?> serviceClass,
                               ServicePriority priority) {
-        String serviceName = serviceClass.getSimpleName();
+        String serviceName = getServiceName(serviceClass);
+        String fullServiceName = serviceClass.getName();
 
         try {
             long startTime = System.currentTimeMillis();
@@ -679,14 +680,14 @@ public class ServiceLifecycleManager {
 
         } catch (Exception e) {
             LOG.error("═══════════════════════════════════════════════════════════");
-            LOG.error("✗ STARTUP FAILED: {}", serviceName);
+            LOG.error("✗ STARTUP FAILED: {}", fullServiceName);
             LOG.error("  Phase: {}", priority.phase.name());
             LOG.error("  Sub-priority: {}", priority.subPriority);
             LOG.error("═══════════════════════════════════════════════════════════");
             LOG.error("Error: ", e);
 
             state = State.DISCOVERED; // Reset to allow retry
-            throw new RuntimeException("Service startup failed: " + serviceName, e);
+            throw new RuntimeException("Service startup failed: " + fullServiceName, e);
         }
     }
 
@@ -741,7 +742,7 @@ public class ServiceLifecycleManager {
                 LOG.info("Shutting down Phase: {}", currentPhase.name());
             }
 
-            String serviceName = serviceClass.getSimpleName();
+            String serviceName = getServiceName(serviceClass);
 
             try {
                 long startTime = System.currentTimeMillis();
@@ -864,7 +865,7 @@ public class ServiceLifecycleManager {
                 .collect(Collectors.toUnmodifiableMap(
                         entry -> entry.getKey().getGroupName(),
                         entry -> entry.getValue().stream()
-                                .map(info -> info.serviceClass.getSimpleName())
+                                .map(info -> getServiceName(info.serviceClass))
                                 .collect(Collectors.toList())
                 ));
     }
@@ -906,8 +907,9 @@ public class ServiceLifecycleManager {
      * @see ProviderController#provider()
      */
     public <T> Optional<T> getRunningService(Class<T> serviceType) {
-        if (state != State.RUNNING) {
-            LOG.warn("getRunningService() called in state {} - services may not be fully initialized", state);
+        // Allow service lookup during STARTING phase to support service dependencies
+        if (state != State.RUNNING && state != State.STARTING) {
+            LOG.warn("getRunningService() called in state {} - services may not be available", state);
             return Optional.empty();
         }
 
@@ -923,7 +925,8 @@ public class ServiceLifecycleManager {
                                 return Optional.of(serviceType.cast(service));
                             }
                         } catch (IllegalStateException e) {
-                            LOG.debug("Provider not available from controller: {}", controller.getClass().getSimpleName());
+                            // Provider not started yet - this is expected during STARTING phase
+                            LOG.debug("Provider not available from controller: {}", controller.getClass().getName());
                         }
                         break; // Found matching service class, no need to check others for this controller
                     }
@@ -943,5 +946,27 @@ public class ServiceLifecycleManager {
         }
 
         return Optional.empty();
+    }
+    private String getServiceName(Class<?> clazz) {
+        String canonical = clazz.getCanonicalName();
+        if (canonical == null) {
+            canonical = clazz.getName(); // fallback for anonymous/local classes
+        }
+
+        // Find the last package separator (dot before a capital letter or at second-to-last dot)
+        int lastPackageDot = canonical.lastIndexOf('.');
+        int secondLastDot = canonical.lastIndexOf('.', lastPackageDot - 1);
+
+        // If there's a second-to-last dot, check if what follows is capitalized (class name)
+        if (secondLastDot >= 0 && secondLastDot < canonical.length() - 1) {
+            char charAfterDot = canonical.charAt(secondLastDot + 1);
+            if (Character.isUpperCase(charAfterDot)) {
+                // This is likely OuterClass.InnerClass
+                return canonical.substring(secondLastDot + 1);
+            }
+        }
+
+        // Otherwise, just use everything after the last dot
+        return lastPackageDot >= 0 ? canonical.substring(lastPackageDot + 1) : canonical;
     }
 }

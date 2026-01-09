@@ -273,6 +273,12 @@ public abstract class ProviderController<P> implements ServiceLifecycle {
     // ========== ServiceLifecycle Defaults ==========
 
     @Override
+    public Optional<Object> getService() {
+        // Return the provider instance as the service
+        return Optional.ofNullable(providerRef.get());
+    }
+
+    @Override
     public ServiceLifecyclePhase getLifecyclePhase() {
         return ServiceLifecyclePhase.APPLICATION_SERVICES;
     }
