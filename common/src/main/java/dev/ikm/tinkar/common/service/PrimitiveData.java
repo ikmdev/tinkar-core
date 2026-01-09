@@ -39,7 +39,6 @@ public class PrimitiveData {
     public static Instant PREMUNDANE_INSTANT = Instant.ofEpochSecond(Instant.MIN.getEpochSecond() + 1, 0);
 
     public static UUID NONEXISTENT_STAMP_UUID = UUID.fromString("00fea511-30eb-4bbb-9105-c846db5bf0ad");
-    private static DataServiceController<PrimitiveDataService> controllerSingleton;
     private static DefaultDescriptionForNidService defaultDescriptionForNidServiceSingleton;
     private static PublicIdService publicIdServiceSingleton;
     private static PrimitiveData singleton;
@@ -74,21 +73,17 @@ public class PrimitiveData {
             LOG.info("ServiceLifecycleManager already running");
         }
 
-        // Legacy compatibility: DO NOT start controllerSingleton here if lifecycle manager is running
-        // The lifecycle manager will start the selected provider
-        // Only start if lifecycle manager is NOT being used (old-style startup)
-        if (controllerSingleton != null && !lifecycleManager.isRunning()) {
-            LOG.info("Starting legacy controller (not lifecycle-managed)");
-            controllerSingleton.start();
-        } else if (lifecycleManager.isRunning() && controllerSingleton == null) {
-            LOG.warn("ServiceLifecycleManager running but no data provider controller found");
-        }
-
-        ServiceLoader<DefaultDescriptionForNidService> loader = PluggableService.load(DefaultDescriptionForNidService.class);
-        PrimitiveData.defaultDescriptionForNidServiceSingleton = loader.findFirst().get();
-        ServiceLoader<PublicIdService> publicIdLoader = PluggableService.load(PublicIdService.class);
-        PrimitiveData.publicIdServiceSingleton = publicIdLoader.findFirst().get();
+        // Get services from ServiceLifecycleManager (which started them)
+        PrimitiveData.defaultDescriptionForNidServiceSingleton = lifecycleManager
+                .getRunningService(DefaultDescriptionForNidService.class)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "No DefaultDescriptionForNidService found. Ensure services have been started."));
+        PrimitiveData.publicIdServiceSingleton = lifecycleManager
+                .getRunningService(PublicIdService.class)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "No PublicIdService found. Ensure services have been started."));
         LOG.info("Default desc service: " + defaultDescriptionForNidServiceSingleton);
+        LOG.info("Public ID service: " + publicIdServiceSingleton);
     }
 
     public static void stop() {
@@ -104,11 +99,6 @@ public class PrimitiveData {
                 lifecycleManager.shutdownServices();
                 LOG.info("ServiceLifecycleManager stopped successfully");
             }
-
-            // Legacy compatibility - stop the controller if it exists
-            if (controllerSingleton != null) {
-                controllerSingleton.stop();
-            }
         } catch (Throwable ex) {
             LOG.error(ex.getLocalizedMessage(), ex);
         } finally {
@@ -118,10 +108,6 @@ public class PrimitiveData {
     }
 
     public static void save() {
-        if (controllerSingleton != null) {
-            controllerSingleton.save();
-        }
-
         // Save all lifecycle-managed services that support saving
         ServiceLifecycleManager lifecycleManager = ServiceLifecycleManager.get();
         if (lifecycleManager.isRunning()) {
@@ -168,15 +154,8 @@ public class PrimitiveData {
         return statesToSave;
     }
 
-    public static void reload() {
-        controllerSingleton.reload();
-    }
-
     public static boolean running() {
-        if (controllerSingleton == null) {
-            return false;
-        }
-        return controllerSingleton.running();
+        return ServiceLifecycleManager.get().isRunning();
     }
 
     public static List<DataServiceController<?>> getControllerOptions() {
@@ -197,16 +176,7 @@ public class PrimitiveData {
     }
 
     public static void selectControllerByName(String name) {
-        DataServiceController<?> selected = null;
-        PrimitiveData.selectController((dataServiceController) -> {
-            if (name.equals(dataServiceController.controllerName())) {
-                return 1;
-            }
-            return -1;
-        });
-
-        // Also tell ServiceLifecycleManager about the selection
-        // Find the controller that was selected
+        // Find the controller that matches the name and tell ServiceLifecycleManager
         ServiceLoader<DataServiceController> loader = PluggableService.load(DataServiceController.class);
         for (DataServiceController<?> controller : loader) {
             if (name.equals(controller.controllerName())) {
@@ -214,9 +184,10 @@ public class PrimitiveData {
                     ServiceExclusionGroup.DATA_PROVIDER,
                     controller.getClass()
                 );
-                break;
+                return;
             }
         }
+        throw new IllegalArgumentException("No controller found with name: " + name);
     }
 
     /**
@@ -231,59 +202,9 @@ public class PrimitiveData {
      * @throws IllegalStateException if no matching controller is found
      */
     public static void selectControllerByClass(Class<? extends DataServiceController<?>> controllerClass) {
-        PrimitiveData.selectController((dataServiceController) -> {
-            if (controllerClass.isInstance(dataServiceController)) {
-                return 1;
-            }
-            return -1;
-        });
-
-        // Also tell ServiceLifecycleManager about the selection
         ServiceLifecycleManager.get().selectServiceForGroup(
             ServiceExclusionGroup.DATA_PROVIDER,
             controllerClass
-        );
-    }
-
-    public static void selectController(ToIntFunction<DataServiceController<?>> scorer) {
-        DataServiceController<PrimitiveDataService> topContender = null;
-        int topScore = -1;
-        int controllerCount = 0;
-        ServiceLoader<DataServiceController> loader = PluggableService.load(DataServiceController.class);
-        for (DataServiceController controller : loader) {
-            // Check if controller provides PrimitiveDataService via serviceClasses()
-            if (controller instanceof ProviderController<?> providerController) {
-                boolean providesPrimitiveData = providerController.serviceClasses().stream()
-                        .anyMatch(PrimitiveDataService.class::isAssignableFrom);
-                if (providesPrimitiveData) {
-                    controllerCount++;
-                    int score = scorer.applyAsInt(controller);
-                    if (score > topScore) {
-                        topScore = score;
-                        topContender = controller;
-                    }
-                }
-            }
-        }
-        if (topScore > -1) {
-            setController(topContender);
-        } else {
-            throw new IllegalStateException("No DataServiceController selected for provider. Tried " + controllerCount);
-        }
-    }
-
-    public static DataServiceController getController() {
-        return controllerSingleton;
-    }
-
-    public static void setController(DataServiceController controller) {
-        controllerSingleton = controller;
-
-        // Also tell ServiceLifecycleManager about the selection
-        // This is crucial for GUI selection (SelectDataSourceController)
-        ServiceLifecycleManager.get().selectServiceForGroup(
-            ServiceExclusionGroup.DATA_PROVIDER,
-            controller.getClass()
         );
     }
 
@@ -356,13 +277,12 @@ public class PrimitiveData {
     }
 
     public static PrimitiveDataService get() {
-        if (controllerSingleton != null) {
-            // DataServiceController extends ProviderController, which has provider() method
-            if (controllerSingleton instanceof ProviderController<?> providerController) {
-                return (PrimitiveDataService) providerController.provider();
-            }
-        }
-        throw new IllegalStateException("No provider. Call Select provider prior to get()");
+        return ServiceLifecycleManager.get()
+            .getRunningService(PrimitiveDataService.class)
+            .orElseThrow(() -> new IllegalStateException(
+                "No PrimitiveDataService provider available. " +
+                "Ensure ServiceLifecycleManager.get().startServices() has been called " +
+                "or call selectControllerByName()/selectControllerByClass() before start()."));
     }
 
     public static final ScopedValue<PublicId> SCOPED_PATTERN_PUBLICID_FOR_NID = ScopedValue.newInstance();
@@ -420,7 +340,6 @@ public class PrimitiveData {
 
         @Override
         public void reset() {
-            controllerSingleton = null;
             defaultDescriptionForNidServiceSingleton = null;
             publicIdServiceSingleton = null;
             statesToSave.clear();
