@@ -29,7 +29,7 @@ import dev.ikm.tinkar.composer.assembler.SemanticAssemblerConsumer;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
-import dev.ikm.tinkar.entity.EntityCountSummary;
+import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.Field;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;

@@ -57,7 +57,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
                         "No EntityService found. Ensure ServiceLifecycleManager has started services."));
     }
 
-    default CompletableFuture<EntityCountSummary> fullExport(File file) {
+    default CompletableFuture<dev.ikm.tinkar.common.service.EntityCountSummary> fullExport(File file) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 return TinkExecutor.ioThreadPool().submit(new ExportEntitiesToProtobufFile(file)).get();
@@ -67,7 +67,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
         }, TinkExecutor.ioThreadPool());
     }
 
-    default CompletableFuture<EntityCountSummary> temporalExport(File file, long fromEpoch, long toEpoch) {
+    default CompletableFuture<dev.ikm.tinkar.common.service.EntityCountSummary> temporalExport(File file, long fromEpoch, long toEpoch) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 return TinkExecutor.ioThreadPool().submit(new ExportEntitiesToProtobufFile(file, fromEpoch, toEpoch)).get();
@@ -77,7 +77,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
         }, TinkExecutor.ioThreadPool());
     }
 
-    default CompletableFuture<EntityCountSummary> membershipExport(File file, List<PublicId> membershipTags) {
+    default CompletableFuture<dev.ikm.tinkar.common.service.EntityCountSummary> membershipExport(File file, List<PublicId> membershipTags) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 return TinkExecutor.ioThreadPool().submit(new ExportEntitiesToProtobufFile(file, membershipTags)).get();
@@ -87,7 +87,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
         }, TinkExecutor.ioThreadPool());
     }
 
-    default CompletableFuture<EntityCountSummary> loadData(File file) {
+    default CompletableFuture<dev.ikm.tinkar.common.service.EntityCountSummary> loadData(File file) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 return TinkExecutor.ioThreadPool().submit(new LoadEntitiesFromProtobufFile(file)).get();

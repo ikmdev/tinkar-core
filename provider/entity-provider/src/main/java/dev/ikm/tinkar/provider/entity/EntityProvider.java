@@ -82,14 +82,6 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     public EntityProvider() {
         LOG.info("Constructing EntityProvider");
         this.processor = new SimpleBroadcaster<>();
-        // Ensure that the non-existent stamp is always available.
-        // Write is idempotent, so writing each time should not cause any problems.
-        // But we don't want to prevent starting the entity service if this.putEntity
-        // blocks for debugging or other reasons, so putting it in a virtual thread to
-        // allow completion of the constructor.
-        Thread.ofVirtual().start(() -> {
-            this.putEntity(StampRecord.nonExistentStamp(), DataActivity.INITIALIZE);
-        });
     }
 
     public void addSubscriberWithWeakReference(Subscriber<Integer> subscriber) {

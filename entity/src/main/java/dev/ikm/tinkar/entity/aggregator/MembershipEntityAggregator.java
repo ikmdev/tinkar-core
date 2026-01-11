@@ -19,7 +19,7 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.component.FieldDataType;
 import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityCountSummary;
+import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 

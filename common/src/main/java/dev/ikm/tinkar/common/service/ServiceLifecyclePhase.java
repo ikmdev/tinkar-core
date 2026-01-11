@@ -67,18 +67,18 @@ public enum ServiceLifecyclePhase {
      * <p>
      * Examples: Configuration UI, provider selection dialogs, settings managers
      * </p>
-     * <p>Base value: 50</p>
+     * <p>Base value: 100</p>
      */
-    CONFIGURATION(50),
+    CONFIGURATION(100),
 
     /**
      * Data storage initialization - database connections, file systems.
      * <p>
      * Examples: SpinedArrayProvider, MVStore, RocksDB initialization
      * </p>
-     * <p>Base value: 100</p>
+     * <p>Base value: 200</p>
      */
-    DATA_STORAGE(100),
+    DATA_STORAGE(200),
 
     /**
      * Entity services - entity management, identity resolution, stamp management.
@@ -89,45 +89,65 @@ public enum ServiceLifecyclePhase {
      * <p>
      * Examples: EntityService, PublicIdService, StampService, DefaultDescriptionForNidService
      * </p>
-     * <p>Base value: 150</p>
+     * <p>Base value: 300</p>
      */
-    ENTITIES(150),
+    ENTITIES(300),
 
     /**
      * Indexing services - search indexes, caches that depend on data storage.
      * <p>
      * Examples: Lucene indexer, cache managers
      * </p>
-     * <p>Base value: 200</p>
+     * <p>Base value: 400</p>
      */
-    INDEXING(200),
+    INDEXING(400),
+
+    /**
+     * Data loading phase - bulk import operations, changeset processing.
+     * <p>
+     * This phase occurs after all data infrastructure (storage, entities, indexing)
+     * is fully operational. Use this phase for heavyweight data loading operations
+     * that write entities and require full service availability.
+     * </p>
+     * <p>
+     * The DataLoadController singleton runs in this phase and provides a consistent
+     * mechanism for loading protobuf changesets. All data providers (RocksDB, SpinedArray,
+     * MVStore, Ephemeral) can configure the DataLoadController with files to import.
+     * </p>
+     * <p>
+     * Examples: Initial data imports via DataLoadController, changeset loading,
+     * database population from protobuf files
+     * </p>
+     * <p>Base value: 500</p>
+     */
+    DATA_LOAD(500),
 
     /**
      * Core business services - services that depend on data but not UI.
      * <p>
      * Examples: StampService, ConceptService, EntityService
      * </p>
-     * <p>Base value: 300</p>
+     * <p>Base value: 600</p>
      */
-    CORE_SERVICES(300),
+    CORE_SERVICES(600),
 
     /**
      * Application services - higher-level business logic.
      * <p>
      * Examples: ReasonerService, ClassifierService
      * </p>
-     * <p>Base value: 400</p>
+     * <p>Base value: 700</p>
      */
-    APPLICATION_SERVICES(400),
+    APPLICATION_SERVICES(700),
 
     /**
      * UI and presentation services - anything requiring data to be fully loaded.
      * <p>
      * Examples: UI controllers, window managers, event dispatchers
      * </p>
-     * <p>Base value: 500</p>
+     * <p>Base value: 800</p>
      */
-    PRESENTATION(500);
+    PRESENTATION(800);
 
     private final int baseValue;
 

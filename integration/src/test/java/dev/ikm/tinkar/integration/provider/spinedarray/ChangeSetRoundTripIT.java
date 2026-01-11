@@ -24,7 +24,7 @@ import dev.ikm.tinkar.composer.Session;
 import dev.ikm.tinkar.composer.template.Synonym;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
-import dev.ikm.tinkar.entity.EntityCountSummary;
+import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
