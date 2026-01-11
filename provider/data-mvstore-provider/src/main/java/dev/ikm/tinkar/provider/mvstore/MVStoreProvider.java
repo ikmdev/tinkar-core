@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.provider.mvstore;
 
-import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
@@ -23,7 +22,7 @@ import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.common.validation.ValidationRecord;
 import dev.ikm.tinkar.common.validation.ValidationSeverity;
 import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityCountSummary;
+import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.provider.search.SearchService;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
@@ -47,8 +46,6 @@ import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;

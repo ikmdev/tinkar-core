@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.integration.changeSet;
 
-import dev.ikm.tinkar.entity.EntityCountSummary;
+import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
@@ -59,10 +59,10 @@ class EntityServiceIT {
         assertNotNull(summary);
         // Add your assertions here based on the expected summary values
         // For example:
-        assertEquals(319, summary.conceptsCount());
-        assertEquals(3253, summary.semanticsCount());
-        assertEquals(18, summary.patternsCount());
-        assertEquals(45, summary.stampsCount());
+        assertEquals(319, summary.conceptCount());
+        assertEquals(3253, summary.semanticCount());
+        assertEquals(18, summary.patternCount());
+        assertEquals(45, summary.stampCount());
         // To ensure exports are self-contained, when a Component has a version in the specified time range, all its versions
         // are exported with the specified stamp. Therefore, many stamps are expected to be exported here.
     }

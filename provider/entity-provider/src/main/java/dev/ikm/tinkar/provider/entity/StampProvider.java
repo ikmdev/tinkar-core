@@ -18,10 +18,7 @@ package dev.ikm.tinkar.provider.entity;
 
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.ProviderController;
-import dev.ikm.tinkar.common.service.ServiceExclusionGroup;
-import dev.ikm.tinkar.common.service.ServiceLifecyclePhase;
+import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.util.broadcast.Subscriber;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.util.EntityProcessor;
@@ -86,7 +83,15 @@ public class StampProvider extends EntityProcessor<StampEntity<StampEntityVersio
                             subscribed = true;
                         }
                     }
-                    EntityService.get().forEachStampEntity(this);
+                    // Ensure that the non-existent stamp is always available.
+                    // Write is idempotent, so writing each time should not cause any problems.
+                    // But we don't want to prevent starting the entity service if this.putEntity
+                    // blocks for debugging or other reasons, so putting it in a virtual thread to
+                    // allow completion of the constructor.
+                    Thread.ofVirtual().start(() -> {
+                        EntityService.get().putEntity(StampRecord.nonExistentStamp(), DataActivity.INITIALIZE);
+                    });
+                    //EntityService.get().forEachStampEntity(this);
                     initialized = true;
                 }
             }
@@ -186,14 +191,14 @@ public class StampProvider extends EntityProcessor<StampEntity<StampEntityVersio
 
         @Override
         public ServiceLifecyclePhase getLifecyclePhase() {
-            return ServiceLifecyclePhase.ENTITIES;
+            return ServiceLifecyclePhase.DATA_LOAD;
         }
 
         @Override
         public int getSubPriority() {
-            // Start after EntityProvider (which has subpriority 10)
-            // StampProvider depends on EntityService being available
-            return 20;
+            // Start after data loading completes to ensure entities exist
+            // StampProvider depends on EntityService and loaded data being available
+            return 99;
         }
 
         @Override

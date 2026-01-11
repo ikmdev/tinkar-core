@@ -18,7 +18,7 @@ package dev.ikm.tinkar.integration.provider.spinedarray;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
-import dev.ikm.tinkar.entity.EntityCountSummary;
+import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.entity.util.EntityCounter;
 import dev.ikm.tinkar.entity.util.EntityProcessor;

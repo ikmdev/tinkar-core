@@ -17,7 +17,6 @@ package dev.ikm.tinkar.provider.ephemeral;
 
 import dev.ikm.tinkar.collection.KeyType;
 import dev.ikm.tinkar.collection.SpinedIntIntMapAtomic;
-import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
@@ -34,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.util.*;
@@ -309,7 +307,7 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
                             PluggableService.load(LoadDataFromFileController.class);
                     LoadDataFromFileController loader = controllerFinder.findFirst()
                             .orElseThrow(() -> new IllegalStateException("No LoadDataFromFileController found"));
-                    Future<EntityCountSummary> loadFuture =
+                    Future<dev.ikm.tinkar.common.service.EntityCountSummary> loadFuture =
                             (Future<EntityCountSummary>) loader.load(new File(importDataFileString));
                     EntityCountSummary entityCountSummary = loadFuture.get();
                     LOG.info("Loaded ephemeral data: " + entityCountSummary);

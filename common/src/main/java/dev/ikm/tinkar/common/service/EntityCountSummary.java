@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.entity;
+package dev.ikm.tinkar.common.service;
 
 public record EntityCountSummary(
-        long conceptsCount,
-        long semanticsCount,
-        long patternsCount,
-        long stampsCount
+        long conceptCount,
+        long semanticCount,
+        long patternCount,
+        long stampCount
     ) {
 
     public long getTotalCount() {
-        return conceptsCount + semanticsCount + patternsCount + stampsCount;
+        return conceptCount + semanticCount + patternCount + stampCount;
     }
 }
