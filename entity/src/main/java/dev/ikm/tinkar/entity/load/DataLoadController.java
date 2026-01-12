@@ -26,6 +26,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Singleton service for loading protobuf changeset files during DATA_LOAD phase.
@@ -84,8 +85,45 @@ public class DataLoadController extends ProviderController<DataLoadProvider>
             LOG.info("Saving datastore after loading...");
             PrimitiveData.save();
             LOG.info("Datastore saved successfully");
+
+            // Recreate Lucene index after data import
+            recreateLuceneIndexAfterLoad();
         } else {
             LOG.info("DataLoadController: No files queued for loading");
+        }
+    }
+
+    /**
+     * Recreates the Lucene index after data has been loaded.
+     * <p>
+     * This ensures the search index is updated with all newly imported entities.
+     * The index recreation is performed asynchronously via PrimitiveData service
+     * and we wait for it to complete to ensure search is functional before proceeding.
+     * </p>
+     */
+    private void recreateLuceneIndexAfterLoad() {
+        LOG.info("═══════════════════════════════════════════════════════════");
+        LOG.info("Recreating Lucene index after data import...");
+        LOG.info("═══════════════════════════════════════════════════════════");
+
+        try {
+            // Use PrimitiveData.get() to access the data provider's recreateLuceneIndex() method
+            // This delegates to the underlying search service without requiring direct dependency
+            CompletableFuture<Void> indexFuture = PrimitiveData.get().recreateLuceneIndex();
+
+            LOG.info("Index recreation started, waiting for completion...");
+            indexFuture.get(); // Block until index recreation completes
+
+            LOG.info("═══════════════════════════════════════════════════════════");
+            LOG.info("Lucene index recreation completed successfully");
+            LOG.info("Search functionality is now available");
+            LOG.info("═══════════════════════════════════════════════════════════");
+        } catch (Exception e) {
+            LOG.error("═══════════════════════════════════════════════════════════");
+            LOG.error("Failed to recreate Lucene index after data load", e);
+            LOG.error("Search functionality may not work correctly");
+            LOG.error("You may need to manually recreate the index");
+            LOG.error("═══════════════════════════════════════════════════════════");
         }
     }
 
