@@ -645,4 +645,16 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern())
                 .call(() -> nidForPublicId(conceptPublicId));
     }
+
+    /**
+     * Lists and cancels uncommitted stamps during data provider shutdown.
+     * This method is called by data providers during their close() sequence to ensure
+     * data integrity by canceling any stamps that were left uncommitted outside of transactions.
+     * <p>
+     * This method must be called while EntityService is still available, typically early
+     * in the data provider's shutdown sequence before the data store is closed.
+     *
+     * @param stampNids array of stamp NIDs to check for uncommitted stamps
+     */
+    void listAndCancelUncommittedStamps(int[] stampNids);
 }

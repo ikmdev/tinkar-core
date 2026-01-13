@@ -909,7 +909,8 @@ public class ServiceLifecycleManager {
     public <T> Optional<T> getRunningService(Class<T> serviceType) {
         // Allow service lookup during STARTING phase to support service dependencies
         if (state != State.RUNNING && state != State.STARTING) {
-            LOG.warn("getRunningService() called in state {} - services may not be available", state);
+            LOG.warn("getRunningService({}) called in state {} - services may not be available",
+                serviceType.getSimpleName(), state);
             return Optional.empty();
         }
 
@@ -945,6 +946,12 @@ public class ServiceLifecycleManager {
             }
         }
 
+        LOG.warn("Service {} not found. Active services: {}. State: {}",
+            serviceType.getSimpleName(),
+            activeServices.keySet().stream()
+                .map(Class::getSimpleName)
+                .collect(java.util.stream.Collectors.joining(", ")),
+            state);
         return Optional.empty();
     }
     private String getServiceName(Class<?> clazz) {

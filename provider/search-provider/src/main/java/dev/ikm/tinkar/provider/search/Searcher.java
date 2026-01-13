@@ -69,7 +69,17 @@ public class Searcher {
         this.parser = new QueryParser("text", Indexer.analyzer());
         // Initialize SearcherManager if not already done
         if (searcherManager == null) {
+            if (Indexer.indexReader() == null) {
+                LOG.error("Indexer.indexReader() is null - Indexer must be created before Searcher");
+                LOG.error("SearchProvider should create Indexer first, then Searcher");
+                LOG.error("If you're seeing this during tests, ensure you run 'mvn clean install' to recompile all classes");
+                throw new IllegalStateException("IndexReader is null - Indexer not initialized. " +
+                    "This usually indicates stale compiled classes. Run 'mvn clean install'.");
+            }
             searcherManager = new SearcherManager(Indexer.indexReader(), null);
+            LOG.debug("Created new SearcherManager with IndexReader");
+        } else {
+            LOG.debug("SearcherManager already initialized, reusing existing instance");
         }
         stopwatch.stop();
         LOG.info("Opened lucene searcher in: " + stopwatch.durationString());

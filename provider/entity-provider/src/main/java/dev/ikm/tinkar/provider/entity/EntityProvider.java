@@ -554,6 +554,53 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     }
 
     /**
+     * Lists and cancels uncommitted stamps during shutdown.
+     * This method is called by data providers during their shutdown sequence to ensure
+     * data integrity by canceling any stamps that were left uncommitted outside of transactions.
+     *
+     * @param stampNids the collection of stamp NIDs to check for uncommitted stamps
+     */
+    public void listAndCancelUncommittedStamps(int[] stampNids) {
+        LOG.debug("Searching for canceled stamps in set of size {}", stampNids.length);
+        for (int stampNid : stampNids) {
+            try {
+                StampEntity stamp = getStampFast(stampNid);
+                if (stamp == null) {
+                    LOG.debug("No stamp found for nid: {}", stampNid);
+                    continue;
+                }
+                if (stamp.lastVersion() == null) {
+                    LOG.info("Null last version for stamp with nid: {}", stampNid);
+                } else {
+                    if (stamp.time() == Long.MAX_VALUE && Transaction.forStamp(stamp).isEmpty()) {
+                        // Uncommitted stamp found outside a transaction on restart. Set to canceled.
+                        cancelUncommittedStamp(stampNid, (StampRecord) stamp);
+                    }
+                    if (stamp.lastVersion().stateNid() == State.CANCELED.nid()) {
+                        PrimitiveData.get().addCanceledStampNid(stampNid);
+                    }
+                }
+            } catch (Exception e) {
+                LOG.error("Error processing stamp {}", stampNid, e);
+            }
+        }
+    }
+
+    private void cancelUncommittedStamp(int stampNid, StampRecord stamp) {
+        LOG.warn("Canceling uncommitted stamp: {}", stamp.publicId().asUuidList());
+        StampVersionRecord lastVersion = stamp.lastVersion();
+        StampVersionRecord canceledVersion = lastVersion.with()
+                .time(Long.MIN_VALUE)
+                .stateNid(State.CANCELED.nid())
+                .build();
+        StampEntity canceledStamp = stamp
+                .without(lastVersion)
+                .with(canceledVersion)
+                .build();
+        putEntity(canceledStamp, DataActivity.DATA_REPAIR);
+    }
+
+    /**
      * Controller for EntityProvider lifecycle management.
      * <p>
      * Integrates with {@link dev.ikm.tinkar.common.service.ServiceLifecycleManager} and provides
@@ -575,8 +622,9 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
         @Override
         protected void stopProvider(EntityProvider provider) {
-            // EntityProvider has no explicit shutdown logic
-            // Could add future cleanup here if needed
+            LOG.info("Stopping EntityProvider");
+            // Note: Uncommitted stamp checking is handled by data providers during their shutdown
+            // Data providers call provider.listAndCancelUncommittedStamps() before EntityService shuts down
         }
 
         @Override

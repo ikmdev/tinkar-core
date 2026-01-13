@@ -64,18 +64,21 @@ public class SearchProvider implements SearchService {
      */
     private SearchProvider() {
         // Get DATA_STORE_ROOT - it should be set by the data provider in DATA_STORAGE phase
+        // For ephemeral (in-memory) stores, use a unique directory per JVM instance
         File datastoreRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT)
                 .map(obj -> {
                     LOG.info("DATA_STORE_ROOT retrieved from ServiceProperties: {}", obj);
                     return (File) obj;
                 })
-                .orElseThrow(() -> {
-                    LOG.error("DATA_STORE_ROOT not found in ServiceProperties");
-                    LOG.error("SearchProvider must start after DATA_STORAGE phase completes");
-                    LOG.error("Check ServiceLifecyclePhase configuration and ensure data provider sets DATA_STORE_ROOT");
-                    return new IllegalStateException(
-                        "DATA_STORE_ROOT must be set before SearchProvider starts. " +
-                        "Ensure a data provider has been initialized in the DATA_STORAGE phase.");
+                .orElseGet(() -> {
+                    LOG.warn("DATA_STORE_ROOT not set in ServiceProperties");
+                    LOG.warn("This is expected for ephemeral/in-memory stores (ProviderEphemeral)");
+                    LOG.warn("For persistent stores (RocksProvider, MVStoreProvider, SpinedArrayProvider), ensure DATA_STORE_ROOT is set during DATA_STORAGE phase");
+                    // Use a unique directory based on JVM UUID to avoid lock conflicts in tests
+                    String jvmUuid = ServiceProperties.jvmUuid();
+                    File uniqueDir = new File(defaultDataDirectory, jvmUuid);
+                    LOG.info("Using unique Lucene index location: {}", uniqueDir.getAbsolutePath());
+                    return uniqueDir;
                 });
         this(datastoreRoot);
     }

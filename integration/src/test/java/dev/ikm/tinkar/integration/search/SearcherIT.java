@@ -17,6 +17,7 @@ package dev.ikm.tinkar.integration.search;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.service.ServiceLifecycleManager;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.composer.Composer;
 import dev.ikm.tinkar.coordinate.Coordinates;
@@ -24,6 +25,7 @@ import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithC
 import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
+import dev.ikm.tinkar.provider.search.SearchService;
 import dev.ikm.tinkar.provider.search.Searcher;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -82,8 +84,11 @@ public class SearcherIT {
         //When new entities are written (via setup())
 
         //Then the searcher should immediately search on the newly added/indexed entities
-        var searcher = new Searcher();
-        var searchResults = searcher.search("user", 100);
+        // Access SearchService through ServiceLifecycleManager instead of directly instantiating Searcher
+        var searchService = ServiceLifecycleManager.get()
+                .getRunningService(SearchService.class)
+                .orElseThrow(() -> new IllegalStateException("SearchService not available - ensure services are started"));
+        var searchResults = searchService.search("user", 100);
 
         assertTrue(searchResults.length > 0, "Missing search results");
     }

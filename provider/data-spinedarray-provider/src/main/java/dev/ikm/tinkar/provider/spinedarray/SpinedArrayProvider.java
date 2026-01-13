@@ -176,7 +176,11 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
                     LOG.info(uuidNidCollector.report());
                 }
                 LOG.info("Starting virtual thread for listAndCancelUncommittedStamps");
-                Thread.ofVirtual().start(this::listAndCancelUncommittedStamps);
+                Thread.ofVirtual().start(() -> {
+                    EntityService.get().listAndCancelUncommittedStamps(
+                        stampNids.stream().sorted().mapToInt(value -> (int) value).toArray()
+                    );
+                });
                 LOG.info("UUID loading task completed");
             }).get();
             LOG.info("UUID loading task .get() returned successfully");
@@ -213,36 +217,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         return uuidToNidMap.containsKey(uuid);
     }
 
-    private void listAndCancelUncommittedStamps() {
-        LOG.debug("Searching for canceled stamps in set of size " + stampNids.size());
-        int[] stampNidArray = stampNids.stream().sorted().mapToInt(value -> (int) value).toArray();
-        for (int stampNid : stampNidArray) {
-            StampRecord stamp = Entity.getStamp(stampNid);
-            if (stamp.lastVersion() == null) {
-                LOG.info("Null last version for stamp with nid: " + stampNid);
-            } else {
-//                LOG.info("Stamp: " + stamp);
-                if (stamp.time() == Long.MAX_VALUE && Transaction.forStamp(stamp).isEmpty()) {
-                    // Uncommitted stamp found outside a transaction on restart. Set to canceled.
-                    cancelUncommittedStamp(stampNid, stamp);
-                }
-                if (stamp.lastVersion().stateNid() == State.CANCELED.nid()) {
-                    PrimitiveData.get().addCanceledStampNid(stampNid);
-                }
-            }
-        }
-    }
-
-    private void cancelUncommittedStamp(int stampNid, StampRecord stamp) {
-        LOG.warn("Canceling uncommitted stamp: " + stamp.publicId().asUuidList());
-        StampVersionRecord lastVersion = stamp.lastVersion();
-        StampVersionRecord canceledVersion = lastVersion.with().time(Long.MIN_VALUE).stateNid(State.CANCELED.nid()).build();
-        byte[] stampBytes = stamp
-                .without(lastVersion)
-                .with(canceledVersion)
-                .build().getBytes();
-        this.entityToBytesMap.put(stampNid, stampBytes);
-    }
 
     @Override
     public long writeSequence() {
@@ -258,7 +232,17 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             try {
                 this.changeSetWriterServices.forEach(ChangeSetWriterService::shutdown);
                 save();
-                listAndCancelUncommittedStamps();
+
+                // Check for uncommitted stamps using EntityProvider while EntityService is still available
+                // This must happen before data provider shutdown since EntityProvider needs access to entities
+                try {
+                    EntityService.get().listAndCancelUncommittedStamps(
+                        stampNids.stream().sorted().mapToInt(value -> (int) value).toArray()
+                    );
+                } catch (java.util.NoSuchElementException e) {
+                    LOG.warn("EntityService not available during shutdown, skipping uncommitted stamp check");
+                }
+
                 entityToBytesMap.close();
             } catch (Exception e) {
                 LOG.error("Error closing SpinedArrayProvider", e);
