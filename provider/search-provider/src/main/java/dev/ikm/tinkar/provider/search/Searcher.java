@@ -61,40 +61,56 @@ public class Searcher {
     public static final EntityProxy.Pattern QUANTITATIVE_ALLOWED_RESULT_SET_PATTERN = EntityProxy.Pattern.make(null, UUID.fromString("9d40d06b-7776-5a56-97e4-0c27f5d574c7"));
     public static final EntityProxy.Pattern QUALITATIVE_ALLOWED_RESULT_SET_PATTERN = EntityProxy.Pattern.make(null, UUID.fromString("160a63a6-3cba-510e-83d1-235822045885"));
     QueryParser parser;
-    private static final SearcherManager searcherManager;
-
-    //TODO - refactor this class to not have static fields. Currently needed when using this SearcherManager class.
-    static {
-        try {
-            searcherManager = new SearcherManager(Indexer.indexReader(), null);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
+    private static SearcherManager searcherManager;
 
     public Searcher() throws IOException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening lucene searcher");
         this.parser = new QueryParser("text", Indexer.analyzer());
+        // Initialize SearcherManager if not already done
+        if (searcherManager == null) {
+            if (Indexer.indexReader() == null) {
+                LOG.error("Indexer.indexReader() is null - Indexer must be created before Searcher");
+                LOG.error("SearchProvider should create Indexer first, then Searcher");
+                LOG.error("If you're seeing this during tests, ensure you run 'mvn clean install' to recompile all classes");
+                throw new IllegalStateException("IndexReader is null - Indexer not initialized. " +
+                    "This usually indicates stale compiled classes. Run 'mvn clean install'.");
+            }
+            searcherManager = new SearcherManager(Indexer.indexReader(), null);
+            LOG.debug("Created new SearcherManager with IndexReader");
+        } else {
+            LOG.debug("SearcherManager already initialized, reusing existing instance");
+        }
         stopwatch.stop();
         LOG.info("Opened lucene searcher in: " + stopwatch.durationString());
     }
 
     public PrimitiveDataSearchResult[] search(String queryString, int maxResultSize) throws
             ParseException, IOException, InvalidTokenOffsetsException {
+        LOG.debug("Searcher.search() called with queryString='{}', maxResultSize={}", queryString, maxResultSize);
+
+        if (searcherManager == null) {
+            LOG.error("Searcher.search() - searcherManager is null!");
+            return new PrimitiveDataSearchResult[0];
+        }
+
         boolean refreshOutcome = searcherManager.maybeRefresh();
-        LOG.debug("Index Reader refresh outcome = {}", refreshOutcome);
+        LOG.debug("Searcher.search() - Index Reader refresh outcome = {}", refreshOutcome);
         IndexSearcher indexSearcher = searcherManager.acquire();
+        LOG.debug("Searcher.search() - Acquired IndexSearcher");
         try {
             if (queryString != null & !queryString.isEmpty()) {
+                LOG.debug("Searcher.search() - Query string is valid, parsing");
                 PrimitiveDataSearchResult[] results;
                     Query query = parser.parse(queryString);
+                    LOG.debug("Searcher.search() - Parsed query: {}", query.toString());
                     Formatter formatter = new SimpleHTMLFormatter();
                     QueryScorer scorer = new QueryScorer(query);
                     Highlighter highlighter = new Highlighter(formatter, scorer);
                     highlighter.setTextFragmenter(new NullFragmenter());
 
                     ScoreDoc[] hits = indexSearcher.search(query, maxResultSize).scoreDocs;
+                    LOG.debug("Searcher.search() - Found {} hits", hits.length);
                     results = new PrimitiveDataSearchResult[hits.length];
                     for (int i = 0; i < hits.length; i++) {
                         int docId = hits[i].doc;
@@ -124,12 +140,29 @@ public class Searcher {
                                 highlightedString
                         );
                     }
+                LOG.debug("Searcher.search() - Returning {} results", results.length);
                 return results;
+            } else {
+                LOG.debug("Searcher.search() - Query string is null or empty, returning empty results");
             }
         } finally {
             searcherManager.release(indexSearcher);
+            LOG.debug("Searcher.search() - Released IndexSearcher");
         }
+        LOG.debug("Searcher.search() - Returning 0 results (empty query)");
         return new PrimitiveDataSearchResult[0];
+    }
+
+    /**
+     * Closes the SearcherManager and releases resources.
+     * Should be called when SearchProvider is closed.
+     */
+    public void close() throws IOException {
+        if (searcherManager != null) {
+            searcherManager.close();
+            searcherManager = null;
+            LOG.info("Closed SearcherManager");
+        }
     }
 
     /**

@@ -560,7 +560,9 @@
                     <version>${maven.compiler-plugin.version}</version>
                     <configuration>
                         <release>${java.version}</release>
-                        <compilerArgs>${compiler.args}</compilerArgs>
+                        <compilerArgs>
+                            <arg>--enable-preview</arg>
+                        </compilerArgs>
                     </configuration>
                     <dependencies>
                         <dependency>
@@ -589,6 +591,17 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
                     <version>${maven.assembly.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <configuration>
+                        <!-- Exclude files using JEP 447 (statements before super/this) - unsupported by Checkstyle parser -->
+                        <!-- @SuppressWarnings is ineffective because Checkstyle fails during parsing, before annotations are processed -->
+                        <excludes>
+                            **/SearchProvider.java
+                        </excludes>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

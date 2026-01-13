@@ -15,25 +15,23 @@
  */
 package dev.ikm.tinkar.provider.mvstore;
 
-import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.service.DataActivity;
-import dev.ikm.tinkar.common.service.NidGenerator;
-import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
-import dev.ikm.tinkar.common.service.PrimitiveDataService;
-import dev.ikm.tinkar.common.service.ServiceKeys;
-import dev.ikm.tinkar.common.service.ServiceProperties;
-import dev.ikm.tinkar.common.service.TinkExecutor;
+import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
+import dev.ikm.tinkar.common.validation.ValidationRecord;
+import dev.ikm.tinkar.common.validation.ValidationSeverity;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.PatternEntity;
-import dev.ikm.tinkar.provider.search.Indexer;
-import dev.ikm.tinkar.provider.search.RecreateIndex;
-import dev.ikm.tinkar.provider.search.Searcher;
+import dev.ikm.tinkar.provider.search.SearchService;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.api.map.ImmutableMap;
+import org.eclipse.collections.api.map.MutableMap;
 import org.eclipse.collections.api.tuple.Pair;
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
 import org.h2.mvstore.MVMap;
@@ -44,11 +42,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Set;
-import java.util.UUID;
+import java.io.UncheckedIOException;
+import java.net.MalformedURLException;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
@@ -74,11 +72,10 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
      */
     final MVMap<Integer, long[]> nidToCitingComponentsNidMap;
     final MVMap<Integer, int[]> patternToElementNidsMap;
-    final Indexer indexer;
-    final Searcher searcher;
     final String name;
     protected LongAdder writeSequence = new LongAdder();
     ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Integer>> patternElementNidsMap = ConcurrentHashMap.newMap();
+    final StableValue<SearchService> searchService = StableValue.of();
 
 
     public MVStoreProvider() throws IOException {
@@ -115,10 +112,6 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         MVStoreProvider.singleton = this;
         stopwatch.stop();
         LOG.info("Opened MVStoreProvider in: " + stopwatch.durationString());
-
-        File indexDir = new File(configuredRoot, "lucene");
-        this.indexer = new Indexer(indexDir.toPath());
-        this.searcher = new Searcher();
     }
 
     public boolean addToElementSet(int patternNid, int elementNid) {
@@ -141,10 +134,9 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         LOG.info("Closing MVStoreProvider");
         try {
             save();
-            this.indexer.close();
             this.store.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            LOG.error("Error closing MVStoreProvider", e);
         } finally {
             stopwatch.stop();
             LOG.info("Closed MVStoreProvider in: " + stopwatch.durationString());
@@ -154,21 +146,15 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     public void save() {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Saving MVStoreProvider");
-        try {
-            this.uuidToNidMap.put(nextNidKey, nextNid.get());
-            for (Pair<Integer, ConcurrentHashMap<Integer, Integer>> keyValue : patternElementNidsMap.keyValuesView()) {
-                patternToElementNidsMap.put(keyValue.getOne(), keyValue.getTwo().keySet()
-                        .stream().mapToInt(value -> (int) value).toArray());
-            }
-            this.store.commit();
-            this.offHeap.sync();
-            this.indexer.commit();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            stopwatch.stop();
-            LOG.info("Saved MVStoreProvider in: " + stopwatch.durationString());
+        this.uuidToNidMap.put(nextNidKey, nextNid.get());
+        for (Pair<Integer, ConcurrentHashMap<Integer, Integer>> keyValue : patternElementNidsMap.keyValuesView()) {
+            patternToElementNidsMap.put(keyValue.getOne(), keyValue.getTwo().keySet()
+                    .stream().mapToInt(value -> (int) value).toArray());
         }
+        this.store.commit();
+        this.offHeap.sync();
+        stopwatch.stop();
+        LOG.info("Saved MVStoreProvider in: " + stopwatch.durationString());
     }
 
     @Override
@@ -234,26 +220,34 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         }
         byte[] mergedBytes = nidToComponentMap.merge(nid, value, PrimitiveDataService::merge);
         writeSequence.increment();
-        this.indexer.index(sourceObject);
+
+        // Delegate indexing to SearchProvider
+        try {
+            getSearchService().index(sourceObject);
+        } catch (Exception e) {
+            // Search service may not be available yet during startup
+            LOG.debug("SearchService not available for indexing", e);
+        }
+
         return mergedBytes;
+    }
+
+    private SearchService getSearchService() {
+        return searchService.orElseSet(() ->
+            ServiceLifecycleManager.get()
+                .getRunningService(SearchService.class)
+                .orElseThrow(() -> new IllegalStateException("SearchService not available - ensure services are started"))
+        );
     }
 
     @Override
     public PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception {
-        return this.searcher.search(query, maxResultSize);
+        return getSearchService().search(query, maxResultSize);
     }
 
     @Override
     public CompletableFuture<Void> recreateLuceneIndex() throws Exception {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                return TinkExecutor.ioThreadPool().submit(new RecreateIndex(this.indexer)).get();
-            } catch (InterruptedException | ExecutionException ex) {
-                AlertStreams.dispatchToRoot(new CompletionException("Error encountered while creating Lucene indexes." +
-                        "Search and Type Ahead Suggestions may not function as expected.", ex));
-            }
-            return null;
-        }, TinkExecutor.ioThreadPool());
+        return getSearchService().recreateIndex();
     }
 
     @Override
@@ -327,5 +321,236 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     @Override
     public String name() {
         return name;
+    }
+
+    /**
+     * Base Controller for MVStoreProvider lifecycle management.
+     * <p>
+     * Handles heavyweight initialization including data loading and indexing.
+     * </p>
+     */
+    public abstract static class Controller extends ProviderController<MVStoreProvider>
+            implements DataServiceController<PrimitiveDataService> {
+
+        @Override
+        protected MVStoreProvider createProvider() throws Exception {
+            return new MVStoreProvider();
+        }
+
+        @Override
+        protected void startProvider(MVStoreProvider provider) {
+            // Provider starts itself in constructor
+        }
+
+        @Override
+        protected void stopProvider(MVStoreProvider provider) {
+            provider.close();
+        }
+
+        @Override
+        protected void cleanupProvider(MVStoreProvider provider) throws Exception {
+            // save() is already called in close(), no need to call it again
+        }
+
+        @Override
+        protected String getProviderName() {
+            return "MVStoreProvider";
+        }
+
+        @Override
+        public ServiceLifecyclePhase getLifecyclePhase() {
+            return ServiceLifecyclePhase.DATA_STORAGE;
+        }
+
+        @Override
+        public Optional<ServiceExclusionGroup> getMutualExclusionGroup() {
+            return Optional.of(ServiceExclusionGroup.DATA_PROVIDER);
+        }
+
+        // ========== DataServiceController Implementation ==========
+
+        @Override
+        public ImmutableList<Class<?>> serviceClasses() {
+            // MVStoreProvider (the generic type parameter P) implements PrimitiveDataService
+            // This establishes the contract: ProviderController<MVStoreProvider> provides PrimitiveDataService
+            return Lists.immutable.of(PrimitiveDataService.class);
+        }
+
+        @Override
+        public boolean running() {
+            return getProvider() != null && MVStoreProvider.singleton != null;
+        }
+
+        @Override
+        public void start() {
+            startup();
+        }
+
+        @Override
+        public void stop() {
+            shutdown();
+        }
+
+        @Override
+        public void save() {
+            MVStoreProvider provider = getProvider();
+            if (provider != null) {
+                provider.save();
+            }
+        }
+
+        @Override
+        public void reload() {
+            throw new UnsupportedOperationException("Reload not yet supported");
+        }
+
+        // Note: provider() method is inherited from ProviderController base class
+    }
+
+    /**
+     * Controller for opening an existing MVStore database.
+     */
+    public static class OpenController extends Controller {
+        public static final String CONTROLLER_NAME = "Open MV Store";
+
+        @Override
+        public void setDataUriOption(DataUriOption option) {
+            super.setDataUriOption(option);
+            if (option != null) {
+                ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, option.toFile());
+            }
+        }
+
+        @Override
+        public boolean isValidDataLocation(String name) {
+            return name.equals("mvstore.dat");
+        }
+
+        @Override
+        public String controllerName() {
+            return CONTROLLER_NAME;
+        }
+
+        @Override
+        public int getSubPriority() {
+            return 20; // After SpinedArray
+        }
+    }
+
+    /**
+     * Controller for creating a new MVStore database and importing data.
+     */
+    public static class NewController extends Controller {
+        public static final String CONTROLLER_NAME = "New MV Store";
+        private static final DataServiceProperty NEW_FOLDER_PROPERTY =
+                new DataServiceProperty("New folder name", false, true);
+
+        private final MutableMap<DataServiceProperty, String> providerProperties = Maps.mutable.empty();
+        private String importDataFileString;
+
+        public NewController() {
+            providerProperties.put(NEW_FOLDER_PROPERTY, null);
+        }
+
+        @Override
+        public ImmutableMap<DataServiceProperty, String> providerProperties() {
+            return providerProperties.toImmutable();
+        }
+
+        @Override
+        public void setDataServiceProperty(DataServiceProperty key, String value) {
+            providerProperties.put(key, value);
+        }
+
+        @Override
+        public ValidationRecord[] validate(DataServiceProperty dataServiceProperty, Object value, Object target) {
+            if (NEW_FOLDER_PROPERTY.equals(dataServiceProperty)) {
+                File rootFolder = new File(System.getProperty("user.home"), "Solor");
+                if (value instanceof String fileName) {
+                    if (fileName.isBlank()) {
+                        return new ValidationRecord[]{new ValidationRecord(ValidationSeverity.ERROR,
+                                "Directory name cannot be blank", target)};
+                    } else {
+                        File possibleFile = new File(rootFolder, fileName);
+                        if (possibleFile.exists()) {
+                            return new ValidationRecord[]{new ValidationRecord(ValidationSeverity.ERROR,
+                                    "Directory already exists", target)};
+                        }
+                    }
+                }
+            }
+            return new ValidationRecord[]{};
+        }
+
+        @Override
+        public List<DataUriOption> providerOptions() {
+            List<DataUriOption> dataUriOptions = new ArrayList<>();
+            File rootFolder = new File(System.getProperty("user.home"), "Solor");
+            if (!rootFolder.exists()) {
+                rootFolder.mkdirs();
+            }
+            File[] files = rootFolder.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    if (isValidDataLocation(f.getName())) {
+                        dataUriOptions.add(new DataUriOption(f.getName(), f.toURI()));
+                    }
+                }
+            }
+            return dataUriOptions;
+        }
+
+        @Override
+        public void setDataUriOption(DataUriOption option) {
+            super.setDataUriOption(option);
+            if (option != null) {
+                try {
+                    importDataFileString = option.uri().toURL().getFile();
+                } catch (MalformedURLException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+        }
+
+        @Override
+        protected void initializeProvider(MVStoreProvider provider) throws Exception {
+            // Set up the data directory from properties
+            File rootFolder = new File(System.getProperty("user.home"), "Solor");
+            File dataDirectory = new File(rootFolder, providerProperties.get(NEW_FOLDER_PROPERTY));
+            ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, dataDirectory);
+
+            // Load data from file if specified
+            if (importDataFileString != null) {
+                ServiceLoader<LoadDataFromFileController> controllerFinder =
+                        PluggableService.load(LoadDataFromFileController.class);
+                LoadDataFromFileController loader = controllerFinder.findFirst()
+                        .orElseThrow(() -> new IllegalStateException("No LoadDataFromFileController found"));
+                Future<EntityCountSummary> loadFuture =
+                        (Future<EntityCountSummary>) loader.load(new File(importDataFileString));
+                EntityCountSummary entityCountSummary = loadFuture.get();
+                LOG.info("Loaded data: " + entityCountSummary);
+            }
+        }
+
+        @Override
+        public boolean isValidDataLocation(String name) {
+            return name.toLowerCase().endsWith("pb.zip") ||
+                    (name.toLowerCase().endsWith(".zip") && name.toLowerCase().contains("tink"));
+        }
+
+        @Override
+        public String controllerName() {
+            return CONTROLLER_NAME;
+        }
+
+        @Override
+        public int getSubPriority() {
+            return 21; // After Open
+        }
+
+        @Override
+        public boolean loading() {
+            return importDataFileString != null && !running();
+        }
     }
 }

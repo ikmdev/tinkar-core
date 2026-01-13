@@ -23,9 +23,13 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.DefaultDescriptionForNidService;
+import dev.ikm.tinkar.common.service.PluggableService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.PrimitiveDataRepair;
+import dev.ikm.tinkar.common.service.ProviderController;
 import dev.ikm.tinkar.common.service.PublicIdService;
+import dev.ikm.tinkar.common.service.ServiceExclusionGroup;
+import dev.ikm.tinkar.common.service.ServiceLifecyclePhase;
 import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.util.broadcast.Broadcaster;
 import dev.ikm.tinkar.common.util.broadcast.SimpleBroadcaster;
@@ -38,6 +42,7 @@ import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
+import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.factory.primitive.IntSets;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -77,14 +82,6 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     public EntityProvider() {
         LOG.info("Constructing EntityProvider");
         this.processor = new SimpleBroadcaster<>();
-        // Ensure that the non-existent stamp is always available.
-        // Write is idempotent, so writing each time should not cause any problems.
-        // But we don't want to prevent starting the entity service if this.putEntity
-        // blocks for debugging or other reasons, so putting it in a virtual thread to
-        // allow completion of the constructor.
-        Thread.ofVirtual().start(() -> {
-            this.putEntity(StampRecord.nonExistentStamp(), DataActivity.INITIALIZE);
-        });
     }
 
     public void addSubscriberWithWeakReference(Subscriber<Integer> subscriber) {
@@ -554,5 +551,110 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     public void endLoadPhase() {
         loadPhase = false;
         processor.dispatch(Integer.MIN_VALUE);
+    }
+
+    /**
+     * Lists and cancels uncommitted stamps during shutdown.
+     * This method is called by data providers during their shutdown sequence to ensure
+     * data integrity by canceling any stamps that were left uncommitted outside of transactions.
+     *
+     * @param stampNids the collection of stamp NIDs to check for uncommitted stamps
+     */
+    public void listAndCancelUncommittedStamps(int[] stampNids) {
+        LOG.debug("Searching for canceled stamps in set of size {}", stampNids.length);
+        for (int stampNid : stampNids) {
+            try {
+                StampEntity stamp = getStampFast(stampNid);
+                if (stamp == null) {
+                    LOG.debug("No stamp found for nid: {}", stampNid);
+                    continue;
+                }
+                if (stamp.lastVersion() == null) {
+                    LOG.info("Null last version for stamp with nid: {}", stampNid);
+                } else {
+                    if (stamp.time() == Long.MAX_VALUE && Transaction.forStamp(stamp).isEmpty()) {
+                        // Uncommitted stamp found outside a transaction on restart. Set to canceled.
+                        cancelUncommittedStamp(stampNid, (StampRecord) stamp);
+                    }
+                    if (stamp.lastVersion().stateNid() == State.CANCELED.nid()) {
+                        PrimitiveData.get().addCanceledStampNid(stampNid);
+                    }
+                }
+            } catch (Exception e) {
+                LOG.error("Error processing stamp {}", stampNid, e);
+            }
+        }
+    }
+
+    private void cancelUncommittedStamp(int stampNid, StampRecord stamp) {
+        LOG.warn("Canceling uncommitted stamp: {}", stamp.publicId().asUuidList());
+        StampVersionRecord lastVersion = stamp.lastVersion();
+        StampVersionRecord canceledVersion = lastVersion.with()
+                .time(Long.MIN_VALUE)
+                .stateNid(State.CANCELED.nid())
+                .build();
+        StampEntity canceledStamp = stamp
+                .without(lastVersion)
+                .with(canceledVersion)
+                .build();
+        putEntity(canceledStamp, DataActivity.DATA_REPAIR);
+    }
+
+    /**
+     * Controller for EntityProvider lifecycle management.
+     * <p>
+     * Integrates with {@link dev.ikm.tinkar.common.service.ServiceLifecycleManager} and provides
+     * service discovery for EntityService, PublicIdService, and DefaultDescriptionForNidService.
+     * </p>
+     */
+    public static class Controller extends ProviderController<EntityProvider> {
+
+        @Override
+        protected EntityProvider createProvider() {
+            return new EntityProvider();
+        }
+
+        @Override
+        protected void startProvider(EntityProvider provider) {
+            // EntityProvider starts immediately upon construction
+            // No explicit start method needed
+        }
+
+        @Override
+        protected void stopProvider(EntityProvider provider) {
+            LOG.info("Stopping EntityProvider");
+            // Note: Uncommitted stamp checking is handled by data providers during their shutdown
+            // Data providers call provider.listAndCancelUncommittedStamps() before EntityService shuts down
+        }
+
+        @Override
+        protected String getProviderName() {
+            return "EntityProvider";
+        }
+
+        @Override
+        public ImmutableList<Class<?>> serviceClasses() {
+            // EntityProvider implements three service interfaces
+            return Lists.immutable.of(
+                    EntityService.class,
+                    PublicIdService.class,
+                    DefaultDescriptionForNidService.class
+            );
+        }
+
+        @Override
+        public ServiceLifecyclePhase getLifecyclePhase() {
+            return ServiceLifecyclePhase.ENTITIES;
+        }
+
+        @Override
+        public int getSubPriority() {
+            return 10; // Start early in ENTITIES phase
+        }
+
+        @Override
+        public Optional<ServiceExclusionGroup> getMutualExclusionGroup() {
+            return Optional.empty(); // Not mutually exclusive
+        }
     }
 }

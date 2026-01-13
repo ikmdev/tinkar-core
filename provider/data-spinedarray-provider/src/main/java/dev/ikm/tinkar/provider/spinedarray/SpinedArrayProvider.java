@@ -21,16 +21,7 @@ import dev.ikm.tinkar.collection.SpinedIntIntMap;
 import dev.ikm.tinkar.collection.SpinedIntLongArrayMap;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.service.DataActivity;
-import dev.ikm.tinkar.common.service.NidGenerator;
-import dev.ikm.tinkar.common.service.PluggableService;
-import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.PrimitiveDataRepair;
-import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
-import dev.ikm.tinkar.common.service.PrimitiveDataService;
-import dev.ikm.tinkar.common.service.ServiceKeys;
-import dev.ikm.tinkar.common.service.ServiceProperties;
-import dev.ikm.tinkar.common.service.TinkExecutor;
+import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.common.util.io.FileUtil;
@@ -38,9 +29,7 @@ import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.transaction.Transaction;
-import dev.ikm.tinkar.provider.search.Indexer;
-import dev.ikm.tinkar.provider.search.RecreateIndex;
-import dev.ikm.tinkar.provider.search.Searcher;
+import dev.ikm.tinkar.provider.search.SearchService;
 import dev.ikm.tinkar.terms.State;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
@@ -67,6 +56,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.ServiceLoader;
 import java.util.UUID;
@@ -137,8 +127,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     final File nidToByteArrayMapDirectory;
     final File nidToCitingComponentNidMapDirectory;
     final File nextNidKeyFile;
-    final Indexer indexer;
-    final Searcher searcher;
+    final StableValue<SearchService> searchService = StableValue.of();
     final String name;
     final ImmutableList<ChangeSetWriterService> changeSetWriterServices;
 
@@ -149,19 +138,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         name = configuredRoot.getName();
         configuredRoot.mkdirs();
         LOG.info("Datastore root: " + configuredRoot.getAbsolutePath());
-        Path indexPath = Path.of(configuredRoot.getPath(),"lucene");
-        boolean indexExists = Files.exists(indexPath);
-        Indexer indexer;
-        try {
-            indexer = new Indexer(indexPath);
-        } catch (IllegalArgumentException ex) {
-            // If Indexer Codec does not match, then delete and rebuild with new Codec
-            FileUtil.recursiveDelete(indexPath.toFile());
-            indexExists = Files.exists(indexPath);
-            indexer = new Indexer(indexPath);
-        }
-        this.indexer = indexer;
-        this.searcher = new Searcher();
 
         this.nidToPatternNidMapDirectory = new File(configuredRoot, "nidToPatternNidMap");
         this.nidToPatternNidMapDirectory.mkdirs();
@@ -200,7 +176,11 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
                     LOG.info(uuidNidCollector.report());
                 }
                 LOG.info("Starting virtual thread for listAndCancelUncommittedStamps");
-                Thread.ofVirtual().start(this::listAndCancelUncommittedStamps);
+                Thread.ofVirtual().start(() -> {
+                    EntityService.get().listAndCancelUncommittedStamps(
+                        stampNids.stream().sorted().mapToInt(value -> (int) value).toArray()
+                    );
+                });
                 LOG.info("UUID loading task completed");
             }).get();
             LOG.info("UUID loading task .get() returned successfully");
@@ -220,15 +200,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             LOG.info("ChangeSetWriterService(s): ", changeSetWriters);
         }
 
-        if (!indexExists) {
-            try {
-                LOG.info("Lucene index does not exist, creating...");
-                //this.recreateLuceneIndex().get();
-                LOG.info("Recreated Lucene index successfully...");
-            } catch (Exception e) {
-                LOG.error(e.getLocalizedMessage(), e);
-            }
-        }
+        // Index recreation is now handled by SearchProvider in INDEXING phase
         stopwatch.stop();
         LOG.info("Opened SpinedArrayProvider in: " + stopwatch.durationString());
         lifecycle.set(Lifecycle.RUNNING);
@@ -245,36 +217,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         return uuidToNidMap.containsKey(uuid);
     }
 
-    private void listAndCancelUncommittedStamps() {
-        LOG.debug("Searching for canceled stamps in set of size " + stampNids.size());
-        int[] stampNidArray = stampNids.stream().sorted().mapToInt(value -> (int) value).toArray();
-        for (int stampNid : stampNidArray) {
-            StampRecord stamp = Entity.getStamp(stampNid);
-            if (stamp.lastVersion() == null) {
-                LOG.info("Null last version for stamp with nid: " + stampNid);
-            } else {
-//                LOG.info("Stamp: " + stamp);
-                if (stamp.time() == Long.MAX_VALUE && Transaction.forStamp(stamp).isEmpty()) {
-                    // Uncommitted stamp found outside a transaction on restart. Set to canceled.
-                    cancelUncommittedStamp(stampNid, stamp);
-                }
-                if (stamp.lastVersion().stateNid() == State.CANCELED.nid()) {
-                    PrimitiveData.get().addCanceledStampNid(stampNid);
-                }
-            }
-        }
-    }
-
-    private void cancelUncommittedStamp(int stampNid, StampRecord stamp) {
-        LOG.warn("Canceling uncommitted stamp: " + stamp.publicId().asUuidList());
-        StampVersionRecord lastVersion = stamp.lastVersion();
-        StampVersionRecord canceledVersion = lastVersion.with().time(Long.MIN_VALUE).stateNid(State.CANCELED.nid()).build();
-        byte[] stampBytes = stamp
-                .without(lastVersion)
-                .with(canceledVersion)
-                .build().getBytes();
-        this.entityToBytesMap.put(stampNid, stampBytes);
-    }
 
     @Override
     public long writeSequence() {
@@ -290,11 +232,20 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             try {
                 this.changeSetWriterServices.forEach(ChangeSetWriterService::shutdown);
                 save();
-                listAndCancelUncommittedStamps();
+
+                // Check for uncommitted stamps using EntityProvider while EntityService is still available
+                // This must happen before data provider shutdown since EntityProvider needs access to entities
+                try {
+                    EntityService.get().listAndCancelUncommittedStamps(
+                        stampNids.stream().sorted().mapToInt(value -> (int) value).toArray()
+                    );
+                } catch (java.util.NoSuchElementException e) {
+                    LOG.warn("EntityService not available during shutdown, skipping uncommitted stamp check");
+                }
+
                 entityToBytesMap.close();
-                this.indexer.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            } catch (Exception e) {
+                LOG.error("Error closing SpinedArrayProvider", e);
             } finally {
                 lifecycle.set(Lifecycle.STOPPED);
                 stopwatch.stop();
@@ -313,9 +264,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             nidToPatternNidMap.write(this.nidToPatternNidMapDirectory);
             this.entityToBytesMap.write();
             this.nidToCitingComponentsNidMap.write();
-            this.indexer.commit();
-        } catch (IOException e) {
-            LOG.error(e.getLocalizedMessage(), e);
+        } catch (Exception e) {
+            LOG.error("Error saving SpinedArrayProvider", e);
         } finally {
             stopwatch.stop();
             LOG.info("Save SpinedArrayProvider in: " + stopwatch.durationString());
@@ -469,8 +419,24 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         byte[] mergedBytes = this.entityToBytesMap.accumulateAndGet(nid, value, PrimitiveDataService::merge);
         this.writeSequence.increment();
         this.changeSetWriterServices.forEach(writerService -> writerService.writeToChangeSet((Entity) sourceObject, activity));
-        this.indexer.index(sourceObject);
+
+        // Delegate indexing to SearchProvider
+        try {
+            getSearchService().index(sourceObject);
+        } catch (Exception e) {
+            // Search service may not be available yet during startup
+            LOG.debug("SearchService not available for indexing", e);
+        }
+
         return mergedBytes;
+    }
+
+    private SearchService getSearchService() {
+        return searchService.orElseSet(() ->
+            ServiceLifecycleManager.get()
+                .getRunningService(SearchService.class)
+                .orElseThrow(() -> new IllegalStateException("SearchService not available - ensure services are started"))
+        );
     }
 
     public boolean addToPatternElementSet(int patternNid, int elementNid) {
@@ -481,20 +447,12 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
 
     @Override
     public PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception {
-        return this.searcher.search(query, maxResultSize);
+        return getSearchService().search(query, maxResultSize);
     }
 
     @Override
     public CompletableFuture<Void> recreateLuceneIndex() {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                return TinkExecutor.ioThreadPool().submit(new RecreateIndex(this.indexer)).get();
-            } catch (InterruptedException | ExecutionException ex) {
-                AlertStreams.dispatchToRoot(new CompletionException("Error encountered while creating Lucene indexes." +
-                        "Search and Type Ahead Suggestions may not function as expected.", ex));
-            }
-            return null;
-        }, TinkExecutor.ioThreadPool());
+        return getSearchService().recreateIndex();
     }
 
     @Override
@@ -744,4 +702,131 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     public void put(int nid, byte[] bytesToOverwrite) {
         this.entityToBytesMap.put(nid, bytesToOverwrite);
     }
+
+
+    /**
+     * Controller for SpinedArrayProvider lifecycle management.
+     * <p>
+     * Handles heavyweight initialization including data loading, indexing, and UUID mapping.
+     * </p>
+     */
+    public abstract static class Controller extends ProviderController<SpinedArrayProvider>
+            implements DataServiceController<PrimitiveDataService> {
+
+        @Override
+        public void setDataUriOption(DataUriOption option) {
+            super.setDataUriOption(option);
+            if (option != null) {
+                ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, option.toFile());
+            }
+        }
+
+        @Override
+        protected SpinedArrayProvider createProvider() throws Exception {
+            return new SpinedArrayProvider();
+        }
+
+        @Override
+        protected void startProvider(SpinedArrayProvider provider) {
+            // SpinedArrayProvider starts itself in constructor
+            // Just wait for it to be ready
+            lifecycle.set(Lifecycle.RUNNING);
+        }
+
+        @Override
+        protected void stopProvider(SpinedArrayProvider provider) {
+            provider.close();
+        }
+
+        @Override
+        protected void cleanupProvider(SpinedArrayProvider provider) throws Exception {
+            // Additional cleanup if needed
+            provider.save();
+        }
+
+        @Override
+        protected String getProviderName() {
+            return "SpinedArrayProvider";
+        }
+
+        @Override
+        public ServiceLifecyclePhase getLifecyclePhase() {
+            return ServiceLifecyclePhase.DATA_STORAGE;
+        }
+
+        @Override
+        public Optional<ServiceExclusionGroup> getMutualExclusionGroup() {
+            return Optional.of(ServiceExclusionGroup.DATA_PROVIDER);
+        }
+
+        // ========== DataServiceController Implementation ==========
+
+        @Override
+        public ImmutableList<Class<?>> serviceClasses() {
+            // SpinedArrayProvider (the generic type parameter P) implements PrimitiveDataService
+            // This establishes the contract: ProviderController<SpinedArrayProvider> provides PrimitiveDataService
+            return Lists.immutable.of(PrimitiveDataService.class);
+        }
+
+        @Override
+        public boolean running() {
+            return getProvider() != null && lifecycle.get() == Lifecycle.RUNNING;
+        }
+
+        @Override
+        public void start() {
+            startup();
+        }
+
+        @Override
+        public void stop() {
+            shutdown();
+        }
+
+        @Override
+        public void save() {
+            SpinedArrayProvider provider = getProvider();
+            if (provider != null) {
+                provider.save();
+            }
+        }
+
+        @Override
+        public void reload() {
+            throw new UnsupportedOperationException("Reload not yet supported");
+        }
+
+        // Note: provider() method is inherited from ProviderController base class
+    }
+
+    public static class OpenController extends Controller {
+        public static final String CONTROLLER_NAME = "Open SpinedArrayStore";
+
+        @Override
+        public String controllerName() {
+            return CONTROLLER_NAME;
+        }
+
+        @Override
+        public int getSubPriority() {
+            return 30;
+        }
+    }
+
+    public static class NewController extends Controller {
+        public static final String CONTROLLER_NAME = "New SpinedArrayStore";
+
+        @Override
+        public String controllerName() {
+            return CONTROLLER_NAME;
+        }
+
+        @Override
+        public int getSubPriority() {
+            return 31;
+        }
+    }
 }
+
+
+

@@ -21,6 +21,7 @@
 
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.LoadDataFromFileController;
+import dev.ikm.tinkar.common.service.ServiceLifecycle;
 import dev.ikm.tinkar.coordinate.PathService;
 import dev.ikm.tinkar.coordinate.edit.EditCoordinateRecord;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculatorWithCache;
@@ -32,6 +33,7 @@ import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculatorWithCache;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.StampService;
+import dev.ikm.tinkar.entity.load.DataLoadController;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromFileController;
 
 module dev.ikm.tinkar.entity {
@@ -91,6 +93,8 @@ module dev.ikm.tinkar.entity {
              with LoadEntitiesFromFileController;
 
     provides PathService with PathProvider;
+
+    provides ServiceLifecycle with DataLoadController;
 
     uses CachingService;
     uses EntityService;

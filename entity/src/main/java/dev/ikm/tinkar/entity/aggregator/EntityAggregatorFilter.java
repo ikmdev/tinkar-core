@@ -1,6 +1,6 @@
 package dev.ikm.tinkar.entity.aggregator;
 
-import dev.ikm.tinkar.entity.EntityCountSummary;
+import dev.ikm.tinkar.common.service.EntityCountSummary;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.IntConsumer;
@@ -20,10 +20,10 @@ abstract public class EntityAggregatorFilter extends EntityAggregator {
     public abstract EntityCountSummary aggregate(IntConsumer nidConsumer);
 
     public void adjustCounts(EntityCountSummary unfilteredSummary) {
-        this.conceptsAggregatedCount.set(unfilteredSummary.conceptsCount() - conceptsFilteredCount.get());
-        this.semanticsAggregatedCount.set(unfilteredSummary.semanticsCount() - semanticsFilteredCount.get());
-        this.patternsAggregatedCount.set(unfilteredSummary.patternsCount() - patternsFilteredCount.get());
-        this.stampsAggregatedCount.set(unfilteredSummary.stampsCount() - stampsFilteredCount.get());
+        this.conceptsAggregatedCount.set(unfilteredSummary.conceptCount() - conceptsFilteredCount.get());
+        this.semanticsAggregatedCount.set(unfilteredSummary.semanticCount() - semanticsFilteredCount.get());
+        this.patternsAggregatedCount.set(unfilteredSummary.patternCount() - patternsFilteredCount.get());
+        this.stampsAggregatedCount.set(unfilteredSummary.stampCount() - stampsFilteredCount.get());
     }
 
     @Override

@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.provider.entity;
+package dev.ikm.tinkar.common.service;
 
-import dev.ikm.tinkar.common.service.DefaultDescriptionForNidService;
+public record EntityCountSummary(
+        long conceptCount,
+        long semanticCount,
+        long patternCount,
+        long stampCount
+    ) {
 
-//@AutoService({DefaultDescriptionForNidService.class})
-public class DefaultDescriptionForNidServiceFactory {
-    public static DefaultDescriptionForNidService provider() {
-        // TODO: review startup order/bindings/
-        return EntityServiceFactory.provider();
+    public long getTotalCount() {
+        return conceptCount + semanticCount + patternCount + stampCount;
     }
 }

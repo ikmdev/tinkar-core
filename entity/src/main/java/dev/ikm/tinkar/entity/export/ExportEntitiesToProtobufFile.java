@@ -20,7 +20,7 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityCountSummary;
+import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.StampEntity;
@@ -133,10 +133,10 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             ZipEntry manifestEntry = new ZipEntry("META-INF/MANIFEST.MF");
             zos.putNextEntry(manifestEntry);
             zos.write(generateManifestContent(entityCountSummary.getTotalCount(),
-                    entityCountSummary.conceptsCount(),
-                    entityCountSummary.semanticsCount(),
-                    entityCountSummary.patternsCount(),
-                    entityCountSummary.stampsCount(),
+                    entityCountSummary.conceptCount(),
+                    entityCountSummary.semanticCount(),
+                    entityCountSummary.patternCount(),
+                    entityCountSummary.stampCount(),
                     moduleList,
                     authorList
                 ).getBytes(StandardCharsets.UTF_8));
@@ -205,9 +205,9 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
 
     private void logCounts(EntityCountSummary summary) {
         LOG.info("Exported " + summary.getTotalCount() + " total entities.");
-        LOG.info("Exported " + summary.conceptsCount() + " concepts.");
-        LOG.info("Exported " + summary.semanticsCount() + " semantics.");
-        LOG.info("Exported " + summary.patternsCount() + " patterns.");
-        LOG.info("Exported " + summary.stampsCount() + " stamps.");
+        LOG.info("Exported " + summary.conceptCount() + " concepts.");
+        LOG.info("Exported " + summary.semanticCount() + " semantics.");
+        LOG.info("Exported " + summary.patternCount() + " patterns.");
+        LOG.info("Exported " + summary.stampCount() + " stamps.");
     }
 }

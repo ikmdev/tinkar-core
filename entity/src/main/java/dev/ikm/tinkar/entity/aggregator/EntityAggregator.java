@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.entity.aggregator;
 
-import dev.ikm.tinkar.entity.EntityCountSummary;
+import dev.ikm.tinkar.common.service.EntityCountSummary;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.IntConsumer;

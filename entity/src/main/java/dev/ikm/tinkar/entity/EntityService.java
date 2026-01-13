@@ -20,6 +20,7 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.ServiceLifecycleManager;
 import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.util.broadcast.Broadcaster;
 import dev.ikm.tinkar.component.Chronology;
@@ -27,7 +28,6 @@ import dev.ikm.tinkar.component.ChronologyService;
 import dev.ikm.tinkar.component.Component;
 import dev.ikm.tinkar.component.Version;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
-import dev.ikm.tinkar.entity.internal.EntityServiceFinder;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.ComponentWithNid;
@@ -51,10 +51,13 @@ import static dev.ikm.tinkar.entity.Entity.LOG;
 
 public interface EntityService extends ChronologyService, Broadcaster<Integer> {
     static EntityService get() {
-        return EntityServiceFinder.INSTANCE.get();
+        return ServiceLifecycleManager.get()
+                .getRunningService(EntityService.class)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "No EntityService found. Ensure ServiceLifecycleManager has started services."));
     }
 
-    default CompletableFuture<EntityCountSummary> fullExport(File file) {
+    default CompletableFuture<dev.ikm.tinkar.common.service.EntityCountSummary> fullExport(File file) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 return TinkExecutor.ioThreadPool().submit(new ExportEntitiesToProtobufFile(file)).get();
@@ -64,7 +67,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
         }, TinkExecutor.ioThreadPool());
     }
 
-    default CompletableFuture<EntityCountSummary> temporalExport(File file, long fromEpoch, long toEpoch) {
+    default CompletableFuture<dev.ikm.tinkar.common.service.EntityCountSummary> temporalExport(File file, long fromEpoch, long toEpoch) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 return TinkExecutor.ioThreadPool().submit(new ExportEntitiesToProtobufFile(file, fromEpoch, toEpoch)).get();
@@ -74,7 +77,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
         }, TinkExecutor.ioThreadPool());
     }
 
-    default CompletableFuture<EntityCountSummary> membershipExport(File file, List<PublicId> membershipTags) {
+    default CompletableFuture<dev.ikm.tinkar.common.service.EntityCountSummary> membershipExport(File file, List<PublicId> membershipTags) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 return TinkExecutor.ioThreadPool().submit(new ExportEntitiesToProtobufFile(file, membershipTags)).get();
@@ -84,7 +87,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
         }, TinkExecutor.ioThreadPool());
     }
 
-    default CompletableFuture<EntityCountSummary> loadData(File file) {
+    default CompletableFuture<dev.ikm.tinkar.common.service.EntityCountSummary> loadData(File file) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 return TinkExecutor.ioThreadPool().submit(new LoadEntitiesFromProtobufFile(file)).get();
@@ -642,4 +645,16 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern())
                 .call(() -> nidForPublicId(conceptPublicId));
     }
+
+    /**
+     * Lists and cancels uncommitted stamps during data provider shutdown.
+     * This method is called by data providers during their close() sequence to ensure
+     * data integrity by canceling any stamps that were left uncommitted outside of transactions.
+     * <p>
+     * This method must be called while EntityService is still available, typically early
+     * in the data provider's shutdown sequence before the data store is closed.
+     *
+     * @param stampNids array of stamp NIDs to check for uncommitted stamps
+     */
+    void listAndCancelUncommittedStamps(int[] stampNids);
 }
