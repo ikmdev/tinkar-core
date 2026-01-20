@@ -67,7 +67,7 @@ public class DataLoadController extends ProviderController<DataLoadProvider>
 
     @Override
     protected void startProvider(DataLoadProvider provider) throws Exception {
-        LOG.info("DataLoadController entering DATA_LOAD phase");
+        LOG.info("DataLoadController entering DATA_LOAD phase with " + provider.getClass().getName());
 
         // Collect changeset files from all ChangeSetImportConfiguration services
         collectChangeSetImports(provider);
