@@ -51,6 +51,7 @@ module dev.ikm.tinkar.common {
     exports dev.ikm.tinkar.common.bind.annotations.names;
     exports dev.ikm.tinkar.common.bind.annotations.publicid;
     exports dev.ikm.tinkar.common.id;
+    exports dev.ikm.tinkar.common.id.impl;
     exports dev.ikm.tinkar.common.service;
     exports dev.ikm.tinkar.common.util.functional;
     exports dev.ikm.tinkar.common.util.ints2long;
@@ -62,7 +63,6 @@ module dev.ikm.tinkar.common {
     exports dev.ikm.tinkar.common.validation;
     exports dev.ikm.tinkar.common.sets;
     exports dev.ikm.tinkar.common.flow;
-    exports dev.ikm.tinkar.common.id.impl;
     exports dev.ikm.tinkar.common.util.broadcast;
     exports dev.ikm.tinkar.common.util;
 

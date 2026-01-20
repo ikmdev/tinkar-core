@@ -3,6 +3,8 @@ package dev.ikm.tinkar.provider.search;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
+import dev.ikm.tinkar.entity.EntityRecordFactory;
 import dev.ikm.tinkar.entity.EntityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +70,7 @@ public class RecreateIndex extends TrackingCallable<Void> {
             updateProgress(0, totalEntities.longValue()+1);
 
             PrimitiveData.get().forEachParallel((bytes, nid) -> {
-                Entity<?> entity = Entity.getFast(nid);
+                Entity<?> entity =  EntityRecordFactory.make(bytes);
                 if (entity != null) {
                     this.indexer.index(entity);
                 }

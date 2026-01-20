@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.common.service;
 
+import dev.ikm.tinkar.common.id.EntityKey;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
@@ -40,6 +41,7 @@ import org.eclipse.collections.impl.factory.primitive.LongSets;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
@@ -467,6 +469,14 @@ public interface PrimitiveDataService {
      * @return user-friendly name for this data service
      */
     String name();
+
+    default EntityKey getEntityKey(PublicId patternId, PublicId entityId) {
+        throw new UnsupportedOperationException("Not implemented in " + getClass().getName());
+    }
+
+    default Optional<EntityKey> getEntityKey(UUID uuid) {
+        throw new UnsupportedOperationException("Not implemented in " + getClass().getName());
+    }
 
     enum RemoteOperations {
         NID_FOR_UUIDS(1),
