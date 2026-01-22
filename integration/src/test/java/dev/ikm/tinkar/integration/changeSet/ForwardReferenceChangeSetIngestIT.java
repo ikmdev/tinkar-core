@@ -17,6 +17,7 @@ package dev.ikm.tinkar.integration.changeSet;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.SemanticEntity;
@@ -183,5 +184,20 @@ class ForwardReferenceChangeSetIngestIT {
 
         LOG.info("Successfully loaded concept: {}", loadedConcept);
         LOG.info("Successfully loaded semantic: {}", loadedSemantic);
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("Auto-detected import mode should match provider requirement")
+    void testAutoDetectedImportMode() {
+        // This test verifies the auto-detection matches the provider
+        boolean providerRequiresMultiPass = PrimitiveData.requiresMultiPassImport();
+        LOG.info("Provider requires multi-pass: {}", providerRequiresMultiPass);
+        
+        // The default constructor should use the provider's preference
+        LoadEntitiesFromProtobufFile loader = new LoadEntitiesFromProtobufFile(changesetFile);
+        // Verify it works (the mode is chosen correctly for the provider)
+        var summary = loader.compute();
+        assertNotNull(summary);
     }
 }

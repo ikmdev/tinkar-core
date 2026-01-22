@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.entity.load;
 
 import dev.ikm.tinkar.common.alert.AlertStreams;
+import dev.ikm.tinkar.common.id.EntityKey;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.id.impl.NidCodec6;
@@ -78,11 +79,17 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
     public static final ScopedValue<Set<UUID>> SCOPED_WATCH_LIST = ScopedValue.newInstance();
 
     /**
-     * Create a loader with default multi-pass import mode.
+     * Create a loader that auto-detects the import mode based on the provider.
+     * <p>
+     * Uses multi-pass import for providers that encode pattern information in NIDs
+     * (e.g., RocksDB), and single-pass import for sequential NID providers
+     * (e.g., SpinedArray, MVStore, Ephemeral).
+     * </p>
+     * 
      * @param importFile the protobuf file to import
      */
     public LoadEntitiesFromProtobufFile(File importFile) {
-        this(importFile, true);
+        this(importFile, PrimitiveData.requiresMultiPassImport());
     }
 
     /**
@@ -264,15 +271,12 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
 
             patternUuids.forEach(patternUuid -> {
                 int nid = PrimitiveData.get().nidForUuids(patternUuid);
-                dev.ikm.tinkar.common.id.EntityKey entityKey = PrimitiveData.getEntityKey(patternUuid).get();
                 PatternEntity patternEntity = EntityService.get().getEntityFast(nid);
                 StampCoordinate stampCoordinate = Coordinates.Stamp.DevelopmentLatest();
-//                LanguageCalculatorWithCache languageCalculator = new LanguageCalculatorWithCache(stampCoordinate.toStampCoordinateRecord(),
-//                        Lists.immutable.of(Coordinates.Language.UsEnglishFullyQualifiedName(), Coordinates.Language.AnyLanguageRegularName()));
-//
-//                String entityText = languageCalculator.getPreferredDescriptionTextOrNid(nid);
                 String entityText = PrimitiveData.textWithNid(nid);
-                stringBuilder.append("\n\nPattern: ").append(entityText).append(" EntityKey: ").append(entityKey);
+                PrimitiveData.getEntityKey(patternUuid).ifPresent(entityKey ->
+                        stringBuilder.append("\n\nPattern: ").append(entityText).append(" EntityKey: ").append(entityKey));
+
                 stringBuilder.append("\n nid=").append(nid).append(" (0x").append(String.format("%08X", nid)).append(")").append(" pattern sequence=").append(NidCodec6.decodePatternSequence(nid)).append(" element sequence=").append(NidCodec6.decodeElementSequence(nid));
                 stringBuilder.append("\nPatternEntity: ").append(patternEntity);
             });
