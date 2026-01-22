@@ -470,12 +470,34 @@ public interface PrimitiveDataService {
      */
     String name();
 
+    /**
+     * Gets or creates an EntityKey for the given pattern and entity.
+     * <p>
+     * Default implementation for providers using sequential NIDs (SpinedArray, MVStore, Ephemeral).
+     * These providers don't encode pattern information in the NID, so this returns a
+     * {@link EntityKey.SequentialNidEntityKey} that wraps the sequential NID directly.
+     * </p>
+     * <p>
+     * Providers using pattern-encoded NIDs (e.g., RocksDB) should override this method.
+     * </p>
+     */
     default EntityKey getEntityKey(PublicId patternId, PublicId entityId) {
-        throw new UnsupportedOperationException("Not implemented in " + getClass().getName());
+        int nid = nidForUuids(entityId.asUuidArray());
+        return EntityKey.ofSequentialNid(nid);
     }
 
+    /**
+     * Gets an EntityKey for the given UUID if it exists.
+     * <p>
+     * Default implementation for providers using sequential NIDs.
+     * </p>
+     */
     default Optional<EntityKey> getEntityKey(UUID uuid) {
-        throw new UnsupportedOperationException("Not implemented in " + getClass().getName());
+        if (hasUuid(uuid)) {
+            int nid = nidForUuids(uuid);
+            return Optional.of(EntityKey.ofSequentialNid(nid));
+        }
+        return Optional.empty();
     }
 
     enum RemoteOperations {
@@ -501,6 +523,24 @@ public interface PrimitiveDataService {
                     throw new UnsupportedOperationException("Can't handle token: " + token);
             }
         }
+    }
+
+    /**
+     * Returns whether this provider requires multi-pass import for correct NID assignment.
+     * <p>
+     * Providers that encode pattern information in NIDs (like RocksDB) return {@code true}
+     * because they need to discover all patterns in the first pass before assigning 
+     * pattern-encoded NIDs in the second pass.
+     * </p>
+     * <p>
+     * Providers using sequential NIDs (SpinedArray, MVStore, Ephemeral) return {@code false}
+     * because NIDs are assigned on-demand without pattern encoding.
+     * </p>
+     * 
+     * @return true if multi-pass import is required, false for single-pass
+     */
+    default boolean requiresMultiPassImport() {
+        return false;  // Default: sequential NID providers don't need multi-pass
     }
 
     class CacheProvider implements CachingService {

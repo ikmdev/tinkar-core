@@ -365,4 +365,13 @@ public class PrimitiveData {
         }
     }
 
+    /**
+     * Returns whether the current provider requires multi-pass import.
+     * 
+     * @return true if multi-pass import is required
+     * @see PrimitiveDataService#requiresMultiPassImport()
+     */
+    public static boolean requiresMultiPassImport() {
+        return get().requiresMultiPassImport();
+    }
 }
