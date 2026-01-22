@@ -1,35 +1,5 @@
 package dev.ikm.tinkar.reasoner.service;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.StructuredTaskScope;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-
-import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
-import dev.ikm.tinkar.entity.*;
-import org.eclipse.collections.api.IntIterable;
-import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.factory.primitive.IntObjectMaps;
-import org.eclipse.collections.api.list.ImmutableList;
-import org.eclipse.collections.api.list.MutableList;
-import org.eclipse.collections.api.list.primitive.ImmutableIntList;
-import org.eclipse.collections.api.list.primitive.IntList;
-import org.eclipse.collections.api.list.primitive.MutableIntList;
-import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
-import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
-import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
-import org.eclipse.collections.api.set.primitive.IntSet;
-import org.eclipse.collections.impl.factory.primitive.IntLists;
-import org.eclipse.collections.impl.factory.primitive.IntSets;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -38,13 +8,35 @@ import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.time.MultipleEndpointTimer;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
+import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
+import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResults;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.api.list.primitive.IntList;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
+import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
+import org.eclipse.collections.api.set.primitive.IntSet;
+import org.eclipse.collections.impl.factory.primitive.IntLists;
+import org.eclipse.collections.impl.factory.primitive.IntSets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.StructuredTaskScope;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 
 import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 import static dev.ikm.tinkar.common.service.PrimitiveData.calculateOptimalChunkSize;
@@ -278,21 +270,24 @@ public class InferredResultsWriter {
 
                             EntityService.get().forEachEntity(conceptChunk, concept -> {
 								progressUpdater.completedUnitOfWork();
-                                UUID inferredSemanticUuid = UuidT5Generator.singleSemanticUuid(inferredPattern,
-                                        concept.publicId());
-                                if (PrimitiveData.get().hasUuid(inferredSemanticUuid)) {
-                                    results.inferredSemanticToUpdate.add(PrimitiveData.nid(inferredSemanticUuid));
-                                } else {
-                                    results.conceptForNewInferredSemantic.add(concept.nid());
-                                }
+								
+								// Find canonical inferred semantic, handling duplicates gracefully
+								Optional<Integer> inferredSemanticNid = findCanonicalSemanticNid(
+										inferredPattern, concept);
+								if (inferredSemanticNid.isPresent()) {
+									results.inferredSemanticToUpdate.add(inferredSemanticNid.get());
+								} else {
+									results.conceptForNewInferredSemantic.add(concept.nid());
+								}
 
-                                UUID inferredNavigationUuid = UuidT5Generator.singleSemanticUuid(inferredNavigationPattern,
-                                        concept.publicId());
-                                if (PrimitiveData.get().hasUuid(inferredNavigationUuid)) {
-                                    results.navSemanticToUpdate.add(PrimitiveData.nid(inferredNavigationUuid));
-                                } else {
-                                    results.conceptForNewNavSemantic.add(concept.nid());
-                                }
+								// Find canonical navigation semantic, handling duplicates gracefully
+								Optional<Integer> navigationSemanticNid = findCanonicalSemanticNid(
+										inferredNavigationPattern, concept);
+								if (navigationSemanticNid.isPresent()) {
+									results.navSemanticToUpdate.add(navigationSemanticNid.get());
+								} else {
+									results.conceptForNewNavSemantic.add(concept.nid());
+								}
                             });
 
                             return results;
@@ -532,6 +527,73 @@ public class InferredResultsWriter {
 					Lists.immutable.of(childrenIds, parentIds)));
 			processSemantic(navigationRecord);
 		}
+	}
+
+	/**
+	 * Finds the canonical semantic for a single-semantic pattern, handling duplicates gracefully.
+	 * If duplicates exist due to a past race condition, this method identifies the correct one
+	 * based on the reproducible UUID generation and logs a warning about the duplicates.
+	 *
+	 * @param patternEntity the pattern entity
+	 * @param referencedComponent the referenced component (concept)
+	 * @return Optional containing the nid of the correct semantic, or empty if none exists
+	 */
+	private Optional<Integer> findCanonicalSemanticNid(PatternEntity<?> patternEntity, Entity<?> referencedComponent) {
+		int[] semanticNids = PrimitiveData.get().semanticNidsForComponentOfPattern(
+				referencedComponent.nid(), patternEntity.nid());
+		
+		if (semanticNids.length == 0) {
+			return Optional.empty();
+		}
+		
+		if (semanticNids.length == 1) {
+			return Optional.of(semanticNids[0]);
+		}
+		
+		// Multiple semantics found - need to determine which is canonical
+		UUID canonicalUuid = UuidT5Generator.singleSemanticUuid(patternEntity, referencedComponent.publicId());
+		
+		int canonicalNid = -1;
+		MutableIntList duplicateNids = IntLists.mutable.empty();
+		
+		for (int semanticNid : semanticNids) {
+			SemanticEntity<?> semantic = EntityHandle.getSemanticOrThrow(semanticNid);
+			if (semantic.publicId().contains(canonicalUuid)) {
+				canonicalNid = semanticNid;
+			} else {
+				duplicateNids.add(semanticNid);
+			}
+		}
+		
+		// Log the warning about duplicates
+		if (duplicateNids.notEmpty()) {
+			LOG.warn("Found {} duplicate semantic(s) for pattern {} with component {}. " +
+					"Canonical UUID: {}, Canonical NID: {}, Duplicate NIDs: {}. " +
+					"These duplicates were likely created by a past race condition in UUID generation. " +
+					"Consider running a cleanup task to remove the duplicates.",
+					duplicateNids.size(),
+					PrimitiveData.text(patternEntity.nid()),
+					PrimitiveData.text(referencedComponent.nid()),
+					canonicalUuid,
+					canonicalNid,
+					duplicateNids.toList());
+		}
+		
+		if (canonicalNid != -1) {
+			return Optional.of(canonicalNid);
+		}
+		
+		// None matched the canonical UUID - this shouldn't happen but handle gracefully
+		// Pick the first one and log a more severe warning
+		LOG.error("No semantic matched the canonical UUID {} for pattern {} and component {}. " +
+				"Using first found semantic (nid: {}). All semantic NIDs: {}",
+				canonicalUuid,
+				PrimitiveData.text(patternEntity.nid()),
+				PrimitiveData.text(referencedComponent.nid()),
+				semanticNids[0],
+				Arrays.toString(semanticNids));
+		
+		return Optional.of(semanticNids[0]);
 	}
 
 }
