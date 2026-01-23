@@ -17,8 +17,10 @@ package dev.ikm.tinkar.common.service;
 
 import dev.ikm.tinkar.common.alert.AlertObject;
 import dev.ikm.tinkar.common.alert.AlertStreams;
+import dev.ikm.tinkar.common.id.EntityKey;
 import dev.ikm.tinkar.common.id.IntIdCollection;
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.impl.NidCodec6;
 import org.eclipse.collections.api.list.primitive.IntList;
 import org.eclipse.collections.api.set.primitive.IntSet;
 import org.slf4j.Logger;
@@ -287,6 +289,22 @@ public class PrimitiveData {
 
     public static final ScopedValue<PublicId> SCOPED_PATTERN_PUBLICID_FOR_NID = ScopedValue.newInstance();
 
+    public static EntityKey getEntityKey(PublicId patternId, PublicId entityId) {
+        return get().getEntityKey(patternId, entityId);
+    }
+
+    public static Optional<EntityKey> getEntityKey(UUID uuid) {
+        return get().getEntityKey(uuid);
+    }
+
+    public static long elementSequenceForNid(int nid) {
+        return NidCodec6.decodeElementSequence(nid);
+    }
+
+    public static int patternSequenceForNid(int nid) {
+        return NidCodec6.decodePatternSequence(nid);
+    }
+
     /**
      * Example call when resolving via RocksDB:
      *
@@ -347,4 +365,13 @@ public class PrimitiveData {
         }
     }
 
+    /**
+     * Returns whether the current provider requires multi-pass import.
+     * 
+     * @return true if multi-pass import is required
+     * @see PrimitiveDataService#requiresMultiPassImport()
+     */
+    public static boolean requiresMultiPassImport() {
+        return get().requiresMultiPassImport();
+    }
 }

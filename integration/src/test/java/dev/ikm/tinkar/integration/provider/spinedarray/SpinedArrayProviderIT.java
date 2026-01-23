@@ -38,6 +38,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.Arrays;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class SpinedArrayProviderIT {
@@ -53,10 +55,15 @@ class SpinedArrayProviderIT {
     @Test
     @Order(1)
     public void loadChronologies() {
+        // Verify SpinedArray doesn't require multi-pass
+        assertFalse(PrimitiveData.requiresMultiPassImport(), 
+            "SpinedArray should not require multi-pass import");
+        
         File file = TestConstants.PB_STARTER_DATA_REASONED;
+        // Uses auto-detection (single-pass for SpinedArray)
         LoadEntitiesFromProtobufFile loadProto = new LoadEntitiesFromProtobufFile(file);
         EntityCountSummary count = loadProto.compute();
-        LOG.info(count + " entitles loaded from file: " + loadProto.summarize() + "\n\n");
+        LOG.info(count + " entities loaded from file: " + loadProto.summarize());
     }
 
     @Test

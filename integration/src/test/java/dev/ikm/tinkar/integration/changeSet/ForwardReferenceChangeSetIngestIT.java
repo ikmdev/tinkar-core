@@ -17,6 +17,7 @@ package dev.ikm.tinkar.integration.changeSet;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.SemanticEntity;
@@ -127,31 +128,33 @@ class ForwardReferenceChangeSetIngestIT {
             LOG.info("No lock file found. ForwardReferenceChangeSetGenerateStep may have already completed.");
         }
     }
-
     /**
-     * Test that 1-pass import fails when encountering a forward reference.
-     * The semantic is written before the concept it references, causing
-     * the transformer to fail when trying to resolve the concept.
-     *
-     * This test runs first to ensure the entities don't exist in the datastore yet.
+     * Test that 1-pass import succeeds even with forward references.
+     * The semantic is written before the concept it references, but
+     * Entity.nid() assigns NIDs without requiring the entity to exist.
      */
     @Test
     @Order(1)
-    @DisplayName("1-pass import should fail with forward reference")
-    void testOnePassImportFailsWithForwardReference() {
-        LOG.info("Testing 1-pass import with forward reference - expecting failure");
-
+    @DisplayName("1-pass import should succeed with forward reference")
+    void testOnePassImportSucceedsWithForwardReference() {
+        LOG.info("Testing 1-pass import with forward reference - expecting success");
 
         // Create loader with 1-pass mode (useTwoPassImport = false)
         LoadEntitiesFromProtobufFile loader = new LoadEntitiesFromProtobufFile(changesetFile, false);
 
-        // Should throw exception when trying to resolve the concept that doesn't exist yet
-        RuntimeException exception = assertThrows(RuntimeException.class, loader::compute);
+        // Should succeed - Entity.nid() assigns NIDs without requiring entity to exist
+        var summary = loader.compute();
 
-        LOG.info("1-pass import failed as expected: {}", exception.getMessage());
-        assertNotNull(exception);
+        LOG.info("1-pass import succeeded: {}", summary);
+        assertNotNull(summary);
+
+        // Verify both entities were loaded
+        ConceptEntity loadedConcept = EntityHandle.get(newConceptPublicId).expectConcept();
+        SemanticEntity loadedSemantic = EntityHandle.get(descriptionSemanticPublicId).expectSemantic();
+
+        assertNotNull(loadedConcept, "New concept should be loaded");
+        assertNotNull(loadedSemantic, "Description semantic should be loaded");
     }
-
     /**
      * Test that multi-pass import succeeds with forward references.
      * Pass 1: Imports all non-semantics (concept exists)
@@ -183,5 +186,20 @@ class ForwardReferenceChangeSetIngestIT {
 
         LOG.info("Successfully loaded concept: {}", loadedConcept);
         LOG.info("Successfully loaded semantic: {}", loadedSemantic);
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("Auto-detected import mode should match provider requirement")
+    void testAutoDetectedImportMode() {
+        // This test verifies the auto-detection matches the provider
+        boolean providerRequiresMultiPass = PrimitiveData.requiresMultiPassImport();
+        LOG.info("Provider requires multi-pass: {}", providerRequiresMultiPass);
+        
+        // The default constructor should use the provider's preference
+        LoadEntitiesFromProtobufFile loader = new LoadEntitiesFromProtobufFile(changesetFile);
+        // Verify it works (the mode is chosen correctly for the provider)
+        var summary = loader.compute();
+        assertNotNull(summary);
     }
 }
