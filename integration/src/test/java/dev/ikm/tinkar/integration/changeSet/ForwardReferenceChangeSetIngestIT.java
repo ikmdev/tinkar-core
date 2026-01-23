@@ -128,31 +128,33 @@ class ForwardReferenceChangeSetIngestIT {
             LOG.info("No lock file found. ForwardReferenceChangeSetGenerateStep may have already completed.");
         }
     }
-
     /**
-     * Test that 1-pass import fails when encountering a forward reference.
-     * The semantic is written before the concept it references, causing
-     * the transformer to fail when trying to resolve the concept.
-     *
-     * This test runs first to ensure the entities don't exist in the datastore yet.
+     * Test that 1-pass import succeeds even with forward references.
+     * The semantic is written before the concept it references, but
+     * Entity.nid() assigns NIDs without requiring the entity to exist.
      */
     @Test
     @Order(1)
-    @DisplayName("1-pass import should fail with forward reference")
-    void testOnePassImportFailsWithForwardReference() {
-        LOG.info("Testing 1-pass import with forward reference - expecting failure");
-
+    @DisplayName("1-pass import should succeed with forward reference")
+    void testOnePassImportSucceedsWithForwardReference() {
+        LOG.info("Testing 1-pass import with forward reference - expecting success");
 
         // Create loader with 1-pass mode (useTwoPassImport = false)
         LoadEntitiesFromProtobufFile loader = new LoadEntitiesFromProtobufFile(changesetFile, false);
 
-        // Should throw exception when trying to resolve the concept that doesn't exist yet
-        RuntimeException exception = assertThrows(RuntimeException.class, loader::compute);
+        // Should succeed - Entity.nid() assigns NIDs without requiring entity to exist
+        var summary = loader.compute();
 
-        LOG.info("1-pass import failed as expected: {}", exception.getMessage());
-        assertNotNull(exception);
+        LOG.info("1-pass import succeeded: {}", summary);
+        assertNotNull(summary);
+
+        // Verify both entities were loaded
+        ConceptEntity loadedConcept = EntityHandle.get(newConceptPublicId).expectConcept();
+        SemanticEntity loadedSemantic = EntityHandle.get(descriptionSemanticPublicId).expectSemantic();
+
+        assertNotNull(loadedConcept, "New concept should be loaded");
+        assertNotNull(loadedSemantic, "Description semantic should be loaded");
     }
-
     /**
      * Test that multi-pass import succeeds with forward references.
      * Pass 1: Imports all non-semantics (concept exists)

@@ -155,9 +155,10 @@ public class TinkarSchemaToEntityTransformer {
         int patternNid = nidForPattern(patternPublicId);
 
 
-        // Hope that the referenced component was created before the semantic and is already in the database.
-        // If not, we'll have to do late binding somehow, or do a two pass...
-        final int referencedComponentNid  = EntityHandle.getEntityOrThrow(referencedComponentPublicId).nid();
+        // For sequential NID providers (single-pass import), we can assign a NID without 
+        // requiring the entity to exist in the database. Entity.nid() will create/retrieve
+        // the NID based on PublicId alone.
+        final int referencedComponentNid = Entity.nid(referencedComponentPublicId);
 
         if (semanticPublicId.uuidCount() > 0) {
             int semanticNid = nidForSemantic(patternPublicId, semanticPublicId);
