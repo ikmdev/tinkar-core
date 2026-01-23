@@ -547,6 +547,17 @@ public class InferredResultsWriter {
 		}
 		
 		if (semanticNids.length == 1) {
+			// Verify the single semantic belongs to the expected pattern
+			SemanticEntity<?> semantic = EntityHandle.getSemanticOrThrow(semanticNids[0]);
+			if (semantic.patternNid() != patternEntity.nid()) {
+				LOG.error("Pattern mismatch! Expected pattern {} but semantic {} has pattern {}. " +
+						"Referenced component: {}. This indicates a data or indexing corruption.",
+						PrimitiveData.textWithNid(patternEntity.nid()),
+						PrimitiveData.textWithNid(semanticNids[0]),
+						PrimitiveData.textWithNid(semantic.patternNid()),
+						PrimitiveData.textWithNid(referencedComponent.nid()));
+				return Optional.empty(); // Don't return mismatched semantic
+			}
 			return Optional.of(semanticNids[0]);
 		}
 		
@@ -555,9 +566,23 @@ public class InferredResultsWriter {
 		
 		int canonicalNid = -1;
 		MutableIntList duplicateNids = IntLists.mutable.empty();
+		MutableIntList wrongPatternNids = IntLists.mutable.empty();
 		
 		for (int semanticNid : semanticNids) {
 			SemanticEntity<?> semantic = EntityHandle.getSemanticOrThrow(semanticNid);
+			
+			// Verify semantic belongs to the expected pattern
+			if (semantic.patternNid() != patternEntity.nid()) {
+				wrongPatternNids.add(semanticNid);
+				LOG.error("Pattern mismatch in multi-semantic lookup! Expected pattern {} but semantic {} has pattern {}. " +
+						"Referenced component: {}",
+						PrimitiveData.textWithNid(patternEntity.nid()),
+						PrimitiveData.textWithNid(semanticNid),
+						PrimitiveData.textWithNid(semantic.patternNid()),
+						PrimitiveData.textWithNid(referencedComponent.nid()));
+				continue; // Skip this semantic - wrong pattern
+			}
+			
 			if (semantic.publicId().contains(canonicalUuid)) {
 				canonicalNid = semanticNid;
 			} else {
@@ -565,7 +590,17 @@ public class InferredResultsWriter {
 			}
 		}
 		
-		// Log the warning about duplicates
+		// Log if we found semantics with wrong patterns
+		if (wrongPatternNids.notEmpty()) {
+			LOG.error("Found {} semantic(s) with WRONG PATTERN for expected pattern {} with component {}. " +
+					"Wrong pattern NIDs: {}. This indicates data or indexing corruption.",
+					wrongPatternNids.size(),
+					PrimitiveData.textWithNid(patternEntity.nid()),
+					PrimitiveData.textWithNid(referencedComponent.nid()),
+					wrongPatternNids.toList());
+		}
+		
+		// Log the warning about duplicates (same pattern, different UUIDs)
 		if (duplicateNids.notEmpty()) {
 			LOG.warn("Found {} duplicate semantic(s) for pattern {} with component {}. " +
 					"Canonical UUID: {}, Canonical NID: {}, Duplicate NIDs: {}. " +
@@ -584,16 +619,26 @@ public class InferredResultsWriter {
 		}
 		
 		// None matched the canonical UUID - this shouldn't happen but handle gracefully
-		// Pick the first one and log a more severe warning
-		LOG.error("No semantic matched the canonical UUID {} for pattern {} and component {}. " +
-				"Using first found semantic (nid: {}). All semantic NIDs: {}",
-				canonicalUuid,
+		// Find first semantic with correct pattern
+		for (int semanticNid : semanticNids) {
+			if (!wrongPatternNids.contains(semanticNid)) {
+				LOG.error("No semantic matched the canonical UUID {} for pattern {} and component {}. " +
+						"Using first found semantic with correct pattern (nid: {}). All semantic NIDs: {}",
+						canonicalUuid,
+						PrimitiveData.text(patternEntity.nid()),
+						PrimitiveData.text(referencedComponent.nid()),
+						semanticNid,
+						Arrays.toString(semanticNids));
+				return Optional.of(semanticNid);
+			}
+		}
+		
+		// All semantics had wrong pattern - return empty
+		LOG.error("All semantics had wrong pattern for pattern {} and component {}. Semantic NIDs: {}",
 				PrimitiveData.text(patternEntity.nid()),
 				PrimitiveData.text(referencedComponent.nid()),
-				semanticNids[0],
 				Arrays.toString(semanticNids));
-		
-		return Optional.of(semanticNids[0]);
+		return Optional.empty();
 	}
 
 }
