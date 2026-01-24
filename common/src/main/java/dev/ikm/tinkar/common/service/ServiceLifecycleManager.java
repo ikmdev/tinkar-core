@@ -389,7 +389,7 @@ public class ServiceLifecycleManager {
                 List<Class<?>> candidates = services.stream()
                         .map(info -> info.serviceClass)
                         .collect(Collectors.toList());
-
+                candidates.sort((o1, o2) -> getServiceName(o1).compareTo(getServiceName(o2)));
                 Class<?> selected = groupSelectionCallback.apply(
                         new GroupSelectionContext(group, candidates));
 
@@ -955,6 +955,15 @@ public class ServiceLifecycleManager {
         return Optional.empty();
     }
     private String getServiceName(Class<?> clazz) {
+        
+        ServiceLifecycle service = discoveredServices.get(clazz);
+        if (service == null) {
+            service = activeServices.get(clazz);
+        }
+        if (service instanceof ProviderController<?> controller) {
+            return controller.getProviderName();
+        }
+
         String canonical = clazz.getCanonicalName();
         if (canonical == null) {
             canonical = clazz.getName(); // fallback for anonymous/local classes
