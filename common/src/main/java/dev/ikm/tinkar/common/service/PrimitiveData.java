@@ -161,19 +161,26 @@ public class PrimitiveData {
     }
 
     public static List<DataServiceController<?>> getControllerOptions() {
-        // Return controllers from ServiceLifecycleManager to ensure we use the same instances
-        // that will be started by the lifecycle manager
         ServiceLifecycleManager lifecycleManager = ServiceLifecycleManager.get();
+
+        // Ensure services are discovered
         if (!lifecycleManager.isDiscovered()) {
             lifecycleManager.discoverServices();
         }
 
-        // Get all DataServiceController instances from lifecycle manager
+        // Filter for DataServiceControllers that belong to the DATA_PROVIDER group
         @SuppressWarnings("unchecked")
         List<DataServiceController<?>> controllers = (List<DataServiceController<?>>) (List<?>)
                 lifecycleManager.getAllServices().stream()
                         .filter(service -> service instanceof DataServiceController)
+                        .filter(service -> {
+                            // Only return controllers that are in the DATA_PROVIDER mutual exclusion group
+                            return service.getMutualExclusionGroup()
+                                    .map(group -> group == ServiceExclusionGroup.DATA_PROVIDER)
+                                    .orElse(false);
+                        })
                         .toList();
+
         return controllers;
     }
 

@@ -41,18 +41,18 @@
         </dependency>
 
         <dependency>
-            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <groupId>dev.ikm.jpms</groupId>
             <artifactId>record-builder-core</artifactId>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
-            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <groupId>dev.ikm.jpms</groupId>
             <artifactId>protobuf-java</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <groupId>dev.ikm.jpms</groupId>
             <artifactId>activej-bytebuf</artifactId>
         </dependency>
 

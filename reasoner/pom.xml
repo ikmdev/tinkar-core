@@ -29,26 +29,6 @@
 		<!-- <versions-maven-plugin.version>2.15.0</versions-maven-plugin.version> -->
 	</properties>
 
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>dev.ikm.hybrid-reasoner</groupId>
-				<artifactId>hybrid-reasoner-snomed</artifactId>
-				<version>${hybrid-reasoner.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>${project.groupId}</groupId>
-				<artifactId>reasoner-elk-snomed</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>dev.ikm.tinkar</groupId>
-				<artifactId>reasoner-service</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
-
 	<build>
 		<pluginManagement>
 			<plugins>

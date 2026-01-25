@@ -1,3 +1,4 @@
+
 /*
  * Copyright © 2015 Integrated Knowledge Management (support@ikm.dev)
  *
@@ -866,8 +867,34 @@ public class ServiceLifecycleManager {
                         entry -> entry.getKey().getGroupName(),
                         entry -> entry.getValue().stream()
                                 .map(info -> getServiceName(info.serviceClass))
+                                .sorted()
                                 .collect(Collectors.toList())
                 ));
+    }
+
+    /**
+     * Returns discovered services for a specific exclusion group, sorted alphabetically by name.
+     * <p>
+     * This is useful for GUI components that need to present service options
+     * for user selection before services are started.
+     * </p>
+     * <p>
+     * Note: Services are sorted by display name for user presentation, not by priority.
+     * Priority is only used for automatic fallback selection when no user choice is made.
+     * </p>
+     *
+     * @param group the mutual exclusion group
+     * @return list of services in the group, sorted alphabetically by service name
+     */
+    public List<ServiceLifecycle> getServicesForGroup(ServiceExclusionGroup group) {
+        List<ServiceInfo> servicesInGroup = mutualExclusionGroups.get(group);
+        if (servicesInGroup == null) {
+            return Collections.emptyList();
+        }
+        return servicesInGroup.stream()
+                .sorted(Comparator.comparing(info -> getServiceName(info.serviceClass)))
+                .map(info -> info.service)
+                .collect(Collectors.toUnmodifiableList());
     }
 
     /**
@@ -910,7 +937,7 @@ public class ServiceLifecycleManager {
         // Allow service lookup during STARTING phase to support service dependencies
         if (state != State.RUNNING && state != State.STARTING) {
             LOG.warn("getRunningService({}) called in state {} - services may not be available",
-                serviceType.getSimpleName(), state);
+                    serviceType.getSimpleName(), state);
             return Optional.empty();
         }
 
@@ -947,21 +974,22 @@ public class ServiceLifecycleManager {
         }
 
         LOG.warn("Service {} not found. Active services: {}. State: {}",
-            serviceType.getSimpleName(),
-            activeServices.keySet().stream()
-                .map(Class::getSimpleName)
-                .collect(java.util.stream.Collectors.joining(", ")),
-            state);
+                serviceType.getSimpleName(),
+                activeServices.keySet().stream()
+                        .map(Class::getSimpleName)
+                        .collect(java.util.stream.Collectors.joining(", ")),
+                state);
         return Optional.empty();
     }
+
     private String getServiceName(Class<?> clazz) {
-        
+
         ServiceLifecycle service = discoveredServices.get(clazz);
         if (service == null) {
             service = activeServices.get(clazz);
         }
-        if (service instanceof ProviderController<?> controller) {
-            return controller.getProviderName();
+        if (service instanceof DataServiceController controller) {
+            return controller.controllerName();
         }
 
         String canonical = clazz.getCanonicalName();

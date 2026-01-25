@@ -10,15 +10,6 @@
 
     <name>TINKAR Language Extension - Binding</name>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>dev.ikm.tinkar</groupId>
-                <artifactId>entity-provider</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>dev.ikm.tinkar</groupId>
