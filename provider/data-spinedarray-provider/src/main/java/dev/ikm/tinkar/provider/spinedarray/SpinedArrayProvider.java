@@ -136,6 +136,11 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening SpinedArrayProvider on thread: {}", Thread.currentThread().getName());
         File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
+        boolean expectEmpty = ServiceProperties.get(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
+        if (expectEmpty) {
+            assertEmptyDataRoot(configuredRoot);
+            ServiceProperties.set(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
+        }
         name = configuredRoot.getName();
         configuredRoot.mkdirs();
         LOG.info("Datastore root: " + configuredRoot.getAbsolutePath());
@@ -206,6 +211,19 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         LOG.info("Opened SpinedArrayProvider in: " + stopwatch.durationString());
         lifecycle.set(Lifecycle.RUNNING);
 
+    }
+
+    private static void assertEmptyDataRoot(File configuredRoot) {
+        if (!configuredRoot.exists()) {
+            return;
+        }
+        if (!configuredRoot.isDirectory()) {
+            throw new IllegalStateException("Configured DATA_STORE_ROOT is not a directory: " + configuredRoot.getAbsolutePath());
+        }
+        String[] entries = configuredRoot.list();
+        if (entries != null && entries.length > 0) {
+            throw new IllegalStateException("Expected empty DATA_STORE_ROOT but found contents: " + configuredRoot.getAbsolutePath());
+        }
     }
 
     @Override
@@ -804,6 +822,14 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         public static final String CONTROLLER_NAME = "Open SpinedArrayStore";
 
         @Override
+        public void setDataUriOption(DataUriOption option) {
+            super.setDataUriOption(option);
+            if (option != null) {
+                ServiceProperties.set(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
+            }
+        }
+
+        @Override
         public String controllerName() {
             return CONTROLLER_NAME;
         }
@@ -818,6 +844,18 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         public static final String CONTROLLER_NAME = "New SpinedArrayStore";
 
         @Override
+        public void setDataUriOption(DataUriOption option) {
+            super.setDataUriOption(option);
+            ServiceProperties.set(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.TRUE);
+        }
+
+        @Override
+        protected SpinedArrayProvider createProvider() throws Exception {
+            ServiceProperties.set(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.TRUE);
+            return new SpinedArrayProvider();
+        }
+
+        @Override
         public String controllerName() {
             return CONTROLLER_NAME;
         }
@@ -828,6 +866,4 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         }
     }
 }
-
-
 

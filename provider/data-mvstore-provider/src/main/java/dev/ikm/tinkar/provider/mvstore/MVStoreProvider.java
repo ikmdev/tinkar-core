@@ -83,6 +83,11 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         LOG.info("Opening MVStoreProvider");
         this.offHeap = new OffHeapStore();
         File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
+        boolean expectEmpty = ServiceProperties.get(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
+        if (expectEmpty) {
+            assertEmptyDataRoot(configuredRoot);
+            ServiceProperties.set(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
+        }
         configuredRoot.mkdirs();
         this.name = configuredRoot.getName();
         File databaseFile = new File(configuredRoot, databaseFileName);
@@ -112,6 +117,19 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         MVStoreProvider.singleton = this;
         stopwatch.stop();
         LOG.info("Opened MVStoreProvider in: " + stopwatch.durationString());
+    }
+
+    private static void assertEmptyDataRoot(File configuredRoot) {
+        if (!configuredRoot.exists()) {
+            return;
+        }
+        if (!configuredRoot.isDirectory()) {
+            throw new IllegalStateException("Configured DATA_STORE_ROOT is not a directory: " + configuredRoot.getAbsolutePath());
+        }
+        String[] entries = configuredRoot.list();
+        if (entries != null && entries.length > 0) {
+            throw new IllegalStateException("Expected empty DATA_STORE_ROOT but found contents: " + configuredRoot.getAbsolutePath());
+        }
     }
 
     public boolean addToElementSet(int patternNid, int elementNid) {
@@ -418,6 +436,7 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
             super.setDataUriOption(option);
             if (option != null) {
                 ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, option.toFile());
+                ServiceProperties.set(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
             }
         }
 
@@ -510,6 +529,19 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
                     throw new UncheckedIOException(e);
                 }
             }
+        }
+
+        @Override
+        protected MVStoreProvider createProvider() throws Exception {
+            File rootFolder = new File(System.getProperty("user.home"), "Solor");
+            String folderName = providerProperties.get(NEW_FOLDER_PROPERTY);
+            if (folderName == null || folderName.isBlank()) {
+                throw new IllegalStateException("New folder name not set for New MV Store");
+            }
+            File dataDirectory = new File(rootFolder, folderName);
+            ServiceProperties.set(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.TRUE);
+            ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, dataDirectory);
+            return new MVStoreProvider();
         }
 
         @Override
