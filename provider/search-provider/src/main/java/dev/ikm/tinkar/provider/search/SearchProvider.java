@@ -148,6 +148,8 @@ public class SearchProvider implements SearchService {
             return;
         }
         indexer.index(object);
+        // Ensure the NRT searcher sees the new document immediately.
+        Searcher.refreshAfterIndex();
     }
 
     @Override
@@ -161,13 +163,13 @@ public class SearchProvider implements SearchService {
 
     @Override
     public PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception {
-        LOG.debug("SearchProvider.search() called with query='{}', maxResultSize={}", query, maxResultSize);
+        LOG.info("SearchProvider.search() called with query='{}', maxResultSize={}", query, maxResultSize);
         if (closed.get()) {
             LOG.error("SearchProvider is closed, cannot perform search");
             throw new IllegalStateException("SearchProvider is closed");
         }
         PrimitiveDataSearchResult[] results = searcher.search(query, maxResultSize);
-        LOG.debug("SearchProvider.search() returning {} results", results != null ? results.length : 0);
+        LOG.info("SearchProvider.search() returning {} results", results != null ? results.length : 0);
         return results;
     }
 

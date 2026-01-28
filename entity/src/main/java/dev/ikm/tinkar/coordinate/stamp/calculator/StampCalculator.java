@@ -425,6 +425,7 @@ public interface StampCalculator {
         PrimitiveDataSearchResult[] primitiveResults = PrimitiveData.get().search(query, maxResultSize);
         final MutableIntObjectMap<LatestVersionSearchResult> semanticNidSearchResultMap = IntObjectMaps.mutable.ofInitialCapacity(primitiveResults.length);
         final AtomicInteger duplicates = new AtomicInteger();
+        final AtomicInteger missingLatest = new AtomicInteger();
         for (PrimitiveDataSearchResult primitiveResult : primitiveResults) {
             if (semanticNidSearchResultMap.containsKey(primitiveResult.nid())) {
                 duplicates.incrementAndGet();
@@ -438,13 +439,18 @@ public interface StampCalculator {
                 }
             } else {
                 Latest<SemanticEntityVersion> latestVersion = latest(primitiveResult.nid());
-                latestVersion.ifPresent(semanticVersion -> semanticNidSearchResultMap.put(primitiveResult.nid(),
-                        new LatestVersionSearchResult(latestVersion, primitiveResult.fieldIndex(), primitiveResult.score(),
-                                primitiveResult.highlightedString())));
+                if (latestVersion.isPresent()) {
+                    semanticNidSearchResultMap.put(primitiveResult.nid(),
+                            new LatestVersionSearchResult(latestVersion, primitiveResult.fieldIndex(), primitiveResult.score(),
+                                    primitiveResult.highlightedString()));
+                } else {
+                    missingLatest.incrementAndGet();
+                }
             }
         }
         ImmutableList<LatestVersionSearchResult> filteredResults = Lists.immutable.ofAll(semanticNidSearchResultMap.values());
-        LOG.debug("Removed " + duplicates.intValue() + " duplicates. Latest result count: " + filteredResults.size());
+        LOG.info("Search '{}': primitive hits={}, filtered duplicates={}, missing-latest={}, final results={}",
+                query, primitiveResults.length, duplicates.intValue(), missingLatest.intValue(), filteredResults.size());
         return filteredResults;
     }
 

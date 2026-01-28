@@ -30,6 +30,7 @@ import dev.ikm.tinkar.component.Version;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.entity.transaction.Transaction;
+import dev.ikm.tinkar.entity.EntityStringUtil;
 import dev.ikm.tinkar.terms.ComponentWithNid;
 import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityFacade;
@@ -657,4 +658,12 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      * @param stampNids array of stamp NIDs to check for uncommitted stamps
      */
     void listAndCancelUncommittedStamps(int[] stampNids);
+
+    default String recursiveEntityToString(int nid) {
+        return EntityStringUtil.recursiveEntityToString(nid);
+    }
+
+    default String recursiveEntityToString(EntityFacade entityFacade) {
+        return EntityStringUtil.recursiveEntityToString(entityFacade);
+    }
 }

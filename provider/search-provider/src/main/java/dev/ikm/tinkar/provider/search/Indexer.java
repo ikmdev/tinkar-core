@@ -174,11 +174,17 @@ public class Indexer {
                                 document.add(fieldIndexField);
                             }
                         }
+                        LOG.info("Indexing semantic nid={} rcNid={} patternNid={} fieldIndex={} text='{}'",
+                                semanticEntity.nid(), semanticEntity.referencedComponentNid(), semanticEntity.patternNid(), i, text);
                     }
                 }
             }
             try {
                 long addSequence = indexWriter.addDocument(document);
+                // Ensure the segment is published for NRT readers promptly.
+                indexWriter.flush();
+                LOG.info("Indexed nid={} rcNid={} patternNid={} docSeq={}", semanticEntity.nid(),
+                        semanticEntity.referencedComponentNid(), semanticEntity.patternNid(), addSequence);
             } catch (IOException e) {
                 LOG.error("Exception writing: " + object);
             }

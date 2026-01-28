@@ -557,13 +557,14 @@ public class InferredResultsWriter {
 			return nnf;
 		}
 		Latest<DiTreeEntity> statedTree = rs.getViewCalculator().getAxiomTreeForEntity(conceptNid, PremiseType.STATED);
+		String recursiveEntity = EntityStringUtil.recursiveEntityToString(conceptNid);
 		if (statedTree.isPresent()) {
-			LOG.warn("No necessary normal form for concept nid={} ({}) when {}; using stated axioms fallback",
-					conceptNid, PrimitiveData.text(conceptNid), context);
+			LOG.warn("No necessary normal form for concept nid={} ({}) when {}; using stated axioms fallback. Entity detail:\n{}",
+					conceptNid, PrimitiveData.text(conceptNid), context, recursiveEntity);
 			return new LogicalExpression(statedTree.get());
 		}
-		LOG.warn("No necessary normal form for concept nid={} ({}) when {}; stated axioms missing",
-				conceptNid, PrimitiveData.text(conceptNid), context);
+		LOG.warn("No necessary normal form for concept nid={} ({}) when {}; stated axioms missing. Entity detail:\n{}",
+				conceptNid, PrimitiveData.text(conceptNid), context, recursiveEntity);
 		return null;
 	}
 
