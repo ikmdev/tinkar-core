@@ -17,7 +17,19 @@
 			<groupId>${project.groupId}</groupId>
 			<artifactId>terms</artifactId>
 		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>dev.ikm.tinkar</groupId>
+            <artifactId>common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.collections</groupId>
+            <artifactId>eclipse-collections-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.collections</groupId>
+            <artifactId>eclipse-collections</artifactId>
+        </dependency>
+    </dependencies>
 
 	<build>
         <plugins>

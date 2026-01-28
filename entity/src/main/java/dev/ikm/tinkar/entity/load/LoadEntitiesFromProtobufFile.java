@@ -22,6 +22,7 @@ import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.id.impl.NidCodec6;
 import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.ServiceLifecycleManager;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.common.util.io.CountingInputStream;
 import dev.ikm.tinkar.coordinate.Coordinates;
@@ -313,6 +314,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             } catch (Exception e) {
                 LOG.error("Encountered exception {}", e.getMessage());
             }
+            commitSearchIndexIfAvailable();
             updateMessage("In " + durationString());
             updateProgress(1, 1);
         }
@@ -385,6 +387,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             } catch (Exception e) {
                 LOG.error("Encountered exception {}", e.getMessage());
             }
+            commitSearchIndexIfAvailable();
             updateMessage("In " + durationString());
             updateProgress(1, 1);
         }
@@ -457,6 +460,24 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                 importPatternCount.get(),
                 importStampCount.get()
         );
+    }
+
+    private static void commitSearchIndexIfAvailable() {
+        try {
+            Class<?> searchServiceClass = Class.forName("dev.ikm.tinkar.provider.search.SearchService");
+            @SuppressWarnings("unchecked")
+            Optional<Object> searchService = (Optional<Object>) ServiceLifecycleManager.get()
+                    .getRunningService((Class) searchServiceClass);
+            searchService.ifPresent(service -> {
+                try {
+                    service.getClass().getMethod("commit").invoke(service);
+                } catch (Exception e) {
+                    LOG.warn("Failed to commit Lucene index after import", e);
+                }
+            });
+        } catch (ClassNotFoundException e) {
+            LOG.debug("SearchService not available on classpath; skipping index commit");
+        }
     }
 
     private long analyzeManifest(Map<PublicId, String> manifestEntryData) {

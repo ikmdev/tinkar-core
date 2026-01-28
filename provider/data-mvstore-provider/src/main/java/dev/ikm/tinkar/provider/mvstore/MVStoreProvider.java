@@ -442,7 +442,31 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
 
         @Override
         public boolean isValidDataLocation(String name) {
-            return name.equals("mvstore.dat");
+            File rootFolder = new File(System.getProperty("user.home"), "Solor");
+            File checkDir = new File(rootFolder, name);
+            if (checkDir.exists() && checkDir.isDirectory()) {
+                File storeFile = new File(checkDir, databaseFileName);
+                return storeFile.exists() && storeFile.isFile();
+            }
+            return false;
+        }
+
+        @Override
+        public List<DataUriOption> providerOptions() {
+            List<DataUriOption> dataUriOptions = new ArrayList<>();
+            File rootFolder = new File(System.getProperty("user.home"), "Solor");
+            if (!rootFolder.exists()) {
+                rootFolder.mkdirs();
+            }
+            File[] files = rootFolder.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    if (f.isDirectory() && isValidDataLocation(f.getName())) {
+                        dataUriOptions.add(new DataUriOption(f.getName(), f.toURI()));
+                    }
+                }
+            }
+            return dataUriOptions;
         }
 
         @Override
@@ -551,16 +575,15 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
             File dataDirectory = new File(rootFolder, providerProperties.get(NEW_FOLDER_PROPERTY));
             ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, dataDirectory);
 
-            // Load data from file if specified
+            // Queue data file for loading in DATA_LOAD phase (don't load it now)
             if (importDataFileString != null) {
-                ServiceLoader<LoadDataFromFileController> controllerFinder =
-                        PluggableService.load(LoadDataFromFileController.class);
-                LoadDataFromFileController loader = controllerFinder.findFirst()
-                        .orElseThrow(() -> new IllegalStateException("No LoadDataFromFileController found"));
-                Future<EntityCountSummary> loadFuture =
-                        (Future<EntityCountSummary>) loader.load(new File(importDataFileString));
-                EntityCountSummary entityCountSummary = loadFuture.get();
-                LOG.info("Loaded data: " + entityCountSummary);
+                File importFile = new File(importDataFileString);
+                LOG.info("Queueing starter data for deferred import: {}", importFile.getName());
+                dev.ikm.tinkar.entity.load.DataLoadProvider dataLoadService =
+                        dev.ikm.tinkar.entity.load.DataLoadProvider.get();
+                dataLoadService.addFile(importFile);
+            } else {
+                LOG.warn("No import file specified - creating empty database");
             }
         }
 

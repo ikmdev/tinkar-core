@@ -18,8 +18,12 @@ package dev.ikm.tinkar.reasoner.service;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.terms.PatternFacade;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class ReasonerServiceBase implements ReasonerService {
+
+	private static final Logger LOG = LoggerFactory.getLogger(ReasonerServiceBase.class);
 
 	protected ViewCalculator viewCalculator;
 
@@ -48,6 +52,25 @@ public abstract class ReasonerServiceBase implements ReasonerService {
 		this.viewCalculator = viewCalculator;
 		this.statedAxiomPattern = statedAxiomPattern;
 		this.inferredAxiomPattern = inferredAxiomPattern;
+		if (viewCalculator != null) {
+			var viewRecord = viewCalculator.viewCoordinateRecord();
+			if (viewRecord != null && viewRecord.stampCoordinate() != null) {
+				var stamp = viewRecord.stampCoordinate();
+				LOG.info("Reasoner init view coordinate: {}", viewRecord);
+				LOG.info("Reasoner stamp position time={}, pathNid={}, allowedStates={}, moduleNids={}, excludedModuleNids={}, modulePriorityNids={}",
+						stamp.stampPosition().time(),
+						stamp.stampPosition().pathForPositionNid(),
+						stamp.allowedStates(),
+						stamp.moduleNids(),
+						stamp.excludedModuleNids(),
+						stamp.modulePriorityNidList());
+			} else {
+				LOG.info("Reasoner init view coordinate unavailable");
+			}
+		}
+		LOG.info("Reasoner patterns: statedPatternNid={}, inferredPatternNid={}",
+				statedAxiomPattern.nid(),
+				inferredAxiomPattern.nid());
 	}
 
 	@Override

@@ -7,6 +7,7 @@ import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.time.MultipleEndpointTimer;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
+import dev.ikm.tinkar.coordinate.logic.PremiseType;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
@@ -65,6 +66,9 @@ public class InferredResultsWriter {
 	private ConcurrentHashSet<ImmutableIntList> equivalentSets;
 
 	private AtomicInteger axiomDataNotFoundCounter;
+	private AtomicInteger emptyParentCount;
+	private AtomicInteger emptyChildCount;
+	private int rootConceptNid;
 
 	private final TrackingCallable<?> progressUpdater;
 
@@ -177,6 +181,7 @@ public class InferredResultsWriter {
 	}
 	public ClassifierResults write() {
 		ImmutableIntList conceptsToUpdate = rs.getReasonerConceptSet();
+		LOG.info("Reasoner concept set size: {}", conceptsToUpdate.size());
 		MutableIntList conceptsWithInferredChanges = IntLists.mutable.withInitialCapacity(conceptsToUpdate.size());
 		MutableIntList conceptsWithNavigationChanges = IntLists.mutable.withInitialCapacity(conceptsToUpdate.size());
 
@@ -197,6 +202,9 @@ public class InferredResultsWriter {
 			multipleEndpointTimer = new MultipleEndpointTimer<>(IsomorphicResults.EndPoints.class);
 			equivalentSets = new ConcurrentHashSet<>();
 			axiomDataNotFoundCounter = new AtomicInteger();
+			emptyParentCount = new AtomicInteger();
+			emptyChildCount = new AtomicInteger();
+			rootConceptNid = getViewCoordinateRecord().logicCoordinate().rootNid();
 
 			// Create more chunks than cores for work stealing
 			int chunkSize = PrimitiveData.calculateOptimalChunkSize(conceptsToUpdate.size());
@@ -304,6 +312,8 @@ public class InferredResultsWriter {
 			LOG.info("Concepts needing new inferred semantics: " + String.format("%,d", noInferredSemanticConcepts.size()));
 			LOG.info("Navigation semantics to update: " + String.format("%,d", navigationSemanticNids.size()));
 			LOG.info("Concepts needing new navigation semantics: " + String.format("%,d", noNavigationSemanticConcepts.size()));
+			logSampleConcepts("Concepts missing inferred semantics (sample)", noInferredSemanticConcepts, 10);
+			logSampleConcepts("Concepts missing navigation semantics (sample)", noNavigationSemanticConcepts, 10);
 
 			try {
 				progressUpdater.updateMessage("Processing updates to inferred semantics");
@@ -392,6 +402,9 @@ public class InferredResultsWriter {
 		LOG.info("Inferred changes: " + conceptsWithInferredChanges.size());
 		LOG.info("Navigation changes: " + conceptsWithNavigationChanges.size());
 		LOG.info("NavigationSemantics processed not in AxiomData: " + axiomDataNotFoundCounter.get());
+		if (emptyChildCount != null) {
+			LOG.info("Empty child sets observed: {}", emptyChildCount.get());
+		}
 		ViewCoordinateRecord commitCoordinate = getViewCoordinateRecord().withStampCoordinate(
 				getViewCoordinateRecord().stampCoordinate().withStampPositionTime(updateTransaction.commitTime()));
 
@@ -428,7 +441,11 @@ public class InferredResultsWriter {
 		Objects.nonNull(semanticEntity);
 		Latest<SemanticEntityVersion> latestInferredSemantic = (Latest<SemanticEntityVersion>) rs.getViewCalculator()
 				.latest(semanticEntity);
-		LogicalExpression nnf = rs.getNecessaryNormalForm(semanticEntity.referencedComponentNid());
+		LogicalExpression nnf = getNecessaryNormalFormOrStated(semanticEntity.referencedComponentNid(),
+				"updating inferred semantic nid=" + semanticEntity.nid());
+		if (nnf == null) {
+			return;
+		}
 		boolean same = true;
 		if (latestInferredSemantic.isPresent()) {
 			ImmutableList<Object> latestInferredFields = latestInferredSemantic.get().fieldValues();
@@ -445,7 +462,10 @@ public class InferredResultsWriter {
 	}
 
 	public void newNNF(ConceptEntity concept) {
-		LogicalExpression nnf = rs.getNecessaryNormalForm(concept.nid());
+		LogicalExpression nnf = getNecessaryNormalFormOrStated(concept.nid(), "creating inferred semantic");
+		if (nnf == null) {
+			return;
+		}
 		ImmutableList<Object> fields = Lists.immutable.of(nnf.sourceGraph());
 		UUID inferredSemanticUuid = UuidT5Generator.singleSemanticUuid(inferredPattern,
 				concept.publicId());
@@ -474,6 +494,7 @@ public class InferredResultsWriter {
 			childNids = IntSets.immutable.of();
 			axiomDataNotFoundCounter.incrementAndGet();
 		}
+		logEmptyNavigationSets(semanticEntity.referencedComponentNid(), parentNids, childNids);
 		Latest<SemanticEntityVersion> latestInferredNavigationSemantic = rs.getViewCalculator()
 				.latest((Entity<SemanticEntityVersion>) semanticEntity);
 		boolean navigationChanged = true;
@@ -508,6 +529,7 @@ public class InferredResultsWriter {
 		if (childNids == null) {
 			childNids = IntSets.immutable.of();
 		}
+		logEmptyNavigationSets(concept.nid(), parentNids, childNids);
 		if (parentNids.notEmpty() || childNids.notEmpty()) {
 			// Create a new semantic...
 			RecordListBuilder<SemanticVersionRecord> versionRecords = RecordListBuilder.make();
@@ -526,6 +548,46 @@ public class InferredResultsWriter {
 			versionRecords.add(new SemanticVersionRecord(navigationRecord, updateStampNid,
 					Lists.immutable.of(childrenIds, parentIds)));
 			processSemantic(navigationRecord);
+		}
+	}
+
+	private LogicalExpression getNecessaryNormalFormOrStated(int conceptNid, String context) {
+		LogicalExpression nnf = rs.getNecessaryNormalForm(conceptNid);
+		if (nnf != null) {
+			return nnf;
+		}
+		Latest<DiTreeEntity> statedTree = rs.getViewCalculator().getAxiomTreeForEntity(conceptNid, PremiseType.STATED);
+		if (statedTree.isPresent()) {
+			LOG.warn("No necessary normal form for concept nid={} ({}) when {}; using stated axioms fallback",
+					conceptNid, PrimitiveData.text(conceptNid), context);
+			return new LogicalExpression(statedTree.get());
+		}
+		LOG.warn("No necessary normal form for concept nid={} ({}) when {}; stated axioms missing",
+				conceptNid, PrimitiveData.text(conceptNid), context);
+		return null;
+	}
+
+	private void logEmptyNavigationSets(int conceptNid, ImmutableIntSet parentNids, ImmutableIntSet childNids) {
+		if (parentNids.isEmpty()) {
+			int count = emptyParentCount.incrementAndGet();
+			if (conceptNid == rootConceptNid) {
+				LOG.warn("Empty parent set for root concept nid={} ({})", conceptNid, PrimitiveData.text(conceptNid));
+			} else if (count > 1) {
+				LOG.error("Multiple concepts with empty parent sets. Count={}, latest nid={} ({}), rootNid={} ({})",
+						count, conceptNid, PrimitiveData.text(conceptNid), rootConceptNid,
+						PrimitiveData.text(rootConceptNid));
+			} else {
+				LOG.error("Empty parent set for non-root concept nid={} ({}), rootNid={} ({})",
+						conceptNid, PrimitiveData.text(conceptNid), rootConceptNid,
+						PrimitiveData.text(rootConceptNid));
+			}
+		}
+		if (childNids.isEmpty()) {
+			int count = emptyChildCount.incrementAndGet();
+			if (count <= 5 && LOG.isDebugEnabled()) {
+				LOG.debug("Empty child set for concept nid={} ({}). Empty child count={}",
+						conceptNid, PrimitiveData.text(conceptNid), count);
+			}
 		}
 	}
 
@@ -639,6 +701,22 @@ public class InferredResultsWriter {
 				PrimitiveData.text(referencedComponent.nid()),
 				Arrays.toString(semanticNids));
 		return Optional.empty();
+	}
+
+	private void logSampleConcepts(String label, MutableIntList nids, int maxSamples) {
+		if (nids.isEmpty()) {
+			return;
+		}
+		StringBuilder sample = new StringBuilder();
+		int limit = Math.min(maxSamples, nids.size());
+		for (int i = 0; i < limit; i++) {
+			int nid = nids.get(i);
+			if (sample.length() > 0) {
+				sample.append(", ");
+			}
+			sample.append(nid).append(":").append(PrimitiveData.text(nid));
+		}
+		LOG.info("{}: {}", label, sample);
 	}
 
 }

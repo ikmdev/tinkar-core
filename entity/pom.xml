@@ -14,48 +14,39 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>terms</artifactId>
         </dependency>
-
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>collection</artifactId>
         </dependency>
-
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>common</artifactId>
         </dependency>
-
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>component</artifactId>
         </dependency>
-
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>tinkar-schema</artifactId>
         </dependency>
-
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
         </dependency>
-
         <dependency>
             <groupId>dev.ikm.jpms</groupId>
             <artifactId>record-builder-core</artifactId>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>dev.ikm.jpms</groupId>
             <artifactId>protobuf-java</artifactId>
         </dependency>
-
         <dependency>
             <groupId>dev.ikm.jpms</groupId>
             <artifactId>activej-bytebuf</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.jgrapht</groupId>
             <artifactId>jgrapht-core</artifactId>
@@ -65,6 +56,12 @@
                     <artifactId>jheaps</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency><groupId>org.eclipse.collections</groupId>
+            <artifactId>eclipse-collections-api</artifactId>
+        </dependency>
+        <dependency><groupId>org.eclipse.collections</groupId>
+            <artifactId>eclipse-collections</artifactId>
         </dependency>
         <dependency>
             <groupId>dev.ikm.jpms</groupId>
@@ -79,7 +76,6 @@
             <artifactId>jackson-databind</artifactId>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>

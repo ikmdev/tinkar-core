@@ -299,21 +299,20 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
 
         @Override
         protected void initializeProvider(ProviderEphemeral provider) throws Exception {
-            // Load data from file if specified
+            // Queue data file for loading in DATA_LOAD phase (don't load it now)
             if (importDataFileString != null) {
                 try {
                     loading.set(true);
-                    ServiceLoader<LoadDataFromFileController> controllerFinder =
-                            PluggableService.load(LoadDataFromFileController.class);
-                    LoadDataFromFileController loader = controllerFinder.findFirst()
-                            .orElseThrow(() -> new IllegalStateException("No LoadDataFromFileController found"));
-                    Future<dev.ikm.tinkar.common.service.EntityCountSummary> loadFuture =
-                            (Future<EntityCountSummary>) loader.load(new File(importDataFileString));
-                    EntityCountSummary entityCountSummary = loadFuture.get();
-                    LOG.info("Loaded ephemeral data: " + entityCountSummary);
+                    File importFile = new File(importDataFileString);
+                    LOG.info("Queueing starter data for deferred import: {}", importFile.getName());
+                    dev.ikm.tinkar.entity.load.DataLoadProvider dataLoadService =
+                            dev.ikm.tinkar.entity.load.DataLoadProvider.get();
+                    dataLoadService.addFile(importFile);
                 } finally {
                     loading.set(false);
                 }
+            } else {
+                LOG.warn("No import file specified - creating empty database");
             }
         }
 
