@@ -72,7 +72,7 @@ public class Searcher {
         try {
             // Block to ensure the next search sees newly indexed docs.
             searcherManager.maybeRefreshBlocking();
-            LOG.info("Refreshed SearcherManager after indexing");
+            LOG.debug("Refreshed SearcherManager after indexing");
         } catch (IOException e) {
             LOG.warn("Unable to refresh searcher after indexing", e);
         }
