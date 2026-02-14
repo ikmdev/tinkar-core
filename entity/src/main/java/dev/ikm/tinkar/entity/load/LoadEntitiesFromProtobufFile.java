@@ -470,13 +470,17 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                     .getRunningService((Class) searchServiceClass);
             searchService.ifPresent(service -> {
                 try {
-                    service.getClass().getMethod("commit").invoke(service);
+                    // Recreate the index in batch after import (indexing is skipped during load phase).
+                    Object future = service.getClass().getMethod("recreateIndex").invoke(service);
+                    if (future instanceof java.util.concurrent.CompletableFuture<?> cf) {
+                        cf.get();
+                    }
                 } catch (Exception e) {
-                    LOG.warn("Failed to commit Lucene index after import", e);
+                    LOG.warn("Failed to recreate Lucene index after import", e);
                 }
             });
         } catch (ClassNotFoundException e) {
-            LOG.debug("SearchService not available on classpath; skipping index commit");
+            LOG.debug("SearchService not available on classpath; skipping index rebuild");
         }
     }
 

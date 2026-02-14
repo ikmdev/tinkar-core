@@ -545,11 +545,13 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     @Override
     public void beginLoadPhase() {
         loadPhase = true;
+        PrimitiveData.get().setLoadPhase(true);
     }
 
     @Override
     public void endLoadPhase() {
         loadPhase = false;
+        PrimitiveData.get().setLoadPhase(false);
         processor.dispatch(Integer.MIN_VALUE);
     }
 

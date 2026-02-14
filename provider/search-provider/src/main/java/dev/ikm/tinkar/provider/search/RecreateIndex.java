@@ -108,6 +108,7 @@ public class RecreateIndex extends TrackingCallable<Void> {
         updateProgress(-1,1);
 
         EntityService.get().beginLoadPhase();
+        this.indexer.setBulkMode(true);
         try {
             LongAdder totalEntities = new LongAdder();
             LongAdder processedEntities = new LongAdder();
@@ -192,6 +193,7 @@ public class RecreateIndex extends TrackingCallable<Void> {
                     String.format("%,d", indexedEntities.longValue()));
 
         } finally {
+            this.indexer.setBulkMode(false);
             EntityService.get().endLoadPhase();
         }
 

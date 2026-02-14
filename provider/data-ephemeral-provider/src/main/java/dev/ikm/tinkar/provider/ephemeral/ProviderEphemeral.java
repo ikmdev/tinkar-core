@@ -65,6 +65,7 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     private final ConcurrentHashMap<UUID, Integer> uuidNidMap = new ConcurrentHashMap<>();
     private final AtomicInteger nextNid = new AtomicInteger(PrimitiveDataService.FIRST_NID);
     final StableValue<SearchService> searchService = StableValue.of();
+    private volatile boolean loadPhase = false;
 
     private ProviderEphemeral() {
         LOG.info("Constructing ProviderEphemeral");
@@ -170,12 +171,15 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
         byte[] mergedBytes = nidComponentMap.merge(nid, value, PrimitiveDataService::merge);
         writeSequence.increment();
 
-        // Delegate indexing to SearchProvider
-        try {
-            getSearchService().index(sourceObject);
-        } catch (Exception e) {
-            // Search service may not be available yet during startup
-            LOG.debug("SearchService not available for indexing", e);
+        // Delegate indexing to SearchProvider.
+        // Skip during load phase (import) — RecreateIndex will build the index in batch afterward.
+        if (!loadPhase) {
+            try {
+                getSearchService().index(sourceObject);
+            } catch (Exception e) {
+                // Search service may not be available yet during startup
+                LOG.debug("SearchService not available for indexing", e);
+            }
         }
 
         return mergedBytes;
@@ -192,6 +196,11 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     @Override
     public PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception {
         return getSearchService().search(query, maxResultSize);
+    }
+
+    @Override
+    public void setLoadPhase(boolean loadPhase) {
+        this.loadPhase = loadPhase;
     }
 
     @Override

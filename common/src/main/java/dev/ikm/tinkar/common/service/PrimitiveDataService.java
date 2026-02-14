@@ -543,6 +543,15 @@ public interface PrimitiveDataService {
         return false;  // Default: sequential NID providers don't need multi-pass
     }
 
+    /**
+     * Signals the data provider to suppress per-entity indexing.
+     * Set to {@code true} before bulk import and {@code false} after,
+     * so that the index can be rebuilt in a single batch pass.
+     */
+    default void setLoadPhase(boolean loadPhase) {
+        // Default no-op for providers that don't index inline.
+    }
+
     class CacheProvider implements CachingService {
 
         @Override

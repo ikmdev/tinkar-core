@@ -84,6 +84,17 @@ public class Indexer {
         return indexReader;
     }
 
+    /**
+     * When true, skip per-document flush in {@link #index(Object)}.
+     * Set this during bulk operations like {@link RecreateIndex} where
+     * the caller manages commits/flushes in batches.
+     */
+    private boolean bulkMode = false;
+
+    public void setBulkMode(boolean bulkMode) {
+        this.bulkMode = bulkMode;
+    }
+
     public Indexer(Path indexPath) throws IOException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening lucene indexer");
@@ -181,8 +192,11 @@ public class Indexer {
             }
             try {
                 long addSequence = indexWriter.addDocument(document);
-                // Ensure the segment is published for NRT readers promptly.
-                indexWriter.flush();
+                if (!bulkMode) {
+                    // Ensure the segment is published for NRT readers promptly.
+                    // Skipped during bulk indexing where the caller commits in batches.
+                    indexWriter.flush();
+                }
                 LOG.debug("Indexed nid={} rcNid={} patternNid={} docSeq={}", semanticEntity.nid(),
                         semanticEntity.referencedComponentNid(), semanticEntity.patternNid(), addSequence);
             } catch (IOException e) {
