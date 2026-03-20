@@ -1,0 +1,129 @@
+syntax = "proto3";
+
+package dev.ikm.tinkar.service;
+
+import "Tinkar.proto";
+
+option java_multiple_files = true;
+option java_package = "dev.ikm.tinkar.service.proto";
+option java_outer_classname = "IkeAdminProto";
+
+/*
+ * Tier 3: Admin / Data Management
+ *
+ * Operations for importing changesets, exporting entity data,
+ * and running the reasoner classification pipeline.
+ * Target audience: platform operators, DevOps, CI/CD pipelines.
+ */
+
+// ── Import ──────────────────────────────────────────────────────────
+
+// Import a Tinkar changeset (protobuf ZIP file).
+message ImportChangesetRequest {
+  /*
+   * Raw bytes of the ZIP file containing delimited TinkarMsg protobuf + manifest.
+   */
+  bytes changeset_data = 1;
+
+  /*
+   * If true, use multi-pass import to resolve forward references (default behavior).
+   * If false, use single-pass import (faster, but fails on forward references).
+   */
+  bool use_multi_pass = 2;
+}
+
+// Summary of entity counts from an import or export operation.
+message EntityCountSummaryProto {
+  int64 concepts_count = 1;
+  int64 semantics_count = 2;
+  int64 patterns_count = 3;
+  int64 stamps_count = 4;
+  int64 total_count = 5;
+}
+
+message ImportChangesetResponse {
+  bool success = 1;
+  string error_message = 2;
+  EntityCountSummaryProto entity_counts = 3;
+}
+
+// ── Export ───────────────────────────────────────────────────────────
+
+// Export type selection.
+enum ExportType {
+  FULL = 0;       // Export all entities (default)
+  TEMPORAL = 1;   // Export entities modified within a time range
+  MEMBERSHIP = 2; // Export entities matching membership tags
+}
+
+message ExportEntitiesRequest {
+  /*
+   * Type of export to perform. Default: FULL.
+   */
+  ExportType export_type = 1;
+
+  /*
+   * For TEMPORAL export: start time as epoch milliseconds (inclusive).
+   */
+  int64 from_epoch_millis = 2;
+
+  /*
+   * For TEMPORAL export: end time as epoch milliseconds (inclusive).
+   */
+  int64 to_epoch_millis = 3;
+
+  /*
+   * For MEMBERSHIP export: list of tag PublicIds.
+   */
+  repeated dev.ikm.tinkar.schema.PublicId membership_tags = 4;
+}
+
+message ExportEntitiesResponse {
+  bool success = 1;
+  string error_message = 2;
+  EntityCountSummaryProto entity_counts = 3;
+  /*
+   * Raw bytes of the exported ZIP file.
+   */
+  bytes export_data = 4;
+}
+
+// ── Reasoner ────────────────────────────────────────────────────────
+
+message RunReasonerRequest {
+  // Currently no parameters needed — uses server defaults.
+  // Future: could accept coordinate overrides, specific reasoner name, etc.
+}
+
+// Summary of classification results.
+message ReasonerResultsProto {
+  int32 classified_concept_count = 1;
+  int32 inferred_changes_count = 2;
+  int32 navigation_changes_count = 3;
+  int32 equivalent_sets_count = 4;
+  int32 cycles_count = 5;
+  int32 orphans_count = 6;
+}
+
+message RunReasonerResponse {
+  bool success = 1;
+  string error_message = 2;
+  ReasonerResultsProto results = 3;
+  /*
+   * Duration of the reasoner pipeline in milliseconds.
+   */
+  int64 duration_ms = 4;
+}
+
+// ── Service ─────────────────────────────────────────────────────────
+
+service IkeAdmin {
+  // Import a changeset (protobuf ZIP file).
+  rpc ImportChangeset(ImportChangesetRequest) returns (ImportChangesetResponse);
+
+  // Export entities to a protobuf ZIP file.
+  rpc ExportEntities(ExportEntitiesRequest) returns (ExportEntitiesResponse);
+
+  // Run the full reasoner classification pipeline.
+  rpc RunReasoner(RunReasonerRequest) returns (RunReasonerResponse);
+}
