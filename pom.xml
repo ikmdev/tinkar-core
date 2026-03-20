@@ -58,6 +58,7 @@
         <subproject>events</subproject>
         <subproject>plugin-service-loader</subproject>
         <subproject>tinkar-bom</subproject>
+        <subproject>service</subproject>
     </subprojects>
 
     <distributionManagement>
