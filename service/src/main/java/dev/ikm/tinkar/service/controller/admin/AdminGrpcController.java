@@ -87,61 +87,6 @@ public class AdminGrpcController extends IkeAdminGrpc.IkeAdminImplBase {
     }
 
     @Override
-    public void exportEntities(ExportEntitiesRequest request,
-            StreamObserver<ExportEntitiesResponse> responseObserver) {
-        log.info("IkeAdmin exportEntities request (type={})", request.getExportType());
-
-        File tempFile = null;
-        try {
-            tempFile = Files.createTempFile("tinkar-export-", ".zip").toFile();
-
-            EntityCountSummaryResponse result = switch (request.getExportType()) {
-                case TEMPORAL -> tinkarService.exportEntities(tempFile,
-                        request.getFromEpochMillis(), request.getToEpochMillis());
-                case MEMBERSHIP -> {
-                    List<String> tagIds = request.getMembershipTagsList().stream()
-                            .map(pid -> pid.getUuids(0))
-                            .toList();
-                    yield tinkarService.exportEntitiesByMembership(tempFile, tagIds);
-                }
-                default -> tinkarService.exportEntities(tempFile); // FULL or unrecognized
-            };
-
-            ExportEntitiesResponse.Builder builder = ExportEntitiesResponse.newBuilder()
-                    .setSuccess(result.success())
-                    .setErrorMessage(result.errorMessage() != null ? result.errorMessage() : "");
-
-            if (result.success()) {
-                builder.setEntityCounts(EntityCountSummaryProto.newBuilder()
-                        .setConceptsCount(result.conceptsCount())
-                        .setSemanticsCount(result.semanticsCount())
-                        .setPatternsCount(result.patternsCount())
-                        .setStampsCount(result.stampsCount())
-                        .setTotalCount(result.totalCount())
-                        .build());
-
-                // Read exported file bytes into response
-                byte[] exportBytes = Files.readAllBytes(tempFile.toPath());
-                builder.setExportData(ByteString.copyFrom(exportBytes));
-            }
-
-            responseObserver.onNext(builder.build());
-            responseObserver.onCompleted();
-        } catch (Exception e) {
-            log.error("Failed to process export request: {}", e.getMessage(), e);
-            responseObserver.onNext(ExportEntitiesResponse.newBuilder()
-                    .setSuccess(false)
-                    .setErrorMessage(e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName())
-                    .build());
-            responseObserver.onCompleted();
-        } finally {
-            if (tempFile != null && tempFile.exists()) {
-                tempFile.delete();
-            }
-        }
-    }
-
-    @Override
     public void runReasoner(RunReasonerRequest request,
             StreamObserver<RunReasonerResponse> responseObserver) {
         log.info("IkeAdmin runReasoner request");

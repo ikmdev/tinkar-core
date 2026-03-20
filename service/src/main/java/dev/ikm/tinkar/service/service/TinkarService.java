@@ -214,30 +214,6 @@ public interface TinkarService {
     EntityCountSummaryResponse importChangeset(File importFile, boolean useMultiPass);
 
     /**
-     * Exports all entities to a protobuf ZIP file.
-     * @param exportFile the target ZIP file
-     * @return EntityCountSummaryResponse with counts of exported entities
-     */
-    EntityCountSummaryResponse exportEntities(File exportFile);
-
-    /**
-     * Exports entities modified within a time range to a protobuf ZIP file.
-     * @param exportFile the target ZIP file
-     * @param fromEpochMillis start time (inclusive)
-     * @param toEpochMillis end time (inclusive)
-     * @return EntityCountSummaryResponse with counts of exported entities
-     */
-    EntityCountSummaryResponse exportEntities(File exportFile, long fromEpochMillis, long toEpochMillis);
-
-    /**
-     * Exports entities matching membership tags to a protobuf ZIP file.
-     * @param exportFile the target ZIP file
-     * @param membershipTagIds list of tag PublicId UUIDs
-     * @return EntityCountSummaryResponse with counts of exported entities
-     */
-    EntityCountSummaryResponse exportEntitiesByMembership(File exportFile, List<String> membershipTagIds);
-
-    /**
      * Runs the full reasoner classification pipeline:
      * init -> extractData -> loadData -> computeInferences -> writeInferredResults.
      * @return ReasonerResultsResponse with classification results
