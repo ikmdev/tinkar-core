@@ -343,7 +343,7 @@
 			<!-- Everything else -->
             <dependency>
                 <groupId>com.github.RoaringBitmap.RoaringBitmap</groupId>
-                <artifactId>roaringbitmap</artifactId>
+                <artifactId>RoaringBitmap</artifactId>
                 <version>${roaringbitmap.version}</version>
             </dependency>
 
