@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package dev.ikm.tinkar.service;
+
+import "tinkar_search.proto";
+
+option java_multiple_files = true;
+option java_package = "dev.ikm.tinkar.service.proto";
+option java_outer_classname = "IkeGraphRAGProto";
+
+/*
+ * Tier 1: Graph RAG Ready
+ *
+ * Simple, opinionated API for ML/RAG engineers and data scientists.
+ * All responses are pre-resolved to human-readable form using server-side defaults.
+ * Callers do not need to understand the coordinate system.
+ */
+service IkeGraphRAG {
+  // Full-text search returning ranked results
+  rpc Search(TinkarSearchQueryRequest) returns (TinkarSearchQueryResponse);
+
+  // Concept-level search with optional result limit
+  rpc ConceptSearch(TinkarConceptSearchRequest) returns (TinkarSearchQueryResponse);
+
+  // Concept search with configurable sort options
+  rpc ConceptSearchWithSort(TinkarConceptSearchWithSortRequest) returns (TinkarConceptSearchWithSortResponse);
+
+  // Retrieve a concept by PublicId
+  rpc GetEntity(TinkarConceptIdRequest) returns (TinkarSearchQueryResponse);
+
+  // Get direct child concepts
+  rpc GetChildConcepts(TinkarConceptIdRequest) returns (TinkarSearchQueryResponse);
+
+  // Get all descendant concepts (full subtree)
+  rpc GetDescendantConcepts(TinkarConceptIdRequest) returns (TinkarSearchQueryResponse);
+
+  // Get LIDR record concepts for a test kit
+  rpc GetLIDRRecordConceptsFromTestKit(TinkarConceptIdRequest) returns (TinkarSearchQueryResponse);
+
+  // Get result conformance concepts from a LIDR record
+  rpc GetResultConformanceConceptsFromLIDRRecord(TinkarConceptIdRequest) returns (TinkarSearchQueryResponse);
+
+  // Get allowed result concepts from a result conformance
+  rpc GetAllowedResultConceptsFromResultConformance(TinkarConceptIdRequest) returns (TinkarSearchQueryResponse);
+
+  // Admin: Rebuild the Lucene search index
+  rpc RebuildSearchIndex(TinkarRebuildIndexRequest) returns (TinkarRebuildIndexResponse);
+}

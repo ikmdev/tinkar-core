@@ -1,0 +1,225 @@
+syntax = "proto3";
+
+package dev.ikm.tinkar.service;
+
+import "Tinkar.proto";
+import "tinkar_search.proto";
+
+option java_multiple_files = true;
+option java_package = "dev.ikm.tinkar.service.proto";
+option java_outer_classname = "IkeKnowledgeGraphProto";
+
+/*
+ * Tier 2: Concept-Aware (Knowledge Graph)
+ *
+ * Exposes the concept-oriented structure with optional coordinate overrides.
+ * Responses include PublicIds and pre-resolved labels (dual-return pattern).
+ * Target audience: analytics engineers, knowledge graph practitioners.
+ */
+
+// Allowed status states for STAMP filtering
+enum AllowedStates {
+  ACTIVE_AND_INACTIVE = 0;  // Include both active and inactive (default)
+  ACTIVE = 1;               // Only include active entities
+  INACTIVE = 2;             // Only include inactive entities
+}
+
+// Navigation premise type
+enum ProtoPremiseType {
+  INFERRED = 0;  // Use inferred (classified) navigation relationships (default)
+  STATED = 1;    // Use stated (authored) navigation relationships
+}
+
+// Optional coordinate overrides for Tier 2 queries.
+// All fields are optional — unset fields use server defaults.
+message CoordinateOverride {
+  /*
+   * Filter by entity status. Default: ACTIVE_AND_INACTIVE.
+   */
+  AllowedStates allowed_states = 1;
+
+  /*
+   * Position time as epoch milliseconds. 0 means latest (default).
+   */
+  int64 position_time = 2;
+
+  /*
+   * UUID of the path concept (e.g., development path, master path).
+   * Empty string means use default (development path).
+   */
+  string position_path_id = 3;
+
+  /*
+   * UUIDs of module concepts to include. Empty means no module filter (allow all).
+   */
+  repeated string module_ids = 4;
+
+  /*
+   * UUIDs of module concepts to exclude. Empty means no exclusions.
+   */
+  repeated string excluded_module_ids = 5;
+
+  /*
+   * Navigation premise type. Default: INFERRED.
+   */
+  ProtoPremiseType premise_type = 6;
+
+  /*
+   * Ordered list of module concept UUIDs for priority when multiple versions compete.
+   * Order matters — earlier entries take precedence. Empty means server default.
+   */
+  repeated string module_priority_ids = 7;
+
+  /*
+   * Language coordinate preset controlling description type and dialect preference.
+   * Default (US_ENGLISH_REGULAR_NAME = 0) means use server default.
+   */
+  ProtoLanguagePreset language_preset = 8;
+}
+
+// Request message with coordinate support for concept-level queries
+message KnowledgeGraphConceptRequest {
+  /*
+   * The public ID of the concept (supports multiple UUIDs).
+   */
+  dev.ikm.tinkar.schema.PublicId public_id = 1;
+
+  /*
+   * Optional coordinate overrides. If not set, server defaults are used.
+   */
+  CoordinateOverride coordinate_override = 2;
+}
+
+// Settings for a saved StampCoordinate. Unset fields use server defaults.
+message StampCoordinateSettings {
+  AllowedStates allowed_states = 1;
+  int64 position_time = 2;         // 0 means latest (default)
+  string position_path_id = 3;     // empty means development path (default)
+  repeated string module_ids = 4;
+  repeated string excluded_module_ids = 5;
+  repeated string module_priority_ids = 6;
+}
+
+// Settings for a saved NavigationCoordinate.
+message NavigationCoordinateSettings {
+  ProtoPremiseType premise_type = 1;  // Default: INFERRED
+}
+
+// Language preset — maps to Coordinates.Language.* factory methods
+enum ProtoLanguagePreset {
+  US_ENGLISH_REGULAR_NAME = 0;          // Coordinates.Language.UsEnglishRegularName() (default)
+  US_ENGLISH_FULLY_QUALIFIED_NAME = 1;  // Coordinates.Language.UsEnglishFullyQualifiedName()
+  GB_ENGLISH_PREFERRED_NAME = 2;        // Coordinates.Language.GbEnglishPreferredName()
+  GB_ENGLISH_FULLY_QUALIFIED_NAME = 3;  // Coordinates.Language.GbEnglishFullyQualifiedName()
+  ANY_LANGUAGE_REGULAR_NAME = 4;        // Coordinates.Language.AnyLanguageRegularName()
+  ANY_LANGUAGE_FULLY_QUALIFIED_NAME = 5; // Coordinates.Language.AnyLanguageFullyQualifiedName()
+  ANY_LANGUAGE_DEFINITION = 6;          // Coordinates.Language.AnyLanguageDefinition()
+  SPANISH_PREFERRED_NAME = 7;           // Coordinates.Language.SpanishPreferredName()
+  SPANISH_FULLY_QUALIFIED_NAME = 8;     // Coordinates.Language.SpanishFullyQualifiedName()
+}
+
+// Settings for a saved LanguageCoordinate.
+message LanguageCoordinateSettings {
+  ProtoLanguagePreset language_preset = 1;  // Default: US_ENGLISH_REGULAR_NAME
+}
+
+// Request for saving a StampCoordinate
+message SaveStampCoordinateRequest {
+  StampCoordinateSettings settings = 1;
+}
+
+// A saved StampCoordinate with its content-derived UUID
+message SavedStampCoordinateResponse {
+  string id = 1;                      // Content-derived UUID; pass as stamp_coordinate_id elsewhere
+  StampCoordinateSettings settings = 2;
+  string created_at = 3;              // ISO-8601 timestamp
+}
+
+// Request for listing all saved StampCoordinates (no parameters)
+message ListStampCoordinatesRequest {}
+
+// All saved StampCoordinates
+message ListStampCoordinatesResponse {
+  repeated SavedStampCoordinateResponse coordinates = 1;
+}
+
+// Request for saving a NavigationCoordinate
+message SaveNavigationCoordinateRequest {
+  NavigationCoordinateSettings settings = 1;
+}
+
+// A saved NavigationCoordinate with its content-derived UUID
+message SavedNavigationCoordinateResponse {
+  string id = 1;                           // Content-derived UUID; pass as navigation_coordinate_id elsewhere
+  NavigationCoordinateSettings settings = 2;
+  string created_at = 3;                   // ISO-8601 timestamp
+}
+
+// Request for listing all saved NavigationCoordinates (no parameters)
+message ListNavigationCoordinatesRequest {}
+
+// All saved NavigationCoordinates
+message ListNavigationCoordinatesResponse {
+  repeated SavedNavigationCoordinateResponse coordinates = 1;
+}
+
+// Request for saving a LanguageCoordinate
+message SaveLanguageCoordinateRequest {
+  LanguageCoordinateSettings settings = 1;
+}
+
+// A saved LanguageCoordinate with its content-derived UUID
+message SavedLanguageCoordinateResponse {
+  string id = 1;                          // Content-derived UUID; pass as language_coordinate_id elsewhere
+  LanguageCoordinateSettings settings = 2;
+  string created_at = 3;                  // ISO-8601 timestamp
+}
+
+// Request for listing all saved LanguageCoordinates (no parameters)
+message ListLanguageCoordinatesRequest {}
+
+// All saved LanguageCoordinates
+message ListLanguageCoordinatesResponse {
+  repeated SavedLanguageCoordinateResponse coordinates = 1;
+}
+
+// Request for getting semantics using previously saved coordinate IDs.
+// All IDs are optional — omitted values use server defaults.
+message SemanticsWithCoordinateRequest {
+  dev.ikm.tinkar.schema.PublicId concept_public_id = 1;
+  string stamp_coordinate_id = 2;       // UUID returned by SaveStampCoordinate
+  string navigation_coordinate_id = 3;  // UUID returned by SaveNavigationCoordinate
+  string language_coordinate_id = 4;    // UUID returned by SaveLanguageCoordinate
+}
+
+service IkeKnowledgeGraph {
+  // Get all semantics attached to a concept (patterns, fields, STAMP info)
+  rpc GetConceptSemantics(KnowledgeGraphConceptRequest) returns (TinkarConceptSemanticsResponse);
+
+  // Get direct child concepts with coordinate-aware navigation (premise type controls STATED vs INFERRED hierarchy)
+  rpc GetChildConcepts(KnowledgeGraphConceptRequest) returns (TinkarSearchQueryResponse);
+
+  // Get all descendant concepts (full subtree) with coordinate-aware navigation
+  rpc GetDescendantConcepts(KnowledgeGraphConceptRequest) returns (TinkarSearchQueryResponse);
+
+  // Save a StampCoordinate to the dataset (idempotent — same settings return same UUID)
+  rpc SaveStampCoordinate(SaveStampCoordinateRequest) returns (SavedStampCoordinateResponse);
+
+  // List all saved StampCoordinates
+  rpc ListStampCoordinates(ListStampCoordinatesRequest) returns (ListStampCoordinatesResponse);
+
+  // Save a NavigationCoordinate to the dataset (idempotent — same settings return same UUID)
+  rpc SaveNavigationCoordinate(SaveNavigationCoordinateRequest) returns (SavedNavigationCoordinateResponse);
+
+  // List all saved NavigationCoordinates
+  rpc ListNavigationCoordinates(ListNavigationCoordinatesRequest) returns (ListNavigationCoordinatesResponse);
+
+  // Save a LanguageCoordinate to the dataset (idempotent — same settings return same UUID)
+  rpc SaveLanguageCoordinate(SaveLanguageCoordinateRequest) returns (SavedLanguageCoordinateResponse);
+
+  // List all saved LanguageCoordinates
+  rpc ListLanguageCoordinates(ListLanguageCoordinatesRequest) returns (ListLanguageCoordinatesResponse);
+
+  // Get semantics for a concept using previously saved coordinate IDs (all optional)
+  rpc GetSemanticsWithCoordinate(SemanticsWithCoordinateRequest) returns (TinkarConceptSemanticsResponse);
+}
