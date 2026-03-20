@@ -108,6 +108,378 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>component</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>component</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
+                <classifier>tests</classifier>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>entity</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>integration</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>data-ephemeral-provider</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>data-mvstore-provider</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>data-spinedarray-provider</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>data-websocket-client-provider</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>data-websocket-server-provider</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>entity-provider</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+			<dependency>
+				<groupId>dev.ikm.tinkar</groupId>
+				<artifactId>executor-provider</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>dev.ikm.tinkar.ext.owl</groupId>
+				<artifactId>owl-extension</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+            <!-- Reasoner Submodules (Start) -->
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>reasoner-elk-owl</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>reasoner-elk-snomed</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>reasoner-elk-snomed-test</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>reasoner-hybrid</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>reasoner-service</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Reasoner Submodules (End) -->
+
+			<dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>search-provider</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>terms</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.tinkar</groupId>
+                <artifactId>events</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+			<!-- IKM Dependencies -->
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>tinkar-schema</artifactId>
+                <version>${tinkar-schema.version}</version>
+            </dependency>
+
+			<!-- JPMS Dependencies -->
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>record-builder-core</artifactId>
+                <version>${jpms-record-builder-core.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>jheaps</artifactId>
+                <version>${jheaps.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>activej-bytebuf</artifactId>
+                <version>${activej-bytebuf.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>activej-common</artifactId>
+                <version>${activej-common.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.ben-manes.caffeine</groupId>
+                <artifactId>caffeine</artifactId>
+                <version>${caffeine.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.eclipse.collections</groupId>
+                <artifactId>eclipse-collections</artifactId>
+                <version>${eclipse-collections.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.eclipse.collections</groupId>
+                <artifactId>eclipse-collections-api</artifactId>
+                <version>${eclipse-collections-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${protobuf-java.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${tinkar-jpms-deps.groupId}</groupId>
+                <artifactId>mvstore</artifactId>
+                <version>${mvstore.version}</version>
+            </dependency>
+
+			<!-- Everything else -->
+            <dependency>
+                <groupId>com.github.RoaringBitmap.RoaringBitmap</groupId>
+                <artifactId>RoaringBitmap</artifactId>
+                <version>${roaringbitmap.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jsonschema2pojo</groupId>
+                <artifactId>jsonschema2pojo-core</artifactId>
+                <version>${jsonschema2pojo-core.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>fasterxml-jackson-core</artifactId>
+                <version>${fasterxml-jackson-core.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jsr310</artifactId>
+                <version>${fasterxml-jackson-core.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.activej</groupId>
+                <artifactId>activej-launchers-http</artifactId>
+                <version>${activej-launchers.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.udaychandra.susel</groupId>
+                <artifactId>susel</artifactId>
+                <version>${susel.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jgrapht</groupId>
+                <artifactId>jgrapht-core</artifactId>
+                <version>${jgrapht.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apfloat</groupId>
+                        <artifactId>apfloat</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.ikm.jpms</groupId>
+                <artifactId>apfloat</artifactId>
+                <version>${apfloat.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.maven.surefire</groupId>
+                <artifactId>common-java5</artifactId>
+                <version>${common-java5.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito.version}</version>
+            </dependency>
+
+			<!-- https://mvnrepository.com/artifact/org.apache.lucene/lucene-queries -->
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-queryparser</artifactId>
+                <version>${lucene-queryparser.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-queries</artifactId>
+                <version>${lucene-queries.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-highlighter</artifactId>
+                <version>${lucene-highlighter.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-core</artifactId>
+                <version>${lucene-core.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-backward-codecs</artifactId>
+                <version>${lucene-core.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-suggest</artifactId>
+                <version>${lucene-suggest.version}</version>
+            </dependency>
+
+            <dependency>
+				<groupId>dev.ikm.owlapi</groupId>
+				<artifactId>owlapi-api</artifactId>
+				<version>${owlapi.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.ikm.owlapi</groupId>
+				<artifactId>owlapi-apibinding</artifactId>
+				<version>${owlapi.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.ikm.owlapi</groupId>
+				<artifactId>owlapi-impl</artifactId>
+				<version>${owlapi.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.ikm.owlapi</groupId>
+				<artifactId>owlapi-parsers</artifactId>
+				<version>${owlapi.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.ikm.elk</groupId>
+				<artifactId>elk-snomed</artifactId>
+				<version>${ikm-reasoner.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.ikm.elk</groupId>
+				<artifactId>elk-snomed-owl</artifactId>
+				<version>${ikm-reasoner.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.ikm.elk</groupId>
+				<artifactId>elk-snomed-owl-el</artifactId>
+				<version>${ikm-reasoner.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.ikm.elk</groupId>
+				<artifactId>elk-snomed-test</artifactId>
+				<version>${ikm-reasoner.version}</version>
+			</dependency>
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm</artifactId>
+                <version>${asm.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm-commons</artifactId>
+                <version>${asm.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm-tree</artifactId>
+                <version>${asm.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm-util</artifactId>
+                <version>${asm.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
     <!-- Cross project dependencies -->
