@@ -1,57 +1,37 @@
 package dev.ikm.tinkar.service.service.impl;
 
-import dev.ikm.tinkar.service.dto.ChangeHistoryResponse;
-import dev.ikm.tinkar.service.dto.ChangeHistoryResponse.FieldChange;
-import dev.ikm.tinkar.service.dto.ChangeHistoryResponse.StampInfo;
-import dev.ikm.tinkar.service.dto.ChangeHistoryResponse.VersionChange;
-import dev.ikm.tinkar.service.dto.ConceptChangeHistoryResponse;
-import dev.ikm.tinkar.service.dto.ConceptSearchResponse;
-import dev.ikm.tinkar.service.dto.ConceptSearchResponse.GroupedSearchResult;
-import dev.ikm.tinkar.service.dto.ConceptSearchResponse.MatchingSemantic;
-import dev.ikm.tinkar.service.dto.ConceptSearchResponse.SemanticSearchResult;
-import dev.ikm.tinkar.service.dto.ConceptSemanticsResponse;
-import dev.ikm.tinkar.service.dto.ConceptSemanticsResponse.SemanticInfo;
-import dev.ikm.tinkar.service.dto.ConceptSemanticsResponse.FieldValue;
-import dev.ikm.tinkar.service.dto.DescendantOperationResponse;
-import dev.ikm.tinkar.service.dto.EntityCountSummaryResponse;
-import dev.ikm.tinkar.service.dto.ReasonerResultsResponse;
-import dev.ikm.tinkar.service.dto.SearchSortOption;
-import dev.ikm.tinkar.common.id.IntIdList;
-import dev.ikm.tinkar.common.id.IntIdSet;
-import dev.ikm.tinkar.common.id.IntIds;
-import dev.ikm.tinkar.service.proto.TinkarConceptDescriptions;
-import dev.ikm.tinkar.service.proto.TinkarConceptSemanticInfo;
-import dev.ikm.tinkar.service.proto.TinkarConceptSemanticsResponse;
-import dev.ikm.tinkar.service.proto.TinkarSearchQueryResponse;
-import dev.ikm.tinkar.service.proto.TinkarSearchResult;
-import dev.ikm.tinkar.service.proto.TinkarStampInfo;
-import dev.ikm.tinkar.service.service.TinkarPrimitive;
-import dev.ikm.tinkar.service.service.TinkarService;
-import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.id.*;
+import dev.ikm.tinkar.common.service.EntityCountSummary;
+import dev.ikm.tinkar.common.service.PluggableService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.LatestVersionSearchResult;
-import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculatorWithCache;
 import dev.ikm.tinkar.coordinate.stamp.change.ChangeChronology;
 import dev.ikm.tinkar.coordinate.stamp.change.FieldChangeRecord;
 import dev.ikm.tinkar.coordinate.stamp.change.VersionChangeRecord;
-import dev.ikm.tinkar.common.service.PluggableService;
-import dev.ikm.tinkar.common.service.TrackingCallable;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityCountSummary;
-import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.entity.SemanticEntity;
-import dev.ikm.tinkar.entity.SemanticEntityVersion;
-import dev.ikm.tinkar.entity.SemanticRecord;
-import dev.ikm.tinkar.entity.StampEntity;
-import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
+import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculatorWithCache;
+import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.reasoner.service.ClassifierResults;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
 import dev.ikm.tinkar.schema.StampVersion;
+import dev.ikm.tinkar.service.dto.*;
+import dev.ikm.tinkar.service.dto.ChangeHistoryResponse.FieldChange;
+import dev.ikm.tinkar.service.dto.ChangeHistoryResponse.StampInfo;
+import dev.ikm.tinkar.service.dto.ChangeHistoryResponse.VersionChange;
+import dev.ikm.tinkar.service.dto.ConceptSearchResponse.GroupedSearchResult;
+import dev.ikm.tinkar.service.dto.ConceptSearchResponse.MatchingSemantic;
+import dev.ikm.tinkar.service.dto.ConceptSearchResponse.SemanticSearchResult;
+import dev.ikm.tinkar.service.dto.ConceptSemanticsResponse.FieldValue;
+import dev.ikm.tinkar.service.dto.ConceptSemanticsResponse.SemanticInfo;
+import dev.ikm.tinkar.service.dto.SearchSortOption;
+import dev.ikm.tinkar.service.proto.*;
+import dev.ikm.tinkar.service.proto.TinkarSearchQueryResponse;
+import dev.ikm.tinkar.service.service.TinkarPrimitive;
+import dev.ikm.tinkar.service.service.TinkarService;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import lombok.extern.slf4j.Slf4j;
@@ -64,14 +44,7 @@ import java.io.File;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.ServiceLoader;
-import java.util.TreeMap;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -1853,8 +1826,8 @@ public class TinkarServiceImpl implements TinkarService {
             EntityCountSummary summary = loader.compute();
 
             log.info("Import complete: {} concepts, {} semantics, {} patterns, {} stamps",
-                    summary.conceptsCount(), summary.semanticsCount(),
-                    summary.patternsCount(), summary.stampsCount());
+                    summary.conceptCount(), summary.semanticCount(),
+                    summary.patternCount(), summary.stampCount());
 
             // Rebuild search index so newly imported entities are searchable
             log.info("Rebuilding search index after import...");
@@ -1864,77 +1837,10 @@ public class TinkarServiceImpl implements TinkarService {
             dev.ikm.tinkar.common.service.CachingService.clearAll();
 
             return EntityCountSummaryResponse.success(
-                    summary.conceptsCount(), summary.semanticsCount(),
-                    summary.patternsCount(), summary.stampsCount());
+                    summary.conceptCount(), summary.conceptCount(),
+                    summary.conceptCount(), summary.conceptCount());
         } catch (Exception e) {
             log.error("Import failed: {}", e.getMessage(), e);
-            return EntityCountSummaryResponse.error(e.getMessage());
-        }
-    }
-
-    @Override
-    public EntityCountSummaryResponse exportEntities(File exportFile) {
-        log.info("Exporting all entities to: {}", exportFile.getAbsolutePath());
-        try {
-            ExportEntitiesToProtobufFile exporter = new ExportEntitiesToProtobufFile(exportFile);
-            EntityCountSummary summary = exporter.compute();
-
-            log.info("Export complete: {} concepts, {} semantics, {} patterns, {} stamps",
-                    summary.conceptsCount(), summary.semanticsCount(),
-                    summary.patternsCount(), summary.stampsCount());
-
-            return EntityCountSummaryResponse.success(
-                    summary.conceptsCount(), summary.semanticsCount(),
-                    summary.patternsCount(), summary.stampsCount());
-        } catch (Exception e) {
-            log.error("Export failed: {}", e.getMessage(), e);
-            return EntityCountSummaryResponse.error(e.getMessage());
-        }
-    }
-
-    @Override
-    public EntityCountSummaryResponse exportEntities(File exportFile, long fromEpochMillis, long toEpochMillis) {
-        log.info("Exporting temporal entities to: {} (from={}, to={})",
-                exportFile.getAbsolutePath(), fromEpochMillis, toEpochMillis);
-        try {
-            ExportEntitiesToProtobufFile exporter =
-                    new ExportEntitiesToProtobufFile(exportFile, fromEpochMillis, toEpochMillis);
-            EntityCountSummary summary = exporter.compute();
-
-            log.info("Temporal export complete: {} concepts, {} semantics, {} patterns, {} stamps",
-                    summary.conceptsCount(), summary.semanticsCount(),
-                    summary.patternsCount(), summary.stampsCount());
-
-            return EntityCountSummaryResponse.success(
-                    summary.conceptsCount(), summary.semanticsCount(),
-                    summary.patternsCount(), summary.stampsCount());
-        } catch (Exception e) {
-            log.error("Temporal export failed: {}", e.getMessage(), e);
-            return EntityCountSummaryResponse.error(e.getMessage());
-        }
-    }
-
-    @Override
-    public EntityCountSummaryResponse exportEntitiesByMembership(File exportFile, List<String> membershipTagIds) {
-        log.info("Exporting membership entities to: {} (tags={})",
-                exportFile.getAbsolutePath(), membershipTagIds);
-        try {
-            List<PublicId> tagPublicIds = membershipTagIds.stream()
-                    .map(id -> (PublicId) PublicIds.of(UUID.fromString(id)))
-                    .toList();
-            ExportEntitiesToProtobufFile exporter =
-                    new ExportEntitiesToProtobufFile(exportFile, tagPublicIds);
-            EntityCountSummary summary = exporter.compute();
-
-            log.info("Membership export complete: {} concepts, {} semantics, {} patterns, {} stamps",
-                    summary.conceptsCount(), summary.semanticsCount(),
-                    summary.patternsCount(), summary.stampsCount());
-
-            return EntityCountSummaryResponse.success(
-                    summary.conceptsCount(), summary.semanticsCount(),
-                    summary.patternsCount(), summary.stampsCount());
-        } catch (Exception e) {
-            log.error("Membership export failed: {}", e.getMessage(), e);
             return EntityCountSummaryResponse.error(e.getMessage());
         }
     }
