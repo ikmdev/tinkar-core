@@ -550,6 +550,15 @@
         </dependency>
     </dependencies>
 
+    <repositories>
+        <repository>
+            <id>tinkar-nexus</id>
+            <url>https://nexus.tinkar.org/repository/ike-public/</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+    </repositories>
+
     <build>
         <pluginManagement>
             <plugins>
