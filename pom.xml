@@ -122,7 +122,7 @@
 		<eclipse-collections.version>13.0.0</eclipse-collections.version>
 		<eclipse-collections-api.version>13.0.0</eclipse-collections-api.version>
 		<jheaps.version>0.14-r16</jheaps.version>
-		<roaringbitmap.version>1.5.3</roaringbitmap.version>
+		<roaringbitmap.version>1.6.13</roaringbitmap.version>
 
 		<hybrid-reasoner.version>1.1.9</hybrid-reasoner.version>
 		<ikm-reasoner.version>0.39.7</ikm-reasoner.version>
@@ -342,8 +342,8 @@
 
 			<!-- Everything else -->
             <dependency>
-                <groupId>com.github.RoaringBitmap.RoaringBitmap</groupId>
-                <artifactId>roaringbitmap</artifactId>
+                <groupId>org.roaringbitmap</groupId>
+                <artifactId>RoaringBitmap</artifactId>
                 <version>${roaringbitmap.version}</version>
             </dependency>
 
@@ -549,13 +549,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <repositories>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-    </repositories>
 
     <build>
         <pluginManagement>

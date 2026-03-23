@@ -13,8 +13,8 @@
 <!--    </properties>-->
     <dependencies>
         <dependency>
-            <groupId>com.github.RoaringBitmap.RoaringBitmap</groupId>
-            <artifactId>roaringbitmap</artifactId>
+            <groupId>org.roaringbitmap</groupId>
+            <artifactId>RoaringBitmap</artifactId>
         </dependency>
         <dependency>
             <groupId>${tinkar-jpms-deps.groupId}</groupId>
