@@ -9,13 +9,13 @@
 
 	<name>TINKAR Reasoner Service and Implementations</name>
 
-	<modules>
-		<module>reasoner-elk-owl</module>
-		<module>reasoner-elk-snomed</module>
-		<module>reasoner-elk-snomed-test</module>
-		<module>reasoner-hybrid</module>
-		<module>reasoner-service</module>
-	</modules>
+	<subprojects>
+		<subproject>reasoner-elk-owl</subproject>
+		<subproject>reasoner-elk-snomed</subproject>
+		<subproject>reasoner-elk-snomed-test</subproject>
+		<subproject>reasoner-hybrid</subproject>
+		<subproject>reasoner-service</subproject>
+	</subprojects>
 
 	<properties>
 		<maven-assembly-plugin.version>3.7.1</maven-assembly-plugin.version>
@@ -35,7 +35,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-assembly-plugin</artifactId>
-					<version>${maven.assembly-plugin.version}</version>
+					<version>${maven-assembly-plugin.version}</version>
 				</plugin>
 				<!-- other plugins -->
 				<plugin>

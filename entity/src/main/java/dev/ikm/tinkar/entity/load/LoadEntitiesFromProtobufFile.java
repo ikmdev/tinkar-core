@@ -81,11 +81,9 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
 
     /**
      * Create a loader that auto-detects the import mode based on the provider.
-     * <p>
-     * Uses multi-pass import for providers that encode pattern information in NIDs
+     * <p>     * Uses multi-pass import for providers that encode pattern information in NIDs
      * (e.g., RocksDB), and single-pass import for sequential NID providers
      * (e.g., SpinedArray, MVStore, Ephemeral).
-     * </p>
      * 
      * @param importFile the protobuf file to import
      */

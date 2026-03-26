@@ -19,13 +19,11 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 
 /**
  * Type-safe JUnit 5 extension for creating a NEW SpinedArray store.
- * <p>
- * Prefer this class when you want discoverable, IDE-friendly configuration via
+ * <p>Prefer this class when you want discoverable, IDE-friendly configuration via
  * {@code @ExtendWith(NewSpinedArrayKeyValueProvider.class)}. You can still
  * refine behavior with {@link WithKeyValueProvider} on the test class
  * (e.g., to set {@code dataPath}, {@code cleanOnStart}, or {@code importPath}).
- * <p>
- * Defaults:
+ * <p>Defaults:
  * - Forces controller {@code TestConstants.NEW_SPINED_ARRAY_STORE}
  * - Defaults {@code dataPath} to {@code target/spinedarrays/{TestClassName}} if not specified
  */

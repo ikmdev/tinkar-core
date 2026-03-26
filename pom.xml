@@ -3,9 +3,9 @@
     <modelVersion>4.1.0</modelVersion>
 
     <parent>
-        <groupId>dev.ikm.build</groupId>
-        <artifactId>java-parent</artifactId>
-        <version>1.73.0</version>
+        <groupId>network.ike</groupId>
+        <artifactId>ike-parent</artifactId>
+        <version>34</version>
     </parent>
 
     <groupId>dev.ikm.tinkar</groupId>
@@ -96,7 +96,7 @@
             <dependency>
                 <groupId>dev.ikm.ike</groupId>
                 <artifactId>ike-bom</artifactId>
-                <version>3.0.7-kec-jan-19-SNAPSHOT</version>
+                <version>3.0.7-SNAPSHOT</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -154,7 +154,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>${maven.compiler-plugin.version}</version>
+                    <version>${maven-compiler-plugin.version}</version>
                     <configuration>
                         <release>${java.version}</release>
                         <compilerArgs>
@@ -188,17 +188,6 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
                     <version>${maven.assembly.version}</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-checkstyle-plugin</artifactId>
-                    <configuration>
-                        <!-- Exclude files using JEP 447 (statements before super/this) - unsupported by Checkstyle parser -->
-                        <!-- @SuppressWarnings is ineffective because Checkstyle fails during parsing, before annotations are processed -->
-                        <excludes>
-                            **/SearchProvider.java
-                        </excludes>
-                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

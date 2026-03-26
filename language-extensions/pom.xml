@@ -9,8 +9,8 @@
 
     <name>TINKAR Language Extensions</name>
 
-    <modules>
-        <module>owl-extension</module>
-        <module>binding-extension</module>
-    </modules>
+    <subprojects>
+        <subproject>owl-extension</subproject>
+        <subproject>binding-extension</subproject>
+    </subprojects>
 </project>

@@ -22,7 +22,7 @@
  * version filtering algorithm, provide latest version selection, and support temporal queries
  * across the knowledge graph.</p>
  *
- * <h3>Core Responsibilities</h3>
+ * <p><b>Core Responsibilities</b></p>
  *
  * <p>STAMP calculators handle:</p>
  * <ul>
@@ -34,9 +34,9 @@
  * <li><strong>Entity Snapshots</strong> - Capture entity state at specific stamp positions</li>
  * </ul>
  *
- * <h3>Core Interfaces and Classes</h3>
+ * <p><b>Core Interfaces and Classes</b></p>
  *
- * <h4>StampCalculator</h4>
+ * <p><b>StampCalculator</b></p>
  * <p>Primary interface defining version resolution operations. Key methods include:</p>
  * <ul>
  * <li><strong>latest()</strong> - Get latest version of an entity matching stamp coordinate</li>
@@ -47,7 +47,7 @@
  * <li><strong>stampCoordinate()</strong> - Access underlying STAMP coordinate</li>
  * </ul>
  *
- * <h4>StampCalculatorWithCache</h4>
+ * <p><b>StampCalculatorWithCache</b></p>
  * <p>Cached implementation storing latest version results. Features:</p>
  * <ul>
  * <li>Thread-safe caching of Latest results</li>
@@ -67,7 +67,7 @@
  * Latest<ConceptVersion> latest = calculator.latest(concept);
  * }</pre>
  *
- * <h4>Latest<T></h4>
+ * <p><b>Latest&lt;T&gt;</b></p>
  * <p>Result container for version resolution. Represents three possible outcomes:</p>
  * <ul>
  * <li><strong>PRESENT</strong> - Single version found matching all criteria</li>
@@ -95,7 +95,7 @@
  * });
  * }</pre>
  *
- * <h4>RelativePosition</h4>
+ * <p><b>RelativePosition</b></p>
  * <p>Enumeration describing temporal relationship between two stamps:</p>
  * <ul>
  * <li><strong>BEFORE</strong> - First stamp occurs before second</li>
@@ -105,11 +105,11 @@
  * <li><strong>CONTRADICTION</strong> - Same time but different values</li>
  * </ul>
  *
- * <h4>EntitySnapshot</h4>
+ * <p><b>EntitySnapshot</b></p>
  * <p>Captures complete entity state at a specific STAMP position, including all components
  * and semantics visible at that point in time.</p>
  *
- * <h3>Version Resolution Algorithm</h3>
+ * <p><b>Version Resolution Algorithm</b></p>
  *
  * <p>The calculator implements the multi-stage latest version algorithm:</p>
  *
@@ -158,7 +158,7 @@
  * }
  * }</pre>
  *
- * <h3>Relative Position Calculation</h3>
+ * <p><b>Relative Position Calculation</b></p>
  *
  * <p>Determining temporal ordering between stamps:</p>
  *
@@ -187,7 +187,7 @@
  * }
  * }</pre>
  *
- * <h3>Path Visibility Analysis</h3>
+ * <p><b>Path Visibility Analysis</b></p>
  *
  * <p>Determining if a stamp is visible on a coordinate's path:</p>
  *
@@ -215,7 +215,7 @@
  * }
  * }</pre>
  *
- * <h3>Change Detection</h3>
+ * <p><b>Change Detection</b></p>
  *
  * <p>Tracking changes between versions:</p>
  *
@@ -240,7 +240,7 @@
  * }
  * }</pre>
  *
- * <h3>Entity Snapshots</h3>
+ * <p><b>Entity Snapshots</b></p>
  *
  * <p>Capturing complete entity state at a specific time:</p>
  *
@@ -258,7 +258,7 @@
  * List<Latest<SemanticEntityVersion>> semantics = snapshot.semantics();
  * }</pre>
  *
- * <h3>Bulk Operations</h3>
+ * <p><b>Bulk Operations</b></p>
  *
  * <p>Efficiently process latest versions for multiple entities:</p>
  *
@@ -282,7 +282,7 @@
  *     });
  * }</pre>
  *
- * <h3>Active Status Testing</h3>
+ * <p><b>Active Status Testing</b></p>
  *
  * <pre>{@code
  * // Test if concept has active latest version
@@ -294,7 +294,7 @@
  *                   latest.get().state() == State.ACTIVE;
  * }</pre>
  *
- * <h3>Performance and Caching</h3>
+ * <p><b>Performance and Caching</b></p>
  *
  * <p>StampCalculatorWithCache provides significant performance benefits:</p>
  * <ul>
@@ -313,12 +313,12 @@
  * <li>Memory overhead: One Latest per entity per coordinate</li>
  * </ul>
  *
- * <h3>Cache Invalidation</h3>
+ * <p><b>Cache Invalidation</b></p>
  *
  * <p>The {@link dev.ikm.tinkar.coordinate.stamp.calculator.CacheInvalidationIfPatternSubscriber}
  * supports automatic cache invalidation when underlying data changes.</p>
  *
- * <h3>Integration with Other Calculators</h3>
+ * <p><b>Integration with Other Calculators</b></p>
  *
  * <p>STAMP calculators are used by all other calculator types:</p>
  * <ul>
@@ -328,7 +328,7 @@
  * <li>ViewCalculator delegates to StampCalculator for all version operations</li>
  * </ul>
  *
- * <h3>Thread Safety</h3>
+ * <p><b>Thread Safety</b></p>
  *
  * <p>All calculator implementations are thread-safe. The cached implementation uses concurrent
  * data structures for safe concurrent access to version caches.</p>

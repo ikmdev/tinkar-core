@@ -52,48 +52,36 @@ import static dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResults.EndPoints
 
 /**
  * The Class IsomorphicResultsLeafHash.
- * <p>
- * A (Sub)Graph Isomorphism Algorithm for Matching Large Graphs
+ * <p>A (Sub)Graph Isomorphism Algorithm for Matching Large Graphs
  * IEEE TRANSACTIONS ON PATTERN ANALYSIS AND MACHINE INTELLIGENCE,
  * VOL. 26, NO. 10, OCTOBER 2004 1367
  * Luigi P. Cordella, Pasquale Foggia, Carlo Sansone, and Mario Vento
- * <p>
- * Graphs, Vertexes, Edges, Nodes, Branches, ...
- * <p>
- * The above paper uses: G1 = (N1, B1) or translated Graph 1 is a set of Nodes of 1 and Branches of 1...
+ * <p>Graphs, Vertexes, Edges, Nodes, Branches, ...
+ * <p>The above paper uses: G1 = (N1, B1) or translated Graph 1 is a set of Nodes of 1 and Branches of 1...
  * To minimise confusion between other uses of Node (javafx.scene.Node), we preferentially use
  * Vertexes and Edges to describe the Graphs.
- * <p>
- * https://digitalcommons.calpoly.edu/cgi/viewcontent.cgi?article=3437&amp;context=theses
- * <p>
- * VF2++ — An Improved Subgraph Isomorphism Algorithm
+ * <p>https://digitalcommons.calpoly.edu/cgi/viewcontent.cgi?article=3437&amp;context=theses
+ * <p>VF2++ — An Improved Subgraph Isomorphism Algorithm
  * Alpar Juttner and Peter Madarasi
  * https://web.cs.elte.hu/egres/tr/egres-18-03.pdf
- * <p>
- * MET: a Java package for fast molecule equivalence testing
+ * <p>MET: a Java package for fast molecule equivalence testing
  * https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7745470/
- * <p>
- * Given a query graph and a target graph, it calculates all possible subgraphs of the target graph isomorphic to
+ * <p>Given a query graph and a target graph, it calculates all possible subgraphs of the target graph isomorphic to
  * the query graph. Both the query graph and target graph are stored in the same Neo4j database.
  * https://github.com/jiatistuta/subgraph-isomorphism-neo4j
- * <p>
- * TODO: reconsider use of BitSet
+ * <p>TODO: reconsider use of BitSet
  * Performance of nextSetBit(), get(), and iteration are key performance areas.
  * Also consider other types of sets... Eclipse intSet for example.
  * https://stackoverflow.com/questions/37080045/java-jdk-bitset-vs-lucene-openbitset
- * <p>
- * org.apache.lucene.util.OpenBitSet
- * <p>
- * The goals of OpenBitSet are the fastest implementation possible, and maximum code reuse.
+ * <p>org.apache.lucene.util.OpenBitSet
+ * <p>The goals of OpenBitSet are the fastest implementation possible, and maximum code reuse.
  * Extra safety and encapsulation may always be built on top, but if that's built in, the
  * cost can never be removed (and hence people re-implement their own version in order to
  * get better performance). If you want a "safe", totally encapsulated (and slower and limited) B
  * itSet class, use java.util.BitSet.
- * <p>
- * Also consider Roaring BitMaps...
+ * <p>Also consider Roaring BitMaps...
  * https://roaringbitmap.org
- * <p>
- * Maybe make a custom structure that will switch between direct representation or bitmap depending on
+ * <p>Maybe make a custom structure that will switch between direct representation or bitmap depending on
  * size and cardinality.
  */
 public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> extends IsomorphicResultsAbstract<VVD> {
@@ -106,8 +94,7 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
      * And vertex above...
      * In example below nodes 6 and 5 had same hashcode. Revised to include meaning nid for vertex
      * in addition to the nidList...
-     * <p>
-     * <pre>
+     * <p>     * <pre>
      * DiTreeEntity{
      *    [0]➞[9,13] Definition root
      *      [9]➞[8] Sufficient set

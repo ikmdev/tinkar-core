@@ -22,7 +22,7 @@
  * a single, unified API that delegates to the appropriate calculator based on the view coordinate
  * specification.</p>
  *
- * <h3>Core Concept: Unified Calculation</h3>
+ * <p><b>Core Concept: Unified Calculation</b></p>
  *
  * <p>View calculators provide a "one-stop shop" for knowledge graph access by integrating:</p>
  * <ul>
@@ -33,9 +33,9 @@
  * <li><strong>Consistent Context</strong> - All operations use the same view coordinate</li>
  * </ul>
  *
- * <h3>Core Interfaces and Classes</h3>
+ * <p><b>Core Interfaces and Classes</b></p>
  *
- * <h4>ViewCalculator</h4>
+ * <p><b>ViewCalculator</b></p>
  * <p>The primary interface providing unified access to all calculator operations. Extends all
  * four calculator delegate interfaces:</p>
  * <ul>
@@ -64,7 +64,7 @@
  * IntIdSet parents = calc.parentsOf(conceptNid);
  * }</pre>
  *
- * <h4>ViewCalculatorWithCache</h4>
+ * <p><b>ViewCalculatorWithCache</b></p>
  * <p>Cached implementation that maintains separate cached calculator instances for each
  * coordinate type. Features:</p>
  * <ul>
@@ -85,11 +85,11 @@
  * IntIdSet children = calculator.childrenOf(conceptNid);
  * }</pre>
  *
- * <h4>ViewCalculatorDelegate</h4>
+ * <p><b>ViewCalculatorDelegate</b></p>
  * <p>Delegation interface allowing classes to provide ViewCalculator functionality. Not typically
  * used directly by application code, but useful for building higher-level service abstractions.</p>
  *
- * <h3>Calculator Delegation Architecture</h3>
+ * <p><b>Calculator Delegation Architecture</b></p>
  *
  * <p>ViewCalculatorWithCache maintains instances of all specialized calculators:</p>
  *
@@ -119,7 +119,7 @@
  * <p>When you call methods on ViewCalculator, they automatically delegate to the appropriate
  * specialized calculator, all using consistent coordinates from the view.</p>
  *
- * <h3>Comprehensive Example</h3>
+ * <p><b>Comprehensive Example</b></p>
  *
  * <pre>{@code
  * // Create view and calculator
@@ -154,9 +154,9 @@
  * }
  * }</pre>
  *
- * <h3>Common Usage Patterns</h3>
+ * <p><b>Common Usage Patterns</b></p>
  *
- * <h4>Concept Information Retrieval</h4>
+ * <p><b>Concept Information Retrieval</b></p>
  * <pre>{@code
  * public ConceptInfo getConceptInfo(int conceptNid, ViewCoordinate view) {
  *     ViewCalculator calc = ViewCalculatorWithCache.getCalculator(
@@ -175,7 +175,7 @@
  * }
  * }</pre>
  *
- * <h4>Hierarchy Browsing</h4>
+ * <p><b>Hierarchy Browsing</b></p>
  * <pre>{@code
  * public HierarchyNode buildHierarchy(int rootNid, ViewCoordinate view, int depth) {
  *     ViewCalculator calc = ViewCalculatorWithCache.getCalculator(
@@ -201,7 +201,7 @@
  * }
  * }</pre>
  *
- * <h4>Search with Description and Hierarchy</h4>
+ * <p><b>Search with Description and Hierarchy</b></p>
  * <pre>{@code
  * public List<SearchResult> search(String query, ViewCoordinate view) {
  *     ViewCalculator calc = ViewCalculatorWithCache.getCalculator(
@@ -230,7 +230,7 @@
  * }
  * }</pre>
  *
- * <h4>Subsumption Testing with Descriptions</h4>
+ * <p><b>Subsumption Testing with Descriptions</b></p>
  * <pre>{@code
  * public boolean isKindOf(int specificNid, int generalNid, ViewCoordinate view) {
  *     ViewCalculator calc = ViewCalculatorWithCache.getCalculator(
@@ -251,7 +251,7 @@
  * }
  * }</pre>
  *
- * <h4>Definition Analysis</h4>
+ * <p><b>Definition Analysis</b></p>
  * <pre>{@code
  * public DefinitionAnalysis analyzeDefinition(int conceptNid, ViewCoordinate view) {
  *     ViewCalculator calc = ViewCalculatorWithCache.getCalculator(
@@ -289,7 +289,7 @@
  * }
  * }</pre>
  *
- * <h3>Performance Benefits</h3>
+ * <p><b>Performance Benefits</b></p>
  *
  * <p>Using ViewCalculatorWithCache provides compound performance benefits:</p>
  * <ul>
@@ -308,7 +308,7 @@
  * <li>Mixed operations: Each calculator caches independently</li>
  * </ul>
  *
- * <h3>View Coordinate Consistency</h3>
+ * <p><b>View Coordinate Consistency</b></p>
  *
  * <p>A critical advantage of ViewCalculator is coordinate consistency. All operations
  * automatically use the same view specification:</p>
@@ -330,12 +330,12 @@
  *
  * <p>This eliminates subtle bugs from mixing incompatible coordinates.</p>
  *
- * <h3>Thread Safety</h3>
+ * <p><b>Thread Safety</b></p>
  *
  * <p>ViewCalculator implementations are thread-safe and can be shared across threads. The
  * cached implementation uses thread-safe calculator instances internally.</p>
  *
- * <h3>Best Practices</h3>
+ * <p><b>Best Practices</b></p>
  *
  * <ol>
  * <li><strong>Reuse Calculators</strong> - Get calculator once per request/session, reuse for all operations</li>

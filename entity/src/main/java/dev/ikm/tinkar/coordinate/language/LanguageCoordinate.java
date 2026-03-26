@@ -28,8 +28,7 @@ import java.util.UUID;
 
 /**
  * LanguageCoordinate to specify the retrieval and display of language and dialect information.
- * <p>
- * Created by kec on 2/16/15.
+ * <p>Created by kec on 2/16/15.
  */
 public interface LanguageCoordinate {
 

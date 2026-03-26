@@ -26,8 +26,7 @@ import java.util.function.ObjIntConsumer;
 /**
  * Generic entity processor supporting both byte-based and typed entity processing.
  * Can process any entity type (Stamp, Concept, Pattern, Semantic).
- * <p>
- * Subclasses implement a single method: {@link #process(Entity)}
+ * <p>Subclasses implement a single method: {@link #process(Entity)}
  *
  * @param <E> The entity type this processor handles (must extend Entity)
  * @param <V> The entity version type (must extend EntityVersion)

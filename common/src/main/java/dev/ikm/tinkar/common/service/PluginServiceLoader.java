@@ -25,8 +25,7 @@ public interface PluginServiceLoader {
 
     /**
      * Returns a ServiceLoader for the given pluggable service class.
-     * <p>
-     * Note that the caller must prepare to abandon all references to the
+     * <p>     * Note that the caller must prepare to abandon all references to the
      * loader and service if the deployment allows for dynamic removal of plugin layers,
      * as would be notified by a PluginLifecycleListener.pluginLayerBeingRemoved
      * event. If the deployment allows for dynamic removal of plugin layers,

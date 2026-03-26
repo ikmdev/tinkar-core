@@ -213,8 +213,7 @@ public class Searcher {
     /**
      * Returns List of Children PublicIds for the Entity PublicId provided
      * using a supplied NavigationCalculator
-     * <p>
-     * Provided as an ease-of-use method to convert nids provided by the
+     * <p>     * Provided as an ease-of-use method to convert nids provided by the
      * {@link NavigationCalculator#childrenOf(int)} method to PublicIds
      *
      * @param   navCalc NavigationCalculator to calculate children
@@ -244,8 +243,7 @@ public class Searcher {
     /**
      * Returns List of descendant PublicIds for the Entity PublicId provided
      * using a supplied NavigationCalculator
-     * <p>
-     * Provided as an ease-of-use method to convert nids provided by the
+     * <p>     * Provided as an ease-of-use method to convert nids provided by the
      * {@link NavigationCalculator#descendentsOf(int)} method to PublicIds
      *
      * @param   navCalc NavigationCalculator to calculate descendants
@@ -275,8 +273,7 @@ public class Searcher {
     /**
      * Returns List of Fully Qualified Name (FQN) Strings for the Entity PublicIds provided
      * using a supplied NavigationCalculator
-     * <p>
-     * Provided as an ease-of-use method to retrieve FQNs for multiple concepts at once
+     * <p>     * Provided as an ease-of-use method to retrieve FQNs for multiple concepts at once
      * using the {@link NavigationCalculator#getFullyQualifiedNameText(int)} method
      *
      * @param   navCalc NavigationCalculator to calculate FQNs

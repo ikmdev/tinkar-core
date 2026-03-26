@@ -18,17 +18,14 @@ import java.util.concurrent.atomic.LongAdder;
  * The {@code RecreateIndex} class is responsible for rebuilding a Lucene index.
  * This process includes iterating over all entities, indexing them using a provided
  * {@link Indexer}, and updating progress tracking mechanisms.
- * <p>
- * The class extends {@code TrackingCallable<Void>}, providing mechanisms for tracking
+ * <p>The class extends {@code TrackingCallable<Void>}, providing mechanisms for tracking
  * and reporting progress, as well as handling cancellation and lifecycle events
  * of the index recreation task.
- * <p>
- * Constructor:
+ * <p>Constructor:
  * <p> - Initializes the class with a specified {@link Indexer}.
  * <p> - Sets relevant properties for tracking task status and progress.
  * <p> - Logs the start of the index recreation process.
- * <p>
- * Methods:
+ * <p>Methods:
  * <p> - {@link #compute()}:
  * <p>   Executes the index rebuilding task, including:
  * <p>   - Initializing load phases through {@link EntityService}.

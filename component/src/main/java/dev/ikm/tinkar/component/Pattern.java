@@ -16,7 +16,7 @@
 package dev.ikm.tinkar.component;
 
 /**
- * [Meaning] of <referenced component> for [purpose] in [pattern]
+ * [Meaning] of &lt;referenced component&gt; for [purpose] in [pattern]
  *
  * 
  */

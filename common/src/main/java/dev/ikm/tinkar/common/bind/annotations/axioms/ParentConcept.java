@@ -39,7 +39,6 @@ import java.lang.annotation.Target;
  *   <li><b>Target:</b> {@link ElementType#TYPE} - The annotation can only be applied at the class, interface, or enum level.</li>
  *   <li><b>Documented:</b> This annotation is included in generated API documentation.</li>
  * </ul>
- * </p>
  *
  * @see ClassConceptBinding
  */

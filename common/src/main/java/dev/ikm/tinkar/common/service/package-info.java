@@ -16,16 +16,12 @@
 
 /**
  * Core service infrastructure for the Tinkar architecture.
- * <p>
- * This package provides the foundation for service discovery, lifecycle management, and plugin integration
+ * <p>This package provides the foundation for service discovery, lifecycle management, and plugin integration
  * in Tinkar applications. It enables a flexible, extensible architecture where services can be dynamically
  * discovered, configured, and managed through their complete lifecycle.
- * </p>
  *
  * <h2>Package Organization</h2>
- * <p>
- * This package is organized into several functional areas:
- * </p>
+ * <p>This package is organized into several functional areas:
  * <ul>
  *   <li><b>Service Lifecycle Management</b> - Ordered startup and shutdown of application services</li>
  *   <li><b>Plugin System</b> - Dynamic loading of services from plugin modules</li>
@@ -35,12 +31,10 @@
  * </ul>
  *
  * <h2>Service Lifecycle Management</h2>
- * <p>
- * The service lifecycle framework provides Maven-style phased startup and shutdown of services,
+ * <p>The service lifecycle framework provides Maven-style phased startup and shutdown of services,
  * ensuring proper initialization order and clean resource management.
- * </p>
  *
- * <h3>Core Concepts</h3>
+ * <p><b>Core Concepts</b></p>
  * <dl>
  *   <dt>{@link dev.ikm.tinkar.common.service.ServiceLifecycle}</dt>
  *   <dd>Interface for services that participate in lifecycle management. Services implement
@@ -59,7 +53,7 @@
  *       Accessed via {@code ServiceLifecycleManager.get()}.</dd>
  * </dl>
  *
- * <h3>Quick Start - Implementing a Lifecycle-Managed Service</h3>
+ * <p><b>Quick Start - Implementing a Lifecycle-Managed Service</b></p>
  * <pre>{@code
  * @LifecyclePhase(ServiceLifecyclePhase.DATA_STORAGE)
  * public class MyDatabaseService implements ServiceLifecycle {
@@ -86,17 +80,13 @@
  * }
  * }</pre>
  *
- * <p>
- * Register in {@code module-info.java}:
- * </p>
+ * <p>Register in {@code module-info.java}:
  * <pre>{@code
  * provides ServiceLifecycle with MyDatabaseService;
  * }</pre>
  *
- * <h3>Application Integration</h3>
- * <p>
- * In your application's startup sequence:
- * </p>
+ * <p><b>Application Integration</b></p>
+ * <p>In your application's startup sequence:
  * <pre>{@code
  * public class Application {
  *     public void init() {
@@ -121,11 +111,9 @@
  * }
  * }</pre>
  *
- * <h3>Mutual Exclusion Groups</h3>
- * <p>
- * When multiple implementations of a service exist and only ONE should be active
+ * <p><b>Mutual Exclusion Groups</b></p>
+ * <p>When multiple implementations of a service exist and only ONE should be active
  * (e.g., choosing between different database providers), use mutual exclusion groups:
- * </p>
  * <pre>{@code
  * @LifecyclePhase(ServiceLifecyclePhase.DATA_STORAGE)
  * public class SpinedArrayProvider implements PrimitiveDataService, ServiceLifecycle {
@@ -150,9 +138,7 @@
  * }
  * }</pre>
  *
- * <p>
- * Selection can be made programmatically, via user interaction, or command-line:
- * </p>
+ * <p>Selection can be made programmatically, via user interaction, or command-line:
  * <pre>{@code
  * // Programmatic (e.g., in tests)
  * ServiceLifecycleManager.get().selectServiceForGroup(
@@ -168,10 +154,8 @@
  * });
  * }</pre>
  *
- * <h3>Conditional Activation</h3>
- * <p>
- * Services can control whether they should activate during a particular startup:
- * </p>
+ * <p><b>Conditional Activation</b></p>
+ * <p>Services can control whether they should activate during a particular startup:
  * <pre>{@code
  * public class OptionalFeatureService implements ServiceLifecycle {
  *
@@ -185,10 +169,8 @@
  * }
  * }</pre>
  *
- * <h3>Command-Line Configuration</h3>
- * <p>
- * All lifecycle configuration can be overridden at runtime:
- * </p>
+ * <p><b>Command-Line Configuration</b></p>
+ * <p>All lifecycle configuration can be overridden at runtime:
  * <pre>
  * # Override service phase
  * -Dservice.lifecycle.phase.MyService=INFRASTRUCTURE
@@ -203,7 +185,7 @@
  * -Dservice.lifecycle.log.verbose=true
  * </pre>
  *
- * <h3>Lifecycle Phases in Detail</h3>
+ * <p><b>Lifecycle Phases in Detail</b></p>
  * <dl>
  *   <dt>INFRASTRUCTURE (0-99)</dt>
  *   <dd>Thread pools, executors, logging, monitoring. Services that other services depend on.</dd>
@@ -225,12 +207,10 @@
  * </dl>
  *
  * <h2>Plugin System</h2>
- * <p>
- * The plugin system enables dynamic loading of services from external JAR files using
+ * <p>The plugin system enables dynamic loading of services from external JAR files using
  * Java's Module Layer mechanism.
- * </p>
  *
- * <h3>Core Plugin Classes</h3>
+ * <p><b>Core Plugin Classes</b></p>
  * <dl>
  *   <dt>{@link dev.ikm.tinkar.common.service.PluggableService}</dt>
  *   <dd>Primary API for loading services. Transparently uses either standard {@link java.util.ServiceLoader}
@@ -241,7 +221,7 @@
  *       and class loading from plugin JARs.</dd>
  * </dl>
  *
- * <h3>Using PluggableService</h3>
+ * <p><b>Using PluggableService</b></p>
  * <pre>{@code
  * // Load all implementations of a service
  * ServiceLoader<MyService> loader = PluggableService.load(MyService.class);
@@ -256,7 +236,7 @@
  * Class<?> clazz = PluggableService.forName("com.example.MyClass");
  * }</pre>
  *
- * <h3>Plugin Directory Structure</h3>
+ * <p><b>Plugin Directory Structure</b></p>
  * <pre>
  * plugins/
  * ├── my-plugin/
@@ -268,11 +248,9 @@
  * </pre>
  *
  * <h2>Domain Services</h2>
- * <p>
- * Core Tinkar services provided by this package:
- * </p>
+ * <p>Core Tinkar services provided by this package:
  *
- * <h3>Data Services</h3>
+ * <p><b>Data Services</b></p>
  * <dl>
  *   <dt>{@link dev.ikm.tinkar.common.service.PrimitiveData}</dt>
  *   <dd>Static accessor for the active primitive data service. Entry point for data operations.</dd>
@@ -291,7 +269,7 @@
  *   <dd>Interface for generating native identifiers (NIDs).</dd>
  * </dl>
  *
- * <h3>Executor Services</h3>
+ * <p><b>Executor Services</b></p>
  * <dl>
  *   <dt>{@link dev.ikm.tinkar.common.service.TinkExecutor}</dt>
  *   <dd>Static accessor for thread pools and executors.</dd>
@@ -309,7 +287,7 @@
  *   <dd>Listener interface for monitoring tracked tasks.</dd>
  * </dl>
  *
- * <h3>Other Services</h3>
+ * <p><b>Other Services</b></p>
  * <dl>
  *   <dt>{@link dev.ikm.tinkar.common.service.CachingService}</dt>
  *   <dd>Interface for services that maintain caches that can be reset.</dd>
@@ -319,10 +297,8 @@
  * </dl>
  *
  * <h2>Service Controllers</h2>
- * <p>
- * Controllers manage the configuration and initialization of services, particularly data providers.
+ * <p>Controllers manage the configuration and initialization of services, particularly data providers.
  * They bridge user/programmatic selection with service instantiation.
- * </p>
  *
  * <dl>
  *   <dt>{@link dev.ikm.tinkar.common.service.DataServiceController}</dt>
@@ -339,7 +315,7 @@
  *   <dd>Represents a selectable URI option for data sources.</dd>
  * </dl>
  *
- * <h3>Controller Usage Pattern</h3>
+ * <p><b>Controller Usage Pattern</b></p>
  * <pre>{@code
  * // 1. User selects "Open Existing" or "Create New"
  * ServiceLoader<DataServiceController> controllers =
@@ -362,11 +338,9 @@
  * ServiceLifecycleManager.get().startServices();
  * }</pre>
  *
- * <p>
- * <b>Note:</b> Controllers are used for <em>selection and initial configuration</em>.
+ * <p><b>Note:</b> Controllers are used for <em>selection and initial configuration</em>.
  * Once a service is started via a controller, it becomes eligible for lifecycle management.
  * Controllers do not implement {@code ServiceLifecycle} - the services they create do.
- * </p>
  *
  * <h2>Configuration and Properties</h2>
  * <dl>
@@ -377,7 +351,7 @@
  *   <dd>Standard property keys (DATA_STORE_ROOT, JVM_UUID, CACHE_PERIOD_UUID).</dd>
  * </dl>
  *
- * <h3>Usage</h3>
+ * <p><b>Usage</b></p>
  * <pre>{@code
  * // Set property
  * ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, new File("/path/to/data"));
@@ -407,7 +381,7 @@
  *
  * <h2>Architecture Guidelines</h2>
  *
- * <h3>For Service Implementers</h3>
+ * <p><b>For Service Implementers</b></p>
  * <ol>
  *   <li><b>Implement ServiceLifecycle</b> if your service needs ordered startup/shutdown</li>
  *   <li><b>Choose the appropriate phase</b> based on dependencies</li>
@@ -419,7 +393,7 @@
  *   </li>
  * </ol>
  *
- * <h3>For Application Developers</h3>
+ * <p><b>For Application Developers</b></p>
  * <ol>
  *   <li><b>Initialize plugins early</b> before discovering services</li>
  *   <li><b>Discover once</b> - {@code discoverServices()} should be called once per application lifetime</li>
@@ -428,7 +402,7 @@
  *   <li><b>Consider restart requirements</b> - services cannot be restarted after shutdown</li>
  * </ol>
  *
- * <h3>For Plugin Developers</h3>
+ * <p><b>For Plugin Developers</b></p>
  * <ol>
  *   <li><b>Provide module-info.java</b> with proper {@code provides} declarations</li>
  *   <li><b>Document dependencies</b> clearly in your service documentation</li>
@@ -461,9 +435,7 @@
  * }</pre>
  *
  * <h2>Migration Guide</h2>
- * <p>
- * For existing services that use manual initialization:
- * </p>
+ * <p>For existing services that use manual initialization:
  * <ol>
  *   <li>Implement {@link dev.ikm.tinkar.common.service.ServiceLifecycle}</li>
  *   <li>Move initialization code from constructor/static initializers to {@code startup()}</li>
@@ -475,15 +447,11 @@
  * </ol>
  *
  * <h2>Thread Safety</h2>
- * <p>
- * {@link dev.ikm.tinkar.common.service.ServiceLifecycleManager} methods are thread-safe and use
+ * <p>{@link dev.ikm.tinkar.common.service.ServiceLifecycleManager} methods are thread-safe and use
  * synchronization to prevent concurrent modifications. However, individual service {@code startup()}
  * and {@code shutdown()} methods are called sequentially, not concurrently.
- * </p>
- * <p>
- * Services should be designed to be thread-safe once started, but startup/shutdown themselves
+ * <p>Services should be designed to be thread-safe once started, but startup/shutdown themselves
  * do not need internal synchronization.
- * </p>
  *
  * <h2>Performance Considerations</h2>
  * <ul>

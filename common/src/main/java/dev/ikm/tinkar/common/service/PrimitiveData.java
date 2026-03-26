@@ -201,11 +201,9 @@ public class PrimitiveData {
 
     /**
      * Selects a controller by class. Provides compile-time safety.
-     * <p>
-     * This method provides type safety over {@link #selectControllerByName(String)}
+     * <p>     * This method provides type safety over {@link #selectControllerByName(String)}
      * by requiring the actual controller class at compile time, preventing runtime
      * errors from typos or references to non-existent controllers.
-     * </p>
      *
      * @param controllerClass the controller class to select (e.g., {@code ProviderEphemeral.NewController.class})
      * @throws IllegalStateException if no matching controller is found
@@ -230,6 +228,9 @@ public class PrimitiveData {
     }
 
     public static Optional<String> textOptional(int nid) {
+        if (defaultDescriptionForNidServiceSingleton == null) {
+            return Optional.empty();
+        }
         try {
             return defaultDescriptionForNidServiceSingleton.textOptional(nid);
         } catch (RuntimeException ex) {

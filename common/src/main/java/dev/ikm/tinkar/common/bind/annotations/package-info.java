@@ -12,7 +12,6 @@
  *   <li>Support for specifying unique identifiers like UUIDs for binding conceptual entities.</li>
  *   <li>Enable reflective access to annotations at runtime for dynamic operations.</li>
  * </ul>
- * </p>
  *
  * <p><b>Typical Use Cases:</b>
  * <ul>
@@ -20,7 +19,6 @@
  *   <li>Define parent-child relationships in conceptual hierarchies.</li>
  *   <li>Support dynamic processing of metadata and relationships in entity-model systems.</li>
  * </ul>
- * </p>
  *
  * <p>This package works in conjunction with other packages in the Tinkar framework to provide
  * a comprehensive system for managing and interacting with conceptual models.</p>

@@ -352,9 +352,7 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
 
     /**
      * Base Controller for MVStoreProvider lifecycle management.
-     * <p>
-     * Handles heavyweight initialization including data loading and indexing.
-     * </p>
+     * <p>     * Handles heavyweight initialization including data loading and indexing.
      */
     public abstract static class Controller extends ProviderController<MVStoreProvider>
             implements DataServiceController<PrimitiveDataService> {

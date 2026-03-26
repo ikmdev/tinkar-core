@@ -18,11 +18,9 @@ package dev.ikm.tinkar.integration;
 /**
  * Class to read stuff in the module-info.java file, that the tests will use, since
  * IntelliJ colors them read and says things like:
- * <p>
- * "Package 'dev.ikm.tinkar.common.service' is declared in module 'dev.ikm.tinkar.common', but module 'dev.ikm.tinkar.integration' does not read it"
- * <p>
+ * <p>"Package 'dev.ikm.tinkar.common.service' is declared in module 'dev.ikm.tinkar.common', but module 'dev.ikm.tinkar.integration' does not read it"
  *
- * @TODO Invalidating the IntelliJ cache and restarting may have fixed need for this class, but leaving it in for now...
+ * <p>TODO: Invalidating the IntelliJ cache and restarting may have fixed need for this class, but leaving it in for now...
  */
 
 import dev.ikm.tinkar.common.service.DataServiceController;

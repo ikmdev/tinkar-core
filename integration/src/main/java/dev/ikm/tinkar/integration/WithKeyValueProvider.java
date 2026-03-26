@@ -25,8 +25,7 @@ import java.lang.annotation.Target;
 
 /**
  * Parameterized JUnit 5 annotation to initialize a key-value provider for tests.
- * <p>
- * Example usage (type-safe, preferred):
+ * <p>Example usage (type-safe, preferred):
  * <pre>
  * {@code
  * @WithKeyValueProvider(
@@ -56,11 +55,9 @@ import java.lang.annotation.Target;
 public @interface WithKeyValueProvider {
     /**
      * Type-safe controller class to use (preferred over {@link #controllerName()}).
-     * <p>
-     * Provides compile-time safety by requiring an actual controller class reference.
+     * <p>     * Provides compile-time safety by requiring an actual controller class reference.
      * If not specified (defaults to DataServiceController.class as sentinel), falls back to
      * {@link #controllerName()} or auto-selection based on filesystem state.
-     * </p>
      *
      * Example:
      * <pre>{@code

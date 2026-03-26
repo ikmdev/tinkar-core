@@ -47,12 +47,12 @@ package dev.ikm.tinkar.common.id.impl;
  *       maps to {@code (P=31, E=67,108,864)} → reject this pair</li>
  * </ul>
  *
- * @apiNote
+ * <p><b>API Note:</b>
  * The mapping is injective except for the two excluded pairs above. Per-pattern
  * issuance stays sequential because {@code E} increments linearly within the
  * lower 26 bits.
  *
- * @implNote
+ * <p><b>Implementation Note:</b>
  * Masks and shifts are fixed-width and safe:
  * <ul>
  *   <li>{@code PATTERN_MASK = 0x3F}</li>

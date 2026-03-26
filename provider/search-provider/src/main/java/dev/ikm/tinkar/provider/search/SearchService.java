@@ -22,19 +22,15 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Service interface for search indexing and searching functionality.
- * <p>
- * Provides access to Lucene-based full-text search capabilities for Tinkar entities.
+ * <p>Provides access to Lucene-based full-text search capabilities for Tinkar entities.
  * This service manages the lifecycle of the search index and provides methods for
  * indexing content and performing searches.
- * </p>
  */
 public interface SearchService {
 
     /**
      * Indexes an object in the search index.
-     * <p>
-     * Currently supports SemanticEntity objects. Other object types are ignored.
-     * </p>
+     * <p>     * Currently supports SemanticEntity objects. Other object types are ignored.
      *
      * @param object the object to index
      */
@@ -59,10 +55,8 @@ public interface SearchService {
 
     /**
      * Recreates the entire Lucene index from scratch.
-     * <p>
-     * This is an expensive operation that should only be performed when necessary,
+     * <p>     * This is an expensive operation that should only be performed when necessary,
      * such as when the index is corrupted or when upgrading to a new index format.
-     * </p>
      *
      * @return a CompletableFuture that completes when the index recreation is done
      */

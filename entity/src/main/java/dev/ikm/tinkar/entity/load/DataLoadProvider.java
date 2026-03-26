@@ -30,15 +30,11 @@ import java.util.concurrent.Future;
 /**
  * Provider implementation for data loading service.
  * Singleton instance manages the queue of files to load.
- * <p>
- * This provider uses LoadEntitiesFromProtobufFile (which extends TrackingCallable)
+ * <p>This provider uses LoadEntitiesFromProtobufFile (which extends TrackingCallable)
  * to load each file, providing progress tracking capability.
- * </p>
  *
- * <h3>Singleton Lifecycle</h3>
- * <p>
- * This class uses a singleton pattern that spans multiple service lifecycle phases:
- * </p>
+ * <p><b>Singleton Lifecycle</b></p>
+ * <p>This class uses a singleton pattern that spans multiple service lifecycle phases:
  * <ol>
  *   <li><b>Creation (typically DATA_STORAGE phase):</b> First call to {@link #get()} creates
  *       the singleton instance. This usually happens when a data provider (RocksDB, SpinedArray, etc.)
@@ -49,11 +45,9 @@ import java.util.concurrent.Future;
  *       all queued files. This happens after ENTITIES and INDEXING phases complete, ensuring
  *       all required services are available.</li>
  * </ol>
- * <p>
- * The singleton is created on-demand but persists for the application lifetime, allowing
+ * <p>The singleton is created on-demand but persists for the application lifetime, allowing
  * early queuing and late loading. This separation ensures files are loaded only after
  * SearchService and EntityProvider are ready.
- * </p>
  */
 public class DataLoadProvider implements DataLoadService {
 
@@ -66,10 +60,8 @@ public class DataLoadProvider implements DataLoadService {
 
     /**
      * Gets the singleton instance, creating it on first access.
-     * <p>
-     * This method is typically first called during DATA_STORAGE phase when data providers
+     * <p>     * This method is typically first called during DATA_STORAGE phase when data providers
      * queue import files. The same instance is reused throughout the application lifecycle.
-     * </p>
      *
      * @return the singleton DataLoadProvider instance
      */

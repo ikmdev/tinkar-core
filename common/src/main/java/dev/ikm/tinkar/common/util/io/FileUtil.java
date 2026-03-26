@@ -47,7 +47,6 @@ public class FileUtil {
      *
      * @param path the path for the file.
      * @return the string
-     * @throws IOException Signals that an I/O exception has occurred.
      */
     public static Optional<String> readFile(Path path) {
         try {
@@ -62,7 +61,6 @@ public class FileUtil {
      * Recursive delete.
      *
      * @param file the file
-     * @throws IOException Signals that an I/O exception has occurred.
      */
     public static void recursiveDelete(File file) {
         if ((file == null) || !file.exists()) {

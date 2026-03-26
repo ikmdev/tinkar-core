@@ -26,12 +26,9 @@ import dev.ikm.tinkar.common.util.text.NaturalOrder;
  * Used when developer wants to have a key with a unique public identifier, but want to
  * have a potentially changeable string associated with that key for user comprehension
  * of intended objects associated with the key.
- * <p>
- * https://www.honeybadger.io/blog/uuids-and-ulids/
- * <p>
- * https://www.getuniqueid.com/cuid
- * <p>
- * T is the class this is a key for, to help code comprehension
+ * <p>https://www.honeybadger.io/blog/uuids-and-ulids/
+ * <p>https://www.getuniqueid.com/cuid
+ * <p>T is the class this is a key for, to help code comprehension
  */
 public class PublicIdStringKey<T> implements PublicIdWithString<PublicIdStringKey> {
 

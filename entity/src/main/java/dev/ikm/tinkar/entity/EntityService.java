@@ -131,11 +131,9 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
 
         /**
          * @deprecated Use {@link EntityHandle#get(PublicId)} instead.
-         * <p>
-         * This method is being phased out in favor of the fluent {@link EntityHandle} API,
+         * <p>         * This method is being phased out in favor of the fluent {@link EntityHandle} API,
          * which provides better type safety, null handling, and composability.
-         * <p>
-         * <b>Migration:</b>
+         * <p>         * <b>Migration:</b>
          * <pre>{@code
          * // Old (deprecated):
          * Optional<Entity> entity = EntityService.get().getEntity(publicId);
@@ -156,11 +154,9 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
 
         /**
          * @deprecated Use {@link EntityHandle#get(int)} instead.
-         * <p>
-         * This method is being phased out in favor of the fluent {@link EntityHandle} API,
+         * <p>         * This method is being phased out in favor of the fluent {@link EntityHandle} API,
          * which provides better type safety, null handling, and composability.
-         * <p>
-         * <b>Migration:</b>
+         * <p>         * <b>Migration:</b>
          * <pre>{@code
          * // Old (deprecated):
          * Optional<Entity> entity = EntityService.get().getEntity(nid);
@@ -231,11 +227,9 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
 
         /**
          * @deprecated Use {@link EntityHandle#get(PublicId)} instead.
-         * <p>
-         * This method is being phased out in favor of the fluent {@link EntityHandle} API,
+         * <p>         * This method is being phased out in favor of the fluent {@link EntityHandle} API,
          * which provides better type safety, null handling, and composability.
-         * <p>
-         * <b>Migration:</b>
+         * <p>         * <b>Migration:</b>
          * <pre>{@code
          * // Old (deprecated):
          * Optional<Entity> entity = EntityService.get().getEntity(uuids);
@@ -257,11 +251,9 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
 
         /**
          * @deprecated Use {@link EntityHandle#get(EntityFacade)} instead.
-         * <p>
-         * This method is being phased out in favor of the fluent {@link EntityHandle} API,
+         * <p>         * This method is being phased out in favor of the fluent {@link EntityHandle} API,
          * which provides better type safety, null handling, and composability.
-         * <p>
-         * <b>Migration:</b>
+         * <p>         * <b>Migration:</b>
          * <pre>{@code
          * // Old (deprecated):
          * Optional<Entity> entity = EntityService.get().getEntity(entityFacade);
@@ -543,12 +535,10 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
 
     /**
      * Retrieves the NID for an entity of a specific pattern.
-     * <p>
-     * <b>Why use this method:</b> This method supports the evolution toward making EntityKey more efficient
+     * <p>     * <b>Why use this method:</b> This method supports the evolution toward making EntityKey more efficient
      * by incorporating a Pattern part and a sequence within that pattern part. This approach enables better
      * organization and performance optimization of entity identifiers.
-     * <p>
-     * <b>Deprecation Note:</b> The {@code Entity.nid()} methods have been deprecated in favor of these
+     * <p>     * <b>Deprecation Note:</b> The {@code Entity.nid()} methods have been deprecated in favor of these
      * {@code nidForXxx} methods, which provide explicit pattern context and prepare the codebase for
      * enhanced identifier management.
      *
@@ -565,12 +555,10 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
 
     /**
      * Retrieves the NID for a semantic entity associated with a specific pattern.
-     * <p>
-     * <b>Why use this method:</b> This method supports the evolution toward making EntityKey more efficient
+     * <p>     * <b>Why use this method:</b> This method supports the evolution toward making EntityKey more efficient
      * by incorporating a Pattern part and a sequence within that pattern part. By explicitly specifying the
      * pattern context, this method enables better performance and more accurate identifier resolution for semantics.
-     * <p>
-     * <b>Deprecation Note:</b> The {@code Entity.nid()} methods have been deprecated in favor of these
+     * <p>     * <b>Deprecation Note:</b> The {@code Entity.nid()} methods have been deprecated in favor of these
      * {@code nidForXxx} methods, which provide explicit pattern context and prepare the codebase for
      * enhanced identifier management.
      *
@@ -586,13 +574,11 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
 
     /**
      * Retrieves the NID for a pattern entity.
-     * <p>
-     * <b>Why use this method:</b> This method supports the evolution toward making EntityKey more efficient
+     * <p>     * <b>Why use this method:</b> This method supports the evolution toward making EntityKey more efficient
      * by incorporating a Pattern part and a sequence within that pattern part. By explicitly identifying
      * pattern entities through this method, the system can optimize identifier allocation and retrieval
      * for pattern-specific operations.
-     * <p>
-     * <b>Deprecation Note:</b> The {@code Entity.nid()} methods have been deprecated in favor of these
+     * <p>     * <b>Deprecation Note:</b> The {@code Entity.nid()} methods have been deprecated in favor of these
      * {@code nidForXxx} methods, which provide explicit pattern context and prepare the codebase for
      * enhanced identifier management.
      *
@@ -607,13 +593,11 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
 
     /**
      * Retrieves the NID for a STAMP (Status, Time, Author, Module, Path) entity.
-     * <p>
-     * <b>Why use this method:</b> This method supports the evolution toward making EntityKey more efficient
+     * <p>     * <b>Why use this method:</b> This method supports the evolution toward making EntityKey more efficient
      * by incorporating a Pattern part and a sequence within that pattern part. By explicitly handling
      * STAMP entities through this method, the system can optimize identifier management for versioning
      * and provenance tracking operations.
-     * <p>
-     * <b>Deprecation Note:</b> The {@code Entity.nid()} methods have been deprecated in favor of these
+     * <p>     * <b>Deprecation Note:</b> The {@code Entity.nid()} methods have been deprecated in favor of these
      * {@code nidForXxx} methods, which provide explicit pattern context and prepare the codebase for
      * enhanced identifier management.
      *
@@ -628,13 +612,11 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
 
     /**
      * Retrieves the NID for a concept entity.
-     * <p>
-     * <b>Why use this method:</b> This method supports the evolution toward making EntityKey more efficient
+     * <p>     * <b>Why use this method:</b> This method supports the evolution toward making EntityKey more efficient
      * by incorporating a Pattern part and a sequence within that pattern part. By explicitly identifying
      * concept entities through this method, the system can optimize identifier allocation and retrieval
      * for concept-specific operations.
-     * <p>
-     * <b>Deprecation Note:</b> The {@code Entity.nid()} methods have been deprecated in favor of these
+     * <p>     * <b>Deprecation Note:</b> The {@code Entity.nid()} methods have been deprecated in favor of these
      * {@code nidForXxx} methods, which provide explicit pattern context and prepare the codebase for
      * enhanced identifier management.
      *
@@ -651,8 +633,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      * Lists and cancels uncommitted stamps during data provider shutdown.
      * This method is called by data providers during their close() sequence to ensure
      * data integrity by canceling any stamps that were left uncommitted outside of transactions.
-     * <p>
-     * This method must be called while EntityService is still available, typically early
+     * <p>     * This method must be called while EntityService is still available, typically early
      * in the data provider's shutdown sequence before the data store is closed.
      *
      * @param stampNids array of stamp NIDs to check for uncommitted stamps

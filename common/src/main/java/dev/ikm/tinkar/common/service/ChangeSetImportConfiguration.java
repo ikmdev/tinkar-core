@@ -20,17 +20,12 @@ import java.util.List;
 
 /**
  * Configuration interface for services that need to import changesets on startup.
- * <p>
- * Controllers implementing this interface can configure the DataLoadController
+ * <p>Controllers implementing this interface can configure the DataLoadController
  * with files to import during the DATA_LOAD phase.
- * </p>
- * <p>
- * This interface is discovered via ServiceLoader during the DATA_LOAD phase.
+ * <p>This interface is discovered via ServiceLoader during the DATA_LOAD phase.
  * The DataLoadController will call {@link #getChangeSetFilesToImport()} on all
  * registered implementations and queue the returned files for loading.
- * </p>
- * <p>
- * Example implementation:
+ * <p>Example implementation:
  * <pre>{@code
  * public class MyChangeSetConfig implements ChangeSetImportConfiguration {
  *     @Override
@@ -44,7 +39,6 @@ import java.util.List;
  *     }
  * }
  * }</pre>
- * </p>
  */
 public interface ChangeSetImportConfiguration {
 

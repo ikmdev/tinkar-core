@@ -53,11 +53,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * JUnit 5 extension that initializes the Tinkar key-value provider for tests.
- * <p>
- * It prevents the common "No provider. Call Select provider prior to get()" error by
+ * <p>It prevents the common "No provider. Call Select provider prior to get()" error by
  * ensuring the provider is selected and started before any tests that access entities run.
- * <p>
- * Usage options (hybrid approach):
+ * <p>Usage options (hybrid approach):
  * <ul>
  *   <li>Annotation-driven: annotate test classes with {@link WithKeyValueProvider} to configure
  *   controller, data path, clean-on-start, and optional imports.</li>
@@ -66,15 +64,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *   discoverable, IDE-friendly defaults. You can still refine behavior by adding
  *   {@link WithKeyValueProvider} on the test class.</li>
  * </ul>
- * <p>
- * Configuration precedence (highest to lowest):
+ * <p>Configuration precedence (highest to lowest):
  * <ol>
  *   <li>Test class-level {@link WithKeyValueProvider} annotation</li>
  *   <li>Predefined provider subclass via {@link #resolveConfig(ExtensionContext)} override</li>
  *   <li>Sensible defaults (controller = automatic NEW/OPEN selection; dataPath = "target/key-value-store/{TestClassName}")</li>
  * </ol>
- * <p>
- * Defaults and smart behavior:
+ * <p>Defaults and smart behavior:
  * <ul>
  *   <li>If {@code controllerName="default"} or empty, a Spined Array controller is selected automatically:
  *     OPEN if {@code dataPath} exists and has content; NEW otherwise.</li>

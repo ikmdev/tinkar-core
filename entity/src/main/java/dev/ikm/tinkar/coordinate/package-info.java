@@ -21,7 +21,7 @@
  * that changes over time. Coordinates specify how to view, navigate, and interact with temporal
  * knowledge graphs by controlling multiple dimensions of access and interpretation.</p>
  *
- * <h3>Core Coordinate Types</h3>
+ * <p><b>Core Coordinate Types</b></p>
  *
  * <p>The coordinate system is organized into five primary coordinate types, each managing a
  * specific dimension of knowledge access:</p>
@@ -89,7 +89,7 @@
  * </dd>
  * </dl>
  *
- * <h3>View Coordinates: Unified Access</h3>
+ * <p><b>View Coordinates: Unified Access</b></p>
  *
  * <p>The {@link dev.ikm.tinkar.coordinate.view.ViewCoordinate} combines all five coordinate types
  * into a single, cohesive specification that can be applied to the entire knowledge graph or to
@@ -100,7 +100,7 @@
  * point in time, on this development path, in this language, using this reasoning profile?"
  * </blockquote>
  *
- * <h3>Coordinate Composition and Delegation</h3>
+ * <p><b>Coordinate Composition and Delegation</b></p>
  *
  * <p>Coordinates follow a compositional design pattern with three implementation approaches:</p>
  *
@@ -118,7 +118,7 @@
  * with computation logic for version resolution, description ranking, and navigation graph traversal.</li>
  * </ol>
  *
- * <h3>Coordinate Factory and Presets</h3>
+ * <p><b>Coordinate Factory and Presets</b></p>
  *
  * <p>The {@link dev.ikm.tinkar.coordinate.Coordinates} class provides factory methods and
  * common coordinate presets for typical use cases:</p>
@@ -132,7 +132,7 @@
  * <li>{@code Coordinates.Logic.ElPlusPlus()} - EL++ description logic profile with Snorocket classifier</li>
  * </ul>
  *
- * <h3>Key Design Principles</h3>
+ * <p><b>Key Design Principles</b></p>
  *
  * <ul>
  * <li><strong>Declarative Specification</strong> - Coordinates describe what to access, not how to
@@ -143,7 +143,7 @@
  * <li><strong>UUID-based Identity</strong> - Coordinates generate content-based UUIDs for caching and equality</li>
  * </ul>
  *
- * <h3>Typical Usage Pattern</h3>
+ * <p><b>Typical Usage Pattern</b></p>
  *
  * <pre>{@code
  * // Create a view coordinate for accessing the knowledge graph
@@ -162,7 +162,7 @@
  * );
  * }</pre>
  *
- * <h3>Package Organization</h3>
+ * <p><b>Package Organization</b></p>
  *
  * <ul>
  * <li>{@link dev.ikm.tinkar.coordinate.edit} - Edit coordinate interfaces and records</li>

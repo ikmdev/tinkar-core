@@ -60,14 +60,11 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
 
     /**
      * Represents the various states of the ChangeSetWriterProvider during its lifecycle.
-     * <p>
-     * The STATE enum defines the operational phases for tracking the current status
+     * <p>     * The STATE enum defines the operational phases for tracking the current status
      * of the service. Each state corresponds to a specific stage or condition
      * during the execution of writing and processing changes.
-     * <p>
-     * The states are:
-     * <p>
-     * <p> - INITIALIZING: The service is starting up and performing initialization tasks.
+     * <p>     * The states are:
+     * <p>     * <p> - INITIALIZING: The service is starting up and performing initialization tasks.
      * <p> - RUNNING: The service is actively processing and writing entity changes.
      * <p> - ROTATING: The service is in the process of rotating or transitioning its resources,
      *             such as creating a new change set file.
@@ -118,8 +115,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
 
     /**
      * Writes an entity to the change set based on the specified activity.
-     * <p>
-     * Depending on the provided activity, the method will determine whether the
+     * <p>     * Depending on the provided activity, the method will determine whether the
      * entity should be queued for writing or ignored. Specifically, entities with
      * the activity {@code SYNCHRONIZABLE_EDIT} are added to the internal queue for
      * processing. All other activity types do not trigger any action.
@@ -168,8 +164,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
     /**
      * Creates a new ZIP file in the change set folder with a unique name. The file name is generated
      * using the following pattern: [USER description] [current timestamp] [random alphanumeric string] ike-cs.zip.
-     * <p>
-     * The method ensures that the generated file name is unique and based on the current time and
+     * <p>     * The method ensures that the generated file name is unique and based on the current time and
      * additional random characters to prevent name collisions.
      *
      * @return a {@code File} object pointing to the newly created ZIP file in the change set folder
@@ -186,8 +181,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      * into a ZIP file format. This method creates and manages a virtual thread, utilizing the
      * Thread API with a specific thread name for identification. The service remains operational
      * until explicitly stopped, processing entities passed to it for handling and writing.
-     * <p>
-     * The method performs the following tasks:
+     * <p>     * The method performs the following tasks:
      * <p> - Acquires necessary resources for thread execution.
      * <p> - Processes entities from a queue for writing. Handles both committed and uncommitted entities
      *   separately, ensuring uncommitted entities are managed at the end.
@@ -199,8 +193,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      *   is empty.
      * <p> - Ensures thread execution is properly controlled, including handling interruptions and failure
      *   scenarios with appropriate state transitions.
-     * <p>
-     * This method is core to managing and persisting changes in the change set, leveraging thread-safe
+     * <p>     * This method is core to managing and persisting changes in the change set, leveraging thread-safe
      * mechanisms and efficient I/O handling.
      */
     private void startService() {
@@ -391,8 +384,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
 
     /**
      * Saves the current state of the change set writer by initiating a checkpoint.
-     * <p>
-     * The method performs the following actions:
+     * <p>     * The method performs the following actions:
      * <p> - If a service thread is currently running, it interrupts the thread to ensure
      *   any ongoing processing is stopped, and all changes are written to the open zip file.
      * <p> - If the restart parameter is set to true, it initiates a new service thread
@@ -410,14 +402,12 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
     /**
      * Shuts down the ChangeSetWriterProvider, ensuring any necessary finalization
      * or cleanup steps are completed.
-     * <p>
-     * This method performs the following actions:
+     * <p>     * This method performs the following actions:
      * <p> - Logs the initiation of the shutdown process.
      * <p> - Executes a checkpoint operation to save the current state without restarting the service.
      * <p> - Acquires the maximum allowed writer permits, effectively blocking further writing operations.
      * <p> - Logs the completion of the shutdown process.
-     * <p>
-     * This implementation ensures that all active resources are managed or released properly
+     * <p>     * This implementation ensures that all active resources are managed or released properly
      * to facilitate a clean shutdown of the service.
      */
     @Override

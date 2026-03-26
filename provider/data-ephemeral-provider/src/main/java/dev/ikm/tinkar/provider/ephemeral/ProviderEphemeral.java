@@ -274,9 +274,7 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
 
     /**
      * Controller for ProviderEphemeral lifecycle management (creating new ephemeral database with data import).
-     * <p>
-     * Ephemeral provider is in-memory only and typically used for creating new databases.
-     * </p>
+     * <p>     * Ephemeral provider is in-memory only and typically used for creating new databases.
      */
     public static class NewController extends ProviderController<ProviderEphemeral>
             implements DataServiceController<PrimitiveDataService> {

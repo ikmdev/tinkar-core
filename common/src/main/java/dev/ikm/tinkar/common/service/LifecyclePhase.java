@@ -23,16 +23,12 @@ import java.lang.annotation.Target;
 
 /**
  * Annotation to specify the service lifecycle phase and optional sub-priority.
- * <p>
- * This annotation takes precedence over the {@link ServiceLifecycle#getLifecyclePhase()}
+ * <p>This annotation takes precedence over the {@link ServiceLifecycle#getLifecyclePhase()}
  * and {@link ServiceLifecycle#getSubPriority()} methods if present.
- * </p>
- * <p>
- * Command-line system properties take precedence over both the annotation and
+ * <p>Command-line system properties take precedence over both the annotation and
  * interface methods.
- * </p>
  *
- * <h3>Example Usage</h3>
+ * <p><b>Example Usage</b></p>
  * <pre>{@code
  * // Simple usage - just specify the phase
  * @LifecyclePhase(ServiceLifecyclePhase.DATA_STORAGE)
@@ -48,7 +44,7 @@ import java.lang.annotation.Target;
  * }
  * }</pre>
  *
- * <h3>Command-Line Override</h3>
+ * <p><b>Command-Line Override</b></p>
  * <pre>
  * # Override phase and sub-priority at runtime
  * java -Dservice.lifecycle.phase.MyDatabaseService=INFRASTRUCTURE \
@@ -70,10 +66,8 @@ public @interface LifecyclePhase {
 
     /**
      * Sub-priority within the phase (0-99).
-     * <p>
-     * Lower values start first within the phase. Default is 50.
+     * <p>     * Lower values start first within the phase. Default is 50.
      * Only specify this if you have dependencies within the same phase.
-     * </p>
      *
      * @return sub-priority within phase (default: 50)
      */

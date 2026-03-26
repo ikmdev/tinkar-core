@@ -2,12 +2,10 @@ package dev.ikm.tinkar.integration;
 
 /**
  * JUnit 5 extension that loads tinkar-starter-data into ephemeral store.
- * <p>
- * <b>Store Type:</b> Ephemeral (in-memory)
+ * <p><b>Store Type:</b> Ephemeral (in-memory)
  * <br>
  * <b>Data Loaded:</b> tinkar-starter-data-reasoned-pb.zip
- * <p>
- * <b>Usage:</b>
+ * <p><b>Usage:</b>
  * <pre>
  * {@code
  * @ExtendWith(StarterDataEphemeralProvider.class)

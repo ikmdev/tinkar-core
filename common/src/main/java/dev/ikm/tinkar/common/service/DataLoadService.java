@@ -22,17 +22,12 @@ import java.util.concurrent.Future;
 
 /**
  * Service for loading data files during the DATA_LOAD phase.
- * <p>
- * This service provides a unified mechanism for loading protobuf changeset files
+ * <p>This service provides a unified mechanism for loading protobuf changeset files
  * into the data store. It is designed to be provider-agnostic - the same changeset
  * format works with RocksDB, SpinedArray, MVStore, and Ephemeral providers.
- * </p>
- * <p>
- * The service supports loading multiple files in order and provides progress tracking
+ * <p>The service supports loading multiple files in order and provides progress tracking
  * through TrackingCallable implementations.
- * </p>
- * <p>
- * Example usage:
+ * <p>Example usage:
  * <pre>{@code
  * // During provider initialization (DATA_STORAGE phase):
  * DataLoadService loadService = DataLoadProvider.get();
@@ -40,7 +35,6 @@ import java.util.concurrent.Future;
  *
  * // DataLoadController will load files during DATA_LOAD phase
  * }</pre>
- * </p>
  */
 public interface DataLoadService {
 

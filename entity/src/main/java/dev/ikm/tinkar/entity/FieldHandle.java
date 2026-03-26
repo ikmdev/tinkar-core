@@ -25,20 +25,18 @@ import java.util.function.Supplier;
 
 /**
  * A fluent handle for semantic field values that provides type-safe access without casting.
- * <p>
- * Semantic fields can contain various types: primitives (boolean, int, float, long, String),
+ * <p>Semantic fields can contain various types: primitives (boolean, int, float, long, String),
  * entity references (PublicId, ConceptFacade), complex structures (DiGraph, DiTree), and more.
  * This handle provides three access patterns similar to {@link EntityHandle}:
  *
  * <h2>Handling EntityProxy and EntityFacade</h2>
- * <p>
- * When a field value is an {@code EntityFacade} (including {@code EntityProxy}), the handle
+ * <p>When a field value is an {@code EntityFacade} (including {@code EntityProxy}), the handle
  * automatically resolves the actual entity to determine its true type. This is necessary because
  * {@code EntityProxy} is abstract and doesn't directly implement type-specific interfaces like
  * {@code ConceptFacade}. The handle uses {@link EntityHandle} internally to perform this resolution.
  *
  * <h2>The Three Patterns</h2>
- * <table border="1" cellpadding="5">
+ * <table border="1">
  * <caption>Field Access Patterns</caption>
  * <tr>
  *   <th>Pattern</th>
@@ -67,8 +65,7 @@ import java.util.function.Supplier;
  * </table>
  *
  * <h2>Convenient Field Access</h2>
- * <p>
- * The static factory methods provide multiple ways to access fields from a {@link SemanticEntityVersion},
+ * <p>The static factory methods provide multiple ways to access fields from a {@link SemanticEntityVersion},
  * reducing boilerplate code:
  * <pre>{@code
  * SemanticEntityVersion version = ...;
@@ -134,8 +131,7 @@ public interface FieldHandle {
 
     /**
      * Creates a handle for a field value from a semantic by field index.
-     * <p>
-     * This is a convenience method that combines field value retrieval with handle creation:
+     * <p>     * This is a convenience method that combines field value retrieval with handle creation:
      * <pre>{@code
      * // Instead of:
      * FieldHandle.of(version.fieldValues().get(index))
@@ -155,8 +151,7 @@ public interface FieldHandle {
 
     /**
      * Creates a handle for a field value from a semantic by field meaning.
-     * <p>
-     * This method looks up the field index using the pattern's {@code indexForMeaning} method,
+     * <p>     * This method looks up the field index using the pattern's {@code indexForMeaning} method,
      * then retrieves the field value. This is useful when you know the semantic meaning of a
      * field but not its position:
      * <pre>{@code
@@ -188,8 +183,7 @@ public interface FieldHandle {
 
     /**
      * Creates a handle for a field value from a semantic by field meaning NID.
-     * <p>
-     * This method looks up the field index using the pattern's {@code indexForMeaning} method
+     * <p>     * This method looks up the field index using the pattern's {@code indexForMeaning} method
      * with the meaning NID, then retrieves the field value:
      * <pre>{@code
      * // Instead of:
@@ -220,8 +214,7 @@ public interface FieldHandle {
 
     /**
      * Creates a handle for a field value from a semantic by field purpose.
-     * <p>
-     * This method looks up the field index using the pattern's {@code indexForPurpose} method,
+     * <p>     * This method looks up the field index using the pattern's {@code indexForPurpose} method,
      * then retrieves the field value. This is useful when you want to find a field by its purpose
      * rather than its semantic meaning:
      * <pre>{@code
@@ -248,8 +241,7 @@ public interface FieldHandle {
 
     /**
      * Creates a handle for a field value from a semantic by field purpose NID.
-     * <p>
-     * This method looks up the field index using the pattern's {@code indexForPurpose} method
+     * <p>     * This method looks up the field index using the pattern's {@code indexForPurpose} method
      * with the purpose NID, then retrieves the field value:
      * <pre>{@code
      * FieldHandle.ofPurpose(version, purposeNid, stampCalculator)
@@ -354,8 +346,7 @@ public interface FieldHandle {
 
     /**
      * If the field value is a ConceptFacade (or resolves to a ConceptEntity), executes the consumer.
-     * <p>
-     * This handles the common case where field values from patterns store concept references.
+     * <p>     * This handles the common case where field values from patterns store concept references.
      * If the value is an {@code EntityFacade}, it resolves the actual entity to check if it's a concept.
      */
     default FieldHandle ifConcept(Consumer<ConceptEntity> consumer) {
@@ -498,8 +489,7 @@ public interface FieldHandle {
 
     /**
      * Returns the field value as a ConceptEntity if it is one (or resolves to one).
-     * <p>
-     * This is the safe extraction method for concept field values. Use when the field
+     * <p>     * This is the safe extraction method for concept field values. Use when the field
      * might or might not be a concept (e.g., handling multiple pattern types).
      * If the value is an {@code EntityFacade}, it resolves the actual entity to check if it's a concept.
      */
@@ -577,8 +567,7 @@ public interface FieldHandle {
 
     /**
      * Returns the field value as a ConceptFacade, throwing if it's not.
-     * <p>
-     * Use this when the pattern definition guarantees the field is a concept.
+     * <p>     * Use this when the pattern definition guarantees the field is a concept.
      * This is the replacement for unsafe casts like {@code (ConceptFacade) fieldValue}.
      * If the value is an {@code EntityFacade}, it resolves the actual entity and asserts it's a concept.
      *

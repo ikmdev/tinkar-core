@@ -37,8 +37,7 @@ import java.util.UUID;
 
 /**
  * ImmutableCoordinate to manage the retrieval and display of logic information.
- * <p>
- * Created by kec on 2/16/15.
+ * <p>Created by kec on 2/16/15.
  */
 public interface LogicCoordinate {
     /**

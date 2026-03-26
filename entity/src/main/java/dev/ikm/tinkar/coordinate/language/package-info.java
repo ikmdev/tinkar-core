@@ -21,7 +21,7 @@
  * for concepts, semantics, and other entities in the Tinkar knowledge graph. Language coordinates
  * enable multilingual support, dialect preferences, and description type prioritization.</p>
  *
- * <h3>Core Responsibilities</h3>
+ * <p><b>Core Responsibilities</b></p>
  *
  * <p>Language coordinates control five dimensions of description selection and ranking:</p>
  *
@@ -56,7 +56,7 @@
  * concept, module preference determines which one to return.</dd>
  * </dl>
  *
- * <h3>Description Selection Algorithm</h3>
+ * <p><b>Description Selection Algorithm</b></p>
  *
  * <p>When retrieving a description for a concept, the language coordinate applies a multi-stage
  * ranking algorithm:</p>
@@ -74,7 +74,7 @@
  *
  * <p>The highest-ranked description after all stages is returned as the preferred description.</p>
  *
- * <h3>Core Interface</h3>
+ * <p><b>Core Interface</b></p>
  *
  * <p>The {@link dev.ikm.tinkar.coordinate.language.LanguageCoordinate} interface defines the
  * contract for all language coordinate implementations. It provides:</p>
@@ -86,9 +86,9 @@
  * <li>User-friendly string representation</li>
  * </ul>
  *
- * <h3>Implementation Patterns</h3>
+ * <p><b>Implementation Patterns</b></p>
  *
- * <h4>LanguageCoordinateRecord</h4>
+ * <p><b>LanguageCoordinateRecord</b></p>
  * <p>Immutable record implementation providing thread-safe language coordinates. Created via
  * factory methods in the {@code Coordinates.Language} class:</p>
  * <pre>{@code
@@ -109,7 +109,7 @@
  *     Coordinates.Language.AnyLanguageDefinition();
  * }</pre>
  *
- * <h4>LanguageCoordinateDelegate</h4>
+ * <p><b>LanguageCoordinateDelegate</b></p>
  * <p>Delegation pattern allowing classes to implement LanguageCoordinate by delegating to an
  * underlying instance:</p>
  * <pre>{@code
@@ -123,9 +123,9 @@
  * }
  * }</pre>
  *
- * <h3>Common Language Coordinate Patterns</h3>
+ * <p><b>Common Language Coordinate Patterns</b></p>
  *
- * <h4>Language-Agnostic Coordinates</h4>
+ * <p><b>Language-Agnostic Coordinates</b></p>
  * <p>Useful as fallback coordinates when language-specific descriptions are unavailable:</p>
  * <ul>
  * <li>{@code AnyLanguageRegularName()} - Any language, regular name</li>
@@ -133,7 +133,7 @@
  * <li>{@code AnyLanguageDefinition()} - Any language, definition</li>
  * </ul>
  *
- * <h4>English Variants</h4>
+ * <p><b>English Variants</b></p>
  * <p>Supporting US and GB dialect preferences:</p>
  * <ul>
  * <li>{@code UsEnglishRegularName()} - US first, then GB, regular names preferred</li>
@@ -142,13 +142,13 @@
  * <li>{@code GbEnglishFullyQualifiedName()} - GB first, then US, FQNs preferred</li>
  * </ul>
  *
- * <h4>International Languages</h4>
+ * <p><b>International Languages</b></p>
  * <ul>
  * <li>{@code SpanishPreferredName()} - Spanish regular names</li>
  * <li>{@code SpanishFullyQualifiedName()} - Spanish FQNs</li>
  * </ul>
  *
- * <h3>Cascading Language Coordinates</h3>
+ * <p><b>Cascading Language Coordinates</b></p>
  *
  * <p>View coordinates can specify multiple language coordinates in priority order, enabling
  * graceful fallback when descriptions aren't available in the preferred language:</p>
@@ -167,13 +167,13 @@
  * );
  * }</pre>
  *
- * <h3>Integration with Calculators</h3>
+ * <p><b>Integration with Calculators</b></p>
  *
  * <p>Language coordinates are used by {@link dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculator}
  * implementations to compute preferred descriptions. The calculator package provides the actual
  * description selection and ranking logic based on these coordinate specifications.</p>
  *
- * <h3>Custom Language Coordinates</h3>
+ * <p><b>Custom Language Coordinates</b></p>
  *
  * <p>Create custom language coordinates for specialized needs:</p>
  * <pre>{@code
@@ -191,7 +191,7 @@
  * );
  * }</pre>
  *
- * <h3>Thread Safety and Immutability</h3>
+ * <p><b>Thread Safety and Immutability</b></p>
  *
  * <p>LanguageCoordinateRecord instances are immutable and thread-safe, suitable for:</p>
  * <ul>
@@ -201,7 +201,7 @@
  * <li>Functional composition and transformation</li>
  * </ul>
  *
- * <h3>Performance Considerations</h3>
+ * <p><b>Performance Considerations</b></p>
  *
  * <p>Language coordinates generate content-based UUIDs for efficient caching. Identical
  * language coordinates (same language, dialects, types, modules) produce identical UUIDs,

@@ -4,8 +4,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 
 /**
  * JUnit 5 extension that loads tinkar-starter-data into SpinedArray store.
- * <p>
- * <b>Store Type:</b> SpinedArray (persistent, file-based)
+ * <p><b>Store Type:</b> SpinedArray (persistent, file-based)
  * <br>
  * <b>Data Loaded:</b> tinkar-starter-data-reasoned-pb.zip
  * <br>

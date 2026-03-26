@@ -35,15 +35,11 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
  * TODO elegant shutdown of entityStream and others
- * <p>
- * TODO startup to wait for processing complete.
- * <p>
- * Encountered this error:
- * <p>
- * https://github.com/h2database/h2database/issues/2590
- * <p>
- * at dev.ikm.tinkar.provider.mvstore.MVStoreProvider.forEachParallel(MVStoreProvider.java:144)
- * at dev.ikm.tinkar.provider.entity.StampProvider.<init>(StampProvider.java:38)
+ * <p>TODO startup to wait for processing complete.
+ * <p>Encountered this error:
+ * <p>https://github.com/h2database/h2database/issues/2590
+ * <p>at dev.ikm.tinkar.provider.mvstore.MVStoreProvider.forEachParallel(MVStoreProvider.java:144)
+ * at dev.ikm.tinkar.provider.entity.StampProvider.&lt;init&gt;(StampProvider.java:38)
  * at java.base/jdk.internal.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
  * at java.base/jdk.internal.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:78)
  * at java.base/jdk.internal.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
@@ -153,10 +149,8 @@ public class StampProvider extends EntityProcessor<StampEntity<StampEntityVersio
 
     /**
      * Controller for StampProvider lifecycle management.
-     * <p>
-     * Integrates with {@link dev.ikm.tinkar.common.service.ServiceLifecycleManager} and provides
+     * <p>     * Integrates with {@link dev.ikm.tinkar.common.service.ServiceLifecycleManager} and provides
      * service discovery for StampService. Depends on EntityProvider being started first.
-     * </p>
      */
     public static class Controller extends ProviderController<StampProvider> {
 

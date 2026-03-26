@@ -36,11 +36,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Provider for Lucene-based search indexing and searching services.
- * <p>
- * This provider manages the lifecycle of the Indexer and Searcher components,
+ * <p>This provider manages the lifecycle of the Indexer and Searcher components,
  * ensuring they are properly initialized during the INDEXING phase and cleanly
  * shutdown when the application terminates.
- * </p>
  */
 public class SearchProvider implements SearchService {
     private static final Logger LOG = LoggerFactory.getLogger(SearchProvider.class);
@@ -269,29 +267,23 @@ public class SearchProvider implements SearchService {
 
     /**
      * Controller for SearchProvider lifecycle management.
-     * <p>
-     * Manages the lifecycle of search services during the INDEXING phase,
+     * <p>     * Manages the lifecycle of search services during the INDEXING phase,
      * which occurs after DATA_STORAGE but before CORE_SERVICES.
      * This is NOT a user-selectable data source - it runs automatically.
-     * </p>
      *
-     * <h3>Type Relationship</h3>
-     * <p>
-     * This controller extends {@code ProviderController<SearchProvider>} where {@code SearchProvider}
+     * <p><b>Type Relationship</b></p>
+     * <p>     * This controller extends {@code ProviderController<SearchProvider>} where {@code SearchProvider}
      * is the concrete implementation class. The {@link #serviceClasses()} method returns
      * {@code SearchService.class}, which {@code SearchProvider} implements. This establishes
      * the contract that {@code SearchProvider implements SearchService}.
-     * </p>
      *
-     * <h3>Service Discovery</h3>
-     * <p>
-     * Other services discover SearchProvider by requesting SearchService:
+     * <p><b>Service Discovery</b></p>
+     * <p>     * Other services discover SearchProvider by requesting SearchService:
      * <pre>{@code
      * SearchService searchService = ServiceLifecycleManager.get()
      *     .getRunningService(SearchService.class)
      *     .orElseThrow();
      * }</pre>
-     * </p>
      */
     public static class Controller extends ProviderController<SearchProvider> {
 

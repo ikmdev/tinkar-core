@@ -20,13 +20,13 @@ public interface EntityKey {
 
     /**
      * The pattern sequence. A 16-bit unsigned number.
-     * @return an int > 0 and < 2^16 (65,536)
+     * @return an int &gt; 0 and &lt; 2^16 (65,536)
      */
     int patternSequence();
 
     /**
      * The element sequence. A 48-bit unsigned number.
-     * @return an int > 0 and < 2^48 (281,474,976,710,656)
+     * @return an int &gt; 0 and &lt; 2^48 (281,474,976,710,656)
      */
     long elementSequence();
 
@@ -73,7 +73,7 @@ public interface EntityKey {
     interface EntityVersionKey extends EntityKey {
         /**
          * The stamp sequence. A 32-bit unsigned number.
-         * @return an int >= 0 and < 2^32 (4,294,967,296)
+         * @return an int &gt;= 0 and &lt; 2^32 (4,294,967,296)
          */
         int stampSequence();
         default byte[] key() {
@@ -132,15 +132,11 @@ public interface EntityKey {
     /**
      * Special EntityKey implementation for providers that use sequential NIDs
      * (SpinedArray, MVStore, Ephemeral) rather than pattern-encoded NIDs.
-     * <p>
-     * This implementation stores the NID directly and returns it unchanged from {@link #nid()},
+     * <p>     * This implementation stores the NID directly and returns it unchanged from {@link #nid()},
      * bypassing the NidCodec6 encoding. The pattern sequence is always 0 (indicating
      * "not pattern-encoded") and the element sequence equals the NID value offset to be positive.
-     * </p>
-     * <p>
-     * This allows the EntityKey API to be satisfied while maintaining compatibility with
+     * <p>     * This allows the EntityKey API to be satisfied while maintaining compatibility with
      * existing sequential NID assignment in non-RocksDB providers.
-     * </p>
      */
     record SequentialNidEntityKey(int sequentialNid) implements EntityKey {
         /**

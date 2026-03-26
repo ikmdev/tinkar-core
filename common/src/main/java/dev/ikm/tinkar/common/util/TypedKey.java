@@ -20,16 +20,13 @@ import java.util.Objects;
 
 /**
  * A type-safe key for storing and retrieving values from map-like structures.
- * <p>
- * Provides compile-time type safety by encoding the value type in the key itself,
+ * <p>Provides compile-time type safety by encoding the value type in the key itself,
  * eliminating the need for unsafe casts when retrieving values from generic maps.
  * This is a general-purpose utility that can be used across the entire codebase.
- * <p>
- * <b>Can be implemented by enums</b> to gain singleton, iteration, and exhaustiveness benefits.
+ * <p><b>Can be implemented by enums</b> to gain singleton, iteration, and exhaustiveness benefits.
  *
  * <h2>Why TypedKey Exists: The Problem It Solves</h2>
- * <p>
- * Traditional {@code Map<String, Object>} usage suffers from type safety issues:
+ * <p>Traditional {@code Map<String, Object>} usage suffers from type safety issues:
  * <pre>{@code
  * // Traditional approach - unsafe and error-prone:
  * Map<String, Object> config = new HashMap<>();
@@ -41,8 +38,7 @@ import java.util.Objects;
  * Integer wrong = (Integer) config.get("host"); // ⚠️ ClassCastException at runtime!
  * }</pre>
  *
- * <p>
- * {@code TypedKey} solves these problems by making the type system work for you:
+ * <p>{@code TypedKey} solves these problems by making the type system work for you:
  * <ul>
  *   <li><b>Type mismatches caught at compile time</b> - not at runtime</li>
  *   <li><b>No unsafe casts</b> - compiler enforces type correctness</li>
@@ -52,16 +48,14 @@ import java.util.Objects;
  * </ul>
  *
  * <h2>Core Concept: Phantom Types + Interface Default Methods</h2>
- * <p>
- * {@code TypedKey<T>} uses the "phantom type" pattern - the type parameter {@code T}
+ * <p>{@code TypedKey<T>} uses the "phantom type" pattern - the type parameter {@code T}
  * exists only at compile time to provide type safety. This interface provides all
  * implementation via default methods, requiring only two abstract methods from implementors:
  * <ul>
  *   <li>{@link #getKey()} - Returns the string identifier</li>
  *   <li>{@link #getType()} - Returns the expected value type</li>
  * </ul>
- * <p>
- * This design enables both standalone instances (via {@link #of(String, Class)}) and
+ * <p>This design enables both standalone instances (via {@link #of(String, Class)}) and
  * enum implementations for singleton + iteration benefits.
  *
  * <h2>Benefits</h2>
@@ -152,7 +146,7 @@ import java.util.Objects;
  * </ul>
  *
  * <h2>When to Use TypedKey vs Alternatives</h2>
- * <table border="1" cellpadding="5">
+ * <table border="1">
  * <caption>TypedKey vs Alternative Approaches</caption>
  * <tr>
  *   <th>Situation</th>
@@ -192,15 +186,13 @@ import java.util.Objects;
  * </table>
  *
  * <h2>Architectural Context</h2>
- * <p>
- * {@code TypedKey} is the foundation of a layered type-safe property system:
+ * <p>{@code TypedKey} is the foundation of a layered type-safe property system:
  * <ul>
  *   <li><b>tinkar-common:</b> {@code TypedKey} - Generic map-based type safety (this class)</li>
  *   <li><b>komet-framework:</b> {@code TypedProperty} - ViewModel-specific specialization</li>
  *   <li><b>Application layer:</b> Domain-specific property constants (e.g., {@code StampProperties})</li>
  * </ul>
- * <p>
- * Use {@code TypedKey} when working with general-purpose maps, caches, or configuration.
+ * <p>Use {@code TypedKey} when working with general-purpose maps, caches, or configuration.
  * Use {@code TypedProperty} when working with Cognitive ViewModels in the UI layer.
  *
  * <h2>Design Decisions</h2>
@@ -229,8 +221,7 @@ public interface TypedKey<T> {
 
     /**
      * Returns the string key identifier.
-     * <p>
-     * For enums, typically implemented as {@code return this.name();}.
+     * <p>     * For enums, typically implemented as {@code return this.name();}.
      * For standalone instances, returns the key provided at construction.
      *
      * @return the key string (never null)
@@ -239,8 +230,7 @@ public interface TypedKey<T> {
 
     /**
      * Returns the expected type of values for this key.
-     * <p>
-     * Used for runtime type checking and casting. For enums, typically stored
+     * <p>     * Used for runtime type checking and casting. For enums, typically stored
      * in a field and returned with appropriate casting.
      *
      * @return the value type (never null)
@@ -249,11 +239,10 @@ public interface TypedKey<T> {
 
     /**
      * Gets the typed value from the specified map.
-     * <p>
-     * Provides compile-time type safety through generics. Performs runtime type
+     * <p>     * Provides compile-time type safety through generics. Performs runtime type
      * checking and throws ClassCastException if stored value doesn't match expected type.
      *
-     * <h3>Example:</h3>
+     * <p><b>Example:</b></p>
      * <pre>{@code
      * String username = USERNAME.get(map);  // Type-safe!
      * }</pre>
@@ -275,11 +264,10 @@ public interface TypedKey<T> {
 
     /**
      * Puts the typed value into the specified map.
-     * <p>
-     * Provides compile-time type safety through generics. Performs runtime
+     * <p>     * Provides compile-time type safety through generics. Performs runtime
      * validation to ensure type correctness before storing.
      *
-     * <h3>Example:</h3>
+     * <p><b>Example:</b></p>
      * <pre>{@code
      * USERNAME.put(map, "john.doe");  // Type-safe!
      * }</pre>
@@ -321,10 +309,9 @@ public interface TypedKey<T> {
 
     /**
      * Factory method for creating standalone TypedKey instances.
-     * <p>
-     * Use this for ad-hoc keys or when you don't need enum benefits.
+     * <p>     * Use this for ad-hoc keys or when you don't need enum benefits.
      *
-     * <h3>Example:</h3>
+     * <p><b>Example:</b></p>
      * <pre>{@code
      * TypedKey<String> USERNAME = TypedKey.of("username", String.class);
      * }</pre>
@@ -347,8 +334,7 @@ public interface TypedKey<T> {
 
     /**
      * Simple record implementation for standalone (non-enum) TypedKey instances.
-     * <p>
-     * This is an internal implementation detail used by the {@link #of(String, Class)}
+     * <p>     * This is an internal implementation detail used by the {@link #of(String, Class)}
      * factory method. Users should not instantiate this directly.
      */
     record TypedKeyImpl<T>(String key, Class<T> type) implements TypedKey<T> {

@@ -21,7 +21,7 @@
  * Tinkar knowledge graph. These records enable change detection, diff generation, audit trails,
  * and synchronization workflows by capturing what changed, when it changed, and how it changed.</p>
  *
- * <h3>Core Responsibilities</h3>
+ * <p><b>Core Responsibilities</b></p>
  *
  * <p>The change tracking system captures:</p>
  * <ul>
@@ -32,9 +32,9 @@
  * <li><strong>Change Magnitude</strong> - Categorization of change significance</li>
  * </ul>
  *
- * <h3>Core Record Types</h3>
+ * <p><b>Core Record Types</b></p>
  *
- * <h4>ChangeChronology</h4>
+ * <p><b>ChangeChronology</b></p>
  * <p>Represents the complete change history for an entity between two STAMP positions. Contains:</p>
  * <ul>
  * <li><strong>Entity Identity</strong> - Which entity changed</li>
@@ -61,7 +61,7 @@
  * boolean hasChanges = !changes.versionChanges().isEmpty();
  * }</pre>
  *
- * <h4>VersionChangeRecord</h4>
+ * <p><b>VersionChangeRecord</b></p>
  * <p>Represents changes to a single version of an entity. Contains:</p>
  * <ul>
  * <li><strong>Version Identity</strong> - Which version changed</li>
@@ -88,7 +88,7 @@
  * }
  * }</pre>
  *
- * <h4>FieldChangeRecord</h4>
+ * <p><b>FieldChangeRecord</b></p>
  * <p>Represents a change to a specific field within a version. Contains:</p>
  * <ul>
  * <li><strong>Field Index</strong> - Which field changed (position in field array)</li>
@@ -115,9 +115,9 @@
  * }
  * }</pre>
  *
- * <h3>Change Detection Patterns</h3>
+ * <p><b>Change Detection Patterns</b></p>
  *
- * <h4>Simple Change Detection</h4>
+ * <p><b>Simple Change Detection</b></p>
  * <pre>{@code
  * // Has entity changed between two times?
  * StampCalculator calc = StampCalculatorWithCache.getCalculator(stampCoord);
@@ -137,7 +137,7 @@
  * }
  * }</pre>
  *
- * <h4>Bulk Change Detection</h4>
+ * <p><b>Bulk Change Detection</b></p>
  * <pre>{@code
  * // Find all concepts that changed in time range
  * List<ChangeChronology> changes = new ArrayList<>();
@@ -156,7 +156,7 @@
  * System.out.println("Found " + changes.size() + " changed concepts");
  * }</pre>
  *
- * <h4>Specific Field Change Detection</h4>
+ * <p><b>Specific Field Change Detection</b></p>
  * <pre>{@code
  * // Find changes to specific field (e.g., descriptions)
  * for (VersionChangeRecord versionChange : changes.versionChanges()) {
@@ -173,9 +173,9 @@
  * }
  * }</pre>
  *
- * <h3>Change Types and Patterns</h3>
+ * <p><b>Change Types and Patterns</b></p>
  *
- * <h4>Creation Changes</h4>
+ * <p><b>Creation Changes</b></p>
  * <p>New entity or version created:</p>
  * <ul>
  * <li>VersionChangeRecord with no previous version</li>
@@ -183,7 +183,7 @@
  * <li>STAMP indicates creation time, author, module, path</li>
  * </ul>
  *
- * <h4>Modification Changes</h4>
+ * <p><b>Modification Changes</b></p>
  * <p>Existing version modified:</p>
  * <ul>
  * <li>VersionChangeRecord references previous version</li>
@@ -191,7 +191,7 @@
  * <li>Some fields may be unchanged</li>
  * </ul>
  *
- * <h4>State Changes</h4>
+ * <p><b>State Changes</b></p>
  * <p>Entity activated or inactivated:</p>
  * <ul>
  * <li>STAMP status field changes between ACTIVE and INACTIVE</li>
@@ -199,7 +199,7 @@
  * <li>Common for retirement and deprecation</li>
  * </ul>
  *
- * <h4>Module Reorganization</h4>
+ * <p><b>Module Reorganization</b></p>
  * <p>Entity moved between modules:</p>
  * <ul>
  * <li>STAMP module field changes</li>
@@ -207,9 +207,9 @@
  * <li>Reflects modularization activity</li>
  * </ul>
  *
- * <h3>Use Cases</h3>
+ * <p><b>Use Cases</b></p>
  *
- * <h4>Audit Trails</h4>
+ * <p><b>Audit Trails</b></p>
  * <pre>{@code
  * // Generate audit trail for entity
  * void auditEntity(Entity entity) {
@@ -230,7 +230,7 @@
  * }
  * }</pre>
  *
- * <h4>Synchronization</h4>
+ * <p><b>Synchronization</b></p>
  * <pre>{@code
  * // Synchronize changes from source to target
  * void syncChanges(StampPositionRecord lastSync, StampPositionRecord now) {
@@ -246,7 +246,7 @@
  * }
  * }</pre>
  *
- * <h4>Diff Generation</h4>
+ * <p><b>Diff Generation</b></p>
  * <pre>{@code
  * // Generate human-readable diff
  * void generateDiff(Entity entity, StampPositionRecord v1, StampPositionRecord v2) {
@@ -262,7 +262,7 @@
  * }
  * }</pre>
  *
- * <h4>Change Notification</h4>
+ * <p><b>Change Notification</b></p>
  * <pre>{@code
  * // Notify subscribers of changes
  * void notifyChanges(long lastCheckTime) {
@@ -281,7 +281,7 @@
  * }
  * }</pre>
  *
- * <h3>Integration with Version Control</h3>
+ * <p><b>Integration with Version Control</b></p>
  *
  * <p>Change records integrate with STAMP-based version control:</p>
  * <ul>
@@ -291,7 +291,7 @@
  * <li>Conflict detection via contradiction analysis</li>
  * </ul>
  *
- * <h3>Performance Considerations</h3>
+ * <p><b>Performance Considerations</b></p>
  *
  * <ul>
  * <li>Change detection is O(V) where V is version count</li>
@@ -300,7 +300,7 @@
  * <li>Consider batching change detection operations</li>
  * </ul>
  *
- * <h3>Thread Safety</h3>
+ * <p><b>Thread Safety</b></p>
  *
  * <p>All change record types are immutable and thread-safe. They can be safely shared across
  * threads and used in concurrent change detection workflows.</p>

@@ -81,11 +81,9 @@ import java.util.function.ObjIntConsumer;
 
 /**
  * Maybe a hybrid of SpinedArrayProvider and MVStoreProvider is worth considering.
- * <p>
- * SpinedArrayProvider is performing horribly because of dependency on ConcurrentUuidIntHashMap serialization.
+ * <p>SpinedArrayProvider is performing horribly because of dependency on ConcurrentUuidIntHashMap serialization.
  * TODO: consider if we remove ConcurrentUuidIntHashMap, or improve.
- * <p>
- * MVStore performs worse when iterating over entities.
+ * <p>MVStore performs worse when iterating over entities.
  */
 public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, PrimitiveDataRepair {
     private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayProvider.class);
@@ -743,9 +741,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
 
     /**
      * Controller for SpinedArrayProvider lifecycle management.
-     * <p>
-     * Handles heavyweight initialization including data loading, indexing, and UUID mapping.
-     * </p>
+     * <p>     * Handles heavyweight initialization including data loading, indexing, and UUID mapping.
      */
     public abstract static class Controller extends ProviderController<SpinedArrayProvider>
             implements DataServiceController<PrimitiveDataService> {

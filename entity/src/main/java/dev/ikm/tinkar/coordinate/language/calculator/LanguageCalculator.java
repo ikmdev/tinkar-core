@@ -347,40 +347,31 @@ public interface LanguageCalculator {
     /**
      * TODO needs update. Add info on patterns, and we don't use getNextPriorityLanguageCoordinate anymore...
      * The developer can pass an ordered list of language coordinates to the language stampCoordinateRecord.
-     * <p>
-     * Gets the specified description(s).
-     * <p>
-     * Iterates over the list of supplied descriptions, finding the descriptions that match the highest ranked
+     * <p>     * Gets the specified description(s).
+     * <p>     * Iterates over the list of supplied descriptions, finding the descriptions that match the highest ranked
      * {@link LanguageCoordinate#descriptionTypePreferenceNidList()} (first item in the array) and the
      * {@link LanguageCoordinate#languageConceptNid()}.  If no descriptions match, the process is repeated
      * with each subsequent item in {@link LanguageCoordinate#descriptionTypePreferenceNidList()}, walking
      * through the array one by one.
-     * <p>
-     * For any given step, if multiple descriptions match the criteria, an ACTIVE description should have priority over
+     * <p>     * For any given step, if multiple descriptions match the criteria, an ACTIVE description should have priority over
      * an inactive one.
-     * <p>
-     * To be returned, a description MUST match one of the description types, and the specified language.
-     * <p>
-     * If the specified language {@link LanguageCoordinate#languageConceptNid()} is {@link TinkarTerm#LANGUAGE},
+     * <p>     * To be returned, a description MUST match one of the description types, and the specified language.
+     * <p>     * If the specified language {@link LanguageCoordinate#languageConceptNid()} is {@link TinkarTerm#LANGUAGE},
      * then language will be considered to always match, ignoring the actual value of the language in the description.
      * This allows this method to be used with a fallback behavior - where it will match a description of any language,
      * but still rank by the requested type.
-     * <p>
-     * For any descriptions that matched the criteria, they are then compared with the requested
+     * <p>     * For any descriptions that matched the criteria, they are then compared with the requested
      * {@link LanguageCoordinate#dialectPatternPreferenceNidList()}
      * The dialect preferences are evaluated in array order.  Each description that has a dialect annotation that matches
      * the dialect preference, with a type of {@link TinkarTerm#PREFERRED}, it is advanced to the next ranking step (below)
-     * <p>
-     * If none of the descriptions has a dialect annotation of type {@link TinkarTerm#PREFERRED} that matches a dialect
+     * <p>     * If none of the descriptions has a dialect annotation of type {@link TinkarTerm#PREFERRED} that matches a dialect
      * in the {@link LanguageCoordinate#dialectPatternPreferenceNidList()}, then all matching language / type matching
      * descriptions are advanced to the next ranking step (below).
-     * <p>
-     * The final ranking step, is to evaluate {@link LanguageCoordinate#modulePreferenceNidListForLanguage()}
+     * <p>     * The final ranking step, is to evaluate {@link LanguageCoordinate#modulePreferenceNidListForLanguage()}
      * The module list is evaluated in order.  If a description matches the requested module, then it is placed
      * into the top position, so it is returned via {@link Latest#get()}.  All other descriptions are still
      * returned, but as part of the {@link Latest#contradictions()}.
-     * <p>
-     * If none of the description match a specified module ranking, then the descriptions are returned in an arbitrary order,
+     * <p>     * If none of the description match a specified module ranking, then the descriptions are returned in an arbitrary order,
      * between {@link Latest#get()} and {@link Latest#contradictions()}.
      *
      * @param descriptionList List of descriptions to consider.
@@ -767,7 +758,7 @@ public interface LanguageCalculator {
 
     /**
      * Same as getSpecifiedDescription(StampFilter stampCoordinateRecord,
-     * List<SemanticChronology> descriptionList,
+     * List&lt;SemanticChronology&gt; descriptionList,
      * LanguageCoordinate languageCoordinate);
      * but allows the descriptionTypePriority to be independent of the coordinate, without forcing a clone of
      * the coordinate.

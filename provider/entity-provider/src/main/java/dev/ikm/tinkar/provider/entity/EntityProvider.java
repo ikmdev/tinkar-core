@@ -604,10 +604,8 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
     /**
      * Controller for EntityProvider lifecycle management.
-     * <p>
-     * Integrates with {@link dev.ikm.tinkar.common.service.ServiceLifecycleManager} and provides
+     * <p>     * Integrates with {@link dev.ikm.tinkar.common.service.ServiceLifecycleManager} and provides
      * service discovery for EntityService, PublicIdService, and DefaultDescriptionForNidService.
-     * </p>
      */
     public static class Controller extends ProviderController<EntityProvider> {
 

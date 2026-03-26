@@ -22,7 +22,7 @@
  * navigation patterns, apply vertex filtering and sorting, and provide efficient graph traversal
  * operations including parent/child queries, ancestor/descendant calculations, and subsumption testing.</p>
  *
- * <h3>Core Responsibilities</h3>
+ * <p><b>Core Responsibilities</b></p>
  *
  * <p>Navigation calculators handle:</p>
  * <ul>
@@ -35,9 +35,9 @@
  * <li><strong>Graph Caching</strong> - Cache constructed graphs for efficient reuse</li>
  * </ul>
  *
- * <h3>Core Interfaces and Classes</h3>
+ * <p><b>Core Interfaces and Classes</b></p>
  *
- * <h4>NavigationCalculator</h4>
+ * <p><b>NavigationCalculator</b></p>
  * <p>The primary interface defining graph traversal operations. Key methods include:</p>
  *
  * <ul>
@@ -51,7 +51,7 @@
  * <li><strong>leaves()</strong> - Get leaf concepts (concepts with no children)</li>
  * </ul>
  *
- * <h4>NavigationCalculatorWithCache</h4>
+ * <p><b>NavigationCalculatorWithCache</b></p>
  * <p>Cached implementation that stores graph structures for performance. Features:</p>
  * <ul>
  * <li>Thread-safe caching of parent/child relationships</li>
@@ -74,7 +74,7 @@
  * IntIdSet children = calculator.childrenOf(conceptNid);
  * }</pre>
  *
- * <h4>NavigationCalculatorDelegate</h4>
+ * <p><b>NavigationCalculatorDelegate</b></p>
  * <p>Delegation interface allowing classes to provide navigation calculator functionality by
  * delegating to an underlying calculator instance. Used in view calculators:</p>
  * <pre>{@code
@@ -90,7 +90,7 @@
  * }
  * }</pre>
  *
- * <h4>Edge and EdgeRecord</h4>
+ * <p><b>Edge and EdgeRecord</b></p>
  * <p>Represent directed edges in the navigation graph:</p>
  * <ul>
  * <li><strong>Edge</strong> - Interface representing a directed relationship between concepts</li>
@@ -100,9 +100,9 @@
  * <li>Multiple edges can exist between the same concepts from different patterns</li>
  * </ul>
  *
- * <h3>Graph Traversal Operations</h3>
+ * <p><b>Graph Traversal Operations</b></p>
  *
- * <h4>Immediate Relationships</h4>
+ * <p><b>Immediate Relationships</b></p>
  * <pre>{@code
  * NavigationCalculator calc = NavigationCalculatorWithCache.getCalculator(stamp, nav);
  *
@@ -122,7 +122,7 @@
  * boolean isChild = calc.isChildOf(childNid, parentNid);
  * }</pre>
  *
- * <h4>Transitive Relationships</h4>
+ * <p><b>Transitive Relationships</b></p>
  * <pre>{@code
  * // Get all ancestors (parents, grandparents, etc.)
  * IntIdSet ancestors = calc.ancestorsOf(conceptNid);
@@ -137,7 +137,7 @@
  * boolean isDescendant = calc.ancestorsOf(descendantNid).contains(ancestorNid);
  * }</pre>
  *
- * <h4>Special Nodes</h4>
+ * <p><b>Special Nodes</b></p>
  * <pre>{@code
  * // Get root concepts (no parents)
  * IntIdSet roots = calc.roots();
@@ -149,7 +149,7 @@
  * IntIdSet allConcepts = calc.allReachableConcepts();
  * }</pre>
  *
- * <h3>Graph Construction Process</h3>
+ * <p><b>Graph Construction Process</b></p>
  *
  * <p>The calculator builds navigation graphs through multiple stages:</p>
  *
@@ -200,7 +200,7 @@
  * </li>
  * </ol>
  *
- * <h3>Multi-Pattern Navigation</h3>
+ * <p><b>Multi-Pattern Navigation</b></p>
  *
  * <p>When multiple navigation patterns are specified, edges from all patterns are merged:</p>
  *
@@ -222,7 +222,7 @@
  * IntIdSet parents = calc.parentsOf(conceptNid);
  * }</pre>
  *
- * <h3>Sorting Implementation</h3>
+ * <p><b>Sorting Implementation</b></p>
  *
  * <p>When vertex sorting is enabled, children are sorted in multiple stages:</p>
  *
@@ -242,9 +242,9 @@
  * });
  * }</pre>
  *
- * <h3>Common Usage Patterns</h3>
+ * <p><b>Common Usage Patterns</b></p>
  *
- * <h4>Building Hierarchy Trees</h4>
+ * <p><b>Building Hierarchy Trees</b></p>
  * <pre>{@code
  * // Recursively build tree from root
  * void buildTree(int conceptNid, NavigationCalculator calc, int depth) {
@@ -257,7 +257,7 @@
  * }
  * }</pre>
  *
- * <h4>Finding Common Ancestors</h4>
+ * <p><b>Finding Common Ancestors</b></p>
  * <pre>{@code
  * IntIdSet ancestors1 = calc.ancestorsOf(concept1Nid);
  * IntIdSet ancestors2 = calc.ancestorsOf(concept2Nid);
@@ -266,7 +266,7 @@
  * IntIdSet commonAncestors = ancestors1.intersect(ancestors2);
  * }</pre>
  *
- * <h4>Subsumption Testing</h4>
+ * <p><b>Subsumption Testing</b></p>
  * <pre>{@code
  * // Test if concept1 is more general than concept2
  * boolean concept1SubsumesConcept2 =
@@ -278,7 +278,7 @@
  *     calc.isDescendentOf(concept2Nid, concept1Nid);
  * }</pre>
  *
- * <h4>Computing Path Distance</h4>
+ * <p><b>Computing Path Distance</b></p>
  * <pre>{@code
  * // Find shortest path between concepts
  * OptionalInt distance = calc.pathDistance(fromNid, toNid);
@@ -287,7 +287,7 @@
  * }
  * }</pre>
  *
- * <h3>Performance and Caching</h3>
+ * <p><b>Performance and Caching</b></p>
  *
  * <p>NavigationCalculatorWithCache provides significant performance benefits:</p>
  *
@@ -307,7 +307,7 @@
  * <li>Memory overhead: O(V + E) per unique coordinate combination</li>
  * </ul>
  *
- * <h3>Integration with View Calculators</h3>
+ * <p><b>Integration with View Calculators</b></p>
  *
  * <p>Navigation calculators are typically accessed through view calculators:</p>
  * <pre>{@code
@@ -318,7 +318,7 @@
  * boolean isDescendant = viewCalc.isDescendentOf(childNid, parentNid);
  * }</pre>
  *
- * <h3>Thread Safety</h3>
+ * <p><b>Thread Safety</b></p>
  *
  * <p>All calculator implementations are thread-safe and can be shared across threads.
  * The cached implementation uses concurrent data structures for safe concurrent access

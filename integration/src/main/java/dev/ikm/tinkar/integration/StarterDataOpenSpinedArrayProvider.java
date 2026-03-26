@@ -5,12 +5,10 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 /**
  * JUnit 5 extension that opens an existing SpinedArray store and ensures
  * tinkar-starter-data is loaded (useful when a store exists but needs data).
- * <p>
- * Store Type: SpinedArray (persistent, file-based)
+ * <p>Store Type: SpinedArray (persistent, file-based)
  * Data Loaded: tinkar-starter-data-reasoned-pb.zip
  * Storage Location (default): target/spinedarrays/{TestClassName}
- * <p>
- * You can still override behavior on a per-test basis using {@link WithKeyValueProvider}
+ * <p>You can still override behavior on a per-test basis using {@link WithKeyValueProvider}
  * for custom {@code dataPath}, {@code cleanOnStart}, or {@code importPath}.
  */
 public class StarterDataOpenSpinedArrayProvider extends OpenSpinedArrayKeyValueProvider {
