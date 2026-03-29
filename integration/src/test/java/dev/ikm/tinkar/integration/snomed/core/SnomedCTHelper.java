@@ -16,9 +16,6 @@
 package dev.ikm.tinkar.integration.snomed.core;
 
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
-import dev.ikm.tinkar.entity.EntityService;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -26,26 +23,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.UUID;
-import java.util.function.Consumer;
 
 import static dev.ikm.tinkar.integration.snomed.core.MockDataType.ENTITYREF;
-import static dev.ikm.tinkar.integration.snomed.core.MockEntity.clearCache;
 import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.SNOMED_CT_NAMESPACE_UUID;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class SnomedCTHelper {
-
-    public static void openSession(Consumer<MockedStatic<EntityService>> mockedStaticEntity) {
-        clearCache();
-        try (MockedStatic<EntityService> mockStaticEntityService = Mockito.mockStatic(EntityService.class)) {
-            EntityService entityService = mock(EntityService.class);
-            mockStaticEntityService.when(EntityService::get).thenReturn(entityService);
-            when(EntityService.get().nidForUuids(any(UUID.class))).thenAnswer((y) -> MockEntity.getNid(y.getArgument(0)));
-            mockedStaticEntity.accept(mockStaticEntityService);
-        }
-    }
 
     /**
      * This method returns SnomedCTData class after it loads the file

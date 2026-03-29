@@ -190,8 +190,7 @@ public abstract class TrackingCallable<V> implements Callable<V> {
      * Updates the message and blocks until the UI thread has processed the update.
      * This is useful for ensuring final status messages are displayed before a task completes,
      * especially for very fast tasks that might complete in microseconds.
-     * <p>
-     * Requires a UiThreadExecutor to be set via setUiThreadExecutor().
+     * <p>     * Requires a UiThreadExecutor to be set via setUiThreadExecutor().
      * If no executor is set, falls back to regular updateMessage().
      * 
      * @param message the message to set

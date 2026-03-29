@@ -25,10 +25,8 @@ import java.util.ArrayList;
 
 /**
  * Template for marshalable class implementations classes
- * <p>
- * <p>
  *
-  <pre><code>
+ * <pre><code>
 
  &#64;Decoder
  public static ClassBeingDecoded decode(DecoderInput in) {

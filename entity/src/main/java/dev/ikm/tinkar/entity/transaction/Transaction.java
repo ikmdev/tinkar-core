@@ -321,12 +321,10 @@ public class Transaction implements Comparable<Transaction>, Encodable {
     /**
      * Retrieves or creates a {@code StampEntity} based on the given parameters.
      * Validates input arguments to ensure they are within defined constraints.
-     * <p>
-     * Time can be Long.MAX_VALUE, and will be set at commit time, or Time can be a
+     * <p>     * Time can be Long.MAX_VALUE, and will be set at commit time, or Time can be a
      * time in the past, and on commit, time is preserved. This strategy allows transactions to
      * work on import of historic content.
-     * <p>
-     * @param state the state of the stamp to retrieve; must not be null
+     * <p>     * @param state the state of the stamp to retrieve; must not be null
      * @param time the timestamp associated with the stamp; must not be {@code Long.MIN_VALUE}
      * @param authorNid the identifier of the author; must not be zero
      * @param moduleNid the identifier of the module; must not be zero
@@ -403,8 +401,7 @@ public class Transaction implements Comparable<Transaction>, Encodable {
     /**
      * Commits the current transaction by finalizing all stamps included in it, recording the
      * commit timestamp, and notifying the system of the changes.
-     * <p>
-     * This method processes each stamp in the transaction by invoking the `commitStamp` method
+     * <p>     * This method processes each stamp in the transaction by invoking the `commitStamp` method
      * with the appropriate commit time. It also updates the list of active transactions by
      * removing the committed transaction and triggers a notification to indicate that a refresh
      * is required.
@@ -566,25 +563,20 @@ public class Transaction implements Comparable<Transaction>, Encodable {
 
     /**
      * Saves the current active transactions to a file within the configured data store root directory.
-     * <p>
-     * This method retrieves the root directory from {@link ServiceProperties} using the
+     * <p>     * This method retrieves the root directory from {@link ServiceProperties} using the
      * {@link ServiceKeys#DATA_STORE_ROOT} key. If the root directory is configured, it creates
      * or overwrites a file named "transactions.encoded" in this directory. The method then
      * serializes the transactions from the `activeTransactions` collection, encoding their data
      * and writing each transaction to the file.
-     * <p>
-     * Preconditions:
+     * <p>     * Preconditions:
      * <p> - The `ServiceKeys.DATA_STORE_ROOT` must be properly configured and accessible.
      * <p> - The `activeTransactions` collection must contain valid transaction objects.
-     * <p>
-     * Postconditions:
+     * <p>     * Postconditions:
      * <p> - A file named "transactions.encoded" will be created or overwritten in the configured root directory.
      * <p> - The file will contain serialized data for all currently active transactions.
-     * <p>
-     * Exceptions:
+     * <p>     * Exceptions:
      * <p> - Throws {@link RuntimeException} if an I/O error or unexpected encoding issue occurs during the process.
-     * <p>
-     * Dependencies:
+     * <p>     * Dependencies:
      * <p> - Relies on the configuration provided by {@link ServiceProperties} for determining the data store root directory.
      * <p> - Each transaction within the `activeTransactions` collection is expected to implement the `encode` method
      *   for proper serialization.
@@ -611,25 +603,19 @@ public class Transaction implements Comparable<Transaction>, Encodable {
 
     /**
      * Restores previously saved transactions from a specified file in the data store root directory.
-     * <p>
-     * This method retrieves the root directory from the service properties and looks for a file named
+     * <p>     * This method retrieves the root directory from the service properties and looks for a file named
      * "transactions.encoded". If the file exists, it reads the transaction data, decodes each transaction,
      * and populates the list of active transactions.
-     * <p>
-     * Any errors during the file reading process are logged, and an {@link UncheckedIOException}
+     * <p>     * Any errors during the file reading process are logged, and an {@link UncheckedIOException}
      * is thrown with detailed information about the failure.
-     * <p>
-     * <p> Preconditions:
+     * <p>     * <p> Preconditions:
      * <p> - The "transactions.encoded" file must be present in the configured data store root directory.
      * <p> - The file format must match the expected encoding of transaction data.
-     * <p>
-     * Postconditions:
+     * <p>     * Postconditions:
      * <p> - Decoded transactions are added to the active transactions list.
-     * <p>
-     * Exceptions:
+     * <p>     * Exceptions:
      * <p> - Throws {@link UncheckedIOException} if file reading or parsing encounters an I/O error.
-     * <p>
-     * Dependencies:
+     * <p>     * Dependencies:
      * <p> - The method depends on the configuration provided by {@link ServiceProperties}.
      * <p> - The transactions are decoded using the {@link Transaction#decode(DecoderInput)} method.
      */

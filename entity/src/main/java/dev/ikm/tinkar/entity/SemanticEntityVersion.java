@@ -34,20 +34,17 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A version of a SemanticEntity.
- * <p>
- * A semantic is an assertion that is patterned by a {@link PatternEntity}. Each semantic version references:
+ * <p>A semantic is an assertion that is patterned by a {@link PatternEntity}. Each semantic version references:
  * - the pattern that defines the meaning and data types of its fields; and
  * - the component (concept, semantic, pattern, or other entity) that the assertion is about (the referenced component).
- * <p>
- * Implementations expose the raw field values via {@link #fieldValues()} and provide a set of convenience conversion
+ * <p>Implementations expose the raw field values via {@link #fieldValues()} and provide a set of convenience conversion
  * methods (for example, {@link #fieldAsInt(int)}, {@link #fieldAsLong(int)}, {@link #fieldAsLogicalExpression(int)})
  * that perform exact, checked conversions. These conversions follow the rules below:
  * - A null field value results in a NullPointerException.
  * - If the type is unsupported for the requested conversion, an IllegalArgumentException is thrown.
  * - For numeric conversions, overflow or loss of precision results in an ArithmeticException. Non-finite floating
  *   point values also result in an ArithmeticException.
- * <p>
- * The {@link #entity()} and {@link #chronology()} methods both return the owning {@link SemanticEntity}. The default
+ * <p>The {@link #entity()} and {@link #chronology()} methods both return the owning {@link SemanticEntity}. The default
  * implementation of {@link #entity()} delegates to {@link #chronology()}.
  */
 public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
@@ -73,8 +70,7 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
 
     /**
      * The component that this semantic is about.
-     * <p>
-     * Equivalent to resolving {@link #referencedComponentNid()} through the {@link Entity#provider()}.
+     * <p>     * Equivalent to resolving {@link #referencedComponentNid()} through the {@link Entity#provider()}.
      *
      * @return the referenced component as an {@link EntityFacade}
      */
@@ -93,8 +89,7 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
 
     /**
      * The pattern that defines the meaning and data types of the fields for this semantic.
-     * <p>
-     * Equivalent to resolving {@link #patternNid()} through the {@link Entity#provider()}.
+     * <p>     * Equivalent to resolving {@link #patternNid()} through the {@link Entity#provider()}.
      *
      * @return the {@link PatternEntity} for this semantic
      */
@@ -143,11 +138,9 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
 
 /**
      * Returns the value at the specified field index as an int with exact, checked conversion.
-     * <p>
-     * Accepts integral numeric types (Byte, Short, Integer, Long, BigInteger, BigDecimal with scale 0),
+     * <p>     * Accepts integral numeric types (Byte, Short, Integer, Long, BigInteger, BigDecimal with scale 0),
      * floating point numbers that represent an exact integer within int range, and numeric strings.
-     * <p>
-     * Throws:
+     * <p>     * Throws:
      * - NullPointerException if the field value is null
      * - ArithmeticException on overflow, non-finite values, or loss of precision
      * - IllegalArgumentException if the type cannot be converted
@@ -223,11 +216,9 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
 
 /**
      * Returns the value at the specified field index as a long with exact, checked conversion.
-     * <p>
-     * Accepts integral numeric types (Byte, Short, Integer, Long, BigInteger, BigDecimal with scale 0),
+     * <p>     * Accepts integral numeric types (Byte, Short, Integer, Long, BigInteger, BigDecimal with scale 0),
      * floating point numbers that represent an exact integer within long range, and numeric strings.
-     * <p>
-     * Throws:
+     * <p>     * Throws:
      * - NullPointerException if the field value is null
      * - ArithmeticException on overflow, non-finite values, or loss of precision
      * - IllegalArgumentException if the type cannot be converted
@@ -301,11 +292,9 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
 
 /**
      * Returns the value at the specified field index as a double.
-     * <p>
-     * Accepts numeric types and numeric strings. BigDecimal and BigInteger are converted using their
+     * <p>     * Accepts numeric types and numeric strings. BigDecimal and BigInteger are converted using their
      * doubleValue with no additional scaling, which may lose precision for large values.
-     * <p>
-     * Throws:
+     * <p>     * Throws:
      * - NullPointerException if the field value is null
      * - IllegalArgumentException if the type cannot be converted
      *
@@ -359,11 +348,9 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
 
 /**
      * Returns the value at the specified field index as a float.
-     * <p>
-     * Accepts numeric types and numeric strings. BigDecimal and BigInteger are converted using their
+     * <p>     * Accepts numeric types and numeric strings. BigDecimal and BigInteger are converted using their
      * floatValue with no additional scaling, which may lose precision for large values.
-     * <p>
-     * Throws:
+     * <p>     * Throws:
      * - NullPointerException if the field value is null
      * - IllegalArgumentException if the type cannot be converted
      *
@@ -441,11 +428,9 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
 
 /**
      * Returns the value at the specified field index as a BigInteger.
-     * <p>
-     * Accepts integral numeric types (Byte, Short, Integer, Long, BigInteger, BigDecimal with scale 0),
+     * <p>     * Accepts integral numeric types (Byte, Short, Integer, Long, BigInteger, BigDecimal with scale 0),
      * floating point numbers that represent an exact integer, and numeric strings.
-     * <p>
-     * Throws:
+     * <p>     * Throws:
      * - NullPointerException if the field value is null
      * - ArithmeticException on non-integer floating point or BigDecimal inputs
      * - IllegalArgumentException if the type cannot be converted
@@ -502,11 +487,9 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
 
 /**
      * Returns the value at the specified field index as a BigDecimal.
-     * <p>
-     * Accepts all numeric types and numeric strings. Integral types are converted with scale 0.
+     * <p>     * Accepts all numeric types and numeric strings. Integral types are converted with scale 0.
      * Floating point inputs produce a BigDecimal via valueOf to preserve common representations.
-     * <p>
-     * Throws:
+     * <p>     * Throws:
      * - NullPointerException if the field value is null
      * - IllegalArgumentException if the type cannot be converted
      *
@@ -558,11 +541,9 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
     // Boolean as int/long/double/float if needed
 /**
      * Returns the value at the specified field index as a boolean.
-     * <p>
-     * Accepts Boolean values directly and common textual representations: "true"/"false",
+     * <p>     * Accepts Boolean values directly and common textual representations: "true"/"false",
      * "1"/"0", and "yes"/"no" (case-insensitive and trimmed). No other types are accepted.
-     * <p>
-     * Throws:
+     * <p>     * Throws:
      * - NullPointerException if the field value is null
      * - IllegalArgumentException if the value cannot be interpreted as a boolean
      *
@@ -587,8 +568,7 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
 
 /**
      * Returns the value at the specified field index as a String.
-     * <p>
-     * For numeric and boolean values, returns the default string representation. BigDecimal uses
+     * <p>     * For numeric and boolean values, returns the default string representation. BigDecimal uses
      * toPlainString to avoid scientific notation. For EntityFacade, returns its XML fragment. Null
      * values return null. All other objects use toString().
      *
@@ -643,11 +623,9 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
 
 /**
      * Returns the value at the specified field index as an EntityFacade.
-     * <p>
-     * Accepts EntityFacade directly, Component (resolved via publicId), or an int nid resolved via
+     * <p>     * Accepts EntityFacade directly, Component (resolved via publicId), or an int nid resolved via
      * EntityService. Any other type results in an error.
-     * <p>
-     * Throws:
+     * <p>     * Throws:
      * - NullPointerException if the field value is null
      * - IllegalArgumentException if the value cannot be resolved to an entity
      *
@@ -668,8 +646,7 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
 
 /**
      * Returns the value at the specified field index as a ConceptFacade.
-     * <p>
-     * Accepts ConceptFacade directly, or resolves an EntityFacade/nid to a ConceptFacade via EntityService.
+     * <p>     * Accepts ConceptFacade directly, or resolves an EntityFacade/nid to a ConceptFacade via EntityService.
      * If the resolved entity is not a concept, an error is thrown.
      *
      * @param index zero-based field index
@@ -691,8 +668,7 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
 
 /**
      * Returns the value at the specified field index as a SemanticFacade.
-     * <p>
-     * Accepts SemanticFacade directly, or resolves an EntityFacade/nid to a SemanticFacade via EntityService.
+     * <p>     * Accepts SemanticFacade directly, or resolves an EntityFacade/nid to a SemanticFacade via EntityService.
      * If the resolved entity is not a semantic, an error is thrown.
      *
      * @param index zero-based field index
@@ -714,8 +690,7 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
 
 /**
      * Returns the value at the specified field index as a PatternFacade.
-     * <p>
-     * Accepts PatternFacade directly, or resolves an EntityFacade/nid to a PatternFacade via EntityService.
+     * <p>     * Accepts PatternFacade directly, or resolves an EntityFacade/nid to a PatternFacade via EntityService.
      * If the resolved entity is not a pattern, an error is thrown.
      *
      * @param index zero-based field index
@@ -737,8 +712,7 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
 
 /**
      * Returns the value at the specified field index as a StampEntity.
-     * <p>
-     * Resolves an EntityFacade or nid via EntityService and requires the resolved entity to be a StampEntity.
+     * <p>     * Resolves an EntityFacade or nid via EntityService and requires the resolved entity to be a StampEntity.
      *
      * @param index zero-based field index
      * @return the resolved StampEntity
@@ -758,8 +732,7 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
 
 /**
      * Returns the value at the specified field index as a DiTree of EntityVertex.
-     * <p>
-     * Expects the stored value to already be a DiTree; no resolution is performed.
+     * <p>     * Expects the stored value to already be a DiTree; no resolution is performed.
      *
      * @param index zero-based field index
      * @return the DiTree value
@@ -778,8 +751,7 @@ public interface SemanticEntityVersion extends EntityVersion, SemanticVersion {
 
 /**
      * Returns the value at the specified field index as a LogicalExpression.
-     * <p>
-     * Expects the stored value to be a DiTree<EntityVertex> and wraps it in a LogicalExpression.
+     * <p>     * Expects the stored value to be a {@code DiTree<EntityVertex>} and wraps it in a LogicalExpression.
      * No additional validation or transformation of the tree is performed.
      *
      * @param index zero-based field index

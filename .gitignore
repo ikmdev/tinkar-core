@@ -231,3 +231,8 @@ Temporary Items
  # Develocity
 ###################
 **.develocity/
+
+###################
+# Claude (unpacked build standards)
+###################
+.claude

@@ -545,11 +545,13 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     @Override
     public void beginLoadPhase() {
         loadPhase = true;
+        PrimitiveData.get().setLoadPhase(true);
     }
 
     @Override
     public void endLoadPhase() {
         loadPhase = false;
+        PrimitiveData.get().setLoadPhase(false);
         processor.dispatch(Integer.MIN_VALUE);
     }
 
@@ -602,10 +604,8 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
     /**
      * Controller for EntityProvider lifecycle management.
-     * <p>
-     * Integrates with {@link dev.ikm.tinkar.common.service.ServiceLifecycleManager} and provides
+     * <p>     * Integrates with {@link dev.ikm.tinkar.common.service.ServiceLifecycleManager} and provides
      * service discovery for EntityService, PublicIdService, and DefaultDescriptionForNidService.
-     * </p>
      */
     public static class Controller extends ProviderController<EntityProvider> {
 

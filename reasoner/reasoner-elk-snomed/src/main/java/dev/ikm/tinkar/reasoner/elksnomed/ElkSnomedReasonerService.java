@@ -144,11 +144,35 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 		// Convert Set<Long> to MutableLongSet
 		MutableLongObjectMap<MutableLongSet> superConcepts = reasoner.getSuperConcepts();
 		MutableLongObjectMap<MutableLongSet> superRoleTypes = reasoner.getSuperRoleTypes(false);
+		logMissingReasonerConcepts(superConcepts);
 		
 		nnfb = NecessaryNormalFormBuilder.create(ontology, superConcepts, superRoleTypes, 
 			TinkarTerm.ROOT_VERTEX.nid(), 
 			(int workDone, int max) -> progressUpdater.updateProgress(workDone, max));
 		nnfb.generate();
+	}
+
+	private void logMissingReasonerConcepts(MutableLongObjectMap<MutableLongSet> superConcepts) {
+		ImmutableIntList conceptSet = data.getReasonerConceptSet();
+		int missingCount = 0;
+		StringBuilder sample = new StringBuilder();
+		int sampleLimit = 10;
+		for (int nid : conceptSet.toArray()) {
+			if (!superConcepts.containsKey((long) nid)) {
+				if (missingCount < sampleLimit) {
+					if (sample.length() > 0) {
+						sample.append(", ");
+					}
+					sample.append(nid).append(":").append(PrimitiveData.text(nid));
+				}
+				missingCount++;
+			}
+		}
+		LOG.info("Reasoner concept set size={}, superConcepts map size={}, missing from map={}",
+				conceptSet.size(), superConcepts.size(), missingCount);
+		if (missingCount > 0) {
+			LOG.info("Sample missing concepts: {}", sample);
+		}
 	}
 
 	// Helper method to convert boxed collections to primitive

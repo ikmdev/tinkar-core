@@ -27,18 +27,14 @@ import java.util.Optional;
 
 /**
  * Interface for controllers that manage user-selectable data service providers.
- * <p>
- * This interface extends the capabilities of {@link ProviderController} by adding
+ * <p>This interface extends the capabilities of {@link ProviderController} by adding
  * UI-specific methods for data source selection, configuration, and validation.
  * It is intended for controllers that need to be selected by users through a UI
  * (e.g., "Open Rocks KB", "Load Ephemeral Store", etc.).
- * </p>
  *
  * <h2>Relationship with ProviderController</h2>
- * <p>
- * Controllers implementing this interface should extend {@link ProviderController},
+ * <p>Controllers implementing this interface should extend {@link ProviderController},
  * which provides the core lifecycle management and service discovery capabilities:
- * </p>
  * <ul>
  *   <li>{@link ProviderController#serviceClasses()} - declares what service interfaces the provider implements</li>
  *   <li>{@link ProviderController#provider()} - provides access to the provider instance</li>

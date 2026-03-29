@@ -22,7 +22,7 @@
  * the Tinkar knowledge graph. View coordinates answer the comprehensive question: "How should I
  * access, interpret, describe, navigate, and modify this knowledge?"</p>
  *
- * <h3>Core Concept: Unified Access</h3>
+ * <p><b>Core Concept: Unified Access</b></p>
  *
  * <p>A view coordinate represents a complete, self-contained specification of:</p>
  * <ul>
@@ -36,7 +36,7 @@
  * <p>By bundling all coordinate types together, view coordinates ensure consistent interpretation
  * of knowledge across all operations: querying, browsing, reasoning, and editing.</p>
  *
- * <h3>Core Responsibilities</h3>
+ * <p><b>Core Responsibilities</b></p>
  *
  * <p>View coordinates unify access to:</p>
  * <ul>
@@ -47,9 +47,9 @@
  * <li><strong>Change Attribution</strong> - Via edit coordinate</li>
  * </ul>
  *
- * <h3>Core Interfaces</h3>
+ * <p><b>Core Interfaces</b></p>
  *
- * <h4>ViewCoordinate</h4>
+ * <p><b>ViewCoordinate</b></p>
  * <p>Primary interface defining unified coordinate access. Key methods include:</p>
  * <ul>
  * <li><strong>stampCoordinate()</strong> - Access STAMP coordinate</li>
@@ -61,7 +61,7 @@
  * <li><strong>languageCalculator()</strong> - Get language calculator for this view</li>
  * </ul>
  *
- * <h4>ViewCoordinateRecord</h4>
+ * <p><b>ViewCoordinateRecord</b></p>
  * <p>Immutable record implementation providing thread-safe view coordinates. Created via factory
  * methods or explicit construction:</p>
  *
@@ -79,11 +79,11 @@
  * );
  * }</pre>
  *
- * <h4>ViewCoordinateDelegate</h4>
+ * <p><b>ViewCoordinateDelegate</b></p>
  * <p>Delegation interface allowing classes to implement ViewCoordinate by delegating to an
  * underlying instance. Used in calculator implementations and service classes.</p>
  *
- * <h3>Cascading Language Coordinates</h3>
+ * <p><b>Cascading Language Coordinates</b></p>
  *
  * <p>View coordinates support multiple language coordinates in priority order, enabling graceful
  * fallback when descriptions aren't available in the preferred language:</p>
@@ -102,7 +102,7 @@
  * );
  * }</pre>
  *
- * <h3>Default View Configuration</h3>
+ * <p><b>Default View Configuration</b></p>
  *
  * <p>The standard default view provides sensible defaults for most use cases:</p>
  * <ul>
@@ -125,7 +125,7 @@
  * );
  * }</pre>
  *
- * <h3>View Coordinate Customization</h3>
+ * <p><b>View Coordinate Customization</b></p>
  *
  * <p>Create specialized views by modifying individual coordinates:</p>
  *
@@ -149,7 +149,7 @@
  * );
  * }</pre>
  *
- * <h3>Integration with View Calculators</h3>
+ * <p><b>Integration with View Calculators</b></p>
  *
  * <p>View coordinates are typically used through {@link dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator}
  * implementations that provide high-level operations combining all coordinate types:</p>
@@ -165,9 +165,9 @@
  * boolean isDefined = calculator.isDefined(conceptNid);            // Logic + STAMP
  * }</pre>
  *
- * <h3>Common View Patterns</h3>
+ * <p><b>Common View Patterns</b></p>
  *
- * <h4>Development View</h4>
+ * <p><b>Development View</b></p>
  * <p>For active development and authoring:</p>
  * <pre>{@code
  * ViewCoordinateRecord devView = ViewCoordinateRecord.make(
@@ -179,7 +179,7 @@
  * );
  * }</pre>
  *
- * <h4>Production View</h4>
+ * <p><b>Production View</b></p>
  * <p>For end-user applications:</p>
  * <pre>{@code
  * ViewCoordinateRecord prodView = ViewCoordinateRecord.make(
@@ -191,7 +191,7 @@
  * );
  * }</pre>
  *
- * <h4>Administrative View</h4>
+ * <p><b>Administrative View</b></p>
  * <p>For system administration and analysis:</p>
  * <pre>{@code
  * ViewCoordinateRecord adminView = ViewCoordinateRecord.make(
@@ -203,7 +203,7 @@
  * );
  * }</pre>
  *
- * <h4>Multilingual View</h4>
+ * <p><b>Multilingual View</b></p>
  * <p>For international applications:</p>
  * <pre>{@code
  * ViewCoordinateRecord multilingualView = ViewCoordinateRecord.make(
@@ -219,7 +219,7 @@
  * );
  * }</pre>
  *
- * <h3>User Preference Integration</h3>
+ * <p><b>User Preference Integration</b></p>
  *
  * <p>View coordinates are ideal for storing user preferences:</p>
  * <pre>{@code
@@ -239,7 +239,7 @@
  * userPrefs.setPreferredView(viewUuid);
  * }</pre>
  *
- * <h3>Vertex Sorting</h3>
+ * <p><b>Vertex Sorting</b></p>
  *
  * <p>View coordinates include vertex sorting specifications via navigation coordinate and
  * additional sort customization:</p>
@@ -249,7 +249,7 @@
  * <li>{@link dev.ikm.tinkar.coordinate.view.VertexSortNone} - No sorting (faster)</li>
  * </ul>
  *
- * <h3>Coordinate Consistency</h3>
+ * <p><b>Coordinate Consistency</b></p>
  *
  * <p>View coordinates ensure consistency across operations:</p>
  * <ul>
@@ -262,7 +262,7 @@
  *
  * <p>This consistency eliminates ambiguity and ensures predictable behavior.</p>
  *
- * <h3>Thread Safety and Immutability</h3>
+ * <p><b>Thread Safety and Immutability</b></p>
  *
  * <p>ViewCoordinateRecord instances are immutable and thread-safe, suitable for:</p>
  * <ul>
@@ -273,7 +273,7 @@
  * <li>Web session storage</li>
  * </ul>
  *
- * <h3>Performance Considerations</h3>
+ * <p><b>Performance Considerations</b></p>
  *
  * <ul>
  * <li><strong>Content-Based UUIDs</strong> - Views generate stable UUIDs for calculator caching</li>
@@ -282,7 +282,7 @@
  * <li><strong>Coordinate Caching</strong> - Reuse standard view coordinates when possible</li>
  * </ul>
  *
- * <h3>Use in Service Layers</h3>
+ * <p><b>Use in Service Layers</b></p>
  *
  * <p>View coordinates are commonly passed as context to service methods:</p>
  * <pre>{@code

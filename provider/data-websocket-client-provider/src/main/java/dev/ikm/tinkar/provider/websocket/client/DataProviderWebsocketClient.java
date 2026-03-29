@@ -309,9 +309,7 @@ public class DataProviderWebsocketClient
 
     /**
      * Controller for DataProviderWebsocketClient lifecycle management.
-     * <p>
-     * Handles websocket-based remote data provider connection.
-     * </p>
+     * <p>     * Handles websocket-based remote data provider connection.
      */
     public static class Controller extends ProviderController<DataProviderWebsocketClient>
             implements DataServiceController<PrimitiveDataService> {

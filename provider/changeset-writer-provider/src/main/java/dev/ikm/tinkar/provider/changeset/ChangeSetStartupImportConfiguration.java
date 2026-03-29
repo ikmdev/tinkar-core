@@ -27,12 +27,9 @@ import java.util.List;
 
 /**
  * Configuration for importing changesets on application startup.
- * <p>
- * This service checks for system properties pointing to changeset files or directories
+ * <p>This service checks for system properties pointing to changeset files or directories
  * to import during the DATA_LOAD phase.
- * </p>
- * <p>
- * System property usage:
+ * <p>System property usage:
  * <pre>
  * # Import all .pb.zip files from a directory:
  * -Dchangeset.import.dir=/path/to/changesets
@@ -40,11 +37,8 @@ import java.util.List;
  * # Import specific files (comma-separated):
  * -Dchangeset.import.files=/path/to/file1.pb.zip,/path/to/file2.pb.zip
  * </pre>
- * </p>
- * <p>
- * Files from the directory are sorted alphabetically before being queued.
+ * <p>Files from the directory are sorted alphabetically before being queued.
  * Files specified via the files property are queued in the order listed.
- * </p>
  */
 public class ChangeSetStartupImportConfiguration implements ChangeSetImportConfiguration {
 

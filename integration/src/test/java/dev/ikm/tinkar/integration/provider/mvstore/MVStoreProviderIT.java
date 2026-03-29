@@ -34,13 +34,10 @@ import java.io.File;
 
 /**
  * Concerned that MVStore may not be "bullet proof" based on this exception. Will watch, and save for posterity.
- * <p>
- * Mar 28, 2021 9:41:28 AM dev.ikm.tinkar.integration.provider.mvstore.MVStoreProviderTest teardownSuite
+ * <p>Mar 28, 2021 9:41:28 AM dev.ikm.tinkar.integration.provider.mvstore.MVStoreProviderTest teardownSuite
  * INFO: teardownSuite
- * <p>
- * java.lang.IllegalStateException: Chunk 77 not found [1.4.200/9]
- * <p>
- * at org.h2.mvstore.DataUtils.newIllegalStateException(DataUtils.java:950)
+ * <p>java.lang.IllegalStateException: Chunk 77 not found [1.4.200/9]
+ * <p>at org.h2.mvstore.DataUtils.newIllegalStateException(DataUtils.java:950)
  * at org.h2.mvstore.MVStore.getChunk(MVStore.java:1230)
  * at org.h2.mvstore.MVStore.readBufferForPage(MVStore.java:1214)
  * at org.h2.mvstore.MVStore.readPage(MVStore.java:2209)

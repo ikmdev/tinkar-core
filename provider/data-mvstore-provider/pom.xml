@@ -26,13 +26,14 @@
         </dependency>
 
         <dependency>
-            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <groupId>dev.ikm.jpms</groupId>
             <artifactId>mvstore</artifactId>
         </dependency>
 
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>component</artifactId>
+            <version>${parent.version}</version>
             <type>test-jar</type>
             <classifier>tests</classifier>
             <scope>test</scope>
@@ -42,6 +43,18 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>search-provider</artifactId>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>dev.ikm.tinkar</groupId>
+            <artifactId>common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.collections</groupId>
+            <artifactId>eclipse-collections-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.collections</groupId>
+            <artifactId>eclipse-collections</artifactId>
         </dependency>
     </dependencies>
 

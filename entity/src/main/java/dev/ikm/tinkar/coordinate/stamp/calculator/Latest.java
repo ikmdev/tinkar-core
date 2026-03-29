@@ -331,7 +331,7 @@ public final class Latest<V> {
      *
      * @return the latest version
      * @throws NoSuchElementException - if there is no value present
-     * @see this.isPresent()
+     * @see #isPresent()
      */
     public V get() {
         if (this.value == null) {

@@ -16,12 +16,9 @@
 package dev.ikm.tinkar.integration.snomed.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.entity.*;
 import org.eclipse.collections.api.list.ImmutableList;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,12 +26,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.BiConsumer;
 
 import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.loadJsonData;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /*
 Helper class to load starter data and load primitives for EntityService to
@@ -48,24 +41,6 @@ public class TinkarStarterDataHelper {
 
     // to keep count of nids
     static int nidCount = 1;
-
-    /*
-    This inner class helps create Mock data as we read mock-data.json file.
-     */
-
-    public static void openSession(BiConsumer<MockedStatic<EntityService>, JsonNode> session) {
-        // open session is a biconsumer that makes mockStaticEntityService available
-        // in tests to customize and mock more methods or override mock methods.
-        MockEntity.clearCache();
-        JsonNode starterData = loadStarterData(TEST_SNOMEDCT_STARTER_DATA_JSON);
-
-        try (MockedStatic<EntityService> mockStaticEntityService = Mockito.mockStatic(EntityService.class)) {
-            EntityService entityService = mock(EntityService.class);
-            mockStaticEntityService.when(EntityService::get).thenReturn(entityService);
-            when(EntityService.get().nidForUuids(any(UUID.class))).thenAnswer((y) -> MockEntity.getNid(y.getArgument(0)));
-            session.accept(mockStaticEntityService, starterData);
-        }
-    }
 
     /*
     Methods to load starter data and mock data
@@ -272,9 +247,7 @@ public class TinkarStarterDataHelper {
     }
 
     public static UUID generateConceptUuid(JsonNode conceptNode) {
-        ObjectMapper mapper = new ObjectMapper();
         String description = conceptNode.get("description").asText();
-        //        UUID descriptionConcept = UuidT5Generator.get(conceptNode.get("description").asText());
         List<String> originsArray = conceptNode.findValues("origins").stream().map((x) -> {
             if (x.size() > 0) {
                 return x.get(0).asText();

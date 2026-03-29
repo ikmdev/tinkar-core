@@ -12,15 +12,13 @@ import java.util.function.Supplier;
 /**
  * A fluent handle for an entity that may be absent or one of the four entity subtypes
  * (Concept, Semantic, Pattern, Stamp).
- * <p>
- * Provides three complementary patterns for type-safe entity processing without manual
+ * <p>Provides three complementary patterns for type-safe entity processing without manual
  * instanceof checks or casts. Choose the right pattern based on your use case.
  *
  * <h2>Design Symmetry: Type-Specific and Entity-Level Methods</h2>
- * <p>
- * This interface provides <b>symmetric method patterns</b> at two levels of abstraction:
+ * <p>This interface provides <b>symmetric method patterns</b> at two levels of abstraction:
  *
- * <table border="1" cellpadding="5">
+ * <table border="1">
  * <caption>Method Symmetry Matrix</caption>
  * <tr>
  *   <th>Pattern</th>
@@ -49,7 +47,7 @@ import java.util.function.Supplier;
  * </tr>
  * </table>
  *
- * <h3>When to Use Entity-Level vs Type-Specific Methods</h3>
+ * <p><b>When to Use Entity-Level vs Type-Specific Methods</b></p>
  * <ul>
  *   <li><b>Use Entity-Level Methods ({@code ifEntity}, {@code asEntity}, {@code expectEntity})</b> when:
  *     <ul>
@@ -69,19 +67,17 @@ import java.util.function.Supplier;
  *   </li>
  * </ul>
  *
- * <h3>Symmetry with ObservableEntityHandle</h3>
- * <p>
- * This interface maintains complete method symmetry with {@code dev.ikm.komet.framework.observable.ObservableEntityHandle},
+ * <p><b>Symmetry with ObservableEntityHandle</b></p>
+ * <p>This interface maintains complete method symmetry with {@code dev.ikm.komet.framework.observable.ObservableEntityHandle},
  * ensuring consistent API patterns across both immutable entities ({@code Entity}) and observable entities
  * ({@code ObservableEntity}). The only differences are return types ({@code Entity<?>} vs {@code ObservableEntity<?>})
  * and thread safety characteristics (thread-safe vs JavaFX-thread-only).
  *
  * <h2>Flexible Entity Access</h2>
- * <p>
- * Entities can be accessed using three different identifier types, providing flexibility
+ * <p>Entities can be accessed using three different identifier types, providing flexibility
  * across different contexts and API boundaries:
  *
- * <table border="1" cellpadding="5">
+ * <table border="1">
  * <caption>Entity Access Methods</caption>
  * <tr>
  *   <th>Identifier Type</th>
@@ -105,8 +101,7 @@ import java.util.function.Supplier;
  * </tr>
  * </table>
  *
- * <p>
- * All three access methods are available for every API method that accepts an entity identifier:
+ * <p>All three access methods are available for every API method that accepts an entity identifier:
  *
  * <pre>{@code
  * // Using nid (native identifier)
@@ -129,7 +124,7 @@ import java.util.function.Supplier;
  *
  * <h2>The Three Patterns: When to Use Each</h2>
  *
- * <table border="1" cellpadding="5">
+ * <table border="1">
  * <caption>Entity Access Patterns</caption>
  * <tr>
  *   <th>Pattern</th>
@@ -162,8 +157,7 @@ import java.util.function.Supplier;
  * </table>
  *
  * <h2>Pattern 1: Side Effects with {@code ifXxx} Methods</h2>
- * <p>
- * <b>When to use:</b> You want to execute code based on entity type but don't need to return anything.
+ * <p><b>When to use:</b> You want to execute code based on entity type but don't need to return anything.
  * <br><b>Returns:</b> {@code this} for chaining.
  * <br><b>Key benefit:</b> Fluent branching without if/else statements.
  *
@@ -183,8 +177,7 @@ import java.util.function.Supplier;
  * }</pre>
  *
  * <h2>Pattern 2: Safe Extraction with {@code asXxx} Methods</h2>
- * <p>
- * <b>When to use:</b> Wrong type is a valid possibility (user input, filtering, exploratory queries).
+ * <p><b>When to use:</b> Wrong type is a valid possibility (user input, filtering, exploratory queries).
  * <br><b>Returns:</b> {@code Optional<T>} - allows standard Optional operations.
  * <br><b>Key benefit:</b> Explicit handling of the "not this type" case.
  *
@@ -212,8 +205,7 @@ import java.util.function.Supplier;
  * }</pre>
  *
  * <h2>Pattern 3: Assertion with {@code expectXxx} Methods</h2>
- * <p>
- * <b>When to use:</b> Entity type is guaranteed by your data model. Wrong type means data corruption.
+ * <p><b>When to use:</b> Entity type is guaranteed by your data model. Wrong type means data corruption.
  * <br><b>Returns:</b> {@code ConceptEntity} (never null) - throws if wrong type.
  * <br><b>Key benefit:</b> Clean, direct access when type is certain. Avoids unsafe casts.
  *
@@ -242,8 +234,7 @@ import java.util.function.Supplier;
  * }</pre>
  *
  * <h2>Static Convenience Methods</h2>
- * <p>
- * For the common "get by nid and assert type" pattern, static methods combine fetch + assertion:
+ * <p>For the common "get by nid and assert type" pattern, static methods combine fetch + assertion:
  *
  * <pre>{@code
  * // Equivalent to EntityHandle.get(nid).expectConcept()
@@ -255,7 +246,7 @@ import java.util.function.Supplier;
  *
  * <h2>Choosing the Right Pattern</h2>
  *
- * <h3>Ask yourself:</h3>
+ * <p><b>Ask yourself:</b></p>
  * <ol>
  *   <li><b>Am I returning a value?</b>
  *     <ul>
@@ -271,7 +262,7 @@ import java.util.function.Supplier;
  *   </li>
  * </ol>
  *
- * <h3>Anti-patterns to avoid:</h3>
+ * <p><b>Anti-patterns to avoid:</b></p>
  * <pre>{@code
  * // ❌ DON'T: Unsafe cast (bypasses type checking)
  * ConceptEntity concept = (ConceptEntity) Entity.getFast(nid);
@@ -289,8 +280,7 @@ import java.util.function.Supplier;
  * }</pre>
  *
  * <h2>Pattern Matching Alternative</h2>
- * <p>
- * For comprehensive type handling, use {@code ifPresent} with switch expressions:
+ * <p>For comprehensive type handling, use {@code ifPresent} with switch expressions:
  *
  * <pre>{@code
  * EntityHandle.get(nid).ifPresent(entity -> {
@@ -304,8 +294,7 @@ import java.util.function.Supplier;
  * }</pre>
  *
  * <h2>Implementation</h2>
- * <p>
- * Implementors need only provide {@link #entity()} which returns an {@link Optional}
+ * <p>Implementors need only provide {@link #entity()} which returns an {@link Optional}
  * containing the entity (or empty if absent). All fluent methods are provided as
  * default implementations. This class is an example of Interface-based traits with data records.
  *
@@ -320,8 +309,7 @@ public interface EntityHandle {
 
     /**
      * Returns an Optional containing the entity, or empty if absent.
-     * <p>
-     * This is the only method implementors must provide. All other methods
+     * <p>     * This is the only method implementors must provide. All other methods
      * are implemented as defaults based on this method.
      *
      * @return Optional containing the entity, or empty if absent
@@ -332,8 +320,7 @@ public interface EntityHandle {
 
     /**
      * Retrieves an entity by nid and returns a fluent handle for type-safe processing.
-     * <p>
-     * The returned handle allows chaining type-specific operations without manual
+     * <p>     * The returned handle allows chaining type-specific operations without manual
      * instanceof checks or casts.
      *
      * @param nid the native identifier
@@ -352,8 +339,7 @@ public interface EntityHandle {
 
     /**
      * Retrieves an entity by PublicId and returns a fluent handle for type-safe processing.
-     * <p>
-     * Converts the PublicId to nid and retrieves the entity.
+     * <p>     * Converts the PublicId to nid and retrieves the entity.
      *
      * @param publicId the public identifier
      * @return an EntityHandle representing the entity, or an empty EntityHandle if absent.
@@ -381,8 +367,7 @@ public interface EntityHandle {
 
     /**
      * Retrieves an entity by EntityFacade and returns a fluent handle for type-safe processing.
-     * <p>
-     * Extracts the nid from the EntityFacade and retrieves the entity.
+     * <p>     * Extracts the nid from the EntityFacade and retrieves the entity.
      *
      * @param entityFacade the entity facade
      * @return an EntityHandle representing the entity, or an empty EntityHandle if absent.
@@ -396,8 +381,7 @@ public interface EntityHandle {
 
     /**
      * Returns a singleton handle representing an absent entity.
-     * <p>
-     * Use this when you need to explicitly represent absence.
+     * <p>     * Use this when you need to explicitly represent absence.
      *
      * @return the absent entity handle singleton
      */
@@ -422,11 +406,10 @@ public interface EntityHandle {
 
     /**
      * If entity is present (any type), executes the consumer with the entity.
-     * <p>
-     * Use this when you want to perform operations that work on any entity type,
+     * <p>     * Use this when you want to perform operations that work on any entity type,
      * such as logging, caching, or accessing common entity properties (nid, publicId, versions).
      *
-     * <h3>Usage Examples:</h3>
+     * <p><b>Usage Examples:</b></p>
      * <pre>{@code
      * // Log any entity
      * EntityHandle.get(nid)
@@ -453,8 +436,7 @@ public interface EntityHandle {
 
     /**
      * If entity is present and is a {@link ConceptEntity}, executes the consumer.
-     * <p>
-     * No casting required - consumer receives ConceptEntity directly.
+     * <p>     * No casting required - consumer receives ConceptEntity directly.
      * Returns {@code this} for chaining regardless of whether consumer executed.
      *
      * @param consumer the action to perform on the ConceptEntity
@@ -630,8 +612,7 @@ public interface EntityHandle {
 
     /**
      * Gets entity by nid and returns it as an {@link Entity}, throwing if absent.
-     * <p>
-     * Convenience method equivalent to {@code get(nid).expectEntity()}.
+     * <p>     * Convenience method equivalent to {@code get(nid).expectEntity()}.
      * Use when you need to fetch any entity type and assert it exists.
      *
      * @param nid the entity nid
@@ -667,8 +648,7 @@ public interface EntityHandle {
 
     /**
      * Gets entity by nid and returns it as a {@link ConceptEntity}, throwing if absent or wrong type.
-     * <p>
-     * Convenience method equivalent to {@code get(nid).expectConcept()}.
+     * <p>     * Convenience method equivalent to {@code get(nid).expectConcept()}.
      * Use when you need to fetch and assert type in one call.
      *
      * @param nid the entity nid
@@ -704,8 +684,7 @@ public interface EntityHandle {
 
     /**
      * Gets entity by nid and returns it as a {@link SemanticEntity}, throwing if absent or wrong type.
-     * <p>
-     * Convenience method equivalent to {@code get(nid).expectSemantic()}.
+     * <p>     * Convenience method equivalent to {@code get(nid).expectSemantic()}.
      *
      * @param nid the entity nid
      * @return the SemanticEntity (never null)
@@ -739,8 +718,7 @@ public interface EntityHandle {
 
     /**
      * Gets entity by nid and returns it as a {@link PatternEntity}, throwing if absent or wrong type.
-     * <p>
-     * Convenience method equivalent to {@code get(nid).expectPattern()}.
+     * <p>     * Convenience method equivalent to {@code get(nid).expectPattern()}.
      *
      * @param nid the entity nid
      * @return the PatternEntity (never null)
@@ -774,8 +752,7 @@ public interface EntityHandle {
 
     /**
      * Gets entity by nid and returns it as a {@link StampEntity}, throwing if absent or wrong type.
-     * <p>
-     * Convenience method equivalent to {@code get(nid).expectStamp()}.
+     * <p>     * Convenience method equivalent to {@code get(nid).expectStamp()}.
      *
      * @param nid the entity nid
      * @return the StampEntity (never null)
@@ -811,12 +788,11 @@ public interface EntityHandle {
 
     /**
      * Returns this handle's entity as an {@link Optional}.
-     * <p>
-     * This is a convenience method that simply returns {@link #entity()}, providing symmetry
+     * <p>     * This is a convenience method that simply returns {@link #entity()}, providing symmetry
      * with the {@code asXxx()} pattern used for type-specific extraction. Use this when you
      * want Optional-based extraction of the entity regardless of type.
      *
-     * <h3>Usage Examples:</h3>
+     * <p><b>Usage Examples:</b></p>
      * <pre>{@code
      * // Extract entity with Optional chaining
      * Optional<Entity<?>> maybeEntity = EntityHandle.get(nid).asEntity();
@@ -853,11 +829,10 @@ public interface EntityHandle {
 
     /**
      * Returns this entity as a {@link ConceptEntity} if it is one.
-     * <p>
-     * Use this method when you need to extract and return the concept, or when you
+     * <p>     * Use this method when you need to extract and return the concept, or when you
      * want to apply transformations using {@link Optional#map(java.util.function.Function)}.
      *
-     * <h3>Usage Examples:</h3>
+     * <p><b>Usage Examples:</b></p>
      * <pre>{@code
      * // Extract concept or return null
      * ConceptEntity concept = EntityHandle.get(nid)
@@ -893,11 +868,10 @@ public interface EntityHandle {
 
     /**
      * Returns this entity as a {@link SemanticEntity} if it is one.
-     * <p>
-     * Use this method when you need to extract and return the semantic, or when you
+     * <p>     * Use this method when you need to extract and return the semantic, or when you
      * want to apply transformations using {@link Optional#map(java.util.function.Function)}.
      *
-     * <h3>Usage Examples:</h3>
+     * <p><b>Usage Examples:</b></p>
      * <pre>{@code
      * // Extract semantic with default
      * SemanticEntity semantic = EntityHandle.get(nid)
@@ -921,11 +895,10 @@ public interface EntityHandle {
 
     /**
      * Returns this entity as a {@link PatternEntity} if it is one.
-     * <p>
-     * Use this method when you need to extract and return the pattern, or when you
+     * <p>     * Use this method when you need to extract and return the pattern, or when you
      * want to apply transformations using {@link Optional#map(java.util.function.Function)}.
      *
-     * <h3>Usage Examples:</h3>
+     * <p><b>Usage Examples:</b></p>
      * <pre>{@code
      * // Extract pattern
      * Optional<PatternEntity> pattern = EntityHandle.get(nid).asPattern();
@@ -948,11 +921,10 @@ public interface EntityHandle {
 
     /**
      * Returns this entity as a {@link StampEntity} if it is one.
-     * <p>
-     * Use this method when you need to extract and return the stamp, or when you
+     * <p>     * Use this method when you need to extract and return the stamp, or when you
      * want to apply transformations using {@link Optional#map(java.util.function.Function)}.
      *
-     * <h3>Usage Examples:</h3>
+     * <p><b>Usage Examples:</b></p>
      * <pre>{@code
      * // Extract stamp
      * StampEntity stamp = EntityHandle.get(nid)
@@ -979,11 +951,10 @@ public interface EntityHandle {
 
     /**
      * Returns the entity or throws if absent, regardless of specific type.
-     * <p>
-     * Use this when you know an entity must exist but don't need a specific type.
+     * <p>     * Use this when you know an entity must exist but don't need a specific type.
      * Throws {@link IllegalStateException} if the entity is not found.
      *
-     * <h3>Common Use Cases:</h3>
+     * <p><b>Common Use Cases:</b></p>
      * <ul>
      *   <li>Validating that an entity exists before processing</li>
      *   <li>Working with entity properties common to all types (nid, publicId, versions)</li>
@@ -991,7 +962,7 @@ public interface EntityHandle {
      *   <li>Any context where absence means data integrity violation but type doesn't matter</li>
      * </ul>
      *
-     * <h3>Usage Examples:</h3>
+     * <p><b>Usage Examples:</b></p>
      * <pre>{@code
      * // Validate entity exists
      * Entity<?> entity = EntityHandle.get(nid).expectEntity();
@@ -1021,10 +992,9 @@ public interface EntityHandle {
 
     /**
      * Returns the entity or throws with a custom message if absent.
-     * <p>
-     * Use this when you want more descriptive error messages for debugging.
+     * <p>     * Use this when you want more descriptive error messages for debugging.
      *
-     * <h3>Usage Example:</h3>
+     * <p><b>Usage Example:</b></p>
      * <pre>{@code
      * Entity<?> entity = EntityHandle.get(nid)
      *     .expectEntity("Required entity for initialization not found");
@@ -1040,11 +1010,10 @@ public interface EntityHandle {
 
     /**
      * Returns this entity as a {@link ConceptEntity}, throwing an exception if absent or wrong type.
-     * <p>
-     * <b>Use this method when:</b> Entity type is guaranteed by your data model. Wrong type indicates
+     * <p>     * <b>Use this method when:</b> Entity type is guaranteed by your data model. Wrong type indicates
      * data corruption or programming error, not a legitimate alternative case.
      *
-     * <h3>Common Use Cases:</h3>
+     * <p><b>Common Use Cases:</b></p>
      * <ul>
      *   <li>Field definitions where meaning/datatype/purpose are always concepts</li>
      *   <li>Pattern definitions where field types are known</li>
@@ -1052,7 +1021,7 @@ public interface EntityHandle {
      *   <li>Any context where wrong type means data integrity violation</li>
      * </ul>
      *
-     * <h3>Usage Examples:</h3>
+     * <p><b>Usage Examples:</b></p>
      * <pre>{@code
      * // Field definition - meaning is ALWAYS a concept per data model
      * public ConceptEntity meaning() {
@@ -1088,10 +1057,9 @@ public interface EntityHandle {
 
     /**
      * Returns this entity as a {@link ConceptEntity}, throwing an exception with custom message if absent or wrong type.
-     * <p>
-     * Use this variant when you want to provide domain-specific error context.
+     * <p>     * Use this variant when you want to provide domain-specific error context.
      *
-     * <h3>Usage Example:</h3>
+     * <p><b>Usage Example:</b></p>
      * <pre>{@code
      * public ConceptEntity dataType() {
      *     return EntityHandle.get(dataTypeNid())
@@ -1112,10 +1080,9 @@ public interface EntityHandle {
 
     /**
      * Returns this entity as a {@link SemanticEntity}, throwing an exception if absent or wrong type.
-     * <p>
-     * <b>Use this method when:</b> Entity type is guaranteed by your data model.
+     * <p>     * <b>Use this method when:</b> Entity type is guaranteed by your data model.
      *
-     * <h3>Usage Example:</h3>
+     * <p><b>Usage Example:</b></p>
      * <pre>{@code
      * public SemanticEntity getDefinition(int semanticNid) {
      *     return EntityHandle.get(semanticNid).expectSemantic();
@@ -1152,10 +1119,9 @@ public interface EntityHandle {
 
     /**
      * Returns this entity as a {@link PatternEntity}, throwing an exception if absent or wrong type.
-     * <p>
-     * <b>Use this method when:</b> Entity type is guaranteed by your data model.
+     * <p>     * <b>Use this method when:</b> Entity type is guaranteed by your data model.
      *
-     * <h3>Usage Example:</h3>
+     * <p><b>Usage Example:</b></p>
      * <pre>{@code
      * public PatternEntity getPatternForSemantic(int patternNid) {
      *     return EntityHandle.get(patternNid).expectPattern();
@@ -1192,10 +1158,9 @@ public interface EntityHandle {
 
     /**
      * Returns this entity as a {@link StampEntity}, throwing an exception if absent or wrong type.
-     * <p>
-     * <b>Use this method when:</b> Entity type is guaranteed by your data model.
+     * <p>     * <b>Use this method when:</b> Entity type is guaranteed by your data model.
      *
-     * <h3>Usage Example:</h3>
+     * <p><b>Usage Example:</b></p>
      * <pre>{@code
      * public StampEntity getVersionStamp(int stampNid) {
      *     return EntityHandle.get(stampNid).expectStamp();
@@ -1234,11 +1199,10 @@ public interface EntityHandle {
 
     /**
      * Returns this entity as a {@link ConceptRecord}, throwing an exception if absent or wrong type.
-     * <p>
-     * <b>Use this method when:</b> You need the concrete {@link ConceptRecord} type for builder operations.
+     * <p>     * <b>Use this method when:</b> You need the concrete {@link ConceptRecord} type for builder operations.
      * This is especially useful when creating new versions via the builder pattern.
      *
-     * <h3>Usage Example:</h3>
+     * <p><b>Usage Example:</b></p>
      * <pre>{@code
      * // Creating a new concept version with updated stamp
      * ConceptRecord conceptRecord = EntityHandle.get(conceptNid).expectConceptRecord();
@@ -1264,10 +1228,9 @@ public interface EntityHandle {
 
     /**
      * Returns this entity as a {@link PatternRecord}, throwing an exception if absent or wrong type.
-     * <p>
-     * <b>Use this method when:</b> You need the concrete {@link PatternRecord} type for builder operations.
+     * <p>     * <b>Use this method when:</b> You need the concrete {@link PatternRecord} type for builder operations.
      *
-     * <h3>Usage Example:</h3>
+     * <p><b>Usage Example:</b></p>
      * <pre>{@code
      * // Creating a new pattern version with updated stamp
      * PatternRecord patternRecord = EntityHandle.get(patternNid).expectPatternRecord();
@@ -1294,10 +1257,9 @@ public interface EntityHandle {
 
     /**
      * Returns this entity as a {@link SemanticRecord}, throwing an exception if absent or wrong type.
-     * <p>
-     * <b>Use this method when:</b> You need the concrete {@link SemanticRecord} type for builder operations.
+     * <p>     * <b>Use this method when:</b> You need the concrete {@link SemanticRecord} type for builder operations.
      *
-     * <h3>Usage Example:</h3>
+     * <p><b>Usage Example:</b></p>
      * <pre>{@code
      * // Creating a new semantic version with updated stamp
      * SemanticRecord semanticRecord = EntityHandle.get(semanticNid).expectSemanticRecord();
@@ -1324,10 +1286,9 @@ public interface EntityHandle {
 
     /**
      * Returns this entity as a {@link StampRecord}, throwing an exception if absent or wrong type.
-     * <p>
-     * <b>Use this method when:</b> You need the concrete {@link StampRecord} type for builder operations.
+     * <p>     * <b>Use this method when:</b> You need the concrete {@link StampRecord} type for builder operations.
      *
-     * <h3>Usage Example:</h3>
+     * <p><b>Usage Example:</b></p>
      * <pre>{@code
      * // Getting a StampRecord for stamp-based operations
      * StampRecord stampRecord = EntityHandle.get(stampNid).expectStampRecord();
@@ -1432,8 +1393,7 @@ public interface EntityHandle {
 
     /**
      * Record implementation for a present entity.
-     * <p>
-     * Immutable and provides all fluent methods via default implementations.
+     * <p>     * Immutable and provides all fluent methods via default implementations.
      *
      * @param entityValue the entity being handled (never null)
      */
@@ -1455,8 +1415,7 @@ public interface EntityHandle {
 
     /**
      * Singleton implementation for an absent entity.
-     * <p>
-     * Provides all fluent methods via default implementations, all of which
+     * <p>     * Provides all fluent methods via default implementations, all of which
      * handle the empty case appropriately.
      */
     final class AbsentHandle implements EntityHandle {

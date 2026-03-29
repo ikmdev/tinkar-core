@@ -70,8 +70,7 @@ public class JavaTemplates {
                  * <ul>
                  ${uuids}
                  * </ul>
-                 * <p>
-                 * Pattern contains the following fields:
+                 * <p>                 * Pattern contains the following fields:
                  * <ul>
                  ${patternFieldDefinitions}
                  * <ul>

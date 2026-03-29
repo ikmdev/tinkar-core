@@ -17,7 +17,6 @@
  *   <li>Supports hierarchical and entity-based modeling for complex systems.</li>
  *   <li>Facilitates interaction with unique identifiers such as UUIDs.</li>
  * </ul>
- * </p>
  *
  * <p><b>Typical Use Cases:</b>
  * <ul>
@@ -25,7 +24,6 @@
  *   <li>Build dynamic models of conceptual hierarchies and associations.</li>
  *   <li>Enable extensibility and maintainability for systems relying on conceptual bindings.</li>
  * </ul>
- * </p>
  *
  * <p>This package forms the foundation for the higher-level functionality provided by related
  * packages, offering flexibility and scalability for systems working with conceptual models.</p>

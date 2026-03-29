@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,13 +34,27 @@ import dev.ikm.elk.snomed.model.ConcreteRoleType;
 import dev.ikm.elk.snomed.model.RoleType;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ElkSnomedData {
+
+	private static final Logger LOG = LoggerFactory.getLogger(ElkSnomedData.class);
 
 	public static int getNid(long sctid) {
 		UUID uuid = UuidUtil.fromSNOMED("" + sctid);
 		int nid = PrimitiveData.nid(uuid);
 		return nid;
+	}
+
+	public static OptionalInt tryGetNid(long sctid) {
+		UUID uuid = UuidUtil.fromSNOMED("" + sctid);
+		try {
+			return OptionalInt.of(PrimitiveData.nid(uuid));
+		} catch (IllegalStateException e) {
+			LOG.warn("No entity for SNOMED SCTID {} (uuid {})", sctid, uuid);
+			return OptionalInt.empty();
+		}
 	}
 
 	private final ConcurrentHashMap<Integer, Concept> nidConceptMap = new ConcurrentHashMap<>();

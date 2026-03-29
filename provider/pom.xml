@@ -9,15 +9,15 @@
 
     <name>TINKAR Providers</name>
 
-    <modules>
-        <module>data-ephemeral-provider</module>
-        <module>data-mvstore-provider</module>
-        <module>data-spinedarray-provider</module>
-        <module>data-websocket-client-provider</module>
-        <module>data-websocket-server-provider</module>
-        <module>entity-provider</module>
-        <module>executor-provider</module>
-        <module>search-provider</module>
-        <module>changeset-writer-provider</module>
-    </modules>
+    <subprojects>
+        <subproject>data-ephemeral-provider</subproject>
+        <subproject>data-mvstore-provider</subproject>
+        <subproject>data-spinedarray-provider</subproject>
+        <subproject>data-websocket-client-provider</subproject>
+        <subproject>data-websocket-server-provider</subproject>
+        <subproject>entity-provider</subproject>
+        <subproject>executor-provider</subproject>
+        <subproject>search-provider</subproject>
+        <subproject>changeset-writer-provider</subproject>
+    </subprojects>
 </project>

@@ -1,3 +1,4 @@
+
 /*
  * Copyright © 2015 Integrated Knowledge Management (support@ikm.dev)
  *
@@ -25,17 +26,13 @@ import java.util.stream.Collectors;
 
 /**
  * Manages the lifecycle of services implementing {@link ServiceLifecycle}.
- * <p>
- * This manager discovers services via {@link PluggableService} during initialization,
+ * <p>This manager discovers services via {@link PluggableService} during initialization,
  * orders them by phase and sub-priority, and manages their startup and shutdown
  * in the correct sequence.
- * </p>
- * <p>
- * Services are started in priority order (low to high), and shutdown in
+ * <p>Services are started in priority order (low to high), and shutdown in
  * reverse priority order.
- * </p>
  *
- * <h3>Lifecycle States</h3>
+ * <p><b>Lifecycle States</b></p>
  * <ul>
  *   <li><b>UNINITIALIZED</b> - Initial state, no services discovered yet</li>
  *   <li><b>DISCOVERED</b> - Services have been discovered but not started</li>
@@ -45,7 +42,7 @@ import java.util.stream.Collectors;
  *   <li><b>SHUTDOWN</b> - All services shutdown</li>
  * </ul>
  *
- * <h3>Command-Line Configuration</h3>
+ * <p><b>Command-Line Configuration</b></p>
  * <pre>
  * # Override specific service phases/priorities
  * -Dservice.lifecycle.phase.MyService=INFRASTRUCTURE
@@ -154,10 +151,8 @@ public class ServiceLifecycleManager {
 
     /**
      * Sets a callback function for selecting services from mutual exclusion groups.
-     * <p>
-     * This callback is invoked when multiple services belong to the same group and
+     * <p>     * This callback is invoked when multiple services belong to the same group and
      * no command-line selection or programmatic selection has been made.
-     * </p>
      *
      * @param callback function to select from group candidates, or null to use default
      */
@@ -167,9 +162,7 @@ public class ServiceLifecycleManager {
 
     /**
      * Programmatically selects a specific service for a mutual exclusion group.
-     * <p>
-     * This method must be called BEFORE {@link #startServices()}.
-     * </p>
+     * <p>     * This method must be called BEFORE {@link #startServices()}.
      *
      * @param group the mutual exclusion group
      * @param serviceClass the service class to activate for this group
@@ -185,18 +178,14 @@ public class ServiceLifecycleManager {
 
     /**
      * Discovers and registers all services implementing ServiceLifecycle.
-     * <p>
-     * This method should be called early in application initialization,
+     * <p>     * This method should be called early in application initialization,
      * before calling startServices(). It can only be called once - subsequent
      * calls will log a warning and return.
-     * </p>
-     * <p>
-     * Services are discovered from:
+     * <p>     * Services are discovered from:
      * <ul>
      *   <li>ServiceLoader mechanism via PluggableService</li>
      *   <li>All loaded plugin modules</li>
      * </ul>
-     * </p>
      *
      * @throws IllegalStateException if called after services have been started
      */
@@ -286,13 +275,9 @@ public class ServiceLifecycleManager {
 
     /**
      * Prepares for startup by resolving group selections and applying activation filters.
-     * <p>
-     * This must be called after discovery and after any programmatic selections have been made,
+     * <p>     * This must be called after discovery and after any programmatic selections have been made,
      * but before startServices(). It can be called multiple times - subsequent calls are no-ops.
-     * </p>
-     * <p>
-     * Note: startServices() automatically calls this method if not already called.
-     * </p>
+     * <p>     * Note: startServices() automatically calls this method if not already called.
      */
     public synchronized void prepareStartup() {
         if (state == State.PREPARED) {
@@ -389,7 +374,7 @@ public class ServiceLifecycleManager {
                 List<Class<?>> candidates = services.stream()
                         .map(info -> info.serviceClass)
                         .collect(Collectors.toList());
-
+                candidates.sort((o1, o2) -> getServiceName(o1).compareTo(getServiceName(o2)));
                 Class<?> selected = groupSelectionCallback.apply(
                         new GroupSelectionContext(group, candidates));
 
@@ -575,11 +560,9 @@ public class ServiceLifecycleManager {
 
     /**
      * Starts all discovered services in priority order.
-     * <p>
-     * Services with lower effective priority values start first. Services are started
+     * <p>     * Services with lower effective priority values start first. Services are started
      * sequentially. If any service fails to start, the entire startup process fails
      * and no further services are started.
-     * </p>
      *
      * @throws RuntimeException if any service fails to start
      * @throws IllegalStateException if services have not been discovered
@@ -693,10 +676,8 @@ public class ServiceLifecycleManager {
 
     /**
      * Shuts down all managed services in reverse priority order.
-     * <p>
-     * Services with higher priority values shutdown first. All services
+     * <p>     * Services with higher priority values shutdown first. All services
      * are shut down even if some fail - failures are logged but not rethrown.
-     * </p>
      */
     public synchronized void shutdownServices() {
         if (state != State.RUNNING) {
@@ -866,27 +847,44 @@ public class ServiceLifecycleManager {
                         entry -> entry.getKey().getGroupName(),
                         entry -> entry.getValue().stream()
                                 .map(info -> getServiceName(info.serviceClass))
+                                .sorted()
                                 .collect(Collectors.toList())
                 ));
     }
 
     /**
+     * Returns discovered services for a specific exclusion group, sorted alphabetically by name.
+     * <p>     * This is useful for GUI components that need to present service options
+     * for user selection before services are started.
+     * <p>     * Note: Services are sorted by display name for user presentation, not by priority.
+     * Priority is only used for automatic fallback selection when no user choice is made.
+     *
+     * @param group the mutual exclusion group
+     * @return list of services in the group, sorted alphabetically by service name
+     */
+    public List<ServiceLifecycle> getServicesForGroup(ServiceExclusionGroup group) {
+        List<ServiceInfo> servicesInGroup = mutualExclusionGroups.get(group);
+        if (servicesInGroup == null) {
+            return Collections.emptyList();
+        }
+        return servicesInGroup.stream()
+                .sorted(Comparator.comparing(info -> getServiceName(info.serviceClass)))
+                .map(info -> info.service)
+                .collect(Collectors.toUnmodifiableList());
+    }
+
+    /**
      * Retrieves a running service by type.
-     * <p>
-     * Searches through active services for one that provides a service instance
+     * <p>     * Searches through active services for one that provides a service instance
      * matching the requested type. The search strategy is:
-     * </p>
      * <ol>
      *   <li>First checks {@link ProviderController} instances via {@link ProviderController#serviceClasses()}
      *       and {@link ProviderController#provider()} - the preferred, type-safe approach</li>
      *   <li>Falls back to checking {@link ServiceLifecycle#getService()} for non-ProviderController services</li>
      * </ol>
-     * <p>
-     * This method should only be called after services have been started
+     * <p>     * This method should only be called after services have been started
      * (state == RUNNING). If called earlier, it will return empty and log a warning.
-     * </p>
-     * <p>
-     * Example usage:
+     * <p>     * Example usage:
      * <pre>{@code
      * // Discover SearchService (provided by SearchProvider via ProviderController)
      * SearchService searchService = ServiceLifecycleManager.get()
@@ -898,7 +896,6 @@ public class ServiceLifecycleManager {
      *     .getRunningService(PrimitiveDataService.class)
      *     .orElseThrow();
      * }</pre>
-     * </p>
      *
      * @param serviceType the type of service to retrieve
      * @param <T> the service type
@@ -910,7 +907,7 @@ public class ServiceLifecycleManager {
         // Allow service lookup during STARTING phase to support service dependencies
         if (state != State.RUNNING && state != State.STARTING) {
             LOG.warn("getRunningService({}) called in state {} - services may not be available",
-                serviceType.getSimpleName(), state);
+                    serviceType.getSimpleName(), state);
             return Optional.empty();
         }
 
@@ -947,14 +944,24 @@ public class ServiceLifecycleManager {
         }
 
         LOG.warn("Service {} not found. Active services: {}. State: {}",
-            serviceType.getSimpleName(),
-            activeServices.keySet().stream()
-                .map(Class::getSimpleName)
-                .collect(java.util.stream.Collectors.joining(", ")),
-            state);
+                serviceType.getSimpleName(),
+                activeServices.keySet().stream()
+                        .map(Class::getSimpleName)
+                        .collect(java.util.stream.Collectors.joining(", ")),
+                state);
         return Optional.empty();
     }
+
     private String getServiceName(Class<?> clazz) {
+
+        ServiceLifecycle service = discoveredServices.get(clazz);
+        if (service == null) {
+            service = activeServices.get(clazz);
+        }
+        if (service instanceof DataServiceController controller) {
+            return controller.controllerName();
+        }
+
         String canonical = clazz.getCanonicalName();
         if (canonical == null) {
             canonical = clazz.getName(); // fallback for anonymous/local classes

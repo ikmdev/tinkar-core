@@ -21,8 +21,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>08f9112c-c041-56d3-b89b-63258f070074
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a Component display field that represents United States of America English dialect (SOLOR).
      * </ul>
@@ -34,8 +33,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>3734fb0a-4c14-5831-9a61-4743af609e7a
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a String display field that represents Comment (SOLOR).
      * </ul>
@@ -47,8 +45,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>3e510cb9-1666-4676-9334-d288a56bf155
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a Component display field that represents Public ID field.
      * <li>Field 1 is a Component Id display set that represents Concept versions field.
@@ -61,8 +58,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>536b0ec4-4974-47ae-93a6-ae6c4d169780
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a Component Id display set that represents Module origins (SOLOR).
      * </ul>
@@ -74,8 +70,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>561f817a-130e-5e56-984d-910e9991558c
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a Component display field that represents Great Britain English dialect.
      * </ul>
@@ -87,8 +82,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>5bc93adb-9d39-43fe-a7a4-1492245b7efb
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a Component display field that represents Public ID field.
      * <li>Field 1 is a Component Id display set that represents Pattern versions field.
@@ -101,8 +95,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>5d60e14b-c410-5172-9559-3c4253278ae2
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a Component display field that represents Identifier Source.
      * <li>Field 1 is a String display field that represents Identifier Value (SOLOR).
@@ -115,8 +108,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>5f0ad6ca-638e-4052-82b0-3f564ac99b3f
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a Component display field that represents Public ID field.
      * <li>Field 1 is a Component display field that represents Semantic pattern field.
@@ -139,8 +131,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>70f89dd5-2cdb-59bb-bbaa-98527513547c
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a Component display field that represents Path concept (SOLOR).
      * <li>Field 1 is a Instant literal (SOLOR) that represents Path origins (SOLOR).
@@ -153,8 +144,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>73c798cf-bc77-49a2-84f7-4c0f4bc4c012
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a Component display field that represents STAMP field.
      * <li>Field 1 is a Component display field that represents Status field.
@@ -171,8 +161,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>7943a5f1-538b-4fda-8acb-019e0bec125b
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a Component display field that represents STAMP field.
      * </ul>
@@ -184,8 +173,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>82f93e84-cee1-44bc-bb6d-4cc2a722048b
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a Component display field that represents STAMP field.
      * <li>Field 1 is a Component Id display set that represents Semantic field field.
@@ -198,8 +186,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>922697f7-36ba-4afc-9dd5-f29d54b0fdec
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a Concept display field (SOLOR) that represents Value Constraint Source (SOLOR).
      * <li>Field 1 is a Concept display field (SOLOR) that represents Minimum Value Operator (SOLOR).
@@ -216,8 +203,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>9f011812-15c9-5b1b-85f8-bb262bc1b2a2
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a DiTree display field that represents EL++ Inferred terminological axioms.
      * </ul>
@@ -229,8 +215,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>9fd67fee-abf9-551d-9d0e-76a4b1e8b4ee
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a Component display field that represents Status value.
      * <li>Field 1 is a Long (SOLOR) that represents Time for version (SOLOR).
@@ -246,8 +231,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>a38b7d2d-8fa5-4206-9185-a1af9f81be2c
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a Component display field that represents STAMP field.
      * </ul>
@@ -259,8 +243,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>a4de0039-2625-5842-8a4c-d1ce6aebf021
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a Component display field that represents Language concept nid for description (SOLOR).
      * <li>Field 1 is a String display field that represents Text for description.
@@ -275,8 +258,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>a53cc42d-c07e-5934-96b3-2ede3264474e
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a Component Id display set that represents Relationship destination.
      * <li>Field 1 is a Component Id display set that represents Relationship origin.
@@ -289,8 +271,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>a90f8a4d-ae13-476b-98b8-814914f9704e
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a Component display field that represents STAMP field.
      * <li>Field 1 is a Component display field that represents Pattern meaning field.
@@ -313,8 +294,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>c0ca180b-aae2-5fa1-9ab7-4a24f2dfe16b
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a String display field that represents Axiom Syntax (SOLOR).
      * </ul>
@@ -326,8 +306,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>c48db76d-5eb0-4ff5-84d0-5c3c4ec77767
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a Component display field that represents Public ID field.
      * <li>Field 1 is a Component Id display set that represents Component versions field.
@@ -340,8 +319,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>d02957d6-132d-5b3c-adba-505f5778d998
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a Component Id display set that represents Relationship destination.
      * <li>Field 1 is a Component Id display set that represents Relationship origin.
@@ -362,8 +340,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>e16abc7a-2a7b-42af-b168-d77aec8116ea
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a Component display field that represents Public ID field.
      * <li>Field 1 is a Component Id display set that represents STAMP versions field.
@@ -376,8 +353,7 @@ public class TinkarTermV2 {
      * <ul>
      * <li>e813eb92-7d07-5035-8d43-e81249f5b36e
      * </ul>
-     * <p>
-     * Pattern contains the following fields
+     * <p>     * Pattern contains the following fields
      * <ul>
      * <li>Field 0 is a DiTree display field that represents EL++ Stated terminological axioms.
      * </ul>

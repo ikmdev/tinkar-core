@@ -23,7 +23,8 @@ public class EscapeUtil {
      * Escape characters for text appearing as XML data, between tags.
      *
      * <p>The following characters are replaced with corresponding character entities:</p>
-     * <table border='1' cellpadding='3' cellspacing='0'>
+     * <table border='1'>
+     * <caption>XML character escape mappings</caption>
      * <tr><th> Character </th><th> Encoding </th></tr>
      * <tr><td> &lt; </td><td> &amp;lt; </td></tr>
      * <tr><td> &gt; </td><td> &amp;gt; </td></tr>

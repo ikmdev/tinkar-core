@@ -4,12 +4,10 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 
 /**
  * JUnit 5 extension that initializes an empty ephemeral (in-memory) store.
- * <p>
- * <b>Store Type:</b> Ephemeral (in-memory)
+ * <p><b>Store Type:</b> Ephemeral (in-memory)
  * <br>
  * <b>Data Loaded:</b> None
- * <p>
- * <b>Usage:</b>
+ * <p><b>Usage:</b>
  * <pre>
  * {@code
  * @ExtendWith(NewEphemeralKeyValueProvider.class)

@@ -42,8 +42,7 @@ public interface IsomorphicResults {
 
     /**
      * Returns the TreeSet of SetElementKeys that represent the added set elements.
-     * <p>
-     * The SetElementKey class is used to uniquely identify set elements based on their vertex index and
+     * <p>     * The SetElementKey class is used to uniquely identify set elements based on their vertex index and
      * the concepts referenced at or below the vertex.
      *
      * @return TreeSet of SetElementKeys representing the added set elements.

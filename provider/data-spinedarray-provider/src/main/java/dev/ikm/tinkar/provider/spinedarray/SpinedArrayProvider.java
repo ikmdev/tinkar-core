@@ -28,6 +28,8 @@ import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
+import dev.ikm.tinkar.common.validation.ValidationRecord;
+import dev.ikm.tinkar.common.validation.ValidationSeverity;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.provider.search.SearchService;
@@ -36,6 +38,7 @@ import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.factory.primitive.LongSets;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -43,6 +46,8 @@ import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.list.primitive.MutableLongList;
+import org.eclipse.collections.api.map.ImmutableMap;
+import org.eclipse.collections.api.map.MutableMap;
 import org.eclipse.collections.api.set.MutableSet;
 import org.eclipse.collections.api.set.primitive.IntSet;
 import org.eclipse.collections.api.set.primitive.MutableLongSet;
@@ -55,8 +60,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.ServiceLoader;
@@ -72,11 +81,9 @@ import java.util.function.ObjIntConsumer;
 
 /**
  * Maybe a hybrid of SpinedArrayProvider and MVStoreProvider is worth considering.
- * <p>
- * SpinedArrayProvider is performing horribly because of dependency on ConcurrentUuidIntHashMap serialization.
+ * <p>SpinedArrayProvider is performing horribly because of dependency on ConcurrentUuidIntHashMap serialization.
  * TODO: consider if we remove ConcurrentUuidIntHashMap, or improve.
- * <p>
- * MVStore performs worse when iterating over entities.
+ * <p>MVStore performs worse when iterating over entities.
  */
 public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, PrimitiveDataRepair {
     private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayProvider.class);
@@ -129,6 +136,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     final File nidToCitingComponentNidMapDirectory;
     final File nextNidKeyFile;
     final StableValue<SearchService> searchService = StableValue.of();
+    private volatile boolean loadPhase = false;
     final String name;
     final ImmutableList<ChangeSetWriterService> changeSetWriterServices;
 
@@ -136,6 +144,11 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening SpinedArrayProvider on thread: {}", Thread.currentThread().getName());
         File configuredRoot = ServiceProperties.get(ServiceKeys.DATA_STORE_ROOT, defaultDataDirectory);
+        boolean expectEmpty = ServiceProperties.get(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
+        if (expectEmpty) {
+            assertEmptyDataRoot(configuredRoot);
+            ServiceProperties.set(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
+        }
         name = configuredRoot.getName();
         configuredRoot.mkdirs();
         LOG.info("Datastore root: " + configuredRoot.getAbsolutePath());
@@ -206,6 +219,19 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         LOG.info("Opened SpinedArrayProvider in: " + stopwatch.durationString());
         lifecycle.set(Lifecycle.RUNNING);
 
+    }
+
+    private static void assertEmptyDataRoot(File configuredRoot) {
+        if (!configuredRoot.exists()) {
+            return;
+        }
+        if (!configuredRoot.isDirectory()) {
+            throw new IllegalStateException("Configured DATA_STORE_ROOT is not a directory: " + configuredRoot.getAbsolutePath());
+        }
+        String[] entries = configuredRoot.list();
+        if (entries != null && entries.length > 0) {
+            throw new IllegalStateException("Expected empty DATA_STORE_ROOT but found contents: " + configuredRoot.getAbsolutePath());
+        }
     }
 
     @Override
@@ -421,12 +447,15 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         this.writeSequence.increment();
         this.changeSetWriterServices.forEach(writerService -> writerService.writeToChangeSet((Entity) sourceObject, activity));
 
-        // Delegate indexing to SearchProvider
-        try {
-            getSearchService().index(sourceObject);
-        } catch (Exception e) {
-            // Search service may not be available yet during startup
-            LOG.debug("SearchService not available for indexing", e);
+        // Delegate indexing to SearchProvider.
+        // Skip during load phase (import) — RecreateIndex will build the index in batch afterward.
+        if (!loadPhase) {
+            try {
+                getSearchService().index(sourceObject);
+            } catch (Exception e) {
+                // Search service may not be available yet during startup
+                LOG.debug("SearchService not available for indexing", e);
+            }
         }
 
         return mergedBytes;
@@ -449,6 +478,11 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     @Override
     public PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception {
         return getSearchService().search(query, maxResultSize);
+    }
+
+    @Override
+    public void setLoadPhase(boolean loadPhase) {
+        this.loadPhase = loadPhase;
     }
 
     @Override
@@ -707,9 +741,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
 
     /**
      * Controller for SpinedArrayProvider lifecycle management.
-     * <p>
-     * Handles heavyweight initialization including data loading, indexing, and UUID mapping.
-     * </p>
+     * <p>     * Handles heavyweight initialization including data loading, indexing, and UUID mapping.
      */
     public abstract static class Controller extends ProviderController<SpinedArrayProvider>
             implements DataServiceController<PrimitiveDataService> {
@@ -804,6 +836,48 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         public static final String CONTROLLER_NAME = "Open SpinedArrayStore";
 
         @Override
+        public void setDataUriOption(DataUriOption option) {
+            super.setDataUriOption(option);
+            if (option != null) {
+                ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, option.toFile());
+                ServiceProperties.set(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.FALSE);
+            }
+        }
+
+        @Override
+        public boolean isValidDataLocation(String name) {
+            File rootFolder = new File(System.getProperty("user.home"), "Solor");
+            File checkDir = new File(rootFolder, name);
+            if (!checkDir.exists() || !checkDir.isDirectory()) {
+                return false;
+            }
+            File nidToPatternDir = new File(checkDir, "nidToPatternNidMap");
+            File nidToBytesDir = new File(checkDir, "nidToByteArrayMap");
+            File nidToCitingDir = new File(checkDir, "nidToCitingComponentNidMap");
+            return nidToPatternDir.isDirectory()
+                    && nidToBytesDir.isDirectory()
+                    && nidToCitingDir.isDirectory();
+        }
+
+        @Override
+        public List<DataUriOption> providerOptions() {
+            List<DataUriOption> dataUriOptions = new ArrayList<>();
+            File rootFolder = new File(System.getProperty("user.home"), "Solor");
+            if (!rootFolder.exists()) {
+                rootFolder.mkdirs();
+            }
+            File[] files = rootFolder.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    if (f.isDirectory() && isValidDataLocation(f.getName())) {
+                        dataUriOptions.add(new DataUriOption(f.getName(), f.toURI()));
+                    }
+                }
+            }
+            return dataUriOptions;
+        }
+
+        @Override
         public String controllerName() {
             return CONTROLLER_NAME;
         }
@@ -816,6 +890,113 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
 
     public static class NewController extends Controller {
         public static final String CONTROLLER_NAME = "New SpinedArrayStore";
+        private static final DataServiceProperty NEW_FOLDER_PROPERTY =
+                new DataServiceProperty("New folder name", false, true);
+
+        private final MutableMap<DataServiceProperty, String> providerProperties = Maps.mutable.empty();
+        private String importDataFileString;
+
+        public NewController() {
+            providerProperties.put(NEW_FOLDER_PROPERTY, null);
+        }
+
+        @Override
+        public void setDataUriOption(DataUriOption option) {
+            super.setDataUriOption(option);
+            ServiceProperties.set(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.TRUE);
+            if (option != null) {
+                try {
+                    importDataFileString = option.uri().toURL().getFile();
+                } catch (MalformedURLException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+        }
+
+        @Override
+        public ImmutableMap<DataServiceProperty, String> providerProperties() {
+            return providerProperties.toImmutable();
+        }
+
+        @Override
+        public void setDataServiceProperty(DataServiceProperty key, String value) {
+            providerProperties.put(key, value);
+        }
+
+        @Override
+        public ValidationRecord[] validate(DataServiceProperty dataServiceProperty, Object value, Object target) {
+            if (NEW_FOLDER_PROPERTY.equals(dataServiceProperty)) {
+                File rootFolder = new File(System.getProperty("user.home"), "Solor");
+                if (value instanceof String fileName) {
+                    if (fileName.isBlank()) {
+                        return new ValidationRecord[]{new ValidationRecord(ValidationSeverity.ERROR,
+                                "Directory name cannot be blank", target)};
+                    } else {
+                        File possibleFile = new File(rootFolder, fileName);
+                        if (possibleFile.exists() && !isEmptyDirectory(possibleFile)) {
+                            return new ValidationRecord[]{new ValidationRecord(ValidationSeverity.ERROR,
+                                    "Directory exists and is not empty", target)};
+                        }
+                    }
+                }
+            }
+            return new ValidationRecord[]{};
+        }
+
+        @Override
+        public List<DataUriOption> providerOptions() {
+            List<DataUriOption> dataUriOptions = new ArrayList<>();
+            File rootFolder = new File(System.getProperty("user.home"), "Solor");
+            if (!rootFolder.exists()) {
+                rootFolder.mkdirs();
+            }
+            File[] files = rootFolder.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    if (isValidDataLocation(f.getName())) {
+                        dataUriOptions.add(new DataUriOption(f.getName(), f.toURI()));
+                    }
+                }
+            }
+            return dataUriOptions;
+        }
+
+        @Override
+        protected SpinedArrayProvider createProvider() throws Exception {
+            ServiceProperties.set(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.TRUE);
+            File rootFolder = new File(System.getProperty("user.home"), "Solor");
+            String folderName = providerProperties.get(NEW_FOLDER_PROPERTY);
+            if (folderName == null || folderName.isBlank()) {
+                throw new IllegalStateException("New folder name not set for New SpinedArrayStore");
+            }
+            File dataDirectory = new File(rootFolder, folderName);
+            assertNewDataDirectory(dataDirectory);
+            ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, dataDirectory);
+            return new SpinedArrayProvider();
+        }
+
+        @Override
+        protected void initializeProvider(SpinedArrayProvider provider) {
+            File rootFolder = new File(System.getProperty("user.home"), "Solor");
+            File dataDirectory = new File(rootFolder, providerProperties.get(NEW_FOLDER_PROPERTY));
+            ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, dataDirectory);
+
+            if (importDataFileString != null) {
+                File importFile = new File(importDataFileString);
+                LOG.info("Queueing starter data for deferred import: {}", importFile.getName());
+                dev.ikm.tinkar.entity.load.DataLoadProvider dataLoadService =
+                        dev.ikm.tinkar.entity.load.DataLoadProvider.get();
+                dataLoadService.addFile(importFile);
+            } else {
+                LOG.warn("No import file specified - creating empty database");
+            }
+        }
+
+        @Override
+        public boolean isValidDataLocation(String name) {
+            return name.toLowerCase().endsWith("pb.zip") ||
+                    (name.toLowerCase().endsWith(".zip") && name.toLowerCase().contains("tink"));
+        }
 
         @Override
         public String controllerName() {
@@ -826,8 +1007,21 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         public int getSubPriority() {
             return 31;
         }
+
+        private static void assertNewDataDirectory(File dir) {
+            if (dir.exists()) {
+                if (!dir.isDirectory()) {
+                    throw new IllegalStateException("New SpinedArrayStore path is not a directory: " + dir.getAbsolutePath());
+                }
+                if (!isEmptyDirectory(dir)) {
+                    throw new IllegalStateException("New SpinedArrayStore directory is not empty: " + dir.getAbsolutePath());
+                }
+            }
+        }
+
+        private static boolean isEmptyDirectory(File dir) {
+            String[] entries = dir.list();
+            return entries == null || entries.length == 0;
+        }
     }
 }
-
-
-

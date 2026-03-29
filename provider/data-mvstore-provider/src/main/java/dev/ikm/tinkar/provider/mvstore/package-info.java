@@ -17,12 +17,9 @@ package dev.ikm.tinkar.provider.mvstore;
 
 /**
  * https://gitee.com/zhangjunfang/Chronicle-Map
- * <p>
- * https://stackoverflow.com/questions/62328831/using-chroniclemap-with-generics-java-lang-nosuchmethodexception-sun-nio-ch-fi
- * <p>
- * Getting intermittent exception with MVStore:
- * <p>
- * [ERROR] dev.ikm.tinkar.integration.coordinate.TestCoordinates.computeLatest  Time elapsed: 0.033 s  <<< ERROR!
+ * <p>https://stackoverflow.com/questions/62328831/using-chroniclemap-with-generics-java-lang-nosuchmethodexception-sun-nio-ch-fi
+ * <p>Getting intermittent exception with MVStore:
+ * <p>[ERROR] dev.ikm.tinkar.integration.coordinate.TestCoordinates.computeLatest  Time elapsed: 0.033 s  <<< ERROR!
  * java.lang.ClassCastException: class dev.ikm.tinkar.entity.ConceptRecord cannot be cast to class dev.ikm.tinkar.entity.SemanticEntity (dev.ikm.tinkar.entity.ConceptRecord and dev.ikm.tinkar.entity.SemanticEntity are in module dev.ikm.tinkar.entity@1.0-SNAPSHOT of loader 'app')
  * at dev.ikm.tinkar.provider.entity@1.0-SNAPSHOT/dev.ikm.tinkar.provider.entity.EntityProvider.lambda$textFast$0(EntityProvider.java:68)
  * at dev.ikm.tinkar.caffeine@3.0.2/com.github.benmanes.caffeine.cache.BoundedLocalCache.lambda$doComputeIfAbsent$13(BoundedLocalCache.java:2439)

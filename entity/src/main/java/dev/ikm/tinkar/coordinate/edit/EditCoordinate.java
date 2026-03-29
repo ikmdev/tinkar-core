@@ -24,13 +24,10 @@ import java.util.UUID;
 
 /**
  * Edits occur on the manifold coordinate path when developing.
- * <p>
- * Module is unchanged when developing. A default module is used for any new content.
- * <p>
- * When modularizing, a destination module is provided, and the change will be written to the
+ * <p>Module is unchanged when developing. A default module is used for any new content.
+ * <p>When modularizing, a destination module is provided, and the change will be written to the
  * manifold coordinate path.
- * <p>
- * When promoting, the module will be unchanged, and the promotion path will be where a copy of
+ * <p>When promoting, the module will be unchanged, and the promotion path will be where a copy of
  * content on the manifold coordinate path written.
  *
  * 

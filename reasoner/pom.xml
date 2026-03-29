@@ -9,13 +9,13 @@
 
 	<name>TINKAR Reasoner Service and Implementations</name>
 
-	<modules>
-		<module>reasoner-elk-owl</module>
-		<module>reasoner-elk-snomed</module>
-		<module>reasoner-elk-snomed-test</module>
-		<module>reasoner-hybrid</module>
-		<module>reasoner-service</module>
-	</modules>
+	<subprojects>
+		<subproject>reasoner-elk-owl</subproject>
+		<subproject>reasoner-elk-snomed</subproject>
+		<subproject>reasoner-elk-snomed-test</subproject>
+		<subproject>reasoner-hybrid</subproject>
+		<subproject>reasoner-service</subproject>
+	</subprojects>
 
 	<properties>
 		<maven-assembly-plugin.version>3.7.1</maven-assembly-plugin.version>
@@ -29,33 +29,13 @@
 		<!-- <versions-maven-plugin.version>2.15.0</versions-maven-plugin.version> -->
 	</properties>
 
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>dev.ikm.hybrid-reasoner</groupId>
-				<artifactId>hybrid-reasoner-snomed</artifactId>
-				<version>${hybrid-reasoner.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>${project.groupId}</groupId>
-				<artifactId>reasoner-elk-snomed</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>dev.ikm.tinkar</groupId>
-				<artifactId>reasoner-service</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
-
 	<build>
 		<pluginManagement>
 			<plugins>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-assembly-plugin</artifactId>
-					<version>${maven.assembly-plugin.version}</version>
+					<version>${maven-assembly-plugin.version}</version>
 				</plugin>
 				<!-- other plugins -->
 				<plugin>

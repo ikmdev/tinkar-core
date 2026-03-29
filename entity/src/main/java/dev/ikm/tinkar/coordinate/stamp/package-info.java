@@ -22,7 +22,7 @@
  * of concepts, semantics, and patterns are visible based on their status, temporal position,
  * authorship, modular organization, and development path.</p>
  *
- * <h3>STAMP Metadata Components</h3>
+ * <p><b>STAMP Metadata Components</b></p>
  *
  * <p>Every version in Tinkar carries STAMP metadata consisting of five fields:</p>
  *
@@ -48,11 +48,11 @@
  * enable branching workflows like development → staging → production.</dd>
  * </dl>
  *
- * <h3>Core Coordinate Types</h3>
+ * <p><b>Core Coordinate Types</b></p>
  *
  * <p>The STAMP package provides three levels of coordinate specificity:</p>
  *
- * <h4>StampPosition</h4>
+ * <p><b>StampPosition</b></p>
  * <p>Specifies a point in time on a specific path:</p>
  * <ul>
  * <li><strong>Time</strong> - Specific timestamp or {@code Long.MAX_VALUE} for latest</li>
@@ -60,7 +60,7 @@
  * <li>Represents "what was visible at time T on path P"</li>
  * </ul>
  *
- * <h4>StampPath</h4>
+ * <p><b>StampPath</b></p>
  * <p>Represents a development path with its origins:</p>
  * <ul>
  * <li><strong>Path Concept</strong> - Identity of the path</li>
@@ -68,7 +68,7 @@
  * <li>Enables path-relative versioning and merging</li>
  * </ul>
  *
- * <h4>StampCoordinate</h4>
+ * <p><b>StampCoordinate</b></p>
  * <p>Complete specification for version filtering:</p>
  * <ul>
  * <li><strong>Allowed States</strong> - Which statuses to include (active, inactive, or both)</li>
@@ -77,7 +77,7 @@
  * <li><strong>Module Priorities</strong> - Preference order when multiple versions exist</li>
  * </ul>
  *
- * <h3>Version Selection Algorithm</h3>
+ * <p><b>Version Selection Algorithm</b></p>
  *
  * <p>STAMP coordinates determine the "latest" version through multi-stage filtering:</p>
  *
@@ -91,9 +91,9 @@
  * <li><strong>Module Priority</strong> - If multiple versions have same time, use module priority order</li>
  * </ol>
  *
- * <h3>Core Interfaces</h3>
+ * <p><b>Core Interfaces</b></p>
  *
- * <h4>StampCoordinate</h4>
+ * <p><b>StampCoordinate</b></p>
  * <p>Primary interface for version filtering. Key methods include:</p>
  * <ul>
  * <li>{@code allowedStates()} - Get state filter</li>
@@ -104,7 +104,7 @@
  * <li>{@code withAllowedStates()}, {@code withStampPosition()}, etc. - Create modified coordinates</li>
  * </ul>
  *
- * <h4>StampPosition</h4>
+ * <p><b>StampPosition</b></p>
  * <p>Represents a temporal position. Key methods:</p>
  * <ul>
  * <li>{@code time()} - Get timestamp</li>
@@ -112,14 +112,14 @@
  * <li>{@code withTime()}, {@code withPathForPositionNid()} - Create modified positions</li>
  * </ul>
  *
- * <h4>StampPath</h4>
+ * <p><b>StampPath</b></p>
  * <p>Represents a development path. Key methods:</p>
  * <ul>
  * <li>{@code pathConceptNid()} - Get path concept identifier</li>
  * <li>{@code pathOrigins()} - Get origin positions (where path branched from)</li>
  * </ul>
  *
- * <h3>StateSet Enumeration</h3>
+ * <p><b>StateSet Enumeration</b></p>
  *
  * <p>The {@link dev.ikm.tinkar.coordinate.stamp.StateSet} enum defines state filters:</p>
  * <ul>
@@ -128,9 +128,9 @@
  * <li><strong>ACTIVE_AND_INACTIVE</strong> - Include both (no state filtering)</li>
  * </ul>
  *
- * <h3>Implementation Patterns</h3>
+ * <p><b>Implementation Patterns</b></p>
  *
- * <h4>Record Implementations</h4>
+ * <p><b>Record Implementations</b></p>
  * <p>Immutable, thread-safe record types:</p>
  * <ul>
  * <li>{@link dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord}</li>
@@ -155,7 +155,7 @@
  * );
  * }</pre>
  *
- * <h4>Delegate Implementations</h4>
+ * <p><b>Delegate Implementations</b></p>
  * <p>Delegation interfaces for composition:</p>
  * <ul>
  * <li>{@link dev.ikm.tinkar.coordinate.stamp.StampCoordinateDelegate}</li>
@@ -163,9 +163,9 @@
  * <li>{@link dev.ikm.tinkar.coordinate.stamp.StampPathDelegate}</li>
  * </ul>
  *
- * <h3>Common Usage Patterns</h3>
+ * <p><b>Common Usage Patterns</b></p>
  *
- * <h4>Latest Active Versions</h4>
+ * <p><b>Latest Active Versions</b></p>
  * <pre>{@code
  * // Most common: latest active versions on development path
  * StampCoordinateRecord stamp = Coordinates.Stamp.DevelopmentLatestActiveOnly();
@@ -174,7 +174,7 @@
  * StampCoordinateRecord stamp = Coordinates.Stamp.MasterLatestActiveOnly();
  * }</pre>
  *
- * <h4>Point-in-Time Queries</h4>
+ * <p><b>Point-in-Time Queries</b></p>
  * <pre>{@code
  * // View knowledge as it was on a specific date
  * long timestampJan1_2024 = Instant.parse("2024-01-01T00:00:00Z")
@@ -190,7 +190,7 @@
  * );
  * }</pre>
  *
- * <h4>Module Filtering</h4>
+ * <p><b>Module Filtering</b></p>
  * <pre>{@code
  * // Include only specific modules
  * StampCoordinateRecord filtered = stamp.withModuleNids(
@@ -206,7 +206,7 @@
  * );
  * }</pre>
  *
- * <h4>Including Inactive Content</h4>
+ * <p><b>Including Inactive Content</b></p>
  * <pre>{@code
  * // Include both active and inactive (useful for administrative views)
  * StampCoordinateRecord all = stamp.withAllowedStates(
@@ -219,7 +219,7 @@
  * );
  * }</pre>
  *
- * <h3>Path Branching and Merging</h3>
+ * <p><b>Path Branching and Merging</b></p>
  *
  * <p>Paths support branching workflows:</p>
  * <pre>{@code
@@ -240,7 +240,7 @@
  * );
  * }</pre>
  *
- * <h3>Integration with Calculators</h3>
+ * <p><b>Integration with Calculators</b></p>
  *
  * <p>STAMP coordinates are used by {@link dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator}
  * implementations to perform version resolution:</p>
@@ -258,12 +258,12 @@
  * RelativePosition position = calc.relativePosition(stamp1, stamp2);
  * }</pre>
  *
- * <h3>Change Tracking</h3>
+ * <p><b>Change Tracking</b></p>
  *
  * <p>The {@link dev.ikm.tinkar.coordinate.stamp.change} subpackage provides records for tracking
  * changes between versions, enabling change detection, diff generation, and audit trails.</p>
  *
- * <h3>Thread Safety and Immutability</h3>
+ * <p><b>Thread Safety and Immutability</b></p>
  *
  * <p>All record implementations are immutable and thread-safe. STAMP coordinates can be safely:</p>
  * <ul>
@@ -273,7 +273,7 @@
  * <li>Passed across service boundaries</li>
  * </ul>
  *
- * <h3>Performance Considerations</h3>
+ * <p><b>Performance Considerations</b></p>
  *
  * <ul>
  * <li><strong>Content-Based UUIDs</strong> - Coordinates generate stable UUIDs for caching</li>

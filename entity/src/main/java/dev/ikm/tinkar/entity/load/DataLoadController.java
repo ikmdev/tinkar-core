@@ -30,22 +30,17 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Singleton service for loading protobuf changeset files during DATA_LOAD phase.
- * <p>
- * This controller provides a unified, provider-agnostic mechanism for loading
+ * <p>This controller provides a unified, provider-agnostic mechanism for loading
  * data files. It runs after all infrastructure (DATA_STORAGE, ENTITIES, INDEXING)
  * is ready, ensuring SearchService and EntityProvider are available.
- * </p>
- * <p>
- * The controller automatically:
+ * <p>The controller automatically:
  * <ul>
  *   <li>Collects files from all ChangeSetImportConfiguration services</li>
  *   <li>Loads files queued by data providers during DATA_STORAGE phase</li>
  *   <li>Loads all files in order using LoadEntitiesFromProtobufFile (TrackingCallable)</li>
  *   <li>Saves the datastore after loading completes</li>
  * </ul>
- * </p>
- * <p>
- * Usage example for data providers:
+ * <p>Usage example for data providers:
  * <pre>{@code
  * // During provider initialization (DATA_STORAGE phase):
  * DataLoadService loadService = DataLoadProvider.get();
@@ -53,7 +48,6 @@ import java.util.concurrent.CompletableFuture;
  *
  * // DataLoadController will automatically load during DATA_LOAD phase
  * }</pre>
- * </p>
  */
 public class DataLoadController extends ProviderController<DataLoadProvider>
         implements ServiceLifecycle {
@@ -95,11 +89,9 @@ public class DataLoadController extends ProviderController<DataLoadProvider>
 
     /**
      * Recreates the Lucene index after data has been loaded.
-     * <p>
-     * This ensures the search index is updated with all newly imported entities.
+     * <p>     * This ensures the search index is updated with all newly imported entities.
      * The index recreation is performed asynchronously via PrimitiveData service
      * and we wait for it to complete to ensure search is functional before proceeding.
-     * </p>
      */
     private void recreateLuceneIndexAfterLoad() {
         LOG.info("═══════════════════════════════════════════════════════════");

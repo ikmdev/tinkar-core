@@ -21,7 +21,7 @@
  * content within the Tinkar framework. Edit coordinates ensure proper provenance tracking and
  * organizational structure for all changes made to the knowledge graph.</p>
  *
- * <h3>Core Responsibilities</h3>
+ * <p><b>Core Responsibilities</b></p>
  *
  * <p>Edit coordinates manage five critical aspects of content authoring and modification:</p>
  *
@@ -48,11 +48,11 @@
  * (e.g., from development to staging, or from staging to production).</dd>
  * </dl>
  *
- * <h3>Development Workflow Support</h3>
+ * <p><b>Development Workflow Support</b></p>
  *
  * <p>Edit coordinates support three primary content management workflows:</p>
  *
- * <h4>1. Developing</h4>
+ * <p><b>1. Developing</b></p>
  * <p>Creating new content or modifying existing content on the current development path:</p>
  * <ul>
  * <li>New content is assigned to the <strong>default module</strong></li>
@@ -61,7 +61,7 @@
  * <li>Existing content retains its original module assignment</li>
  * </ul>
  *
- * <h4>2. Modularizing</h4>
+ * <p><b>2. Modularizing</b></p>
  * <p>Reorganizing content across module boundaries:</p>
  * <ul>
  * <li>Content is moved to the <strong>destination module</strong></li>
@@ -69,7 +69,7 @@
  * <li>Preserves version history while changing module organization</li>
  * </ul>
  *
- * <h4>3. Promoting</h4>
+ * <p><b>3. Promoting</b></p>
  * <p>Moving content from one development branch to another:</p>
  * <ul>
  * <li>Content retains its current <strong>module assignment</strong></li>
@@ -77,7 +77,7 @@
  * <li>Supports staged release workflows (dev → test → production)</li>
  * </ul>
  *
- * <h3>Core Interface</h3>
+ * <p><b>Core Interface</b></p>
  *
  * <p>The {@link dev.ikm.tinkar.coordinate.edit.EditCoordinate} interface defines the contract
  * for all edit coordinate implementations. It provides:</p>
@@ -89,11 +89,11 @@
  * <li>User-friendly string representation for debugging and display</li>
  * </ul>
  *
- * <h3>Implementation Patterns</h3>
+ * <p><b>Implementation Patterns</b></p>
  *
  * <p>The package provides two primary implementation patterns:</p>
  *
- * <h4>EditCoordinateRecord</h4>
+ * <p><b>EditCoordinateRecord</b></p>
  * <p>Immutable record implementation suitable for most use cases. Created via factory methods
  * or the {@code Coordinates.Edit} class:</p>
  * <pre>{@code
@@ -107,7 +107,7 @@
  * );
  * }</pre>
  *
- * <h4>EditCoordinateDelegate</h4>
+ * <p><b>EditCoordinateDelegate</b></p>
  * <p>Delegation pattern allowing classes to implement EditCoordinate by delegating to an
  * underlying coordinate instance. Useful for view coordinates and other composite structures:</p>
  * <pre>{@code
@@ -121,7 +121,7 @@
  * }
  * }</pre>
  *
- * <h3>Activity Enumeration</h3>
+ * <p><b>Activity Enumeration</b></p>
  *
  * <p>The {@link dev.ikm.tinkar.coordinate.edit.Activity} enum identifies which workflow
  * is currently active:</p>
@@ -131,7 +131,7 @@
  * <li>{@code PROMOTING} - Moving content across development paths</li>
  * </ul>
  *
- * <h3>Integration with STAMP</h3>
+ * <p><b>Integration with STAMP</b></p>
  *
  * <p>Edit coordinates work in conjunction with STAMP coordinates to provide complete version
  * control:</p>
@@ -144,7 +144,7 @@
  * <li><strong>State</strong> specified during edit → Status field in STAMP</li>
  * </ul>
  *
- * <h3>Usage Example</h3>
+ * <p><b>Usage Example</b></p>
  *
  * <pre>{@code
  * // Create an edit coordinate for development work
@@ -164,7 +164,7 @@
  *     .build();
  * }</pre>
  *
- * <h3>Thread Safety and Immutability</h3>
+ * <p><b>Thread Safety and Immutability</b></p>
  *
  * <p>EditCoordinateRecord instances are immutable and thread-safe, making them suitable for:</p>
  * <ul>

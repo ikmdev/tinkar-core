@@ -22,6 +22,7 @@ import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.id.impl.NidCodec6;
 import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.ServiceLifecycleManager;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.common.util.io.CountingInputStream;
 import dev.ikm.tinkar.coordinate.Coordinates;
@@ -80,11 +81,9 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
 
     /**
      * Create a loader that auto-detects the import mode based on the provider.
-     * <p>
-     * Uses multi-pass import for providers that encode pattern information in NIDs
+     * <p>     * Uses multi-pass import for providers that encode pattern information in NIDs
      * (e.g., RocksDB), and single-pass import for sequential NID providers
      * (e.g., SpinedArray, MVStore, Ephemeral).
-     * </p>
      * 
      * @param importFile the protobuf file to import
      */
@@ -313,6 +312,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             } catch (Exception e) {
                 LOG.error("Encountered exception {}", e.getMessage());
             }
+            commitSearchIndexIfAvailable();
             updateMessage("In " + durationString());
             updateProgress(1, 1);
         }
@@ -385,6 +385,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             } catch (Exception e) {
                 LOG.error("Encountered exception {}", e.getMessage());
             }
+            commitSearchIndexIfAvailable();
             updateMessage("In " + durationString());
             updateProgress(1, 1);
         }
@@ -457,6 +458,28 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                 importPatternCount.get(),
                 importStampCount.get()
         );
+    }
+
+    private static void commitSearchIndexIfAvailable() {
+        try {
+            Class<?> searchServiceClass = Class.forName("dev.ikm.tinkar.provider.search.SearchService");
+            @SuppressWarnings("unchecked")
+            Optional<Object> searchService = (Optional<Object>) ServiceLifecycleManager.get()
+                    .getRunningService((Class) searchServiceClass);
+            searchService.ifPresent(service -> {
+                try {
+                    // Recreate the index in batch after import (indexing is skipped during load phase).
+                    Object future = service.getClass().getMethod("recreateIndex").invoke(service);
+                    if (future instanceof java.util.concurrent.CompletableFuture<?> cf) {
+                        cf.get();
+                    }
+                } catch (Exception e) {
+                    LOG.warn("Failed to recreate Lucene index after import", e);
+                }
+            });
+        } catch (ClassNotFoundException e) {
+            LOG.debug("SearchService not available on classpath; skipping index rebuild");
+        }
     }
 
     private long analyzeManifest(Map<PublicId, String> manifestEntryData) {

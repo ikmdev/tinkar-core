@@ -157,8 +157,7 @@ public interface StampCalculator {
     /**
      * Calculates the latest version of the component identified by the nid, potentially caching
      * the result.
-     * <p>
-     * This method is optimal for random access or repeated access to the same components
+     * <p>     * This method is optimal for random access or repeated access to the same components
      * (e.g. UI rendering, specific logic checks) where the working set fits within the cache.
      *
      * @param nid the nid of the component to calculate the latest version for
@@ -169,11 +168,9 @@ public interface StampCalculator {
 
     /**
      * Calculates the latest version of the component identified by the nid without caching the result.
-     * <p>
-     * This method should be used for large iterations (e.g. processing all concepts, all inferred semantics,
+     * <p>     * This method should be used for large iterations (e.g. processing all concepts, all inferred semantics,
      * all stated semantics, or navigation semantics) where the number of components exceeds the cache size.
-     * <p>
-     * In such large iteration scenarios, using the cache causes high eviction rates ("thrashing") and
+     * <p>     * In such large iteration scenarios, using the cache causes high eviction rates ("thrashing") and
      * synchronization overhead with no benefit, as entries are unlikely to be reused before evection.
      *
      * @param nid the nid of the component to calculate the latest version for
@@ -425,6 +422,7 @@ public interface StampCalculator {
         PrimitiveDataSearchResult[] primitiveResults = PrimitiveData.get().search(query, maxResultSize);
         final MutableIntObjectMap<LatestVersionSearchResult> semanticNidSearchResultMap = IntObjectMaps.mutable.ofInitialCapacity(primitiveResults.length);
         final AtomicInteger duplicates = new AtomicInteger();
+        final AtomicInteger missingLatest = new AtomicInteger();
         for (PrimitiveDataSearchResult primitiveResult : primitiveResults) {
             if (semanticNidSearchResultMap.containsKey(primitiveResult.nid())) {
                 duplicates.incrementAndGet();
@@ -438,13 +436,18 @@ public interface StampCalculator {
                 }
             } else {
                 Latest<SemanticEntityVersion> latestVersion = latest(primitiveResult.nid());
-                latestVersion.ifPresent(semanticVersion -> semanticNidSearchResultMap.put(primitiveResult.nid(),
-                        new LatestVersionSearchResult(latestVersion, primitiveResult.fieldIndex(), primitiveResult.score(),
-                                primitiveResult.highlightedString())));
+                if (latestVersion.isPresent()) {
+                    semanticNidSearchResultMap.put(primitiveResult.nid(),
+                            new LatestVersionSearchResult(latestVersion, primitiveResult.fieldIndex(), primitiveResult.score(),
+                                    primitiveResult.highlightedString()));
+                } else {
+                    missingLatest.incrementAndGet();
+                }
             }
         }
         ImmutableList<LatestVersionSearchResult> filteredResults = Lists.immutable.ofAll(semanticNidSearchResultMap.values());
-        LOG.debug("Removed " + duplicates.intValue() + " duplicates. Latest result count: " + filteredResults.size());
+        LOG.info("Search '{}': primitive hits={}, filtered duplicates={}, missing-latest={}, final results={}",
+                query, primitiveResults.length, duplicates.intValue(), missingLatest.intValue(), filteredResults.size());
         return filteredResults;
     }
 

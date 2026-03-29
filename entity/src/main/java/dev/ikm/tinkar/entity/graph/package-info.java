@@ -22,9 +22,9 @@
  * (DiTrees) and directed graphs (DiGraphs) with entity vertices for encoding complex logical
  * expressions and relationships.</p>
  *
- * <h3>Core Graph Structures</h3>
+ * <p><b>Core Graph Structures</b></p>
  *
- * <h4>DiTreeEntity - Directed Trees for Logic</h4>
+ * <p><b>DiTreeEntity - Directed Trees for Logic</b></p>
  * <p>{@link dev.ikm.tinkar.entity.graph.DiTreeEntity} represents directed trees used primarily for
  * encoding description logic axioms. DiTrees are tree structures where:</p>
  *
@@ -53,7 +53,7 @@
  * <p>This represents: "Pneumonia is sufficiently defined by: finding site is SOME lung structure,
  * associated morphology is SOME inflammation, and interpretation is SOME abnormal."</p>
  *
- * <h4>DiGraphEntity - Directed Graphs for Navigation</h4>
+ * <p><b>DiGraphEntity - Directed Graphs for Navigation</b></p>
  * <p>{@link dev.ikm.tinkar.entity.graph.DiGraphEntity} represents directed graphs used for
  * navigational hierarchies and relationship networks. DiGraphs allow:</p>
  *
@@ -64,9 +64,9 @@
  * <li><strong>Rich Connectivity</strong> - Models complex relationship networks</li>
  * </ul>
  *
- * <h3>Vertex Types</h3>
+ * <p><b>Vertex Types</b></p>
  *
- * <h4>EntityVertex</h4>
+ * <p><b>EntityVertex</b></p>
  * <p>{@link dev.ikm.tinkar.entity.graph.EntityVertex} represents a vertex in entity-level graphs
  * (DiTreeEntity, DiGraphEntity). Each vertex:</p>
  *
@@ -89,15 +89,15 @@
  * }
  * }</pre>
  *
- * <h4>VersionVertex</h4>
+ * <p><b>VersionVertex</b></p>
  * <p>{@link dev.ikm.tinkar.entity.graph.VersionVertex} represents a vertex in version-level graphs
  * (DiTreeVersion). Version vertices include STAMP metadata for temporal queries.</p>
  *
- * <h3>Description Logic Encoding</h3>
+ * <p><b>Description Logic Encoding</b></p>
  *
  * <p>DiTrees encode description logic expressions using concept vertices with specific meanings:</p>
  *
- * <h4>Logical Operators</h4>
+ * <p><b>Logical Operators</b></p>
  * <ul>
  * <li><strong>AND</strong> - Conjunction of child concepts</li>
  * <li><strong>OR</strong> - Disjunction of child concepts</li>
@@ -106,14 +106,14 @@
  * <li><strong>NECESSARY_SET</strong> - Necessary conditions (if semantics)</li>
  * </ul>
  *
- * <h4>Existential Restrictions</h4>
+ * <p><b>Existential Restrictions</b></p>
  * <ul>
  * <li><strong>SOME</strong> - Existential quantification (∃ role.concept)</li>
  * <li>First child is the role (e.g., "finding site")</li>
  * <li>Second child is the filler concept (e.g., "Lung structure")</li>
  * </ul>
  *
- * <h4>Role Groups</h4>
+ * <p><b>Role Groups</b></p>
  * <ul>
  * <li><strong>ROLE_GROUP</strong> - Groups related roles together</li>
  * <li>Used in SNOMED CT and other terminologies for role correlation</li>
@@ -149,7 +149,7 @@
  * }
  * }</pre>
  *
- * <h3>Graph Construction</h3>
+ * <p><b>Graph Construction</b></p>
  *
  * <p>Graphs are built using builder patterns or direct construction:</p>
  *
@@ -186,11 +186,11 @@
  * );
  * }</pre>
  *
- * <h3>Graph Traversal</h3>
+ * <p><b>Graph Traversal</b></p>
  *
  * <p>Graphs support multiple traversal patterns:</p>
  *
- * <h4>Depth-First Traversal</h4>
+ * <p><b>Depth-First Traversal</b></p>
  * <pre>{@code
  * void depthFirst(DiTreeEntity tree, int vertexIndex, int depth) {
  *     EntityVertex vertex = tree.vertex(vertexIndex);
@@ -203,7 +203,7 @@
  * }
  * }</pre>
  *
- * <h4>Breadth-First Traversal</h4>
+ * <p><b>Breadth-First Traversal</b></p>
  * <pre>{@code
  * void breadthFirst(DiTreeEntity tree) {
  *     Queue<Integer> queue = new LinkedList<>();
@@ -219,7 +219,7 @@
  * }
  * }</pre>
  *
- * <h4>Visit Processor Pattern</h4>
+ * <p><b>Visit Processor Pattern</b></p>
  * <p>{@link dev.ikm.tinkar.entity.graph.VisitProcessor} provides a visitor pattern for
  * graph traversal with state tracking:</p>
  *
@@ -231,7 +231,7 @@
  * });
  * }</pre>
  *
- * <h3>Isomorphic Analysis</h3>
+ * <p><b>Isomorphic Analysis</b></p>
  *
  * <p>The {@link dev.ikm.tinkar.entity.graph.isomorphic} subpackage provides algorithms for
  * determining if two graphs are structurally equivalent:</p>
@@ -257,9 +257,9 @@
  * <li>Quality assurance of terminology content</li>
  * </ul>
  *
- * <h3>Graph Utilities</h3>
+ * <p><b>Graph Utilities</b></p>
  *
- * <h4>JGraphUtil</h4>
+ * <p><b>JGraphUtil</b></p>
  * <p>{@link dev.ikm.tinkar.entity.graph.JGraphUtil} provides integration with the JGraphT library
  * for advanced graph algorithms:</p>
  * <ul>
@@ -269,7 +269,7 @@
  * <li>Graph visualization export</li>
  * </ul>
  *
- * <h4>Vertex Status</h4>
+ * <p><b>Vertex Status</b></p>
  * <p>{@link dev.ikm.tinkar.entity.graph.VertexStatus} tracks vertex processing state during
  * graph algorithms:</p>
  * <ul>
@@ -278,7 +278,7 @@
  * <li><strong>PROCESSED</strong> - Fully processed</li>
  * </ul>
  *
- * <h3>Graph Serialization</h3>
+ * <p><b>Graph Serialization</b></p>
  *
  * <p>Graphs can be serialized for storage and transmission:</p>
  *
@@ -293,7 +293,7 @@
  * DiTreeEntity restored = DiTreeEntity.make(readBuffer);
  * }</pre>
  *
- * <h3>Use in Logic Coordinates</h3>
+ * <p><b>Use in Logic Coordinates</b></p>
  *
  * <p>DiTrees are stored as field values in semantic entities conforming to axiom patterns:</p>
  *
@@ -311,7 +311,7 @@
  * }
  * }</pre>
  *
- * <h3>Performance Considerations</h3>
+ * <p><b>Performance Considerations</b></p>
  *
  * <ul>
  * <li><strong>Immutability Benefits</strong> - Graphs are immutable, enabling safe caching</li>
@@ -320,7 +320,7 @@
  * <li><strong>Memory Efficiency</strong> - Compact representation using primitive collections</li>
  * </ul>
  *
- * <h3>Thread Safety</h3>
+ * <p><b>Thread Safety</b></p>
  *
  * <p>All graph implementations are immutable and thread-safe:</p>
  * <ul>

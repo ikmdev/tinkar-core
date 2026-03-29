@@ -127,8 +127,7 @@ public interface PrimitiveDataService {
     /**
      * Merge bytes from concurrently created entities. Method is idempotent.
      * Versions will not be duplicated as a result of calling method multiple times.
-     * <p>
-     * Used for map.merge functions in concurrent maps.
+     * <p>     * Used for map.merge functions in concurrent maps.
      *
      * @param oldBytes
      * @param newBytes
@@ -472,14 +471,10 @@ public interface PrimitiveDataService {
 
     /**
      * Gets or creates an EntityKey for the given pattern and entity.
-     * <p>
-     * Default implementation for providers using sequential NIDs (SpinedArray, MVStore, Ephemeral).
+     * <p>     * Default implementation for providers using sequential NIDs (SpinedArray, MVStore, Ephemeral).
      * These providers don't encode pattern information in the NID, so this returns a
      * {@link EntityKey.SequentialNidEntityKey} that wraps the sequential NID directly.
-     * </p>
-     * <p>
-     * Providers using pattern-encoded NIDs (e.g., RocksDB) should override this method.
-     * </p>
+     * <p>     * Providers using pattern-encoded NIDs (e.g., RocksDB) should override this method.
      */
     default EntityKey getEntityKey(PublicId patternId, PublicId entityId) {
         int nid = nidForUuids(entityId.asUuidArray());
@@ -488,9 +483,7 @@ public interface PrimitiveDataService {
 
     /**
      * Gets an EntityKey for the given UUID if it exists.
-     * <p>
-     * Default implementation for providers using sequential NIDs.
-     * </p>
+     * <p>     * Default implementation for providers using sequential NIDs.
      */
     default Optional<EntityKey> getEntityKey(UUID uuid) {
         if (hasUuid(uuid)) {
@@ -527,20 +520,25 @@ public interface PrimitiveDataService {
 
     /**
      * Returns whether this provider requires multi-pass import for correct NID assignment.
-     * <p>
-     * Providers that encode pattern information in NIDs (like RocksDB) return {@code true}
+     * <p>     * Providers that encode pattern information in NIDs (like RocksDB) return {@code true}
      * because they need to discover all patterns in the first pass before assigning 
      * pattern-encoded NIDs in the second pass.
-     * </p>
-     * <p>
-     * Providers using sequential NIDs (SpinedArray, MVStore, Ephemeral) return {@code false}
+     * <p>     * Providers using sequential NIDs (SpinedArray, MVStore, Ephemeral) return {@code false}
      * because NIDs are assigned on-demand without pattern encoding.
-     * </p>
      * 
      * @return true if multi-pass import is required, false for single-pass
      */
     default boolean requiresMultiPassImport() {
         return false;  // Default: sequential NID providers don't need multi-pass
+    }
+
+    /**
+     * Signals the data provider to suppress per-entity indexing.
+     * Set to {@code true} before bulk import and {@code false} after,
+     * so that the index can be rebuilt in a single batch pass.
+     */
+    default void setLoadPhase(boolean loadPhase) {
+        // Default no-op for providers that don't index inline.
     }
 
     class CacheProvider implements CachingService {

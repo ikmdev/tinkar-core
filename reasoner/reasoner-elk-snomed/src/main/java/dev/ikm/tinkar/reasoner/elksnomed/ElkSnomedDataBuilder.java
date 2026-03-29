@@ -62,6 +62,7 @@ public class ElkSnomedDataBuilder {
 	private final ElkSnomedData data;
 
 	private TrackingCallable<?> progressUpdater = null;
+	private final AtomicInteger emptyDefinitionCount = new AtomicInteger();
 
 	public ElkSnomedDataBuilder(ViewCalculator viewCalculator, PatternFacade statedAxiomPattern, ElkSnomedData data) {
 		super();
@@ -104,7 +105,16 @@ public class ElkSnomedDataBuilder {
 						}
 						updateProgress(processedCount.incrementAndGet(), totalCount);
 					} catch (Exception ex) {
-						if (ex_cnt.incrementAndGet() < 10) {
+						int errorCount = ex_cnt.incrementAndGet();
+						if (errorCount <= 10) {
+							int conceptNid = semanticEntityVersion.referencedComponentNid();
+							int semanticNid = semanticEntityVersion.chronology().nid();
+							LOG.error("Error processing stated axiom semantic nid={} for concept nid={} ({})",
+									semanticNid, conceptNid, PrimitiveData.text(conceptNid));
+							LOG.error("Semantic pattern nid={} ({})",
+									semanticEntityVersion.patternNid(),
+									PrimitiveData.text(semanticEntityVersion.patternNid()));
+							LOG.error("Definition field: {}", semanticEntityVersion.fieldValues().getFirst());
 							LOG.error(ex.getMessage());
 							LOG.error("", ex);
 						}
@@ -112,6 +122,8 @@ public class ElkSnomedDataBuilder {
 				});
 		buildRoleConcepts();
 		data.initializeReasonerConceptSet();
+		LOG.info("Reasoner concept set size: {}, concepts loaded: {}",
+				data.getReasonerConceptSet().size(), data.getConcepts().size());
 		for (Concept con : data.getConcepts()) {
 			if (con.getDefinitions().isEmpty())
 				LOG.warn("No definitions: " + con.getId() + " " + PrimitiveData.text((int) con.getId()));
@@ -132,8 +144,10 @@ public class ElkSnomedDataBuilder {
 	private void buildRoleConcepts() {
 		// Create concepts for role types and concrete role types
 		// Should eventually do this in the write back of inferred
+		var objectAttributeRoot = ElkSnomedData.tryGetNid(SnomedIds.concept_model_object_attribute);
+		var dataAttributeRoot = ElkSnomedData.tryGetNid(SnomedIds.concept_model_data_attribute);
 		for (RoleType role : data.getRoleTypes()) {
-			if (ElkSnomedData.getNid(SnomedIds.concept_model_object_attribute) == role.getId()) {
+			if (objectAttributeRoot.isPresent() && objectAttributeRoot.getAsInt() == role.getId()) {
 				LOG.info("Skipping root " + PrimitiveData.text((int) role.getId()));
 				continue;
 			}
@@ -151,7 +165,7 @@ public class ElkSnomedDataBuilder {
 			}
 		}
 		for (ConcreteRoleType role : data.getConcreteRoleTypes()) {
-			if (ElkSnomedData.getNid(SnomedIds.concept_model_data_attribute) == role.getId()) {
+			if (dataAttributeRoot.isPresent() && dataAttributeRoot.getAsInt() == role.getId()) {
 				LOG.info("Skipping root " + PrimitiveData.text((int) role.getId()));
 				continue;
 			}
@@ -256,7 +270,11 @@ public class ElkSnomedDataBuilder {
 		DiTreeEntity definition = (DiTreeEntity) semanticEntityVersion.fieldValues().getFirst();
 		EntityVertex root = definition.root();
 		if (definition.successors(root).isEmpty()) {
-			LOG.warn("No definition for: " + PrimitiveData.text(conceptNid));
+			int emptyCount = emptyDefinitionCount.incrementAndGet();
+			if (emptyCount <= 10) {
+				LOG.warn("No definition for concept nid={} ({}) from semantic nid={}",
+						conceptNid, PrimitiveData.text(conceptNid), semanticEntityVersion.chronology().nid());
+			}
 		}
 		for (EntityVertex child : definition.successors(root)) {
 			SnomedEntity result = null;

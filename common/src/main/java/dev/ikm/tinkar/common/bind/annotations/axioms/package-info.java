@@ -13,7 +13,6 @@
  *   <li>Manage UUID-based identifiers for parent entities.</li>
  *   <li>Enable runtime reflection to retrieve relationships and metadata dynamically.</li>
  * </ul>
- * </p>
  *
  * <p>The annotations in this package are designed to support the creation and management
  * of logical axioms, metadata, and hierarchical structures within conceptual models.</p>
@@ -46,7 +45,6 @@
  *   <li>Define unique identifiers (e.g., UUIDs) for parent relationships.</li>
  *   <li>Associate metadata or logical relationships with conceptual classes.</li>
  * </ul>
- * </p>
  *
  * <p>This package is an integral part of the Tinkar framework's ability to handle dynamic
  * conceptual modeling and relationship management.</p>

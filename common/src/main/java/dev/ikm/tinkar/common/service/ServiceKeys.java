@@ -21,6 +21,10 @@ public enum ServiceKeys {
      */
     DATA_STORE_ROOT,
     /**
+     * When true, providers should ensure the data store root is new/empty.
+     */
+    DATA_STORE_EXPECT_EMPTY,
+    /**
      * Unique to each invocation of the JVM. Will persist across cache resets.
      */
     JVM_UUID,

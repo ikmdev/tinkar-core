@@ -19,7 +19,7 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.component.Component;
 
 /**
- * <entity desc="" uuids=""/>
+ * {@code <entity desc="" uuids=""/>}
  */
 public interface EntityFacade extends Component, ComponentWithNid {
 

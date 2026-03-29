@@ -31,12 +31,10 @@ import static dev.ikm.tinkar.common.service.PrimitiveDataService.STAMP_DATA_TYPE
 
 /**
  * Note that Double objects will be converted to Float objects by the serialization mechanisms.
- * <p>
- * The underlying intent is to keep the implementation simple by using the common types,
+ * <p>The underlying intent is to keep the implementation simple by using the common types,
  * with precision dictated by domain of use, and that long and double are more granular than
  * typically required, and they waste more memory/bandwidth.
- * <p>
- * If there is compelling use for a more precise data type (such as Instant), they can be added when a
+ * <p>If there is compelling use for a more precise data type (such as Instant), they can be added when a
  * agreed business need and use case are identified..
  */
 public enum FieldDataType {

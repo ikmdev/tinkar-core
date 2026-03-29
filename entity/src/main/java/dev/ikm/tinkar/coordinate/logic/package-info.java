@@ -23,7 +23,7 @@
  * concepts. These coordinates enable subsumption testing, taxonomy generation, and semantic
  * reasoning over concept definitions.</p>
  *
- * <h3>Core Responsibilities</h3>
+ * <p><b>Core Responsibilities</b></p>
  *
  * <p>Logic coordinates specify eight critical components for description logic reasoning:</p>
  *
@@ -72,7 +72,7 @@
  * is-a relationships.</dd>
  * </dl>
  *
- * <h3>Premise Types</h3>
+ * <p><b>Premise Types</b></p>
  *
  * <p>The {@link dev.ikm.tinkar.coordinate.logic.PremiseType} enum distinguishes between stated
  * and inferred axioms:</p>
@@ -89,13 +89,13 @@
  * Inferred axioms are used for queries requiring full logical consistency.</dd>
  * </dl>
  *
- * <h3>Taxonomy Flags</h3>
+ * <p><b>Taxonomy Flags</b></p>
  *
  * <p>The {@link dev.ikm.tinkar.coordinate.logic.TaxonomyFlag} enum provides metadata about
  * taxonomy relationships and concept status, supporting efficient graph operations and
  * classification status tracking.</p>
  *
- * <h3>Core Interface</h3>
+ * <p><b>Core Interface</b></p>
  *
  * <p>The {@link dev.ikm.tinkar.coordinate.logic.LogicCoordinate} interface defines the contract
  * for all logic coordinate implementations. Key features include:</p>
@@ -108,9 +108,9 @@
  * <li>Conversion to {@link dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord}</li>
  * </ul>
  *
- * <h3>Implementation Patterns</h3>
+ * <p><b>Implementation Patterns</b></p>
  *
- * <h4>LogicCoordinateRecord</h4>
+ * <p><b>LogicCoordinateRecord</b></p>
  * <p>Immutable record implementation providing thread-safe logic coordinates. Typically created
  * via the {@code Coordinates.Logic} factory class:</p>
  * <pre>{@code
@@ -130,7 +130,7 @@
  * );
  * }</pre>
  *
- * <h4>LogicCoordinateDelegate</h4>
+ * <p><b>LogicCoordinateDelegate</b></p>
  * <p>Delegation pattern allowing classes to implement LogicCoordinate by delegating to an
  * underlying instance:</p>
  * <pre>{@code
@@ -144,7 +144,7 @@
  * }
  * }</pre>
  *
- * <h3>Axiom Retrieval</h3>
+ * <p><b>Axiom Retrieval</b></p>
  *
  * <p>Logic coordinates provide methods for retrieving axioms with STAMP filtering:</p>
  *
@@ -169,7 +169,7 @@
  *     logic.getAxiomsChronology(conceptNid, PremiseType.INFERRED);
  * }</pre>
  *
- * <h3>Pattern Selection</h3>
+ * <p><b>Pattern Selection</b></p>
  *
  * <p>Logic coordinates map premise types to their corresponding patterns:</p>
  *
@@ -188,7 +188,7 @@
  * PatternFacade inferredNav = logic.inferredNavigationPattern();
  * }</pre>
  *
- * <h3>Integration with Classification</h3>
+ * <p><b>Integration with Classification</b></p>
  *
  * <p>Logic coordinates specify the configuration for classification workflows:</p>
  *
@@ -209,7 +209,7 @@
  * {@code statedNavigationPatternNid()} and {@code inferredNavigationPatternNid()}</li>
  * </ol>
  *
- * <h3>Description Logic Profiles</h3>
+ * <p><b>Description Logic Profiles</b></p>
  *
  * <p>Common profiles and their characteristics:</p>
  *
@@ -227,7 +227,7 @@
  * nominals, qualified cardinality restrictions. NExpTime-complete classification.</dd>
  * </dl>
  *
- * <h3>Subsumption and Equivalence</h3>
+ * <p><b>Subsumption and Equivalence</b></p>
  *
  * <p>Logic coordinates enable subsumption testing through integration with navigation calculators:</p>
  *
@@ -244,7 +244,7 @@
  * IntIdSet ancestors = view.ancestorsOf(conceptNid);
  * }</pre>
  *
- * <h3>Integration with Navigation</h3>
+ * <p><b>Integration with Navigation</b></p>
  *
  * <p>Logic coordinates generate navigation patterns that feed into navigation coordinates:</p>
  * <ul>
@@ -254,7 +254,7 @@
  * <li>Navigation calculators traverse the resulting digraphs</li>
  * </ul>
  *
- * <h3>Thread Safety and Immutability</h3>
+ * <p><b>Thread Safety and Immutability</b></p>
  *
  * <p>LogicCoordinateRecord instances are immutable and thread-safe, suitable for:</p>
  * <ul>

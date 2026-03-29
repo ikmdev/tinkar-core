@@ -11,12 +11,9 @@ import java.util.function.Supplier;
 
 /**
  * Abstract base class for provider lifecycle controllers.
- * <p>
- * This class handles the common boilerplate for managing singleton provider instances
+ * <p>This class handles the common boilerplate for managing singleton provider instances
  * that integrate with both {@link ServiceLifecycle} and domain-specific controller interfaces.
- * </p>
- * <p>
- * Subclasses need only implement a few abstract methods to specify:
+ * <p>Subclasses need only implement a few abstract methods to specify:
  * <ul>
  *   <li>How to create the provider instance</li>
  *   <li>How to start the provider</li>
@@ -25,21 +22,15 @@ import java.util.function.Supplier;
  *   <li>Lifecycle phase and priority</li>
  *   <li>Mutual exclusion group (if applicable)</li>
  * </ul>
- * </p>
  *
  * <h2>Type Parameter Relationship</h2>
- * <p>
- * The generic type parameter {@code P} represents the <b>concrete provider implementation class</b>
+ * <p>The generic type parameter {@code P} represents the <b>concrete provider implementation class</b>
  * (e.g., {@code SearchProvider}, {@code RocksProvider}). This provider class must implement
  * ALL service interfaces returned by {@link #serviceClasses()}.
- * </p>
- * <p>
- * <b>Contract:</b> For each {@code Class<?>} in {@code serviceClasses()}, the provider type {@code P}
+ * <p><b>Contract:</b> For each {@code Class<?>} in {@code serviceClasses()}, the provider type {@code P}
  * must be assignable to that class. The compiler cannot enforce this relationship due to type erasure,
  * so implementers must ensure correctness.
- * </p>
- * <p>
- * Example:
+ * <p>Example:
  * <pre>{@code
  * // SearchProvider implements SearchService
  * public class Controller extends ProviderController<SearchProvider> {
@@ -69,7 +60,6 @@ import java.util.function.Supplier;
  *     // MultiProvider MUST implement BOTH SearchService AND IndexService
  * }
  * }</pre>
- * </p>
  *
  * @param <P> the concrete provider implementation class that implements the service interface(s)
  *           declared in {@link #serviceClasses()}
@@ -132,9 +122,7 @@ public abstract class ProviderController<P> implements ServiceLifecycle {
 
     /**
      * Creates a new instance of the provider.
-     * <p>
-     * Called during {@link #startup()} when no provider instance exists.
-     * </p>
+     * <p>     * Called during {@link #startup()} when no provider instance exists.
      *
      * @return a new provider instance
      * @throws Exception if provider creation fails
@@ -143,10 +131,8 @@ public abstract class ProviderController<P> implements ServiceLifecycle {
 
     /**
      * Starts the provider's services.
-     * <p>
-     * Called after {@link #createProvider()} and {@link #initializeProvider(Object)}.
+     * <p>     * Called after {@link #createProvider()} and {@link #initializeProvider(Object)}.
      * This is where you should start thread pools, open connections, etc.
-     * </p>
      *
      * @param provider the provider to start
      * @throws Exception if startup fails
@@ -155,10 +141,8 @@ public abstract class ProviderController<P> implements ServiceLifecycle {
 
     /**
      * Stops the provider's services.
-     * <p>
-     * Called during {@link #shutdown()}. This is where you should stop thread pools,
+     * <p>     * Called during {@link #shutdown()}. This is where you should stop thread pools,
      * close connections, flush buffers, etc.
-     * </p>
      *
      * @param provider the provider to stop
      * @throws Exception if shutdown fails (will be logged but not rethrown)
@@ -174,27 +158,20 @@ public abstract class ProviderController<P> implements ServiceLifecycle {
 
     /**
      * Returns the list of service interface classes that this provider implements.
-     * <p>
-     * This enables consistent service discovery across all providers, whether they are
+     * <p>     * This enables consistent service discovery across all providers, whether they are
      * user-selectable data sources or automatic background services. Providers can implement
      * multiple service interfaces, giving flexibility for evolution and composition.
-     * </p>
      *
-     * <h3>Implementation Contract</h3>
-     * <p>
-     * <b>CRITICAL:</b> The provider type {@code P} (the generic parameter of {@code ProviderController<P>})
+     * <p><b>Implementation Contract</b></p>
+     * <p>     * <b>CRITICAL:</b> The provider type {@code P} (the generic parameter of {@code ProviderController<P>})
      * MUST implement ALL service interfaces returned by this method. This is a runtime contract
      * that cannot be enforced by the compiler due to type erasure.
-     * </p>
-     * <p>
-     * For example, if {@code ProviderController<SearchProvider>} returns
+     * <p>     * For example, if {@code ProviderController<SearchProvider>} returns
      * {@code Lists.immutable.of(SearchService.class)}, then {@code SearchProvider} must
      * implement {@code SearchService}.
-     * </p>
      *
-     * <h3>Discovery</h3>
-     * <p>
-     * Other services discover this provider by calling:
+     * <p><b>Discovery</b></p>
+     * <p>     * Other services discover this provider by calling:
      * <pre>{@code
      * SearchService service = ServiceLifecycleManager.get()
      *     .getRunningService(SearchService.class)
@@ -203,9 +180,8 @@ public abstract class ProviderController<P> implements ServiceLifecycle {
      * The lifecycle manager will iterate through all {@code ProviderController} instances,
      * check their {@code serviceClasses()}, and return the provider if it declares the
      * requested service interface.
-     * </p>
      *
-     * <h3>Examples</h3>
+     * <p><b>Examples</b></p>
      * <pre>{@code
      * // Single service interface
      * public class SearchProvider implements SearchService { ... }
@@ -244,10 +220,8 @@ public abstract class ProviderController<P> implements ServiceLifecycle {
 
     /**
      * Initializes the provider before starting.
-     * <p>
-     * Override this to perform initialization that must happen after construction
+     * <p>     * Override this to perform initialization that must happen after construction
      * but before startup. Default implementation does nothing.
-     * </p>
      *
      * @param provider the provider to initialize
      * @throws Exception if initialization fails
@@ -258,10 +232,8 @@ public abstract class ProviderController<P> implements ServiceLifecycle {
 
     /**
      * Cleans up resources after stopping the provider.
-     * <p>
-     * Override this to perform cleanup that must happen after shutdown.
+     * <p>     * Override this to perform cleanup that must happen after shutdown.
      * Default implementation does nothing.
-     * </p>
      *
      * @param provider the provider to clean up
      * @throws Exception if cleanup fails
@@ -297,18 +269,13 @@ public abstract class ProviderController<P> implements ServiceLifecycle {
 
     /**
      * Gets the current provider instance for external consumption.
-     * <p>
-     * This is the public API for accessing the provider service. Other services should
+     * <p>     * This is the public API for accessing the provider service. Other services should
      * discover and access this controller's provider through this method.
-     * </p>
-     * <p>
-     * The returned provider instance {@code P} implements all service interfaces declared
+     * <p>     * The returned provider instance {@code P} implements all service interfaces declared
      * by {@link #serviceClasses()}. Callers typically discover this controller via
      * {@link ServiceLifecycleManager#getRunningService(Class)} and then access the provider
      * through this method.
-     * </p>
-     * <p>
-     * Example usage:
+     * <p>     * Example usage:
      * <pre>{@code
      * // Discovery via ServiceLifecycleManager
      * SearchService searchService = ServiceLifecycleManager.get()
@@ -320,7 +287,6 @@ public abstract class ProviderController<P> implements ServiceLifecycle {
      * // 2. Calls controller.provider() to get the SearchProvider instance
      * // 3. Returns it cast to SearchService
      * }</pre>
-     * </p>
      *
      * @return the provider instance that implements the service interface(s) declared
      *         by {@link #serviceClasses()}
@@ -332,9 +298,7 @@ public abstract class ProviderController<P> implements ServiceLifecycle {
 
     /**
      * Gets the current provider instance.
-     * <p>
-     * May return null if the provider has not been started or has been shut down.
-     * </p>
+     * <p>     * May return null if the provider has not been started or has been shut down.
      *
      * @return the provider instance, or null if not available
      */
@@ -344,9 +308,7 @@ public abstract class ProviderController<P> implements ServiceLifecycle {
 
     /**
      * Gets the current provider instance, throwing an exception if not available.
-     * <p>
-     * Use this when the provider must be present for the operation to succeed.
-     * </p>
+     * <p>     * Use this when the provider must be present for the operation to succeed.
      *
      * @return the provider instance
      * @throws IllegalStateException if provider is not started
@@ -362,10 +324,8 @@ public abstract class ProviderController<P> implements ServiceLifecycle {
 
     /**
      * Gets the current provider instance, or creates and starts one if not available.
-     * <p>
-     * <b>Use with caution:</b> This bypasses normal lifecycle management.
+     * <p>     * <b>Use with caution:</b> This bypasses normal lifecycle management.
      * Prefer using {@link #requireProvider()} or waiting for {@link #startup()} to be called.
-     * </p>
      *
      * @return the provider instance
      * @throws RuntimeException if provider creation or startup fails
@@ -386,10 +346,8 @@ public abstract class ProviderController<P> implements ServiceLifecycle {
 
     /**
      * Returns a user-friendly string representation for UI display.
-     * <p>
-     * For DataServiceControllers, this returns the controller name.
+     * <p>     * For DataServiceControllers, this returns the controller name.
      * Otherwise, it returns the provider name.
-     * </p>
      *
      * @return user-friendly display name
      */

@@ -41,15 +41,13 @@ import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICI
 /**
  * Immutable, thread-safe representation of a Tinkar entity providing the foundation for terminology
  * management, semantic modeling, and knowledge representation.
- * <p>
- * {@code Entity} is the core abstraction in Tinkar, representing versioned knowledge artifacts that
+ * <p>{@code Entity} is the core abstraction in Tinkar, representing versioned knowledge artifacts that
  * maintain their identity across time while supporting multiple versions, collaborative editing, and
  * distributed synchronization. Entities are fully immutable, making them safe for concurrent access,
  * caching, and use in calculations or background processing.
  *
  * <h2>What is an Entity?</h2>
- * <p>
- * An {@code Entity} is an <b>immutable, versioned knowledge artifact</b> that provides:
+ * <p>An {@code Entity} is an <b>immutable, versioned knowledge artifact</b> that provides:
  * <ul>
  *   <li><b>Immutability:</b> Once created, entity data never changes - updates create new versions</li>
  *   <li><b>Thread Safety:</b> Can be safely accessed from any thread without synchronization</li>
@@ -58,8 +56,7 @@ import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICI
  * </ul>
  *
  * <h2>Four Entity Types</h2>
- * <p>
- * This interface has four primary implementations representing different knowledge artifact types:
+ * <p>This interface has four primary implementations representing different knowledge artifact types:
  * <ul>
  *   <li>{@link ConceptEntity} - Represents a concept (idea, term, or classification)</li>
  *   <li>{@link SemanticEntity} - Represents semantic annotations or relationships attached to other entities</li>
@@ -68,12 +65,11 @@ import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICI
  * </ul>
  *
  * <h2>⚠️ How to Access: Use EntityHandle</h2>
- * <p>
- * <b>DO NOT</b> call the static {@code get()}, {@code getOrThrow()}, or {@code getFast()} methods on this
+ * <p><b>DO NOT</b> call the static {@code get()}, {@code getOrThrow()}, or {@code getFast()} methods on this
  * interface directly. They are deprecated and will be made module-internal in a future release. Instead,
  * use {@link EntityHandle}, which provides a fluent, type-safe API for accessing entities.
  *
- * <h3>Why Use EntityHandle?</h3>
+ * <p><b>Why Use EntityHandle?</b></p>
  * <ul>
  *   <li><b>Type Safety:</b> Compile-time checks ensure you're working with the correct entity type
  *       (Concept, Semantic, Pattern, or Stamp)</li>
@@ -85,7 +81,7 @@ import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICI
  *   <li><b>Flexible Identifiers:</b> Accept NID (int), {@link PublicId}, or {@link EntityFacade} interchangeably</li>
  * </ul>
  *
- * <h3>Correct Usage Examples</h3>
+ * <p><b>Correct Usage Examples</b></p>
  * <pre>{@code
  * // ✅ CORRECT: Use EntityHandle for type-safe access
  * ConceptEntity concept = EntityHandle.getConceptOrThrow(conceptNid);
@@ -112,7 +108,7 @@ import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICI
  * }</pre>
  *
  * <h2>When to Use Entity vs ObservableEntity</h2>
- * <table border="1" cellpadding="5">
+ * <table border="1">
  * <caption>Entity vs ObservableEntity Comparison</caption>
  * <tr>
  *   <th>Use Case</th>
@@ -152,8 +148,7 @@ import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICI
  * </table>
  *
  * <h2>Version Management</h2>
- * <p>
- * Each entity maintains a complete version history accessed via {@link #versions()}. Versions are
+ * <p>Each entity maintains a complete version history accessed via {@link #versions()}. Versions are
  * ordered chronologically and include all changes made to the entity over time. Each version is
  * associated with a {@link StampEntity} that records who made the change, when, in what module,
  * and on what development path.
@@ -173,8 +168,7 @@ import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICI
  * }</pre>
  *
  * <h2>Identity and Identification</h2>
- * <p>
- * Entities can be identified in three ways, all supported by {@link EntityHandle}:
+ * <p>Entities can be identified in three ways, all supported by {@link EntityHandle}:
  * <ul>
  *   <li><b>NID (Native ID):</b> Integer identifier unique within this system (int)</li>
  *   <li><b>PublicId:</b> Universally unique identifier for cross-system synchronization (UUIDs)</li>
@@ -189,16 +183,14 @@ import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICI
  * }</pre>
  *
  * <h2>Thread Safety and Performance</h2>
- * <p>
- * {@code Entity} instances are fully immutable and thread-safe. They can be:
+ * <p>{@code Entity} instances are fully immutable and thread-safe. They can be:
  * <ul>
  *   <li>Safely shared across threads without synchronization</li>
  *   <li>Cached indefinitely (they never change)</li>
  *   <li>Used in parallel streams and concurrent collections</li>
  *   <li>Passed between background tasks and UI threads</li>
  * </ul>
- * <p>
- * For best performance in tight loops or frequent access, use {@link EntityService#getEntityFast(int)}
+ * <p>For best performance in tight loops or frequent access, use {@link EntityService#getEntityFast(int)}
  * via {@link EntityHandle} methods, which skip Optional wrapping. For most use cases, the standard
  * {@link EntityHandle} API provides the best balance of safety and performance.
  *
@@ -305,12 +297,10 @@ public interface Entity<V extends EntityVersion>
 
     /**
      * @deprecated Use {@link EntityHandle#get(int)} instead.
-     * <p>
-     * This static accessor method is being phased out in favor of the fluent
+     * <p>     * This static accessor method is being phased out in favor of the fluent
      * {@link EntityHandle} API, which provides better type safety, null handling,
      * and composability. This method will be made module-internal in a future release.
-     * <p>
-     * <b>Migration:</b>
+     * <p>     * <b>Migration:</b>
      * <pre>{@code
      * // Old (deprecated):
      * Optional<Entity> entity = Entity.get(nid);
@@ -341,12 +331,10 @@ public interface Entity<V extends EntityVersion>
 
     /**
      * @deprecated Use {@link EntityHandle#getConceptOrThrow(int)} or type-specific methods instead.
-     * <p>
-     * This static accessor method is being phased out in favor of the fluent
+     * <p>     * This static accessor method is being phased out in favor of the fluent
      * {@link EntityHandle} API, which provides better type safety and composability.
      * This method will be made module-internal in a future release.
-     * <p>
-     * <b>Migration:</b>
+     * <p>     * <b>Migration:</b>
      * <pre>{@code
      * // Old (deprecated):
      * Entity entity = Entity.getOrThrow(nid);
@@ -378,8 +366,7 @@ public interface Entity<V extends EntityVersion>
 
     /**
      * @deprecated Use {@link EntityHandle#get(EntityFacade)} instead.
-     * <p>
-     * This static accessor method is being phased out in favor of the fluent
+     * <p>     * This static accessor method is being phased out in favor of the fluent
      * {@link EntityHandle} API. This method will be made module-internal in a future release.
      *
      * @see EntityHandle#get(EntityFacade)
@@ -401,8 +388,7 @@ public interface Entity<V extends EntityVersion>
 
     /**
      * @deprecated Use {@link EntityHandle#getConceptOrThrow(EntityFacade)} or type-specific methods instead.
-     * <p>
-     * This static accessor method is being phased out in favor of the fluent
+     * <p>     * This static accessor method is being phased out in favor of the fluent
      * {@link EntityHandle} API. This method will be made module-internal in a future release.
      *
      * @see EntityHandle#getConceptOrThrow(EntityFacade)
@@ -419,11 +405,9 @@ public interface Entity<V extends EntityVersion>
 
     /**
      * @deprecated Use {@link EntityHandle#get(int)} instead.
-     * <p>
-     * This static accessor method is being phased out in favor of the fluent
+     * <p>     * This static accessor method is being phased out in favor of the fluent
      * {@link EntityHandle} API. This method will be made module-internal in a future release.
-     * <p>
-     * <b>Migration:</b>
+     * <p>     * <b>Migration:</b>
      * <pre>{@code
      * // Old (deprecated):
      * Entity entity = Entity.getFast(nid);
@@ -462,8 +446,7 @@ public interface Entity<V extends EntityVersion>
 
     /**
      * @deprecated Use {@link EntityHandle#get(EntityFacade)} instead.
-     * <p>
-     * This static accessor method is being phased out in favor of the fluent
+     * <p>     * This static accessor method is being phased out in favor of the fluent
      * {@link EntityHandle} API. This method will be made module-internal in a future release.
      *
      * @see EntityHandle#get(EntityFacade)

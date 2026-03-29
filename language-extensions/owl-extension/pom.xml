@@ -4,7 +4,7 @@
 
 	<parent/>
 
-	<groupId>dev.ikm.tinkar.ext.owl</groupId>
+	<groupId>dev.ikm.tinkar.ext.binding</groupId>
 	<artifactId>owl-extension</artifactId>
 	<packaging>jar</packaging>
 
@@ -15,36 +15,6 @@
 		<skipITs>true</skipITs>
 	</properties>
 
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>${project.parent.groupId}</groupId>
-				<artifactId>entity</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>${project.parent.groupId}</groupId>
-				<artifactId>common</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>${project.parent.groupId}</groupId>
-				<artifactId>entity-provider</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>${project.parent.groupId}</groupId>
-				<artifactId>data-spinedarray-provider</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>${project.parent.groupId}</groupId>
-				<artifactId>executor-provider</artifactId>
-				<version>${project.version}</version>
-				<scope>test</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
 	<dependencies>
 		<dependency>
 			<groupId>${project.parent.groupId}</groupId>

@@ -22,7 +22,7 @@
  * calculators implement the description selection algorithm and provide high-level access methods
  * for obtaining human-readable text.</p>
  *
- * <h3>Core Responsibilities</h3>
+ * <p><b>Core Responsibilities</b></p>
  *
  * <p>Language calculators execute the multi-stage description selection and ranking process:</p>
  *
@@ -36,9 +36,9 @@
  * <li><strong>Natural Order Fallback</strong> - Sort alphabetically when all else is equal</li>
  * </ol>
  *
- * <h3>Core Interfaces and Classes</h3>
+ * <p><b>Core Interfaces and Classes</b></p>
  *
- * <h4>LanguageCalculator</h4>
+ * <p><b>LanguageCalculator</b></p>
  * <p>The primary interface defining description retrieval operations. Key methods include:</p>
  *
  * <ul>
@@ -50,7 +50,7 @@
  * <li><strong>languageCoordinateList()</strong> - Get cascading language coordinate chain</li>
  * </ul>
  *
- * <h4>LanguageCalculatorWithCache</h4>
+ * <p><b>LanguageCalculatorWithCache</b></p>
  * <p>Cached implementation that stores description lookup results for performance. Features:</p>
  * <ul>
  * <li>Thread-safe caching of description text and semantic results</li>
@@ -72,7 +72,7 @@
  * String text = calculator.getDescriptionText(conceptNid);
  * }</pre>
  *
- * <h4>LanguageCalculatorDelegate</h4>
+ * <p><b>LanguageCalculatorDelegate</b></p>
  * <p>Delegation interface allowing classes to provide language calculator functionality by
  * delegating to an underlying calculator instance. Used extensively in view calculators and
  * other composite coordinate types:</p>
@@ -89,11 +89,11 @@
  * }
  * }</pre>
  *
- * <h3>Description Selection Algorithm</h3>
+ * <p><b>Description Selection Algorithm</b></p>
  *
  * <p>The calculator implements a sophisticated multi-criteria ranking algorithm:</p>
  *
- * <h4>Stage 1: Discovery and Version Filtering</h4>
+ * <p><b>Stage 1: Discovery and Version Filtering</b></p>
  * <pre>{@code
  * // Find all description semantics for the concept
  * List<SemanticEntity> descriptions = findDescriptionsForConcept(conceptNid);
@@ -106,7 +106,7 @@
  *         .collect(toList());
  * }</pre>
  *
- * <h4>Stage 2: Language and Pattern Filtering</h4>
+ * <p><b>Stage 2: Language and Pattern Filtering</b></p>
  * <pre>{@code
  * // For each language coordinate in priority order
  * for (LanguageCoordinate langCoord : languageCoordinateList()) {
@@ -123,7 +123,7 @@
  * }
  * }</pre>
  *
- * <h4>Stage 3: Type, Dialect, and Module Ranking</h4>
+ * <p><b>Stage 3: Type, Dialect, and Module Ranking</b></p>
  * <pre>{@code
  * // Rank by description type priority
  * for (int typeNid : langCoord.descriptionTypePreferenceNidList()) {
@@ -138,7 +138,7 @@
  * }
  * }</pre>
  *
- * <h3>Cascading Language Coordinates</h3>
+ * <p><b>Cascading Language Coordinates</b></p>
  *
  * <p>Calculators support multiple language coordinates in priority order, enabling graceful
  * fallback behavior when descriptions aren't available in the preferred language:</p>
@@ -157,9 +157,9 @@
  * String text = calculator.getDescriptionText(conceptNid);
  * }</pre>
  *
- * <h3>Common Usage Patterns</h3>
+ * <p><b>Common Usage Patterns</b></p>
  *
- * <h4>Getting Preferred Text</h4>
+ * <p><b>Getting Preferred Text</b></p>
  * <pre>{@code
  * // Simplest: get text according to coordinate preferences
  * String text = calculator.getDescriptionText(conceptNid);
@@ -171,7 +171,7 @@
  * Map<Integer, String> texts = calculator.getDescriptionTexts(conceptNids);
  * }</pre>
  *
- * <h4>Getting Specific Description Types</h4>
+ * <p><b>Getting Specific Description Types</b></p>
  * <pre>{@code
  * // Get fully qualified name specifically
  * Optional<String> fqn = calculator.getFullyQualifiedName(conceptNid);
@@ -186,7 +186,7 @@
  * );
  * }</pre>
  *
- * <h4>Getting All Descriptions (Ranked)</h4>
+ * <p><b>Getting All Descriptions (Ranked)</b></p>
  * <pre>{@code
  * // Get all descriptions in preference order
  * List<SemanticEntityVersion> descriptions =
@@ -200,7 +200,7 @@
  * }
  * }</pre>
  *
- * <h3>Performance and Caching</h3>
+ * <p><b>Performance and Caching</b></p>
  *
  * <p>LanguageCalculatorWithCache provides significant performance benefits:</p>
  * <ul>
@@ -217,7 +217,7 @@
  * <li>Memory overhead: Proportional to number of unique entities accessed</li>
  * </ul>
  *
- * <h3>Integration with View Calculators</h3>
+ * <p><b>Integration with View Calculators</b></p>
  *
  * <p>Language calculators are typically accessed through view calculators, which combine all
  * coordinate types:</p>
@@ -229,7 +229,7 @@
  * String fqn = viewCalc.getFullyQualifiedName(conceptNid).orElse("Unknown");
  * }</pre>
  *
- * <h3>Thread Safety</h3>
+ * <p><b>Thread Safety</b></p>
  *
  * <p>All calculator implementations are thread-safe and can be safely shared across threads.
  * The cached implementation uses concurrent data structures for safe concurrent access.</p>

@@ -62,22 +62,43 @@ public class Searcher {
     public static final EntityProxy.Pattern QUALITATIVE_ALLOWED_RESULT_SET_PATTERN = EntityProxy.Pattern.make(null, UUID.fromString("160a63a6-3cba-510e-83d1-235822045885"));
     QueryParser parser;
     private static SearcherManager searcherManager;
+    private static boolean searcherManagerFromWriter = false;
+
+    static void refreshAfterIndex() {
+        if (searcherManager == null) {
+            LOG.info("refreshAfterIndex: searcherManager is null; skipping refresh");
+            return;
+        }
+        try {
+            // Block to ensure the next search sees newly indexed docs.
+            searcherManager.maybeRefreshBlocking();
+            LOG.debug("Refreshed SearcherManager after indexing");
+        } catch (IOException e) {
+            LOG.warn("Unable to refresh searcher after indexing", e);
+        }
+    }
 
     public Searcher() throws IOException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening lucene searcher");
         this.parser = new QueryParser("text", Indexer.analyzer());
         // Initialize SearcherManager if not already done
-        if (searcherManager == null) {
-            if (Indexer.indexReader() == null) {
-                LOG.error("Indexer.indexReader() is null - Indexer must be created before Searcher");
+        if (searcherManager == null || !searcherManagerFromWriter) {
+            if (searcherManager != null) {
+                LOG.info("Rebuilding SearcherManager to use IndexWriter (NRT)");
+                searcherManager.close();
+            }
+            if (Indexer.indexWriter() == null) {
+                LOG.error("Indexer.indexWriter() is null - Indexer must be created before Searcher");
                 LOG.error("SearchProvider should create Indexer first, then Searcher");
                 LOG.error("If you're seeing this during tests, ensure you run 'mvn clean install' to recompile all classes");
-                throw new IllegalStateException("IndexReader is null - Indexer not initialized. " +
+                throw new IllegalStateException("IndexWriter is null - Indexer not initialized. " +
                     "This usually indicates stale compiled classes. Run 'mvn clean install'.");
             }
-            searcherManager = new SearcherManager(Indexer.indexReader(), null);
-            LOG.debug("Created new SearcherManager with IndexReader");
+            // NRT: tie the SearcherManager to the live IndexWriter so refresh picks up new docs without commits.
+            searcherManager = new SearcherManager(Indexer.indexWriter(), null);
+            searcherManagerFromWriter = true;
+            LOG.info("Created SearcherManager with IndexWriter (NRT)");
         } else {
             LOG.debug("SearcherManager already initialized, reusing existing instance");
         }
@@ -192,8 +213,7 @@ public class Searcher {
     /**
      * Returns List of Children PublicIds for the Entity PublicId provided
      * using a supplied NavigationCalculator
-     * <p>
-     * Provided as an ease-of-use method to convert nids provided by the
+     * <p>     * Provided as an ease-of-use method to convert nids provided by the
      * {@link NavigationCalculator#childrenOf(int)} method to PublicIds
      *
      * @param   navCalc NavigationCalculator to calculate children
@@ -223,8 +243,7 @@ public class Searcher {
     /**
      * Returns List of descendant PublicIds for the Entity PublicId provided
      * using a supplied NavigationCalculator
-     * <p>
-     * Provided as an ease-of-use method to convert nids provided by the
+     * <p>     * Provided as an ease-of-use method to convert nids provided by the
      * {@link NavigationCalculator#descendentsOf(int)} method to PublicIds
      *
      * @param   navCalc NavigationCalculator to calculate descendants
@@ -254,8 +273,7 @@ public class Searcher {
     /**
      * Returns List of Fully Qualified Name (FQN) Strings for the Entity PublicIds provided
      * using a supplied NavigationCalculator
-     * <p>
-     * Provided as an ease-of-use method to retrieve FQNs for multiple concepts at once
+     * <p>     * Provided as an ease-of-use method to retrieve FQNs for multiple concepts at once
      * using the {@link NavigationCalculator#getFullyQualifiedNameText(int)} method
      *
      * @param   navCalc NavigationCalculator to calculate FQNs

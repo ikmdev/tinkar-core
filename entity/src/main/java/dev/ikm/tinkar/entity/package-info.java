@@ -21,7 +21,7 @@
  * the Tinkar framework. This package defines the four fundamental entity types that form the
  * foundation of all knowledge representation: Concepts, Semantics, Patterns, and STAMPs.</p>
  *
- * <h3>Core Design Principles</h3>
+ * <p><b>Core Design Principles</b></p>
  *
  * <ul>
  * <li><strong>Immutability</strong> - All entities and versions are immutable, ensuring thread safety
@@ -36,9 +36,9 @@
  * knowledge modeling without schema migration</li>
  * </ul>
  *
- * <h3>The Four Entity Types</h3>
+ * <p><b>The Four Entity Types</b></p>
  *
- * <h4>1. ConceptEntity - Representing Ideas and Meanings</h4>
+ * <p><b>1. ConceptEntity - Representing Ideas and Meanings</b></p>
  * <p>{@link dev.ikm.tinkar.entity.ConceptEntity} represents concepts—the fundamental ideas, terms,
  * and classifications in the knowledge graph. Examples include "Pneumonia", "Patient", "Qualifier value",
  * or "SNOMED CT Core Module".</p>
@@ -61,7 +61,7 @@
  * Latest<ConceptVersion> latest = calc.latest(pneumonia);
  * }</pre>
  *
- * <h4>2. SemanticEntity - Adding Meaning Through Annotation</h4>
+ * <p><b>2. SemanticEntity - Adding Meaning Through Annotation</b></p>
  * <p>{@link dev.ikm.tinkar.entity.SemanticEntity} represents semantic annotations that add meaning
  * to other entities. Semantics reference a component (concept, pattern, or another semantic) and
  * conform to a pattern that defines their structure.</p>
@@ -106,7 +106,7 @@
  * });
  * }</pre>
  *
- * <h4>3. PatternEntity - Defining Semantic Structure</h4>
+ * <p><b>3. PatternEntity - Defining Semantic Structure</b></p>
  * <p>{@link dev.ikm.tinkar.entity.PatternEntity} defines the schema for semantic entities. Patterns
  * specify what fields a semantic has, their data types, meanings, and purposes.</p>
  *
@@ -142,7 +142,7 @@
  * // Field 3: Case significance (Concept)
  * }</pre>
  *
- * <h4>4. StampEntity - Change Metadata</h4>
+ * <p><b>4. StampEntity - Change Metadata</b></p>
  * <p>{@link dev.ikm.tinkar.entity.StampEntity} represents the provenance metadata for every version
  * of every entity. STAMP stands for Status, Time, Author, Module, Path.</p>
  *
@@ -168,7 +168,7 @@
  * int pathNid = stamp.pathNid();       // What path
  * }</pre>
  *
- * <h3>Entity Identity: NIDs and PublicIds</h3>
+ * <p><b>Entity Identity: NIDs and PublicIds</b></p>
  *
  * <p>Entities use a dual identity system:</p>
  *
@@ -203,7 +203,7 @@
  * Optional<Integer> nidOpt = Entity.provider().nidForPublicId(publicId);
  * }</pre>
  *
- * <h3>Entity Versioning and Chronology</h3>
+ * <p><b>Entity Versioning and Chronology</b></p>
  *
  * <p>Every entity is a <strong>chronology</strong>—a collection of versions ordered by time:</p>
  *
@@ -231,7 +231,7 @@
  * Latest<ConceptVersion> historicVersion = calc.latest(concept);
  * }</pre>
  *
- * <h3>Semantic Organization via Patterns</h3>
+ * <p><b>Semantic Organization via Patterns</b></p>
  *
  * <p>Patterns serve as the organizing element for semantics, enabling efficient queries and
  * structured knowledge representation:</p>
@@ -260,7 +260,7 @@
  * );
  * }</pre>
  *
- * <h3>Recursive Semantic Structure</h3>
+ * <p><b>Recursive Semantic Structure</b></p>
  *
  * <p>Semantics can reference other semantics, enabling nested annotations:</p>
  *
@@ -279,9 +279,9 @@
  * // Walks up the semantic chain to find the ultimate non-semantic component
  * }</pre>
  *
- * <h3>Entity Access Patterns</h3>
+ * <p><b>Entity Access Patterns</b></p>
  *
- * <h4>Direct Access (Recommended: Use EntityHandle)</h4>
+ * <p><b>Direct Access (Recommended: Use EntityHandle)</b></p>
  * <pre>{@code
  * // Type-safe access via EntityHandle
  * ConceptEntity concept = EntityHandle.forNid(conceptNid)
@@ -293,7 +293,7 @@
  *     .orElseThrow();
  * }</pre>
  *
- * <h4>Legacy Direct Access (Deprecated)</h4>
+ * <p><b>Legacy Direct Access (Deprecated)</b></p>
  * <pre>{@code
  * // Legacy static methods (being phased out)
  * ConceptEntity concept = Entity.getConceptForNid(conceptNid);
@@ -301,7 +301,7 @@
  * Entity entity = Entity.getFast(nid);  // Returns appropriate subtype
  * }</pre>
  *
- * <h4>Provider-Based Access</h4>
+ * <p><b>Provider-Based Access</b></p>
  * <pre>{@code
  * // Access via EntityService provider
  * EntityService provider = Entity.provider();
@@ -313,7 +313,7 @@
  * });
  * }</pre>
  *
- * <h3>Entity Construction and Modification</h3>
+ * <p><b>Entity Construction and Modification</b></p>
  *
  * <p>Entities are immutable, so "modification" means creating new versions:</p>
  *
@@ -340,7 +340,7 @@
  * );
  * }</pre>
  *
- * <h3>Entity Lifecycle and State</h3>
+ * <p><b>Entity Lifecycle and State</b></p>
  *
  * <p>Entities and their versions can be ACTIVE or INACTIVE:</p>
  *
@@ -369,7 +369,7 @@
  * // Query will see concept as inactive with appropriate STAMP coordinate
  * }</pre>
  *
- * <h3>Performance Considerations</h3>
+ * <p><b>Performance Considerations</b></p>
  *
  * <ul>
  * <li><strong>Use NIDs for internal operations</strong> - Much faster than PublicIds</li>
@@ -381,7 +381,7 @@
  * for proper version resolution</li>
  * </ul>
  *
- * <h3>Thread Safety</h3>
+ * <p><b>Thread Safety</b></p>
  *
  * <p>All entity types are immutable and thread-safe:</p>
  * <ul>
@@ -391,7 +391,7 @@
  * <li>Version lists are immutable collections</li>
  * </ul>
  *
- * <h3>Key Subpackages</h3>
+ * <p><b>Key Subpackages</b></p>
  *
  * <ul>
  * <li>{@link dev.ikm.tinkar.entity.graph} - Graph structures for axioms and navigation</li>

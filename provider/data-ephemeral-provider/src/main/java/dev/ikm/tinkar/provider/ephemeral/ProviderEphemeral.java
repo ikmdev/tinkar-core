@@ -65,6 +65,7 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     private final ConcurrentHashMap<UUID, Integer> uuidNidMap = new ConcurrentHashMap<>();
     private final AtomicInteger nextNid = new AtomicInteger(PrimitiveDataService.FIRST_NID);
     final StableValue<SearchService> searchService = StableValue.of();
+    private volatile boolean loadPhase = false;
 
     private ProviderEphemeral() {
         LOG.info("Constructing ProviderEphemeral");
@@ -170,12 +171,15 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
         byte[] mergedBytes = nidComponentMap.merge(nid, value, PrimitiveDataService::merge);
         writeSequence.increment();
 
-        // Delegate indexing to SearchProvider
-        try {
-            getSearchService().index(sourceObject);
-        } catch (Exception e) {
-            // Search service may not be available yet during startup
-            LOG.debug("SearchService not available for indexing", e);
+        // Delegate indexing to SearchProvider.
+        // Skip during load phase (import) — RecreateIndex will build the index in batch afterward.
+        if (!loadPhase) {
+            try {
+                getSearchService().index(sourceObject);
+            } catch (Exception e) {
+                // Search service may not be available yet during startup
+                LOG.debug("SearchService not available for indexing", e);
+            }
         }
 
         return mergedBytes;
@@ -192,6 +196,11 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     @Override
     public PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception {
         return getSearchService().search(query, maxResultSize);
+    }
+
+    @Override
+    public void setLoadPhase(boolean loadPhase) {
+        this.loadPhase = loadPhase;
     }
 
     @Override
@@ -265,9 +274,7 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
 
     /**
      * Controller for ProviderEphemeral lifecycle management (creating new ephemeral database with data import).
-     * <p>
-     * Ephemeral provider is in-memory only and typically used for creating new databases.
-     * </p>
+     * <p>     * Ephemeral provider is in-memory only and typically used for creating new databases.
      */
     public static class NewController extends ProviderController<ProviderEphemeral>
             implements DataServiceController<PrimitiveDataService> {
@@ -299,21 +306,20 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
 
         @Override
         protected void initializeProvider(ProviderEphemeral provider) throws Exception {
-            // Load data from file if specified
+            // Queue data file for loading in DATA_LOAD phase (don't load it now)
             if (importDataFileString != null) {
                 try {
                     loading.set(true);
-                    ServiceLoader<LoadDataFromFileController> controllerFinder =
-                            PluggableService.load(LoadDataFromFileController.class);
-                    LoadDataFromFileController loader = controllerFinder.findFirst()
-                            .orElseThrow(() -> new IllegalStateException("No LoadDataFromFileController found"));
-                    Future<dev.ikm.tinkar.common.service.EntityCountSummary> loadFuture =
-                            (Future<EntityCountSummary>) loader.load(new File(importDataFileString));
-                    EntityCountSummary entityCountSummary = loadFuture.get();
-                    LOG.info("Loaded ephemeral data: " + entityCountSummary);
+                    File importFile = new File(importDataFileString);
+                    LOG.info("Queueing starter data for deferred import: {}", importFile.getName());
+                    dev.ikm.tinkar.entity.load.DataLoadProvider dataLoadService =
+                            dev.ikm.tinkar.entity.load.DataLoadProvider.get();
+                    dataLoadService.addFile(importFile);
                 } finally {
                     loading.set(false);
                 }
+            } else {
+                LOG.warn("No import file specified - creating empty database");
             }
         }
 

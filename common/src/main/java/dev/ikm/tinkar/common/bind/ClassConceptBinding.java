@@ -194,7 +194,7 @@ public interface ClassConceptBinding {
      * names extracted from the annotation is empty, the method generates a default regular name
      * by converting the class's simple name from camelCase to a space-separated format.
      *
-     * @return an immutable list of regular names (`ImmutableList<String>`) representing descriptive
+     * @return an immutable list of regular names ({@code ImmutableList<String>}) representing descriptive
      * labels or names for the implementing class.
      */
     default ImmutableList<String> regularNames() {

@@ -161,19 +161,26 @@ public class PrimitiveData {
     }
 
     public static List<DataServiceController<?>> getControllerOptions() {
-        // Return controllers from ServiceLifecycleManager to ensure we use the same instances
-        // that will be started by the lifecycle manager
         ServiceLifecycleManager lifecycleManager = ServiceLifecycleManager.get();
+
+        // Ensure services are discovered
         if (!lifecycleManager.isDiscovered()) {
             lifecycleManager.discoverServices();
         }
 
-        // Get all DataServiceController instances from lifecycle manager
+        // Filter for DataServiceControllers that belong to the DATA_PROVIDER group
         @SuppressWarnings("unchecked")
         List<DataServiceController<?>> controllers = (List<DataServiceController<?>>) (List<?>)
                 lifecycleManager.getAllServices().stream()
                         .filter(service -> service instanceof DataServiceController)
+                        .filter(service -> {
+                            // Only return controllers that are in the DATA_PROVIDER mutual exclusion group
+                            return service.getMutualExclusionGroup()
+                                    .map(group -> group == ServiceExclusionGroup.DATA_PROVIDER)
+                                    .orElse(false);
+                        })
                         .toList();
+
         return controllers;
     }
 
@@ -194,11 +201,9 @@ public class PrimitiveData {
 
     /**
      * Selects a controller by class. Provides compile-time safety.
-     * <p>
-     * This method provides type safety over {@link #selectControllerByName(String)}
+     * <p>     * This method provides type safety over {@link #selectControllerByName(String)}
      * by requiring the actual controller class at compile time, preventing runtime
      * errors from typos or references to non-existent controllers.
-     * </p>
      *
      * @param controllerClass the controller class to select (e.g., {@code ProviderEphemeral.NewController.class})
      * @throws IllegalStateException if no matching controller is found
@@ -223,6 +228,9 @@ public class PrimitiveData {
     }
 
     public static Optional<String> textOptional(int nid) {
+        if (defaultDescriptionForNidServiceSingleton == null) {
+            return Optional.empty();
+        }
         try {
             return defaultDescriptionForNidServiceSingleton.textOptional(nid);
         } catch (RuntimeException ex) {

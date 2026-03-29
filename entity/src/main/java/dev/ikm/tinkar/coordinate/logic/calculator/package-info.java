@@ -22,7 +22,7 @@
  * Logic calculators provide high-level access to stated and inferred axioms with STAMP-based
  * version filtering and caching support.</p>
  *
- * <h3>Core Responsibilities</h3>
+ * <p><b>Core Responsibilities</b></p>
  *
  * <p>Logic calculators handle:</p>
  * <ul>
@@ -34,9 +34,9 @@
  * <li><strong>Classification Support</strong> - Provide axioms to classifiers for reasoning</li>
  * </ul>
  *
- * <h3>Core Interfaces and Classes</h3>
+ * <p><b>Core Interfaces and Classes</b></p>
  *
- * <h4>LogicCalculator</h4>
+ * <p><b>LogicCalculator</b></p>
  * <p>The primary interface defining logic calculation operations. Key methods include:</p>
  *
  * <ul>
@@ -46,7 +46,7 @@
  * <li><strong>logicCoordinate()</strong> - Access the underlying logic coordinate</li>
  * </ul>
  *
- * <h4>LogicCalculatorWithCache</h4>
+ * <p><b>LogicCalculatorWithCache</b></p>
  * <p>Cached implementation that stores axiom tree lookup results for performance. Features:</p>
  * <ul>
  * <li>Thread-safe caching of DiTree axiom structures</li>
@@ -68,7 +68,7 @@
  *     calculator.getStatedAxiomTree(conceptNid);
  * }</pre>
  *
- * <h4>LogicCalculatorDelegate</h4>
+ * <p><b>LogicCalculatorDelegate</b></p>
  * <p>Delegation interface allowing classes to provide logic calculator functionality by
  * delegating to an underlying calculator instance. Used in view calculators and other
  * composite coordinate types:</p>
@@ -85,11 +85,11 @@
  * }
  * }</pre>
  *
- * <h3>Axiom Tree Retrieval</h3>
+ * <p><b>Axiom Tree Retrieval</b></p>
  *
  * <p>The calculator provides multiple methods for accessing concept axioms:</p>
  *
- * <h4>Basic Axiom Access</h4>
+ * <p><b>Basic Axiom Access</b></p>
  * <pre>{@code
  * LogicCalculator calc = LogicCalculatorWithCache.getCalculator(stamp, logic);
  *
@@ -108,7 +108,7 @@
  * }
  * }</pre>
  *
- * <h4>Premise-Parameterized Access</h4>
+ * <p><b>Premise-Parameterized Access</b></p>
  * <pre>{@code
  * // Generic access with premise type parameter
  * PremiseType premiseType = PremiseType.STATED; // or INFERRED
@@ -123,7 +123,7 @@
  * }
  * }</pre>
  *
- * <h4>Working with Latest Results</h4>
+ * <p><b>Working with Latest Results</b></p>
  * <pre>{@code
  * Latest<DiTreeEntity> axioms = calc.getStatedAxiomTree(conceptNid);
  *
@@ -143,7 +143,7 @@
  * });
  * }</pre>
  *
- * <h3>DiTree Structure</h3>
+ * <p><b>DiTree Structure</b></p>
  *
  * <p>Axioms are represented as directed tree structures ({@code DiTreeEntity}) encoding
  * description logic expressions:</p>
@@ -166,7 +166,7 @@
  * });
  * }</pre>
  *
- * <h3>Integration with Classification</h3>
+ * <p><b>Integration with Classification</b></p>
  *
  * <p>Logic calculators provide axioms to classifiers in classification workflows:</p>
  *
@@ -196,7 +196,7 @@
  * }
  * }</pre>
  *
- * <h3>STAMP Coordinate Integration</h3>
+ * <p><b>STAMP Coordinate Integration</b></p>
  *
  * <p>Logic calculators apply STAMP coordinates to filter axiom versions:</p>
  *
@@ -227,7 +227,7 @@
  * Latest<DiTreeEntity> masterAxioms = masterCalc.getStatedAxiomTree(conceptNid);
  * }</pre>
  *
- * <h3>Performance and Caching</h3>
+ * <p><b>Performance and Caching</b></p>
  *
  * <p>LogicCalculatorWithCache provides significant performance benefits for axiom access:</p>
  *
@@ -245,9 +245,9 @@
  * <li>Memory overhead: One DiTreeEntity per concept per unique coordinate combination</li>
  * </ul>
  *
- * <h3>Common Usage Patterns</h3>
+ * <p><b>Common Usage Patterns</b></p>
  *
- * <h4>Checking for Definitions</h4>
+ * <p><b>Checking for Definitions</b></p>
  * <pre>{@code
  * // Check if concept has sufficient definition
  * boolean isDefined(int conceptNid) {
@@ -260,7 +260,7 @@
  * }
  * }</pre>
  *
- * <h4>Comparing Stated vs. Inferred</h4>
+ * <p><b>Comparing Stated vs. Inferred</b></p>
  * <pre>{@code
  * // Compare stated and inferred axioms
  * Latest<DiTreeEntity> stated = calc.getStatedAxiomTree(conceptNid);
@@ -275,7 +275,7 @@
  * }
  * }</pre>
  *
- * <h4>Extracting Relationships</h4>
+ * <p><b>Extracting Relationships</b></p>
  * <pre>{@code
  * // Extract role groups from axiom tree
  * Latest<DiTreeEntity> axioms = calc.getStatedAxiomTree(conceptNid);
@@ -291,7 +291,7 @@
  * }
  * }</pre>
  *
- * <h3>Integration with View Calculators</h3>
+ * <p><b>Integration with View Calculators</b></p>
  *
  * <p>Logic calculators are typically accessed through view calculators:</p>
  * <pre>{@code
@@ -302,7 +302,7 @@
  * boolean isDefined = viewCalc.isDefined(conceptNid);
  * }</pre>
  *
- * <h3>Thread Safety</h3>
+ * <p><b>Thread Safety</b></p>
  *
  * <p>All calculator implementations are thread-safe and can be shared across threads.
  * The cached implementation uses concurrent data structures for safe concurrent access

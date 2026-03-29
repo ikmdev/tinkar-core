@@ -37,8 +37,7 @@ import java.util.UUID;
  * In mathematics, and more specifically in graph theory, a directed graph (or digraph)
  * is a graph that is made up of a set of vertices connected by edges, where the edges
  * have a direction associated with them.
- * <p>
- * TODO change Graph NODE to Vertex everywhere since node is overloaded with JavaFx Node (which means something else)...
+ * <p>TODO change Graph NODE to Vertex everywhere since node is overloaded with JavaFx Node (which means something else)...
  */
 public interface NavigationCoordinate {
 
