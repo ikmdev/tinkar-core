@@ -195,6 +195,7 @@
                                             <type>zip</type>
                                             <overWrite>false</overWrite>
                                             <outputDirectory>${project.build.directory}/data</outputDirectory>
+                                            <destFileName>tinkar-starter-data-reasoned-pb.zip</destFileName>
                                         </artifactItem>
                                         <artifactItem>
                                             <groupId>dev.ikm.data.tinkar</groupId>
@@ -204,6 +205,7 @@
                                             <type>zip</type>
                                             <overWrite>false</overWrite>
                                             <outputDirectory>${project.build.directory}/data</outputDirectory>
+                                            <destFileName>tinkar-starter-data-unreasoned-pb.zip</destFileName>
                                         </artifactItem>
                                         <artifactItem>
                                             <groupId>dev.ikm.data.tinkar</groupId>
@@ -213,34 +215,12 @@
                                             <type>zip</type>
                                             <overWrite>false</overWrite>
                                             <outputDirectory>${project.build.directory}/data</outputDirectory>
+                                            <destFileName>tinkar-example-data-reasoned-pb.zip</destFileName>
                                         </artifactItem>
                                     </artifactItems>
                                     <outputDirectory>${project.build.directory}/data</outputDirectory>
                                     <overWriteReleases>false</overWriteReleases>
                                     <overWriteSnapshots>true</overWriteSnapshots>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>rename-file</id>
-                                <phase>process-test-resources</phase>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <configuration>
-                                    <target>
-                                        <move file="${project.build.directory}/data/tinkar-starter-data-${tinkar-starter-data.version}-unreasoned-pb.zip"
-                                              tofile="${project.build.directory}/data/tinkar-starter-data-unreasoned-pb.zip" />
-                                        <move file="${project.build.directory}/data/tinkar-starter-data-${tinkar-starter-data.version}-reasoned-pb.zip"
-                                              tofile="${project.build.directory}/data/tinkar-starter-data-reasoned-pb.zip" />
-                                        <move file="${project.build.directory}/data/tinkar-example-data-${tinkar-example-data.version}-reasoned-pb.zip"
-                                              tofile="${project.build.directory}/data/tinkar-example-data-reasoned-pb.zip" />
-                                    </target>
                                 </configuration>
                             </execution>
                         </executions>

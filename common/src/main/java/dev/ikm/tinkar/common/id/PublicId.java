@@ -45,14 +45,15 @@ public interface PublicId extends Comparable<PublicId> {
         });
     }
 
-    /**
-     *
-     * @return
-     * @deprecated use additionalUuidLongs for thread safety.
-     */
-    @Deprecated
     default UUID[] asUuidArray() {
-        return asUuidList().toArray(new UUID[uuidCount()]);
+        UUID[] uuids = new UUID[uuidCount()];
+        long[] longs = new long[uuidCount() * 2];
+        int[] index = {0};
+        forEach(l -> longs[index[0]++] = l);
+        for (int i = 0; i < uuids.length; i++) {
+            uuids[i] = new UUID(longs[i * 2], longs[i * 2 + 1]);
+        }
+        return uuids;
     }
 
     int uuidCount();
@@ -64,13 +65,18 @@ public interface PublicId extends Comparable<PublicId> {
     ImmutableList<UUID> asUuidList();
 
     default ImmutableLongList additionalUuidLongs() {
-        MutableLongList additionalLongs = LongLists.mutable.withInitialCapacity((uuidCount() * 2) - 2);
-        for (int i = 1; i < uuidCount(); i++) {
-            UUID uuid = asUuidArray()[i];
-            additionalLongs.add(uuid.getMostSignificantBits());
-            additionalLongs.add(uuid.getLeastSignificantBits());
+        int count = uuidCount();
+        if (count <= 1) {
+            return null;
         }
-        return additionalLongs.isEmpty() ? null : additionalLongs.toImmutable();
+        long[] longs = new long[count * 2];
+        int[] index = {0};
+        forEach(l -> longs[index[0]++] = l);
+        MutableLongList additionalLongs = LongLists.mutable.withInitialCapacity((count - 1) * 2);
+        for (int i = 2; i < longs.length; i++) {
+            additionalLongs.add(longs[i]);
+        }
+        return additionalLongs.toImmutable();
     }
 
     /**
