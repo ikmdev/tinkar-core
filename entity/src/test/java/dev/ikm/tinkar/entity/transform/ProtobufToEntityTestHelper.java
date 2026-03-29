@@ -19,12 +19,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.component.Concept;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.schema.StampVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,23 +31,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.BiConsumer;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Test Helper utility class helps the developer & tester to do the following:
+ * Test Helper utility class helps the developer and tester to do the following:
  * <pre>
- *     1. Open a session to perform tests and mock entity related services.
- *     2. Create Protobuffer objects
- *     3. Any utility functions to assist in the test cases.
+ *     1. Load test concepts from JSON and register NIDs in an in-memory registry.
+ *     2. Create Protobuf objects for testing.
+ *     3. Provide utility functions to assist in test cases.
  * </pre>
  * This allows you to create unit tests without wiring up a full entity service.
- *
  */
 public class ProtobufToEntityTestHelper {
-    /** Primative starter data */
+    /** Primitive starter data */
     public static final String TEST_TINKAR_STARTER_JSON = "test-tinkar-starter-data.json";
 
     /** JSON property concepts an array of concept objects. */
@@ -85,15 +77,42 @@ public class ProtobufToEntityTestHelper {
     /** A purposeConcept concept object. */
     public static final String PURPOSE_CONCEPT_NAME          = "purposeConcept";
 
+    // In-memory NID registry - maps PublicId UUIDs to NIDs
+    private static final ConcurrentHashMap<UUID, Integer> nidRegistry = new ConcurrentHashMap<>();
 
-    public static dev.ikm.tinkar.schema.PublicId createPBPublicId(){
+    public static void registerNid(PublicId publicId, int nid) {
+        for (UUID uuid : publicId.asUuidArray()) {
+            nidRegistry.put(uuid, nid);
+        }
+    }
+
+    public static int getNid(PublicId publicId) {
+        Integer nid = nidRegistry.get(publicId.asUuidArray()[0]);
+        if (nid == null) {
+            throw new IllegalStateException("No NID registered for PublicId: " + publicId);
+        }
+        return nid;
+    }
+
+    public static int getNid(Concept concept) {
+        return getNid(concept.publicId());
+    }
+
+    public static void clearRegistry() {
+        nidRegistry.clear();
+    }
+
+    public static dev.ikm.tinkar.schema.PublicId createPBPublicId() {
         return dev.ikm.tinkar.schema.PublicId.newBuilder().build();
     }
-    public static dev.ikm.tinkar.schema.PublicId createPBPublicId(Concept concept){
+
+    public static dev.ikm.tinkar.schema.PublicId createPBPublicId(Concept concept) {
         return createPBPublicId(concept.publicId());
     }
-    public static dev.ikm.tinkar.schema.PublicId createPBPublicId(PublicId publicId){
-        return dev.ikm.tinkar.schema.PublicId.newBuilder().addUuids(publicId.asUuidList().get(0).toString()).build();
+
+    public static dev.ikm.tinkar.schema.PublicId createPBPublicId(PublicId publicId) {
+        return dev.ikm.tinkar.schema.PublicId.newBuilder()
+                .addUuids(publicId.asUuidList().get(0).toString()).build();
     }
 
     /**
@@ -103,6 +122,7 @@ public class ProtobufToEntityTestHelper {
     public static long nowEpochMillis() {
         return Instant.now().toEpochMilli();
     }
+
     public static long nowEpochMillis(long millisToAdd) {
         return Instant.now().plusMillis(millisToAdd).toEpochMilli();
     }
@@ -114,12 +134,13 @@ public class ProtobufToEntityTestHelper {
     public static long nowTimestamp() {
         return nowEpochMillis();
     }
+
     public static long nowTimestamp(long millisToAdd) {
         return nowEpochMillis(millisToAdd);
     }
 
     /**
-     * This will create a simple concept having a name and uuid. Becareful the concept returned will not have a nid inside the PublicId.
+     * This will create a simple concept having a name and uuid.
      * @param conceptName Name of the unique concept
      * @param uuidStr UUID hash string
      * @return Concept The concept.
@@ -134,7 +155,7 @@ public class ProtobufToEntityTestHelper {
      * @param fileName The json file name
      * @return JsonNode which allows you to read and parse values.
      */
-    public static JsonNode loadJsonFile(Class clazz, String fileName)  {
+    public static JsonNode loadJsonFile(Class clazz, String fileName) {
         InputStream inputStream = clazz.getResourceAsStream(fileName);
         try {
             String jsonText = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
@@ -146,89 +167,58 @@ public class ProtobufToEntityTestHelper {
     }
 
     /**
-     * This can only be used when the Entity.nid(PublicId) is mocked.
-     * @param concept The concept the method will get the nid for
-     * @return int concept nid
-     */
-    public static int nid(Concept concept) {
-        return Entity.nid(concept.publicId());
-    }
-
-    /**
      * Create PB stamp Version
-     * @param expectedTime
-     * @param statusConcept
-     * @param authorConcept
-     * @param moduleConcept
-     * @param pathConcept
-     * @return
+     * @param expectedTime the expected time
+     * @param statusConcept the status concept
+     * @param authorConcept the author concept
+     * @param moduleConcept the module concept
+     * @param pathConcept the path concept
+     * @return the StampVersion protobuf message
      */
-    public static StampVersion createPbStampVersion(long expectedTime, Concept statusConcept, Concept authorConcept, Concept moduleConcept, Concept pathConcept) {
-        StampVersion pbStampVersion = StampVersion.newBuilder()
+    public static StampVersion createPbStampVersion(long expectedTime, Concept statusConcept,
+                                                     Concept authorConcept, Concept moduleConcept,
+                                                     Concept pathConcept) {
+        return StampVersion.newBuilder()
                 .setStatusPublicId(createPBPublicId(statusConcept))
                 .setTime(expectedTime)
                 .setAuthorPublicId(createPBPublicId(authorConcept))
                 .setModulePublicId(createPBPublicId(moduleConcept))
                 .setPathPublicId(createPBPublicId(pathConcept))
                 .build();
-        return pbStampVersion;
     }
 
     public static StampVersion createPbStampVersion(Map<String, Concept> conceptMap, long expectedTime) {
-        StampVersion pbStampVersion = StampVersion.newBuilder()
-                .setStatusPublicId(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
-                .setTime(expectedTime)
-                .setAuthorPublicId(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
-                .setModulePublicId(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
-                .setPathPublicId(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
-                .build();
-        return pbStampVersion;
+        return createPbStampVersion(expectedTime,
+                conceptMap.get(STATUS_CONCEPT_NAME),
+                conceptMap.get(AUTHOR_CONCEPT_NAME),
+                conceptMap.get(MODULE_CONCEPT_NAME),
+                conceptMap.get(PATH_CONCEPT_NAME));
     }
+
     /**
-     * A statically mocked Entity class when nid(PublicId) and nid(Component) is called.
-     * Also map containing the concept name and concept instance for easy lookup.
-     * @param test The test class enabling the core concepts to be loaded from a json file
-     * @param session A scope for the test developer to perform testing so Mokito can unregister statically mocked objects.
+     * Loads test concepts from JSON, registers NIDs, and returns the concept map.
+     * Replaces the old Mockito-based openSession pattern.
+     *
+     * @param test the test class instance (for resource loading)
+     * @return a map of concept name/uuid to Concept instances
      */
-    public static void openSession(Object test, BiConsumer<MockedStatic<Entity>, Map<String, Concept>> session) {
+    public static Map<String, Concept> loadTestConcepts(Object test) {
         Map<String, Concept> conceptMap = new HashMap<>();
         JsonNode jsonNode = loadJsonFile(test.getClass(), TEST_TINKAR_STARTER_JSON);
         JsonNode concepts = jsonNode.get(JSON_CONCEPTS_ARRAY_PROP);
-
-        // Convert to a list of json concepts
         List<JsonNode> conceptList = new ArrayList<>();
         concepts.iterator().forEachRemaining(conceptList::add);
 
-        try (MockedStatic<Entity> mockedEntity = Mockito.mockStatic(Entity.class)) {
-            // Mock the EntityService provider
-            EntityService entityService = mock(EntityService.class);
-
-            for(int i=0; i<conceptList.size(); i++) {
-                int nid = (i+1) * 10;
-                // Each JSON concept from the json file (resources)
-                JsonNode conceptJson = conceptList.get(i);
-                Concept concept = createSimpleConcept(conceptJson.get(JSON_CONCEPT_NAME_PROP).asText(),
-                        conceptJson.get(JSON_CONCEPT_UUID_PROP).asText());
-                conceptMap.put(conceptJson.get(JSON_CONCEPT_UUID_PROP).asText(), concept);
-                conceptMap.put(conceptJson.get(JSON_CONCEPT_NAME_PROP).asText(), concept);
-
-                // Mock the nid(PublicId) method
-                mockedEntity.when(() -> Entity.nid(concept.publicId())).thenReturn(nid);
-
-                // Mock the nid(Concept) method
-                mockedEntity.when(() -> Entity.nid(concept)).thenReturn(nid);
-
-                // put entity and store nid
-                when(entityService.nidForComponent(concept)).thenReturn(nid);
-                when(entityService.nidForPublicId(concept.publicId())).thenReturn(nid);
-                mockedEntity.when(() -> Entity.provider()).thenReturn(entityService);
-            }
-
-            // Pass mocked entity service and conc
-            session.accept(mockedEntity, conceptMap);
-
-        } // closable (unregisters statically mocked object)
-
+        for (int i = 0; i < conceptList.size(); i++) {
+            int nid = (i + 1) * 10;
+            JsonNode conceptJson = conceptList.get(i);
+            Concept concept = createSimpleConcept(
+                    conceptJson.get(JSON_CONCEPT_NAME_PROP).asText(),
+                    conceptJson.get(JSON_CONCEPT_UUID_PROP).asText());
+            conceptMap.put(conceptJson.get(JSON_CONCEPT_UUID_PROP).asText(), concept);
+            conceptMap.put(conceptJson.get(JSON_CONCEPT_NAME_PROP).asText(), concept);
+            registerNid(concept.publicId(), nid);
+        }
+        return conceptMap;
     }
-
 }

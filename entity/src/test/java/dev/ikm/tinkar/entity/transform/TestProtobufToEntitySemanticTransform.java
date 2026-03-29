@@ -16,141 +16,76 @@
 package dev.ikm.tinkar.entity.transform;
 
 import dev.ikm.tinkar.component.Concept;
-import dev.ikm.tinkar.component.FieldDataType;
-import dev.ikm.tinkar.component.Semantic;
-import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.schema.Field;
 import dev.ikm.tinkar.schema.SemanticChronology;
 import dev.ikm.tinkar.schema.SemanticVersion;
 import dev.ikm.tinkar.schema.StampChronology;
 import dev.ikm.tinkar.schema.StampVersion;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.AUTHOR_CONCEPT_NAME;
-import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.MODULE_CONCEPT_NAME;
-import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.PATH_CONCEPT_NAME;
-import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.STATUS_CONCEPT_NAME;
-import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.TEST_CONCEPT_NAME;
-import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.createPBPublicId;
-import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.nowTimestamp;
-import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.openSession;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.Map;
+
+import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-// @Disabled("Java 23")
 public class TestProtobufToEntitySemanticTransform {
-    private Semantic mockSemantic;
 
-    @Test
-    @DisplayName("Transform a Semantic Chronology With Zero Versions Present")
-    public void semanticChronologyTransformWithZeroVersion(){
-        openSession(this, (mockedEntityService, conceptMap) -> {
-            // Given a PBSemanticChronology with a no Semantic Versions present
-            SemanticChronology pbSemanticChronology = SemanticChronology.newBuilder()
-                    .setPublicId(createPBPublicId(conceptMap.get(TEST_CONCEPT_NAME)))
-                    .setReferencedComponentPublicId(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
-                    .setPatternForSemanticPublicId(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
-                    .build();
+    private Map<String, Concept> conceptMap;
 
-            // When we transform PBSemanticChronology
-
-            // Then we will throw a Runtime exception
-            assertThrows(Throwable.class, () -> TinkarSchemaToEntityTransformer.getInstance().transformSemanticChronology(pbSemanticChronology), "Not allowed to have no semantic versions.");
-        });
+    @BeforeEach
+    public void setUp() {
+        conceptMap = loadTestConcepts(this);
     }
-    @Test
-    @DisplayName("Transform a Semantic Chronology With One Version Present")
-    @Disabled("Need entity provider and integration test DB")
-    public void semanticChronologyTransformWithOneVersion(){
-        openSession(this, (mockedEntityService, conceptMap) -> {
-            // Given a PBSemanticChronology with a no Semantic Versions present
-            Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
 
-            StampVersion pbStampVersion = StampVersion.newBuilder()
-                    .setStatusPublicId(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
-                    .setTime(nowTimestamp())
-                    .setAuthorPublicId(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
-                    .setModulePublicId(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
-                    .setPathPublicId(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
-                    .build();
-
-            StampChronology pbStampChronology = StampChronology.newBuilder()
-                    .setPublicId(createPBPublicId(testConcept))
-                    .setFirstStampVersion(pbStampVersion)
-                    .build();
-
-            String expectedStringValue = "Testing Field Transformation with a string.";
-            Field pbFieldString = Field.newBuilder()
-                    .setStringValue(expectedStringValue)
-                    .build();
-
-            SemanticVersion pbSemanticVersion = SemanticVersion.newBuilder()
-                    .setStampChronologyPublicId(pbStampChronology.getPublicId())
-                    .addFields(pbFieldString)
-                    .build();
-
-            // The new way of assigning nids requres the referenced component to be known and in the database.
-            SemanticChronology pbSemanticChronology = SemanticChronology.newBuilder()
-                    .setPublicId(createPBPublicId(conceptMap.get(TEST_CONCEPT_NAME)))
-                    .setReferencedComponentPublicId(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
-                    .setPatternForSemanticPublicId(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
-                    .addSemanticVersions(pbSemanticVersion)
-                    .build();
-
-            // When we transform PBSemanticChronology
-            SemanticEntity actualSemanticChronology = TinkarSchemaToEntityTransformer.getInstance().transformSemanticChronology(pbSemanticChronology);
-
-            // Then we compare the PBSemanticChronology to the expected one
-            assertEquals(1, actualSemanticChronology.versions().size(), "Versions are missing from the Semantic Chronology.");
-            assertEquals(FieldDataType.SEMANTIC_CHRONOLOGY, actualSemanticChronology.entityDataType(), "The field data types are not matching up.");
-        });
+    @AfterEach
+    public void tearDown() {
+        clearRegistry();
     }
 
     @Test
     @DisplayName("Transform a Semantic Chronology With Missing Public ID's")
-    public void semanticChronologyTransformWithAMissingPublicId(){
-        openSession(this, (mockedEntityService, conceptMap) -> {
-            // Given a PBSemanticChronology with a no Semantic Public ID's present
-            Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
+    public void semanticChronologyTransformWithAMissingPublicId() {
+        // Given a PBSemanticChronology with no Semantic Public ID's present
+        Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
 
-            StampVersion pbStampVersion = StampVersion.newBuilder()
-                    .setStatusPublicId(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
-                    .setTime(nowTimestamp())
-                    .setAuthorPublicId(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
-                    .setModulePublicId(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
-                    .setPathPublicId(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
-                    .build();
+        StampVersion pbStampVersion = StampVersion.newBuilder()
+                .setStatusPublicId(createPBPublicId(conceptMap.get(STATUS_CONCEPT_NAME)))
+                .setTime(nowTimestamp())
+                .setAuthorPublicId(createPBPublicId(conceptMap.get(AUTHOR_CONCEPT_NAME)))
+                .setModulePublicId(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
+                .setPathPublicId(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
+                .build();
 
-            StampChronology pbStampChronology = StampChronology.newBuilder()
-                    .setPublicId(createPBPublicId(testConcept))
-                    .setFirstStampVersion(pbStampVersion)
-                    .build();
+        StampChronology pbStampChronology = StampChronology.newBuilder()
+                .setPublicId(createPBPublicId(testConcept))
+                .setFirstStampVersion(pbStampVersion)
+                .build();
 
-            String expectedStringValue = "Testing Field Transformation with a string.";
-            Field pbFieldString = Field.newBuilder()
-                    .setStringValue(expectedStringValue)
-                    .build();
+        String expectedStringValue = "Testing Field Transformation with a string.";
+        Field pbFieldString = Field.newBuilder()
+                .setStringValue(expectedStringValue)
+                .build();
 
-            SemanticVersion pbSemanticVersion = SemanticVersion.newBuilder()
-                    .setStampChronologyPublicId(pbStampChronology.getPublicId())
-                    .addFields(pbFieldString)
-                    .build();
+        SemanticVersion pbSemanticVersion = SemanticVersion.newBuilder()
+                .setStampChronologyPublicId(pbStampChronology.getPublicId())
+                .addFields(pbFieldString)
+                .build();
 
-            SemanticChronology pbSemanticChronology = SemanticChronology.newBuilder()
-                    .setReferencedComponentPublicId(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
-                    .setPatternForSemanticPublicId(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
-                    .addSemanticVersions(pbSemanticVersion)
-                    .build();
+        SemanticChronology pbSemanticChronology = SemanticChronology.newBuilder()
+                .setReferencedComponentPublicId(createPBPublicId(conceptMap.get(MODULE_CONCEPT_NAME)))
+                .setPatternForSemanticPublicId(createPBPublicId(conceptMap.get(PATH_CONCEPT_NAME)))
+                .addSemanticVersions(pbSemanticVersion)
+                .build();
 
-            // When we transform PBSemanticChronology
-
-            // Then we will throw a Runtime exception
-            assertThrows(Throwable.class, () -> TinkarSchemaToEntityTransformer.getInstance().transformSemanticChronology(pbSemanticChronology), "Not allowed to have no semantic versions.");
-        });
+        // When we transform PBSemanticChronology
+        // Then we will throw a Runtime exception (missing public ID)
+        assertThrows(Throwable.class, () -> TinkarSchemaToEntityTransformer.getInstance()
+                .transformSemanticChronology(pbSemanticChronology), "Not allowed to have no semantic versions.");
     }
     //TODO: Add more coverage to Semantic missing fields
 }

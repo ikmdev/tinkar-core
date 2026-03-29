@@ -15,9 +15,9 @@
  */
 package dev.ikm.tinkar.integration.snomed.relationship;
 
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.StampRecord;
-import dev.ikm.tinkar.integration.KeyValueProviderExtension;
-import dev.ikm.tinkar.integration.OpenSpinedArrayKeyValueProvider;
+import dev.ikm.tinkar.integration.NewEphemeralKeyValueProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -25,62 +25,52 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.List;
 
-import static dev.ikm.tinkar.integration.snomed.core.MockEntity.getNid;
 import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.ACTIVE_UUID;
 import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.DEVELOPMENT_PATH_UUID;
 import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.SNOMED_CT_AUTHOR_UUID;
 import static dev.ikm.tinkar.integration.snomed.core.SnomedCTConstants.SNOMED_TEXT_MODULE_ID_UUID;
-import static dev.ikm.tinkar.integration.snomed.core.SnomedCTHelper.openSession;
 import static dev.ikm.tinkar.integration.snomed.core.SnomedCTStampChronology.createSTAMPChronologyForAllRecords;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@ExtendWith(OpenSpinedArrayKeyValueProvider.class)
+@ExtendWith(NewEphemeralKeyValueProvider.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TestActiveRelationship {
 
     @Test
     @DisplayName("Test Snomed to Entity Relationship Version. - One record.")
     public void testSnomedToEntityRelationShipOneRecord(){
-        openSession((mockedStaticEntity) -> {
-            List<StampRecord> stampRecords =  createSTAMPChronologyForAllRecords(this,"sct2_Relationship_Full_US1000124_20220901_1.txt");
-           StampRecord record = stampRecords.get(0);
-                assertEquals(1, record.versions().size(), "Has more than one row");
-        });
+        List<StampRecord> stampRecords =  createSTAMPChronologyForAllRecords(this,"sct2_Relationship_Full_US1000124_20220901_1.txt");
+        StampRecord record = stampRecords.get(0);
+        assertEquals(1, record.versions().size(), "Has more than one row");
     }
 
     @Test
     @DisplayName("Test Snomed to Entity Relationship Version. - Many record.")
     public void testSnomedToEntityRelationShipManyRecords(){
-        openSession((mockedStaticEntity) -> {
-            List<StampRecord> stampRecords =  createSTAMPChronologyForAllRecords(this,"sct2_Relationship_Full_US1000124_20220901_9.txt");
-            for(StampRecord record : stampRecords ) {
-                assertEquals(1, record.versions().size(), "Has more than one row");
-            }
-        });
+        List<StampRecord> stampRecords =  createSTAMPChronologyForAllRecords(this,"sct2_Relationship_Full_US1000124_20220901_9.txt");
+        for(StampRecord record : stampRecords ) {
+            assertEquals(1, record.versions().size(), "Has more than one row");
+        }
     }
 
     @Test
     @DisplayName("Test Stamp with active Transform Result for Snomed to Entity Relationship. - One Record")
     public void testStampWithActiveTransformResultOneRecord(){
-        openSession((mockedStaticEntity) -> {
-            List<StampRecord> stampRecords =  createSTAMPChronologyForAllRecords(this,"sct2_Relationship_Full_US1000124_20220901_1.txt");
-            StampRecord record = stampRecords.get(0);
-            assertEquals(getNid(ACTIVE_UUID), record.stateNid(), "State is Not Active");
-        });
+        List<StampRecord> stampRecords =  createSTAMPChronologyForAllRecords(this,"sct2_Relationship_Full_US1000124_20220901_1.txt");
+        StampRecord record = stampRecords.get(0);
+        assertEquals(EntityService.get().nidForUuids(ACTIVE_UUID), record.stateNid(), "State is Not Active");
     }
 
     @Test
     @DisplayName("Test Stamp with active Transform Result for Snomed to Entity Relationship. - Many Records")
     public void testStampWithActiveTransformResultManyRecords(){
-        openSession((mockedStaticEntity) -> {
-            List<StampRecord> stampRecords =  createSTAMPChronologyForAllRecords(this,"sct2_Relationship_Full_US1000124_20220901_9.txt");
-            for(StampRecord record : stampRecords ) {
-     //           assertEquals(getNid(ACTIVE_UUID), record.stateNid(), "State is not active");
-                assertEquals(getNid(SNOMED_CT_AUTHOR_UUID), record.authorNid(), "Author couldn't be referenced");
-                assertEquals(getNid(DEVELOPMENT_PATH_UUID), record.pathNid(), "Path could not be referenced");
-                assertEquals(getNid(SNOMED_TEXT_MODULE_ID_UUID), record.moduleNid(), "Module could not be referenced");
-            }
-        });
+        List<StampRecord> stampRecords =  createSTAMPChronologyForAllRecords(this,"sct2_Relationship_Full_US1000124_20220901_9.txt");
+        for(StampRecord record : stampRecords ) {
+     //           assertEquals(EntityService.get().nidForUuids(ACTIVE_UUID), record.stateNid(), "State is not active");
+            assertEquals(EntityService.get().nidForUuids(SNOMED_CT_AUTHOR_UUID), record.authorNid(), "Author couldn't be referenced");
+            assertEquals(EntityService.get().nidForUuids(DEVELOPMENT_PATH_UUID), record.pathNid(), "Path could not be referenced");
+            assertEquals(EntityService.get().nidForUuids(SNOMED_TEXT_MODULE_ID_UUID), record.moduleNid(), "Module could not be referenced");
+        }
     }
 
 }

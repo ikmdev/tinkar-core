@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.integration.snomed.description;
 
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.RecordListBuilder;
 import dev.ikm.tinkar.entity.SemanticRecord;
 import dev.ikm.tinkar.entity.SemanticVersionRecord;
@@ -23,6 +24,7 @@ import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.entity.StampRecordBuilder;
 import dev.ikm.tinkar.entity.StampVersionRecord;
 import dev.ikm.tinkar.entity.StampVersionRecordBuilder;
+import dev.ikm.tinkar.integration.NewEphemeralKeyValueProvider;
 import dev.ikm.tinkar.integration.snomed.core.MockEntity;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +34,7 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -51,7 +54,6 @@ import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.SN
 import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.SNOMED_CT_NAMESPACE;
 import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.SNOMED_TEXT_MODULE_ID;
 import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.loadSnomedFile;
-import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterDataHelper.openSession;
 import static dev.ikm.tinkar.integration.snomed.description.SnomedToEntityDescription.CASE_SIGNIFICANCE_ID_INDEX;
 import static dev.ikm.tinkar.integration.snomed.description.SnomedToEntityDescription.CONCEPT_ID_INDEX;
 import static dev.ikm.tinkar.integration.snomed.description.SnomedToEntityDescription.ID_INDEX;
@@ -62,6 +64,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Disabled("Stale")
+@ExtendWith(NewEphemeralKeyValueProvider.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class SnomedToEntityDescriptionIT {
@@ -78,87 +81,82 @@ public class SnomedToEntityDescriptionIT {
     @DisplayName("Creating a Stamp Chronology with Active State")
     public void testCreateStampChronologyWithActiveState(){
         //Given a row of snomed data
-        openSession((mockStaticEntityService, starterData) -> {
-            UUID namespaceUuid = SNOMED_CT_NAMESPACE;
-            UUID stampUUID = UuidT5Generator.get(namespaceUuid, "101013200201311900000000000207008126813005en900000000000013009Neoplasm of anterior aspect of epiglottis900000000000020002");
+        UUID namespaceUuid = SNOMED_CT_NAMESPACE;
+        UUID stampUUID = UuidT5Generator.get(namespaceUuid, "101013200201311900000000000207008126813005en900000000000013009Neoplasm of anterior aspect of epiglottis900000000000020002");
 
-            MockEntity.populateMockData(stampUUID.toString(), ENTITYREF);
+        MockEntity.populateMockData(stampUUID.toString(), ENTITYREF);
 
-            StampRecord expectedRecord = StampRecordBuilder.builder()
-                    .leastSignificantBits(stampUUID.getLeastSignificantBits())
-                    .mostSignificantBits(stampUUID.getMostSignificantBits())
-                    .nid(MockEntity.getNid(stampUUID))
-                    .versions(RecordListBuilder.make().build())
-                    .build();
+        StampRecord expectedRecord = StampRecordBuilder.builder()
+                .leastSignificantBits(stampUUID.getLeastSignificantBits())
+                .mostSignificantBits(stampUUID.getMostSignificantBits())
+                .nid(EntityService.get().nidForUuids(stampUUID))
+                .versions(RecordListBuilder.make().build())
+                .build();
 
-            StampVersionRecord expectedVersionRecord = StampVersionRecordBuilder.builder()
-                    .stateNid(MockEntity.getNid(ACTIVE))
-                    .chronology(expectedRecord)
-                    .time(EXPECTED_DATE)
-                    .authorNid(MockEntity.getNid(SNOMED_CT_AUTHOR))
-                    .moduleNid(MockEntity.getNid(SNOMED_TEXT_MODULE_ID))
-                    .pathNid(MockEntity.getNid(DEVELOPMENT_PATH))
-                    .build();
+        StampVersionRecord expectedVersionRecord = StampVersionRecordBuilder.builder()
+                .stateNid(EntityService.get().nidForUuids(ACTIVE))
+                .chronology(expectedRecord)
+                .time(EXPECTED_DATE)
+                .authorNid(EntityService.get().nidForUuids(SNOMED_CT_AUTHOR))
+                .moduleNid(EntityService.get().nidForUuids(SNOMED_TEXT_MODULE_ID))
+                .pathNid(EntityService.get().nidForUuids(DEVELOPMENT_PATH))
+                .build();
 
-            expectedRecord = expectedRecord.withVersions(RecordListBuilder.make().newWith(expectedVersionRecord));
+        expectedRecord = expectedRecord.withVersions(RecordListBuilder.make().newWith(expectedVersionRecord));
 
-            List<String> rows = loadSnomedFile(this.getClass(),"sct2_Description_Full-en_US1000124_20220901_1.txt");
-            assertEquals(1, rows.size(),"Read file should only have one row");
-            String testValues = rows.get(0);
+        List<String> rows = loadSnomedFile(this.getClass(),"sct2_Description_Full-en_US1000124_20220901_1.txt");
+        assertEquals(1, rows.size(),"Read file should only have one row");
+        String testValues = rows.get(0);
 
-            //When creating Stamp Chronology
-            StampRecord actualRecord = transformer.createSTAMPChronology(testValues);
+        //When creating Stamp Chronology
+        StampRecord actualRecord = transformer.createSTAMPChronology(testValues);
 
-            //Then the created Stamp Chronology should match expected values
-            assertEquals(expectedRecord.leastSignificantBits(), actualRecord.leastSignificantBits(), "StampRecord leastSignificantBits do not match expected");
-            assertEquals(expectedRecord.mostSignificantBits(), actualRecord.mostSignificantBits(), "StampRecord mostSignificantBits do not match expected");
-            assertEquals(expectedRecord.nid(), actualRecord.nid(), "StampRecord nid does not match expected");
-            assertEquals(expectedRecord.versions(), actualRecord.versions(), "StampRecord versions do not match expected");
-        });
+        //Then the created Stamp Chronology should match expected values
+        assertEquals(expectedRecord.leastSignificantBits(), actualRecord.leastSignificantBits(), "StampRecord leastSignificantBits do not match expected");
+        assertEquals(expectedRecord.mostSignificantBits(), actualRecord.mostSignificantBits(), "StampRecord mostSignificantBits do not match expected");
+        assertEquals(expectedRecord.nid(), actualRecord.nid(), "StampRecord nid does not match expected");
+        assertEquals(expectedRecord.versions(), actualRecord.versions(), "StampRecord versions do not match expected");
     }
 
     @Test
     @DisplayName("Creating a Stamp Chronology with Inactive State")
     public void testCreateStampChronologyWithInactiveState(){
         //Given a row of snomed data
-        openSession((mockStaticEntityService, starterData) -> {
-            UUID namespaceUuid = SNOMED_CT_NAMESPACE;
-            UUID stampUUID = UuidT5Generator.get(namespaceUuid, "157016200707310900000000000207008126869001en900000000000013009Neoplasm of the mesentery900000000000020002");
+        UUID namespaceUuid = SNOMED_CT_NAMESPACE;
+        UUID stampUUID = UuidT5Generator.get(namespaceUuid, "157016200707310900000000000207008126869001en900000000000013009Neoplasm of the mesentery900000000000020002");
 
-            MockEntity.populateMockData(stampUUID.toString(), ENTITYREF);
+        MockEntity.populateMockData(stampUUID.toString(), ENTITYREF);
 
-            StampRecord expectedRecord = StampRecordBuilder.builder()
-                    .leastSignificantBits(stampUUID.getLeastSignificantBits())
-                    .mostSignificantBits(stampUUID.getMostSignificantBits())
-                    .nid(MockEntity.getNid(stampUUID))
-                    .versions(RecordListBuilder.make().build())
-                    .build();
+        StampRecord expectedRecord = StampRecordBuilder.builder()
+                .leastSignificantBits(stampUUID.getLeastSignificantBits())
+                .mostSignificantBits(stampUUID.getMostSignificantBits())
+                .nid(EntityService.get().nidForUuids(stampUUID))
+                .versions(RecordListBuilder.make().build())
+                .build();
 
-            StampVersionRecord expectedVersionRecord = StampVersionRecordBuilder.builder()
-                    .stateNid(MockEntity.getNid(INACTIVE))
-                    .chronology(expectedRecord)
-                    .time(LocalDate.parse("20070731", DateTimeFormatter.ofPattern("yyyyMMdd")).atTime(12,0,0).toInstant(ZoneOffset.UTC).toEpochMilli())
-                    .authorNid(MockEntity.getNid(SNOMED_CT_AUTHOR))
-                    .moduleNid(MockEntity.getNid(SNOMED_TEXT_MODULE_ID))
-                    .pathNid(MockEntity.getNid(DEVELOPMENT_PATH))
-                    .build();
+        StampVersionRecord expectedVersionRecord = StampVersionRecordBuilder.builder()
+                .stateNid(EntityService.get().nidForUuids(INACTIVE))
+                .chronology(expectedRecord)
+                .time(LocalDate.parse("20070731", DateTimeFormatter.ofPattern("yyyyMMdd")).atTime(12,0,0).toInstant(ZoneOffset.UTC).toEpochMilli())
+                .authorNid(EntityService.get().nidForUuids(SNOMED_CT_AUTHOR))
+                .moduleNid(EntityService.get().nidForUuids(SNOMED_TEXT_MODULE_ID))
+                .pathNid(EntityService.get().nidForUuids(DEVELOPMENT_PATH))
+                .build();
 
-            expectedRecord = expectedRecord.withVersions(RecordListBuilder.make().newWith(expectedVersionRecord));
+        expectedRecord = expectedRecord.withVersions(RecordListBuilder.make().newWith(expectedVersionRecord));
 
-            List<String> rows = loadSnomedFile(this.getClass(),"sct2_Description_Full-en_US1000124_20220901_2.txt");
-            Assertions.assertEquals(1, rows.size(),"Read file should only have one row");
-            String testValues = rows.get(0);
+        List<String> rows = loadSnomedFile(this.getClass(),"sct2_Description_Full-en_US1000124_20220901_2.txt");
+        Assertions.assertEquals(1, rows.size(),"Read file should only have one row");
+        String testValues = rows.get(0);
 
-            //When creating Stamp Chronology
-            StampRecord actualRecord = transformer.createSTAMPChronology(testValues);
+        //When creating Stamp Chronology
+        StampRecord actualRecord = transformer.createSTAMPChronology(testValues);
 
-            //Then the created Stamp Chronology should match expected values
-            Assertions.assertEquals(expectedRecord.leastSignificantBits(),actualRecord.leastSignificantBits(),"StampRecord leastSignificantBits do not match expected");
-            Assertions.assertEquals(expectedRecord.mostSignificantBits(),actualRecord.mostSignificantBits(), "StampRecord mostSignificantBits do not match expected");
-            Assertions.assertEquals(expectedRecord.nid(),actualRecord.nid(),"StampRecord nid does not match expected");
-            Assertions.assertEquals(expectedRecord.versions(),actualRecord.versions(), "StampRecord versions do not match expected");
-        });
-
+        //Then the created Stamp Chronology should match expected values
+        Assertions.assertEquals(expectedRecord.leastSignificantBits(),actualRecord.leastSignificantBits(),"StampRecord leastSignificantBits do not match expected");
+        Assertions.assertEquals(expectedRecord.mostSignificantBits(),actualRecord.mostSignificantBits(), "StampRecord mostSignificantBits do not match expected");
+        Assertions.assertEquals(expectedRecord.nid(),actualRecord.nid(),"StampRecord nid does not match expected");
+        Assertions.assertEquals(expectedRecord.versions(),actualRecord.versions(), "StampRecord versions do not match expected");
     }
 
     @Test
@@ -332,53 +330,50 @@ public class SnomedToEntityDescriptionIT {
 
 
     private void testAndCompareTransformation(List<String> rows) {
-        openSession((mockStaticEntityService, starterData) -> {
+        //Create Description Semantic for every row of test file
+        List<SemanticRecord> actualRecords = new ArrayList<>();
+        for (String row : rows) {
 
-            //Create Description Semantic for every row of test file
-            List<SemanticRecord> actualRecords = new ArrayList<>();
-            for (String row : rows) {
+            //Create expected values and populate entity service with Nids
+            String[] values = row.split("\t");
+            UUID expectedStampUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE, row.replaceAll("\t",""));
+            UUID expectedPatternUUID = DESCRIPTION_PATTERN;
+            UUID expectedSemanticUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE,DESCRIPTION_PATTERN.toString()+values[ID_INDEX]);
+            UUID expectedReferencedComponentUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE, values[CONCEPT_ID_INDEX]);
 
-                //Create expected values and populate entity service with Nids
-                String[] values = row.split("\t");
-                UUID expectedStampUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE, row.replaceAll("\t",""));
-                UUID expectedPatternUUID = DESCRIPTION_PATTERN;
-                UUID expectedSemanticUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE,DESCRIPTION_PATTERN.toString()+values[ID_INDEX]);
-                UUID expectedReferencedComponentUUID = UuidT5Generator.get(SNOMED_CT_NAMESPACE, values[CONCEPT_ID_INDEX]);
+            MockEntity.populateMockData(expectedStampUUID.toString(), ENTITYREF);
+            MockEntity.populateMockData(expectedPatternUUID.toString(), ENTITYREF);
+            MockEntity.populateMockData(expectedSemanticUUID.toString(),ENTITYREF);
+            MockEntity.populateMockData(expectedReferencedComponentUUID.toString(), ENTITYREF);
 
-                MockEntity.populateMockData(expectedStampUUID.toString(), ENTITYREF);
-                MockEntity.populateMockData(expectedPatternUUID.toString(), ENTITYREF);
-                MockEntity.populateMockData(expectedSemanticUUID.toString(),ENTITYREF);
-                MockEntity.populateMockData(expectedReferencedComponentUUID.toString(), ENTITYREF);
+            //Create expected field values for SemanticVersionRecord
+            Object[] expectedFields = new Object[]{
+                    ENGLISH_LANGUAGE,
+                    values[TERM_INDEX],
+                    UuidT5Generator.get(SNOMED_CT_NAMESPACE, values[CASE_SIGNIFICANCE_ID_INDEX]),
+                    UuidT5Generator.get(SNOMED_CT_NAMESPACE, values[TYPE_ID_INDEX])};
 
-                //Create expected field values for SemanticVersionRecord
-                Object[] expectedFields = new Object[]{
-                        ENGLISH_LANGUAGE,
-                        values[TERM_INDEX],
-                        UuidT5Generator.get(SNOMED_CT_NAMESPACE, values[CASE_SIGNIFICANCE_ID_INDEX]),
-                        UuidT5Generator.get(SNOMED_CT_NAMESPACE, values[TYPE_ID_INDEX])};
+            //Create actual semantic description
+            SemanticRecord actualRecord = transformer.createDescriptionSemantic(row);
 
-                //Create actual semantic description
-                SemanticRecord actualRecord = transformer.createDescriptionSemantic(row);
-
-                //Check SemanticRecord values against expected
-                assertEquals(expectedSemanticUUID.getMostSignificantBits(), actualRecord.mostSignificantBits(), "SemanticRecord most significant bits do not match expected");
-                assertEquals(expectedSemanticUUID.getLeastSignificantBits(), actualRecord.leastSignificantBits(), "SemanticRecord least significant bits do not match expected");
-                assertEquals(MockEntity.getNid(expectedSemanticUUID), actualRecord.nid(), "SemanticRecord nid does not match expected");
-                assertEquals(MockEntity.getNid(expectedPatternUUID), actualRecord.patternNid(), "SemanticRecord most patternNid does not match expected");
-                assertEquals(MockEntity.getNid(expectedReferencedComponentUUID), actualRecord.referencedComponentNid(), "SemanticRecord referencedComponentNid does not match expected");
-                assertTrue(actualRecord.versions().size() > 0, "No SemanticRecordVersions");
+            //Check SemanticRecord values against expected
+            assertEquals(expectedSemanticUUID.getMostSignificantBits(), actualRecord.mostSignificantBits(), "SemanticRecord most significant bits do not match expected");
+            assertEquals(expectedSemanticUUID.getLeastSignificantBits(), actualRecord.leastSignificantBits(), "SemanticRecord least significant bits do not match expected");
+            assertEquals(EntityService.get().nidForUuids(expectedSemanticUUID), actualRecord.nid(), "SemanticRecord nid does not match expected");
+            assertEquals(EntityService.get().nidForUuids(expectedPatternUUID), actualRecord.patternNid(), "SemanticRecord most patternNid does not match expected");
+            assertEquals(EntityService.get().nidForUuids(expectedReferencedComponentUUID), actualRecord.referencedComponentNid(), "SemanticRecord referencedComponentNid does not match expected");
+            assertTrue(actualRecord.versions().size() > 0, "No SemanticRecordVersions");
 
 
-                SemanticVersionRecord actualVersionRecord = actualRecord.versions().get(0);
-                assertEquals(actualVersionRecord.stampNid(), MockEntity.getNid(expectedStampUUID));
+            SemanticVersionRecord actualVersionRecord = actualRecord.versions().get(0);
+            assertEquals(actualVersionRecord.stampNid(), EntityService.get().nidForUuids(expectedStampUUID));
 
-                //Check field values to expected
-                assertEquals(expectedFields[0], actualVersionRecord.fieldValues().get(0), "SemanticVersionRecord Language does not match expected");
-                assertEquals(expectedFields[1], actualVersionRecord.fieldValues().get(1), "SemanticVersionRecord term does not match expected");
-                assertEquals(expectedFields[2], actualVersionRecord.fieldValues().get(2), "SemanticVersionRecord case significance id does not match expected");
-                assertEquals(expectedFields[3], actualVersionRecord.fieldValues().get(3), "SemanticVersionRecord type id does not match expected");
-            }
-        });
+            //Check field values to expected
+            assertEquals(expectedFields[0], actualVersionRecord.fieldValues().get(0), "SemanticVersionRecord Language does not match expected");
+            assertEquals(expectedFields[1], actualVersionRecord.fieldValues().get(1), "SemanticVersionRecord term does not match expected");
+            assertEquals(expectedFields[2], actualVersionRecord.fieldValues().get(2), "SemanticVersionRecord case significance id does not match expected");
+            assertEquals(expectedFields[3], actualVersionRecord.fieldValues().get(3), "SemanticVersionRecord type id does not match expected");
+        }
     }
 
 

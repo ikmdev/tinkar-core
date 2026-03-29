@@ -16,57 +16,59 @@
 package dev.ikm.tinkar.integration.snomed.language;
 
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticRecord;
 import dev.ikm.tinkar.entity.SemanticVersionRecord;
-import org.junit.jupiter.api.Disabled;
+import dev.ikm.tinkar.integration.NewEphemeralKeyValueProvider;
+import dev.ikm.tinkar.integration.snomed.core.MockEntity;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.List;
 import java.util.UUID;
 
-import static dev.ikm.tinkar.integration.snomed.core.MockEntity.getNid;
 import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.SNOMED_CT_NAMESPACE;
-import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterDataHelper.openSession;
 import static dev.ikm.tinkar.integration.snomed.language.SnomedLanguageSemanticMultipleVersions.createLanguageAcceptabilitySemantic;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
-@Disabled("Stale")
+@ExtendWith(NewEphemeralKeyValueProvider.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SnomedLanguageSemanticMultipleVersionsIT {
+
+    @BeforeEach
+    void setUp() {
+        MockEntity.clearCache();
+    }
 
     @Test
     @DisplayName("Language Acceptability Semantic with multiple versions")
     @Order(1)
     void createLanguageAcceptabilitySemanticMultipleVersions() {
-        openSession((mockStaticEntityService, starterData) -> {
-            String input = "der2_cRefset_LanguageFull-en_US1000124_20220901_5.txt";
-            List<SemanticRecord> semanticRecordList = createLanguageAcceptabilitySemantic(input);
-            assertEquals(1, semanticRecordList.size(), "has one record");
-            SemanticRecord semanticRecord = semanticRecordList.get(0);
-            assertNotEquals(semanticRecord.versions().get(0), semanticRecord.versions().get(1), "multiple versions");
-            assertNotEquals(semanticRecord.versions().get(0).stampNid(), semanticRecord.versions().get(1).stampNid());
-        });
+        String input = "der2_cRefset_LanguageFull-en_US1000124_20220901_5.txt";
+        List<SemanticRecord> semanticRecordList = createLanguageAcceptabilitySemantic(input);
+        assertEquals(1, semanticRecordList.size(), "has one record");
+        SemanticRecord semanticRecord = semanticRecordList.get(0);
+        assertNotEquals(semanticRecord.versions().get(0), semanticRecord.versions().get(1), "multiple versions");
+        assertNotEquals(semanticRecord.versions().get(0).stampNid(), semanticRecord.versions().get(1).stampNid());
     }
 
-  
+
 
     @Test
     @DisplayName("Test Language Acceptability Semantic records data")
     @Order(2)
     void createLanguageAcceptabilitySemanticVersionsTestWithRealData() {
-        openSession((mockStaticEntityService, starterData) -> {
-            String input = "der2_cRefset_LanguageFull-en_US1000124_20220901_5.txt";
-            List<SemanticRecord> semanticRecordList = createLanguageAcceptabilitySemantic(input);
-            UUID testStampUUID = getTestStampUUID();
-            SemanticRecord semanticRecord = semanticRecordList.get(0);
-            SemanticVersionRecord semanticVersionRecord1 = semanticRecord.versions().get(0);
-            assertEquals(getNid(testStampUUID), semanticVersionRecord1.stampNid(),"Same StampUUID");
-
-        });
+        String input = "der2_cRefset_LanguageFull-en_US1000124_20220901_5.txt";
+        List<SemanticRecord> semanticRecordList = createLanguageAcceptabilitySemantic(input);
+        UUID testStampUUID = getTestStampUUID();
+        SemanticRecord semanticRecord = semanticRecordList.get(0);
+        SemanticVersionRecord semanticVersionRecord1 = semanticRecord.versions().get(0);
+        assertEquals(EntityService.get().nidForUuids(testStampUUID), semanticVersionRecord1.stampNid(),"Same StampUUID");
     }
 
     private static UUID getTestStampUUID() {
@@ -90,17 +92,13 @@ class SnomedLanguageSemanticMultipleVersionsIT {
     @DisplayName("Test Language Acceptability Semantic records")
     @Order(3)
     void createLanguageAcceptabilitySemanticVersionChronologyTest() {
-        openSession((mockStaticEntityService, starterData) -> {
-            String input = "der2_cRefset_LanguageFull-en_US1000124_20220901_5.txt";
-            List<SemanticRecord> semanticRecordList = createLanguageAcceptabilitySemantic(input);
-            SemanticRecord semanticRecord = semanticRecordList.get(0);
-            SemanticVersionRecord semanticVersionRecord1 = semanticRecord.versions().get(0);
-            SemanticVersionRecord semanticVersionRecord2 = semanticRecord.versions().get(1);
-            assertEquals(semanticVersionRecord1.chronology().patternNid(), semanticVersionRecord2.chronology().patternNid());
-            assertNotEquals(semanticVersionRecord1.stampNid(), semanticVersionRecord2.stampNid());
-            assertNotEquals(semanticVersionRecord1.chronology().versions(), semanticVersionRecord2.chronology().versions());
-
-        });
-    
+        String input = "der2_cRefset_LanguageFull-en_US1000124_20220901_5.txt";
+        List<SemanticRecord> semanticRecordList = createLanguageAcceptabilitySemantic(input);
+        SemanticRecord semanticRecord = semanticRecordList.get(0);
+        SemanticVersionRecord semanticVersionRecord1 = semanticRecord.versions().get(0);
+        SemanticVersionRecord semanticVersionRecord2 = semanticRecord.versions().get(1);
+        assertEquals(semanticVersionRecord1.chronology().patternNid(), semanticVersionRecord2.chronology().patternNid());
+        assertNotEquals(semanticVersionRecord1.stampNid(), semanticVersionRecord2.stampNid());
+        assertNotEquals(semanticVersionRecord1.chronology().versions(), semanticVersionRecord2.chronology().versions());
     }
 }
