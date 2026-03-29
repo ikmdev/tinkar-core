@@ -15,11 +15,21 @@
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
+			<artifactId>common</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>terms</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>entity-provider</artifactId>
+			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>data-spinedarray-provider</artifactId>
+			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
@@ -35,12 +45,29 @@
 			<artifactId>reasoner-service</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>org.eclipse.collections</groupId>
+			<artifactId>eclipse-collections-api</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>dev.ikm.elk</groupId>
 			<artifactId>elk-snomed</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>dev.ikm.elk</groupId>
+			<artifactId>elk-snomed-test</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>dev.ikm.tinkar.ext.owl</groupId>
+			<artifactId>owl-extension</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>dev.ikm.hybrid-reasoner</groupId>
 			<artifactId>hybrid-reasoner-snomed</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 

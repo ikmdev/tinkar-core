@@ -165,26 +165,26 @@ class SpinedArrayIdentifierMergeIT {
         EntityProxy.Concept snomedIdentifier = EntityProxy.Concept.make(name, UuidT5Generator.get(namespace, name));
         session.compose((ConceptAssembler concept) -> concept
                 .concept(snomedIdentifier)
-                .attach((FullyQualifiedName fqn) -> fqn
+                .attach(FullyQualifiedName.class, fqn -> fqn
                         .language(ENGLISH_LANGUAGE)
                         .text(name)
                         .caseSignificance(DESCRIPTION_NOT_CASE_SENSITIVE)
                 )
-                .attach((Synonym synonym) -> synonym
+                .attach(Synonym.class, synonym -> synonym
                         .language(ENGLISH_LANGUAGE)
                         .text(name)
                         .caseSignificance(DESCRIPTION_NOT_CASE_SENSITIVE)
                 )
-                .attach((Definition definition) -> definition
+                .attach(Definition.class, definition -> definition
                         .language(ENGLISH_LANGUAGE)
                         .text(name)
                         .caseSignificance(DESCRIPTION_NOT_CASE_SENSITIVE)
                 )
-                .attach((Identifier identifier) -> identifier
+                .attach(Identifier.class, identifier -> identifier
                         .source(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER)
                         .identifier(snomedIdentifier.asUuidArray()[0].toString())
                 )
-                .attach((StatedAxiom statedAxiom) -> statedAxiom
+                .attach(StatedAxiom.class, statedAxiom -> statedAxiom
                         .isA(TinkarTerm.IDENTIFIER_SOURCE)
                 )
         );
@@ -200,11 +200,11 @@ class SpinedArrayIdentifierMergeIT {
         EntityProxy.Concept concept = EntityProxy.Concept.make(PublicIds.of(uuid));
         session.compose((ConceptAssembler conceptAssembler) -> conceptAssembler
                 .concept(concept)
-                .attach((Identifier identifier) -> identifier
+                .attach(Identifier.class, identifier -> identifier
                         .source(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER)
                         .identifier(concept.asUuidArray()[0].toString())
                 )
-                .attach((Identifier identifier) -> identifier
+                .attach(Identifier.class, identifier -> identifier
                         .source(identifierSource)
                         .identifier(identifierValue)
                 )
@@ -215,26 +215,26 @@ class SpinedArrayIdentifierMergeIT {
     private void initializeAuthor(Session session, UUID namespace, EntityProxy.Concept author) {
         session.compose((ConceptAssembler concept) -> concept
                 .concept(author)
-                .attach((FullyQualifiedName fqn) -> fqn
+                .attach(FullyQualifiedName.class, fqn -> fqn
                         .language(ENGLISH_LANGUAGE)
                         .text("IHTSDO SNOMED CT Starter Data Author")
                         .caseSignificance(DESCRIPTION_NOT_CASE_SENSITIVE)
                 )
-                .attach((Synonym synonym) -> synonym
+                .attach(Synonym.class, synonym -> synonym
                         .language(ENGLISH_LANGUAGE)
                         .text("SNOMED CT Starter Data Author")
                         .caseSignificance(DESCRIPTION_NOT_CASE_SENSITIVE)
                 )
-                .attach((Definition definition) -> definition
+                .attach(Definition.class, definition -> definition
                         .language(ENGLISH_LANGUAGE)
                         .text("International Health Terminology Standards Development Organisation (IHTSDO) SNOMED CT Starter Data Author")
                         .caseSignificance(DESCRIPTION_NOT_CASE_SENSITIVE)
                 )
-                .attach((Identifier identifier) -> identifier
+                .attach(Identifier.class, identifier -> identifier
                         .source(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER)
                         .identifier(author.asUuidArray()[0].toString())
                 )
-                .attach((StatedAxiom statedAxiom) -> statedAxiom
+                .attach(StatedAxiom.class, statedAxiom -> statedAxiom
                         .isA(TinkarTerm.USER)
                 )
         );

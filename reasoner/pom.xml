@@ -113,6 +113,32 @@
 						</goals>
 						<configuration>
 							<ignoreUnusedRuntime>true</ignoreUnusedRuntime>
+							<ignoredUnusedDeclaredDependencies>
+								<!-- Test infrastructure inherited from tinkar-core/ike-parent -->
+								<ignoredUnusedDeclaredDependency>org.apache.logging.log4j:log4j-slf4j2-impl</ignoredUnusedDeclaredDependency>
+								<ignoredUnusedDeclaredDependency>org.junit.jupiter:junit-jupiter</ignoredUnusedDeclaredDependency>
+								<ignoredUnusedDeclaredDependency>org.junit.jupiter:junit-jupiter-engine</ignoredUnusedDeclaredDependency>
+								<ignoredUnusedDeclaredDependency>org.junit.platform:junit-platform-console</ignoredUnusedDeclaredDependency>
+								<ignoredUnusedDeclaredDependency>org.apache.maven.surefire:common-java5</ignoredUnusedDeclaredDependency>
+								<!-- Build infrastructure from ike-parent -->
+								<ignoredUnusedDeclaredDependency>network.ike:ike-build-standards</ignoredUnusedDeclaredDependency>
+								<ignoredUnusedDeclaredDependency>network.ike:ike-build-tools</ignoredUnusedDeclaredDependency>
+								<!-- JPMS ServiceLoader providers (runtime, not compile-visible) -->
+								<ignoredUnusedDeclaredDependency>dev.ikm.tinkar:executor-provider</ignoredUnusedDeclaredDependency>
+								<!-- JPMS module-info requires at compile scope, only test bytecode refs -->
+								<ignoredUnusedDeclaredDependency>dev.ikm.elk:elk-snomed-owl-el</ignoredUnusedDeclaredDependency>
+								<ignoredUnusedDeclaredDependency>dev.ikm.elk:elk-snomed-test</ignoredUnusedDeclaredDependency>
+								<ignoredUnusedDeclaredDependency>dev.ikm.elk:elk-snomed-owl-el</ignoredUnusedDeclaredDependency>
+							</ignoredUnusedDeclaredDependencies>
+							<ignoredNonTestScopedDependencies>
+								<!-- JPMS module-info requires these at compile scope -->
+								<ignoredNonTestScopedDependency>dev.ikm.elk:elk-owlapi</ignoredNonTestScopedDependency>
+								<ignoredNonTestScopedDependency>dev.ikm.elk:elk-snomed</ignoredNonTestScopedDependency>
+								<ignoredNonTestScopedDependency>dev.ikm.elk:elk-snomed-test</ignoredNonTestScopedDependency>
+								<ignoredNonTestScopedDependency>dev.ikm.owlapi:owlapi-apibinding</ignoredNonTestScopedDependency>
+								<ignoredNonTestScopedDependency>dev.ikm.tinkar:component</ignoredNonTestScopedDependency>
+								<ignoredNonTestScopedDependency>dev.ikm.tinkar.ext.owl:owl-extension</ignoredNonTestScopedDependency>
+							</ignoredNonTestScopedDependencies>
 						</configuration>
 					</execution>
 				</executions>
