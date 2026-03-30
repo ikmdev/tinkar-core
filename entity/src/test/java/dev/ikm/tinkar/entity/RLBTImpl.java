@@ -139,6 +139,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 
+@SuppressWarnings("deprecation")
 public class RLBTImpl {
 
     protected static Predicate predicate = new Predicate() {

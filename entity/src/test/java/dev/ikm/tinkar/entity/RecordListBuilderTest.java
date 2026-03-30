@@ -76,6 +76,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@SuppressWarnings("deprecation")
 public class RecordListBuilderTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(RecordListBuilderTest.class);
