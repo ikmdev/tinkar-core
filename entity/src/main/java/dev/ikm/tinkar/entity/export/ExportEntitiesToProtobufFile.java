@@ -23,6 +23,7 @@ import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.aggregator.DefaultEntityAggregator;
 import dev.ikm.tinkar.entity.aggregator.EntityAggregator;
@@ -60,6 +61,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             EntityToTinkarSchemaTransformer.getInstance();
     private final Set<PublicId> moduleList = new HashSet<>();
     private final Set<PublicId> authorList = new HashSet<>();
+    private final Set<PublicId> patternList = new HashSet<>();
     private final EntityAggregator entityAggregator;
 
 
@@ -107,10 +109,12 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
 
             IntConsumer exportNidConsumer = (nid) -> {
                 Entity<? extends EntityVersion> entity = EntityService.get().getEntityFast(nid);
-                // Store Module & Author Dependencies for Manifest
+                // Store Module, Author, and Pattern dependencies for Manifest
                 if (entity instanceof StampEntity stampEntity) {
                     moduleList.add(stampEntity.module().publicId());
                     authorList.add(stampEntity.author().publicId());
+                } else if (entity instanceof SemanticEntity<?> semanticEntity) {
+                    patternList.add(semanticEntity.pattern().publicId());
                 }
                 // Transform and Write data
                 TinkarMsg pbTinkarMsg = entityTransformer.transform(entity);
@@ -138,7 +142,8 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                     entityCountSummary.patternCount(),
                     entityCountSummary.stampCount(),
                     moduleList,
-                    authorList
+                    authorList,
+                    patternList
                 ).getBytes(StandardCharsets.UTF_8));
             zos.closeEntry();
             zos.flush();
@@ -167,6 +172,18 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                                            long stampsCount,
                                            Set<PublicId> moduleList,
                                            Set<PublicId> authorList){
+        return generateManifestContent(entityCount, conceptsCount, semanticsCount, patternsCount,
+                stampsCount, moduleList, authorList, Set.of());
+    }
+
+    public static String generateManifestContent(long entityCount,
+                                           long conceptsCount,
+                                           long semanticsCount,
+                                           long patternsCount,
+                                           long stampsCount,
+                                           Set<PublicId> moduleList,
+                                           Set<PublicId> authorList,
+                                           Set<PublicId> patternList){
         StringBuilder manifestContent = new StringBuilder()
                 // TODO: Dynamically populate this user
                 .append("Packager-Name: ").append(TinkarTerm.KOMET_USER.description()).append("\n")
@@ -178,6 +195,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                 .append("Stamp-Count: ").append(stampsCount).append("\n")
                 .append(idsToManifestEntry(moduleList))
                 .append(idsToManifestEntry(authorList))
+                .append(patternsToManifestEntry(patternList))
                 .append("\n"); // Final new line necessary per Manifest spec
         return manifestContent.toString();
     }
@@ -199,6 +217,22 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             manifestEntry.append("\n")
                     .append("Name: ").append(idString).append("\n")
                     .append("Description: ").append(manifestDescription).append("\n");
+        });
+        return manifestEntry.toString();
+    }
+
+    public static String patternsToManifestEntry(Collection<PublicId> patternIds) {
+        StringBuilder manifestEntry = new StringBuilder();
+        patternIds.forEach((publicId) -> {
+            String idString = publicId.asUuidList().stream()
+                    .map(UUID::toString)
+                    .collect(Collectors.joining(","));
+            Optional<Entity<EntityVersion>> entity = EntityService.get().getEntity(PrimitiveData.nid(publicId));
+            String name = entity.map(Entity::description).orElse("Unknown Pattern");
+            manifestEntry.append("\n")
+                    .append("Name: ").append(idString).append("\n")
+                    .append("Description: ").append(name).append("\n")
+                    .append("Type: Pattern\n");
         });
         return manifestEntry.toString();
     }
