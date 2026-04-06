@@ -236,6 +236,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
 
                 final Set<PublicId> moduleList = new HashSet<>();
                 final Set<PublicId> authorList = new HashSet<>();
+                final Set<PublicId> patternList = new HashSet<>();
                 final EntityToTinkarSchemaTransformer entityTransformer =
                         EntityToTinkarSchemaTransformer.getInstance();
 
@@ -278,9 +279,9 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                         writeStampSnapshotsThenDependents(
                                                 uncommittedEntitiesByStamp.removeAll(stampEntity.nid()),
                                                 entityCount, conceptsCount, semanticsCount, patternsCount,
-                                                stampsCount, moduleList, authorList, entityTransformer, zos);
+                                                stampsCount, moduleList, authorList, patternList, entityTransformer, zos);
                                     }
-                                    writeEntity(entityCount, entityToWrite, conceptsCount, semanticsCount, patternsCount, stampsCount, moduleList, authorList, entityTransformer, zos);
+                                    writeEntity(entityCount, entityToWrite, conceptsCount, semanticsCount, patternsCount, stampsCount, moduleList, authorList, patternList, entityTransformer, zos);
                                 }
                             }
                             if (System.currentTimeMillis() - lastWriteTimeMillis.get() > INACTIVITY_THRESHOLD_MILLIS) {
@@ -304,7 +305,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                         writeStampSnapshotsThenDependents(
                                 uncommittedEntitiesByStamp.removeAll(stampNid),
                                 entityCount, conceptsCount, semanticsCount, patternsCount,
-                                stampsCount, moduleList, authorList, entityTransformer, zos);
+                                stampsCount, moduleList, authorList, patternList, entityTransformer, zos);
                     }
                     zos.closeEntry();
                     if (entityCount.sum() > 0) {
@@ -320,7 +321,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                 patternsCount,
                                 stampsCount,
                                 moduleList,
-                                authorList).getBytes(StandardCharsets.UTF_8));
+                                authorList,
+                                patternList).getBytes(StandardCharsets.UTF_8));
                         zos.closeEntry();
                     }
                     // Cleanup
@@ -369,12 +371,17 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                     LongAdder stampsCount,
                                     Set<PublicId> moduleList,
                                     Set<PublicId> authorList,
+                                    Set<PublicId> patternList,
                                     EntityToTinkarSchemaTransformer entityTransformer,
                                     ZipOutputStream zos) {
         entityCount.increment();
         switch (entityToWrite) {
             case ConceptEntity _ -> conceptsCount.increment();
-            case SemanticEntity _ -> semanticsCount.increment();
+            case SemanticEntity<?> semanticEntity -> {
+                semanticsCount.increment();
+                // Store Pattern dependency for Manifest
+                patternList.add(semanticEntity.pattern().publicId());
+            }
             case PatternEntity _ -> patternsCount.increment();
             case StampEntity stampEntity -> {
                 stampsCount.increment();
@@ -417,6 +424,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      * @param stampsCount       counter for stamp entities written
      * @param moduleList        set collecting module public IDs for the manifest
      * @param authorList        set collecting author public IDs for the manifest
+     * @param patternList       set collecting pattern public IDs for the manifest
      * @param entityTransformer transformer that produces protobuf messages
      * @param zos               the open ZIP output stream
      */
@@ -429,6 +437,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
             LongAdder stampsCount,
             Set<PublicId> moduleList,
             Set<PublicId> authorList,
+            Set<PublicId> patternList,
             EntityToTinkarSchemaTransformer entityTransformer,
             ZipOutputStream zos) {
         List<Entity<EntityVersion>> stampSnapshots = new ArrayList<>();
@@ -442,11 +451,11 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
         }
         for (Entity<EntityVersion> e : stampSnapshots) {
             writeEntity(entityCount, e, conceptsCount, semanticsCount, patternsCount,
-                    stampsCount, moduleList, authorList, entityTransformer, zos);
+                    stampsCount, moduleList, authorList, patternList, entityTransformer, zos);
         }
         for (Entity<EntityVersion> e : dependents) {
             writeEntity(entityCount, e, conceptsCount, semanticsCount, patternsCount,
-                    stampsCount, moduleList, authorList, entityTransformer, zos);
+                    stampsCount, moduleList, authorList, patternList, entityTransformer, zos);
         }
     }
 
@@ -470,14 +479,16 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                            LongAdder patternsCount,
                                            LongAdder stampsCount,
                                            Set<PublicId> moduleList,
-                                           Set<PublicId> authorList) {
+                                           Set<PublicId> authorList,
+                                           Set<PublicId> patternList) {
         return ExportEntitiesToProtobufFile.generateManifestContent(entityCount.sum(),
                 conceptsCount.sum(),
                 semanticsCount.sum(),
                 patternsCount.sum(),
                 stampsCount.sum(),
                 moduleList,
-                authorList);
+                authorList,
+                patternList);
     }
 
     /**
