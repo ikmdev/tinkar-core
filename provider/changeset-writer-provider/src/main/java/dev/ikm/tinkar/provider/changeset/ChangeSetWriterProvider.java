@@ -221,6 +221,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
 
                 final Set<PublicId> moduleList = new HashSet<>();
                 final Set<PublicId> authorList = new HashSet<>();
+                final Set<PublicId> patternList = new HashSet<>();
                 final EntityToTinkarSchemaTransformer entityTransformer =
                         EntityToTinkarSchemaTransformer.getInstance();
 
@@ -248,12 +249,12 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                         uncommittedEntitiesByStamp.put(stampNid, entityToWrite);
                                     });
                                 } else {
-                                    writeEntity(entityCount, entityToWrite, conceptsCount, semanticsCount, patternsCount, stampsCount, moduleList, authorList, entityTransformer, zos);
+                                    writeEntity(entityCount, entityToWrite, conceptsCount, semanticsCount, patternsCount, stampsCount, moduleList, authorList, patternList, entityTransformer, zos);
                                     // If a committed stamp comes through, then see if any previously uncommitted versions for that stamp exist, and write them if so.
                                     if (entityToWrite instanceof StampEntity stampEntity && uncommittedEntitiesByStamp.containsKey(stampEntity.nid())) {
                                         uncommittedEntitiesByStamp.removeAll(stampEntity.nid()).forEach(entity ->
                                                 writeEntity(entityCount, entity, conceptsCount, semanticsCount, patternsCount,
-                                                        stampsCount, moduleList, authorList, entityTransformer, zos));
+                                                        stampsCount, moduleList, authorList, patternList, entityTransformer, zos));
                                     }
                                 }
                             }
@@ -268,7 +269,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                     // Write any uncommitted entities.
                     uncommittedEntitiesByStamp.forEachValue(entityToWrite ->
                             writeEntity(entityCount, entityToWrite, conceptsCount, semanticsCount, patternsCount,
-                                    stampsCount, moduleList, authorList, entityTransformer, zos));
+                                    stampsCount, moduleList, authorList, patternList, entityTransformer, zos));
                     zos.closeEntry();
                     if (entityCount.sum() > 0) {
                         LOG.debug("Data zipEntry size: " + zipEntry.getSize());
@@ -283,7 +284,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                 patternsCount,
                                 stampsCount,
                                 moduleList,
-                                authorList).getBytes(StandardCharsets.UTF_8));
+                                authorList,
+                                patternList).getBytes(StandardCharsets.UTF_8));
                         zos.closeEntry();
                     }
                     // Cleanup
@@ -332,12 +334,17 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                     LongAdder stampsCount,
                                     Set<PublicId> moduleList,
                                     Set<PublicId> authorList,
+                                    Set<PublicId> patternList,
                                     EntityToTinkarSchemaTransformer entityTransformer,
                                     ZipOutputStream zos) {
         entityCount.increment();
         switch (entityToWrite) {
             case ConceptEntity _ -> conceptsCount.increment();
-            case SemanticEntity _ -> semanticsCount.increment();
+            case SemanticEntity<?> semanticEntity -> {
+                semanticsCount.increment();
+                // Store Pattern dependency for Manifest
+                patternList.add(semanticEntity.pattern().publicId());
+            }
             case PatternEntity _ -> patternsCount.increment();
             case StampEntity stampEntity -> {
                 stampsCount.increment();
@@ -379,14 +386,16 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                            LongAdder patternsCount,
                                            LongAdder stampsCount,
                                            Set<PublicId> moduleList,
-                                           Set<PublicId> authorList) {
+                                           Set<PublicId> authorList,
+                                           Set<PublicId> patternList) {
         return ExportEntitiesToProtobufFile.generateManifestContent(entityCount.sum(),
                 conceptsCount.sum(),
                 semanticsCount.sum(),
                 patternsCount.sum(),
                 stampsCount.sum(),
                 moduleList,
-                authorList);
+                authorList,
+                patternList);
     }
 
     /**

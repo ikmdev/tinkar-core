@@ -16,7 +16,6 @@
 package dev.ikm.tinkar.entity.load;
 
 import dev.ikm.tinkar.common.alert.AlertStreams;
-import dev.ikm.tinkar.common.id.EntityKey;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.id.impl.NidCodec6;
@@ -118,9 +117,17 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             updateMessage("Analyzing Import File...");
 
             // Analyze Manifest and update tracking callable
-            Map<PublicId, String> manifestEntryData =new HashMap();
-            long expectedImports = analyzeManifest(manifestEntryData);
+            Map<PublicId, String> manifestEntryData = new HashMap<>();
+            Set<PublicId> manifestPatternPublicIds = new HashSet<>();
+            long expectedImports = analyzeManifest(manifestEntryData, manifestPatternPublicIds);
             LOG.info(expectedImports + " Entities to process...");
+
+            // Pass 0: Pre-register pattern NIDs from manifest before any entity scan.
+            // This allows the entity stream to resolve semantic pattern NIDs without a
+            // separate full-file pass, enabling single-pass import for running changesets.
+            if (!manifestPatternPublicIds.isEmpty()) {
+                preRegisterPatternNids(manifestPatternPublicIds);
+            }
 
             if (useMultiPassImport) {
                 return computeMultiPass(expectedImports, manifestEntryData);
@@ -269,19 +276,22 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             }
             StringBuilder stringBuilder = new StringBuilder();
 
-            patternUuids.forEach(patternUuid -> {
-                int nid = PrimitiveData.get().nidForUuids(patternUuid);
-                PatternEntity patternEntity = EntityService.get().getEntityFast(nid);
-                StampCoordinate stampCoordinate = Coordinates.Stamp.DevelopmentLatest();
-                String entityText = PrimitiveData.textWithNid(nid);
-                PrimitiveData.getEntityKey(patternUuid).ifPresent(entityKey ->
-                        stringBuilder.append("\n\nPattern: ").append(entityText).append(" EntityKey: ").append(entityKey));
+            try {
+                patternUuids.forEach(patternUuid -> {
+                    int nid = PrimitiveData.get().nidForUuids(patternUuid);
+                    PatternEntity patternEntity = EntityService.get().getEntityFast(nid);
+                    StampCoordinate stampCoordinate = Coordinates.Stamp.DevelopmentLatest();
+                    String entityText = PrimitiveData.textWithNid(nid);
+                    PrimitiveData.getEntityKey(patternUuid).ifPresent((Object entityKey) ->
+                            stringBuilder.append("\n\nPattern: ").append(entityText).append(" EntityKey: ").append(entityKey));
 
-                stringBuilder.append("\n nid=").append(nid).append(" (0x").append(String.format("%08X", nid)).append(")").append(" pattern sequence=").append(NidCodec6.decodePatternSequence(nid)).append(" element sequence=").append(NidCodec6.decodeElementSequence(nid));
-                stringBuilder.append("\nPatternEntity: ").append(patternEntity);
-            });
-
-            LOG.info("PatternInfo:\n {}", stringBuilder);
+                    stringBuilder.append("\n nid=").append(nid).append(" (0x").append(String.format("%08X", nid)).append(")").append(" pattern sequence=").append(NidCodec6.decodePatternSequence(nid)).append(" element sequence=").append(NidCodec6.decodeElementSequence(nid));
+                    stringBuilder.append("\nPatternEntity: ").append(patternEntity);
+                });
+                LOG.info("PatternInfo:\n {}", stringBuilder);
+            } catch (StackOverflowError e) {
+                LOG.warn("StackOverflowError resolving pattern text descriptions (expected on fresh DB import), skipping debug output for {} pattern(s)", patternUuids.size());
+            }
 
             LOG.info("Imported {} entities", String.format("%,d", importCount.get()));
 
@@ -459,7 +469,20 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         );
     }
 
-    private long analyzeManifest(Map<PublicId, String> manifestEntryData) {
+    /**
+     * Pre-registers pattern NIDs from the manifest before scanning the entity stream.
+     * This is "Pass 0" — a fast operation that reads only the already-parsed manifest data,
+     * ensuring pattern sequences are allocated in RocksDB before semantics reference them.
+     */
+    private void preRegisterPatternNids(Set<PublicId> patternPublicIds) {
+        LOG.info("Pre-registering {} pattern NID(s) from manifest", patternPublicIds.size());
+        patternPublicIds.forEach(patternPublicId -> {
+            int nid = Entity.nidForPattern(patternPublicId);
+            LOG.debug("Pre-registered pattern NID {} for {}", nid, patternPublicId);
+        });
+    }
+
+    private long analyzeManifest(Map<PublicId, String> manifestEntryData, Set<PublicId> manifestPatternPublicIds) {
         long expectedImports = -1;
 
         // Read Manifest from Zip
@@ -473,11 +496,16 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                 if (zipEntry.getName().equals(MANIFEST_RELPATH)) {
                     Manifest manifest = new Manifest(zis);
                     expectedImports = Long.parseLong(manifest.getMainAttributes().getValue("Total-Count"));
-                    // Get Dependent Module / Author PublicIds and Descriptions
+                    // Separate pattern entries (Type: Pattern) from module/author dependency entries
                     manifest.getEntries().keySet().forEach((publicIdKey) -> {
                         PublicId publicId = PublicIds.of(publicIdKey.split(","));
-                        String description = manifest.getEntries().get(publicIdKey).getValue("Description");
-                        manifestEntryData.put(publicId, description);
+                        String type = manifest.getEntries().get(publicIdKey).getValue("Type");
+                        if ("Pattern".equals(type)) {
+                            manifestPatternPublicIds.add(publicId);
+                        } else {
+                            String description = manifest.getEntries().get(publicIdKey).getValue("Description");
+                            manifestEntryData.put(publicId, description);
+                        }
                     });
                     foundManifest = true;
                 }
@@ -516,8 +544,8 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         } else {
             LOG.info("Watch list not bound");
         }
-        dev.ikm.tinkar.common.id.EntityKey entityKey = PrimitiveData.getEntityKey(pattern.publicId(), entityId);
-        return entityKey.nid();
+        return ScopedValue.where(PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID, pattern.publicId())
+                .call(() -> PrimitiveData.nid(entityId.asUuidArray()));
     }
 
 }
