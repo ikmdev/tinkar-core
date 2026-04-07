@@ -4,7 +4,7 @@
 
 	<parent/>
 
-	<groupId>dev.ikm.tinkar.ext.binding</groupId>
+	<groupId>dev.ikm.tinkar.ext.owl</groupId>
 	<artifactId>owl-extension</artifactId>
 	<packaging>jar</packaging>
 
