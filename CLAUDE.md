@@ -1,6 +1,6 @@
-# Tinkar Core
+# tinkar-core
 
-Core data model, entity types, providers, and reasoning services for the Tinkar architecture.
+tinkar-core component.
 
 ## Build Standards
 
@@ -15,7 +15,16 @@ mvn clean verify -DskipTests -T4
 ## Key Facts
 
 - GroupId: `dev.ikm.tinkar`
-- Uses `--enable-preview` (Java 25) — set via `maven.compiler.enablePreview` in properties
+- Version: `1.127.2-SNAPSHOT`
+- Uses `--enable-preview` (Java 25)
 - BOM: imports `dev.ikm.ike:ike-bom` for dependency version management
-- Sub-aggregators (provider, reasoner, language-extensions) use `<subprojects>`
-- `tinkar-bom` submodule manages internal dependency versions for consumers
+
+## Prohibited Patterns
+
+- **Never use `maven-antrun-plugin`** — use a proper Maven goal or `exec-maven-plugin`
+- **Never use `build-helper-maven-plugin` for multi-execution property chaining** —
+  write a proper Maven goal in `ike-maven-plugin`
+- **Never embed shell commands inline in POM** — extract to a named script
+
+See `.claude/standards/` (after `mvn validate`) for full standards.
+See `CLAUDE-tinkar-core.md` for project-specific notes.
