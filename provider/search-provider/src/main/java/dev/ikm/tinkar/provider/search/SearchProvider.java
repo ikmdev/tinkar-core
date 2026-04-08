@@ -334,11 +334,6 @@ public class SearchProvider implements SearchService {
         }
 
         @Override
-        public Optional<Object> getService() {
-            return Optional.of(requireProvider());
-        }
-
-        @Override
         public int getSubPriority() {
             return 10; // Start early in INDEXING phase
         }

@@ -190,10 +190,28 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
                     LOG.info(uuidNidCollector.report());
                 }
                 LOG.info("Starting virtual thread for listAndCancelUncommittedStamps");
-                Thread.ofVirtual().start(() -> {
-                    EntityService.get().listAndCancelUncommittedStamps(
-                        stampNids.stream().sorted().mapToInt(value -> (int) value).toArray()
-                    );
+                int[] sortedStampNids = stampNids.stream().sorted().mapToInt(value -> (int) value).toArray();
+                Thread.ofVirtual().name("cancel-uncommitted-stamps").start(() -> {
+                    // EntityService starts in ENTITIES phase, after DATA_STORAGE where this provider starts.
+                    // Wait for it to become available rather than failing immediately.
+                    int maxAttempts = 60;
+                    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+                        Optional<EntityService> entityServiceOpt = ServiceLifecycleManager.get()
+                                .getRunningService(EntityService.class);
+                        if (entityServiceOpt.isPresent()) {
+                            entityServiceOpt.get().listAndCancelUncommittedStamps(sortedStampNids);
+                            return;
+                        }
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            LOG.warn("Interrupted while waiting for EntityService");
+                            return;
+                        }
+                    }
+                    LOG.warn("EntityService not available after {}s, skipping uncommitted stamp cancellation at startup",
+                            maxAttempts / 2);
                 });
                 LOG.info("UUID loading task completed");
             }).get();

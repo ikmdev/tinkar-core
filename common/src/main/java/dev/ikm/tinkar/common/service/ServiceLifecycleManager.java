@@ -934,12 +934,17 @@ public class ServiceLifecycleManager {
 
         // Fallback to generic getService() check for non-ProviderController services
         for (ServiceLifecycle lifecycle : activeServices.values()) {
-            Optional<Object> serviceOpt = lifecycle.getService();
-            if (serviceOpt.isPresent()) {
-                Object service = serviceOpt.get();
-                if (serviceType.isInstance(service)) {
-                    return Optional.of(serviceType.cast(service));
+            try {
+                Optional<Object> serviceOpt = lifecycle.getService();
+                if (serviceOpt.isPresent()) {
+                    Object service = serviceOpt.get();
+                    if (serviceType.isInstance(service)) {
+                        return Optional.of(serviceType.cast(service));
+                    }
                 }
+            } catch (IllegalStateException e) {
+                // Provider not started yet - this is expected during STARTING phase
+                LOG.debug("Service not available from lifecycle: {}", lifecycle.getClass().getName());
             }
         }
 
