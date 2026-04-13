@@ -18,16 +18,30 @@ package dev.ikm.tinkar.common.id.impl;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
+/**
+ * A single-element {@link IntIdList} implementation.
+ */
 public class IntId1List extends IntId1 implements IntIdList {
+    /**
+     * Constructs a single-element list.
+     *
+     * @param element the sole element
+     */
     public IntId1List(int element) {
         super(element);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isEmpty() {
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -41,11 +55,17 @@ public class IntId1List extends IntId1 implements IntIdList {
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int hashCode() {
         return 31 + element;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         return "IntIdList[" + PrimitiveData.textWithNid(element) + "]";

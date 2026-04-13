@@ -18,9 +18,20 @@ package dev.ikm.tinkar.common.id.impl;
 
 import dev.ikm.tinkar.common.id.IntIdSet;
 
+/**
+ * An empty {@link IntIdSet} implementation. Use {@link #INSTANCE} to obtain the singleton.
+ */
 public class IntId0Set extends IntId0 implements IntIdSet {
+
+    /** Constructs an empty set. */
+    private IntId0Set() {}
+
+    /** The singleton empty set instance. */
     public static final IntId0Set INSTANCE = new IntId0Set();
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -32,11 +43,17 @@ public class IntId0Set extends IntId0 implements IntIdSet {
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int hashCode() {
         return 0;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         return "IntIdSet[]";

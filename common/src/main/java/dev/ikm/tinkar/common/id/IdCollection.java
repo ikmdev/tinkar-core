@@ -15,9 +15,18 @@
  */
 package dev.ikm.tinkar.common.id;
 
+/**
+ * Base interface for collections of identifiers.
+ */
 public interface IdCollection {
+    /** Maximum number of elements to include in {@link Object#toString()} representations. */
     int TO_STRING_LIMIT = 32;
 
+    /**
+     * Returns the number of identifiers in this collection.
+     *
+     * @return the number of identifiers
+     */
     int size();
 
 }

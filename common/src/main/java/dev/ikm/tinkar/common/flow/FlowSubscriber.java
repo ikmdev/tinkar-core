@@ -19,15 +19,29 @@ import dev.ikm.tinkar.common.util.broadcast.Subscriber;
 
 import java.util.function.Consumer;
 
+/**
+ * A {@link Subscriber} implementation that delegates each received item to a {@link Consumer}.
+ *
+ * @param <T> the type of items received by this subscriber
+ */
 public class FlowSubscriber<T> implements Subscriber<T> {
 
+    /** The action to invoke for each received item. */
     Consumer<T> action;
 
+    /**
+     * Constructs a new {@code FlowSubscriber} that delegates to the given action.
+     *
+     * @param action the consumer to invoke for each received item
+     */
     public FlowSubscriber(Consumer<T> action) {
         this.action = action;
     }
 
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onNext(T next) {
         action.accept(next);

@@ -15,7 +15,17 @@
  */
 package dev.ikm.tinkar.common.id;
 
+/**
+ * Entry point for creating {@link IntIdList} and {@link IntIdSet} instances via
+ * the {@link #list} and {@link #set} factory fields.
+ */
 public class IntIds {
+
+    /** Private constructor to prevent instantiation. */
+    private IntIds() {}
+
+    /** Factory for creating {@link IntIdList} instances. */
     public static final IntIdListFactory list = IntIdListFactoryEnum.INSTANCE;
+    /** Factory for creating {@link IntIdSet} instances. */
     public static final IntIdSetFactory set = IntIdSetFactoryEnum.INSTANCE;
 }

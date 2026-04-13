@@ -19,21 +19,44 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 
+/**
+ * Provides access to the various thread pools used throughout the application.
+ */
 public interface ExecutorService {
 
-    /** The fork join executor. */
+    /**
+     * Returns the fork-join thread pool.
+     *
+     * @return the {@link ForkJoinPool}
+     */
     ForkJoinPool forkJoinThreadPool();
 
-    /** The blocking thread pool executor. */
+    /**
+     * Returns the thread pool for blocking operations.
+     *
+     * @return the blocking {@link ThreadPoolExecutor}
+     */
     ThreadPoolExecutor blockingThreadPool();
 
-    /** The thread pool executor. */
+    /**
+     * Returns the general-purpose thread pool.
+     *
+     * @return the {@link ThreadPoolExecutor}
+     */
     ThreadPoolExecutor threadPool();
 
-    /** The io thread pool executor. */
+    /**
+     * Returns the thread pool for I/O operations.
+     *
+     * @return the I/O {@link ThreadPoolExecutor}
+     */
     ThreadPoolExecutor ioThreadPool();
 
-    /** The scheduled executor. */
+    /**
+     * Returns the scheduled executor service.
+     *
+     * @return the {@link ScheduledExecutorService}
+     */
     ScheduledExecutorService scheduled();
 
 }

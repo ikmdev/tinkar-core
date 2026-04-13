@@ -15,6 +15,16 @@
  */
 package dev.ikm.tinkar.common.util.broadcast;
 
+/**
+ * A subscriber that receives broadcast items.
+ *
+ * @param <T> the type of items received
+ */
 public interface Subscriber<T> {
+    /**
+     * Called when the next item is available.
+     *
+     * @param item the item to process
+     */
     void onNext(T item);
 }

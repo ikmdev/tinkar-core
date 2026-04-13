@@ -28,16 +28,21 @@ import java.util.Comparator;
 import java.util.Optional;
 
 /**
- * {@link FileUtil}.
+ * Utility methods for reading, writing, and deleting files.
  */
 public class FileUtil {
-    /**
-     * The Constant LOG.
-     */
+
+    /** Constructs a new {@code FileUtil} instance. */
+    public FileUtil() {}
+
     private static final Logger LOG = LoggerFactory.getLogger(FileUtil.class);
 
-    //~--- methods -------------------------------------------------------------
-
+    /**
+     * Reads the contents of the given file as a string.
+     *
+     * @param file the file to read
+     * @return an {@link Optional} containing the file contents, or empty if an I/O error occurs
+     */
     public static Optional<String> readFile(File file) {
         return readFile(file.toPath());
     }
@@ -76,10 +81,23 @@ public class FileUtil {
         }
     }
 
+    /**
+     * Writes the given content to the specified file.
+     *
+     * @param file the file to write to
+     * @param content the content to write
+     */
     public void writeFile(File file, String content) {
         writeFile(file.toPath(), content);
     }
 
+    /**
+     * Writes the given content to the specified path.
+     *
+     * @param path the path to write to
+     * @param content the content to write
+     * @throws RuntimeException if an I/O error occurs
+     */
     public void writeFile(Path path, String content) {
         try {
             Files.writeString(path, content);

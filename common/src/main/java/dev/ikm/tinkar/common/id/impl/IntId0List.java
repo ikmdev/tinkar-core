@@ -17,9 +17,20 @@ package dev.ikm.tinkar.common.id.impl;
 
 import dev.ikm.tinkar.common.id.IntIdList;
 
+/**
+ * An empty {@link IntIdList} implementation. Use {@link #INSTANCE} to obtain the singleton.
+ */
 public class IntId0List extends IntId0 implements IntIdList {
+
+    /** Constructs an empty list. */
+    private IntId0List() {}
+
+    /** The singleton empty list instance. */
     public static final IntId0List INSTANCE = new IntId0List();
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -33,11 +44,17 @@ public class IntId0List extends IntId0 implements IntIdList {
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int hashCode() {
         return 1;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         return "IntIdList[]";

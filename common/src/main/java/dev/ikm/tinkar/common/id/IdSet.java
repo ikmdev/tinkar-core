@@ -15,5 +15,8 @@
  */
 package dev.ikm.tinkar.common.id;
 
+/**
+ * A collection of unique identifiers with no guaranteed ordering.
+ */
 public interface IdSet extends IdCollection {
 }

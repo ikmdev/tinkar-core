@@ -20,7 +20,17 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 
 import java.util.Arrays;
 
+/**
+ * A two-element {@link IntIdSet} implementation.
+ */
 public class IntId2Set extends IntId2 implements IntIdSet {
+    /**
+     * Constructs a two-element set.
+     *
+     * @param element the first element
+     * @param element2 the second element
+     * @throws IllegalStateException if the two elements are equal
+     */
     public IntId2Set(int element, int element2) {
         super(element, element2);
         if (element == element2) {
@@ -28,11 +38,17 @@ public class IntId2Set extends IntId2 implements IntIdSet {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isEmpty() {
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -48,11 +64,17 @@ public class IntId2Set extends IntId2 implements IntIdSet {
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int hashCode() {
         return element + element2;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         return "IntIdSet[" + PrimitiveData.textWithNid(element) + ", " + PrimitiveData.textWithNid(element2) + "]";

@@ -20,11 +20,23 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 
 import java.util.Arrays;
 
+/**
+ * A two-element {@link IntIdList} implementation.
+ */
 public class IntId2List extends IntId2 implements IntIdList {
+    /**
+     * Constructs a two-element list.
+     *
+     * @param element the first element
+     * @param element2 the second element
+     */
     public IntId2List(int element, int element2) {
         super(element, element2);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int get(int index) {
         if (index == 0) {
@@ -36,11 +48,17 @@ public class IntId2List extends IntId2 implements IntIdList {
         throw new IndexOutOfBoundsException("Index: " + index);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isEmpty() {
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -54,11 +72,17 @@ public class IntId2List extends IntId2 implements IntIdList {
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int hashCode() {
         return 31 * (31 + element) + element2;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         return "IntIdList[" + PrimitiveData.textWithNid(element) + ", " + PrimitiveData.textWithNid(element2) + "]";

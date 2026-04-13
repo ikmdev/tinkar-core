@@ -15,6 +15,9 @@
  */
 package dev.ikm.tinkar.common.id;
 
+/**
+ * An ordered collection of identifiers that preserves insertion order and allows duplicates.
+ */
 public interface IdList extends IdCollection {
 
 }

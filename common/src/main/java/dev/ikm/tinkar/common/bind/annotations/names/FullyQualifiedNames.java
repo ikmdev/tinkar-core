@@ -31,5 +31,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.FIELD})
 public @interface FullyQualifiedNames {
+    /**
+     * Returns the array of fully qualified name annotations associated with this type.
+     *
+     * @return the fully qualified name annotations
+     */
     FullyQualifiedName[] value();
 }

@@ -30,31 +30,58 @@ import java.util.stream.IntStream;
  */
 public class IntIdSetArray
         implements IntIdSet {
+    /** The backing array of elements. */
     private final int[] elements;
 
+    /**
+     * Constructs a set backed by the given array.
+     *
+     * @param newElements the elements for this set
+     */
     private IntIdSetArray(int... newElements) {
         this.elements = newElements;
     }
 
+    /**
+     * Creates a new {@code IntIdSetArray} from the given elements.
+     *
+     * @param newElements the elements
+     * @return a new set containing the elements
+     */
     public static IntIdSetArray newIntIdSet(int... newElements) {
         return new IntIdSetArray(newElements);
     }
 
+    /**
+     * Creates a new {@code IntIdSetArray} from elements that are already sorted.
+     *
+     * @param newElements the pre-sorted elements
+     * @return a new set containing the elements
+     */
     public static IntIdSetArray newIntIdSetAlreadySorted(int... newElements) {
         return new IntIdSetArray(newElements);
     }
 
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int size() {
         return elements.length;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public IntStream intStream() {
         return IntStream.of(elements);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean contains(int value) {
         // for small lists, iteration is faster search than binary search because of less branching.
@@ -72,16 +99,25 @@ public class IntIdSetArray
         return Arrays.binarySearch(clone, value) >= 0;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isEmpty() {
         return elements.length == 0;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int[] toArray() {
         return elements;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void forEach(IntConsumer consumer) {
         for (int element : elements) {
@@ -89,6 +125,9 @@ public class IntIdSetArray
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -114,6 +153,9 @@ public class IntIdSetArray
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int hashCode() {
         int h = 0;
@@ -123,6 +165,9 @@ public class IntIdSetArray
         return h;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("IntIdSet[");

@@ -22,8 +22,19 @@ import org.eclipse.collections.api.set.MutableSet;
 
 import java.util.function.IntFunction;
 
+/**
+ * A set of unique primitive {@code int} identifiers with no guaranteed ordering.
+ */
 public interface IntIdSet extends IdSet, IntIdCollection {
 
+    /**
+     * Maps each identifier to an object using the given function and returns the results
+     * as an {@link ImmutableSet}.
+     *
+     * @param <T> the element type of the resulting set
+     * @param function the mapping function from {@code int} to {@code T}
+     * @return an immutable set containing the mapped values
+     */
     default <T extends Object> ImmutableSet<T> map(IntFunction<T> function) {
         MutableSet<T> set = Sets.mutable.ofInitialCapacity(size());
         for (int nid : toArray()) {
@@ -32,6 +43,9 @@ public interface IntIdSet extends IdSet, IntIdCollection {
         return set.toImmutable();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     default IntIdSet with(int... valuesToAdd) {
         return IntIds.set.of(this, valuesToAdd);
     }

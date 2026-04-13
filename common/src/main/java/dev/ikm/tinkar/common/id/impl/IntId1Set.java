@@ -19,11 +19,22 @@ package dev.ikm.tinkar.common.id.impl;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
+/**
+ * A single-element {@link IntIdSet} implementation.
+ */
 public class IntId1Set extends IntId1 implements IntIdSet {
+    /**
+     * Constructs a single-element set.
+     *
+     * @param element the sole element
+     */
     public IntId1Set(int element) {
         super(element);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -35,11 +46,17 @@ public class IntId1Set extends IntId1 implements IntIdSet {
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int hashCode() {
         return element;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         return "IntIdSet[" + PrimitiveData.textWithNid(element) + "]";
