@@ -16,9 +16,10 @@
 package dev.ikm.tinkar.common.alert;
 
 /**
- * A subset of javafx.scene.control.Alert.AlertType
- *
- * 
+ * Severity levels for an {@link AlertObject}, modeled as a subset of
+ * {@code javafx.scene.control.Alert.AlertType}. Each level carries a flag
+ * indicating whether an alert of that severity should prevent a commit
+ * from succeeding.
  */
 public enum AlertType {
     /**
@@ -47,8 +48,14 @@ public enum AlertType {
      */
     SUCCESS(false);
 
+    /** Whether an alert of this type prevents a commit from succeeding. */
     private boolean alertPreventsCommit;
 
+    /**
+     * Constructs an {@code AlertType} with the specified commit-blocking behavior.
+     *
+     * @param alertPreventsCommit {@code true} if alerts of this type should block commits
+     */
     private AlertType(boolean alertPreventsCommit) {
         this.alertPreventsCommit = alertPreventsCommit;
     }
@@ -56,7 +63,7 @@ public enum AlertType {
     /**
      * For integration of alerts into the Commit API, we need to know if an alert is fatal to a commit or not.
      *
-     * @return
+     * @return {@code true} if an alert of this type should prevent a commit from succeeding
      */
     public boolean preventsCheckerPass() {
         return this.alertPreventsCommit;

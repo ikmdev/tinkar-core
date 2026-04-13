@@ -16,8 +16,12 @@
 package dev.ikm.tinkar.common.alert;
 
 /**
- * 
+ * Indicates whether a resolution applied by a {@link Resolver} or {@link AlertResolver}
+ * is temporary (valid only for the current session) or permanent (persisted across sessions).
  */
 public enum ResolutionPersistence {
-    TEMPORARY, PERMANENT
+    /** The resolution applies only for the duration of the current session. */
+    TEMPORARY,
+    /** The resolution is persisted and applies across sessions. */
+    PERMANENT
 }

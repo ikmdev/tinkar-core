@@ -15,7 +15,25 @@
  */
 package dev.ikm.tinkar.common.util.text;
 
+/**
+ * Utility for converting human-readable description text into a token-safe string
+ * suitable for use as identifiers or enum-like constants. Punctuation and special
+ * characters are stripped or replaced with underscore-based equivalents.
+ */
 public class DescriptionToToken {
+
+    /** Private constructor to prevent instantiation of this utility class. */
+    private DescriptionToToken() {
+        // utility class
+    }
+
+    /**
+     * Converts the given description text to a token string by replacing or removing
+     * punctuation and special characters.
+     *
+     * @param descriptionText the human-readable description to convert
+     * @return the token-safe string
+     */
     public static String get(String descriptionText) {
         String tokenString = descriptionText;
         tokenString = tokenString.replace(".", "");

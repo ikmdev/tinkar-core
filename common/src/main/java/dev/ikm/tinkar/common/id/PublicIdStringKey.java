@@ -29,21 +29,41 @@ import dev.ikm.tinkar.common.util.text.NaturalOrder;
  * <p>https://www.honeybadger.io/blog/uuids-and-ulids/
  * <p>https://www.getuniqueid.com/cuid
  * <p>T is the class this is a key for, to help code comprehension
+ *
+ * @param <T> the class this key is associated with, for code comprehension
  */
 public class PublicIdStringKey<T> implements PublicIdWithString<PublicIdStringKey> {
 
     final PublicId publicId;
     String string;
 
+    /**
+     * Constructs a new {@code PublicIdStringKey} with the given public identifier and display string.
+     *
+     * @param publicId the unique public identifier for this key
+     * @param string   the human-readable string associated with this key
+     */
     public PublicIdStringKey(PublicId publicId, String string) {
         this.publicId = publicId;
         this.string = string;
     }
 
+    /**
+     * Factory method that creates a new {@code PublicIdStringKey} with a randomly generated public identifier.
+     *
+     * @param string the human-readable string to associate with the new key
+     * @return a new {@code PublicIdStringKey} with a random public identifier
+     */
     public static PublicIdStringKey make(String string) {
         return new PublicIdStringKey(PublicIds.newRandom(), string);
     }
 
+    /**
+     * Decodes a {@code PublicIdStringKey} from the given decoder input.
+     *
+     * @param in the decoder input to read from
+     * @return a reconstructed {@code PublicIdStringKey}
+     */
     @Decoder
     public static PublicIdStringKey decode(DecoderInput in) {
         switch (Encodable.checkVersion(in)) {
@@ -67,10 +87,20 @@ public class PublicIdStringKey<T> implements PublicIdWithString<PublicIdStringKe
         return publicId.compareTo(o.getPublicId());
     }
 
+    /**
+     * Returns the human-readable string associated with this key.
+     *
+     * @return the display string
+     */
     public String getString() {
         return string;
     }
 
+    /**
+     * Returns the unique public identifier for this key.
+     *
+     * @return the public identifier
+     */
     public PublicId getPublicId() {
         return publicId;
     }
@@ -93,6 +123,11 @@ public class PublicIdStringKey<T> implements PublicIdWithString<PublicIdStringKe
         return string;
     }
 
+    /**
+     * Updates the human-readable string associated with this key.
+     *
+     * @param string the new display string
+     */
     public void updateString(String string) {
         this.string = string;
     }

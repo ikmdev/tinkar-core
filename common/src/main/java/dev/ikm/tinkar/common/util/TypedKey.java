@@ -215,7 +215,7 @@ import java.util.Objects;
  * </ul>
  *
  * @param <T> the type of value associated with this key
- * See also: {@code dev.ikm.komet.framework.property.TypedProperty} for ViewModel-specific properties
+ * @see <a href="https://github.com/IKE-Network">TypedProperty</a> in komet-framework for ViewModel-specific properties
  */
 public interface TypedKey<T> {
 
@@ -334,8 +334,12 @@ public interface TypedKey<T> {
 
     /**
      * Simple record implementation for standalone (non-enum) TypedKey instances.
-     * <p>     * This is an internal implementation detail used by the {@link #of(String, Class)}
+     * <p>This is an internal implementation detail used by the {@link #of(String, Class)}
      * factory method. Users should not instantiate this directly.
+     *
+     * @param <T> the type of value associated with this key
+     * @param key the string identifier
+     * @param type the expected value type
      */
     record TypedKeyImpl<T>(String key, Class<T> type) implements TypedKey<T> {
         /**
@@ -360,6 +364,7 @@ public interface TypedKey<T> {
             return type;
         }
 
+        /** {@inheritDoc} */
         @Override
         public String toString() {
             return "TypedKey[" + key + ": " + type.getSimpleName() + "]";

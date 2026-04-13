@@ -18,9 +18,18 @@ package dev.ikm.tinkar.common.util.text;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 
+/**
+ * Utility methods for escaping and unescaping text in XML contexts.
+ */
 public class EscapeUtil {
+
+    /** Private constructor to prevent instantiation of this utility class. */
+    private EscapeUtil() {
+        // utility class
+    }
+
     /**
-     * Escape characters for text appearing as XML data, between tags.
+     * Escapes characters for text appearing as XML data, between tags.
      *
      * <p>The following characters are replaced with corresponding character entities:</p>
      * <table border='1'>
@@ -32,6 +41,9 @@ public class EscapeUtil {
      * <tr><td> &quot; </td><td> &amp;quot;</td></tr>
      * <tr><td> &#039; </td><td> &amp;#039;</td></tr>
      * </table>
+     *
+     * @param aText the plain text to escape for XML
+     * @return the XML-safe escaped string
      */
     public static String forXML(String aText){
         final StringBuilder result = new StringBuilder();
@@ -63,6 +75,12 @@ public class EscapeUtil {
         return result.toString();
     }
 
+    /**
+     * Unescapes XML character entities back to their original characters.
+     *
+     * @param aText the XML-escaped text to unescape
+     * @return the unescaped plain text
+     */
     public static String fromXML(String aText) {
         aText = aText.replace("&lt;", "<");
         aText = aText.replace("&quot;", ">");

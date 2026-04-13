@@ -31,19 +31,51 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>Each node has a set of resolvers that can be automatically or manually applied.
 
  */
+/**
+ * Registry of named {@link Broadcaster} instances used to dispatch {@link AlertObject}
+ * notifications. Each stream is identified by a {@link PublicIdStringKey} and lazily
+ * created on first access. The {@link #ROOT_ALERT_STREAM_KEY root stream} serves as the
+ * default destination for alerts that are not scoped to a specific node or window.
+ */
 public class AlertStreams {
+
+    /** Private constructor to prevent instantiation of this utility class. */
+    private AlertStreams() {
+    }
+
+    /** Key identifying the root (application-level) alert stream. */
     public static final PublicIdStringKey<Broadcaster<AlertObject>> ROOT_ALERT_STREAM_KEY =
             new PublicIdStringKey(PublicIds.of("d2733c61-fef3-4051-bc96-137819a18d0a"), "root alert stream");
+
+    /** Map from stream key to lazily-created broadcaster instances. */
     private static ConcurrentHashMap<PublicIdStringKey<Broadcaster<AlertObject>>, Broadcaster<AlertObject>> alertStreamMap = new ConcurrentHashMap<>();
 
+    /**
+     * Convenience method that wraps the given throwable in an error-level
+     * {@link AlertObject} and dispatches it to the root alert stream.
+     *
+     * @param e the throwable to dispatch as an error alert
+     */
     public static void dispatchToRoot(Throwable e) {
         getRoot().dispatch(AlertObject.makeError(e));
     }
 
+    /**
+     * Returns the root (application-level) alert broadcaster, creating it if necessary.
+     *
+     * @return the root {@link Broadcaster} for {@link AlertObject} instances
+     */
     public static Broadcaster<AlertObject> getRoot() {
         return get(ROOT_ALERT_STREAM_KEY);
     }
 
+    /**
+     * Returns the alert broadcaster for the given key, creating a new
+     * {@link SimpleBroadcaster} if one does not already exist.
+     *
+     * @param alertStreamKey the key identifying the desired alert stream
+     * @return the {@link Broadcaster} associated with the given key
+     */
     public static Broadcaster<AlertObject> get(PublicIdStringKey<Broadcaster<AlertObject>> alertStreamKey) {
         return AlertStreams.alertStreamMap.computeIfAbsent(alertStreamKey, alertStreamPublicIdStringKey -> new SimpleBroadcaster<>());
     }

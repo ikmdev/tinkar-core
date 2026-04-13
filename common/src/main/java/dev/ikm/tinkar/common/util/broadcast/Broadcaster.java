@@ -16,10 +16,35 @@
 package dev.ikm.tinkar.common.util.broadcast;
 
 
+/**
+ * A publish-subscribe dispatcher that delivers items to registered subscribers.
+ * Subscribers are held via weak references so they can be garbage-collected
+ * when no longer strongly reachable.
+ *
+ * @param <T> the type of item dispatched to subscribers
+ */
 public interface Broadcaster<T> {
 
+    /**
+     * Dispatches the given item to all currently registered subscribers.
+     *
+     * @param item the item to broadcast
+     */
     void dispatch(T item);
+
+    /**
+     * Registers a subscriber using a weak reference, allowing it to be
+     * garbage-collected when no strong references remain.
+     *
+     * @param subscriber the subscriber to register
+     */
     void addSubscriberWithWeakReference(Subscriber<T> subscriber);
+
+    /**
+     * Removes a previously registered subscriber so it no longer receives dispatched items.
+     *
+     * @param subscriber the subscriber to remove
+     */
     void removeSubscriber(Subscriber<T> subscriber);
 
 }

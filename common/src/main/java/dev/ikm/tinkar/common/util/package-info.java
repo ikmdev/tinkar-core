@@ -13,4 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ * General-purpose utility classes for arrays, typed keys, broadcasting,
+ * I/O helpers, natural-order text comparison, and date/time formatting.
+ */
 package dev.ikm.tinkar.common.util;

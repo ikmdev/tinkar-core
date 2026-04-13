@@ -23,12 +23,18 @@ import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 
 /**
- *
+ * An array-backed implementation of {@link IntIdList} that stores native identifiers (NIDs)
+ * in a compact integer array.
  */
 public final class IntIdListArray
         implements IntIdList {
     private final int[] elements;
 
+    /**
+     * Constructs a new {@code IntIdListArray} with the given elements.
+     *
+     * @param newElements the integer identifiers to store in this list
+     */
     public IntIdListArray(int... newElements) {
         this.elements = newElements;
     }

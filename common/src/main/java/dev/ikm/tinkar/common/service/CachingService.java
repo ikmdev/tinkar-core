@@ -25,8 +25,13 @@ import java.util.ServiceLoader;
  * may need to be reset at runtime.
  */
 public interface CachingService {
+    /** Logger for caching service lifecycle events. */
     Logger LOG = LoggerFactory.getLogger(CachingService.class);
 
+    /**
+     * Resets all registered caching services by iterating over all available
+     * {@code CachingService} implementations and invoking {@link #reset()} on each.
+     */
     static void clearAll() {
         ServiceLoader<CachingService> serviceLoader = PluggableService.load(CachingService.class);
         serviceLoader.forEach(cachingService -> {
@@ -35,5 +40,9 @@ public interface CachingService {
         });
     }
 
+    /**
+     * Resets this caching service, clearing all cached data so that subsequent
+     * lookups will be recomputed from their sources.
+     */
     void reset();
 }

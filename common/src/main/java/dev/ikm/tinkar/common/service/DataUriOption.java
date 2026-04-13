@@ -20,6 +20,13 @@ import java.io.File;
 import java.net.URI;
 import java.nio.file.Paths;
 
+/**
+ * Represents a selectable data source option, pairing a human-readable name
+ * with a URI pointing to the data location.
+ *
+ * @param name the display name for this data source option
+ * @param uri  the URI identifying the data source location
+ */
 public record DataUriOption(String name, URI uri) {
 
     @Override
@@ -27,6 +34,11 @@ public record DataUriOption(String name, URI uri) {
         return name;
     }
 
+    /**
+     * Converts this option's URI to a {@link File} reference.
+     *
+     * @return a {@link File} pointing to this option's data location
+     */
     public File toFile() {
         return Paths.get(uri).toFile();
     }

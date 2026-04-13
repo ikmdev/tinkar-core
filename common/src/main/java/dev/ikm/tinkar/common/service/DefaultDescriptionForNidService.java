@@ -30,10 +30,23 @@ import java.util.Optional;
  * service will provide the first description found irrespective of type, status, language, or dialect.
  */
 public interface DefaultDescriptionForNidService {
+
+    /**
+     * Returns a list of optional description texts for the given native identifier collection.
+     *
+     * @param nids the collection of native identifiers to look up
+     * @return a list of optional strings, one per nid
+     */
     default List<Optional<String>> optionalTextList(IntIdCollection nids) {
         return optionalTextList(nids.toArray());
     }
 
+    /**
+     * Returns a list of optional description texts for the given native identifiers.
+     *
+     * @param nids the native identifiers to look up
+     * @return a list of optional strings, one per nid
+     */
     default List<Optional<String>> optionalTextList(int... nids) {
         List<Optional<String>> textList = new ArrayList<>(nids.length);
         for (int nid : nids) {
@@ -42,6 +55,14 @@ public interface DefaultDescriptionForNidService {
         return textList;
     }
 
+    /**
+     * Returns an optional description text for the given native identifier.
+     * If {@link #textFast(int)} throws a {@link RuntimeException}, the exception
+     * is dispatched to the root alert stream and an empty optional is returned.
+     *
+     * @param nid the native identifier to look up
+     * @return an optional containing the description text, or empty if unavailable
+     */
     default Optional<String> textOptional(int nid) {
         try {
             return Optional.ofNullable(textFast(nid));
@@ -52,19 +73,45 @@ public interface DefaultDescriptionForNidService {
     }
 
     /**
-     * May throw a RuntimeException if invoked prior to database initialization. Otherwise, should always return
-     * a String.
+     * Returns the description text for the given native identifier without
+     * wrapping in an {@link Optional}. May throw a {@link RuntimeException}
+     * if invoked prior to database initialization. Otherwise, should always
+     * return a non-null string.
+     *
+     * @param nid the native identifier to look up
+     * @return the description text, or {@code null} if none is found
+     * @throws RuntimeException if the database is not yet initialized
      */
     String textFast(int nid);
 
+    /**
+     * Returns a list of optional description texts for the given int list of nids.
+     *
+     * @param nids the int list of native identifiers to look up
+     * @return a list of optional strings, one per nid
+     */
     default List<Optional<String>> optionalTextList(IntList nids) {
         return optionalTextList(nids.toArray());
     }
 
+    /**
+     * Returns a list of optional description texts for the given int set of nids.
+     *
+     * @param nids the int set of native identifiers to look up
+     * @return a list of optional strings, one per nid
+     */
     default List<Optional<String>> optionalTextList(IntSet nids) {
         return optionalTextList(nids.toArray());
     }
 
+    /**
+     * Returns a list of non-null description texts for the given native identifiers.
+     * If no description is found for a nid, a placeholder string containing the nid
+     * value is used instead.
+     *
+     * @param nids the native identifiers to look up
+     * @return a list of description strings, one per nid
+     */
     default List<String> textList(int... nids) {
         List<String> textList = new ArrayList<>(nids.length);
         for (int nid : nids) {
@@ -73,6 +120,13 @@ public interface DefaultDescriptionForNidService {
         return textList;
     }
 
+    /**
+     * Returns the description text for the given native identifier, falling back
+     * to a placeholder string of the form {@code "<nid>"} if no description is found.
+     *
+     * @param nid the native identifier to look up
+     * @return the description text, or a placeholder if none is found
+     */
     default String text(int nid) {
         String textFast = textFast(nid);
         if (textFast == null) {
@@ -81,14 +135,32 @@ public interface DefaultDescriptionForNidService {
         return textFast;
     }
 
+    /**
+     * Returns a list of optional description texts for the given identifier collection.
+     *
+     * @param nids the collection of native identifiers to look up
+     * @return a list of optional strings, one per nid
+     */
     default List<Optional<String>> textList(IntIdCollection nids) {
         return optionalTextList(nids.toArray());
     }
 
+    /**
+     * Returns a list of optional description texts for the given int list of nids.
+     *
+     * @param nids the int list of native identifiers to look up
+     * @return a list of optional strings, one per nid
+     */
     default List<Optional<String>> textList(IntList nids) {
         return optionalTextList(nids.toArray());
     }
 
+    /**
+     * Returns a list of optional description texts for the given int set of nids.
+     *
+     * @param nids the int set of native identifiers to look up
+     * @return a list of optional strings, one per nid
+     */
     default List<Optional<String>> textList(IntSet nids) {
         return optionalTextList(nids.toArray());
     }

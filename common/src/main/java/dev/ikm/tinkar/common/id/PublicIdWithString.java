@@ -20,7 +20,8 @@ import dev.ikm.tinkar.common.binary.Encodable;
 /**
  * An interface that can be implemented by an enum, and can also be made compatible
  * with a future concept binding that may exist in a starter set or elsewhere.
- * @param <T>
+ *
+ * @param <T> the implementing type, enabling self-referential comparisons
  */
 public interface PublicIdWithString<T> extends Comparable<PublicIdStringKey>, Encodable {
 }

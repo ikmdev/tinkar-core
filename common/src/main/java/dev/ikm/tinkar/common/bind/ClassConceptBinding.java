@@ -42,6 +42,8 @@ import java.util.function.Supplier;
  * on annotations and class data while maintaining immutability in the resulting lists and identifiers.
  */
 public interface ClassConceptBinding {
+
+    /** UUID namespace used for generating deterministic type-5 UUIDs when no explicit public id is annotated. */
     UUID uuidNameSpace = UUID.fromString("6cb071e7-661f-4694-8c3b-3176bcfd443f");
 
     /**

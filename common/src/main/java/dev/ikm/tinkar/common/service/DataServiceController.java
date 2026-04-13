@@ -55,23 +55,54 @@ import java.util.Optional;
  */
 public interface DataServiceController<P> {
 
-    /** Properties that are necessary to configure the service. */
+    /**
+     * Returns the properties necessary to configure this service.
+     *
+     * @return an immutable map of configuration properties and their current values
+     */
     default ImmutableMap<DataServiceProperty, String> providerProperties() {
         return Maps.immutable.empty();
     }
 
+    /**
+     * Retrieves the value of a data service property by key.
+     *
+     * @param propertyKey the property to look up
+     * @return an {@link Optional} containing the property value, or empty if not set
+     */
     default Optional<String> getDataServiceProperty(DataServiceProperty propertyKey) {
         return Optional.ofNullable(providerProperties().get(propertyKey));
     }
 
+    /**
+     * Sets a data service configuration property.
+     *
+     * @param key   the property key
+     * @param value the property value
+     * @throws UnsupportedOperationException if this controller does not support property modification
+     */
     default void setDataServiceProperty(DataServiceProperty key, String value) {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * Validates a data service property value against the given target.
+     *
+     * @param dataServiceProperty the property to validate
+     * @param value               the proposed value
+     * @param target              the validation target context
+     * @return an array of validation records, empty if validation passes
+     */
     default ValidationRecord[] validate(DataServiceProperty dataServiceProperty, Object value, Object target) {
         return new ValidationRecord[] {};
     }
 
+    /**
+     * Returns the available data URI options for this provider, typically
+     * discovered by scanning the user's Solor directory for valid data locations.
+     *
+     * @return a list of available data URI options
+     */
     default List<DataUriOption> providerOptions() {
         List<DataUriOption> dataUriOptions = new ArrayList<>();
         File rootFolder = new File(System.getProperty("user.home"), "Solor");
@@ -104,18 +135,47 @@ public interface DataServiceController<P> {
         return true;
     }
 
+    /**
+     * Returns the display name for this controller, used for user-facing identification
+     * in menus and status displays.
+     *
+     * @return the human-readable controller name
+     */
     String controllerName();
+
+    /**
+     * Returns whether the data service managed by this controller is currently running.
+     *
+     * @return {@code true} if the service is running, {@code false} otherwise
+     */
     boolean running();
+
+    /**
+     * Starts the data service managed by this controller.
+     */
     void start();
+
+    /**
+     * Stops the data service managed by this controller.
+     */
     void stop();
+
+    /**
+     * Persists any in-memory state of the data service to durable storage.
+     */
     void save();
+
+    /**
+     * Reloads the data service, re-reading configuration and reinitializing internal state.
+     */
     void reload();
 
     // Note: serviceClasses() and provider() are inherited from ProviderController base class
 
     /**
+     * Returns whether this controller is currently loading a new database from file.
      *
-     * @return true if loading new database from file.
+     * @return {@code true} if loading a new database from file, {@code false} otherwise
      */
     default boolean loading() {
         return false;

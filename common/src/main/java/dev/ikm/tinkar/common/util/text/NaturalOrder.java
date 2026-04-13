@@ -18,11 +18,14 @@ package dev.ikm.tinkar.common.util.text;
 import java.util.Comparator;
 
 /**
- * Looking for more efficient implementation than AplphanumComparator which allocates memory,
- * and breaks strings into parts.
- * Solution found at: https://stackoverflow.com/questions/104599/sort-on-a-string-that-may-contain-a-number
+ * A {@link Comparator} that sorts strings in natural (human-friendly) order,
+ * treating embedded numeric substrings as numbers rather than character sequences.
+ * For example, "item2" sorts before "item10".
  *
- * 
+ * <p>The implementation avoids allocating intermediate objects such as substrings
+ * or character arrays, making it suitable for performance-sensitive sorting.
+ *
+ * @param <T> the type of objects to compare (via {@link Object#toString()})
  */
 public class NaturalOrder<T extends Object> implements Comparator<T> {
 
@@ -40,10 +43,21 @@ public class NaturalOrder<T extends Object> implements Comparator<T> {
    private static final Comparator<Object> objectNaturalOrder = new NaturalOrder<>();
    private static final Comparator<String> stringNaturalOrder = new StringNaturalOrder();
 
+   /**
+    * Returns a comparator that applies natural ordering to arbitrary objects
+    * by comparing their {@link Object#toString()} representations.
+    *
+    * @return a natural-order comparator for objects
+    */
    public static final Comparator<Object> getObjectComparator() {
       return objectNaturalOrder;
    }
 
+   /**
+    * Returns a comparator that applies natural ordering to strings.
+    *
+    * @return a natural-order comparator for strings
+    */
    public static final Comparator<String> getStringComparator() {
       return stringNaturalOrder;
    }
@@ -114,6 +128,9 @@ public class NaturalOrder<T extends Object> implements Comparator<T> {
       // No digits
       return (Character.toLowerCase(c1) - Character.toLowerCase(c2));
    }
+   /**
+    * {@inheritDoc}
+    */
    @Override
    public int compare(Object o1, Object o2) {
       return compareStrings(o1.toString(), o2.toString());

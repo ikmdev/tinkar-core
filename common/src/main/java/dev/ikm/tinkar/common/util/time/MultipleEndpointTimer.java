@@ -23,7 +23,8 @@ import java.util.concurrent.atomic.LongAdder;
 
 /**
  * Supports timing on concurrent threads with statistics for multiple endpoints.
- * @param <T>
+ *
+ * @param <T> an enum type whose constants identify the individual endpoints
  */
 public class MultipleEndpointTimer<T extends Enum<T>> {
     final Class<T> endPointsEnumClass;
@@ -32,6 +33,11 @@ public class MultipleEndpointTimer<T extends Enum<T>> {
 
     final T[] enums;
 
+    /**
+     * Creates a timer that collects statistics for each constant in the given enum class.
+     *
+     * @param endPointsEnumClass the enum class whose constants define the endpoints
+     */
     public MultipleEndpointTimer(Class<T> endPointsEnumClass) {
         this.endPointsEnumClass = endPointsEnumClass;
         enums = endPointsEnumClass.getEnumConstants();
@@ -41,9 +47,19 @@ public class MultipleEndpointTimer<T extends Enum<T>> {
         }
     }
 
+    /**
+     * Starts and returns a new {@link Stopwatch} that begins timing immediately.
+     *
+     * @return a new running stopwatch
+     */
     public Stopwatch startNew() {
         return new Stopwatch();
     }
+    /**
+     * Returns a brief progress string showing global (all-endpoint) statistics.
+     *
+     * @return the progress summary
+     */
     public String progress() {
         StringBuilder sb = new StringBuilder();
         sb.append("Processed ");
@@ -52,6 +68,12 @@ public class MultipleEndpointTimer<T extends Enum<T>> {
         return sb.toString();
     }
 
+    /**
+     * Returns a detailed summary string with per-endpoint and overall statistics
+     * (count, min, mean, and max durations).
+     *
+     * @return the full summary
+     */
     public String summary() {
         StringBuilder sb = new StringBuilder();
         for (T enumValue: enums) {
@@ -97,10 +119,21 @@ public class MultipleEndpointTimer<T extends Enum<T>> {
         }
     }
 
+    /**
+     * A simple stopwatch that records the elapsed time between creation and
+     * a call to one of the {@code end} methods.
+     */
     public class Stopwatch {
         private final Instant start = Instant.now();
         private Instant end;
 
+        /**
+         * Stops the stopwatch and records the elapsed duration against the specified
+         * endpoint as well as the global statistics.
+         *
+         * @param endPoint the endpoint to attribute this timing to
+         * @return the elapsed duration
+         */
         public Duration end(T endPoint) {
             this.end = Instant.now();
             SumInfo sumInfoForEndpoint = sumInfoArray[endPoint.ordinal()];
@@ -110,6 +143,12 @@ public class MultipleEndpointTimer<T extends Enum<T>> {
             globalInfo.accept(nanoseconds);
             return duration;
         }
+        /**
+         * Stops the stopwatch and records the elapsed duration against the global
+         * statistics only (no specific endpoint).
+         *
+         * @return the elapsed duration
+         */
         public Duration end() {
             this.end = Instant.now();
              Duration duration = Duration.between(start, end);

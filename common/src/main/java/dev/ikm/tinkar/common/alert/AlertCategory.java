@@ -17,8 +17,20 @@ package dev.ikm.tinkar.common.alert;
 
 
 /**
- * 
+ * Categories that classify the origin or domain of an {@link AlertObject}.
+ * Each category identifies the subsystem or operation that produced the alert.
  */
 public enum AlertCategory {
-    TAXONOMY, CLASSIFIER, ADD_UNCOMMITTED, COMMIT, ENVIRONMENT, UNSPECIFIED
+    /** An alert related to taxonomy operations. */
+    TAXONOMY,
+    /** An alert related to classifier operations. */
+    CLASSIFIER,
+    /** An alert related to adding uncommitted changes. */
+    ADD_UNCOMMITTED,
+    /** An alert related to commit operations. */
+    COMMIT,
+    /** An alert related to the runtime environment. */
+    ENVIRONMENT,
+    /** An alert whose category has not been specified. */
+    UNSPECIFIED
 }

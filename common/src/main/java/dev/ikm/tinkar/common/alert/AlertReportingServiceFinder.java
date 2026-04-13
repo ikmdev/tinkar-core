@@ -19,11 +19,24 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.ServiceLoader;
 
+/**
+ * Singleton finder that discovers and caches the {@link AlertReportingService} implementation
+ * via {@link java.util.ServiceLoader}. Access the service through {@link #INSTANCE}.{@link #get()}.
+ *
+ */
 public enum AlertReportingServiceFinder {
+    /** The singleton instance of this finder. */
     INSTANCE;
 
+    /** The discovered {@link AlertReportingService} implementation. */
     final AlertReportingService service;
 
+    /**
+     * Constructs the finder by loading the first available {@link AlertReportingService}
+     * via {@link java.util.ServiceLoader}.
+     *
+     * @throws java.util.NoSuchElementException if no implementation is available
+     */
     AlertReportingServiceFinder() {
         Class serviceClass = AlertReportingService.class;
         ServiceLoader<AlertReportingService> PluggableServiceLoader = ServiceLoader.load(serviceClass);
@@ -37,6 +50,11 @@ public enum AlertReportingServiceFinder {
         }
     }
 
+    /**
+     * Returns the discovered {@link AlertReportingService} implementation.
+     *
+     * @return the cached {@link AlertReportingService} instance
+     */
     public AlertReportingService get() {
         return service;
     }

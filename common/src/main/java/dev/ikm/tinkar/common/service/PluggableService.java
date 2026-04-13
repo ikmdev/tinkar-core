@@ -20,7 +20,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * PluggablePluggableServiceLoader is a utility class used to load service providers using the {@link ServiceLoader} mechanism.
+ * Utility class for loading service providers using the {@link ServiceLoader} mechanism,
+ * with support for a pluggable class loader to enable OSGi and other modular runtime environments.
+ *
+ * @param <S> the service type
  */
 public class PluggableService<S> {
     private static AtomicReference<PluginServiceLoader> pluggableServiceAtomic = new AtomicReference<>();
@@ -60,9 +63,11 @@ public class PluggableService<S> {
 
     /**
      * A simplified method to load when there should only be one and only one instance of a service.
-     * @param service
-     * @return
-     * @param <S>
+     *
+     * @param service the service class to load
+     * @param <S>     the type of the service
+     * @return the single service instance
+     * @throws IllegalStateException if more than one provider is registered for the service
      */
     public static <S> S first(Class<S> service) {
         return (S) cachedServices.computeIfAbsent(service, serviceClass -> {
@@ -75,10 +80,13 @@ public class PluggableService<S> {
      }
 
     /**
-     * Use the plugin class loader provided by the plugable service loader to
-     * @param className
-     * @return
-     * @throws ClassNotFoundException
+     * Uses the plugin class loader provided by the pluggable service loader to
+     * resolve a class by name. Falls back to {@link Class#forName(String)} when
+     * no pluggable service loader is configured.
+     *
+     * @param className the fully qualified name of the class to load
+     * @return the {@link Class} object for the specified class name
+     * @throws ClassNotFoundException if the class cannot be found
      */
      public static Class<?> forName(String className) throws ClassNotFoundException {
          if (pluggableServiceAtomic.get() == null) {

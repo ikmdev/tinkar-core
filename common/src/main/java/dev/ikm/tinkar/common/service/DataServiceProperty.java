@@ -15,6 +15,14 @@
  */
 package dev.ikm.tinkar.common.service;
 
+/**
+ * Describes a configuration property for a {@link DataServiceController}, including
+ * metadata about how the property should be presented and validated in a UI.
+ *
+ * @param propertyName the name of the configuration property
+ * @param hiddenText   {@code true} if the property value should be masked in the UI (e.g., passwords)
+ * @param validate     {@code true} if the property value should be validated before acceptance
+ */
 public record DataServiceProperty(String propertyName, boolean hiddenText, boolean validate) {
 
 }

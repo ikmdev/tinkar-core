@@ -18,16 +18,28 @@ package dev.ikm.tinkar.common.util.io;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * An {@link InputStream} wrapper that counts the number of bytes read from the
+ * underlying stream.
+ */
 public class CountingInputStream extends InputStream implements AutoCloseable {
 
     private long bytesRead = 0 ;
 
     private final InputStream stream ;
 
+    /**
+     * Wraps the given input stream so that bytes read through this stream are counted.
+     *
+     * @param stream the underlying input stream to wrap
+     */
     public CountingInputStream(InputStream stream) {
         this.stream = stream ;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int read() throws IOException {
         int result = stream.read() ;
@@ -37,12 +49,20 @@ public class CountingInputStream extends InputStream implements AutoCloseable {
         return result ;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void close() throws IOException {
         super.close();
         stream.close();
     }
 
+    /**
+     * Returns the total number of bytes read from the underlying stream so far.
+     *
+     * @return the byte count
+     */
     public long getBytesRead() {
         return bytesRead ;
     }

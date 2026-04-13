@@ -15,6 +15,15 @@
  */
 package dev.ikm.tinkar.common.service;
 
+/**
+ * An immutable summary of entity counts within a Tinkar datastore,
+ * broken down by entity type: concepts, semantics, patterns, and stamps.
+ *
+ * @param conceptCount  the number of concept entities
+ * @param semanticCount the number of semantic entities
+ * @param patternCount  the number of pattern entities
+ * @param stampCount    the number of stamp entities
+ */
 public record EntityCountSummary(
         long conceptCount,
         long semanticCount,
@@ -22,6 +31,11 @@ public record EntityCountSummary(
         long stampCount
     ) {
 
+    /**
+     * Returns the sum of all entity counts.
+     *
+     * @return the total count across all entity types
+     */
     public long getTotalCount() {
         return conceptCount + semanticCount + patternCount + stampCount;
     }

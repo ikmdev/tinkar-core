@@ -18,10 +18,12 @@ package dev.ikm.tinkar.common.util.time;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
- * 
+ * Utility methods for formatting {@link java.time.Duration} values into human-readable
+ * strings and ISO 8601 duration representations.
  */
 public class DurationUtil {
+    /** Private constructor to prevent instantiation. */
+    private DurationUtil() {}
     /**
      * Seconds per minute.
      */
@@ -37,6 +39,14 @@ public class DurationUtil {
      */
     static final int SECONDS_PER_HOUR = SECONDS_PER_MINUTE * MINUTES_PER_HOUR;
 
+    /**
+     * Formats a {@link java.time.Duration} into a concise human-readable string
+     * using the most appropriate time unit (hours, minutes, seconds, milliseconds,
+     * microseconds, or nanoseconds).
+     *
+     * @param d the duration to format
+     * @return a human-readable duration string (e.g., "2 h 15 m 3 s" or "42 ms")
+     */
     public static String format(java.time.Duration d) {
         final StringBuilder builder = new StringBuilder();
         final long          seconds = d.getSeconds();
@@ -83,6 +93,13 @@ public class DurationUtil {
                 .toString();
     }
 
+    /**
+     * Converts a duration in milliseconds to an ISO 8601 duration string
+     * (e.g., "P1Y2M3DT4H5M6.789S").
+     *
+     * @param milliseconds the duration in milliseconds
+     * @return the ISO 8601 duration representation
+     */
     public static String msTo8601(long milliseconds) {
         StringBuilder builder = new StringBuilder();
         builder.append("P");

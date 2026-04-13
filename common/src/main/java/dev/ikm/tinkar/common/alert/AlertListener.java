@@ -15,6 +15,17 @@
  */
 package dev.ikm.tinkar.common.alert;
 
+/**
+ * Listener interface for receiving notifications when an {@link AlertObject} is raised.
+ * Implementations define how individual alerts are handled (e.g., displayed to the user,
+ * logged, or forwarded to another subsystem).
+ */
 public interface AlertListener {
+
+    /**
+     * Invoked when an alert is raised that this listener should process.
+     *
+     * @param alert the {@link AlertObject} describing the alert condition
+     */
     void handleAlert(AlertObject alert);
 }

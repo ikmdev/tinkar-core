@@ -15,20 +15,51 @@
  */
 package dev.ikm.tinkar.common.binary;
 
+/**
+ * Unchecked exception thrown when binary encoding or decoding operations encounter
+ * errors such as version mismatches or missing decoder methods.
+ */
 public class EncodingExceptionUnchecked extends RuntimeException {
 
+    /**
+     * Constructs an encoding exception with the specified detail message.
+     *
+     * @param message the detail message
+     */
     public EncodingExceptionUnchecked(String message) {
         super(message);
     }
 
+    /**
+     * Constructs an encoding exception with the specified cause.
+     *
+     * @param cause the underlying cause of this exception
+     */
     public EncodingExceptionUnchecked(Throwable cause) {
         super(cause);
     }
 
+    /**
+     * Creates an exception indicating that the encoding version in the decoder input
+     * does not match the single expected version.
+     *
+     * @param expected the expected encoding version
+     * @param in the decoder input containing the actual version
+     * @return the constructed exception
+     */
     public static EncodingExceptionUnchecked makeWrongVersionException(int expected, DecoderInput in) {
         return new EncodingExceptionUnchecked("Wrong encoding version. Expected: " + expected + " found: " + in.encodingFormatVersion());
     }
 
+    /**
+     * Creates an exception indicating that the encoding version in the decoder input
+     * falls outside the supported range.
+     *
+     * @param lowerBound the lowest supported encoding version (inclusive)
+     * @param upperBound the highest supported encoding version (inclusive)
+     * @param in the decoder input containing the actual version
+     * @return the constructed exception
+     */
     public static EncodingExceptionUnchecked makeWrongVersionException(int lowerBound, int upperBound, DecoderInput in) {
         return new EncodingExceptionUnchecked("Wrong encoding version. Expected version between [" +
                 lowerBound + ", " + upperBound + "] found: " + in.encodingFormatVersion());

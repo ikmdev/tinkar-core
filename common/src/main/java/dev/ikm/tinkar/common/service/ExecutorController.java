@@ -17,7 +17,23 @@ package dev.ikm.tinkar.common.service;
 
 import java.util.ServiceConfigurationError;
 
+/**
+ * Service provider interface for creating and stopping the application's
+ * {@link ExecutorService}. Implementations are loaded via {@link java.util.ServiceLoader}.
+ */
 public interface ExecutorController {
+
+    /**
+     * Creates and returns a new {@link ExecutorService} instance.
+     *
+     * @return the newly created executor service
+     * @throws ServiceConfigurationError if the executor service cannot be created
+     */
     ExecutorService create() throws ServiceConfigurationError;
+
+    /**
+     * Stops the executor service, shutting down any running threads and
+     * releasing associated resources.
+     */
     void stop();
 }

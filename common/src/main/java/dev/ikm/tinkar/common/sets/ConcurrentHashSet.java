@@ -21,17 +21,39 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * A thread-safe {@link Set} implementation backed by a {@link ConcurrentHashMap} key set.
+ * This provides concurrent access semantics without requiring external synchronization.
+ *
+ * <p>Note: {@link #retainAll(Collection)} and {@link #removeAll(Collection)} are not supported
+ * and will throw {@link UnsupportedOperationException}.
+ *
+ * @param <T> the type of elements maintained by this set
+ */
 public class ConcurrentHashSet<T extends Object> implements Set<T> {
      final ConcurrentHashMap.KeySetView<T,Boolean> keySet;
 
+    /**
+     * Constructs an empty {@code ConcurrentHashSet} with the specified initial capacity.
+     *
+     * @param initialSize the initial capacity of the backing map
+     */
     public ConcurrentHashSet(int initialSize) {
         this.keySet = ConcurrentHashMap.newKeySet(initialSize);
     }
 
+    /**
+     * Constructs an empty {@code ConcurrentHashSet} with the default initial capacity.
+     */
     public ConcurrentHashSet() {
         this.keySet = ConcurrentHashMap.newKeySet();
     }
 
+    /**
+     * Constructs a {@code ConcurrentHashSet} containing all elements from the given enumeration.
+     *
+     * @param keys the enumeration of elements to add to this set
+     */
     public ConcurrentHashSet(Enumeration<T> keys) {
         this.keySet = ConcurrentHashMap.newKeySet();
         while (keys.hasMoreElements()) {
