@@ -108,7 +108,7 @@
         <dependency>
             <groupId>dev.ikm.tinkar.ext.owl</groupId>
             <artifactId>owl-extension</artifactId>
-            <version>1.127.2-SNAPSHOT</version>
+            <version>1.127.2-search-provider-diagnostics-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>

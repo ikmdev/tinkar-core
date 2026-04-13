@@ -130,9 +130,22 @@ public class SearchProvider implements SearchService {
                 LOG.error("Failed to recreate Lucene index", e);
             }
         } else if (!dataExists) {
-            LOG.info("No existing database found - Lucene index will be created as data is added");
+            LOG.info("No existing database found — Lucene index will be created as data is added");
         } else {
-            LOG.info("Lucene index already exists");
+            // Index exists — report document count for diagnostics
+            int docCount = Indexer.indexWriter().getDocStats().numDocs;
+            LOG.info("Lucene index already exists ({} documents)", String.format("%,d", docCount));
+
+            if (dataExists && docCount == 0) {
+                LOG.warn("Lucene index is empty but database exists — scheduling index recreation");
+                try {
+                    this.recreateIndex().get();
+                    int newCount = Indexer.indexWriter().getDocStats().numDocs;
+                    LOG.info("Lucene index recreation completed ({} documents)", String.format("%,d", newCount));
+                } catch (Exception e) {
+                    LOG.error("Failed to recreate Lucene index", e);
+                }
+            }
         }
 
         stopwatch.stop();
