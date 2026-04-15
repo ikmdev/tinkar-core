@@ -19,5 +19,6 @@
         <subproject>executor-provider</subproject>
         <subproject>search-provider</subproject>
         <subproject>changeset-writer-provider</subproject>
+        <subproject>grpc-search-provider</subproject>
     </subprojects>
 </project>
