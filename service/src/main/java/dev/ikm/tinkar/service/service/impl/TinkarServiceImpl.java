@@ -242,7 +242,9 @@ public class TinkarServiceImpl implements TinkarService {
                     .map(r -> new MatchingSemantic(
                             r.highlightedString(),
                             getPlainText(r),
-                            r.score()))
+                            r.score(),
+                            r.fieldIndex(),
+                            r.latestVersion().isPresent() ? r.latestVersion().get().nid() : null))
                     .toList();
 
             groupedResults.add(new GroupedSearchResult(
@@ -250,7 +252,8 @@ public class TinkarServiceImpl implements TinkarService {
                     fqn,
                     active,
                     topScore,
-                    matchingSemantics));
+                    matchingSemantics,
+                    topNid));
 
             totalSemanticCount += matchingSemantics.size();
         }

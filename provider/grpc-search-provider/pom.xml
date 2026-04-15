@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.1.0 https://maven.apache.org/xsd/maven-4.1.0.xsd">
+    <modelVersion>4.1.0</modelVersion>
+
+    <parent/>
+
+    <artifactId>grpc-search-provider</artifactId>
+    <packaging>jar</packaging>
+
+    <name>TINKAR gRPC Search Provider</name>
+
+    <properties>
+        <grpc.version>1.78.0</grpc.version>
+        <protobuf.version>4.30.2</protobuf.version>
+    </properties>
+
+    <dependencies>
+        <!--
+            grpc-netty-shaded is the transport (Netty + grpc-netty in one jar).
+            Declared 'runtime' so it is on the classpath at runtime but does not
+            cause a module-requires error at compile time for named modules.
+        -->
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty-shaded</artifactId>
+            <version>${grpc.version}</version>
+            <scope>runtime</scope>
+            <exclusions>
+                <exclusion><groupId>com.google.protobuf</groupId><artifactId>protobuf-java</artifactId></exclusion>
+                <exclusion><groupId>com.google.code.findbugs</groupId><artifactId>jsr305</artifactId></exclusion>
+                <exclusion><groupId>javax.annotation</groupId><artifactId>javax.annotation-api</artifactId></exclusion>
+            </exclusions>
+        </dependency>
+
+        <!--
+            grpc-api, grpc-stub, grpc-protobuf are all automatic modules.
+            Declared 'provided' so they compile but are shaded into the jar.
+        -->
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-api</artifactId>
+            <version>${grpc.version}</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion><groupId>com.google.protobuf</groupId><artifactId>protobuf-java</artifactId></exclusion>
+                <exclusion><groupId>com.google.code.findbugs</groupId><artifactId>jsr305</artifactId></exclusion>
+                <exclusion><groupId>javax.annotation</groupId><artifactId>javax.annotation-api</artifactId></exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-stub</artifactId>
+            <version>${grpc.version}</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion><groupId>com.google.protobuf</groupId><artifactId>protobuf-java</artifactId></exclusion>
+                <exclusion><groupId>com.google.code.findbugs</groupId><artifactId>jsr305</artifactId></exclusion>
+                <exclusion><groupId>javax.annotation</groupId><artifactId>javax.annotation-api</artifactId></exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-protobuf</artifactId>
+            <version>${grpc.version}</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion><groupId>com.google.protobuf</groupId><artifactId>protobuf-java</artifactId></exclusion>
+                <exclusion><groupId>com.google.code.findbugs</groupId><artifactId>jsr305</artifactId></exclusion>
+                <exclusion><groupId>javax.annotation</groupId><artifactId>javax.annotation-api</artifactId></exclusion>
+            </exclusions>
+        </dependency>
+        <!-- grpc-netty-shaded pulls in perfmark at runtime -->
+        <dependency>
+            <groupId>io.perfmark</groupId>
+            <artifactId>perfmark-api</artifactId>
+            <version>0.27.0</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Protobuf runtime — JPMS-wrapped -->
+        <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>${protobuf-java.version}</version>
+        </dependency>
+        <!-- Tinkar schema message classes (from Tinkar.proto) -->
+        <dependency>
+            <groupId>dev.ikm.tinkar</groupId>
+            <artifactId>tinkar-schema</artifactId>
+            <version>${tinkar-schema.version}</version>
+        </dependency>
+        <!-- JPMS-wrapped javax.annotation (module: dev.ikm.jpms.javax.annotation) -->
+        <dependency>
+            <groupId>${tinkar-jpms-deps.groupId}</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.2-r7</version>
+        </dependency>
+        <!-- Guava — needed by gRPC generated async stubs; shaded in -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>33.1.0-jre</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion><groupId>com.google.code.findbugs</groupId><artifactId>jsr305</artifactId></exclusion>
+                <exclusion><groupId>com.google.errorprone</groupId><artifactId>error_prone_annotations</artifactId></exclusion>
+                <exclusion><groupId>com.google.j2objc</groupId><artifactId>j2objc-annotations</artifactId></exclusion>
+                <exclusion><groupId>com.google.guava</groupId><artifactId>listenablefuture</artifactId></exclusion>
+                <exclusion><groupId>org.checkerframework</groupId><artifactId>checker-qual</artifactId></exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.google.errorprone</groupId>
+            <artifactId>error_prone_annotations</artifactId>
+            <version>2.26.1</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <!-- SearchService interface + PrimitiveDataSearchResult -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>search-provider</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>common</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <extensions>
+            <extension>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.7.1</version>
+            </extension>
+        </extensions>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <compilerArgs>
+                        <arg>--add-reads</arg>
+                        <arg>dev.ikm.tinkar.provider.grpc=ALL-UNNAMED</arg>
+                        <arg>--enable-preview</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+
+            <!-- Generate Java classes from tinkar_search.proto -->
+            <plugin>
+                <groupId>org.xolstice.maven.plugins</groupId>
+                <artifactId>protobuf-maven-plugin</artifactId>
+                <version>0.6.1</version>
+                <configuration>
+                    <protocArtifact>com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}</protocArtifact>
+                    <pluginId>grpc-java</pluginId>
+                    <pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}</pluginArtifact>
+                    <additionalProtoPathElements>
+                        <additionalProtoPathElement>${project.basedir}/../../../tinkar-schema</additionalProtoPathElement>
+                    </additionalProtoPathElements>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>compile-custom</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--
+                Shade grpc-api, grpc-stub, grpc-protobuf, and guava into this jar.
+                These are automatic modules and cannot be in a jlink image as separate entries.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <createSourcesJar>false</createSourcesJar>
+                            <artifactSet>
+                                <includes>
+                                    <include>io.grpc:grpc-api</include>
+                                    <include>io.grpc:grpc-stub</include>
+                                    <include>io.grpc:grpc-protobuf</include>
+                                    <include>io.grpc:grpc-protobuf-lite</include>
+                                    <include>com.google.guava:guava</include>
+                                    <include>com.google.guava:failureaccess</include>
+                                </includes>
+                            </artifactSet>
+                            <filters>
+                                <filter>
+                                    <artifact>io.grpc:grpc-api</artifact>
+                                    <excludes><exclude>META-INF/versions/*/module-info.class</exclude></excludes>
+                                </filter>
+                                <filter>
+                                    <artifact>io.grpc:grpc-stub</artifact>
+                                    <excludes><exclude>META-INF/versions/*/module-info.class</exclude></excludes>
+                                </filter>
+                                <filter>
+                                    <artifact>io.grpc:grpc-protobuf</artifact>
+                                    <excludes><exclude>META-INF/versions/*/module-info.class</exclude></excludes>
+                                </filter>
+                                <filter>
+                                    <artifact>io.grpc:grpc-protobuf-lite</artifact>
+                                    <excludes><exclude>META-INF/versions/*/module-info.class</exclude></excludes>
+                                </filter>
+                                <filter>
+                                    <artifact>com.google.guava:guava</artifact>
+                                    <excludes><exclude>META-INF/versions/*/module-info.class</exclude></excludes>
+                                </filter>
+                            </filters>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                                    <resource>module-info.class</resource>
+                                    <file>${project.build.outputDirectory}/module-info.class</file>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
