@@ -126,6 +126,9 @@ public class TinkarSearchGrpcController extends TinkarSearchServiceGrpc.TinkarSe
                 if (group.publicId() != null) {
                     groupBuilder.addAllPublicId(group.publicId());
                 }
+                if (group.conceptNid() != null) {
+                    groupBuilder.setConceptNid(group.conceptNid());
+                }
 
                 if (group.matchingSemantics() != null) {
                     for (ConceptSearchResponse.MatchingSemantic semantic : group.matchingSemantics()) {
@@ -137,6 +140,12 @@ public class TinkarSearchGrpcController extends TinkarSearchServiceGrpc.TinkarSe
                         }
                         if (semantic.plainText() != null) {
                             semanticBuilder.setPlainText(semantic.plainText());
+                        }
+                        if (semantic.fieldIndex() != null) {
+                            semanticBuilder.setFieldIndex(semantic.fieldIndex());
+                        }
+                        if (semantic.semanticNid() != null) {
+                            semanticBuilder.setSemanticNid(semantic.semanticNid());
                         }
 
                         groupBuilder.addMatchingSemantics(semanticBuilder.build());

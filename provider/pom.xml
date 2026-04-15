@@ -19,5 +19,6 @@
         <module>executor-provider</module>
         <module>search-provider</module>
         <module>changeset-writer-provider</module>
+        <module>grpc-search-provider</module>
     </modules>
 </project>
