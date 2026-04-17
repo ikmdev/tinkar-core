@@ -36,6 +36,17 @@ package dev.ikm.tinkar.common.service.llm;
  * handled internally by the driver by discovering
  * {@link dev.ikm.tinkar.common.service.tool.ToolProvider} implementations
  * and routing {@code tool_use} blocks emitted by the model.
+ * <p>
+ * The driver implementation itself is expected to be thread-safe; many
+ * callers may call {@link #open(LlmSessionConfig)} concurrently. Sessions
+ * returned by {@code open} are not thread-safe — see
+ * {@link LlmSession} for details.
+ *
+ * @see LlmSession
+ * @see LlmSessionConfig
+ * @see LlmEvent
+ * @see dev.ikm.tinkar.common.service.ServiceExclusionGroup#LLM_DRIVER
+ * @see dev.ikm.tinkar.common.service.tool.ToolProvider
  */
 public interface LlmDriver {
 

@@ -20,11 +20,20 @@ import java.util.Optional;
 
 /**
  * A single call to a tool, containing parameter values and invocation context.
+ * <p>
+ * Passed to {@link ToolProvider#invoke(ToolInvocation)} by the tool
+ * consumer. Parameter values arrive as a JSON-shaped {@link Map};
+ * implementations cast or use the typed accessors ({@link #getString},
+ * {@link #getInteger}, {@link #get(String, Class)}) to extract them
+ * safely.
  *
  * @param parameters parameter values as a JSON-shaped map; keys match the
  *                   names declared by {@link ToolDescriptor#parameters()}
  * @param context per-invocation context (STAMP coordinate, session
- *                identifier, caller identity)
+ *                identifier, caller identity) — information the tool may
+ *                need that is not LLM-visible
+ * @see ToolProvider#invoke(ToolInvocation)
+ * @see ToolContext
  */
 public record ToolInvocation(
         Map<String, Object> parameters,

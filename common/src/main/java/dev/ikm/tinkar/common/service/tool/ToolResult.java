@@ -23,7 +23,9 @@ import java.util.Optional;
  * <p>
  * {@code textOutput} is what the LLM sees directly. {@code structuredData}
  * is an optional machine-readable payload for non-LLM consumers (UI
- * rendering, programmatic callers, tests).
+ * rendering, programmatic callers, tests) — its values should be
+ * JSON-compatible types (String, Number, Boolean, List, Map) so they
+ * survive serialization when sent over MCP or similar transports.
  * <p>
  * Tool-level errors (bad parameters, entity not found, etc.) should be
  * returned as a result with {@link #error()} true and a descriptive
@@ -33,6 +35,9 @@ import java.util.Optional;
  * @param textOutput LLM-facing text (required, may be empty string)
  * @param structuredData optional structured payload for non-LLM consumers
  * @param error whether this result represents a tool-level error
+ * @see ToolProvider#invoke(ToolInvocation)
+ * @see #text(String)
+ * @see #errorResult(String)
  */
 public record ToolResult(
         String textOutput,

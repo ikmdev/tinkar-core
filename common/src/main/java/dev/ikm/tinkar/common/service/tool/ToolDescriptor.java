@@ -22,17 +22,27 @@ import java.util.Optional;
 /**
  * Describes a tool to an LLM or other consumer.
  * <p>
+ * Returned by {@link ToolProvider#describe()} and consumed by tool
+ * catalogers (typically an {@link dev.ikm.tinkar.common.service.llm.LlmDriver})
+ * at startup to build the set of capabilities presented to the model.
+ * <p>
  * The {@code name} must be unique within the active tool catalog; use
- * a dotted-namespace convention ({@code "concept.get"}, {@code "axiom.inferred"}).
- * Name collisions are detected at LLM driver startup.
+ * the dotted-namespace convention {@code <domain>.<operation>}
+ * ({@code "concept.get"}, {@code "navigation.parents"},
+ * {@code "axiom.inferred"}). Name collisions are detected at LLM driver
+ * startup and cause fail-fast.
  * <p>
  * The {@code description} is presented to the LLM and should explain
- * when to use the tool and any constraints on its use.
+ * when to use the tool, any constraints on its use, and the shape of
+ * the result. Write it for an LLM audience — the model chooses among
+ * tools based on these descriptions, so clarity matters.
  *
- * @param name unique namespaced identifier
+ * @param name unique namespaced identifier (e.g. {@code "concept.get"})
  * @param description human-readable guidance for the LLM
- * @param parameters ordered list of input parameters
+ * @param parameters ordered list of input parameters (may be empty)
  * @param resultDescription optional guidance on what the result will contain
+ * @see ToolProvider#describe()
+ * @see ToolParameter
  */
 public record ToolDescriptor(
         String name,

@@ -23,6 +23,21 @@ import java.util.Map;
  * An event emitted during a single {@link LlmSession#send(String)}
  * interaction. Subscribers consume these as they arrive to show streaming
  * text, tool-use indicators, completion, or errors.
+ * <p>
+ * The hierarchy is sealed — pattern matching is exhaustive, and adding
+ * a new event kind is a source-compatible breaking change that forces
+ * every consumer to update:
+ * <pre>{@code
+ * switch (event) {
+ *     case LlmEvent.TextChunk(String text)            -> ui.append(text);
+ *     case LlmEvent.ToolUseRequested(var name, var p) -> ui.showCallingTool(name);
+ *     case LlmEvent.ToolUseCompleted(var name, var r) -> ui.showToolResult(name, r);
+ *     case LlmEvent.Done(var reason)                  -> ui.markTurnComplete();
+ *     case LlmEvent.Error(var cause)                  -> ui.showError(cause);
+ * }
+ * }</pre>
+ *
+ * @see LlmSession#send(String)
  */
 public sealed interface LlmEvent {
 

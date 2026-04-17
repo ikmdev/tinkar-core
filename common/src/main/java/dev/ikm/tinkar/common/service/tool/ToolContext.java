@@ -24,7 +24,17 @@ import java.util.UUID;
  * coordinate, session identifier, caller identity.
  * <p>
  * The context is created by the LLM driver (or other tool caller) and
- * supplied on each invocation. Tools should not cache context between calls.
+ * supplied on each invocation. Tools should not cache context between
+ * calls — session state can change (the STAMP coordinate may be updated
+ * by a {@code stamp.setCoordinate} tool mid-conversation) and
+ * cross-session identity must not leak.
+ * <p>
+ * <b>When to use context vs. parameters.</b> Anything the LLM needs to
+ * reason about ("which concept?", "which relationship?") goes in
+ * {@link ToolInvocation#parameters()}. Anything that identifies the
+ * execution environment ("in whose session?", "under which STAMP?")
+ * goes in context. Context values are usually set once per session and
+ * applied uniformly to every invocation within that session.
  *
  * @param sessionId identifier of the calling session, if any
  * @param stampCoordinate active STAMP coordinate for read operations, if
@@ -33,6 +43,9 @@ import java.util.UUID;
  *                        modules (the concrete type is
  *                        {@code StampCoordinateRecord} when present)
  * @param callerId identifier of the caller for audit logging, if supplied
+ * @see ToolInvocation
+ * @see #empty()
+ * @see #forSession(java.util.UUID)
  */
 public record ToolContext(
         Optional<UUID> sessionId,

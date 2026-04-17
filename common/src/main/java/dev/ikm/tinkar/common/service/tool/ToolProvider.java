@@ -39,6 +39,12 @@ package dev.ikm.tinkar.common.service.tool;
  * {@link ToolResult#error()} {@code true} and a descriptive
  * {@link ToolResult#textOutput()}. Throw only for framework-level failures
  * the LLM cannot meaningfully handle.
+ *
+ * @see ToolDescriptor
+ * @see ToolInvocation
+ * @see ToolResult
+ * @see dev.ikm.tinkar.common.service.ProviderController
+ * @see dev.ikm.tinkar.common.service.ServiceLifecycleManager#getRunningServices(Class)
  */
 public interface ToolProvider {
 
