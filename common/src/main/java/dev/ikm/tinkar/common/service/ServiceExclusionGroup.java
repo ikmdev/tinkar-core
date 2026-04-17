@@ -69,7 +69,26 @@ public enum ServiceExclusionGroup {
      *   <li><b>NoCacheProvider</b> - No caching (testing, debugging)</li>
      * </ul>
      */
-    CACHE_PROVIDER;
+    CACHE_PROVIDER,
+
+    /**
+     * LLM driver providers.
+     * <p>
+     * Mutually exclusive vendor-specific LLM implementations:
+     * </p>
+     * <ul>
+     *   <li><b>AnthropicLlmProvider</b> - Anthropic Claude via Messages API</li>
+     *   <li><b>OpenAiLlmProvider</b> - OpenAI via Chat Completions / Responses API</li>
+     *   <li><b>OllamaLlmProvider</b> - local Ollama server</li>
+     *   <li><b>NoOpLlmProvider</b> - placeholder; disables LLM features gracefully</li>
+     * </ul>
+     * <p>
+     * Only one LLM driver is active at a time. Selection is typically
+     * automatic based on which provider's {@code shouldActivate()} returns
+     * true (usually gated on API-key presence), with manual override
+     * available via system property or programmatic selection.
+     */
+    LLM_DRIVER;
 
     /**
      * Returns the group name for use in system properties and logging.

@@ -957,6 +957,82 @@ public class ServiceLifecycleManager {
         return Optional.empty();
     }
 
+    /**
+     * Returns all running services whose managing controller declares the
+     * given service type in its {@link ProviderController#serviceClasses()},
+     * or whose {@link ServiceLifecycle#getService()} returns an instance of
+     * the given type.
+     * <p>
+     * Use this for multi-instance services —
+     * {@link dev.ikm.tinkar.common.service.tool.ToolProvider} is the
+     * primary example — where many providers may implement the interface
+     * and all are active simultaneously. For single-instance services
+     * (possibly with mutual exclusion), use
+     * {@link #getRunningService(Class)} instead.
+     * <p>
+     * Controllers whose providers are not yet started are skipped silently.
+     * Returns an empty collection if the lifecycle manager is not yet in
+     * STARTING or RUNNING state.
+     *
+     * @param serviceType the service interface to look up
+     * @param <T> the service type
+     * @return collection of running providers implementing the service;
+     *         empty if none discovered or started; never null
+     * @see #getRunningService(Class)
+     * @see ProviderController#serviceClasses()
+     */
+    public <T> Collection<T> getRunningServices(Class<T> serviceType) {
+        if (state != State.RUNNING && state != State.STARTING) {
+            LOG.warn("getRunningServices({}) called in state {} - services may not be available",
+                    serviceType.getSimpleName(), state);
+            return List.of();
+        }
+
+        List<T> results = new ArrayList<>();
+        Set<Object> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+
+        // Check ProviderControllers first (more specific via serviceClasses())
+        for (ServiceLifecycle lifecycle : activeServices.values()) {
+            if (lifecycle instanceof ProviderController<?> controller) {
+                for (Class<?> serviceClass : controller.serviceClasses()) {
+                    if (serviceType.isAssignableFrom(serviceClass)) {
+                        try {
+                            Object service = controller.provider();
+                            if (serviceType.isInstance(service) && seen.add(service)) {
+                                results.add(serviceType.cast(service));
+                            }
+                        } catch (IllegalStateException e) {
+                            LOG.debug("Provider not available from controller: {}",
+                                    controller.getClass().getName());
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Fallback to generic getService() check for non-ProviderController services
+        for (ServiceLifecycle lifecycle : activeServices.values()) {
+            if (lifecycle instanceof ProviderController<?>) {
+                continue; // already handled above
+            }
+            try {
+                Optional<Object> serviceOpt = lifecycle.getService();
+                if (serviceOpt.isPresent()) {
+                    Object service = serviceOpt.get();
+                    if (serviceType.isInstance(service) && seen.add(service)) {
+                        results.add(serviceType.cast(service));
+                    }
+                }
+            } catch (IllegalStateException e) {
+                LOG.debug("Service not available from lifecycle: {}",
+                        lifecycle.getClass().getName());
+            }
+        }
+
+        return results;
+    }
+
     private String getServiceName(Class<?> clazz) {
 
         ServiceLifecycle service = discoveredServices.get(clazz);
