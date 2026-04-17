@@ -56,6 +56,7 @@
         <subproject>integration</subproject>
         <subproject>aggregator</subproject>
         <subproject>events</subproject>
+        <subproject>plugin-service-loader</subproject>
         <subproject>tinkar-bom</subproject>
     </subprojects>
 

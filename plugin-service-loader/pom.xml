@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  xsi:schemaLocation="http://maven.apache.org/POM/4.1.0 https://maven.apache.org/xsd/maven-4.1.0.xsd">
+    <modelVersion>4.1.0</modelVersion>
+    <parent/>
+
+    <artifactId>plugin-service-loader</artifactId>
+    <packaging>jar</packaging>
+
+    <name>TINKAR Plugin Service Loader</name>
+    <description>
+        Implementation of PluginServiceLoader that loads into its own ModuleLayer
+        (with the plugin layer as parent) so that services provided by plugin
+        modules are discoverable via ServiceLoader.load(layer, service).
+
+        This artifact is staged into the jlink/jpackage image's plugin-service-loader/
+        directory — NOT onto the application's main modulepath — so that
+        IkeServiceManager can construct a dedicated ModuleLayer for it at runtime.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.collections</groupId>
+            <artifactId>eclipse-collections-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.collections</groupId>
+            <artifactId>eclipse-collections</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>25</source>
+                    <target>25</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -54,6 +54,7 @@ module dev.ikm.tinkar.common {
     exports dev.ikm.tinkar.common.id.impl;
     exports dev.ikm.tinkar.common.service;
     exports dev.ikm.tinkar.common.service.llm;
+    exports dev.ikm.tinkar.common.service.plugin;
     exports dev.ikm.tinkar.common.service.tool;
     exports dev.ikm.tinkar.common.util.functional;
     exports dev.ikm.tinkar.common.util.ints2long;
