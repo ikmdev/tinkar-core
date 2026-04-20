@@ -42,6 +42,8 @@ module dev.ikm.tinkar.provider.grpc {
     // SearchService contract and PrimitiveDataSearchResult
     requires dev.ikm.tinkar.provider.search;
     requires dev.ikm.tinkar.common;
+    // Entity module: TinkarSchemaToEntityTransformer + EntityService for concept loading
+    requires dev.ikm.tinkar.entity;
 
     requires org.slf4j;
 }

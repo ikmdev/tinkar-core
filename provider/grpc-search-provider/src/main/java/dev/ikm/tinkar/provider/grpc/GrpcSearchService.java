@@ -16,13 +16,19 @@
 package dev.ikm.tinkar.provider.grpc;
 
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.transform.TinkarSchemaToEntityTransformer;
 import dev.ikm.tinkar.provider.search.SearchService;
+import dev.ikm.tinkar.schema.PublicId;
 import dev.ikm.tinkar.service.proto.SearchSortOption;
+import dev.ikm.tinkar.service.proto.TinkarConceptEntityResponse;
+import io.grpc.StatusRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -158,6 +164,43 @@ public class GrpcSearchService implements SearchService {
                         r.getActive(),
                         r.getScore()))
                 .toList();
+    }
+
+    /**
+     * Fetches the full entity graph for a concept from the gRPC service and loads it into
+     * the local entity store (ephemeral provider in gRPC mode).  After this call returns,
+     * {@code Entity.get(nid)} will find the concept and all its semantics, patterns, and
+     * stamps.
+     *
+     * <p>The server is expected to implement {@code GetConceptWithSemantics} and return
+     * the concept's ConceptChronology, SemanticChronologies, PatternChronologies, and
+     * StampChronologies as a list of {@code TinkarMsg} objects.
+     *
+     * @param publicIds the concept's public UUIDs (from a search result)
+     * @return the local NID assigned to the concept after loading
+     * @throws IllegalStateException    if gRPC is not initialized
+     * @throws StatusRuntimeException   if the server call fails (e.g. UNIMPLEMENTED)
+     */
+    public int loadConceptWithSemantics(List<UUID> publicIds) {
+        if (!isActive()) {
+            throw new IllegalStateException("GrpcSearchService not initialized");
+        }
+        PublicId protoPublicId = PublicId.newBuilder()
+                .addAllUuids(publicIds.stream().map(UUID::toString).toList())
+                .build();
+        TinkarConceptEntityResponse response =
+                GrpcSearchClient.get().getConceptWithSemantics(protoPublicId);
+        if (!response.getSuccess()) {
+            throw new RuntimeException("GetConceptWithSemantics failed: " + response.getErrorMessage());
+        }
+        TinkarSchemaToEntityTransformer transformer = TinkarSchemaToEntityTransformer.getInstance();
+        for (dev.ikm.tinkar.schema.TinkarMsg msg : response.getEntitiesList()) {
+            transformer.transform(
+                    msg,
+                    entity -> EntityService.get().putEntity(entity),
+                    stamp  -> EntityService.get().putEntity(stamp));
+        }
+        return EntityService.get().nidForUuids(publicIds.toArray(new UUID[0]));
     }
 
     // --- SearchService contract ---

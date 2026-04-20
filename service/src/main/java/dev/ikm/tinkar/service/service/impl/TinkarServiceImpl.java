@@ -14,6 +14,7 @@ import dev.ikm.tinkar.coordinate.stamp.change.VersionChangeRecord;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculatorWithCache;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
+import dev.ikm.tinkar.entity.transform.EntityToTinkarSchemaTransformer;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.reasoner.service.ClassifierResults;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
@@ -1173,6 +1174,155 @@ public class TinkarServiceImpl implements TinkarService {
                     .setErrorMessage(e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName())
                     .setTotalCount(0)
                     .build();
+        }
+    }
+
+    @Override
+    public TinkarConceptEntityResponse getConceptWithSemantics(String conceptId) {
+        try {
+            EntityToTinkarSchemaTransformer transformer = EntityToTinkarSchemaTransformer.getInstance();
+            TinkarConceptEntityResponse.Builder builder = TinkarConceptEntityResponse.newBuilder();
+            Set<Integer> includedNids = new HashSet<>();
+            Set<Integer> stampNids = new HashSet<>();
+            // NIDs of entities referenced by field values / stamps — must be loaded so
+            // the client can resolve EntityProxy.publicId() without hitting null.
+            Set<Integer> referencedNids = new HashSet<>();
+
+            // 1. Fetch the concept entity
+            PublicId publicId = primitive.getPublicId(conceptId);
+            int conceptNid = EntityService.get().nidForPublicId(publicId);
+            Entity<?> conceptEntity = EntityService.get().getEntityFast(conceptNid);
+            if (conceptEntity == null) {
+                return TinkarConceptEntityResponse.newBuilder()
+                        .setSuccess(false)
+                        .setErrorMessage("Concept not found: " + conceptId)
+                        .build();
+            }
+            addToResponse(builder, transformer, includedNids, conceptEntity);
+            conceptEntity.versions().forEach(v -> stampNids.add(v.stampNid()));
+
+            // 2. Fetch all semantics attached to the concept
+            int[] semanticNids = EntityService.get().semanticNidsForComponent(conceptNid);
+            Set<Integer> patternNids = new HashSet<>();
+            for (int semanticNid : semanticNids) {
+                if (includedNids.contains(semanticNid)) continue;
+                Entity<?> semanticEntity = EntityService.get().getEntityFast(semanticNid);
+                if (semanticEntity instanceof SemanticEntity<?> semantic) {
+                    addToResponse(builder, transformer, includedNids, semantic);
+                    patternNids.add(semantic.patternNid());
+                    semantic.versions().forEach(v -> {
+                        stampNids.add(v.stampNid());
+                        // Collect entity refs from field values so the client can resolve publicId()
+                        if (v instanceof SemanticEntityVersion sev) {
+                            collectPublicIdRefs(sev.fieldValues(), referencedNids);
+                        }
+                    });
+                }
+            }
+
+            // 3. Fetch pattern entities referenced by the semantics.
+            //    Also collect field-definition dataType/purpose/meaning concept NIDs so the
+            //    client can resolve FieldDefinitionForEntity.dataType(), .purpose(), .meaning()
+            //    without hitting getConceptOrThrow on absent entities.
+            for (int patternNid : patternNids) {
+                if (includedNids.contains(patternNid)) continue;
+                Entity<?> patternEntity = EntityService.get().getEntityFast(patternNid);
+                if (patternEntity != null) {
+                    addToResponse(builder, transformer, includedNids, patternEntity);
+                    patternEntity.versions().forEach(v -> {
+                        stampNids.add(v.stampNid());
+                        if (v instanceof PatternEntityVersion pev) {
+                            pev.fieldDefinitions().forEach(fd -> {
+                                referencedNids.add(fd.dataTypeNid());
+                                referencedNids.add(fd.purposeNid());
+                                referencedNids.add(fd.meaningNid());
+                            });
+                        }
+                    });
+                }
+            }
+
+            // 4. Fetch stamp entities; collect status/author/module/path concept refs
+            for (int stampNid : stampNids) {
+                if (includedNids.contains(stampNid)) continue;
+                StampEntity<?> stampEntity = EntityService.get().getStampFast(stampNid);
+                if (stampEntity != null) {
+                    addToResponse(builder, transformer, includedNids, stampEntity);
+                    // These are concept NIDs the client needs to resolve for display
+                    referencedNids.add(stampEntity.stateNid());
+                    referencedNids.add(stampEntity.authorNid());
+                    referencedNids.add(stampEntity.moduleNid());
+                    referencedNids.add(stampEntity.pathNid());
+                }
+            }
+
+            // 5. Load all referenced concept entities + their description semantics + stamps.
+            //    This lets the client resolve EntityProxy.publicId() and PrimitiveData.text()
+            //    for status, author, module, path, language, description-type, etc.
+            Set<Integer> descStampNids = new HashSet<>();
+            for (int refNid : referencedNids) {
+                if (includedNids.contains(refNid)) continue;
+                Entity<?> refEntity = EntityService.get().getEntityFast(refNid);
+                if (refEntity == null) continue;
+                addToResponse(builder, transformer, includedNids, refEntity);
+                // Include description semantics so text() lookups work on the client
+                int[] descSemNids = EntityService.get().semanticNidsForComponent(refNid);
+                for (int descSemNid : descSemNids) {
+                    if (includedNids.contains(descSemNid)) continue;
+                    Entity<?> descEntity = EntityService.get().getEntityFast(descSemNid);
+                    if (descEntity instanceof SemanticEntity<?> descSem) {
+                        addToResponse(builder, transformer, includedNids, descSem);
+                        descSem.versions().forEach(v -> descStampNids.add(v.stampNid()));
+                    }
+                }
+            }
+
+            // 6. Stamps for the referenced-entity description semantics
+            for (int descStampNid : descStampNids) {
+                if (includedNids.contains(descStampNid)) continue;
+                Entity<?> stampEntity = EntityService.get().getEntityFast(descStampNid);
+                if (stampEntity != null) {
+                    addToResponse(builder, transformer, includedNids, stampEntity);
+                }
+            }
+
+            return builder.setSuccess(true).build();
+        } catch (Exception e) {
+            log.error("Failed to get concept with semantics for {}: {}", conceptId, e.getMessage(), e);
+            return TinkarConceptEntityResponse.newBuilder()
+                    .setSuccess(false)
+                    .setErrorMessage(e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName())
+                    .build();
+        }
+    }
+
+    /** Adds an entity to the proto response if not already included. */
+    private void addToResponse(TinkarConceptEntityResponse.Builder builder,
+                               EntityToTinkarSchemaTransformer transformer,
+                               Set<Integer> includedNids,
+                               Entity<?> entity) {
+        if (entity != null && includedNids.add(entity.nid())) {
+            builder.addEntities(transformer.transform(entity));
+        }
+    }
+
+    /**
+     * Collects NIDs of entities referenced via {@link PublicId} field values in a semantic version.
+     * These are concept/pattern/semantic references that the client needs in its entity store so
+     * that {@code EntityProxy.publicId()} (and text lookups) resolve without NPE.
+     */
+    private void collectPublicIdRefs(Iterable<?> fieldValues, Set<Integer> refs) {
+        for (Object value : fieldValues) {
+            if (value instanceof PublicId pid) {
+                try {
+                    refs.add(EntityService.get().nidForPublicId(pid));
+                } catch (Exception ignored) {
+                    // PublicId not registered in this store — skip
+                }
+            } else if (value instanceof EntityProxy proxy) {
+                // Fallback: some field value types may already be EntityProxy objects
+                refs.add(proxy.nid());
+            }
         }
     }
 
