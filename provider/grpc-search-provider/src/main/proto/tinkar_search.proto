@@ -301,6 +301,25 @@ message TinkarConceptSemanticsResponse {
   string error_message = 6;
 }
 
+// Response containing the full entity graph (concept + semantics + stamps + patterns)
+// needed to display concept details in the local entity store.
+// The server should include all entities transitively referenced by the concept.
+message TinkarConceptEntityResponse {
+  /*
+   * Whether the query was successful.
+   */
+  bool success = 1;
+  /*
+   * Error message if query failed.
+   */
+  string error_message = 2;
+  /*
+   * Full entity graph: ConceptChronology, SemanticChronologies, PatternChronologies,
+   * and StampChronologies needed to render the concept detail view.
+   */
+  repeated dev.ikm.tinkar.schema.TinkarMsg entities = 3;
+}
+
 // gRPC service definition
 service TinkarSearchService {
   rpc Search(TinkarSearchQueryRequest) returns (TinkarSearchQueryResponse);
@@ -314,4 +333,9 @@ service TinkarSearchService {
   rpc GetAllowedResultConceptsFromResultConformance(TinkarConceptIdRequest) returns (TinkarSearchQueryResponse);
   rpc RebuildSearchIndex(TinkarRebuildIndexRequest) returns (TinkarRebuildIndexResponse);
   rpc GetConceptSemantics(TinkarConceptIdRequest) returns (TinkarConceptSemanticsResponse);
+  /*
+   * Returns the full entity graph for a concept (concept + semantics + patterns + stamps)
+   * so the caller can load them into a local entity store and display the concept detail view.
+   */
+  rpc GetConceptWithSemantics(TinkarConceptIdRequest) returns (TinkarConceptEntityResponse);
 }
