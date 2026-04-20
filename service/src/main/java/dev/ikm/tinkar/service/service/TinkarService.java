@@ -144,6 +144,17 @@ public interface TinkarService {
     TinkarConceptSemanticsResponse getConceptSemanticsProto(String conceptId, ViewCalculatorWithCache viewCalculator);
 
     /**
+     * Returns the full entity graph for a concept as a list of serialized {@code TinkarMsg} objects.
+     * Includes the concept itself, all attached semantics, their patterns, and all referenced stamps.
+     * The caller can load these entities into a local entity store (e.g. an ephemeral provider) and
+     * then use the standard concept detail view to display the concept.
+     *
+     * @param conceptId the first UUID string of the concept's public ID
+     * @return TinkarConceptEntityResponse containing all TinkarMsg entities
+     */
+    dev.ikm.tinkar.service.proto.TinkarConceptEntityResponse getConceptWithSemantics(String conceptId);
+
+    /**
      * Gets comprehensive change history for a concept including all attached semantics.
      * This shows changes to the concept itself AND changes to all comments, descriptions, etc.
      * @param conceptId The public ID (UUID) of the concept

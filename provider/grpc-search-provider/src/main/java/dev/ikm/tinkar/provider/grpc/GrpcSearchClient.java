@@ -15,7 +15,10 @@
  */
 package dev.ikm.tinkar.provider.grpc;
 
+import dev.ikm.tinkar.schema.PublicId;
 import dev.ikm.tinkar.service.proto.SearchSortOption;
+import dev.ikm.tinkar.service.proto.TinkarConceptEntityResponse;
+import dev.ikm.tinkar.service.proto.TinkarConceptIdRequest;
 import dev.ikm.tinkar.service.proto.TinkarConceptSearchWithSortRequest;
 import dev.ikm.tinkar.service.proto.TinkarConceptSearchWithSortResponse;
 import dev.ikm.tinkar.service.proto.TinkarSearchServiceGrpc;
@@ -89,6 +92,21 @@ public class GrpcSearchClient implements AutoCloseable {
                 .setSortBy(sortBy)
                 .build();
         return stub.conceptSearchWithSort(request);
+    }
+
+    /**
+     * Calls {@code TinkarSearchService.GetConceptWithSemantics} on the remote service.
+     * Returns the full entity graph (concept + semantics + patterns + stamps) so the
+     * caller can load them into a local entity store and display concept details.
+     *
+     * @param publicId the concept's public ID (list of UUIDs)
+     * @return the response with all related TinkarMsg entities, or an error response
+     */
+    public TinkarConceptEntityResponse getConceptWithSemantics(PublicId publicId) {
+        TinkarConceptIdRequest request = TinkarConceptIdRequest.newBuilder()
+                .setPublicId(publicId)
+                .build();
+        return stub.getConceptWithSemantics(request);
     }
 
     @Override

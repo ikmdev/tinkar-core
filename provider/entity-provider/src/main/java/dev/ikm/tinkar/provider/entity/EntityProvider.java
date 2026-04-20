@@ -117,26 +117,40 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                         }
                         anyString = (String) version.fieldValues().get(indexForText);
                     } else {
-                        Entity<?> entity = patternHandle.expectEntity();
-                        anyString = " <" + entity.nid() + ">" + entity.asUuidList().toString();
-                        // Added in case entity.toString() itself throws an exception, at least get a UUID for the problem.
-                        AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a pattern entity. Found entity with id:  " + anyString)));
-                        AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a pattern entity. Found: " + entity)));
+                        // Pattern entity is not a PatternEntity. If it is absent (e.g. in gRPC/ephemeral-store mode
+                        // before all entities are loaded) skip silently. Otherwise report the type mismatch.
+                        if (patternHandle.isAbsent()) {
+                            LOG.warn("Pattern entity absent for NID {} while resolving text for NID {} — skipping (gRPC mode)",
+                                    descriptionSemantic.patternNid(), nid);
+                        } else {
+                            Entity<?> entity = patternHandle.expectEntity();
+                            anyString = " <" + entity.nid() + ">" + entity.asUuidList().toString();
+                            // Added in case entity.toString() itself throws an exception, at least get a UUID for the problem.
+                            AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a pattern entity. Found entity with id:  " + anyString)));
+                            AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a pattern entity. Found: " + entity)));
+                        }
                     }
                 } else {
-                    Entity<?> entity = descriptionSemanticHandle.expectEntity();
-                    anyString = " <" + entity.nid() + "> " + entity.asUuidList().toString();
-                    LOG.error("ERROR getting string for nid: " + anyString);
-                    LOG.error("ERROR Nid - 2: <" + (nid - 2) + "> " + getChronology(nid - 2));
-                    LOG.error("ERROR Nid - 1: <" + (nid - 1) + "> " + getChronology(nid - 1));
-                    LOG.error("ERROR Nid: <" + nid + "> " + getChronology(nid - 1));
-                    LOG.error("ERROR Nid + 1: <" + (nid + 1) + "> " + getChronology(nid + 1));
-                    LOG.error("ERROR Nid + 2: <" + (nid + 2) + "> " + getChronology(nid + 2));
+                    // Description semantic handle is not a SemanticEntity. If absent (gRPC/ephemeral-store mode
+                    // before all entities are loaded) skip silently. Otherwise report the type mismatch.
+                    if (descriptionSemanticHandle.isAbsent()) {
+                        LOG.warn("Description semantic entity absent for NID {} while resolving text for NID {} — skipping (gRPC mode)",
+                                semanticNid, nid);
+                    } else {
+                        Entity<?> entity = descriptionSemanticHandle.expectEntity();
+                        anyString = " <" + entity.nid() + "> " + entity.asUuidList().toString();
+                        LOG.error("ERROR getting string for nid: " + anyString);
+                        LOG.error("ERROR Nid - 2: <" + (nid - 2) + "> " + getChronology(nid - 2));
+                        LOG.error("ERROR Nid - 1: <" + (nid - 1) + "> " + getChronology(nid - 1));
+                        LOG.error("ERROR Nid: <" + nid + "> " + getChronology(nid - 1));
+                        LOG.error("ERROR Nid + 1: <" + (nid + 1) + "> " + getChronology(nid + 1));
+                        LOG.error("ERROR Nid + 2: <" + (nid + 2) + "> " + getChronology(nid + 2));
 
-                    // Added in case entity.toString() itself throws an exception, at least get a UUID for the problem.
-                    AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a description semantic entity from list: " +
-                            Arrays.toString(semanticNids) + "\n Found entity with id:  " + anyString)));
-                    AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a description semantic. Found: " + entity)));
+                        // Added in case entity.toString() itself throws an exception, at least get a UUID for the problem.
+                        AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a description semantic entity from list: " +
+                                Arrays.toString(semanticNids) + "\n Found entity with id:  " + anyString)));
+                        AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a description semantic. Found: " + entity)));
+                    }
                 }
             }
             if (fqnString != null) {
