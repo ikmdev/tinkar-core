@@ -33,6 +33,7 @@ import dev.ikm.tinkar.service.proto.*;
 import dev.ikm.tinkar.service.proto.TinkarSearchQueryResponse;
 import dev.ikm.tinkar.service.service.TinkarPrimitive;
 import dev.ikm.tinkar.service.service.TinkarService;
+import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import lombok.extern.slf4j.Slf4j;
@@ -1307,9 +1308,15 @@ public class TinkarServiceImpl implements TinkarService {
     }
 
     /**
-     * Collects NIDs of entities referenced via {@link PublicId} field values in a semantic version.
-     * These are concept/pattern/semantic references that the client needs in its entity store so
-     * that {@code EntityProxy.publicId()} (and text lookups) resolve without NPE.
+     * Collects NIDs of entities referenced by semantic field values.  Handles:
+     * <ul>
+     *   <li>{@link PublicId} / {@link EntityProxy} – concept/pattern/semantic references so the
+     *       client can resolve {@code EntityProxy.publicId()} without NPE.</li>
+     *   <li>{@link DiTreeEntity} – EL++ axiom trees.  Every vertex in the tree references concept
+     *       NIDs (meaning, property keys, concept-valued properties).  These must all be present in
+     *       the client's ephemeral store so the axiom renderer can show concept names instead of raw
+     *       NID numbers.</li>
+     * </ul>
      */
     private void collectPublicIdRefs(Iterable<?> fieldValues, Set<Integer> refs) {
         for (Object value : fieldValues) {
@@ -1320,8 +1327,17 @@ public class TinkarServiceImpl implements TinkarService {
                     // PublicId not registered in this store — skip
                 }
             } else if (value instanceof EntityProxy proxy) {
-                // Fallback: some field value types may already be EntityProxy objects
                 refs.add(proxy.nid());
+            } else if (value instanceof DiTreeEntity diTree) {
+                // Axiom tree: collect every concept NID referenced by every vertex so the
+                // client can render concept names (role types, role values, etc.)
+                MutableIntSet vertexConceptNids = IntSets.mutable.empty();
+                diTree.vertexMap().forEach(vertex -> {
+                    if (vertex != null) {
+                        vertex.addConceptsReferencedByVertex(vertexConceptNids);
+                    }
+                });
+                vertexConceptNids.forEach(refs::add);
             }
         }
     }
