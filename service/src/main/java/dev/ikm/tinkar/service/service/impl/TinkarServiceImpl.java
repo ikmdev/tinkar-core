@@ -1287,6 +1287,57 @@ public class TinkarServiceImpl implements TinkarService {
                 }
             }
 
+            // 7. Load concept entities for navigation semantic neighbors (parents + children).
+            //    NavigationCalculatorWithCache.intIdListForMeaningFromPattern() filters neighbors
+            //    via vertexStampCalculator.latest(neighborNid). In gRPC/ephemeral-store mode the
+            //    neighbor concept entities are absent, so latest() returns empty and all children
+            //    (and any parents not already loaded via axiom refs) are silently dropped.
+            //    Load only the concept entity + DESCRIPTION_PATTERN semantics per neighbor —
+            //    enough for state-filtering and preferred-description-text lookups in the UI.
+            Set<Integer> navNeighborNids = new HashSet<>();
+            for (int semanticNid : semanticNids) {
+                Entity<?> sem = EntityService.get().getEntityFast(semanticNid);
+                if (!(sem instanceof SemanticEntity<?> semantic)) continue;
+                int patNid = semantic.patternNid();
+                if (patNid != TinkarTerm.INFERRED_NAVIGATION_PATTERN.nid() &&
+                        patNid != TinkarTerm.STATED_NAVIGATION_PATTERN.nid()) continue;
+                semantic.versions().forEach(v -> {
+                    if (v instanceof SemanticEntityVersion sev) {
+                        sev.fieldValues().forEach(fv -> {
+                            if (fv instanceof IntIdCollection intIds) {
+                                intIds.forEach(nid -> navNeighborNids.add(nid));
+                            }
+                        });
+                    }
+                });
+            }
+            Set<Integer> navStampNids = new HashSet<>();
+            for (int neighborNid : navNeighborNids) {
+                if (includedNids.contains(neighborNid)) continue;
+                Entity<?> neighborEntity = EntityService.get().getEntityFast(neighborNid);
+                if (neighborEntity == null) continue;
+                addToResponse(builder, transformer, includedNids, neighborEntity);
+                neighborEntity.versions().forEach(v -> navStampNids.add(v.stampNid()));
+                // Load description semantics for preferred-description-text lookups in hierarchy view
+                int[] neighborDescNids = EntityService.get().semanticNidsForComponentOfPattern(
+                        neighborNid, TinkarTerm.DESCRIPTION_PATTERN.nid());
+                for (int neighborDescNid : neighborDescNids) {
+                    if (includedNids.contains(neighborDescNid)) continue;
+                    Entity<?> descEntity = EntityService.get().getEntityFast(neighborDescNid);
+                    if (descEntity instanceof SemanticEntity<?> descSem) {
+                        addToResponse(builder, transformer, includedNids, descSem);
+                        descSem.versions().forEach(v -> navStampNids.add(v.stampNid()));
+                    }
+                }
+            }
+            for (int navStampNid : navStampNids) {
+                if (includedNids.contains(navStampNid)) continue;
+                Entity<?> stampEntity = EntityService.get().getEntityFast(navStampNid);
+                if (stampEntity != null) {
+                    addToResponse(builder, transformer, includedNids, stampEntity);
+                }
+            }
+
             return builder.setSuccess(true).build();
         } catch (Exception e) {
             log.error("Failed to get concept with semantics for {}: {}", conceptId, e.getMessage(), e);
