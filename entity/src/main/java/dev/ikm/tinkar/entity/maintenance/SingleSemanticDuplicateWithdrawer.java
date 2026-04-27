@@ -31,14 +31,21 @@ import dev.ikm.tinkar.terms.State;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
+import org.eclipse.collections.api.tuple.primitive.IntObjectPair;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
+import org.eclipse.collections.impl.tuple.primitive.PrimitiveTuples;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.StructuredTaskScope;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Finds and withdraws duplicate semantics on patterns that conventionally hold
@@ -51,16 +58,15 @@ import java.util.UUID;
  * own module and path; the author is supplied by the caller (typically the
  * editing author of the active view).
  *
- * <p>Two callers wire this in:
- * <ul>
- *   <li>The classifier ({@code InferredResultsWriter}) at the start of every
- *       run, so subsequent duplicate-detection branches see clean data.</li>
- *   <li>A standalone Maven goal / Komet menu command that runs against an
- *       arbitrary pattern set, including a {@code dryRun} mode that reports
- *       without writing.</li>
- * </ul>
+ * <p>Patterns whose UUID is not registered in the active data store are
+ * skipped with an INFO log so the same {@code DEFAULT} pattern set works
+ * across datasets that load only a subset.
  *
- * @see SingleSemanticPatterns#DEFAULT
+ * <p>Concurrency: across-pattern fan-out, plus within each pattern a chunked
+ * parallel grouping pass (chronicle lookup of every semantic on the pattern)
+ * and a chunked parallel duplicate-processing pass. The {@link Transaction}
+ * uses concurrent-safe internals for stamp and component registration, so
+ * withdrawal writes can run from multiple threads.
  */
 public final class SingleSemanticDuplicateWithdrawer {
 
@@ -110,57 +116,132 @@ public final class SingleSemanticDuplicateWithdrawer {
     }
 
     public Report scan(Iterable<? extends EntityProxy.Pattern> patterns) {
+        List<StructuredTaskScope.Subtask<PatternResult>> subtasks = new ArrayList<>();
+        try (var scope = StructuredTaskScope.<PatternResult>open()) {
+            for (EntityProxy.Pattern pattern : patterns) {
+                subtasks.add(scope.fork(() -> scan(pattern)));
+            }
+            scope.join();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Interrupted scanning patterns", e);
+        }
         MutableList<PatternResult> results = Lists.mutable.empty();
-        for (EntityProxy.Pattern pattern : patterns) {
-            results.add(scan(pattern));
+        for (StructuredTaskScope.Subtask<PatternResult> subtask : subtasks) {
+            PatternResult r = subtask.get();
+            if (r != null) {
+                results.add(r);
+            }
         }
         return new Report(results.toImmutable());
     }
 
     public PatternResult scan(EntityProxy.Pattern pattern) {
-        PatternEntity<?> patternEntity = EntityHandle.getPatternOrThrow(pattern.nid());
+        int patternNid;
+        try {
+            patternNid = pattern.nid();
+        } catch (IllegalStateException missing) {
+            LOG.info("Skipping pattern not present in data store: {} ({})",
+                    pattern.description(), pattern.publicId().idString());
+            return null;
+        }
+        PatternEntity<?> patternEntity = EntityHandle.getPatternOrThrow(patternNid);
 
-        MutableIntObjectMap<MutableIntList> componentToSemantics = IntObjectMaps.mutable.empty();
-        PrimitiveData.get().forEachSemanticNidOfPattern(patternEntity.nid(), semanticNid -> {
-            SemanticEntity<?> semantic = EntityHandle.getSemanticOrThrow(semanticNid);
-            componentToSemantics
-                    .getIfAbsentPut(semantic.referencedComponentNid(), IntLists.mutable::empty)
-                    .add(semanticNid);
-        });
+        MutableIntList allNids = IntLists.mutable.empty();
+        PrimitiveData.get().forEachSemanticNidOfPattern(patternEntity.nid(), allNids::add);
 
-        int componentsScanned = componentToSemantics.size();
-        int componentsWithDuplicates = 0;
-        int duplicatesWithdrawn = 0;
-        int alreadyWithdrawn = 0;
-        int noCanonicalMatch = 0;
-        int wrongPatternSkipped = 0;
+        MutableIntObjectMap<MutableIntList> componentToSemantics = parallelGroupByComponent(allNids);
 
-        for (var iter = componentToSemantics.keyValuesView().iterator(); iter.hasNext();) {
+        List<IntObjectPair<MutableIntList>> duplicateGroups = new ArrayList<>();
+        for (var iter = componentToSemantics.keyValuesView().iterator(); iter.hasNext(); ) {
             var entry = iter.next();
-            int componentNid = entry.getOne();
-            MutableIntList semanticNids = entry.getTwo();
-            if (semanticNids.size() <= 1) {
-                continue;
+            if (entry.getTwo().size() > 1) {
+                duplicateGroups.add(PrimitiveTuples.pair(entry.getOne(), entry.getTwo()));
             }
-            componentsWithDuplicates++;
+        }
 
-            ComponentOutcome outcome = processComponent(patternEntity, componentNid, semanticNids);
-            duplicatesWithdrawn += outcome.withdrawn;
-            alreadyWithdrawn += outcome.alreadyWithdrawn;
-            wrongPatternSkipped += outcome.wrongPattern;
-            if (outcome.noCanonicalMatch) {
-                noCanonicalMatch++;
+        AtomicInteger duplicatesWithdrawn = new AtomicInteger();
+        AtomicInteger alreadyWithdrawn = new AtomicInteger();
+        AtomicInteger noCanonicalMatch = new AtomicInteger();
+        AtomicInteger wrongPatternSkipped = new AtomicInteger();
+
+        if (!duplicateGroups.isEmpty()) {
+            int chunkSize = chunkSize(duplicateGroups.size());
+            try (var scope = StructuredTaskScope.<Void>open()) {
+                for (int start = 0; start < duplicateGroups.size(); start += chunkSize) {
+                    int chunkStart = start;
+                    int chunkEnd = Math.min(start + chunkSize, duplicateGroups.size());
+                    scope.fork(() -> {
+                        for (int i = chunkStart; i < chunkEnd; i++) {
+                            IntObjectPair<MutableIntList> entry = duplicateGroups.get(i);
+                            ComponentOutcome outcome = processComponent(patternEntity, entry.getOne(), entry.getTwo());
+                            duplicatesWithdrawn.addAndGet(outcome.withdrawn);
+                            alreadyWithdrawn.addAndGet(outcome.alreadyWithdrawn);
+                            wrongPatternSkipped.addAndGet(outcome.wrongPattern);
+                            if (outcome.noCanonicalMatch) {
+                                noCanonicalMatch.incrementAndGet();
+                            }
+                        }
+                        return null;
+                    });
+                }
+                scope.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Interrupted processing duplicate groups", e);
             }
         }
 
         return new PatternResult(
                 patternEntity.nid(),
-                componentsScanned,
-                componentsWithDuplicates,
-                duplicatesWithdrawn,
-                alreadyWithdrawn,
-                noCanonicalMatch,
-                wrongPatternSkipped);
+                componentToSemantics.size(),
+                duplicateGroups.size(),
+                duplicatesWithdrawn.get(),
+                alreadyWithdrawn.get(),
+                noCanonicalMatch.get(),
+                wrongPatternSkipped.get());
+    }
+
+    private MutableIntObjectMap<MutableIntList> parallelGroupByComponent(MutableIntList allNids) {
+        MutableIntObjectMap<MutableIntList> merged = IntObjectMaps.mutable.empty();
+        if (allNids.isEmpty()) {
+            return merged;
+        }
+        int chunkSize = chunkSize(allNids.size());
+        ImmutableIntList nids = allNids.toImmutable();
+        List<StructuredTaskScope.Subtask<MutableIntObjectMap<MutableIntList>>> subtasks = new ArrayList<>();
+        try (var scope = StructuredTaskScope.<MutableIntObjectMap<MutableIntList>>open()) {
+            for (int start = 0; start < nids.size(); start += chunkSize) {
+                int chunkStart = start;
+                int chunkEnd = Math.min(start + chunkSize, nids.size());
+                subtasks.add(scope.fork(() -> {
+                    MutableIntObjectMap<MutableIntList> local = IntObjectMaps.mutable.empty();
+                    for (int i = chunkStart; i < chunkEnd; i++) {
+                        int nid = nids.get(i);
+                        SemanticEntity<?> semantic = EntityHandle.getSemanticOrThrow(nid);
+                        local.getIfAbsentPut(semantic.referencedComponentNid(), IntLists.mutable::empty).add(nid);
+                    }
+                    return local;
+                }));
+            }
+            scope.join();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Interrupted grouping semantics by component", e);
+        }
+        for (StructuredTaskScope.Subtask<MutableIntObjectMap<MutableIntList>> subtask : subtasks) {
+            MutableIntObjectMap<MutableIntList> local = subtask.get();
+            local.forEachKeyValue((componentNid, nidsForComponent) ->
+                    merged.getIfAbsentPut(componentNid, IntLists.mutable::empty).addAll(nidsForComponent));
+        }
+        return merged;
+    }
+
+    private static int chunkSize(int total) {
+        int cores = Math.max(1, Runtime.getRuntime().availableProcessors());
+        // Aim for ~4 chunks per core so work-stealing handles uneven chunks; floor at 1024 to amortize fork overhead.
+        int target = Math.max(1024, (total + (cores * 4 - 1)) / (cores * 4));
+        return Math.min(target, total);
     }
 
     private record ComponentOutcome(int withdrawn, int alreadyWithdrawn, int wrongPattern, boolean noCanonicalMatch) {}
