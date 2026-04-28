@@ -332,10 +332,10 @@ service TinkarSearchService {
   rpc GetResultConformanceConceptsFromLIDRRecord(TinkarConceptIdRequest) returns (TinkarSearchQueryResponse);
   rpc GetAllowedResultConceptsFromResultConformance(TinkarConceptIdRequest) returns (TinkarSearchQueryResponse);
   rpc RebuildSearchIndex(TinkarRebuildIndexRequest) returns (TinkarRebuildIndexResponse);
-  rpc GetConceptSemantics(TinkarConceptIdRequest) returns (TinkarConceptSemanticsResponse);
+  rpc InspectConcept(TinkarConceptIdRequest) returns (TinkarConceptSemanticsResponse);
   /*
    * Returns the full entity graph for a concept (concept + semantics + patterns + stamps)
    * so the caller can load them into a local entity store and display the concept detail view.
    */
-  rpc GetConceptWithSemantics(TinkarConceptIdRequest) returns (TinkarConceptEntityResponse);
+  rpc LoadConceptEntityGraph(TinkarConceptIdRequest) returns (TinkarConceptEntityResponse);
 }

@@ -228,20 +228,20 @@ public class TinkarSearchGrpcController extends TinkarSearchServiceGrpc.TinkarSe
     }
 
     @Override
-    public void getConceptSemantics(TinkarConceptIdRequest request,
+    public void inspectConcept(TinkarConceptIdRequest request,
             StreamObserver<TinkarConceptSemanticsResponse> responseObserver) {
         String conceptId = extractConceptId(request.getPublicId());
-        log.info("gRPC getConceptSemantics request for conceptId: {}", conceptId);
-        responseObserver.onNext(tinkarService.getConceptSemanticsProto(conceptId));
+        log.info("gRPC inspectConcept request for conceptId: {}", conceptId);
+        responseObserver.onNext(tinkarService.inspectConceptProto(conceptId));
         responseObserver.onCompleted();
     }
 
     @Override
-    public void getConceptWithSemantics(TinkarConceptIdRequest request,
+    public void loadConceptEntityGraph(TinkarConceptIdRequest request,
             StreamObserver<TinkarConceptEntityResponse> responseObserver) {
         String conceptId = extractConceptId(request.getPublicId());
-        log.info("gRPC getConceptWithSemantics request for conceptId: {}", conceptId);
-        responseObserver.onNext(tinkarService.getConceptWithSemantics(conceptId));
+        log.info("gRPC loadConceptEntityGraph request for conceptId: {}", conceptId);
+        responseObserver.onNext(tinkarService.loadConceptEntityGraph(conceptId));
         responseObserver.onCompleted();
     }
 

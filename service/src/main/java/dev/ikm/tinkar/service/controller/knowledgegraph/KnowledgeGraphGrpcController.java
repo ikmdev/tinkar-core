@@ -42,12 +42,12 @@ public class KnowledgeGraphGrpcController extends IkeKnowledgeGraphGrpc.IkeKnowl
     }
 
     @Override
-    public void getConceptSemantics(KnowledgeGraphConceptRequest request,
+    public void inspectConcept(KnowledgeGraphConceptRequest request,
             StreamObserver<TinkarConceptSemanticsResponse> responseObserver) {
         String conceptId = extractConceptId(request.getPublicId());
-        log.info("IkeKnowledgeGraph getConceptSemantics request for conceptId: {}", conceptId);
+        log.info("IkeKnowledgeGraph inspectConcept request for conceptId: {}", conceptId);
         ViewCalculatorWithCache calc = buildCalculator(request.getCoordinateOverride());
-        responseObserver.onNext(tinkarService.getConceptSemanticsProto(conceptId, calc));
+        responseObserver.onNext(tinkarService.inspectConceptProto(conceptId, calc));
         responseObserver.onCompleted();
     }
 
@@ -154,7 +154,7 @@ public class KnowledgeGraphGrpcController extends IkeKnowledgeGraphGrpc.IkeKnowl
         LanguageCoordinateRecord langCoord = resolveLanguageCoordinate(langId);
         NavigationCoordinateRecord navCoord = resolveNavigationCoordinate(navId);
         ViewCalculatorWithCache calc = CoordinateFactory.buildCalculator(stampCoord, langCoord, navCoord);
-        responseObserver.onNext(tinkarService.getConceptSemanticsProto(conceptId, calc));
+        responseObserver.onNext(tinkarService.inspectConceptProto(conceptId, calc));
         responseObserver.onCompleted();
     }
 

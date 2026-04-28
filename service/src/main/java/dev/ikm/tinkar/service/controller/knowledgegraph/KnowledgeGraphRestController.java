@@ -24,6 +24,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -68,7 +69,7 @@ public class KnowledgeGraphRestController {
             @ApiResponse(responseCode = "400", description = "Invalid concept ID parameter")
     })
     @GetMapping("/semantics")
-    public ResponseEntity<ConceptSemanticsResponse> getConceptSemantics(
+    public ResponseEntity<ConceptSemanticsResponse> inspectConcept(
             @Parameter(description = "Concept ID (UUID)", required = true, example = "9fc3832b-a5f8-5504-ba16-7551976841dc") @RequestParam("conceptId") String conceptId,
             @Parameter(description = "Allowed states: ACTIVE, INACTIVE, or ACTIVE_AND_INACTIVE") @RequestParam(required = false) String allowedStates,
             @Parameter(description = "Position time as epoch milliseconds (null = latest)") @RequestParam(required = false) Long positionTime,
@@ -79,7 +80,7 @@ public class KnowledgeGraphRestController {
             @Parameter(description = "Navigation premise type: STATED or INFERRED") @RequestParam(required = false) PremiseType premiseType,
             @Parameter(description = "Language coordinate preset controlling description type and dialect preference") @RequestParam(required = false) LanguagePreset languagePreset) {
         ViewCalculatorWithCache calc = buildCalculator(allowedStates, positionTime, positionPath, modules, excludedModules, modulePriority, premiseType, languagePreset);
-        return ResponseEntity.ok(tinkarService.getConceptSemantics(conceptId, calc));
+        return ResponseEntity.ok(tinkarService.inspectConcept(conceptId, calc));
     }
 
     @Operation(summary = "Get comments for a concept",
@@ -343,7 +344,27 @@ public class KnowledgeGraphRestController {
         dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord langCoord = resolveLanguageCoordinate(languageCoordinateId);
         dev.ikm.tinkar.coordinate.navigation.NavigationCoordinateRecord navCoord = resolveNavigationCoordinate(navigationCoordinateId);
         ViewCalculatorWithCache calc = CoordinateFactory.buildCalculator(stampCoord, langCoord, navCoord);
-        return ResponseEntity.ok(tinkarService.getConceptSemantics(conceptId, calc));
+        return ResponseEntity.ok(tinkarService.inspectConcept(conceptId, calc));
+    }
+
+    @Operation(summary = "Load full entity graph for a concept",
+            description = "Returns the complete binary entity graph (concept + semantics + patterns + stamps + " +
+                    "navigation neighbors + STAMP_PATTERN) as serialized protobuf bytes " +
+                    "(Content-Type: application/x-protobuf). Deserialize as TinkarConceptEntityResponse " +
+                    "and load entities into a local entity store to power the concept detail view, " +
+                    "Hierarchy tab, and History tab.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Entity graph returned as protobuf bytes"),
+            @ApiResponse(responseCode = "400", description = "Invalid concept ID parameter")
+    })
+    @GetMapping("/entity-graph")
+    public ResponseEntity<byte[]> loadConceptEntityGraph(
+            @Parameter(description = "Concept ID (UUID)", required = true, example = "9fc3832b-a5f8-5504-ba16-7551976841dc") @RequestParam("conceptId") String conceptId) {
+
+        dev.ikm.tinkar.service.proto.TinkarConceptEntityResponse response = tinkarService.loadConceptEntityGraph(conceptId);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_TYPE, "application/x-protobuf");
+        return new ResponseEntity<>(response.toByteArray(), headers, HttpStatus.OK);
     }
 
     private dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord resolveStampCoordinate(String stampCoordinateId) {
