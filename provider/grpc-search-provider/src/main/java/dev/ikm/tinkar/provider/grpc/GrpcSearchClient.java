@@ -95,18 +95,18 @@ public class GrpcSearchClient implements AutoCloseable {
     }
 
     /**
-     * Calls {@code TinkarSearchService.GetConceptWithSemantics} on the remote service.
+     * Calls {@code TinkarSearchService.LoadConceptEntityGraph} on the remote service.
      * Returns the full entity graph (concept + semantics + patterns + stamps) so the
      * caller can load them into a local entity store and display concept details.
      *
      * @param publicId the concept's public ID (list of UUIDs)
      * @return the response with all related TinkarMsg entities, or an error response
      */
-    public TinkarConceptEntityResponse getConceptWithSemantics(PublicId publicId) {
+    public TinkarConceptEntityResponse loadConceptEntityGraph(PublicId publicId) {
         TinkarConceptIdRequest request = TinkarConceptIdRequest.newBuilder()
                 .setPublicId(publicId)
                 .build();
-        return stub.getConceptWithSemantics(request);
+        return stub.loadConceptEntityGraph(request);
     }
 
     @Override
