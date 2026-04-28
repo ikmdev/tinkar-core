@@ -172,7 +172,7 @@ public class GrpcSearchService implements SearchService {
      * {@code Entity.get(nid)} will find the concept and all its semantics, patterns, and
      * stamps.
      *
-     * <p>The server is expected to implement {@code GetConceptWithSemantics} and return
+     * <p>The server is expected to implement {@code LoadConceptEntityGraph} and return
      * the concept's ConceptChronology, SemanticChronologies, PatternChronologies, and
      * StampChronologies as a list of {@code TinkarMsg} objects.
      *
@@ -189,9 +189,9 @@ public class GrpcSearchService implements SearchService {
                 .addAllUuids(publicIds.stream().map(UUID::toString).toList())
                 .build();
         TinkarConceptEntityResponse response =
-                GrpcSearchClient.get().getConceptWithSemantics(protoPublicId);
+                GrpcSearchClient.get().loadConceptEntityGraph(protoPublicId);
         if (!response.getSuccess()) {
-            throw new RuntimeException("GetConceptWithSemantics failed: " + response.getErrorMessage());
+            throw new RuntimeException("LoadConceptEntityGraph failed: " + response.getErrorMessage());
         }
         TinkarSchemaToEntityTransformer transformer = TinkarSchemaToEntityTransformer.getInstance();
         for (dev.ikm.tinkar.schema.TinkarMsg msg : response.getEntitiesList()) {

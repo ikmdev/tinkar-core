@@ -23,6 +23,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -219,10 +221,30 @@ public class TinkarSearchController {
                         @ApiResponse(responseCode = "400", description = "Invalid concept ID parameter")
         })
         @GetMapping("/semantics")
-        public ResponseEntity<ConceptSemanticsResponse> getConceptSemantics(
+        public ResponseEntity<ConceptSemanticsResponse> inspectConcept(
                         @Parameter(description = "Concept ID (UUID)", required = true, example = "9fc3832b-a5f8-5504-ba16-7551976841dc") @RequestParam("conceptId") String conceptId) {
 
-                return ResponseEntity.ok(tinkarService.getConceptSemantics(conceptId));
+                return ResponseEntity.ok(tinkarService.inspectConcept(conceptId));
+        }
+
+        @Operation(summary = "Load full entity graph for a concept",
+                        description = "Returns the complete binary entity graph (concept + semantics + patterns + stamps + " +
+                                        "navigation neighbors + STAMP_PATTERN) as serialized protobuf bytes " +
+                                        "(Content-Type: application/x-protobuf). Deserialize as TinkarConceptEntityResponse " +
+                                        "and load entities into a local entity store to power the concept detail view, " +
+                                        "Hierarchy tab, and History tab.")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "Entity graph returned as protobuf bytes"),
+                        @ApiResponse(responseCode = "400", description = "Invalid concept ID parameter")
+        })
+        @GetMapping("/entity-graph")
+        public ResponseEntity<byte[]> loadConceptEntityGraph(
+                        @Parameter(description = "Concept ID (UUID)", required = true, example = "9fc3832b-a5f8-5504-ba16-7551976841dc") @RequestParam("conceptId") String conceptId) {
+
+                dev.ikm.tinkar.service.proto.TinkarConceptEntityResponse response = tinkarService.loadConceptEntityGraph(conceptId);
+                HttpHeaders headers = new HttpHeaders();
+                headers.set(HttpHeaders.CONTENT_TYPE, "application/x-protobuf");
+                return new ResponseEntity<>(response.toByteArray(), headers, HttpStatus.OK);
         }
 
         @Operation(summary = "Get comprehensive change history for a concept", description = "Retrieves the full change history for a concept INCLUDING all attached semantics (comments, descriptions, axioms, etc.). Use this to see all changes made to a concept and its associated data.")

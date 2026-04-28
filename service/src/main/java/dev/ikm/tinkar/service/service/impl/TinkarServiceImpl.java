@@ -1081,14 +1081,14 @@ public class TinkarServiceImpl implements TinkarService {
     }
 
     @Override
-    public ConceptSemanticsResponse getConceptSemantics(String conceptId) {
-        return getConceptSemantics(conceptId, null);
+    public ConceptSemanticsResponse inspectConcept(String conceptId) {
+        return inspectConcept(conceptId, null);
     }
 
     @Override
-    public ConceptSemanticsResponse getConceptSemantics(String conceptId, ViewCalculatorWithCache viewCalculator) {
+    public ConceptSemanticsResponse inspectConcept(String conceptId, ViewCalculatorWithCache viewCalculator) {
         // Delegate to proto implementation and convert to DTO
-        TinkarConceptSemanticsResponse protoResponse = getConceptSemanticsProto(conceptId, viewCalculator);
+        TinkarConceptSemanticsResponse protoResponse = inspectConceptProto(conceptId, viewCalculator);
         return convertProtoToDto(protoResponse);
     }
 
@@ -1134,12 +1134,12 @@ public class TinkarServiceImpl implements TinkarService {
     }
 
     @Override
-    public TinkarConceptSemanticsResponse getConceptSemanticsProto(String conceptId) {
-        return getConceptSemanticsProto(conceptId, null);
+    public TinkarConceptSemanticsResponse inspectConceptProto(String conceptId) {
+        return inspectConceptProto(conceptId, null);
     }
 
     @Override
-    public TinkarConceptSemanticsResponse getConceptSemanticsProto(String conceptId, ViewCalculatorWithCache viewCalculator) {
+    public TinkarConceptSemanticsResponse inspectConceptProto(String conceptId, ViewCalculatorWithCache viewCalculator) {
         ViewCalculatorWithCache calc = resolveCalculator(viewCalculator);
         try {
             PublicId publicId = primitive.getPublicId(conceptId);
@@ -1179,7 +1179,7 @@ public class TinkarServiceImpl implements TinkarService {
     }
 
     @Override
-    public TinkarConceptEntityResponse getConceptWithSemantics(String conceptId) {
+    public TinkarConceptEntityResponse loadConceptEntityGraph(String conceptId) {
         try {
             EntityToTinkarSchemaTransformer transformer = EntityToTinkarSchemaTransformer.getInstance();
             TinkarConceptEntityResponse.Builder builder = TinkarConceptEntityResponse.newBuilder();
@@ -1225,6 +1225,10 @@ public class TinkarServiceImpl implements TinkarService {
             //    Also collect field-definition dataType/purpose/meaning concept NIDs so the
             //    client can resolve FieldDefinitionForEntity.dataType(), .purpose(), .meaning()
             //    without hitting getConceptOrThrow on absent entities.
+            //    Always include STAMP_PATTERN — required by StampCalculator.changeChronology()
+            //    to determine what fields stamps contain. Without it, latest(STAMP_PATTERN)
+            //    returns empty and the History tab shows nothing in gRPC mode.
+            patternNids.add(TinkarTerm.STAMP_PATTERN.nid());
             for (int patternNid : patternNids) {
                 if (includedNids.contains(patternNid)) continue;
                 Entity<?> patternEntity = EntityService.get().getEntityFast(patternNid);

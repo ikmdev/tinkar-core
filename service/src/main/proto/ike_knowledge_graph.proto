@@ -193,8 +193,8 @@ message SemanticsWithCoordinateRequest {
 }
 
 service IkeKnowledgeGraph {
-  // Get all semantics attached to a concept (patterns, fields, STAMP info)
-  rpc GetConceptSemantics(KnowledgeGraphConceptRequest) returns (TinkarConceptSemanticsResponse);
+  // Get all semantics attached to a concept (patterns, fields, STAMP info) — human-readable inspection
+  rpc InspectConcept(KnowledgeGraphConceptRequest) returns (TinkarConceptSemanticsResponse);
 
   // Get direct child concepts with coordinate-aware navigation (premise type controls STATED vs INFERRED hierarchy)
   rpc GetChildConcepts(KnowledgeGraphConceptRequest) returns (TinkarSearchQueryResponse);

@@ -118,7 +118,7 @@ public interface TinkarService {
      * @param conceptId The public ID (UUID) of the concept
      * @return ConceptSemanticsResponse containing all semantics for this concept
      */
-    ConceptSemanticsResponse getConceptSemantics(String conceptId);
+    ConceptSemanticsResponse inspectConcept(String conceptId);
 
     /**
      * Gets all semantics of any pattern attached to a concept using the specified view calculator.
@@ -126,14 +126,14 @@ public interface TinkarService {
      * @param viewCalculator The view calculator with coordinate overrides
      * @return ConceptSemanticsResponse containing all semantics for this concept
      */
-    ConceptSemanticsResponse getConceptSemantics(String conceptId, ViewCalculatorWithCache viewCalculator);
+    ConceptSemanticsResponse inspectConcept(String conceptId, ViewCalculatorWithCache viewCalculator);
 
     /**
      * Gets all semantics of any pattern attached to a concept (gRPC proto response).
      * @param conceptId The public ID (UUID) of the concept
      * @return TinkarConceptSemanticsResponse proto containing all semantics for this concept
      */
-    TinkarConceptSemanticsResponse getConceptSemanticsProto(String conceptId);
+    TinkarConceptSemanticsResponse inspectConceptProto(String conceptId);
 
     /**
      * Gets all semantics of any pattern attached to a concept (gRPC proto response) using the specified view calculator.
@@ -141,7 +141,7 @@ public interface TinkarService {
      * @param viewCalculator The view calculator with coordinate overrides
      * @return TinkarConceptSemanticsResponse proto containing all semantics for this concept
      */
-    TinkarConceptSemanticsResponse getConceptSemanticsProto(String conceptId, ViewCalculatorWithCache viewCalculator);
+    TinkarConceptSemanticsResponse inspectConceptProto(String conceptId, ViewCalculatorWithCache viewCalculator);
 
     /**
      * Returns the full entity graph for a concept as a list of serialized {@code TinkarMsg} objects.
@@ -152,7 +152,7 @@ public interface TinkarService {
      * @param conceptId the first UUID string of the concept's public ID
      * @return TinkarConceptEntityResponse containing all TinkarMsg entities
      */
-    dev.ikm.tinkar.service.proto.TinkarConceptEntityResponse getConceptWithSemantics(String conceptId);
+    dev.ikm.tinkar.service.proto.TinkarConceptEntityResponse loadConceptEntityGraph(String conceptId);
 
     /**
      * Gets comprehensive change history for a concept including all attached semantics.
