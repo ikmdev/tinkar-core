@@ -630,8 +630,22 @@ public class InferredResultsWriter {
 		
 		if (semanticNids.length == 1) {
 			// Verify the single semantic belongs to the expected pattern
-			SemanticEntity<?> semantic = EntityHandle.getSemanticOrThrow(semanticNids[0]);
-			if (semantic.patternNid() != patternEntity.nid()) {
+            SemanticEntity<?> semantic = null;
+            try {
+                semantic = EntityHandle.getSemanticOrThrow(semanticNids[0]);
+            } catch (Exception e) {
+				// see if semantic is null.
+                byte[] bytes = PrimitiveData.get().getBytes(semanticNids[0]);
+				if (bytes == null) {
+					LOG.error(e.getMessage());
+					LOG.error("Semantic is null for nid " + semanticNids[0]);
+				} else {
+					LOG.error(e.getMessage());
+					LOG.error("Bytes are present for nid " + semanticNids[0] + " bytes are " + Arrays.toString(bytes));
+				}
+				return Optional.empty();
+            }
+            if (semantic.patternNid() != patternEntity.nid()) {
 				LOG.error("Pattern mismatch! Expected pattern {} but semantic {} has pattern {}. " +
 						"Referenced component: {}. This indicates a data or indexing corruption.",
 						PrimitiveData.textWithNid(patternEntity.nid()),
