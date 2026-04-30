@@ -107,17 +107,19 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
 
             IntConsumer exportNidConsumer = (nid) -> {
                 Entity<? extends EntityVersion> entity = EntityService.get().getEntityFast(nid);
-                // Store Module & Author Dependencies for Manifest
-                if (entity instanceof StampEntity stampEntity) {
-                    moduleList.add(stampEntity.module().publicId());
-                    authorList.add(stampEntity.author().publicId());
-                }
-                // Transform and Write data
-                TinkarMsg pbTinkarMsg = entityTransformer.transform(entity);
-                try {
-                    pbTinkarMsg.writeDelimitedTo(zos);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+                if (entity != null) {
+                    if (entity instanceof StampEntity stampEntity) {
+                        // Store Module & Author Dependencies for Manifest
+                        moduleList.add(stampEntity.module().publicId());
+                        authorList.add(stampEntity.author().publicId());
+                    }
+                    // Transform and Write data
+                    TinkarMsg pbTinkarMsg = entityTransformer.transform(entity);
+                    try {
+                        pbTinkarMsg.writeDelimitedTo(zos);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
                 completedUnitOfWork();
             };
