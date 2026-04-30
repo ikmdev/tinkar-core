@@ -338,4 +338,9 @@ service TinkarSearchService {
    * so the caller can load them into a local entity store and display the concept detail view.
    */
   rpc LoadConceptEntityGraph(TinkarConceptIdRequest) returns (TinkarConceptEntityResponse);
+  /*
+   * Returns a single entity (plus its version stamps) for the given public ID.
+   * Used by GrpcPrimitiveDataService as a fallback when an entity is not in the local cache.
+   */
+  rpc GetEntityByPublicId(TinkarConceptIdRequest) returns (TinkarConceptEntityResponse);
 }

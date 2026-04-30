@@ -245,6 +245,15 @@ public class TinkarSearchGrpcController extends TinkarSearchServiceGrpc.TinkarSe
         responseObserver.onCompleted();
     }
 
+    @Override
+    public void getEntityByPublicId(TinkarConceptIdRequest request,
+            StreamObserver<TinkarConceptEntityResponse> responseObserver) {
+        String entityId = extractConceptId(request.getPublicId());
+        log.debug("gRPC getEntityByPublicId request for entityId: {}", entityId);
+        responseObserver.onNext(tinkarService.getEntityByPublicId(entityId));
+        responseObserver.onCompleted();
+    }
+
     private String extractConceptId(PublicId publicId) {
         if (publicId == null || publicId.getUuidsList().isEmpty()) {
             return "";
