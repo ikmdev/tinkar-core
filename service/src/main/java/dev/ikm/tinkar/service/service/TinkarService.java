@@ -155,6 +155,17 @@ public interface TinkarService {
     dev.ikm.tinkar.service.proto.TinkarConceptEntityResponse loadConceptEntityGraph(String conceptId);
 
     /**
+     * Returns a single entity plus its version stamps as {@code TinkarMsg} objects.
+     * Used by {@code GrpcPrimitiveDataService} as a cache-miss fallback: when an entity is not
+     * already in the local in-memory store, this call fetches just that entity (not a full concept
+     * graph) so the client can cache and return the bytes.
+     *
+     * @param entityId the first UUID string of the entity's public ID
+     * @return TinkarConceptEntityResponse containing the entity and its stamps
+     */
+    dev.ikm.tinkar.service.proto.TinkarConceptEntityResponse getEntityByPublicId(String entityId);
+
+    /**
      * Gets comprehensive change history for a concept including all attached semantics.
      * This shows changes to the concept itself AND changes to all comments, descriptions, etc.
      * @param conceptId The public ID (UUID) of the concept

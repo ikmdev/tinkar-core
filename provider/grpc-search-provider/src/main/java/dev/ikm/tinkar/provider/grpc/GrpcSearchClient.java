@@ -109,6 +109,21 @@ public class GrpcSearchClient implements AutoCloseable {
         return stub.loadConceptEntityGraph(request);
     }
 
+    /**
+     * Calls {@code TinkarSearchService.GetEntityByPublicId} on the remote service.
+     * Returns a single entity plus its version stamps — used as a cache-miss fallback
+     * by {@link GrpcPrimitiveDataService}.
+     *
+     * @param publicId the entity's public ID (list of UUIDs)
+     * @return the response with the entity and its stamps, or an error response
+     */
+    public TinkarConceptEntityResponse getEntityByPublicId(PublicId publicId) {
+        TinkarConceptIdRequest request = TinkarConceptIdRequest.newBuilder()
+                .setPublicId(publicId)
+                .build();
+        return stub.getEntityByPublicId(request);
+    }
+
     @Override
     public void close() {
         try {
