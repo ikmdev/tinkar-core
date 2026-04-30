@@ -7,13 +7,8 @@ import dev.ikm.tinkar.service.dto.ConceptSemanticsResponse;
 import dev.ikm.tinkar.service.dto.DescendantOperationResponse;
 import dev.ikm.tinkar.service.dto.SearchSortOption;
 import dev.ikm.tinkar.service.dto.TinkarSearchQueryResponse;
-import dev.ikm.tinkar.service.dto.TinkarSearchQueryResponse.Descriptions;
-import dev.ikm.tinkar.service.dto.TinkarSearchQueryResponse.SearchResult;
-import dev.ikm.tinkar.service.dto.TinkarSearchQueryResponse.Stamp;
-import dev.ikm.tinkar.service.proto.TinkarConceptDescriptions;
-import dev.ikm.tinkar.service.proto.TinkarSearchResult;
 import dev.ikm.tinkar.service.service.TinkarService;
-import dev.ikm.tinkar.schema.StampVersion;
+import dev.ikm.tinkar.service.util.ProtoConversionUtils;
 import dev.ikm.tinkar.service.controller.graphrag.GraphRAGRestController;
 import dev.ikm.tinkar.service.controller.knowledgegraph.KnowledgeGraphRestController;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,8 +27,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 /**
  * @deprecated Use {@link GraphRAGRestController} (Tier 1)
@@ -60,7 +53,7 @@ public class TinkarSearchController {
         public ResponseEntity<TinkarSearchQueryResponse> search(
                         @Parameter(description = "Search query string", required = true, example = "chronic lung") @RequestParam String query) {
 
-                return ResponseEntity.ok(toDto(tinkarService.search(query)));
+                return ResponseEntity.ok(ProtoConversionUtils.toDto(tinkarService.search(query)));
         }
 
         @Operation(summary = "Search for concepts", description = "Search for concepts based off a search term")
@@ -73,7 +66,7 @@ public class TinkarSearchController {
                         @Parameter(description = "Search query string", required = true, example = "chronic lung") @RequestParam String query,
                         @Parameter(description = "Maximum number of results to return", required = false) @RequestParam(name = "maxResults", required = false) Integer maxResults) {
 
-                return ResponseEntity.ok(toDto(tinkarService.conceptSearch(query, maxResults)));
+                return ResponseEntity.ok(ProtoConversionUtils.toDto(tinkarService.conceptSearch(query, maxResults)));
         }
 
         @Operation(summary = "Search for concepts with sort options", description = "Search for concepts with configurable sort options. " +
@@ -103,7 +96,7 @@ public class TinkarSearchController {
         public ResponseEntity<TinkarSearchQueryResponse> getEntity(
                         @Parameter(description = "Concept ID", required = true, example = "f5c39ec3-7256-3a03-b651-d17b623a30ec") @RequestParam("conceptId") String conceptId) {
 
-                return ResponseEntity.ok(toDto(tinkarService.getEntity(conceptId)));
+                return ResponseEntity.ok(ProtoConversionUtils.toDto(tinkarService.getEntity(conceptId)));
         }
 
         @Operation(summary = "Get child concepts", description = "Look up child concepts for the tinkar concept public ID")
@@ -115,7 +108,7 @@ public class TinkarSearchController {
         public ResponseEntity<TinkarSearchQueryResponse> getTinkarChildConcepts(
                         @Parameter(description = "Concept ID", required = true, example = "f5c39ec3-7256-3a03-b651-d17b623a30ec") @RequestParam("conceptId") String conceptId) {
 
-                return ResponseEntity.ok(toDto(tinkarService.getChildConcepts(conceptId)));
+                return ResponseEntity.ok(ProtoConversionUtils.toDto(tinkarService.getChildConcepts(conceptId)));
         }
 
         @Operation(summary = "Get descendant concepts", description = "Look up descendant concepts for the tinkar concept public ID")
@@ -127,7 +120,7 @@ public class TinkarSearchController {
         public ResponseEntity<TinkarSearchQueryResponse> getTinkarDescendantConcepts(
                         @Parameter(description = "Concept ID", required = true, example = "f5c39ec3-7256-3a03-b651-d17b623a30ec") @RequestParam("conceptId") String conceptId) {
 
-                return ResponseEntity.ok(toDto(tinkarService.getDescendantConcepts(conceptId)));
+                return ResponseEntity.ok(ProtoConversionUtils.toDto(tinkarService.getDescendantConcepts(conceptId)));
         }
 
         @Operation(summary = "Get LIDR record concepts from test kit", description = "Look up lidr record concepts for a test kit concept public ID")
@@ -139,7 +132,7 @@ public class TinkarSearchController {
         public ResponseEntity<TinkarSearchQueryResponse> getLIDRRecordConceptsFromTestKit(
                         @Parameter(description = "Test kit concept ID", required = true, example = "f5c39ec3-7256-3a03-b651-d17b623a30ec") @RequestParam("testKitConceptId") String testKitConceptId) {
 
-                return ResponseEntity.ok(toDto(tinkarService.getLIDRRecordConceptsFromTestKit(testKitConceptId)));
+                return ResponseEntity.ok(ProtoConversionUtils.toDto(tinkarService.getLIDRRecordConceptsFromTestKit(testKitConceptId)));
         }
 
         @Operation(summary = "Get result conformance concepts from LIDR record", description = "Look up result conformances for a LIDR record concept public ID")
@@ -151,7 +144,7 @@ public class TinkarSearchController {
         public ResponseEntity<TinkarSearchQueryResponse> getResultConformanceConceptsFromLIDRRecord(
                         @Parameter(description = "LIDR record concept ID", required = true, example = "f5c39ec3-7256-3a03-b651-d17b623a30ec") @RequestParam("lidrRecordConceptId") String lidrRecordConceptId) {
 
-                return ResponseEntity.ok(toDto(tinkarService.getResultConformanceConceptsFromLIDRRecord(lidrRecordConceptId)));
+                return ResponseEntity.ok(ProtoConversionUtils.toDto(tinkarService.getResultConformanceConceptsFromLIDRRecord(lidrRecordConceptId)));
         }
 
         @Operation(summary = "Get allowed result concepts from result conformance", description = "Look up allowed results for a result conformance concept public ID")
@@ -163,7 +156,7 @@ public class TinkarSearchController {
         public ResponseEntity<TinkarSearchQueryResponse> getAllowedResultConceptsFromResultConformance(
                         @Parameter(description = "Result conformance concept ID", required = true, example = "f5c39ec3-7256-3a03-b651-d17b623a30ec") @RequestParam("resultConformanceConceptId") String resultConformanceConceptId) {
 
-                return ResponseEntity.ok(toDto(tinkarService.getAllowedResultConceptsFromResultConformance(
+                return ResponseEntity.ok(ProtoConversionUtils.toDto(tinkarService.getAllowedResultConceptsFromResultConformance(
                                 resultConformanceConceptId)));
         }
 
@@ -320,54 +313,4 @@ public class TinkarSearchController {
                 return ResponseEntity.ok(tinkarService.removeDescendant(parentConceptId, descendantConceptId));
         }
 
-        private TinkarSearchQueryResponse toDto(dev.ikm.tinkar.service.proto.TinkarSearchQueryResponse proto) {
-                List<SearchResult> results = proto.getResultsList().stream()
-                                .map(this::toSearchResultDto)
-                                .toList();
-
-                return new TinkarSearchQueryResponse(
-                                proto.getQuery(),
-                                proto.getTotalCount(),
-                                results,
-                                proto.getSuccess(),
-                                proto.getErrorMessage().isEmpty() ? null : proto.getErrorMessage());
-        }
-
-        private SearchResult toSearchResultDto(TinkarSearchResult proto) {
-                List<String> publicIds = proto.getPublicId().getUuidsList();
-
-                Descriptions descriptions = toDescriptionsDto(proto.getDescriptions());
-                Stamp stamp = toStampDto(proto.getStamp());
-
-                return new SearchResult(publicIds, descriptions, stamp);
-        }
-
-        private Descriptions toDescriptionsDto(TinkarConceptDescriptions proto) {
-                return new Descriptions(
-                                proto.getFullyQualifiedName(),
-                                proto.getRegularName(),
-                                proto.getDefinition());
-        }
-
-        private Stamp toStampDto(StampVersion proto) {
-                String statusPublicId = proto.hasStatusPublicId() && !proto.getStatusPublicId().getUuidsList().isEmpty()
-                                ? proto.getStatusPublicId().getUuids(0)
-                                : null;
-                String authorPublicId = proto.hasAuthorPublicId() && !proto.getAuthorPublicId().getUuidsList().isEmpty()
-                                ? proto.getAuthorPublicId().getUuids(0)
-                                : null;
-                String modulePublicId = proto.hasModulePublicId() && !proto.getModulePublicId().getUuidsList().isEmpty()
-                                ? proto.getModulePublicId().getUuids(0)
-                                : null;
-                String pathPublicId = proto.hasPathPublicId() && !proto.getPathPublicId().getUuidsList().isEmpty()
-                                ? proto.getPathPublicId().getUuids(0)
-                                : null;
-
-                return new Stamp(
-                                statusPublicId,
-                                authorPublicId,
-                                modulePublicId,
-                                pathPublicId,
-                                proto.getTime());
-        }
 }
