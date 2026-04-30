@@ -8,15 +8,11 @@ import dev.ikm.tinkar.service.dto.PremiseType;
 import dev.ikm.tinkar.service.dto.SavedLanguageCoordinateResponse;
 import dev.ikm.tinkar.service.dto.SavedNavigationCoordinateResponse;
 import dev.ikm.tinkar.service.dto.TinkarSearchQueryResponse;
-import dev.ikm.tinkar.service.dto.TinkarSearchQueryResponse.Descriptions;
-import dev.ikm.tinkar.service.dto.TinkarSearchQueryResponse.SearchResult;
-import dev.ikm.tinkar.service.dto.TinkarSearchQueryResponse.Stamp;
-import dev.ikm.tinkar.service.proto.TinkarSearchResult;
 import dev.ikm.tinkar.service.service.CoordinateFactory;
 import dev.ikm.tinkar.service.service.CoordinateStoreService;
 import dev.ikm.tinkar.service.service.TinkarService;
+import dev.ikm.tinkar.service.util.ProtoConversionUtils;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculatorWithCache;
-import dev.ikm.tinkar.schema.StampVersion;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -164,7 +160,7 @@ public class KnowledgeGraphRestController {
             @Parameter(description = "Ordered UUIDs of module concepts for priority") @RequestParam(required = false) List<String> modulePriority,
             @Parameter(description = "Navigation premise type: STATED or INFERRED") @RequestParam(required = false) PremiseType premiseType) {
         ViewCalculatorWithCache calc = buildCalculator(allowedStates, positionTime, positionPath, modules, excludedModules, modulePriority, premiseType, null);
-        return ResponseEntity.ok(toDto(tinkarService.getChildConcepts(conceptId, calc)));
+        return ResponseEntity.ok(ProtoConversionUtils.toDto(tinkarService.getChildConcepts(conceptId, calc)));
     }
 
     @Operation(summary = "Get all descendant concepts",
@@ -185,7 +181,7 @@ public class KnowledgeGraphRestController {
             @Parameter(description = "Ordered UUIDs of module concepts for priority") @RequestParam(required = false) List<String> modulePriority,
             @Parameter(description = "Navigation premise type: STATED or INFERRED") @RequestParam(required = false) PremiseType premiseType) {
         ViewCalculatorWithCache calc = buildCalculator(allowedStates, positionTime, positionPath, modules, excludedModules, modulePriority, premiseType, null);
-        return ResponseEntity.ok(toDto(tinkarService.getDescendantConcepts(conceptId, calc)));
+        return ResponseEntity.ok(ProtoConversionUtils.toDto(tinkarService.getDescendantConcepts(conceptId, calc)));
     }
 
     @Operation(summary = "Create a sample change (comment)", description = "Creates a new comment semantic attached to the specified concept.")
@@ -413,35 +409,20 @@ public class KnowledgeGraphRestController {
         return CoordinateFactory.buildCalculator(override);
     }
 
-    private TinkarSearchQueryResponse toDto(dev.ikm.tinkar.service.proto.TinkarSearchQueryResponse proto) {
-        List<SearchResult> results = proto.getResultsList().stream()
-                .map(this::toSearchResultDto)
-                .toList();
-        return new TinkarSearchQueryResponse(
-                proto.getQuery(),
-                proto.getTotalCount(),
-                results,
-                proto.getSuccess(),
-                proto.getErrorMessage().isEmpty() ? null : proto.getErrorMessage());
-    }
-
-    private SearchResult toSearchResultDto(TinkarSearchResult proto) {
-        List<String> publicIds = proto.getPublicId().getUuidsList();
-        Descriptions descriptions = new Descriptions(
-                proto.getDescriptions().getFullyQualifiedName(),
-                proto.getDescriptions().getRegularName(),
-                proto.getDescriptions().getDefinition());
-        StampVersion stampProto = proto.getStamp();
-        Stamp stamp = new Stamp(
-                stampProto.hasStatusPublicId() && !stampProto.getStatusPublicId().getUuidsList().isEmpty()
-                        ? stampProto.getStatusPublicId().getUuids(0) : null,
-                stampProto.hasAuthorPublicId() && !stampProto.getAuthorPublicId().getUuidsList().isEmpty()
-                        ? stampProto.getAuthorPublicId().getUuids(0) : null,
-                stampProto.hasModulePublicId() && !stampProto.getModulePublicId().getUuidsList().isEmpty()
-                        ? stampProto.getModulePublicId().getUuids(0) : null,
-                stampProto.hasPathPublicId() && !stampProto.getPathPublicId().getUuidsList().isEmpty()
-                        ? stampProto.getPathPublicId().getUuids(0) : null,
-                stampProto.getTime());
-        return new SearchResult(publicIds, descriptions, stamp);
+    @Operation(summary = "Get entity by public ID",
+            description = "Returns a single entity and its stamps as serialized protobuf bytes " +
+                    "(Content-Type: application/x-protobuf). Deserialize as TinkarConceptEntityResponse. " +
+                    "Used as a point lookup for individual entities by UUID.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Entity returned as protobuf bytes"),
+            @ApiResponse(responseCode = "400", description = "Invalid entity ID parameter")
+    })
+    @GetMapping("/entity-by-id")
+    public ResponseEntity<byte[]> getEntityByPublicId(
+            @Parameter(description = "Entity ID (UUID)", required = true, example = "9fc3832b-a5f8-5504-ba16-7551976841dc") @RequestParam("entityId") String entityId) {
+        dev.ikm.tinkar.service.proto.TinkarConceptEntityResponse response = tinkarService.getEntityByPublicId(entityId);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_TYPE, "application/x-protobuf");
+        return new ResponseEntity<>(response.toByteArray(), headers, HttpStatus.OK);
     }
 }
