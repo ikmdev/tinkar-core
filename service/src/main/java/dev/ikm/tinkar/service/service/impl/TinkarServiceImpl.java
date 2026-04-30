@@ -1352,6 +1352,44 @@ public class TinkarServiceImpl implements TinkarService {
         }
     }
 
+    @Override
+    public TinkarConceptEntityResponse getEntityByPublicId(String entityId) {
+        try {
+            EntityToTinkarSchemaTransformer transformer = EntityToTinkarSchemaTransformer.getInstance();
+            TinkarConceptEntityResponse.Builder builder = TinkarConceptEntityResponse.newBuilder();
+            Set<Integer> includedNids = new HashSet<>();
+
+            PublicId publicId = primitive.getPublicId(entityId);
+            int nid = EntityService.get().nidForPublicId(publicId);
+            Entity<?> entity = EntityService.get().getEntityFast(nid);
+            if (entity == null) {
+                return TinkarConceptEntityResponse.newBuilder()
+                        .setSuccess(false)
+                        .setErrorMessage("Entity not found: " + entityId)
+                        .build();
+            }
+            addToResponse(builder, transformer, includedNids, entity);
+
+            // Include version stamps so the client can render status/author/module/path
+            Set<Integer> stampNids = new HashSet<>();
+            entity.versions().forEach(v -> stampNids.add(v.stampNid()));
+            for (int stampNid : stampNids) {
+                StampEntity<?> stampEntity = EntityService.get().getStampFast(stampNid);
+                if (stampEntity != null) {
+                    addToResponse(builder, transformer, includedNids, stampEntity);
+                }
+            }
+
+            return builder.setSuccess(true).build();
+        } catch (Exception e) {
+            log.error("Failed to get entity by public ID {}: {}", entityId, e.getMessage(), e);
+            return TinkarConceptEntityResponse.newBuilder()
+                    .setSuccess(false)
+                    .setErrorMessage(e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName())
+                    .build();
+        }
+    }
+
     /** Adds an entity to the proto response if not already included. */
     private void addToResponse(TinkarConceptEntityResponse.Builder builder,
                                EntityToTinkarSchemaTransformer transformer,

@@ -26,6 +26,10 @@
  * grpc-netty-shaded (the transport) remains on the classpath as a runtime-only
  * automatic module discovered via ServiceLoader.
  */
+import dev.ikm.tinkar.common.service.DataServiceController;
+import dev.ikm.tinkar.common.service.ServiceLifecycle;
+import dev.ikm.tinkar.provider.grpc.GrpcPrimitiveDataService;
+
 module dev.ikm.tinkar.provider.grpc {
 
     exports dev.ikm.tinkar.provider.grpc;
@@ -45,5 +49,12 @@ module dev.ikm.tinkar.provider.grpc {
     // Entity module: TinkarSchemaToEntityTransformer + EntityService for concept loading
     requires dev.ikm.tinkar.entity;
 
+    // Eclipse Collections API: ImmutableList, IntProcedure, Lists.immutable
+    requires org.eclipse.collections.api;
+
     requires org.slf4j;
+
+    // Register GrpcPrimitiveDataService.Controller as a PrimitiveDataService provider
+    provides DataServiceController with GrpcPrimitiveDataService.Controller;
+    provides ServiceLifecycle with GrpcPrimitiveDataService.Controller;
 }
