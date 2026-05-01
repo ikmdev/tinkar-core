@@ -13,6 +13,7 @@
     <properties>
         <grpc.version>1.78.0</grpc.version>
         <protobuf.version>4.30.2</protobuf.version>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
     </properties>
 
     <dependencies>
