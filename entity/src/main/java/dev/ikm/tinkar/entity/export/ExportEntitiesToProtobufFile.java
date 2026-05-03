@@ -47,7 +47,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.IntConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -105,26 +105,22 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             ZipEntry zipEntry = new ZipEntry(protobufFile.getName().replace(".zip", ""));
             zos.putNextEntry(zipEntry);
 
-            IntConsumer exportNidConsumer = (nid) -> {
-                Entity<? extends EntityVersion> entity = EntityService.get().getEntityFast(nid);
-                if (entity != null) {
-                    if (entity instanceof StampEntity stampEntity) {
-                        // Store Module & Author Dependencies for Manifest
-                        moduleList.add(stampEntity.module().publicId());
-                        authorList.add(stampEntity.author().publicId());
-                    }
-                    // Transform and Write data
-                    TinkarMsg pbTinkarMsg = entityTransformer.transform(entity);
-                    try {
-                        pbTinkarMsg.writeDelimitedTo(zos);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+            Consumer<Entity<?>> exportEntityConsumer = entity -> {
+                if (entity instanceof StampEntity stampEntity) {
+                    // Store Module & Author Dependencies for Manifest
+                    moduleList.add(stampEntity.module().publicId());
+                    authorList.add(stampEntity.author().publicId());
+                }
+                TinkarMsg pbTinkarMsg = entityTransformer.transform(entity);
+                try {
+                    pbTinkarMsg.writeDelimitedTo(zos);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
                 completedUnitOfWork();
             };
 
-            entityCountSummary = entityAggregator.aggregate(exportNidConsumer);
+            entityCountSummary = entityAggregator.aggregateEntities(exportEntityConsumer);
 
             zos.closeEntry();
             zos.flush();
