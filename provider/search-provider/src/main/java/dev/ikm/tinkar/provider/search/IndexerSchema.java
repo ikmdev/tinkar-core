@@ -16,6 +16,9 @@
 package dev.ikm.tinkar.provider.search;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.IntField;
+import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexableField;
@@ -51,8 +54,19 @@ public final class IndexerSchema {
     /**
      * Current schema version written by this build. Bump on any breaking
      * change to document shape (field names, field types, doc granularity).
+     *
+     * <p>v2 (this build): one Lucene document per (semantic-nid, fieldIndex)
+     * carrying single-valued {@code nid}, {@code fieldIndex}, and {@code text}
+     * fields. {@code nid} and {@code fieldIndex} are written as
+     * {@link IntField} (indexed, doc-values, stored), eliminating the v1
+     * {@code IntPoint + StoredField} pair and the §3.1 reuse bug.
+     *
+     * <p>v1 (deprecated): one document per semantic with multi-valued
+     * {@code text}/{@code fieldIndex}, plus dead {@code rcNid}, {@code patternNid},
+     * and {@code nidPoint} fields. Indexes at v0 (legacy, no version key)
+     * or v1 are auto-recreated against v2 on next startup.
      */
-    public static final int VERSION = 1;
+    public static final int VERSION = 2;
 
     /** Lucene commit-user-data key under which {@link #VERSION} is stored. */
     public static final String VERSION_KEY = "ike.indexer.schemaVersion";
@@ -60,27 +74,22 @@ public final class IndexerSchema {
     /**
      * Sentinel returned by {@link #readVersion(Directory)} when an existing
      * index has no {@link #VERSION_KEY} entry — i.e., it was written before
-     * this schema-version mechanism existed. Pre-feature indexes carry latent
-     * shape bugs (the §3.1 fieldIndex reuse bug, ambiguous multi-valued read-
-     * back) and cannot be trusted to mean what their fields say they mean,
-     * so they read back as {@code 0} to force a recreate against the current
-     * {@link #VERSION}.
+     * the schema-version mechanism existed (pre-A0). Pre-feature indexes
+     * carry latent shape bugs (the §3.1 fieldIndex reuse bug, ambiguous
+     * multi-valued read-back) and cannot be trusted to mean what their fields
+     * say they mean, so they read back as {@code 0} to force a recreate
+     * against the current {@link #VERSION}.
      */
     private static final int LEGACY_INDEX_VERSION = 0;
 
-    /** Stored {@code int} nid of the indexed semantic. */
+    /** Indexed (BKD point + doc-values) and stored {@code int} nid of the source semantic. */
     public static final IntDescriptor NID = new IntDescriptor("nid");
 
-    /** Stored {@code int} referenced-component nid. Unused on the read side; retained in v1 for shape parity. */
-    public static final IntDescriptor RC_NID = new IntDescriptor("rcNid");
-
-    /** Stored {@code int} pattern nid. Unused on the read side; retained in v1 for shape parity. */
-    public static final IntDescriptor PATTERN_NID = new IntDescriptor("patternNid");
-
-    /** Stored {@code int} field index — the position of the matched text within the semantic's field values. */
+    /** Indexed (BKD point + doc-values) and stored {@code int} field index — the position
+     *  of the matched text within the semantic's {@code fieldValues()} list. */
     public static final IntDescriptor FIELD_INDEX = new IntDescriptor("fieldIndex");
 
-    /** Indexed and stored full-text content. */
+    /** Analyzed and stored full-text content for the (nid, fieldIndex) tuple. */
     public static final TextDescriptor TEXT = new TextDescriptor("text");
 
     /**
@@ -90,8 +99,6 @@ public final class IndexerSchema {
      */
     public static final Set<String> FIELDS_TO_LOAD = Set.of(
             NID.name(),
-            RC_NID.name(),
-            PATTERN_NID.name(),
             FIELD_INDEX.name(),
             TEXT.name()
     );
@@ -158,9 +165,21 @@ public final class IndexerSchema {
      */
     public sealed interface Descriptor<T> permits IntDescriptor, TextDescriptor {
         /**
-         * @return the Lucene field name this descriptor reads
+         * @return the Lucene field name this descriptor reads and writes
          */
         String name();
+
+        /**
+         * Build a fresh Lucene field carrying the given typed value, suitable
+         * for {@code Document.add(...)}. A new instance must be returned on
+         * every call — Lucene fields hold their value by reference, and
+         * sharing instances across documents (or across positions in the same
+         * document) is the §3.1 bug A retires.
+         *
+         * @param value the typed value to store and index
+         * @return a fresh {@link IndexableField} for this descriptor's shape
+         */
+        IndexableField make(T value);
 
         /**
          * Read this descriptor's value from a hit document.
@@ -172,12 +191,19 @@ public final class IndexerSchema {
     }
 
     /**
-     * Descriptor for a stored {@code int} field. Reads via
-     * {@link IndexableField#numericValue()}, so it works against either a
-     * {@code StoredField} (v1 shape) or a {@code IntField} (v2 shape) without
-     * change.
+     * Descriptor for an {@link IntField}: indexed as a BKD point, exposed as
+     * doc-values, and stored. Reads via {@link IndexableField#numericValue()}.
      */
     public record IntDescriptor(String name) implements Descriptor<Integer> {
+        /**
+         * @param value the int value (auto-unboxed)
+         * @return a fresh {@link IntField} with {@link Field.Store#YES}
+         */
+        @Override
+        public IndexableField make(Integer value) {
+            return new IntField(name, value, Field.Store.YES);
+        }
+
         /**
          * @param doc the hit document
          * @return the stored int as an {@link Integer}, or {@code null} if absent
@@ -190,10 +216,19 @@ public final class IndexerSchema {
     }
 
     /**
-     * Descriptor for a stored full-text field. Reads via
-     * {@link Document#get(String)} which returns the first stored value.
+     * Descriptor for a {@link TextField}: analyzed and stored full text.
+     * Reads via {@link Document#get(String)} (first stored value).
      */
     public record TextDescriptor(String name) implements Descriptor<String> {
+        /**
+         * @param value the text to analyze and store
+         * @return a fresh {@link TextField} with {@link Field.Store#YES}
+         */
+        @Override
+        public IndexableField make(String value) {
+            return new TextField(name, value, Field.Store.YES);
+        }
+
         /**
          * @param doc the hit document
          * @return the stored string, or {@code null} if absent

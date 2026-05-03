@@ -431,6 +431,7 @@ public interface StampCalculator {
                     semanticNidSearchResultMap.put(primitiveResult.nid(),
                             currentResult
                                     .withScore(primitiveResult.score())
+                                    .withFieldIndex(primitiveResult.fieldIndex())
                                     .withHighlightedString(primitiveResult.highlightedString())
                     );
                 }

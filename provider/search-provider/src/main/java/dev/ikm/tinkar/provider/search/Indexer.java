@@ -16,20 +16,14 @@
 package dev.ikm.tinkar.provider.search;
 
 import dev.ikm.tinkar.common.util.time.Stopwatch;
-import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.IntPoint;
-import org.apache.lucene.document.StoredField;
-import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
@@ -40,14 +34,10 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Indexer {
-    public static final String NID_POINT = "nidPoint";
-    public static final String NID = "nid";
-    public static final String RC_NID = "rcNid";
-    public static final String PATTERN_NID = "patternNid";
-    public static final String FIELD_INDEX = "fieldIndex";
-    public static final String TEXT_FIELD_NAME = "text";
     private static final Logger LOG = LoggerFactory.getLogger(Indexer.class);
     private static final File defaultDataDirectory = new File("target/lucene/");
     private static DirectoryReader indexReader;
@@ -167,92 +157,62 @@ public class Indexer {
         LOG.info("Closed lucene index in: " + stopwatch.durationString());
     }
 
+    /**
+     * Index a semantic by emitting one Lucene document per distinct
+     * (nid, fieldIndex, stripped-text) tuple seen across the semantic's
+     * versions.
+     *
+     * <p>Each emitted document carries three single-valued fields:
+     * {@link IndexerSchema#NID}, {@link IndexerSchema#FIELD_INDEX}, and
+     * {@link IndexerSchema#TEXT}. Doc-per-position guarantees every hit has
+     * unambiguous text/fieldIndex/highlight — the ambiguity that v1's
+     * multi-valued fields had at read time is gone by construction.
+     *
+     * <p>Non-{@link SemanticEntity} arguments are silently ignored; the
+     * concept/pattern/stamp paths feed indexing through their description
+     * semantics.
+     *
+     * @param object the entity to index; only {@link SemanticEntity} is acted on
+     */
     public void index(Object object) {
-        if (object instanceof SemanticEntity semanticEntity) {
-            IntPoint nidPoint = new IntPoint(NID_POINT, 0);
-            // The IntPoint field does not store the value,
-            // so we also need a stored field to retrieve the nid from a document.
-            StoredField nidField = new StoredField(NID, 0);
-            StoredField rcNidField = new StoredField(RC_NID, 0);
-            StoredField patternNidField = new StoredField(PATTERN_NID, 0);
-            StoredField fieldIndexField = new StoredField(FIELD_INDEX, 0);
+        if (!(object instanceof SemanticEntity<?> semanticEntity)) {
+            return;
+        }
 
-            // KEC: Deliberately commented out. See explanation on method for reason.
-            // deleteDocumentIfExists(semanticEntity);
-
-
-            Document document = new Document();
-            nidPoint.setIntValue(semanticEntity.nid());
-            nidField.setIntValue(semanticEntity.nid());
-            rcNidField.setIntValue(semanticEntity.referencedComponentNid());
-            patternNidField.setIntValue(semanticEntity.patternNid());
-
-            document.add(nidPoint);
-            document.add(nidField);
-            document.add(rcNidField);
-            document.add(patternNidField);
+        Set<String> seenTexts = new HashSet<>();
+        int docsAdded = 0;
+        try {
             for (SemanticEntityVersion version : ((SemanticEntity<SemanticEntityVersion>) semanticEntity).versions()) {
                 ImmutableList<Object> fields = version.fieldValues();
                 for (int i = 0; i < fields.size(); i++) {
-                    Object field = fields.get(i);
-                    if (field instanceof String text) {
-                        text = text.strip();
-                        if (i == 0) {
-                            document.add(new TextField(TEXT_FIELD_NAME, text, Field.Store.YES));
-                            fieldIndexField.setIntValue(i);
-                            document.add(fieldIndexField);
-                        } else {
-                            // Check to make sure identical text is not already in the document,
-                            // to prevent unnecessary document/index bloat.
-                            boolean alreadyAdded = false;
-                            for (String value: document.getValues(TEXT_FIELD_NAME)) {
-                                if (text.equals(value)) {
-                                    alreadyAdded = true;
-                                    break;
-                                }
-                            }
-                            if (!alreadyAdded) {
-                                document.add(new TextField(TEXT_FIELD_NAME, text, Field.Store.YES));
-                                fieldIndexField.setIntValue(i);
-                                document.add(fieldIndexField);
-                            }
-                        }
-                        LOG.debug("Indexing semantic nid={} rcNid={} patternNid={} fieldIndex={} text='{}'",
-                                semanticEntity.nid(), semanticEntity.referencedComponentNid(), semanticEntity.patternNid(), i, text);
+                    if (!(fields.get(i) instanceof String rawText)) {
+                        continue;
                     }
+                    String text = rawText.strip();
+                    // Dedup uniformly across all positions and versions.
+                    // Same (text, fieldIndex) pair seen twice is redundant.
+                    if (!seenTexts.add(i + "\0" + text)) {
+                        continue;
+                    }
+                    Document doc = new Document();
+                    doc.add(IndexerSchema.NID.make(semanticEntity.nid()));
+                    doc.add(IndexerSchema.FIELD_INDEX.make(i));
+                    doc.add(IndexerSchema.TEXT.make(text));
+                    indexWriter.addDocument(doc);
+                    docsAdded++;
+                    LOG.debug("Indexing semantic nid={} fieldIndex={} text='{}'",
+                            semanticEntity.nid(), i, text);
                 }
             }
-            try {
-                long addSequence = indexWriter.addDocument(document);
-                if (!bulkMode) {
-                    // Ensure the segment is published for NRT readers promptly.
-                    // Skipped during bulk indexing where the caller commits in batches.
-                    indexWriter.flush();
-                }
-                LOG.debug("Indexed nid={} rcNid={} patternNid={} docSeq={}", semanticEntity.nid(),
-                        semanticEntity.referencedComponentNid(), semanticEntity.patternNid(), addSequence);
-            } catch (IOException e) {
-                LOG.error("Exception writing: " + object);
+            if (docsAdded > 0 && !bulkMode) {
+                // One flush per semantic call publishes all positional docs
+                // to NRT readers. Skipped in bulk mode where the caller
+                // commits in batches.
+                indexWriter.flush();
             }
-        }
-
-    }
-
-    /**
-     * This method would delete any existing document for the semantic. This is a costly operation,
-     * and unnecessary for standard use cases. Since the semantic chronologies are append only,
-     * the same historic versions will still be written to the index. Determination of current
-     * content is done by the StampComputer, not by the lucene index, so there is no need to remove
-     * historic versions.
-     *
-     * @param semanticEntity
-     */
-    private static void deleteDocumentIfExists(SemanticEntity semanticEntity) {
-        try {
-            Query nidQuery = IntPoint.newExactQuery(NID_POINT, semanticEntity.nid());
-            long deleteSequence = indexWriter.deleteDocuments(nidQuery);
+            LOG.debug("Indexed nid={} docs={}", semanticEntity.nid(), docsAdded);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            LOG.error("Exception writing entity {}", object, e);
         }
     }
 }

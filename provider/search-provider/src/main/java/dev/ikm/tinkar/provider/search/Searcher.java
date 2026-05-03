@@ -34,7 +34,6 @@ import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.StoredField;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
@@ -81,7 +80,7 @@ public class Searcher {
     public Searcher() throws IOException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening lucene searcher");
-        this.parser = new QueryParser("text", Indexer.analyzer());
+        this.parser = new QueryParser(IndexerSchema.TEXT.name(), Indexer.analyzer());
         // Initialize SearcherManager if not already done
         if (searcherManager == null || !searcherManagerFromWriter) {
             if (searcherManager != null) {
@@ -135,28 +134,19 @@ public class Searcher {
                     results = new PrimitiveDataSearchResult[hits.length];
                     for (int i = 0; i < hits.length; i++) {
                         int docId = hits[i].doc;
-                        // Load only needed stored fields to avoid reading all fields
-                        Set<String> fieldsToLoad = Set.of(
-                                Indexer.NID,
-                                Indexer.PATTERN_NID,
-                                Indexer.RC_NID,
-                                Indexer.FIELD_INDEX,
-                                Indexer.TEXT_FIELD_NAME
-                        );
-                        Document hitDoc = indexSearcher.storedFields().document(docId, fieldsToLoad);
-                        StoredField nidField = (StoredField) hitDoc.getField(Indexer.NID);
-                        StoredField patternNidField = (StoredField) hitDoc.getField(Indexer.PATTERN_NID);
-                        StoredField rcNidField = (StoredField) hitDoc.getField(Indexer.RC_NID);
-                        StoredField fieldIndexField = (StoredField) hitDoc.getField(Indexer.FIELD_INDEX);
-                        StoredField textField = (StoredField) hitDoc.getField(Indexer.TEXT_FIELD_NAME);
+                        Document hitDoc = indexSearcher.storedFields().document(docId, IndexerSchema.FIELDS_TO_LOAD);
+                        int nid = IndexerSchema.NID.read(hitDoc);
+                        int fieldIndex = IndexerSchema.FIELD_INDEX.read(hitDoc);
+                        String text = IndexerSchema.TEXT.read(hitDoc);
                         String highlightedString = highlighter.getBestFragment(
-                                Indexer.analyzer(), Indexer.TEXT_FIELD_NAME, textField.stringValue());
+                                Indexer.analyzer(), IndexerSchema.TEXT.name(), text);
 
+                        // rcNid / patternNid no longer indexed (v2 schema); A2 slims the record.
                         results[i] = new PrimitiveDataSearchResult(
-                                nidField.numericValue().intValue(),
-                                rcNidField.numericValue().intValue(),
-                                patternNidField.numericValue().intValue(),
-                                fieldIndexField.numericValue().intValue(),
+                                nid,
+                                0,
+                                0,
+                                fieldIndex,
                                 hits[i].score,
                                 highlightedString
                         );
