@@ -60,6 +60,7 @@ public class Indexer {
         Indexer.indexDirectory = new ByteBuffersDirectory();
         Indexer.analyzer = new StandardAnalyzer();
         Indexer.indexWriter = Indexer.getIndexWriter();
+        IndexerSchema.attachVersion(Indexer.indexWriter);
         Indexer.indexReader = DirectoryReader.open(Indexer.indexWriter, true, false);
         this.indexPath = null;
     }
@@ -132,6 +133,7 @@ public class Indexer {
         Indexer.indexDirectory = FSDirectory.open(this.indexPath);
         Indexer.analyzer = new StandardAnalyzer();
         Indexer.indexWriter = Indexer.getIndexWriter();
+        IndexerSchema.attachVersion(Indexer.indexWriter);
         Indexer.indexReader = DirectoryReader.open(Indexer.indexWriter);
         stopwatch.stop();
         LOG.info("Opened lucene index in: " + stopwatch.durationString());

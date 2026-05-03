@@ -132,12 +132,27 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
         } else if (!dataExists) {
             LOG.info("No existing database found — Lucene index will be created as data is added");
         } else {
-            // Index exists — report document count for diagnostics
+            // Index exists — report document count and schema version for diagnostics
             int docCount = Indexer.indexWriter().getDocStats().numDocs;
-            LOG.info("Lucene index already exists ({} documents)", String.format("%,d", docCount));
+            int schemaVersion;
+            try {
+                schemaVersion = IndexerSchema.readVersion(Indexer.indexDirectory());
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to read Lucene schema version", e);
+            }
+            LOG.info("Lucene index already exists ({} documents, schema v{})",
+                    String.format("%,d", docCount), schemaVersion);
 
-            if (dataExists && docCount == 0) {
-                LOG.warn("Lucene index is empty but database exists — scheduling index recreation");
+            boolean schemaStale = schemaVersion < IndexerSchema.VERSION;
+            boolean emptyButHasData = dataExists && docCount == 0;
+
+            if (schemaStale || emptyButHasData) {
+                if (schemaStale) {
+                    LOG.warn("Lucene index schema v{} predates current v{} — scheduling index recreation",
+                            schemaVersion, IndexerSchema.VERSION);
+                } else {
+                    LOG.warn("Lucene index is empty but database exists — scheduling index recreation");
+                }
                 try {
                     this.recreateIndex().get();
                     int newCount = Indexer.indexWriter().getDocStats().numDocs;
