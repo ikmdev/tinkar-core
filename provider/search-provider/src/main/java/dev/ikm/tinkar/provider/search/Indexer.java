@@ -64,6 +64,36 @@ public class Indexer {
         this.indexPath = null;
     }
 
+    /** Private constructor used by {@link #wrapActiveState()}. Does not touch static state. */
+    private Indexer(Path indexPath, boolean wrapActiveMarker) {
+        this.indexPath = indexPath;
+    }
+
+    /**
+     * Return an {@link Indexer} instance that points at the currently-active
+     * static state ({@code indexWriter}, {@code indexDirectory}, {@code analyzer},
+     * {@code indexReader}). Use this when a maintenance utility needs an
+     * Indexer handle (for {@link #setBulkMode(boolean)} or a {@code RecreateIndex})
+     * but must not reinitialize the singleton.
+     *
+     * <p>The returned instance shares the static state with whatever Indexer
+     * originally opened the directory. Calling {@link #close()} on the
+     * returned instance closes the underlying writer just as if you'd called
+     * it on the original — same singleton, same effect.
+     *
+     * @return a transient Indexer wrapping the active state
+     * @throws IllegalStateException if the static state is not initialized
+     *                               (no Lucene index is currently open)
+     */
+    public static Indexer wrapActiveState() {
+        if (Indexer.indexWriter == null || Indexer.indexDirectory == null) {
+            throw new IllegalStateException(
+                    "No active Lucene index — Indexer.indexWriter() is null. "
+                            + "Open a data store first.");
+        }
+        return new Indexer((Path) null, true);
+    }
+
     private static IndexWriter getIndexWriter() throws IOException {
         //Create the indexer
         IndexWriterConfig config = new IndexWriterConfig(analyzer());

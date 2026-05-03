@@ -13,8 +13,6 @@ import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
-import dev.ikm.tinkar.entity.maintenance.SingleSemanticDuplicateWithdrawer;
-import dev.ikm.tinkar.entity.maintenance.SingleSemanticPatterns;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.entity.graph.isomorphic.IsomorphicResults;
 import dev.ikm.tinkar.entity.transaction.Transaction;
@@ -200,21 +198,6 @@ public class InferredResultsWriter {
 					getViewCoordinateRecord().getDefaultPathNid());
 			updateStampNid = updateStamp.nid();
 
-			// Withdraw any pre-existing duplicate semantics on the four single-semantic
-			// patterns the reasoner depends on. Doing this up-front means
-			// findCanonicalSemanticNid below sees only the canonical for each
-			// (pattern, component) pair and the chronic duplicate-warning goes silent
-			// once the duplicates are persisted as WITHDRAWN.
-			SingleSemanticDuplicateWithdrawer withdrawer = new SingleSemanticDuplicateWithdrawer(
-					updateTransaction,
-					getViewCoordinateRecord().getAuthorNidForChanges(),
-					false);
-			SingleSemanticDuplicateWithdrawer.Report duplicateReport =
-					withdrawer.scan(SingleSemanticPatterns.DEFAULT);
-			if (duplicateReport.totalDuplicatesWithdrawn() > 0
-					|| duplicateReport.totalComponentsWithDuplicates() > 0) {
-				LOG.info("Pre-classification single-semantic duplicate withdrawer: {}", duplicateReport);
-			}
 
 			inferredPattern = EntityHandle.getPatternOrThrow(getViewCoordinateRecord().logicCoordinate().inferredAxiomsPatternNid());
 			inferredNavigationPattern = EntityHandle.getPatternOrThrow(TinkarTerm.INFERRED_NAVIGATION_PATTERN.nid());

@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * ensuring they are properly initialized during the INDEXING phase and cleanly
  * shutdown when the application terminates.
  */
-public class SearchProvider implements SearchService {
+public class SearchProvider implements dev.ikm.tinkar.common.service.SearchService {
     private static final Logger LOG = LoggerFactory.getLogger(SearchProvider.class);
     private static final File defaultDataDirectory = new File("target/lucene/");
 

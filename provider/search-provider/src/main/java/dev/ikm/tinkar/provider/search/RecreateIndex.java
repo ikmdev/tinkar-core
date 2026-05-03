@@ -129,6 +129,25 @@ public class RecreateIndex extends TrackingCallable<Void> {
             updateMessage("Generating Lucene Indexes...");
             updateProgress(0, totalCount + 1);
 
+            // Wipe the existing index before rebuilding. Without this, every call
+            // to recreateIndex() appends a fresh full copy of every entity on top
+            // of whatever was already in the index — Indexer.index() does not
+            // delete prior versions (see Indexer#deleteDocumentIfExists, deliberately
+            // disabled for the append-only chronology design). Repeated invocations
+            // — notably from LoadEntitiesFromProtobufFile.commitSearchIndexIfAvailable()
+            // after every import / sync / pull — therefore produced geometric
+            // duplicate-document growth. The recreate path is now honest: the index
+            // is genuinely emptied here before the parallel walk repopulates it.
+            //
+            // The startup callers in SearchProvider (codec-mismatch, missing index,
+            // empty index) only invoke recreateIndex() against an already-empty
+            // index, so the deleteAll() is a no-op for them.
+            LOG.info("Wiping existing Lucene index before recreation");
+            synchronized (this.indexer) {
+                Indexer.indexWriter().deleteAll();
+                this.indexer.commit();
+            }
+
             // Use atomic counter for batching across parallel threads
             AtomicInteger batchCounter = new AtomicInteger(0);
 
