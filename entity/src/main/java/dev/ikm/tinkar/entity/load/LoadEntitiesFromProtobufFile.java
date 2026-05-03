@@ -22,6 +22,7 @@ import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.id.impl.NidCodec6;
 import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.SearchService;
 import dev.ikm.tinkar.common.service.ServiceLifecycleManager;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.common.util.io.CountingInputStream;
@@ -461,25 +462,19 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
     }
 
     private static void commitSearchIndexIfAvailable() {
-        try {
-            Class<?> searchServiceClass = Class.forName("dev.ikm.tinkar.provider.search.SearchService");
-            @SuppressWarnings("unchecked")
-            Optional<Object> searchService = (Optional<Object>) ServiceLifecycleManager.get()
-                    .getRunningService((Class) searchServiceClass);
-            searchService.ifPresent(service -> {
-                try {
-                    // Recreate the index in batch after import (indexing is skipped during load phase).
-                    Object future = service.getClass().getMethod("recreateIndex").invoke(service);
-                    if (future instanceof java.util.concurrent.CompletableFuture<?> cf) {
-                        cf.get();
-                    }
-                } catch (Exception e) {
-                    LOG.warn("Failed to recreate Lucene index after import", e);
+        Optional<SearchService> searchService = ServiceLifecycleManager.get()
+                .getRunningService(SearchService.class);
+        searchService.ifPresent(service -> {
+            try {
+                // Recreate the index in batch after import (indexing is skipped during load phase).
+                Object future = service.recreateIndex();
+                if (future instanceof java.util.concurrent.CompletableFuture<?> cf) {
+                    cf.get();
                 }
-            });
-        } catch (ClassNotFoundException e) {
-            LOG.debug("SearchService not available on classpath; skipping index rebuild");
-        }
+            } catch (Exception e) {
+                LOG.warn("Failed to recreate Lucene index after import", e);
+            }
+        });
     }
 
     private long analyzeManifest(Map<PublicId, String> manifestEntryData) {
