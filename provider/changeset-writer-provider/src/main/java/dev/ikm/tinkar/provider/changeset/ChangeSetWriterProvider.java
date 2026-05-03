@@ -30,7 +30,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
@@ -195,6 +197,26 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      *   scenarios with appropriate state transitions.
      * <p>     * This method is core to managing and persisting changes in the change set, leveraging thread-safe
      * mechanisms and efficient I/O handling.
+     *
+     * <h2>On-disk ordering contract</h2>
+     *
+     * Within a change set ZIP, entries are emitted as a journal where each
+     * unit is
+     * <pre>
+     *     uncommitted-stamp-snapshot(s) → dependent-uncommitted-versions → committed-stamp
+     * </pre>
+     * The unit terminates either at the commit event (the "on-commit drain"
+     * path here) or at a rollover / shutdown flush (in which case there is
+     * no committed-stamp tail — just the snapshot and its dependents). This
+     * makes the journal narrate the actual lifecycle of each stamp:
+     * something was edited uncommitted, several entities referenced it
+     * uncommitted, and finally the stamp committed.
+     *
+     * <p>Importers ({@link dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile})
+     * merge by {@link PublicId} and are <strong>order-insensitive</strong> —
+     * the contract above is for human readers, diagnostic tools, and any
+     * downstream consumer that wants to interpret a change set as a
+     * narrative. Loaders must never depend on ordering for correctness.
      */
     private void startService() {
         Thread.ofVirtual().name("ChangeSetWriterProvider-ServiceThread").start(() -> {
@@ -241,13 +263,24 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                         uncommittedEntitiesByStamp.put(stampNid, entityToWrite);
                                     });
                                 } else {
-                                    writeEntity(entityCount, entityToWrite, conceptsCount, semanticsCount, patternsCount, stampsCount, moduleList, authorList, entityTransformer, zos);
-                                    // If a committed stamp comes through, then see if any previously uncommitted versions for that stamp exist, and write them if so.
-                                    if (entityToWrite instanceof StampEntity stampEntity && uncommittedEntitiesByStamp.containsKey(stampEntity.nid())) {
-                                        uncommittedEntitiesByStamp.removeAll(stampEntity.nid()).forEach(entity ->
-                                                writeEntity(entityCount, entity, conceptsCount, semanticsCount, patternsCount,
-                                                        stampsCount, moduleList, authorList, entityTransformer, zos));
+                                    // Ordering contract: when a stamp commits, drain its
+                                    // held-back uncommitted history first (snapshots of the
+                                    // stamp itself, then the dependent concept / semantic /
+                                    // pattern versions), then write the now-committed stamp.
+                                    // The on-disk journal therefore reads as
+                                    //   uncommitted-snapshot → dependents → commit
+                                    // for every stamp that committed during the session.
+                                    // Importers (LoadEntitiesFromProtobufFile) merge by
+                                    // PublicId and are order-insensitive — the contract is
+                                    // for human readers and downstream diagnostic tools.
+                                    if (entityToWrite instanceof StampEntity stampEntity
+                                            && uncommittedEntitiesByStamp.containsKey(stampEntity.nid())) {
+                                        writeStampSnapshotsThenDependents(
+                                                uncommittedEntitiesByStamp.removeAll(stampEntity.nid()),
+                                                entityCount, conceptsCount, semanticsCount, patternsCount,
+                                                stampsCount, moduleList, authorList, entityTransformer, zos);
                                     }
+                                    writeEntity(entityCount, entityToWrite, conceptsCount, semanticsCount, patternsCount, stampsCount, moduleList, authorList, entityTransformer, zos);
                                 }
                             }
                             if (System.currentTimeMillis() - lastWriteTimeMillis.get() > INACTIVITY_THRESHOLD_MILLIS) {
@@ -258,10 +291,21 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                         }
                     } catch (InterruptedException e) {
                     }
-                    // Write any uncommitted entities.
-                    uncommittedEntitiesByStamp.forEachValue(entityToWrite ->
-                            writeEntity(entityCount, entityToWrite, conceptsCount, semanticsCount, patternsCount,
-                                    stampsCount, moduleList, authorList, entityTransformer, zos));
+                    // Rollover / shutdown flush. Group held-back entities by stamp nid
+                    // so each stamp's snapshot is followed by the dependent uncommitted
+                    // entities that referenced it — same per-stamp shape as the on-commit
+                    // drain above. Groups themselves can appear in any order (no commit
+                    // event anchors them in time), but within each group the ordering
+                    // contract ("snapshot → dependents") still holds.
+                    // Snapshot the key set before iterating, since removeAll mutates it.
+                    List<Integer> stampNidsSnapshot = new ArrayList<>();
+                    uncommittedEntitiesByStamp.keySet().forEach(stampNidsSnapshot::add);
+                    for (Integer stampNid : stampNidsSnapshot) {
+                        writeStampSnapshotsThenDependents(
+                                uncommittedEntitiesByStamp.removeAll(stampNid),
+                                entityCount, conceptsCount, semanticsCount, patternsCount,
+                                stampsCount, moduleList, authorList, entityTransformer, zos);
+                    }
                     zos.closeEntry();
                     if (entityCount.sum() > 0) {
                         LOG.debug("Data zipEntry size: " + zipEntry.getSize());
@@ -349,6 +393,60 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
             LOG.debug("ChangeSetWriterProvider wrote Entity:\n{}", entityToWrite);
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Writes a held-back uncommitted group to the ZIP, partitioned so that
+     * {@link StampEntity} snapshots come first and the dependent
+     * concept / semantic / pattern entities follow. Used by both the
+     * on-commit drain (when a stamp transitions from uncommitted to committed)
+     * and the rollover / shutdown flush, so the on-disk ordering contract
+     * — <em>uncommitted-snapshot → dependents</em> — is consistent across
+     * paths.
+     *
+     * <p>The underlying multimap value collection is a {@code MutableSet}
+     * with no defined iteration order; the partition is what gives the
+     * output a stable shape.
+     *
+     * @param heldBack          the entities to flush; iterated once
+     * @param entityCount       counter for total entities written
+     * @param conceptsCount     counter for concept entities written
+     * @param semanticsCount    counter for semantic entities written
+     * @param patternsCount     counter for pattern entities written
+     * @param stampsCount       counter for stamp entities written
+     * @param moduleList        set collecting module public IDs for the manifest
+     * @param authorList        set collecting author public IDs for the manifest
+     * @param entityTransformer transformer that produces protobuf messages
+     * @param zos               the open ZIP output stream
+     */
+    private static void writeStampSnapshotsThenDependents(
+            Iterable<Entity<EntityVersion>> heldBack,
+            LongAdder entityCount,
+            LongAdder conceptsCount,
+            LongAdder semanticsCount,
+            LongAdder patternsCount,
+            LongAdder stampsCount,
+            Set<PublicId> moduleList,
+            Set<PublicId> authorList,
+            EntityToTinkarSchemaTransformer entityTransformer,
+            ZipOutputStream zos) {
+        List<Entity<EntityVersion>> stampSnapshots = new ArrayList<>();
+        List<Entity<EntityVersion>> dependents = new ArrayList<>();
+        for (Entity<EntityVersion> e : heldBack) {
+            if (e instanceof StampEntity) {
+                stampSnapshots.add(e);
+            } else {
+                dependents.add(e);
+            }
+        }
+        for (Entity<EntityVersion> e : stampSnapshots) {
+            writeEntity(entityCount, e, conceptsCount, semanticsCount, patternsCount,
+                    stampsCount, moduleList, authorList, entityTransformer, zos);
+        }
+        for (Entity<EntityVersion> e : dependents) {
+            writeEntity(entityCount, e, conceptsCount, semanticsCount, patternsCount,
+                    stampsCount, moduleList, authorList, entityTransformer, zos);
         }
     }
 
