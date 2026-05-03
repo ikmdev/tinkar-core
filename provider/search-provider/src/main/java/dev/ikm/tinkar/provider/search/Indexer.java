@@ -105,17 +105,6 @@ public class Indexer {
         return indexReader;
     }
 
-    /**
-     * When true, skip per-document flush in {@link #index(Object)}.
-     * Set this during bulk operations like {@link RecreateIndex} where
-     * the caller manages commits/flushes in batches.
-     */
-    private boolean bulkMode = false;
-
-    public void setBulkMode(boolean bulkMode) {
-        this.bulkMode = bulkMode;
-    }
-
     public Indexer(Path indexPath) throws IOException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening lucene indexer");
@@ -159,7 +148,7 @@ public class Indexer {
 
     /**
      * Index a semantic by emitting one Lucene document per distinct
-     * (nid, fieldIndex, stripped-text) tuple seen across the semantic's
+     * {@code (nid, fieldIndex, stripped-text)} tuple seen across the semantic's
      * versions.
      *
      * <p>Each emitted document carries three single-valued fields:
@@ -168,19 +157,15 @@ public class Indexer {
      * unambiguous text/fieldIndex/highlight — the ambiguity that v1's
      * multi-valued fields had at read time is gone by construction.
      *
-     * <p>Non-{@link SemanticEntity} arguments are silently ignored; the
-     * concept/pattern/stamp paths feed indexing through their description
-     * semantics.
+     * <p>Concept, pattern, and stamp entities are filtered out one level up
+     * (in {@code SearchProvider.index} and {@code RecreateIndex.compute}) —
+     * concept names live in description semantics and reach this method via
+     * their semantics, not directly.
      *
-     * @param object the entity to index; only {@link SemanticEntity} is acted on
+     * @param semanticEntity the semantic to index; must not be {@code null}
      */
-    public void index(Object object) {
-        if (!(object instanceof SemanticEntity<?> semanticEntity)) {
-            return;
-        }
-
+    public void index(SemanticEntity<?> semanticEntity) {
         Set<String> seenTexts = new HashSet<>();
-        int docsAdded = 0;
         try {
             for (SemanticEntityVersion version : ((SemanticEntity<SemanticEntityVersion>) semanticEntity).versions()) {
                 ImmutableList<Object> fields = version.fieldValues();
@@ -199,20 +184,12 @@ public class Indexer {
                     doc.add(IndexerSchema.FIELD_INDEX.make(i));
                     doc.add(IndexerSchema.TEXT.make(text));
                     indexWriter.addDocument(doc);
-                    docsAdded++;
                     LOG.debug("Indexing semantic nid={} fieldIndex={} text='{}'",
                             semanticEntity.nid(), i, text);
                 }
             }
-            if (docsAdded > 0 && !bulkMode) {
-                // One flush per semantic call publishes all positional docs
-                // to NRT readers. Skipped in bulk mode where the caller
-                // commits in batches.
-                indexWriter.flush();
-            }
-            LOG.debug("Indexed nid={} docs={}", semanticEntity.nid(), docsAdded);
         } catch (IOException e) {
-            LOG.error("Exception writing entity {}", object, e);
+            LOG.error("Exception writing entity {}", semanticEntity, e);
         }
     }
 }

@@ -7,6 +7,7 @@ import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityRecordFactory;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,7 +106,6 @@ public class RecreateIndex extends TrackingCallable<Void> {
         updateProgress(-1,1);
 
         EntityService.get().beginLoadPhase();
-        this.indexer.setBulkMode(true);
         try {
             LongAdder totalEntities = new LongAdder();
             LongAdder processedEntities = new LongAdder();
@@ -157,11 +157,13 @@ public class RecreateIndex extends TrackingCallable<Void> {
                     return;
                 }
 
-                // Only process non-null entities
+                // Only process non-null entities. Lucene indexing applies to
+                // semantics only — concept/pattern/stamp content reaches the index
+                // through their description semantics.
                 if (bytes != null && bytes.length > 0) {
                     Entity<?> entity = EntityRecordFactory.make(bytes);
-                    if (entity != null) {
-                        this.indexer.index(entity);
+                    if (entity instanceof SemanticEntity<?> semantic) {
+                        this.indexer.index(semantic);
                         indexedEntities.increment();
 
                         // Commit in batches
@@ -209,7 +211,6 @@ public class RecreateIndex extends TrackingCallable<Void> {
                     String.format("%,d", indexedEntities.longValue()));
 
         } finally {
-            this.indexer.setBulkMode(false);
             EntityService.get().endLoadPhase();
         }
 

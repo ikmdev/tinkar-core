@@ -18,6 +18,7 @@ package dev.ikm.tinkar.provider.search;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.util.io.FileUtil;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -173,9 +174,13 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
             LOG.debug("SearchProvider is closed, skipping index operation");
             return;
         }
-        indexer.index(object);
-        // Ensure the NRT searcher sees the new document immediately.
-        Searcher.refreshAfterIndex();
+        // Lucene full-text indexing only applies to semantics — concept/pattern/stamp
+        // names live in description semantics and reach the index via their semantics.
+        if (object instanceof SemanticEntity<?> semanticEntity) {
+            indexer.index(semanticEntity);
+            // Ensure the NRT searcher sees the new document immediately.
+            Searcher.refreshAfterIndex();
+        }
     }
 
     @Override
