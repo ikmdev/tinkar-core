@@ -141,15 +141,7 @@ public class Searcher {
                         String highlightedString = highlighter.getBestFragment(
                                 Indexer.analyzer(), IndexerSchema.TEXT.name(), text);
 
-                        // rcNid / patternNid no longer indexed (v2 schema); A2 slims the record.
-                        results[i] = new PrimitiveDataSearchResult(
-                                nid,
-                                0,
-                                0,
-                                fieldIndex,
-                                hits[i].score,
-                                highlightedString
-                        );
+                        results[i] = new PrimitiveDataSearchResult(nid, fieldIndex, hits[i].score, highlightedString);
                     }
                 LOG.debug("Searcher.search() - Returning {} results", results.length);
                 return results;
