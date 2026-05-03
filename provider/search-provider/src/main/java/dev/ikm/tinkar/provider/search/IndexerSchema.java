@@ -53,20 +53,28 @@ public final class IndexerSchema {
 
     /**
      * Current schema version written by this build. Bump on any breaking
-     * change to document shape (field names, field types, doc granularity).
+     * change to document shape (field names, field types, doc granularity,
+     * stored vs. indexed-only).
      *
-     * <p>v2 (this build): one Lucene document per (semantic-nid, fieldIndex)
-     * carrying single-valued {@code nid}, {@code fieldIndex}, and {@code text}
-     * fields. {@code nid} and {@code fieldIndex} are written as
-     * {@link IntField} (indexed, doc-values, stored), eliminating the v1
-     * {@code IntPoint + StoredField} pair and the §3.1 reuse bug.
+     * <p>v3 (this build): {@code text} becomes {@link Field.Store#NO} —
+     * indexed for term lookup but no longer retrievable from the index.
+     * The text source of truth moves entirely to the entity binary store;
+     * {@link Searcher} rehydrates it per hit when computing highlights via
+     * {@link UnifiedHighlighter}'s re-analysis offset source. Stored fields
+     * shrink to {@code nid} and {@code fieldIndex}.
+     *
+     * <p>v2 (deprecated): doc-per-(nid, fieldIndex) with single-valued
+     * {@code nid}, {@code fieldIndex} ({@link IntField}), and {@code text}
+     * stored as {@link TextField} with {@link Field.Store#YES}.
      *
      * <p>v1 (deprecated): one document per semantic with multi-valued
-     * {@code text}/{@code fieldIndex}, plus dead {@code rcNid}, {@code patternNid},
-     * and {@code nidPoint} fields. Indexes at v0 (legacy, no version key)
-     * or v1 are auto-recreated against v2 on next startup.
+     * {@code text}/{@code fieldIndex}, plus dead {@code rcNid},
+     * {@code patternNid}, and {@code nidPoint} fields.
+     *
+     * <p>Indexes at v0 (legacy, no version key), v1, or v2 are auto-recreated
+     * against v3 on next startup via the trigger in {@code SearchProvider}.
      */
-    public static final int VERSION = 2;
+    public static final int VERSION = 3;
 
     /** Lucene commit-user-data key under which {@link #VERSION} is stored. */
     public static final String VERSION_KEY = "ike.indexer.schemaVersion";
@@ -89,18 +97,26 @@ public final class IndexerSchema {
      *  of the matched text within the semantic's {@code fieldValues()} list. */
     public static final IntDescriptor FIELD_INDEX = new IntDescriptor("fieldIndex");
 
-    /** Analyzed and stored full-text content for the (nid, fieldIndex) tuple. */
+    /** Analyzed full-text content for the (nid, fieldIndex) tuple. v3 indexes
+     *  but does not store the text — rehydrated from the entity binary store
+     *  at search time via {@link UnifiedHighlighter}'s re-analysis offset
+     *  source. {@link TextDescriptor#read(Document)} returns {@code null}
+     *  on v3 documents; only the field name is consulted on the read side. */
     public static final TextDescriptor TEXT = new TextDescriptor("text");
 
     /**
      * The set of field names that {@link Searcher#search(String, int)} must
      * load when materializing a hit. Used as the {@code fieldsToLoad} argument
      * to {@code IndexSearcher.storedFields().document(int, Set)}.
+     *
+     * <p>v3: {@code text} is no longer stored, so it's not in this set. Hit
+     * decoding pulls only {@code nid} and {@code fieldIndex} from the index;
+     * the text comes from the entity binary store via the
+     * {@link UnifiedHighlighter} loader override.
      */
     public static final Set<String> FIELDS_TO_LOAD = Set.of(
             NID.name(),
-            FIELD_INDEX.name(),
-            TEXT.name()
+            FIELD_INDEX.name()
     );
 
     private IndexerSchema() {
@@ -216,22 +232,26 @@ public final class IndexerSchema {
     }
 
     /**
-     * Descriptor for a {@link TextField}: analyzed and stored full text.
-     * Reads via {@link Document#get(String)} (first stored value).
+     * Descriptor for an analyzed-but-not-stored {@link TextField}: the term
+     * stream is indexed for inverted-index lookup, but the text itself is
+     * not retained in the segment. Read access exists only because the
+     * {@link Descriptor} interface requires it; v3 callers should not use
+     * it — text comes from the entity binary store via re-analysis.
      */
     public record TextDescriptor(String name) implements Descriptor<String> {
         /**
-         * @param value the text to analyze and store
-         * @return a fresh {@link TextField} with {@link Field.Store#YES}
+         * @param value the text to analyze and index
+         * @return a fresh {@link TextField} with {@link Field.Store#NO}
          */
         @Override
         public IndexableField make(String value) {
-            return new TextField(name, value, Field.Store.YES);
+            return new TextField(name, value, Field.Store.NO);
         }
 
         /**
          * @param doc the hit document
-         * @return the stored string, or {@code null} if absent
+         * @return {@code null} on v3 documents (field is not stored); legacy
+         *         v2 documents would return the stored string here
          */
         @Override
         public String read(Document doc) {

@@ -40,12 +40,9 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.SearcherManager;
-import org.apache.lucene.search.highlight.Formatter;
-import org.apache.lucene.search.highlight.Highlighter;
-import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
-import org.apache.lucene.search.highlight.NullFragmenter;
-import org.apache.lucene.search.highlight.QueryScorer;
-import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
+import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.uhighlight.DefaultPassageFormatter;
+import org.apache.lucene.search.uhighlight.UnifiedHighlighter;
 import org.eclipse.collections.impl.factory.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,11 +103,16 @@ public class Searcher {
     }
 
     public PrimitiveDataSearchResult[] search(String queryString, int maxResultSize) throws
-            ParseException, IOException, InvalidTokenOffsetsException {
+            ParseException, IOException {
         LOG.debug("Searcher.search() called with queryString='{}', maxResultSize={}", queryString, maxResultSize);
 
         if (searcherManager == null) {
             LOG.error("Searcher.search() - searcherManager is null!");
+            return new PrimitiveDataSearchResult[0];
+        }
+
+        if (queryString == null || queryString.isEmpty()) {
+            LOG.debug("Searcher.search() - Query string is null or empty, returning empty results");
             return new PrimitiveDataSearchResult[0];
         }
 
@@ -119,41 +121,35 @@ public class Searcher {
         IndexSearcher indexSearcher = searcherManager.acquire();
         LOG.debug("Searcher.search() - Acquired IndexSearcher");
         try {
-            if (queryString != null & !queryString.isEmpty()) {
-                LOG.debug("Searcher.search() - Query string is valid, parsing");
-                PrimitiveDataSearchResult[] results;
-                    Query query = parser.parse(queryString);
-                    LOG.debug("Searcher.search() - Parsed query: {}", query.toString());
-                    Formatter formatter = new SimpleHTMLFormatter();
-                    QueryScorer scorer = new QueryScorer(query);
-                    Highlighter highlighter = new Highlighter(formatter, scorer);
-                    highlighter.setTextFragmenter(new NullFragmenter());
+            Query query = parser.parse(queryString);
+            LOG.debug("Searcher.search() - Parsed query: {}", query);
 
-                    ScoreDoc[] hits = indexSearcher.search(query, maxResultSize).scoreDocs;
-                    LOG.debug("Searcher.search() - Found {} hits", hits.length);
-                    results = new PrimitiveDataSearchResult[hits.length];
-                    for (int i = 0; i < hits.length; i++) {
-                        int docId = hits[i].doc;
-                        Document hitDoc = indexSearcher.storedFields().document(docId, IndexerSchema.FIELDS_TO_LOAD);
-                        int nid = IndexerSchema.NID.read(hitDoc);
-                        int fieldIndex = IndexerSchema.FIELD_INDEX.read(hitDoc);
-                        String text = IndexerSchema.TEXT.read(hitDoc);
-                        String highlightedString = highlighter.getBestFragment(
-                                Indexer.analyzer(), IndexerSchema.TEXT.name(), text);
+            TopDocs topDocs = indexSearcher.search(query, maxResultSize);
+            ScoreDoc[] hits = topDocs.scoreDocs;
+            LOG.debug("Searcher.search() - Found {} hits", hits.length);
 
-                        results[i] = new PrimitiveDataSearchResult(nid, fieldIndex, hits[i].score, highlightedString);
-                    }
-                LOG.debug("Searcher.search() - Returning {} results", results.length);
-                return results;
-            } else {
-                LOG.debug("Searcher.search() - Query string is null or empty, returning empty results");
+            // UnifiedHighlighter with re-analysis offset source. The TEXT field
+            // is indexed-only in v3, so the override pulls source text from the
+            // entity binary store per hit. Uppercase <B>/</B> tags match what
+            // HighlightedSegments parses on the UI side.
+            UnifiedHighlighter highlighter = new EntityStoreBackedHighlighter(indexSearcher, Indexer.analyzer());
+            highlighter.setFormatter(new DefaultPassageFormatter("<B>", "</B>", "", false));
+            String[] snippets = highlighter.highlight(IndexerSchema.TEXT.name(), query, topDocs);
+
+            PrimitiveDataSearchResult[] results = new PrimitiveDataSearchResult[hits.length];
+            for (int i = 0; i < hits.length; i++) {
+                int docId = hits[i].doc;
+                Document hitDoc = indexSearcher.storedFields().document(docId, IndexerSchema.FIELDS_TO_LOAD);
+                int nid = IndexerSchema.NID.read(hitDoc);
+                int fieldIndex = IndexerSchema.FIELD_INDEX.read(hitDoc);
+                results[i] = new PrimitiveDataSearchResult(nid, fieldIndex, hits[i].score, snippets[i]);
             }
+            LOG.debug("Searcher.search() - Returning {} results", results.length);
+            return results;
         } finally {
             searcherManager.release(indexSearcher);
             LOG.debug("Searcher.search() - Released IndexSearcher");
         }
-        LOG.debug("Searcher.search() - Returning 0 results (empty query)");
-        return new PrimitiveDataSearchResult[0];
     }
 
     /**
