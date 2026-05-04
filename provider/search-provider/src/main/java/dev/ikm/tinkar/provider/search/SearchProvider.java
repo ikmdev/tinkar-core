@@ -20,6 +20,8 @@ import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
+import org.apache.lucene.index.IndexFormatTooNewException;
+import org.apache.lucene.index.IndexFormatTooOldException;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.slf4j.Logger;
@@ -97,9 +99,22 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
         Indexer tempIndexer;
         try {
             tempIndexer = new Indexer(indexPath);
-        } catch (IllegalArgumentException ex) {
-            // If Indexer Codec does not match, then delete and rebuild with new Codec
-            LOG.warn("Index codec mismatch, deleting and recreating index");
+        } catch (IllegalArgumentException
+                 | IndexFormatTooOldException
+                 | IndexFormatTooNewException ex) {
+            // The existing index can't be opened by the current Lucene version.
+            // Three flavors of this:
+            //   - IllegalArgumentException: historical codec-mismatch path
+            //     (some Lucene versions threw IAE rather than a typed exception).
+            //   - IndexFormatTooOldException: segments were written by an older
+            //     codec whose class isn't on the classpath (e.g. Lucene103 on
+            //     a 10.4 build that ships only Lucene104). Common when opening
+            //     a database snapshotted under an earlier release.
+            //   - IndexFormatTooNewException: segments are from a newer Lucene
+            //     than this build. Rare in practice but the same recovery applies.
+            // All three signal "this index is unreadable here; rebuild it."
+            LOG.warn("Existing Lucene index cannot be opened ({}: {}). Deleting and recreating.",
+                    ex.getClass().getSimpleName(), ex.getMessage());
             try {
                 FileUtil.recursiveDelete(indexPath.toFile());
                 indexExists = false;
