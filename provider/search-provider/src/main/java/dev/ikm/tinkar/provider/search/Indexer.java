@@ -152,9 +152,9 @@ public class Indexer {
      * versions.
      *
      * <p>Each emitted document carries three single-valued fields:
-     * {@link IndexerSchema#NID}, {@link IndexerSchema#FIELD_INDEX}, and
-     * {@link IndexerSchema#TEXT}. Doc-per-position guarantees every hit has
-     * unambiguous text/fieldIndex/highlight — the ambiguity that v1's
+     * {@link IndexerSchema#NID}, {@link IndexerSchema#INDEXED_FIELD_ORDINAL},
+     * and {@link IndexerSchema#TEXT}. Doc-per-position guarantees every hit has
+     * unambiguous text/ordinal/highlight — the ambiguity that v1's
      * multi-valued fields had at read time is gone by construction.
      *
      * <p>Concept, pattern, and stamp entities are filtered out one level up
@@ -181,7 +181,7 @@ public class Indexer {
                     }
                     Document doc = new Document();
                     doc.add(IndexerSchema.NID.make(semanticEntity.nid()));
-                    doc.add(IndexerSchema.FIELD_INDEX.make(i));
+                    doc.add(IndexerSchema.INDEXED_FIELD_ORDINAL.make(i));
                     doc.add(IndexerSchema.TEXT.make(text));
                     indexWriter.addDocument(doc);
                     LOG.debug("Indexing semantic nid={} fieldIndex={} text='{}'",

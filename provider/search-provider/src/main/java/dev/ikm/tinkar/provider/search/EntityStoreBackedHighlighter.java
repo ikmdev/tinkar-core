@@ -36,17 +36,17 @@ import java.util.Set;
 
 /**
  * {@link UnifiedHighlighter} that pulls source text from the entity binary
- * store instead of from stored Lucene fields. The v3 index does not store the
- * {@code text} field — only the {@code nid} and {@code fieldIndex} ints — so
- * the highlighter has to look up the text per hit before it can compute
+ * store instead of from stored Lucene fields. The v4 index does not store the
+ * {@code text} field — only the {@code nid} and {@code fieldOrdinal} ints —
+ * so the highlighter has to look up the text per hit before it can compute
  * passages.
  *
  * <p>Per hit the loader:
  * <ol>
- *   <li>Reads {@code nid} and {@code fieldIndex} from the doc's stored fields.</li>
+ *   <li>Reads {@code nid} and {@code fieldOrdinal} from the doc's stored fields.</li>
  *   <li>Fetches the corresponding {@link SemanticEntity} via
  *       {@link EntityService#getEntityFast(int)}.</li>
- *   <li>Takes the latest version's {@code fieldValues().get(fieldIndex)} and
+ *   <li>Takes the latest version's {@code fieldValues().get(fieldOrdinal)} and
  *       returns it as the source text.</li>
  * </ol>
  *
@@ -59,7 +59,7 @@ import java.util.Set;
  * than v2's behavior of marking up stored stale text.
  *
  * <p>The offset source defaults to {@code ANALYSIS} automatically because
- * the v3 {@code text} field has neither stored offsets in postings nor term
+ * the v4 {@code text} field has neither stored offsets in postings nor term
  * vectors. The analyzer re-tokenizes the rehydrated text per hit.
  */
 final class EntityStoreBackedHighlighter extends UnifiedHighlighter {
@@ -67,7 +67,7 @@ final class EntityStoreBackedHighlighter extends UnifiedHighlighter {
 
     private static final Set<String> STORED_FIELDS_FOR_REHYDRATION = Set.of(
             IndexerSchema.NID.name(),
-            IndexerSchema.FIELD_INDEX.name()
+            IndexerSchema.INDEXED_FIELD_ORDINAL.name()
     );
 
     EntityStoreBackedHighlighter(IndexSearcher searcher, Analyzer analyzer) {
@@ -90,27 +90,27 @@ final class EntityStoreBackedHighlighter extends UnifiedHighlighter {
         while ((docId = docIter.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
             Document hitDoc = storedFields.document(docId, STORED_FIELDS_FOR_REHYDRATION);
             Integer nid = IndexerSchema.NID.read(hitDoc);
-            Integer fieldIndex = IndexerSchema.FIELD_INDEX.read(hitDoc);
-            String text = (nid == null || fieldIndex == null)
+            Integer fieldOrdinal = IndexerSchema.INDEXED_FIELD_ORDINAL.read(hitDoc);
+            String text = (nid == null || fieldOrdinal == null)
                     ? ""
-                    : rehydrate(nid, fieldIndex);
+                    : rehydrate(nid, fieldOrdinal);
             out.add(new CharSequence[] { text });
         }
         return out;
     }
 
     /**
-     * Read the latest-version text at {@code fieldIndex} for the semantic
+     * Read the latest-version text at {@code fieldOrdinal} for the semantic
      * with {@code nid}. Returns the empty string when the entity is missing,
      * is not a {@link SemanticEntity}, has no versions, has no field at the
-     * given index, or the field value isn't a {@link String}.
+     * given ordinal, or the field value isn't a {@link String}.
      *
      * @param nid the semantic's nid (from the hit's stored {@code nid} field)
-     * @param fieldIndex the position in {@code fieldValues()} (from the hit's
-     *                   stored {@code fieldIndex} field)
+     * @param fieldOrdinal the position in {@code fieldValues()} (from the hit's
+     *                     stored {@code fieldOrdinal} field)
      * @return the rehydrated text, never {@code null}
      */
-    private static String rehydrate(int nid, int fieldIndex) {
+    private static String rehydrate(int nid, int fieldOrdinal) {
         Entity<?> entity = EntityService.get().getEntityFast(nid);
         if (!(entity instanceof SemanticEntity<?> semantic)) {
             LOG.debug("rehydrate: nid {} is not a SemanticEntity (was {})",
@@ -125,9 +125,9 @@ final class EntityStoreBackedHighlighter extends UnifiedHighlighter {
         }
         SemanticEntityVersion latest = versions.getLast();
         ImmutableList<Object> fieldValues = latest.fieldValues();
-        if (fieldIndex < 0 || fieldIndex >= fieldValues.size()) {
+        if (fieldOrdinal < 0 || fieldOrdinal >= fieldValues.size()) {
             return "";
         }
-        return fieldValues.get(fieldIndex) instanceof String s ? s.strip() : "";
+        return fieldValues.get(fieldOrdinal) instanceof String s ? s.strip() : "";
     }
 }

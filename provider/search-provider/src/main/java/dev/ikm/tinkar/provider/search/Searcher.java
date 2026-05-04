@@ -141,8 +141,8 @@ public class Searcher {
                 int docId = hits[i].doc;
                 Document hitDoc = indexSearcher.storedFields().document(docId, IndexerSchema.FIELDS_TO_LOAD);
                 int nid = IndexerSchema.NID.read(hitDoc);
-                int fieldIndex = IndexerSchema.FIELD_INDEX.read(hitDoc);
-                results[i] = new PrimitiveDataSearchResult(nid, fieldIndex, hits[i].score, snippets[i]);
+                int fieldOrdinal = IndexerSchema.INDEXED_FIELD_ORDINAL.read(hitDoc);
+                results[i] = new PrimitiveDataSearchResult(nid, fieldOrdinal, hits[i].score, snippets[i]);
             }
             LOG.debug("Searcher.search() - Returning {} results", results.length);
             return results;

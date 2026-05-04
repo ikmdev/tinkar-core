@@ -56,12 +56,16 @@ public final class IndexerSchema {
      * change to document shape (field names, field types, doc granularity,
      * stored vs. indexed-only).
      *
-     * <p>v3 (this build): {@code text} becomes {@link Field.Store#NO} —
-     * indexed for term lookup but no longer retrievable from the index.
-     * The text source of truth moves entirely to the entity binary store;
-     * {@link Searcher} rehydrates it per hit when computing highlights via
-     * {@link UnifiedHighlighter}'s re-analysis offset source. Stored fields
-     * shrink to {@code nid} and {@code fieldIndex}.
+     * <p>v4 (this build): the per-position int field is renamed on the wire
+     * from {@code "fieldIndex"} to {@code "fieldOrdinal"} for clarity —
+     * "ordinal" is the canonical term for "position in an ordered sequence"
+     * and disambiguates from the unrelated MVVM property key
+     * {@code FormViewModel.FIELD_INDEX}. Document shape is otherwise identical
+     * to v3.
+     *
+     * <p>v3 (deprecated): {@code text} indexed-only ({@link Field.Store#NO});
+     * {@link Searcher} rehydrates text per hit via {@link UnifiedHighlighter}
+     * re-analysis. Stored fields {@code nid} and {@code fieldIndex}.
      *
      * <p>v2 (deprecated): doc-per-(nid, fieldIndex) with single-valued
      * {@code nid}, {@code fieldIndex} ({@link IntField}), and {@code text}
@@ -71,10 +75,11 @@ public final class IndexerSchema {
      * {@code text}/{@code fieldIndex}, plus dead {@code rcNid},
      * {@code patternNid}, and {@code nidPoint} fields.
      *
-     * <p>Indexes at v0 (legacy, no version key), v1, or v2 are auto-recreated
-     * against v3 on next startup via the trigger in {@code SearchProvider}.
+     * <p>Indexes at v0 (legacy, no version key), v1, v2, or v3 are
+     * auto-recreated against v4 on next startup via the trigger in
+     * {@code SearchProvider}.
      */
-    public static final int VERSION = 3;
+    public static final int VERSION = 4;
 
     /** Lucene commit-user-data key under which {@link #VERSION} is stored. */
     public static final String VERSION_KEY = "ike.indexer.schemaVersion";
@@ -93,9 +98,15 @@ public final class IndexerSchema {
     /** Indexed (BKD point + doc-values) and stored {@code int} nid of the source semantic. */
     public static final IntDescriptor NID = new IntDescriptor("nid");
 
-    /** Indexed (BKD point + doc-values) and stored {@code int} field index — the position
-     *  of the matched text within the semantic's {@code fieldValues()} list. */
-    public static final IntDescriptor FIELD_INDEX = new IntDescriptor("fieldIndex");
+    /** Indexed (BKD point + doc-values) and stored {@code int} ordinal — the position
+     *  of the matched value within the semantic's {@code fieldValues()} list.
+     *
+     *  <p>Wire-format field name {@code "fieldOrdinal"} (renamed from v3's
+     *  {@code "fieldIndex"} for clarity — see schema notes on {@link #VERSION}).
+     *  The Java constant {@code INDEXED_FIELD_ORDINAL} disambiguates from
+     *  {@code FormViewModel.FIELD_INDEX}, the unrelated MVVM property key in
+     *  {@code komet/kview}. */
+    public static final IntDescriptor INDEXED_FIELD_ORDINAL = new IntDescriptor("fieldOrdinal");
 
     /** Analyzed full-text content for the (nid, fieldIndex) tuple. v3 indexes
      *  but does not store the text — rehydrated from the entity binary store
@@ -116,7 +127,7 @@ public final class IndexerSchema {
      */
     public static final Set<String> FIELDS_TO_LOAD = Set.of(
             NID.name(),
-            FIELD_INDEX.name()
+            INDEXED_FIELD_ORDINAL.name()
     );
 
     private IndexerSchema() {
