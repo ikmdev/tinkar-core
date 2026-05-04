@@ -18,6 +18,7 @@ package dev.ikm.tinkar.provider.grpc;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.DataServiceController;
+import dev.ikm.tinkar.common.service.DataServiceProperty;
 import dev.ikm.tinkar.common.service.DataUriOption;
 import dev.ikm.tinkar.common.service.NidGenerator;
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
@@ -34,14 +35,18 @@ import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.transform.TinkarSchemaToEntityTransformer;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -374,7 +379,16 @@ public class GrpcPrimitiveDataService implements PrimitiveDataService, NidGenera
     public static class Controller extends ProviderController<GrpcPrimitiveDataService>
             implements DataServiceController<PrimitiveDataService> {
 
-        public static final String CONTROLLER_NAME = "gRPC Data Service";
+        public static final String CONTROLLER_NAME = "Connect to gRPC service";
+
+        public static final DataServiceProperty SERVICE_URL_PROPERTY =
+                new DataServiceProperty("Service URL", false, true);
+
+        private final Map<DataServiceProperty, String> properties = new LinkedHashMap<>();
+
+        public Controller() {
+            properties.put(SERVICE_URL_PROPERTY, "localhost:9095");
+        }
 
         @Override
         protected GrpcPrimitiveDataService createProvider() {
@@ -383,7 +397,27 @@ public class GrpcPrimitiveDataService implements PrimitiveDataService, NidGenera
 
         @Override
         protected void startProvider(GrpcPrimitiveDataService provider) {
-            // ready on construction
+            // When started via -Dkomet.grpc.port, GrpcSearchService is already initialized
+            if (!GrpcSearchService.isActive()) {
+                String url = properties.getOrDefault(SERVICE_URL_PROPERTY, "localhost:9095").trim();
+                String host;
+                int port;
+                int colon = url.lastIndexOf(':');
+                if (colon > 0) {
+                    host = url.substring(0, colon).trim();
+                    try {
+                        port = Integer.parseInt(url.substring(colon + 1).trim());
+                    } catch (NumberFormatException e) {
+                        LOG.error("Invalid port in gRPC service URL '{}', defaulting to 9095", url);
+                        port = 9095;
+                    }
+                } else {
+                    host = url.isEmpty() ? "localhost" : url;
+                    port = 9095;
+                }
+                LOG.info("Initializing gRPC connection to {}:{}", host, port);
+                GrpcSearchService.initialize(host, port);
+            }
         }
 
         @Override
@@ -420,6 +454,16 @@ public class GrpcPrimitiveDataService implements PrimitiveDataService, NidGenera
         @Override
         public String controllerName() {
             return CONTROLLER_NAME;
+        }
+
+        @Override
+        public ImmutableMap<DataServiceProperty, String> providerProperties() {
+            return Maps.immutable.ofAll(properties);
+        }
+
+        @Override
+        public void setDataServiceProperty(DataServiceProperty key, String value) {
+            properties.put(key, value);
         }
 
         @Override

@@ -315,7 +315,9 @@ public class TinkarPrimitiveImpl implements TinkarPrimitive {
 
             @Override
             public void forEach(LongConsumer longConsumer) {
-                // TODO to be implemented later
+                UUID uuid = UUID.fromString(concept);
+                longConsumer.accept(uuid.getMostSignificantBits());
+                longConsumer.accept(uuid.getLeastSignificantBits());
             }
 
             @Override
