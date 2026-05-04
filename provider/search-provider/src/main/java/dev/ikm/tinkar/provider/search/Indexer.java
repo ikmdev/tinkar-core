@@ -21,6 +21,7 @@ import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.IntField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -167,7 +168,18 @@ public class Indexer {
     /**
      * Index a semantic by emitting one Lucene document per distinct
      * {@code (nid, fieldOrdinal, stripped-text)} tuple seen across the semantic's
-     * versions.
+     * versions, replacing any prior docs for this nid.
+     *
+     * <p>Every call buffers a {@code deleteDocuments} for the semantic's nid
+     * before adding new docs. This makes the operation idempotent at the index
+     * level: re-indexing the same content leaves the same Lucene state, and
+     * indexing a new version of an evolving semantic doesn't accumulate
+     * superseded docs from earlier versions. The delete-by-NID is a BKD
+     * point-exact query against the indexed {@link IndexerSchema#NID} field;
+     * cost is sub-microsecond to buffer and ~hundreds of nanoseconds per
+     * segment to resolve at the next flush. Empty deletes (no existing docs
+     * for this nid — the common case during {@link RecreateIndex}) are nearly
+     * free.
      *
      * <p>Each emitted document carries three single-valued fields:
      * {@link IndexerSchema#NID}, {@link IndexerSchema#INDEXED_FIELD_ORDINAL},
@@ -183,9 +195,10 @@ public class Indexer {
      * <p>Many semantics carry no indexable text (navigation, identifier,
      * membership, image, numeric-only, etc. — anything whose
      * {@code fieldValues()} contains no {@code String}); for those this method
-     * is a no-op that returns {@code 0}. Callers (notably {@code RecreateIndex})
-     * use the return value to gate batch operations on actual index changes
-     * rather than on entity-walk progress.
+     * still buffers the delete-by-NID (a no-op when no prior docs exist) and
+     * returns {@code 0}. Callers (notably {@code RecreateIndex}) use the
+     * return value to gate batch operations on actual index changes rather
+     * than on entity-walk progress.
      *
      * @param semanticEntity the semantic to index; must not be {@code null}
      * @return the number of Lucene documents added to the writer; {@code 0}
@@ -195,6 +208,10 @@ public class Indexer {
         Set<String> seenTexts = new HashSet<>();
         int docsAdded = 0;
         try {
+            // Replace any prior docs for this nid. See class-level note on cost.
+            indexWriter.deleteDocuments(
+                    IntField.newExactQuery(IndexerSchema.NID.name(), semanticEntity.nid()));
+
             for (SemanticEntityVersion version : ((SemanticEntity<SemanticEntityVersion>) semanticEntity).versions()) {
                 ImmutableList<Object> fields = version.fieldValues();
                 for (int i = 0; i < fields.size(); i++) {
