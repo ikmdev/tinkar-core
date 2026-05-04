@@ -34,19 +34,15 @@ import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.StoredField;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.SearcherManager;
-import org.apache.lucene.search.highlight.Formatter;
-import org.apache.lucene.search.highlight.Highlighter;
-import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
-import org.apache.lucene.search.highlight.NullFragmenter;
-import org.apache.lucene.search.highlight.QueryScorer;
-import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
+import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.uhighlight.DefaultPassageFormatter;
+import org.apache.lucene.search.uhighlight.UnifiedHighlighter;
 import org.eclipse.collections.impl.factory.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,7 +77,7 @@ public class Searcher {
     public Searcher() throws IOException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening lucene searcher");
-        this.parser = new QueryParser("text", Indexer.analyzer());
+        this.parser = new QueryParser(IndexerSchema.TEXT.name(), Indexer.analyzer());
         // Initialize SearcherManager if not already done
         if (searcherManager == null || !searcherManagerFromWriter) {
             if (searcherManager != null) {
@@ -106,12 +102,54 @@ public class Searcher {
         LOG.info("Opened lucene searcher in: " + stopwatch.durationString());
     }
 
+    /**
+     * Highlight an arbitrary text against the same query the index would parse,
+     * using the same analyzer and {@code <B>...</B>} markup as
+     * {@link #search(String, int)} produces for hit snippets.
+     *
+     * <p>Unlike {@link #search}, this does not consult the index — it analyzes
+     * the supplied {@code text} on the fly and asks Lucene's
+     * {@link UnifiedHighlighter#highlightWithoutSearcher} to mark up matching
+     * tokens. Matching is therefore stem-/analyzer-aware (a query of
+     * {@code "topping"} marks {@code "Toppings"}) and respects the query
+     * grammar the {@link QueryParser} accepts.
+     *
+     * <p>Intended for UI surfaces that need to highlight strings that aren't
+     * themselves search hits — e.g. a concept's preferred name shown above
+     * the list of matched description semantics.
+     *
+     * @param queryString the user query, parsed with the same parser as {@link #search}
+     * @param text        the text to highlight; returned unchanged when no terms match
+     * @return {@code text} with matched tokens wrapped in {@code <B>...</B>},
+     *         or the original {@code text} when there are no matches or either
+     *         input is null/empty
+     * @throws ParseException if {@code queryString} cannot be parsed
+     */
+    public String highlight(String queryString, String text) throws ParseException, IOException {
+        if (queryString == null || queryString.isEmpty() || text == null || text.isEmpty()) {
+            return text == null ? "" : text;
+        }
+        Query query = parser.parse(queryString);
+        UnifiedHighlighter highlighter = UnifiedHighlighter
+                .builderWithoutSearcher(Indexer.analyzer())
+                .withFormatter(new DefaultPassageFormatter("<B>", "</B>", "", false))
+                .build();
+        Object marked = highlighter.highlightWithoutSearcher(
+                IndexerSchema.TEXT.name(), query, text, 1);
+        return marked == null ? text : marked.toString();
+    }
+
     public PrimitiveDataSearchResult[] search(String queryString, int maxResultSize) throws
-            ParseException, IOException, InvalidTokenOffsetsException {
+            ParseException, IOException {
         LOG.debug("Searcher.search() called with queryString='{}', maxResultSize={}", queryString, maxResultSize);
 
         if (searcherManager == null) {
             LOG.error("Searcher.search() - searcherManager is null!");
+            return new PrimitiveDataSearchResult[0];
+        }
+
+        if (queryString == null || queryString.isEmpty()) {
+            LOG.debug("Searcher.search() - Query string is null or empty, returning empty results");
             return new PrimitiveDataSearchResult[0];
         }
 
@@ -120,58 +158,35 @@ public class Searcher {
         IndexSearcher indexSearcher = searcherManager.acquire();
         LOG.debug("Searcher.search() - Acquired IndexSearcher");
         try {
-            if (queryString != null & !queryString.isEmpty()) {
-                LOG.debug("Searcher.search() - Query string is valid, parsing");
-                PrimitiveDataSearchResult[] results;
-                    Query query = parser.parse(queryString);
-                    LOG.debug("Searcher.search() - Parsed query: {}", query.toString());
-                    Formatter formatter = new SimpleHTMLFormatter();
-                    QueryScorer scorer = new QueryScorer(query);
-                    Highlighter highlighter = new Highlighter(formatter, scorer);
-                    highlighter.setTextFragmenter(new NullFragmenter());
+            Query query = parser.parse(queryString);
+            LOG.debug("Searcher.search() - Parsed query: {}", query);
 
-                    ScoreDoc[] hits = indexSearcher.search(query, maxResultSize).scoreDocs;
-                    LOG.debug("Searcher.search() - Found {} hits", hits.length);
-                    results = new PrimitiveDataSearchResult[hits.length];
-                    for (int i = 0; i < hits.length; i++) {
-                        int docId = hits[i].doc;
-                        // Load only needed stored fields to avoid reading all fields
-                        Set<String> fieldsToLoad = Set.of(
-                                Indexer.NID,
-                                Indexer.PATTERN_NID,
-                                Indexer.RC_NID,
-                                Indexer.FIELD_INDEX,
-                                Indexer.TEXT_FIELD_NAME
-                        );
-                        Document hitDoc = indexSearcher.storedFields().document(docId, fieldsToLoad);
-                        StoredField nidField = (StoredField) hitDoc.getField(Indexer.NID);
-                        StoredField patternNidField = (StoredField) hitDoc.getField(Indexer.PATTERN_NID);
-                        StoredField rcNidField = (StoredField) hitDoc.getField(Indexer.RC_NID);
-                        StoredField fieldIndexField = (StoredField) hitDoc.getField(Indexer.FIELD_INDEX);
-                        StoredField textField = (StoredField) hitDoc.getField(Indexer.TEXT_FIELD_NAME);
-                        String highlightedString = highlighter.getBestFragment(
-                                Indexer.analyzer(), Indexer.TEXT_FIELD_NAME, textField.stringValue());
+            TopDocs topDocs = indexSearcher.search(query, maxResultSize);
+            ScoreDoc[] hits = topDocs.scoreDocs;
+            LOG.debug("Searcher.search() - Found {} hits", hits.length);
 
-                        results[i] = new PrimitiveDataSearchResult(
-                                nidField.numericValue().intValue(),
-                                rcNidField.numericValue().intValue(),
-                                patternNidField.numericValue().intValue(),
-                                fieldIndexField.numericValue().intValue(),
-                                hits[i].score,
-                                highlightedString
-                        );
-                    }
-                LOG.debug("Searcher.search() - Returning {} results", results.length);
-                return results;
-            } else {
-                LOG.debug("Searcher.search() - Query string is null or empty, returning empty results");
+            // UnifiedHighlighter with re-analysis offset source. The TEXT field
+            // is indexed-only in v3, so the override pulls source text from the
+            // entity binary store per hit. Uppercase <B>/</B> tags match what
+            // HighlightedSegments parses on the UI side.
+            UnifiedHighlighter highlighter = new EntityStoreBackedHighlighter(indexSearcher, Indexer.analyzer());
+            highlighter.setFormatter(new DefaultPassageFormatter("<B>", "</B>", "", false));
+            String[] snippets = highlighter.highlight(IndexerSchema.TEXT.name(), query, topDocs);
+
+            PrimitiveDataSearchResult[] results = new PrimitiveDataSearchResult[hits.length];
+            for (int i = 0; i < hits.length; i++) {
+                int docId = hits[i].doc;
+                Document hitDoc = indexSearcher.storedFields().document(docId, IndexerSchema.FIELDS_TO_LOAD);
+                int nid = IndexerSchema.NID.read(hitDoc);
+                int fieldOrdinal = IndexerSchema.INDEXED_FIELD_ORDINAL.read(hitDoc);
+                results[i] = new PrimitiveDataSearchResult(nid, fieldOrdinal, hits[i].score, snippets[i]);
             }
+            LOG.debug("Searcher.search() - Returning {} results", results.length);
+            return results;
         } finally {
             searcherManager.release(indexSearcher);
             LOG.debug("Searcher.search() - Released IndexSearcher");
         }
-        LOG.debug("Searcher.search() - Returning 0 results (empty query)");
-        return new PrimitiveDataSearchResult[0];
     }
 
     /**

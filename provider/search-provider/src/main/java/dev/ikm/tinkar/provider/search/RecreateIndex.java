@@ -7,6 +7,7 @@ import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityRecordFactory;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,7 +106,6 @@ public class RecreateIndex extends TrackingCallable<Void> {
         updateProgress(-1,1);
 
         EntityService.get().beginLoadPhase();
-        this.indexer.setBulkMode(true);
         try {
             LongAdder totalEntities = new LongAdder();
             LongAdder processedEntities = new LongAdder();
@@ -129,6 +129,25 @@ public class RecreateIndex extends TrackingCallable<Void> {
             updateMessage("Generating Lucene Indexes...");
             updateProgress(0, totalCount + 1);
 
+            // Wipe the existing index before rebuilding. Without this, every call
+            // to recreateIndex() appends a fresh full copy of every entity on top
+            // of whatever was already in the index — Indexer.index() does not
+            // delete prior versions (see Indexer#deleteDocumentIfExists, deliberately
+            // disabled for the append-only chronology design). Repeated invocations
+            // — notably from LoadEntitiesFromProtobufFile.commitSearchIndexIfAvailable()
+            // after every import / sync / pull — therefore produced geometric
+            // duplicate-document growth. The recreate path is now honest: the index
+            // is genuinely emptied here before the parallel walk repopulates it.
+            //
+            // The startup callers in SearchProvider (codec-mismatch, missing index,
+            // empty index) only invoke recreateIndex() against an already-empty
+            // index, so the deleteAll() is a no-op for them.
+            LOG.info("Wiping existing Lucene index before recreation");
+            synchronized (this.indexer) {
+                Indexer.indexWriter().deleteAll();
+                this.indexer.commit();
+            }
+
             // Use atomic counter for batching across parallel threads
             AtomicInteger batchCounter = new AtomicInteger(0);
 
@@ -138,11 +157,13 @@ public class RecreateIndex extends TrackingCallable<Void> {
                     return;
                 }
 
-                // Only process non-null entities
+                // Only process non-null entities. Lucene indexing applies to
+                // semantics only — concept/pattern/stamp content reaches the index
+                // through their description semantics.
                 if (bytes != null && bytes.length > 0) {
                     Entity<?> entity = EntityRecordFactory.make(bytes);
-                    if (entity != null) {
-                        this.indexer.index(entity);
+                    if (entity instanceof SemanticEntity<?> semantic) {
+                        this.indexer.index(semantic);
                         indexedEntities.increment();
 
                         // Commit in batches
@@ -190,7 +211,6 @@ public class RecreateIndex extends TrackingCallable<Void> {
                     String.format("%,d", indexedEntities.longValue()));
 
         } finally {
-            this.indexer.setBulkMode(false);
             EntityService.get().endLoadPhase();
         }
 

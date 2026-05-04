@@ -18,6 +18,7 @@ package dev.ikm.tinkar.provider.search;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.util.io.FileUtil;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -40,7 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * ensuring they are properly initialized during the INDEXING phase and cleanly
  * shutdown when the application terminates.
  */
-public class SearchProvider implements SearchService {
+public class SearchProvider implements dev.ikm.tinkar.common.service.SearchService {
     private static final Logger LOG = LoggerFactory.getLogger(SearchProvider.class);
     private static final File defaultDataDirectory = new File("target/lucene/");
 
@@ -132,12 +133,27 @@ public class SearchProvider implements SearchService {
         } else if (!dataExists) {
             LOG.info("No existing database found — Lucene index will be created as data is added");
         } else {
-            // Index exists — report document count for diagnostics
+            // Index exists — report document count and schema version for diagnostics
             int docCount = Indexer.indexWriter().getDocStats().numDocs;
-            LOG.info("Lucene index already exists ({} documents)", String.format("%,d", docCount));
+            int schemaVersion;
+            try {
+                schemaVersion = IndexerSchema.readVersion(Indexer.indexDirectory());
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to read Lucene schema version", e);
+            }
+            LOG.info("Lucene index already exists ({} documents, schema v{})",
+                    String.format("%,d", docCount), schemaVersion);
 
-            if (dataExists && docCount == 0) {
-                LOG.warn("Lucene index is empty but database exists — scheduling index recreation");
+            boolean schemaStale = schemaVersion < IndexerSchema.VERSION;
+            boolean emptyButHasData = dataExists && docCount == 0;
+
+            if (schemaStale || emptyButHasData) {
+                if (schemaStale) {
+                    LOG.warn("Lucene index schema v{} predates current v{} — scheduling index recreation",
+                            schemaVersion, IndexerSchema.VERSION);
+                } else {
+                    LOG.warn("Lucene index is empty but database exists — scheduling index recreation");
+                }
                 try {
                     this.recreateIndex().get();
                     int newCount = Indexer.indexWriter().getDocStats().numDocs;
@@ -158,9 +174,13 @@ public class SearchProvider implements SearchService {
             LOG.debug("SearchProvider is closed, skipping index operation");
             return;
         }
-        indexer.index(object);
-        // Ensure the NRT searcher sees the new document immediately.
-        Searcher.refreshAfterIndex();
+        // Lucene full-text indexing only applies to semantics — concept/pattern/stamp
+        // names live in description semantics and reach the index via their semantics.
+        if (object instanceof SemanticEntity<?> semanticEntity) {
+            indexer.index(semanticEntity);
+            // Ensure the NRT searcher sees the new document immediately.
+            Searcher.refreshAfterIndex();
+        }
     }
 
     @Override
@@ -182,6 +202,15 @@ public class SearchProvider implements SearchService {
         PrimitiveDataSearchResult[] results = searcher.search(query, maxResultSize);
         LOG.debug("SearchProvider.search() returning {} results", results != null ? results.length : 0);
         return results;
+    }
+
+    @Override
+    public String highlight(String query, String text) throws Exception {
+        if (closed.get()) {
+            LOG.error("SearchProvider is closed, cannot perform highlight");
+            throw new IllegalStateException("SearchProvider is closed");
+        }
+        return searcher.highlight(query, text);
     }
 
     @Override

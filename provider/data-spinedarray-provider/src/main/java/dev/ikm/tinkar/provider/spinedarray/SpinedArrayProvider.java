@@ -20,20 +20,16 @@ import dev.ikm.tinkar.collection.SpinedByteArrayMap;
 import dev.ikm.tinkar.collection.SpinedIntIntMap;
 import dev.ikm.tinkar.collection.SpinedIntLongArrayMap;
 import dev.ikm.tinkar.common.alert.AlertStreams;
-import dev.ikm.tinkar.common.id.EntityKey;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
-import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.common.validation.ValidationRecord;
 import dev.ikm.tinkar.common.validation.ValidationSeverity;
 import dev.ikm.tinkar.entity.*;
-import dev.ikm.tinkar.entity.transaction.Transaction;
-import dev.ikm.tinkar.provider.search.SearchService;
-import dev.ikm.tinkar.terms.State;
+import dev.ikm.tinkar.common.service.SearchService;
 import io.activej.bytebuf.ByteBuf;
 import io.activej.bytebuf.ByteBufPool;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
@@ -63,7 +59,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -71,7 +66,6 @@ import java.util.OptionalInt;
 import java.util.ServiceLoader;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -496,6 +490,11 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     @Override
     public PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception {
         return getSearchService().search(query, maxResultSize);
+    }
+
+    @Override
+    public String highlight(String query, String text) throws Exception {
+        return getSearchService().highlight(query, text);
     }
 
     @Override

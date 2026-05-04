@@ -73,6 +73,7 @@ module dev.ikm.tinkar.entity {
     exports dev.ikm.tinkar.entity.graph.isomorphic;
     exports dev.ikm.tinkar.entity.graph;
     exports dev.ikm.tinkar.entity.load;
+    exports dev.ikm.tinkar.entity.maintenance;
     exports dev.ikm.tinkar.entity.transaction;
     exports dev.ikm.tinkar.entity.transform;
     exports dev.ikm.tinkar.entity.util;

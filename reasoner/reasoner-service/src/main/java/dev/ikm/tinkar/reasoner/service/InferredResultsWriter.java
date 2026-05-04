@@ -197,6 +197,8 @@ public class InferredResultsWriter {
 					getViewCoordinateRecord().getAuthorNidForChanges(), getViewCoordinateRecord().getDefaultModuleNid(),
 					getViewCoordinateRecord().getDefaultPathNid());
 			updateStampNid = updateStamp.nid();
+
+
 			inferredPattern = EntityHandle.getPatternOrThrow(getViewCoordinateRecord().logicCoordinate().inferredAxiomsPatternNid());
 			inferredNavigationPattern = EntityHandle.getPatternOrThrow(TinkarTerm.INFERRED_NAVIGATION_PATTERN.nid());
 			multipleEndpointTimer = new MultipleEndpointTimer<>(IsomorphicResults.EndPoints.class);
@@ -611,8 +613,22 @@ public class InferredResultsWriter {
 		
 		if (semanticNids.length == 1) {
 			// Verify the single semantic belongs to the expected pattern
-			SemanticEntity<?> semantic = EntityHandle.getSemanticOrThrow(semanticNids[0]);
-			if (semantic.patternNid() != patternEntity.nid()) {
+            SemanticEntity<?> semantic = null;
+            try {
+                semantic = EntityHandle.getSemanticOrThrow(semanticNids[0]);
+            } catch (Exception e) {
+				// see if semantic is null.
+                byte[] bytes = PrimitiveData.get().getBytes(semanticNids[0]);
+				if (bytes == null) {
+					LOG.error(e.getMessage());
+					LOG.error("Semantic is null for nid " + semanticNids[0]);
+				} else {
+					LOG.error(e.getMessage());
+					LOG.error("Bytes are present for nid " + semanticNids[0] + " bytes are " + Arrays.toString(bytes));
+				}
+				return Optional.empty();
+            }
+            if (semantic.patternNid() != patternEntity.nid()) {
 				LOG.error("Pattern mismatch! Expected pattern {} but semantic {} has pattern {}. " +
 						"Referenced component: {}. This indicates a data or indexing corruption.",
 						PrimitiveData.textWithNid(patternEntity.nid()),
@@ -663,12 +679,12 @@ public class InferredResultsWriter {
 					wrongPatternNids.toList());
 		}
 		
-		// Log the warning about duplicates (same pattern, different UUIDs)
+		// Residual duplicates after the pre-classification withdrawer ran. This branch
+		// should be empty in steady state; if it fires, the withdrawer either failed
+		// to run or new duplicates appeared mid-run — both are real surprises.
 		if (duplicateNids.notEmpty()) {
-			LOG.warn("Found {} duplicate semantic(s) for pattern {} with component {}. " +
-					"Canonical UUID: {}, Canonical NID: {}, Duplicate NIDs: {}. " +
-					"These duplicates were likely created by a past race condition in UUID generation. " +
-					"Consider running a cleanup task to remove the duplicates.",
+			LOG.error("Residual duplicate semantic(s) after pre-classification withdraw: {} for pattern {} with component {}. " +
+					"Canonical UUID: {}, Canonical NID: {}, Duplicate NIDs: {}.",
 					duplicateNids.size(),
 					PrimitiveData.text(patternEntity.nid()),
 					PrimitiveData.text(referencedComponent.nid()),
