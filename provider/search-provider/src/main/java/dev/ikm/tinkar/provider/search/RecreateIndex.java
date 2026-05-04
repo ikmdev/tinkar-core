@@ -38,16 +38,40 @@ import java.util.concurrent.atomic.LongAdder;
 public class RecreateIndex extends TrackingCallable<Void> {
     private static final Logger LOG = LoggerFactory.getLogger(RecreateIndex.class);
     private final Indexer indexer;
+    private final RecreateReason reason;
 
     // Batch size for commits - tune based on available memory
     private static final int COMMIT_BATCH_SIZE =
             Integer.getInteger("lucene.index.commit.batch.size", 50_000);
 
-    public RecreateIndex(Indexer indexer) {
+    /**
+     * Construct a recreate task with a reason that drives the user-visible
+     * title and initial message. Use this constructor from
+     * {@link SearchProvider} so the progress dialog tells the right story
+     * (post-upgrade rebuild vs. first-time build vs. user-requested, etc.).
+     *
+     * @param indexer the {@link Indexer} owning the writer to rebuild against
+     * @param reason  why this recreate run was triggered; never {@code null}
+     */
+    public RecreateIndex(Indexer indexer, RecreateReason reason) {
         super(false, true);
         this.indexer = indexer;
-        this.updateTitle("Recreate Lucene Index");
-        LOG.info("Recreate Lucene Index started (batch size: {})", COMMIT_BATCH_SIZE);
+        this.reason = reason;
+        this.updateTitle(reason.title());
+        this.updateMessage(reason.description());
+        LOG.info("Recreate Lucene Index started — reason: {} (batch size: {})",
+                reason.name(), COMMIT_BATCH_SIZE);
+    }
+
+    /**
+     * Back-compat constructor — defaults the reason to
+     * {@link RecreateReason#USER_REQUESTED}. Prefer the two-arg form so the
+     * dialog can explain why the rebuild is running.
+     *
+     * @param indexer the {@link Indexer} owning the writer to rebuild against
+     */
+    public RecreateIndex(Indexer indexer) {
+        this(indexer, RecreateReason.USER_REQUESTED);
     }
 
     /**
@@ -101,8 +125,9 @@ public class RecreateIndex extends TrackingCallable<Void> {
     }
     @Override
     protected Void compute() throws Exception {
-        updateTitle("Indexing Semantics");
-        updateMessage("Initializing...");
+        // Title was set in the constructor from the reason; keep it so the
+        // dialog displays the right context throughout the run.
+        updateMessage(reason.description());
         updateProgress(-1,1);
 
         EntityService.get().beginLoadPhase();
@@ -215,13 +240,13 @@ public class RecreateIndex extends TrackingCallable<Void> {
         }
 
         if (shouldStop()) {
-            String reason = getStopReason();
-            LOG.info("Lucene index recreation stopped: {}", reason);
-            this.updateTitle("Lucene Index Cancelled");
-            this.updateMessage("Index creation was cancelled: " + reason);
+            String stopReason = getStopReason();
+            LOG.info("Lucene index recreation stopped: {}", stopReason);
+            this.updateTitle(reason.title() + " — Cancelled");
+            this.updateMessage("Index creation was cancelled: " + stopReason);
         } else {
             LOG.info("Recreate Lucene Index completed in {}", this.durationString());
-            this.updateTitle("Recreate Lucene Index Completed");
+            this.updateTitle(reason.title() + " — Completed");
             this.updateMessage("Index time: " + this.durationString());
         }
         updateProgress(1,1);

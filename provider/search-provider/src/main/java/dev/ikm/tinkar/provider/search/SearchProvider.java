@@ -97,6 +97,7 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
         this.indexPath = indexPath;
 
         Indexer tempIndexer;
+        boolean luceneFormatWipe = false;
         try {
             tempIndexer = new Indexer(indexPath);
         } catch (IllegalArgumentException
@@ -118,6 +119,7 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
             try {
                 FileUtil.recursiveDelete(indexPath.toFile());
                 indexExists = false;
+                luceneFormatWipe = true;
                 tempIndexer = new Indexer(indexPath);
             } catch (IOException e) {
                 throw new RuntimeException("Failed to recreate index after codec mismatch", e);
@@ -138,9 +140,18 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
         boolean dataExists = checkDataExists(datastoreRoot);
 
         if (dataExists && !indexExists) {
-            LOG.info("Database exists but Lucene index is missing, scheduling index recreation");
+            // Two paths arrive here: the codec-wipe branch above (the index
+            // existed but couldn't be opened, so we deleted and reopened
+            // empty), and the genuine "fresh open of a snapshot" case.
+            // Distinguish via luceneFormatWipe so the user sees the right
+            // explanation in the progress dialog.
+            RecreateReason reason = luceneFormatWipe
+                    ? RecreateReason.LUCENE_FORMAT_INCOMPATIBLE
+                    : RecreateReason.INITIAL_BUILD;
+            LOG.info("Database exists but Lucene index is missing — scheduling rebuild ({})",
+                    reason.name());
             try {
-                this.recreateIndex().get();
+                this.recreateIndexFor(reason).get();
                 LOG.info("Lucene index recreation completed successfully");
             } catch (Exception e) {
                 LOG.error("Failed to recreate Lucene index", e);
@@ -163,14 +174,17 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
             boolean emptyButHasData = dataExists && docCount == 0;
 
             if (schemaStale || emptyButHasData) {
+                RecreateReason reason;
                 if (schemaStale) {
                     LOG.warn("Lucene index schema v{} predates current v{} — scheduling index recreation",
                             schemaVersion, IndexerSchema.VERSION);
+                    reason = RecreateReason.SCHEMA_OUTDATED;
                 } else {
                     LOG.warn("Lucene index is empty but database exists — scheduling index recreation");
+                    reason = RecreateReason.EMPTY_INDEX_RECOVERY;
                 }
                 try {
-                    this.recreateIndex().get();
+                    this.recreateIndexFor(reason).get();
                     int newCount = Indexer.indexWriter().getDocStats().numDocs;
                     LOG.info("Lucene index recreation completed ({} documents)", String.format("%,d", newCount));
                 } catch (Exception e) {
@@ -230,9 +244,25 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
 
     @Override
     public CompletableFuture<Void> recreateIndex() {
+        return recreateIndexFor(RecreateReason.USER_REQUESTED);
+    }
+
+    /**
+     * Internal recreate path that lets startup triggers and other context-aware
+     * callers tag the run with a {@link RecreateReason}. The reason drives the
+     * user-visible progress dialog title and initial message — important for
+     * any rebuild triggered automatically (Lucene upgrade, schema bump, empty
+     * index, etc.) so the user can tell why their database open is doing
+     * extra work.
+     *
+     * @param reason why the recreate run is happening
+     * @return future that completes (with {@code null}) when the rebuild
+     *         finishes or with a logged error if it fails
+     */
+    private CompletableFuture<Void> recreateIndexFor(RecreateReason reason) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                return TinkExecutor.ioThreadPool().submit(new RecreateIndex(this.indexer)).get();
+                return TinkExecutor.ioThreadPool().submit(new RecreateIndex(this.indexer, reason)).get();
             } catch (InterruptedException | ExecutionException ex) {
                 AlertStreams.dispatchToRoot(new CompletionException("Error encountered while creating Lucene indexes. " +
                         "Search and Type Ahead Suggestions may not function as expected.", ex));
