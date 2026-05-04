@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
@@ -40,10 +39,6 @@ public class RecreateIndex extends TrackingCallable<Void> {
     private final Indexer indexer;
     private final RecreateReason reason;
 
-    // Batch size for commits - tune based on available memory
-    private static final int COMMIT_BATCH_SIZE =
-            Integer.getInteger("lucene.index.commit.batch.size", 50_000);
-
     /**
      * Construct a recreate task with a reason that drives the user-visible
      * title and initial message. Use this constructor from
@@ -59,8 +54,7 @@ public class RecreateIndex extends TrackingCallable<Void> {
         this.reason = reason;
         this.updateTitle(reason.title());
         this.updateMessage(reason.description());
-        LOG.info("Recreate Lucene Index started — reason: {} (batch size: {})",
-                reason.name(), COMMIT_BATCH_SIZE);
+        LOG.info("Recreate Lucene Index started — reason: {}", reason.name());
     }
 
     /**
@@ -173,8 +167,16 @@ public class RecreateIndex extends TrackingCallable<Void> {
                 this.indexer.commit();
             }
 
-            // Use atomic counter for batching across parallel threads
-            AtomicInteger batchCounter = new AtomicInteger(0);
+            // Track docs added so the end-of-run log carries useful diagnostics.
+            // No periodic commits during the walk — Lucene's RAM buffer auto-flushes
+            // to disk segments as it fills (default 256 MB; see
+            // Indexer.RAM_BUFFER_SIZE_MB), and TieredMergePolicy compacts segments
+            // in the background. A single commit at the end persists everything.
+            // Forcing periodic commits during the walk caused a "commit storm"
+            // where the modulo gate tripped on stretches of non-text-bearing
+            // semantics that had nothing to flush — hundreds of empty commits
+            // in tight succession.
+            LongAdder docsAdded = new LongAdder();
 
             PrimitiveData.get().forEachParallel((bytes, nid) -> {
                 // Check for cancellation periodically
@@ -188,25 +190,9 @@ public class RecreateIndex extends TrackingCallable<Void> {
                 if (bytes != null && bytes.length > 0) {
                     Entity<?> entity = EntityRecordFactory.make(bytes);
                     if (entity instanceof SemanticEntity<?> semantic) {
-                        this.indexer.index(semantic);
+                        int added = this.indexer.index(semantic);
+                        docsAdded.add(added);
                         indexedEntities.increment();
-
-                        // Commit in batches
-                        int count = batchCounter.incrementAndGet();
-                        if (count % COMMIT_BATCH_SIZE == 0) {
-                            if (shouldStop()) {
-                                return;
-                            }
-
-                            try {
-                                synchronized (this.indexer) {
-                                    this.indexer.commit();
-                                    LOG.debug("Committed batch at {} entities", count);
-                                }
-                            } catch (IOException e) {
-                                LOG.error("Error committing batch at count {}", count, e);
-                            }
-                        }
                     }
                 }
 
@@ -223,17 +209,26 @@ public class RecreateIndex extends TrackingCallable<Void> {
 
             // Check before final commit
             if (shouldStop()) {
-                String reason = getStopReason();
-                LOG.info("Lucene index recreation cancelled before final commit: {}", reason);
-                LOG.info("Processed {} of {} entities before cancellation",
-                        indexedEntities.longValue(), totalCount);
+                String stopReason = getStopReason();
+                LOG.info("Lucene index recreation cancelled before final commit: {}", stopReason);
+                LOG.info("Processed {} of {} entities ({} docs added) before cancellation",
+                        indexedEntities.longValue(), totalCount, docsAdded.longValue());
                 return null;
             }
 
-            // Final commit
-            this.indexer.commit();
-            LOG.info("Final commit completed - indexed {} entities",
-                    String.format("%,d", indexedEntities.longValue()));
+            // Final commit — guard with hasUncommittedChanges() so a recreate
+            // that produced zero indexable content (extreme edge case: no
+            // text-bearing semantics in the entity store) doesn't pay for an
+            // empty commit.
+            if (Indexer.indexWriter().hasUncommittedChanges()) {
+                this.indexer.commit();
+                LOG.info("Final commit completed — indexed {} entities ({} docs)",
+                        String.format("%,d", indexedEntities.longValue()),
+                        String.format("%,d", docsAdded.longValue()));
+            } else {
+                LOG.info("Nothing to commit at end — {} entities walked produced no indexable docs",
+                        String.format("%,d", indexedEntities.longValue()));
+            }
 
         } finally {
             EntityService.get().endLoadPhase();

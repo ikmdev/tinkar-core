@@ -85,10 +85,28 @@ public class Indexer {
         return new Indexer((Path) null, true);
     }
 
+    /**
+     * Lucene RAM buffer size in MB. The writer auto-flushes a segment to disk
+     * when buffered pending docs hit this size. Default is 256 MB — meaningfully
+     * larger than Lucene's stock 16 MB default to reduce segment churn during
+     * full rebuilds (see {@link RecreateIndex}). A v4 doc is ~250 bytes including
+     * overhead, so 256 MB carries roughly 1.5M docs per flush — a typical
+     * rebuild emits 6-12 segments instead of dozens to a hundred at the stock
+     * default, and {@code TieredMergePolicy} has correspondingly less work.
+     *
+     * <p>Live writes (post-rebuild) fill this buffer slowly and pay no extra
+     * cost from the larger size — RAM is grown into, not pre-allocated.
+     *
+     * <p>Override via system property for memory-constrained deployments.
+     */
+    private static final double RAM_BUFFER_SIZE_MB =
+            Double.parseDouble(System.getProperty("lucene.index.ram.buffer.mb", "256"));
+
     private static IndexWriter getIndexWriter() throws IOException {
         //Create the indexer
         IndexWriterConfig config = new IndexWriterConfig(analyzer());
         config.setCommitOnClose(true);
+        config.setRAMBufferSizeMB(RAM_BUFFER_SIZE_MB);
         return new IndexWriter(indexDirectory(), config);
     }
 
@@ -148,7 +166,7 @@ public class Indexer {
 
     /**
      * Index a semantic by emitting one Lucene document per distinct
-     * {@code (nid, fieldIndex, stripped-text)} tuple seen across the semantic's
+     * {@code (nid, fieldOrdinal, stripped-text)} tuple seen across the semantic's
      * versions.
      *
      * <p>Each emitted document carries three single-valued fields:
@@ -162,10 +180,20 @@ public class Indexer {
      * concept names live in description semantics and reach this method via
      * their semantics, not directly.
      *
+     * <p>Many semantics carry no indexable text (navigation, identifier,
+     * membership, image, numeric-only, etc. — anything whose
+     * {@code fieldValues()} contains no {@code String}); for those this method
+     * is a no-op that returns {@code 0}. Callers (notably {@code RecreateIndex})
+     * use the return value to gate batch operations on actual index changes
+     * rather than on entity-walk progress.
+     *
      * @param semanticEntity the semantic to index; must not be {@code null}
+     * @return the number of Lucene documents added to the writer; {@code 0}
+     *         when the semantic has no indexable text or on I/O error
      */
-    public void index(SemanticEntity<?> semanticEntity) {
+    public int index(SemanticEntity<?> semanticEntity) {
         Set<String> seenTexts = new HashSet<>();
+        int docsAdded = 0;
         try {
             for (SemanticEntityVersion version : ((SemanticEntity<SemanticEntityVersion>) semanticEntity).versions()) {
                 ImmutableList<Object> fields = version.fieldValues();
@@ -175,7 +203,7 @@ public class Indexer {
                     }
                     String text = rawText.strip();
                     // Dedup uniformly across all positions and versions.
-                    // Same (text, fieldIndex) pair seen twice is redundant.
+                    // Same (text, fieldOrdinal) pair seen twice is redundant.
                     if (!seenTexts.add(i + "\0" + text)) {
                         continue;
                     }
@@ -184,12 +212,14 @@ public class Indexer {
                     doc.add(IndexerSchema.INDEXED_FIELD_ORDINAL.make(i));
                     doc.add(IndexerSchema.TEXT.make(text));
                     indexWriter.addDocument(doc);
-                    LOG.debug("Indexing semantic nid={} fieldIndex={} text='{}'",
+                    docsAdded++;
+                    LOG.debug("Indexing semantic nid={} fieldOrdinal={} text='{}'",
                             semanticEntity.nid(), i, text);
                 }
             }
         } catch (IOException e) {
             LOG.error("Exception writing entity {}", semanticEntity, e);
         }
+        return docsAdded;
     }
 }
