@@ -418,6 +418,28 @@ public interface StampCalculator {
      * @return
      * @throws Exception
      */
+    /**
+     * Highlight an arbitrary text against the same parsed query the search
+     * index would use, returning the text with matched tokens wrapped in
+     * {@code <B>...</B>} markup. Matching is analyzer-aware (stem-, case-,
+     * grammar-aware) — a query of {@code "topping"} marks {@code "Toppings"}
+     * in the supplied text.
+     *
+     * <p>Intended for UI surfaces that need to highlight strings that aren't
+     * themselves search hits — e.g. a concept's preferred name shown above
+     * its matched description semantics. The marker format matches what
+     * {@link LatestVersionSearchResult#highlightedString()} carries, so
+     * callers can route both through the same parser/renderer.
+     *
+     * @param query the search query string
+     * @param text the text to highlight; returned unchanged when no terms match
+     * @return {@code text} with matched tokens wrapped in {@code <B>...</B>}
+     * @throws Exception if an error occurs during query parsing or highlighting
+     */
+    default String highlight(String query, String text) throws Exception {
+        return PrimitiveData.get().highlight(query, text);
+    }
+
     default ImmutableList<LatestVersionSearchResult> search(String query, int maxResultSize) throws Exception {
         PrimitiveDataSearchResult[] primitiveResults = PrimitiveData.get().search(query, maxResultSize);
         final MutableIntObjectMap<LatestVersionSearchResult> semanticNidSearchResultMap = IntObjectMaps.mutable.ofInitialCapacity(primitiveResults.length);
@@ -451,6 +473,7 @@ public interface StampCalculator {
                 query, primitiveResults.length, duplicates.intValue(), missingLatest.intValue(), filteredResults.size());
         return filteredResults;
     }
+
 
     /**
      * Performs a lucene based search using the {@link #search(String, int)} method but applies an additional constraint

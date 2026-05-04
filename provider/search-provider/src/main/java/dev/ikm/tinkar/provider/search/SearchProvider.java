@@ -205,6 +205,15 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
     }
 
     @Override
+    public String highlight(String query, String text) throws Exception {
+        if (closed.get()) {
+            LOG.error("SearchProvider is closed, cannot perform highlight");
+            throw new IllegalStateException("SearchProvider is closed");
+        }
+        return searcher.highlight(query, text);
+    }
+
+    @Override
     public CompletableFuture<Void> recreateIndex() {
         return CompletableFuture.supplyAsync(() -> {
             try {

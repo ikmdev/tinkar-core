@@ -229,6 +229,11 @@ public class DataProviderWebsocketClient
     }
 
     @Override
+    public String highlight(String query, String text) throws Exception {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public CompletableFuture<Void> recreateLuceneIndex() throws Exception {
         throw new UnsupportedOperationException();
     }

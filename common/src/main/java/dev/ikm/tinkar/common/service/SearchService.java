@@ -52,6 +52,27 @@ public interface SearchService {
     PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception;
 
     /**
+     * Highlight an arbitrary text against the same parsed query the index would
+     * use, returning the text with matched tokens wrapped in
+     * {@code <B>...</B>} markup.
+     *
+     * <p>The matching is analyzer-aware (stem-, case-, and grammar-aware in the
+     * same way as the search index), so a query of {@code "topping"} marks the
+     * occurrence of {@code "Toppings"} in the supplied text. Intended for UI
+     * surfaces that need to highlight strings that aren't themselves search
+     * hits — e.g. a concept's preferred name shown above its matched description
+     * semantics.
+     *
+     * @param query the search query string, parsed with the same parser used by {@link #search}
+     * @param text the text to highlight; returned unchanged when no terms match
+     * @return {@code text} with matched tokens wrapped in {@code <B>...</B>},
+     *         or the original {@code text} when there are no matches or either
+     *         input is null/empty
+     * @throws Exception if an error occurs during query parsing or highlighting
+     */
+    String highlight(String query, String text) throws Exception;
+
+    /**
      * Recreates the entire Lucene index from scratch.
      * <p>     * This is an expensive operation that should only be performed when necessary,
      * such as when the index is corrupted or when upgrading to a new index format.

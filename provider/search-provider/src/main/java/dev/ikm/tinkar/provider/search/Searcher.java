@@ -102,6 +102,43 @@ public class Searcher {
         LOG.info("Opened lucene searcher in: " + stopwatch.durationString());
     }
 
+    /**
+     * Highlight an arbitrary text against the same query the index would parse,
+     * using the same analyzer and {@code <B>...</B>} markup as
+     * {@link #search(String, int)} produces for hit snippets.
+     *
+     * <p>Unlike {@link #search}, this does not consult the index — it analyzes
+     * the supplied {@code text} on the fly and asks Lucene's
+     * {@link UnifiedHighlighter#highlightWithoutSearcher} to mark up matching
+     * tokens. Matching is therefore stem-/analyzer-aware (a query of
+     * {@code "topping"} marks {@code "Toppings"}) and respects the query
+     * grammar the {@link QueryParser} accepts.
+     *
+     * <p>Intended for UI surfaces that need to highlight strings that aren't
+     * themselves search hits — e.g. a concept's preferred name shown above
+     * the list of matched description semantics.
+     *
+     * @param queryString the user query, parsed with the same parser as {@link #search}
+     * @param text        the text to highlight; returned unchanged when no terms match
+     * @return {@code text} with matched tokens wrapped in {@code <B>...</B>},
+     *         or the original {@code text} when there are no matches or either
+     *         input is null/empty
+     * @throws ParseException if {@code queryString} cannot be parsed
+     */
+    public String highlight(String queryString, String text) throws ParseException, IOException {
+        if (queryString == null || queryString.isEmpty() || text == null || text.isEmpty()) {
+            return text == null ? "" : text;
+        }
+        Query query = parser.parse(queryString);
+        UnifiedHighlighter highlighter = UnifiedHighlighter
+                .builderWithoutSearcher(Indexer.analyzer())
+                .withFormatter(new DefaultPassageFormatter("<B>", "</B>", "", false))
+                .build();
+        Object marked = highlighter.highlightWithoutSearcher(
+                IndexerSchema.TEXT.name(), query, text, 1);
+        return marked == null ? text : marked.toString();
+    }
+
     public PrimitiveDataSearchResult[] search(String queryString, int maxResultSize) throws
             ParseException, IOException {
         LOG.debug("Searcher.search() called with queryString='{}', maxResultSize={}", queryString, maxResultSize);

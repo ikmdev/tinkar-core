@@ -266,6 +266,11 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     }
 
     @Override
+    public String highlight(String query, String text) throws Exception {
+        return getSearchService().highlight(query, text);
+    }
+
+    @Override
     public void setLoadPhase(boolean loadPhase) {
         this.loadPhase = loadPhase;
     }
