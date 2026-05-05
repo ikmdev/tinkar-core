@@ -119,6 +119,7 @@ public class TinkarSearchGrpcController extends TinkarSearchServiceGrpc.TinkarSe
         TinkarRebuildIndexResponse response = TinkarRebuildIndexResponse.newBuilder()
                 .setMessage(message)
                 .setSuccess(success)
+                .setCreatedAt(System.currentTimeMillis())
                 .build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();

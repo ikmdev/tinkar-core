@@ -31,7 +31,10 @@ public record ConceptSearchResponse(
         Boolean success,
 
         @Schema(description = "Error message if search failed", example = "null")
-        String errorMessage) {
+        String errorMessage,
+
+        @Schema(description = "Unix epoch milliseconds when this response was generated")
+        Long createdAt) {
 
     /**
      * Individual semantic search result with score and highlighted text.
@@ -117,7 +120,8 @@ public record ConceptSearchResponse(
                 results,
                 null,
                 true,
-                null);
+                null,
+                System.currentTimeMillis());
     }
 
     /**
@@ -132,7 +136,8 @@ public record ConceptSearchResponse(
                 null,
                 groupedResults,
                 true,
-                null);
+                null,
+                System.currentTimeMillis());
     }
 
     /**
@@ -147,7 +152,8 @@ public record ConceptSearchResponse(
                 List.of(),
                 List.of(),
                 true,
-                null);
+                null,
+                System.currentTimeMillis());
     }
 
     /**
@@ -161,6 +167,7 @@ public record ConceptSearchResponse(
                 null,
                 null,
                 false,
-                errorMessage);
+                errorMessage,
+                System.currentTimeMillis());
     }
 }

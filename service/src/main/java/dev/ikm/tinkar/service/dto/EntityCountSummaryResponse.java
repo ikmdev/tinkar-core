@@ -12,16 +12,18 @@ public record EntityCountSummaryResponse(
         @Schema(description = "Number of stamps") Long stampsCount,
         @Schema(description = "Total entity count") Long totalCount,
         @Schema(description = "Whether the operation was successful") Boolean success,
-        @Schema(description = "Error message if operation failed") String errorMessage) {
+        @Schema(description = "Error message if operation failed") String errorMessage,
+        @Schema(description = "Unix epoch milliseconds when this response was generated") Long createdAt) {
 
     public static EntityCountSummaryResponse success(long concepts, long semantics,
             long patterns, long stamps) {
         long total = concepts + semantics + patterns + stamps;
         return new EntityCountSummaryResponse(concepts, semantics, patterns, stamps,
-                total, true, null);
+                total, true, null, System.currentTimeMillis());
     }
 
     public static EntityCountSummaryResponse error(String errorMessage) {
-        return new EntityCountSummaryResponse(null, null, null, null, null, false, errorMessage);
+        return new EntityCountSummaryResponse(null, null, null, null, null, false, errorMessage,
+                System.currentTimeMillis());
     }
 }

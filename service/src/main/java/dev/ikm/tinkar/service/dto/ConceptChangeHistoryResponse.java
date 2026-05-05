@@ -24,7 +24,9 @@ public record ConceptChangeHistoryResponse(
 
         @Schema(description = "Whether the query was successful") Boolean success,
 
-        @Schema(description = "Error message if query failed") String errorMessage) {
+        @Schema(description = "Error message if query failed") String errorMessage,
+
+        @Schema(description = "Unix epoch milliseconds when this response was generated") Long createdAt) {
 
     /**
      * Change history for a single semantic.
@@ -106,7 +108,8 @@ public record ConceptChangeHistoryResponse(
                 semanticChanges,
                 totalChanges,
                 true,
-                null);
+                null,
+                System.currentTimeMillis());
     }
 
     /**
@@ -120,6 +123,7 @@ public record ConceptChangeHistoryResponse(
                 null,
                 0,
                 false,
-                errorMessage);
+                errorMessage,
+                System.currentTimeMillis());
     }
 }

@@ -45,6 +45,7 @@ message ImportChangesetResponse {
   bool success = 1;
   string error_message = 2;
   EntityCountSummaryProto entity_counts = 3;
+  int64 created_at = 4;
 }
 
 // ── Export ───────────────────────────────────────────────────────────
@@ -86,6 +87,7 @@ message ExportEntitiesResponse {
    * Raw bytes of the exported ZIP file.
    */
   bytes export_data = 4;
+  int64 created_at = 5;
 }
 
 // ── Reasoner ────────────────────────────────────────────────────────
@@ -113,6 +115,7 @@ message RunReasonerResponse {
    * Duration of the reasoner pipeline in milliseconds.
    */
   int64 duration_ms = 4;
+  int64 created_at = 5;
 }
 
 // ── Service ─────────────────────────────────────────────────────────

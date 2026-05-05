@@ -30,7 +30,8 @@ public final class ProtoConversionUtils {
                 proto.getTotalCount(),
                 results,
                 proto.getSuccess(),
-                proto.getErrorMessage().isEmpty() ? null : proto.getErrorMessage());
+                proto.getErrorMessage().isEmpty() ? null : proto.getErrorMessage(),
+                proto.getCreatedAt() != 0 ? proto.getCreatedAt() : System.currentTimeMillis());
     }
 
     private static SearchResult toSearchResultDto(TinkarSearchResult proto) {
@@ -89,7 +90,8 @@ public final class ProtoConversionUtils {
                 .setQuery(dtoResponse.query() != null ? dtoResponse.query() : "")
                 .setTotalCount(dtoResponse.totalCount() != null ? dtoResponse.totalCount() : 0L)
                 .setSortBy(toSortOptionProto(dtoResponse.sortBy()))
-                .setSuccess(dtoResponse.success() != null && dtoResponse.success());
+                .setSuccess(dtoResponse.success() != null && dtoResponse.success())
+                .setCreatedAt(dtoResponse.createdAt() != null ? dtoResponse.createdAt() : System.currentTimeMillis());
 
         if (dtoResponse.errorMessage() != null) {
             builder.setErrorMessage(dtoResponse.errorMessage());

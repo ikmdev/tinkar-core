@@ -20,7 +20,9 @@ public record TinkarSearchQueryResponse(
 
                 @Schema(description = "Whether the search was successful", example = "true") Boolean success,
 
-                @Schema(description = "Error message if search failed", example = "null") String errorMessage) {
+                @Schema(description = "Error message if search failed", example = "null") String errorMessage,
+
+                @Schema(description = "Unix epoch milliseconds when this response was generated") Long createdAt) {
 
         /**
          * Descriptions associated with a concept.
@@ -74,7 +76,8 @@ public record TinkarSearchQueryResponse(
                                 results != null ? (long) results.size() : 0L,
                                 results,
                                 true,
-                                null);
+                                null,
+                                System.currentTimeMillis());
         }
 
         /**
@@ -86,6 +89,7 @@ public record TinkarSearchQueryResponse(
                                 0L,
                                 null,
                                 false,
-                                errorMessage);
+                                errorMessage,
+                                System.currentTimeMillis());
         }
 }
