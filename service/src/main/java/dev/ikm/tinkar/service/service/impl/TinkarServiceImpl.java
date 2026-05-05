@@ -1244,6 +1244,18 @@ public class TinkarServiceImpl implements TinkarService {
                             });
                         }
                     });
+                    // Include DESCRIPTION_PATTERN semantics so the client can resolve the
+                    // pattern's preferred name and FQN without a separate round-trip.
+                    int[] patDescNids = EntityService.get().semanticNidsForComponentOfPattern(
+                            patternNid, TinkarTerm.DESCRIPTION_PATTERN.nid());
+                    for (int patDescNid : patDescNids) {
+                        if (includedNids.contains(patDescNid)) continue;
+                        Entity<?> descEntity = EntityService.get().getEntityFast(patDescNid);
+                        if (descEntity instanceof SemanticEntity<?> descSem) {
+                            addToResponse(builder, transformer, includedNids, descSem);
+                            descSem.versions().forEach(v -> stampNids.add(v.stampNid()));
+                        }
+                    }
                 }
             }
 
