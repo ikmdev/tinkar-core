@@ -174,12 +174,17 @@ public class Indexer {
      * before adding new docs. This makes the operation idempotent at the index
      * level: re-indexing the same content leaves the same Lucene state, and
      * indexing a new version of an evolving semantic doesn't accumulate
-     * superseded docs from earlier versions. The delete-by-NID is a BKD
-     * point-exact query against the indexed {@link IndexerSchema#NID} field;
-     * cost is sub-microsecond to buffer and ~hundreds of nanoseconds per
-     * segment to resolve at the next flush. Empty deletes (no existing docs
-     * for this nid — the common case during {@link RecreateIndex}) are nearly
-     * free.
+     * superseded docs from earlier versions. Suitable for live writes where
+     * a doc for the nid may already exist.
+     *
+     * <p><b>Do not call from a full-rebuild loop.</b> RecreateIndex starts with
+     * {@code IndexWriter.deleteAll()} and indexes ~tens of millions of entities
+     * against an initially-empty writer; using {@link #index} would buffer
+     * tens of millions of no-match {@code PointRangeQuery} delete entries in
+     * Lucene's BufferedUpdates queue. The queue grows between flushes and
+     * resolution at flush time scales with both queue length and segment count,
+     * producing O(n²) work that can multiply rebuild time by orders of
+     * magnitude. Use {@link #indexFresh(SemanticEntity)} for the recreate path.
      *
      * <p>Each emitted document carries three single-valued fields:
      * {@link IndexerSchema#NID}, {@link IndexerSchema#INDEXED_FIELD_ORDINAL},
@@ -196,22 +201,54 @@ public class Indexer {
      * membership, image, numeric-only, etc. — anything whose
      * {@code fieldValues()} contains no {@code String}); for those this method
      * still buffers the delete-by-NID (a no-op when no prior docs exist) and
-     * returns {@code 0}. Callers (notably {@code RecreateIndex}) use the
-     * return value to gate batch operations on actual index changes rather
-     * than on entity-walk progress.
+     * returns {@code 0}.
      *
      * @param semanticEntity the semantic to index; must not be {@code null}
      * @return the number of Lucene documents added to the writer; {@code 0}
      *         when the semantic has no indexable text or on I/O error
      */
     public int index(SemanticEntity<?> semanticEntity) {
+        try {
+            // Replace any prior docs for this nid. Cheap as a single live-write
+            // operation; pathological in a tight loop — see indexFresh().
+            indexWriter.deleteDocuments(
+                    IntField.newExactQuery(IndexerSchema.NID.name(), semanticEntity.nid()));
+        } catch (IOException e) {
+            LOG.error("Exception buffering delete-by-nid for entity {}", semanticEntity, e);
+            return 0;
+        }
+        return indexInternal(semanticEntity);
+    }
+
+    /**
+     * Index a semantic without buffering a delete-by-NID first. Intended for
+     * the {@link RecreateIndex} hot path, where the writer was just
+     * {@code deleteAll()}'d and there are no prior docs for any nid; the delete
+     * would resolve to a no-match query and contribute only buffer-and-resolve
+     * overhead. Live writes should use {@link #index(SemanticEntity)} instead;
+     * skipping the delete there would let stale per-nid docs accumulate from
+     * earlier indexings.
+     *
+     * <p>Same return semantics and same per-doc shape as {@link #index} —
+     * the only difference is the absence of the delete buffering.
+     *
+     * @param semanticEntity the semantic to index; must not be {@code null}
+     * @return the number of Lucene documents added to the writer; {@code 0}
+     *         when the semantic has no indexable text or on I/O error
+     */
+    public int indexFresh(SemanticEntity<?> semanticEntity) {
+        return indexInternal(semanticEntity);
+    }
+
+    /**
+     * Shared add-doc loop. Both {@link #index} and {@link #indexFresh} delegate
+     * here; the only difference between them is whether they buffer a
+     * delete-by-NID before calling this method.
+     */
+    private int indexInternal(SemanticEntity<?> semanticEntity) {
         Set<String> seenTexts = new HashSet<>();
         int docsAdded = 0;
         try {
-            // Replace any prior docs for this nid. See class-level note on cost.
-            indexWriter.deleteDocuments(
-                    IntField.newExactQuery(IndexerSchema.NID.name(), semanticEntity.nid()));
-
             for (SemanticEntityVersion version : ((SemanticEntity<SemanticEntityVersion>) semanticEntity).versions()) {
                 ImmutableList<Object> fields = version.fieldValues();
                 for (int i = 0; i < fields.size(); i++) {

@@ -190,7 +190,16 @@ public class RecreateIndex extends TrackingCallable<Void> {
                 if (bytes != null && bytes.length > 0) {
                     Entity<?> entity = EntityRecordFactory.make(bytes);
                     if (entity instanceof SemanticEntity<?> semantic) {
-                        int added = this.indexer.index(semantic);
+                        // indexFresh skips the per-call delete-by-NID. The
+                        // writer was deleteAll()'d at the start of this run
+                        // (see above), so the delete would resolve to a
+                        // no-match query against an initially-empty writer
+                        // and accumulate tens of millions of buffered
+                        // PointRangeQuery entries that turn flush-time work
+                        // O(n²). Live writes through SearchProvider.index
+                        // still go through index(), preserving idempotent
+                        // delete-then-add for evolving entities.
+                        int added = this.indexer.indexFresh(semantic);
                         docsAdded.add(added);
                         indexedEntities.increment();
                     }
