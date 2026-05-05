@@ -508,6 +508,7 @@ public class TinkarServiceImpl implements TinkarService {
                 .addAllResults(results)
                 .setSuccess(true)
                 .setErrorMessage("")
+                .setCreatedAt(System.currentTimeMillis())
                 .build();
     }
 
@@ -517,6 +518,7 @@ public class TinkarServiceImpl implements TinkarService {
                 .setTotalCount(0)
                 .setSuccess(false)
                 .setErrorMessage(errorMessage != null ? errorMessage : "Unknown error")
+                .setCreatedAt(System.currentTimeMillis())
                 .build();
     }
 
@@ -762,7 +764,8 @@ public class TinkarServiceImpl implements TinkarService {
                 1,
                 List.of(versionChange),
                 true,
-                null
+                null,
+                System.currentTimeMillis()
         );
     }
 
@@ -1165,6 +1168,7 @@ public class TinkarServiceImpl implements TinkarService {
                 }
             }
             responseBuilder.setTotalCount(count);
+            responseBuilder.setCreatedAt(System.currentTimeMillis());
 
             return responseBuilder.build();
         } catch (Exception e) {
@@ -1174,6 +1178,7 @@ public class TinkarServiceImpl implements TinkarService {
                     .setSuccess(false)
                     .setErrorMessage(e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName())
                     .setTotalCount(0)
+                    .setCreatedAt(System.currentTimeMillis())
                     .build();
         }
     }
@@ -1197,6 +1202,7 @@ public class TinkarServiceImpl implements TinkarService {
                 return TinkarConceptEntityResponse.newBuilder()
                         .setSuccess(false)
                         .setErrorMessage("Concept not found: " + conceptId)
+                        .setCreatedAt(System.currentTimeMillis())
                         .build();
             }
             addToResponse(builder, transformer, includedNids, conceptEntity);
@@ -1354,12 +1360,13 @@ public class TinkarServiceImpl implements TinkarService {
                 }
             }
 
-            return builder.setSuccess(true).build();
+            return builder.setSuccess(true).setCreatedAt(System.currentTimeMillis()).build();
         } catch (Exception e) {
             log.error("Failed to get concept with semantics for {}: {}", conceptId, e.getMessage(), e);
             return TinkarConceptEntityResponse.newBuilder()
                     .setSuccess(false)
                     .setErrorMessage(e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName())
+                    .setCreatedAt(System.currentTimeMillis())
                     .build();
         }
     }
@@ -1378,6 +1385,7 @@ public class TinkarServiceImpl implements TinkarService {
                 return TinkarConceptEntityResponse.newBuilder()
                         .setSuccess(false)
                         .setErrorMessage("Entity not found: " + entityId)
+                        .setCreatedAt(System.currentTimeMillis())
                         .build();
             }
             addToResponse(builder, transformer, includedNids, entity);
@@ -1392,12 +1400,13 @@ public class TinkarServiceImpl implements TinkarService {
                 }
             }
 
-            return builder.setSuccess(true).build();
+            return builder.setSuccess(true).setCreatedAt(System.currentTimeMillis()).build();
         } catch (Exception e) {
             log.error("Failed to get entity by public ID {}: {}", entityId, e.getMessage(), e);
             return TinkarConceptEntityResponse.newBuilder()
                     .setSuccess(false)
                     .setErrorMessage(e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName())
+                    .setCreatedAt(System.currentTimeMillis())
                     .build();
         }
     }

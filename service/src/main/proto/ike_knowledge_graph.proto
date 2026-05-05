@@ -141,6 +141,7 @@ message ListStampCoordinatesRequest {}
 // All saved StampCoordinates
 message ListStampCoordinatesResponse {
   repeated SavedStampCoordinateResponse coordinates = 1;
+  int64 created_at = 2;
 }
 
 // Request for saving a NavigationCoordinate
@@ -161,6 +162,7 @@ message ListNavigationCoordinatesRequest {}
 // All saved NavigationCoordinates
 message ListNavigationCoordinatesResponse {
   repeated SavedNavigationCoordinateResponse coordinates = 1;
+  int64 created_at = 2;
 }
 
 // Request for saving a LanguageCoordinate
@@ -181,6 +183,7 @@ message ListLanguageCoordinatesRequest {}
 // All saved LanguageCoordinates
 message ListLanguageCoordinatesResponse {
   repeated SavedLanguageCoordinateResponse coordinates = 1;
+  int64 created_at = 2;
 }
 
 // Request for getting semantics using previously saved coordinate IDs.

@@ -89,6 +89,7 @@ public class KnowledgeGraphGrpcController extends IkeKnowledgeGraphGrpc.IkeKnowl
         List<SavedStampCoordinateResponse> list = coordinateStoreService.findAllStamp();
         ListStampCoordinatesResponse response = ListStampCoordinatesResponse.newBuilder()
                 .addAllCoordinates(list.stream().map(this::toProtoStampResponse).toList())
+                .setCreatedAt(System.currentTimeMillis())
                 .build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -112,6 +113,7 @@ public class KnowledgeGraphGrpcController extends IkeKnowledgeGraphGrpc.IkeKnowl
         List<SavedNavigationCoordinateResponse> list = coordinateStoreService.findAllNavigation();
         ListNavigationCoordinatesResponse response = ListNavigationCoordinatesResponse.newBuilder()
                 .addAllCoordinates(list.stream().map(this::toProtoNavResponse).toList())
+                .setCreatedAt(System.currentTimeMillis())
                 .build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -135,6 +137,7 @@ public class KnowledgeGraphGrpcController extends IkeKnowledgeGraphGrpc.IkeKnowl
         List<SavedLanguageCoordinateResponse> list = coordinateStoreService.findAllLanguage();
         ListLanguageCoordinatesResponse response = ListLanguageCoordinatesResponse.newBuilder()
                 .addAllCoordinates(list.stream().map(this::toProtoLangResponse).toList())
+                .setCreatedAt(System.currentTimeMillis())
                 .build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();

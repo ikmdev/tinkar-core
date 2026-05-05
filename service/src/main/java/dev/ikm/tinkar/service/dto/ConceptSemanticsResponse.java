@@ -22,7 +22,9 @@ public record ConceptSemanticsResponse(
 
         @Schema(description = "Whether the query was successful") Boolean success,
 
-        @Schema(description = "Error message if query failed") String errorMessage) {
+        @Schema(description = "Error message if query failed") String errorMessage,
+
+        @Schema(description = "Unix epoch milliseconds when this response was generated") Long createdAt) {
 
     /**
      * Information about a single semantic attached to a concept.
@@ -80,7 +82,8 @@ public record ConceptSemanticsResponse(
                 semantics != null ? semantics.size() : 0,
                 semantics,
                 true,
-                null);
+                null,
+                System.currentTimeMillis());
     }
 
     /**
@@ -93,6 +96,7 @@ public record ConceptSemanticsResponse(
                 0,
                 null,
                 false,
-                errorMessage);
+                errorMessage,
+                System.currentTimeMillis());
     }
 }

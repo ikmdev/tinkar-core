@@ -22,7 +22,9 @@ public record ChangeHistoryResponse(
 
         @Schema(description = "Whether the query was successful") Boolean success,
 
-        @Schema(description = "Error message if query failed") String errorMessage) {
+        @Schema(description = "Error message if query failed") String errorMessage,
+
+        @Schema(description = "Unix epoch milliseconds when this response was generated") Long createdAt) {
 
     /**
      * A single version change at a specific STAMP.
@@ -82,7 +84,8 @@ public record ChangeHistoryResponse(
                 versionChanges != null ? versionChanges.size() : 0,
                 versionChanges,
                 true,
-                null);
+                null,
+                System.currentTimeMillis());
     }
 
     /**
@@ -95,6 +98,7 @@ public record ChangeHistoryResponse(
                 0,
                 null,
                 false,
-                errorMessage);
+                errorMessage,
+                System.currentTimeMillis());
     }
 }

@@ -14,18 +14,19 @@ public record ReasonerResultsResponse(
         @Schema(description = "Number of orphaned concepts detected") Integer orphansCount,
         @Schema(description = "Duration of the reasoner pipeline in milliseconds") Long durationMs,
         @Schema(description = "Whether the operation was successful") Boolean success,
-        @Schema(description = "Error message if operation failed") String errorMessage) {
+        @Schema(description = "Error message if operation failed") String errorMessage,
+        @Schema(description = "Unix epoch milliseconds when this response was generated") Long createdAt) {
 
     public static ReasonerResultsResponse success(int classifiedConceptCount,
             int inferredChangesCount, int navigationChangesCount,
             int equivalentSetsCount, int cyclesCount, int orphansCount, long durationMs) {
         return new ReasonerResultsResponse(classifiedConceptCount, inferredChangesCount,
                 navigationChangesCount, equivalentSetsCount, cyclesCount, orphansCount,
-                durationMs, true, null);
+                durationMs, true, null, System.currentTimeMillis());
     }
 
     public static ReasonerResultsResponse error(String errorMessage) {
         return new ReasonerResultsResponse(null, null, null, null, null, null, null,
-                false, errorMessage);
+                false, errorMessage, System.currentTimeMillis());
     }
 }

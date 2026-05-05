@@ -70,6 +70,7 @@ public class AdminGrpcController extends IkeAdminGrpc.IkeAdminImplBase {
                         .build());
             }
 
+            builder.setCreatedAt(System.currentTimeMillis());
             responseObserver.onNext(builder.build());
             responseObserver.onCompleted();
         } catch (Exception e) {
@@ -77,6 +78,7 @@ public class AdminGrpcController extends IkeAdminGrpc.IkeAdminImplBase {
             responseObserver.onNext(ImportChangesetResponse.newBuilder()
                     .setSuccess(false)
                     .setErrorMessage(e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName())
+                    .setCreatedAt(System.currentTimeMillis())
                     .build());
             responseObserver.onCompleted();
         } finally {
@@ -109,6 +111,7 @@ public class AdminGrpcController extends IkeAdminGrpc.IkeAdminImplBase {
             builder.setDurationMs(result.durationMs());
         }
 
+        builder.setCreatedAt(System.currentTimeMillis());
         responseObserver.onNext(builder.build());
         responseObserver.onCompleted();
     }

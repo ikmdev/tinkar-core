@@ -76,12 +76,15 @@ message TinkarSearchQueryResponse {
   repeated TinkarSearchResult results = 3;
   bool success = 4;
   string error_message = 5;
+  // Unix epoch milliseconds when this response was generated.
+  int64 created_at = 6;
 }
 
 // Rebuild index response
 message TinkarRebuildIndexResponse {
   string message = 1;
   bool success = 2;
+  int64 created_at = 3;
 }
 
 // Empty request for rebuild index
@@ -219,6 +222,8 @@ message TinkarConceptSearchWithSortResponse {
    * Error message if search failed.
    */
   string error_message = 7;
+  // Unix epoch milliseconds when this response was generated.
+  int64 created_at = 8;
 }
 
 // Human-readable STAMP information for display purposes
@@ -299,6 +304,8 @@ message TinkarConceptSemanticsResponse {
    * Error message if query failed.
    */
   string error_message = 6;
+  // Unix epoch milliseconds when this response was generated.
+  int64 created_at = 7;
 }
 
 // Response containing the full entity graph (concept + semantics + stamps + patterns)
@@ -318,6 +325,8 @@ message TinkarConceptEntityResponse {
    * and StampChronologies needed to render the concept detail view.
    */
   repeated dev.ikm.tinkar.schema.TinkarMsg entities = 3;
+  // Unix epoch milliseconds when this response was generated.
+  int64 created_at = 4;
 }
 
 // gRPC service definition

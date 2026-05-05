@@ -19,7 +19,9 @@ public record DescendantOperationResponse(
 
         @Schema(description = "Whether the operation was successful") Boolean success,
 
-        @Schema(description = "Error message if operation failed") String errorMessage) {
+        @Schema(description = "Error message if operation failed") String errorMessage,
+
+        @Schema(description = "Unix epoch milliseconds when this response was generated") Long createdAt) {
 
     /**
      * Factory method to create a successful response.
@@ -32,7 +34,8 @@ public record DescendantOperationResponse(
                 descendantDescription,
                 operation,
                 true,
-                null);
+                null,
+                System.currentTimeMillis());
     }
 
     /**
@@ -46,6 +49,7 @@ public record DescendantOperationResponse(
                 null,
                 null,
                 false,
-                errorMessage);
+                errorMessage,
+                System.currentTimeMillis());
     }
 }
