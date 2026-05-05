@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
@@ -165,85 +166,78 @@ public class IkeServiceManager {
      * probing, in order:
      *
      * <ol>
-     *   <li>jpackage app layout — {@code <Contents>/runtime/Contents/Home/plugin-service-loader/}
-     *       (detected via {@code jpackage.app-path})</li>
-     *   <li>jlink image layout — sibling of {@code bin/}, i.e.
-     *       {@code <image-root>/plugin-service-loader/}</li>
-     *   <li>Local Maven build — {@code <user.dir>/target/plugin-service-loader/}</li>
+     *   <li>{@code <java.home>/plugin-service-loader/} — covers jpackage on
+     *       macOS, Windows, and Linux as well as jlink launchers, since
+     *       {@code java.home} points at the runtime root in all four cases:
+     *       {@code Komet.app/Contents/runtime/Contents/Home} on macOS,
+     *       {@code <InstallDir>\runtime} on Windows,
+     *       {@code <install>/lib/runtime} on Linux,
+     *       and the image root for a jlink launcher.</li>
+     *   <li>{@code <parent-of-user.dir>/plugin-service-loader/} — jlink image
+     *       launched from {@code bin/} on a developer workstation.</li>
+     *   <li>{@code <user.dir>/target/plugin-service-loader/} — local Maven
+     *       build.</li>
      * </ol>
      *
-     * <p>If none of these exist, returns a reasonable default (image-root
-     * sibling) and logs the attempted paths so deployment misconfigurations
-     * surface in logs rather than as opaque NPEs.
+     * <p>If none of these exist, returns a reasonable default and logs every
+     * attempted path so deployment misconfigurations surface in logs rather
+     * than as opaque NPEs.
      *
      * @return the resolved directory, or a best-guess default that may not exist
      */
     private static Path resolvePluginServiceLoaderPath() {
+        String javaHome = System.getProperty("java.home");
+        String userDir = System.getProperty("user.dir");
         LOG.debug("Resolving plugin service loader path");
-        LOG.debug("  user.dir: {}", System.getProperty("user.dir"));
+        LOG.debug("  java.home: {}", javaHome);
+        LOG.debug("  user.dir: {}", userDir);
         LOG.debug("  jpackage.app-path: {}", System.getProperty("jpackage.app-path"));
 
-        // 1. jpackage-installed application
-        String jpackageAppPath = System.getProperty("jpackage.app-path");
-        if (jpackageAppPath != null) {
-            LOG.info("Detected jpackage.app-path for plugin service loader: {}", jpackageAppPath);
-            Path appPath = Path.of(jpackageAppPath);
+        List<Path> candidates = pluginServiceLoaderCandidates(javaHome, userDir);
 
-            // jpackage.app-path points to .../Contents/MacOS/<executable-name>.
-            // Navigate up to Contents, then into runtime/Contents/Home/plugin-service-loader.
-            Path macosDir = appPath.getParent();
-            if (macosDir != null) {
-                Path contentsDir = macosDir.getParent();
-                if (contentsDir != null) {
-                    Path pluginServiceLoaderPath = contentsDir.resolve("runtime")
-                            .resolve("Contents")
-                            .resolve("Home")
-                            .resolve(PLUGIN_SERVICE_LOADER_DIRECTORY);
-
-                    LOG.info("Checking jpackage plugin service loader path: {}", pluginServiceLoaderPath.toAbsolutePath());
-                    LOG.info("  Path exists: {}", Files.exists(pluginServiceLoaderPath));
-
-                    if (pluginServiceLoaderPath.toFile().exists()) {
-                        LOG.info("Plugin Service Loader directory: {}", pluginServiceLoaderPath.toAbsolutePath());
-                        return pluginServiceLoaderPath;
-                    }
-                }
+        for (Path candidate : candidates) {
+            if (Files.isDirectory(candidate)) {
+                LOG.info("Plugin Service Loader directory: {}", candidate.toAbsolutePath());
+                return candidate;
             }
         }
 
-        // 2. jlink image — launched from bin/, image root is parent of user.dir
-        Path userDir = Path.of(System.getProperty("user.dir"));
-        Path parent = userDir.getParent();
-
-        if (parent != null) {
-            Path jlinkImagePath = parent.resolve(PLUGIN_SERVICE_LOADER_DIRECTORY);
-            if (jlinkImagePath.toFile().exists()) {
-                LOG.info("Plugin Service Loader directory: {}", jlinkImagePath.toAbsolutePath());
-                return jlinkImagePath;
-            }
-        }
-
-        // 3. Local Maven build — target/plugin-service-loader/
-        Path localPluginServiceLoaderPath = userDir.resolve("target").resolve(PLUGIN_SERVICE_LOADER_DIRECTORY);
-        if (localPluginServiceLoaderPath.toFile().exists()) {
-            LOG.info("Plugin Service Loader directory: {}", localPluginServiceLoaderPath.toAbsolutePath());
-            return localPluginServiceLoaderPath;
-        }
-
-        // None found — log attempted paths before returning a best-guess default.
         LOG.warn("Plugin service loader not found at any expected location. Tried:");
-        if (jpackageAppPath != null) {
-            LOG.warn("  - jpackage: <Contents>/runtime/Contents/Home/{}", PLUGIN_SERVICE_LOADER_DIRECTORY);
+        for (Path candidate : candidates) {
+            LOG.warn("  - {}", candidate.toAbsolutePath());
         }
-        if (parent != null) {
-            LOG.warn("  - Jlink image: {}", parent.resolve(PLUGIN_SERVICE_LOADER_DIRECTORY).toAbsolutePath());
-        }
-        LOG.warn("  - Local build: {}", localPluginServiceLoaderPath.toAbsolutePath());
 
-        Path defaultPath = parent != null ? parent.resolve(PLUGIN_SERVICE_LOADER_DIRECTORY) :
-                userDir.resolve(PLUGIN_SERVICE_LOADER_DIRECTORY);
+        Path defaultPath = candidates.isEmpty()
+                ? Path.of(PLUGIN_SERVICE_LOADER_DIRECTORY).toAbsolutePath()
+                : candidates.get(0);
         LOG.warn("Using default path: {}", defaultPath.toAbsolutePath());
         return defaultPath;
+    }
+
+    /**
+     * Computes the ordered list of candidate directories for the
+     * plugin-service-loader, given {@code java.home} and {@code user.dir}
+     * values. Pure function — visible for testing the cross-platform probe
+     * order without mutating system properties.
+     *
+     * @param javaHome value of {@code java.home}, may be {@code null}/blank
+     * @param userDir  value of {@code user.dir}, may be {@code null}
+     * @return ordered list of candidate directories (never {@code null})
+     */
+    static List<Path> pluginServiceLoaderCandidates(String javaHome, String userDir) {
+        List<Path> candidates = new ArrayList<>();
+        if (javaHome != null && !javaHome.isBlank()) {
+            candidates.add(Path.of(javaHome).resolve(PLUGIN_SERVICE_LOADER_DIRECTORY));
+        }
+        if (userDir != null && !userDir.isBlank()) {
+            Path userDirPath = Path.of(userDir);
+            Path parent = userDirPath.getParent();
+            if (parent != null) {
+                candidates.add(parent.resolve(PLUGIN_SERVICE_LOADER_DIRECTORY));
+            }
+            candidates.add(userDirPath.resolve("target").resolve(PLUGIN_SERVICE_LOADER_DIRECTORY));
+        }
+        return candidates;
     }
 
     /**
