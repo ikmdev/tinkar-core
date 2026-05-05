@@ -460,8 +460,14 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
         this.changeSetWriterServices.forEach(writerService -> writerService.writeToChangeSet((Entity) sourceObject, activity));
 
         // Delegate indexing to SearchProvider.
-        // Skip during load phase (import) — RecreateIndex will build the index in batch afterward.
-        if (!loadPhase) {
+        //
+        // TODO(temp): During loadPhase, live-index up to LoadPhaseSearchPolicy's
+        // threshold; once exceeded, skip the rest and fall back to a full
+        // recreate at endLoadPhase. Replace this two-mode shim with touched-nid
+        // notification + per-nid catch-up when the proper design lands.
+        // See LoadPhaseSearchPolicy javadoc for the full picture.
+        if (!loadPhase
+                || dev.ikm.tinkar.entity.EntityService.get().loadPhaseSearchPolicy().shouldIndexLive()) {
             try {
                 getSearchService().index(sourceObject);
             } catch (Exception e) {

@@ -462,11 +462,31 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
     }
 
     private static void commitSearchIndexIfAvailable() {
+        // TODO(temp): two-mode logic (no-op vs. full recreate) is a stand-in
+        // for the proper touched-nid catch-up design. See LoadPhaseSearchPolicy
+        // for the longer rationale; replace this with the catch-up walk when
+        // that design lands.
+        dev.ikm.tinkar.entity.LoadPhaseSearchPolicy policy =
+                dev.ikm.tinkar.entity.EntityService.get().loadPhaseSearchPolicy();
+        if (!policy.recreateRequired()) {
+            // The change-set fit under the live-index threshold; the index
+            // was kept current by per-merge calls during loadPhase. No
+            // post-load search work needed.
+            LOG.info("Change-set indexed live during load phase ({} entities, threshold {}) — no recreate needed",
+                    policy.liveIndexedCount(),
+                    dev.ikm.tinkar.entity.LoadPhaseSearchPolicy.threshold());
+            return;
+        }
+        // Change-set exceeded the live-index threshold — fall back to a full
+        // recreate so the entities merged after live indexing was abandoned
+        // get into the index.
+        LOG.info("Change-set exceeded live-index threshold ({} > {}); scheduling full recreate",
+                policy.liveIndexedCount(),
+                dev.ikm.tinkar.entity.LoadPhaseSearchPolicy.threshold());
         Optional<SearchService> searchService = ServiceLifecycleManager.get()
                 .getRunningService(SearchService.class);
         searchService.ifPresent(service -> {
             try {
-                // Recreate the index in batch after import (indexing is skipped during load phase).
                 Object future = service.recreateIndex();
                 if (future instanceof java.util.concurrent.CompletableFuture<?> cf) {
                     cf.get();

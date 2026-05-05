@@ -76,12 +76,20 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
     private boolean loadPhase = false;
 
+    private final dev.ikm.tinkar.entity.LoadPhaseSearchPolicy loadPhaseSearchPolicy =
+            new dev.ikm.tinkar.entity.LoadPhaseSearchPolicy();
+
     /**
      * TODO elegant shutdown of entityStream and others
      */
     public EntityProvider() {
         LOG.info("Constructing EntityProvider");
         this.processor = new SimpleBroadcaster<>();
+    }
+
+    @Override
+    public dev.ikm.tinkar.entity.LoadPhaseSearchPolicy loadPhaseSearchPolicy() {
+        return loadPhaseSearchPolicy;
     }
 
     public void addSubscriberWithWeakReference(Subscriber<Integer> subscriber) {
@@ -545,6 +553,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     @Override
     public void beginLoadPhase() {
         loadPhase = true;
+        loadPhaseSearchPolicy.reset();
         PrimitiveData.get().setLoadPhase(true);
     }
 
