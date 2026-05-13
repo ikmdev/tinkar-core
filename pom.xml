@@ -5,7 +5,7 @@
     <parent>
         <groupId>network.ike.platform</groupId>
         <artifactId>ike-parent</artifactId>
-        <version>16</version>
+        <version>55</version>
         <relativePath/>
     </parent>
 
@@ -59,6 +59,16 @@
         <subproject>plugin-service-loader</subproject>
         <subproject>tinkar-bom</subproject>
     </subprojects>
+
+    <distributionManagement>
+        <!-- Explicit <site> URL — see ike-parent/CLAUDE.md
+             ("Inheriting projects MUST declare their own
+             <distributionManagement><site>") and ike-issues#380/#383. -->
+        <site>
+            <id>ike-site</id>
+            <url>https://ike.network/tinkar-core/</url>
+        </site>
+    </distributionManagement>
 
     <scm>
         <url>http://www.github.com/ikmdev/tinkar-core</url>
