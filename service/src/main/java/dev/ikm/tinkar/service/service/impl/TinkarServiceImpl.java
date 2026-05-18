@@ -984,9 +984,12 @@ public class TinkarServiceImpl implements TinkarService {
 
         for (FieldChangeRecord fieldChange : fieldChangeRecords) {
             String fieldName = determineFieldName(fieldChange, calc);
-            Integer fieldIndex = fieldChange.currentValue() != null
-                    ? fieldChange.currentValue().indexInPattern()
-                    : (fieldChange.priorValue() != null ? fieldChange.priorValue().indexInPattern() : null);
+            Integer fieldIndex = null;
+            if (fieldChange.currentValue() != null) {
+                fieldIndex = fieldChange.currentValue().indexInPattern();
+            } else if (fieldChange.priorValue() != null) {
+                fieldIndex = fieldChange.priorValue().indexInPattern();
+            }
 
             String priorValue = fieldChange.priorValue() != null
                     ? formatFieldValue(fieldChange.priorValue().value(), calc)
@@ -1647,9 +1650,12 @@ public class TinkarServiceImpl implements TinkarService {
 
         for (FieldChangeRecord fieldChange : fieldChangeRecords) {
             String fieldName = determineFieldName(fieldChange, calc);
-            Integer fieldIndex = fieldChange.currentValue() != null
-                    ? fieldChange.currentValue().indexInPattern()
-                    : (fieldChange.priorValue() != null ? fieldChange.priorValue().indexInPattern() : null);
+            Integer fieldIndex = null;
+            if (fieldChange.currentValue() != null) {
+                fieldIndex = fieldChange.currentValue().indexInPattern();
+            } else if (fieldChange.priorValue() != null) {
+                fieldIndex = fieldChange.priorValue().indexInPattern();
+            }
 
             String priorValue = fieldChange.priorValue() != null
                     ? formatFieldValue(fieldChange.priorValue().value(), calc)
@@ -2035,6 +2041,13 @@ public class TinkarServiceImpl implements TinkarService {
             Object destField = latestVersion.fieldValues().get(0);
             log.debug("removeDescendant: destination field type={}", destField != null ? destField.getClass().getSimpleName() : "null");
 
+            if (destField == null) {
+                return DescendantOperationResponse.error(
+                        parentConceptId,
+                        descendantConceptId,
+                        "Navigation semantic field value is null"
+                );
+            }
             IntIdSet existingDestination = (IntIdSet) destField;
             log.debug("removeDescendant: destination set size={}, looking for descendantNid={}", existingDestination.size(), descendantNid);
             log.debug("removeDescendant: destination set contains descendantNid? {}", existingDestination.contains(descendantNid));
