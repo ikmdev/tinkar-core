@@ -534,14 +534,26 @@ public class TinkarServiceImpl implements TinkarService {
     }
 
     private TinkarSearchResult publicIdToSearchResult(PublicId publicId, ViewCalculatorWithCache calc) {
-        int nid = EntityService.get().nidForPublicId(publicId);
-
-        // Build PublicId proto
         dev.ikm.tinkar.schema.PublicId protoPublicId = dev.ikm.tinkar.schema.PublicId.newBuilder()
                 .addAllUuids(publicId.asUuidList().stream()
                         .map(java.util.UUID::toString)
                         .toList())
                 .build();
+
+        int nid;
+        try {
+            nid = EntityService.get().nidForPublicId(publicId);
+        } catch (Exception e) {
+            // Entity exists in the NID store (found via iteration) but its UUID is not in
+            // the reverse UUID→NID index (data integrity gap in the dataset).
+            // Return a minimal result so the caller gets the PublicId rather than failing.
+            log.warn("UUID not in NID index, returning minimal result for: {} ({})", publicId, e.getMessage());
+            return TinkarSearchResult.newBuilder()
+                    .setPublicId(protoPublicId)
+                    .setDescriptions(TinkarConceptDescriptions.newBuilder().build())
+                    .setStamp(StampVersion.newBuilder().build())
+                    .build();
+        }
 
         // Build descriptions — guard against missing TinkarTerm concepts on a fresh DB.
         // calc may be null when ViewCalculator initialization failed (missing UUID stubs).
