@@ -1,3 +1,6 @@
+import dev.ikm.tinkar.common.service.DataServiceController;
+import dev.ikm.tinkar.common.service.ServiceLifecycle;
+import dev.ikm.tinkar.provider.spinedarray.SpinedArrayProvider;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
 
 open module dev.ikm.tinkar.reasoner.elksnomed.test {
@@ -16,10 +19,14 @@ open module dev.ikm.tinkar.reasoner.elksnomed.test {
 	requires dev.ikm.elk.snomed.owlel;
 	requires dev.ikm.elk.snomed.test;
     requires dev.ikm.tinkar.common;
+	requires dev.ikm.tinkar.provider.spinedarray;
 
     exports dev.ikm.tinkar.reasoner.elksnomed.test;
 
 	// TODO
 	uses ReasonerService;
+    uses DataServiceController;
+    uses SpinedArrayProvider.OpenController;
+    uses ServiceLifecycle;
 
 }

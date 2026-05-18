@@ -128,7 +128,7 @@ public abstract class PrimitiveDataTestUtil {
 //		for (DataUriOption duo : dsc.providerOptions()) {
 //			LOG.info("DataUriOption: " + duo);
 //		}
-		CachingService.clearAll();
+//		CachingService.clearAll();
 // First get the controller to configure it
 		DataServiceController<?> dsc = PrimitiveData.getControllerOptions().stream()
 				.filter(c -> "Open SpinedArrayStore".equals(c.controllerName()))
