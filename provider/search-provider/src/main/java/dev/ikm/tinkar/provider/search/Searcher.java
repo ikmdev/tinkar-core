@@ -303,9 +303,19 @@ public class Searcher {
     public static List<PublicId> getLidrRecordSemanticsFromTestKit(PublicId testKitId){
         List<PublicId> lidrRecordSemanticIds = new ArrayList<>();
 
+        int diagnosticDevicePatternNid;
+        int lidrRecordPatternNid;
+        try {
+            diagnosticDevicePatternNid = DIAGNOSTIC_DEVICE_PATTERN.nid();
+            lidrRecordPatternNid = LIDR_RECORD_PATTERN.nid();
+        } catch (Exception e) {
+            LOG.warn("LIDR patterns not present in this dataset, returning empty LIDR record list: {}", e.getMessage());
+            return lidrRecordSemanticIds;
+        }
+
         EntityHandle.get(testKitId).ifPresent((testKitEntity) -> {
-            EntityService.get().forEachSemanticForComponentOfPattern(testKitEntity.nid(), DIAGNOSTIC_DEVICE_PATTERN.nid(), diagnosticDeviceSemantic -> {
-                EntityService.get().forEachSemanticForComponentOfPattern(diagnosticDeviceSemantic.nid(), LIDR_RECORD_PATTERN.nid(), lidrRecordSemantic -> {
+            EntityService.get().forEachSemanticForComponentOfPattern(testKitEntity.nid(), diagnosticDevicePatternNid, diagnosticDeviceSemantic -> {
+                EntityService.get().forEachSemanticForComponentOfPattern(diagnosticDeviceSemantic.nid(), lidrRecordPatternNid, lidrRecordSemantic -> {
                     lidrRecordSemanticIds.add(lidrRecordSemantic.publicId());
                 });
             });
@@ -393,16 +403,26 @@ public class Searcher {
     public static List<PublicId> getAllowedResultsFromResultConformance(NavigationCalculator navCalc, PublicId resultConformanceId) {
         List<PublicId> allowedResultsList = new ArrayList<>();
 
-        int resultConformanceNid = EntityService.get().nidForPublicId(resultConformanceId);
+        int resultConformanceNid;
+        int quantitativePatternNid;
+        int qualitativePatternNid;
+        try {
+            resultConformanceNid = EntityService.get().nidForPublicId(resultConformanceId);
+            quantitativePatternNid = QUANTITATIVE_ALLOWED_RESULT_SET_PATTERN.nid();
+            qualitativePatternNid = QUALITATIVE_ALLOWED_RESULT_SET_PATTERN.nid();
+        } catch (Exception e) {
+            LOG.warn("LIDR allowed-result patterns not present in this dataset, returning empty list: {}", e.getMessage());
+            return allowedResultsList;
+        }
 
-        EntityService.get().forEachSemanticForComponentOfPattern(resultConformanceNid, QUANTITATIVE_ALLOWED_RESULT_SET_PATTERN.nid(),
+        EntityService.get().forEachSemanticForComponentOfPattern(resultConformanceNid, quantitativePatternNid,
                 (quantitativeResultSet) -> navCalc.stampCalculator().latest(quantitativeResultSet)
                         .ifPresent((latestQuantitativeResultSet) -> {
                             ((IntIdSet) latestQuantitativeResultSet.fieldValues().get(0))
                                     .map(PrimitiveData::publicId)
                                     .forEach(allowedResultsList::add);
                         }));
-        EntityService.get().forEachSemanticForComponentOfPattern(resultConformanceNid, QUALITATIVE_ALLOWED_RESULT_SET_PATTERN.nid(),
+        EntityService.get().forEachSemanticForComponentOfPattern(resultConformanceNid, qualitativePatternNid,
                 (qualitativeResultSet) -> navCalc.stampCalculator().latest(qualitativeResultSet)
                         .ifPresent((latestQualitativeResultSet) -> {
                             ((IntIdSet) latestQualitativeResultSet.fieldValues().get(0))
