@@ -31,6 +31,7 @@ import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.MutableSet;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 /**
@@ -247,14 +248,14 @@ public class LogicalExpressionBuilder {
 		return new LogicalAxiomAdaptor.IntervalPropertySetAdaptor(logicalExpression, propertySet.vertexIndex());
 	}
 
-	public LogicalAxiom.Atom.TypedAtom.IntervalRole IntervalRole(ConceptFacade intervalRoleType, int lowerBound,
-			boolean lowerOpen, int upperBound, boolean upperOpen, ConceptFacade units) {
+	public LogicalAxiom.Atom.TypedAtom.IntervalRole IntervalRole(ConceptFacade intervalRoleType, BigDecimal lowerBound,
+			boolean lowerOpen, BigDecimal upperBound, boolean upperOpen, ConceptFacade units) {
 		return IntervalRole(generateRandomUuid(), intervalRoleType, lowerBound, lowerOpen, upperBound, upperOpen,
 				units);
 	}
 
 	public LogicalAxiom.Atom.TypedAtom.IntervalRole IntervalRole(UUID vertexUuid, ConceptFacade intervalRoleType,
-			int lowerBound, boolean lowerOpen, int upperBound, boolean upperOpen, ConceptFacade units) {
+			BigDecimal lowerBound, boolean lowerOpen, BigDecimal upperBound, boolean upperOpen, ConceptFacade units) {
 		EntityVertex intervalRole = EntityVertex.make(vertexUuid, LogicalAxiomSemantic.INTERVAL_ROLE.nid);
 		builder.addVertex(intervalRole);
 		intervalRole.putUncommittedProperty(TinkarTerm.INTERVAL_ROLE_TYPE.nid(), intervalRoleType);
@@ -606,8 +607,8 @@ public class LogicalExpressionBuilder {
 		roleVertex.commitProperties();
 	}
 
-	public void updateIntervalRoleValue(LogicalAxiom.Atom.TypedAtom.IntervalRole intervalRoleAxiom, int lowerBound,
-			boolean lowerOpen, int upperBound, boolean upperOpen) {
+	public void updateIntervalRoleValue(LogicalAxiom.Atom.TypedAtom.IntervalRole intervalRoleAxiom, BigDecimal lowerBound,
+			boolean lowerOpen, BigDecimal upperBound, boolean upperOpen) {
 		EntityVertex roleVertex = this.builder.vertex(intervalRoleAxiom.vertexIndex());
 		roleVertex.putUncommittedProperty(TinkarTerm.INTERVAL_LOWER_BOUND.nid(), lowerBound);
 		roleVertex.putUncommittedProperty(TinkarTerm.LOWER_BOUND_OPEN.nid(), lowerOpen);
