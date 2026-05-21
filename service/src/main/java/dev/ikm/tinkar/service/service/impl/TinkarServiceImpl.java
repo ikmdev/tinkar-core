@@ -781,10 +781,6 @@ public class TinkarServiceImpl implements TinkarService {
         );
     }
 
-    private List<VersionChange> convertChangeChronologyToDto(ChangeChronology changeChronology) {
-        return convertChangeChronologyToDto(changeChronology, Calculators.View.Default());
-    }
-
     private List<VersionChange> convertChangeChronologyToDto(ChangeChronology changeChronology, ViewCalculatorWithCache calc) {
         List<VersionChange> versionChanges = new ArrayList<>();
 
@@ -795,10 +791,6 @@ public class TinkarServiceImpl implements TinkarService {
         }
 
         return versionChanges;
-    }
-
-    private StampInfo buildStampInfo(int stampNid) {
-        return buildStampInfo(stampNid, Calculators.View.Default());
     }
 
     private StampInfo buildStampInfo(int stampNid, ViewCalculatorWithCache calc) {
@@ -975,10 +967,6 @@ public class TinkarServiceImpl implements TinkarService {
                 .format(Instant.ofEpochMilli(epochMillis));
     }
 
-    private List<FieldChange> convertFieldChanges(Iterable<FieldChangeRecord> fieldChangeRecords) {
-        return convertFieldChanges(fieldChangeRecords, Calculators.View.Default());
-    }
-
     private List<FieldChange> convertFieldChanges(Iterable<FieldChangeRecord> fieldChangeRecords, ViewCalculatorWithCache calc) {
         List<FieldChange> fieldChanges = new ArrayList<>();
 
@@ -1004,10 +992,6 @@ public class TinkarServiceImpl implements TinkarService {
         }
 
         return fieldChanges;
-    }
-
-    private String determineFieldName(FieldChangeRecord fieldChange) {
-        return determineFieldName(fieldChange, Calculators.View.Default());
     }
 
     private String determineFieldName(FieldChangeRecord fieldChange, ViewCalculatorWithCache calc) {
@@ -1471,10 +1455,6 @@ public class TinkarServiceImpl implements TinkarService {
         }
     }
 
-    private TinkarConceptSemanticInfo buildSemanticInfoProto(int semanticNid) {
-        return buildSemanticInfoProto(semanticNid, Calculators.View.Default());
-    }
-
     private TinkarConceptSemanticInfo buildSemanticInfoProto(int semanticNid, ViewCalculatorWithCache calc) {
         try {
             Entity<?> entity = EntityService.get().getEntityFast(semanticNid);
@@ -1520,10 +1500,6 @@ public class TinkarServiceImpl implements TinkarService {
             log.warn("Failed to build semantic info proto for nid {}: {}", semanticNid, e.getMessage());
             return null;
         }
-    }
-
-    private TinkarStampInfo buildStampInfoProto(int stampNid) {
-        return buildStampInfoProto(stampNid, Calculators.View.Default());
     }
 
     private TinkarStampInfo buildStampInfoProto(int stampNid, ViewCalculatorWithCache calc) {
@@ -1597,10 +1573,6 @@ public class TinkarServiceImpl implements TinkarService {
         }
     }
 
-    private List<ConceptChangeHistoryResponse.VersionChange> convertToConceptVersionChanges(ChangeChronology changeChronology) {
-        return convertToConceptVersionChanges(changeChronology, Calculators.View.Default());
-    }
-
     private List<ConceptChangeHistoryResponse.VersionChange> convertToConceptVersionChanges(
             ChangeChronology changeChronology, ViewCalculatorWithCache calc) {
         List<ConceptChangeHistoryResponse.VersionChange> versionChanges = new ArrayList<>();
@@ -1612,10 +1584,6 @@ public class TinkarServiceImpl implements TinkarService {
         }
 
         return versionChanges;
-    }
-
-    private ConceptChangeHistoryResponse.StampInfo buildConceptStampInfo(int stampNid) {
-        return buildConceptStampInfo(stampNid, Calculators.View.Default());
     }
 
     private ConceptChangeHistoryResponse.StampInfo buildConceptStampInfo(int stampNid, ViewCalculatorWithCache calc) {
@@ -1637,11 +1605,6 @@ public class TinkarServiceImpl implements TinkarService {
             log.warn("Failed to build STAMP info for stampNid {}: {}", stampNid, e.getMessage());
             return new ConceptChangeHistoryResponse.StampInfo(null, null, null, null, null, null);
         }
-    }
-
-    private List<ConceptChangeHistoryResponse.FieldChange> convertToConceptFieldChanges(
-            Iterable<FieldChangeRecord> fieldChangeRecords) {
-        return convertToConceptFieldChanges(fieldChangeRecords, Calculators.View.Default());
     }
 
     private List<ConceptChangeHistoryResponse.FieldChange> convertToConceptFieldChanges(
@@ -1673,10 +1636,6 @@ public class TinkarServiceImpl implements TinkarService {
         return fieldChanges;
     }
 
-    private ConceptChangeHistoryResponse.SemanticChangeHistory buildSemanticChangeHistory(int semanticNid) {
-        return buildSemanticChangeHistory(semanticNid, Calculators.View.Default());
-    }
-
     private ConceptChangeHistoryResponse.SemanticChangeHistory buildSemanticChangeHistory(
             int semanticNid, ViewCalculatorWithCache calc) {
         try {
@@ -1706,10 +1665,6 @@ public class TinkarServiceImpl implements TinkarService {
             log.warn("Failed to build semantic change history for nid {}: {}", semanticNid, e.getMessage());
             return null;
         }
-    }
-
-    private String getSemanticSummary(SemanticEntity<?> semanticEntity) {
-        return getSemanticSummary(semanticEntity, Calculators.View.Default());
     }
 
     private String getSemanticSummary(SemanticEntity<?> semanticEntity, ViewCalculatorWithCache calc) {
