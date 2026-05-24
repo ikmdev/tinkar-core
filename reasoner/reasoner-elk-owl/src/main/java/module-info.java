@@ -30,7 +30,9 @@ module dev.ikm.tinkar.reasoner.elkowl {
 	requires org.slf4j;
 
 	requires dev.ikm.tinkar.collection;
+    requires dev.ikm.tinkar.common;
 	requires dev.ikm.tinkar.entity;
+	requires dev.ikm.tinkar.reasoner.service;
 
 	requires org.semanticweb.owlapi;
 	requires org.semanticweb.owlapi.apibinding;
@@ -42,8 +44,6 @@ module dev.ikm.tinkar.reasoner.elkowl {
 	requires dev.ikm.elk.snomed;
 	requires dev.ikm.elk.snomed.owl;
 
-	requires dev.ikm.tinkar.reasoner.service;
-    requires dev.ikm.tinkar.common;
 
     exports dev.ikm.tinkar.reasoner.elkowl;
 
