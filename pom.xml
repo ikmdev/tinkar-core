@@ -5,7 +5,7 @@
     <parent>
         <groupId>network.ike.platform</groupId>
         <artifactId>ike-parent</artifactId>
-        <version>90</version>
+        <version>91</version>
         <relativePath/>
     </parent>
 
@@ -176,11 +176,6 @@
                             <arg>--enable-preview</arg>
                         </compilerArgs>
                     </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-assembly-plugin</artifactId>
-                    <version>${maven.assembly.version}</version>
                 </plugin>
             </plugins>
         </pluginManagement>
