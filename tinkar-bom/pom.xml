@@ -20,18 +20,13 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- Import upstream BOMs -->
+            <!-- Import upstream BOMs — slf4j-bom before log4j-bom so
+                 our stable SLF4J version takes precedence over the
+                 alpha version that log4j-bom pulls transitively -->
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
                 <version>${junit.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-bom</artifactId>
-                <version>${log4j.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -42,18 +37,24 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            <!-- Lock Log4j to 3.0.0-beta3 -->
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-bom</artifactId>
+                <version>${log4j.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- log4j-api and log4j-slf4j2-impl have no 3.0.0-beta3 release;
+                 pin to beta2 so the log4j-bom entries are overridden -->
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-api</artifactId>
                 <version>${log4j-api.version}</version>
-                <!-- TODO: There is no 3.0.0-beta3 for log4j-api -->
             </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-slf4j2-impl</artifactId>
                 <version>${log4j-slf4j2-impl.version}</version>
-                <!-- TODO: There is no 3.0.0-beta3 for log4j-slf4j2-impl -->
             </dependency>
         </dependencies>
     </dependencyManagement>
