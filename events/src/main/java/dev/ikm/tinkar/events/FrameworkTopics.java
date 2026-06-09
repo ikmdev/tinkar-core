@@ -28,5 +28,7 @@ public enum FrameworkTopics {
 
     IMPORT_TOPIC,
 
-    LANDING_PAGE_TOPIC
+    LANDING_PAGE_TOPIC,
+
+    COMMIT_TOPIC
 }

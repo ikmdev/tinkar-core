@@ -25,6 +25,7 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.ServiceKeys;
 import dev.ikm.tinkar.common.service.ServiceProperties;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
+import dev.ikm.tinkar.common.util.broadcast.CommitBroadcaster;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityVersion;
@@ -51,6 +52,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+
+import org.eclipse.collections.api.factory.primitive.IntLists;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
 
 import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 
@@ -412,11 +416,17 @@ public class Transaction implements Comparable<Transaction>, Encodable {
         AtomicInteger stampCount = new AtomicInteger();
         this.commitTime = System.currentTimeMillis();
         activeTransactions.remove(this);
+        MutableIntList finalizedStampNids = IntLists.mutable.empty();
         forEachStampInTransaction(stampUuid -> {
-            commitStamp(stampUuid, this.commitTime);
+            finalizedStampNids.add(commitStamp(stampUuid, this.commitTime));
             stampCount.incrementAndGet();
         });
         Entity.provider().notifyRefreshRequired(this);
+        MutableIntList changedComponentNids = IntLists.mutable.empty();
+        forEachComponentInTransaction(componentNid -> changedComponentNids.add(componentNid));
+        CommitBroadcaster.publish(new CommitBroadcaster.CommitNotification(
+                this.transactionUuid, this.transactionName, this.commitTime,
+                finalizedStampNids.toArray(), changedComponentNids.toArray(), stampCount.get()));
         return stampCount.get();
     }
 
@@ -433,7 +443,7 @@ public class Transaction implements Comparable<Transaction>, Encodable {
      * @param stampUuid   The unique identifier of the stamp being committed.
      * @param commitTime  The timestamp to be associated with the stamp upon commitment.
      */
-    private void commitStamp(UUID stampUuid, long commitTime) {
+    private int commitStamp(UUID stampUuid, long commitTime) {
         int stampNid = ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern().publicId())
                 .call(() -> PrimitiveData.nid(stampUuid));
@@ -453,6 +463,7 @@ public class Transaction implements Comparable<Transaction>, Encodable {
 //        for (TransactionImpl childTransaction : transaction.getChildren()) {
 //            processTransaction(uncommittedStamp, stampSequence, childTransaction);
 //        }
+        return stampNid;
     }
 
     /**
