@@ -53,8 +53,10 @@ import org.eclipse.collections.api.partition.list.PartitionImmutableList;
 import org.eclipse.collections.api.set.MutableSet;
 import org.eclipse.collections.api.set.sorted.MutableSortedSet;
 import org.eclipse.collections.api.stack.MutableStack;
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,6 +79,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("deprecation")
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class RecordListBuilderTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(RecordListBuilderTest.class);
