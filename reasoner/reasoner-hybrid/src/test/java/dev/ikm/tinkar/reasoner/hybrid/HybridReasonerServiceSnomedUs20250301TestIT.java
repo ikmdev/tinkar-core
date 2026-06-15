@@ -36,7 +36,7 @@ public class HybridReasonerServiceSnomedUs20250301TestIT extends HybridReasonerS
 	}
 
 	{
-		expected_swec_children = 2;
+		expected_swec_children = 3;
 	}
 
 	@Override
