@@ -298,6 +298,12 @@ public class GrpcPrimitiveDataService implements PrimitiveDataService, NidGenera
     }
 
     @Override
+    public String highlight(String query, String text) {
+        throw new UnsupportedOperationException(
+                "Local highlight is not available in gRPC mode — use GrpcSearchService");
+    }
+
+    @Override
     public CompletableFuture<Void> recreateLuceneIndex() {
         throw new UnsupportedOperationException("No local Lucene index in gRPC mode");
     }

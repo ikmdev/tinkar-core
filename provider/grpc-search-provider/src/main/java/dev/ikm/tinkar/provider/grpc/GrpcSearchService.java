@@ -18,7 +18,7 @@ package dev.ikm.tinkar.provider.grpc;
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.transform.TinkarSchemaToEntityTransformer;
-import dev.ikm.tinkar.provider.search.SearchService;
+import dev.ikm.tinkar.common.service.SearchService;
 import dev.ikm.tinkar.schema.PublicId;
 import dev.ikm.tinkar.service.proto.SearchSortOption;
 import dev.ikm.tinkar.service.proto.TinkarConceptEntityResponse;
@@ -224,8 +224,14 @@ public class GrpcSearchService implements SearchService {
     public PrimitiveDataSearchResult[] search(String query, int maxResultSize) {
         List<SemanticResult> flat = searchFlat(query, maxResultSize, SortOption.SEMANTIC);
         return flat.stream()
-                .map(r -> new PrimitiveDataSearchResult(0, 0, 0, 0, r.score(), r.highlightedText()))
+                .map(r -> new PrimitiveDataSearchResult(0, 0, r.score(), r.highlightedText()))
                 .toArray(PrimitiveDataSearchResult[]::new);
+    }
+
+    @Override
+    public String highlight(String query, String text) {
+        LOG.debug("GrpcSearchService.highlight() called — returning text unchanged in gRPC mode");
+        return text;
     }
 
     @Override
