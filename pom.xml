@@ -125,10 +125,10 @@
         <mvstore.version>2.3.232-r3</mvstore.version>
         <protobuf-java.version>4.30.2-r3</protobuf-java.version>
         <susel.version>0.1.2</susel.version>
-        <tinkar-schema.version>1.42.0</tinkar-schema.version>
+        <tinkar-schema.version>1.43.0-SNAPSHOT</tinkar-schema.version>
 
 		<hybrid-reasoner.version>1.1.9</hybrid-reasoner.version>
-		<ikm-reasoner.version>0.39.7</ikm-reasoner.version>
+		<ikm-reasoner.version>0.40.0</ikm-reasoner.version>
 		<owlapi.version>4.8.7</owlapi.version>
 
         <maven.github-flow.version>1.21.1-r11</maven.github-flow.version>
