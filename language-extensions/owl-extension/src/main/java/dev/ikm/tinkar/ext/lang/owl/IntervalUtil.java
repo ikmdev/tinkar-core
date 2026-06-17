@@ -1,5 +1,7 @@
 package dev.ikm.tinkar.ext.lang.owl;
 
+import java.math.BigDecimal;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,9 +30,9 @@ public class IntervalUtil {
 	}
 
 	public static Interval makeInterval(EntityVertex node) {
-		int lowerBound = node.propertyFast(TinkarTerm.INTERVAL_LOWER_BOUND);
+		BigDecimal lowerBound = node.propertyFast(TinkarTerm.INTERVAL_LOWER_BOUND);
 		boolean lowerOpen = node.propertyFast(TinkarTerm.LOWER_BOUND_OPEN);
-		int upperBound = node.propertyFast(TinkarTerm.INTERVAL_UPPER_BOUND);
+		BigDecimal upperBound = node.propertyFast(TinkarTerm.INTERVAL_UPPER_BOUND);
 		boolean upperOpen = node.propertyFast(TinkarTerm.UPPER_BOUND_OPEN);
 		int unit_nid = getNid(node, TinkarTerm.UNIT_OF_MEASURE);
 		return new Interval(lowerBound, lowerOpen, upperBound, upperOpen, new Concept(unit_nid));

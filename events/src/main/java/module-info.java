@@ -24,5 +24,8 @@ open module dev.ikm.tinkar.events {
     provides dev.ikm.tinkar.events.EvtBus
             with dev.ikm.tinkar.events.DefaultEvtBus;
 
+    provides dev.ikm.tinkar.common.service.ServiceLifecycle
+            with dev.ikm.tinkar.events.CommitEventBridge;
+
     uses dev.ikm.tinkar.events.EvtBus;
 }

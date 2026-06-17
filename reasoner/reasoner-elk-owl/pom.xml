@@ -8,6 +8,10 @@
 
 	<name>Reasoner Elk Owl</name>
 
+	<properties>
+		<failsafeArgLine>-Xmx12G</failsafeArgLine>
+	</properties>
+	
 	<dependencies>
 		<dependency>
 			<groupId>${project.groupId}</groupId>

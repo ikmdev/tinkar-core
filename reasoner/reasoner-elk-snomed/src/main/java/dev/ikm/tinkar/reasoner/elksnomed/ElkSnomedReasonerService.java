@@ -71,7 +71,10 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 			PatternFacade inferredAxiomPattern) {
 		super.init(viewCalculator, statedAxiomPattern, inferredAxiomPattern);
 		this.data = null;
+		this.builder = null;
+		this.ontology = null;
 		this.reasoner = null;
+		this.nnfb = null;
 	}
 
 	@Override

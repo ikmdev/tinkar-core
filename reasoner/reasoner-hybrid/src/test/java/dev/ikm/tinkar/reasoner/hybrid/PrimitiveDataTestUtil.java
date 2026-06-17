@@ -124,11 +124,12 @@ public abstract class PrimitiveDataTestUtil {
 		// Temp until test data artifacts are in maven repo
 		assumeTrue(Files.exists(target_path));
 		LOG.info("DataServiceController: " + PrimitiveData.getControllerOptions());
+		System.out.println("DataServiceController: " + PrimitiveData.getControllerOptions());
 //		for (DataServiceController<?> dsc : PrimitiveData.getControllerOptions()) {
 //		for (DataUriOption duo : dsc.providerOptions()) {
 //			LOG.info("DataUriOption: " + duo);
 //		}
-		CachingService.clearAll();
+//		CachingService.clearAll();
 // First get the controller to configure it
 		DataServiceController<?> dsc = PrimitiveData.getControllerOptions().stream()
 				.filter(c -> "Open SpinedArrayStore".equals(c.controllerName()))

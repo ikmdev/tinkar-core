@@ -12,26 +12,21 @@
 
     <properties>
         <junit.version>6.0.0</junit.version>
-        <log4j.version>3.0.0-beta3</log4j.version>
-        <log4j-api.version>3.0.0-beta2</log4j-api.version>
-        <log4j-slf4j2-impl.version>3.0.0-beta2</log4j-slf4j2-impl.version>
+        <!-- log4j 2.x — single property; log4j-bom (imported below)
+             aligns api / core / slf4j2-impl at the same version. -->
+        <log4j.version>2.26.0</log4j.version>
         <slf4j.version>2.0.17</slf4j.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <!-- Import upstream BOMs -->
+            <!-- Import upstream BOMs. Keep slf4j-bom before log4j-bom
+                 so our pinned SLF4J version wins if log4j-bom ever
+                 pulls a different one transitively. -->
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
                 <version>${junit.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-bom</artifactId>
-                <version>${log4j.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -42,19 +37,17 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            <!-- Lock Log4j to 3.0.0-beta3 -->
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-api</artifactId>
-                <version>${log4j-api.version}</version>
-                <!-- TODO: There is no 3.0.0-beta3 for log4j-api -->
+                <artifactId>log4j-bom</artifactId>
+                <version>${log4j.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
-            <dependency>
-                <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-slf4j2-impl</artifactId>
-                <version>${log4j-slf4j2-impl.version}</version>
-                <!-- TODO: There is no 3.0.0-beta3 for log4j-slf4j2-impl -->
-            </dependency>
+            <!-- log4j-api / log4j-slf4j2-impl are managed by the
+                 log4j-bom import above; no per-artifact overrides
+                 needed. (Previous beta2/beta3 split was a workaround
+                 for a now-removed mismatch.) -->
         </dependencies>
     </dependencyManagement>
 </project>

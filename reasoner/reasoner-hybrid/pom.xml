@@ -8,6 +8,10 @@
 
 	<name>Reasoner Hybrid</name>
 
+	<properties>
+		<failsafeArgLine>-Xmx12G</failsafeArgLine>
+	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
@@ -29,7 +33,6 @@
 		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>data-spinedarray-provider</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>

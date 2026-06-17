@@ -532,6 +532,19 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
 
     void beginLoadPhase();
 
+    /**
+     * The active {@link LoadPhaseSearchPolicy} for this load phase. Providers
+     * consult it in their {@code merge(...)} hot path to decide whether each
+     * incoming merge should be live-indexed (small change-sets) or skipped
+     * with a fallback recreate at endLoadPhase (large change-sets).
+     *
+     * <p>The same instance is reused across loadPhases; {@code beginLoadPhase}
+     * is responsible for resetting its state.
+     *
+     * @return never {@code null}
+     */
+    LoadPhaseSearchPolicy loadPhaseSearchPolicy();
+
 
     /**
      * Retrieves the NID for an entity of a specific pattern.

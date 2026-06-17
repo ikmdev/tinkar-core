@@ -7,11 +7,11 @@ import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityRecordFactory;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
@@ -37,16 +37,35 @@ import java.util.concurrent.atomic.LongAdder;
 public class RecreateIndex extends TrackingCallable<Void> {
     private static final Logger LOG = LoggerFactory.getLogger(RecreateIndex.class);
     private final Indexer indexer;
+    private final RecreateReason reason;
 
-    // Batch size for commits - tune based on available memory
-    private static final int COMMIT_BATCH_SIZE =
-            Integer.getInteger("lucene.index.commit.batch.size", 50_000);
-
-    public RecreateIndex(Indexer indexer) {
+    /**
+     * Construct a recreate task with a reason that drives the user-visible
+     * title and initial message. Use this constructor from
+     * {@link SearchProvider} so the progress dialog tells the right story
+     * (post-upgrade rebuild vs. first-time build vs. user-requested, etc.).
+     *
+     * @param indexer the {@link Indexer} owning the writer to rebuild against
+     * @param reason  why this recreate run was triggered; never {@code null}
+     */
+    public RecreateIndex(Indexer indexer, RecreateReason reason) {
         super(false, true);
         this.indexer = indexer;
-        this.updateTitle("Recreate Lucene Index");
-        LOG.info("Recreate Lucene Index started (batch size: {})", COMMIT_BATCH_SIZE);
+        this.reason = reason;
+        this.updateTitle(reason.title());
+        this.updateMessage(reason.description());
+        LOG.info("Recreate Lucene Index started — reason: {}", reason.name());
+    }
+
+    /**
+     * Back-compat constructor — defaults the reason to
+     * {@link RecreateReason#USER_REQUESTED}. Prefer the two-arg form so the
+     * dialog can explain why the rebuild is running.
+     *
+     * @param indexer the {@link Indexer} owning the writer to rebuild against
+     */
+    public RecreateIndex(Indexer indexer) {
+        this(indexer, RecreateReason.USER_REQUESTED);
     }
 
     /**
@@ -100,12 +119,12 @@ public class RecreateIndex extends TrackingCallable<Void> {
     }
     @Override
     protected Void compute() throws Exception {
-        updateTitle("Indexing Semantics");
-        updateMessage("Initializing...");
+        // Title was set in the constructor from the reason; keep it so the
+        // dialog displays the right context throughout the run.
+        updateMessage(reason.description());
         updateProgress(-1,1);
 
         EntityService.get().beginLoadPhase();
-        this.indexer.setBulkMode(true);
         try {
             LongAdder totalEntities = new LongAdder();
             LongAdder processedEntities = new LongAdder();
@@ -129,8 +148,35 @@ public class RecreateIndex extends TrackingCallable<Void> {
             updateMessage("Generating Lucene Indexes...");
             updateProgress(0, totalCount + 1);
 
-            // Use atomic counter for batching across parallel threads
-            AtomicInteger batchCounter = new AtomicInteger(0);
+            // Wipe the existing index before rebuilding. Without this, every call
+            // to recreateIndex() appends a fresh full copy of every entity on top
+            // of whatever was already in the index — Indexer.index() does not
+            // delete prior versions (see Indexer#deleteDocumentIfExists, deliberately
+            // disabled for the append-only chronology design). Repeated invocations
+            // — notably from LoadEntitiesFromProtobufFile.commitSearchIndexIfAvailable()
+            // after every import / sync / pull — therefore produced geometric
+            // duplicate-document growth. The recreate path is now honest: the index
+            // is genuinely emptied here before the parallel walk repopulates it.
+            //
+            // The startup callers in SearchProvider (codec-mismatch, missing index,
+            // empty index) only invoke recreateIndex() against an already-empty
+            // index, so the deleteAll() is a no-op for them.
+            LOG.info("Wiping existing Lucene index before recreation");
+            synchronized (this.indexer) {
+                Indexer.indexWriter().deleteAll();
+                this.indexer.commit();
+            }
+
+            // Track docs added so the end-of-run log carries useful diagnostics.
+            // No periodic commits during the walk — Lucene's RAM buffer auto-flushes
+            // to disk segments as it fills (default 256 MB; see
+            // Indexer.RAM_BUFFER_SIZE_MB), and TieredMergePolicy compacts segments
+            // in the background. A single commit at the end persists everything.
+            // Forcing periodic commits during the walk caused a "commit storm"
+            // where the modulo gate tripped on stretches of non-text-bearing
+            // semantics that had nothing to flush — hundreds of empty commits
+            // in tight succession.
+            LongAdder docsAdded = new LongAdder();
 
             PrimitiveData.get().forEachParallel((bytes, nid) -> {
                 // Check for cancellation periodically
@@ -138,29 +184,24 @@ public class RecreateIndex extends TrackingCallable<Void> {
                     return;
                 }
 
-                // Only process non-null entities
+                // Only process non-null entities. Lucene indexing applies to
+                // semantics only — concept/pattern/stamp content reaches the index
+                // through their description semantics.
                 if (bytes != null && bytes.length > 0) {
                     Entity<?> entity = EntityRecordFactory.make(bytes);
-                    if (entity != null) {
-                        this.indexer.index(entity);
+                    if (entity instanceof SemanticEntity<?> semantic) {
+                        // indexFresh skips the per-call delete-by-NID. The
+                        // writer was deleteAll()'d at the start of this run
+                        // (see above), so the delete would resolve to a
+                        // no-match query against an initially-empty writer
+                        // and accumulate tens of millions of buffered
+                        // PointRangeQuery entries that turn flush-time work
+                        // O(n²). Live writes through SearchProvider.index
+                        // still go through index(), preserving idempotent
+                        // delete-then-add for evolving entities.
+                        int added = this.indexer.indexFresh(semantic);
+                        docsAdded.add(added);
                         indexedEntities.increment();
-
-                        // Commit in batches
-                        int count = batchCounter.incrementAndGet();
-                        if (count % COMMIT_BATCH_SIZE == 0) {
-                            if (shouldStop()) {
-                                return;
-                            }
-
-                            try {
-                                synchronized (this.indexer) {
-                                    this.indexer.commit();
-                                    LOG.debug("Committed batch at {} entities", count);
-                                }
-                            } catch (IOException e) {
-                                LOG.error("Error committing batch at count {}", count, e);
-                            }
-                        }
                     }
                 }
 
@@ -177,31 +218,39 @@ public class RecreateIndex extends TrackingCallable<Void> {
 
             // Check before final commit
             if (shouldStop()) {
-                String reason = getStopReason();
-                LOG.info("Lucene index recreation cancelled before final commit: {}", reason);
-                LOG.info("Processed {} of {} entities before cancellation",
-                        indexedEntities.longValue(), totalCount);
+                String stopReason = getStopReason();
+                LOG.info("Lucene index recreation cancelled before final commit: {}", stopReason);
+                LOG.info("Processed {} of {} entities ({} docs added) before cancellation",
+                        indexedEntities.longValue(), totalCount, docsAdded.longValue());
                 return null;
             }
 
-            // Final commit
-            this.indexer.commit();
-            LOG.info("Final commit completed - indexed {} entities",
-                    String.format("%,d", indexedEntities.longValue()));
+            // Final commit — guard with hasUncommittedChanges() so a recreate
+            // that produced zero indexable content (extreme edge case: no
+            // text-bearing semantics in the entity store) doesn't pay for an
+            // empty commit.
+            if (Indexer.indexWriter().hasUncommittedChanges()) {
+                this.indexer.commit();
+                LOG.info("Final commit completed — indexed {} entities ({} docs)",
+                        String.format("%,d", indexedEntities.longValue()),
+                        String.format("%,d", docsAdded.longValue()));
+            } else {
+                LOG.info("Nothing to commit at end — {} entities walked produced no indexable docs",
+                        String.format("%,d", indexedEntities.longValue()));
+            }
 
         } finally {
-            this.indexer.setBulkMode(false);
             EntityService.get().endLoadPhase();
         }
 
         if (shouldStop()) {
-            String reason = getStopReason();
-            LOG.info("Lucene index recreation stopped: {}", reason);
-            this.updateTitle("Lucene Index Cancelled");
-            this.updateMessage("Index creation was cancelled: " + reason);
+            String stopReason = getStopReason();
+            LOG.info("Lucene index recreation stopped: {}", stopReason);
+            this.updateTitle(reason.title() + " — Cancelled");
+            this.updateMessage("Index creation was cancelled: " + stopReason);
         } else {
             LOG.info("Recreate Lucene Index completed in {}", this.durationString());
-            this.updateTitle("Recreate Lucene Index Completed");
+            this.updateTitle(reason.title() + " — Completed");
             this.updateMessage("Index time: " + this.durationString());
         }
         updateProgress(1,1);

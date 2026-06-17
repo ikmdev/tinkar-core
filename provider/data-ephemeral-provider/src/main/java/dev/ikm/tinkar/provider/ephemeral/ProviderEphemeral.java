@@ -22,7 +22,7 @@ import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.entity.*;
-import dev.ikm.tinkar.provider.search.SearchService;
+import dev.ikm.tinkar.common.service.SearchService;
 import org.eclipse.collections.api.block.procedure.Procedure2;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.factory.Lists;
@@ -172,8 +172,14 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
         writeSequence.increment();
 
         // Delegate indexing to SearchProvider.
-        // Skip during load phase (import) — RecreateIndex will build the index in batch afterward.
-        if (!loadPhase) {
+        //
+        // TODO(temp): During loadPhase, live-index up to LoadPhaseSearchPolicy's
+        // threshold; once exceeded, skip the rest and fall back to a full
+        // recreate at endLoadPhase. Replace this two-mode shim with touched-nid
+        // notification + per-nid catch-up when the proper design lands.
+        // See LoadPhaseSearchPolicy javadoc for the full picture.
+        if (!loadPhase
+                || dev.ikm.tinkar.entity.EntityService.get().loadPhaseSearchPolicy().shouldIndexLive()) {
             try {
                 getSearchService().index(sourceObject);
             } catch (Exception e) {
@@ -196,6 +202,11 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     @Override
     public PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception {
         return getSearchService().search(query, maxResultSize);
+    }
+
+    @Override
+    public String highlight(String query, String text) throws Exception {
+        return getSearchService().highlight(query, text);
     }
 
     @Override

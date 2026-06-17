@@ -422,6 +422,19 @@ public interface PrimitiveDataService {
 
     PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception;
 
+    /**
+     * Highlight an arbitrary text against the same parsed query the index would
+     * use. See {@link SearchService#highlight(String, String)} for matching
+     * semantics and intended use.
+     *
+     * @param query the search query string
+     * @param text the text to highlight
+     * @return {@code text} with matched tokens wrapped in {@code <B>...</B>},
+     *         or the original {@code text} when there are no matches
+     * @throws Exception if an error occurs during query parsing or highlighting
+     */
+    String highlight(String query, String text) throws Exception;
+
     CompletableFuture<Void> recreateLuceneIndex() throws Exception;
 
     /**

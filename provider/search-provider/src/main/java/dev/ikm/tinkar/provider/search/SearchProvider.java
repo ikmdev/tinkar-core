@@ -18,7 +18,10 @@ package dev.ikm.tinkar.provider.search;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.util.io.FileUtil;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
+import org.apache.lucene.index.IndexFormatTooNewException;
+import org.apache.lucene.index.IndexFormatTooOldException;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.slf4j.Logger;
@@ -40,7 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * ensuring they are properly initialized during the INDEXING phase and cleanly
  * shutdown when the application terminates.
  */
-public class SearchProvider implements SearchService {
+public class SearchProvider implements dev.ikm.tinkar.common.service.SearchService {
     private static final Logger LOG = LoggerFactory.getLogger(SearchProvider.class);
     private static final File defaultDataDirectory = new File("target/lucene/");
 
@@ -94,14 +97,29 @@ public class SearchProvider implements SearchService {
         this.indexPath = indexPath;
 
         Indexer tempIndexer;
+        boolean luceneFormatWipe = false;
         try {
             tempIndexer = new Indexer(indexPath);
-        } catch (IllegalArgumentException ex) {
-            // If Indexer Codec does not match, then delete and rebuild with new Codec
-            LOG.warn("Index codec mismatch, deleting and recreating index");
+        } catch (IllegalArgumentException
+                 | IndexFormatTooOldException
+                 | IndexFormatTooNewException ex) {
+            // The existing index can't be opened by the current Lucene version.
+            // Three flavors of this:
+            //   - IllegalArgumentException: historical codec-mismatch path
+            //     (some Lucene versions threw IAE rather than a typed exception).
+            //   - IndexFormatTooOldException: segments were written by an older
+            //     codec whose class isn't on the classpath (e.g. Lucene103 on
+            //     a 10.4 build that ships only Lucene104). Common when opening
+            //     a database snapshotted under an earlier release.
+            //   - IndexFormatTooNewException: segments are from a newer Lucene
+            //     than this build. Rare in practice but the same recovery applies.
+            // All three signal "this index is unreadable here; rebuild it."
+            LOG.warn("Existing Lucene index cannot be opened ({}: {}). Deleting and recreating.",
+                    ex.getClass().getSimpleName(), ex.getMessage());
             try {
                 FileUtil.recursiveDelete(indexPath.toFile());
                 indexExists = false;
+                luceneFormatWipe = true;
                 tempIndexer = new Indexer(indexPath);
             } catch (IOException e) {
                 throw new RuntimeException("Failed to recreate index after codec mismatch", e);
@@ -122,9 +140,18 @@ public class SearchProvider implements SearchService {
         boolean dataExists = checkDataExists(datastoreRoot);
 
         if (dataExists && !indexExists) {
-            LOG.info("Database exists but Lucene index is missing, scheduling index recreation");
+            // Two paths arrive here: the codec-wipe branch above (the index
+            // existed but couldn't be opened, so we deleted and reopened
+            // empty), and the genuine "fresh open of a snapshot" case.
+            // Distinguish via luceneFormatWipe so the user sees the right
+            // explanation in the progress dialog.
+            RecreateReason reason = luceneFormatWipe
+                    ? RecreateReason.LUCENE_FORMAT_INCOMPATIBLE
+                    : RecreateReason.INITIAL_BUILD;
+            LOG.info("Database exists but Lucene index is missing — scheduling rebuild ({})",
+                    reason.name());
             try {
-                this.recreateIndex().get();
+                this.recreateIndexFor(reason).get();
                 LOG.info("Lucene index recreation completed successfully");
             } catch (Exception e) {
                 LOG.error("Failed to recreate Lucene index", e);
@@ -132,14 +159,32 @@ public class SearchProvider implements SearchService {
         } else if (!dataExists) {
             LOG.info("No existing database found — Lucene index will be created as data is added");
         } else {
-            // Index exists — report document count for diagnostics
+            // Index exists — report document count and schema version for diagnostics
             int docCount = Indexer.indexWriter().getDocStats().numDocs;
-            LOG.info("Lucene index already exists ({} documents)", String.format("%,d", docCount));
+            int schemaVersion;
+            try {
+                schemaVersion = IndexerSchema.readVersion(Indexer.indexDirectory());
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to read Lucene schema version", e);
+            }
+            LOG.info("Lucene index already exists ({} documents, schema v{})",
+                    String.format("%,d", docCount), schemaVersion);
 
-            if (dataExists && docCount == 0) {
-                LOG.warn("Lucene index is empty but database exists — scheduling index recreation");
+            boolean schemaStale = schemaVersion < IndexerSchema.VERSION;
+            boolean emptyButHasData = dataExists && docCount == 0;
+
+            if (schemaStale || emptyButHasData) {
+                RecreateReason reason;
+                if (schemaStale) {
+                    LOG.warn("Lucene index schema v{} predates current v{} — scheduling index recreation",
+                            schemaVersion, IndexerSchema.VERSION);
+                    reason = RecreateReason.SCHEMA_OUTDATED;
+                } else {
+                    LOG.warn("Lucene index is empty but database exists — scheduling index recreation");
+                    reason = RecreateReason.EMPTY_INDEX_RECOVERY;
+                }
                 try {
-                    this.recreateIndex().get();
+                    this.recreateIndexFor(reason).get();
                     int newCount = Indexer.indexWriter().getDocStats().numDocs;
                     LOG.info("Lucene index recreation completed ({} documents)", String.format("%,d", newCount));
                 } catch (Exception e) {
@@ -158,9 +203,13 @@ public class SearchProvider implements SearchService {
             LOG.debug("SearchProvider is closed, skipping index operation");
             return;
         }
-        indexer.index(object);
-        // Ensure the NRT searcher sees the new document immediately.
-        Searcher.refreshAfterIndex();
+        // Lucene full-text indexing only applies to semantics — concept/pattern/stamp
+        // names live in description semantics and reach the index via their semantics.
+        if (object instanceof SemanticEntity<?> semanticEntity) {
+            indexer.index(semanticEntity);
+            // Ensure the NRT searcher sees the new document immediately.
+            Searcher.refreshAfterIndex();
+        }
     }
 
     @Override
@@ -185,10 +234,35 @@ public class SearchProvider implements SearchService {
     }
 
     @Override
+    public String highlight(String query, String text) throws Exception {
+        if (closed.get()) {
+            LOG.error("SearchProvider is closed, cannot perform highlight");
+            throw new IllegalStateException("SearchProvider is closed");
+        }
+        return searcher.highlight(query, text);
+    }
+
+    @Override
     public CompletableFuture<Void> recreateIndex() {
+        return recreateIndexFor(RecreateReason.USER_REQUESTED);
+    }
+
+    /**
+     * Internal recreate path that lets startup triggers and other context-aware
+     * callers tag the run with a {@link RecreateReason}. The reason drives the
+     * user-visible progress dialog title and initial message — important for
+     * any rebuild triggered automatically (Lucene upgrade, schema bump, empty
+     * index, etc.) so the user can tell why their database open is doing
+     * extra work.
+     *
+     * @param reason why the recreate run is happening
+     * @return future that completes (with {@code null}) when the rebuild
+     *         finishes or with a logged error if it fails
+     */
+    private CompletableFuture<Void> recreateIndexFor(RecreateReason reason) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                return TinkExecutor.ioThreadPool().submit(new RecreateIndex(this.indexer)).get();
+                return TinkExecutor.ioThreadPool().submit(new RecreateIndex(this.indexer, reason)).get();
             } catch (InterruptedException | ExecutionException ex) {
                 AlertStreams.dispatchToRoot(new CompletionException("Error encountered while creating Lucene indexes. " +
                         "Search and Type Ahead Suggestions may not function as expected.", ex));

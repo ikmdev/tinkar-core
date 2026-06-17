@@ -21,6 +21,7 @@ import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.id.impl.NidCodec6;
 import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.SearchService;
 import dev.ikm.tinkar.common.service.ServiceLifecycleManager;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.common.util.io.CountingInputStream;
@@ -471,25 +472,39 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
     }
 
     private static void commitSearchIndexIfAvailable() {
-        try {
-            Class<?> searchServiceClass = Class.forName("dev.ikm.tinkar.provider.search.SearchService");
-            @SuppressWarnings("unchecked")
-            Optional<Object> searchService = (Optional<Object>) ServiceLifecycleManager.get()
-                    .getRunningService((Class) searchServiceClass);
-            searchService.ifPresent(service -> {
-                try {
-                    // Recreate the index in batch after import (indexing is skipped during load phase).
-                    Object future = service.getClass().getMethod("recreateIndex").invoke(service);
-                    if (future instanceof java.util.concurrent.CompletableFuture<?> cf) {
-                        cf.get();
-                    }
-                } catch (Exception e) {
-                    LOG.warn("Failed to recreate Lucene index after import", e);
-                }
-            });
-        } catch (ClassNotFoundException e) {
-            LOG.debug("SearchService not available on classpath; skipping index rebuild");
+        // TODO(temp): two-mode logic (no-op vs. full recreate) is a stand-in
+        // for the proper touched-nid catch-up design. See LoadPhaseSearchPolicy
+        // for the longer rationale; replace this with the catch-up walk when
+        // that design lands.
+        dev.ikm.tinkar.entity.LoadPhaseSearchPolicy policy =
+                dev.ikm.tinkar.entity.EntityService.get().loadPhaseSearchPolicy();
+        if (!policy.recreateRequired()) {
+            // The change-set fit under the live-index threshold; the index
+            // was kept current by per-merge calls during loadPhase. No
+            // post-load search work needed.
+            LOG.info("Change-set indexed live during load phase ({} entities, threshold {}) — no recreate needed",
+                    policy.liveIndexedCount(),
+                    dev.ikm.tinkar.entity.LoadPhaseSearchPolicy.threshold());
+            return;
         }
+        // Change-set exceeded the live-index threshold — fall back to a full
+        // recreate so the entities merged after live indexing was abandoned
+        // get into the index.
+        LOG.info("Change-set exceeded live-index threshold ({} > {}); scheduling full recreate",
+                policy.liveIndexedCount(),
+                dev.ikm.tinkar.entity.LoadPhaseSearchPolicy.threshold());
+        Optional<SearchService> searchService = ServiceLifecycleManager.get()
+                .getRunningService(SearchService.class);
+        searchService.ifPresent(service -> {
+            try {
+                Object future = service.recreateIndex();
+                if (future instanceof java.util.concurrent.CompletableFuture<?> cf) {
+                    cf.get();
+                }
+            } catch (Exception e) {
+                LOG.warn("Failed to recreate Lucene index after import", e);
+            }
+        });
     }
 
     /**

@@ -25,7 +25,7 @@ import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithC
 import dev.ikm.tinkar.integration.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
-import dev.ikm.tinkar.provider.search.SearchService;
+import dev.ikm.tinkar.common.service.SearchService;
 import dev.ikm.tinkar.provider.search.Searcher;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;

@@ -22,9 +22,8 @@ import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.common.validation.ValidationRecord;
 import dev.ikm.tinkar.common.validation.ValidationSeverity;
 import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.PatternEntity;
-import dev.ikm.tinkar.provider.search.SearchService;
+import dev.ikm.tinkar.common.service.SearchService;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Maps;
@@ -46,7 +45,6 @@ import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
@@ -241,8 +239,14 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         writeSequence.increment();
 
         // Delegate indexing to SearchProvider.
-        // Skip during load phase (import) — RecreateIndex will build the index in batch afterward.
-        if (!loadPhase) {
+        //
+        // TODO(temp): During loadPhase, live-index up to LoadPhaseSearchPolicy's
+        // threshold; once exceeded, skip the rest and fall back to a full
+        // recreate at endLoadPhase. Replace this two-mode shim with touched-nid
+        // notification + per-nid catch-up when the proper design lands.
+        // See LoadPhaseSearchPolicy javadoc for the full picture.
+        if (!loadPhase
+                || dev.ikm.tinkar.entity.EntityService.get().loadPhaseSearchPolicy().shouldIndexLive()) {
             try {
                 getSearchService().index(sourceObject);
             } catch (Exception e) {
@@ -265,6 +269,11 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     @Override
     public PrimitiveDataSearchResult[] search(String query, int maxResultSize) throws Exception {
         return getSearchService().search(query, maxResultSize);
+    }
+
+    @Override
+    public String highlight(String query, String text) throws Exception {
+        return getSearchService().highlight(query, text);
     }
 
     @Override

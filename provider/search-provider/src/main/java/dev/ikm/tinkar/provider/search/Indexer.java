@@ -16,20 +16,15 @@
 package dev.ikm.tinkar.provider.search;
 
 import dev.ikm.tinkar.common.util.time.Stopwatch;
-import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.IntPoint;
-import org.apache.lucene.document.StoredField;
-import org.apache.lucene.document.TextField;
+import org.apache.lucene.document.IntField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
@@ -40,14 +35,10 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Indexer {
-    public static final String NID_POINT = "nidPoint";
-    public static final String NID = "nid";
-    public static final String RC_NID = "rcNid";
-    public static final String PATTERN_NID = "patternNid";
-    public static final String FIELD_INDEX = "fieldIndex";
-    public static final String TEXT_FIELD_NAME = "text";
     private static final Logger LOG = LoggerFactory.getLogger(Indexer.class);
     private static final File defaultDataDirectory = new File("target/lucene/");
     private static DirectoryReader indexReader;
@@ -60,14 +51,63 @@ public class Indexer {
         Indexer.indexDirectory = new ByteBuffersDirectory();
         Indexer.analyzer = new StandardAnalyzer();
         Indexer.indexWriter = Indexer.getIndexWriter();
+        IndexerSchema.attachVersion(Indexer.indexWriter);
         Indexer.indexReader = DirectoryReader.open(Indexer.indexWriter, true, false);
         this.indexPath = null;
     }
+
+    /** Private constructor used by {@link #wrapActiveState()}. Does not touch static state. */
+    private Indexer(Path indexPath, boolean wrapActiveMarker) {
+        this.indexPath = indexPath;
+    }
+
+    /**
+     * Return an {@link Indexer} instance that points at the currently-active
+     * static state ({@code indexWriter}, {@code indexDirectory}, {@code analyzer},
+     * {@code indexReader}). Use this when a maintenance utility needs an
+     * Indexer handle (for {@link #setBulkMode(boolean)} or a {@code RecreateIndex})
+     * but must not reinitialize the singleton.
+     *
+     * <p>The returned instance shares the static state with whatever Indexer
+     * originally opened the directory. Calling {@link #close()} on the
+     * returned instance closes the underlying writer just as if you'd called
+     * it on the original — same singleton, same effect.
+     *
+     * @return a transient Indexer wrapping the active state
+     * @throws IllegalStateException if the static state is not initialized
+     *                               (no Lucene index is currently open)
+     */
+    public static Indexer wrapActiveState() {
+        if (Indexer.indexWriter == null || Indexer.indexDirectory == null) {
+            throw new IllegalStateException(
+                    "No active Lucene index — Indexer.indexWriter() is null. "
+                            + "Open a data store first.");
+        }
+        return new Indexer((Path) null, true);
+    }
+
+    /**
+     * Lucene RAM buffer size in MB. The writer auto-flushes a segment to disk
+     * when buffered pending docs hit this size. Default is 256 MB — meaningfully
+     * larger than Lucene's stock 16 MB default to reduce segment churn during
+     * full rebuilds (see {@link RecreateIndex}). A v4 doc is ~250 bytes including
+     * overhead, so 256 MB carries roughly 1.5M docs per flush — a typical
+     * rebuild emits 6-12 segments instead of dozens to a hundred at the stock
+     * default, and {@code TieredMergePolicy} has correspondingly less work.
+     *
+     * <p>Live writes (post-rebuild) fill this buffer slowly and pay no extra
+     * cost from the larger size — RAM is grown into, not pre-allocated.
+     *
+     * <p>Override via system property for memory-constrained deployments.
+     */
+    private static final double RAM_BUFFER_SIZE_MB =
+            Double.parseDouble(System.getProperty("lucene.index.ram.buffer.mb", "256"));
 
     private static IndexWriter getIndexWriter() throws IOException {
         //Create the indexer
         IndexWriterConfig config = new IndexWriterConfig(analyzer());
         config.setCommitOnClose(true);
+        config.setRAMBufferSizeMB(RAM_BUFFER_SIZE_MB);
         return new IndexWriter(indexDirectory(), config);
     }
 
@@ -84,17 +124,6 @@ public class Indexer {
         return indexReader;
     }
 
-    /**
-     * When true, skip per-document flush in {@link #index(Object)}.
-     * Set this during bulk operations like {@link RecreateIndex} where
-     * the caller manages commits/flushes in batches.
-     */
-    private boolean bulkMode = false;
-
-    public void setBulkMode(boolean bulkMode) {
-        this.bulkMode = bulkMode;
-    }
-
     public Indexer(Path indexPath) throws IOException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening lucene indexer");
@@ -102,6 +131,7 @@ public class Indexer {
         Indexer.indexDirectory = FSDirectory.open(this.indexPath);
         Indexer.analyzer = new StandardAnalyzer();
         Indexer.indexWriter = Indexer.getIndexWriter();
+        IndexerSchema.attachVersion(Indexer.indexWriter);
         Indexer.indexReader = DirectoryReader.open(Indexer.indexWriter);
         stopwatch.stop();
         LOG.info("Opened lucene index in: " + stopwatch.durationString());
@@ -135,92 +165,115 @@ public class Indexer {
         LOG.info("Closed lucene index in: " + stopwatch.durationString());
     }
 
-    public void index(Object object) {
-        if (object instanceof SemanticEntity semanticEntity) {
-            IntPoint nidPoint = new IntPoint(NID_POINT, 0);
-            // The IntPoint field does not store the value,
-            // so we also need a stored field to retrieve the nid from a document.
-            StoredField nidField = new StoredField(NID, 0);
-            StoredField rcNidField = new StoredField(RC_NID, 0);
-            StoredField patternNidField = new StoredField(PATTERN_NID, 0);
-            StoredField fieldIndexField = new StoredField(FIELD_INDEX, 0);
-
-            // KEC: Deliberately commented out. See explanation on method for reason.
-            // deleteDocumentIfExists(semanticEntity);
-
-
-            Document document = new Document();
-            nidPoint.setIntValue(semanticEntity.nid());
-            nidField.setIntValue(semanticEntity.nid());
-            rcNidField.setIntValue(semanticEntity.referencedComponentNid());
-            patternNidField.setIntValue(semanticEntity.patternNid());
-
-            document.add(nidPoint);
-            document.add(nidField);
-            document.add(rcNidField);
-            document.add(patternNidField);
-            for (SemanticEntityVersion version : ((SemanticEntity<SemanticEntityVersion>) semanticEntity).versions()) {
-                ImmutableList<Object> fields = version.fieldValues();
-                for (int i = 0; i < fields.size(); i++) {
-                    Object field = fields.get(i);
-                    if (field instanceof String text) {
-                        text = text.strip();
-                        if (i == 0) {
-                            document.add(new TextField(TEXT_FIELD_NAME, text, Field.Store.YES));
-                            fieldIndexField.setIntValue(i);
-                            document.add(fieldIndexField);
-                        } else {
-                            // Check to make sure identical text is not already in the document,
-                            // to prevent unnecessary document/index bloat.
-                            boolean alreadyAdded = false;
-                            for (String value: document.getValues(TEXT_FIELD_NAME)) {
-                                if (text.equals(value)) {
-                                    alreadyAdded = true;
-                                    break;
-                                }
-                            }
-                            if (!alreadyAdded) {
-                                document.add(new TextField(TEXT_FIELD_NAME, text, Field.Store.YES));
-                                fieldIndexField.setIntValue(i);
-                                document.add(fieldIndexField);
-                            }
-                        }
-                        LOG.debug("Indexing semantic nid={} rcNid={} patternNid={} fieldIndex={} text='{}'",
-                                semanticEntity.nid(), semanticEntity.referencedComponentNid(), semanticEntity.patternNid(), i, text);
-                    }
-                }
-            }
-            try {
-                long addSequence = indexWriter.addDocument(document);
-                if (!bulkMode) {
-                    // Ensure the segment is published for NRT readers promptly.
-                    // Skipped during bulk indexing where the caller commits in batches.
-                    indexWriter.flush();
-                }
-                LOG.debug("Indexed nid={} rcNid={} patternNid={} docSeq={}", semanticEntity.nid(),
-                        semanticEntity.referencedComponentNid(), semanticEntity.patternNid(), addSequence);
-            } catch (IOException e) {
-                LOG.error("Exception writing: " + object);
-            }
+    /**
+     * Index a semantic by emitting one Lucene document per distinct
+     * {@code (nid, fieldOrdinal, stripped-text)} tuple seen across the semantic's
+     * versions, replacing any prior docs for this nid.
+     *
+     * <p>Every call buffers a {@code deleteDocuments} for the semantic's nid
+     * before adding new docs. This makes the operation idempotent at the index
+     * level: re-indexing the same content leaves the same Lucene state, and
+     * indexing a new version of an evolving semantic doesn't accumulate
+     * superseded docs from earlier versions. Suitable for live writes where
+     * a doc for the nid may already exist.
+     *
+     * <p><b>Do not call from a full-rebuild loop.</b> RecreateIndex starts with
+     * {@code IndexWriter.deleteAll()} and indexes ~tens of millions of entities
+     * against an initially-empty writer; using {@link #index} would buffer
+     * tens of millions of no-match {@code PointRangeQuery} delete entries in
+     * Lucene's BufferedUpdates queue. The queue grows between flushes and
+     * resolution at flush time scales with both queue length and segment count,
+     * producing O(n²) work that can multiply rebuild time by orders of
+     * magnitude. Use {@link #indexFresh(SemanticEntity)} for the recreate path.
+     *
+     * <p>Each emitted document carries three single-valued fields:
+     * {@link IndexerSchema#NID}, {@link IndexerSchema#INDEXED_FIELD_ORDINAL},
+     * and {@link IndexerSchema#TEXT}. Doc-per-position guarantees every hit has
+     * unambiguous text/ordinal/highlight — the ambiguity that v1's
+     * multi-valued fields had at read time is gone by construction.
+     *
+     * <p>Concept, pattern, and stamp entities are filtered out one level up
+     * (in {@code SearchProvider.index} and {@code RecreateIndex.compute}) —
+     * concept names live in description semantics and reach this method via
+     * their semantics, not directly.
+     *
+     * <p>Many semantics carry no indexable text (navigation, identifier,
+     * membership, image, numeric-only, etc. — anything whose
+     * {@code fieldValues()} contains no {@code String}); for those this method
+     * still buffers the delete-by-NID (a no-op when no prior docs exist) and
+     * returns {@code 0}.
+     *
+     * @param semanticEntity the semantic to index; must not be {@code null}
+     * @return the number of Lucene documents added to the writer; {@code 0}
+     *         when the semantic has no indexable text or on I/O error
+     */
+    public int index(SemanticEntity<?> semanticEntity) {
+        try {
+            // Replace any prior docs for this nid. Cheap as a single live-write
+            // operation; pathological in a tight loop — see indexFresh().
+            indexWriter.deleteDocuments(
+                    IntField.newExactQuery(IndexerSchema.NID.name(), semanticEntity.nid()));
+        } catch (IOException e) {
+            LOG.error("Exception buffering delete-by-nid for entity {}", semanticEntity, e);
+            return 0;
         }
-
+        return indexInternal(semanticEntity);
     }
 
     /**
-     * This method would delete any existing document for the semantic. This is a costly operation,
-     * and unnecessary for standard use cases. Since the semantic chronologies are append only,
-     * the same historic versions will still be written to the index. Determination of current
-     * content is done by the StampComputer, not by the lucene index, so there is no need to remove
-     * historic versions.
+     * Index a semantic without buffering a delete-by-NID first. Intended for
+     * the {@link RecreateIndex} hot path, where the writer was just
+     * {@code deleteAll()}'d and there are no prior docs for any nid; the delete
+     * would resolve to a no-match query and contribute only buffer-and-resolve
+     * overhead. Live writes should use {@link #index(SemanticEntity)} instead;
+     * skipping the delete there would let stale per-nid docs accumulate from
+     * earlier indexings.
      *
-     * @param semanticEntity
+     * <p>Same return semantics and same per-doc shape as {@link #index} —
+     * the only difference is the absence of the delete buffering.
+     *
+     * @param semanticEntity the semantic to index; must not be {@code null}
+     * @return the number of Lucene documents added to the writer; {@code 0}
+     *         when the semantic has no indexable text or on I/O error
      */
-    private static void deleteDocumentIfExists(SemanticEntity semanticEntity) {
+    public int indexFresh(SemanticEntity<?> semanticEntity) {
+        return indexInternal(semanticEntity);
+    }
+
+    /**
+     * Shared add-doc loop. Both {@link #index} and {@link #indexFresh} delegate
+     * here; the only difference between them is whether they buffer a
+     * delete-by-NID before calling this method.
+     */
+    private int indexInternal(SemanticEntity<?> semanticEntity) {
+        Set<String> seenTexts = new HashSet<>();
+        int docsAdded = 0;
         try {
-            Query nidQuery = IntPoint.newExactQuery(NID_POINT, semanticEntity.nid());
-            long deleteSequence = indexWriter.deleteDocuments(nidQuery);
+            for (SemanticEntityVersion version : ((SemanticEntity<SemanticEntityVersion>) semanticEntity).versions()) {
+                ImmutableList<Object> fields = version.fieldValues();
+                for (int i = 0; i < fields.size(); i++) {
+                    if (!(fields.get(i) instanceof String rawText)) {
+                        continue;
+                    }
+                    String text = rawText.strip();
+                    // Dedup uniformly across all positions and versions.
+                    // Same (text, fieldOrdinal) pair seen twice is redundant.
+                    if (!seenTexts.add(i + "\0" + text)) {
+                        continue;
+                    }
+                    Document doc = new Document();
+                    doc.add(IndexerSchema.NID.make(semanticEntity.nid()));
+                    doc.add(IndexerSchema.INDEXED_FIELD_ORDINAL.make(i));
+                    doc.add(IndexerSchema.TEXT.make(text));
+                    indexWriter.addDocument(doc);
+                    docsAdded++;
+                    LOG.debug("Indexing semantic nid={} fieldOrdinal={} text='{}'",
+                            semanticEntity.nid(), i, text);
+                }
+            }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            LOG.error("Exception writing entity {}", semanticEntity, e);
         }
+        return docsAdded;
     }
 }

@@ -236,3 +236,10 @@ Temporary Items
 # Claude (unpacked build standards)
 ###################
 .claude
+# BEGIN ike-managed
+# IKE local state (never committed)
+.ike/vcs-state
+# END ike-managed
+
+# ike:* goal reports
+ike꞉*.md
