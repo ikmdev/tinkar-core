@@ -96,8 +96,8 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 	public void buildNecessaryNormalForm(TrackingCallable<?> progressUpdater) {
 		//TODO: refactor to use primitive collections directly.
 		nnfb = NecessaryNormalFormBuilder.create(sso.getOntology(),
-				convertToLongMap(sso.getSuperConcepts()),
-				convertToLongMap(sso.getSuperRoleTypes(false)),
+				sso.getSuperConcepts(),
+				sso.getSuperRoleTypes(false),
 				TinkarTerm.ROOT_VERTEX.nid(),
 				(workDone, max) -> progressUpdater.updateProgress(workDone, max));
 		nnfb.generate();
@@ -124,26 +124,21 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 
 	@Override
 	public ImmutableIntSet getEquivalent(int id) {
-		Set<Long> eqs = sso.getEquivalentConcepts(id);
-		MutableIntSet eqsInt = IntSets.mutable.empty();
-		eqs.stream().mapToInt(Long::intValue).forEach(eqsInt::add);
-		return eqsInt.toImmutable();
+		MutableLongSet eqs = sso.getEquivalentConcepts(id);
+		return toIntSet(eqs);
 	}
 
 	@Override
 	public ImmutableIntSet getParents(int id) {
-		Set<Long> supers = sso.getSuperConcepts(id);
-		MutableIntSet eqsInt = IntSets.mutable.empty();
-		supers.stream().mapToInt(Long::intValue).forEach(eqsInt::add);
-		return eqsInt.toImmutable();
+		MutableLongSet supers = sso.getSuperConcepts(id);
+		return toIntSet(supers);
 	}
 
 	@Override
 	public ImmutableIntSet getChildren(int id) {
-		Set<Long> subs = sso.getSubConcepts(id);
-		MutableIntSet eqsInt = IntSets.mutable.empty();
-		subs.stream().mapToInt(Long::intValue).forEach(eqsInt::add);
-		return eqsInt.toImmutable();
+		MutableLongSet subs = sso.getSubConcepts(id);
+		return toIntSet(subs);
+
 	}
 
 }
