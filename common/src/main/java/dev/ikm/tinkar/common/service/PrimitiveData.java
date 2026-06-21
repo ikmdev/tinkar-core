@@ -94,9 +94,11 @@ public class PrimitiveData {
         try {
             save();
 
-            // Stop the service lifecycle manager (shuts down all services in reverse order)
+            // Stop the service lifecycle manager (shuts down all services in reverse order).
+            // Also stop after a non-retryable startup failure (FAILED): startup may have
+            // opened the data store before aborting, and those providers must be closed.
             ServiceLifecycleManager lifecycleManager = ServiceLifecycleManager.get();
-            if (lifecycleManager.isRunning()) {
+            if (lifecycleManager.isRunning() || lifecycleManager.isFailed()) {
                 LOG.info("Stopping ServiceLifecycleManager...");
                 lifecycleManager.shutdownServices();
                 LOG.info("ServiceLifecycleManager stopped successfully");

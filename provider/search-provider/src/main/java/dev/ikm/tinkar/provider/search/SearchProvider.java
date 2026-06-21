@@ -22,6 +22,7 @@ import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 import org.apache.lucene.index.IndexFormatTooNewException;
 import org.apache.lucene.index.IndexFormatTooOldException;
+import org.apache.lucene.store.LockObtainFailedException;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.slf4j.Logger;
@@ -124,6 +125,16 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
             } catch (IOException e) {
                 throw new RuntimeException("Failed to recreate index after codec mismatch", e);
             }
+        } catch (LockObtainFailedException lockEx) {
+            // Lucene's write.lock is held by another program — i.e. this data
+            // store is already open in another process (or another Komet
+            // window). Lucene's native FS lock is the only component that takes
+            // an OS-level exclusive lock, so this is where the condition first
+            // surfaces. It is fatal and non-retryable: rethrow as a typed
+            // DataStoreAlreadyOpenException so the lifecycle manager records a
+            // terminal failure and the application can exit gracefully instead
+            // of resetting for a retry and spinning.
+            throw new DataStoreAlreadyOpenException(datastoreRoot.getAbsolutePath(), lockEx);
         } catch (IOException e) {
             throw new RuntimeException("Failed to initialize indexer", e);
         }
