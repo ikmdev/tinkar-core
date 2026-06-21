@@ -22,6 +22,7 @@ import dev.ikm.tinkar.collection.SpinedIntLongArrayMap;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.*;
+import dev.ikm.tinkar.provider.search.DataStoreLockProbe;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
@@ -788,6 +789,12 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             if (option != null) {
                 ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, option.toFile());
             }
+        }
+
+        @Override
+        public Optional<String> openConflict(DataUriOption option) {
+            return option == null ? Optional.empty()
+                    : DataStoreLockProbe.openConflict(option.toFile());
         }
 
         @Override

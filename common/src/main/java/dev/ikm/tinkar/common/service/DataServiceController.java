@@ -96,6 +96,27 @@ public interface DataServiceController<P> {
     void setDataUriOption(DataUriOption option);
 
     /**
+     * Reports whether the data store identified by {@code option} appears to be
+     * already open in another process, so the selection UI can warn the user
+     * before launch instead of failing deep in startup.
+     * <p>The default returns empty (no conflict) — appropriate for providers
+     * whose stores cannot conflict (ephemeral, websocket) and for "new store"
+     * targets. Providers backed by an on-disk store override this to probe the
+     * store's lock non-destructively.
+     * <p>This is advisory and subject to a time-of-check/time-of-use race; the
+     * authoritative guard is the open-time {@link DataStoreAlreadyOpenException}
+     * path. Callers must treat a present result as "warn", not "guaranteed
+     * locked", and an empty result as "proceed, but the open may still fail".
+     *
+     * @param option the data store option to test; may be {@code null}
+     * @return a short, human-readable reason if a conflict is detected; empty if
+     *         the store is free, not applicable, or the state is unknown
+     */
+    default Optional<String> openConflict(DataUriOption option) {
+        return Optional.empty();
+    }
+
+    /**
      * Checks if a given name represents a valid data location for this provider.
      * @param name the name to check
      * @return true if valid, false otherwise
