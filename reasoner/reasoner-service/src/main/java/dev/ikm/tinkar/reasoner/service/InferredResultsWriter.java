@@ -194,7 +194,7 @@ public class InferredResultsWriter {
 		EntityService.get().beginLoadPhase();
 		try {
 			StampEntity<?> updateStamp = updateTransaction.getStamp(State.ACTIVE,
-					getViewCoordinateRecord().getAuthorNidForChanges(), getViewCoordinateRecord().getDefaultModuleNid(),
+					getViewCoordinateRecord().logicCoordinate().classifierNid() /* classifier authors inferred forms, not the user - ike-issues#753 */, getViewCoordinateRecord().getDefaultModuleNid(),
 					getViewCoordinateRecord().getDefaultPathNid());
 			updateStampNid = updateStamp.nid();
 
