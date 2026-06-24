@@ -15,8 +15,10 @@
  */
 package dev.ikm.tinkar.common.service;
 
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +26,7 @@ import static dev.ikm.tinkar.common.service.PrimitiveDataService.STAMP_DATA_TYPE
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class PrimitiveDataServiceTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(PrimitiveDataServiceTest.class);

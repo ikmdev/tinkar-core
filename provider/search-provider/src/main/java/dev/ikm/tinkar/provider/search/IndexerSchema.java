@@ -64,7 +64,7 @@ public final class IndexerSchema {
      * to v3.
      *
      * <p>v3 (deprecated): {@code text} indexed-only ({@link Field.Store#NO});
-     * {@link Searcher} rehydrates text per hit via {@link UnifiedHighlighter}
+     * {@link Searcher} rehydrates text per hit via {@code UnifiedHighlighter}
      * re-analysis. Stored fields {@code nid} and {@code fieldIndex}.
      *
      * <p>v2 (deprecated): doc-per-(nid, fieldIndex) with single-valued
@@ -110,7 +110,7 @@ public final class IndexerSchema {
 
     /** Analyzed full-text content for the (nid, fieldIndex) tuple. v3 indexes
      *  but does not store the text — rehydrated from the entity binary store
-     *  at search time via {@link UnifiedHighlighter}'s re-analysis offset
+     *  at search time via {@code UnifiedHighlighter}'s re-analysis offset
      *  source. {@link TextDescriptor#read(Document)} returns {@code null}
      *  on v3 documents; only the field name is consulted on the read side. */
     public static final TextDescriptor TEXT = new TextDescriptor("text");
@@ -123,7 +123,7 @@ public final class IndexerSchema {
      * <p>v3: {@code text} is no longer stored, so it's not in this set. Hit
      * decoding pulls only {@code nid} and {@code fieldIndex} from the index;
      * the text comes from the entity binary store via the
-     * {@link UnifiedHighlighter} loader override.
+     * {@code UnifiedHighlighter} loader override.
      */
     public static final Set<String> FIELDS_TO_LOAD = Set.of(
             NID.name(),

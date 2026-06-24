@@ -65,7 +65,7 @@ public class Indexer {
      * Return an {@link Indexer} instance that points at the currently-active
      * static state ({@code indexWriter}, {@code indexDirectory}, {@code analyzer},
      * {@code indexReader}). Use this when a maintenance utility needs an
-     * Indexer handle (for {@link #setBulkMode(boolean)} or a {@code RecreateIndex})
+     * Indexer handle (for a {@code RecreateIndex})
      * but must not reinitialize the singleton.
      *
      * <p>The returned instance shares the static state with whatever Indexer
