@@ -322,6 +322,12 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                         parent = getEntityFast(semantic.referencedComponentNid());
                         STRING_CACHE.invalidate(semantic.nid());
                     }
+                    case StampEntity stampEntity -> {
+                        // A semantic can reference a STAMP (e.g. a commit-provenance comment); terminate the
+                        // walk and invalidate the stamp's string cache, like the concept/pattern cases (ike-issues#757).
+                        parent = null;
+                        STRING_CACHE.invalidate(stampEntity.nid());
+                    }
                     default -> throw new IllegalStateException("Unexpected value: " + parent);
                 }
             }
