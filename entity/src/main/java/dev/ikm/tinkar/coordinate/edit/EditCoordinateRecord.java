@@ -29,8 +29,13 @@ import dev.ikm.tinkar.terms.ConceptFacade;
 import java.util.Objects;
 
 
-public record EditCoordinateRecord(int authorNid, int defaultModuleNid, int promotionPathNid,
-                                   int defaultPathNid, int destinationModuleNid)
+// Component order MUST match how every positional constructor (the make() overloads, decode()) and
+// encode() lay the fields out: author, defaultModule, destinationModule, defaultPath, promotionPath.
+// It previously declared promotionPath and destinationModule transposed, so make()/decode() — which pass
+// args in the order below — stored destinationModule into the promotionPath field and vice versa, leaving
+// every freshly-made record's destinationModule/promotionPath swapped (IKE-Network/ike-issues#744).
+public record EditCoordinateRecord(int authorNid, int defaultModuleNid, int destinationModuleNid,
+                                   int defaultPathNid, int promotionPathNid)
         implements EditCoordinate, ImmutableCoordinate {
 
     private static final ConcurrentReferenceHashMap<EditCoordinateRecord, EditCoordinateRecord> SINGLETONS =

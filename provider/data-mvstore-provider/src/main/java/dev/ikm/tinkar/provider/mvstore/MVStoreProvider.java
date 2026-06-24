@@ -17,6 +17,7 @@ package dev.ikm.tinkar.provider.mvstore;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.*;
+import dev.ikm.tinkar.provider.search.DataStoreLockProbe;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.common.validation.ValidationRecord;
@@ -399,6 +400,12 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         @Override
         public Optional<ServiceExclusionGroup> getMutualExclusionGroup() {
             return Optional.of(ServiceExclusionGroup.DATA_PROVIDER);
+        }
+
+        @Override
+        public Optional<String> openConflict(DataUriOption option) {
+            return option == null ? Optional.empty()
+                    : DataStoreLockProbe.openConflict(option.toFile());
         }
 
         // ========== DataServiceController Implementation ==========

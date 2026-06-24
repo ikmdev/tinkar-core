@@ -182,7 +182,7 @@ public class ProcessReasonerResults {
 		// TODO change type of affectedConcepts to a parallel friendly primitive class.
 		final AtomicInteger sufficientSets = new AtomicInteger();
 		StampEntity updateStamp = updateTransaction.getStamp(State.ACTIVE,
-				getViewCoordinateRecord().getAuthorNidForChanges(), getViewCoordinateRecord().getDefaultModuleNid(),
+				getViewCoordinateRecord().logicCoordinate().classifierNid() /* classifier authors inferred forms, not the user - ike-issues#753 */, getViewCoordinateRecord().getDefaultModuleNid(),
 				getViewCoordinateRecord().getDefaultPathNid());
 		int updateStampNid = updateStamp.nid();
 

@@ -22,6 +22,7 @@ import dev.ikm.tinkar.collection.SpinedIntLongArrayMap;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.*;
+import dev.ikm.tinkar.provider.search.DataStoreLockProbe;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
@@ -188,10 +189,23 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
                 Thread.ofVirtual().name("cancel-uncommitted-stamps").start(() -> {
                     // EntityService starts in ENTITIES phase, after DATA_STORAGE where this provider starts.
                     // Wait for it to become available rather than failing immediately.
+                    ServiceLifecycleManager lifecycleManager = ServiceLifecycleManager.get();
                     int maxAttempts = 60;
                     for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-                        Optional<EntityService> entityServiceOpt = ServiceLifecycleManager.get()
-                                .getRunningService(EntityService.class);
+                        // Stop waiting if startup is no longer in progress — e.g. a
+                        // non-retryable failure (data store already open in another
+                        // process) aborted it. Without this check the loop spins out
+                        // its full budget logging "getRunningService(EntityService)
+                        // called in state DISCOVERED" once per cycle for a service
+                        // that will never appear.
+                        if (!lifecycleManager.isStartupActive()) {
+                            LOG.info("Service startup no longer in progress (state {}); skipping "
+                                            + "uncommitted stamp cancellation at startup",
+                                    lifecycleManager.getState());
+                            return;
+                        }
+                        Optional<EntityService> entityServiceOpt =
+                                lifecycleManager.getRunningService(EntityService.class);
                         if (entityServiceOpt.isPresent()) {
                             entityServiceOpt.get().listAndCancelUncommittedStamps(sortedStampNids);
                             return;
@@ -775,6 +789,12 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             if (option != null) {
                 ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT, option.toFile());
             }
+        }
+
+        @Override
+        public Optional<String> openConflict(DataUriOption option) {
+            return option == null ? Optional.empty()
+                    : DataStoreLockProbe.openConflict(option.toFile());
         }
 
         @Override

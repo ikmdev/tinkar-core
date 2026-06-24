@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
  *   <li><b>DISCOVERED</b> - Services have been discovered but not started</li>
  *   <li><b>STARTING</b> - Currently starting services</li>
  *   <li><b>RUNNING</b> - All services started successfully</li>
+ *   <li><b>FAILED</b> - A non-retryable failure aborted startup (terminal)</li>
  *   <li><b>SHUTTING_DOWN</b> - Currently shutting down services</li>
  *   <li><b>SHUTDOWN</b> - All services shutdown</li>
  * </ul>
@@ -69,7 +70,7 @@ public class ServiceLifecycleManager {
      * Internal lifecycle states for the manager itself.
      */
     public enum State {
-        UNINITIALIZED, DISCOVERED, PREPARED, STARTING, RUNNING, SHUTTING_DOWN, SHUTDOWN
+        UNINITIALIZED, DISCOVERED, PREPARED, STARTING, RUNNING, FAILED, SHUTTING_DOWN, SHUTDOWN
     }
 
     private final Map<Class<?>, ServiceLifecycle> discoveredServices = new ConcurrentHashMap<>();
@@ -79,7 +80,8 @@ public class ServiceLifecycleManager {
     private final Map<ServiceExclusionGroup, Class<?>> groupSelections = new ConcurrentHashMap<>();
     private Function<GroupSelectionContext, Class<?>> groupSelectionCallback;
 
-    private State state = State.UNINITIALIZED;
+    private volatile State state = State.UNINITIALIZED;
+    private volatile Throwable startupFailure;
     private final boolean verboseLogging;
 
     /**
@@ -662,14 +664,27 @@ public class ServiceLifecycleManager {
             LOG.info("  ✓ {} ({} ms)", serviceName, duration);
 
         } catch (Exception e) {
+            boolean nonRetryable = NonRetryableStartupFailure.isPresentIn(e);
+
             LOG.error("═══════════════════════════════════════════════════════════");
-            LOG.error("✗ STARTUP FAILED: {}", fullServiceName);
+            LOG.error("✗ STARTUP FAILED{}: {}", nonRetryable ? " (non-retryable)" : "", fullServiceName);
             LOG.error("  Phase: {}", priority.phase.name());
             LOG.error("  Sub-priority: {}", priority.subPriority);
             LOG.error("═══════════════════════════════════════════════════════════");
             LOG.error("Error: ", e);
 
-            state = State.DISCOVERED; // Reset to allow retry
+            if (nonRetryable) {
+                // Terminal failure (e.g. data store already open in another
+                // process). Do NOT reset to DISCOVERED — there is nothing to
+                // retry, and pretending otherwise leaves background waiters
+                // polling getRunningService() forever. Record the cause so
+                // callers can react (a graceful exit with a clear message)
+                // and stop short-circuit any service lookups still in flight.
+                startupFailure = e;
+                state = State.FAILED;
+            } else {
+                state = State.DISCOVERED; // Reset to allow retry
+            }
             throw new RuntimeException("Service startup failed: " + fullServiceName, e);
         }
     }
@@ -680,7 +695,11 @@ public class ServiceLifecycleManager {
      * are shut down even if some fail - failures are logged but not rethrown.
      */
     public synchronized void shutdownServices() {
-        if (state != State.RUNNING) {
+        // Allow shutdown from FAILED too: a non-retryable startup abort may have
+        // left some providers started (the data store opened before the search
+        // provider hit the lock). shutdown() is a no-op for providers that never
+        // started, so this safely closes whatever did.
+        if (state != State.RUNNING && state != State.FAILED) {
             LOG.warn("Cannot shutdown services in state: {}. Ignoring.", state);
             return;
         }
@@ -792,6 +811,46 @@ public class ServiceLifecycleManager {
      */
     public boolean isRunning() {
         return state == State.RUNNING;
+    }
+
+    /**
+     * Returns whether startup aborted with a non-retryable failure.
+     * <p>When {@code true}, the manager is in the terminal {@link State#FAILED}
+     * state and {@link #getStartupFailure()} returns the cause.
+     *
+     * @return {@code true} if the manager is in {@link State#FAILED}
+     */
+    public boolean isFailed() {
+        return state == State.FAILED;
+    }
+
+    /**
+     * Returns the exception that aborted startup, if any.
+     * <p>Set only when a service throws a {@link NonRetryableStartupFailure}
+     * during {@link #startServices()}; otherwise empty. Inspect the cause chain
+     * (e.g. with {@link DataStoreAlreadyOpenException#findIn(Throwable)}) to
+     * react to a specific terminal condition.
+     *
+     * @return the terminal startup failure, or empty if startup has not failed
+     */
+    public Optional<Throwable> getStartupFailure() {
+        return Optional.ofNullable(startupFailure);
+    }
+
+    /**
+     * Returns whether it is still meaningful to wait for a service to become
+     * available — that is, whether startup is in progress ({@link State#STARTING})
+     * or has completed successfully ({@link State#RUNNING}).
+     * <p>Background waiters that poll {@link #getRunningService(Class)} for a
+     * service that starts in a later phase should consult this method and stop
+     * waiting once it returns {@code false}, rather than spinning until they
+     * exhaust a retry budget. It returns {@code false} once startup has failed
+     * ({@link State#FAILED}) or shutdown has begun.
+     *
+     * @return {@code true} while in {@link State#STARTING} or {@link State#RUNNING}
+     */
+    public boolean isStartupActive() {
+        return state == State.STARTING || state == State.RUNNING;
     }
 
     /**

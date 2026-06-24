@@ -123,12 +123,19 @@ public record NavigationCoordinateRecord(IntIdSet navigationPatternNids,
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof NavigationCoordinateRecord that)) return false;
-        return navigationPatternNids().equals(that.navigationPatternNids());
+        // All four components participate. vertexStates / sortVertices / verticesSortPatternNidList were
+        // previously omitted, so a change to any of them did not register as a value change — an override of
+        // those dimensions never propagated into the composite coordinate and so could not be captured or
+        // persisted (IKE-Network/ike-issues#746).
+        return sortVertices() == that.sortVertices()
+                && navigationPatternNids().equals(that.navigationPatternNids())
+                && vertexStates().equals(that.vertexStates())
+                && verticesSortPatternNidList().equals(that.verticesSortPatternNidList());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(navigationPatternNids());
+        return Objects.hash(navigationPatternNids(), vertexStates(), sortVertices(), verticesSortPatternNidList());
     }
 
     @Override
