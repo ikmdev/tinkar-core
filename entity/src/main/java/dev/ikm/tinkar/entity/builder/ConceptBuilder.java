@@ -17,7 +17,6 @@ package dev.ikm.tinkar.entity.builder;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
-import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.entity.ConceptRecord;
 import dev.ikm.tinkar.entity.ConceptRecordBuilder;
@@ -29,18 +28,15 @@ import dev.ikm.tinkar.entity.SemanticRecord;
 import dev.ikm.tinkar.entity.SemanticRecordBuilder;
 import dev.ikm.tinkar.entity.SemanticVersionRecord;
 import dev.ikm.tinkar.entity.SemanticVersionRecordBuilder;
-import dev.ikm.tinkar.entity.StampRecord;
+import dev.ikm.tinkar.entity.builder.ComponentLedger.VersionEntry;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpressionBuilder;
-import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -53,7 +49,7 @@ import java.util.function.Consumer;
  * that stamp, and {@code build()} replays the accumulated declarations into the open
  * datastore. There is no transaction: declared stamps are committed facts, writes go
  * directly through {@link EntityService#putEntity}, and replaying the same ledger yields
- * byte-identical entities (all identities are derived, none random).
+ * identical entities (all identities are derived, none random).
  *
  * <h2>Grammar</h2>
  * <ul>
@@ -96,22 +92,11 @@ import java.util.function.Consumer;
  */
 public final class ConceptBuilder {
 
-    private final Namespace namespace;
-    private final String birthFqn;
-    private final UUID conceptUuid;
-
-    private final List<Stamp> conceptStamps = new ArrayList<>();
-    private final List<DescriptionLedger> descriptions = new ArrayList<>();
+    private final ComponentLedger ledger;
     private final List<VersionEntry<DiTreeEntity>> axiomVersions = new ArrayList<>();
 
-    private long lastStampTime = Long.MIN_VALUE;
-    private boolean born = false;
-    private boolean built = false;
-
     ConceptBuilder(Namespace namespace, String birthFqn) {
-        this.namespace = namespace;
-        this.birthFqn = birthFqn;
-        this.conceptUuid = namespace.uuidFor(birthFqn);
+        this.ledger = new ComponentLedger(namespace.uuidFor(birthFqn), birthFqn);
     }
 
     /**
@@ -120,7 +105,7 @@ public final class ConceptBuilder {
      * @return the concept's public id
      */
     public PublicId publicId() {
-        return PublicIds.of(conceptUuid);
+        return PublicIds.of(ledger.componentUuid);
     }
 
     /**
@@ -135,15 +120,9 @@ public final class ConceptBuilder {
      * @throws IllegalStateException    if {@code build()} has already run
      */
     public ActiveScope at(ActiveStamp stamp) {
-        checkChronology(stamp);
-        if (!born) {
-            born = true;
-            conceptStamps.add(stamp);
-            DescriptionLedger fqn = new DescriptionLedger(
-                    fqnUuid(), TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE, TinkarTerm.ENGLISH_LANGUAGE);
-            fqn.versions.add(new VersionEntry<>(stamp, birthFqn));
-            fqn.dialects.add(new VersionEntry<>(stamp, TinkarTerm.PREFERRED));
-            descriptions.add(fqn);
+        ledger.checkChronology(stamp);
+        if (!ledger.born()) {
+            ledger.birth(stamp);
         }
         return new ActiveScope(stamp);
     }
@@ -161,24 +140,9 @@ public final class ConceptBuilder {
      *                                  {@code build()} has already run
      */
     public RetireScope at(InactiveStamp stamp) {
-        if (!born) {
-            throw new IllegalStateException(
-                    "Cannot open a retirement scope before the birth scope: " + birthFqn);
-        }
-        checkChronology(stamp);
+        ledger.requireBornForRetirement();
+        ledger.checkChronology(stamp);
         return new RetireScope(stamp);
-    }
-
-    private void checkChronology(Stamp stamp) {
-        if (built) {
-            throw new IllegalStateException("This declaration has already been built: " + birthFqn);
-        }
-        if (stamp.time() < lastStampTime) {
-            throw new IllegalArgumentException(
-                    "Ledger scopes must be chronological: stamp time " + stamp.time()
-                            + " precedes prior scope time " + lastStampTime + " for " + birthFqn);
-        }
-        lastStampTime = stamp.time();
     }
 
     /**
@@ -192,24 +156,12 @@ public final class ConceptBuilder {
      * @throws IllegalStateException if no birth scope was declared, or on repeat invocation
      */
     public EntityProxy.Concept build() {
-        if (!born) {
-            throw new IllegalStateException("A concept declaration requires a birth scope: " + birthFqn);
-        }
-        if (built) {
-            throw new IllegalStateException("This declaration has already been built: " + birthFqn);
-        }
-        built = true;
-
-        Set<UUID> writtenStamps = new HashSet<>();
-        int conceptNid = nidFor(conceptUuid);
-
-        writeConcept(conceptNid, writtenStamps);
-        for (DescriptionLedger description : descriptions) {
-            writeDescription(description, conceptNid, writtenStamps);
-        }
-        writeAxioms(conceptNid, writtenStamps);
-
-        return EntityProxy.Concept.make(birthFqn, PublicIds.of(conceptUuid));
+        ledger.markBuilt();
+        int conceptNid = ledger.componentNid();
+        writeConcept(conceptNid);
+        ledger.writeDescriptions(conceptNid);
+        writeAxioms(conceptNid);
+        return EntityProxy.Concept.make(ledger.birthFqn, PublicIds.of(ledger.componentUuid));
     }
 
     // ------------------------------------------------------------------ scopes
@@ -234,7 +186,7 @@ public final class ConceptBuilder {
          * @return this scope, for chaining
          */
         public ActiveScope synonym(String text) {
-            addDescription(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE, "synonym", text, stamp);
+            ledger.addDescription(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE, "synonym", text, stamp);
             return this;
         }
 
@@ -246,7 +198,7 @@ public final class ConceptBuilder {
          * @return this scope, for chaining
          */
         public ActiveScope definition(String text) {
-            addDescription(TinkarTerm.DEFINITION_DESCRIPTION_TYPE, "definition", text, stamp);
+            ledger.addDescription(TinkarTerm.DEFINITION_DESCRIPTION_TYPE, "definition", text, stamp);
             return this;
         }
 
@@ -262,7 +214,7 @@ public final class ConceptBuilder {
          *                                  or if more than one does (ambiguous reference)
          */
         public ActiveScope reviseSynonym(String currentText, String newText) {
-            resolveLive(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym")
+            ledger.resolveLive(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym")
                     .versions.add(new VersionEntry<>(stamp, newText));
             return this;
         }
@@ -276,7 +228,7 @@ public final class ConceptBuilder {
          * @return this scope, for chaining
          */
         public ActiveScope reviseFullyQualifiedName(String newText) {
-            descriptions.getFirst().versions.add(new VersionEntry<>(stamp, newText));
+            ledger.fqnLedger().versions.add(new VersionEntry<>(stamp, newText));
             return this;
         }
 
@@ -347,7 +299,7 @@ public final class ConceptBuilder {
          * @return this scope, for chaining
          */
         public RetireScope retire() {
-            conceptStamps.add(stamp);
+            ledger.componentStamps.add(stamp);
             return this;
         }
 
@@ -361,8 +313,8 @@ public final class ConceptBuilder {
          *                                  or if more than one does (ambiguous reference)
          */
         public RetireScope retireSynonym(String currentText) {
-            DescriptionLedger target = resolveLive(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym");
-            target.versions.add(new VersionEntry<>(stamp, currentText));
+            ledger.resolveLive(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym")
+                    .versions.add(new VersionEntry<>(stamp, currentText));
             return this;
         }
 
@@ -376,8 +328,8 @@ public final class ConceptBuilder {
          *                                  or if more than one does (ambiguous reference)
          */
         public RetireScope retireDefinition(String currentText) {
-            DescriptionLedger target = resolveLive(TinkarTerm.DEFINITION_DESCRIPTION_TYPE, currentText, "definition");
-            target.versions.add(new VersionEntry<>(stamp, currentText));
+            ledger.resolveLive(TinkarTerm.DEFINITION_DESCRIPTION_TYPE, currentText, "definition")
+                    .versions.add(new VersionEntry<>(stamp, currentText));
             return this;
         }
 
@@ -412,128 +364,34 @@ public final class ConceptBuilder {
         }
     }
 
-    // ------------------------------------------------------------------ accumulation
-
-    private void addDescription(EntityProxy.Concept type, String kindKey, String text, Stamp stamp) {
-        long ordinal = descriptions.stream().filter(d -> d.type.equals(type)).count();
-        UUID descriptionUuid = UuidT5Generator.get(conceptUuid,
-                kindKey + "|" + TinkarTerm.ENGLISH_LANGUAGE.publicId().asUuidArray()[0] + "|" + ordinal);
-        DescriptionLedger description = new DescriptionLedger(descriptionUuid, type, TinkarTerm.ENGLISH_LANGUAGE);
-        description.versions.add(new VersionEntry<>(stamp, text));
-        description.dialects.add(new VersionEntry<>(stamp, TinkarTerm.PREFERRED));
-        descriptions.add(description);
-    }
-
-    private DescriptionLedger resolveLive(EntityProxy.Concept type, String currentText, String kindLabel) {
-        List<DescriptionLedger> matches = descriptions.stream()
-                .filter(d -> d.type.equals(type))
-                .filter(d -> !d.retired())
-                .filter(d -> d.currentText().equals(currentText))
-                .toList();
-        if (matches.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "No live " + kindLabel + " with text \"" + currentText + "\" on " + birthFqn);
-        }
-        if (matches.size() > 1) {
-            throw new IllegalArgumentException(
-                    "Ambiguous reference: " + matches.size() + " live " + kindLabel + "s with text \""
-                            + currentText + "\" on " + birthFqn);
-        }
-        return matches.getFirst();
-    }
-
-    private UUID fqnUuid() {
-        return UuidT5Generator.get(conceptUuid,
-                "fully-qualified-name|" + TinkarTerm.ENGLISH_LANGUAGE.publicId().asUuidArray()[0]);
-    }
-
     // ------------------------------------------------------------------ replay
 
-    private int writeStamp(Stamp stamp, Set<UUID> written) {
-        UUID stampUuid = stamp.publicId().asUuidArray()[0];
-        int stampNid = nidFor(stampUuid);
-        if (written.add(stampUuid)) {
-            StampRecord record = StampRecord.make(stampUuid, stamp.state(), stamp.time(),
-                    stamp.author().publicId(), stamp.module().publicId(), stamp.path().publicId());
-            EntityService.get().putEntity(record);
-        }
-        return stampNid;
-    }
-
-    private void writeConcept(int conceptNid, Set<UUID> writtenStamps) {
+    private void writeConcept(int conceptNid) {
         RecordListBuilder<ConceptVersionRecord> versions = RecordListBuilder.make();
         ConceptRecord bootstrap = ConceptRecordBuilder.builder()
                 .nid(conceptNid)
-                .mostSignificantBits(conceptUuid.getMostSignificantBits())
-                .leastSignificantBits(conceptUuid.getLeastSignificantBits())
+                .mostSignificantBits(ledger.componentUuid.getMostSignificantBits())
+                .leastSignificantBits(ledger.componentUuid.getLeastSignificantBits())
                 .versions(versions)
                 .build();
-        for (Stamp stamp : conceptStamps) {
+        for (Stamp stamp : ledger.componentStamps) {
             versions.add(ConceptVersionRecordBuilder.builder()
                     .chronology(bootstrap)
-                    .stampNid(writeStamp(stamp, writtenStamps))
+                    .stampNid(ledger.writeStamp(stamp))
                     .build());
         }
         EntityService.get().putEntity(
                 ConceptRecordBuilder.builder(bootstrap).versions(versions.toImmutable()).build());
     }
 
-    private void writeDescription(DescriptionLedger description, int conceptNid, Set<UUID> writtenStamps) {
-        int descriptionNid = nidFor(description.uuid);
-        RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
-        SemanticRecord bootstrap = SemanticRecordBuilder.builder()
-                .nid(descriptionNid)
-                .mostSignificantBits(description.uuid.getMostSignificantBits())
-                .leastSignificantBits(description.uuid.getLeastSignificantBits())
-                .patternNid(TinkarTerm.DESCRIPTION_PATTERN.nid())
-                .referencedComponentNid(conceptNid)
-                .versions(versions)
-                .build();
-        for (VersionEntry<String> version : description.versions) {
-            versions.add(SemanticVersionRecordBuilder.builder()
-                    .chronology(bootstrap)
-                    .stampNid(writeStamp(version.stamp, writtenStamps))
-                    .fieldValues(Lists.immutable.of(
-                            description.language, version.value,
-                            TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE, description.type))
-                    .build());
-        }
-        EntityService.get().putEntity(
-                SemanticRecordBuilder.builder(bootstrap).versions(versions.toImmutable()).build());
-
-        writeDialect(description, descriptionNid, writtenStamps);
-    }
-
-    private void writeDialect(DescriptionLedger description, int descriptionNid, Set<UUID> writtenStamps) {
-        UUID dialectUuid = UuidT5Generator.get(description.uuid, "us-dialect");
-        RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
-        SemanticRecord bootstrap = SemanticRecordBuilder.builder()
-                .nid(nidFor(dialectUuid))
-                .mostSignificantBits(dialectUuid.getMostSignificantBits())
-                .leastSignificantBits(dialectUuid.getLeastSignificantBits())
-                .patternNid(TinkarTerm.US_DIALECT_PATTERN.nid())
-                .referencedComponentNid(descriptionNid)
-                .versions(versions)
-                .build();
-        for (VersionEntry<EntityProxy.Concept> dialect : description.dialects) {
-            versions.add(SemanticVersionRecordBuilder.builder()
-                    .chronology(bootstrap)
-                    .stampNid(writeStamp(dialect.stamp, writtenStamps))
-                    .fieldValues(Lists.immutable.of(dialect.value))
-                    .build());
-        }
-        EntityService.get().putEntity(
-                SemanticRecordBuilder.builder(bootstrap).versions(versions.toImmutable()).build());
-    }
-
-    private void writeAxioms(int conceptNid, Set<UUID> writtenStamps) {
+    private void writeAxioms(int conceptNid) {
         if (axiomVersions.isEmpty()) {
             return;
         }
-        UUID axiomUuid = UuidT5Generator.get(conceptUuid, "el-plus-plus-stated-axioms");
+        UUID axiomUuid = UuidT5Generator.get(ledger.componentUuid, "el-plus-plus-stated-axioms");
         RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
         SemanticRecord bootstrap = SemanticRecordBuilder.builder()
-                .nid(nidFor(axiomUuid))
+                .nid(ComponentLedger.nidFor(axiomUuid))
                 .mostSignificantBits(axiomUuid.getMostSignificantBits())
                 .leastSignificantBits(axiomUuid.getLeastSignificantBits())
                 .patternNid(TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid())
@@ -543,42 +401,11 @@ public final class ConceptBuilder {
         for (VersionEntry<DiTreeEntity> axiom : axiomVersions) {
             versions.add(SemanticVersionRecordBuilder.builder()
                     .chronology(bootstrap)
-                    .stampNid(writeStamp(axiom.stamp, writtenStamps))
-                    .fieldValues(Lists.immutable.of(axiom.value))
+                    .stampNid(ledger.writeStamp(axiom.stamp()))
+                    .fieldValues(Lists.immutable.of(axiom.value()))
                     .build());
         }
         EntityService.get().putEntity(
                 SemanticRecordBuilder.builder(bootstrap).versions(versions.toImmutable()).build());
-    }
-
-    private static int nidFor(UUID uuid) {
-        return PrimitiveData.nid(PublicIds.of(uuid));
-    }
-
-    // ------------------------------------------------------------------ ledger state
-
-    private record VersionEntry<T>(Stamp stamp, T value) {
-    }
-
-    private static final class DescriptionLedger {
-        final UUID uuid;
-        final EntityProxy.Concept type;
-        final ConceptFacade language;
-        final List<VersionEntry<String>> versions = new ArrayList<>();
-        final List<VersionEntry<EntityProxy.Concept>> dialects = new ArrayList<>();
-
-        DescriptionLedger(UUID uuid, EntityProxy.Concept type, ConceptFacade language) {
-            this.uuid = uuid;
-            this.type = type;
-            this.language = language;
-        }
-
-        String currentText() {
-            return versions.getLast().value();
-        }
-
-        boolean retired() {
-            return versions.getLast().stamp() instanceof InactiveStamp;
-        }
     }
 }

@@ -78,6 +78,34 @@ public record Namespace(UUID uuid) {
     }
 
     /**
+     * Opens a pattern declaration whose identity is derived from its fully qualified name
+     * at birth. The returned builder's first {@link PatternBuilder#at(ActiveStamp)} scope
+     * is the birth scope and must declare the pattern's meaning and purpose.
+     *
+     * @param fullyQualifiedName the pattern's fully qualified name at birth — both the
+     *                           identity seed and the FQN description's initial text
+     * @return a builder for the pattern's version ledger
+     * @throws IllegalArgumentException if {@code fullyQualifiedName} is null or blank
+     */
+    public PatternBuilder pattern(String fullyQualifiedName) {
+        if (fullyQualifiedName == null || fullyQualifiedName.isBlank()) {
+            throw new IllegalArgumentException("A pattern declaration requires a meaningful fully qualified name");
+        }
+        return new PatternBuilder(this, fullyQualifiedName);
+    }
+
+    /**
+     * Resolves the identity a birth FQN derives in this namespace, as a pattern reference
+     * handle — for citing a pattern without building it here.
+     *
+     * @param birthFqn the pattern's fully qualified name at birth
+     * @return a pattern proxy carrying the derived identity and the given name as its description
+     */
+    public EntityProxy.Pattern patternRef(String birthFqn) {
+        return EntityProxy.Pattern.make(birthFqn, PublicIds.of(uuidFor(birthFqn)));
+    }
+
+    /**
      * Derives the type-5 UUID this namespace assigns to a name.
      *
      * @param name the identity seed — for concepts, the fully qualified name at birth

@@ -21,6 +21,8 @@ import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
+import dev.ikm.tinkar.entity.PatternEntity;
+import dev.ikm.tinkar.entity.PatternEntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.StampEntity;
@@ -28,6 +30,7 @@ import dev.ikm.tinkar.entity.builder.ActiveStamp;
 import dev.ikm.tinkar.entity.builder.ConceptBuilder;
 import dev.ikm.tinkar.entity.builder.InactiveStamp;
 import dev.ikm.tinkar.entity.builder.Namespace;
+import dev.ikm.tinkar.entity.builder.PatternBuilder;
 import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.integration.helper.DataStore;
@@ -225,6 +228,75 @@ class ChronologyBuilderIT {
         int[] descriptionNids = EntityService.get().semanticNidsForComponentOfPattern(
                 first.nid(), TinkarTerm.DESCRIPTION_PATTERN.nid());
         assertEquals(2, descriptionNids.length, "FQN + one synonym, not duplicated by replay");
+    }
+
+    @Test
+    @DisplayName("A pattern ledger replays: version tuple, ordered field definitions, descriptions")
+    void patternLedgerReplay() {
+        EntityProxy.Pattern pattern = TEST_NAMESPACE.pattern("Journal manifest pattern (Test)")
+                .at(W1)
+                    .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER)
+                    .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.COMPONENT_ID_LIST_FIELD)
+                    .field(TinkarTerm.USER, TinkarTerm.MODEL_CONCEPT, TinkarTerm.STRING)
+                    .synonym("Journal manifest")
+                .build();
+
+        assertEquals(TEST_NAMESPACE.patternRef("Journal manifest pattern (Test)").publicId(),
+                pattern.publicId());
+
+        PatternEntity<?> patternEntity = EntityHandle.get(pattern.nid()).expectPattern();
+        assertEquals(1, patternEntity.versions().size());
+        PatternEntityVersion version = (PatternEntityVersion) patternEntity.versions().get(0);
+        assertEquals(TinkarTerm.MODEL_CONCEPT.nid(), version.semanticMeaningNid());
+        assertEquals(TinkarTerm.USER.nid(), version.semanticPurposeNid());
+        assertEquals(2, version.fieldDefinitions().size());
+        assertEquals(TinkarTerm.COMPONENT_ID_LIST_FIELD.nid(),
+                version.fieldDefinitions().get(0).dataTypeNid());
+        assertEquals(0, version.fieldDefinitions().get(0).indexInPattern());
+        assertEquals(TinkarTerm.STRING.nid(), version.fieldDefinitions().get(1).dataTypeNid());
+        assertEquals(1, version.fieldDefinitions().get(1).indexInPattern());
+
+        int[] descriptionNids = EntityService.get().semanticNidsForComponentOfPattern(
+                pattern.nid(), TinkarTerm.DESCRIPTION_PATTERN.nid());
+        assertEquals(2, descriptionNids.length, "FQN + one synonym");
+    }
+
+    @Test
+    @DisplayName("Pattern restatement in a later scope is a revision; retirement carries content")
+    void patternRestatementAndRetirement() {
+        EntityProxy.Pattern pattern = TEST_NAMESPACE.pattern("Evolving pattern (Test)")
+                .at(W1)
+                    .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER)
+                .at(W2)
+                    .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER)
+                    .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.STRING)
+                .at(W3_RETIRE)
+                    .retire()
+                .build();
+
+        PatternEntity<?> patternEntity = EntityHandle.get(pattern.nid()).expectPattern();
+        assertEquals(3, patternEntity.versions().size(), "birth + restatement + retirement");
+        PatternEntityVersion birth = (PatternEntityVersion) patternEntity.versions().get(0);
+        assertEquals(0, birth.fieldDefinitions().size(), "membership-pattern shape at birth");
+        PatternEntityVersion restated = (PatternEntityVersion) patternEntity.versions().get(1);
+        assertEquals(1, restated.fieldDefinitions().size());
+        PatternEntityVersion retired = (PatternEntityVersion) patternEntity.versions().get(2);
+        assertEquals(1, retired.fieldDefinitions().size(), "retirement carries prior content");
+        assertEquals(State.INACTIVE, Entity.getStamp(retired.stampNid()).state());
+    }
+
+    @Test
+    @DisplayName("A pattern version restates as a whole — partial scopes fail")
+    void patternVersionValidation() {
+        PatternBuilder.ActiveScope partial = TEST_NAMESPACE.pattern("Partial pattern (Test)")
+                .at(W1)
+                .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.STRING);
+        assertThrows(IllegalStateException.class, partial::build,
+                "a scope declaring fields must restate meaning and purpose");
+
+        PatternBuilder.ActiveScope empty = TEST_NAMESPACE.pattern("Empty pattern (Test)").at(W1);
+        assertThrows(IllegalStateException.class, empty::build,
+                "the birth scope must declare meaning and purpose");
     }
 
     private static SemanticEntity<?> findDescriptionByLatestText(int[] descriptionNids, String text) {
