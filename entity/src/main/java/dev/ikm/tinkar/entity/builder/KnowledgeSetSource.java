@@ -24,12 +24,12 @@ package dev.ikm.tinkar.entity.builder;
  * Implementations compose the full ledger — every wave — into the set's session and
  * return the set. Composition must be store-free: builders defer everything that mints
  * nids (axiom graph materialization happens at {@link KnowledgeSet#write()}), so a
- * {@code KnowledgeSource} can be composed for reflection over its declarations without a
+ * {@code KnowledgeSetSource} can be composed for reflection over its declarations without a
  * running datastore. Ledger modules should register the implementation both in
  * {@code module-info} ({@code provides}) and in {@code META-INF/services} for classpath
  * discovery by build tooling.
  */
-public interface KnowledgeSource {
+public interface KnowledgeSetSource {
 
     /**
      * Composes the full ledger into the knowledge set's session and returns the set.

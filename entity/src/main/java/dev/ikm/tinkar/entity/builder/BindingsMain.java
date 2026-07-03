@@ -22,7 +22,7 @@ import java.util.ServiceLoader;
 
 /**
  * The bindings-generation entry point build tooling invokes: discovers the project's
- * {@link KnowledgeSource} via {@link ServiceLoader}, composes it, and writes the
+ * {@link KnowledgeSetSource} via {@link ServiceLoader}, composes it, and writes the
  * generated bindings class with {@link BindingsWriter}.
  * <p>
  * This is the stable reflective seam for the {@code ike:knowledge-bindings} Maven goal:
@@ -33,7 +33,7 @@ import java.util.ServiceLoader;
  * <p>
  * Arguments: {@code outputDir packageName className [sourceClassName]} — the source
  * class argument selects an implementation when the classpath provides more than one
- * {@code KnowledgeSource}; otherwise exactly one must be discoverable.
+ * {@code KnowledgeSetSource}; otherwise exactly one must be discoverable.
  */
 public final class BindingsMain {
 
@@ -55,16 +55,16 @@ public final class BindingsMain {
         String packageName = args[1];
         String className = args[2];
 
-        KnowledgeSource source;
+        KnowledgeSetSource source;
         if (args.length == 4) {
-            source = (KnowledgeSource) Class.forName(args[3], true, BindingsMain.class.getClassLoader())
+            source = (KnowledgeSetSource) Class.forName(args[3], true, BindingsMain.class.getClassLoader())
                     .getDeclaredConstructor().newInstance();
         } else {
-            List<KnowledgeSource> found = new ArrayList<>();
-            ServiceLoader.load(KnowledgeSource.class, BindingsMain.class.getClassLoader())
+            List<KnowledgeSetSource> found = new ArrayList<>();
+            ServiceLoader.load(KnowledgeSetSource.class, BindingsMain.class.getClassLoader())
                     .forEach(found::add);
             if (found.size() != 1) {
-                throw new IllegalStateException("Expected exactly one KnowledgeSource on the classpath, found "
+                throw new IllegalStateException("Expected exactly one KnowledgeSetSource on the classpath, found "
                         + found.size() + (found.isEmpty() ? "" : ": "
                         + found.stream().map(s -> s.getClass().getName()).toList())
                         + " — pass the implementation class name as the fourth argument to select one");

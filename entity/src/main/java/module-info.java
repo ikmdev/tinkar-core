@@ -82,7 +82,7 @@ module dev.ikm.tinkar.entity {
 
     opens dev.ikm.tinkar.entity.graph.adaptor.axiom;
 
-    uses dev.ikm.tinkar.entity.builder.KnowledgeSource;
+    uses dev.ikm.tinkar.entity.builder.KnowledgeSetSource;
 
     provides CachingService with
             LanguageCalculatorWithCache.CacheProvider,
