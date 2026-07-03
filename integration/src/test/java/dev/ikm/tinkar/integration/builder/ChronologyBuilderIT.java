@@ -29,7 +29,7 @@ import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.builder.ActiveStamp;
 import dev.ikm.tinkar.entity.builder.ConceptBuilder;
 import dev.ikm.tinkar.entity.builder.InactiveStamp;
-import dev.ikm.tinkar.entity.builder.Namespace;
+import dev.ikm.tinkar.entity.builder.KnowledgeSet;
 import dev.ikm.tinkar.entity.builder.PatternBuilder;
 import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
@@ -53,16 +53,16 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * Integration tests for the ledger-form builders under the session model: the namespace
+ * Integration tests for the ledger-form builders under the session model: the knowledge set
  * is the session — builders resume by birth FQN, the source composes time-major
- * (stamps declared inline, edits under each), and {@link Namespace#write()} replays the
+ * (stamps declared inline, edits under each), and {@link KnowledgeSet#write()} replays the
  * whole session, idempotently.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ChronologyBuilderIT {
 
-    private static final Namespace TEST_NAMESPACE =
-            Namespace.of("f7f5c2a4-4b1e-5b6a-9d3c-2e8f0a1b4c6d");
+    private static final KnowledgeSet TEST_SET =
+            KnowledgeSet.of("f7f5c2a4-4b1e-5b6a-9d3c-2e8f0a1b4c6d");
 
     private static ActiveStamp birth;
     private static ActiveStamp later;
@@ -77,49 +77,49 @@ class ChronologyBuilderIT {
         birth = Stamp.active("2026-07-15T00:00:00Z",
                 TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
 
-        TEST_NAMESPACE.concept("Journal element (Test)").at(birth)
+        TEST_SET.concept("Journal element (Test)").at(birth)
                 .synonym("Journal element")
                 .definition("Root kind of the blocks a conversation journal orders.")
                 .statedAxioms(leb -> leb.NecessarySet(leb.And(
                         leb.ConceptAxiom(TinkarTerm.MODEL_CONCEPT))));
 
-        TEST_NAMESPACE.concept("Retiring kind (Test)").at(birth)
+        TEST_SET.concept("Retiring kind (Test)").at(birth)
                 .synonym("Temporary name");
 
-        TEST_NAMESPACE.pattern("Journal manifest pattern (Test)").at(birth)
+        TEST_SET.pattern("Journal manifest pattern (Test)").at(birth)
                 .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER)
                 .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.COMPONENT_ID_LIST_FIELD)
                 .field(TinkarTerm.USER, TinkarTerm.MODEL_CONCEPT, TinkarTerm.STRING)
                 .synonym("Journal manifest");
 
-        TEST_NAMESPACE.pattern("Evolving pattern (Test)").at(birth)
+        TEST_SET.pattern("Evolving pattern (Test)").at(birth)
                 .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER);
 
         later = Stamp.active("2026-09-01T00:00:00Z",
                 TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
 
         // Resume by FQN — no restatement; the ledger simply continues.
-        TEST_NAMESPACE.concept("Journal element (Test)").at(later)
+        TEST_SET.concept("Journal element (Test)").at(later)
                 .synonym("Journal block")
                 .reviseSynonym("Journal element", "Journal atom");
 
-        TEST_NAMESPACE.pattern("Evolving pattern (Test)").at(later)
+        TEST_SET.pattern("Evolving pattern (Test)").at(later)
                 .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER)
                 .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.STRING);
 
         retirement = Stamp.inactive("2026-10-01T00:00:00Z",
                 TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
 
-        TEST_NAMESPACE.concept("Retiring kind (Test)").at(retirement)
+        TEST_SET.concept("Retiring kind (Test)").at(retirement)
                 .retire()
                 .retireSynonym("Temporary name");
 
-        TEST_NAMESPACE.pattern("Evolving pattern (Test)").at(retirement)
+        TEST_SET.pattern("Evolving pattern (Test)").at(retirement)
                 .retire();
 
         // ---- One session write; a second write proves idempotence. ----
-        TEST_NAMESPACE.write();
-        TEST_NAMESPACE.write();
+        TEST_SET.write();
+        TEST_SET.write();
     }
 
     @AfterAll
@@ -130,12 +130,12 @@ class ChronologyBuilderIT {
     @Test
     @DisplayName("Builders resume by FQN — same builder, same identity, one continuous ledger")
     void buildersResume() {
-        ConceptBuilder resumed = TEST_NAMESPACE.concept("Journal element (Test)");
-        assertSame(resumed, TEST_NAMESPACE.concept("Journal element (Test)"));
-        assertEquals(UuidT5Generator.get(TEST_NAMESPACE.uuid(), "Journal element (Test)"),
+        ConceptBuilder resumed = TEST_SET.concept("Journal element (Test)");
+        assertSame(resumed, TEST_SET.concept("Journal element (Test)"));
+        assertEquals(UuidT5Generator.get(TEST_SET.uuid(), "Journal element (Test)"),
                 resumed.publicId().asUuidArray()[0]);
         assertEquals(resumed.publicId(),
-                TEST_NAMESPACE.conceptRef("Journal element (Test)").publicId());
+                TEST_SET.conceptRef("Journal element (Test)").publicId());
     }
 
     @Test
@@ -150,7 +150,7 @@ class ChronologyBuilderIT {
     @Test
     @DisplayName("The resumed concept replays as one chronology: revisions, additions, axioms")
     void conceptLedgerReplay() {
-        int conceptNid = TEST_NAMESPACE.conceptRef("Journal element (Test)").nid();
+        int conceptNid = TEST_SET.conceptRef("Journal element (Test)").nid();
         ConceptEntity<?> conceptEntity = EntityHandle.get(conceptNid).expectConcept();
         assertEquals(1, conceptEntity.versions().size(),
                 "birth only — later scopes touched descriptions, not the concept; and write() twice must not duplicate");
@@ -187,7 +187,7 @@ class ChronologyBuilderIT {
     @Test
     @DisplayName("Retirement scopes append inactive-stamped versions")
     void retirementLedger() {
-        int conceptNid = TEST_NAMESPACE.conceptRef("Retiring kind (Test)").nid();
+        int conceptNid = TEST_SET.conceptRef("Retiring kind (Test)").nid();
         ConceptEntity<?> conceptEntity = EntityHandle.get(conceptNid).expectConcept();
         assertEquals(2, conceptEntity.versions().size(), "birth + retirement");
         StampEntity<?> lastStamp = Entity.getStamp(conceptEntity.versions().get(1).stampNid());
@@ -204,7 +204,7 @@ class ChronologyBuilderIT {
     @Test
     @DisplayName("Patterns replay: version tuple, ordered fields, restatement revises, retirement carries")
     void patternLedgerReplay() {
-        int manifestNid = TEST_NAMESPACE.patternRef("Journal manifest pattern (Test)").nid();
+        int manifestNid = TEST_SET.patternRef("Journal manifest pattern (Test)").nid();
         PatternEntity<?> manifest = EntityHandle.get(manifestNid).expectPattern();
         assertEquals(1, manifest.versions().size());
         PatternEntityVersion manifestVersion = (PatternEntityVersion) manifest.versions().get(0);
@@ -217,7 +217,7 @@ class ChronologyBuilderIT {
         assertEquals(TinkarTerm.STRING.nid(),
                 manifestVersion.fieldDefinitions().get(1).dataTypeNid());
 
-        int evolvingNid = TEST_NAMESPACE.patternRef("Evolving pattern (Test)").nid();
+        int evolvingNid = TEST_SET.patternRef("Evolving pattern (Test)").nid();
         PatternEntity<?> evolving = EntityHandle.get(evolvingNid).expectPattern();
         assertEquals(3, evolving.versions().size(), "birth + restatement + retirement");
         assertEquals(0, ((PatternEntityVersion) evolving.versions().get(0)).fieldDefinitions().size(),
@@ -231,7 +231,7 @@ class ChronologyBuilderIT {
     @Test
     @DisplayName("Ledger scopes must be chronological, per component")
     void chronologyEnforced() {
-        Namespace probe = Namespace.of("11111111-1111-5111-9111-111111111111");
+        KnowledgeSet probe = KnowledgeSet.of("11111111-1111-5111-9111-111111111111");
         ConceptBuilder.ActiveScope scope = probe.concept("Out of order (Probe)").at(later);
         assertThrows(IllegalArgumentException.class, () -> scope.at(birth));
     }
@@ -239,7 +239,7 @@ class ChronologyBuilderIT {
     @Test
     @DisplayName("Revise references must resolve uniquely")
     void reviseValidation() {
-        Namespace probe = Namespace.of("22222222-2222-5222-9222-222222222222");
+        KnowledgeSet probe = KnowledgeSet.of("22222222-2222-5222-9222-222222222222");
         ConceptBuilder.ActiveScope scope = probe.concept("Validation probe (Probe)")
                 .at(birth).synonym("Only name");
         assertThrows(IllegalArgumentException.class,
@@ -254,7 +254,7 @@ class ChronologyBuilderIT {
     @Test
     @DisplayName("Incomplete declarations fail the session write; retirement requires birth")
     void lifecycleValidation() {
-        Namespace probe = Namespace.of("33333333-3333-5333-9333-333333333333");
+        KnowledgeSet probe = KnowledgeSet.of("33333333-3333-5333-9333-333333333333");
         assertThrows(IllegalStateException.class,
                 () -> probe.concept("Never born (Probe)").at(retirement));
 
@@ -266,13 +266,13 @@ class ChronologyBuilderIT {
     @Test
     @DisplayName("A pattern version restates as a whole; field meanings must be unique")
     void patternValidation() {
-        Namespace probe = Namespace.of("44444444-4444-5444-9444-444444444444");
+        KnowledgeSet probe = KnowledgeSet.of("44444444-4444-5444-9444-444444444444");
         probe.pattern("Partial pattern (Probe)").at(birth)
                 .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.STRING);
         assertThrows(IllegalStateException.class, probe::write,
                 "a scope declaring fields must restate meaning and purpose");
 
-        Namespace duplicates = Namespace.of("55555555-5555-5555-9555-555555555555");
+        KnowledgeSet duplicates = KnowledgeSet.of("55555555-5555-5555-9555-555555555555");
         PatternBuilder.ActiveScope duplicate = duplicates.pattern("Duplicate meanings (Probe)").at(birth)
                 .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER)
                 .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.STRING)
@@ -282,9 +282,9 @@ class ChronologyBuilderIT {
     }
 
     @Test
-    @DisplayName("One FQN cannot name both a concept and a pattern in a namespace")
+    @DisplayName("One FQN cannot name both a concept and a pattern in a knowledge set")
     void kindCollision() {
-        Namespace probe = Namespace.of("66666666-6666-5666-9666-666666666666");
+        KnowledgeSet probe = KnowledgeSet.of("66666666-6666-5666-9666-666666666666");
         probe.concept("Collider (Probe)");
         assertThrows(IllegalArgumentException.class, () -> probe.pattern("Collider (Probe)"));
     }

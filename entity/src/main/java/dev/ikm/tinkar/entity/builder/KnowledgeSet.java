@@ -24,13 +24,14 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * The identity root and ledger session of a content set. A namespace turns a concept's
- * <em>fully qualified name at birth</em> into its {@link dev.ikm.tinkar.common.id.PublicId}:
- * identity is {@code T5(namespace, birthFqn)}, so identity cannot be minted without a
- * meaningful name, and one UUID literal per namespace replaces one per concept.
+ * A knowledge set: the identity root and ledger session of an authored content set — the
+ * thing whose releases are change sets. The set's UUID acts as the RFC-4122 type-5
+ * namespace for identity derivation: a concept's identity is
+ * {@code T5(setUuid, fullyQualifiedNameAtBirth)}, so identity cannot be minted without a
+ * meaningful name, and one UUID literal per knowledge set replaces one per concept.
  *
  * <h2>The session registry — builders resume</h2>
- * A namespace keeps every builder it has opened, keyed by birth FQN:
+ * A knowledge set keeps every builder it has opened, keyed by birth FQN:
  * {@link #concept(String)} and {@link #pattern(String)} return the <em>same</em> builder
  * on every call with the same FQN, so a ledger can pull a component back up at any point
  * — typically under a later stamp — and continue without restating anything. The source
@@ -47,35 +48,36 @@ import java.util.UUID;
  * revised later without changing identity (the append-only ledger permanently records the
  * seed at its first declaration). Two rules keep the derivation safe, enforced by the
  * release verifier rather than this class: a birth FQN is never reused within a
- * namespace, even after retirement; and a released declaration's birth FQN is never
+ * knowledge set, even after retirement; and a released declaration's birth FQN is never
  * edited. Within one session, using the same FQN for both a concept and a pattern is an
  * error this class does reject — the identity would collide.
  */
-public final class Namespace {
+public final class KnowledgeSet {
 
     private final UUID uuid;
     private final Map<String, ConceptBuilder> concepts = new LinkedHashMap<>();
     private final Map<String, PatternBuilder> patterns = new LinkedHashMap<>();
 
-    private Namespace(UUID uuid) {
+    private KnowledgeSet(UUID uuid) {
         this.uuid = uuid;
     }
 
     /**
-     * Creates a namespace from a UUID literal.
+     * Creates a knowledge set from its UUID literal.
      *
-     * @param uuidString the namespace UUID in canonical string form
-     * @return the namespace
+     * @param uuidString the set's UUID in canonical string form
+     * @return the knowledge set
      * @throws IllegalArgumentException if {@code uuidString} is not a valid UUID
      */
-    public static Namespace of(String uuidString) {
-        return new Namespace(UUID.fromString(uuidString));
+    public static KnowledgeSet of(String uuidString) {
+        return new KnowledgeSet(UUID.fromString(uuidString));
     }
 
     /**
-     * The namespace UUID — the content set's single identity literal.
+     * The set's UUID — its single identity literal, and the type-5 namespace (RFC 4122
+     * sense) from which every identity in the set derives.
      *
-     * @return the namespace UUID
+     * @return the set's UUID
      */
     public UUID uuid() {
         return uuid;
@@ -91,13 +93,13 @@ public final class Namespace {
      *                           identity seed and the FQN description's initial text
      * @return the (new or resumed) builder for the concept's version ledger
      * @throws IllegalArgumentException if {@code fullyQualifiedName} is null or blank,
-     *                                  or already names a pattern in this namespace
+     *                                  or already names a pattern in this knowledge set
      */
     public ConceptBuilder concept(String fullyQualifiedName) {
         requireMeaningful(fullyQualifiedName, "concept");
         if (patterns.containsKey(fullyQualifiedName)) {
             throw new IllegalArgumentException(
-                    "\"" + fullyQualifiedName + "\" already names a pattern in this namespace — identity would collide");
+                    "\"" + fullyQualifiedName + "\" already names a pattern in this knowledge set — identity would collide");
         }
         return concepts.computeIfAbsent(fullyQualifiedName, fqn -> new ConceptBuilder(this, fqn));
     }
@@ -112,20 +114,20 @@ public final class Namespace {
      *                           identity seed and the FQN description's initial text
      * @return the (new or resumed) builder for the pattern's version ledger
      * @throws IllegalArgumentException if {@code fullyQualifiedName} is null or blank,
-     *                                  or already names a concept in this namespace
+     *                                  or already names a concept in this knowledge set
      */
     public PatternBuilder pattern(String fullyQualifiedName) {
         requireMeaningful(fullyQualifiedName, "pattern");
         if (concepts.containsKey(fullyQualifiedName)) {
             throw new IllegalArgumentException(
-                    "\"" + fullyQualifiedName + "\" already names a concept in this namespace — identity would collide");
+                    "\"" + fullyQualifiedName + "\" already names a concept in this knowledge set — identity would collide");
         }
         return patterns.computeIfAbsent(fullyQualifiedName, fqn -> new PatternBuilder(this, fqn));
     }
 
     /**
-     * Replays the whole session — every concept and pattern builder this namespace has
-     * opened — into the open datastore. Idempotent and repeatable: identities and stamps
+     * Replays the whole session — every concept and pattern builder this knowledge set
+     * has opened — into the open datastore. Idempotent and repeatable: identities and stamps
      * are derived, so writing again merges to the same state. May be called mid-ledger
      * and again later; the final state is the same single continuous ledger.
      *
@@ -143,7 +145,7 @@ public final class Namespace {
     }
 
     /**
-     * Resolves the identity a birth FQN derives in this namespace, as a reference handle —
+     * Resolves the identity a birth FQN derives in this knowledge set, as a reference handle —
      * for citing a concept (for example in a stated axiom) without opening its builder.
      *
      * @param birthFqn the concept's fully qualified name at birth
@@ -154,7 +156,7 @@ public final class Namespace {
     }
 
     /**
-     * Resolves the identity a birth FQN derives in this namespace, as a pattern reference
+     * Resolves the identity a birth FQN derives in this knowledge set, as a pattern reference
      * handle — for citing a pattern without opening its builder.
      *
      * @param birthFqn the pattern's fully qualified name at birth
@@ -165,10 +167,11 @@ public final class Namespace {
     }
 
     /**
-     * Derives the type-5 UUID this namespace assigns to a name.
+     * Derives the type-5 UUID this knowledge set assigns to a name — the set's UUID is
+     * the T5 namespace.
      *
      * @param name the identity seed — for concepts and patterns, the fully qualified name at birth
-     * @return {@code T5(namespace, name)}
+     * @return {@code T5(setUuid, name)}
      */
     public UUID uuidFor(String name) {
         return UuidT5Generator.get(uuid, name);

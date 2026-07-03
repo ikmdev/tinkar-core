@@ -67,7 +67,7 @@ import java.util.function.Consumer;
  * </ul>
  *
  * <h2>Identity</h2>
- * The concept's identity is {@code T5(namespace, birthFqn)} (see {@link Namespace}).
+ * The concept's identity is {@code T5(setUuid, birthFqn)} (see {@link KnowledgeSet}).
  * Attached semantics derive their identity from authoring context, never content:
  * the FQN description from {@code (concept, type, language)}; synonyms and definitions
  * from {@code (concept, type, language, declaration ordinal)}; dialect semantics from
@@ -95,12 +95,12 @@ public final class ConceptBuilder {
     private final ComponentLedger ledger;
     private final List<VersionEntry<DiTreeEntity>> axiomVersions = new ArrayList<>();
 
-    ConceptBuilder(Namespace namespace, String birthFqn) {
-        this.ledger = new ComponentLedger(namespace.uuidFor(birthFqn), birthFqn);
+    ConceptBuilder(KnowledgeSet knowledgeSet, String birthFqn) {
+        this.ledger = new ComponentLedger(knowledgeSet.uuidFor(birthFqn), birthFqn);
     }
 
     /**
-     * The identity this declaration derives: {@code T5(namespace, birthFqn)}.
+     * The identity this declaration derives: {@code T5(setUuid, birthFqn)}.
      *
      * @return the concept's public id
      */
@@ -148,7 +148,7 @@ public final class ConceptBuilder {
     /**
      * Replays the accumulated declarations into the open datastore: the stamps used, the
      * concept chronology, every description with its dialect-acceptability semantic, and
-     * the stated-axiom semantic. Invoked by {@link Namespace#write()}; repeatable —
+     * the stated-axiom semantic. Invoked by {@link KnowledgeSet#write()}; repeatable —
      * identities and stamps are derived, so re-writing merges to the same state.
      */
     void writeInto() {

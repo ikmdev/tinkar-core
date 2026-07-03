@@ -40,7 +40,7 @@ import java.util.Set;
 /**
  * Ledger-form authoring of a pattern — its meaning, purpose, field definitions, and
  * descriptions — as one coherent, replayable declaration. Shares the grammar and identity
- * discipline of {@link ConceptBuilder}: identity is {@code T5(namespace, birthFqn)},
+ * discipline of {@link ConceptBuilder}: identity is {@code T5(setUuid, birthFqn)},
  * {@link #at(ActiveStamp)} opens a version scope, descriptions use the add/revise/retire
  * verbs, and retirement scopes ({@link #at(InactiveStamp)}) expose only retirement verbs.
  *
@@ -72,12 +72,12 @@ public final class PatternBuilder {
     private final List<FieldDeclaration> pendingFields = new ArrayList<>();
     private ActiveStamp pendingStamp;
 
-    PatternBuilder(Namespace namespace, String birthFqn) {
-        this.ledger = new ComponentLedger(namespace.uuidFor(birthFqn), birthFqn);
+    PatternBuilder(KnowledgeSet knowledgeSet, String birthFqn) {
+        this.ledger = new ComponentLedger(knowledgeSet.uuidFor(birthFqn), birthFqn);
     }
 
     /**
-     * The identity this declaration derives: {@code T5(namespace, birthFqn)}.
+     * The identity this declaration derives: {@code T5(setUuid, birthFqn)}.
      *
      * @return the pattern's public id
      */
@@ -128,7 +128,7 @@ public final class PatternBuilder {
     /**
      * Replays the accumulated declarations into the open datastore: the stamps used, the
      * pattern chronology with its versions and field definitions, and every description
-     * with its dialect-acceptability semantic. Invoked by {@link Namespace#write()};
+     * with its dialect-acceptability semantic. Invoked by {@link KnowledgeSet#write()};
      * repeatable — identities and stamps are derived, so re-writing merges to the same
      * state.
      */
