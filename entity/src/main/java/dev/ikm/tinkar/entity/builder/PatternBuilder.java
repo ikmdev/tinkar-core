@@ -33,7 +33,9 @@ import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.MutableList;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Ledger-form authoring of a pattern — its meaning, purpose, field definitions, and
@@ -153,6 +155,15 @@ public final class PatternBuilder {
             throw new IllegalStateException(
                     "A pattern version restates as a whole: meaning and purpose are both required in a scope"
                             + " that declares any of meaning, purpose, or field — " + ledger.birthFqn);
+        }
+        Set<Integer> meaningNids = new HashSet<>();
+        for (FieldDeclaration field : pendingFields) {
+            if (!meaningNids.add(field.meaning().nid())) {
+                throw new IllegalStateException(
+                        "Field meanings must be unique within a pattern — meaning is the field's"
+                                + " knowledge-level address (getFieldWithMeaning): duplicate \""
+                                + field.meaning().description() + "\" on " + ledger.birthFqn);
+            }
         }
         patternVersions.add(new VersionEntry<>(pendingStamp,
                 new PatternContent(pendingMeaning, pendingPurpose, List.copyOf(pendingFields))));

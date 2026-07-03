@@ -64,11 +64,11 @@ class ChronologyBuilderIT {
     private static final Namespace TEST_NAMESPACE =
             Namespace.of("f7f5c2a4-4b1e-5b6a-9d3c-2e8f0a1b4c6d");
 
-    private static final ActiveStamp W1 = Stamp.active("2026-07-15T00:00:00Z",
+    private static final ActiveStamp BIRTH = Stamp.active("2026-07-15T00:00:00Z",
             TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-    private static final ActiveStamp W2 = Stamp.active("2026-09-01T00:00:00Z",
+    private static final ActiveStamp LATER = Stamp.active("2026-09-01T00:00:00Z",
             TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-    private static final InactiveStamp W3_RETIRE = Stamp.inactive("2026-10-01T00:00:00Z",
+    private static final InactiveStamp RETIREMENT = Stamp.inactive("2026-10-01T00:00:00Z",
             TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
 
     @BeforeAll
@@ -97,20 +97,20 @@ class ChronologyBuilderIT {
     void stampTupleIdentity() {
         ActiveStamp again = Stamp.active("2026-07-15T00:00:00Z",
                 TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        assertEquals(W1.publicId(), again.publicId());
-        assertEquals(W1.time(), Instant.parse("2026-07-15T00:00:00Z").toEpochMilli());
+        assertEquals(BIRTH.publicId(), again.publicId());
+        assertEquals(BIRTH.time(), Instant.parse("2026-07-15T00:00:00Z").toEpochMilli());
     }
 
     @Test
     @DisplayName("A full ledger replays: concept, descriptions, dialects, axioms, revisions")
     void ledgerReplay() {
         EntityProxy.Concept concept = TEST_NAMESPACE.concept("Journal element (Test)")
-                .at(W1)
+                .at(BIRTH)
                     .synonym("Journal element")
                     .definition("Root kind of the blocks a conversation journal orders.")
                     .statedAxioms(leb -> leb.NecessarySet(leb.And(
                             leb.ConceptAxiom(TinkarTerm.MODEL_CONCEPT))))
-                .at(W2)
+                .at(LATER)
                     .synonym("Journal block")
                     .reviseSynonym("Journal element", "Journal atom")
                 .build();
@@ -123,7 +123,7 @@ class ChronologyBuilderIT {
 
         StampEntity<?> birthStamp = Entity.getStamp(conceptEntity.versions().get(0).stampNid());
         assertEquals(State.ACTIVE, birthStamp.state());
-        assertEquals(W1.time(), birthStamp.time());
+        assertEquals(BIRTH.time(), birthStamp.time());
 
         // Descriptions: FQN + two synonyms + one definition.
         int[] descriptionNids = EntityService.get().semanticNidsForComponentOfPattern(
@@ -135,7 +135,7 @@ class ChronologyBuilderIT {
         assertEquals(2, revised.versions().size());
         assertEquals("Journal element", textOf(revised.versions().get(0)));
         assertEquals("Journal atom", textOf(revised.versions().get(1)));
-        assertEquals(W2.time(), Entity.getStamp(revised.versions().get(1).stampNid()).time());
+        assertEquals(LATER.time(), Entity.getStamp(revised.versions().get(1).stampNid()).time());
 
         // Every description carries exactly one US-dialect acceptability semantic.
         for (int descriptionNid : descriptionNids) {
@@ -159,9 +159,9 @@ class ChronologyBuilderIT {
     @DisplayName("Retirement scopes append inactive-stamped versions; content verbs absent")
     void retirementLedger() {
         EntityProxy.Concept concept = TEST_NAMESPACE.concept("Retiring kind (Test)")
-                .at(W1)
+                .at(BIRTH)
                     .synonym("Temporary name")
-                .at(W3_RETIRE)
+                .at(RETIREMENT)
                     .retire()
                     .retireSynonym("Temporary name")
                 .build();
@@ -170,7 +170,7 @@ class ChronologyBuilderIT {
         assertEquals(2, conceptEntity.versions().size(), "birth + retirement");
         StampEntity<?> lastStamp = Entity.getStamp(conceptEntity.versions().get(1).stampNid());
         assertEquals(State.INACTIVE, lastStamp.state());
-        assertEquals(W3_RETIRE.time(), lastStamp.time());
+        assertEquals(RETIREMENT.time(), lastStamp.time());
 
         int[] descriptionNids = EntityService.get().semanticNidsForComponentOfPattern(
                 concept.nid(), TinkarTerm.DESCRIPTION_PATTERN.nid());
@@ -182,8 +182,8 @@ class ChronologyBuilderIT {
     @Test
     @DisplayName("Ledger scopes must be chronological")
     void chronologyEnforced() {
-        ConceptBuilder.ActiveScope scope = TEST_NAMESPACE.concept("Out of order (Test)").at(W2);
-        assertThrows(IllegalArgumentException.class, () -> scope.at(W1),
+        ConceptBuilder.ActiveScope scope = TEST_NAMESPACE.concept("Out of order (Test)").at(LATER);
+        assertThrows(IllegalArgumentException.class, () -> scope.at(BIRTH),
                 "a later scope may not precede an earlier stamp's time");
     }
 
@@ -191,12 +191,12 @@ class ChronologyBuilderIT {
     @DisplayName("Revising an unknown or ambiguous synonym fails the build")
     void reviseValidation() {
         ConceptBuilder.ActiveScope scope = TEST_NAMESPACE.concept("Validation probe (Test)")
-                .at(W1).synonym("Only name");
+                .at(BIRTH).synonym("Only name");
         assertThrows(IllegalArgumentException.class,
                 () -> scope.reviseSynonym("No such name", "Anything"));
 
         ConceptBuilder.ActiveScope ambiguous = TEST_NAMESPACE.concept("Ambiguity probe (Test)")
-                .at(W1).synonym("Twin").synonym("Twin");
+                .at(BIRTH).synonym("Twin").synonym("Twin");
         assertThrows(IllegalArgumentException.class,
                 () -> ambiguous.reviseSynonym("Twin", "Renamed"));
     }
@@ -205,9 +205,9 @@ class ChronologyBuilderIT {
     @DisplayName("A retirement scope requires a prior birth scope; build() runs once")
     void lifecycleValidation() {
         assertThrows(IllegalStateException.class,
-                () -> TEST_NAMESPACE.concept("Never born (Test)").at(W3_RETIRE));
+                () -> TEST_NAMESPACE.concept("Never born (Test)").at(RETIREMENT));
 
-        ConceptBuilder.ActiveScope scope = TEST_NAMESPACE.concept("Build once (Test)").at(W1);
+        ConceptBuilder.ActiveScope scope = TEST_NAMESPACE.concept("Build once (Test)").at(BIRTH);
         scope.build();
         assertThrows(IllegalStateException.class, scope::build);
     }
@@ -217,9 +217,9 @@ class ChronologyBuilderIT {
     void replayIdempotence() {
         String fqn = "Replayed concept (Test)";
         EntityProxy.Concept first = TEST_NAMESPACE.concept(fqn)
-                .at(W1).synonym("Replay name").build();
+                .at(BIRTH).synonym("Replay name").build();
         EntityProxy.Concept second = TEST_NAMESPACE.concept(fqn)
-                .at(W1).synonym("Replay name").build();
+                .at(BIRTH).synonym("Replay name").build();
 
         assertEquals(first.publicId(), second.publicId());
         ConceptEntity<?> conceptEntity = EntityHandle.get(first.nid()).expectConcept();
@@ -234,7 +234,7 @@ class ChronologyBuilderIT {
     @DisplayName("A pattern ledger replays: version tuple, ordered field definitions, descriptions")
     void patternLedgerReplay() {
         EntityProxy.Pattern pattern = TEST_NAMESPACE.pattern("Journal manifest pattern (Test)")
-                .at(W1)
+                .at(BIRTH)
                     .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER)
                     .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.COMPONENT_ID_LIST_FIELD)
                     .field(TinkarTerm.USER, TinkarTerm.MODEL_CONCEPT, TinkarTerm.STRING)
@@ -265,12 +265,12 @@ class ChronologyBuilderIT {
     @DisplayName("Pattern restatement in a later scope is a revision; retirement carries content")
     void patternRestatementAndRetirement() {
         EntityProxy.Pattern pattern = TEST_NAMESPACE.pattern("Evolving pattern (Test)")
-                .at(W1)
+                .at(BIRTH)
                     .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER)
-                .at(W2)
+                .at(LATER)
                     .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER)
                     .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.STRING)
-                .at(W3_RETIRE)
+                .at(RETIREMENT)
                     .retire()
                 .build();
 
@@ -289,14 +289,26 @@ class ChronologyBuilderIT {
     @DisplayName("A pattern version restates as a whole — partial scopes fail")
     void patternVersionValidation() {
         PatternBuilder.ActiveScope partial = TEST_NAMESPACE.pattern("Partial pattern (Test)")
-                .at(W1)
+                .at(BIRTH)
                 .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.STRING);
         assertThrows(IllegalStateException.class, partial::build,
                 "a scope declaring fields must restate meaning and purpose");
 
-        PatternBuilder.ActiveScope empty = TEST_NAMESPACE.pattern("Empty pattern (Test)").at(W1);
+        PatternBuilder.ActiveScope empty = TEST_NAMESPACE.pattern("Empty pattern (Test)").at(BIRTH);
         assertThrows(IllegalStateException.class, empty::build,
                 "the birth scope must declare meaning and purpose");
+    }
+
+    @Test
+    @DisplayName("Field meanings must be unique within a pattern — meaning is the field address")
+    void fieldMeaningUniqueness() {
+        PatternBuilder.ActiveScope duplicate = TEST_NAMESPACE.pattern("Duplicate meanings (Test)")
+                .at(BIRTH)
+                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER)
+                .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.STRING)
+                .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.MODEL_CONCEPT, TinkarTerm.STRING);
+        assertThrows(IllegalStateException.class, duplicate::build,
+                "getFieldWithMeaning would be ambiguous with duplicate field meanings");
     }
 
     private static SemanticEntity<?> findDescriptionByLatestText(int[] descriptionNids, String text) {
