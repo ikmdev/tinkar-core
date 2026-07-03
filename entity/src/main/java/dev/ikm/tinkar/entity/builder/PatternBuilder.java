@@ -85,6 +85,10 @@ public final class PatternBuilder {
         return PublicIds.of(ledger.componentUuid);
     }
 
+    ComponentLedger ledger() {
+        return ledger;
+    }
+
     /**
      * Opens a content scope at the given active stamp. The first active scope is the
      * birth scope, which must declare the pattern's meaning and purpose; it also creates

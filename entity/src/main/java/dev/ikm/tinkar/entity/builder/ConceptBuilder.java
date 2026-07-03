@@ -93,7 +93,7 @@ import java.util.function.Consumer;
 public final class ConceptBuilder {
 
     private final ComponentLedger ledger;
-    private final List<VersionEntry<DiTreeEntity>> axiomVersions = new ArrayList<>();
+    private final List<VersionEntry<Consumer<LogicalExpressionBuilder>>> axiomVersions = new ArrayList<>();
 
     ConceptBuilder(KnowledgeSet knowledgeSet, String birthFqn) {
         this.ledger = new ComponentLedger(knowledgeSet.uuidFor(birthFqn), birthFqn);
@@ -106,6 +106,10 @@ public final class ConceptBuilder {
      */
     public PublicId publicId() {
         return PublicIds.of(ledger.componentUuid);
+    }
+
+    ComponentLedger ledger() {
+        return ledger;
     }
 
     /**
@@ -239,9 +243,9 @@ public final class ConceptBuilder {
          * @return this scope, for chaining
          */
         public ActiveScope statedAxioms(Consumer<LogicalExpressionBuilder> axioms) {
-            LogicalExpressionBuilder leb = new LogicalExpressionBuilder();
-            axioms.accept(leb);
-            axiomVersions.add(new VersionEntry<>(stamp, (DiTreeEntity) leb.build().sourceGraph()));
+            // Materialized at write() — composing stays store-free (graph construction
+            // mints nids, which requires a started PrimitiveData store).
+            axiomVersions.add(new VersionEntry<>(stamp, axioms));
             return this;
         }
 
@@ -375,11 +379,14 @@ public final class ConceptBuilder {
                 .referencedComponentNid(conceptNid)
                 .versions(versions)
                 .build();
-        for (VersionEntry<DiTreeEntity> axiom : axiomVersions) {
+        for (VersionEntry<Consumer<LogicalExpressionBuilder>> axiom : axiomVersions) {
+            LogicalExpressionBuilder leb = new LogicalExpressionBuilder();
+            axiom.value().accept(leb);
+            DiTreeEntity tree = (DiTreeEntity) leb.build().sourceGraph();
             versions.add(SemanticVersionRecordBuilder.builder()
                     .chronology(bootstrap)
                     .stampNid(ledger.writeStamp(axiom.stamp()))
-                    .fieldValues(Lists.immutable.of(axiom.value()))
+                    .fieldValues(Lists.immutable.of(tree))
                     .build());
         }
         EntityService.get().putEntity(

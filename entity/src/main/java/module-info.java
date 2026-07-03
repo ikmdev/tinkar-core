@@ -82,6 +82,8 @@ module dev.ikm.tinkar.entity {
 
     opens dev.ikm.tinkar.entity.graph.adaptor.axiom;
 
+    uses dev.ikm.tinkar.entity.builder.KnowledgeSource;
+
     provides CachingService with
             LanguageCalculatorWithCache.CacheProvider,
             LogicCalculatorWithCache.CacheProvider,

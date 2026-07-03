@@ -145,6 +145,15 @@ final class ComponentLedger {
         return descriptions.getFirst();
     }
 
+    /** The current text of the first live definition description, if any. */
+    java.util.Optional<String> currentDefinition() {
+        return descriptions.stream()
+                .filter(d -> d.type.equals(TinkarTerm.DEFINITION_DESCRIPTION_TYPE))
+                .filter(d -> !d.retired())
+                .findFirst()
+                .map(DescriptionLedger::currentText);
+    }
+
     // ------------------------------------------------------------------ replay
 
     int componentNid() {

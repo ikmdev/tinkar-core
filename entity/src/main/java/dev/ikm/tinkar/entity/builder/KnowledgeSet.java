@@ -15,12 +15,16 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
+import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.terms.EntityProxy;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -141,6 +145,46 @@ public final class KnowledgeSet {
         }
         for (PatternBuilder builder : patterns.values()) {
             builder.writeInto();
+        }
+    }
+
+    /**
+     * The declarations this session has opened, in declaration order — the read surface
+     * for tooling: bindings generation, draft reports, and the release verifier.
+     *
+     * @return one {@link Declaration} per opened concept and pattern builder
+     */
+    public List<Declaration> declarations() {
+        List<Declaration> result = new ArrayList<>();
+        for (ConceptBuilder builder : concepts.values()) {
+            result.add(new Declaration(Declaration.Kind.CONCEPT, builder.ledger().birthFqn,
+                    builder.publicId(), builder.ledger().currentDefinition()));
+        }
+        for (PatternBuilder builder : patterns.values()) {
+            result.add(new Declaration(Declaration.Kind.PATTERN, builder.ledger().birthFqn,
+                    builder.publicId(), builder.ledger().currentDefinition()));
+        }
+        return result;
+    }
+
+    /**
+     * One opened declaration of a knowledge set: its kind, the fully qualified name at
+     * birth (the identity seed), the derived identity, and the current definition text
+     * if the ledger declared one.
+     *
+     * @param kind       concept or pattern
+     * @param birthFqn   the fully qualified name at birth
+     * @param publicId   the derived identity, {@code T5(setUuid, birthFqn)}
+     * @param definition the current text of the first live definition description, if any
+     */
+    public record Declaration(Kind kind, String birthFqn, PublicId publicId, Optional<String> definition) {
+
+        /** The kind of a declaration. */
+        public enum Kind {
+            /** A concept declaration. */
+            CONCEPT,
+            /** A pattern declaration. */
+            PATTERN
         }
     }
 

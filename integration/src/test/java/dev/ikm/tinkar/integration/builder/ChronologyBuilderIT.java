@@ -29,6 +29,7 @@ import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.builder.ActiveStamp;
 import dev.ikm.tinkar.entity.builder.ConceptBuilder;
 import dev.ikm.tinkar.entity.builder.InactiveStamp;
+import dev.ikm.tinkar.entity.builder.BindingsWriter;
 import dev.ikm.tinkar.entity.builder.KnowledgeSet;
 import dev.ikm.tinkar.entity.builder.PatternBuilder;
 import dev.ikm.tinkar.entity.builder.Stamp;
@@ -43,6 +44,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +54,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Integration tests for the ledger-form builders under the session model: the knowledge set
@@ -287,6 +291,27 @@ class ChronologyBuilderIT {
         KnowledgeSet probe = KnowledgeSet.of("66666666-6666-5666-9666-666666666666");
         probe.concept("Collider (Probe)");
         assertThrows(IllegalArgumentException.class, () -> probe.pattern("Collider (Probe)"));
+    }
+
+    @Test
+    @DisplayName("Bindings generate from the composed set: constants, UUID literals, definition javadoc")
+    void bindingsGeneration() throws Exception {
+        Path outputDir = Path.of(System.getProperty("user.dir"))
+                .resolve("target").resolve("generated-test-bindings");
+        Path file = BindingsWriter.write(TEST_SET, "test.bindings", "TestSetTerms", outputDir);
+        String source = Files.readString(file);
+
+        assertEquals("JOURNAL_ELEMENT", BindingsWriter.constantName("Journal element (Test)"));
+        assertTrue(source.contains("public static final EntityProxy.Concept JOURNAL_ELEMENT ="),
+                "concept constant with tag-stripped name");
+        assertTrue(source.contains("public static final EntityProxy.Pattern JOURNAL_MANIFEST_PATTERN ="),
+                "pattern constant");
+        assertTrue(source.contains(TEST_SET.conceptRef("Journal element (Test)")
+                        .publicId().asUuidArray()[0].toString()),
+                "resolved UUID literal embedded");
+        assertTrue(source.contains("Root kind of the blocks a conversation journal orders."),
+                "definition text as javadoc");
+        assertTrue(source.contains("DO NOT EDIT"), "generation marker");
     }
 
     private static SemanticEntity<?> findDescriptionByLatestText(int[] descriptionNids, String text) {
