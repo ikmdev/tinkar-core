@@ -148,20 +148,15 @@ public final class ConceptBuilder {
     /**
      * Replays the accumulated declarations into the open datastore: the stamps used, the
      * concept chronology, every description with its dialect-acceptability semantic, and
-     * the stated-axiom semantic. Writes go directly through
-     * {@link EntityService#putEntity}; provider-level merge reconciles with any existing
-     * versions of the same chronologies.
-     *
-     * @return a proxy for the built concept, carrying its birth FQN and derived identity
-     * @throws IllegalStateException if no birth scope was declared, or on repeat invocation
+     * the stated-axiom semantic. Invoked by {@link Namespace#write()}; repeatable —
+     * identities and stamps are derived, so re-writing merges to the same state.
      */
-    public EntityProxy.Concept build() {
-        ledger.markBuilt();
+    void writeInto() {
+        ledger.requireBornForWrite();
         int conceptNid = ledger.componentNid();
         writeConcept(conceptNid);
         ledger.writeDescriptions(conceptNid);
         writeAxioms(conceptNid);
-        return EntityProxy.Concept.make(ledger.birthFqn, PublicIds.of(ledger.componentUuid));
     }
 
     // ------------------------------------------------------------------ scopes
@@ -270,15 +265,6 @@ public final class ConceptBuilder {
             return ConceptBuilder.this.at(nextStamp);
         }
 
-        /**
-         * Terminal: replays the ledger into the datastore.
-         * Delegates to {@link ConceptBuilder#build()}.
-         *
-         * @return a proxy for the built concept
-         */
-        public EntityProxy.Concept build() {
-            return ConceptBuilder.this.build();
-        }
     }
 
     /**
@@ -353,15 +339,6 @@ public final class ConceptBuilder {
             return ConceptBuilder.this.at(nextStamp);
         }
 
-        /**
-         * Terminal: replays the ledger into the datastore.
-         * Delegates to {@link ConceptBuilder#build()}.
-         *
-         * @return a proxy for the built concept
-         */
-        public EntityProxy.Concept build() {
-            return ConceptBuilder.this.build();
-        }
     }
 
     // ------------------------------------------------------------------ replay

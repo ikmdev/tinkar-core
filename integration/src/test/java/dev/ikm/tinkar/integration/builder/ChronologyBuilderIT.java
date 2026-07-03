@@ -16,8 +16,8 @@
 package dev.ikm.tinkar.integration.builder;
 
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
-import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.ConceptEntity;
+import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
@@ -35,7 +35,6 @@ import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
-import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.AfterAll;
@@ -50,13 +49,14 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * Integration tests for the ledger-form {@link ConceptBuilder}: birth-FQN identity,
- * declared-stamp idempotence, the add/revise/retire grammar, and chronology replay
- * into an ephemeral store.
+ * Integration tests for the ledger-form builders under the session model: the namespace
+ * is the session — builders resume by birth FQN, the source composes time-major
+ * (stamps declared inline, edits under each), and {@link Namespace#write()} replays the
+ * whole session, idempotently.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ChronologyBuilderIT {
@@ -64,16 +64,62 @@ class ChronologyBuilderIT {
     private static final Namespace TEST_NAMESPACE =
             Namespace.of("f7f5c2a4-4b1e-5b6a-9d3c-2e8f0a1b4c6d");
 
-    private static final ActiveStamp BIRTH = Stamp.active("2026-07-15T00:00:00Z",
-            TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-    private static final ActiveStamp LATER = Stamp.active("2026-09-01T00:00:00Z",
-            TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-    private static final InactiveStamp RETIREMENT = Stamp.inactive("2026-10-01T00:00:00Z",
-            TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+    private static ActiveStamp birth;
+    private static ActiveStamp later;
+    private static InactiveStamp retirement;
 
     @BeforeAll
-    static void beforeAll() {
+    static void composeAndWrite() {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
+
+        // ---- The ledger, time-major: a stamp, then the edits under it. ----
+
+        birth = Stamp.active("2026-07-15T00:00:00Z",
+                TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+
+        TEST_NAMESPACE.concept("Journal element (Test)").at(birth)
+                .synonym("Journal element")
+                .definition("Root kind of the blocks a conversation journal orders.")
+                .statedAxioms(leb -> leb.NecessarySet(leb.And(
+                        leb.ConceptAxiom(TinkarTerm.MODEL_CONCEPT))));
+
+        TEST_NAMESPACE.concept("Retiring kind (Test)").at(birth)
+                .synonym("Temporary name");
+
+        TEST_NAMESPACE.pattern("Journal manifest pattern (Test)").at(birth)
+                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER)
+                .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.COMPONENT_ID_LIST_FIELD)
+                .field(TinkarTerm.USER, TinkarTerm.MODEL_CONCEPT, TinkarTerm.STRING)
+                .synonym("Journal manifest");
+
+        TEST_NAMESPACE.pattern("Evolving pattern (Test)").at(birth)
+                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER);
+
+        later = Stamp.active("2026-09-01T00:00:00Z",
+                TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+
+        // Resume by FQN — no restatement; the ledger simply continues.
+        TEST_NAMESPACE.concept("Journal element (Test)").at(later)
+                .synonym("Journal block")
+                .reviseSynonym("Journal element", "Journal atom");
+
+        TEST_NAMESPACE.pattern("Evolving pattern (Test)").at(later)
+                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER)
+                .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.STRING);
+
+        retirement = Stamp.inactive("2026-10-01T00:00:00Z",
+                TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+
+        TEST_NAMESPACE.concept("Retiring kind (Test)").at(retirement)
+                .retire()
+                .retireSynonym("Temporary name");
+
+        TEST_NAMESPACE.pattern("Evolving pattern (Test)").at(retirement)
+                .retire();
+
+        // ---- One session write; a second write proves idempotence. ----
+        TEST_NAMESPACE.write();
+        TEST_NAMESPACE.write();
     }
 
     @AfterAll
@@ -82,240 +128,173 @@ class ChronologyBuilderIT {
     }
 
     @Test
-    @DisplayName("Identity derives from namespace + FQN at birth, deterministically")
-    void birthFqnIdentity() {
-        String fqn = "Identity probe (Test)";
-        ConceptBuilder builder = TEST_NAMESPACE.concept(fqn);
-        assertEquals(UuidT5Generator.get(TEST_NAMESPACE.uuid(), fqn),
-                builder.publicId().asUuidArray()[0]);
-        assertEquals(builder.publicId(), TEST_NAMESPACE.conceptRef(fqn).publicId(),
-                "conceptRef must derive the same identity as the declaration");
+    @DisplayName("Builders resume by FQN — same builder, same identity, one continuous ledger")
+    void buildersResume() {
+        ConceptBuilder resumed = TEST_NAMESPACE.concept("Journal element (Test)");
+        assertSame(resumed, TEST_NAMESPACE.concept("Journal element (Test)"));
+        assertEquals(UuidT5Generator.get(TEST_NAMESPACE.uuid(), "Journal element (Test)"),
+                resumed.publicId().asUuidArray()[0]);
+        assertEquals(resumed.publicId(),
+                TEST_NAMESPACE.conceptRef("Journal element (Test)").publicId());
     }
 
     @Test
     @DisplayName("Same stamp tuple, same stamp identity — declared stamps are idempotent")
     void stampTupleIdentity() {
-        ActiveStamp again = Stamp.active("2026-07-15T00:00:00Z",
+        ActiveStamp restated = Stamp.active("2026-07-15T00:00:00Z",
                 TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        assertEquals(BIRTH.publicId(), again.publicId());
-        assertEquals(BIRTH.time(), Instant.parse("2026-07-15T00:00:00Z").toEpochMilli());
+        assertEquals(birth.publicId(), restated.publicId());
+        assertEquals(birth.time(), Instant.parse("2026-07-15T00:00:00Z").toEpochMilli());
     }
 
     @Test
-    @DisplayName("A full ledger replays: concept, descriptions, dialects, axioms, revisions")
-    void ledgerReplay() {
-        EntityProxy.Concept concept = TEST_NAMESPACE.concept("Journal element (Test)")
-                .at(BIRTH)
-                    .synonym("Journal element")
-                    .definition("Root kind of the blocks a conversation journal orders.")
-                    .statedAxioms(leb -> leb.NecessarySet(leb.And(
-                            leb.ConceptAxiom(TinkarTerm.MODEL_CONCEPT))))
-                .at(LATER)
-                    .synonym("Journal block")
-                    .reviseSynonym("Journal element", "Journal atom")
-                .build();
-
-        int conceptNid = concept.nid();
+    @DisplayName("The resumed concept replays as one chronology: revisions, additions, axioms")
+    void conceptLedgerReplay() {
+        int conceptNid = TEST_NAMESPACE.conceptRef("Journal element (Test)").nid();
         ConceptEntity<?> conceptEntity = EntityHandle.get(conceptNid).expectConcept();
-        assertNotNull(conceptEntity);
         assertEquals(1, conceptEntity.versions().size(),
-                "Only the birth scope adds a concept version");
+                "birth only — later scopes touched descriptions, not the concept; and write() twice must not duplicate");
 
         StampEntity<?> birthStamp = Entity.getStamp(conceptEntity.versions().get(0).stampNid());
         assertEquals(State.ACTIVE, birthStamp.state());
-        assertEquals(BIRTH.time(), birthStamp.time());
+        assertEquals(birth.time(), birthStamp.time());
 
-        // Descriptions: FQN + two synonyms + one definition.
+        // FQN + two synonyms + one definition — across two resumed sections.
         int[] descriptionNids = EntityService.get().semanticNidsForComponentOfPattern(
                 conceptNid, TinkarTerm.DESCRIPTION_PATTERN.nid());
         assertEquals(4, descriptionNids.length);
 
-        // The revised synonym is one semantic with two versions, oldest first.
         SemanticEntity<?> revised = findDescriptionByLatestText(descriptionNids, "Journal atom");
         assertEquals(2, revised.versions().size());
         assertEquals("Journal element", textOf(revised.versions().get(0)));
         assertEquals("Journal atom", textOf(revised.versions().get(1)));
-        assertEquals(LATER.time(), Entity.getStamp(revised.versions().get(1).stampNid()).time());
+        assertEquals(later.time(), Entity.getStamp(revised.versions().get(1).stampNid()).time());
 
-        // Every description carries exactly one US-dialect acceptability semantic.
         for (int descriptionNid : descriptionNids) {
-            int[] dialectNids = EntityService.get().semanticNidsForComponentOfPattern(
-                    descriptionNid, TinkarTerm.US_DIALECT_PATTERN.nid());
-            assertEquals(1, dialectNids.length);
+            assertEquals(1, EntityService.get().semanticNidsForComponentOfPattern(
+                    descriptionNid, TinkarTerm.US_DIALECT_PATTERN.nid()).length);
         }
 
-        // Stated axioms: one singleton semantic whose value is the LogicalExpressionBuilder tree.
         int[] axiomNids = EntityService.get().semanticNidsForComponentOfPattern(
                 conceptNid, TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid());
         assertEquals(1, axiomNids.length);
         SemanticEntity<?> axioms = EntityHandle.get(axiomNids[0]).expectSemantic();
         Object axiomField = ((SemanticEntityVersion) axioms.versions().get(0)).fieldValues().get(0);
         assertInstanceOf(DiTreeEntity.class, axiomField);
-        assertEquals(4, ((DiTreeEntity) axiomField).vertexCount(),
-                "definition-root, necessary-set, and, concept-reference");
+        assertEquals(4, ((DiTreeEntity) axiomField).vertexCount());
     }
 
     @Test
-    @DisplayName("Retirement scopes append inactive-stamped versions; content verbs absent")
+    @DisplayName("Retirement scopes append inactive-stamped versions")
     void retirementLedger() {
-        EntityProxy.Concept concept = TEST_NAMESPACE.concept("Retiring kind (Test)")
-                .at(BIRTH)
-                    .synonym("Temporary name")
-                .at(RETIREMENT)
-                    .retire()
-                    .retireSynonym("Temporary name")
-                .build();
-
-        ConceptEntity<?> conceptEntity = EntityHandle.get(concept.nid()).expectConcept();
+        int conceptNid = TEST_NAMESPACE.conceptRef("Retiring kind (Test)").nid();
+        ConceptEntity<?> conceptEntity = EntityHandle.get(conceptNid).expectConcept();
         assertEquals(2, conceptEntity.versions().size(), "birth + retirement");
         StampEntity<?> lastStamp = Entity.getStamp(conceptEntity.versions().get(1).stampNid());
         assertEquals(State.INACTIVE, lastStamp.state());
-        assertEquals(RETIREMENT.time(), lastStamp.time());
+        assertEquals(retirement.time(), lastStamp.time());
 
         int[] descriptionNids = EntityService.get().semanticNidsForComponentOfPattern(
-                concept.nid(), TinkarTerm.DESCRIPTION_PATTERN.nid());
+                conceptNid, TinkarTerm.DESCRIPTION_PATTERN.nid());
         SemanticEntity<?> synonym = findDescriptionByLatestText(descriptionNids, "Temporary name");
         assertEquals(2, synonym.versions().size());
         assertEquals(State.INACTIVE, Entity.getStamp(synonym.versions().get(1).stampNid()).state());
     }
 
     @Test
-    @DisplayName("Ledger scopes must be chronological")
-    void chronologyEnforced() {
-        ConceptBuilder.ActiveScope scope = TEST_NAMESPACE.concept("Out of order (Test)").at(LATER);
-        assertThrows(IllegalArgumentException.class, () -> scope.at(BIRTH),
-                "a later scope may not precede an earlier stamp's time");
-    }
-
-    @Test
-    @DisplayName("Revising an unknown or ambiguous synonym fails the build")
-    void reviseValidation() {
-        ConceptBuilder.ActiveScope scope = TEST_NAMESPACE.concept("Validation probe (Test)")
-                .at(BIRTH).synonym("Only name");
-        assertThrows(IllegalArgumentException.class,
-                () -> scope.reviseSynonym("No such name", "Anything"));
-
-        ConceptBuilder.ActiveScope ambiguous = TEST_NAMESPACE.concept("Ambiguity probe (Test)")
-                .at(BIRTH).synonym("Twin").synonym("Twin");
-        assertThrows(IllegalArgumentException.class,
-                () -> ambiguous.reviseSynonym("Twin", "Renamed"));
-    }
-
-    @Test
-    @DisplayName("A retirement scope requires a prior birth scope; build() runs once")
-    void lifecycleValidation() {
-        assertThrows(IllegalStateException.class,
-                () -> TEST_NAMESPACE.concept("Never born (Test)").at(RETIREMENT));
-
-        ConceptBuilder.ActiveScope scope = TEST_NAMESPACE.concept("Build once (Test)").at(BIRTH);
-        scope.build();
-        assertThrows(IllegalStateException.class, scope::build);
-    }
-
-    @Test
-    @DisplayName("Replaying the same declaration is idempotent — same identities, same versions")
-    void replayIdempotence() {
-        String fqn = "Replayed concept (Test)";
-        EntityProxy.Concept first = TEST_NAMESPACE.concept(fqn)
-                .at(BIRTH).synonym("Replay name").build();
-        EntityProxy.Concept second = TEST_NAMESPACE.concept(fqn)
-                .at(BIRTH).synonym("Replay name").build();
-
-        assertEquals(first.publicId(), second.publicId());
-        ConceptEntity<?> conceptEntity = EntityHandle.get(first.nid()).expectConcept();
-        assertEquals(1, conceptEntity.versions().size(),
-                "replay must not duplicate versions — same stamps, same identities");
-        int[] descriptionNids = EntityService.get().semanticNidsForComponentOfPattern(
-                first.nid(), TinkarTerm.DESCRIPTION_PATTERN.nid());
-        assertEquals(2, descriptionNids.length, "FQN + one synonym, not duplicated by replay");
-    }
-
-    @Test
-    @DisplayName("A pattern ledger replays: version tuple, ordered field definitions, descriptions")
+    @DisplayName("Patterns replay: version tuple, ordered fields, restatement revises, retirement carries")
     void patternLedgerReplay() {
-        EntityProxy.Pattern pattern = TEST_NAMESPACE.pattern("Journal manifest pattern (Test)")
-                .at(BIRTH)
-                    .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER)
-                    .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.COMPONENT_ID_LIST_FIELD)
-                    .field(TinkarTerm.USER, TinkarTerm.MODEL_CONCEPT, TinkarTerm.STRING)
-                    .synonym("Journal manifest")
-                .build();
-
-        assertEquals(TEST_NAMESPACE.patternRef("Journal manifest pattern (Test)").publicId(),
-                pattern.publicId());
-
-        PatternEntity<?> patternEntity = EntityHandle.get(pattern.nid()).expectPattern();
-        assertEquals(1, patternEntity.versions().size());
-        PatternEntityVersion version = (PatternEntityVersion) patternEntity.versions().get(0);
-        assertEquals(TinkarTerm.MODEL_CONCEPT.nid(), version.semanticMeaningNid());
-        assertEquals(TinkarTerm.USER.nid(), version.semanticPurposeNid());
-        assertEquals(2, version.fieldDefinitions().size());
+        int manifestNid = TEST_NAMESPACE.patternRef("Journal manifest pattern (Test)").nid();
+        PatternEntity<?> manifest = EntityHandle.get(manifestNid).expectPattern();
+        assertEquals(1, manifest.versions().size());
+        PatternEntityVersion manifestVersion = (PatternEntityVersion) manifest.versions().get(0);
+        assertEquals(TinkarTerm.MODEL_CONCEPT.nid(), manifestVersion.semanticMeaningNid());
+        assertEquals(TinkarTerm.USER.nid(), manifestVersion.semanticPurposeNid());
+        assertEquals(2, manifestVersion.fieldDefinitions().size());
         assertEquals(TinkarTerm.COMPONENT_ID_LIST_FIELD.nid(),
-                version.fieldDefinitions().get(0).dataTypeNid());
-        assertEquals(0, version.fieldDefinitions().get(0).indexInPattern());
-        assertEquals(TinkarTerm.STRING.nid(), version.fieldDefinitions().get(1).dataTypeNid());
-        assertEquals(1, version.fieldDefinitions().get(1).indexInPattern());
+                manifestVersion.fieldDefinitions().get(0).dataTypeNid());
+        assertEquals(0, manifestVersion.fieldDefinitions().get(0).indexInPattern());
+        assertEquals(TinkarTerm.STRING.nid(),
+                manifestVersion.fieldDefinitions().get(1).dataTypeNid());
 
-        int[] descriptionNids = EntityService.get().semanticNidsForComponentOfPattern(
-                pattern.nid(), TinkarTerm.DESCRIPTION_PATTERN.nid());
-        assertEquals(2, descriptionNids.length, "FQN + one synonym");
-    }
-
-    @Test
-    @DisplayName("Pattern restatement in a later scope is a revision; retirement carries content")
-    void patternRestatementAndRetirement() {
-        EntityProxy.Pattern pattern = TEST_NAMESPACE.pattern("Evolving pattern (Test)")
-                .at(BIRTH)
-                    .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER)
-                .at(LATER)
-                    .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER)
-                    .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.STRING)
-                .at(RETIREMENT)
-                    .retire()
-                .build();
-
-        PatternEntity<?> patternEntity = EntityHandle.get(pattern.nid()).expectPattern();
-        assertEquals(3, patternEntity.versions().size(), "birth + restatement + retirement");
-        PatternEntityVersion birth = (PatternEntityVersion) patternEntity.versions().get(0);
-        assertEquals(0, birth.fieldDefinitions().size(), "membership-pattern shape at birth");
-        PatternEntityVersion restated = (PatternEntityVersion) patternEntity.versions().get(1);
-        assertEquals(1, restated.fieldDefinitions().size());
-        PatternEntityVersion retired = (PatternEntityVersion) patternEntity.versions().get(2);
+        int evolvingNid = TEST_NAMESPACE.patternRef("Evolving pattern (Test)").nid();
+        PatternEntity<?> evolving = EntityHandle.get(evolvingNid).expectPattern();
+        assertEquals(3, evolving.versions().size(), "birth + restatement + retirement");
+        assertEquals(0, ((PatternEntityVersion) evolving.versions().get(0)).fieldDefinitions().size(),
+                "membership-pattern shape at birth");
+        assertEquals(1, ((PatternEntityVersion) evolving.versions().get(1)).fieldDefinitions().size());
+        PatternEntityVersion retired = (PatternEntityVersion) evolving.versions().get(2);
         assertEquals(1, retired.fieldDefinitions().size(), "retirement carries prior content");
         assertEquals(State.INACTIVE, Entity.getStamp(retired.stampNid()).state());
     }
 
     @Test
-    @DisplayName("A pattern version restates as a whole — partial scopes fail")
-    void patternVersionValidation() {
-        PatternBuilder.ActiveScope partial = TEST_NAMESPACE.pattern("Partial pattern (Test)")
-                .at(BIRTH)
-                .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.STRING);
-        assertThrows(IllegalStateException.class, partial::build,
-                "a scope declaring fields must restate meaning and purpose");
-
-        PatternBuilder.ActiveScope empty = TEST_NAMESPACE.pattern("Empty pattern (Test)").at(BIRTH);
-        assertThrows(IllegalStateException.class, empty::build,
-                "the birth scope must declare meaning and purpose");
+    @DisplayName("Ledger scopes must be chronological, per component")
+    void chronologyEnforced() {
+        Namespace probe = Namespace.of("11111111-1111-5111-9111-111111111111");
+        ConceptBuilder.ActiveScope scope = probe.concept("Out of order (Probe)").at(later);
+        assertThrows(IllegalArgumentException.class, () -> scope.at(birth));
     }
 
     @Test
-    @DisplayName("Field meanings must be unique within a pattern — meaning is the field address")
-    void fieldMeaningUniqueness() {
-        PatternBuilder.ActiveScope duplicate = TEST_NAMESPACE.pattern("Duplicate meanings (Test)")
-                .at(BIRTH)
+    @DisplayName("Revise references must resolve uniquely")
+    void reviseValidation() {
+        Namespace probe = Namespace.of("22222222-2222-5222-9222-222222222222");
+        ConceptBuilder.ActiveScope scope = probe.concept("Validation probe (Probe)")
+                .at(birth).synonym("Only name");
+        assertThrows(IllegalArgumentException.class,
+                () -> scope.reviseSynonym("No such name", "Anything"));
+
+        ConceptBuilder.ActiveScope ambiguous = probe.concept("Ambiguity probe (Probe)")
+                .at(birth).synonym("Twin").synonym("Twin");
+        assertThrows(IllegalArgumentException.class,
+                () -> ambiguous.reviseSynonym("Twin", "Renamed"));
+    }
+
+    @Test
+    @DisplayName("Incomplete declarations fail the session write; retirement requires birth")
+    void lifecycleValidation() {
+        Namespace probe = Namespace.of("33333333-3333-5333-9333-333333333333");
+        assertThrows(IllegalStateException.class,
+                () -> probe.concept("Never born (Probe)").at(retirement));
+
+        probe.concept("Opened but never scoped (Probe)");
+        assertThrows(IllegalStateException.class, probe::write,
+                "a declaration with no birth scope fails the session write");
+    }
+
+    @Test
+    @DisplayName("A pattern version restates as a whole; field meanings must be unique")
+    void patternValidation() {
+        Namespace probe = Namespace.of("44444444-4444-5444-9444-444444444444");
+        probe.pattern("Partial pattern (Probe)").at(birth)
+                .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.STRING);
+        assertThrows(IllegalStateException.class, probe::write,
+                "a scope declaring fields must restate meaning and purpose");
+
+        Namespace duplicates = Namespace.of("55555555-5555-5555-9555-555555555555");
+        PatternBuilder.ActiveScope duplicate = duplicates.pattern("Duplicate meanings (Probe)").at(birth)
                 .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER)
                 .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.STRING)
                 .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.MODEL_CONCEPT, TinkarTerm.STRING);
-        assertThrows(IllegalStateException.class, duplicate::build,
-                "getFieldWithMeaning would be ambiguous with duplicate field meanings");
+        assertThrows(IllegalStateException.class, () -> duplicate.at(later),
+                "duplicate field meanings are rejected at version flush");
+    }
+
+    @Test
+    @DisplayName("One FQN cannot name both a concept and a pattern in a namespace")
+    void kindCollision() {
+        Namespace probe = Namespace.of("66666666-6666-5666-9666-666666666666");
+        probe.concept("Collider (Probe)");
+        assertThrows(IllegalArgumentException.class, () -> probe.pattern("Collider (Probe)"));
     }
 
     private static SemanticEntity<?> findDescriptionByLatestText(int[] descriptionNids, String text) {
         List<String> latestTexts = new ArrayList<>();
         for (int nid : descriptionNids) {
             SemanticEntity<?> semantic = EntityHandle.get(nid).expectSemantic();
-            String latest = textOf(semantic.versions().get(semantic.versions().size() - 1));
+            EntityVersion last = semantic.versions().get(semantic.versions().size() - 1);
+            String latest = textOf(last);
             latestTexts.add(latest);
             if (text.equals(latest)) {
                 return semantic;

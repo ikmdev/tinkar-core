@@ -53,7 +53,6 @@ final class ComponentLedger {
 
     private long lastStampTime = Long.MIN_VALUE;
     private boolean born = false;
-    private boolean built = false;
 
     ComponentLedger(UUID componentUuid, String birthFqn) {
         this.componentUuid = componentUuid;
@@ -82,9 +81,6 @@ final class ComponentLedger {
     }
 
     void checkChronology(Stamp stamp) {
-        if (built) {
-            throw new IllegalStateException("This declaration has already been built: " + birthFqn);
-        }
         if (stamp.time() < lastStampTime) {
             throw new IllegalArgumentException(
                     "Ledger scopes must be chronological: stamp time " + stamp.time()
@@ -100,14 +96,10 @@ final class ComponentLedger {
         }
     }
 
-    void markBuilt() {
+    void requireBornForWrite() {
         if (!born) {
-            throw new IllegalStateException("A declaration requires a birth scope: " + birthFqn);
+            throw new IllegalStateException("A declaration requires a birth scope before write: " + birthFqn);
         }
-        if (built) {
-            throw new IllegalStateException("This declaration has already been built: " + birthFqn);
-        }
-        built = true;
     }
 
     /**

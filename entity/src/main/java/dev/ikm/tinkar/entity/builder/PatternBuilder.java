@@ -128,15 +128,13 @@ public final class PatternBuilder {
     /**
      * Replays the accumulated declarations into the open datastore: the stamps used, the
      * pattern chronology with its versions and field definitions, and every description
-     * with its dialect-acceptability semantic.
-     *
-     * @return a proxy for the built pattern, carrying its birth FQN and derived identity
-     * @throws IllegalStateException if no birth scope was declared, if the birth scope did
-     *                               not declare meaning and purpose, or on repeat invocation
+     * with its dialect-acceptability semantic. Invoked by {@link Namespace#write()};
+     * repeatable — identities and stamps are derived, so re-writing merges to the same
+     * state.
      */
-    public EntityProxy.Pattern build() {
+    void writeInto() {
         flushPendingVersion();
-        ledger.markBuilt();
+        ledger.requireBornForWrite();
         if (patternVersions.isEmpty()) {
             throw new IllegalStateException(
                     "A pattern declaration requires meaning and purpose in its birth scope: " + ledger.birthFqn);
@@ -144,7 +142,6 @@ public final class PatternBuilder {
         int patternNid = ledger.componentNid();
         writePattern(patternNid);
         ledger.writeDescriptions(patternNid);
-        return EntityProxy.Pattern.make(ledger.birthFqn, PublicIds.of(ledger.componentUuid));
     }
 
     private void flushPendingVersion() {
@@ -295,15 +292,6 @@ public final class PatternBuilder {
             return PatternBuilder.this.at(nextStamp);
         }
 
-        /**
-         * Terminal: replays the ledger into the datastore.
-         * Delegates to {@link PatternBuilder#build()}.
-         *
-         * @return a proxy for the built pattern
-         */
-        public EntityProxy.Pattern build() {
-            return PatternBuilder.this.build();
-        }
     }
 
     /**
@@ -384,15 +372,6 @@ public final class PatternBuilder {
             return PatternBuilder.this.at(nextStamp);
         }
 
-        /**
-         * Terminal: replays the ledger into the datastore.
-         * Delegates to {@link PatternBuilder#build()}.
-         *
-         * @return a proxy for the built pattern
-         */
-        public EntityProxy.Pattern build() {
-            return PatternBuilder.this.build();
-        }
     }
 
     // ------------------------------------------------------------------ replay
