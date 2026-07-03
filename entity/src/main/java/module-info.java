@@ -68,6 +68,7 @@ module dev.ikm.tinkar.entity {
     exports dev.ikm.tinkar.coordinate.view;
     exports dev.ikm.tinkar.coordinate;
     exports dev.ikm.tinkar.entity.aggregator;
+    exports dev.ikm.tinkar.entity.builder;
     exports dev.ikm.tinkar.entity.export;
     exports dev.ikm.tinkar.entity.graph.adaptor.axiom;
     exports dev.ikm.tinkar.entity.graph.isomorphic;
