@@ -379,7 +379,7 @@ public class EntityToTinkarSchemaTransformer {
 
     protected dev.ikm.tinkar.schema.PublicIdSet createPBPublicIdSet(IntIdSet intIdSet){
         List<PublicId> pbPublicIds = new ArrayList<>();
-        intIdSet.forEach(nid -> pbPublicIds.add(createPBPublicId(EntityService.get().getEntityFast(nid).publicId())));
+        intIdSet.forEach(nid -> pbPublicIds.add(createPBPublicId(PrimitiveData.publicId(nid))));
         return dev.ikm.tinkar.schema.PublicIdSet.newBuilder()
                 .addAllPublicIds(pbPublicIds)
                 .build();
@@ -427,7 +427,7 @@ public class EntityToTinkarSchemaTransformer {
         return dev.ikm.tinkar.schema.Vertex.newBuilder()
                 .setVertexUuid(createPBVertexUUID(vertex.vertexId()))
                 .setIndex(pbVertexIndex)
-                .setMeaningPublicId(createPBPublicId(EntityService.get().getEntityFast(vertex.getMeaningNid()).publicId()))
+                .setMeaningPublicId(createPBPublicId(PrimitiveData.publicId(vertex.getMeaningNid())))
                 .addAllProperties(pbPropertyList)
                 .build();
     }
