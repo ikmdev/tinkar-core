@@ -108,8 +108,10 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             Consumer<Entity<?>> exportEntityConsumer = entity -> {
                 if (entity instanceof StampEntity stampEntity) {
                     // Store Module & Author Dependencies for Manifest
-                    moduleList.add(stampEntity.module().publicId());
-                    authorList.add(stampEntity.author().publicId());
+                    // Resolve via the nid->publicId map: module/author concepts need
+                    // not be present as entities in the exporting store.
+                    moduleList.add(PrimitiveData.publicId(stampEntity.moduleNid()));
+                    authorList.add(PrimitiveData.publicId(stampEntity.authorNid()));
                 }
                 TinkarMsg pbTinkarMsg = entityTransformer.transform(entity);
                 try {

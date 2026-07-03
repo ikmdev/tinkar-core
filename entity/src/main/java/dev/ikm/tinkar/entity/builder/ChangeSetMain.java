@@ -20,6 +20,7 @@ import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.ServiceKeys;
 import dev.ikm.tinkar.common.service.ServiceProperties;
+import dev.ikm.tinkar.entity.aggregator.TemporalEntityAggregator;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 
 import java.nio.file.Files;
@@ -41,10 +42,13 @@ import java.util.ServiceLoader;
  * (tinkar providers declare services in {@code module-info} only; the exporting module
  * supplies the registrations in its own resources).
  * <p>
- * The store is fresh and seeded only by the replay, so a whole-store export contains
- * exactly the set: its concepts, semantics, and declared stamps. Referenced identities
- * outside the set (for example {@code TinkarTerm} concepts) mint nids during replay but
- * are never written as entities, so they do not leak into the artifact.
+ * The store is fresh and seeded only by the replay, so the export contains exactly the
+ * set: its concepts, semantics, and declared stamps (aggregated by real time — epoch
+ * zero onward — which excludes the store's startup sentinel stamp). Referenced
+ * identities outside the set (for example {@code TinkarTerm} concepts) mint nids during
+ * replay but are never written as entities, so they do not leak into the artifact.
+ * Declared stamp times before 1970 are therefore not exportable — not a real
+ * constraint for authored content.
  * <p>
  * Arguments: {@code outputFile [sourceClassName]}.
  */
@@ -91,7 +95,12 @@ public final class ChangeSetMain {
         try {
             KnowledgeSet knowledgeSet = source.compose();
             knowledgeSet.write();
-            EntityCountSummary summary = new ExportEntitiesToProtobufFile(outputFile.toFile()).compute();
+            // Aggregate by real time (epoch >= 0): includes every declared stamp and its
+            // content, and excludes the premundane NONEXISTENT_STAMP sentinel the store
+            // mints at startup — whose module/author concepts are absent in a store
+            // seeded only by this replay, and which is not part of the set.
+            EntityCountSummary summary = new ExportEntitiesToProtobufFile(outputFile.toFile(),
+                    new TemporalEntityAggregator(0L, Long.MAX_VALUE)).compute();
             System.out.println("Change set written: " + outputFile + " — "
                     + summary.getTotalCount() + " entities ("
                     + summary.conceptCount() + " concepts, "

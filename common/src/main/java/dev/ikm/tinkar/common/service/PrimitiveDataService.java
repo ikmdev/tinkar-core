@@ -350,6 +350,22 @@ public interface PrimitiveDataService {
 
     void close();
 
+    /**
+     * Resolves the {@link PublicId} a nid was minted from, using the provider's
+     * identity map alone — the component need not be present as an entity. The inverse
+     * of {@link #nidForPublicId(PublicId)}. Providers that do not maintain a reverse
+     * identity mapping may leave the default, which signals the capability is absent.
+     *
+     * @param nid the nid to resolve
+     * @return the public id the nid was minted from
+     * @throws UnsupportedOperationException if this provider cannot reverse-resolve nids
+     * @throws IllegalStateException         if the nid was never minted in this store
+     */
+    default PublicId publicIdForNid(int nid) {
+        throw new UnsupportedOperationException(
+                "This primitive-data provider does not maintain a reverse (nid to public id) identity map");
+    }
+
     default int nidForPublicId(PublicId publicId) {
         return nidForUuids(publicId.asUuidArray());
     }

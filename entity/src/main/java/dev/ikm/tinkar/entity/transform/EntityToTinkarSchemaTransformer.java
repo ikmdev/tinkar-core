@@ -33,6 +33,7 @@ import dev.ikm.tinkar.entity.ConceptEntityVersion;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.FieldDefinitionRecord;
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.PatternEntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntity;
@@ -141,8 +142,8 @@ public class EntityToTinkarSchemaTransformer {
         return TinkarMsg.newBuilder()
                 .setSemanticChronology(SemanticChronology.newBuilder()
                         .setPublicId(createPBPublicId(semanticEntity.publicId()))
-                        .setReferencedComponentPublicId(createPBPublicId(semanticEntity.referencedComponent().publicId()))
-                        .setPatternForSemanticPublicId(createPBPublicId(semanticEntity.pattern().publicId()))
+                        .setReferencedComponentPublicId(createPBPublicId(PrimitiveData.publicId(semanticEntity.referencedComponentNid())))
+                        .setPatternForSemanticPublicId(createPBPublicId(PrimitiveData.publicId(semanticEntity.patternNid())))
                         .addAllSemanticVersions(createPBSemanticVersions(semanticEntity.versions()))
                         .build())
                 .build();
@@ -176,8 +177,8 @@ public class EntityToTinkarSchemaTransformer {
         patternEntityVersions.forEach(patternEntityVersion -> pbPatternVersions
                 .add(PatternVersion.newBuilder()
                 .setStampChronologyPublicId(createPBPublicId(patternEntityVersion.stamp().publicId()))
-                .setReferencedComponentPurposePublicId(createPBPublicId(patternEntityVersion.semanticPurpose().publicId()))
-                .setReferencedComponentMeaningPublicId(createPBPublicId(patternEntityVersion.semanticMeaning().publicId()))
+                .setReferencedComponentPurposePublicId(createPBPublicId(PrimitiveData.publicId(patternEntityVersion.semanticPurposeNid())))
+                .setReferencedComponentMeaningPublicId(createPBPublicId(PrimitiveData.publicId(patternEntityVersion.semanticMeaningNid())))
                 .addAllFieldDefinitions(createPBFieldDefinitions((ImmutableList<FieldDefinitionRecord>) patternEntityVersion.fieldDefinitions()))
                 .build()));
         return pbPatternVersions;
@@ -201,17 +202,17 @@ public class EntityToTinkarSchemaTransformer {
         return StampVersion.newBuilder()
                     .setStatusPublicId(createPBPublicId(stampVersionRecord.state().publicId()))
                     .setTime(stampVersionRecord.time())
-                    .setAuthorPublicId(createPBPublicId(stampVersionRecord.author().publicId()))
-                    .setModulePublicId(createPBPublicId(stampVersionRecord.module().publicId()))
-                    .setPathPublicId(createPBPublicId(stampVersionRecord.path().publicId()))
+                    .setAuthorPublicId(createPBPublicId(PrimitiveData.publicId(stampVersionRecord.authorNid())))
+                    .setModulePublicId(createPBPublicId(PrimitiveData.publicId(stampVersionRecord.moduleNid())))
+                    .setPathPublicId(createPBPublicId(PrimitiveData.publicId(stampVersionRecord.pathNid())))
                     .build();
     }
 
     protected FieldDefinition createPBFieldDefinition(FieldDefinitionRecord fieldDefinitionRecord){
         return FieldDefinition.newBuilder()
-                .setMeaningPublicId(createPBPublicId(fieldDefinitionRecord.meaning().publicId()))
-                .setDataTypePublicId(createPBPublicId(fieldDefinitionRecord.dataType().publicId()))
-                .setPurposePublicId(createPBPublicId(fieldDefinitionRecord.purpose().publicId()))
+                .setMeaningPublicId(createPBPublicId(PrimitiveData.publicId(fieldDefinitionRecord.meaningNid())))
+                .setDataTypePublicId(createPBPublicId(PrimitiveData.publicId(fieldDefinitionRecord.dataTypeNid())))
+                .setPurposePublicId(createPBPublicId(PrimitiveData.publicId(fieldDefinitionRecord.purposeNid())))
                 .build();
     }
 
@@ -370,7 +371,7 @@ public class EntityToTinkarSchemaTransformer {
 
     protected dev.ikm.tinkar.schema.PublicIdList createPBPublicIdList(IntIdList intIdList){
         List<PublicId> pbPublicIds = new ArrayList<>();
-        intIdList.forEach(nid -> pbPublicIds.add(createPBPublicId(EntityService.get().getEntityFast(nid).publicId())));
+        intIdList.forEach(nid -> pbPublicIds.add(createPBPublicId(PrimitiveData.publicId(nid))));
         return dev.ikm.tinkar.schema.PublicIdList.newBuilder()
                 .addAllPublicIds(pbPublicIds)
                 .build();
