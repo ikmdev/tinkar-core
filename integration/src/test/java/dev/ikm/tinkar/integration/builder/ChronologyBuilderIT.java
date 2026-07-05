@@ -84,8 +84,12 @@ class ChronologyBuilderIT {
         TEST_SET.concept("Journal element (Test)").at(birth)
                 .synonym("Journal element")
                 .definition("Root kind of the blocks a conversation journal orders.")
-                .statedAxioms(leb -> leb.NecessarySet(leb.And(
-                        leb.ConceptAxiom(TinkarTerm.MODEL_CONCEPT))));
+                .isA(TinkarTerm.MODEL_CONCEPT);
+
+        // A child under Journal element — the structural taxonomy the glossary reads.
+        TEST_SET.concept("Prose element (Test)").at(birth)
+                .synonym("Prose element")
+                .isA(TEST_SET.conceptRef("Journal element (Test)"));
 
         TEST_SET.concept("Retiring kind (Test)").at(birth)
                 .synonym("Temporary name");
@@ -291,6 +295,28 @@ class ChronologyBuilderIT {
         KnowledgeSet probe = KnowledgeSet.of("66666666-6666-5666-9666-666666666666");
         probe.concept("Collider (Probe)");
         assertThrows(IllegalArgumentException.class, () -> probe.pattern("Collider (Probe)"));
+    }
+
+    @Test
+    @DisplayName("isA exposes supertypes structurally and still writes the stated-axiom semantic")
+    void isAStructuralTaxonomy() {
+        java.util.Map<String, KnowledgeSet.Declaration> byFqn = new java.util.HashMap<>();
+        for (KnowledgeSet.Declaration d : TEST_SET.declarations()) {
+            byFqn.put(d.birthFqn(), d);
+        }
+        KnowledgeSet.Declaration prose = byFqn.get("Prose element (Test)");
+        assertEquals(1, prose.supertypes().size());
+        assertEquals(TEST_SET.conceptRef("Journal element (Test)").publicId(),
+                prose.supertypes().get(0), "structural parent readable without a store");
+
+        // The isA also composed the stated-axiom semantic in the store.
+        int[] axiomNids = EntityService.get().semanticNidsForComponentOfPattern(
+                TEST_SET.conceptRef("Prose element (Test)").nid(),
+                TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid());
+        assertEquals(1, axiomNids.length);
+
+        // Patterns carry no supertypes.
+        assertTrue(byFqn.get("Journal manifest pattern (Test)").supertypes().isEmpty());
     }
 
     @Test
