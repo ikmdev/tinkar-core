@@ -64,15 +64,29 @@ public final class ChangeSetMain {
      * @throws Exception if discovery, composition, replay, or export fails
      */
     public static void main(String[] args) throws Exception {
-        if (args.length < 1 || args.length > 2) {
-            throw new IllegalArgumentException("Usage: ChangeSetMain <outputFile> [sourceClassName]");
+        if (args.length < 1 || args.length > 3) {
+            throw new IllegalArgumentException(
+                    "Usage: ChangeSetMain <outputFile> [konceptsYmlFile] [sourceClassName]");
         }
         Path outputFile = Path.of(args[0]);
         Files.createDirectories(outputFile.toAbsolutePath().getParent());
 
+        // Optional second arg is the koncepts YAML output; an optional trailing arg names
+        // the source class. Both are position-flexible: a value ending in .yml is the
+        // koncepts file, anything else is the source class.
+        Path konceptsYml = null;
+        String sourceClassName = null;
+        for (int i = 1; i < args.length; i++) {
+            if (args[i].endsWith(".yml") || args[i].endsWith(".yaml")) {
+                konceptsYml = Path.of(args[i]);
+            } else {
+                sourceClassName = args[i];
+            }
+        }
+
         KnowledgeSetSource source;
-        if (args.length == 2) {
-            source = (KnowledgeSetSource) Class.forName(args[1], true, ChangeSetMain.class.getClassLoader())
+        if (sourceClassName != null) {
+            source = (KnowledgeSetSource) Class.forName(sourceClassName, true, ChangeSetMain.class.getClassLoader())
                     .getDeclaredConstructor().newInstance();
         } else {
             List<KnowledgeSetSource> found = new ArrayList<>();
@@ -82,7 +96,7 @@ public final class ChangeSetMain {
                 throw new IllegalStateException("Expected exactly one KnowledgeSetSource on the classpath, found "
                         + found.size() + (found.isEmpty() ? "" : ": "
                         + found.stream().map(s -> s.getClass().getName()).toList())
-                        + " — pass the implementation class name as the second argument to select one");
+                        + " — pass the implementation class name as an argument to select one");
             }
             source = found.getFirst();
         }
@@ -107,6 +121,14 @@ public final class ChangeSetMain {
                     + summary.semanticCount() + " semantics, "
                     + summary.patternCount() + " patterns, "
                     + summary.stampCount() + " stamps) from " + source.getClass().getName());
+
+            // The glossary is extracted from this same loaded store — one materialization,
+            // both artifacts — rather than a parallel read of the ledger.
+            if (konceptsYml != null) {
+                Files.createDirectories(konceptsYml.toAbsolutePath().getParent());
+                Files.writeString(konceptsYml, KonceptExtractor.extractYaml());
+                System.out.println("Koncepts extracted: " + konceptsYml);
+            }
         } finally {
             PrimitiveData.stop();
         }

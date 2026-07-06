@@ -158,31 +158,26 @@ public final class KnowledgeSet {
         List<Declaration> result = new ArrayList<>();
         for (ConceptBuilder builder : concepts.values()) {
             result.add(new Declaration(Declaration.Kind.CONCEPT, builder.ledger().birthFqn,
-                    builder.publicId(), builder.ledger().currentDefinition(), builder.currentSupertypes()));
+                    builder.publicId(), builder.ledger().currentDefinition()));
         }
         for (PatternBuilder builder : patterns.values()) {
             result.add(new Declaration(Declaration.Kind.PATTERN, builder.ledger().birthFqn,
-                    builder.publicId(), builder.ledger().currentDefinition(), List.of()));
+                    builder.publicId(), builder.ledger().currentDefinition()));
         }
         return result;
     }
 
     /**
      * One opened declaration of a knowledge set: its kind, the fully qualified name at
-     * birth (the identity seed), the derived identity, the current definition text if the
-     * ledger declared one, and the current supertypes if declared via {@link
-     * ConceptBuilder.ActiveScope#isA(dev.ikm.tinkar.terms.ConceptFacade...)}.
+     * birth (the identity seed), the derived identity, and the current definition text if
+     * the ledger declared one.
      *
      * @param kind       concept or pattern
      * @param birthFqn   the fully qualified name at birth
      * @param publicId   the derived identity, {@code T5(setUuid, birthFqn)}
      * @param definition the current text of the first live definition description, if any
-     * @param supertypes the current is-a parents (identities), empty for patterns and for
-     *                   concepts with no {@code isA} declaration; children are the inverse
-     *                   across the set's declarations
      */
-    public record Declaration(Kind kind, String birthFqn, PublicId publicId, Optional<String> definition,
-                              List<PublicId> supertypes) {
+    public record Declaration(Kind kind, String birthFqn, PublicId publicId, Optional<String> definition) {
 
         /** The kind of a declaration. */
         public enum Kind {

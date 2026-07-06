@@ -298,25 +298,17 @@ class ChronologyBuilderIT {
     }
 
     @Test
-    @DisplayName("isA exposes supertypes structurally and still writes the stated-axiom semantic")
-    void isAStructuralTaxonomy() {
-        java.util.Map<String, KnowledgeSet.Declaration> byFqn = new java.util.HashMap<>();
-        for (KnowledgeSet.Declaration d : TEST_SET.declarations()) {
-            byFqn.put(d.birthFqn(), d);
-        }
-        KnowledgeSet.Declaration prose = byFqn.get("Prose element (Test)");
-        assertEquals(1, prose.supertypes().size());
-        assertEquals(TEST_SET.conceptRef("Journal element (Test)").publicId(),
-                prose.supertypes().get(0), "structural parent readable without a store");
-
-        // The isA also composed the stated-axiom semantic in the store.
+    @DisplayName("isA composes the stated-axiom semantic; parents are read from the store")
+    void isAWritesStatedAxiom() {
+        // isA composes NecessarySet(And(ConceptAxiom(parent))) as the stated-axiom semantic;
+        // the glossary extractor reads parents from this stored axiom (no builder read API).
         int[] axiomNids = EntityService.get().semanticNidsForComponentOfPattern(
                 TEST_SET.conceptRef("Prose element (Test)").nid(),
                 TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid());
         assertEquals(1, axiomNids.length);
-
-        // Patterns carry no supertypes.
-        assertTrue(byFqn.get("Journal manifest pattern (Test)").supertypes().isEmpty());
+        SemanticEntity<?> axiom = EntityHandle.get(axiomNids[0]).expectSemantic();
+        Object field = ((SemanticEntityVersion) axiom.versions().get(0)).fieldValues().get(0);
+        assertInstanceOf(DiTreeEntity.class, field);
     }
 
     @Test

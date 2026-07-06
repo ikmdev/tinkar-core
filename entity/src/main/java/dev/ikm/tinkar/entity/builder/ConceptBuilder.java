@@ -96,7 +96,6 @@ public final class ConceptBuilder {
 
     private final ComponentLedger ledger;
     private final List<VersionEntry<Consumer<LogicalExpressionBuilder>>> axiomVersions = new ArrayList<>();
-    private final List<VersionEntry<List<PublicId>>> supertypeVersions = new ArrayList<>();
 
     ConceptBuilder(KnowledgeSet knowledgeSet, String birthFqn) {
         this.ledger = new ComponentLedger(knowledgeSet.uuidFor(birthFqn), birthFqn);
@@ -113,18 +112,6 @@ public final class ConceptBuilder {
 
     ComponentLedger ledger() {
         return ledger;
-    }
-
-    /**
-     * The concept's current supertypes: the parents of the most recent {@link
-     * ActiveScope#isA(ConceptFacade...)} declaration, or empty if none was made. The
-     * structural read surface behind a knowledge set's taxonomy — available store-free,
-     * unlike the materialized axiom graph.
-     *
-     * @return the latest declared supertype identities, in declaration order
-     */
-    List<PublicId> currentSupertypes() {
-        return supertypeVersions.isEmpty() ? List.of() : supertypeVersions.getLast().value();
     }
 
     /**
@@ -267,12 +254,9 @@ public final class ConceptBuilder {
         /**
          * States the concept's supertypes: composes a stated-axiom version of the form
          * {@code NecessarySet(And(ConceptAxiom(parent), ...))} — the common is-a
-         * taxonomy case — and records the parents structurally so the knowledge set's
-         * {@link KnowledgeSet#declarations()} exposes the taxonomy without a store (which
-         * the materialized axiom graph would require). Restating {@code isA} in a later
-         * scope revises the singleton stated-axiom semantic and the current supertype set.
-         * For richer definitions use {@link #statedAxioms(Consumer)} directly; those are
-         * not reflected in the structural taxonomy.
+         * taxonomy case. Restating {@code isA} in a later scope revises the singleton
+         * stated-axiom semantic. The taxonomy is read back from the stored axioms (for
+         * example by the glossary extractor over a loaded store), not from the builder.
          *
          * @param parents the supertype concepts; at least one
          * @return this scope, for chaining
@@ -283,8 +267,6 @@ public final class ConceptBuilder {
                 throw new IllegalArgumentException("isA requires at least one parent");
             }
             List<ConceptFacade> parentList = List.of(parents);
-            supertypeVersions.add(new VersionEntry<>(stamp,
-                    parentList.stream().map(ConceptFacade::publicId).toList()));
             axiomVersions.add(new VersionEntry<>(stamp, leb -> {
                 LogicalAxiom.Atom[] atoms = parentList.stream()
                         .map(parent -> leb.ConceptAxiom(parent))
