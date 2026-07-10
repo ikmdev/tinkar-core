@@ -15,19 +15,26 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
+import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.ServiceKeys;
 import dev.ikm.tinkar.common.service.ServiceProperties;
+import dev.ikm.tinkar.entity.aggregator.AllowlistEntityAggregator;
+import dev.ikm.tinkar.entity.aggregator.EntityAggregator;
 import dev.ikm.tinkar.entity.aggregator.TemporalEntityAggregator;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * The change-set export entry point build tooling invokes: discovers the project's
@@ -109,12 +116,8 @@ public final class ChangeSetMain {
         try {
             KnowledgeSet knowledgeSet = source.compose();
             knowledgeSet.write();
-            // Aggregate by real time (epoch >= 0): includes every declared stamp and its
-            // content, and excludes the premundane NONEXISTENT_STAMP sentinel the store
-            // mints at startup — whose module/author concepts are absent in a store
-            // seeded only by this replay, and which is not part of the set.
             EntityCountSummary summary = new ExportEntitiesToProtobufFile(outputFile.toFile(),
-                    new TemporalEntityAggregator(0L, Long.MAX_VALUE)).compute();
+                    selectAggregator()).compute();
             System.out.println("Change set written: " + outputFile + " — "
                     + summary.getTotalCount() + " entities ("
                     + summary.conceptCount() + " concepts, "
@@ -132,5 +135,43 @@ public final class ChangeSetMain {
         } finally {
             PrimitiveData.stop();
         }
+    }
+
+    /**
+     * The export aggregator. Default (no system property): aggregate by real time (epoch &ge; 0) —
+     * every declared stamp and its content, excluding the premundane {@code NONEXISTENT_STAMP} sentinel
+     * the store mints at startup (whose module/author are absent in a store seeded only by this replay).
+     * That is the behavior-preserving default for every existing export.
+     *
+     * <p>When {@code changeset.export.moduleAllowlist} is set (comma-separated module UUIDs), export
+     * becomes a <b>filtered projection</b>: only content in the allowlisted modules crosses, optionally
+     * narrowed to the paths in {@code changeset.export.pathAllowlist}. This is default-deny — a module
+     * not named is not exported. See {@link AllowlistEntityAggregator}.
+     */
+    private static EntityAggregator selectAggregator() {
+        Set<PublicId> modules = publicIdsFromProperty("changeset.export.moduleAllowlist");
+        if (modules.isEmpty()) {
+            return new TemporalEntityAggregator(0L, Long.MAX_VALUE);
+        }
+        Set<PublicId> paths = publicIdsFromProperty("changeset.export.pathAllowlist");
+        System.out.println("Change set filtered by module allowlist: " + modules.size() + " module(s)"
+                + (paths.isEmpty() ? "" : ", " + paths.size() + " path(s)"));
+        return new AllowlistEntityAggregator(modules, paths, null);
+    }
+
+    /** Parses a comma-separated list of UUIDs from a system property into a set of {@link PublicId}s. */
+    private static Set<PublicId> publicIdsFromProperty(String propertyName) {
+        String value = System.getProperty(propertyName);
+        if (value == null || value.isBlank()) {
+            return Set.of();
+        }
+        Set<PublicId> publicIds = new LinkedHashSet<>();
+        for (String token : value.split(",")) {
+            String trimmed = token.trim();
+            if (!trimmed.isEmpty()) {
+                publicIds.add(PublicIds.of(UUID.fromString(trimmed)));
+            }
+        }
+        return publicIds;
     }
 }
