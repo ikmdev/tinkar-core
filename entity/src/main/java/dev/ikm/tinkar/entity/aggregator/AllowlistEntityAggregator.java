@@ -44,6 +44,14 @@ import java.util.function.IntPredicate;
  * invisible to a knowledge-distribution export until it is explicitly allowlisted — the failure mode is
  * "forgot to include" (loud), never "forgot to exclude" (a silent leak).
  *
+ * <p>Within that module/path scope it also filters by <b>pattern</b> — the primary content-type axis
+ * (layout-vs-fact is <em>which pattern</em> a semantic uses). An include-set and an exclude-set (the
+ * {@code StampCoordinate.moduleNids}/{@code excludedModuleNids} precedent) select the patterns that may
+ * cross: a semantic passes when its pattern is included and not excluded; a pattern entity is likewise
+ * kept or dropped by its own nid, so excluding a layout pattern drops both its semantics and the pattern
+ * definition. Concepts and stamps have no pattern and are unaffected. Both sets empty means no pattern
+ * constraint.
+ *
  * <p>It emits <b>patterns before the semantics that reference them</b> (unlike
  * {@link DefaultEntityAggregator}, which emits semantics first), so a consumer can resolve a semantic's
  * pattern — and thus its pattern-purpose — before applying it. Referenced stamps of included entities
@@ -59,29 +67,39 @@ public class AllowlistEntityAggregator extends EntityAggregator {
 
     private final Set<PublicId> allowedModules;
     private final Set<PublicId> allowedPaths;
+    private final Set<PublicId> includedPatterns;
+    private final Set<PublicId> excludedPatterns;
     private final IntPredicate purposeNidPredicate;
 
     /**
-     * An allowlist by module only, any path, no purpose refinement.
+     * An allowlist by module only — any path, any pattern, no purpose refinement.
      *
      * @param allowedModules the module concepts whose content may cross the boundary
      */
     public AllowlistEntityAggregator(Set<PublicId> allowedModules) {
-        this(allowedModules, Set.of(), null);
+        this(allowedModules, Set.of(), Set.of(), Set.of(), null);
     }
 
     /**
      * @param allowedModules      the module concepts whose content may cross the boundary; required,
      *                            non-empty for anything to be exported
      * @param allowedPaths        the path concepts allowed, or empty for any path
+     * @param includedPatterns    the patterns semantics may use, or empty for any pattern; also gates
+     *                            which pattern entities are exported
+     * @param excludedPatterns    patterns to drop (wins over the include-set) — e.g. the layout patterns
+     *                            excluded from a knowledge distribution; drops both the semantics on them
+     *                            and the pattern definitions
      * @param purposeNidPredicate an optional refinement applied to <em>semantics</em>, tested against
      *                            their pattern's purpose nid; {@code null} disables purpose filtering
      *                            (purpose is a permitted, complementary key — off by default)
      */
     public AllowlistEntityAggregator(Set<PublicId> allowedModules, Set<PublicId> allowedPaths,
+                                     Set<PublicId> includedPatterns, Set<PublicId> excludedPatterns,
                                      IntPredicate purposeNidPredicate) {
         this.allowedModules = Set.copyOf(Objects.requireNonNull(allowedModules, "allowedModules"));
         this.allowedPaths = allowedPaths == null ? Set.of() : Set.copyOf(allowedPaths);
+        this.includedPatterns = includedPatterns == null ? Set.of() : Set.copyOf(includedPatterns);
+        this.excludedPatterns = excludedPatterns == null ? Set.of() : Set.copyOf(excludedPatterns);
         this.purposeNidPredicate = purposeNidPredicate;
     }
 
@@ -93,6 +111,10 @@ public class AllowlistEntityAggregator extends EntityAggregator {
         allowedModules.forEach(publicId -> allowedModuleNids.add(PrimitiveData.nid(publicId)));
         Set<Integer> allowedPathNids = new HashSet<>();
         allowedPaths.forEach(publicId -> allowedPathNids.add(PrimitiveData.nid(publicId)));
+        Set<Integer> includedPatternNids = new HashSet<>();
+        includedPatterns.forEach(publicId -> includedPatternNids.add(PrimitiveData.nid(publicId)));
+        Set<Integer> excludedPatternNids = new HashSet<>();
+        excludedPatterns.forEach(publicId -> excludedPatternNids.add(PrimitiveData.nid(publicId)));
 
         // The stamps whose module (and path, when constrained) is allowlisted.
         Set<Integer> allowedStampNids = new HashSet<>();
@@ -118,22 +140,29 @@ public class AllowlistEntityAggregator extends EntityAggregator {
                     }
                 }));
 
-        // Patterns BEFORE semantics, so a consumer can resolve a semantic's pattern (and purpose) first.
+        // Patterns BEFORE semantics, so a consumer can resolve a semantic's pattern (and purpose) first;
+        // a pattern entity is itself subject to the pattern include/exclude by its own nid.
         PrimitiveData.get().forEachPatternNid(patternNid ->
                 EntityService.get().getEntity(patternNid).ifPresent(patternEntity -> {
                     Set<Integer> stampNids = patternEntity.stampNids().mapToSet(i -> i);
-                    if (!Collections.disjoint(allowedStampNids, stampNids)) {
+                    if (!Collections.disjoint(allowedStampNids, stampNids)
+                            && patternAllowed(patternNid, includedPatternNids, excludedPatternNids)) {
                         patternsAggregatedCount.incrementAndGet();
                         nidConsumer.accept(patternNid);
                         referencedStampNids.addAll(stampNids);
                     }
                 }));
 
-        // Semantics included when any stamp is allowlisted and the optional purpose refinement passes.
+        // Semantics included when any stamp is allowlisted, the semantic's pattern is allowed, and the
+        // optional purpose refinement passes.
         PrimitiveData.get().forEachSemanticNid(semanticNid ->
                 EntityService.get().getEntity(semanticNid).ifPresent(semanticEntity -> {
+                    if (!(semanticEntity instanceof SemanticEntity<?> semantic)) {
+                        return;
+                    }
                     Set<Integer> stampNids = semanticEntity.stampNids().mapToSet(i -> i);
                     if (!Collections.disjoint(allowedStampNids, stampNids)
+                            && patternAllowed(semantic.patternNid(), includedPatternNids, excludedPatternNids)
                             && purposeAllows(semanticEntity)) {
                         semanticsAggregatedCount.incrementAndGet();
                         nidConsumer.accept(semanticNid);
@@ -146,6 +175,17 @@ public class AllowlistEntityAggregator extends EntityAggregator {
         deduplicatedStampNids.forEach(nidConsumer::accept);
 
         return summarize();
+    }
+
+    /**
+     * Whether {@code patternNid} passes the pattern include/exclude: never when excluded; otherwise when
+     * the include-set is empty (any pattern) or contains it.
+     */
+    private static boolean patternAllowed(int patternNid, Set<Integer> included, Set<Integer> excluded) {
+        if (excluded.contains(patternNid)) {
+            return false;
+        }
+        return included.isEmpty() || included.contains(patternNid);
     }
 
     /**

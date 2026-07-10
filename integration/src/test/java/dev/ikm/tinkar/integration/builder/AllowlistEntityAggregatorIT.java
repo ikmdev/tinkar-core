@@ -39,6 +39,7 @@ class AllowlistEntityAggregatorIT {
     private EntityProxy.Concept moduleB;
     private EntityProxy.Concept thingA;
     private EntityProxy.Concept thingB;
+    private EntityProxy.Pattern probePattern;
 
     @BeforeAll
     void beforeAll() {
@@ -49,6 +50,7 @@ class AllowlistEntityAggregatorIT {
         moduleB = set.conceptRef("Module B (Probe)");
         thingA = set.conceptRef("Thing A (Probe)");
         thingB = set.conceptRef("Thing B (Probe)");
+        probePattern = set.patternRef("Probe pattern (Probe)");
 
         ActiveStamp stampA = Stamp.active("2026-07-10T00:00:00Z", TinkarTerm.USER, moduleA, TinkarTerm.DEVELOPMENT_PATH);
         ActiveStamp stampB = Stamp.active("2026-07-10T00:00:00Z", TinkarTerm.USER, moduleB, TinkarTerm.DEVELOPMENT_PATH);
@@ -109,13 +111,41 @@ class AllowlistEntityAggregatorIT {
         // description semantics here sit on TinkarTerm patterns absent from this replay-seeded store),
         // so a reject-everything predicate leaves the semantic count unchanged.
         EntityCountSummary rejectAll =
-                new AllowlistEntityAggregator(allow, Set.of(), nid -> false).aggregate(nid -> { });
+                new AllowlistEntityAggregator(allow, Set.of(), Set.of(), Set.of(), nid -> false).aggregate(nid -> { });
 
         assertTrue(noPredicate.semanticCount() > 0, "the allowed module has description semantics");
         assertEquals(noPredicate.semanticCount(), rejectAll.semanticCount(),
                 "a complementary purpose refinement never drops content it cannot classify");
         // NOTE: positive purpose exclusion (a reject predicate dropping a semantic on an in-store
         // pattern) needs a semantic instance, which KnowledgeSet does not yet author — follow-up.
+    }
+
+    @Test
+    void excludingAPatternDropsItButKeepsSemanticsOnOtherPatterns() {
+        Set<PublicId> mod = Set.of(moduleA.publicId());
+        EntityCountSummary baseline = new AllowlistEntityAggregator(mod).aggregate(nid -> { });
+        AllowlistEntityAggregator excluding = new AllowlistEntityAggregator(
+                mod, Set.of(), Set.of(), Set.of(probePattern.publicId()), null);
+        List<Integer> emitted = collect(excluding);
+        EntityCountSummary excluded = new AllowlistEntityAggregator(
+                mod, Set.of(), Set.of(), Set.of(probePattern.publicId()), null).aggregate(nid -> { });
+
+        assertFalse(emitted.contains(probePattern.nid()), "an excluded pattern is not exported");
+        assertEquals(baseline.patternCount() - 1, excluded.patternCount(), "exactly the excluded pattern is dropped");
+        assertEquals(baseline.semanticCount(), excluded.semanticCount(),
+                "excluding a pattern does not drop semantics that use other patterns");
+    }
+
+    @Test
+    void includingOnlyOnePatternKeepsOnlyThatPattern() {
+        Set<PublicId> mod = Set.of(moduleA.publicId());
+        EntityCountSummary included = new AllowlistEntityAggregator(
+                mod, Set.of(), Set.of(probePattern.publicId()), Set.of(), null).aggregate(nid -> { });
+
+        assertEquals(1, included.patternCount(), "only the included pattern is exported");
+        // The module's description semantics sit on external TinkarTerm patterns, so an include-set
+        // limited to the probe pattern drops them — nothing in this fixture uses the probe pattern.
+        assertEquals(0, included.semanticCount(), "only semantics on the included pattern would cross");
     }
 
     private static List<Integer> collect(AllowlistEntityAggregator aggregator) {

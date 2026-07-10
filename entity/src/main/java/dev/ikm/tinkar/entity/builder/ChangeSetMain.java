@@ -145,8 +145,10 @@ public final class ChangeSetMain {
      *
      * <p>When {@code changeset.export.moduleAllowlist} is set (comma-separated module UUIDs), export
      * becomes a <b>filtered projection</b>: only content in the allowlisted modules crosses, optionally
-     * narrowed to the paths in {@code changeset.export.pathAllowlist}. This is default-deny — a module
-     * not named is not exported. See {@link AllowlistEntityAggregator}.
+     * narrowed to the paths in {@code changeset.export.pathAllowlist}, and refined by pattern via
+     * {@code changeset.export.includePatterns} / {@code changeset.export.excludePatterns} (comma-separated
+     * pattern UUIDs — e.g. exclude the layout patterns from a knowledge distribution). This is
+     * default-deny — a module not named is not exported. See {@link AllowlistEntityAggregator}.
      */
     private static EntityAggregator selectAggregator() {
         Set<PublicId> modules = publicIdsFromProperty("changeset.export.moduleAllowlist");
@@ -154,9 +156,13 @@ public final class ChangeSetMain {
             return new TemporalEntityAggregator(0L, Long.MAX_VALUE);
         }
         Set<PublicId> paths = publicIdsFromProperty("changeset.export.pathAllowlist");
+        Set<PublicId> includePatterns = publicIdsFromProperty("changeset.export.includePatterns");
+        Set<PublicId> excludePatterns = publicIdsFromProperty("changeset.export.excludePatterns");
         System.out.println("Change set filtered by module allowlist: " + modules.size() + " module(s)"
-                + (paths.isEmpty() ? "" : ", " + paths.size() + " path(s)"));
-        return new AllowlistEntityAggregator(modules, paths, null);
+                + (paths.isEmpty() ? "" : ", " + paths.size() + " path(s)")
+                + (includePatterns.isEmpty() ? "" : ", include " + includePatterns.size() + " pattern(s)")
+                + (excludePatterns.isEmpty() ? "" : ", exclude " + excludePatterns.size() + " pattern(s)"));
+        return new AllowlistEntityAggregator(modules, paths, includePatterns, excludePatterns, null);
     }
 
     /** Parses a comma-separated list of UUIDs from a system property into a set of {@link PublicId}s. */
