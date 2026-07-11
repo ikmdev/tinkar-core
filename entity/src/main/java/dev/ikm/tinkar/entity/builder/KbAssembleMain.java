@@ -43,7 +43,16 @@ import java.nio.file.Path;
  * {@code META-INF/services} controller registrations when running on the classpath.
  * <p>
  * Arguments: {@code storeRoot pbZip [pbZip...]}.
+ *
+ * @deprecated Replaced by the {@code ike-knowledge-spi} service contract
+ * (IKE-Network/ike-issues#850): goals resolve a {@code KnowledgeBaseAssembler} /
+ * {@code KnowledgeExporter} / {@code BindingsGenerator} implementation via
+ * {@link java.util.ServiceLoader} instead of invoking this main by name. Retained only
+ * while the {@code ike:} goals migrate; removal is tracked on the same issue. There are
+ * no external users — this deprecation marks the iterative migration, not a
+ * compatibility promise.
  */
+@Deprecated
 public final class KbAssembleMain {
 
     private KbAssembleMain() {

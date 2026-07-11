@@ -34,7 +34,16 @@ import java.util.ServiceLoader;
  * Arguments: {@code outputDir packageName className [sourceClassName]} — the source
  * class argument selects an implementation when the classpath provides more than one
  * {@code KnowledgeSetSource}; otherwise exactly one must be discoverable.
+ *
+ * @deprecated Replaced by the {@code ike-knowledge-spi} service contract
+ * (IKE-Network/ike-issues#850): goals resolve a {@code KnowledgeBaseAssembler} /
+ * {@code KnowledgeExporter} / {@code BindingsGenerator} implementation via
+ * {@link java.util.ServiceLoader} instead of invoking this main by name. Retained only
+ * while the {@code ike:} goals migrate; removal is tracked on the same issue. There are
+ * no external users — this deprecation marks the iterative migration, not a
+ * compatibility promise.
  */
+@Deprecated
 public final class BindingsMain {
 
     private BindingsMain() {
