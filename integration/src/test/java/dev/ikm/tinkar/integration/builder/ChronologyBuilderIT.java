@@ -49,6 +49,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -67,6 +68,12 @@ class ChronologyBuilderIT {
 
     private static final KnowledgeSet TEST_SET =
             KnowledgeSet.of("f7f5c2a4-4b1e-5b6a-9d3c-2e8f0a1b4c6d");
+
+    /** An identity established outside this set — as an ingested or Komet-minted component carries. */
+    private static final UUID ADOPTED_CONCEPT_IDENTITY =
+            UUID.fromString("3c9d1e7a-52f4-4b8e-b1a6-0d5e8c2f7a41");
+    private static final UUID ADOPTED_PATTERN_IDENTITY =
+            UUID.fromString("6b4f2a8c-91d3-4e7f-a2c5-8e0b1d6f3c92");
 
     private static ActiveStamp birth;
     private static ActiveStamp later;
@@ -101,6 +108,15 @@ class ChronologyBuilderIT {
                 .synonym("Journal manifest");
 
         TEST_SET.pattern("Evolving pattern (Test)").at(birth)
+                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER);
+
+        // Declared identity — content whose identity was established elsewhere (ingest
+        // of an existing set, or a Komet-minted component lifted back into the ledger).
+        TEST_SET.concept("Adopted kind (Test)", ADOPTED_CONCEPT_IDENTITY).at(birth)
+                .synonym("Adopted kind")
+                .isA(TEST_SET.conceptRef("Journal element (Test)"));
+
+        TEST_SET.pattern("Adopted pattern (Test)", ADOPTED_PATTERN_IDENTITY).at(birth)
                 .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER);
 
         later = Stamp.active("2026-09-01T00:00:00Z",
@@ -144,6 +160,38 @@ class ChronologyBuilderIT {
                 resumed.publicId().asUuidArray()[0]);
         assertEquals(resumed.publicId(),
                 TEST_SET.conceptRef("Journal element (Test)").publicId());
+    }
+
+    @Test
+    @DisplayName("Declared identity: FQN + UUID adopts an established identity; resume must agree")
+    void declaredIdentity() {
+        ConceptBuilder adopted = TEST_SET.concept("Adopted kind (Test)");
+        assertEquals(ADOPTED_CONCEPT_IDENTITY, adopted.publicId().asUuidArray()[0],
+                "declared identity, not T5(setUuid, fqn)");
+        assertEquals(adopted.publicId(), TEST_SET.conceptRef("Adopted kind (Test)").publicId(),
+                "a ref after the declaration answers the declared identity");
+        assertSame(adopted, TEST_SET.concept("Adopted kind (Test)", ADOPTED_CONCEPT_IDENTITY));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> TEST_SET.concept("Adopted kind (Test)",
+                        UUID.fromString("00000000-0000-0000-0000-000000000001")),
+                "resuming under a different declared identity is rejected");
+        assertThrows(IllegalArgumentException.class,
+                () -> TEST_SET.concept("Journal element (Test)", ADOPTED_CONCEPT_IDENTITY),
+                "declaring an identity for an FQN already opened derived is rejected");
+        assertThrows(IllegalArgumentException.class,
+                () -> TEST_SET.concept("Unopened kind (Test)", null),
+                "a declared identity requires a UUID");
+
+        // Replay wrote the entity under the declared identity.
+        ConceptEntity<?> entity = EntityHandle.get(
+                TEST_SET.conceptRef("Adopted kind (Test)").nid()).expectConcept();
+        assertEquals(ADOPTED_CONCEPT_IDENTITY, entity.publicId().asUuidArray()[0]);
+
+        PatternBuilder adoptedPattern = TEST_SET.pattern("Adopted pattern (Test)");
+        assertEquals(ADOPTED_PATTERN_IDENTITY, adoptedPattern.publicId().asUuidArray()[0]);
+        assertEquals(adoptedPattern.publicId(),
+                TEST_SET.patternRef("Adopted pattern (Test)").publicId());
     }
 
     @Test

@@ -33,6 +33,11 @@ import java.util.UUID;
  * namespace for identity derivation: a concept's identity is
  * {@code T5(setUuid, fullyQualifiedNameAtBirth)}, so identity cannot be minted without a
  * meaningful name, and one UUID literal per knowledge set replaces one per concept.
+ * Birth-FQN derivation is the seed for the formative declarations of every set; content
+ * whose identity was established elsewhere — an existing starter set being ingested into
+ * ledger form, or a concept minted interactively and lifted back into the source —
+ * instead <em>declares</em> that identity alongside its FQN
+ * ({@link #concept(String, UUID)}, {@link #pattern(String, UUID)}).
  *
  * <h2>The session registry — builders resume</h2>
  * A knowledge set keeps every builder it has opened, keyed by birth FQN:
@@ -100,12 +105,54 @@ public final class KnowledgeSet {
      *                                  or already names a pattern in this knowledge set
      */
     public ConceptBuilder concept(String fullyQualifiedName) {
+        return openConcept(fullyQualifiedName, null);
+    }
+
+    /**
+     * Opens — or resumes — the concept declaration for the given birth FQN with a
+     * <em>declared</em> identity: the concept's public id is the given UUID rather than
+     * the {@code T5(setUuid, fqn)} derivation. Birth-FQN derivation remains the seed for
+     * the formative declarations of every set; a declared identity adopts an identity
+     * established elsewhere — content ingested from an existing starter set, or a concept
+     * minted interactively (for example in Komet) and lifted back into the ledger. The
+     * FQN is still the registry key and the FQN description's initial text, and is still
+     * never reused within the set.
+     * <p>
+     * Resuming must agree on identity: once opened, a later call for the same FQN with a
+     * different declared identity — or a declared identity where the derived one was
+     * already opened, and vice versa when they differ — is rejected.
+     *
+     * @param fullyQualifiedName the concept's fully qualified name at birth
+     * @param declaredIdentity   the established identity to adopt
+     * @return the (new or resumed) builder for the concept's version ledger
+     * @throws IllegalArgumentException if {@code fullyQualifiedName} is null or blank,
+     *                                  already names a pattern in this knowledge set, or
+     *                                  was already opened under a different identity;
+     *                                  or if {@code declaredIdentity} is null
+     */
+    public ConceptBuilder concept(String fullyQualifiedName, UUID declaredIdentity) {
+        if (declaredIdentity == null) {
+            throw new IllegalArgumentException(
+                    "A declared identity requires a UUID — use concept(fqn) for the derived identity");
+        }
+        return openConcept(fullyQualifiedName, declaredIdentity);
+    }
+
+    private ConceptBuilder openConcept(String fullyQualifiedName, UUID declaredIdentity) {
         requireMeaningful(fullyQualifiedName, "concept");
         if (patterns.containsKey(fullyQualifiedName)) {
             throw new IllegalArgumentException(
                     "\"" + fullyQualifiedName + "\" already names a pattern in this knowledge set — identity would collide");
         }
-        return concepts.computeIfAbsent(fullyQualifiedName, fqn -> new ConceptBuilder(this, fqn));
+        ConceptBuilder opened = concepts.get(fullyQualifiedName);
+        if (opened != null) {
+            requireIdentityAgreement(fullyQualifiedName, opened.ledger().componentUuid, declaredIdentity);
+            return opened;
+        }
+        ConceptBuilder created = new ConceptBuilder(
+                declaredIdentity != null ? declaredIdentity : uuidFor(fullyQualifiedName), fullyQualifiedName);
+        concepts.put(fullyQualifiedName, created);
+        return created;
     }
 
     /**
@@ -121,12 +168,47 @@ public final class KnowledgeSet {
      *                                  or already names a concept in this knowledge set
      */
     public PatternBuilder pattern(String fullyQualifiedName) {
+        return openPattern(fullyQualifiedName, null);
+    }
+
+    /**
+     * Opens — or resumes — the pattern declaration for the given birth FQN with a
+     * <em>declared</em> identity: the pattern's public id is the given UUID rather than
+     * the {@code T5(setUuid, fqn)} derivation. See {@link #concept(String, UUID)} for the
+     * declared-identity semantics — adoption of an established identity (ingest or lift),
+     * with the FQN still the registry key and never reused.
+     *
+     * @param fullyQualifiedName the pattern's fully qualified name at birth
+     * @param declaredIdentity   the established identity to adopt
+     * @return the (new or resumed) builder for the pattern's version ledger
+     * @throws IllegalArgumentException if {@code fullyQualifiedName} is null or blank,
+     *                                  already names a concept in this knowledge set, or
+     *                                  was already opened under a different identity;
+     *                                  or if {@code declaredIdentity} is null
+     */
+    public PatternBuilder pattern(String fullyQualifiedName, UUID declaredIdentity) {
+        if (declaredIdentity == null) {
+            throw new IllegalArgumentException(
+                    "A declared identity requires a UUID — use pattern(fqn) for the derived identity");
+        }
+        return openPattern(fullyQualifiedName, declaredIdentity);
+    }
+
+    private PatternBuilder openPattern(String fullyQualifiedName, UUID declaredIdentity) {
         requireMeaningful(fullyQualifiedName, "pattern");
         if (concepts.containsKey(fullyQualifiedName)) {
             throw new IllegalArgumentException(
                     "\"" + fullyQualifiedName + "\" already names a concept in this knowledge set — identity would collide");
         }
-        return patterns.computeIfAbsent(fullyQualifiedName, fqn -> new PatternBuilder(this, fqn));
+        PatternBuilder opened = patterns.get(fullyQualifiedName);
+        if (opened != null) {
+            requireIdentityAgreement(fullyQualifiedName, opened.ledger().componentUuid, declaredIdentity);
+            return opened;
+        }
+        PatternBuilder created = new PatternBuilder(
+                declaredIdentity != null ? declaredIdentity : uuidFor(fullyQualifiedName), fullyQualifiedName);
+        patterns.put(fullyQualifiedName, created);
+        return created;
     }
 
     /**
@@ -174,7 +256,8 @@ public final class KnowledgeSet {
      *
      * @param kind       concept or pattern
      * @param birthFqn   the fully qualified name at birth
-     * @param publicId   the derived identity, {@code T5(setUuid, birthFqn)}
+     * @param publicId   the identity — derived {@code T5(setUuid, birthFqn)}, or the
+     *                   declared identity the ledger adopted
      * @param definition the current text of the first live definition description, if any
      */
     public record Declaration(Kind kind, String birthFqn, PublicId publicId, Optional<String> definition) {
@@ -189,25 +272,35 @@ public final class KnowledgeSet {
     }
 
     /**
-     * Resolves the identity a birth FQN derives in this knowledge set, as a reference handle —
-     * for citing a concept (for example in a stated axiom) without opening its builder.
+     * Resolves the identity a birth FQN carries in this knowledge set, as a reference
+     * handle — for citing a concept (for example in a stated axiom) without opening its
+     * builder. An opened declaration answers with its actual identity — declared or
+     * derived; an FQN not yet opened answers with the derivation, so a reference to a
+     * declared-identity concept must follow its declaration.
      *
      * @param birthFqn the concept's fully qualified name at birth
-     * @return a concept proxy carrying the derived identity and the given name as its description
+     * @return a concept proxy carrying the identity and the given name as its description
      */
     public EntityProxy.Concept conceptRef(String birthFqn) {
-        return EntityProxy.Concept.make(birthFqn, PublicIds.of(uuidFor(birthFqn)));
+        ConceptBuilder opened = concepts.get(birthFqn);
+        UUID identity = opened != null ? opened.ledger().componentUuid : uuidFor(birthFqn);
+        return EntityProxy.Concept.make(birthFqn, PublicIds.of(identity));
     }
 
     /**
-     * Resolves the identity a birth FQN derives in this knowledge set, as a pattern reference
-     * handle — for citing a pattern without opening its builder.
+     * Resolves the identity a birth FQN carries in this knowledge set, as a pattern
+     * reference handle — for citing a pattern without opening its builder. An opened
+     * declaration answers with its actual identity — declared or derived; an FQN not yet
+     * opened answers with the derivation, so a reference to a declared-identity pattern
+     * must follow its declaration.
      *
      * @param birthFqn the pattern's fully qualified name at birth
-     * @return a pattern proxy carrying the derived identity and the given name as its description
+     * @return a pattern proxy carrying the identity and the given name as its description
      */
     public EntityProxy.Pattern patternRef(String birthFqn) {
-        return EntityProxy.Pattern.make(birthFqn, PublicIds.of(uuidFor(birthFqn)));
+        PatternBuilder opened = patterns.get(birthFqn);
+        UUID identity = opened != null ? opened.ledger().componentUuid : uuidFor(birthFqn);
+        return EntityProxy.Pattern.make(birthFqn, PublicIds.of(identity));
     }
 
     /**
@@ -225,6 +318,15 @@ public final class KnowledgeSet {
         if (fullyQualifiedName == null || fullyQualifiedName.isBlank()) {
             throw new IllegalArgumentException(
                     "A " + kind + " declaration requires a meaningful fully qualified name");
+        }
+    }
+
+    private static void requireIdentityAgreement(String fullyQualifiedName, UUID openedIdentity,
+                                                 UUID declaredIdentity) {
+        if (declaredIdentity != null && !declaredIdentity.equals(openedIdentity)) {
+            throw new IllegalArgumentException(
+                    "\"" + fullyQualifiedName + "\" is already opened with identity " + openedIdentity
+                            + " — cannot resume it with declared identity " + declaredIdentity);
         }
     }
 }

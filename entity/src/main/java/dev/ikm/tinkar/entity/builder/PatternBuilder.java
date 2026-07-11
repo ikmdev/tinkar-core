@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Ledger-form authoring of a pattern — its meaning, purpose, field definitions, and
@@ -72,12 +73,14 @@ public final class PatternBuilder {
     private final List<FieldDeclaration> pendingFields = new ArrayList<>();
     private ActiveStamp pendingStamp;
 
-    PatternBuilder(KnowledgeSet knowledgeSet, String birthFqn) {
-        this.ledger = new ComponentLedger(knowledgeSet.uuidFor(birthFqn), birthFqn);
+    PatternBuilder(UUID componentUuid, String birthFqn) {
+        this.ledger = new ComponentLedger(componentUuid, birthFqn);
     }
 
     /**
-     * The identity this declaration derives: {@code T5(setUuid, birthFqn)}.
+     * The identity of this declaration: {@code T5(setUuid, birthFqn)} when derived, or
+     * the declared identity when the ledger adopted an established one (see
+     * {@link KnowledgeSet#pattern(String, UUID)}).
      *
      * @return the pattern's public id
      */

@@ -97,12 +97,14 @@ public final class ConceptBuilder {
     private final ComponentLedger ledger;
     private final List<VersionEntry<Consumer<LogicalExpressionBuilder>>> axiomVersions = new ArrayList<>();
 
-    ConceptBuilder(KnowledgeSet knowledgeSet, String birthFqn) {
-        this.ledger = new ComponentLedger(knowledgeSet.uuidFor(birthFqn), birthFqn);
+    ConceptBuilder(UUID componentUuid, String birthFqn) {
+        this.ledger = new ComponentLedger(componentUuid, birthFqn);
     }
 
     /**
-     * The identity this declaration derives: {@code T5(setUuid, birthFqn)}.
+     * The identity of this declaration: {@code T5(setUuid, birthFqn)} when derived, or
+     * the declared identity when the ledger adopted an established one (see
+     * {@link KnowledgeSet#concept(String, UUID)}).
      *
      * @return the concept's public id
      */
