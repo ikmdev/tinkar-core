@@ -37,8 +37,8 @@ import java.nio.file.Path;
  * merges by public id — the shared-identity join. The store may also be an existing one:
  * loading into a non-empty root imports the artifacts into it.
  * <p>
- * Like {@link ChangeSetMain} and {@link BindingsMain}, this is a stable reflective seam
- * for build tooling (the future {@code ike:kb-assemble} goal): the classpath must carry
+ * Like {@link BindingsMain}, this is a reflective seam for build tooling (the future
+ * {@code ike:kb-assemble} goal): the classpath must carry
  * the entity, executor, and Spined Array providers, with their legacy
  * {@code META-INF/services} controller registrations when running on the classpath.
  * <p>
