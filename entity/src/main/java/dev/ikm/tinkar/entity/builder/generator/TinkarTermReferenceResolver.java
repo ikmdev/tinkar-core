@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.builder.generator;
 
+import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -101,8 +102,8 @@ public final class TinkarTermReferenceResolver {
      *         constant covers this identity, {@code false} when the fallback is used
      */
     public Resolved resolve(EntityFacade facade) {
-        UUID[] uuids = facade.publicId().asUuidArray();
-        for (UUID uuid : uuids) {
+        PublicId publicId = facade.publicId();
+        for (UUID uuid : publicId.asUuidArray()) {
             String constantName = constantNamesByUuid.get(uuid);
             if (constantName != null) {
                 return new Resolved(true, "TinkarTerm." + constantName);
@@ -110,12 +111,21 @@ public final class TinkarTermReferenceResolver {
         }
         String escapedDescription = escapeForJavaStringLiteral(facade.description());
         String factory = facade instanceof PatternFacade ? "EntityProxy.Pattern.make(\"" : "EntityProxy.Concept.make(\"";
-        List<String> uuidLiterals = new ArrayList<>(uuids.length);
-        for (UUID uuid : uuids) {
+        return new Resolved(false, factory + escapedDescription + "\", " + publicIdLiteral(publicId) + ")");
+    }
+
+    /**
+     * The Java source expression for a {@code PublicId} literal: {@code PublicIds.of(
+     * UUID.fromString("..."), ...)}. Shared by every call site in this package that
+     * emits a declared identity, so the UUID-literal rendering (and its escaping)
+     * has exactly one definition.
+     */
+    static String publicIdLiteral(PublicId publicId) {
+        List<String> uuidLiterals = new ArrayList<>();
+        for (UUID uuid : publicId.asUuidArray()) {
             uuidLiterals.add("UUID.fromString(\"" + uuid + "\")");
         }
-        return new Resolved(false, factory + escapedDescription + "\", PublicIds.of("
-                + String.join(", ", uuidLiterals) + "))");
+        return "PublicIds.of(" + String.join(", ", uuidLiterals) + ")";
     }
 
     /**

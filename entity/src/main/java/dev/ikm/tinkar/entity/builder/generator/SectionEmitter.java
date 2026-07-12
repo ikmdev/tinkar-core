@@ -25,7 +25,7 @@ import dev.ikm.tinkar.terms.EntityProxy;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import java.util.Optional;
 
 /**
  * Emits one compilable Java source file per {@link Section} — a package-private class
@@ -92,12 +92,7 @@ public final class SectionEmitter {
                 .append(authorRef).append(", ").append(moduleRef).append(", TinkarTerm.DEVELOPMENT_PATH);\n\n");
 
         for (int memberNid : section.members()) {
-            try {
-                emitComponent(memberNid, calculator, languageCalculator, resolver, source, notes);
-            } catch (IllegalStateException e) {
-                notes.add("Skipped component nid " + memberNid + " in section \"" + section.name()
-                        + "\": " + e.getMessage());
-            }
+            emitComponent(memberNid, calculator, languageCalculator, resolver, source, notes, section.name());
         }
 
         source.append("    }\n}\n");
@@ -106,19 +101,29 @@ public final class SectionEmitter {
 
     private static void emitComponent(int memberNid, StampCalculator calculator,
                                       LanguageCalculator languageCalculator, TinkarTermReferenceResolver resolver,
-                                      StringBuilder source, List<String> notes) {
+                                      StringBuilder source, List<String> notes, String sectionName) {
         EntityHandle handle = EntityHandle.get(memberNid);
         boolean isPattern = handle.isPattern();
         EntityFacade component = isPattern ? EntityProxy.Pattern.make(memberNid) : EntityProxy.Concept.make(memberNid);
+
+        // Checked as a value BEFORE decompiling — never as a thrown-and-caught
+        // exception. A missing FQN is an anticipated, routine condition (like every
+        // other "cannot express this" outcome in this package); using an exception
+        // for it would force a catch broad enough to also swallow a genuinely
+        // unexpected failure inside decompile() (a malformed axiom tree, for
+        // example) under the same "skipped" note, masking a real bug as routine.
+        Optional<String> rawFqn = languageCalculator.getFullyQualifiedNameText(component);
+        if (rawFqn.isEmpty()) {
+            notes.add("Skipped component nid " + memberNid + " in section \"" + sectionName
+                    + "\": no fully-qualified-name description — every component must carry one");
+            return;
+        }
+
         ComponentSource componentSource = ComponentDecompiler.decompile(component, calculator, resolver);
         notes.addAll(componentSource.manifestNotes());
 
-        String rawFqn = languageCalculator.getFullyQualifiedNameText(component)
-                .orElseThrow(() -> new IllegalStateException(
-                        "No fully-qualified-name description for " + component.description() + " (nid "
-                                + memberNid + ") — every component must carry one"));
-        String fqn = TinkarTermReferenceResolver.escapeForJavaStringLiteral(rawFqn);
-        String declaredId = publicIdLiteral(component);
+        String fqn = TinkarTermReferenceResolver.escapeForJavaStringLiteral(rawFqn.get());
+        String declaredId = TinkarTermReferenceResolver.publicIdLiteral(component.publicId());
         source.append("        set.").append(isPattern ? "pattern(" : "concept(")
                 .append('"').append(fqn).append("\", ").append(declaredId).append(").at(inception)\n");
         for (String verbLine : componentSource.verbLines()) {
@@ -157,14 +162,6 @@ public final class SectionEmitter {
         source.append("        return set;\n");
         source.append("    }\n}\n");
         return source.toString();
-    }
-
-    private static String publicIdLiteral(EntityFacade facade) {
-        List<String> uuidLiterals = new ArrayList<>();
-        for (UUID uuid : facade.publicId().asUuidArray()) {
-            uuidLiterals.add("UUID.fromString(\"" + uuid + "\")");
-        }
-        return "PublicIds.of(" + String.join(", ", uuidLiterals) + ")";
     }
 
     /**

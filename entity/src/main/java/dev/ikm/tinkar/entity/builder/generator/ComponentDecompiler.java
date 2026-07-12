@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.entity.builder.generator;
 
-import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.EntityHandle;
@@ -31,7 +30,6 @@ import dev.ikm.tinkar.terms.TinkarTerm;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Decompiles one component's latest-active state — every semantic the calculator
@@ -139,7 +137,7 @@ public final class ComponentDecompiler {
                                         List<String> lines, List<String> notes) {
         DiTreeEntity tree = (DiTreeEntity) semanticVersion.fieldValues().get(0);
         AxiomDecompiler.Result result = AxiomDecompiler.decompile(tree);
-        String declaredId = publicIdLiteral(semanticVersion.chronology().publicId());
+        String declaredId = TinkarTermReferenceResolver.publicIdLiteral(semanticVersion.chronology().publicId());
         if (result.simpleIsA()) {
             // Declared identity via statedAxioms(PublicId, Consumer) — NOT
             // isA(ConceptFacade...), which is derived-identity only. There is no
@@ -176,40 +174,68 @@ public final class ComponentDecompiler {
     private static void decompileGenericSemantic(SemanticEntityVersion semanticVersion,
                                                  TinkarTermReferenceResolver resolver, List<String> lines,
                                                  List<String> notes) {
-        String declaredId = publicIdLiteral(semanticVersion.chronology().publicId());
-        String patternRef = resolver.resolve(EntityFacade.make(semanticVersion.patternNid())).sourceExpression();
-        List<String> fieldExpressions = new ArrayList<>();
-        for (int index = 0; index < semanticVersion.fieldValues().size(); index++) {
-            Object value = semanticVersion.fieldValues().get(index);
-            try {
-                fieldExpressions.add(fieldValueExpression(value, resolver));
-            } catch (IllegalArgumentException e) {
-                notes.add("Semantic " + declaredId + " field " + index + ": " + e.getMessage());
-                fieldExpressions.add("/* TODO " + e.getMessage() + " */ null");
-            }
-        }
-        String fieldArgs = fieldExpressions.isEmpty() ? "" : ", " + String.join(", ", fieldExpressions);
-        lines.add(".semantic(" + patternRef + ", " + declaredId + fieldArgs + ")");
+        // patternNid() is always a pattern — EntityFacade.make(nid) returns a
+        // kind-less wrapper that is never instanceof PatternFacade, so wrapping it
+        // that way would make the resolver's fallback emit EntityProxy.Concept.make(...)
+        // for what is actually a pattern reference (uncompilable generated source,
+        // the same hazard the isPattern()-detection comment above warns about).
+        EntityFacade patternRef = EntityProxy.Pattern.make(semanticVersion.patternNid());
+        emitGenericSemantic(null, semanticVersion, patternRef, resolver, lines, notes);
     }
 
     private static void emitSemanticOn(EntityFacade referencedComponent, SemanticEntityVersion semanticVersion,
                                        EntityFacade patternConstant, TinkarTermReferenceResolver resolver,
                                        List<String> lines, List<String> notes) {
-        String declaredId = publicIdLiteral(semanticVersion.chronology().publicId());
-        String referencedId = publicIdLiteral(referencedComponent.publicId());
-        String patternRef = resolver.resolve(patternConstant).sourceExpression();
+        emitGenericSemantic(referencedComponent, semanticVersion, patternConstant, resolver, lines, notes);
+    }
+
+    /**
+     * Emits one generic declared-identity semantic verb line — {@code .semantic(...)}
+     * when {@code referencedComponent} is null (the semantic references its own
+     * component), {@code .semanticOn(...)} otherwise. Every field is serialized
+     * before any text is appended: if even one field's value type is unsupported,
+     * the whole line becomes a hand-authoring placeholder comment (matching the
+     * axiom fallback's convention) rather than a live verb call with a {@code null}
+     * literal mixed in among real arguments — a {@code null} would compile cleanly
+     * but throw at replay time ({@code ComponentLedger} rejects null field values),
+     * failing the entire component's declaration statement for one bad field
+     * instead of degrading gracefully.
+     */
+    private static void emitGenericSemantic(EntityFacade referencedComponent, SemanticEntityVersion semanticVersion,
+                                            EntityFacade patternFacade, TinkarTermReferenceResolver resolver,
+                                            List<String> lines, List<String> notes) {
+        String declaredId = TinkarTermReferenceResolver.publicIdLiteral(semanticVersion.chronology().publicId());
+        String patternRef = resolver.resolve(patternFacade).sourceExpression();
+        String referencedId = referencedComponent == null ? null
+                : TinkarTermReferenceResolver.publicIdLiteral(referencedComponent.publicId());
+        String location = referencedId == null ? declaredId : declaredId + " (on " + referencedId + ")";
+
+        // Every field is scanned before any decision is made — collecting a note for
+        // EACH unsupported field, not just the first — so a semantic with more than
+        // one hand-authoring-needed field never loses all but its first problem from
+        // the manifest (the class's own contract: "never a silent omission").
         List<String> fieldExpressions = new ArrayList<>();
+        List<String> unsupportedFields = new ArrayList<>();
         for (int index = 0; index < semanticVersion.fieldValues().size(); index++) {
             Object value = semanticVersion.fieldValues().get(index);
             try {
                 fieldExpressions.add(fieldValueExpression(value, resolver));
             } catch (IllegalArgumentException e) {
-                notes.add("Semantic " + declaredId + " (on " + referencedId + ") field " + index + ": " + e.getMessage());
-                fieldExpressions.add("/* TODO " + e.getMessage() + " */ null");
+                notes.add("Semantic " + location + " field " + index + " needs hand authoring: " + e.getMessage());
+                unsupportedFields.add("field " + index + ": " + e.getMessage());
             }
         }
+        if (!unsupportedFields.isEmpty()) {
+            String verb = referencedId == null
+                    ? ".semantic(" + patternRef + ", " + declaredId + ", /* ... */)"
+                    : ".semanticOn(" + referencedId + ", " + patternRef + ", " + declaredId + ", /* ... */)";
+            lines.add("// TODO hand-author " + verb + " — " + String.join("; ", unsupportedFields));
+            return;
+        }
         String fieldArgs = fieldExpressions.isEmpty() ? "" : ", " + String.join(", ", fieldExpressions);
-        lines.add(".semanticOn(" + referencedId + ", " + patternRef + ", " + declaredId + fieldArgs + ")");
+        lines.add(referencedId == null
+                ? ".semantic(" + patternRef + ", " + declaredId + fieldArgs + ")"
+                : ".semanticOn(" + referencedId + ", " + patternRef + ", " + declaredId + fieldArgs + ")");
     }
 
     /**
@@ -231,18 +257,6 @@ public final class ComponentDecompiler {
         }
         throw new IllegalArgumentException("unsupported field value type: "
                 + (value == null ? "null" : value.getClass().getName()));
-    }
-
-    private static String publicIdLiteral(PublicId publicId) {
-        UUID[] uuids = publicId.asUuidArray();
-        StringBuilder args = new StringBuilder();
-        for (UUID uuid : uuids) {
-            if (args.length() > 0) {
-                args.append(", ");
-            }
-            args.append("UUID.fromString(\"").append(uuid).append("\")");
-        }
-        return "PublicIds.of(" + args + ")";
     }
 
     /**

@@ -72,8 +72,18 @@ public final class AxiomDecompiler {
             return notSimple(tree, "top-level set is " + meaningOf(setVertex) + ", not NecessarySet");
         }
         ImmutableIntList setChildren = tree.successors(setVertex.vertexIndex());
-        if (setChildren.size() == 1 && meaningOf(tree.vertex(setChildren.get(0))) == LogicalAxiomSemantic.CONCEPT) {
-            return new Result(true, List.of(conceptOf(tree.vertex(setChildren.get(0)))), null);
+        if (setChildren.size() == 1) {
+            int soleChildIndex = setChildren.get(0);
+            EntityVertex soleChild = tree.vertex(soleChildIndex);
+            if (meaningOf(soleChild) == LogicalAxiomSemantic.CONCEPT && tree.successors(soleChildIndex).isEmpty()) {
+                return new Result(true, List.of(conceptOf(soleChild)), null);
+            }
+            if (meaningOf(soleChild) == LogicalAxiomSemantic.CONCEPT) {
+                // A CONCEPT vertex is a terminal atom by construction — one carrying
+                // its own successors is a malformed or unexpected shape, not a plain
+                // reference; reported, not silently accepted with its content dropped.
+                return notSimple(tree, "NecessarySet(ConceptAxiom) whose concept vertex is not a leaf");
+            }
         }
         if (setChildren.size() != 1) {
             return notSimple(tree, "NecessarySet with " + setChildren.size() + " direct children (expected one And)");
@@ -83,6 +93,9 @@ public final class AxiomDecompiler {
             return notSimple(tree, "NecessarySet(" + meaningOf(connective) + "), not an And");
         }
         ImmutableIntList andChildren = tree.successors(connective.vertexIndex());
+        if (andChildren.isEmpty()) {
+            return notSimple(tree, "And has no children");
+        }
         List<ConceptFacade> parents = new ArrayList<>(andChildren.size());
         for (int index = 0; index < andChildren.size(); index++) {
             int childIndex = andChildren.get(index);

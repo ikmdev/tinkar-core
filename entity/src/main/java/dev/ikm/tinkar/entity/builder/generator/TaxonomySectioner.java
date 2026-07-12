@@ -24,6 +24,7 @@ import org.eclipse.collections.api.list.primitive.MutableIntList;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -152,6 +153,12 @@ public final class TaxonomySectioner {
         for (int child : childrenOf(taxonomyRootNid)) {
             splitInto(child, splitThreshold, maxDepth, 1, sections, new HashSet<>());
         }
+        // childrenOf/splitInto walk in HashMap iteration order (ultimately driven by
+        // forEachSemanticVersionOfPattern's iteration order), not nid order — sorted
+        // here so the documented "stable (sorted by root's nid)" contract actually
+        // holds regardless of store iteration order, which is what makes regenerating
+        // the ledger produce a reviewable, stable diff.
+        sections.sort(Comparator.comparingInt(Section::rootNid));
         return sections;
     }
 
@@ -171,7 +178,7 @@ public final class TaxonomySectioner {
             List<Integer> subtree = subtreeOf(nid);
             List<Integer> grandchildren = childrenOf(nid);
             if (subtree.size() <= splitThreshold || depth >= maxDepth || grandchildren.isEmpty()) {
-                sections.add(new Section(nid, subtree));
+                sections.add(new Section(nid, List.copyOf(subtree)));
                 return;
             }
             // This node's descendants are being split out below — but the node itself
