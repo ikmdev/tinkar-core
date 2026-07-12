@@ -16,7 +16,6 @@
 package dev.ikm.tinkar.entity.builder;
 
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.FieldDefinitionRecord;
 import dev.ikm.tinkar.entity.FieldDefinitionRecordBuilder;
@@ -36,7 +35,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 /**
  * Ledger-form authoring of a pattern — its meaning, purpose, field definitions, and
@@ -59,8 +57,7 @@ import java.util.UUID;
  *     .at(W1)
  *         .meaning(JOURNAL_MANIFEST).purpose(ELEMENT_ORDER)
  *         .field(JOURNAL_ELEMENTS, ELEMENT_ORDER, TinkarTerm.COMPONENT_ID_LIST_FIELD)
- *         .synonym("Journal manifest")
- *     .build();
+ *         .synonym("Journal manifest");
  * }</pre>
  */
 public final class PatternBuilder {
@@ -73,19 +70,20 @@ public final class PatternBuilder {
     private final List<FieldDeclaration> pendingFields = new ArrayList<>();
     private ActiveStamp pendingStamp;
 
-    PatternBuilder(UUID componentUuid, String birthFqn) {
-        this.ledger = new ComponentLedger(componentUuid, birthFqn);
+    PatternBuilder(PublicId componentId, String birthFqn, SessionRegistry registry) {
+        this.ledger = new ComponentLedger(componentId, birthFqn, registry);
     }
 
     /**
      * The identity of this declaration: {@code T5(setUuid, birthFqn)} when derived, or
      * the declared identity when the ledger adopted an established one (see
-     * {@link KnowledgeSet#pattern(String, UUID)}).
+     * {@link KnowledgeSet#pattern(String, java.util.UUID)}) — in full, including any
+     * additional UUIDs the established identity carries.
      *
      * @return the pattern's public id
      */
     public PublicId publicId() {
-        return PublicIds.of(ledger.componentUuid);
+        return ledger.componentId;
     }
 
     ComponentLedger ledger() {
@@ -102,7 +100,7 @@ public final class PatternBuilder {
      * @throws IllegalArgumentException if the stamp's time precedes a previously scoped
      *                                  stamp's time — the ledger must be chronological
      * @throws IllegalStateException    if a prior scope declared an incomplete pattern
-     *                                  version, or if {@code build()} has already run
+     *                                  version
      */
     public ActiveScope at(ActiveStamp stamp) {
         ledger.checkChronology(stamp);
@@ -122,8 +120,7 @@ public final class PatternBuilder {
      * @return the retirement scope
      * @throws IllegalArgumentException if the stamp's time precedes a previously scoped
      *                                  stamp's time — the ledger must be chronological
-     * @throws IllegalStateException    if the pattern has no birth scope yet, or if
-     *                                  {@code build()} has already run
+     * @throws IllegalStateException    if the pattern has no birth scope yet
      */
     public RetireScope at(InactiveStamp stamp) {
         ledger.requireBornForRetirement();
@@ -149,6 +146,7 @@ public final class PatternBuilder {
         int patternNid = ledger.componentNid();
         writePattern(patternNid);
         ledger.writeDescriptions(patternNid);
+        ledger.writeGenericSemantics(patternNid);
     }
 
     private void flushPendingVersion() {
@@ -169,6 +167,8 @@ public final class PatternBuilder {
                                 + field.meaning().description() + "\" on " + ledger.birthFqn);
             }
         }
+        ledger.requireNewStamp(patternVersions.stream().map(VersionEntry::stamp).toList(),
+                pendingStamp, "the pattern chronology");
         patternVersions.add(new VersionEntry<>(pendingStamp,
                 new PatternContent(pendingMeaning, pendingPurpose, List.copyOf(pendingFields))));
         pendingMeaning = null;
@@ -262,8 +262,9 @@ public final class PatternBuilder {
          *                                  or if more than one does (ambiguous reference)
          */
         public ActiveScope reviseSynonym(String currentText, String newText) {
-            ledger.resolveLive(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym")
-                    .versions.add(new VersionEntry<>(stamp, newText));
+            ledger.appendDescriptionVersion(
+                    ledger.resolveLive(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym"),
+                    stamp, newText);
             return this;
         }
 
@@ -275,7 +276,56 @@ public final class PatternBuilder {
          * @return this scope, for chaining
          */
         public ActiveScope reviseFullyQualifiedName(String newText) {
-            ledger.fqnLedger().versions.add(new VersionEntry<>(stamp, newText));
+            ledger.appendDescriptionVersion(ledger.fqnLedger(), stamp, newText);
+            return this;
+        }
+
+        /**
+         * Declares a version of a generic declared-identity semantic on this pattern
+         * component — membership tags and identifier semantics attach to patterns just
+         * as they do to concepts. See
+         * {@link ConceptBuilder.ActiveScope#semantic(EntityProxy.Pattern, PublicId, Object...)}
+         * for the generic verb's semantics and the supported field value types.
+         *
+         * @param pattern          the semantic's pattern
+         * @param declaredIdentity the established identity the semantic adopts
+         * @param fieldValues      the version's field values, in the pattern's field order
+         * @return this scope, for chaining
+         * @throws IllegalArgumentException if the pattern or identity is missing, a
+         *                                  resumed declaration disagrees on identity,
+         *                                  pattern, or referenced component, a field
+         *                                  value's type is unsupported, or this stamp
+         *                                  already carries a version of the semantic
+         */
+        public ActiveScope semantic(EntityProxy.Pattern pattern, PublicId declaredIdentity, Object... fieldValues) {
+            ledger.addGenericVersion(pattern, declaredIdentity, null, stamp, fieldValues);
+            return this;
+        }
+
+        /**
+         * Declares a version of a generic declared-identity semantic on another
+         * component — typically a semantic declared earlier in this ledger, as a
+         * dialect-acceptability semantic references its description. See
+         * {@link ConceptBuilder.ActiveScope#semanticOn(PublicId, EntityProxy.Pattern, PublicId, Object...)}.
+         *
+         * @param referencedComponent the established identity of the component the
+         *                            semantic references
+         * @param pattern             the semantic's pattern
+         * @param declaredIdentity    the established identity the semantic adopts
+         * @param fieldValues         the version's field values, in the pattern's field order
+         * @return this scope, for chaining
+         * @throws IllegalArgumentException as
+         *                                  {@link #semantic(EntityProxy.Pattern, PublicId, Object...)},
+         *                                  or if {@code referencedComponent} is null or empty
+         */
+        public ActiveScope semanticOn(PublicId referencedComponent, EntityProxy.Pattern pattern,
+                                      PublicId declaredIdentity, Object... fieldValues) {
+            if (referencedComponent == null || referencedComponent.uuidCount() == 0) {
+                throw new IllegalArgumentException(
+                        "semanticOn requires the referenced component's established identity —"
+                                + " use semantic(pattern, identity, fields) for a semantic on this pattern");
+            }
+            ledger.addGenericVersion(pattern, declaredIdentity, referencedComponent, stamp, fieldValues);
             return this;
         }
 
@@ -325,6 +375,8 @@ public final class PatternBuilder {
                         "Cannot retire a pattern before its birth scope declared meaning and purpose: "
                                 + ledger.birthFqn);
             }
+            ledger.requireNewStamp(patternVersions.stream().map(VersionEntry::stamp).toList(),
+                    stamp, "the pattern chronology");
             patternVersions.add(new VersionEntry<>(stamp, patternVersions.getLast().value()));
             return this;
         }
@@ -339,8 +391,9 @@ public final class PatternBuilder {
          *                                  or if more than one does (ambiguous reference)
          */
         public RetireScope retireSynonym(String currentText) {
-            ledger.resolveLive(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym")
-                    .versions.add(new VersionEntry<>(stamp, currentText));
+            ledger.appendDescriptionVersion(
+                    ledger.resolveLive(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym"),
+                    stamp, currentText);
             return this;
         }
 
@@ -354,8 +407,31 @@ public final class PatternBuilder {
          *                                  or if more than one does (ambiguous reference)
          */
         public RetireScope retireDefinition(String currentText) {
-            ledger.resolveLive(TinkarTerm.DEFINITION_DESCRIPTION_TYPE, currentText, "definition")
-                    .versions.add(new VersionEntry<>(stamp, currentText));
+            ledger.appendDescriptionVersion(
+                    ledger.resolveLive(TinkarTerm.DEFINITION_DESCRIPTION_TYPE, currentText, "definition"),
+                    stamp, currentText);
+            return this;
+        }
+
+        /**
+         * Retires a generic declared-identity semantic: a new version bound to this
+         * scope's inactive stamp — the prior version's fields restated when
+         * {@code fieldValues} is empty, or the given payload verbatim. See
+         * {@link ConceptBuilder.RetireScope#retireSemantic(EntityProxy.Pattern, PublicId, Object...)}.
+         *
+         * @param pattern          the semantic's pattern — restated for agreement
+         * @param declaredIdentity the established identity of the semantic to retire
+         * @param fieldValues      the retired version's field values, or empty to restate
+         *                         the prior version's
+         * @return this scope, for chaining
+         * @throws IllegalArgumentException if no semantic with the declared identity was
+         *                                  declared, the pattern disagrees, a field
+         *                                  value's type is unsupported, or this stamp
+         *                                  already carries a version of the semantic
+         */
+        public RetireScope retireSemantic(EntityProxy.Pattern pattern, PublicId declaredIdentity,
+                                          Object... fieldValues) {
+            ledger.retireGenericVersion(pattern, declaredIdentity, stamp, fieldValues);
             return this;
         }
 
@@ -385,12 +461,7 @@ public final class PatternBuilder {
 
     private void writePattern(int patternNid) {
         RecordListBuilder<PatternVersionRecord> versions = RecordListBuilder.make();
-        PatternRecord bootstrap = PatternRecordBuilder.builder()
-                .nid(patternNid)
-                .mostSignificantBits(ledger.componentUuid.getMostSignificantBits())
-                .leastSignificantBits(ledger.componentUuid.getLeastSignificantBits())
-                .versions(versions)
-                .build();
+        PatternRecord bootstrap = PatternRecord.makeNew(ledger.componentId, versions);
         for (VersionEntry<PatternContent> version : patternVersions) {
             int stampNid = ledger.writeStamp(version.stamp());
             MutableList<FieldDefinitionRecord> fieldDefinitions = Lists.mutable.empty();

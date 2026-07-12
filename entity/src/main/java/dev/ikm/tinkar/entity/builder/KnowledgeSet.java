@@ -21,10 +21,13 @@ import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.terms.EntityProxy;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -37,7 +40,9 @@ import java.util.UUID;
  * whose identity was established elsewhere — an existing starter set being ingested into
  * ledger form, or a concept minted interactively and lifted back into the source —
  * instead <em>declares</em> that identity alongside its FQN
- * ({@link #concept(String, UUID)}, {@link #pattern(String, UUID)}).
+ * ({@link #concept(String, UUID)}, {@link #pattern(String, UUID)} — or the
+ * {@link #concept(String, PublicId)} / {@link #pattern(String, PublicId)} forms when the
+ * established identity carries multiple UUIDs).
  *
  * <h2>The session registry — builders resume</h2>
  * A knowledge set keeps every builder it has opened, keyed by birth FQN:
@@ -66,6 +71,8 @@ public final class KnowledgeSet {
     private final UUID uuid;
     private final Map<String, ConceptBuilder> concepts = new LinkedHashMap<>();
     private final Map<String, PatternBuilder> patterns = new LinkedHashMap<>();
+    private final SessionRegistry registry = new SessionRegistry();
+    private final Set<String> derivedReferencesIssued = new LinkedHashSet<>();
 
     private KnowledgeSet(UUID uuid) {
         this.uuid = uuid;
@@ -135,10 +142,30 @@ public final class KnowledgeSet {
             throw new IllegalArgumentException(
                     "A declared identity requires a UUID — use concept(fqn) for the derived identity");
         }
-        return openConcept(fullyQualifiedName, declaredIdentity);
+        return openConcept(fullyQualifiedName, PublicIds.of(declaredIdentity));
     }
 
-    private ConceptBuilder openConcept(String fullyQualifiedName, UUID declaredIdentity) {
+    /**
+     * Opens — or resumes — the concept declaration for the given birth FQN with a
+     * <em>declared</em> identity carrying the full established {@link PublicId} — which
+     * may hold multiple UUIDs, as store-established identities sometimes do. See
+     * {@link #concept(String, UUID)} for the declared-identity semantics; this overload
+     * exists because adoption must be identity-exact: an established id with two UUIDs
+     * is adopted with both.
+     *
+     * @param fullyQualifiedName the concept's fully qualified name at birth
+     * @param declaredIdentity   the established identity to adopt, in full
+     * @return the (new or resumed) builder for the concept's version ledger
+     * @throws IllegalArgumentException if {@code fullyQualifiedName} is null or blank,
+     *                                  already names a pattern in this knowledge set, or
+     *                                  was already opened under a different identity;
+     *                                  or if {@code declaredIdentity} is null or empty
+     */
+    public ConceptBuilder concept(String fullyQualifiedName, PublicId declaredIdentity) {
+        return openConcept(fullyQualifiedName, requireDeclared(declaredIdentity, "concept(fqn)"));
+    }
+
+    private ConceptBuilder openConcept(String fullyQualifiedName, PublicId declaredIdentity) {
         requireMeaningful(fullyQualifiedName, "concept");
         if (patterns.containsKey(fullyQualifiedName)) {
             throw new IllegalArgumentException(
@@ -146,11 +173,14 @@ public final class KnowledgeSet {
         }
         ConceptBuilder opened = concepts.get(fullyQualifiedName);
         if (opened != null) {
-            requireIdentityAgreement(fullyQualifiedName, opened.ledger().componentUuid, declaredIdentity);
+            requireIdentityAgreement(fullyQualifiedName, opened.publicId(), declaredIdentity);
             return opened;
         }
-        ConceptBuilder created = new ConceptBuilder(
-                declaredIdentity != null ? declaredIdentity : uuidFor(fullyQualifiedName), fullyQualifiedName);
+        PublicId identity =
+                declaredIdentity != null ? declaredIdentity : PublicIds.of(uuidFor(fullyQualifiedName));
+        requireReferenceFollowsDeclaration(fullyQualifiedName, declaredIdentity);
+        registry.registerIdentity(identity, "concept \"" + fullyQualifiedName + "\"");
+        ConceptBuilder created = new ConceptBuilder(identity, fullyQualifiedName, registry);
         concepts.put(fullyQualifiedName, created);
         return created;
     }
@@ -191,10 +221,28 @@ public final class KnowledgeSet {
             throw new IllegalArgumentException(
                     "A declared identity requires a UUID — use pattern(fqn) for the derived identity");
         }
-        return openPattern(fullyQualifiedName, declaredIdentity);
+        return openPattern(fullyQualifiedName, PublicIds.of(declaredIdentity));
     }
 
-    private PatternBuilder openPattern(String fullyQualifiedName, UUID declaredIdentity) {
+    /**
+     * Opens — or resumes — the pattern declaration for the given birth FQN with a
+     * <em>declared</em> identity carrying the full established {@link PublicId} — which
+     * may hold multiple UUIDs, as store-established identities sometimes do. See
+     * {@link #concept(String, PublicId)}.
+     *
+     * @param fullyQualifiedName the pattern's fully qualified name at birth
+     * @param declaredIdentity   the established identity to adopt, in full
+     * @return the (new or resumed) builder for the pattern's version ledger
+     * @throws IllegalArgumentException if {@code fullyQualifiedName} is null or blank,
+     *                                  already names a concept in this knowledge set, or
+     *                                  was already opened under a different identity;
+     *                                  or if {@code declaredIdentity} is null or empty
+     */
+    public PatternBuilder pattern(String fullyQualifiedName, PublicId declaredIdentity) {
+        return openPattern(fullyQualifiedName, requireDeclared(declaredIdentity, "pattern(fqn)"));
+    }
+
+    private PatternBuilder openPattern(String fullyQualifiedName, PublicId declaredIdentity) {
         requireMeaningful(fullyQualifiedName, "pattern");
         if (concepts.containsKey(fullyQualifiedName)) {
             throw new IllegalArgumentException(
@@ -202,11 +250,14 @@ public final class KnowledgeSet {
         }
         PatternBuilder opened = patterns.get(fullyQualifiedName);
         if (opened != null) {
-            requireIdentityAgreement(fullyQualifiedName, opened.ledger().componentUuid, declaredIdentity);
+            requireIdentityAgreement(fullyQualifiedName, opened.publicId(), declaredIdentity);
             return opened;
         }
-        PatternBuilder created = new PatternBuilder(
-                declaredIdentity != null ? declaredIdentity : uuidFor(fullyQualifiedName), fullyQualifiedName);
+        PublicId identity =
+                declaredIdentity != null ? declaredIdentity : PublicIds.of(uuidFor(fullyQualifiedName));
+        requireReferenceFollowsDeclaration(fullyQualifiedName, declaredIdentity);
+        registry.registerIdentity(identity, "pattern \"" + fullyQualifiedName + "\"");
+        PatternBuilder created = new PatternBuilder(identity, fullyQualifiedName, registry);
         patterns.put(fullyQualifiedName, created);
         return created;
     }
@@ -283,8 +334,11 @@ public final class KnowledgeSet {
      */
     public EntityProxy.Concept conceptRef(String birthFqn) {
         ConceptBuilder opened = concepts.get(birthFqn);
-        UUID identity = opened != null ? opened.ledger().componentUuid : uuidFor(birthFqn);
-        return EntityProxy.Concept.make(birthFqn, PublicIds.of(identity));
+        if (opened == null) {
+            derivedReferencesIssued.add(birthFqn);
+            return EntityProxy.Concept.make(birthFqn, PublicIds.of(uuidFor(birthFqn)));
+        }
+        return EntityProxy.Concept.make(birthFqn, opened.publicId());
     }
 
     /**
@@ -299,8 +353,11 @@ public final class KnowledgeSet {
      */
     public EntityProxy.Pattern patternRef(String birthFqn) {
         PatternBuilder opened = patterns.get(birthFqn);
-        UUID identity = opened != null ? opened.ledger().componentUuid : uuidFor(birthFqn);
-        return EntityProxy.Pattern.make(birthFqn, PublicIds.of(identity));
+        if (opened == null) {
+            derivedReferencesIssued.add(birthFqn);
+            return EntityProxy.Pattern.make(birthFqn, PublicIds.of(uuidFor(birthFqn)));
+        }
+        return EntityProxy.Pattern.make(birthFqn, opened.publicId());
     }
 
     /**
@@ -321,9 +378,36 @@ public final class KnowledgeSet {
         }
     }
 
-    private static void requireIdentityAgreement(String fullyQualifiedName, UUID openedIdentity,
-                                                 UUID declaredIdentity) {
-        if (declaredIdentity != null && !declaredIdentity.equals(openedIdentity)) {
+    private void requireReferenceFollowsDeclaration(String fullyQualifiedName, PublicId declaredIdentity) {
+        if (declaredIdentity == null || !derivedReferencesIssued.contains(fullyQualifiedName)) {
+            return;
+        }
+        UUID derived = uuidFor(fullyQualifiedName);
+        UUID[] declared = declaredIdentity.asUuidArray();
+        if (declared.length == 1 && declared[0].equals(derived)) {
+            return;
+        }
+        throw new IllegalArgumentException(
+                "\"" + fullyQualifiedName + "\" was referenced before this declared-identity"
+                        + " declaration, and the reference answered the derived identity " + derived
+                        + " — a reference to a declared-identity component must follow its declaration");
+    }
+
+    private static PublicId requireDeclared(PublicId declaredIdentity, String derivedForm) {
+        if (declaredIdentity == null || declaredIdentity.uuidCount() == 0) {
+            throw new IllegalArgumentException(
+                    "A declared identity requires a PublicId with at least one UUID — use "
+                            + derivedForm + " for the derived identity");
+        }
+        return declaredIdentity;
+    }
+
+    private static void requireIdentityAgreement(String fullyQualifiedName, PublicId openedIdentity,
+                                                 PublicId declaredIdentity) {
+        // Identity-exact agreement: the full UUID lists must match, in order. Comparison
+        // is by UUID array because PublicId implementations vary by arity.
+        if (declaredIdentity != null
+                && !Arrays.equals(declaredIdentity.asUuidArray(), openedIdentity.asUuidArray())) {
             throw new IllegalArgumentException(
                     "\"" + fullyQualifiedName + "\" is already opened with identity " + openedIdentity
                             + " — cannot resume it with declared identity " + declaredIdentity);

@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
+import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.State;
 
@@ -23,14 +24,29 @@ import dev.ikm.tinkar.terms.State;
  * with an inactive stamp ({@link ConceptBuilder#at(InactiveStamp)}) exposes only the
  * retirement verbs, so authoring content under a retirement stamp does not compile.
  *
- * @param time   the declared time in epoch milliseconds
- * @param author the author dimension
- * @param module the module dimension
- * @param path   the path dimension
+ * @param time             the declared time in epoch milliseconds
+ * @param author           the author dimension
+ * @param module           the module dimension
+ * @param path             the path dimension
+ * @param declaredIdentity the established identity this stamp adopts, or null when
+ *                         identity is tuple-derived (see {@link Stamp#publicId()})
  * @see Stamp#inactive(String, ConceptFacade, ConceptFacade, ConceptFacade)
+ * @see Stamp#inactive(PublicId, String, ConceptFacade, ConceptFacade, ConceptFacade)
  */
 public record InactiveStamp(long time, ConceptFacade author, ConceptFacade module,
-                            ConceptFacade path) implements Stamp {
+                            ConceptFacade path, PublicId declaredIdentity) implements Stamp {
+
+    /**
+     * Declares an inactive stamp with tuple-derived identity — the common authoring form.
+     *
+     * @param time   the declared time in epoch milliseconds
+     * @param author the author dimension
+     * @param module the module dimension
+     * @param path   the path dimension
+     */
+    public InactiveStamp(long time, ConceptFacade author, ConceptFacade module, ConceptFacade path) {
+        this(time, author, module, path, null);
+    }
 
     /**
      * The status dimension of this stamp.

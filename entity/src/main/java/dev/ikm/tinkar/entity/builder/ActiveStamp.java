@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
+import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.State;
 
@@ -22,14 +23,29 @@ import dev.ikm.tinkar.terms.State;
  * A declared stamp whose status dimension is {@link State#ACTIVE}. Scoping a builder with
  * an active stamp ({@link ConceptBuilder#at(ActiveStamp)}) exposes the content verbs.
  *
- * @param time   the declared time in epoch milliseconds
- * @param author the author dimension
- * @param module the module dimension
- * @param path   the path dimension
+ * @param time             the declared time in epoch milliseconds
+ * @param author           the author dimension
+ * @param module           the module dimension
+ * @param path             the path dimension
+ * @param declaredIdentity the established identity this stamp adopts, or null when
+ *                         identity is tuple-derived (see {@link Stamp#publicId()})
  * @see Stamp#active(String, ConceptFacade, ConceptFacade, ConceptFacade)
+ * @see Stamp#active(PublicId, String, ConceptFacade, ConceptFacade, ConceptFacade)
  */
 public record ActiveStamp(long time, ConceptFacade author, ConceptFacade module,
-                          ConceptFacade path) implements Stamp {
+                          ConceptFacade path, PublicId declaredIdentity) implements Stamp {
+
+    /**
+     * Declares an active stamp with tuple-derived identity — the common authoring form.
+     *
+     * @param time   the declared time in epoch milliseconds
+     * @param author the author dimension
+     * @param module the module dimension
+     * @param path   the path dimension
+     */
+    public ActiveStamp(long time, ConceptFacade author, ConceptFacade module, ConceptFacade path) {
+        this(time, author, module, path, null);
+    }
 
     /**
      * The status dimension of this stamp.

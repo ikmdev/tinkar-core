@@ -36,6 +36,12 @@ import java.util.UUID;
  * <p>
  * Stamp identity is derived from the tuple itself: two declarations of the same tuple
  * <em>are</em> the same stamp (see {@link #stampUuid(State, long, ConceptFacade, ConceptFacade, ConceptFacade)}).
+ * A stamp whose identity was established elsewhere — a store-established stamp of an
+ * ingested starter set, or a stamp minted interactively and lifted back into the ledger —
+ * instead <em>declares</em> that identity
+ * ({@link #active(PublicId, long, ConceptFacade, ConceptFacade, ConceptFacade)}), the
+ * same adopt-never-re-mint discipline as declared component identities
+ * ({@link KnowledgeSet#concept(String, java.util.UUID)}).
  * <p>
  * The {@link ActiveStamp} / {@link InactiveStamp} subtypes make status visible to the
  * compiler: {@link ConceptBuilder#at(ActiveStamp)} yields content verbs, while
@@ -80,12 +86,26 @@ public sealed interface Stamp permits ActiveStamp, InactiveStamp {
     ConceptFacade path();
 
     /**
-     * The identity of this stamp, derived from its tuple via
+     * The declared identity this stamp adopts, when its identity was established
+     * elsewhere — a store-established stamp of an ingested starter set, or a stamp minted
+     * interactively and lifted back into the ledger.
+     *
+     * @return the declared {@link PublicId}, or null when identity is tuple-derived
+     */
+    PublicId declaredIdentity();
+
+    /**
+     * The identity of this stamp: the declared identity when this stamp adopts one, else
+     * derived from its tuple via
      * {@link #stampUuid(State, long, ConceptFacade, ConceptFacade, ConceptFacade)}.
      *
-     * @return the tuple-derived {@link PublicId} of this stamp
+     * @return the {@link PublicId} of this stamp; never null
      */
     default PublicId publicId() {
+        PublicId declared = declaredIdentity();
+        if (declared != null) {
+            return declared;
+        }
         return PublicIds.of(stampUuid(state(), time(), author(), module(), path()));
     }
 
@@ -129,6 +149,46 @@ public sealed interface Stamp permits ActiveStamp, InactiveStamp {
     }
 
     /**
+     * Declares an active stamp that adopts an established identity — the identity a
+     * store-established stamp already carries — with a literal ISO-8601 time. The tuple
+     * is still declared in full: the identity is adopted, the dimensions are stated, and
+     * replaying the ledger writes the same stamp entity every time.
+     *
+     * @param declaredIdentity the established identity to adopt; may carry multiple UUIDs
+     * @param isoInstant       the declared time as an ISO-8601 instant, for example
+     *                         {@code "2026-07-15T00:00:00Z"}
+     * @param author           the author dimension
+     * @param module           the module dimension
+     * @param path             the path dimension
+     * @return the declared active stamp
+     * @throws IllegalArgumentException if {@code declaredIdentity} is null
+     * @throws java.time.format.DateTimeParseException if {@code isoInstant} is not a valid ISO-8601 instant
+     */
+    static ActiveStamp active(PublicId declaredIdentity, String isoInstant,
+                              ConceptFacade author, ConceptFacade module, ConceptFacade path) {
+        return new ActiveStamp(Instant.parse(isoInstant).toEpochMilli(), author, module, path,
+                requireDeclared(declaredIdentity));
+    }
+
+    /**
+     * Declares an active stamp that adopts an established identity, with a literal
+     * epoch-millisecond time. See
+     * {@link #active(PublicId, String, ConceptFacade, ConceptFacade, ConceptFacade)}.
+     *
+     * @param declaredIdentity the established identity to adopt; may carry multiple UUIDs
+     * @param time             the declared time in epoch milliseconds
+     * @param author           the author dimension
+     * @param module           the module dimension
+     * @param path             the path dimension
+     * @return the declared active stamp
+     * @throws IllegalArgumentException if {@code declaredIdentity} is null
+     */
+    static ActiveStamp active(PublicId declaredIdentity, long time,
+                              ConceptFacade author, ConceptFacade module, ConceptFacade path) {
+        return new ActiveStamp(time, author, module, path, requireDeclared(declaredIdentity));
+    }
+
+    /**
      * Declares an active stamp with a literal epoch-millisecond time.
      *
      * @param time   the declared time in epoch milliseconds
@@ -168,5 +228,55 @@ public sealed interface Stamp permits ActiveStamp, InactiveStamp {
      */
     static InactiveStamp inactive(long time, ConceptFacade author, ConceptFacade module, ConceptFacade path) {
         return new InactiveStamp(time, author, module, path);
+    }
+
+    /**
+     * Declares an inactive (retirement) stamp that adopts an established identity, with a
+     * literal ISO-8601 time. See
+     * {@link #active(PublicId, String, ConceptFacade, ConceptFacade, ConceptFacade)} for
+     * the declared-identity semantics.
+     *
+     * @param declaredIdentity the established identity to adopt; may carry multiple UUIDs
+     * @param isoInstant       the declared time as an ISO-8601 instant, for example
+     *                         {@code "2026-09-01T00:00:00Z"}
+     * @param author           the author dimension
+     * @param module           the module dimension
+     * @param path             the path dimension
+     * @return the declared inactive stamp
+     * @throws IllegalArgumentException if {@code declaredIdentity} is null
+     * @throws java.time.format.DateTimeParseException if {@code isoInstant} is not a valid ISO-8601 instant
+     */
+    static InactiveStamp inactive(PublicId declaredIdentity, String isoInstant,
+                                  ConceptFacade author, ConceptFacade module, ConceptFacade path) {
+        return new InactiveStamp(Instant.parse(isoInstant).toEpochMilli(), author, module, path,
+                requireDeclared(declaredIdentity));
+    }
+
+    /**
+     * Declares an inactive (retirement) stamp that adopts an established identity, with a
+     * literal epoch-millisecond time. See
+     * {@link #active(PublicId, String, ConceptFacade, ConceptFacade, ConceptFacade)} for
+     * the declared-identity semantics.
+     *
+     * @param declaredIdentity the established identity to adopt; may carry multiple UUIDs
+     * @param time             the declared time in epoch milliseconds
+     * @param author           the author dimension
+     * @param module           the module dimension
+     * @param path             the path dimension
+     * @return the declared inactive stamp
+     * @throws IllegalArgumentException if {@code declaredIdentity} is null
+     */
+    static InactiveStamp inactive(PublicId declaredIdentity, long time,
+                                  ConceptFacade author, ConceptFacade module, ConceptFacade path) {
+        return new InactiveStamp(time, author, module, path, requireDeclared(declaredIdentity));
+    }
+
+    private static PublicId requireDeclared(PublicId declaredIdentity) {
+        if (declaredIdentity == null || declaredIdentity.uuidCount() == 0) {
+            throw new IllegalArgumentException(
+                    "A declared identity requires a PublicId with at least one UUID — use the"
+                            + " tuple-derived factories otherwise");
+        }
+        return declaredIdentity;
     }
 }

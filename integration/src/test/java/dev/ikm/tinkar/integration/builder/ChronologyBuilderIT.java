@@ -180,7 +180,7 @@ class ChronologyBuilderIT {
                 () -> TEST_SET.concept("Journal element (Test)", ADOPTED_CONCEPT_IDENTITY),
                 "declaring an identity for an FQN already opened derived is rejected");
         assertThrows(IllegalArgumentException.class,
-                () -> TEST_SET.concept("Unopened kind (Test)", null),
+                () -> TEST_SET.concept("Unopened kind (Test)", (UUID) null),
                 "a declared identity requires a UUID");
 
         // Replay wrote the entity under the declared identity.

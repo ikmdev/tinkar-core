@@ -16,30 +16,20 @@
 package dev.ikm.tinkar.entity.builder;
 
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.id.PublicIds;
-import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.entity.ConceptRecord;
 import dev.ikm.tinkar.entity.ConceptRecordBuilder;
 import dev.ikm.tinkar.entity.ConceptVersionRecord;
 import dev.ikm.tinkar.entity.ConceptVersionRecordBuilder;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.RecordListBuilder;
-import dev.ikm.tinkar.entity.SemanticRecord;
-import dev.ikm.tinkar.entity.SemanticRecordBuilder;
-import dev.ikm.tinkar.entity.SemanticVersionRecord;
-import dev.ikm.tinkar.entity.SemanticVersionRecordBuilder;
-import dev.ikm.tinkar.entity.builder.ComponentLedger.VersionEntry;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpressionBuilder;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
-import org.eclipse.collections.api.factory.Lists;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -48,8 +38,8 @@ import java.util.function.Consumer;
  * <p>
  * The source form is an append-only version ledger: {@link #at(ActiveStamp)} opens a
  * version scope bound to a declared {@link Stamp}, the verbs inside it say what changed at
- * that stamp, and {@code build()} replays the accumulated declarations into the open
- * datastore. There is no transaction: declared stamps are committed facts, writes go
+ * that stamp, and {@link KnowledgeSet#write()} replays the accumulated declarations into
+ * the open datastore. There is no transaction: declared stamps are committed facts, writes go
  * directly through {@link EntityService#putEntity}, and replaying the same ledger yields
  * identical entities (all identities are derived, none random).
  *
@@ -88,28 +78,27 @@ import java.util.function.Consumer;
  *         .statedAxioms(leb -> leb.NecessarySet(leb.And(leb.ConceptAxiom(RICH_SURFACE_ROOT))))
  *     .at(W2)
  *         .synonym("Journal block")                          // add — a second synonym
- *         .reviseSynonym("Journal element", "Journal atom")  // revise — new version of the first
- *     .build();
+ *         .reviseSynonym("Journal element", "Journal atom"); // revise — new version of the first
  * }</pre>
  */
 public final class ConceptBuilder {
 
     private final ComponentLedger ledger;
-    private final List<VersionEntry<Consumer<LogicalExpressionBuilder>>> axiomVersions = new ArrayList<>();
 
-    ConceptBuilder(UUID componentUuid, String birthFqn) {
-        this.ledger = new ComponentLedger(componentUuid, birthFqn);
+    ConceptBuilder(PublicId componentId, String birthFqn, SessionRegistry registry) {
+        this.ledger = new ComponentLedger(componentId, birthFqn, registry);
     }
 
     /**
      * The identity of this declaration: {@code T5(setUuid, birthFqn)} when derived, or
      * the declared identity when the ledger adopted an established one (see
-     * {@link KnowledgeSet#concept(String, UUID)}).
+     * {@link KnowledgeSet#concept(String, java.util.UUID)}) — in full, including any
+     * additional UUIDs the established identity carries.
      *
      * @return the concept's public id
      */
     public PublicId publicId() {
-        return PublicIds.of(ledger.componentUuid);
+        return ledger.componentId;
     }
 
     ComponentLedger ledger() {
@@ -125,7 +114,6 @@ public final class ConceptBuilder {
      * @return the content scope
      * @throws IllegalArgumentException if the stamp's time precedes a previously scoped
      *                                  stamp's time — the ledger must be chronological
-     * @throws IllegalStateException    if {@code build()} has already run
      */
     public ActiveScope at(ActiveStamp stamp) {
         ledger.checkChronology(stamp);
@@ -144,8 +132,7 @@ public final class ConceptBuilder {
      * @return the retirement scope
      * @throws IllegalArgumentException if the stamp's time precedes a previously scoped
      *                                  stamp's time — the ledger must be chronological
-     * @throws IllegalStateException    if the concept has no birth scope yet, or if
-     *                                  {@code build()} has already run
+     * @throws IllegalStateException    if the concept has no birth scope yet
      */
     public RetireScope at(InactiveStamp stamp) {
         ledger.requireBornForRetirement();
@@ -162,9 +149,10 @@ public final class ConceptBuilder {
     void writeInto() {
         ledger.requireBornForWrite();
         int conceptNid = ledger.componentNid();
-        writeConcept(conceptNid);
+        writeConcept();
         ledger.writeDescriptions(conceptNid);
-        writeAxioms(conceptNid);
+        ledger.writeAxioms(conceptNid);
+        ledger.writeGenericSemantics(conceptNid);
     }
 
     // ------------------------------------------------------------------ scopes
@@ -217,8 +205,9 @@ public final class ConceptBuilder {
          *                                  or if more than one does (ambiguous reference)
          */
         public ActiveScope reviseSynonym(String currentText, String newText) {
-            ledger.resolveLive(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym")
-                    .versions.add(new VersionEntry<>(stamp, newText));
+            ledger.appendDescriptionVersion(
+                    ledger.resolveLive(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym"),
+                    stamp, newText);
             return this;
         }
 
@@ -231,7 +220,21 @@ public final class ConceptBuilder {
          * @return this scope, for chaining
          */
         public ActiveScope reviseFullyQualifiedName(String newText) {
-            ledger.fqnLedger().versions.add(new VersionEntry<>(stamp, newText));
+            ledger.appendDescriptionVersion(ledger.fqnLedger(), stamp, newText);
+            return this;
+        }
+
+        /**
+         * Records a new active version of the concept itself at this scope's stamp —
+         * the concept-level revision an ingested multi-version chronology restates.
+         * The birth scope already records the first version; one version per stamp.
+         *
+         * @return this scope, for chaining
+         * @throws IllegalArgumentException if the concept chronology already has a
+         *                                  version at this scope's stamp
+         */
+        public ActiveScope revise() {
+            ledger.addComponentStamp(stamp);
             return this;
         }
 
@@ -249,7 +252,90 @@ public final class ConceptBuilder {
         public ActiveScope statedAxioms(Consumer<LogicalExpressionBuilder> axioms) {
             // Materialized at write() — composing stays store-free (graph construction
             // mints nids, which requires a started PrimitiveData store).
-            axiomVersions.add(new VersionEntry<>(stamp, axioms));
+            ledger.addAxiomVersion(stamp, axioms);
+            return this;
+        }
+
+        /**
+         * States the concept's axioms under a <em>declared</em> identity: the identity
+         * the stated-axiom semantic already carries — content ingested from an existing
+         * starter set, or axioms authored interactively and lifted back into the ledger.
+         * The identity must be declared at the semantic's first statement; restating
+         * axioms in a later scope — with the same declared identity or plainly —
+         * continues the same singleton semantic.
+         *
+         * @param declaredIdentity the established identity of the stated-axiom semantic
+         * @param axioms           composes the logical expression, as in
+         *                         {@link #statedAxioms(Consumer)}
+         * @return this scope, for chaining
+         * @throws IllegalArgumentException if {@code declaredIdentity} is null or empty,
+         *                                  disagrees with an earlier declaration, or
+         *                                  arrives after the semantic already versioned
+         *                                  under its derived identity
+         */
+        public ActiveScope statedAxioms(PublicId declaredIdentity, Consumer<LogicalExpressionBuilder> axioms) {
+            ledger.addAxiomVersion(declaredIdentity, stamp, axioms);
+            return this;
+        }
+
+        /**
+         * Declares a version of a <em>generic</em> declared-identity semantic on this
+         * concept — the ingest workhorse: any pattern, the semantic's established
+         * identity, and its field values verbatim. Where the rich verbs derive identity
+         * from authoring context and add conveniences (a synonym brings its US-dialect
+         * acceptability), the generic verb adds nothing: one semantic version, exactly
+         * as stated — which is what identity-exact ingest requires. Restating the same
+         * declared identity in a later scope appends a version of the same semantic.
+         * <p>
+         * Field values are carried in identity form and resolved at write: components as
+         * {@link EntityProxy} handles (or {@link PublicId}s), component lists and sets as
+         * {@code PublicIdList}/{@code PublicIdSet}, plus String, Boolean, Integer, Long,
+         * Float, BigDecimal, Instant, and byte[]. A membership semantic declares no
+         * fields. Field-count and datatype fit against the pattern's field definitions
+         * are the release verifier's concern — at compose time the pattern chronology
+         * need not be present.
+         *
+         * @param pattern          the semantic's pattern
+         * @param declaredIdentity the established identity the semantic adopts
+         * @param fieldValues      the version's field values, in the pattern's field order
+         * @return this scope, for chaining
+         * @throws IllegalArgumentException if the pattern or identity is missing, a
+         *                                  resumed declaration disagrees on identity,
+         *                                  pattern, or referenced component, a field
+         *                                  value's type is unsupported, or this stamp
+         *                                  already carries a version of the semantic
+         */
+        public ActiveScope semantic(EntityProxy.Pattern pattern, PublicId declaredIdentity, Object... fieldValues) {
+            ledger.addGenericVersion(pattern, declaredIdentity, null, stamp, fieldValues);
+            return this;
+        }
+
+        /**
+         * Declares a version of a generic declared-identity semantic on <em>another</em>
+         * component — one whose identity is established, typically a semantic declared
+         * earlier in this ledger: a dialect-acceptability semantic references its
+         * description, for example. See
+         * {@link #semantic(EntityProxy.Pattern, PublicId, Object...)} for the generic
+         * verb's semantics; the semantic is still written with this concept's ledger.
+         *
+         * @param referencedComponent the established identity of the component the
+         *                            semantic references
+         * @param pattern             the semantic's pattern
+         * @param declaredIdentity    the established identity the semantic adopts
+         * @param fieldValues         the version's field values, in the pattern's field order
+         * @return this scope, for chaining
+         * @throws IllegalArgumentException as
+         *                                  {@link #semantic(EntityProxy.Pattern, PublicId, Object...)},
+         *                                  or if {@code referencedComponent} is null or empty
+         */
+        public ActiveScope semanticOn(PublicId referencedComponent, EntityProxy.Pattern pattern,
+                                      PublicId declaredIdentity, Object... fieldValues) {
+            if (referencedComponent == null || referencedComponent.uuidCount() == 0) {
+                throw new IllegalArgumentException(
+                        "semanticOn requires the referenced component's established identity —"
+                                + " use semantic(pattern, identity, fields) for a semantic on this concept");
+            }
+            ledger.addGenericVersion(pattern, declaredIdentity, referencedComponent, stamp, fieldValues);
             return this;
         }
 
@@ -269,12 +355,12 @@ public final class ConceptBuilder {
                 throw new IllegalArgumentException("isA requires at least one parent");
             }
             List<ConceptFacade> parentList = List.of(parents);
-            axiomVersions.add(new VersionEntry<>(stamp, leb -> {
+            ledger.addAxiomVersion(stamp, leb -> {
                 LogicalAxiom.Atom[] atoms = parentList.stream()
                         .map(parent -> leb.ConceptAxiom(parent))
                         .toArray(LogicalAxiom.Atom[]::new);
                 leb.NecessarySet(leb.And(atoms));
-            }));
+            });
             return this;
         }
 
@@ -318,7 +404,7 @@ public final class ConceptBuilder {
          * @return this scope, for chaining
          */
         public RetireScope retire() {
-            ledger.componentStamps.add(stamp);
+            ledger.addComponentStamp(stamp);
             return this;
         }
 
@@ -332,8 +418,9 @@ public final class ConceptBuilder {
          *                                  or if more than one does (ambiguous reference)
          */
         public RetireScope retireSynonym(String currentText) {
-            ledger.resolveLive(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym")
-                    .versions.add(new VersionEntry<>(stamp, currentText));
+            ledger.appendDescriptionVersion(
+                    ledger.resolveLive(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym"),
+                    stamp, currentText);
             return this;
         }
 
@@ -347,8 +434,31 @@ public final class ConceptBuilder {
          *                                  or if more than one does (ambiguous reference)
          */
         public RetireScope retireDefinition(String currentText) {
-            ledger.resolveLive(TinkarTerm.DEFINITION_DESCRIPTION_TYPE, currentText, "definition")
-                    .versions.add(new VersionEntry<>(stamp, currentText));
+            ledger.appendDescriptionVersion(
+                    ledger.resolveLive(TinkarTerm.DEFINITION_DESCRIPTION_TYPE, currentText, "definition"),
+                    stamp, currentText);
+            return this;
+        }
+
+        /**
+         * Retires a generic declared-identity semantic: a new version bound to this
+         * scope's inactive stamp — the prior version's fields restated when
+         * {@code fieldValues} is empty (a pure status change), or the given payload
+         * verbatim, since retired versions carry field values too.
+         *
+         * @param pattern          the semantic's pattern — restated for agreement
+         * @param declaredIdentity the established identity of the semantic to retire
+         * @param fieldValues      the retired version's field values, or empty to restate
+         *                         the prior version's
+         * @return this scope, for chaining
+         * @throws IllegalArgumentException if no semantic with the declared identity was
+         *                                  declared, the pattern disagrees, a field
+         *                                  value's type is unsupported, or this stamp
+         *                                  already carries a version of the semantic
+         */
+        public RetireScope retireSemantic(EntityProxy.Pattern pattern, PublicId declaredIdentity,
+                                          Object... fieldValues) {
+            ledger.retireGenericVersion(pattern, declaredIdentity, stamp, fieldValues);
             return this;
         }
 
@@ -376,14 +486,9 @@ public final class ConceptBuilder {
 
     // ------------------------------------------------------------------ replay
 
-    private void writeConcept(int conceptNid) {
+    private void writeConcept() {
         RecordListBuilder<ConceptVersionRecord> versions = RecordListBuilder.make();
-        ConceptRecord bootstrap = ConceptRecordBuilder.builder()
-                .nid(conceptNid)
-                .mostSignificantBits(ledger.componentUuid.getMostSignificantBits())
-                .leastSignificantBits(ledger.componentUuid.getLeastSignificantBits())
-                .versions(versions)
-                .build();
+        ConceptRecord bootstrap = ConceptRecord.makeNew(ledger.componentId, versions);
         for (Stamp stamp : ledger.componentStamps) {
             versions.add(ConceptVersionRecordBuilder.builder()
                     .chronology(bootstrap)
@@ -392,33 +497,5 @@ public final class ConceptBuilder {
         }
         EntityService.get().putEntity(
                 ConceptRecordBuilder.builder(bootstrap).versions(versions.toImmutable()).build());
-    }
-
-    private void writeAxioms(int conceptNid) {
-        if (axiomVersions.isEmpty()) {
-            return;
-        }
-        UUID axiomUuid = UuidT5Generator.get(ledger.componentUuid, "el-plus-plus-stated-axioms");
-        RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
-        SemanticRecord bootstrap = SemanticRecordBuilder.builder()
-                .nid(ComponentLedger.nidFor(axiomUuid))
-                .mostSignificantBits(axiomUuid.getMostSignificantBits())
-                .leastSignificantBits(axiomUuid.getLeastSignificantBits())
-                .patternNid(TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid())
-                .referencedComponentNid(conceptNid)
-                .versions(versions)
-                .build();
-        for (VersionEntry<Consumer<LogicalExpressionBuilder>> axiom : axiomVersions) {
-            LogicalExpressionBuilder leb = new LogicalExpressionBuilder();
-            axiom.value().accept(leb);
-            DiTreeEntity tree = (DiTreeEntity) leb.build().sourceGraph();
-            versions.add(SemanticVersionRecordBuilder.builder()
-                    .chronology(bootstrap)
-                    .stampNid(ledger.writeStamp(axiom.stamp()))
-                    .fieldValues(Lists.immutable.of(tree))
-                    .build());
-        }
-        EntityService.get().putEntity(
-                SemanticRecordBuilder.builder(bootstrap).versions(versions.toImmutable()).build());
     }
 }
