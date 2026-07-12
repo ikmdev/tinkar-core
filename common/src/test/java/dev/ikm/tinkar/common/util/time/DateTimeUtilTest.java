@@ -21,9 +21,11 @@ import org.junit.jupiter.api.Test;
 import java.time.Instant;
 
 import static dev.ikm.tinkar.common.util.time.DateTimeUtil.CANCELED;
+import static dev.ikm.tinkar.common.util.time.DateTimeUtil.INCEPTION;
 import static dev.ikm.tinkar.common.util.time.DateTimeUtil.LATEST;
 import static dev.ikm.tinkar.common.util.time.DateTimeUtil.PREMUNDANE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 class DateTimeUtilTest {
 
@@ -32,6 +34,7 @@ class DateTimeUtilTest {
         assertEquals(Long.MAX_VALUE, DateTimeUtil.parse(LATEST));
         assertEquals(Long.MIN_VALUE, DateTimeUtil.parse(CANCELED));
         assertEquals(PrimitiveData.PREMUNDANE_TIME, DateTimeUtil.parse(PREMUNDANE));
+        assertEquals(PrimitiveData.INCEPTION_EPOCH, DateTimeUtil.parse(INCEPTION));
     }
 
 
@@ -40,9 +43,20 @@ class DateTimeUtilTest {
         assertEquals(LATEST, DateTimeUtil.format(Instant.MAX));
         assertEquals(CANCELED, DateTimeUtil.format(Instant.MIN));
         assertEquals(PREMUNDANE, DateTimeUtil.format(PrimitiveData.PREMUNDANE_INSTANT));
+        assertEquals(INCEPTION, DateTimeUtil.format(PrimitiveData.INCEPTION_INSTANT));
 
         assertEquals(LATEST, DateTimeUtil.format(Long.MAX_VALUE));
         assertEquals(CANCELED, DateTimeUtil.format(Long.MIN_VALUE));
         assertEquals(PREMUNDANE, DateTimeUtil.format(PrimitiveData.PREMUNDANE_TIME));
+        assertEquals(INCEPTION, DateTimeUtil.format(PrimitiveData.INCEPTION_EPOCH));
+    }
+
+    @Test
+    void inceptionEpochIsAMillisecondAfterMidnight() {
+        // The .777 offset is deliberate: a real calendar date landing exactly at
+        // 2026-01-01T00:00:00.000Z must never collide with the inception sentinel.
+        assertEquals(1767225600777L, PrimitiveData.INCEPTION_EPOCH);
+        assertEquals(Instant.parse("2026-01-01T00:00:00.777Z"), PrimitiveData.INCEPTION_INSTANT);
+        assertNotEquals(Instant.parse("2026-01-01T00:00:00.000Z"), PrimitiveData.INCEPTION_INSTANT);
     }
 }

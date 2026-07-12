@@ -40,6 +40,19 @@ public class PrimitiveData {
 
     public static Instant PREMUNDANE_INSTANT = Instant.ofEpochSecond(Instant.MIN.getEpochSecond() + 1, 0);
 
+    /**
+     * The inception epoch — in the Unix-epoch sense, a named reference instant, not an
+     * arithmetic zero point — every knowledge set's formative content is stamped at
+     * before its first release: {@code 2026-01-01T00:00:00.777Z}. The .777 offset is a
+     * deliberate, glance-recognizable marker so a real calendar date landing exactly at
+     * that midnight (a source release, a fiscal boundary) is never mistaken for the
+     * sentinel. Millisecond resolution matches stamp time's actual resolution
+     * end-to-end; a sub-millisecond offset would not survive the protobuf wire.
+     */
+    public static long INCEPTION_EPOCH = 1767225600777L;
+
+    public static Instant INCEPTION_INSTANT = Instant.ofEpochMilli(INCEPTION_EPOCH);
+
     public static UUID NONEXISTENT_STAMP_UUID = UUID.fromString("00fea511-30eb-4bbb-9105-c846db5bf0ad");
     private static DefaultDescriptionForNidService defaultDescriptionForNidServiceSingleton;
     private static PublicIdService publicIdServiceSingleton;

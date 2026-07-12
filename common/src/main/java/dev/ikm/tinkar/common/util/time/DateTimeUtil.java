@@ -57,6 +57,7 @@ public class DateTimeUtil {
     public static final String LATEST = "Latest";
     public static final String CANCELED = "Canceled";
     public static final String PREMUNDANE = "Premundane";
+    public static final String INCEPTION = "Inception";
 
     public static Instant epochMsToInstant(long epochMilliSecond) {
         if (epochMilliSecond == Long.MAX_VALUE) {
@@ -98,6 +99,9 @@ public class DateTimeUtil {
         if (epochMilliSecond == PrimitiveData.PREMUNDANE_TIME) {
             return PREMUNDANE;
         }
+        if (epochMilliSecond == PrimitiveData.INCEPTION_EPOCH) {
+            return INCEPTION;
+        }
         ZonedDateTime positionTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(epochMilliSecond), ZoneOffset.UTC);
         ZonedDateTime inLocalZone = positionTime.withZoneSameInstant(ZoneId.systemDefault());
         return inLocalZone.format(formatter);
@@ -134,6 +138,9 @@ public class DateTimeUtil {
         if (dateTime.equalsIgnoreCase(PREMUNDANE)) {
             return PrimitiveData.PREMUNDANE_TIME;
         }
+        if (dateTime.equalsIgnoreCase(INCEPTION)) {
+            return PrimitiveData.INCEPTION_EPOCH;
+        }
         return ZonedDateTime.parse(dateTime, ZONE_FORMATTER).toInstant().toEpochMilli();
     }
 
@@ -151,6 +158,9 @@ public class DateTimeUtil {
         }
         if (dateTime.equalsIgnoreCase(PREMUNDANE)) {
             return PrimitiveData.PREMUNDANE_TIME;
+        }
+        if (dateTime.equalsIgnoreCase(INCEPTION)) {
+            return PrimitiveData.INCEPTION_EPOCH;
         }
         return LocalDateTime.parse(dateTime, COMPRESSED_DATE_TIME).atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
     }
@@ -170,6 +180,9 @@ public class DateTimeUtil {
         if (date.equalsIgnoreCase(PREMUNDANE)) {
             return PrimitiveData.PREMUNDANE_TIME;
         }
+        if (date.equalsIgnoreCase(INCEPTION)) {
+            return PrimitiveData.INCEPTION_EPOCH;
+        }
         return LocalDate.parse(date, COMPRESSED_DATE).atStartOfDay().atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
     }
 
@@ -188,6 +201,9 @@ public class DateTimeUtil {
         if (dateTime.equalsIgnoreCase(PREMUNDANE)) {
             return PrimitiveData.PREMUNDANE_TIME;
         }
+        if (dateTime.equalsIgnoreCase(INCEPTION)) {
+            return PrimitiveData.INCEPTION_EPOCH;
+        }
         return LocalDateTime.parse(dateTime, FORMATTER).atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
     }
     public static String format(Instant instant, DateTimeFormatter formatter) {
@@ -199,6 +215,9 @@ public class DateTimeUtil {
         }
         if (instant.equals(PrimitiveData.PREMUNDANE_INSTANT)) {
             return PREMUNDANE;
+        }
+        if (instant.equals(PrimitiveData.INCEPTION_INSTANT)) {
+            return INCEPTION;
         }
         return formatter.format(instant.atOffset(ZoneOffset.UTC));
     }
@@ -217,6 +236,9 @@ public class DateTimeUtil {
         }
         if (instant.equals(PrimitiveData.PREMUNDANE_INSTANT)) {
             return PREMUNDANE;
+        }
+        if (instant.equals(PrimitiveData.INCEPTION_INSTANT)) {
+            return INCEPTION;
         }
         if (resolution < MS_IN_SEC) {
             return ZONE_FORMATTER.format(instant);
