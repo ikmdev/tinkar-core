@@ -116,48 +116,20 @@ class GeneratorEndToEndIT {
         int descriptionPatternVersionsBefore = EntityHandle.get(TinkarTerm.DESCRIPTION_PATTERN.nid()).expectPattern()
                 .versions().size();
 
-        List<Section> sections = sectioner.sectionsUnder(TinkarTerm.ROOT_VERTEX.nid(), 60, 4);
-        int totalMembers = sections.stream().mapToInt(section -> section.members().size()).sum();
-        LOG.info("Sectioned into {} files covering {} component slots", sections.size(), totalMembers);
-
         // Sections are not disjoint by design (TaxonomySectioner's own contract) — a
         // dual-parented concept is a member of every section whose root reaches it.
-        // The generator must still declare each component exactly once: first section
-        // to claim it wins, matching "the caller resolves as primary" in
-        // TaxonomySectioner's javadoc.
-        Set<Integer> assigned = new HashSet<>();
-        List<Section> exclusiveSections = new ArrayList<>();
-        for (Section section : sections) {
-            List<Integer> exclusiveMembers = section.members().stream().filter(assigned::add).toList();
-            exclusiveSections.add(new Section(section.rootNid(), exclusiveMembers));
-        }
-        // TaxonomySectioner only walks concepts reachable via stated navigation — the
-        // ~60 unanchored meta-schema concepts the #873 scan found, and all 28
+        // TaxonomySectioner only walks concepts reachable via stated navigation, too —
+        // the ~60 unanchored meta-schema concepts the #873 scan found, and all 28
         // patterns (an entirely separate taxonomy), need a residual catch-all so the
         // round trip actually covers the full store, not just the navigable subset.
-        List<Integer> residualMembers = new ArrayList<>();
-        EntityService.get().forEachConceptEntity(concept -> {
-            if (assigned.add(concept.nid())) {
-                residualMembers.add(concept.nid());
-            }
-        });
-        EntityService.get().forEachPatternEntity(pattern -> {
-            if (assigned.add(pattern.nid())) {
-                residualMembers.add(pattern.nid());
-            }
-        });
-        // Chunked, not one section: a single compose() method over ~90 components can
-        // approach the same 64KB bytecode-per-method limit that forced deeper taxonomy
-        // splitting above.
-        int batchSize = 50;
-        for (int start = 0; start < residualMembers.size(); start += batchSize) {
-            List<Integer> batch = residualMembers.subList(start, Math.min(start + batchSize, residualMembers.size()));
-            exclusiveSections.add(new Section(TinkarTerm.ROOT_VERTEX.nid(), List.copyOf(batch)));
-        }
-        LOG.info("{} unanchored/pattern components in the residual catch-all section", residualMembers.size());
-
-        int distinctMembers = assigned.size();
-        LOG.info("{} distinct components after cross-section dedup", distinctMembers);
+        // sectionsCoveringFullStore does both (first-section-wins dedup + residual
+        // catch-all, batched to stay under the JVM's 64KB bytecode-per-method limit) —
+        // shared with LedgerGeneratorMain's real ingest run so the two can't drift.
+        List<Section> exclusiveSections = sectioner.sectionsCoveringFullStore(
+                TinkarTerm.ROOT_VERTEX.nid(), 60, 4, 50);
+        int distinctMembers = exclusiveSections.stream().mapToInt(section -> section.members().size()).sum();
+        LOG.info("{} sections covering {} distinct components after cross-section dedup + residual catch-all",
+                exclusiveSections.size(), distinctMembers);
 
         Path sourceDir = Files.createTempDirectory("ledger-generator-it-src");
         Path classesDir = Files.createTempDirectory("ledger-generator-it-classes");

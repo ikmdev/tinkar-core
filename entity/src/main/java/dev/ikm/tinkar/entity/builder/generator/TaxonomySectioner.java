@@ -17,6 +17,7 @@ package dev.ikm.tinkar.entity.builder.generator;
 
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.primitive.IntLists;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
@@ -160,6 +161,55 @@ public final class TaxonomySectioner {
         // the ledger produce a reviewable, stable diff.
         sections.sort(Comparator.comparingInt(Section::rootNid));
         return sections;
+    }
+
+    /**
+     * Convenience for callers that need FULL store coverage, not just the
+     * taxonomy-reachable subset: {@link #sectionsUnder(int, int, int)}, first-section-wins
+     * deduplicated across sections (this class's own documented "dedup is the caller's
+     * job" contract, applied once here so every caller doesn't reimplement it), plus a
+     * residual catch-all covering every concept and pattern NOT reachable via stated
+     * navigation — meta-schema concepts the taxonomy scan found unanchored, and the
+     * entirely separate pattern taxonomy, which {@link #sectionsUnder} never walks.
+     * Residual members are batched by {@code residualBatchSize}: a single
+     * {@code compose()} method over every residual member can approach the same 64KB
+     * bytecode-per-method limit that drives {@code splitThreshold}/{@code maxDepth}
+     * above.
+     *
+     * @param taxonomyRootNid  forwarded to {@link #sectionsUnder}
+     * @param splitThreshold   forwarded to {@link #sectionsUnder}
+     * @param maxDepth         forwarded to {@link #sectionsUnder}
+     * @param residualBatchSize the maximum members per residual-catch-all section
+     * @return every section needed for full-store coverage, deduplicated
+     */
+    public List<Section> sectionsCoveringFullStore(int taxonomyRootNid, int splitThreshold, int maxDepth,
+                                                    int residualBatchSize) {
+        List<Section> sections = sectionsUnder(taxonomyRootNid, splitThreshold, maxDepth);
+
+        Set<Integer> assigned = new HashSet<>();
+        List<Section> exclusiveSections = new ArrayList<>();
+        for (Section section : sections) {
+            List<Integer> exclusiveMembers = section.members().stream().filter(assigned::add).toList();
+            exclusiveSections.add(new Section(section.rootNid(), exclusiveMembers));
+        }
+
+        List<Integer> residualMembers = new ArrayList<>();
+        EntityService.get().forEachConceptEntity(concept -> {
+            if (assigned.add(concept.nid())) {
+                residualMembers.add(concept.nid());
+            }
+        });
+        EntityService.get().forEachPatternEntity(pattern -> {
+            if (assigned.add(pattern.nid())) {
+                residualMembers.add(pattern.nid());
+            }
+        });
+        for (int start = 0; start < residualMembers.size(); start += residualBatchSize) {
+            List<Integer> batch = residualMembers.subList(start,
+                    Math.min(start + residualBatchSize, residualMembers.size()));
+            exclusiveSections.add(new Section(taxonomyRootNid, List.copyOf(batch)));
+        }
+        return exclusiveSections;
     }
 
     private void splitInto(int nid, int splitThreshold, int maxDepth, int depth, List<Section> sections,
