@@ -18,6 +18,9 @@ package dev.ikm.tinkar.entity.builder.generator;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom;
+import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.primitive.IntLists;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
@@ -71,6 +74,38 @@ public final class TaxonomySectioner {
                     Object field = semanticVersion.fieldValues().get(parentsFieldIndex);
                     if (field instanceof IntIdSet parentNids) {
                         parentNids.forEach(parentNid -> sectioner.addEdge(parentNid, child));
+                    }
+                });
+        return sectioner;
+    }
+
+    /**
+     * Builds the parent/child taxonomy graph directly from every stated-axiom semantic's
+     * latest active version, per the given calculator's coordinate — the same source
+     * {@code KonceptExtractor.statedParents} reads for {@code broader:}. Unlike
+     * {@link #fromStatedNavigation}, this needs no separately-computed navigation cache,
+     * so it also covers a store whose isA relationships exist only as freshly authored
+     * stated axioms (a builder-composed ledger that was never run through a classifier) —
+     * {@link #fromStatedNavigation} sees no edges at all for such a store, since navigation
+     * is a derived artifact the builder DSL doesn't populate.
+     *
+     * @param calculator the coordinate to resolve latest-active versions with
+     * @return the built sectioner, ready to bucket any root's descendants
+     */
+    public static TaxonomySectioner fromStatedAxioms(StampCalculator calculator) {
+        TaxonomySectioner sectioner = new TaxonomySectioner();
+        calculator.forEachSemanticVersionOfPattern(TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+                (semanticVersion, patternVersion) -> {
+                    int child = semanticVersion.referencedComponentNid();
+                    if (semanticVersion.fieldValues().isEmpty()) {
+                        return;
+                    }
+                    if (semanticVersion.fieldValues().get(0) instanceof DiTreeEntity diTree) {
+                        LogicalExpression expression = new LogicalExpression(diTree);
+                        for (LogicalAxiom.Atom.ConceptAxiom axiom
+                                : expression.nodesOfType(LogicalAxiom.Atom.ConceptAxiom.class)) {
+                            sectioner.addEdge(axiom.concept().nid(), child);
+                        }
                     }
                 });
         return sectioner;
