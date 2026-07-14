@@ -24,6 +24,9 @@ import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
+import dev.ikm.tinkar.entity.FieldDefinitionForEntity;
+import dev.ikm.tinkar.entity.PatternEntity;
+import dev.ikm.tinkar.entity.PatternEntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.StampEntity;
@@ -64,7 +67,11 @@ import java.util.UUID;
  * The produced YAML is the {@code koncept-asciidoc-extension} definition source (label,
  * definition, DL {@code axiom}, {@code broader} parent identifiers, {@code section},
  * {@code since}, {@code comments}, {@code retiredComments}, {@code narrative}, {@code uuids},
- * {@code kind}); the extension renders it into the comprehensive standard glossary.
+ * {@code kind}); the extension renders it into the comprehensive standard glossary. A
+ * {@code kind: pattern} entry additionally carries {@code referencedComponentMeaning}/
+ * {@code referencedComponentPurpose} (what a semantic of this pattern's referenced component
+ * means and is for) and {@code fields} (each field's own {@code meaning}/{@code purpose}/
+ * {@code dataType}) -- see {@link #patternShape}.
  * <p>
  * {@code narrative} -- curated, long-form AsciiDoc prose (as opposed to the short
  * {@code definition} gloss) -- is deliberately not read by the no-arg {@link #extractYaml()}:
@@ -158,6 +165,28 @@ public final class KonceptExtractor {
                 sb.append("  definition: ").append(yaml(definition)).append('\n');
             }
             sb.append("  kind: ").append(isPattern ? "pattern" : "concept").append('\n');
+            if (isPattern) {
+                PatternShape shape = patternShape(nid, identifierByNid);
+                if (shape.referencedComponentMeaning() != null) {
+                    sb.append("  referencedComponentMeaning: ")
+                            .append(shape.referencedComponentMeaning()).append('\n');
+                }
+                if (shape.referencedComponentPurpose() != null) {
+                    sb.append("  referencedComponentPurpose: ")
+                            .append(shape.referencedComponentPurpose()).append('\n');
+                }
+                List<PatternFieldShape> resolvedFields = shape.fields().stream()
+                        .filter(f -> f.meaning() != null && f.purpose() != null && f.dataType() != null)
+                        .toList();
+                if (!resolvedFields.isEmpty()) {
+                    sb.append("  fields:\n");
+                    for (PatternFieldShape field : resolvedFields) {
+                        sb.append("    - meaning: ").append(field.meaning()).append('\n');
+                        sb.append("      purpose: ").append(field.purpose()).append('\n');
+                        sb.append("      dataType: ").append(field.dataType()).append('\n');
+                    }
+                }
+            }
             String section = sectionByNid.get(nid);
             if (section != null) {
                 sb.append("  section: ").append(yaml(section)).append('\n');
@@ -391,6 +420,60 @@ public final class KonceptExtractor {
             }
         }
         return parents;
+    }
+
+    /**
+     * A pattern's own top-level referenced-component meaning/purpose -- Tinkar's wire
+     * schema calls this pair {@code ReferencedComponentMeaning}/{@code ReferencedComponentPurpose};
+     * the Java entity API calls the identical field {@code semanticMeaning}/{@code semanticPurpose}
+     * ("[Meaning] of &lt;referenced component&gt; for [purpose] in [pattern]," per
+     * {@code PatternVersion}'s own javadoc) -- plus its field definitions, each with its own
+     * meaning, purpose, and data type.
+     *
+     * @param referencedComponentMeaning the koncept identifier of the referenced-component
+     *                                   meaning concept, or {@code null} if unresolvable
+     * @param referencedComponentPurpose the koncept identifier of the referenced-component
+     *                                   purpose concept, or {@code null} if unresolvable
+     * @param fields                     the pattern's own field definitions, in declared order
+     */
+    private record PatternShape(String referencedComponentMeaning, String referencedComponentPurpose,
+                                 List<PatternFieldShape> fields) {
+    }
+
+    /**
+     * One field of a pattern: its own meaning, purpose, and data type, each a koncept
+     * identifier, or {@code null} if that field's concept isn't itself resolvable (no FQN
+     * description in this store).
+     */
+    private record PatternFieldShape(String meaning, String purpose, String dataType) {
+    }
+
+    /**
+     * Reads a pattern's own referenced-component meaning/purpose and field definitions from
+     * its latest version by time -- coordinate-independent, like {@link #latestVersion},
+     * since a pattern's own shape doesn't change version-to-version the way a component's
+     * state does. Each referenced concept resolves to its koncept identifier via
+     * {@code identifierByNid} -- the same universe {@link #extractYaml} already built from
+     * this store's own fully-qualified-name descriptions, so a meaning/purpose/dataType
+     * concept without one here resolves to {@code null} rather than a broken reference.
+     */
+    private static PatternShape patternShape(int patternNid, Map<Integer, String> identifierByNid) {
+        PatternEntity<PatternEntityVersion> pattern = EntityService.get().getEntityFast(patternNid);
+        PatternEntityVersion version = pattern.lastVersion();
+        if (version == null) {
+            return new PatternShape(null, null, List.of());
+        }
+        List<PatternFieldShape> fields = new ArrayList<>();
+        for (FieldDefinitionForEntity field : version.fieldDefinitions()) {
+            fields.add(new PatternFieldShape(
+                    identifierByNid.get(field.meaningNid()),
+                    identifierByNid.get(field.purposeNid()),
+                    identifierByNid.get(field.dataTypeNid())));
+        }
+        return new PatternShape(
+                identifierByNid.get(version.semanticMeaningNid()),
+                identifierByNid.get(version.semanticPurposeNid()),
+                fields);
     }
 
     /** The latest version of a semantic by stamp time, or null. */
