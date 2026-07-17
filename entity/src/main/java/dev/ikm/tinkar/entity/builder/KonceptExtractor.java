@@ -15,6 +15,8 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
+import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.coordinate.Calculators;
@@ -35,10 +37,12 @@ import dev.ikm.tinkar.entity.builder.generator.TaxonomySectioner.Section;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
+import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.list.ImmutableList;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -175,6 +179,11 @@ public final class KonceptExtractor {
                     sb.append("  referencedComponentPurpose: ")
                             .append(shape.referencedComponentPurpose()).append('\n');
                 }
+                if (shape.referencedComponentExample() != null) {
+                    sb.append("  referencedComponentExample: ")
+                            .append(exampleYaml(shape.referencedComponentExample(), identifierByNid.values()))
+                            .append('\n');
+                }
                 List<PatternFieldShape> resolvedFields = shape.fields().stream()
                         .filter(f -> f.meaning() != null && f.purpose() != null && f.dataType() != null)
                         .toList();
@@ -184,6 +193,11 @@ public final class KonceptExtractor {
                         sb.append("    - meaning: ").append(field.meaning()).append('\n');
                         sb.append("      purpose: ").append(field.purpose()).append('\n');
                         sb.append("      dataType: ").append(field.dataType()).append('\n');
+                        if (field.example() != null) {
+                            sb.append("      example: ")
+                                    .append(exampleYaml(field.example(), identifierByNid.values()))
+                                    .append('\n');
+                        }
                     }
                 }
             }
@@ -434,18 +448,28 @@ public final class KonceptExtractor {
      *                                   meaning concept, or {@code null} if unresolvable
      * @param referencedComponentPurpose the koncept identifier of the referenced-component
      *                                   purpose concept, or {@code null} if unresolvable
+     * @param referencedComponentExample the referenced component of a real, deterministically
+     *                                   chosen semantic of this pattern already in the store —
+     *                                   a koncept identifier if it resolves to one, otherwise its
+     *                                   display text — or {@code null} if this pattern has no
+     *                                   semantics yet
      * @param fields                     the pattern's own field definitions, in declared order
      */
     private record PatternShape(String referencedComponentMeaning, String referencedComponentPurpose,
-                                 List<PatternFieldShape> fields) {
+                                 String referencedComponentExample, List<PatternFieldShape> fields) {
     }
 
     /**
      * One field of a pattern: its own meaning, purpose, and data type, each a koncept
      * identifier, or {@code null} if that field's concept isn't itself resolvable (no FQN
      * description in this store).
+     *
+     * @param example this field's actual value on the same example semantic used for
+     *                {@link PatternShape#referencedComponentExample()} — a koncept identifier
+     *                if the value resolves to one, otherwise its display text — or {@code null}
+     *                if no example semantic was found
      */
-    private record PatternFieldShape(String meaning, String purpose, String dataType) {
+    private record PatternFieldShape(String meaning, String purpose, String dataType, String example) {
     }
 
     /**
@@ -461,19 +485,105 @@ public final class KonceptExtractor {
         PatternEntity<PatternEntityVersion> pattern = EntityService.get().getEntityFast(patternNid);
         PatternEntityVersion version = pattern.lastVersion();
         if (version == null) {
-            return new PatternShape(null, null, List.of());
+            return new PatternShape(null, null, null, List.of());
         }
         List<PatternFieldShape> fields = new ArrayList<>();
         for (FieldDefinitionForEntity field : version.fieldDefinitions()) {
             fields.add(new PatternFieldShape(
                     identifierByNid.get(field.meaningNid()),
                     identifierByNid.get(field.purposeNid()),
-                    identifierByNid.get(field.dataTypeNid())));
+                    identifierByNid.get(field.dataTypeNid()),
+                    null));
         }
+
+        String referencedComponentExample = null;
+        ExampleSemantic example = exampleSemanticOf(patternNid);
+        if (example != null) {
+            referencedComponentExample = displayText(example.referencedComponentNid(), identifierByNid);
+            for (int i = 0; i < fields.size() && i < example.fieldValues().size(); i++) {
+                PatternFieldShape f = fields.get(i);
+                fields.set(i, new PatternFieldShape(f.meaning(), f.purpose(), f.dataType(),
+                        displayText(example.fieldValues().get(i), identifierByNid)));
+            }
+        }
+
         return new PatternShape(
                 identifierByNid.get(version.semanticMeaningNid()),
                 identifierByNid.get(version.semanticPurposeNid()),
+                referencedComponentExample,
                 fields);
+    }
+
+    /**
+     * The referenced component and field values of one real semantic of {@code patternNid},
+     * chosen deterministically as the earliest-authored (by {@link #earliestStampTime}) —
+     * reproducible across regenerations as long as this store's own authoring order doesn't
+     * change, unlike picking by nid (assignment order is an implementation detail).
+     *
+     * @param patternNid the pattern whose semantics to search
+     * @return the chosen semantic's referenced component and field values, or {@code null} if
+     *         this pattern has no semantics with a resolvable current version in this store
+     */
+    private record ExampleSemantic(int referencedComponentNid, ImmutableList<Object> fieldValues) {
+    }
+
+    private static ExampleSemantic exampleSemanticOf(int patternNid) {
+        int bestNid = -1;
+        long bestTime = Long.MAX_VALUE;
+        for (int semanticNid : EntityService.get().semanticNidsOfPattern(patternNid)) {
+            if (latestVersion(EntityHandle.get(semanticNid).expectSemantic()) == null) {
+                continue;
+            }
+            long time = earliestStampTime(semanticNid);
+            if (time < bestTime) {
+                bestTime = time;
+                bestNid = semanticNid;
+            }
+        }
+        if (bestNid == -1) {
+            return null;
+        }
+        SemanticEntity<?> semantic = EntityHandle.get(bestNid).expectSemantic();
+        return new ExampleSemantic(semantic.referencedComponentNid(), latestVersion(semantic).fieldValues());
+    }
+
+    /**
+     * Display text for one example value — an entity-valued field (or the referenced
+     * component itself) resolves to its koncept identifier when this store has one, otherwise
+     * to {@link PrimitiveData#text}; every other {@link dev.ikm.tinkar.component.FieldDataType}
+     * a semantic field can hold falls back to a plain rendering, mirroring
+     * {@code SemanticVersionRecord.toString()}'s existing per-type handling without depending
+     * on that debug format.
+     */
+    private static String displayText(int nid, Map<Integer, String> identifierByNid) {
+        String identifier = identifierByNid.get(nid);
+        return identifier != null ? identifier : PrimitiveData.text(nid);
+    }
+
+    private static String displayText(Object value, Map<Integer, String> identifierByNid) {
+        return switch (value) {
+            case null -> null;
+            case EntityFacade entity -> displayText(entity.nid(), identifierByNid);
+            case Instant instant -> DateTimeUtil.format(instant);
+            case IntIdList intIdList -> intIdList.isEmpty() ? "(none)"
+                    : String.join(", ", intIdList.intStream()
+                            .mapToObj(memberNid -> displayText(memberNid, identifierByNid)).toList());
+            case IntIdSet intIdSet -> intIdSet.isEmpty() ? "(none)"
+                    : String.join(", ", intIdSet.intStream()
+                            .mapToObj(memberNid -> displayText(memberNid, identifierByNid)).toList());
+            default -> value.toString();
+        };
+    }
+
+    /**
+     * YAML for one example value: a bare, unquoted koncept identifier when {@code value} is one
+     * (matching {@code meaning}/{@code purpose}/{@code dataType}'s existing unquoted style, so
+     * the renderer can badge-link it), otherwise a quoted literal via {@link #yaml} — free text
+     * is vanishingly unlikely to collide with the single-word PascalCase identifiers this store
+     * mints, so no separate reference/literal flag is needed.
+     */
+    private static String exampleYaml(String value, java.util.Collection<String> identifiers) {
+        return identifiers.contains(value) ? value : yaml(value);
     }
 
     /** The latest version of a semantic by stamp time, or null. */

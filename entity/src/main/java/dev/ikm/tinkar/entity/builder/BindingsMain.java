@@ -15,6 +15,14 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
+import dev.ikm.tinkar.common.service.CachingService;
+import dev.ikm.tinkar.common.service.DataServiceController;
+import dev.ikm.tinkar.common.service.PluggableService;
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.ServiceKeys;
+import dev.ikm.tinkar.common.service.ServiceProperties;
+
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,9 +35,17 @@ import java.util.ServiceLoader;
  * <p>
  * This is the stable reflective seam for the {@code ike:knowledge-bindings} Maven goal:
  * the goal loads this class in a classloader over the project's dependency classpath and
- * invokes {@link #main(String[])} in-process. Composition is store-free (builders defer
- * nid-minting work to {@link KnowledgeSet#write()}), so no datastore, providers, or
- * service registrations are needed on the generation classpath.
+ * invokes {@link #main(String[])} in-process. Composition is store-free when the
+ * source's builders defer all nid-minting to {@link KnowledgeSet#write()}; sources that
+ * resolve nids eagerly during composition ({@code PatternBuilder.at()}/
+ * {@code flushPendingVersion()} via {@code EntityProxy.nid()}) additionally need a
+ * running {@link PrimitiveData} service. To serve both without forcing a store
+ * dependency onto every consumer's generation classpath, this entry point probes for
+ * the {@value #EPHEMERAL_STORE_CONTROLLER} controller: when present, composition runs
+ * inside a disposable ephemeral-store lifecycle (the same pattern used by other
+ * in-process {@code KnowledgeSetSource} consumers, e.g. {@code FoundationFidelityIT});
+ * when absent, composition runs store-free under the original contract. Nothing is
+ * persisted either way.
  * <p>
  * Arguments: {@code outputDir packageName className [sourceClassName]} — the source
  * class argument selects an implementation when the classpath provides more than one
@@ -45,6 +61,13 @@ import java.util.ServiceLoader;
  */
 @Deprecated
 public final class BindingsMain {
+
+    /**
+     * Controller name of the disposable in-memory store used around composition when a
+     * provider is on the classpath. Must match the name the probe and
+     * {@link PrimitiveData#selectControllerByName(String)} both see.
+     */
+    private static final String EPHEMERAL_STORE_CONTROLLER = "Load Ephemeral Store";
 
     private BindingsMain() {
     }
@@ -81,6 +104,63 @@ public final class BindingsMain {
             source = found.getFirst();
         }
 
+        if (ephemeralStoreAvailable()) {
+            CachingService.clearAll();
+            ServiceProperties.set(ServiceKeys.DATA_STORE_ROOT,
+                    Files.createTempDirectory("ike-bindings").toFile());
+            PrimitiveData.selectControllerByName(EPHEMERAL_STORE_CONTROLLER);
+            PrimitiveData.start();
+            try {
+                composeAndWrite(source, outputDir, packageName, className);
+            } finally {
+                PrimitiveData.stop();
+            }
+        } else {
+            try {
+                composeAndWrite(source, outputDir, packageName, className);
+            } catch (IllegalStateException e) {
+                if (e.getMessage() != null
+                        && e.getMessage().startsWith("No PrimitiveDataService provider available")) {
+                    throw new IllegalStateException(source.getClass().getName()
+                            + " resolved nids during composition, which needs a running data store,"
+                            + " but no \"" + EPHEMERAL_STORE_CONTROLLER + "\" controller is on the"
+                            + " generation classpath. Add an ephemeral-store provider (e.g."
+                            + " network.ike.knowledge:ike-knowledge-provider) as a runtime dependency"
+                            + " of the bindings module.", e);
+                }
+                throw e;
+            }
+        }
+    }
+
+    /**
+     * Probes the classpath for the {@value #EPHEMERAL_STORE_CONTROLLER} controller using
+     * the same discovery mechanism as
+     * {@link PrimitiveData#selectControllerByName(String)}, so the probe and the
+     * subsequent selection cannot disagree.
+     *
+     * @return whether an ephemeral-store controller is available to select
+     */
+    private static boolean ephemeralStoreAvailable() {
+        for (DataServiceController<?> controller : PluggableService.load(DataServiceController.class)) {
+            if (EPHEMERAL_STORE_CONTROLLER.equals(controller.controllerName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Composes the source and writes the generated bindings class.
+     *
+     * @param source      the knowledge-set source to compose
+     * @param outputDir   directory the bindings source file is written under
+     * @param packageName package of the generated class
+     * @param className   simple name of the generated class
+     * @throws Exception if composition or writing fails
+     */
+    private static void composeAndWrite(KnowledgeSetSource source, Path outputDir,
+                                        String packageName, String className) throws Exception {
         KnowledgeSet knowledgeSet = source.compose();
         Path file = BindingsWriter.write(knowledgeSet, packageName, className, outputDir);
         System.out.println("Bindings written: " + file + " (" + knowledgeSet.declarations().size()

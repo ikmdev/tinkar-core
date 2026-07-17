@@ -650,6 +650,7 @@ public class EntityRecordFactory {
             case Float floatField -> floatField;
             case byte[] byteField -> byteField;
             case Integer integerField -> integerField;
+            case Long longField -> longField;
             case String stringField -> stringField.strip();
             case Instant instantField -> instantField;
             case PlanarPoint planarPointField -> planarPointField;

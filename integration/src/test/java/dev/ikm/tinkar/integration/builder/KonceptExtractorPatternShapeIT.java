@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.entity.builder.ActiveStamp;
 import dev.ikm.tinkar.entity.builder.KnowledgeSet;
 import dev.ikm.tinkar.entity.builder.KonceptExtractor;
@@ -27,6 +28,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -70,6 +73,12 @@ class KonceptExtractorPatternShapeIT {
         TEST_SET.concept("Pattern shape probe field data type (Test)").at(birth)
                 .definition("Field data-type concept for the pattern-shape probe test.")
                 .isA(TinkarTerm.MODEL_CONCEPT);
+        // The referenced component of the example semantic below -- a real concept, so
+        // referencedComponentExample resolves to its own koncept identifier (the bare,
+        // unquoted style), the same way a field value that resolves to a koncept does.
+        TEST_SET.concept("Pattern shape probe subject (Test)").at(birth)
+                .definition("The subject an example semantic of the probe pattern attaches to.")
+                .isA(TinkarTerm.MODEL_CONCEPT);
 
         TEST_SET.pattern("Pattern shape probe pattern (Test)").at(birth)
                 .meaning(TEST_SET.conceptRef("Pattern shape probe meaning (Test)"))
@@ -77,6 +86,14 @@ class KonceptExtractorPatternShapeIT {
                 .field(TEST_SET.conceptRef("Pattern shape probe field meaning (Test)"),
                         TEST_SET.conceptRef("Pattern shape probe field purpose (Test)"),
                         TEST_SET.conceptRef("Pattern shape probe field data type (Test)"));
+
+        // One real semantic of the probe pattern -- exercises exampleSemanticOf()'s search and
+        // both display-text branches: the referenced component resolves to a koncept identifier
+        // (bare/unquoted), while this plain-String field value does not (quoted literal).
+        TEST_SET.concept("Pattern shape probe subject (Test)").at(birth)
+                .semantic(TEST_SET.patternRef("Pattern shape probe pattern (Test)"),
+                        PublicIds.of(UUID.fromString("7a8b5c1d-2e3f-4a5b-8c9d-0e1f2a3b4c5d")),
+                        "an example field value");
 
         TEST_SET.write();
     }
@@ -102,6 +119,20 @@ class KonceptExtractorPatternShapeIT {
                         + "      purpose: PatternShapeProbeFieldPurpose\n"
                         + "      dataType: PatternShapeProbeFieldDataType\n"),
                 "the field's meaning/purpose/dataType must resolve correctly:\n" + block);
+    }
+
+    @Test
+    @DisplayName("a real semantic's referenced component and field values extract as live examples")
+    void exampleValuesExtractFromARealSemantic() {
+        String yaml = KonceptExtractor.extractYaml();
+        String block = entryBlock(yaml, "PatternShapeProbePattern");
+
+        assertTrue(block.contains("  referencedComponentExample: PatternShapeProbeSubject\n"),
+                "an entity-valued referenced component must resolve to its own koncept "
+                        + "identifier, bare and unquoted:\n" + block);
+        assertTrue(block.contains("      example: \"an example field value\"\n"),
+                "a plain-String field value has no koncept identifier to resolve to, so it "
+                        + "must render as a quoted literal, not a bare identifier:\n" + block);
     }
 
     /** The text from an entry's identifier header to the next blank line. */
