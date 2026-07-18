@@ -37,6 +37,7 @@ import dev.ikm.tinkar.entity.builder.generator.TaxonomySectioner.Section;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
+import dev.ikm.tinkar.terms.DefaultsTemplateTerm;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -531,7 +532,8 @@ public final class KonceptExtractor {
         int bestNid = -1;
         long bestTime = Long.MAX_VALUE;
         for (int semanticNid : EntityService.get().semanticNidsOfPattern(patternNid)) {
-            if (latestVersion(EntityHandle.get(semanticNid).expectSemantic()) == null) {
+            SemanticEntity<?> candidate = EntityHandle.get(semanticNid).expectSemantic();
+            if (latestVersion(candidate) == null || isDefaultsOrTemplateContent(candidate)) {
                 continue;
             }
             long time = earliestStampTime(semanticNid);
@@ -545,6 +547,28 @@ public final class KonceptExtractor {
         }
         SemanticEntity<?> semantic = EntityHandle.get(bestNid).expectSemantic();
         return new ExampleSemantic(semantic.referencedComponentNid(), latestVersion(semantic).fieldValues());
+    }
+
+    /**
+     * Whether a semantic is defaults/template content rather than a domain assertion:
+     * any version stamped in
+     * {@link DefaultsTemplateTerm#DEFAULTS_AND_TEMPLATES_MODULE} — the category's
+     * bidirectional live-and-die invariant makes one such version equivalent to all.
+     * An example must be a domain assertion, so a pattern's default value semantic is
+     * never its "example" (IKE-Network/ike-issues#885 — the affirmative-scope rule:
+     * consumers of domain content exclude the support category).
+     *
+     * @param semantic the candidate example semantic
+     * @return {@code true} when the semantic is defaults/template content
+     */
+    private static boolean isDefaultsOrTemplateContent(SemanticEntity<?> semantic) {
+        int defaultsModuleNid = DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE.nid();
+        for (SemanticEntityVersion candidateVersion : semantic.versions()) {
+            if (candidateVersion.stamp().moduleNid() == defaultsModuleNid) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
