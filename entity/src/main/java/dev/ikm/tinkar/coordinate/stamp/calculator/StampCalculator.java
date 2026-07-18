@@ -22,6 +22,7 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
 import dev.ikm.tinkar.common.util.functional.QuadConsumer;
 import dev.ikm.tinkar.common.util.functional.TriConsumer;
+import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.component.ConceptVersion;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculator;
@@ -35,6 +36,7 @@ import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.graph.DiTreeVersion;
 import dev.ikm.tinkar.entity.graph.VersionVertex;
 import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.DefaultsTemplateTerm;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.PatternFacade;
 import org.eclipse.collections.api.factory.Lists;
@@ -50,14 +52,42 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 import static dev.ikm.tinkar.terms.TinkarTerm.STAMP_PATTERN;
 
+/**
+ * Computes latest versions of components at a stamp coordinate's position.
+ *
+ * <h2>Defaults/template exclusion</h2>
+ * Default value semantics and template semantics (IKE-Network/ike-issues#886) live in
+ * {@link DefaultsTemplateTerm#DEFAULTS_AND_TEMPLATES_MODULE} — every version of a
+ * defaults/template chronology is in that module, and that module holds only
+ * defaults/template content. Version-iteration operations (the
+ * {@code streamLatestVersionForPattern} and {@code forEachSemanticVersion*} family)
+ * exclude versions stamped in that module, so defaults and templates never surface as
+ * ordinary pattern or component content. Chronology-level and nid-level surfaces are
+ * unchanged (store truth): chronology enumeration still returns defaults/template nids,
+ * and {@link #latest(int)} on such a nid still resolves. The dedicated accessors —
+ * {@link #getDefault(PatternFacade)}, {@link #getTemplate(ConceptFacade)} — include the
+ * module and resolve by computed identity.
+ */
 public interface StampCalculator {
     Logger LOG = LoggerFactory.getLogger(StampCalculator.class);
+
+    /**
+     * Streams the latest version of each semantic of the given pattern at this
+     * calculator's position — a version-iteration operation: versions stamped in
+     * {@link DefaultsTemplateTerm#DEFAULTS_AND_TEMPLATES_MODULE} are excluded, so a
+     * defaults/template semantic of the pattern contributes an empty {@link Latest}.
+     *
+     * @param patternFacade the pattern whose semantics to stream
+     * @return one {@link Latest} per semantic chronology of the pattern; empty entries
+     *         for semantics with no reachable, allowed-state, non-defaults version
+     */
     default Stream<Latest<SemanticEntityVersion>> streamLatestVersionForPattern(PatternFacade patternFacade) {
         return streamLatestVersionForPattern(patternFacade.nid());
     }
@@ -110,7 +140,17 @@ public interface StampCalculator {
     StampCoordinate stampCoordinate();
 
 
-        Stream<Latest<SemanticEntityVersion>> streamLatestVersionForPattern(int patternNid);
+    /**
+     * Streams the latest version of each semantic of the given pattern at this
+     * calculator's position — a version-iteration operation: versions stamped in
+     * {@link DefaultsTemplateTerm#DEFAULTS_AND_TEMPLATES_MODULE} are excluded, so a
+     * defaults/template semantic of the pattern contributes an empty {@link Latest}.
+     *
+     * @param patternNid the nid of the pattern whose semantics to stream
+     * @return one {@link Latest} per semantic chronology of the pattern; empty entries
+     *         for semantics with no reachable, allowed-state, non-defaults version
+     */
+    Stream<Latest<SemanticEntityVersion>> streamLatestVersionForPattern(int patternNid);
 
     default Stream<SemanticEntityVersion> streamLatestActiveVersionForPattern(PatternFacade patternFacade) {
         return streamLatestActiveVersionForPattern(patternFacade.nid());
@@ -266,10 +306,37 @@ public interface StampCalculator {
 
     }
 
+    /**
+     * Applies the procedure to the latest version of each semantic of the given pattern
+     * at this calculator's position — a version-iteration operation: versions stamped in
+     * {@link DefaultsTemplateTerm#DEFAULTS_AND_TEMPLATES_MODULE} are excluded, so
+     * defaults/template semantics of the pattern are never presented.
+     *
+     * @param patternNid the nid of the pattern whose semantics to iterate
+     * @param procedure  receives each latest semantic version with the pattern's latest version
+     */
     void forEachSemanticVersionOfPattern(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure);
 
+    /**
+     * Parallel form of {@link #forEachSemanticVersionOfPattern(int, BiConsumer)} — the
+     * same version-iteration contract, including the exclusion of versions stamped in
+     * {@link DefaultsTemplateTerm#DEFAULTS_AND_TEMPLATES_MODULE}.
+     *
+     * @param patternNid the nid of the pattern whose semantics to iterate
+     * @param procedure  receives each latest semantic version with the pattern's latest version
+     */
     void forEachSemanticVersionOfPatternParallel(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure);
 
+    /**
+     * Parallel form of {@link #forEachSemanticVersionOfPattern(int, BiConsumer)}
+     * restricted to the given semantic nids — the same version-iteration contract,
+     * including the exclusion of versions stamped in
+     * {@link DefaultsTemplateTerm#DEFAULTS_AND_TEMPLATES_MODULE}.
+     *
+     * @param semanticNidSet the semantic nids to consider
+     * @param patternNid     the nid of the pattern whose semantics to iterate
+     * @param procedure      receives each latest semantic version with the pattern's latest version
+     */
     void forEachSemanticVersionInSetOfPatternParallel(ImmutableIntSet semanticNidSet, int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure);
 
     default void forEachSemanticVersionForComponent(EntityFacade component,
@@ -277,6 +344,16 @@ public interface StampCalculator {
         forEachSemanticVersionForComponent(component.nid(), procedure);
     }
 
+    /**
+     * Applies the procedure to the latest version of each semantic referencing the given
+     * component at this calculator's position — a version-iteration operation: versions
+     * stamped in {@link DefaultsTemplateTerm#DEFAULTS_AND_TEMPLATES_MODULE} are
+     * excluded, so defaults/template semantics attached to the component are never
+     * presented.
+     *
+     * @param componentNid the nid of the referenced component
+     * @param procedure    receives each latest semantic version with the component's latest version
+     */
     void forEachSemanticVersionForComponent(int componentNid,
                                             BiConsumer<SemanticEntityVersion, EntityVersion> procedure);
 
@@ -286,6 +363,18 @@ public interface StampCalculator {
         forEachSemanticVersionForComponentOfPattern(component.nid(), patternFacade.nid(), procedure);
     }
 
+    /**
+     * Applies the procedure to the latest version of each semantic of the given pattern
+     * referencing the given component at this calculator's position — a
+     * version-iteration operation: versions stamped in
+     * {@link DefaultsTemplateTerm#DEFAULTS_AND_TEMPLATES_MODULE} are excluded, so
+     * defaults/template semantics are never presented.
+     *
+     * @param componentNid the nid of the referenced component
+     * @param patternNid   the nid of the pattern whose semantics to iterate
+     * @param procedure    receives each latest semantic version with the component's and
+     *                     pattern's latest versions
+     */
     void forEachSemanticVersionForComponentOfPattern(int componentNid, int patternNid, TriConsumer<SemanticEntityVersion, EntityVersion, PatternEntityVersion> procedure);
 
     default void forEachSemanticVersionWithFieldsOfPattern(PatternFacade patternFacade,
@@ -337,7 +426,125 @@ public interface StampCalculator {
         return (Latest<SemanticEntityVersion>) latest(semanticEntity);
     }
 
+    /**
+     * Resolves the default value semantic of the given pattern at this calculator's
+     * position: the semantic of {@code pattern} whose referenced component is
+     * {@link DefaultsTemplateTerm#DEFAULT_VALUE_CONCEPT}, located by its computed
+     * identity — {@link UuidT5Generator#singleSemanticUuid(PublicId, PublicId)} of the
+     * pattern's public id and the defaults attachment concept's public id — never by
+     * iteration.
+     * <p>
+     * Unlike the version-iteration operations, which exclude every version stamped in
+     * {@link DefaultsTemplateTerm#DEFAULTS_AND_TEMPLATES_MODULE}, this accessor includes
+     * that module. Resolution is the ordinary path calculus at the caller's position, so
+     * preference is per-path: a default authored on the caller's path overrides one
+     * inherited through the path's origins, and a retirement (an inactive version in the
+     * same module) is honored with no resurrection of earlier active versions.
+     *
+     * @param pattern the pattern whose default value semantic to resolve
+     * @return the latest version of the pattern's default value semantic at this
+     *         calculator's position; empty if none exists, none is reachable, or the
+     *         latest reachable version's state is not an allowed state
+     */
+    default Latest<SemanticEntityVersion> getDefault(PatternFacade pattern) {
+        return latest(defaultsSemanticNid(pattern, DefaultsTemplateTerm.DEFAULT_VALUE_CONCEPT));
+    }
 
+    /**
+     * Resolves the template semantic for the given purpose concept at this calculator's
+     * position: the semantic whose referenced component is {@code purposeConcept} and
+     * whose identity is the computed template identity
+     * ({@link UuidT5Generator#singleSemanticUuid(PublicId, PublicId)} of its own
+     * pattern's public id and the purpose concept's public id). Candidate semantics
+     * attached to the purpose concept are enumerated at the chronology level (store
+     * truth), and only the one carrying its computed identity is a template — other
+     * attachments (descriptions, axioms) never match.
+     * <p>
+     * Unlike the version-iteration operations, which exclude every version stamped in
+     * {@link DefaultsTemplateTerm#DEFAULTS_AND_TEMPLATES_MODULE}, this accessor includes
+     * that module, and resolves per-path preference through the ordinary path calculus
+     * at the caller's position.
+     *
+     * @param purposeConcept the template purpose concept — a child of
+     *                       {@link DefaultsTemplateTerm#TEMPLATE_CONCEPT}
+     * @return the latest version of the purpose's template semantic at this calculator's
+     *         position; empty if no template exists, none is reachable, or the latest
+     *         reachable version's state is not an allowed state
+     * @throws IllegalStateException if more than one pattern declares a template for the
+     *                               purpose concept — disambiguate with
+     *                               {@link #getTemplate(PatternFacade, ConceptFacade)}
+     */
+    default Latest<SemanticEntityVersion> getTemplate(ConceptFacade purposeConcept) {
+        int templateNid = 0;
+        for (int candidateNid : PrimitiveData.get().semanticNidsForComponent(purposeConcept.nid())) {
+            EntityHandle handle = EntityHandle.get(candidateNid);
+            if (!handle.isPresent() || !handle.isSemantic()) {
+                continue;
+            }
+            SemanticEntity<?> candidate = handle.expectSemantic();
+            UUID expectedIdentity = UuidT5Generator.singleSemanticUuid(
+                    PrimitiveData.publicId(candidate.patternNid()), purposeConcept.publicId());
+            boolean identityMatches = false;
+            for (UUID candidateUuid : candidate.publicId().asUuidArray()) {
+                if (candidateUuid.equals(expectedIdentity)) {
+                    identityMatches = true;
+                    break;
+                }
+            }
+            if (!identityMatches) {
+                continue;
+            }
+            if (templateNid != 0) {
+                throw new IllegalStateException(
+                        "More than one pattern declares a template for purpose " + purposeConcept
+                                + " — resolve with getTemplate(pattern, purposeConcept)");
+            }
+            templateNid = candidateNid;
+        }
+        if (templateNid == 0) {
+            return Latest.empty();
+        }
+        return latest(templateNid);
+    }
+
+    /**
+     * Resolves the template semantic of the given pattern for the given purpose concept
+     * at this calculator's position, directly by computed identity —
+     * {@link UuidT5Generator#singleSemanticUuid(PublicId, PublicId)} of the pattern's
+     * public id and the purpose concept's public id. The pattern-free form
+     * ({@link #getTemplate(ConceptFacade)}) resolves the same semantic by verifying
+     * computed identity over the purpose concept's attachments; this form is exact when
+     * the pattern is known.
+     *
+     * @param pattern        the pattern whose template semantic to resolve
+     * @param purposeConcept the template purpose concept — a child of
+     *                       {@link DefaultsTemplateTerm#TEMPLATE_CONCEPT}
+     * @return the latest version of the template semantic at this calculator's position;
+     *         empty if none exists, none is reachable, or the latest reachable version's
+     *         state is not an allowed state
+     */
+    default Latest<SemanticEntityVersion> getTemplate(PatternFacade pattern, ConceptFacade purposeConcept) {
+        return latest(defaultsSemanticNid(pattern, purposeConcept));
+    }
+
+    /**
+     * Computes the nid of a defaults/template semantic from its computed identity:
+     * {@link UuidT5Generator#singleSemanticUuid(PublicId, PublicId)} of the pattern's
+     * public id and the attachment concept's public id, minted pattern-scoped exactly as
+     * the writing side mints it, so reader and writer resolve the same nid whether or
+     * not the semantic exists yet.
+     *
+     * @param pattern           the semantic's pattern
+     * @param attachmentConcept the semantic's referenced component — the defaults
+     *                          attachment concept, or a template purpose concept
+     * @return the nid of the computed identity (minted if not yet present)
+     */
+    private static int defaultsSemanticNid(PatternFacade pattern, EntityFacade attachmentConcept) {
+        UUID semanticUuid = UuidT5Generator.singleSemanticUuid(
+                pattern.publicId(), attachmentConcept.publicId());
+        return ScopedValue.where(PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID, pattern.publicId())
+                .call(() -> PrimitiveData.nid(semanticUuid));
+    }
 
     OptionalInt getIndexForMeaning(int patternNid, int meaningNid);
 
