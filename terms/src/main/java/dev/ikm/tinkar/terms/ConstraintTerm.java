@@ -42,9 +42,10 @@ import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
  * constant's initializer is a single expression, so renaming a birth FQN before
  * integration is a one-line change.
  *
- * <p><strong>Naming status (2026-07-18):</strong> the design is settled (one pattern
- * per parameter shape; relations closed, directed, evaluator-backed) — the two birth
- * FQNs below are working titles pending KEC's text pass.
+ * <p><strong>Naming status:</strong> the design is settled (one pattern per parameter
+ * shape; relations closed, directed, evaluator-backed), and both birth FQNs stood in
+ * the 2026-07-18 text pass — the {@code <X> match relation} family naming is
+ * confirmed.
  */
 public final class ConstraintTerm {
 
