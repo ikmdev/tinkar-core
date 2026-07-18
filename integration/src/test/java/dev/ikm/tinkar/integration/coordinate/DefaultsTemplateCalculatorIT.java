@@ -210,20 +210,18 @@ class DefaultsTemplateCalculatorIT {
     }
 
     @Test
-    @DisplayName("getTemplate resolves a purpose's template, with and without the pattern")
-    void templateResolvesForPurpose() {
+    @DisplayName("getTemplate resolves a pattern's template for a purpose by computed identity")
+    void templateResolvesForPatternAndPurpose() {
+        // Both keys are required (KEC, IKE-Network/ike-issues#886): a purpose concept may
+        // host templates of more than one pattern, so the (pattern, purpose) pair — not
+        // the purpose alone — identifies a template.
         EntityProxy.Concept purpose = TEST_SET.conceptRef(PURPOSE_FQN);
 
-        Latest<SemanticEntityVersion> byPurpose = developmentCalculator().getTemplate(purpose);
-        assertTrue(byPurpose.isPresent(), "the template semantic must resolve from the purpose alone");
-        assertEquals(nidOf(templateId), byPurpose.get().nid());
-        assertEquals("template value", byPurpose.get().fieldValues().get(0));
-
-        Latest<SemanticEntityVersion> byPatternAndPurpose =
+        Latest<SemanticEntityVersion> template =
                 developmentCalculator().getTemplate(TEST_SET.patternRef(P1_FQN), purpose);
-        assertTrue(byPatternAndPurpose.isPresent());
-        assertEquals(byPurpose.get().nid(), byPatternAndPurpose.get().nid(),
-                "both accessor forms must resolve the same template semantic");
+        assertTrue(template.isPresent(), "the template semantic must resolve by (pattern, purpose)");
+        assertEquals(nidOf(templateId), template.get().nid());
+        assertEquals("template value", template.get().fieldValues().get(0));
     }
 
     @Test

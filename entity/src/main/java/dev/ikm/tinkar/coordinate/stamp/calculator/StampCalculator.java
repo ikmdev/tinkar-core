@@ -72,8 +72,9 @@ import static dev.ikm.tinkar.terms.TinkarTerm.STAMP_PATTERN;
  * ordinary pattern or component content. Chronology-level and nid-level surfaces are
  * unchanged (store truth): chronology enumeration still returns defaults/template nids,
  * and {@link #latest(int)} on such a nid still resolves. The dedicated accessors —
- * {@link #getDefault(PatternFacade)}, {@link #getTemplate(ConceptFacade)} — include the
- * module and resolve by computed identity.
+ * {@link #getDefault(PatternFacade)},
+ * {@link #getTemplate(PatternFacade, ConceptFacade)} — include the module and resolve
+ * by computed identity.
  */
 public interface StampCalculator {
     Logger LOG = LoggerFactory.getLogger(StampCalculator.class);
@@ -451,70 +452,17 @@ public interface StampCalculator {
     }
 
     /**
-     * Resolves the template semantic for the given purpose concept at this calculator's
-     * position: the semantic whose referenced component is {@code purposeConcept} and
-     * whose identity is the computed template identity
-     * ({@link UuidT5Generator#singleSemanticUuid(PublicId, PublicId)} of its own
-     * pattern's public id and the purpose concept's public id). Candidate semantics
-     * attached to the purpose concept are enumerated at the chronology level (store
-     * truth), and only the one carrying its computed identity is a template — other
-     * attachments (descriptions, axioms) never match.
+     * Resolves the template semantic of the given pattern for the given purpose concept
+     * at this calculator's position, directly by computed identity —
+     * {@link UuidT5Generator#singleSemanticUuid(PublicId, PublicId)} of the pattern's
+     * public id and the purpose concept's public id. Both keys are required (KEC,
+     * IKE-Network/ike-issues#886): a purpose concept may host templates of more than one
+     * pattern, so the pair — not the purpose alone — identifies a template.
      * <p>
      * Unlike the version-iteration operations, which exclude every version stamped in
      * {@link DefaultsTemplateTerm#DEFAULTS_AND_TEMPLATES_MODULE}, this accessor includes
      * that module, and resolves per-path preference through the ordinary path calculus
      * at the caller's position.
-     *
-     * @param purposeConcept the template purpose concept — a child of
-     *                       {@link DefaultsTemplateTerm#TEMPLATE_CONCEPT}
-     * @return the latest version of the purpose's template semantic at this calculator's
-     *         position; empty if no template exists, none is reachable, or the latest
-     *         reachable version's state is not an allowed state
-     * @throws IllegalStateException if more than one pattern declares a template for the
-     *                               purpose concept — disambiguate with
-     *                               {@link #getTemplate(PatternFacade, ConceptFacade)}
-     */
-    default Latest<SemanticEntityVersion> getTemplate(ConceptFacade purposeConcept) {
-        int templateNid = 0;
-        for (int candidateNid : PrimitiveData.get().semanticNidsForComponent(purposeConcept.nid())) {
-            EntityHandle handle = EntityHandle.get(candidateNid);
-            if (!handle.isPresent() || !handle.isSemantic()) {
-                continue;
-            }
-            SemanticEntity<?> candidate = handle.expectSemantic();
-            UUID expectedIdentity = UuidT5Generator.singleSemanticUuid(
-                    PrimitiveData.publicId(candidate.patternNid()), purposeConcept.publicId());
-            boolean identityMatches = false;
-            for (UUID candidateUuid : candidate.publicId().asUuidArray()) {
-                if (candidateUuid.equals(expectedIdentity)) {
-                    identityMatches = true;
-                    break;
-                }
-            }
-            if (!identityMatches) {
-                continue;
-            }
-            if (templateNid != 0) {
-                throw new IllegalStateException(
-                        "More than one pattern declares a template for purpose " + purposeConcept
-                                + " — resolve with getTemplate(pattern, purposeConcept)");
-            }
-            templateNid = candidateNid;
-        }
-        if (templateNid == 0) {
-            return Latest.empty();
-        }
-        return latest(templateNid);
-    }
-
-    /**
-     * Resolves the template semantic of the given pattern for the given purpose concept
-     * at this calculator's position, directly by computed identity —
-     * {@link UuidT5Generator#singleSemanticUuid(PublicId, PublicId)} of the pattern's
-     * public id and the purpose concept's public id. The pattern-free form
-     * ({@link #getTemplate(ConceptFacade)}) resolves the same semantic by verifying
-     * computed identity over the purpose concept's attachments; this form is exact when
-     * the pattern is known.
      *
      * @param pattern        the pattern whose template semantic to resolve
      * @param purposeConcept the template purpose concept — a child of
