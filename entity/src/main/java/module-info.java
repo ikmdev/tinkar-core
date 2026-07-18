@@ -69,6 +69,7 @@ module dev.ikm.tinkar.entity {
     exports dev.ikm.tinkar.coordinate;
     exports dev.ikm.tinkar.entity.aggregator;
     exports dev.ikm.tinkar.entity.builder;
+    exports dev.ikm.tinkar.entity.constraint;
     exports dev.ikm.tinkar.entity.builder.generator;
     exports dev.ikm.tinkar.entity.export;
     exports dev.ikm.tinkar.entity.graph.adaptor.axiom;
@@ -84,6 +85,7 @@ module dev.ikm.tinkar.entity {
     opens dev.ikm.tinkar.entity.graph.adaptor.axiom;
 
     uses dev.ikm.tinkar.entity.builder.KnowledgeSetSource;
+    uses dev.ikm.tinkar.entity.constraint.MemberMatchEvaluator;
 
     provides CachingService with
             LanguageCalculatorWithCache.CacheProvider,
@@ -98,6 +100,9 @@ module dev.ikm.tinkar.entity {
              with LoadEntitiesFromFileController;
 
     provides PathService with PathProvider;
+
+    provides dev.ikm.tinkar.entity.constraint.MemberMatchEvaluator
+             with dev.ikm.tinkar.entity.constraint.EqualMatchEvaluator;
 
     provides ServiceLifecycle with DataLoadController;
 
