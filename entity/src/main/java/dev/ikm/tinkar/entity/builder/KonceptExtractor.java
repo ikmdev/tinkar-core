@@ -15,10 +15,12 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
+import dev.ikm.tinkar.common.id.EntityKey;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
+import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
@@ -34,6 +36,7 @@ import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.builder.generator.TaxonomySectioner;
 import dev.ikm.tinkar.entity.builder.generator.TaxonomySectioner.Section;
+import dev.ikm.tinkar.entity.graph.DiGraphEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
@@ -43,12 +46,18 @@ import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.list.ImmutableList;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.UUID;
 
@@ -76,7 +85,9 @@ import java.util.UUID;
  * {@code kind: pattern} entry additionally carries {@code referencedComponentMeaning}/
  * {@code referencedComponentPurpose} (what a semantic of this pattern's referenced component
  * means and is for) and {@code fields} (each field's own {@code meaning}/{@code purpose}/
- * {@code dataType}) -- see {@link #patternShape}.
+ * {@code dataType}, plus a live {@code example:} from a real semantic and a {@code default:}
+ * from the pattern's default value semantic when one is active — IKE-Network/ike-issues#888)
+ * -- see {@link #patternShape}.
  * <p>
  * {@code narrative} -- curated, long-form AsciiDoc prose (as opposed to the short
  * {@code definition} gloss) -- is deliberately not read by the no-arg {@link #extractYaml()}:
@@ -182,7 +193,7 @@ public final class KonceptExtractor {
                 }
                 if (shape.referencedComponentExample() != null) {
                     sb.append("  referencedComponentExample: ")
-                            .append(exampleYaml(shape.referencedComponentExample(), identifierByNid.values()))
+                            .append(valueYaml(shape.referencedComponentExample(), identifierByNid.values()))
                             .append('\n');
                 }
                 List<PatternFieldShape> resolvedFields = shape.fields().stream()
@@ -196,7 +207,12 @@ public final class KonceptExtractor {
                         sb.append("      dataType: ").append(field.dataType()).append('\n');
                         if (field.example() != null) {
                             sb.append("      example: ")
-                                    .append(exampleYaml(field.example(), identifierByNid.values()))
+                                    .append(valueYaml(field.example(), identifierByNid.values()))
+                                    .append('\n');
+                        }
+                        if (field.defaultValue() != null) {
+                            sb.append("      default: ")
+                                    .append(valueYaml(field.defaultValue(), identifierByNid.values()))
                                     .append('\n');
                         }
                     }
@@ -465,12 +481,17 @@ public final class KonceptExtractor {
      * identifier, or {@code null} if that field's concept isn't itself resolvable (no FQN
      * description in this store).
      *
-     * @param example this field's actual value on the same example semantic used for
-     *                {@link PatternShape#referencedComponentExample()} — a koncept identifier
-     *                if the value resolves to one, otherwise its display text — or {@code null}
-     *                if no example semantic was found
+     * @param example      this field's actual value on the same example semantic used for
+     *                     {@link PatternShape#referencedComponentExample()} — a koncept identifier
+     *                     if the value resolves to one, otherwise its display text — or {@code null}
+     *                     if no example semantic was found
+     * @param defaultValue this field's value on the pattern's default value semantic
+     *                     (IKE-Network/ike-issues#888), rendered with the same display-text
+     *                     conventions as {@code example} — or {@code null} if the pattern has no
+     *                     currently active default value semantic
      */
-    private record PatternFieldShape(String meaning, String purpose, String dataType, String example) {
+    private record PatternFieldShape(String meaning, String purpose, String dataType, String example,
+                                      String defaultValue) {
     }
 
     /**
@@ -481,6 +502,12 @@ public final class KonceptExtractor {
      * {@code identifierByNid} -- the same universe {@link #extractYaml} already built from
      * this store's own fully-qualified-name descriptions, so a meaning/purpose/dataType
      * concept without one here resolves to {@code null} rather than a broken reference.
+     * <p>
+     * Two live-value channels ride on the shape, each independent of the other: the
+     * example channel ({@link #exampleSemanticOf} — a real domain semantic, defaults
+     * content excluded) and the defaults channel ({@link #defaultValueVersion} — the
+     * pattern's default value semantic, resolved by computed identity). A pattern may
+     * carry either, both, or neither.
      */
     private static PatternShape patternShape(int patternNid, Map<Integer, String> identifierByNid) {
         PatternEntity<PatternEntityVersion> pattern = EntityService.get().getEntityFast(patternNid);
@@ -494,6 +521,7 @@ public final class KonceptExtractor {
                     identifierByNid.get(field.meaningNid()),
                     identifierByNid.get(field.purposeNid()),
                     identifierByNid.get(field.dataTypeNid()),
+                    null,
                     null));
         }
 
@@ -504,7 +532,16 @@ public final class KonceptExtractor {
             for (int i = 0; i < fields.size() && i < example.fieldValues().size(); i++) {
                 PatternFieldShape f = fields.get(i);
                 fields.set(i, new PatternFieldShape(f.meaning(), f.purpose(), f.dataType(),
-                        displayText(example.fieldValues().get(i), identifierByNid)));
+                        displayText(example.fieldValues().get(i), identifierByNid), f.defaultValue()));
+            }
+        }
+
+        SemanticEntityVersion defaults = defaultValueVersion(patternNid);
+        if (defaults != null) {
+            for (int i = 0; i < fields.size() && i < defaults.fieldValues().size(); i++) {
+                PatternFieldShape f = fields.get(i);
+                fields.set(i, new PatternFieldShape(f.meaning(), f.purpose(), f.dataType(),
+                        f.example(), displayText(defaults.fieldValues().get(i), identifierByNid)));
             }
         }
 
@@ -550,6 +587,41 @@ public final class KonceptExtractor {
     }
 
     /**
+     * The latest version of a pattern's default value semantic when that version is active,
+     * or {@code null} — the defaults documentation channel (IKE-Network/ike-issues#888).
+     * Resolution is by computed identity, never iteration:
+     * {@link UuidT5Generator#singleSemanticUuid} of the pattern's public id and
+     * {@link DefaultsTemplateTerm#DEFAULT_VALUE_CONCEPT}'s public id — the same stock
+     * convention {@code StampCalculator.getDefault(PatternFacade)} resolves, read here at
+     * the chronicle level ({@link #latestVersion} by stamp time) in this extractor's
+     * coordinate-independent style. The identity lookup is non-minting
+     * ({@link PrimitiveData#getEntityKey(UUID)}), so a store with no defaults content is
+     * untouched; a retired default (latest version inactive) yields {@code null} rather
+     * than resurrecting an earlier active version.
+     *
+     * @param patternNid the pattern whose default value semantic to resolve
+     * @return the defaults semantic's latest version when present and active, else {@code null}
+     */
+    private static SemanticEntityVersion defaultValueVersion(int patternNid) {
+        UUID defaultsIdentity = UuidT5Generator.singleSemanticUuid(
+                PrimitiveData.publicId(patternNid),
+                DefaultsTemplateTerm.DEFAULT_VALUE_CONCEPT.publicId());
+        Optional<EntityKey> key = PrimitiveData.getEntityKey(defaultsIdentity);
+        if (key.isEmpty()) {
+            return null;
+        }
+        Optional<SemanticEntity> semantic = EntityHandle.get(key.get().nid()).asSemantic();
+        if (semantic.isEmpty()) {
+            return null;
+        }
+        SemanticEntityVersion latest = latestVersion(semantic.get());
+        if (latest == null || Entity.getStamp(latest.stampNid()).state() != State.ACTIVE) {
+            return null;
+        }
+        return latest;
+    }
+
+    /**
      * Whether a semantic is defaults/template content rather than a domain assertion:
      * any version stamped in
      * {@link DefaultsTemplateTerm#DEFAULTS_AND_TEMPLATES_MODULE} — the category's
@@ -572,16 +644,49 @@ public final class KonceptExtractor {
     }
 
     /**
-     * Display text for one example value — an entity-valued field (or the referenced
-     * component itself) resolves to its koncept identifier when this store has one, otherwise
-     * to {@link PrimitiveData#text}; every other {@link dev.ikm.tinkar.component.FieldDataType}
-     * a semantic field can hold falls back to a plain rendering, mirroring
-     * {@code SemanticVersionRecord.toString()}'s existing per-type handling without depending
-     * on that debug format.
+     * Display text for one live value (an example or a default) — an entity-valued field
+     * (or the referenced component itself) resolves to its koncept identifier when this
+     * store has one. A semantic-valued entity renders structurally as
+     * {@code <pattern> on <referenced component>} (for example the Data Type Defaults
+     * Pattern's Semantic default, the FQN description semantic of Uninitialized Component,
+     * renders {@code DescriptionPattern on UninitializedComponent}) — a semantic carries
+     * no description of its own, and {@link PrimitiveData#text} is genuinely unusable for
+     * one: {@code EntityProvider} seeds its debug string cache with the semantic's
+     * uuid-list string on every {@code putEntity}, so in a freshly written store the
+     * "description" of a semantic is its raw UUID. Any other entity falls back to
+     * {@link PrimitiveData#text}. Every other
+     * {@link dev.ikm.tinkar.component.FieldDataType} a semantic field can hold falls back
+     * to a readable rendering, mirroring {@code SemanticVersionRecord.toString()}'s
+     * existing per-type handling without depending on that debug format:
+     * <ul>
+     *   <li>{@link Instant} formats via {@link DateTimeUtil#format(Instant)}, which renders
+     *       the premundane instant as its named sentinel ({@code Premundane}), never a raw
+     *       epoch extreme;</li>
+     *   <li>a byte array decodes as strict UTF-8 text when it is valid UTF-8 (the loud
+     *       defaults convention carries readable text in byte form), otherwise as a length
+     *       plus hex dump;</li>
+     *   <li>an {@code Object[]} renders each element recursively, joined in brackets
+     *       ({@code [a, b]}) so the array-ness stays visible even for one element;</li>
+     *   <li>{@link DiTreeEntity}/{@link DiGraphEntity} have no display-text machinery of
+     *       their own (only multi-line debug {@code toString}), so they render compactly by
+     *       shape — {@code N-vertex tree}, {@code N-vertex cycle} when the graph is one
+     *       simple cycle, else {@code N-vertex graph (E edges)};</li>
+     *   <li>{@code Float}/{@code Long}/{@code Integer}/{@code BigDecimal} fall through to
+     *       {@code toString()}, which already renders {@code NaN} and the sentinel numerals
+     *       readably.</li>
+     * </ul>
      */
     private static String displayText(int nid, Map<Integer, String> identifierByNid) {
         String identifier = identifierByNid.get(nid);
-        return identifier != null ? identifier : PrimitiveData.text(nid);
+        if (identifier != null) {
+            return identifier;
+        }
+        Optional<SemanticEntity> semantic = EntityHandle.get(nid).asSemantic();
+        if (semantic.isPresent()) {
+            return displayText(semantic.get().patternNid(), identifierByNid)
+                    + " on " + displayText(semantic.get().referencedComponentNid(), identifierByNid);
+        }
+        return PrimitiveData.text(nid);
     }
 
     private static String displayText(Object value, Map<Integer, String> identifierByNid) {
@@ -595,18 +700,88 @@ public final class KonceptExtractor {
             case IntIdSet intIdSet -> intIdSet.isEmpty() ? "(none)"
                     : String.join(", ", intIdSet.intStream()
                             .mapToObj(memberNid -> displayText(memberNid, identifierByNid)).toList());
+            case byte[] bytes -> byteArrayText(bytes);
+            case Object[] array -> "[" + String.join(", ", java.util.Arrays.stream(array)
+                    .map(element -> displayText(element, identifierByNid)).toList()) + "]";
+            case DiTreeEntity tree -> tree.vertexCount() + "-vertex tree";
+            case DiGraphEntity<?> graph -> graphText(graph);
             default -> value.toString();
         };
     }
 
     /**
-     * YAML for one example value: a bare, unquoted koncept identifier when {@code value} is one
-     * (matching {@code meaning}/{@code purpose}/{@code dataType}'s existing unquoted style, so
-     * the renderer can badge-link it), otherwise a quoted literal via {@link #yaml} — free text
-     * is vanishingly unlikely to collide with the single-word PascalCase identifiers this store
-     * mints, so no separate reference/literal flag is needed.
+     * Readable text for a byte-array value: the bytes decoded as strict UTF-8 when they
+     * are valid UTF-8 (the loud-defaults convention deliberately carries readable text in
+     * byte form), otherwise the length and a hex dump — never Java's default
+     * {@code [B@hash} identity string.
+     *
+     * @param bytes the field value
+     * @return the decoded text, or {@code "N bytes: 0x…"} for non-UTF-8 content
      */
-    private static String exampleYaml(String value, java.util.Collection<String> identifiers) {
+    private static String byteArrayText(byte[] bytes) {
+        try {
+            return StandardCharsets.UTF_8.newDecoder()
+                    .onMalformedInput(CodingErrorAction.REPORT)
+                    .onUnmappableCharacter(CodingErrorAction.REPORT)
+                    .decode(ByteBuffer.wrap(bytes)).toString();
+        } catch (CharacterCodingException e) {
+            return bytes.length + " bytes: 0x" + HexFormat.of().formatHex(bytes);
+        }
+    }
+
+    /**
+     * Compact display text for a directed-graph value, by shape: {@code N-vertex cycle}
+     * when the graph is one simple cycle (every vertex has exactly one successor and one
+     * closed walk visits them all — the Data Type Defaults Pattern's deliberate two-vertex
+     * cycle renders as {@code 2-vertex cycle}), otherwise {@code N-vertex graph (E edges)}.
+     *
+     * @param graph the field value
+     * @return the compact shape description
+     */
+    private static String graphText(DiGraphEntity<?> graph) {
+        int vertexCount = graph.vertexCount();
+        if (vertexCount > 0 && isSimpleCycle(graph)) {
+            return vertexCount + "-vertex cycle";
+        }
+        int edgeCount = 0;
+        for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
+            edgeCount += graph.successors(vertexIndex).size();
+        }
+        return vertexCount + "-vertex graph (" + edgeCount + (edgeCount == 1 ? " edge)" : " edges)");
+    }
+
+    /**
+     * Whether a directed graph is one simple cycle: starting from vertex 0, following each
+     * vertex's single successor walks every vertex exactly once and closes back on vertex 0.
+     *
+     * @param graph the graph to test
+     * @return {@code true} when the graph is a single simple cycle over all its vertices
+     */
+    private static boolean isSimpleCycle(DiGraphEntity<?> graph) {
+        int vertexCount = graph.vertexCount();
+        boolean[] visited = new boolean[vertexCount];
+        int current = 0;
+        for (int step = 0; step < vertexCount; step++) {
+            if (graph.successors(current).size() != 1 || visited[current]) {
+                return false;
+            }
+            visited[current] = true;
+            current = graph.successors(current).get(0);
+            if (current < 0 || current >= vertexCount) {
+                return false;
+            }
+        }
+        return current == 0;
+    }
+
+    /**
+     * YAML for one live value (an example or a default): a bare, unquoted koncept identifier
+     * when {@code value} is one (matching {@code meaning}/{@code purpose}/{@code dataType}'s
+     * existing unquoted style, so the renderer can badge-link it), otherwise a quoted literal
+     * via {@link #yaml} — free text is vanishingly unlikely to collide with the single-word
+     * PascalCase identifiers this store mints, so no separate reference/literal flag is needed.
+     */
+    private static String valueYaml(String value, java.util.Collection<String> identifiers) {
         return identifiers.contains(value) ? value : yaml(value);
     }
 
