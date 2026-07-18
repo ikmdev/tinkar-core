@@ -18,6 +18,7 @@ package dev.ikm.tinkar.entity.builder;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
+import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 
 import java.util.ArrayList;
@@ -260,6 +261,94 @@ public final class KnowledgeSet {
         PatternBuilder created = new PatternBuilder(identity, fullyQualifiedName, registry);
         patterns.put(fullyQualifiedName, created);
         return created;
+    }
+
+    /**
+     * Opens the default-value declaration for a pattern of this knowledge set
+     * (IKE-Network/ike-issues#885): the sugar verb whose builder derives the semantic's
+     * computed identity, fixes its attachment to the Default value concept, checks the
+     * complete typed tuple against the pattern's declared field definitions at compose
+     * time, and validates every scope's stamp against the Defaults and templates module
+     * — see {@link FieldDefaultsBuilder}. The pattern must be declared in this knowledge
+     * set; for a pattern declared elsewhere, use the generic semantic verb with the
+     * computed identity (the write-path and release-verifier checks still apply there).
+     *
+     * @param patternFullyQualifiedName the pattern's fully qualified name at birth
+     * @return the default-value builder for the pattern
+     * @throws IllegalArgumentException if no pattern with that birth FQN is declared in
+     *                                  this knowledge set
+     */
+    public FieldDefaultsBuilder fieldDefaults(String patternFullyQualifiedName) {
+        return new FieldDefaultsBuilder(requireOpenPattern(patternFullyQualifiedName, "fieldDefaults"));
+    }
+
+    /**
+     * Opens the template declaration for a (pattern, purpose) pair
+     * (IKE-Network/ike-issues#885) — both keys required, because a purpose concept may
+     * host templates of more than one pattern. The builder derives the computed
+     * identity, fixes the attachment to the purpose concept, checks the complete typed
+     * tuple, and validates the module gate — see {@link TemplateBuilder}. The pattern
+     * must be declared in this knowledge set.
+     *
+     * @param patternFullyQualifiedName the pattern's fully qualified name at birth
+     * @param purpose                   the purpose concept — typically minted with
+     *                                  {@link #templatePurpose(String)}, or a concept
+     *                                  whose identity was established elsewhere
+     * @return the template builder for the pair
+     * @throws IllegalArgumentException if no pattern with that birth FQN is declared in
+     *                                  this knowledge set, or {@code purpose} is null
+     */
+    public TemplateBuilder template(String patternFullyQualifiedName, ConceptFacade purpose) {
+        if (purpose == null) {
+            throw new IllegalArgumentException(
+                    "template requires the purpose concept — the (pattern, purpose) pair identifies a template");
+        }
+        return new TemplateBuilder(requireOpenPattern(patternFullyQualifiedName, "template"), purpose);
+    }
+
+    /**
+     * Opens the template declaration for a (pattern, purpose) pair, the purpose resolved
+     * by its birth FQN in this knowledge set — see
+     * {@link #template(String, ConceptFacade)}. A purpose not yet opened resolves to the
+     * derived identity, so a declared-identity purpose must be declared first (the same
+     * rule as {@link #conceptRef(String)}).
+     *
+     * @param patternFullyQualifiedName the pattern's fully qualified name at birth
+     * @param purposeFullyQualifiedName the purpose concept's fully qualified name at birth
+     * @return the template builder for the pair
+     * @throws IllegalArgumentException if no pattern with that birth FQN is declared in
+     *                                  this knowledge set
+     */
+    public TemplateBuilder template(String patternFullyQualifiedName, String purposeFullyQualifiedName) {
+        return template(patternFullyQualifiedName, conceptRef(purposeFullyQualifiedName));
+    }
+
+    /**
+     * Opens — or resumes — a template purpose concept declaration
+     * (IKE-Network/ike-issues#885): a concept minted as a child of the Template concept
+     * by construction, its scopes validated against the Defaults and templates module —
+     * see {@link TemplatePurposeBuilder}. Identity follows the ordinary birth-FQN
+     * derivation; resuming the same FQN continues the same declaration.
+     *
+     * @param fullyQualifiedName the purpose concept's fully qualified name at birth
+     * @return the template purpose builder
+     * @throws IllegalArgumentException if {@code fullyQualifiedName} is null or blank,
+     *                                  or already names a pattern in this knowledge set
+     */
+    public TemplatePurposeBuilder templatePurpose(String fullyQualifiedName) {
+        return new TemplatePurposeBuilder(concept(fullyQualifiedName));
+    }
+
+    private PatternBuilder requireOpenPattern(String patternFullyQualifiedName, String verb) {
+        PatternBuilder opened = patterns.get(patternFullyQualifiedName);
+        if (opened == null) {
+            throw new IllegalArgumentException(verb + " requires the pattern's declaration in this"
+                    + " knowledge set — declare pattern(\"" + patternFullyQualifiedName + "\") first"
+                    + " (compose-time shape conformance reads the declared field definitions); for a"
+                    + " pattern declared elsewhere, use the generic semantic verb with the computed"
+                    + " identity");
+        }
+        return opened;
     }
 
     /**

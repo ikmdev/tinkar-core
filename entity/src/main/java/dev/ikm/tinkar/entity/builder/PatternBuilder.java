@@ -91,6 +91,40 @@ public final class PatternBuilder {
     }
 
     /**
+     * A reference handle for this pattern: its birth FQN as the description, its actual
+     * identity — declared or derived. Used by the support verbs
+     * ({@link KnowledgeSet#fieldDefaults}, {@link KnowledgeSet#template}) to host their
+     * semantics on this pattern's ledger.
+     */
+    EntityProxy.Pattern ref() {
+        return EntityProxy.Pattern.make(ledger.birthFqn, ledger.componentId);
+    }
+
+    /**
+     * Whether any pattern-version content — meaning, purpose, or a field definition —
+     * has been declared yet, in the pending scope or a flushed version. The support
+     * verbs require the shape before authoring a tuple against it.
+     */
+    boolean shapeDeclared() {
+        return pendingMeaning != null || pendingPurpose != null || !pendingFields.isEmpty()
+                || !patternVersions.isEmpty();
+    }
+
+    /**
+     * The declared field data-type concepts of the current pattern version, in field
+     * order — the pending scope's declarations when one is open, else the last flushed
+     * version's. Callers check {@link #shapeDeclared()} first; a membership pattern
+     * answers an empty list.
+     */
+    List<ConceptFacade> currentFieldDataTypes() {
+        if (pendingMeaning != null || pendingPurpose != null || !pendingFields.isEmpty()) {
+            return pendingFields.stream().map(FieldDeclaration::dataType).toList();
+        }
+        return patternVersions.getLast().value().fields().stream()
+                .map(FieldDeclaration::dataType).toList();
+    }
+
+    /**
      * Opens a content scope at the given active stamp. The first active scope is the
      * birth scope, which must declare the pattern's meaning and purpose; it also creates
      * the fully qualified name description from the birth FQN.
