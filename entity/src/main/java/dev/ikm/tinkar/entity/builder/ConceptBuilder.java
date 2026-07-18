@@ -289,8 +289,11 @@ public final class ConceptBuilder {
          * <p>
          * Field values are carried in identity form and resolved at write: components as
          * {@link EntityProxy} handles (or {@link PublicId}s), component lists and sets as
-         * {@code PublicIdList}/{@code PublicIdSet}, plus String, Boolean, Integer, Long,
-         * Float, BigDecimal, Instant, and byte[]. A membership semantic declares no
+         * {@code PublicIdList}/{@code PublicIdSet}, DiTree/DiGraph values as
+         * {@link GraphFieldValue} specs (materialized at write), object arrays as
+         * {@code Object[]} of the scalar/identity forms, plus String, Boolean, Integer,
+         * Long, Float, BigDecimal, Instant, and byte[]
+         * (IKE-Network/ike-issues#885). A membership semantic declares no
          * fields. Field-count and datatype fit against the pattern's field definitions
          * are the release verifier's concern — at compose time the pattern chronology
          * need not be present.

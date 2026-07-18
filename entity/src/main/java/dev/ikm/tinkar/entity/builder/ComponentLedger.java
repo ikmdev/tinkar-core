@@ -32,6 +32,7 @@ import dev.ikm.tinkar.entity.SemanticVersionRecord;
 import dev.ikm.tinkar.entity.SemanticVersionRecordBuilder;
 import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.entity.StampVersionRecord;
+import dev.ikm.tinkar.entity.graph.DiGraphEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpressionBuilder;
 import dev.ikm.tinkar.terms.ConceptFacade;
@@ -380,49 +381,87 @@ final class ComponentLedger {
     /**
      * Validates that every field value is compose-safe: a value type the store accepts,
      * carried in identity form — never nids — so replay into a fresh store resolves the
-     * references itself. Field-count and datatype fit against the pattern's field
-     * definitions belong to the release verifier: at compose time the pattern chronology
-     * need not be present at all.
+     * references itself. DiTree- and DiGraph-typed values are carried as
+     * {@link GraphFieldValue} specs and materialized at write; object arrays carry their
+     * elements, each validated by the same scalar/identity rules (nesting arrays or
+     * graphs inside an array is rejected — IKE-Network/ike-issues#885). Field-count and
+     * datatype fit against the pattern's field definitions belong to the release
+     * verifier: at compose time the pattern chronology need not be present at all.
      */
     private List<Object> validateFieldValues(Object[] fieldValues) {
         List<Object> values = new ArrayList<>(fieldValues.length);
         for (int index = 0; index < fieldValues.length; index++) {
             Object value = fieldValues[index];
-            if (value == null) {
-                throw new IllegalArgumentException(
-                        "Field " + index + " on " + birthFqn + " is null — the store rejects null field values");
-            }
-            if (value instanceof Double) {
-                throw new IllegalArgumentException(
-                        "Field " + index + " on " + birthFqn + " is a double — the store narrows double"
-                                + " to float silently; pass a Float");
-            }
-            if (value instanceof IntIdList || value instanceof IntIdSet) {
-                throw new IllegalArgumentException(
-                        "Field " + index + " on " + birthFqn + " is nid-based and not replay-stable —"
-                                + " pass a PublicIdList or PublicIdSet");
-            }
-            if (value instanceof DiTreeEntity) {
-                throw new IllegalArgumentException(
-                        "Field " + index + " on " + birthFqn + " is a nid-based graph and not"
-                                + " replay-stable — state axiom semantics with statedAxioms, which"
-                                + " defers graph construction to write");
-            }
-            boolean supported = value instanceof String || value instanceof Boolean
-                    || value instanceof Integer || value instanceof Long || value instanceof Float
-                    || value instanceof BigDecimal || value instanceof Instant || value instanceof byte[]
-                    || value instanceof EntityFacade || value instanceof PublicId
-                    || value instanceof PublicIdList || value instanceof PublicIdSet;
-            if (!supported) {
-                throw new IllegalArgumentException(
-                        "Field " + index + " on " + birthFqn + " has unsupported type "
-                                + value.getClass().getName() + " — supported: String, Boolean, Integer,"
-                                + " Long, Float, BigDecimal, Instant, byte[], EntityFacade, PublicId,"
-                                + " PublicIdList, PublicIdSet");
-            }
+            validateFieldValue(index, value, false);
             values.add(value);
         }
         return List.copyOf(values);
+    }
+
+    /**
+     * Validates one field value — or, inside an object array, one element — against the
+     * compose-safe rules of {@link #validateFieldValues(Object[])}.
+     *
+     * @param index          the field's position, for the error message
+     * @param value          the value to validate
+     * @param insideArray    whether the value is an object-array element, which excludes
+     *                       nested arrays and graph specs
+     */
+    private void validateFieldValue(int index, Object value, boolean insideArray) {
+        if (value == null) {
+            throw new IllegalArgumentException(
+                    "Field " + index + " on " + birthFqn + " is null — the store rejects null field values");
+        }
+        if (value instanceof Double) {
+            throw new IllegalArgumentException(
+                    "Field " + index + " on " + birthFqn + " is a double — the store narrows double"
+                            + " to float silently; pass a Float");
+        }
+        if (value instanceof IntIdList || value instanceof IntIdSet) {
+            throw new IllegalArgumentException(
+                    "Field " + index + " on " + birthFqn + " is nid-based and not replay-stable —"
+                            + " pass a PublicIdList or PublicIdSet");
+        }
+        if (value instanceof DiTreeEntity || value instanceof DiGraphEntity) {
+            throw new IllegalArgumentException(
+                    "Field " + index + " on " + birthFqn + " is a nid-based graph and not"
+                            + " replay-stable — pass a GraphFieldValue.Tree or GraphFieldValue.Graph"
+                            + " (or state axiom semantics with statedAxioms), which defers graph"
+                            + " construction to write");
+        }
+        if (value instanceof GraphFieldValue) {
+            if (insideArray) {
+                throw new IllegalArgumentException(
+                        "Field " + index + " on " + birthFqn + " nests a graph value inside an object"
+                                + " array — not supported");
+            }
+            return;
+        }
+        // byte[] is not an Object[] subtype, so byte-array fields never reach this branch.
+        if (value instanceof Object[] elements) {
+            if (insideArray) {
+                throw new IllegalArgumentException(
+                        "Field " + index + " on " + birthFqn + " nests an object array inside an object"
+                                + " array — not supported");
+            }
+            for (Object element : elements) {
+                validateFieldValue(index, element, true);
+            }
+            return;
+        }
+        boolean supported = value instanceof String || value instanceof Boolean
+                || value instanceof Integer || value instanceof Long || value instanceof Float
+                || value instanceof BigDecimal || value instanceof Instant || value instanceof byte[]
+                || value instanceof EntityFacade || value instanceof PublicId
+                || value instanceof PublicIdList || value instanceof PublicIdSet;
+        if (!supported) {
+            throw new IllegalArgumentException(
+                    "Field " + index + " on " + birthFqn + " has unsupported type "
+                            + value.getClass().getName() + " — supported: String, Boolean, Integer,"
+                            + " Long, Float, BigDecimal, Instant, byte[], EntityFacade, PublicId,"
+                            + " PublicIdList, PublicIdSet, Object[], GraphFieldValue.Tree,"
+                            + " GraphFieldValue.Graph");
+        }
     }
 
     /**
@@ -624,7 +663,9 @@ final class ComponentLedger {
      * Writes every generic declared-identity semantic ledger. References are resolved to
      * nids here, at write: the referenced component and the pattern are minted from
      * their full public ids, so lookups by any of their UUIDs resolve — whether or not
-     * their chronologies are present yet.
+     * their chronologies are present yet. {@link GraphFieldValue} specs materialize to
+     * their nid-based graph entities here too, for the same reason
+     * (IKE-Network/ike-issues#885).
      */
     void writeGenericSemantics(int componentNid) {
         for (GenericSemanticLedger semantic : genericSemantics.values()) {
@@ -635,15 +676,35 @@ final class ComponentLedger {
             SemanticRecord bootstrap = newSemantic(semantic.semanticId,
                     semantic.pattern, referencedNid, versions);
             for (VersionEntry<List<Object>> version : semantic.versions) {
+                List<Object> materialized = new ArrayList<>(version.value().size());
+                for (Object value : version.value()) {
+                    materialized.add(materializeFieldValue(value));
+                }
                 versions.add(SemanticVersionRecordBuilder.builder()
                         .chronology(bootstrap)
                         .stampNid(writeStamp(version.stamp()))
-                        .fieldValues(Lists.immutable.ofAll(version.value()))
+                        .fieldValues(Lists.immutable.ofAll(materialized))
                         .build());
             }
             EntityService.get().putEntity(
                     SemanticRecordBuilder.builder(bootstrap).versions(versions.toImmutable()).build());
         }
+    }
+
+    /**
+     * Materializes one compose-form field value into its store form: a
+     * {@link GraphFieldValue} spec becomes its nid-based graph entity; every other value
+     * is already store-ready and passes through unchanged.
+     *
+     * @param value the compose-form value
+     * @return the store-form value
+     */
+    private static Object materializeFieldValue(Object value) {
+        return switch (value) {
+            case GraphFieldValue.Tree tree -> tree.toDiTreeEntity();
+            case GraphFieldValue.Graph graph -> graph.toDiGraphEntity();
+            default -> value;
+        };
     }
 
     static int nidFor(UUID uuid) {

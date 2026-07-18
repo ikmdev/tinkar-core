@@ -59,6 +59,17 @@ public class DateTimeUtil {
     public static final String PREMUNDANE = "Premundane";
     public static final String INCEPTION = "Inception";
 
+    /**
+     * Converts an epoch-milliseconds value to its {@link Instant} representation,
+     * honoring the platform's sentinel times: {@code Long.MAX_VALUE} is
+     * {@link Instant#MAX}, {@code Long.MIN_VALUE} is {@link Instant#MIN}, and
+     * {@link PrimitiveData#PREMUNDANE_TIME} is
+     * {@link PrimitiveData#PREMUNDANE_INSTANT} — the inverse of
+     * {@link #instantToEpochMs(Instant)} (IKE-Network/ike-issues#885).
+     *
+     * @param epochMilliSecond the epoch-milliseconds value, possibly a sentinel
+     * @return the corresponding instant
+     */
     public static Instant epochMsToInstant(long epochMilliSecond) {
         if (epochMilliSecond == Long.MAX_VALUE) {
             return Instant.MAX;
@@ -66,15 +77,36 @@ public class DateTimeUtil {
         if (epochMilliSecond == Long.MIN_VALUE) {
             return Instant.MIN;
         }
+        if (epochMilliSecond == PrimitiveData.PREMUNDANE_TIME) {
+            return PrimitiveData.PREMUNDANE_INSTANT;
+        }
         return Instant.ofEpochMilli(epochMilliSecond);
     }
 
+    /**
+     * Converts an {@link Instant} to its epoch-milliseconds representation,
+     * honoring the platform's sentinel instants: {@link Instant#MIN} is
+     * {@code Long.MIN_VALUE}, {@link Instant#MAX} is {@code Long.MAX_VALUE}, and
+     * {@link PrimitiveData#PREMUNDANE_INSTANT} is
+     * {@link PrimitiveData#PREMUNDANE_TIME}. Without the premundane mapping,
+     * {@code Instant.toEpochMilli()} overflows for the premundane instant
+     * (its epoch-second magnitude exceeds {@code Long.MAX_VALUE / 1000}), so any
+     * INSTANT-typed field carrying the premundane default could not round-trip
+     * through epoch-milliseconds forms such as the protobuf change-set encoding
+     * (IKE-Network/ike-issues#885).
+     *
+     * @param instant the instant, possibly a sentinel
+     * @return the corresponding epoch-milliseconds value
+     */
     public static long instantToEpochMs(Instant instant) {
         if (instant.equals(Instant.MIN)) {
             return Long.MIN_VALUE;
         }
         if (instant.equals(Instant.MAX)) {
             return Long.MAX_VALUE;
+        }
+        if (instant.equals(PrimitiveData.PREMUNDANE_INSTANT)) {
+            return PrimitiveData.PREMUNDANE_TIME;
         }
         return instant.toEpochMilli();
     }

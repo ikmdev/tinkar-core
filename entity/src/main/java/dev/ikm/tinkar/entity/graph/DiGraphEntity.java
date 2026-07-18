@@ -62,10 +62,15 @@ public class DiGraphEntity<V extends EntityVertex> extends DiGraphAbstract<V> im
         ImmutableIntObjectMap<ImmutableIntList> successorMap = readIntIntListMap(readBuf);
         ImmutableIntObjectMap<ImmutableIntList> predecessorMap = readIntIntListMap(readBuf);
 
+        // Symmetric with getBytes(): the root count is followed by each root's vertex
+        // index, which must be consumed and resolved. The previous read consumed only
+        // the count and guessed roots as the first vertices, leaving the written root
+        // indexes unread — misaligning every field that follows the graph in the same
+        // buffer (IKE-Network/ike-issues#885).
         int rootCount = readBuf.readInt();
         MutableList<EntityVertex> roots = Lists.mutable.ofInitialCapacity(rootCount);
         for (int i = 0; i < rootCount; i++) {
-            roots.add(vertexMap.get(i));
+            roots.add(vertexMap.get(readBuf.readInt()));
         }
 
         return new DiGraphEntity(roots.toImmutable(), vertexMap.toImmutable(),

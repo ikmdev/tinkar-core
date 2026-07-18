@@ -233,6 +233,9 @@ public class EntityToTinkarSchemaTransformer {
             case Integer i -> toPBInteger(i);
             case Float f -> toPBFloat(f);
             case byte[] bytes -> toPBByte(bytes);
+            // Object arrays map to the FieldArray message, element-wise
+            // (IKE-Network/ike-issues#885).
+            case Object[] objectArray -> toPBFieldArray(objectArray);
             case Instant instant -> toPBInstant(instant);
             case Component component -> toPBComponent(component);
             case VertexId vertexUUID -> toVertexUUID(vertexUUID);
@@ -321,6 +324,23 @@ public class EntityToTinkarSchemaTransformer {
 
     protected Field toPBLong(Long value) {
         return Field.newBuilder().setLong(createPBLong(value)).build();
+    }
+
+    /**
+     * Transforms an object-array field value to its protobuf form: a
+     * {@link dev.ikm.tinkar.schema.FieldArray} carrying each element as an ordinary
+     * {@link Field}, in order — the write side of the OBJECT_ARRAY round trip
+     * (IKE-Network/ike-issues#885).
+     *
+     * @param value the object array to transform
+     * @return the protobuf field carrying the array
+     */
+    protected Field toPBFieldArray(Object[] value) {
+        dev.ikm.tinkar.schema.FieldArray.Builder arrayBuilder = dev.ikm.tinkar.schema.FieldArray.newBuilder();
+        for (Object element : value) {
+            arrayBuilder.addValues(createPBField(element));
+        }
+        return Field.newBuilder().setObjectArray(arrayBuilder.build()).build();
     }
 
     protected List<Field> createPBFields(ImmutableList<Object> objects){
