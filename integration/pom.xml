@@ -10,8 +10,6 @@
 
     <properties>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-        <skip.unit.tests>false</skip.unit.tests>
-        <skip.integration.tests>false</skip.integration.tests>
         <tinkar-composer.version>1.13.0</tinkar-composer.version>
         <failsafeArgLine>
             --enable-preview
@@ -145,6 +143,36 @@
             </plugin>
             <!-- forkCount=1, reuseForks=false (fresh JVM per test class)
                  moved to ike-parent:13 (#282) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <!-- All *IT classes belong to failsafe; without this,
+                             Test*IT-named hybrids match surefire's Test*
+                             default include and run in the test phase -->
+                        <exclude>**/*IT.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <!-- Producer/consumer IT pairs (ForwardReferenceChangeSetGenerateIT
+                         before ...IngestIT, ExportDataIT before ImportDataIT) rely on
+                         alphabetical class order; the default is filesystem-dependent -->
+                    <runOrder>alphabetical</runOrder>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
