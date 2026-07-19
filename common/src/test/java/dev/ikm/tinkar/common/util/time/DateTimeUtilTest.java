@@ -52,6 +52,28 @@ class DateTimeUtilTest {
     }
 
     @Test
+    void zoneExplicitRendering() {
+        // A real time renders differently across zones through the zone-explicit form...
+        long epoch = Instant.parse("2027-03-05T04:30:00Z").toEpochMilli();
+        assertEquals("2027-03-05 04:30",
+                DateTimeUtil.format(epoch, DateTimeUtil.FORMATTER, java.time.ZoneOffset.UTC));
+        assertEquals("2027-03-04 20:30",
+                DateTimeUtil.format(epoch, DateTimeUtil.FORMATTER, java.time.ZoneId.of("America/Los_Angeles")));
+        assertEquals("2027-03-05 04:30", DateTimeUtil.formatUtc(epoch),
+                "formatUtc is the machine-independent form for generated artifacts"
+                        + " (IKE-Network/ike-issues#897)");
+
+        // ...while the sentinel words are zone-invariant on every path.
+        assertEquals(INCEPTION, DateTimeUtil.formatUtc(PrimitiveData.INCEPTION_EPOCH));
+        assertEquals(PREMUNDANE, DateTimeUtil.formatUtc(PrimitiveData.PREMUNDANE_TIME));
+        assertEquals(LATEST, DateTimeUtil.formatUtc(Long.MAX_VALUE));
+        assertEquals(CANCELED, DateTimeUtil.formatUtc(Long.MIN_VALUE));
+        assertEquals(INCEPTION,
+                DateTimeUtil.format(PrimitiveData.INCEPTION_INSTANT, DateTimeUtil.SEC_FORMATTER),
+                "the Instant/formatter path carries the inception sentinel like every other path");
+    }
+
+    @Test
     void inceptionEpochIsAMillisecondAfterMidnight() {
         // The .777 offset is deliberate: a real calendar date landing exactly at
         // 2026-01-01T00:00:00.000Z must never collide with the inception sentinel.

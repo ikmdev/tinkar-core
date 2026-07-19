@@ -239,7 +239,7 @@ public final class KonceptExtractor {
 
             long since = earliestStampTime(nid);
             if (since != Long.MAX_VALUE) {
-                sb.append("  since: ").append(yaml(DateTimeUtil.format(since))).append('\n');
+                sb.append("  since: ").append(yaml(DateTimeUtil.formatUtc(since))).append('\n');
             }
             List<String> comments = activeComments(nid, calculator);
             if (!comments.isEmpty()) {
@@ -254,7 +254,7 @@ public final class KonceptExtractor {
                 for (RetiredComment retiredComment : retired) {
                     sb.append("    - text: ").append(yaml(retiredComment.text())).append('\n');
                     sb.append("      retiredAt: ")
-                            .append(yaml(DateTimeUtil.format(retiredComment.retiredAt()))).append('\n');
+                            .append(yaml(DateTimeUtil.formatUtc(retiredComment.retiredAt()))).append('\n');
                 }
             }
             if (narrativePatternNid != null) {

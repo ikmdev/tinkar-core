@@ -122,6 +122,36 @@ public class DateTimeUtil {
         return format(epochMilliSecond, FORMATTER);
     }
     public static String format(long epochMilliSecond, DateTimeFormatter formatter) {
+        return format(epochMilliSecond, formatter, ZoneId.systemDefault());
+    }
+
+    /**
+     * Formats an epoch time in UTC with the default {@link #FORMATTER} — the form for
+     * generated artifacts, whose text must not depend on the generating machine's zone
+     * (IKE-Network/ike-issues#897). Sentinel times render as their words
+     * ({@code Latest}, {@code Canceled}, {@code Premundane}, {@code Inception}),
+     * identically to every other format path.
+     *
+     * @param epochMilliSecond the epoch time in milliseconds, or a sentinel value
+     * @return the sentinel word, or the UTC-rendered time
+     */
+    public static String formatUtc(long epochMilliSecond) {
+        return format(epochMilliSecond, FORMATTER, ZoneOffset.UTC);
+    }
+
+    /**
+     * Formats an epoch time at an explicit zone — the one method carrying the sentinel
+     * handling for the epoch path; the zone-implicit overloads delegate here at
+     * {@link ZoneId#systemDefault()} (interactive surfaces render local), and
+     * {@link #formatUtc(long)} delegates at UTC (generated artifacts render
+     * machine-independently).
+     *
+     * @param epochMilliSecond the epoch time in milliseconds, or a sentinel value
+     * @param formatter        the date-time formatter to render with
+     * @param zone             the zone to render the instant at
+     * @return the sentinel word, or the time rendered at {@code zone}
+     */
+    public static String format(long epochMilliSecond, DateTimeFormatter formatter, ZoneId zone) {
         if (epochMilliSecond == Long.MAX_VALUE) {
             return LATEST;
         }
@@ -134,9 +164,7 @@ public class DateTimeUtil {
         if (epochMilliSecond == PrimitiveData.INCEPTION_EPOCH) {
             return INCEPTION;
         }
-        ZonedDateTime positionTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(epochMilliSecond), ZoneOffset.UTC);
-        ZonedDateTime inLocalZone = positionTime.withZoneSameInstant(ZoneId.systemDefault());
-        return inLocalZone.format(formatter);
+        return ZonedDateTime.ofInstant(Instant.ofEpochMilli(epochMilliSecond), zone).format(formatter);
     }
     public static String timeNowSimple() {
         return TIME_SIMPLE.format(ZonedDateTime.now());
@@ -247,6 +275,9 @@ public class DateTimeUtil {
         }
         if (instant.equals(PrimitiveData.PREMUNDANE_INSTANT)) {
             return PREMUNDANE;
+        }
+        if (instant.equals(PrimitiveData.INCEPTION_INSTANT)) {
+            return INCEPTION;
         }
         if (instant.equals(PrimitiveData.INCEPTION_INSTANT)) {
             return INCEPTION;
