@@ -63,17 +63,8 @@ class SpinedArrayImportIT {
         TestHelper.stopDatabase();
     }
 
-    // URL.getFile() keeps percent-encoding (breaks in ꞉-sibling worktree paths); decode via URI
-    private static File resourceFile(URL resourceUrl) {
-        try {
-            return new File(resourceUrl.toURI());
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException(resourceUrl.toString(), e);
-        }
-    }
-
     @Test
-    public void givenFQNChangeSet_whenImported_thenViewCalcReturnsCorrectNewFQNText() {
+    public void givenFQNChangeSet_whenImported_thenViewCalcReturnsCorrectNewFQNText() throws URISyntaxException {
         // Set up ViewCalculatorWithCache to replicate calculator for Komet window
         ViewCoordinateRecord viewCoord = Coordinates.View.DefaultView();
         ViewCalculatorWithCache viewCalc = ViewCalculatorWithCache.getCalculator(viewCoord);
@@ -87,7 +78,8 @@ class SpinedArrayImportIT {
         // Import pb file
         URL pbResourceUrl = getClass().getClassLoader().getResource("active-state-fqn-change-ike-cs.zip");
         assert pbResourceUrl != null;
-        File pbFile = resourceFile(pbResourceUrl);
+        // toURI() decodes percent-encoding; getFile() breaks under paths with non-ASCII chars
+        File pbFile = new File(pbResourceUrl.toURI());
 
         LoadEntitiesFromProtobufFile loadProto = new LoadEntitiesFromProtobufFile(pbFile);
         EntityCountSummary count = loadProto.compute();
@@ -126,7 +118,7 @@ class SpinedArrayImportIT {
     }
 
     @Test
-    public void givenOtherNameChangeSet_whenImported_thenViewCalcReturnsCorrectNewOtherNameText() {
+    public void givenOtherNameChangeSet_whenImported_thenViewCalcReturnsCorrectNewOtherNameText() throws URISyntaxException {
         // Set up ViewCalculatorWithCache to replicate calculator for Komet window
         ViewCoordinateRecord viewCoord = Coordinates.View.DefaultView();
         ViewCalculatorWithCache viewCalc = ViewCalculatorWithCache.getCalculator(viewCoord);
@@ -138,7 +130,7 @@ class SpinedArrayImportIT {
         // Import pb file
         URL pbResourceUrl = getClass().getClassLoader().getResource("active-state-other-change-ike-cs.zip");
         assert pbResourceUrl != null;
-        File pbFile = resourceFile(pbResourceUrl);
+        File pbFile = new File(pbResourceUrl.toURI());
 
         LoadEntitiesFromProtobufFile loadProto = new LoadEntitiesFromProtobufFile(pbFile);
         EntityCountSummary count = loadProto.compute();

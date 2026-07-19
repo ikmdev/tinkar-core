@@ -61,42 +61,81 @@ public class Searcher {
     private static boolean searcherManagerFromWriter = false;
 
     static void refreshAfterIndex() {
-        if (searcherManager == null) {
-            LOG.info("refreshAfterIndex: searcherManager is null; skipping refresh");
+        SearcherManager mgr;
+        try {
+            mgr = ensureSearcherManager();
+        } catch (IOException e) {
+            LOG.warn("Unable to (re)initialize searcher before refresh", e);
+            return;
+        }
+        if (mgr == null) {
+            LOG.info("refreshAfterIndex: no live IndexWriter yet; skipping refresh");
             return;
         }
         try {
             // Block to ensure the next search sees newly indexed docs.
-            searcherManager.maybeRefreshBlocking();
+            mgr.maybeRefreshBlocking();
             LOG.debug("Refreshed SearcherManager after indexing");
         } catch (IOException e) {
             LOG.warn("Unable to refresh searcher after indexing", e);
         }
     }
 
+    /**
+     * Returns the shared NRT {@link SearcherManager}, building it against the
+     * live {@link Indexer#indexWriter()} if it is not already open.
+     *
+     * <p>The manager is a JVM-static tied to the current index's IndexWriter.
+     * It is created once in the {@link Searcher} constructor, but any close of
+     * the search stack — a datastore reopen, an index recreate/maintenance run,
+     * or a lifecycle stop/restart within the same JVM — nulls it (see
+     * {@link #close()}). Because {@code SearchProvider} is a stable-value
+     * singleton whose constructor runs only once per JVM/module-layer, nothing
+     * would otherwise rebuild the manager, and every later search would fall
+     * into the {@code searcherManager == null} path and silently return zero
+     * hits. Rebuilding here on demand makes the searcher self-healing and
+     * removes the fragile "Indexer-then-Searcher, exactly once" ordering
+     * dependency.
+     *
+     * @return the live SearcherManager, or {@code null} if no IndexWriter is
+     *         open yet (no index to search)
+     * @throws IOException if a new SearcherManager cannot be opened
+     */
+    private static synchronized SearcherManager ensureSearcherManager() throws IOException {
+        if (searcherManager != null && searcherManagerFromWriter) {
+            return searcherManager;
+        }
+        if (Indexer.indexWriter() == null) {
+            // No live writer → no index is open. Callers treat null as "nothing
+            // to search" rather than an error, so a search before/after the
+            // datastore is available returns empty instead of throwing.
+            LOG.warn("Indexer.indexWriter() is null - no open Lucene index to search");
+            return null;
+        }
+        if (searcherManager != null) {
+            // Manager exists but was built from a stale reader/writer; replace it.
+            LOG.info("Rebuilding SearcherManager to use current IndexWriter (NRT)");
+            searcherManager.close();
+            searcherManager = null;
+            searcherManagerFromWriter = false;
+        }
+        // NRT: tie the SearcherManager to the live IndexWriter so refresh picks up new docs without commits.
+        searcherManager = new SearcherManager(Indexer.indexWriter(), null);
+        searcherManagerFromWriter = true;
+        LOG.info("Created SearcherManager with IndexWriter (NRT)");
+        return searcherManager;
+    }
+
     public Searcher() throws IOException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening lucene searcher");
         this.parser = new QueryParser(IndexerSchema.TEXT.name(), Indexer.analyzer());
-        // Initialize SearcherManager if not already done
-        if (searcherManager == null || !searcherManagerFromWriter) {
-            if (searcherManager != null) {
-                LOG.info("Rebuilding SearcherManager to use IndexWriter (NRT)");
-                searcherManager.close();
-            }
-            if (Indexer.indexWriter() == null) {
-                LOG.error("Indexer.indexWriter() is null - Indexer must be created before Searcher");
-                LOG.error("SearchProvider should create Indexer first, then Searcher");
-                LOG.error("If you're seeing this during tests, ensure you run 'mvn clean install' to recompile all classes");
-                throw new IllegalStateException("IndexWriter is null - Indexer not initialized. " +
-                    "This usually indicates stale compiled classes. Run 'mvn clean install'.");
-            }
-            // NRT: tie the SearcherManager to the live IndexWriter so refresh picks up new docs without commits.
-            searcherManager = new SearcherManager(Indexer.indexWriter(), null);
-            searcherManagerFromWriter = true;
-            LOG.info("Created SearcherManager with IndexWriter (NRT)");
-        } else {
-            LOG.debug("SearcherManager already initialized, reusing existing instance");
+        if (ensureSearcherManager() == null) {
+            LOG.error("Indexer.indexWriter() is null - Indexer must be created before Searcher");
+            LOG.error("SearchProvider should create Indexer first, then Searcher");
+            LOG.error("If you're seeing this during tests, ensure you run 'mvn clean install' to recompile all classes");
+            throw new IllegalStateException("IndexWriter is null - Indexer not initialized. " +
+                "This usually indicates stale compiled classes. Run 'mvn clean install'.");
         }
         stopwatch.stop();
         LOG.info("Opened lucene searcher in: " + stopwatch.durationString());
@@ -143,19 +182,21 @@ public class Searcher {
             ParseException, IOException {
         LOG.debug("Searcher.search() called with queryString='{}', maxResultSize={}", queryString, maxResultSize);
 
-        if (searcherManager == null) {
-            LOG.error("Searcher.search() - searcherManager is null!");
-            return new PrimitiveDataSearchResult[0];
-        }
-
         if (queryString == null || queryString.isEmpty()) {
             LOG.debug("Searcher.search() - Query string is null or empty, returning empty results");
             return new PrimitiveDataSearchResult[0];
         }
 
-        boolean refreshOutcome = searcherManager.maybeRefresh();
+        // Self-heal: rebuild the NRT SearcherManager if a prior close/reopen nulled it.
+        SearcherManager mgr = ensureSearcherManager();
+        if (mgr == null) {
+            LOG.error("Searcher.search() - no open Lucene index (IndexWriter is null); returning no results");
+            return new PrimitiveDataSearchResult[0];
+        }
+
+        boolean refreshOutcome = mgr.maybeRefresh();
         LOG.debug("Searcher.search() - Index Reader refresh outcome = {}", refreshOutcome);
-        IndexSearcher indexSearcher = searcherManager.acquire();
+        IndexSearcher indexSearcher = mgr.acquire();
         LOG.debug("Searcher.search() - Acquired IndexSearcher");
         try {
             Query query = parser.parse(queryString);
@@ -184,7 +225,9 @@ public class Searcher {
             LOG.debug("Searcher.search() - Returning {} results", results.length);
             return results;
         } finally {
-            searcherManager.release(indexSearcher);
+            // Release against the SAME manager we acquired from — the static
+            // field may be swapped or nulled by a concurrent close/reopen.
+            mgr.release(indexSearcher);
             LOG.debug("Searcher.search() - Released IndexSearcher");
         }
     }
@@ -197,6 +240,9 @@ public class Searcher {
         if (searcherManager != null) {
             searcherManager.close();
             searcherManager = null;
+            // Reset the NRT flag so a later ensureSearcherManager() rebuilds
+            // against a fresh IndexWriter instead of reusing this closed state.
+            searcherManagerFromWriter = false;
             LOG.info("Closed SearcherManager");
         }
     }

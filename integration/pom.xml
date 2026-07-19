@@ -10,8 +10,6 @@
 
     <properties>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-        <skip.unit.tests>false</skip.unit.tests>
-        <skip.integration.tests>false</skip.integration.tests>
         <tinkar-composer.version>1.13.0</tinkar-composer.version>
         <failsafeArgLine>
             --enable-preview
@@ -150,8 +148,9 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <excludes>
-                        <!-- *IT classes run once, under failsafe; without this the
-                             Test*-prefixed IT suites also match surefire's Test* include -->
+                        <!-- All *IT classes belong to failsafe; without this,
+                             Test*IT-named hybrids match surefire's Test*
+                             default include and run in the test phase -->
                         <exclude>**/*IT.java</exclude>
                     </excludes>
                 </configuration>
@@ -159,6 +158,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <!-- Producer/consumer IT pairs (ForwardReferenceChangeSetGenerateIT
+                         before ...IngestIT, ExportDataIT before ImportDataIT) rely on
+                         alphabetical class order; the default is filesystem-dependent -->
+                    <runOrder>alphabetical</runOrder>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
@@ -167,12 +172,6 @@
                         </goals>
                     </execution>
                 </executions>
-                <configuration>
-                    <skip>${skip.integration.tests}</skip>
-                    <!-- deterministic order: ForwardReferenceChangeSetGenerateIT must
-                         precede ...IngestIT (lock-file handoff via target/data) -->
-                    <runOrder>alphabetical</runOrder>
-                </configuration>
             </plugin>
         </plugins>
     </build>
