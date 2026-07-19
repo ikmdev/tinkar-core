@@ -159,6 +159,44 @@ public class StampCalculatorWithCache implements StampCalculator {
     }
 
     /**
+     * Instantiates a single-shot calculator for path-bootstrap resolution, bypassing
+     * the recursive path-origin walk of the regular constructor. The segment map is
+     * built directly from {@code orderedSegmentPathNids}: the first entry is the
+     * destination path of the coordinate's position, and each later entry is
+     * antecedent to every entry before it. All segments end at the coordinate's
+     * position time.
+     *
+     * <p>{@link PathProvider} resolves multi-version path-origins semantics with these
+     * instances. The regular constructor cannot serve there: it resolves path origins
+     * through {@link dev.ikm.tinkar.coordinate.PathService} — the very computation in
+     * flight when {@code PathProvider} needs a calculator — and re-entering
+     * {@link #getCalculator(StampCoordinateRecord)} from that resolution can deadlock
+     * the singleton cache on the coordinate under construction. No cache-invalidation
+     * subscribers are registered because instances are used for a single resolution
+     * and discarded.
+     *
+     * @param filter                 the stamp coordinate to evaluate against
+     * @param orderedSegmentPathNids path nids forming the segment map: destination
+     *                               first, progressively more antecedent; duplicate
+     *                               entries are ignored
+     */
+    StampCalculatorWithCache(StampCoordinateRecord filter, int[] orderedSegmentPathNids) {
+        this.filter = filter;
+        this.allowedStates = filter.allowedStates();
+        int segmentSequence = 0;
+        final ConcurrentSkipListSet<Integer> precedingSegments = new ConcurrentSkipListSet<>();
+        for (int pathNid : orderedSegmentPathNids) {
+            if (pathNidSegmentMap.containsKey(pathNid)) {
+                continue;
+            }
+            final Segment segment = new Segment(segmentSequence++, pathNid,
+                    filter.stampPosition().time(), precedingSegments);
+            pathNidSegmentMap.put(pathNid, segment);
+            precedingSegments.add(segment.segmentSequence);
+        }
+    }
+
+    /**
      * Gets the stampCoordinateRecord.
      *
      * @param filter the filter
