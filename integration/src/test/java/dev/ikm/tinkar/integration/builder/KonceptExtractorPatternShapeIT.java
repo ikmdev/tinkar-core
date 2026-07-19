@@ -38,6 +38,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -56,15 +57,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * {@link DefaultsTemplateTerm#DEFAULTS_AND_TEMPLATES_MODULE} — so per-field
  * {@code default:} keys emit alongside {@code example:} keys. A second, defaults-only
  * pattern exercises the per-type display text across the exotic value space: entity
- * references (concept- and semantic-valued), sentinel numerals, {@code NaN}, byte arrays
- * (valid UTF-8 and not), {@code Object[]}, the premundane instant, and DiTree/DiGraph
- * values.
+ * references (concept-, semantic-, and description-semantic-valued — the last renders as
+ * the description's own text, the US Dialect Pattern regression), sentinel numerals,
+ * {@code NaN}, byte arrays (valid UTF-8 and not), {@code Object[]}, the premundane
+ * instant, and DiTree/DiGraph values.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class KonceptExtractorPatternShapeIT {
 
     private static final KnowledgeSet TEST_SET =
             KnowledgeSet.of("6f2b8d4a-3c5e-5a7b-9d1f-4e6c8a2b5d7f");
+
+    /** The raw-nid debug form ({@code <-2147483545>}) that must never reach the YAML. */
+    private static final Pattern RAW_NID = Pattern.compile("<-?\\d+>");
 
     @BeforeAll
     static void composeAndWrite() {
@@ -160,6 +165,7 @@ class KonceptExtractorPatternShapeIT {
                 "Instant default probe meaning (Test)",
                 "Tree default probe meaning (Test)",
                 "Graph default probe meaning (Test)",
+                "Description default probe meaning (Test)",
                 "Defaults display probe purpose (Test)",
                 "Defaults display probe data type (Test)",
                 "Defaults display probe meaning (Test)",
@@ -183,7 +189,8 @@ class KonceptExtractorPatternShapeIT {
                 .field(TEST_SET.conceptRef("Array default probe meaning (Test)"), sweepPurpose, sweepDataType)
                 .field(TEST_SET.conceptRef("Instant default probe meaning (Test)"), sweepPurpose, sweepDataType)
                 .field(TEST_SET.conceptRef("Tree default probe meaning (Test)"), sweepPurpose, sweepDataType)
-                .field(TEST_SET.conceptRef("Graph default probe meaning (Test)"), sweepPurpose, sweepDataType);
+                .field(TEST_SET.conceptRef("Graph default probe meaning (Test)"), sweepPurpose, sweepDataType)
+                .field(TEST_SET.conceptRef("Description default probe meaning (Test)"), sweepPurpose, sweepDataType);
 
         EntityProxy.Pattern probePattern = TEST_SET.patternRef("Pattern shape probe pattern (Test)");
         EntityProxy.Pattern sweepPattern = TEST_SET.patternRef("Defaults display probe pattern (Test)");
@@ -237,7 +244,19 @@ class KonceptExtractorPatternShapeIT {
                                                 TEST_SET.conceptRef("Graph default probe meaning (Test)"))),
                                 List.of(),
                                 List.of(new GraphFieldValue.Edge(0, 1),
-                                        new GraphFieldValue.Edge(1, 0))));
+                                        new GraphFieldValue.Edge(1, 0))),
+                        // Description semantic -- the one semantic carrying text of its
+                        // own, so it renders as the description's own string, never
+                        // structurally and never the <nid> debug fallback (the US
+                        // Dialect regression: a dialect semantic's referenced component
+                        // is a description). The probe subject's auto-seeded FQN
+                        // description; identity per ComponentLedger.seedFqnIfImplicit.
+                        EntityProxy.Semantic.make("Probe subject FQN description",
+                                PublicIds.of(UuidT5Generator.get(
+                                        TEST_SET.conceptRef("Pattern shape probe subject (Test)")
+                                                .publicId().asUuidArray()[0],
+                                        "fully-qualified-name|"
+                                                + TinkarTerm.ENGLISH_LANGUAGE.publicId().asUuidArray()[0]))));
     }
 
     @AfterAll
@@ -332,6 +351,23 @@ class KonceptExtractorPatternShapeIT {
         assertTrue(block.contains("      default: \"2-vertex cycle\"\n"),
                 "the deliberate DiGraph simple cycle must render as a cycle, proving the "
                         + "graph-shape detection:\n" + block);
+    }
+
+    @Test
+    @DisplayName("a description-semantic value renders as the description's own text")
+    void descriptionSemanticValueRendersAsItsText() {
+        String yaml = KonceptExtractor.extractYaml();
+        String block = entryBlock(yaml, "DefaultsDisplayProbePattern");
+
+        assertTrue(block.contains("    - meaning: DescriptionDefaultProbeMeaning\n"
+                        + "      purpose: DefaultsDisplayProbePurpose\n"
+                        + "      dataType: DefaultsDisplayProbeDataType\n"
+                        + "      default: \"Pattern shape probe subject (Test)\"\n"),
+                "a description semantic carries text of its own, so it must render as the "
+                        + "description's own string — the US Dialect Pattern regression, where a "
+                        + "dialect semantic's referenced component is a description:\n" + block);
+        assertFalse(RAW_NID.matcher(yaml).find(),
+                "no extracted value may ever surface the raw <nid> debug form");
     }
 
     /** The text from an entry's identifier header to the next blank line. */

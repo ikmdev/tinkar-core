@@ -56,6 +56,7 @@ import java.util.Comparator;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -646,14 +647,19 @@ public final class KonceptExtractor {
     /**
      * Display text for one live value (an example or a default) — an entity-valued field
      * (or the referenced component itself) resolves to its koncept identifier when this
-     * store has one. A semantic-valued entity renders structurally as
-     * {@code <pattern> on <referenced component>} (for example the Data Type Defaults
-     * Pattern's Semantic default, the FQN description semantic of Uninitialized Component,
-     * renders {@code DescriptionPattern on UninitializedComponent}) — a semantic carries
-     * no description of its own, and {@link PrimitiveData#text} is genuinely unusable for
-     * one: {@code EntityProvider} seeds its debug string cache with the semantic's
-     * uuid-list string on every {@code putEntity}, so in a freshly written store the
-     * "description" of a semantic is its raw UUID. Any other entity falls back to
+     * store has one. A description semantic is the one semantic that carries text of its
+     * own, so it renders as that text (for example the US Dialect Pattern's
+     * referenced-component example is a description semantic — a dialect semantic
+     * qualifies a description — and renders as the description's own string, for
+     * example {@code "Uninitialized Component (SOLOR)"}, never a raw nid). Any other
+     * semantic renders structurally as {@code <pattern> on <referenced component>} —
+     * it carries no text of its own, and {@link PrimitiveData#text} is genuinely
+     * unusable for one: {@code EntityProvider} seeds its debug string cache with the
+     * semantic's uuid-list string on every {@code putEntity}, so in a freshly written
+     * store the "description" of a semantic is its raw UUID. A stamp renders
+     * structurally as {@code <state> <time> on <path>} — a stamp carries no
+     * description semantics at all, so {@link PrimitiveData#text} would fall clear
+     * through to its raw {@code <nid>} form. Any other entity falls back to
      * {@link PrimitiveData#text}. Every other
      * {@link dev.ikm.tinkar.component.FieldDataType} a semantic field can hold falls back
      * to a readable rendering, mirroring {@code SemanticVersionRecord.toString()}'s
@@ -681,10 +687,24 @@ public final class KonceptExtractor {
         if (identifier != null) {
             return identifier;
         }
-        Optional<SemanticEntity> semantic = EntityHandle.get(nid).asSemantic();
+        EntityHandle handle = EntityHandle.get(nid);
+        Optional<SemanticEntity> semantic = handle.asSemantic();
         if (semantic.isPresent()) {
+            if (semantic.get().patternNid() == TinkarTerm.DESCRIPTION_PATTERN.nid()) {
+                SemanticEntityVersion description = latestVersion(semantic.get());
+                if (description != null) {
+                    return description.fieldValues().get(FIELD_TEXT).toString();
+                }
+            }
             return displayText(semantic.get().patternNid(), identifierByNid)
                     + " on " + displayText(semantic.get().referencedComponentNid(), identifierByNid);
+        }
+        Optional<StampEntity> stamp = handle.asStamp();
+        if (stamp.isPresent()) {
+            String state = stamp.get().state().name();
+            return state.charAt(0) + state.substring(1).toLowerCase(Locale.ROOT)
+                    + " " + DateTimeUtil.formatUtc(stamp.get().time())
+                    + " on " + displayText(stamp.get().pathNid(), identifierByNid);
         }
         return PrimitiveData.text(nid);
     }
