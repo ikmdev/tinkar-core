@@ -92,7 +92,7 @@ class KonceptExtractorHistoryIT {
         String yaml = KonceptExtractor.extractYaml();
         String block = entryBlock(yaml, "HistoryProbeConcept");
 
-        assertTrue(block.contains("  since: \"" + DateTimeUtil.format(birth.time()) + "\"\n"),
+        assertTrue(block.contains("  since: \"" + DateTimeUtil.formatUtc(birth.time()) + "\"\n"),
                 "since must be the concept's own (only) version time:\n" + block);
 
         assertTrue(block.contains("    - \"Still active comment text\"\n"),
@@ -102,7 +102,7 @@ class KonceptExtractorHistoryIT {
 
         assertTrue(block.contains("    - text: \"Original comment text\"\n"),
                 "the retired comment's prior text must appear under retiredComments:\n" + block);
-        assertTrue(block.contains("      retiredAt: \"" + DateTimeUtil.format(retirement.time()) + "\"\n"),
+        assertTrue(block.contains("      retiredAt: \"" + DateTimeUtil.formatUtc(retirement.time()) + "\"\n"),
                 "retiredAt must be the retirement stamp's own time:\n" + block);
     }
 

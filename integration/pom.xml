@@ -145,6 +145,35 @@
             </plugin>
             <!-- forkCount=1, reuseForks=false (fresh JVM per test class)
                  moved to ike-parent:13 (#282) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <!-- *IT classes run once, under failsafe; without this the
+                             Test*-prefixed IT suites also match surefire's Test* include -->
+                        <exclude>**/*IT.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <skip>${skip.integration.tests}</skip>
+                    <!-- deterministic order: ForwardReferenceChangeSetGenerateIT must
+                         precede ...IngestIT (lock-file handoff via target/data) -->
+                    <runOrder>alphabetical</runOrder>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 

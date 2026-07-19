@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.UUID;
 
@@ -62,6 +63,15 @@ class SpinedArrayImportIT {
         TestHelper.stopDatabase();
     }
 
+    // URL.getFile() keeps percent-encoding (breaks in ꞉-sibling worktree paths); decode via URI
+    private static File resourceFile(URL resourceUrl) {
+        try {
+            return new File(resourceUrl.toURI());
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(resourceUrl.toString(), e);
+        }
+    }
+
     @Test
     public void givenFQNChangeSet_whenImported_thenViewCalcReturnsCorrectNewFQNText() {
         // Set up ViewCalculatorWithCache to replicate calculator for Komet window
@@ -77,7 +87,7 @@ class SpinedArrayImportIT {
         // Import pb file
         URL pbResourceUrl = getClass().getClassLoader().getResource("active-state-fqn-change-ike-cs.zip");
         assert pbResourceUrl != null;
-        File pbFile = new File(pbResourceUrl.getFile());
+        File pbFile = resourceFile(pbResourceUrl);
 
         LoadEntitiesFromProtobufFile loadProto = new LoadEntitiesFromProtobufFile(pbFile);
         EntityCountSummary count = loadProto.compute();
@@ -128,7 +138,7 @@ class SpinedArrayImportIT {
         // Import pb file
         URL pbResourceUrl = getClass().getClassLoader().getResource("active-state-other-change-ike-cs.zip");
         assert pbResourceUrl != null;
-        File pbFile = new File(pbResourceUrl.getFile());
+        File pbFile = resourceFile(pbResourceUrl);
 
         LoadEntitiesFromProtobufFile loadProto = new LoadEntitiesFromProtobufFile(pbFile);
         EntityCountSummary count = loadProto.compute();
