@@ -666,8 +666,8 @@ public final class KonceptExtractor {
      * existing per-type handling without depending on that debug format:
      * <ul>
      *   <li>{@link Instant} formats via {@link DateTimeUtil#format(Instant)}, which renders
-     *       the premundane instant as its named sentinel ({@code Premundane}), never a raw
-     *       epoch extreme;</li>
+     *       the pre-inception instant (historically "premundane") as its named sentinel
+     *       ({@code Pre-inception}), never a raw epoch extreme;</li>
      *   <li>a byte array decodes as strict UTF-8 text when it is valid UTF-8 (the loud
      *       defaults convention carries readable text in byte form), otherwise as a length
      *       plus hex dump;</li>

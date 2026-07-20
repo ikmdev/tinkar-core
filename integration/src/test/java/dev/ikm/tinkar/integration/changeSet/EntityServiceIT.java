@@ -48,7 +48,7 @@ class EntityServiceIT {
         File exportFile = createFilePathInTarget.apply("data/testExportEntitiesInSpecifiedTemporalRange-pb.zip");
         exportFile.delete(); // Clean up previously created file
 
-        // Starter Data is created at Premundane time which is Long.MIN_VALUE+1 epoch milliseconds
+        // Starter Data is created at pre-inception time which is Long.MIN_VALUE+1 epoch milliseconds
         long fromEpoch = Long.MIN_VALUE;
         long toEpoch = Long.MIN_VALUE+2;
 

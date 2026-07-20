@@ -47,7 +47,7 @@ class ChangeSetExportIT {
 
         Path out = Path.of(System.getProperty("user.dir")).resolve("target").resolve("export-probe.zip");
         Files.deleteIfExists(out);
-        // Real-time aggregation excludes the premundane NONEXISTENT_STAMP sentinel the
+        // Real-time aggregation excludes the pre-inception NONEXISTENT_STAMP sentinel the
         // store mints at startup, whose module/author are unresolvable in a store seeded
         // only by this set (a whole-store export NPEs on it in the manifest pass).
         EntityCountSummary summary = new ExportEntitiesToProtobufFile(out.toFile(),

@@ -52,14 +52,14 @@ public record StampRecord(
     /**
      * The non-existent stamp is for indicating that a value of a component has not yet been created at any point in history
      * where the creation and subsequent changes are not visible.
-     * TODO: State.PRIMORDIAL to State.PREMUNDANE, eliminating PRIMORDIAL?
-     * Premundane definition: before the creation of the world
+     * TODO: State.PRIMORDIAL to State.PRE_INCEPTION, eliminating PRIMORDIAL?
+     * Pre-inception (historically "premundane"): before all recorded time — before Inception
      * @return a stamp that represents that the
      */
     public static StampRecord nonExistentStamp() {
         if (nonExistentStamp == null) {
             nonExistentStamp = StampRecord.make(PrimitiveData.NONEXISTENT_STAMP_UUID, State.PRIMORDIAL,
-                    PrimitiveData.PREMUNDANE_TIME, TinkarTerm.AUTHOR_FOR_VERSION, TinkarTerm.UNINITIALIZED_COMPONENT, TinkarTerm.UNINITIALIZED_COMPONENT);
+                    PrimitiveData.PRE_INCEPTION_TIME, TinkarTerm.AUTHOR_FOR_VERSION, TinkarTerm.UNINITIALIZED_COMPONENT, TinkarTerm.UNINITIALIZED_COMPONENT);
         }
         return nonExistentStamp;
     }

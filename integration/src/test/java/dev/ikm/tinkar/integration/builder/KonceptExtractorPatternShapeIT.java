@@ -59,7 +59,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * pattern exercises the per-type display text across the exotic value space: entity
  * references (concept-, semantic-, and description-semantic-valued — the last renders as
  * the description's own text, the US Dialect Pattern regression), sentinel numerals,
- * {@code NaN}, byte arrays (valid UTF-8 and not), {@code Object[]}, the premundane
+ * {@code NaN}, byte arrays (valid UTF-8 and not), {@code Object[]}, the pre-inception
  * instant, and DiTree/DiGraph values.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -226,8 +226,8 @@ class KonceptExtractorPatternShapeIT {
                         new byte[]{(byte) 0xFF, (byte) 0xFE},
                         // Object[] -- bracket-joined element display texts
                         new Object[]{"first", "second"},
-                        // Instant -- the premundane instant renders by name
-                        PrimitiveData.PREMUNDANE_INSTANT,
+                        // Instant -- the pre-inception instant renders by name
+                        PrimitiveData.PRE_INCEPTION_INSTANT,
                         // DiTree -- the smallest well-formed tree
                         new GraphFieldValue.Tree(
                                 List.of(new GraphFieldValue.Vertex(
@@ -344,8 +344,8 @@ class KonceptExtractorPatternShapeIT {
                 "a non-UTF-8 byte array must fall back to length + hex, never [B@hash:\n" + block);
         assertTrue(block.contains("      default: \"[first, second]\"\n"),
                 "an Object[] must bracket-join its elements' display texts:\n" + block);
-        assertTrue(block.contains("      default: \"Premundane\"\n"),
-                "the premundane instant must render by name, not as a raw epoch extreme:\n" + block);
+        assertTrue(block.contains("      default: \"Pre-inception\"\n"),
+                "the pre-inception instant must render by name, not as a raw epoch extreme:\n" + block);
         assertTrue(block.contains("      default: \"1-vertex tree\"\n"),
                 "a DiTree default must render compactly by shape:\n" + block);
         assertTrue(block.contains("      default: \"2-vertex cycle\"\n"),

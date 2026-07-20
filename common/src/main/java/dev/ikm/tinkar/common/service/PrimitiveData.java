@@ -36,9 +36,20 @@ public class PrimitiveData {
     private static final Logger LOG = LoggerFactory.getLogger(PrimitiveData.class);
 
 
-    public static long PREMUNDANE_TIME = Long.MIN_VALUE + 1;
+    /**
+     * The pre-inception time sentinel (historically "premundane") — the platform's
+     * before-all-recorded-time non-value in epoch-milliseconds form, one above
+     * {@code Long.MIN_VALUE} so it never collides with the canceled sentinel
+     * (IKE-Network/ike-issues#907).
+     */
+    public static long PRE_INCEPTION_TIME = Long.MIN_VALUE + 1;
 
-    public static Instant PREMUNDANE_INSTANT = Instant.ofEpochSecond(Instant.MIN.getEpochSecond() + 1, 0);
+    /**
+     * The pre-inception sentinel in {@link Instant} form — one second above
+     * {@link Instant#MIN}, the {@code Instant}-typed counterpart of
+     * {@link #PRE_INCEPTION_TIME}.
+     */
+    public static Instant PRE_INCEPTION_INSTANT = Instant.ofEpochSecond(Instant.MIN.getEpochSecond() + 1, 0);
 
     /**
      * The inception epoch — in the Unix-epoch sense, a named reference instant, not an

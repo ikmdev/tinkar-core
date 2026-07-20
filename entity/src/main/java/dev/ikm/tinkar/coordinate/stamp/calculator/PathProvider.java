@@ -187,7 +187,7 @@ public class PathProvider implements PathService {
             StampEntity stamp = version.stamp();
             final long time = stamp.time();
             if (time == Long.MIN_VALUE || stamp.pathNid() == referencedPathNid) {
-                // Uncommitted and premundane versions never resolve as latest; versions
+                // Uncommitted and pre-inception versions never resolve as latest; versions
                 // stamped on the referenced path are covered by the destination segment.
                 continue;
             }

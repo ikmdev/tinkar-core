@@ -31,9 +31,9 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 /**
  * Round-trip coverage for the protobuf field forms the Data Type Defaults Pattern
  * exercises for the first time (IKE-Network/ike-issues#885): object arrays (the
- * {@link FieldArray} message, both directions) and the premundane instant sentinel
- * (which must map to {@link PrimitiveData#PREMUNDANE_TIME} rather than overflow
- * {@code Instant.toEpochMilli()}).
+ * {@link FieldArray} message, both directions) and the pre-inception instant sentinel
+ * (historically "premundane"; it must map to {@link PrimitiveData#PRE_INCEPTION_TIME}
+ * rather than overflow {@code Instant.toEpochMilli()}).
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TestFieldArrayAndSentinelTransform {
@@ -79,21 +79,21 @@ public class TestFieldArrayAndSentinelTransform {
     }
 
     @Test
-    @DisplayName("Transform the premundane Instant sentinel to its epoch-ms sentinel and back")
-    public void testPremundaneInstantRoundTrip() {
-        // Given the premundane instant (the Instant data type's loud default).
-        Instant premundane = PrimitiveData.PREMUNDANE_INSTANT;
+    @DisplayName("Transform the pre-inception Instant sentinel to its epoch-ms sentinel and back")
+    public void testPreInceptionInstantRoundTrip() {
+        // Given the pre-inception instant (the Instant data type's loud default).
+        Instant preInception = PrimitiveData.PRE_INCEPTION_INSTANT;
 
         // When we transform it to protobuf form — this used to overflow toEpochMilli().
-        Field pbField = EntityToTinkarSchemaTransformer.getInstance().createPBField(premundane);
+        Field pbField = EntityToTinkarSchemaTransformer.getInstance().createPBField(preInception);
 
-        // Then the wire value is the premundane time sentinel, not an overflow.
-        assertEquals(PrimitiveData.PREMUNDANE_TIME, pbField.getTimeValue(),
-                "The premundane instant must map to the premundane epoch-ms sentinel.");
+        // Then the wire value is the pre-inception time sentinel, not an overflow.
+        assertEquals(PrimitiveData.PRE_INCEPTION_TIME, pbField.getTimeValue(),
+                "The pre-inception instant must map to the pre-inception epoch-ms sentinel.");
 
-        // And transforming back yields the premundane instant exactly.
+        // And transforming back yields the pre-inception instant exactly.
         Object transformedBack = TinkarSchemaToEntityTransformer.getInstance().transformField(pbField);
-        assertEquals(premundane, transformedBack,
-                "The round-tripped premundane instant must equal the sentinel instant.");
+        assertEquals(preInception, transformedBack,
+                "The round-tripped pre-inception instant must equal the sentinel instant.");
     }
 }
