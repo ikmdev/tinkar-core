@@ -60,36 +60,41 @@ public final class SectionEmitter {
      *                    which is not guaranteed to be the fully-qualified form and
      *                    can collide across unrelated concepts that share a synonym
      * @param resolver    resolves concept/pattern references to source expressions
-     * @param moduleRef   the source expression for the stamp's module dimension (a
-     *                    {@code TinkarTerm} constant or resolver fallback — the set's
-     *                    own module concept, once one has been minted)
-     * @param authorRef   the source expression for the stamp's author dimension
+     * @param stampRef    the source expression for the section stamp — either a
+     *                    fully-qualified declared-constant reference (the committed
+     *                    ike-starter-set style: the set's own centralized inception
+     *                    pair, e.g. {@code network.ike.foundation.ike.terms.Ike.INCEPTION},
+     *                    IKE-Network/ike-issues#894, #914) or an inline
+     *                    {@code Stamp.active(...)} expression, for which the Stamp and
+     *                    PrimitiveData imports are emitted automatically
      * @return the section class's full compilable source text, paired with any
      *         manifest notes — components skipped or field values that needed
      *         hand-authoring
      */
     public static EmittedSection emitSection(String packageName, String className, Section section,
                                              StampCalculator calculator, LanguageCalculator languageCalculator,
-                                             TinkarTermReferenceResolver resolver, String moduleRef, String authorRef) {
+                                             TinkarTermReferenceResolver resolver, String stampRef) {
         StringBuilder source = new StringBuilder();
         List<String> notes = new ArrayList<>();
         source.append("package ").append(packageName).append(";\n\n");
         source.append("import dev.ikm.tinkar.common.id.PublicIds;\n");
-        source.append("import dev.ikm.tinkar.common.service.PrimitiveData;\n");
+        if (stampRef.contains("Stamp.active(")) {
+            source.append("import dev.ikm.tinkar.common.service.PrimitiveData;\n");
+        }
         source.append("import dev.ikm.tinkar.entity.builder.ActiveStamp;\n");
         source.append("import dev.ikm.tinkar.entity.builder.KnowledgeSet;\n");
-        source.append("import dev.ikm.tinkar.entity.builder.Stamp;\n");
+        if (stampRef.contains("Stamp.active(")) {
+            source.append("import dev.ikm.tinkar.entity.builder.Stamp;\n");
+        }
         source.append("import dev.ikm.tinkar.terms.EntityProxy;\n");
         source.append("import dev.ikm.tinkar.terms.TinkarTerm;\n");
-        source.append("import java.time.Instant;\n");
-        source.append("import java.util.UUID;\n\n");
+        source.append("import java.time.Instant;\n\n");
         source.append("/** The \"").append(section.name()).append("\" section — a taxonomy subtree of the")
                 .append(" retrofitted starter set (IKE-Network/ike-issues#869). */\n");
         source.append("final class ").append(className).append(" {\n\n");
         source.append("    private ").append(className).append("() {\n    }\n\n");
         source.append("    static void compose(KnowledgeSet set) {\n");
-        source.append("        ActiveStamp inception = Stamp.active(PrimitiveData.INCEPTION_EPOCH, ")
-                .append(authorRef).append(", ").append(moduleRef).append(", TinkarTerm.DEVELOPMENT_PATH);\n\n");
+        source.append("        ActiveStamp inception = ").append(stampRef).append(";\n\n");
 
         for (int memberNid : section.members()) {
             emitComponent(memberNid, calculator, languageCalculator, resolver, source, notes, section.name());

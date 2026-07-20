@@ -115,15 +115,17 @@ public final class TinkarTermReferenceResolver {
     }
 
     /**
-     * The Java source expression for a {@code PublicId} literal: {@code PublicIds.of(
-     * UUID.fromString("..."), ...)}. Shared by every call site in this package that
-     * emits a declared identity, so the UUID-literal rendering (and its escaping)
-     * has exactly one definition.
+     * The Java source expression for a {@code PublicId} literal: the compact
+     * {@code PublicIds.of("...", ...)} String form (IKE-Network/ike-issues#914) —
+     * semantically identical to the {@code UUID.fromString} chain it replaces, since
+     * {@code PublicIds.of(String...)} maps through {@code UUID.fromString} itself.
+     * Shared by every call site in this package that emits a declared identity, so
+     * the UUID-literal rendering (and its escaping) has exactly one definition.
      */
     static String publicIdLiteral(PublicId publicId) {
         List<String> uuidLiterals = new ArrayList<>();
         for (UUID uuid : publicId.asUuidArray()) {
-            uuidLiterals.add("UUID.fromString(\"" + uuid + "\")");
+            uuidLiterals.add("\"" + uuid + "\"");
         }
         return "PublicIds.of(" + String.join(", ", uuidLiterals) + ")";
     }

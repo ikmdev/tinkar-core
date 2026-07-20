@@ -51,8 +51,8 @@ import java.util.List;
  * build; future upstream updates arrive as change sets via the #847 lift machinery,
  * never by re-running this generator).
  * <p>
- * Arguments: {@code pbZip outputSourceRoot packageName moduleRef authorRef}.
- * {@code moduleRef}/{@code authorRef} are fully-qualified Java source expressions
+ * Arguments: {@code pbZip outputSourceRoot packageName stampRef}.
+ * {@code stampRef} is the fully-qualified Java source expression for the section stamp
  * (e.g. {@code network.ike.foundation.ike.terms.Ike.MODULE}) spliced literally into
  * every generated section's stamp — see {@link SectionEmitter#emitSection}.
  */
@@ -66,22 +66,21 @@ public final class LedgerGeneratorMain {
      * catch-all), and a delegating aggregator that composes them all onto a
      * caller-supplied {@code KnowledgeSet}.
      *
-     * @param args {@code pbZip outputSourceRoot packageName moduleRef authorRef}
+     * @param args {@code pbZip outputSourceRoot packageName stampRef}
      * @throws Exception if the store cannot be opened, the artifact fails to load, a
      *                    section cannot be written, or any component needed hand
      *                    authoring (zero tolerance for a silently-skipped component in
      *                    a real ingest)
      */
     public static void main(String[] args) throws Exception {
-        if (args.length != 5) {
+        if (args.length != 4) {
             throw new IllegalArgumentException("Usage: LedgerGeneratorMain <pbZip> <outputSourceRoot>"
-                    + " <packageName> <moduleRef> <authorRef>");
+                    + " <packageName> <stampRef>");
         }
         File pbZip = new File(args[0]);
         Path outputSourceRoot = Path.of(args[1]);
         String packageName = args[2];
-        String moduleRef = args[3];
-        String authorRef = args[4];
+        String stampRef = args[3];
         if (!pbZip.isFile()) {
             throw new IllegalArgumentException("Not a file: " + pbZip);
         }
@@ -114,7 +113,7 @@ public final class LedgerGeneratorMain {
                 String className = "Section" + index;
                 sectionClassNames.add(className);
                 SectionEmitter.EmittedSection emitted = SectionEmitter.emitSection(packageName, className, section,
-                        calculator, languageCalculator, resolver, moduleRef, authorRef);
+                        calculator, languageCalculator, resolver, stampRef);
                 emissionNotes.addAll(emitted.manifestNotes());
                 writeSourceFile(outputSourceRoot, packageName, className, emitted.source());
             }

@@ -145,7 +145,9 @@ class GeneratorEndToEndIT {
             String className = "Section" + index;
             sectionClassNames.add(className);
             SectionEmitter.EmittedSection emitted = SectionEmitter.emitSection(packageName, className, section,
-                    calculator, languageCalculator, resolver, "TinkarTerm.DEVELOPMENT_MODULE", "TinkarTerm.USER");
+                    calculator, languageCalculator, resolver,
+                    "Stamp.active(PrimitiveData.INCEPTION_EPOCH, TinkarTerm.USER,"
+                            + " TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.PRIMORDIAL_PATH)");
             emissionNotes.addAll(emitted.manifestNotes());
             writeSourceFile(sourceDir, packageName, className, emitted.source());
         }
