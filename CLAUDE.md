@@ -1,6 +1,6 @@
 # tinkar-core
 
-tinkar-core component.
+tinkar-core subproject.
 
 ## Build Standards
 
