@@ -36,6 +36,9 @@ import dev.ikm.tinkar.terms.TinkarTerm;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
+import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
+import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
@@ -56,7 +59,7 @@ public class Searcher {
     public static final EntityProxy.Pattern DIAGNOSTIC_DEVICE_PATTERN = EntityProxy.Pattern.make(null, UUID.fromString("a507b3c7-eadb-5d54-84c0-c44f3155d0bc"));
     public static final EntityProxy.Pattern QUANTITATIVE_ALLOWED_RESULT_SET_PATTERN = EntityProxy.Pattern.make(null, UUID.fromString("9d40d06b-7776-5a56-97e4-0c27f5d574c7"));
     public static final EntityProxy.Pattern QUALITATIVE_ALLOWED_RESULT_SET_PATTERN = EntityProxy.Pattern.make(null, UUID.fromString("160a63a6-3cba-510e-83d1-235822045885"));
-    QueryParser parser;
+    StandardQueryParser parser;
     private static SearcherManager searcherManager;
     private static boolean searcherManagerFromWriter = false;
 
@@ -129,7 +132,8 @@ public class Searcher {
     public Searcher() throws IOException {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Opening lucene searcher");
-        this.parser = new QueryParser(IndexerSchema.TEXT.name(), Indexer.analyzer());
+        this.parser = new StandardQueryParser();
+        this.parser.setAnalyzer(Indexer.analyzer());
         if (ensureSearcherManager() == null) {
             LOG.error("Indexer.indexWriter() is null - Indexer must be created before Searcher");
             LOG.error("SearchProvider should create Indexer first, then Searcher");
@@ -139,6 +143,14 @@ public class Searcher {
         }
         stopwatch.stop();
         LOG.info("Opened lucene searcher in: " + stopwatch.durationString());
+    }
+
+    private String preprocessQueryString(String queryString) {
+        if (QueryParserUtil.escape(queryString).equals(queryString)) {
+            queryString += "*";
+            LOG.debug("Searcher - Simple query converted to prefix query: {}", queryString);
+        }
+        return queryString;
     }
 
     /**
@@ -164,11 +176,12 @@ public class Searcher {
      *         input is null/empty
      * @throws ParseException if {@code queryString} cannot be parsed
      */
-    public String highlight(String queryString, String text) throws ParseException, IOException {
+    public String highlight(String queryString, String text) throws ParseException, IOException, QueryNodeException {
         if (queryString == null || queryString.isEmpty() || text == null || text.isEmpty()) {
             return text == null ? "" : text;
         }
-        Query query = parser.parse(queryString);
+        queryString = preprocessQueryString(queryString);
+        Query query = parser.parse(queryString, IndexerSchema.TEXT.name());
         UnifiedHighlighter highlighter = UnifiedHighlighter
                 .builderWithoutSearcher(Indexer.analyzer())
                 .withFormatter(new DefaultPassageFormatter("<B>", "</B>", "", false))
@@ -179,7 +192,7 @@ public class Searcher {
     }
 
     public PrimitiveDataSearchResult[] search(String queryString, int maxResultSize) throws
-            ParseException, IOException {
+            ParseException, IOException, QueryNodeException {
         LOG.debug("Searcher.search() called with queryString='{}', maxResultSize={}", queryString, maxResultSize);
 
         if (queryString == null || queryString.isEmpty()) {
@@ -199,7 +212,8 @@ public class Searcher {
         IndexSearcher indexSearcher = mgr.acquire();
         LOG.debug("Searcher.search() - Acquired IndexSearcher");
         try {
-            Query query = parser.parse(queryString);
+            queryString = preprocessQueryString(queryString);
+            Query query = parser.parse(queryString, IndexerSchema.TEXT.name());
             LOG.debug("Searcher.search() - Parsed query: {}", query);
 
             TopDocs topDocs = indexSearcher.search(query, maxResultSize);
