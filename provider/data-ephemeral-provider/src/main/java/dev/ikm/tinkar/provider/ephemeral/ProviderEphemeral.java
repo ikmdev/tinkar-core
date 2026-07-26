@@ -18,6 +18,7 @@ package dev.ikm.tinkar.provider.ephemeral;
 import dev.ikm.tinkar.collection.KeyType;
 import dev.ikm.tinkar.collection.SpinedIntIntMapAtomic;
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
@@ -92,6 +93,22 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     public void close() {
         this.providerReference.set(null);
         this.singleton = null;
+    }
+
+    @Override
+    public PublicId publicIdForNid(int nid) {
+        // Reverse lookup over the identity map: correctness over speed — used by
+        // export paths for referenced components that are not present as entities.
+        List<UUID> uuids = new ArrayList<>();
+        uuidNidMap.forEach((uuid, mappedNid) -> {
+            if (mappedNid == nid) {
+                uuids.add(uuid);
+            }
+        });
+        if (uuids.isEmpty()) {
+            throw new IllegalStateException("No public id minted for nid " + nid + " in this store");
+        }
+        return PublicIds.of(uuids);
     }
 
     @Override

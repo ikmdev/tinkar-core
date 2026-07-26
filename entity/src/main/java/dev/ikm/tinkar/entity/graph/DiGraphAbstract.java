@@ -186,8 +186,19 @@ public abstract class DiGraphAbstract<V extends EntityVertex>  {
         return vertexMap.size() * 64;
     }
 
+    /**
+     * Writes an int-to-int-list map (a successor or predecessor map) to the buffer:
+     * entry count, then each entry as (vertex index, destination count, destinations).
+     * The count written is {@code map.size()} — it previously wrote
+     * {@code successorMap().size()} regardless of which map was being written, silently
+     * corrupting the wire form of any graph whose predecessor map has a different entry
+     * count than its successor map (IKE-Network/ike-issues#885).
+     *
+     * @param byteBuf the buffer to write to
+     * @param map     the map to write
+     */
     protected void writeIntIntListMap(ByteBuf byteBuf, ImmutableIntObjectMap<ImmutableIntList> map) {
-        byteBuf.writeInt(successorMap().size());
+        byteBuf.writeInt(map.size());
         map.forEachKeyValue((int vertexIndex, ImmutableIntList destinationVertexes) -> {
             byteBuf.writeInt(vertexIndex);
             byteBuf.writeInt(destinationVertexes.size());

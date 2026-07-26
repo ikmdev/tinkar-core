@@ -84,18 +84,18 @@ class SpinedArrayPublicIdMergeIT {
         EntityProxy.Concept conceptWithMultipleUuids = EntityProxy.Concept.make(PublicIds.of(uuid1, uuid2));
         EntityProxy.Concept conceptWithSingleUuid = EntityProxy.Concept.make(PublicIds.of(uuid1));
 
-        Transaction premundaneTransaction = new Transaction();
-        StampEntity premundaneStampEntity = premundaneTransaction.getStamp(State.ACTIVE,
-                PrimitiveData.PREMUNDANE_TIME,
+        Transaction preInceptionTransaction = new Transaction();
+        StampEntity preInceptionStampEntity = preInceptionTransaction.getStamp(State.ACTIVE,
+                PrimitiveData.PRE_INCEPTION_TIME,
                 TinkarTerm.USER.publicId(),
                 TinkarTerm.DEVELOPMENT_MODULE.publicId(),
                 TinkarTerm.DEVELOPMENT_PATH.publicId());
 
         //Write Concept with Multiple UUIDs
-        ConceptEntity conceptRecordWithMultipleUuids = writeConceptHelper(conceptWithMultipleUuids, premundaneStampEntity);
-        premundaneTransaction.addComponent(conceptRecordWithMultipleUuids);
+        ConceptEntity conceptRecordWithMultipleUuids = writeConceptHelper(conceptWithMultipleUuids, preInceptionStampEntity);
+        preInceptionTransaction.addComponent(conceptRecordWithMultipleUuids);
         EntityService.get().putEntity(conceptRecordWithMultipleUuids);
-        premundaneTransaction.commit();
+        preInceptionTransaction.commit();
 
         Transaction currentTransaction = new Transaction();
         StampEntity currentStampEntity = currentTransaction.getStamp(State.ACTIVE,
@@ -134,18 +134,18 @@ class SpinedArrayPublicIdMergeIT {
         EntityProxy.Concept conceptWithSingleUuid = EntityProxy.Concept.make(PublicIds.of(uuid1));
         EntityProxy.Concept conceptWithMultipleUuids = EntityProxy.Concept.make(PublicIds.of(uuid1, uuid2));
 
-        Transaction premundaneTransaction = new Transaction();
-        StampEntity premundaneStampEntity = premundaneTransaction.getStamp(State.ACTIVE,
-                PrimitiveData.PREMUNDANE_TIME,
+        Transaction preInceptionTransaction = new Transaction();
+        StampEntity preInceptionStampEntity = preInceptionTransaction.getStamp(State.ACTIVE,
+                PrimitiveData.PRE_INCEPTION_TIME,
                 TinkarTerm.USER.publicId(),
                 TinkarTerm.DEVELOPMENT_MODULE.publicId(),
                 TinkarTerm.DEVELOPMENT_PATH.publicId());
 
         //Write Concept with Single UUID
-        ConceptEntity conceptRecordWithSingleUuid = writeConceptHelper(conceptWithSingleUuid, premundaneStampEntity);
-        premundaneTransaction.addComponent(conceptRecordWithSingleUuid);
+        ConceptEntity conceptRecordWithSingleUuid = writeConceptHelper(conceptWithSingleUuid, preInceptionStampEntity);
+        preInceptionTransaction.addComponent(conceptRecordWithSingleUuid);
         EntityService.get().putEntity(conceptRecordWithSingleUuid);
-        premundaneTransaction.commit();
+        preInceptionTransaction.commit();
 
         Transaction currentTransaction = new Transaction();
         StampEntity currentStampEntity = currentTransaction.getStamp(State.ACTIVE,
@@ -185,18 +185,18 @@ class SpinedArrayPublicIdMergeIT {
         EntityProxy.Concept conceptWithFirstSetOfMultipleUuids = EntityProxy.Concept.make(PublicIds.of(uuid1, uuid2));
         EntityProxy.Concept conceptWithSecondSetOfMultipleUuids = EntityProxy.Concept.make(PublicIds.of(uuid2, uuid3));
 
-        Transaction premundaneTransaction = new Transaction();
-        StampEntity premundaneStampEntity = premundaneTransaction.getStamp(State.ACTIVE,
-                PrimitiveData.PREMUNDANE_TIME,
+        Transaction preInceptionTransaction = new Transaction();
+        StampEntity preInceptionStampEntity = preInceptionTransaction.getStamp(State.ACTIVE,
+                PrimitiveData.PRE_INCEPTION_TIME,
                 TinkarTerm.USER.publicId(),
                 TinkarTerm.DEVELOPMENT_MODULE.publicId(),
                 TinkarTerm.DEVELOPMENT_PATH.publicId());
 
         //Write Concept with the first set of Multiple Uuids (uuid1 & uuid2)
-        ConceptEntity conceptRecordWithFirstSetOfMultipleUuids = writeConceptHelper(conceptWithFirstSetOfMultipleUuids, premundaneStampEntity);
-        premundaneTransaction.addComponent(conceptRecordWithFirstSetOfMultipleUuids);
+        ConceptEntity conceptRecordWithFirstSetOfMultipleUuids = writeConceptHelper(conceptWithFirstSetOfMultipleUuids, preInceptionStampEntity);
+        preInceptionTransaction.addComponent(conceptRecordWithFirstSetOfMultipleUuids);
         EntityService.get().putEntity(conceptRecordWithFirstSetOfMultipleUuids);
-        premundaneTransaction.commit();
+        preInceptionTransaction.commit();
 
         Transaction currentTransaction = new Transaction();
         StampEntity currentStampEntity = currentTransaction.getStamp(State.ACTIVE,

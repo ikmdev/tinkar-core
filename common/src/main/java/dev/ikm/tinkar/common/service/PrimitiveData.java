@@ -36,9 +36,33 @@ public class PrimitiveData {
     private static final Logger LOG = LoggerFactory.getLogger(PrimitiveData.class);
 
 
-    public static long PREMUNDANE_TIME = Long.MIN_VALUE + 1;
+    /**
+     * The pre-inception time sentinel (historically "premundane") — the platform's
+     * before-all-recorded-time non-value in epoch-milliseconds form, one above
+     * {@code Long.MIN_VALUE} so it never collides with the canceled sentinel
+     * (IKE-Network/ike-issues#907).
+     */
+    public static long PRE_INCEPTION_TIME = Long.MIN_VALUE + 1;
 
-    public static Instant PREMUNDANE_INSTANT = Instant.ofEpochSecond(Instant.MIN.getEpochSecond() + 1, 0);
+    /**
+     * The pre-inception sentinel in {@link Instant} form — one second above
+     * {@link Instant#MIN}, the {@code Instant}-typed counterpart of
+     * {@link #PRE_INCEPTION_TIME}.
+     */
+    public static Instant PRE_INCEPTION_INSTANT = Instant.ofEpochSecond(Instant.MIN.getEpochSecond() + 1, 0);
+
+    /**
+     * The inception epoch — in the Unix-epoch sense, a named reference instant, not an
+     * arithmetic zero point — every knowledge set's formative content is stamped at
+     * before its first release: {@code 2026-01-01T00:00:00.777Z}. The .777 offset is a
+     * deliberate, glance-recognizable marker so a real calendar date landing exactly at
+     * that midnight (a source release, a fiscal boundary) is never mistaken for the
+     * sentinel. Millisecond resolution matches stamp time's actual resolution
+     * end-to-end; a sub-millisecond offset would not survive the protobuf wire.
+     */
+    public static long INCEPTION_EPOCH = 1767225600777L;
+
+    public static Instant INCEPTION_INSTANT = Instant.ofEpochMilli(INCEPTION_EPOCH);
 
     public static UUID NONEXISTENT_STAMP_UUID = UUID.fromString("00fea511-30eb-4bbb-9105-c846db5bf0ad");
     private static DefaultDescriptionForNidService defaultDescriptionForNidServiceSingleton;
@@ -218,7 +242,7 @@ public class PrimitiveData {
     }
 
     public static String textFast(int nid) {
-        return PrimitiveData.defaultDescriptionForNidServiceSingleton.textFast(nid);
+        return PrimitiveData.descriptionForNidService().textFast(nid);
     }
 
     public static String text(int nid) {
@@ -234,7 +258,7 @@ public class PrimitiveData {
             return Optional.empty();
         }
         try {
-            return defaultDescriptionForNidServiceSingleton.textOptional(nid);
+            return descriptionForNidService().textOptional(nid);
         } catch (RuntimeException ex) {
             AlertStreams.dispatchToRoot(ex);
             return Optional.empty();
@@ -249,39 +273,79 @@ public class PrimitiveData {
     }
 
     public static List<Optional<String>> optionalTextList(int... nids) {
-        return defaultDescriptionForNidServiceSingleton.optionalTextList(nids);
+        return descriptionForNidService().optionalTextList(nids);
     }
 
     public static List<Optional<String>> optionalTextList(IntIdCollection nids) {
-        return defaultDescriptionForNidServiceSingleton.optionalTextList(nids);
+        return descriptionForNidService().optionalTextList(nids);
     }
 
     public static List<Optional<String>> optionalTextList(IntList nids) {
-        return defaultDescriptionForNidServiceSingleton.optionalTextList(nids);
+        return descriptionForNidService().optionalTextList(nids);
     }
 
     public static List<Optional<String>> optionalTextList(IntSet nids) {
-        return defaultDescriptionForNidServiceSingleton.optionalTextList(nids);
+        return descriptionForNidService().optionalTextList(nids);
     }
 
     public static List<String> textList(int... nids) {
-        return defaultDescriptionForNidServiceSingleton.textList(nids);
+        return descriptionForNidService().textList(nids);
     }
 
     public static List<Optional<String>> textList(IntIdCollection nids) {
-        return defaultDescriptionForNidServiceSingleton.textList(nids);
+        return descriptionForNidService().textList(nids);
     }
 
     public static List<Optional<String>> textList(IntList nids) {
-        return defaultDescriptionForNidServiceSingleton.textList(nids);
+        return descriptionForNidService().textList(nids);
     }
 
     public static List<Optional<String>> textList(IntSet nids) {
-        return defaultDescriptionForNidServiceSingleton.textList(nids);
+        return descriptionForNidService().textList(nids);
+    }
+
+    /**
+     * The public-id service, resolved lazily when the assigned singleton is not yet
+     * visible: lifecycle services started by {@code startServices()} — the change-set
+     * writer's own startup thread, for example — can reach these statics while
+     * {@link #start()} is still mid-flight, before it copies the running services into
+     * the singletons (IKE-Network/ike-issues#905). The service itself is already
+     * running at that point; only the static assignment lags. A racy double
+     * assignment is benign, and a genuinely unstarted service fails with the same
+     * honest error {@link #get()} uses.
+     */
+    private static PublicIdService publicIdService() {
+        PublicIdService service = publicIdServiceSingleton;
+        if (service == null) {
+            service = ServiceLifecycleManager.get()
+                    .getRunningService(PublicIdService.class)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "PublicIdService is not running. Ensure"
+                                    + " ServiceLifecycleManager.get().startServices() has been called."));
+            publicIdServiceSingleton = service;
+        }
+        return service;
+    }
+
+    /**
+     * The default-description service, resolved lazily under the same
+     * startup-ordering rule as {@link #publicIdService()}.
+     */
+    private static DefaultDescriptionForNidService descriptionForNidService() {
+        DefaultDescriptionForNidService service = defaultDescriptionForNidServiceSingleton;
+        if (service == null) {
+            service = ServiceLifecycleManager.get()
+                    .getRunningService(DefaultDescriptionForNidService.class)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "DefaultDescriptionForNidService is not running. Ensure"
+                                    + " ServiceLifecycleManager.get().startServices() has been called."));
+            defaultDescriptionForNidServiceSingleton = service;
+        }
+        return service;
     }
 
     public static PublicId publicId(int nid) {
-        return publicIdServiceSingleton.publicId(nid);
+        return publicIdService().publicId(nid);
     }
 
     public static int nid(PublicId publicId) {

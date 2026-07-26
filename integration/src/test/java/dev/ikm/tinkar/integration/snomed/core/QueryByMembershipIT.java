@@ -47,7 +47,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+@Disabled("Enable the tests after figuring out the way to load the DataStores in Jenkins. or test directory")
 public class QueryByMembershipIT {
+    // Class-level @Disabled: the only test is disabled, and @BeforeAll would
+    // otherwise still open a datastore in the user's home (~/Solor/...)
 
     private static final Logger LOG = LoggerFactory.getLogger(
             QueryByMembershipIT.class);

@@ -388,7 +388,14 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
 
     @Override
     public PublicId publicId(int nid) {
-        return getEntityFast(nid).publicId();
+        Entity<?> entity = getEntityFast(nid);
+        if (entity != null) {
+            return entity.publicId();
+        }
+        // Referenced-but-absent component: resolve from the primitive store's
+        // identity map — the nid was minted from a public id even if no entity
+        // was ever written for it.
+        return PrimitiveData.get().publicIdForNid(nid);
     }
 
     @Override

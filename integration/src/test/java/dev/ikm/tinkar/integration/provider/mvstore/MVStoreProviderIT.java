@@ -17,6 +17,7 @@ package dev.ikm.tinkar.integration.provider.mvstore;
 
 
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
@@ -57,7 +58,15 @@ class MVStoreProviderIT {
 
     @BeforeAll
     static void beforeAll() {
+        // A prior run's store survives in target/ and MVStore is not reopen-safe after
+        // an unclosed JVM exit -- start from a fresh store every run
+        FileUtil.recursiveDelete(DATASTORE_ROOT);
         TestHelper.startDataBase(DataStore.MV_STORE, DATASTORE_ROOT);
+    }
+
+    @AfterAll
+    static void afterAll() {
+        TestHelper.stopDatabase();
     }
 
     @Test

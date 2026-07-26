@@ -263,6 +263,21 @@ public class EntityRecordFactory {
             case DiTreeEntity diTreeEntityField ->
                     writeTokenAndField(writeBuf, FieldDataType.DITREE, () ->
                             writeBuf.write(diTreeEntityField.getBytes()));
+            // DIGRAPH write case: DiGraph-typed field values had no write path even
+            // though readFieldData already handled DIGRAPH — the first symmetric gap
+            // the Data Type Defaults Pattern exercises (IKE-Network/ike-issues#885).
+            case DiGraphEntity<?> diGraphEntityField ->
+                    writeTokenAndField(writeBuf, FieldDataType.DIGRAPH, () ->
+                            writeBuf.write(diGraphEntityField.getBytes()));
+            // OBJECT_ARRAY write case: element count, then each element recursively as
+            // an ordinary token-prefixed field (IKE-Network/ike-issues#885).
+            case Object[] objectArrayField ->
+                    writeTokenAndField(writeBuf, FieldDataType.OBJECT_ARRAY, () -> {
+                        writeBuf.writeInt(objectArrayField.length);
+                        for (Object element : objectArrayField) {
+                            writeField(writeBuf, element);
+                        }
+                    });
             case PlanarPoint planarPointField ->
                     writeTokenAndField(writeBuf, FieldDataType.PLANAR_POINT, () -> {
                         writeBuf.writeByte(FieldDataType.PLANAR_POINT.token);
@@ -623,6 +638,18 @@ public class EntityRecordFactory {
             case COMPONENT_ID_SET -> IntIds.set.of(readIntArray(readBuf));
             case LONG -> readBuf.readLong();
             case DECIMAL -> new BigDecimal(new String(readBytes(readBuf), UTF_8));
+            // OBJECT_ARRAY read case, symmetric with the writeField Object[] case:
+            // element count, then each element as an ordinary token-prefixed field
+            // (IKE-Network/ike-issues#885).
+            case OBJECT_ARRAY -> {
+                int elementCount = readBuf.readInt();
+                Object[] elements = new Object[elementCount];
+                for (int index = 0; index < elementCount; index++) {
+                    FieldDataType elementType = FieldDataType.fromToken(readBuf.readByte());
+                    elements[index] = readFieldData(readBuf, elementType, formatVersion);
+                }
+                yield elements;
+            }
             default -> throw new UnsupportedOperationException("Can't handle field read of type: " + dataType);
         };
     }
@@ -650,6 +677,7 @@ public class EntityRecordFactory {
             case Float floatField -> floatField;
             case byte[] byteField -> byteField;
             case Integer integerField -> integerField;
+            case Long longField -> longField;
             case String stringField -> stringField.strip();
             case Instant instantField -> instantField;
             case PlanarPoint planarPointField -> planarPointField;
@@ -665,6 +693,15 @@ public class EntityRecordFactory {
             case PublicId publicId -> EntityProxy.make(Entity.nid(publicId));
             case DiTree diTreeField -> DiTreeEntity.make(diTreeField);
             case DiGraph diGraphField -> DiGraphEntity.make(diGraphField);
+            // Object arrays convert element-wise: each element is itself an external
+            // object needing the same conversion (IKE-Network/ike-issues#885).
+            case Object[] objectArrayField -> {
+                Object[] internalElements = new Object[objectArrayField.length];
+                for (int index = 0; index < objectArrayField.length; index++) {
+                    internalElements[index] = externalToInternalObject(objectArrayField[index]);
+                }
+                yield internalElements;
+            }
             case PublicIdSet publicIdSetField -> {
                 MutableIntSet idSet = IntSets.mutable.withInitialCapacity(publicIdSetField.size());
                 publicIdSetField.forEach(publicId -> {

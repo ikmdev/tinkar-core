@@ -120,17 +120,22 @@ public class Transaction implements Comparable<Transaction>, Encodable {
     }
 
     /**
-     * Retrieves a transaction associated with the given stamp identifier.
+     * Retrieves a transaction associated with the given stamp identifier. A stamp
+     * identity may carry multiple UUIDs — an adopted, store-established identity does —
+     * so every UUID is checked; transactions mint single-UUID stamps, so at most one
+     * can match.
      *
-     * @param stampId the public identifier for the stamp, expected to contain a single UUID
+     * @param stampId the public identifier for the stamp
      * @return an Optional containing the corresponding Transaction if found; an empty Optional otherwise
-     * @throws IllegalStateException if the provided stampId contains more than one UUID
      */
     public static Optional<Transaction> forStamp(PublicId stampId) {
-        if (stampId.asUuidArray().length > 1) {
-            throw new IllegalStateException("Can only handle one UUID for stamp. Found: " + stampId);
+        for (UUID stampUuid : stampId.asUuidArray()) {
+            Optional<Transaction> transaction = forStamp(stampUuid);
+            if (transaction.isPresent()) {
+                return transaction;
+            }
         }
-        return forStamp(stampId.asUuidArray()[0]);
+        return Optional.empty();
     }
 
     /**

@@ -26,7 +26,7 @@ public enum State implements dev.ikm.tinkar.component.Concept, ComponentWithNid 
     INACTIVE(TinkarTerm.INACTIVE_STATE),
     WITHDRAWN(TinkarTerm.WITHDRAWN_STATE),
     CANCELED(TinkarTerm.CANCELED_STATE),
-    /* TODO Consider changing from PRIMORDIAL to Premundane */
+    /* TODO Consider changing from PRIMORDIAL to Pre-inception (historically "premundane") */
     PRIMORDIAL(TinkarTerm.PRIMORDIAL_STATE);
 
     final EntityProxy.Concept proxyForState;

@@ -106,18 +106,31 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             zos.putNextEntry(zipEntry);
 
             Consumer<Entity<?>> exportEntityConsumer = entity -> {
-                if (entity instanceof StampEntity stampEntity) {
-                    // Store Module & Author Dependencies for Manifest
-                    moduleList.add(stampEntity.module().publicId());
-                    authorList.add(stampEntity.author().publicId());
-                }
-                TinkarMsg pbTinkarMsg = entityTransformer.transform(entity);
                 try {
+                    if (entity instanceof StampEntity stampEntity) {
+                        // Store Module & Author Dependencies for Manifest
+                        // Resolve via the nid->publicId map: module/author concepts need
+                        // not be present as entities in the exporting store.
+                        moduleList.add(PrimitiveData.publicId(stampEntity.moduleNid()));
+                        authorList.add(PrimitiveData.publicId(stampEntity.authorNid()));
+                    }
+                    TinkarMsg pbTinkarMsg = entityTransformer.transform(entity);
                     pbTinkarMsg.writeDelimitedTo(zos);
+                    completedUnitOfWork();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
+                } catch (RuntimeException e) {
+                    // Dangling reference: this entity references a component that has no
+                    // entity and no resolvable public id — which must not occur in a
+                    // well-formed knowledge base. Log loudly, alert, and continue so the
+                    // export surfaces the defect (and names the offending entity) instead
+                    // of aborting the whole export (IKE-Network/ike-issues#933).
+                    LOG.error("DANGLING REFERENCE — skipping "
+                            + entity.getClass().getSimpleName() + " nid=" + entity.nid()
+                            + " publicId=" + entity.publicId() + ": " + e, e);
+                    AlertStreams.dispatchToRoot(e);
+                    completedUnitOfWork();
                 }
-                completedUnitOfWork();
             };
 
             entityCountSummary = entityAggregator.aggregateEntities(exportEntityConsumer);
