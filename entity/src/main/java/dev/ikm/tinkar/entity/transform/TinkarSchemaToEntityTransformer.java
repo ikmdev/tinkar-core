@@ -34,6 +34,7 @@ import dev.ikm.tinkar.schema.ConceptVersion;
 import dev.ikm.tinkar.schema.DiGraph;
 import dev.ikm.tinkar.schema.DiTree;
 import dev.ikm.tinkar.schema.Field;
+import dev.ikm.tinkar.schema.FieldArray;
 import dev.ikm.tinkar.schema.FieldDefinition;
 import dev.ikm.tinkar.schema.IntToIntMap;
 import dev.ikm.tinkar.schema.IntToMultipleIntMap;
@@ -362,7 +363,29 @@ public class TinkarSchemaToEntityTransformer {
             case VERTEX  -> transformVertexEntity(pbField.getVertex(), stampEntityConsumer);
             case BIG_DECIMAL -> transformBigDecimal(pbField.getBigDecimal());
             case LONG -> transformLong(pbField.getLong());
+            // Object arrays arrive as a FieldArray message, transformed element-wise —
+            // the read side of the OBJECT_ARRAY round trip (IKE-Network/ike-issues#885).
+            case OBJECT_ARRAY -> transformFieldArray(pbField.getObjectArray(), stampEntityConsumer);
         };
+    }
+
+    /**
+     * Transforms a protobuf {@link FieldArray} to the object-array field value it
+     * carries: each element is transformed as an ordinary field, in order — symmetric
+     * with {@code EntityToTinkarSchemaTransformer.toPBFieldArray}
+     * (IKE-Network/ike-issues#885).
+     *
+     * @param pbFieldArray        the protobuf array to transform
+     * @param stampEntityConsumer receives any stamp entities nested elements carry
+     * @return the object array
+     */
+    protected Object[] transformFieldArray(FieldArray pbFieldArray,
+                                           Consumer<StampEntity<StampEntityVersion>> stampEntityConsumer) {
+        Object[] elements = new Object[pbFieldArray.getValuesCount()];
+        for (int index = 0; index < elements.length; index++) {
+            elements[index] = transformField(pbFieldArray.getValues(index), stampEntityConsumer);
+        }
+        return elements;
     }
     protected PublicId transformPublicId(dev.ikm.tinkar.schema.PublicId pbPublicId){
         if (pbPublicId == null || pbPublicId.getUuidsCount() == 0){
@@ -397,13 +420,20 @@ public class TinkarSchemaToEntityTransformer {
         return UUID.fromString(vertexUUID.getUuid());
     }
     protected DiGraphEntity<EntityVertex> transformDigraph(DiGraph pbDiGraph, Consumer<StampEntity<StampEntityVersion>> stampEntityConsumer){
-        //pbDiGraph.get
         List<IntToMultipleIntMap> PredecessorMapList = pbDiGraph.getPredecessorMapList();
         List<IntToMultipleIntMap> SuccessorMapList = pbDiGraph.getSuccessorMapList();
+        // The protobuf form carries root vertex INDEXES; the entity form carries the
+        // root VERTICES themselves. The previous code cast the index list
+        // (ImmutableIntList) straight to ImmutableList<EntityVertex>, which throws
+        // ClassCastException for any graph with at least one root — resolve each index
+        // against the parsed vertex map instead (IKE-Network/ike-issues#885).
+        ImmutableList<EntityVertex> vertexMap = parseVertices(pbDiGraph.getVerticesList(),
+                pbDiGraph.getVerticesCount(), stampEntityConsumer);
+        MutableList<EntityVertex> roots = Lists.mutable.ofInitialCapacity(pbDiGraph.getRootsCount());
+        parseRootSequences(pbDiGraph).forEach(rootIndex -> roots.add(vertexMap.get(rootIndex)));
         return new DiGraphEntity<>(
-                (ImmutableList<EntityVertex>) parseRootSequences(pbDiGraph),
-                parseVertices(pbDiGraph.getVerticesList(),
-                        pbDiGraph.getVerticesCount(), stampEntityConsumer),
+                roots.toImmutable(),
+                vertexMap,
                 parsePredecessorAndSuccessorMaps(SuccessorMapList,
                         pbDiGraph.getSuccessorMapCount()),
                 parsePredecessorAndSuccessorMaps(PredecessorMapList,

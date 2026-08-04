@@ -69,9 +69,9 @@ class SpinedArrayEntityCacheIT {
     //      New Version: Version1->CurrentStamp
     //      Expected New Cache: [ Version1->CurrentStamp ]
     //   Case 2: addNewVersionToExisting
-    //      Existing Cache: [ Version1->PremundaneStamp ]
+    //      Existing Cache: [ Version1->PreInceptionStamp ]
     //      New Version: Version2->CurrentStamp
-    //      Expected New Cache: [ Version1->PremundaneStamp, Version2->CurrentStamp ]
+    //      Expected New Cache: [ Version1->PreInceptionStamp, Version2->CurrentStamp ]
 
     @Test
     @DisplayName("Case 1: addInitialVersion")
@@ -109,8 +109,8 @@ class SpinedArrayEntityCacheIT {
 
         /* Start: Seed database with two STAMPs and a Concept Version */
         Transaction transaction = new Transaction();
-        StampEntity premundaneStampEntity = transaction.getStamp(State.ACTIVE,
-                PrimitiveData.PREMUNDANE_TIME,
+        StampEntity preInceptionStampEntity = transaction.getStamp(State.ACTIVE,
+                PrimitiveData.PRE_INCEPTION_TIME,
                 TinkarTerm.USER.publicId(),
                 TinkarTerm.DEVELOPMENT_MODULE.publicId(),
                 TinkarTerm.DEVELOPMENT_PATH.publicId());
@@ -119,7 +119,7 @@ class SpinedArrayEntityCacheIT {
                 TinkarTerm.DEVELOPMENT_MODULE,
                 TinkarTerm.DEVELOPMENT_PATH);
         //Write Concept Version to database
-        ConceptEntity seedConceptVersion = writeConceptHelper(conceptProxy, premundaneStampEntity);
+        ConceptEntity seedConceptVersion = writeConceptHelper(conceptProxy, preInceptionStampEntity);
         transaction.addComponent(seedConceptVersion);
         EntityService.get().putEntity(seedConceptVersion);
         transaction.commit(); //Commit Transaction to add STAMPs & Concept Version and refresh cache

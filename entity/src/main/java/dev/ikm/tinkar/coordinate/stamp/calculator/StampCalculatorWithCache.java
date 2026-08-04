@@ -71,6 +71,7 @@ import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.graph.DiTreeVersion;
 import dev.ikm.tinkar.entity.graph.VersionVertex;
+import dev.ikm.tinkar.terms.DefaultsTemplateTerm;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
@@ -155,6 +156,44 @@ public class StampCalculatorWithCache implements StampCalculator {
         Entity.provider().addSubscriberWithWeakReference(this.cacheInvalidationSubscriber);
         this.cacheInvalidationIfPatternSubscriber.addCaches(indexForMeaningCache, indexForPurposeCache);
         Entity.provider().addSubscriberWithWeakReference(this.cacheInvalidationIfPatternSubscriber);
+    }
+
+    /**
+     * Instantiates a single-shot calculator for path-bootstrap resolution, bypassing
+     * the recursive path-origin walk of the regular constructor. The segment map is
+     * built directly from {@code orderedSegmentPathNids}: the first entry is the
+     * destination path of the coordinate's position, and each later entry is
+     * antecedent to every entry before it. All segments end at the coordinate's
+     * position time.
+     *
+     * <p>{@link PathProvider} resolves multi-version path-origins semantics with these
+     * instances. The regular constructor cannot serve there: it resolves path origins
+     * through {@link dev.ikm.tinkar.coordinate.PathService} — the very computation in
+     * flight when {@code PathProvider} needs a calculator — and re-entering
+     * {@link #getCalculator(StampCoordinateRecord)} from that resolution can deadlock
+     * the singleton cache on the coordinate under construction. No cache-invalidation
+     * subscribers are registered because instances are used for a single resolution
+     * and discarded.
+     *
+     * @param filter                 the stamp coordinate to evaluate against
+     * @param orderedSegmentPathNids path nids forming the segment map: destination
+     *                               first, progressively more antecedent; duplicate
+     *                               entries are ignored
+     */
+    StampCalculatorWithCache(StampCoordinateRecord filter, int[] orderedSegmentPathNids) {
+        this.filter = filter;
+        this.allowedStates = filter.allowedStates();
+        int segmentSequence = 0;
+        final ConcurrentSkipListSet<Integer> precedingSegments = new ConcurrentSkipListSet<>();
+        for (int pathNid : orderedSegmentPathNids) {
+            if (pathNidSegmentMap.containsKey(pathNid)) {
+                continue;
+            }
+            final Segment segment = new Segment(segmentSequence++, pathNid,
+                    filter.stampPosition().time(), precedingSegments);
+            pathNidSegmentMap.put(pathNid, segment);
+            precedingSegments.add(segment.segmentSequence);
+        }
     }
 
     /**
@@ -284,7 +323,7 @@ public class StampCalculatorWithCache implements StampCalculator {
     public Stream<Latest<SemanticEntityVersion>> streamLatestVersionForPattern(int patternNid) {
         int[] semanticNids = PrimitiveData.get().semanticNidsOfPattern(patternNid);
         ImmutableIntList nidsAsList = IntLists.immutable.of(semanticNids);
-        return nidsAsList.primitiveStream().mapToObj(nid -> latest(nid));
+        return nidsAsList.primitiveStream().mapToObj(nid -> latestForVersionIteration(nid));
     }
 
     @Override
@@ -306,6 +345,26 @@ public class StampCalculatorWithCache implements StampCalculator {
         return Latest.empty();
     }
 
+    /**
+     * Computes the latest version of a component for a version-iteration operation:
+     * versions stamped in {@link DefaultsTemplateTerm#DEFAULTS_AND_TEMPLATES_MODULE}
+     * are excluded (IKE-Network/ike-issues#886), so defaults/template chronologies
+     * yield an empty {@link Latest}. Uncached — the shared latest cache holds the
+     * inclusive results the single-component surfaces return, and iteration workloads
+     * would thrash it anyway (see {@link #latestNoCache(int)}).
+     *
+     * @param nid the nid of the component to calculate the latest version for
+     * @param <V> the type of EntityVersion
+     * @return the latest non-defaults version at this calculator's position
+     */
+    private <V extends EntityVersion> Latest<V> latestForVersionIteration(int nid) {
+        EntityHandle entityHandle = EntityHandle.get(nid);
+        if (entityHandle.isPresent()) {
+            return (Latest<V>) this.latest((Entity<EntityVersion>) entityHandle.expectEntity(), true);
+        }
+        return Latest.empty();
+    }
+
     public <V extends EntityVersion> List<DiTreeVersion<V>> getVersionGraphList(Entity<V> chronicle) {
         return getVersionGraphList(chronicle.versions());
     }
@@ -317,6 +376,29 @@ public class StampCalculatorWithCache implements StampCalculator {
      * @return the latest version
      */
     public <V extends EntityVersion> Latest<V> latest(Entity<V> chronicle) {
+        return latest(chronicle, false);
+    }
+
+    /**
+     * Computes the latest version of a chronicle, optionally excluding
+     * defaults/template content. The exclusion is a module check during the stamp
+     * evaluation this calculator already performs — a version stamped in
+     * {@link DefaultsTemplateTerm#DEFAULTS_AND_TEMPLATES_MODULE} is treated as not on
+     * route — and is requested only by the version-iteration operations
+     * (IKE-Network/ike-issues#886). Because every version of a defaults/template
+     * chronology is in that module (the category's live-and-die invariant), exclusion
+     * makes such a chronology yield an empty {@link Latest} under iteration, while
+     * single-component surfaces ({@link #latest(int)}, {@link #latest(Entity)}) still
+     * resolve it — which is what the {@code getDefault}/{@code getTemplate} accessors
+     * rely on.
+     *
+     * @param chronicle                   the chronicle
+     * @param excludeDefaultsAndTemplates whether versions stamped in the
+     *                                    defaults/templates module are excluded
+     * @param <V>                         the type of EntityVersion
+     * @return the latest version at this calculator's position
+     */
+    private <V extends EntityVersion> Latest<V> latest(Entity<V> chronicle, boolean excludeDefaultsAndTemplates) {
         if (chronicle == null) {
             return Latest.empty();
         }
@@ -331,7 +413,10 @@ public class StampCalculatorWithCache implements StampCalculator {
 
         for (V newVersionToTest : versions) {
             StampEntity stamp = newVersionToTest.stamp();
-            if (stamp != null && stamp.time() > Long.MIN_VALUE && onRoute(stamp)) {
+            if (stamp != null && stamp.time() > Long.MIN_VALUE
+                    && !(excludeDefaultsAndTemplates
+                            && stamp.moduleNid() == DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE.nid())
+                    && onRoute(stamp)) {
                 if (latestVersionList.isEmpty()) {
                     latestVersionList.add(newVersionToTest);
                 } else {
@@ -392,7 +477,7 @@ public class StampCalculatorWithCache implements StampCalculator {
                 if (bytes != null) {
                     Entity<EntityVersion> semanticRecord = EntityFactory.make(bytes);
                     // latest() when providing an entity does not use the cache.
-                    Latest<EntityVersion> latestSemanticVersion = latest(semanticRecord);
+                    Latest<EntityVersion> latestSemanticVersion = latest(semanticRecord, true);
                     latestSemanticVersion.ifPresent(semanticVersion -> procedure.accept((SemanticEntityVersion) semanticVersion, patternEntityVersion));
                 }
             });
@@ -409,7 +494,7 @@ public class StampCalculatorWithCache implements StampCalculator {
                 if (bytes != null) {
                     Entity<EntityVersion> semanticRecord = EntityFactory.make(bytes);
                     // latest() when providing an entity does not use the cache.
-                    Latest<EntityVersion> latestSemanticVersion = latest(semanticRecord);
+                    Latest<EntityVersion> latestSemanticVersion = latest(semanticRecord, true);
                     latestSemanticVersion.ifPresent(semanticVersion -> procedure.accept((SemanticEntityVersion) semanticVersion, patternEntityVersion));
                 }
             });
@@ -422,7 +507,7 @@ public class StampCalculatorWithCache implements StampCalculator {
                                                    BiConsumer<SemanticEntityVersion, EntityVersion> procedure) {
         Latest<EntityVersion> latestEntityVersion = this.latest(componentNid);
         latestEntityVersion.ifPresent(entityVersion -> PrimitiveData.get().forEachSemanticNidForComponent(componentNid, semanticNid -> {
-            Latest<SemanticEntityVersion> latestSemanticVersion = this.latest(semanticNid);
+            Latest<SemanticEntityVersion> latestSemanticVersion = this.latestForVersionIteration(semanticNid);
             latestSemanticVersion.ifPresent(semanticEntityVersion -> procedure.accept(semanticEntityVersion, entityVersion));
         }));
     }
@@ -435,7 +520,7 @@ public class StampCalculatorWithCache implements StampCalculator {
             Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
             latestPatternVersion.ifPresent(patternEntityVersion ->
                     PrimitiveData.get().forEachSemanticNidForComponentOfPattern(componentNid, patternNid, semanticNid -> {
-                        Latest<SemanticEntityVersion> latestSemanticVersion = this.latest(semanticNid);
+                        Latest<SemanticEntityVersion> latestSemanticVersion = this.latestForVersionIteration(semanticNid);
                         latestSemanticVersion.ifPresent(semanticEntityVersion -> procedure.accept(semanticEntityVersion, entityVersion, patternEntityVersion));
                     }));
         });
@@ -1072,13 +1157,24 @@ public class StampCalculatorWithCache implements StampCalculator {
         return getResults(stampsForPosition);
     }
 
+    /**
+     * Computes the latest version of a semantic during pattern iteration, empty when
+     * the nid is not a semantic of the pattern. A version-iteration path: versions
+     * stamped in {@link DefaultsTemplateTerm#DEFAULTS_AND_TEMPLATES_MODULE} are
+     * excluded (IKE-Network/ike-issues#886).
+     *
+     * @param nid        the candidate semantic nid
+     * @param patternNid the pattern the semantic must belong to
+     * @param <V>        the type of EntityVersion
+     * @return the latest non-defaults version, or empty
+     */
     private <V extends EntityVersion> Latest<V> latestIfSemanticOfPattern(int nid, int patternNid) {
 
         EntityHandle handle = EntityHandle.get(nid);
         if (handle.isPresent() && handle.isSemantic()) {
-            var semantic = handle.expectSemantic();
+            SemanticEntity semantic = handle.expectSemantic();
             if (semantic.patternNid() == patternNid) {
-                return latest(semantic);
+                return (Latest<V>) latest(semantic, true);
             }
         }
         return Latest.empty();

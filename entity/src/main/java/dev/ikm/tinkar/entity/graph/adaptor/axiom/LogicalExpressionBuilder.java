@@ -33,6 +33,7 @@ import org.eclipse.collections.api.set.MutableSet;
 
 import java.math.BigDecimal;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 /**
  *
@@ -42,12 +43,24 @@ public class LogicalExpressionBuilder {
     LogicalExpression logicalExpression;
     DiTreeEntity.Builder builder;
     final int rootIndex;
+    private final Supplier<UUID> vertexUuidSupplier;
 
     static UUID generateRandomUuid() {
         return UuidT5Generator.get(UuidT5Generator.STAMP_NAMESPACE, Thread.currentThread().threadId() + "-" + System.nanoTime());
     }
 
-    public LogicalExpressionBuilder(UUID rootVertexUuid) {
+    /**
+     * Creates a builder whose root vertex carries the given UUID and whose undeclared
+     * vertices — those minted by the convenience verbs that take no explicit UUID —
+     * come from the given supplier. A deterministic supplier makes composition
+     * replay-stable: replaying the same composition yields byte-identical graphs, so an
+     * append-only replay merges as a no-op instead of rewriting version payloads.
+     *
+     * @param rootVertexUuid     the definition-root vertex's UUID
+     * @param vertexUuidSupplier mints UUIDs for vertices declared without one
+     */
+    public LogicalExpressionBuilder(UUID rootVertexUuid, Supplier<UUID> vertexUuidSupplier) {
+        this.vertexUuidSupplier = vertexUuidSupplier;
         this.builder = DiTreeEntity.builder();
         this.logicalExpression = new LogicalExpression(builder);
         EntityVertex rootVertex = EntityVertex.make(rootVertexUuid, LogicalAxiomSemantic.DEFINITION_ROOT.nid);
@@ -58,20 +71,31 @@ public class LogicalExpressionBuilder {
 
     }
 
+    public LogicalExpressionBuilder(UUID rootVertexUuid) {
+        this(rootVertexUuid, LogicalExpressionBuilder::generateRandomUuid);
+    }
+
     public LogicalExpressionBuilder() {
         this(generateRandomUuid());
     }
 
     public LogicalExpressionBuilder(LogicalExpression logicalExpression) {
+        this.vertexUuidSupplier = LogicalExpressionBuilder::generateRandomUuid;
         this.builder = DiTreeEntity.builder(logicalExpression.sourceGraph);
         this.rootIndex = logicalExpression.definitionRoot().vertexIndex();
         this.logicalExpression = new LogicalExpression(this.builder);
     }
 
     public LogicalExpressionBuilder(DiTreeEntity logicalExpressionTree) {
+        this.vertexUuidSupplier = LogicalExpressionBuilder::generateRandomUuid;
         this.builder = DiTreeEntity.builder(logicalExpressionTree);
         this.rootIndex = logicalExpressionTree.root().vertexIndex();
         this.logicalExpression = new LogicalExpression(this.builder);
+    }
+
+    /** Mints a UUID for a vertex declared without one, from this builder's supplier. */
+    UUID mintVertexUuid() {
+        return vertexUuidSupplier.get();
     }
 
     enum NormalizeResult {
@@ -163,7 +187,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.LogicalSet.SufficientSet SufficientSet(LogicalAxiom.Atom... elements) {
-        return SufficientSet(generateRandomUuid(), elements);
+        return SufficientSet(mintVertexUuid(), elements);
     }
 
     public LogicalAxiom.LogicalSet.SufficientSet SufficientSet(UUID vertexUuid, LogicalAxiom.Atom... elements) {
@@ -177,7 +201,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.LogicalSet.NecessarySet NecessarySet(LogicalAxiom.Atom... elements) {
-        return NecessarySet(generateRandomUuid(), elements);
+        return NecessarySet(mintVertexUuid(), elements);
     }
 
     public LogicalAxiom.LogicalSet.NecessarySet NecessarySet(UUID vertexUuid, LogicalAxiom.Atom... elements) {
@@ -191,7 +215,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.LogicalSet.InclusionSet InclusionSet(LogicalAxiom.Atom... elements) {
-        return InclusionSet(generateRandomUuid(), elements);
+        return InclusionSet(mintVertexUuid(), elements);
     }
 
     public LogicalAxiom.LogicalSet.InclusionSet InclusionSet(UUID vertexUuid, LogicalAxiom.Atom... elements) {
@@ -206,7 +230,7 @@ public class LogicalExpressionBuilder {
 
 
     public LogicalAxiom.LogicalSet.PropertySet PropertySet(LogicalAxiom.Atom... elements) {
-        return PropertySet(generateRandomUuid(), elements);
+        return PropertySet(mintVertexUuid(), elements);
     }
 
     public LogicalAxiom.LogicalSet.PropertySet PropertySet(UUID vertexUuid, LogicalAxiom.Atom... elements) {
@@ -220,7 +244,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.LogicalSet.DataPropertySet DataPropertySet(LogicalAxiom.Atom... elements) {
-        return DataPropertySet(generateRandomUuid(), elements);
+        return DataPropertySet(mintVertexUuid(), elements);
     }
 
     public LogicalAxiom.LogicalSet.DataPropertySet DataPropertySet(UUID vertexUuid, LogicalAxiom.Atom... elements) {
@@ -234,7 +258,7 @@ public class LogicalExpressionBuilder {
     }
 
 	public LogicalAxiom.LogicalSet.IntervalPropertySet IntervalPropertySet(LogicalAxiom.Atom... elements) {
-		return IntervalPropertySet(generateRandomUuid(), elements);
+		return IntervalPropertySet(mintVertexUuid(), elements);
 	}
 
 	public LogicalAxiom.LogicalSet.IntervalPropertySet IntervalPropertySet(UUID vertexUuid,
@@ -250,7 +274,7 @@ public class LogicalExpressionBuilder {
 
 	public LogicalAxiom.Atom.TypedAtom.IntervalRole IntervalRole(ConceptFacade intervalRoleType, BigDecimal lowerBound,
 			boolean lowerOpen, BigDecimal upperBound, boolean upperOpen, ConceptFacade units) {
-		return IntervalRole(generateRandomUuid(), intervalRoleType, lowerBound, lowerOpen, upperBound, upperOpen,
+		return IntervalRole(mintVertexUuid(), intervalRoleType, lowerBound, lowerOpen, upperBound, upperOpen,
 				units);
 	}
 
@@ -278,7 +302,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.Atom.Connective.And And(ImmutableList<? extends LogicalAxiom.Atom> atoms) {
-        return And(generateRandomUuid(), atoms);
+        return And(mintVertexUuid(), atoms);
     }
 
 
@@ -313,7 +337,7 @@ public class LogicalExpressionBuilder {
 
 
     public LogicalAxiom.Atom.Connective.And And(LogicalAxiom.Atom... atoms) {
-        return And(generateRandomUuid(), atoms);
+        return And(mintVertexUuid(), atoms);
     }
 
     public LogicalAxiom.Atom.Connective.And And(UUID vertexUuid, LogicalAxiom.Atom... atoms) {
@@ -326,7 +350,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.Atom.Connective.Or Or(LogicalAxiom.Atom... atoms) {
-        return Or(generateRandomUuid(), atoms);
+        return Or(mintVertexUuid(), atoms);
     }
 
     public LogicalAxiom.Atom.Connective.Or Or(UUID vertexUuid, LogicalAxiom.Atom... atoms) {
@@ -339,7 +363,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.Atom.TypedAtom.Role SomeRole(ConceptFacade roleType, LogicalAxiom.Atom restriction) {
-        return SomeRole(generateRandomUuid(), roleType, restriction);
+        return SomeRole(mintVertexUuid(), roleType, restriction);
     }
 
     public LogicalAxiom.Atom.TypedAtom.Role SomeRole(UUID vertexUuid, ConceptFacade roleType, LogicalAxiom.Atom restriction) {
@@ -353,7 +377,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.Atom.TypedAtom.Role AllRole(ConceptFacade roleType, LogicalAxiom.Atom restriction) {
-        return AllRole(generateRandomUuid(), roleType, restriction);
+        return AllRole(mintVertexUuid(), roleType, restriction);
     }
 
     public LogicalAxiom.Atom.TypedAtom.Role AllRole(UUID vertexUuid, ConceptFacade roleType, LogicalAxiom.Atom restriction) {
@@ -367,7 +391,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.Atom.TypedAtom.Role Role(ConceptFacade roleOperator, ConceptFacade roleType, LogicalAxiom.Atom restriction) {
-        return Role(generateRandomUuid(), roleOperator, roleType, restriction);
+        return Role(mintVertexUuid(), roleOperator, roleType, restriction);
     }
 
     public LogicalAxiom.Atom.TypedAtom.Role Role(UUID vertexUuid, ConceptFacade roleOperator, ConceptFacade roleType, LogicalAxiom.Atom restriction) {
@@ -381,7 +405,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.Atom.ConceptAxiom ConceptAxiom(int conceptNid) {
-        return ConceptAxiom(generateRandomUuid(), ConceptFacade.make(conceptNid));
+        return ConceptAxiom(mintVertexUuid(), ConceptFacade.make(conceptNid));
     }
 
     public LogicalAxiom.Atom.ConceptAxiom ConceptAxiom(UUID vertexUuid, int conceptNid) {
@@ -389,7 +413,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.Atom.ConceptAxiom ConceptAxiom(ConceptFacade concept) {
-        return ConceptAxiom(generateRandomUuid(), concept);
+        return ConceptAxiom(mintVertexUuid(), concept);
     }
 
     public LogicalAxiom.Atom.ConceptAxiom ConceptAxiom(UUID vertexUuid, ConceptFacade concept) {
@@ -401,7 +425,7 @@ public class LogicalExpressionBuilder {
     }
 
     public LogicalAxiom.Atom.DisjointWithAxiom DisjointWithAxiom(ConceptFacade disjointConcept) {
-        return DisjointWithAxiom(generateRandomUuid(), disjointConcept);
+        return DisjointWithAxiom(mintVertexUuid(), disjointConcept);
     }
 
     public LogicalAxiom.Atom.DisjointWithAxiom DisjointWithAxiom(UUID vertexUuid, ConceptFacade disjointConcept) {
@@ -414,7 +438,7 @@ public class LogicalExpressionBuilder {
 
     public LogicalAxiom.Atom.TypedAtom.Feature FeatureAxiom(ConceptFacade featureType, ConceptFacade concreteDomainOperator,
                                                             Object literalValue) {
-        return FeatureAxiom(generateRandomUuid(), featureType, concreteDomainOperator, literalValue);
+        return FeatureAxiom(mintVertexUuid(), featureType, concreteDomainOperator, literalValue);
     }
 
     public LogicalAxiom.Atom.TypedAtom.Feature FeatureAxiom(UUID vertexUuid, ConceptFacade featureType, ConceptFacade concreteDomainOperator,
@@ -431,7 +455,7 @@ public class LogicalExpressionBuilder {
 
     public LogicalAxiom.Atom.PropertySequenceImplication PropertySequenceImplicationAxiom(ImmutableList<ConceptFacade> propertySequence,
                                                                                           ConceptFacade implication) {
-        return PropertySequenceImplicationAxiom(generateRandomUuid(), propertySequence, implication);
+        return PropertySequenceImplicationAxiom(mintVertexUuid(), propertySequence, implication);
     }
 
     public LogicalAxiom.Atom.PropertySequenceImplication PropertySequenceImplicationAxiom(UUID vertexUuid,

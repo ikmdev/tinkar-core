@@ -56,8 +56,33 @@ public class DateTimeUtil {
 
     public static final String LATEST = "Latest";
     public static final String CANCELED = "Canceled";
-    public static final String PREMUNDANE = "Premundane";
+    /**
+     * The rendered word for the pre-inception time sentinel — the platform's
+     * before-all-recorded-time non-value, named self-relatively to {@link #INCEPTION}
+     * (IKE-Network/ike-issues#907). Every render path emits this word.
+     */
+    public static final String PRE_INCEPTION = "Pre-inception";
+    /**
+     * The historical word for the pre-inception sentinel, retained as a parse-time
+     * synonym (IKE-Network/ike-issues#907): change sets, generated artifacts, and prose
+     * written before the rename carry {@code "Premundane"}, and those artifacts must
+     * keep parsing. Render paths never emit this word — they emit
+     * {@link #PRE_INCEPTION}.
+     */
+    public static final String PREMUNDANE_SYNONYM = "Premundane";
+    public static final String INCEPTION = "Inception";
 
+    /**
+     * Converts an epoch-milliseconds value to its {@link Instant} representation,
+     * honoring the platform's sentinel times: {@code Long.MAX_VALUE} is
+     * {@link Instant#MAX}, {@code Long.MIN_VALUE} is {@link Instant#MIN}, and
+     * {@link PrimitiveData#PRE_INCEPTION_TIME} is
+     * {@link PrimitiveData#PRE_INCEPTION_INSTANT} — the inverse of
+     * {@link #instantToEpochMs(Instant)} (IKE-Network/ike-issues#885).
+     *
+     * @param epochMilliSecond the epoch-milliseconds value, possibly a sentinel
+     * @return the corresponding instant
+     */
     public static Instant epochMsToInstant(long epochMilliSecond) {
         if (epochMilliSecond == Long.MAX_VALUE) {
             return Instant.MAX;
@@ -65,15 +90,36 @@ public class DateTimeUtil {
         if (epochMilliSecond == Long.MIN_VALUE) {
             return Instant.MIN;
         }
+        if (epochMilliSecond == PrimitiveData.PRE_INCEPTION_TIME) {
+            return PrimitiveData.PRE_INCEPTION_INSTANT;
+        }
         return Instant.ofEpochMilli(epochMilliSecond);
     }
 
+    /**
+     * Converts an {@link Instant} to its epoch-milliseconds representation,
+     * honoring the platform's sentinel instants: {@link Instant#MIN} is
+     * {@code Long.MIN_VALUE}, {@link Instant#MAX} is {@code Long.MAX_VALUE}, and
+     * {@link PrimitiveData#PRE_INCEPTION_INSTANT} is
+     * {@link PrimitiveData#PRE_INCEPTION_TIME}. Without the pre-inception mapping
+     * (historically "premundane"), {@code Instant.toEpochMilli()} overflows for the
+     * pre-inception instant (its epoch-second magnitude exceeds
+     * {@code Long.MAX_VALUE / 1000}), so any INSTANT-typed field carrying the
+     * pre-inception default could not round-trip through epoch-milliseconds forms
+     * such as the protobuf change-set encoding (IKE-Network/ike-issues#885).
+     *
+     * @param instant the instant, possibly a sentinel
+     * @return the corresponding epoch-milliseconds value
+     */
     public static long instantToEpochMs(Instant instant) {
         if (instant.equals(Instant.MIN)) {
             return Long.MIN_VALUE;
         }
         if (instant.equals(Instant.MAX)) {
             return Long.MAX_VALUE;
+        }
+        if (instant.equals(PrimitiveData.PRE_INCEPTION_INSTANT)) {
+            return PrimitiveData.PRE_INCEPTION_TIME;
         }
         return instant.toEpochMilli();
     }
@@ -89,18 +135,49 @@ public class DateTimeUtil {
         return format(epochMilliSecond, FORMATTER);
     }
     public static String format(long epochMilliSecond, DateTimeFormatter formatter) {
+        return format(epochMilliSecond, formatter, ZoneId.systemDefault());
+    }
+
+    /**
+     * Formats an epoch time in UTC with the default {@link #FORMATTER} — the form for
+     * generated artifacts, whose text must not depend on the generating machine's zone
+     * (IKE-Network/ike-issues#897). Sentinel times render as their words
+     * ({@code Latest}, {@code Canceled}, {@code Pre-inception}, {@code Inception}),
+     * identically to every other format path.
+     *
+     * @param epochMilliSecond the epoch time in milliseconds, or a sentinel value
+     * @return the sentinel word, or the UTC-rendered time
+     */
+    public static String formatUtc(long epochMilliSecond) {
+        return format(epochMilliSecond, FORMATTER, ZoneOffset.UTC);
+    }
+
+    /**
+     * Formats an epoch time at an explicit zone — the one method carrying the sentinel
+     * handling for the epoch path; the zone-implicit overloads delegate here at
+     * {@link ZoneId#systemDefault()} (interactive surfaces render local), and
+     * {@link #formatUtc(long)} delegates at UTC (generated artifacts render
+     * machine-independently).
+     *
+     * @param epochMilliSecond the epoch time in milliseconds, or a sentinel value
+     * @param formatter        the date-time formatter to render with
+     * @param zone             the zone to render the instant at
+     * @return the sentinel word, or the time rendered at {@code zone}
+     */
+    public static String format(long epochMilliSecond, DateTimeFormatter formatter, ZoneId zone) {
         if (epochMilliSecond == Long.MAX_VALUE) {
             return LATEST;
         }
         if (epochMilliSecond == Long.MIN_VALUE) {
             return CANCELED;
         }
-        if (epochMilliSecond == PrimitiveData.PREMUNDANE_TIME) {
-            return PREMUNDANE;
+        if (epochMilliSecond == PrimitiveData.PRE_INCEPTION_TIME) {
+            return PRE_INCEPTION;
         }
-        ZonedDateTime positionTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(epochMilliSecond), ZoneOffset.UTC);
-        ZonedDateTime inLocalZone = positionTime.withZoneSameInstant(ZoneId.systemDefault());
-        return inLocalZone.format(formatter);
+        if (epochMilliSecond == PrimitiveData.INCEPTION_EPOCH) {
+            return INCEPTION;
+        }
+        return ZonedDateTime.ofInstant(Instant.ofEpochMilli(epochMilliSecond), zone).format(formatter);
     }
     public static String timeNowSimple() {
         return TIME_SIMPLE.format(ZonedDateTime.now());
@@ -120,6 +197,19 @@ public class DateTimeUtil {
     }
 
     /**
+     * Tests whether a parse-input token names the pre-inception sentinel. Both the
+     * current word ({@link #PRE_INCEPTION}) and the historical word
+     * ({@link #PREMUNDANE_SYNONYM}) match, case-insensitively — historical artifacts
+     * and prose written before the rename keep parsing (IKE-Network/ike-issues#907).
+     *
+     * @param token the candidate sentinel word from a parse input
+     * @return {@code true} when the token names the pre-inception sentinel
+     */
+    private static boolean isPreInceptionWord(String token) {
+        return token.equalsIgnoreCase(PRE_INCEPTION) || token.equalsIgnoreCase(PREMUNDANE_SYNONYM);
+    }
+
+    /**
      *
      * @param dateTime such as '2011-12-03T10:15:30', '2011-12-03T10:15:30+01:00' or '2011-12-03T10:15:30+01:00[Europe/Paris]
      * @return Epoch millisecond of the date time...
@@ -131,8 +221,11 @@ public class DateTimeUtil {
         if (dateTime.equalsIgnoreCase(CANCELED)) {
             return Long.MIN_VALUE;
         }
-        if (dateTime.equalsIgnoreCase(PREMUNDANE)) {
-            return PrimitiveData.PREMUNDANE_TIME;
+        if (isPreInceptionWord(dateTime)) {
+            return PrimitiveData.PRE_INCEPTION_TIME;
+        }
+        if (dateTime.equalsIgnoreCase(INCEPTION)) {
+            return PrimitiveData.INCEPTION_EPOCH;
         }
         return ZonedDateTime.parse(dateTime, ZONE_FORMATTER).toInstant().toEpochMilli();
     }
@@ -149,8 +242,11 @@ public class DateTimeUtil {
         if (dateTime.equalsIgnoreCase(CANCELED)) {
             return Long.MIN_VALUE;
         }
-        if (dateTime.equalsIgnoreCase(PREMUNDANE)) {
-            return PrimitiveData.PREMUNDANE_TIME;
+        if (isPreInceptionWord(dateTime)) {
+            return PrimitiveData.PRE_INCEPTION_TIME;
+        }
+        if (dateTime.equalsIgnoreCase(INCEPTION)) {
+            return PrimitiveData.INCEPTION_EPOCH;
         }
         return LocalDateTime.parse(dateTime, COMPRESSED_DATE_TIME).atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
     }
@@ -167,8 +263,11 @@ public class DateTimeUtil {
         if (date.equalsIgnoreCase(CANCELED)) {
             return Long.MIN_VALUE;
         }
-        if (date.equalsIgnoreCase(PREMUNDANE)) {
-            return PrimitiveData.PREMUNDANE_TIME;
+        if (isPreInceptionWord(date)) {
+            return PrimitiveData.PRE_INCEPTION_TIME;
+        }
+        if (date.equalsIgnoreCase(INCEPTION)) {
+            return PrimitiveData.INCEPTION_EPOCH;
         }
         return LocalDate.parse(date, COMPRESSED_DATE).atStartOfDay().atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
     }
@@ -185,8 +284,11 @@ public class DateTimeUtil {
         if (dateTime.equalsIgnoreCase(CANCELED)) {
             return Long.MIN_VALUE;
         }
-        if (dateTime.equalsIgnoreCase(PREMUNDANE)) {
-            return PrimitiveData.PREMUNDANE_TIME;
+        if (isPreInceptionWord(dateTime)) {
+            return PrimitiveData.PRE_INCEPTION_TIME;
+        }
+        if (dateTime.equalsIgnoreCase(INCEPTION)) {
+            return PrimitiveData.INCEPTION_EPOCH;
         }
         return LocalDateTime.parse(dateTime, FORMATTER).atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
     }
@@ -197,8 +299,14 @@ public class DateTimeUtil {
         if (instant.equals(Instant.MIN)) {
             return CANCELED;
         }
-        if (instant.equals(PrimitiveData.PREMUNDANE_INSTANT)) {
-            return PREMUNDANE;
+        if (instant.equals(PrimitiveData.PRE_INCEPTION_INSTANT)) {
+            return PRE_INCEPTION;
+        }
+        if (instant.equals(PrimitiveData.INCEPTION_INSTANT)) {
+            return INCEPTION;
+        }
+        if (instant.equals(PrimitiveData.INCEPTION_INSTANT)) {
+            return INCEPTION;
         }
         return formatter.format(instant.atOffset(ZoneOffset.UTC));
     }
@@ -215,8 +323,11 @@ public class DateTimeUtil {
         if (instant.equals(Instant.MIN)) {
             return CANCELED;
         }
-        if (instant.equals(PrimitiveData.PREMUNDANE_INSTANT)) {
-            return PREMUNDANE;
+        if (instant.equals(PrimitiveData.PRE_INCEPTION_INSTANT)) {
+            return PRE_INCEPTION;
+        }
+        if (instant.equals(PrimitiveData.INCEPTION_INSTANT)) {
+            return INCEPTION;
         }
         if (resolution < MS_IN_SEC) {
             return ZONE_FORMATTER.format(instant);

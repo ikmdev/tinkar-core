@@ -60,6 +60,14 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             EntityToTinkarSchemaTransformer.getInstance();
     private final Set<PublicId> moduleList = new HashSet<>();
     private final Set<PublicId> authorList = new HashSet<>();
+    // Per-type tallies of entities whose transform failed on a dangling reference and
+    // were therefore skipped: the manifest must describe the records actually written,
+    // never the records intended, or every downstream import fails its count check
+    // (IKE-Network/ike-issues#933).
+    private long skippedConcepts;
+    private long skippedSemantics;
+    private long skippedPatterns;
+    private long skippedStamps;
     private final EntityAggregator entityAggregator;
 
 
@@ -106,21 +114,52 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             zos.putNextEntry(zipEntry);
 
             Consumer<Entity<?>> exportEntityConsumer = entity -> {
-                if (entity instanceof StampEntity stampEntity) {
-                    // Store Module & Author Dependencies for Manifest
-                    moduleList.add(stampEntity.module().publicId());
-                    authorList.add(stampEntity.author().publicId());
-                }
-                TinkarMsg pbTinkarMsg = entityTransformer.transform(entity);
                 try {
+                    if (entity instanceof StampEntity stampEntity) {
+                        // Store Module & Author Dependencies for Manifest
+                        // Resolve via the nid->publicId map: module/author concepts need
+                        // not be present as entities in the exporting store.
+                        moduleList.add(PrimitiveData.publicId(stampEntity.moduleNid()));
+                        authorList.add(PrimitiveData.publicId(stampEntity.authorNid()));
+                    }
+                    TinkarMsg pbTinkarMsg = entityTransformer.transform(entity);
                     pbTinkarMsg.writeDelimitedTo(zos);
+                    completedUnitOfWork();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
+                } catch (RuntimeException e) {
+                    // Dangling reference: this entity references a component that has no
+                    // entity and no resolvable public id — which must not occur in a
+                    // well-formed knowledge base. Log loudly, alert, and continue so the
+                    // export surfaces the defect (and names the offending entity) instead
+                    // of aborting the whole export (IKE-Network/ike-issues#933).
+                    LOG.error("DANGLING REFERENCE — skipping "
+                            + entity.getClass().getSimpleName() + " nid=" + entity.nid()
+                            + " publicId=" + entity.publicId() + ": " + e, e);
+                    AlertStreams.dispatchToRoot(e);
+                    tallySkip(entity);
+                    completedUnitOfWork();
                 }
-                completedUnitOfWork();
             };
 
             entityCountSummary = entityAggregator.aggregateEntities(exportEntityConsumer);
+            long totalSkipped = skippedConcepts + skippedSemantics + skippedPatterns + skippedStamps;
+            if (totalSkipped > 0) {
+                // Deduct the skips so manifest counts equal the records in the stream —
+                // the loud per-entity errors above carry the diagnostic burden; the
+                // artifact itself must stay internally consistent
+                // (IKE-Network/ike-issues#933).
+                entityCountSummary = new EntityCountSummary(
+                        entityCountSummary.conceptCount() - skippedConcepts,
+                        entityCountSummary.semanticCount() - skippedSemantics,
+                        entityCountSummary.patternCount() - skippedPatterns,
+                        entityCountSummary.stampCount() - skippedStamps);
+                LOG.warn("Export skipped {} dangling entit{} ({} concepts, {} semantics,"
+                                + " {} patterns, {} stamps) — manifest counts describe the"
+                                + " records actually written",
+                        totalSkipped, totalSkipped == 1 ? "y" : "ies",
+                        skippedConcepts, skippedSemantics, skippedPatterns, skippedStamps);
+            }
 
             zos.closeEntry();
             zos.flush();
@@ -199,6 +238,23 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                     .append("Description: ").append(manifestDescription).append("\n");
         });
         return manifestEntry.toString();
+    }
+
+    /**
+     * Tallies one dangling-reference skip under the entity's own type, so the manifest
+     * deduction matches the aggregator's per-type counting exactly
+     * (IKE-Network/ike-issues#933).
+     *
+     * @param entity the entity whose transform failed
+     */
+    private void tallySkip(Entity<?> entity) {
+        switch (entity) {
+            case StampEntity<?> stamp -> skippedStamps++;
+            case dev.ikm.tinkar.entity.ConceptEntity<?> concept -> skippedConcepts++;
+            case dev.ikm.tinkar.entity.SemanticEntity<?> semantic -> skippedSemantics++;
+            case dev.ikm.tinkar.entity.PatternEntity<?> pattern -> skippedPatterns++;
+            default -> skippedSemantics++;
+        }
     }
 
     private void logCounts(EntityCountSummary summary) {
