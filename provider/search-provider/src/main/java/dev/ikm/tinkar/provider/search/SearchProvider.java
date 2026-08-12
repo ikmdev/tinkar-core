@@ -78,7 +78,23 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
                     LOG.warn("For persistent stores (RocksProvider, MVStoreProvider, SpinedArrayProvider), ensure DATA_STORE_ROOT is set during DATA_STORAGE phase");
                     // Use a unique directory based on JVM UUID to avoid lock conflicts in tests
                     String jvmUuid = ServiceProperties.jvmUuid();
-                    File uniqueDir = new File(defaultDataDirectory, jvmUuid);
+                    // defaultDataDirectory is RELATIVE ("target/lucene/"), so it resolves against
+                    // user.dir. That is right for a Maven build or an IDE run, where user.dir is the
+                    // module directory and the index lands under target/ for `mvn clean` to remove.
+                    // It is wrong for a packaged application: a jpackage app launched from Finder
+                    // has user.dir = "/", so this resolved to /target/lucene and startup died with
+                    // "FileSystemException: /target: Read-only file system" — after the datastore
+                    // had already started, leaving the UI hung with the failure only in the log.
+                    // Reachable whenever DATA_STORE_ROOT is unset, which is the normal case for a
+                    // remote-backed datastore.
+                    File base = defaultDataDirectory;
+                    File workingDirectory = new File(System.getProperty("user.dir", "."));
+                    if (!workingDirectory.canWrite()) {
+                        base = new File(System.getProperty("user.home"), "Solor/komet/lucene");
+                        LOG.warn("Working directory {} is not writable; falling back to {}",
+                                workingDirectory.getAbsolutePath(), base.getAbsolutePath());
+                    }
+                    File uniqueDir = new File(base, jvmUuid);
                     LOG.info("Using unique Lucene index location: {}", uniqueDir.getAbsolutePath());
                     return uniqueDir;
                 });
