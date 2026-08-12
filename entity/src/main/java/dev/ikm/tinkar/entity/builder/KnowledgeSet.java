@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
+import dev.ikm.tinkar.common.id.IntIdCollection;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -26,6 +27,10 @@ import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.PatternEntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
+import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.StampEntityVersion;
+import dev.ikm.tinkar.entity.graph.DiGraphAbstract;
+import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
@@ -394,14 +399,18 @@ public final class KnowledgeSet {
     /**
      * The referential-integrity closure gate (IKE-Network/ike-issues#937). After the set
      * is written, every reference a component makes — a semantic's referenced component,
-     * pattern, and component-valued fields; a pattern's meaning, purpose, and each field
-     * definition's meaning, purpose, and data type — must resolve to a component that is
-     * <em>present</em> in the store, i.e. within the set's closure (its own declarations
-     * plus whatever base or declared dependency was loaded first). A reference to a
-     * component with no entity is a dangling reference: it is silently tolerated by the
-     * ephemeral store (which answers the minted public id) but breaks any consumer that
-     * loads the exported set standalone. It must never ship — the build fails here,
-     * naming every offender, rather than a downstream round-trip catching it.
+     * pattern, and component-valued fields (a facade field directly, every member of a
+     * component-id list or set field, and every concept a logical-expression field's
+     * vertices cite as meaning, property key, or property value); a pattern's meaning,
+     * purpose, and each field definition's meaning, purpose, and data type; and each
+     * stamp version's status, author, module, and path — must resolve to a component
+     * that is <em>present</em> in the store, i.e. within the set's closure (its own
+     * declarations plus whatever base or declared dependency was loaded first). A
+     * reference to a component with no entity is a dangling reference: it is silently
+     * tolerated by the ephemeral store (which answers the minted public id) but breaks
+     * any consumer that loads the exported set standalone. It must never ship — the
+     * build fails here, naming every offender, rather than a downstream round-trip
+     * catching it.
      *
      * @throws IllegalStateException if any reference does not resolve within the closure
      */
@@ -413,9 +422,7 @@ public final class KnowledgeSet {
                 requirePresent(dangling, semantic, "pattern", semantic.patternNid());
                 for (SemanticEntityVersion version : semantic.versions()) {
                     for (Object field : version.fieldValues()) {
-                        if (field instanceof EntityFacade facade) {
-                            requirePresent(dangling, semantic, "field value", facade.nid());
-                        }
+                        requireFieldReferencesPresent(dangling, semantic, field);
                     }
                 }
             }
@@ -430,6 +437,16 @@ public final class KnowledgeSet {
                         requirePresent(dangling, pattern, "field-definition purpose", fieldDefinition.purposeNid());
                         requirePresent(dangling, pattern, "field-definition data type", fieldDefinition.dataTypeNid());
                     }
+                }
+            }
+        });
+        PrimitiveData.get().forEachStampNid(nid -> {
+            if (EntityService.get().getEntityFast(nid) instanceof StampEntity<?> stamp) {
+                for (StampEntityVersion version : stamp.versions()) {
+                    requirePresent(dangling, stamp, "stamp status", version.stateNid());
+                    requirePresent(dangling, stamp, "stamp author", version.authorNid());
+                    requirePresent(dangling, stamp, "stamp module", version.moduleNid());
+                    requirePresent(dangling, stamp, "stamp path", version.pathNid());
                 }
             }
         });
@@ -456,6 +473,39 @@ public final class KnowledgeSet {
             LOG.info("Knowledge set {} referential closure verified — 0 dangling references"
                             + " (enforcement {}).", uuid,
                     Boolean.getBoolean(ENFORCE_CLOSURE_PROPERTY) ? "on" : "off");
+        }
+    }
+
+    /**
+     * Sweeps one semantic field value for component references, by field shape: a facade
+     * field is itself a reference; a component-id list or set field references every
+     * member; a logical-expression field (a directed graph or tree) references each
+     * vertex's meaning, each vertex property key, and every component-valued vertex
+     * property — the surface where stated-definition parents and role types live. Other
+     * field shapes (strings, numbers, instants, byte arrays) carry no references.
+     *
+     * @param dangling the accumulating list of dangling-reference descriptions
+     * @param source   the semantic whose field is being swept
+     * @param field    the field value
+     */
+    private static void requireFieldReferencesPresent(List<String> dangling, Entity<?> source, Object field) {
+        switch (field) {
+            case EntityFacade facade -> requirePresent(dangling, source, "field value", facade.nid());
+            case IntIdCollection members -> members.forEach(memberNid ->
+                    requirePresent(dangling, source, "component-id field member", memberNid));
+            case DiGraphAbstract<?> graph -> {
+                for (EntityVertex vertex : graph.vertexMap()) {
+                    requirePresent(dangling, source, "graph vertex meaning", vertex.getMeaningNid());
+                    vertex.properties().forEachKeyValue((propertyNid, value) -> {
+                        requirePresent(dangling, source, "graph vertex property key", propertyNid);
+                        if (value instanceof EntityFacade facade) {
+                            requirePresent(dangling, source, "graph vertex property value", facade.nid());
+                        }
+                    });
+                }
+            }
+            default -> {
+            }
         }
     }
 
