@@ -26,7 +26,7 @@ import dev.ikm.tinkar.entity.SemanticRecordBuilder;
 import dev.ikm.tinkar.entity.SemanticVersionRecord;
 import dev.ikm.tinkar.entity.SemanticVersionRecordBuilder;
 import dev.ikm.tinkar.entity.transform.EntityToTinkarSchemaTransformer;
-import dev.ikm.tinkar.integration.NewEphemeralKeyValueProvider;
+import dev.ikm.tinkar.fixtures.NewEphemeralKeyValueProvider;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import org.eclipse.collections.api.factory.Lists;
 import org.junit.jupiter.api.BeforeAll;

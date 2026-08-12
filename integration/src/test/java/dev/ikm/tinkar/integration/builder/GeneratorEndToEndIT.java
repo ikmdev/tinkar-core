@@ -26,7 +26,7 @@ import dev.ikm.tinkar.entity.builder.generator.SectionEmitter;
 import dev.ikm.tinkar.entity.builder.generator.TaxonomySectioner;
 import dev.ikm.tinkar.entity.builder.generator.TaxonomySectioner.Section;
 import dev.ikm.tinkar.entity.builder.generator.TinkarTermReferenceResolver;
-import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.TinkarTerm;

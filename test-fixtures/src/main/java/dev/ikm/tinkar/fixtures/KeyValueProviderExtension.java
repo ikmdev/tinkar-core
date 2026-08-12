@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.integration;
+package dev.ikm.tinkar.fixtures;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import dev.ikm.tinkar.common.service.CachingService;

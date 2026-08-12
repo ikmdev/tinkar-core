@@ -24,7 +24,7 @@ import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.entity.StampRecordBuilder;
 import dev.ikm.tinkar.entity.StampVersionRecord;
 import dev.ikm.tinkar.entity.StampVersionRecordBuilder;
-import dev.ikm.tinkar.integration.NewEphemeralKeyValueProvider;
+import dev.ikm.tinkar.fixtures.NewEphemeralKeyValueProvider;
 import dev.ikm.tinkar.integration.snomed.core.MockEntity;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

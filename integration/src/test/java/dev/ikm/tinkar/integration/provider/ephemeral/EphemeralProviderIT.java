@@ -21,7 +21,7 @@ import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.entity.util.EntityCounter;
 import dev.ikm.tinkar.entity.util.EntityProcessor;
 import dev.ikm.tinkar.entity.util.EntityRealizer;
-import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import org.junit.jupiter.api.BeforeAll;

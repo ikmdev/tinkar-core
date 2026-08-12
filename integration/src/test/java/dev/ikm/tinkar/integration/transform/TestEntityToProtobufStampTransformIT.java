@@ -25,7 +25,7 @@ import dev.ikm.tinkar.entity.StampRecordBuilder;
 import dev.ikm.tinkar.entity.StampVersionRecord;
 import dev.ikm.tinkar.entity.StampVersionRecordBuilder;
 import dev.ikm.tinkar.entity.transform.EntityToTinkarSchemaTransformer;
-import dev.ikm.tinkar.integration.NewEphemeralKeyValueProvider;
+import dev.ikm.tinkar.fixtures.NewEphemeralKeyValueProvider;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import dev.ikm.tinkar.terms.State;
 import org.junit.jupiter.api.BeforeAll;

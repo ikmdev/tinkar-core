@@ -1,4 +1,4 @@
-package dev.ikm.tinkar.integration;
+package dev.ikm.tinkar.fixtures;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 

@@ -22,7 +22,7 @@ import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.StampEntityVersion;
 import dev.ikm.tinkar.entity.transform.TinkarSchemaToEntityTransformer;
-import dev.ikm.tinkar.integration.NewEphemeralKeyValueProvider;
+import dev.ikm.tinkar.fixtures.NewEphemeralKeyValueProvider;
 import dev.ikm.tinkar.schema.FieldDefinition;
 import dev.ikm.tinkar.schema.PatternChronology;
 import dev.ikm.tinkar.schema.PatternVersion;

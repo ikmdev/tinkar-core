@@ -1,4 +1,4 @@
-package dev.ikm.tinkar.integration;
+package dev.ikm.tinkar.fixtures;
 
 /**
  * JUnit 5 extension that loads tinkar-starter-data into ephemeral store.

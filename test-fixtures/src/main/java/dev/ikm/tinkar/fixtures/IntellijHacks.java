@@ -13,34 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package dev.ikm.tinkar.fixtures;
+
+/**
+ * Class to read stuff in the module-info.java file, that the tests will use, since
+ * IntelliJ colors them read and says things like:
+ * <p>"Package 'dev.ikm.tinkar.common.service' is declared in module 'dev.ikm.tinkar.common', but module 'dev.ikm.tinkar.integration' does not read it"
+ *
+ * <p>TODO: Invalidating the IntelliJ cache and restarting may have fixed need for this class, but leaving it in for now...
+ */
+
 import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.common.service.DefaultDescriptionForNidService;
 import dev.ikm.tinkar.common.service.PublicIdService;
-import dev.ikm.tinkar.entity.ChangeSetWriterService;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.StampService;
 
-open module dev.ikm.tinkar.integration {
-    requires dev.ikm.tinkar.fixtures;
-    requires dev.ikm.tinkar.common;
-    requires dev.ikm.tinkar.entity;
-    requires dev.ikm.tinkar.terms;
-    requires dev.ikm.tinkar.provider.entity;
-    requires dev.ikm.tinkar.provider.ephemeral;
-    requires dev.ikm.tinkar.provider.spinedarray;
-    requires dev.ikm.tinkar.provider.changeset;
-    requires dev.ikm.tinkar.provider.search;
-    requires dev.ikm.jpms.protobuf;
-    requires org.slf4j;
-    requires org.eclipse.collections.api;
-    requires org.eclipse.collections.impl;
-    requires org.junit.jupiter.api;
-    requires com.github.benmanes.caffeine;
+public class IntellijHacks {
+    DataServiceController dataServiceController = null;
+    DefaultDescriptionForNidService defaultDescriptionForNidService = null;
+    PublicIdService publicIdService = null;
+    EntityService entityService = null;
+    StampService stampService = null;
 
-    uses DataServiceController;
-    uses DefaultDescriptionForNidService;
-    uses EntityService;
-    uses PublicIdService;
-    uses StampService;
-    uses ChangeSetWriterService;
 }
