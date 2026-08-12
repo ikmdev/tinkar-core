@@ -23,7 +23,7 @@ import dev.ikm.tinkar.entity.ConceptVersionRecord;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.RecordListBuilder;
 import dev.ikm.tinkar.entity.transform.EntityToTinkarSchemaTransformer;
-import dev.ikm.tinkar.integration.NewEphemeralKeyValueProvider;
+import dev.ikm.tinkar.fixtures.NewEphemeralKeyValueProvider;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;

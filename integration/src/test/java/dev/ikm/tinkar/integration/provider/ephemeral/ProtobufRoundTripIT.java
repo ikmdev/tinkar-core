@@ -18,7 +18,7 @@ package dev.ikm.tinkar.integration.provider.ephemeral;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
-import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import org.junit.jupiter.api.BeforeAll;

@@ -17,7 +17,7 @@ package dev.ikm.tinkar.integration.changeSet;
 
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.EntityService;
-import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.util.concurrent.ExecutionException;
 
-import static dev.ikm.tinkar.integration.TestConstants.createFilePathInTarget;
+import static dev.ikm.tinkar.fixtures.TestConstants.createFilePathInTarget;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 

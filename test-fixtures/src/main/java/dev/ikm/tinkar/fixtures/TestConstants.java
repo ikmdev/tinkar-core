@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.integration;
+package dev.ikm.tinkar.fixtures;
 
 import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.provider.ephemeral.ProviderEphemeral;

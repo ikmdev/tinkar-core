@@ -21,7 +21,7 @@ import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.builder.generator.ComponentDecompiler;
 import dev.ikm.tinkar.entity.builder.generator.ComponentDecompiler.ComponentSource;
 import dev.ikm.tinkar.entity.builder.generator.TinkarTermReferenceResolver;
-import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityFacade;

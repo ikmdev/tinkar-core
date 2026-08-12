@@ -21,7 +21,7 @@ import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticRecord;
 import dev.ikm.tinkar.entity.SemanticVersionRecord;
 import dev.ikm.tinkar.entity.StampRecord;
-import dev.ikm.tinkar.integration.NewEphemeralKeyValueProvider;
+import dev.ikm.tinkar.fixtures.NewEphemeralKeyValueProvider;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;

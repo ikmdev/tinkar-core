@@ -80,6 +80,11 @@
             <artifactId>integration</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>test-fixtures</artifactId>
+        </dependency>
+
         <!-- Reasoner Submodules (Start) -->
 
         <dependency>

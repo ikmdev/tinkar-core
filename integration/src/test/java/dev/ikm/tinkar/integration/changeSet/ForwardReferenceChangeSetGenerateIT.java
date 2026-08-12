@@ -23,8 +23,8 @@ import dev.ikm.tinkar.entity.SemanticRecord;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.entity.transform.EntityToTinkarSchemaTransformer;
-import dev.ikm.tinkar.integration.OpenSpinedArrayKeyValueProvider;
-import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.fixtures.OpenSpinedArrayKeyValueProvider;
+import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import dev.ikm.tinkar.terms.State;
@@ -47,7 +47,7 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static dev.ikm.tinkar.integration.TestConstants.createFilePathInTarget;
+import static dev.ikm.tinkar.fixtures.TestConstants.createFilePathInTarget;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**

@@ -51,6 +51,7 @@
         <subproject>entity</subproject>
         <subproject>language-extensions</subproject>
         <subproject>terms</subproject>
+        <subproject>test-fixtures</subproject>
         <subproject>provider</subproject>
         <subproject>reasoner</subproject>
         <subproject>integration</subproject>

@@ -17,7 +17,7 @@ package dev.ikm.tinkar.integration.snomed.relationship;
 
 import dev.ikm.tinkar.entity.SemanticRecord;
 import dev.ikm.tinkar.entity.SemanticVersionRecord;
-import dev.ikm.tinkar.integration.NewEphemeralKeyValueProvider;
+import dev.ikm.tinkar.fixtures.NewEphemeralKeyValueProvider;
 import dev.ikm.tinkar.integration.snomed.core.MockEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

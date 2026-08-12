@@ -22,7 +22,7 @@ import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.composer.Composer;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
-import dev.ikm.tinkar.integration.TestConstants;
+import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.common.service.SearchService;
