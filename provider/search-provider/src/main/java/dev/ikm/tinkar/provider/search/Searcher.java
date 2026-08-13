@@ -30,12 +30,15 @@ import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithC
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.EntityHandle;
+import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityVersion;
+import dev.ikm.tinkar.entity.PatternEntity;
+import dev.ikm.tinkar.entity.PatternEntityVersion;
+import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
@@ -51,7 +54,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 public class Searcher {
     private static final Logger LOG = LoggerFactory.getLogger(Searcher.class);
@@ -145,12 +152,21 @@ public class Searcher {
         LOG.info("Opened lucene searcher in: " + stopwatch.durationString());
     }
 
-    private String preprocessQueryString(String queryString) {
-        if (QueryParserUtil.escape(queryString).equals(queryString)) {
-            queryString += "*";
-            LOG.debug("Searcher - Simple query converted to prefix query: {}", queryString);
+    private Optional<Query> parseQuery(String queryString) {
+        if (queryString == null || queryString.isBlank()) {
+            return Optional.empty();
         }
-        return queryString;
+        String q = queryString.strip();
+        if (QueryParserUtil.escape(q).equals(q)) {
+            q += "*";
+            LOG.debug("Searcher - Simple query converted to prefix query: {}", q);
+        }
+        try {
+            return Optional.of(parser.parse(q, IndexerSchema.TEXT.name()));
+        } catch (QueryNodeException | RuntimeException e) {
+            LOG.warn("Searcher - Failed to parse query '{}': {}", queryString, e.getMessage());
+            return Optional.empty();
+        }
     }
 
     /**
@@ -163,7 +179,7 @@ public class Searcher {
      * {@link UnifiedHighlighter#highlightWithoutSearcher} to mark up matching
      * tokens. Matching is therefore stem-/analyzer-aware (a query of
      * {@code "topping"} marks {@code "Toppings"}) and respects the query
-     * grammar the {@link QueryParser} accepts.
+     * grammar the {@link StandardQueryParser} accepts.
      *
      * <p>Intended for UI surfaces that need to highlight strings that aren't
      * themselves search hits — e.g. a concept's preferred name shown above
@@ -174,29 +190,31 @@ public class Searcher {
      * @return {@code text} with matched tokens wrapped in {@code <B>...</B>},
      *         or the original {@code text} when there are no matches or either
      *         input is null/empty
-     * @throws ParseException if {@code queryString} cannot be parsed
+     * @throws IOException if an error occurs during highlighting
      */
-    public String highlight(String queryString, String text) throws ParseException, IOException, QueryNodeException {
-        if (queryString == null || queryString.isEmpty() || text == null || text.isEmpty()) {
+    public String highlight(String queryString, String text) throws IOException {
+        if (text == null || text.isEmpty()) {
             return text == null ? "" : text;
         }
-        queryString = preprocessQueryString(queryString);
-        Query query = parser.parse(queryString, IndexerSchema.TEXT.name());
+        Optional<Query> query = parseQuery(queryString);
+        if (query.isEmpty()) {
+            return text;
+        }
         UnifiedHighlighter highlighter = UnifiedHighlighter
                 .builderWithoutSearcher(Indexer.analyzer())
                 .withFormatter(new DefaultPassageFormatter("<B>", "</B>", "", false))
                 .build();
         Object marked = highlighter.highlightWithoutSearcher(
-                IndexerSchema.TEXT.name(), query, text, 1);
+                IndexerSchema.TEXT.name(), query.get(), text, 1);
         return marked == null ? text : marked.toString();
     }
 
-    public PrimitiveDataSearchResult[] search(String queryString, int maxResultSize) throws
-            ParseException, IOException, QueryNodeException {
+    public PrimitiveDataSearchResult[] search(String queryString, int maxResultSize) throws IOException {
         LOG.debug("Searcher.search() called with queryString='{}', maxResultSize={}", queryString, maxResultSize);
 
-        if (queryString == null || queryString.isEmpty()) {
-            LOG.debug("Searcher.search() - Query string is null or empty, returning empty results");
+        Optional<Query> query = parseQuery(queryString);
+        if (query.isEmpty()) {
+            LOG.debug("Searcher.search() - Query string is empty or invalid, returning empty results");
             return new PrimitiveDataSearchResult[0];
         }
 
@@ -212,11 +230,9 @@ public class Searcher {
         IndexSearcher indexSearcher = mgr.acquire();
         LOG.debug("Searcher.search() - Acquired IndexSearcher");
         try {
-            queryString = preprocessQueryString(queryString);
-            Query query = parser.parse(queryString, IndexerSchema.TEXT.name());
-            LOG.debug("Searcher.search() - Parsed query: {}", query);
+            LOG.debug("Searcher.search() - Executing query: {}", query.get());
 
-            TopDocs topDocs = indexSearcher.search(query, maxResultSize);
+            TopDocs topDocs = indexSearcher.search(query.get(), maxResultSize);
             ScoreDoc[] hits = topDocs.scoreDocs;
             LOG.debug("Searcher.search() - Found {} hits", hits.length);
 
@@ -226,7 +242,7 @@ public class Searcher {
             // HighlightedSegments parses on the UI side.
             UnifiedHighlighter highlighter = new EntityStoreBackedHighlighter(indexSearcher, Indexer.analyzer());
             highlighter.setFormatter(new DefaultPassageFormatter("<B>", "</B>", "", false));
-            String[] snippets = highlighter.highlight(IndexerSchema.TEXT.name(), query, topDocs);
+            String[] snippets = highlighter.highlight(IndexerSchema.TEXT.name(), query.get(), topDocs);
 
             PrimitiveDataSearchResult[] results = new PrimitiveDataSearchResult[hits.length];
             for (int i = 0; i < hits.length; i++) {
@@ -238,6 +254,9 @@ public class Searcher {
             }
             LOG.debug("Searcher.search() - Returning {} results", results.length);
             return results;
+        } catch (RuntimeException e) {
+            LOG.warn("Searcher.search() - Execution failed for query '{}': {}", queryString, e.getMessage());
+            return new PrimitiveDataSearchResult[0];
         } finally {
             // Release against the SAME manager we acquired from — the static
             // field may be swapped or nulled by a concurrent close/reopen.
