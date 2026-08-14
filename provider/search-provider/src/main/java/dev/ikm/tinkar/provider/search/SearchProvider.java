@@ -383,7 +383,18 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
      * Controller for SearchProvider lifecycle management.
      * <p>     * Manages the lifecycle of search services during the INDEXING phase,
      * which occurs after DATA_STORAGE but before CORE_SERVICES.
-     * This is NOT a user-selectable data source - it runs automatically.
+     *
+     * <p><b>Mutual Exclusion</b></p>
+     * <p>     * This controller belongs to {@link ServiceExclusionGroup#SEARCH_ENGINE}, so at most
+     * one search engine runs per JVM. When it is the only candidate — every deployment that
+     * does not put a remote search provider on the module path — the lifecycle manager
+     * auto-selects it, so local Lucene indexing behaves exactly as before.
+     *
+     * <p>When a remote search provider is also present (for example the gRPC plugin's
+     * {@code GrpcSearchService.Controller}), selecting that one excludes this controller and
+     * no Lucene index is built. That matters beyond wasted work: this provider creates its
+     * index directory eagerly at construction, so leaving it active in a remote-backed
+     * session writes an empty index for a store that is never queried.
      *
      * <p><b>Type Relationship</b></p>
      * <p>     * This controller extends {@code ProviderController<SearchProvider>} where {@code SearchProvider}
@@ -444,7 +455,7 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
 
         @Override
         public Optional<ServiceExclusionGroup> getMutualExclusionGroup() {
-            return Optional.empty();
+            return Optional.of(ServiceExclusionGroup.SEARCH_ENGINE);
         }
 
         @Override
