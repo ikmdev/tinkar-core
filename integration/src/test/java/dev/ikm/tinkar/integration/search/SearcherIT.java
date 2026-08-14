@@ -17,6 +17,7 @@ package dev.ikm.tinkar.integration.search;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.service.SearchService;
 import dev.ikm.tinkar.common.service.ServiceLifecycleManager;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.composer.Composer;
@@ -25,7 +26,6 @@ import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithC
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
-import dev.ikm.tinkar.common.service.SearchService;
 import dev.ikm.tinkar.provider.search.Searcher;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -41,6 +41,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -186,5 +187,94 @@ public class SearcherIT {
         assertFalse(publicId.isPresent(), "Concept should be null for non-existing Identifier Value");
         publicId = Searcher.getPublicId(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, TinkarTerm.KOMET_BASE_MODEL_COMPONENT_PATTERN.asUuidArray()[0].toString());
         assertFalse(publicId.isPresent(), "Concept should be null for non-semantic uuid");
+    }
+
+    @Test
+    public void searchWhitespaceDoesNotThrowNPE() {
+        SearchService searchService = ServiceLifecycleManager.get()
+                .getRunningService(SearchService.class)
+                .orElseThrow(() -> new IllegalStateException("SearchService not available"));
+
+        assertDoesNotThrow(() -> {
+            var results = searchService.search(" ", 100);
+            assertEquals(0, results.length);
+        });
+    }
+
+    @Test
+    public void searchEmptyDoesNotThrowNPE() {
+        SearchService searchService = ServiceLifecycleManager.get()
+                .getRunningService(SearchService.class)
+                .orElseThrow(() -> new IllegalStateException("SearchService not available"));
+
+        assertDoesNotThrow(() -> {
+            var results = searchService.search("", 100);
+            assertEquals(0, results.length);
+        });
+    }
+
+    @Test
+    public void highlightWhitespaceDoesNotThrowNPE() {
+        SearchService searchService = ServiceLifecycleManager.get()
+                .getRunningService(SearchService.class)
+                .orElseThrow(() -> new IllegalStateException("SearchService not available"));
+
+        assertDoesNotThrow(() -> {
+            String text = "Some sample text";
+            String result = searchService.highlight(" ", text);
+            assertEquals(text, result);
+        });
+    }
+
+    @Test
+    public void searchTrailingWhitespaceWorks() {
+        SearchService searchService = ServiceLifecycleManager.get()
+                .getRunningService(SearchService.class)
+                .orElseThrow(() -> new IllegalStateException("SearchService not available"));
+
+        assertDoesNotThrow(() -> {
+            // "user " should be trimmed to "user" and return results
+            var results = searchService.search("user ", 100);
+            assertTrue(results.length > 0, "Should find results for 'user ' (trimmed to 'user')");
+        });
+    }
+
+    @Test
+    public void highlightEmptyDoesNotThrowNPE() {
+        SearchService searchService = ServiceLifecycleManager.get()
+                .getRunningService(SearchService.class)
+                .orElseThrow(() -> new IllegalStateException("SearchService not available"));
+
+        assertDoesNotThrow(() -> {
+            String text = "Some sample text";
+            String result = searchService.highlight("", text);
+            assertEquals(text, result);
+        });
+    }
+
+    @Test
+    public void searchUnicodeWhitespaceDoesNotThrowNPE() {
+        SearchService searchService = ServiceLifecycleManager.get()
+                .getRunningService(SearchService.class)
+                .orElseThrow(() -> new IllegalStateException("SearchService not available"));
+
+        assertDoesNotThrow(() -> {
+            // \u2003 is a Unicode em space
+            var results = searchService.search("\u2003", 100);
+            assertEquals(0, results.length);
+        });
+    }
+
+    @Test
+    public void searchTrailingUnicodeWhitespaceWorks() {
+        SearchService searchService = ServiceLifecycleManager.get()
+                .getRunningService(SearchService.class)
+                .orElseThrow(() -> new IllegalStateException("SearchService not available"));
+
+        assertDoesNotThrow(() -> {
+            // "user\u2003" should be stripped to "user" and return results
+            var results = searchService.search("user\u2003", 100);
+            assertTrue(results.length > 0, "Should find results for 'user\u2003' (stripped to 'user')");
+        });
     }
 }
