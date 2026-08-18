@@ -10,7 +10,7 @@
 
     <properties>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-        <tinkar-composer.version>1.14.3</tinkar-composer.version>
+        <tinkar-composer.version>1.14.4</tinkar-composer.version>
         <failsafeArgLine>
             --enable-preview
             -Xmx12G
