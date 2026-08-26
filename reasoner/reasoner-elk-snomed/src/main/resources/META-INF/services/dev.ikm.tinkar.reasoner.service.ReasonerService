@@ -1,0 +1,12 @@
+# ServiceLoader registration for classpath consumers.
+#
+# module-info.java already declares "provides ReasonerService with
+# ElkSnomedReasonerService", but a provides directive is only honoured when this
+# jar is on the MODULE path. On the classpath the descriptor is inert and
+# ServiceLoader reads this file instead, so without it the reasoner is invisible
+# to any classpath application — tinkar-service among them, where RunReasoner
+# failed with "No ReasonerService implementation found via SPI".
+#
+# Both registrations are needed and they do not conflict: on the module path the
+# JDK uses the descriptor and ignores this file.
+dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedReasonerService
