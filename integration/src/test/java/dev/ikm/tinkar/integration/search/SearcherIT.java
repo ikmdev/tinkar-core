@@ -17,13 +17,10 @@ package dev.ikm.tinkar.integration.search;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
-import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
 import dev.ikm.tinkar.common.service.SearchService;
 import dev.ikm.tinkar.common.service.ServiceLifecycleManager;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.composer.Composer;
-import dev.ikm.tinkar.composer.Session;
-import dev.ikm.tinkar.composer.template.Synonym;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
 import dev.ikm.tinkar.fixtures.TestConstants;
@@ -31,7 +28,6 @@ import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.provider.search.Searcher;
 import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.junit.jupiter.api.AfterAll;
@@ -42,7 +38,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -281,97 +276,5 @@ public class SearcherIT {
             var results = searchService.search("user\u2003", 100);
             assertTrue(results.length > 0, "Should find results for 'user\u2003' (stripped to 'user')");
         });
-    }
-
-    /**
-     * Composes a new Synonym description with the given text on {@link TinkarTerm#USER},
-     * returning the {@link EntityProxy.Semantic} proxy so callers can identify the resulting
-     * search hit by nid.
-     */
-    private EntityProxy.Semantic composeSynonym(String text) {
-        EntityProxy.Semantic semanticProxy = EntityProxy.Semantic.make(PublicIds.newRandom());
-        Session session = composer.open(State.ACTIVE, TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        session.compose(new Synonym()
-                        .semantic(semanticProxy)
-                        .language(TinkarTerm.ENGLISH_LANGUAGE)
-                        .caseSignificance(TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE)
-                        .text(text),
-                TinkarTerm.USER);
-        composer.commitSession(session);
-        return semanticProxy;
-    }
-
-    private Optional<PrimitiveDataSearchResult> findByNid(PrimitiveDataSearchResult[] results, int nid) {
-        return Arrays.stream(results).filter(r -> r.nid() == nid).findFirst();
-    }
-
-    @Test
-    public void exactTokenRanksAbovePrefixOnlyTokenForSimpleQuery() throws Exception {
-        // Given two new descriptions: one containing the exact query token, and
-        // one containing the token only as a prefix of a longer word
-        EntityProxy.Semantic exactSemantic = composeSynonym("zzzexactalpha");
-        EntityProxy.Semantic prefixOnlySemantic = composeSynonym("zzzexactalphabetic");
-
-        SearchService searchService = ServiceLifecycleManager.get()
-                .getRunningService(SearchService.class)
-                .orElseThrow(() -> new IllegalStateException("SearchService not available"));
-
-        // When searching the simple query "zzzexactalpha"
-        PrimitiveDataSearchResult[] results = searchService.search("zzzexactalpha", 100);
-
-        // Then both descriptions are found, and the exact match outranks the prefix-only match
-        Optional<PrimitiveDataSearchResult> exactHit = findByNid(results, exactSemantic.nid());
-        Optional<PrimitiveDataSearchResult> prefixHit = findByNid(results, prefixOnlySemantic.nid());
-
-        assertTrue(exactHit.isPresent(), "Exact-match description should be found");
-        assertTrue(prefixHit.isPresent(), "Prefix-only description should still be found");
-        assertTrue(exactHit.get().score() > prefixHit.get().score(),
-                "Exact match score (" + exactHit.get().score() + ") should be greater than prefix-only match score (" + prefixHit.get().score() + ")");
-    }
-
-    @Test
-    public void simplePrefixQueryStillFindsLongerTerm() throws Exception {
-        // Given a description containing a longer word starting with the query token
-        EntityProxy.Semantic prefixOnlySemantic = composeSynonym("zzzprefixalphabetic");
-
-        SearchService searchService = ServiceLifecycleManager.get()
-                .getRunningService(SearchService.class)
-                .orElseThrow(() -> new IllegalStateException("SearchService not available"));
-
-        // When searching a true prefix of that word (not itself an indexed token)
-        PrimitiveDataSearchResult[] results = searchService.search("zzzprefixalph", 100);
-
-        // Then prefix (type-ahead style) matching still finds the longer term
-        assertTrue(findByNid(results, prefixOnlySemantic.nid()).isPresent(),
-                "Simple prefix query should still find the longer indexed term");
-    }
-
-    @Test
-    public void advancedWildcardQueryStillWorks() throws Exception {
-        // Given a description containing a word matching an explicit wildcard query
-        EntityProxy.Semantic semantic = composeSynonym("zzzwildcardalpha");
-
-        SearchService searchService = ServiceLifecycleManager.get()
-                .getRunningService(SearchService.class)
-                .orElseThrow(() -> new IllegalStateException("SearchService not available"));
-
-        // When searching with explicit advanced Lucene wildcard syntax
-        PrimitiveDataSearchResult[] results = assertDoesNotThrow(() -> searchService.search("zzzwildcardalph*", 100));
-
-        // Then the wildcard query still parses and finds the match, unaffected by the
-        // boosted exact+prefix wrapper (which only applies to simple queries)
-        assertTrue(findByNid(results, semantic.nid()).isPresent(),
-                "Explicit wildcard query should still find the matching term");
-    }
-
-    @Test
-    public void highlightWithSimpleQueryStillMarksMatchingText() throws Exception {
-        SearchService searchService = ServiceLifecycleManager.get()
-                .getRunningService(SearchService.class)
-                .orElseThrow(() -> new IllegalStateException("SearchService not available"));
-
-        String result = searchService.highlight("zzzhighlightalpha", "Zzzhighlightalpha zzzhighlightalphabetic beta");
-
-        assertTrue(result.contains("<B>Zzzhighlightalpha</B>"), "Exact term should be highlighted: " + result);
     }
 }

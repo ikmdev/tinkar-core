@@ -40,6 +40,7 @@ import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
+import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -66,7 +67,6 @@ public class Searcher {
     public static final EntityProxy.Pattern QUANTITATIVE_ALLOWED_RESULT_SET_PATTERN = EntityProxy.Pattern.make(null, UUID.fromString("9d40d06b-7776-5a56-97e4-0c27f5d574c7"));
     public static final EntityProxy.Pattern QUALITATIVE_ALLOWED_RESULT_SET_PATTERN = EntityProxy.Pattern.make(null, UUID.fromString("160a63a6-3cba-510e-83d1-235822045885"));
     StandardQueryParser parser;
-    private SearchQueryFactory queryFactory;
     private static SearcherManager searcherManager;
     private static boolean searcherManagerFromWriter = false;
 
@@ -141,7 +141,6 @@ public class Searcher {
         LOG.info("Opening lucene searcher");
         this.parser = new StandardQueryParser();
         this.parser.setAnalyzer(Indexer.analyzer());
-        this.queryFactory = new SearchQueryFactory(this.parser);
         if (ensureSearcherManager() == null) {
             LOG.error("Indexer.indexWriter() is null - Indexer must be created before Searcher");
             LOG.error("SearchProvider should create Indexer first, then Searcher");
@@ -154,8 +153,16 @@ public class Searcher {
     }
 
     private Optional<Query> parseQuery(String queryString) {
+        if (queryString == null || queryString.isBlank()) {
+            return Optional.empty();
+        }
+        String q = queryString.strip();
+        if (QueryParserUtil.escape(q).equals(q)) {
+            q += "*";
+            LOG.debug("Searcher - Simple query converted to prefix query: {}", q);
+        }
         try {
-            return queryFactory.buildQuery(queryString);
+            return Optional.of(parser.parse(q, IndexerSchema.TEXT.name()));
         } catch (QueryNodeException | RuntimeException e) {
             LOG.warn("Searcher - Failed to parse query '{}': {}", queryString, e.getMessage());
             return Optional.empty();
