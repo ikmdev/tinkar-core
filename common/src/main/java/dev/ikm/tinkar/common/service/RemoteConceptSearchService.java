@@ -51,11 +51,18 @@ public interface RemoteConceptSearchService {
     /**
      * A single semantic match within a {@link GroupedResult}.
      *
+     * <p>The public ID travels with the match because a remote client has no local
+     * entity to derive it from — nids are local to a data store. Without it a UI can
+     * render the matched text but cannot identify the semantic behind it, so anything
+     * keyed on identity (an icon, opening the semantic, dragging it) has nothing to
+     * work from.
+     *
+     * @param publicId        stable UUIDs identifying the matched semantic; may be empty
      * @param highlightedText matched text with {@code <B>…</B>} markup
      * @param plainText       plain text without HTML markup
      * @param score           relevance score
      */
-    record MatchingSemantic(String highlightedText, String plainText, float score) {}
+    record MatchingSemantic(List<String> publicId, String highlightedText, String plainText, float score) {}
 
     /**
      * A top-level (grouped) search result — one per matching concept.
