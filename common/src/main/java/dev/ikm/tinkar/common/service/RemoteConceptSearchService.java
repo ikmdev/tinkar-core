@@ -51,17 +51,33 @@ public interface RemoteConceptSearchService {
     /**
      * A single semantic match within a {@link GroupedResult}.
      *
+     * <p>The public ID travels with the match because a remote client has no local
+     * entity to derive it from — nids are local to a data store. Without it a UI can
+     * render the matched text but cannot identify the semantic behind it, so anything
+     * keyed on identity (an icon, opening the semantic, dragging it) has nothing to
+     * work from.
+     *
+     * @param publicId        stable UUIDs identifying the matched semantic; may be empty
      * @param highlightedText matched text with {@code <B>…</B>} markup
      * @param plainText       plain text without HTML markup
      * @param score           relevance score
      */
-    record MatchingSemantic(String highlightedText, String plainText, float score) {}
+    record MatchingSemantic(List<String> publicId, String highlightedText, String plainText, float score) {}
 
     /**
      * A top-level (grouped) search result — one per matching concept.
      *
+     * <p>Three names are carried because a remote client cannot derive them itself: nids
+     * are local to a data store, so a client holding only a public ID cannot resolve a
+     * concept's descriptions against its own view coordinate the way a local calculator
+     * does. Sending all three lets a UI show the same label it would show locally.
+     *
      * @param publicId           stable UUIDs identifying the concept
      * @param fullyQualifiedName FQN of the concept
+     * @param preferredName      the concept's preferred description, per the responding
+     *                           service's language coordinate; may be empty
+     * @param highlightedName    {@code preferredName} with {@code <B>…</B>} markup on the
+     *                           parts matching the query; may be empty
      * @param active             whether the concept is currently active
      * @param topScore           highest relevance score among child semantics
      * @param matchingSemantics  child semantic matches
@@ -69,9 +85,31 @@ public interface RemoteConceptSearchService {
     record GroupedResult(
             List<String> publicId,
             String fullyQualifiedName,
+            String preferredName,
+            String highlightedName,
             boolean active,
             float topScore,
-            List<MatchingSemantic> matchingSemantics) {}
+            List<MatchingSemantic> matchingSemantics) {
+
+        /**
+         * The best available label for this result: the highlighted preferred name when the
+         * service supplied one, then the plain preferred name, falling back to the FQN.
+         *
+         * <p>The returned string may carry {@code <B>…</B>} markup, so render it through a
+         * highlight-aware renderer rather than setting it as plain text.
+         *
+         * @return a non-null display label
+         */
+        public String displayName() {
+            if (highlightedName != null && !highlightedName.isBlank()) {
+                return highlightedName;
+            }
+            if (preferredName != null && !preferredName.isBlank()) {
+                return preferredName;
+            }
+            return fullyQualifiedName == null ? "" : fullyQualifiedName;
+        }
+    }
 
     /**
      * A flat semantic search result (SEMANTIC sort modes) — one per matched semantic.
