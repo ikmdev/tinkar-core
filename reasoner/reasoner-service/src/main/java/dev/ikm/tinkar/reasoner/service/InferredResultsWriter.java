@@ -398,6 +398,19 @@ public class InferredResultsWriter {
 			}
 			updateTransaction.commit();
 
+		} catch (RuntimeException | Error failure) {
+			// Entities are staged into the transaction from the moment it is made until the
+			// commit above, so anything thrown in between would otherwise leave uncommitted
+			// stamps behind in a store other clients read. Cancelling marks them CANCELED so a
+			// failed write leaves nothing half-applied.
+			LOG.error("Writing inferred results failed — cancelling the transaction", failure);
+			try {
+				updateTransaction.cancel();
+			} catch (RuntimeException cancelFailure) {
+				// Report it, but let the original failure be the one that propagates.
+				LOG.error("Could not cancel the reasoner results transaction", cancelFailure);
+			}
+			throw failure;
 		} finally {
 			EntityService.get().endLoadPhase();
 		}
