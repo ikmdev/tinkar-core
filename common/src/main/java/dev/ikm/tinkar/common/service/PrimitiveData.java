@@ -20,7 +20,7 @@ import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.EntityKey;
 import dev.ikm.tinkar.common.id.IntIdCollection;
 import dev.ikm.tinkar.common.id.PublicId;
-import dev.ikm.tinkar.common.id.impl.NidCodec6;
+import dev.ikm.tinkar.common.id.impl.NidCodec8;
 import org.eclipse.collections.api.list.primitive.IntList;
 import org.eclipse.collections.api.set.primitive.IntSet;
 import org.slf4j.Logger;
@@ -372,11 +372,11 @@ public class PrimitiveData {
     }
 
     public static long elementSequenceForNid(int nid) {
-        return NidCodec6.decodeElementSequence(nid);
+        return NidCodec8.decodeElementSequence(nid);
     }
 
     public static int patternSequenceForNid(int nid) {
-        return NidCodec6.decodePatternSequence(nid);
+        return NidCodec8.decodePatternSequence(nid);
     }
 
     /**
