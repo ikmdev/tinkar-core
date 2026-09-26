@@ -37,9 +37,10 @@ package dev.ikm.tinkar.common.id.impl;
  * </ul>
  *
  * <p>Nids are persisted in the RocksDB knowledge base's entity bytes, so the
- * layout is part of the stored format. A database written with the 6-bit
- * layout ({@code NidCodec6}: 63 patterns) cannot be read with this one; it is
- * recognized on open by the absence of pattern sequence
+ * layout is part of the stored format. New databases use this layout; a
+ * database written with the 6-bit layout ({@link NidCodec6}: 63 patterns) is
+ * still opened in that layout. {@link NidLayout} selects between them when a
+ * database opens, by the presence of pattern sequence
  * {@value #PATTERN_PATTERN_SEQUENCE}, which the 6-bit layout cannot produce.
  *
  * {@snippet lang="java":
@@ -63,7 +64,8 @@ public final class NidCodec8 {
     /**
      * Pattern sequence of the pattern-of-patterns. Fixed — never derived from
      * {@link #MAX_PATTERN_SEQUENCE} and never assigned to an ordinary pattern —
-     * because its presence is what identifies a database as 8-bit.
+     * because its presence is what identifies a database as 8-bit
+     * ({@link NidLayout#detect}).
      */
     public static final int PATTERN_PATTERN_SEQUENCE = 255;
 

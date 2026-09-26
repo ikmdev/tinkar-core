@@ -1,7 +1,7 @@
 package dev.ikm.tinkar.common.id;
 
 import dev.ikm.tinkar.common.id.impl.KeyUtil;
-import dev.ikm.tinkar.common.id.impl.NidCodec8;
+import dev.ikm.tinkar.common.id.impl.NidLayout;
 
 /**
  * Represents a unique key for an entity, combining various sequences to produce a single key.
@@ -39,7 +39,7 @@ public interface EntityKey {
      * @return an integer representing the unique identifier (NID)
      */
     default int nid() {
-        return NidCodec8.encode(patternSequence(), elementSequence());
+        return NidLayout.active().encode(patternSequence(), elementSequence());
     }
 
     default byte[] toBytes() {
@@ -59,7 +59,7 @@ public interface EntityKey {
     }
 
     static EntityKey ofNid(int nid) {
-        return new EntityKeyRecord(NidCodec8.decodePatternSequence(nid), NidCodec8.decodeElementSequence(nid));
+        return new EntityKeyRecord(NidLayout.active().decodePatternSequence(nid), NidLayout.active().decodeElementSequence(nid));
     }
 
     static EntityKey ofLongKey(long longKey) {
@@ -133,7 +133,7 @@ public interface EntityKey {
      * Special EntityKey implementation for providers that use sequential NIDs
      * (SpinedArray, MVStore, Ephemeral) rather than pattern-encoded NIDs.
      * <p>     * This implementation stores the NID directly and returns it unchanged from {@link #nid()},
-     * bypassing the NidCodec8 encoding. The pattern sequence is always 0 (indicating
+     * bypassing the pattern-encoded nid layout. The pattern sequence is always 0 (indicating
      * "not pattern-encoded") and the element sequence equals the NID value offset to be positive.
      * <p>     * This allows the EntityKey API to be satisfied while maintaining compatibility with
      * existing sequential NID assignment in non-RocksDB providers.
@@ -165,7 +165,7 @@ public interface EntityKey {
         }
 
         /**
-         * Returns the original sequential NID directly, bypassing NidCodec8.
+         * Returns the original sequential NID directly, bypassing NidLayout.active().
          */
         @Override
         public int nid() {
