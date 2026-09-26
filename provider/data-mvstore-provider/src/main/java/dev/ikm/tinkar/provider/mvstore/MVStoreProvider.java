@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.provider.mvstore;
 
+import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.provider.search.DataStoreLockProbe;
@@ -74,7 +75,7 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     final String name;
     protected LongAdder writeSequence = new LongAdder();
     ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Integer>> patternElementNidsMap = ConcurrentHashMap.newMap();
-    final StableValue<SearchService> searchService = StableValue.of();
+    final SetOnce<SearchService> searchService = new SetOnce<>();
     private volatile boolean loadPhase = false;
 
 

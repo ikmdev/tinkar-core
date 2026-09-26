@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.provider.ephemeral;
 
+import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.collection.KeyType;
 import dev.ikm.tinkar.collection.SpinedIntIntMapAtomic;
 import dev.ikm.tinkar.common.id.PublicId;
@@ -65,7 +66,7 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     private final ConcurrentHashMap<Integer, byte[]> nidComponentMap = ConcurrentHashMap.newMap();
     private final ConcurrentHashMap<UUID, Integer> uuidNidMap = new ConcurrentHashMap<>();
     private final AtomicInteger nextNid = new AtomicInteger(PrimitiveDataService.FIRST_NID);
-    final StableValue<SearchService> searchService = StableValue.of();
+    final SetOnce<SearchService> searchService = new SetOnce<>();
     private volatile boolean loadPhase = false;
 
     private ProviderEphemeral() {

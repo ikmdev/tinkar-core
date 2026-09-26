@@ -127,15 +127,23 @@ public class InferredResultsWriter {
 		Entity.provider().putEntityNoCache(entity);
 	}
 
-	private StructuredTaskScope.Joiner<MutableIntList, Void> createAccumulatingJoiner(MutableIntList accumulator) {
-		return new StructuredTaskScope.Joiner<MutableIntList, Void>() {
+	private StructuredTaskScope.Joiner<MutableIntList, Void, RuntimeException> createAccumulatingJoiner(MutableIntList accumulator) {
+		return new StructuredTaskScope.Joiner<MutableIntList, Void, RuntimeException>() {
 			@Override
 			public Void result() {
 				return null;
 			}
 
 			@Override
-			public boolean onComplete(StructuredTaskScope.Subtask<? extends MutableIntList> subtask) {
+			public Void timeout() {
+				// The scope is opened without a timeout, so join() never calls this; if one is
+				// ever configured, report it rather than return a partial accumulation.
+				throw new IllegalStateException("inferred-results scope timed out",
+						new StructuredTaskScope.CancelledByTimeoutException());
+			}
+
+			@Override
+			public boolean onComplete(StructuredTaskScope.Subtask<MutableIntList> subtask) {
 				if (subtask.state() == StructuredTaskScope.Subtask.State.SUCCESS) {
 					accumulator.addAll(subtask.get());
 				}
@@ -143,7 +151,7 @@ public class InferredResultsWriter {
 			}
 
 			@Override
-			public boolean onFork(StructuredTaskScope.Subtask<? extends MutableIntList> subtask) {
+			public boolean onFork(StructuredTaskScope.Subtask<MutableIntList> subtask) {
 				return false; // Don't short-circuit on fork
 			}
 		};
@@ -232,14 +240,22 @@ public class InferredResultsWriter {
 			}
 
 			// Custom joiner that accumulates results as tasks complete
-			StructuredTaskScope.Joiner<ChunkResults, Void> accumulatingJoiner = new StructuredTaskScope.Joiner<>() {
+			StructuredTaskScope.Joiner<ChunkResults, Void, RuntimeException> accumulatingJoiner = new StructuredTaskScope.Joiner<>() {
 				@Override
 				public Void result() {
 					return null; // No final result needed
 				}
 
 				@Override
-				public boolean onComplete(StructuredTaskScope.Subtask<? extends ChunkResults> subtask) {
+				public Void timeout() {
+					// Opened without a timeout, so join() never calls this; if one is ever
+					// configured, report it rather than return partial results.
+					throw new IllegalStateException("inferred-results write scope timed out",
+							new StructuredTaskScope.CancelledByTimeoutException());
+				}
+
+				@Override
+				public boolean onComplete(StructuredTaskScope.Subtask<ChunkResults> subtask) {
 					if (subtask.state() == StructuredTaskScope.Subtask.State.SUCCESS) {
 						ChunkResults results = subtask.get();
 						// Add to master lists immediately as each task completes
@@ -254,7 +270,7 @@ public class InferredResultsWriter {
 				}
 
 				@Override
-				public boolean onFork(StructuredTaskScope.Subtask<? extends ChunkResults> subtask) {
+				public boolean onFork(StructuredTaskScope.Subtask<ChunkResults> subtask) {
 					return false; // Don't short-circuit on fork
 				}
 			};

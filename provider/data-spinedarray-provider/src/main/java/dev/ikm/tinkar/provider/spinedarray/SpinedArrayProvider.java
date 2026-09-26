@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.provider.spinedarray;
 
+import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.collection.KeyType;
 import dev.ikm.tinkar.collection.SpinedByteArrayMap;
 import dev.ikm.tinkar.collection.SpinedIntIntMap;
@@ -90,14 +91,14 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
 
     public static AtomicReference<Lifecycle> lifecycle = new AtomicReference<>(Lifecycle.UNINITIALIZED);
 
-    private static final StableValue<SpinedArrayProvider> spinedArrayProvider = StableValue.of();
+    private static final SetOnce<SpinedArrayProvider> spinedArrayProvider = new SetOnce<>();
     public static SpinedArrayProvider get() {
         // Set lifecycle to STARTING before attempting initialization
         lifecycle.compareAndSet(Lifecycle.UNINITIALIZED, Lifecycle.STARTING);
 
         return spinedArrayProvider.orElseSet(() -> {
             try {
-                LOG.info("StableValue.orElseSet: Creating new SpinedArrayProvider instance");
+                LOG.info("SetOnce.orElseSet: Creating new SpinedArrayProvider instance");
                 return new SpinedArrayProvider();
             } catch (IOException | ExecutionException | InterruptedException e) {
                 // Reset lifecycle on failure
@@ -130,7 +131,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     final File nidToByteArrayMapDirectory;
     final File nidToCitingComponentNidMapDirectory;
     final File nextNidKeyFile;
-    final StableValue<SearchService> searchService = StableValue.of();
+    final SetOnce<SearchService> searchService = new SetOnce<>();
     private volatile boolean loadPhase = false;
     final String name;
     final ImmutableList<ChangeSetWriterService> changeSetWriterServices;

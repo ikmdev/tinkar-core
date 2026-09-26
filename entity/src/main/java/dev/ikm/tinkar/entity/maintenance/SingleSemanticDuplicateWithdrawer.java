@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.maintenance;
 
+import dev.ikm.tinkar.common.util.thread.StructuredScopes;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
@@ -228,7 +229,7 @@ public final class SingleSemanticDuplicateWithdrawer {
         // Phase 2: parallel per-pattern processing.
         AtomicLong processedNids = new AtomicLong();
         List<StructuredTaskScope.Subtask<PatternResult>> subtasks = new ArrayList<>();
-        try (var scope = StructuredTaskScope.<PatternResult>open()) {
+        try (var scope = StructuredScopes.<PatternResult>open()) {
             for (PatternEnum pe : enumerated) {
                 subtasks.add(scope.fork(() -> {
                     listener.onPatternStarting(pe.pattern, pe.allNids.size());
@@ -269,7 +270,7 @@ public final class SingleSemanticDuplicateWithdrawer {
 
         if (!duplicateGroups.isEmpty()) {
             int chunkSize = chunkSize(duplicateGroups.size());
-            try (var scope = StructuredTaskScope.<Void>open()) {
+            try (var scope = StructuredScopes.<Void>open()) {
                 for (int start = 0; start < duplicateGroups.size(); start += chunkSize) {
                     int chunkStart = start;
                     int chunkEnd = Math.min(start + chunkSize, duplicateGroups.size());
@@ -315,7 +316,7 @@ public final class SingleSemanticDuplicateWithdrawer {
         int chunkSize = chunkSize(allNids.size());
         ImmutableIntList nids = allNids.toImmutable();
         List<StructuredTaskScope.Subtask<MutableIntObjectMap<MutableIntList>>> subtasks = new ArrayList<>();
-        try (var scope = StructuredTaskScope.<MutableIntObjectMap<MutableIntList>>open()) {
+        try (var scope = StructuredScopes.<MutableIntObjectMap<MutableIntList>>open()) {
             for (int start = 0; start < nids.size(); start += chunkSize) {
                 int chunkStart = start;
                 int chunkEnd = Math.min(start + chunkSize, nids.size());
