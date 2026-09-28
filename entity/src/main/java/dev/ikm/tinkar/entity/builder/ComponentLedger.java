@@ -79,16 +79,29 @@ final class ComponentLedger {
     private boolean fqnSeeded = false;
     private long lastStampTime = Long.MIN_VALUE;
     private boolean born = false;
+    /** Whether the component adopts an identity established elsewhere rather than deriving one. */
+    private final boolean identityDeclared;
+    /**
+     * Whether the opening scope was a retirement scope on an established component
+     * (IKE-Network/ike-issues#1130): the ledger retires what the base holds and seeds
+     * nothing of its own.
+     */
+    private boolean bornRetired = false;
 
-    ComponentLedger(PublicId componentId, String birthFqn, SessionRegistry registry) {
+    ComponentLedger(PublicId componentId, String birthFqn, SessionRegistry registry, boolean identityDeclared) {
         this.componentId = componentId;
         this.componentUuid = componentId.asUuidArray()[0];
         this.birthFqn = birthFqn;
         this.registry = registry;
+        this.identityDeclared = identityDeclared;
     }
 
     boolean born() {
         return born;
+    }
+
+    boolean bornRetired() {
+        return bornRetired;
     }
 
     /**
@@ -103,16 +116,41 @@ final class ComponentLedger {
     }
 
     /**
+     * Records the opening scope of a component this ledger did not declare: a retirement
+     * scope on an identity established elsewhere (IKE-Network/ike-issues#1130). The
+     * ledger adopts the identity and retires what the base holds without restating it.
+     * No version is recorded here: the scope's {@code retire()} records the component's
+     * own inactive version, and a scope that names only semantics leaves the component
+     * as the base has it. Nothing is seeded for such a component; its descriptions stay
+     * with the base.
+     *
+     * @throws IllegalStateException if the component's identity is derived: a component
+     *                               this ledger would have created has nothing
+     *                               established to retire
+     */
+    void birthRetired() {
+        if (!identityDeclared) {
+            throw new IllegalStateException(
+                    "Cannot open a retirement scope before the birth scope: " + birthFqn
+                            + " — only a component whose identity is established elsewhere can be"
+                            + " retired without one; declare that identity with concept(fqn, uuid)");
+        }
+        born = true;
+        bornRetired = true;
+    }
+
+    /**
      * Seeds the derived-identity fully-qualified-name description — and its US-dialect
      * acceptability — at the birth stamp, unless the ledger declared any description
      * explicitly as a generic declared-identity semantic. The auto-seed is an authoring
      * convenience default; ingested content carries its descriptions' established
      * identities — the FQN included — and seeding a derived twin would break
      * identity-exact round trip. Idempotent; runs on demand (write, or the first
-     * FQN-referencing verb).
+     * FQN-referencing verb). A component opened by a retirement scope seeds nothing
+     * either: its descriptions are the base's (IKE-Network/ike-issues#1130).
      */
     private void seedFqnIfImplicit() {
-        if (fqnSeeded || descriptionsDeclaredExplicitly) {
+        if (fqnSeeded || descriptionsDeclaredExplicitly || bornRetired) {
             return;
         }
         fqnSeeded = true;
@@ -188,6 +226,11 @@ final class ComponentLedger {
 
     /** The fully qualified name's ledger — seeded on demand, always the first description. */
     DescriptionLedger fqnLedger() {
+        if (bornRetired) {
+            throw new IllegalStateException(
+                    "The descriptions of " + birthFqn + " are the base's — a component opened by a"
+                            + " retirement scope carries no ledger fully qualified name to revise");
+        }
         if (descriptionsDeclaredExplicitly) {
             throw new IllegalStateException(
                     "The descriptions of " + birthFqn + " are declared explicitly with their"
@@ -308,21 +351,36 @@ final class ComponentLedger {
      * Appends a retirement version to a generic declared-identity semantic: the same
      * fields under an inactive stamp when {@code fieldValues} is empty (a pure status
      * change), or the given payload verbatim — retired versions carry field values too.
+     * <p>
+     * On a component opened by a retirement scope, an identity this ledger never declared
+     * names a semantic the base holds (IKE-Network/ike-issues#1130): the ledger opens it
+     * and the retired version carries exactly the given payload, none for a membership.
+     * On a born component the identity must have been declared, so a mistyped identity
+     * still fails at compose time.
      */
     void retireGenericVersion(EntityProxy.Pattern pattern, PublicId declaredIdentity,
                               InactiveStamp stamp, Object[] fieldValues) {
         requireDeclaredIdentity(declaredIdentity);
         GenericSemanticLedger semantic = genericSemantics.get(firstUuidOf(declaredIdentity));
+        List<Object> values;
         if (semantic == null) {
-            throw new IllegalArgumentException(
-                    "No semantic with declared identity " + declaredIdentity + " on " + birthFqn
-                            + " to retire — retirement follows declaration");
+            if (!bornRetired) {
+                throw new IllegalArgumentException(
+                        "No semantic with declared identity " + declaredIdentity + " on " + birthFqn
+                                + " to retire — retirement follows declaration");
+            }
+            if (pattern == null) {
+                throw new IllegalArgumentException("A generic semantic requires its pattern: " + birthFqn);
+            }
+            values = validateFieldValues(fieldValues);
+            semantic = openGenericSemantic(pattern, declaredIdentity, null);
+        } else {
+            requireSemanticIdentityAgreement(semantic, declaredIdentity);
+            requirePatternAgreement(semantic, pattern);
+            values = fieldValues.length == 0
+                    ? semantic.versions.getLast().value()
+                    : validateFieldValues(fieldValues);
         }
-        requireSemanticIdentityAgreement(semantic, declaredIdentity);
-        requirePatternAgreement(semantic, pattern);
-        List<Object> values = fieldValues.length == 0
-                ? semantic.versions.getLast().value()
-                : validateFieldValues(fieldValues);
         requireNewStamp(semantic.versions.stream().map(VersionEntry::stamp).toList(), stamp,
                 "semantic " + semantic.semanticId);
         semantic.versions.add(new VersionEntry<>(stamp, values));
@@ -533,6 +591,25 @@ final class ComponentLedger {
                     "the stated-axiom semantic");
         }
         axiomVersions.add(new VersionEntry<>(stamp, axioms));
+    }
+
+    /**
+     * Appends a stated-axiom retirement under the semantic's derived identity, or
+     * continues the declared semantic when one was declared. A component opened by a
+     * retirement scope has no derived axiom semantic to continue: the base's stated-axiom
+     * semantic must be retired under its established identity
+     * (IKE-Network/ike-issues#1130).
+     *
+     * @throws IllegalStateException if the component was opened by a retirement scope and
+     *                               no axiom identity has been declared
+     */
+    void retireAxiomVersion(InactiveStamp stamp, Consumer<LogicalExpressionBuilder> axioms) {
+        if (bornRetired && declaredAxiomIdentity == null) {
+            throw new IllegalStateException(
+                    "The stated-axiom semantic of " + birthFqn + " is the base's — retire it under"
+                            + " its established identity: retireStatedAxioms(identity, axioms)");
+        }
+        addAxiomVersion(stamp, axioms);
     }
 
     // ------------------------------------------------------------------ replay

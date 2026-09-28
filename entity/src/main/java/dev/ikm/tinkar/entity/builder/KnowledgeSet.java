@@ -206,7 +206,8 @@ public final class KnowledgeSet {
                 declaredIdentity != null ? declaredIdentity : PublicIds.of(uuidFor(fullyQualifiedName));
         requireReferenceFollowsDeclaration(fullyQualifiedName, declaredIdentity);
         registry.registerIdentity(identity, "concept \"" + fullyQualifiedName + "\"");
-        ConceptBuilder created = new ConceptBuilder(identity, fullyQualifiedName, registry);
+        ConceptBuilder created = new ConceptBuilder(identity, fullyQualifiedName, registry,
+                declaredIdentity != null);
         concepts.put(fullyQualifiedName, created);
         return created;
     }
@@ -283,7 +284,8 @@ public final class KnowledgeSet {
                 declaredIdentity != null ? declaredIdentity : PublicIds.of(uuidFor(fullyQualifiedName));
         requireReferenceFollowsDeclaration(fullyQualifiedName, declaredIdentity);
         registry.registerIdentity(identity, "pattern \"" + fullyQualifiedName + "\"");
-        PatternBuilder created = new PatternBuilder(identity, fullyQualifiedName, registry);
+        PatternBuilder created = new PatternBuilder(identity, fullyQualifiedName, registry,
+                declaredIdentity != null);
         patterns.put(fullyQualifiedName, created);
         return created;
     }

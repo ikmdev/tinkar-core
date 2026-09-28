@@ -56,6 +56,14 @@ import java.util.function.Consumer;
  *       append-only).</li>
  *   <li><b>Status is compile-visible.</b> {@link #at(ActiveStamp)} yields content verbs;
  *       {@link #at(InactiveStamp)} yields only retirement verbs.</li>
+ *   <li><b>Established content retires without restatement.</b> A concept declared with
+ *       an identity established elsewhere ({@link KnowledgeSet#concept(String, java.util.UUID)})
+ *       may open its first scope at an inactive stamp (IKE-Network/ike-issues#1130): the
+ *       ledger adopts what the base holds and retires it — the concept with
+ *       {@link RetireScope#retire()}, its definition with
+ *       {@link RetireScope#retireStatedAxioms(PublicId, Consumer)}, any other semantic with
+ *       {@link RetireScope#retireSemantic(EntityProxy.Pattern, PublicId, Object...)} — one
+ *       inactive version each, the base's descriptions left in place.</li>
  * </ul>
  *
  * <h2>Identity</h2>
@@ -85,8 +93,8 @@ public final class ConceptBuilder {
 
     private final ComponentLedger ledger;
 
-    ConceptBuilder(PublicId componentId, String birthFqn, SessionRegistry registry) {
-        this.ledger = new ComponentLedger(componentId, birthFqn, registry);
+    ConceptBuilder(PublicId componentId, String birthFqn, SessionRegistry registry, boolean identityDeclared) {
+        this.ledger = new ComponentLedger(componentId, birthFqn, registry, identityDeclared);
     }
 
     /**
@@ -127,15 +135,29 @@ public final class ConceptBuilder {
      * Opens a retirement scope at the given inactive stamp. Only retirement verbs are
      * available: retirement is always a new version bound to a new inactive stamp, never
      * a mutation, matching the append-only stamp discipline.
+     * <p>
+     * A concept with a declared identity and no birth scope opens here too
+     * (IKE-Network/ike-issues#1130): the identity is established elsewhere, the base
+     * holds the concept and its semantics, and this scope retires them without
+     * restatement — {@link RetireScope#retire()} for the concept itself,
+     * {@link RetireScope#retireStatedAxioms(PublicId, Consumer)} for its definition,
+     * {@link RetireScope#retireSemantic(EntityProxy.Pattern, PublicId, Object...)} for
+     * any other semantic, each by its established identity. Nothing is seeded for such a
+     * concept: its descriptions stay with the base, and a scope that names only
+     * semantics leaves the concept's own versions as the base has them.
      *
      * @param stamp the declared inactive stamp this scope's retirements are bound to
      * @return the retirement scope
      * @throws IllegalArgumentException if the stamp's time precedes a previously scoped
      *                                  stamp's time — the ledger must be chronological
-     * @throws IllegalStateException    if the concept has no birth scope yet
+     * @throws IllegalStateException    if the concept has no birth scope yet and its
+     *                                  identity is derived: a concept this ledger would
+     *                                  have created has nothing established to retire
      */
     public RetireScope at(InactiveStamp stamp) {
-        ledger.requireBornForRetirement();
+        if (!ledger.born()) {
+            ledger.birthRetired();
+        }
         ledger.checkChronology(stamp);
         return new RetireScope(stamp);
     }
@@ -149,7 +171,12 @@ public final class ConceptBuilder {
     void writeInto() {
         ledger.requireBornForWrite();
         int conceptNid = ledger.componentNid();
-        writeConcept();
+        // A retirement scope on an established concept that names only semantics
+        // records no concept version: the concept stays as the base has it
+        // (IKE-Network/ike-issues#1130).
+        if (!ledger.componentStamps.isEmpty()) {
+            writeConcept();
+        }
         ledger.writeDescriptions(conceptNid);
         ledger.writeAxioms(conceptNid);
         ledger.writeGenericSemantics(conceptNid);
@@ -412,6 +439,51 @@ public final class ConceptBuilder {
         }
 
         /**
+         * Retires the concept's stated axioms under their <em>declared</em> identity: an
+         * inactive version of the established stated-axiom semantic, the expression
+         * restated because retired versions carry their fields
+         * (IKE-Network/ike-issues#1130). On a concept opened by a retirement scope this
+         * is the only way to retire the base's definition; on a born concept whose
+         * axioms were declared under this identity it appends the retirement to the
+         * same semantic.
+         *
+         * @param declaredIdentity the established identity of the stated-axiom semantic
+         * @param axioms           composes the retired version's expression, as in
+         *                         {@link ActiveScope#statedAxioms(Consumer)}
+         * @return this scope, for chaining
+         * @throws IllegalArgumentException if {@code declaredIdentity} is null or empty,
+         *                                  disagrees with an earlier declaration, arrives
+         *                                  after the semantic already versioned under its
+         *                                  derived identity, or this stamp already carries
+         *                                  a version of the semantic
+         */
+        public RetireScope retireStatedAxioms(PublicId declaredIdentity, Consumer<LogicalExpressionBuilder> axioms) {
+            ledger.addAxiomVersion(declaredIdentity, stamp, axioms);
+            return this;
+        }
+
+        /**
+         * Retires the concept's stated axioms: an inactive version of the singleton
+         * stated-axiom semantic, the expression restated because retired versions carry
+         * their fields (IKE-Network/ike-issues#1130). Continues the semantic whatever
+         * identity it was stated under.
+         *
+         * @param axioms composes the retired version's expression, as in
+         *               {@link ActiveScope#statedAxioms(Consumer)}
+         * @return this scope, for chaining
+         * @throws IllegalStateException    if the concept was opened by a retirement scope
+         *                                  and its axioms carry no declared identity: the
+         *                                  base's semantic is retired under its established
+         *                                  identity
+         * @throws IllegalArgumentException if this stamp already carries a version of the
+         *                                  semantic
+         */
+        public RetireScope retireStatedAxioms(Consumer<LogicalExpressionBuilder> axioms) {
+            ledger.retireAxiomVersion(stamp, axioms);
+            return this;
+        }
+
+        /**
          * Retires a synonym: a new version of the referenced description, same text,
          * bound to this scope's inactive stamp.
          *
@@ -448,6 +520,11 @@ public final class ConceptBuilder {
          * scope's inactive stamp — the prior version's fields restated when
          * {@code fieldValues} is empty (a pure status change), or the given payload
          * verbatim, since retired versions carry field values too.
+         * <p>
+         * On a concept opened by a retirement scope, an identity this ledger never
+         * declared names a semantic the base holds (IKE-Network/ike-issues#1130): the
+         * retired version carries exactly the given payload, none for a membership. On a
+         * born concept the identity must have been declared in this ledger.
          *
          * @param pattern          the semantic's pattern — restated for agreement
          * @param declaredIdentity the established identity of the semantic to retire
@@ -455,9 +532,10 @@ public final class ConceptBuilder {
          *                         the prior version's
          * @return this scope, for chaining
          * @throws IllegalArgumentException if no semantic with the declared identity was
-         *                                  declared, the pattern disagrees, a field
-         *                                  value's type is unsupported, or this stamp
-         *                                  already carries a version of the semantic
+         *                                  declared on a born concept, the pattern
+         *                                  disagrees, a field value's type is unsupported,
+         *                                  or this stamp already carries a version of the
+         *                                  semantic
          */
         public RetireScope retireSemantic(EntityProxy.Pattern pattern, PublicId declaredIdentity,
                                           Object... fieldValues) {

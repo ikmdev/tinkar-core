@@ -70,8 +70,8 @@ public final class PatternBuilder {
     private final List<FieldDeclaration> pendingFields = new ArrayList<>();
     private ActiveStamp pendingStamp;
 
-    PatternBuilder(PublicId componentId, String birthFqn, SessionRegistry registry) {
-        this.ledger = new ComponentLedger(componentId, birthFqn, registry);
+    PatternBuilder(PublicId componentId, String birthFqn, SessionRegistry registry, boolean identityDeclared) {
+        this.ledger = new ComponentLedger(componentId, birthFqn, registry, identityDeclared);
     }
 
     /**
