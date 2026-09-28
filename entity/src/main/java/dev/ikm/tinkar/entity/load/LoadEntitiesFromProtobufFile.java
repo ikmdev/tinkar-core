@@ -15,11 +15,13 @@
  */
 package dev.ikm.tinkar.entity.load;
 
+import dev.ikm.tinkar.common.util.thread.StructuredScopes;
+import dev.ikm.tinkar.common.util.thread.SubtaskFailedException;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.EntityKey;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
-import dev.ikm.tinkar.common.id.impl.NidCodec6;
+import dev.ikm.tinkar.common.id.impl.NidLayout;
 import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.SearchService;
@@ -156,7 +158,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                 if (!zipEntry.getName().equals(MANIFEST_RELPATH)) {
                     Semaphore permits = new Semaphore(Runtime.getRuntime().availableProcessors() * 8);
 
-                    try (StructuredTaskScope scope = StructuredTaskScope.open()) {
+                    try (StructuredTaskScope<Object, Void, SubtaskFailedException> scope = StructuredScopes.open()) {
                         while (zis.available() > 0) {
                             // zis.available returns 1 until AFTER EOF has been reached
                             TinkarMsg pbTinkarMsg = TinkarMsg.parseDelimitedFrom(zis);
@@ -225,7 +227,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                 if (zipEntry.getName().equals(MANIFEST_RELPATH)) {
                     continue;
                 }
-                try (StructuredTaskScope scope = StructuredTaskScope.open()) {
+                try (StructuredTaskScope<Object, Void, SubtaskFailedException> scope = StructuredScopes.open()) {
                     Semaphore permits = new Semaphore(Runtime.getRuntime().availableProcessors() * 8);
                     while (zis.available() > 0) {
                         // zis.available returns 1 until AFTER EOF has been reached
@@ -277,7 +279,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                 PrimitiveData.getEntityKey(patternUuid).ifPresent(entityKey ->
                         stringBuilder.append("\n\nPattern: ").append(entityText).append(" EntityKey: ").append(entityKey));
 
-                stringBuilder.append("\n nid=").append(nid).append(" (0x").append(String.format("%08X", nid)).append(")").append(" pattern sequence=").append(NidCodec6.decodePatternSequence(nid)).append(" element sequence=").append(NidCodec6.decodeElementSequence(nid));
+                stringBuilder.append("\n nid=").append(nid).append(" (0x").append(String.format("%08X", nid)).append(")").append(" pattern sequence=").append(NidLayout.active().decodePatternSequence(nid)).append(" element sequence=").append(NidLayout.active().decodeElementSequence(nid));
                 stringBuilder.append("\nPatternEntity: ").append(patternEntity);
             });
 

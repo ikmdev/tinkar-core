@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.provider.ephemeral;
 
+import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.collection.KeyType;
 import dev.ikm.tinkar.collection.SpinedIntIntMapAtomic;
 import dev.ikm.tinkar.common.id.PublicId;
@@ -34,8 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.UncheckedIOException;
-import java.net.MalformedURLException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -65,7 +64,7 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
     private final ConcurrentHashMap<Integer, byte[]> nidComponentMap = ConcurrentHashMap.newMap();
     private final ConcurrentHashMap<UUID, Integer> uuidNidMap = new ConcurrentHashMap<>();
     private final AtomicInteger nextNid = new AtomicInteger(PrimitiveDataService.FIRST_NID);
-    final StableValue<SearchService> searchService = StableValue.of();
+    final SetOnce<SearchService> searchService = new SetOnce<>();
     private volatile boolean loadPhase = false;
 
     private ProviderEphemeral() {
@@ -396,11 +395,8 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
         public void setDataUriOption(DataUriOption dataUriOption) {
             this.dataUriOption = dataUriOption;
             if (dataUriOption != null) {
-                try {
-                    importDataFileString = dataUriOption.uri().toURL().getFile();
-                } catch (MalformedURLException e) {
-                    throw new UncheckedIOException(e);
-                }
+                // toFile() decodes the URI; URL.getFile() would keep %20 for a space (ike-issues#1156).
+                importDataFileString = dataUriOption.toFile().getAbsolutePath();
             }
         }
 

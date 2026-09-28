@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.load;
 
+import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import org.slf4j.Logger;
@@ -52,7 +53,7 @@ import java.util.concurrent.Future;
 public class DataLoadProvider implements DataLoadService {
 
     private static final Logger LOG = LoggerFactory.getLogger(DataLoadProvider.class);
-    private static final StableValue<DataLoadProvider> SINGLETON = StableValue.of();
+    private static final SetOnce<DataLoadProvider> SINGLETON = new SetOnce<>();
 
     private final List<File> loadQueue = new ArrayList<>();
     private volatile boolean loadingAllowed = false;

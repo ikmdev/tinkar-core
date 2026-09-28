@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.provider.search;
 
+import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.common.util.io.FileUtil;
@@ -48,7 +49,7 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
     private static final Logger LOG = LoggerFactory.getLogger(SearchProvider.class);
     private static final File defaultDataDirectory = new File("target/lucene/");
 
-    private static final StableValue<SearchProvider> SINGLETON = StableValue.of();
+    private static final SetOnce<SearchProvider> SINGLETON = new SetOnce<>();
 
     private final Indexer indexer;
     private final Searcher searcher;
@@ -62,7 +63,7 @@ public class SearchProvider implements dev.ikm.tinkar.common.service.SearchServi
 
     /**
      * Private constructor - construction is managed by the Controller via {@link #get()}.
-     * Use {@link #get()} to obtain the singleton instance managed by StableValue.
+     * Use {@link #get()} to obtain the singleton instance managed by SetOnce.
      */
     private SearchProvider() {
         // Get DATA_STORE_ROOT - it should be set by the data provider in DATA_STORAGE phase

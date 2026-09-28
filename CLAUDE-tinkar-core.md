@@ -21,7 +21,7 @@ mvn clean verify -DskipTests -T4
 ## Key Facts
 
 - GroupId: `dev.ikm.tinkar`
-- Uses `--enable-preview` (Java 25) — set via `maven.compiler.enablePreview` in properties
+- Uses `--enable-preview` (Java 27) — set via `maven.compiler.enablePreview` in properties
 - BOM: imports `dev.ikm.ike:ike-bom` for dependency version management
 - Sub-aggregators (provider, reasoner, language-extensions) use `<subprojects>`
 - `tinkar-bom` submodule manages internal dependency versions for consumers

@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.provider.mvstore;
 
+import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.*;
 import dev.ikm.tinkar.provider.search.DataStoreLockProbe;
@@ -42,8 +43,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.net.MalformedURLException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -74,7 +73,7 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     final String name;
     protected LongAdder writeSequence = new LongAdder();
     ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Integer>> patternElementNidsMap = ConcurrentHashMap.newMap();
-    final StableValue<SearchService> searchService = StableValue.of();
+    final SetOnce<SearchService> searchService = new SetOnce<>();
     private volatile boolean loadPhase = false;
 
 
@@ -570,11 +569,8 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         public void setDataUriOption(DataUriOption option) {
             super.setDataUriOption(option);
             if (option != null) {
-                try {
-                    importDataFileString = option.uri().toURL().getFile();
-                } catch (MalformedURLException e) {
-                    throw new UncheckedIOException(e);
-                }
+                // toFile() decodes the URI; URL.getFile() would keep %20 for a space (ike-issues#1156).
+                importDataFileString = option.toFile().getAbsolutePath();
             }
         }
 

@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.provider.spinedarray;
 
+import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.collection.KeyType;
 import dev.ikm.tinkar.collection.SpinedByteArrayMap;
 import dev.ikm.tinkar.collection.SpinedIntIntMap;
@@ -57,8 +58,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -90,14 +89,14 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
 
     public static AtomicReference<Lifecycle> lifecycle = new AtomicReference<>(Lifecycle.UNINITIALIZED);
 
-    private static final StableValue<SpinedArrayProvider> spinedArrayProvider = StableValue.of();
+    private static final SetOnce<SpinedArrayProvider> spinedArrayProvider = new SetOnce<>();
     public static SpinedArrayProvider get() {
         // Set lifecycle to STARTING before attempting initialization
         lifecycle.compareAndSet(Lifecycle.UNINITIALIZED, Lifecycle.STARTING);
 
         return spinedArrayProvider.orElseSet(() -> {
             try {
-                LOG.info("StableValue.orElseSet: Creating new SpinedArrayProvider instance");
+                LOG.info("SetOnce.orElseSet: Creating new SpinedArrayProvider instance");
                 return new SpinedArrayProvider();
             } catch (IOException | ExecutionException | InterruptedException e) {
                 // Reset lifecycle on failure
@@ -130,7 +129,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     final File nidToByteArrayMapDirectory;
     final File nidToCitingComponentNidMapDirectory;
     final File nextNidKeyFile;
-    final StableValue<SearchService> searchService = StableValue.of();
+    final SetOnce<SearchService> searchService = new SetOnce<>();
     private volatile boolean loadPhase = false;
     final String name;
     final ImmutableList<ChangeSetWriterService> changeSetWriterServices;
@@ -948,11 +947,8 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
             super.setDataUriOption(option);
             ServiceProperties.set(ServiceKeys.DATA_STORE_EXPECT_EMPTY, Boolean.TRUE);
             if (option != null) {
-                try {
-                    importDataFileString = option.uri().toURL().getFile();
-                } catch (MalformedURLException e) {
-                    throw new UncheckedIOException(e);
-                }
+                // toFile() decodes the URI; URL.getFile() would keep %20 for a space (ike-issues#1156).
+                importDataFileString = option.toFile().getAbsolutePath();
             }
         }
 

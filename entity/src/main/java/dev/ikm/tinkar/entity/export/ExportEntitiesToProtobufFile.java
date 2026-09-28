@@ -42,11 +42,11 @@ import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -58,8 +58,13 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
     private final File protobufFile;
     private final EntityToTinkarSchemaTransformer entityTransformer =
             EntityToTinkarSchemaTransformer.getInstance();
-    private final Set<PublicId> moduleList = new HashSet<>();
-    private final Set<PublicId> authorList = new HashSet<>();
+    // Entities may be delivered concurrently (RocksProvider iterates semantics in
+    // parallel), so shared state is concurrent and stream writes are serialized
+    // (IKE-Network/ike-issues#1142).
+    private final Set<PublicId> moduleList = ConcurrentHashMap.newKeySet();
+    private final Set<PublicId> authorList = ConcurrentHashMap.newKeySet();
+    /** Guards writes to the zip stream and the skip tallies. */
+    private final Object writeLock = new Object();
     // Per-type tallies of entities whose transform failed on a dangling reference and
     // were therefore skipped: the manifest must describe the records actually written,
     // never the records intended, or every downstream import fails its count check
@@ -122,8 +127,12 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                         moduleList.add(PrimitiveData.publicId(stampEntity.moduleNid()));
                         authorList.add(PrimitiveData.publicId(stampEntity.authorNid()));
                     }
+                    // Transform concurrently; write one whole record at a time, or
+                    // records from different threads interleave in the stream.
                     TinkarMsg pbTinkarMsg = entityTransformer.transform(entity);
-                    pbTinkarMsg.writeDelimitedTo(zos);
+                    synchronized (writeLock) {
+                        pbTinkarMsg.writeDelimitedTo(zos);
+                    }
                     completedUnitOfWork();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -248,6 +257,12 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
      * @param entity the entity whose transform failed
      */
     private void tallySkip(Entity<?> entity) {
+        synchronized (writeLock) {
+            tallySkipLocked(entity);
+        }
+    }
+
+    private void tallySkipLocked(Entity<?> entity) {
         switch (entity) {
             case StampEntity<?> stamp -> skippedStamps++;
             case dev.ikm.tinkar.entity.ConceptEntity<?> concept -> skippedConcepts++;
