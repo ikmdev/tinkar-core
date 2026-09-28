@@ -92,4 +92,24 @@ public interface RemoteReasonerService {
      * @throws IllegalStateException if the remote service is unreachable or reported a failure
      */
     RemoteReasonerOutcome runFullReasoner(PhaseListener listener);
+
+    /**
+     * As {@link #runFullReasoner(PhaseListener)}, stopping the remote run if {@code tracker} is
+     * cancelled.
+     *
+     * <p>Cancelling stops the classification on the remote side too, not just the local wait: a
+     * run nobody is waiting for should not keep a server busy for minutes. The remote store is
+     * left untouched — cancellation is honoured only up to the point results start being written.
+     *
+     * <p>The default ignores {@code tracker}, for implementations that cannot cancel.
+     *
+     * @param listener notified per phase; may be {@code null}
+     * @param tracker  cancelling it stops the run; may be {@code null}
+     * @return the classification outcome
+     * @throws java.util.concurrent.CancellationException if the run was cancelled
+     * @throws IllegalStateException if the remote service is unreachable or reported a failure
+     */
+    default RemoteReasonerOutcome runFullReasoner(PhaseListener listener, TrackingCallable<?> tracker) {
+        return runFullReasoner(listener);
+    }
 }

@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.reasoner.elksnomed;
 
 import java.util.HashMap;
+import java.util.concurrent.CancellationException;
 import java.util.List;
 import java.util.Set;
 
@@ -90,12 +91,90 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 		LOG.info("Create ontology");
 		ontology = new SnomedOntology(data.getConcepts(), data.getRoleTypes(), List.of());
 		LOG.info("Create reasoner");
-		reasoner = SnomedOntologyReasoner.create(ontology);
+		// createUninitialized rather than create: this has to hold the reasoner before the
+		// classification starts, or there is nothing to interrupt while it runs. It also keeps
+		// the pipeline's phases honest — the classification now happens in computeInferences,
+		// which is what the caller reports it as.
+		reasoner = SnomedOntologyReasoner.createUninitialized(ontology);
 	}
 
 	@Override
 	public void computeInferences(TrackingCallable<?> progressTracker) {
-		// Already done in SnomedOntologyReasoner.create
+		LOG.info("Compute inferences");
+		try (CancelWatcher ignored = new CancelWatcher(progressTracker, reasoner)) {
+			reasoner.computeInferences();
+		} catch (RuntimeException e) {
+			// An interrupted ELK run throws ElkInterruptedException, which SnomedOntologyReasoner
+			// wraps in a plain RuntimeException. When a cancel was requested that is the cancel
+			// taking effect, not a failure — report it as one so callers can tell the two apart.
+			if (isCancelled(progressTracker)) {
+				CancellationException cancelled =
+						new CancellationException("Reasoner classification was cancelled");
+				cancelled.initCause(e);
+				throw cancelled;
+			}
+			throw e;
+		}
+		if (isCancelled(progressTracker)) {
+			// Covers a cancel that lands just as ELK finishes, after its last interrupt check:
+			// the classification completed but was not wanted, so do not go on to write it.
+			throw new CancellationException("Reasoner classification was cancelled");
+		}
+	}
+
+	private static boolean isCancelled(TrackingCallable<?> progressTracker) {
+		return progressTracker != null && progressTracker.isCancelled();
+	}
+
+	/**
+	 * Interrupts the reasoner when the caller cancels.
+	 *
+	 * <p>A poller rather than a callback because the thread that starts the classification is
+	 * blocked inside ELK until it finishes, so it cannot notice a cancel itself, and
+	 * {@link TrackingCallable} offers no completion hook to hang one on.
+	 *
+	 * <p>The poll interval is coarse on purpose: cancelling a classification that runs for
+	 * minutes does not need sub-second latency, and a tight loop would burn a core for the
+	 * duration of every run, cancelled or not.
+	 */
+	private static final class CancelWatcher implements AutoCloseable {
+
+		private static final long POLL_INTERVAL_MS = 250L;
+
+		private final Thread watcher;
+		private volatile boolean stopped;
+
+		private CancelWatcher(TrackingCallable<?> progressTracker, SnomedOntologyReasoner reasoner) {
+			if (progressTracker == null) {
+				this.watcher = null;
+				return;
+			}
+			this.watcher = new Thread(() -> {
+				while (!stopped) {
+					if (progressTracker.isCancelled()) {
+						LOG.info("Cancel requested — interrupting the reasoner");
+						reasoner.interrupt();
+						return;
+					}
+					try {
+						Thread.sleep(POLL_INTERVAL_MS);
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+						return;
+					}
+				}
+			}, "elk-cancel-watcher");
+			this.watcher.setDaemon(true);
+			this.watcher.start();
+		}
+
+		@Override
+		public void close() {
+			stopped = true;
+			if (watcher != null) {
+				watcher.interrupt();
+			}
+		}
 	}
 
 	@Override
