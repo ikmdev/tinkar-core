@@ -47,6 +47,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -101,14 +102,36 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
         updateTitle("Tag-Based Export to Protobuf");
     }
 
+    /** Cancels the export when true, alongside {@link #cancel()}; for a caller that owns its own handle. */
+    private volatile BooleanSupplier externalCancel = () -> false;
+
+    /**
+     * Also stops the export once {@code cancelled} returns true — for a caller tracking
+     * cancellation with a handle of its own, such as a server job, rather than with this task's
+     * {@link #cancel()}.
+     */
+    public void cancelWhen(BooleanSupplier cancelled) {
+        this.externalCancel = cancelled == null ? () -> false : cancelled;
+    }
+
+    private boolean exportCancelled() {
+        return isCancelled() || externalCancel.getAsBoolean();
+    }
+
     @Override
     public EntityCountSummary compute() {
         updateMessage("Analyzing Entities...");
         updateProgress(-1, 1);
+        entityAggregator.setCancellationCheck(this::exportCancelled);
 
         EntityCountSummary entityCountSummary = null;
         updateMessage("Exporting Entities...");
-        addToTotalWork(entityAggregator.totalCount());
+        // Only when cheap: totalCount() runs the whole aggregation once over just to size the
+        // progress bar. For an aggregator that reads every entity to decide — a time range — that
+        // doubled the export; without it progress is indeterminate, but the export takes half as long.
+        if (entityAggregator.totalCountIsCheap()) {
+            addToTotalWork(entityAggregator.totalCount());
+        }
 
         try (FileOutputStream fos = new FileOutputStream(protobufFile);
              BufferedOutputStream bos = new BufferedOutputStream(fos);
@@ -119,6 +142,9 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             zos.putNextEntry(zipEntry);
 
             Consumer<Entity<?>> exportEntityConsumer = entity -> {
+                if (exportCancelled()) {
+                    return; // the aggregation throws once it notices, ending the export
+                }
                 try {
                     if (entity instanceof StampEntity stampEntity) {
                         // Store Module & Author Dependencies for Manifest

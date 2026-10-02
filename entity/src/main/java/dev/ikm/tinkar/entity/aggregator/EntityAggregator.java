@@ -16,12 +16,15 @@
 package dev.ikm.tinkar.entity.aggregator;
 
 import dev.ikm.tinkar.common.service.EntityCountSummary;
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityRecordFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 
@@ -33,7 +36,53 @@ public abstract class EntityAggregator {
     protected AtomicLong patternsAggregatedCount = new AtomicLong(0);
     protected AtomicLong stampsAggregatedCount = new AtomicLong(0);
 
+    /** Checked during a scan; once true, the scan skips what is left and the aggregation throws. */
+    private volatile BooleanSupplier cancelled = () -> false;
+
     public abstract EntityCountSummary aggregate(IntConsumer nidConsumer);
+
+    /**
+     * Makes the aggregation stop early once {@code cancelled} returns true, throwing
+     * {@link CancellationException}. Scans run in parallel and cannot be broken out of, so each
+     * remaining nid is skipped instead — it is reading them that takes the time.
+     */
+    public void setCancellationCheck(BooleanSupplier cancelled) {
+        this.cancelled = cancelled == null ? () -> false : cancelled;
+    }
+
+    protected boolean isCancelled() {
+        return cancelled.getAsBoolean();
+    }
+
+    /** @throws CancellationException if the aggregation has been cancelled */
+    protected void throwIfCancelled() {
+        if (isCancelled()) {
+            throw new CancellationException("Aggregation cancelled");
+        }
+    }
+
+    /**
+     * Whether {@link #totalCount()} is cheap enough to call before aggregating, to size a progress
+     * bar. It runs the whole aggregation once over, so for an aggregator that has to read every
+     * entity to decide — a time range, say — it doubles the cost of an export.
+     */
+    public boolean totalCountIsCheap() {
+        return false;
+    }
+
+    /**
+     * Reads an entity straight from the store, bypassing the shared entity cache.
+     *
+     * <p>For scans that touch every entity once: sending millions of one-off reads through the
+     * cache evicts the working set everyone else relies on, and with many threads it stalls on
+     * the cache's eviction lock.
+     *
+     * @return the entity, or null if the nid has no entity bytes
+     */
+    protected static Entity<?> readUncached(int nid) {
+        byte[] bytes = PrimitiveData.get().getBytes(nid);
+        return bytes == null ? null : EntityRecordFactory.make(bytes);
+    }
 
     /**
      * Aggregates entities by resolving each nid produced by {@link #aggregate(IntConsumer)}
@@ -56,13 +105,17 @@ public abstract class EntityAggregator {
     public EntityCountSummary aggregateEntities(Consumer<Entity<?>> entityConsumer) {
         AtomicLong orphanCount = new AtomicLong();
         EntityCountSummary summary = aggregate((int nid) -> {
-            Entity<?> entity = EntityService.get().getEntityFast(nid);
+            if (isCancelled()) {
+                return;
+            }
+            Entity<?> entity = readUncached(nid);
             if (entity == null) {
                 orphanCount.incrementAndGet();
                 return;
             }
             entityConsumer.accept(entity);
         });
+        throwIfCancelled();
         long orphans = orphanCount.get();
         if (orphans > 0) {
             LOG.info("Skipped {} orphan nid(s) during aggregation (allocated, no entity bytes)", orphans);

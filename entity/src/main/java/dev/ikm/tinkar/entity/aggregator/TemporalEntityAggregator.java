@@ -24,9 +24,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.IntConsumer;
 
 public class TemporalEntityAggregator extends EntityAggregator {
@@ -40,7 +41,7 @@ public class TemporalEntityAggregator extends EntityAggregator {
      * between allocation and commit). Counted for the log line; never counted in the
      * summary and never emitted, so a manifest written from the summary always matches
      * the records actually delivered (IKE-Network/ike-issues#933). */
-    private long lastOrphanCount;
+    private final AtomicLong lastOrphanCount = new AtomicLong();
 
     public TemporalEntityAggregator(long fromEpochMillis, long toEpochMillis) {
         this.fromEpochMillis = fromEpochMillis;
@@ -50,90 +51,82 @@ public class TemporalEntityAggregator extends EntityAggregator {
     @Override
     public EntityCountSummary aggregate(IntConsumer nidConsumer) {
         initCounts();
+        // Concurrent collections throughout: the forEach*Nid scans run in parallel, and a plain
+        // HashSet or ArrayList filled from several threads can drop entries — here, stamps the
+        // export would then silently leave out.
         // Filter Stamp Nids based on the supplied time span
-        Set<Integer> filteredStampNids = new HashSet<>();
+        Set<Integer> filteredStampNids = ConcurrentHashMap.newKeySet();
         PrimitiveData.get().forEachStampNid((stampNid) -> {
+            if (isCancelled()) {
+                return;
+            }
             EntityService.get().getStamp(stampNid).ifPresent((stampEntity) -> {
                 if (fromEpochMillis <= stampEntity.time() && stampEntity.time() <= toEpochMillis) {
                     filteredStampNids.add(stampEntity.nid());
                 }
             });
         });
+        throwIfCancelled();
 
-        List<Integer> stampsToExport = new ArrayList<>();
+        Set<Integer> stampsToExport = ConcurrentHashMap.newKeySet();
 
-        // Aggregate concepts with a filtered stamp. Resolution goes through
-        // getEntityFast — the byte-backed lookup the downstream consumer uses — so a
-        // nid is counted if and only if it can actually be delivered: an orphan nid
-        // (allocated, no committed bytes; the entity cache may still answer for it)
-        // is excluded from the count, the emission, and the stamp collection alike
-        // (IKE-Network/ike-issues#933).
-        lastOrphanCount = 0;
-        PrimitiveData.get().forEachConceptNid((conceptNid) -> {
-            Entity<?> conceptEntity = EntityService.get().getEntityFast(conceptNid);
-            if (conceptEntity == null) {
-                lastOrphanCount++;
-                return;
-            }
-            Set<Integer> conceptStampNidList = conceptEntity.stampNids().mapToSet(i->i);
-            // Write whole chronology if ANY of the stamps satisfy conditions
-            if (!Collections.disjoint(filteredStampNids, conceptStampNidList)) {
-                conceptsAggregatedCount.incrementAndGet();
-                nidConsumer.accept(conceptNid);
-                stampsToExport.addAll(conceptStampNidList);
-            }
-        });
+        // Every concept, semantic and pattern is read to see whether any of its stamps falls in
+        // the range — there is no index from a stamp to the components that use it. Read past the
+        // entity cache (readUncached): a scan touching every entity once would otherwise evict
+        // the cache's working set and, from many threads, stall on its eviction lock.
+        //
+        // A nid is counted if and only if it can actually be delivered: an orphan nid (allocated,
+        // no committed bytes) is excluded from the count, the emission, and the stamp collection
+        // alike (IKE-Network/ike-issues#933).
+        lastOrphanCount.set(0);
+        PrimitiveData.get().forEachConceptNid(nid -> aggregateIfInRange(nid, filteredStampNids, stampsToExport,
+                conceptsAggregatedCount, nidConsumer));
+        throwIfCancelled();
 
-        // Aggregate semantics with a filtered stamp
-        PrimitiveData.get().forEachSemanticNid((semanticNid) -> {
-            Entity<?> semanticEntity = EntityService.get().getEntityFast(semanticNid);
-            if (semanticEntity == null) {
-                lastOrphanCount++;
-                return;
-            }
-            Set<Integer> semanticStampNidList = semanticEntity.stampNids().mapToSet(i->i);
-            // Write whole chronology if ANY of the stamps satisfy conditions
-            if (!Collections.disjoint(filteredStampNids, semanticStampNidList)) {
-                semanticsAggregatedCount.incrementAndGet();
-                nidConsumer.accept(semanticNid);
-                stampsToExport.addAll(semanticStampNidList);
-            }
-        });
+        PrimitiveData.get().forEachSemanticNid(nid -> aggregateIfInRange(nid, filteredStampNids, stampsToExport,
+                semanticsAggregatedCount, nidConsumer));
+        throwIfCancelled();
 
-        // Aggregate patterns with a filtered stamp
-        PrimitiveData.get().forEachPatternNid((patternNid) -> {
-            Entity<?> patternEntity = EntityService.get().getEntityFast(patternNid);
-            if (patternEntity == null) {
-                lastOrphanCount++;
-                return;
-            }
-            Set<Integer> patternStampNidList = patternEntity.stampNids().mapToSet(i->i);
-            // Write whole chronology if ANY of the stamps satisfy conditions
-            if (!Collections.disjoint(filteredStampNids, patternStampNidList)) {
-                patternsAggregatedCount.incrementAndGet();
-                nidConsumer.accept(patternNid);
-                stampsToExport.addAll(patternStampNidList);
-            }
-        });
+        PrimitiveData.get().forEachPatternNid(nid -> aggregateIfInRange(nid, filteredStampNids, stampsToExport,
+                patternsAggregatedCount, nidConsumer));
+        throwIfCancelled();
 
-        // Deduplicate and export aggregated stamps — resolution-checked like every
-        // other bucket, so the count only claims stamps that can be delivered.
-        Set<Integer> deduplicatedStampsToExport = new HashSet<>(stampsToExport);
+        // Export the aggregated stamps — resolution-checked like every other bucket, so the count
+        // only claims stamps that can be delivered.
         List<Integer> deliverableStampNids = new ArrayList<>();
-        for (int stampNid : deduplicatedStampsToExport) {
-            if (EntityService.get().getEntityFast(stampNid) != null) {
+        for (int stampNid : stampsToExport) {
+            if (readUncached(stampNid) != null) {
                 deliverableStampNids.add(stampNid);
             } else {
-                lastOrphanCount++;
+                lastOrphanCount.incrementAndGet();
             }
         }
         stampsAggregatedCount.set(deliverableStampNids.size());
         deliverableStampNids.forEach(nidConsumer::accept);
 
-        if (lastOrphanCount > 0) {
+        if (lastOrphanCount.get() > 0) {
             LOG.warn("Temporal aggregation skipped {} orphan nid(s) (allocated, no entity"
-                    + " bytes) — excluded from counts and emission alike", lastOrphanCount);
+                    + " bytes) — excluded from counts and emission alike", lastOrphanCount.get());
         }
         return summarize();
+    }
+
+    /** Emits {@code nid} — its whole chronology — if any of its stamps falls in the range. */
+    private void aggregateIfInRange(int nid, Set<Integer> filteredStampNids, Set<Integer> stampsToExport,
+                                    AtomicLong aggregatedCount, IntConsumer nidConsumer) {
+        if (isCancelled()) {
+            return;
+        }
+        Entity<?> entity = readUncached(nid);
+        if (entity == null) {
+            lastOrphanCount.incrementAndGet();
+            return;
+        }
+        Set<Integer> stampNids = entity.stampNids().mapToSet(i -> i);
+        if (!Collections.disjoint(filteredStampNids, stampNids)) {
+            aggregatedCount.incrementAndGet();
+            nidConsumer.accept(nid);
+            stampsToExport.addAll(stampNids);
+        }
     }
 }
