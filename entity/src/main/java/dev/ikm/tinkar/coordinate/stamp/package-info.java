@@ -116,7 +116,7 @@
  * <p>Represents a development path. Key methods:</p>
  * <ul>
  * <li>{@code pathConceptNid()} - Get path concept identifier</li>
- * <li>{@code pathOrigins()} - Get origin positions (where path branched from)</li>
+ * <li>{@code getPathOrigins()} - Get origin positions (where path branched from)</li>
  * </ul>
  *
  * <p><b>StateSet Enumeration</b></p>
