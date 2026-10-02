@@ -150,11 +150,18 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 				return;
 			}
 			this.watcher = new Thread(() -> {
+				boolean announced = false;
 				while (!stopped) {
 					if (progressTracker.isCancelled()) {
-						LOG.info("Cancel requested — interrupting the reasoner");
+						if (!announced) {
+							LOG.info("Cancel requested — interrupting the reasoner");
+							announced = true;
+						}
+						// Every poll, not once: until computeInferences() has created ELK's
+						// reasoner, interrupt() has nothing to act on. A cancel that arrived
+						// before that — while data was still loading — would otherwise be dropped
+						// and the whole classification would run before the cancel took effect.
 						reasoner.interrupt();
-						return;
 					}
 					try {
 						Thread.sleep(POLL_INTERVAL_MS);

@@ -50,6 +50,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.StructuredTaskScope;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -68,6 +69,9 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
     private final TinkarSchemaToEntityTransformer entityTransformer =
             TinkarSchemaToEntityTransformer.getInstance();
     private static final String MANIFEST_RELPATH = "META-INF/MANIFEST.MF";
+
+    /** How often a reader waiting for a permit checks whether its scope has been cancelled. */
+    private static final long PERMIT_POLL_MS = 100L;
     private final File importFile;
     private final AtomicLong importCount = new AtomicLong();
     private final AtomicLong importConceptCount = new AtomicLong();
@@ -162,7 +166,9 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                         while (zis.available() > 0) {
                             // zis.available returns 1 until AFTER EOF has been reached
                             TinkarMsg pbTinkarMsg = TinkarMsg.parseDelimitedFrom(zis);
-                            permits.acquire();
+                            if (!acquireUnlessCancelled(permits, scope)) {
+                                break; // a subtask failed; join() below reports it
+                            }
                             scope.fork(() -> {
                                 try {
                                     ScopedValue.where(SCOPED_TINKAR_MSG, pbTinkarMsg)
@@ -238,7 +244,9 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                         if (pbTinkarMsg == null) {
                             continue;
                         }
-                        permits.acquire();
+                        if (!acquireUnlessCancelled(permits, scope)) {
+                            break; // a subtask failed; join() below reports it
+                        }
                         scope.fork(() -> ScopedValue.where(SCOPED_TINKAR_MSG, pbTinkarMsg).call(() -> {
                             // TODO: Remove need for Stamp Consumer since Stamps are now consumed by Entity Consumer
                             try {
@@ -497,6 +505,25 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                 LOG.warn("Failed to recreate Lucene index after import", e);
             }
         });
+    }
+
+    /**
+     * Takes a permit for the next subtask, or returns false once {@code scope} has been cancelled.
+     *
+     * <p>The scope cancels itself on the first failed subtask, and a cancelled scope does not run
+     * the subtasks forked after that. Each of those would have released its permit when it
+     * finished, so their permits never come back: a plain {@code acquire()} then blocks for good,
+     * and the import hangs instead of reporting the failure. Polling lets the reader notice the
+     * cancellation and stop, so that {@code join()} can throw the subtask's error.
+     */
+    private static boolean acquireUnlessCancelled(Semaphore permits, StructuredTaskScope<?, ?, ?> scope)
+            throws InterruptedException {
+        while (!permits.tryAcquire(PERMIT_POLL_MS, TimeUnit.MILLISECONDS)) {
+            if (scope.isCancelled()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private long analyzeManifest(Map<PublicId, String> manifestEntryData) {
