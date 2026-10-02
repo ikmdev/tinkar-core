@@ -48,12 +48,20 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
     }
 
 
-    private StampPathImmutable(DecoderInput in) {
-        this.pathConceptNid = in.readNid();
+    /**
+     * Decodes a stamp path: its path concept, then its origins.
+     *
+     * <p>From {@link Encodable#PATH_AS_PUBLIC_ID_VERSION} the path concept and the path of
+     * each origin are public ids. A stream of the first version holds them as nids of the
+     * store that wrote it ({@code IKE-Network/ike-issues#1172}); until then this decoder read
+     * public ids where the encoder had written nids, so no first-version stream ever decoded.
+     */
+    private StampPathImmutable(DecoderInput in, int version) {
+        this.pathConceptNid = version >= Encodable.PATH_AS_PUBLIC_ID_VERSION ? in.readNid() : in.readInt();
         int pathOriginsSize = in.readVarInt();
         MutableSet<StampPositionRecord> mutableOrigins = Sets.mutable.ofInitialCapacity(pathOriginsSize);
         for (int i = 0; i < pathOriginsSize; i++) {
-            mutableOrigins.add(StampPositionRecord.make(in.readLong(), in.readNid()));
+            mutableOrigins.add(StampPositionRecord.decode(in));
         }
         this.pathOrigins = mutableOrigins.toImmutable();
     }
@@ -81,17 +89,20 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
                 });
     }
 
+    /**
+     * Decodes a stamp path, and returns the one instance kept for its path concept.
+     *
+     * @param in the stream being decoded
+     * @return the stamp path
+     */
     @Decoder
     public static StampPathImmutable make(DecoderInput in) {
-        switch (Encodable.checkVersion(in)) {
-            default:
-                StampPathImmutable stampPath = new StampPathImmutable(in);
-                if (stampPath.pathConceptNid == TinkarTerm.UNINITIALIZED_COMPONENT.nid()) {
-                    return stampPath;
-                }
-                return SINGLETONS.computeIfAbsent(stampPath.pathConceptNid(),
-                        pathNid -> stampPath);
+        StampPathImmutable stampPath = new StampPathImmutable(in, Encodable.checkVersion(in));
+        if (stampPath.pathConceptNid == TinkarTerm.UNINITIALIZED_COMPONENT.nid()) {
+            return stampPath;
         }
+        return SINGLETONS.computeIfAbsent(stampPath.pathConceptNid(),
+                pathNid -> stampPath);
     }
 
     @Override
@@ -114,10 +125,16 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
                 IntIds.set.empty());
     }
 
+    /**
+     * Encodes this stamp path: the public id of its path concept, then its origins. The nid of
+     * the path concept is never written, because a nid is local to one store.
+     *
+     * @param out the stream being written
+     */
     @Override
     @Encoder
     public void encode(EncoderOutput out) {
-        out.writeInt(this.pathConceptNid);
+        out.writeNid(this.pathConceptNid);
         out.writeVarInt(this.pathOrigins.size());
         for (StampPositionRecord stampPosition : this.pathOrigins) {
             stampPosition.encode(out);

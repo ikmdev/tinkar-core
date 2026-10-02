@@ -63,13 +63,37 @@ public interface Encodable {
      * should not have independent versions.
      * If a component or version encoding format changes, bump the encoding version for the entire
      * set of marshalable objects.
+     *
+     * <p>The first version. In it a stamp position and a stamp path hold their path as a nid of
+     * the store that wrote them; every other nid is written as its public id. Streams of this
+     * version are still read, and no longer written.
      */
     int FIRST_VERSION = 10;
-    int LATEST_VERSION = 11;
 
+    /**
+     * From this version a stamp position and a stamp path hold their path as a public id, so
+     * no encoded object holds a nid ({@code IKE-Network/ike-issues#1172}). A nid is local to
+     * one store, and an encoded object can be read against a store other than the one it was
+     * written from.
+     */
+    int PATH_AS_PUBLIC_ID_VERSION = 11;
+
+    /** The version every stream is written with, and the highest that is read. */
+    int LATEST_VERSION = PATH_AS_PUBLIC_ID_VERSION;
+
+    /**
+     * Returns the version of the stream being decoded, after checking that this build can read
+     * it. A decoder switches on the result where the layout it reads differs between versions.
+     *
+     * @param in the stream being decoded
+     * @return the stream's version, from {@link #FIRST_VERSION} to {@link #LATEST_VERSION}
+     * @throws EncodingExceptionUnchecked if the stream's version is outside that range, so that
+     *                                    a stream from a later build is refused and not read
+     *                                    with a layout it was not written in
+     */
     static int checkVersion(DecoderInput in) {
         if (in.encodingFormatVersion < FIRST_VERSION || in.encodingFormatVersion > LATEST_VERSION) {
-            EncodingExceptionUnchecked.makeWrongVersionException(FIRST_VERSION, LATEST_VERSION, in);
+            throw EncodingExceptionUnchecked.makeWrongVersionException(FIRST_VERSION, LATEST_VERSION, in);
         }
         return in.encodingFormatVersion;
     }
@@ -149,9 +173,15 @@ public interface Encodable {
         return out.buf.asArray();
     }
 
+    /**
+     * Encodes this object as a whole stream: the version, the class name, then the object.
+     * The stream is stamped with {@link #LATEST_VERSION}, the layout every encoder writes.
+     *
+     * @return the output holding the stream
+     */
     default EncoderOutput encode() {
         EncoderOutput encoderOutput = new EncoderOutput();
-        encoderOutput.writeInt(FIRST_VERSION);
+        encoderOutput.writeInt(LATEST_VERSION);
         encoderOutput.writeString(this.getClass().getName());
         encode(encoderOutput);
         return encoderOutput;

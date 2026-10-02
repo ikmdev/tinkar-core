@@ -72,32 +72,38 @@ public record ViewCoordinateRecord(StampCoordinateRecord stampCoordinate,
                 editCoordinate.toEditCoordinateRecord());
     }
 
+    /**
+     * Decodes a view coordinate: its stamp, language, logic, and navigation coordinates.
+     *
+     * <p>The edit coordinate is not read back. {@link #encode(EncoderOutput)} writes it last,
+     * and the decoded view coordinate takes the default edit coordinate in its place. That is
+     * how every stored view coordinate has been read: the decoder used to read the edit
+     * coordinate only above the first stream version, and every stream was stamped with the
+     * first version. The card view-override work ({@code IKE-Network/ike-issues#745}) persists
+     * an override as a delta and depends on that. When streams began to be stamped with a later
+     * version ({@code IKE-Network/ike-issues#1172}), the branch that read the edit coordinate
+     * was removed, so that the version change did not also change what a restored view edits
+     * as.
+     *
+     * @param in the stream being decoded
+     * @return the view coordinate, with the default edit coordinate
+     */
     @Decoder
     public static ViewCoordinateRecord decode(DecoderInput in) {
-        switch (Encodable.checkVersion(in)) {
-            default:
-                StampCoordinateRecord stampCoordinateRecord = StampCoordinateRecord.decode(in);
-                int languageCoordinateCount = in.readInt();
-                MutableList<LanguageCoordinateRecord> languageCoordinateRecords = Lists.mutable.ofInitialCapacity(languageCoordinateCount);
-                for (int i = 0; i < languageCoordinateCount; i++) {
-                    languageCoordinateRecords.add(LanguageCoordinateRecord.decode(in));
-                }
-                LogicCoordinateRecord logicCoordinateRecord = LogicCoordinateRecord.decode(in);
-                NavigationCoordinateRecord navigationCoordinateRecord = NavigationCoordinateRecord.decode(in);
-                if (in.encodingFormatVersion() > FIRST_VERSION) {
-                    EditCoordinateRecord editCoordinateRecord = EditCoordinateRecord.decode(in);
-                    return new ViewCoordinateRecord(stampCoordinateRecord,
-                            languageCoordinateRecords.toImmutable(),
-                            logicCoordinateRecord,
-                            navigationCoordinateRecord,
-                            editCoordinateRecord);
-                }
-                return new ViewCoordinateRecord(stampCoordinateRecord,
-                        languageCoordinateRecords.toImmutable(),
-                        logicCoordinateRecord,
-                        navigationCoordinateRecord,
-                        Coordinates.Edit.Default());
+        Encodable.checkVersion(in);
+        StampCoordinateRecord stampCoordinateRecord = StampCoordinateRecord.decode(in);
+        int languageCoordinateCount = in.readInt();
+        MutableList<LanguageCoordinateRecord> languageCoordinateRecords = Lists.mutable.ofInitialCapacity(languageCoordinateCount);
+        for (int i = 0; i < languageCoordinateCount; i++) {
+            languageCoordinateRecords.add(LanguageCoordinateRecord.decode(in));
         }
+        LogicCoordinateRecord logicCoordinateRecord = LogicCoordinateRecord.decode(in);
+        NavigationCoordinateRecord navigationCoordinateRecord = NavigationCoordinateRecord.decode(in);
+        return new ViewCoordinateRecord(stampCoordinateRecord,
+                languageCoordinateRecords.toImmutable(),
+                logicCoordinateRecord,
+                navigationCoordinateRecord,
+                Coordinates.Edit.Default());
     }
 
     @Override

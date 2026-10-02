@@ -52,19 +52,36 @@ public record StampPositionRecord(long time, int pathForPositionNid)
         return new StampPositionRecord(time, pathForPosition.nid());
     }
 
+    /**
+     * Decodes a stamp position: its time, then its path.
+     *
+     * <p>From {@link Encodable#PATH_AS_PUBLIC_ID_VERSION} the path is a public id, resolved to
+     * its nid in the open store. In a stream of the first version the path is the nid itself,
+     * as the store that wrote the stream assigned it; such a stream is read correctly only
+     * against that store ({@code IKE-Network/ike-issues#1172}).
+     *
+     * @param in the stream being decoded
+     * @return the stamp position
+     */
     @Decoder
     public static StampPositionRecord decode(DecoderInput in) {
-        switch (Encodable.checkVersion(in)) {
-            default:
-                return new StampPositionRecord(in.readLong(), in.readInt());
-        }
+        int version = Encodable.checkVersion(in);
+        long time = in.readLong();
+        int pathForPositionNid = version >= Encodable.PATH_AS_PUBLIC_ID_VERSION ? in.readNid() : in.readInt();
+        return new StampPositionRecord(time, pathForPositionNid);
     }
 
+    /**
+     * Encodes this stamp position: its time, then the public id of its path. The nid of the
+     * path is never written, because a nid is local to one store.
+     *
+     * @param out the stream being written
+     */
     @Override
     @Encoder
     public void encode(EncoderOutput out) {
         out.writeLong(this.time);
-        out.writeInt(this.pathForPositionNid);
+        out.writeNid(this.pathForPositionNid);
     }
 
     /**
