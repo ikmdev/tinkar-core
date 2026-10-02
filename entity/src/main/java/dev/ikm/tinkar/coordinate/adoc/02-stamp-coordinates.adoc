@@ -72,7 +72,7 @@ Paths represent development branches with their origins:
 ----
 // Master path branches from primordial path
 StampPathImmutable masterPath = StampPathImmutable.make(
-    TinkarTerm.MASTER_PATH,
+    TinkarTerm.MASTER_PATH.nid(),
     Sets.immutable.of(
         StampPositionRecord.make(Long.MAX_VALUE, TinkarTerm.PRIMORDIAL_PATH.nid())
     )
@@ -80,7 +80,7 @@ StampPathImmutable masterPath = StampPathImmutable.make(
 
 // Development branches from master at specific time
 StampPathImmutable devPath = StampPathImmutable.make(
-    TinkarTerm.DEVELOPMENT_PATH,
+    TinkarTerm.DEVELOPMENT_PATH.nid(),
     Sets.immutable.of(
         StampPositionRecord.make(branchTimestamp, TinkarTerm.MASTER_PATH.nid())
     )

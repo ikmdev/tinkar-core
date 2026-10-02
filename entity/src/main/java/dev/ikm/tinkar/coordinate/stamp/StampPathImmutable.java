@@ -63,10 +63,6 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
         this.pathOrigins = mutableOrigins.toImmutable();
     }
 
-    public static StampPathImmutable make(ConceptFacade pathConcept, ImmutableSet<StampPositionRecord> pathOrigins) {
-        return make(pathConcept, pathOrigins);
-    }
-
     public static StampPathImmutable make(int pathConceptNid, ImmutableSet<StampPositionRecord> pathOrigins) {
         if (pathConceptNid == TinkarTerm.UNINITIALIZED_COMPONENT.nid()) {
             return new StampPathImmutable(pathConceptNid, pathOrigins);
