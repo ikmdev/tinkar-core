@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.coordinate.stamp.calculator;
 
 
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.coordinate.PathService;
 import dev.ikm.tinkar.coordinate.stamp.StampBranchRecord;
@@ -137,7 +138,7 @@ public class PathProvider implements PathService {
             // A boot strap issue, only the primordial path should have no origins.
             // If terminology not completely loaded, content may not yet be ready.
             if (pathNid != TinkarTerm.SANDBOX_PATH.nid() && pathNid != TinkarTerm.MASTER_PATH.nid() && pathNid != TinkarTerm.DEVELOPMENT_PATH.nid()) {
-                throw new IllegalStateException("Path with no origin: " + EntityService.get().getEntityFast(pathNid));
+                throw new IllegalStateException("Path with no origin: " + DiagnosticText.component(pathNid));
             }
             if (pathNid == TinkarTerm.DEVELOPMENT_PATH.nid()) {
                 return Sets.immutable.with(StampPositionRecord.make(Long.MAX_VALUE, TinkarTerm.SANDBOX_PATH.nid()));

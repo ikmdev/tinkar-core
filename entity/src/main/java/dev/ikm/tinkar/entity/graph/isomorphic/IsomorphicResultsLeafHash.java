@@ -20,6 +20,7 @@ import dev.ikm.tinkar.common.util.ArrayUtil;
 import dev.ikm.tinkar.common.util.time.MultipleEndpointTimer;
 import dev.ikm.tinkar.entity.graph.DiGraphAbstract;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.entity.graph.DiTreeText;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.entity.graph.VisitProcessor;
 import dev.ikm.tinkar.terms.ConceptFacade;
@@ -522,7 +523,7 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
 
                                     necessarySetSuccessors.getFirstOptional().ifPresent(andVertex -> {
                                         if (andVertex.getMeaningNid() != TinkarTerm.AND.nid()) {
-                                            throw new IllegalStateException("Missing necessary set and: " + tree);
+                                            throw new IllegalStateException("Missing necessary set and:\n" + DiTreeText.diagnostic(tree));
                                         }
                                         addFragment(elementToAdd, this.comparisonTree, andVertex.vertexIndex(), treeBuilder);
                                     });
@@ -537,12 +538,12 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
                             int andParentIndex =
                                     this.comparisonVisitData().predecessorIndex(elementToAdd.vertexIndex()).getAsInt();
                             if (this.comparisonTree.vertex(andParentIndex).getMeaningNid() != TinkarTerm.AND.nid()) {
-                                throw new IllegalStateException("Element to add does not have AND for its parent: " + this.comparisonTree.vertex(andParentIndex));
+                                throw new IllegalStateException("Element to add does not have AND for its parent: " + DiTreeText.diagnostic(this.comparisonTree.vertex(andParentIndex)));
                             }
                             int sufficientSetIndexInComparison = this.comparisonVisitData().predecessorIndex(andParentIndex).getAsInt();
                             EntityVertex sufficientSetVertexInComparison = this.comparisonTree.vertex(sufficientSetIndexInComparison);
                             if (sufficientSetVertexInComparison.getMeaningNid() != TinkarTerm.SUFFICIENT_SET.nid()) {
-                                throw new IllegalStateException("Element to add does not have SUFFICIENT_SET for its ancestor: " + sufficientSetVertexInComparison);
+                                throw new IllegalStateException("Element to add does not have SUFFICIENT_SET for its ancestor: " + DiTreeText.diagnostic(sufficientSetVertexInComparison));
                             }
                             AtomicBoolean notAdded = new AtomicBoolean(true);
                             treeBuilder.vertexMap().forEach((Consumer<EntityVertex>) treeBuilderEntityVertex -> {
@@ -560,12 +561,12 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
                             int andParentIndex =
                                     this.comparisonVisitData().predecessorIndex(elementToAdd.vertexIndex()).getAsInt();
                             if (this.comparisonTree.vertex(andParentIndex).getMeaningNid() != TinkarTerm.AND.nid()) {
-                                throw new IllegalStateException("Element to add does not have AND for its parent: " + this.comparisonTree.vertex(andParentIndex));
+                                throw new IllegalStateException("Element to add does not have AND for its parent: " + DiTreeText.diagnostic(this.comparisonTree.vertex(andParentIndex)));
                             }
                             int implicationSetIndexInComparison = this.comparisonVisitData().predecessorIndex(andParentIndex).getAsInt();
                             EntityVertex implicationSetVertexInComparison = this.comparisonTree.vertex(implicationSetIndexInComparison);
                             if (implicationSetVertexInComparison.getMeaningNid() != TinkarTerm.INCLUSION_SET.nid()) {
-                                throw new IllegalStateException("Element to add does not have IMPLICATION_SET for its ancestor: " + implicationSetVertexInComparison);
+                                throw new IllegalStateException("Element to add does not have IMPLICATION_SET for its ancestor: " + DiTreeText.diagnostic(implicationSetVertexInComparison));
                             }
                             AtomicBoolean notAdded = new AtomicBoolean(true);
                             treeBuilder.vertexMap().forEach((Consumer<EntityVertex>) treeBuilderEntityVertex -> {
@@ -596,7 +597,7 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
 
                                     propertySetSuccessors.getFirstOptional().ifPresent(andVertex -> {
                                         if (andVertex.getMeaningNid() != TinkarTerm.AND.nid()) {
-                                            throw new IllegalStateException("Missing property set and: " + tree);
+                                            throw new IllegalStateException("Missing property set and:\n" + DiTreeText.diagnostic(tree));
                                         }
                                         addFragment(elementToAdd, this.comparisonTree, andVertex.vertexIndex(), treeBuilder);
                                     });
@@ -607,7 +608,7 @@ public class IsomorphicResultsLeafHash<VVD extends VertexVisitDataLeafHash> exte
                         }
                     }
                 } else {
-                    throw new IllegalStateException("Element to add does not have a predecessor: " + elementToAdd);
+                    throw new IllegalStateException("Element to add does not have a predecessor: " + DiTreeText.diagnostic(elementToAdd));
                 }
                 this.mergedTree = treeBuilder.build();
                 if (stopwatch != null) {

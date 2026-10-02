@@ -280,10 +280,11 @@ public abstract class DiTreeAbstract<V extends EntityVertex> extends DiGraphAbst
                 if (vertex.vertexIndex() < vertexMap.size()) {
                     vertexMap.set(vertex.vertexIndex, vertex);
                 } else {
-                    throw new IllegalStateException("Vertex index is greater than vertexMap.size(): " + vertex);
+                    throw new IllegalStateException("Vertex index " + vertex.vertexIndex() + " is not less than vertexMap.size() "
+                            + vertexMap.size() + ": " + DiTreeText.diagnostic(vertex));
                 }
             } else {
-                throw new IllegalStateException("Vertex replacing old vertex must have its index set: " + vertex);
+                throw new IllegalStateException("Vertex replacing old vertex must have its index set: " + DiTreeText.diagnostic(vertex));
             }
             return this;
         }

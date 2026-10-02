@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.entity.graph;
 
 import dev.ikm.tinkar.common.id.IntIdCollection;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.terms.EntityFacade;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.map.primitive.ImmutableIntObjectMap;
@@ -47,6 +48,12 @@ import java.util.function.IntFunction;
  * function returns one. A vertex or a tree held as a property value is written the same way. A
  * property value that is none of these — a string, a number, a boolean — is written as its own
  * text.
+ *
+ * <p>The {@code diagnostic} methods are the form for the message of an exception
+ * ({@code IKE-Network/ike-issues#1189}). They name each component as {@link DiagnosticText#name(int)}
+ * does: by its description, else its UUID, and by its nid only when the store has no public id
+ * for it. They throw nothing, because the tree in such a message is often the malformed one the
+ * message is about.
  */
 public final class DiTreeText {
 
@@ -67,10 +74,68 @@ public final class DiTreeText {
      * @param nameOf gives the name to write for a component, from its nid in the open store
      * @return the tree, one vertex per line with its properties beneath it
      */
-    public static String tree(DiTreeEntity tree, IntFunction<String> nameOf) {
+    public static String tree(DiTreeAbstract<? extends EntityVertex> tree, IntFunction<String> nameOf) {
         StringBuilder text = new StringBuilder();
         appendVertex(text, tree, tree.root().vertexIndex(), 1, nameOf);
         return text.toString();
+    }
+
+    /**
+     * The text of a whole tree for a diagnostic message, with each component named as
+     * {@link DiagnosticText#name(int)} names it.
+     *
+     * @param tree the tree; may be null or malformed
+     * @return the tree, one vertex per line with its properties beneath it; a note in place of
+     *         the tree when it cannot be written
+     */
+    public static String diagnostic(DiTreeAbstract<? extends EntityVertex> tree) {
+        if (tree == null) {
+            return "no tree";
+        }
+        try {
+            return tree(tree, DiagnosticText::name);
+        } catch (RuntimeException malformed) {
+            return "a tree that cannot be written (" + malformed.getClass().getSimpleName() + ")";
+        }
+    }
+
+    /**
+     * The text of one vertex for a diagnostic message, with each component named as
+     * {@link DiagnosticText#name(int)} names it.
+     *
+     * @param vertex the vertex; may be null or malformed
+     * @return the vertex on one line; a note in place of the vertex when it cannot be written
+     */
+    public static String diagnostic(EntityVertex vertex) {
+        if (vertex == null) {
+            return "no vertex";
+        }
+        try {
+            return vertex(vertex, DiagnosticText::name);
+        } catch (RuntimeException malformed) {
+            return "a vertex that cannot be written (" + malformed.getClass().getSimpleName() + ")";
+        }
+    }
+
+    /**
+     * The text of several vertices for a diagnostic message.
+     *
+     * @param vertices the vertices; may be null
+     * @return the vertices as {@code [first; second]}, each written as
+     *         {@link #diagnostic(EntityVertex)} writes one
+     */
+    public static String diagnostic(Iterable<? extends EntityVertex> vertices) {
+        if (vertices == null) {
+            return "no vertices";
+        }
+        StringBuilder text = new StringBuilder("[");
+        for (EntityVertex vertex : vertices) {
+            if (text.length() > 1) {
+                text.append("; ");
+            }
+            text.append(diagnostic(vertex));
+        }
+        return text.append(']').toString();
     }
 
     /**
@@ -100,8 +165,8 @@ public final class DiTreeText {
     }
 
     /** Appends a vertex's line, its property lines, and then its successors, depth first. */
-    private static void appendVertex(StringBuilder text, DiTreeEntity tree, int index, int depth,
-                                     IntFunction<String> nameOf) {
+    private static void appendVertex(StringBuilder text, DiTreeAbstract<? extends EntityVertex> tree, int index,
+                                     int depth, IntFunction<String> nameOf) {
         EntityVertex vertex = tree.vertex(index);
         String indent = INDENT.repeat(depth);
         ImmutableIntList successors = tree.successors(index);

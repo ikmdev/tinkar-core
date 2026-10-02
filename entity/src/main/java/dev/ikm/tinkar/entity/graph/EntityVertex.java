@@ -17,6 +17,7 @@ package dev.ikm.tinkar.entity.graph;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.VertexId;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.component.Concept;
@@ -394,6 +395,15 @@ public class EntityVertex implements Vertex, VertexId {
 		return Optional.ofNullable(propertyFast(propertyConcept));
 	}
 
+	/** A property value that names a component — its nid or a facade — for a diagnostic message. */
+	private static String componentText(Object propertyValue) {
+		return switch (propertyValue) {
+		case Integer nid -> DiagnosticText.component(nid);
+		case EntityFacade facade -> DiagnosticText.component(facade.nid());
+		default -> String.valueOf(propertyValue);
+		};
+	}
+
 	@Override
 	public Optional<ConceptFacade> propertyAsConcept(Concept propertyConcept) {
 		Optional<?> optionalPropertyValue = property(propertyConcept);
@@ -408,12 +418,12 @@ public class EntityVertex implements Vertex, VertexId {
             default -> throw new IllegalStateException("optionalPropertyValue is not an identifier or facade: " + optionalPropertyValue.get());
 		};
 		if (optionalEntityValue.isEmpty()) {
-            throw new IllegalStateException("Entity specified by property is not in database:: " + optionalPropertyValue.get());
+            throw new IllegalStateException("Entity specified by property is not in database:: " + componentText(optionalPropertyValue.get()));
 		}
 		if (optionalEntityValue.get() instanceof ConceptFacade conceptFacade) {
 			return Optional.of(conceptFacade);
 		}
-		throw new IllegalStateException("Cannot convert property to concept. Property: " + optionalPropertyValue.get());
+		throw new IllegalStateException("Cannot convert property to concept. Property: " + componentText(optionalPropertyValue.get()));
 	}
 
 	@Override

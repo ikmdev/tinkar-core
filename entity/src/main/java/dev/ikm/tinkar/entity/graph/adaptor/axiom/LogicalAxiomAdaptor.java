@@ -27,6 +27,9 @@ import org.eclipse.collections.api.set.MutableSet;
 
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.entity.graph.DiTreeAbstract;
+import dev.ikm.tinkar.entity.graph.DiTreeText;
+import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -254,7 +257,9 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 		public Atom restriction() {
 			ImmutableSet<Atom> children = children(Atom.class);
 			if (children.size() != 1) {
-				throw new IllegalStateException("Should only be one child for restriction. Found: " + children);
+				throw new IllegalStateException("Should only be one child for restriction. Found " + children.size() + " at vertex "
+						+ vertexIndex() + (adaptedExpression.sourceGraph instanceof DiTreeAbstract<EntityVertex> tree
+								? " of:\n" + DiTreeText.diagnostic(tree) : ""));
 			}
 			return children.getOnly();
 		}

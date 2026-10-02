@@ -17,6 +17,7 @@ package dev.ikm.tinkar.coordinate.logic;
 
 
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.terms.ComponentWithNid;
 import dev.ikm.tinkar.terms.ConceptFacade;
@@ -56,7 +57,7 @@ public enum PremiseType implements dev.ikm.tinkar.component.Concept, ComponentWi
         if (Entity.nid(concept) == TinkarTerm.STATED_PREMISE_TYPE.nid()) {
             return STATED;
         }
-        throw new IllegalStateException("PremiseType.fromConcept can't handle: " + concept);
+        throw new IllegalStateException("PremiseType.fromConcept can't handle: " + DiagnosticText.component(Entity.nid(concept)));
     }
 
     public ConceptFacade getPremiseTypeConcept() {

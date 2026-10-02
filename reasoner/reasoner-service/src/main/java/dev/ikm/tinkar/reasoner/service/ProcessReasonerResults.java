@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
@@ -200,8 +201,7 @@ public class ProcessReasonerResults {
 		if (optionalAxiomsIndex.isEmpty() || optionalAxiomsIndex.getAsInt() != 0) {
 			throw new IllegalStateException(
 					"Index for "
-							+ this.viewCalculator.getPreferredDescriptionTextWithFallbackOrNid(
-									TinkarTerm.EL_PLUS_PLUS_INFERRED_TERMINOLOGICAL_AXIOMS)
+							+ DiagnosticText.component(TinkarTerm.EL_PLUS_PLUS_INFERRED_TERMINOLOGICAL_AXIOMS.nid())
 							+ " is " + optionalAxiomsIndex);
 		}
 		int axiomsIndex = optionalAxiomsIndex.getAsInt();
@@ -226,12 +226,12 @@ public class ProcessReasonerResults {
 			if (statedSemanticNids.length == 0) { // Solor concept length == 0...
 				if (conceptNid != TinkarTerm.SOLOR_CONCEPT.nid()) {
 					AlertStreams.dispatchToRoot(
-							new IllegalStateException("No stated form for concept: " + PrimitiveData.text(conceptNid)));
+							new IllegalStateException("No stated form for concept: " + DiagnosticText.component(conceptNid)));
 				}
 			} else {
 				if (statedSemanticNids.length > 1) {
 					AlertStreams.dispatchToRoot(new IllegalStateException(
-							"More than one stated form for concept: " + PrimitiveData.text(conceptNid)));
+							"More than one stated form for concept: " + DiagnosticText.component(conceptNid)));
 				}
 				Latest<SemanticEntityVersion> latestStatedSemantic = this.viewCalculator.latest(statedSemanticNids[0]);
 				latestStatedSemantic.ifPresent(statedSemantic -> {
@@ -337,8 +337,8 @@ public class ProcessReasonerResults {
 								}
 							}
 							default -> throw new IllegalStateException("More than one inferred semantic of pattern "
-									+ PrimitiveData.text(inferredPatternNid) + "for component: "
-									+ PrimitiveData.text(conceptNid));
+									+ DiagnosticText.component(inferredPatternNid) + " for component: "
+									+ DiagnosticText.component(conceptNid));
 							}
 						}
 						// TODO this approach for updating navigation changes requires a second scan of
@@ -406,8 +406,8 @@ public class ProcessReasonerResults {
 			}
 		}
 		default -> throw new IllegalStateException(
-				"More than one semantic of pattern " + PrimitiveData.text(inferredNavigationPatternNid)
-						+ "for component: " + PrimitiveData.text(conceptNid));
+				"More than one semantic of pattern " + DiagnosticText.component(inferredNavigationPatternNid)
+						+ " for component: " + DiagnosticText.component(conceptNid));
 		}
 	}
 
@@ -477,8 +477,8 @@ public class ProcessReasonerResults {
 				}
 			}
 			default -> throw new IllegalStateException(
-					"More than one semantic of pattern " + PrimitiveData.text(inferredNavigationPatternNid)
-							+ "for component: " + PrimitiveData.text(conceptNid));
+					"More than one semantic of pattern " + DiagnosticText.component(inferredNavigationPatternNid)
+							+ " for component: " + DiagnosticText.component(conceptNid));
 			}
 		});
 		LOG.info("NavigationSemantics processed not in AxiomData: " + axiomDataNotFoundCounter.get());

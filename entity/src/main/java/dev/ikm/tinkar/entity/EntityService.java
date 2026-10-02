@@ -346,7 +346,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
                     case ConceptEntity conceptEntity -> LOG.error("Unexpected concept entity in stamp iteration: {}", conceptEntity);
                     case PatternEntity patternEntity -> LOG.error("Unexpected pattern entity in stamp iteration: {}", patternEntity);
                     case SemanticEntity semanticEntity -> LOG.error("Unexpected semantic entity in stamp iteration: {}", semanticEntity);
-                    default -> throw new IllegalStateException("Unexpected value: " + entity);
+                    default -> throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(entity));
                 }
             });
         });
@@ -369,7 +369,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
                     case StampEntity stampEntity -> LOG.error("Unexpected stamp entity in concept iteration: {}", stampEntity);
                     case PatternEntity patternEntity -> LOG.error("Unexpected pattern entity in concept iteration: {}", patternEntity);
                     case SemanticEntity semanticEntity -> LOG.error("Unexpected semantic entity in concept iteration: {}", semanticEntity);
-                    default -> throw new IllegalStateException("Unexpected value: " + entity);
+                    default -> throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(entity));
                 }
             });
         });
@@ -398,7 +398,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
                     case StampEntity stampEntity -> LOG.error("Unexpected stamp entity in pattern iteration: {}", stampEntity);
                     case ConceptEntity conceptEntity -> LOG.error("Unexpected concept entity in pattern iteration: {}", conceptEntity);
                     case SemanticEntity semanticEntity -> LOG.error("Unexpected semantic entity in pattern iteration: {}", semanticEntity);
-                    default -> throw new IllegalStateException("Unexpected value: " + entity);
+                    default -> throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(entity));
                 }
             });
         });

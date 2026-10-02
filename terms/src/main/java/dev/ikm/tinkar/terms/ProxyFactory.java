@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.terms;
 
 import dev.ikm.tinkar.common.alert.AlertStreams;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.util.text.EscapeUtil;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import org.slf4j.Logger;
@@ -84,9 +85,11 @@ public class ProxyFactory {
             case SemanticFacade semantic -> (T) EntityProxy.Semantic.make(semantic.nid());
             case StampFacade stamp -> (T) EntityProxy.Stamp.make(stamp.nid());
             default -> {
-                IllegalStateException ex = new IllegalStateException("Unexpected value: " + facade);
+                IllegalStateException ex = new IllegalStateException("Unexpected value: " + facade.getClass().getSimpleName()
+                        + ": " + DiagnosticText.component(facade.nid()));
                 AlertStreams.dispatchToRoot(ex);
-                throw new UnsupportedOperationException("Can't handle: " + facade);
+                throw new UnsupportedOperationException("Can't handle: " + facade.getClass().getSimpleName()
+                        + ": " + DiagnosticText.component(facade.nid()));
             }
         };
     }

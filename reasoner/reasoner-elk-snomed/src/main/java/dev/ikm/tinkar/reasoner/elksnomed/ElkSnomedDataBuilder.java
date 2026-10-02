@@ -35,12 +35,14 @@ import dev.ikm.elk.snomed.model.RoleGroup;
 import dev.ikm.elk.snomed.model.RoleType;
 import dev.ikm.elk.snomed.model.SnomedEntity;
 import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.entity.graph.DiTreeText;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiomSemantic;
 import dev.ikm.tinkar.ext.lang.owl.IntervalUtil;
@@ -192,13 +194,13 @@ public class ElkSnomedDataBuilder {
 		}
 		if (data.getRoleType(nid) != null) {
 			RoleType role = data.getRoleType(nid);
-			role.setName(PrimitiveData.text(nid));
-			throw new UnsupportedReasonerProcessIncremental("Delete: " + role.getClass() + " " + role);
+			throw new UnsupportedReasonerProcessIncremental(
+					"Delete: " + role.getClass() + " " + DiagnosticText.component(nid));
 		}
 		if (data.getConcreteRoleType(nid) != null) {
 			ConcreteRoleType role = data.getConcreteRoleType(nid);
-			role.setName(PrimitiveData.text(nid));
-			throw new UnsupportedReasonerProcessIncremental("Delete: " + role.getClass() + " " + role);
+			throw new UnsupportedReasonerProcessIncremental(
+					"Delete: " + role.getClass() + " " + DiagnosticText.component(nid));
 		}
 		return null;
 	}
@@ -215,19 +217,20 @@ public class ElkSnomedDataBuilder {
 		SnomedEntity entity = processDefinition(update);
 		if (entity == null) {
 			LOG.error("\n" + PrimitiveData.text(nid) + "\n" + update);
-			throw new UnsupportedReasonerProcessIncremental("processDefinition failed: " + PrimitiveData.text(nid));
+			throw new UnsupportedReasonerProcessIncremental("processDefinition failed: " + DiagnosticText.component(nid));
 		}
 		return switch (entity) {
 		case Concept concept -> concept;
 		case RoleType role -> {
-			role.setName(PrimitiveData.text(nid));
-			throw new UnsupportedReasonerProcessIncremental("Update: " + role);
+			throw new UnsupportedReasonerProcessIncremental(
+					"Update: " + role.getClass() + " " + DiagnosticText.component(nid));
 		}
 		case ConcreteRoleType role -> {
-			role.setName(PrimitiveData.text(nid));
-			throw new UnsupportedReasonerProcessIncremental("Update: " + role);
+			throw new UnsupportedReasonerProcessIncremental(
+					"Update: " + role.getClass() + " " + DiagnosticText.component(nid));
 		}
-		default -> throw new IllegalArgumentException("Unexpected value: " + entity);
+		default -> throw new IllegalArgumentException(
+				"Unexpected value: " + entity.getClass() + " " + DiagnosticText.component(nid));
 		};
 
 	}
@@ -246,11 +249,13 @@ public class ElkSnomedDataBuilder {
 		final ImmutableList<EntityVertex> children = definition.successors(node);
 		if (children.size() != 1)
 			throw new IllegalStateException(
-					node + " can only have one child. Concept: " + conceptNid + " Definition: " + definition);
+					DiTreeText.diagnostic(node) + " can only have one child. Concept: "
+							+ DiagnosticText.component(conceptNid) + " Definition:\n" + DiTreeText.diagnostic(definition));
 		EntityVertex child = children.getFirst();
 		if (meaning != null && child.getMeaningNid() != meaning.nid())
-			throw new IllegalStateException(node + " can only have " + meaning + " for a child. Concept: " + conceptNid
-					+ " definition: " + definition);
+			throw new IllegalStateException(DiTreeText.diagnostic(node) + " can only have "
+					+ DiagnosticText.name(meaning.nid()) + " for a child. Concept: "
+					+ DiagnosticText.component(conceptNid) + " definition:\n" + DiTreeText.diagnostic(definition));
 		return child;
 	}
 
@@ -258,7 +263,7 @@ public class ElkSnomedDataBuilder {
 		int role_operator_nid = getNid(node, TinkarTerm.ROLE_OPERATOR);
 		if (role_operator_nid != TinkarTerm.EXISTENTIAL_RESTRICTION.nid())
 			throw new UnsupportedOperationException(
-					"Role: " + PrimitiveData.text(role_operator_nid) + " not supported. ");
+					"Role: " + DiagnosticText.component(role_operator_nid) + " not supported. ");
 	}
 
 	// This is just used to support the WriteTest ITs
@@ -285,7 +290,7 @@ public class ElkSnomedDataBuilder {
 				Concept concept = data.getOrCreateConcept(conceptNid);
 				Definition def = new Definition();
 				def.setDefinitionType(DefinitionType.EquivalentConcept);
-				processDefinition(def, child, definition);
+				processDefinition(conceptNid, def, child, definition);
 				concept.addDefinition(def);
 				result = concept;
 			}
@@ -293,7 +298,7 @@ public class ElkSnomedDataBuilder {
 				Concept concept = data.getOrCreateConcept(conceptNid);
 				Definition def = new Definition();
 				def.setDefinitionType(DefinitionType.SubConcept);
-				processDefinition(def, child, definition);
+				processDefinition(conceptNid, def, child, definition);
 				concept.addDefinition(def);
 				result = concept;
 			}
@@ -301,7 +306,7 @@ public class ElkSnomedDataBuilder {
 				Concept concept = data.getOrCreateConcept(conceptNid);
 				Definition def = new Definition();
 				def.setDefinitionType(DefinitionType.SubConcept);
-				processDefinition(def, child, definition);
+				processDefinition(conceptNid, def, child, definition);
 				concept.addGciDefinition(def);
 				result = concept;
 			}
@@ -329,8 +334,8 @@ public class ElkSnomedDataBuilder {
 		return ret;
 	}
 
-	private void processDefinition(Definition def, EntityVertex node, DiTreeEntity definition) {
-		EntityVertex child = getFirstChildCheck(-1, node, definition, null);
+	private void processDefinition(int conceptNid, Definition def, EntityVertex node, DiTreeEntity definition) {
+		EntityVertex child = getFirstChildCheck(conceptNid, node, definition, null);
 		switch (getMeaning(child)) {
 		case AND -> {
 			processAnd(def, child, definition);
@@ -365,25 +370,28 @@ public class ElkSnomedDataBuilder {
 				ConceptFacade ppi = node.propertyFast(TinkarTerm.PROPERTY_SEQUENCE_IMPLICATION);
 				if (ppi.nid() != conceptNid)
 					throw new IllegalStateException(
-							"Property chain malformed. Concept: " + conceptNid + " definition: " + definition);
+							"Property chain malformed. Concept: " + DiagnosticText.component(conceptNid)
+									+ " definition:\n" + DiTreeText.diagnostic(definition));
 				IntIdList ps = node.propertyFast(TinkarTerm.PROPERTY_SEQUENCE);
 				if (ps == null)
 					throw new IllegalStateException(
-							"Property chain malformed. Expected " + TinkarTerm.PROPERTY_SEQUENCE.description()
-									+ " Concept: " + conceptNid + " definition: " + definition);
+							"Property chain malformed. Expected " + DiagnosticText.name(TinkarTerm.PROPERTY_SEQUENCE.nid())
+									+ " Concept: " + DiagnosticText.component(conceptNid)
+									+ " definition:\n" + DiTreeText.diagnostic(definition));
 				if (ps.size() != 2)
-					throw new IllegalStateException("Property chain " + ps.size() + " != 2. Concept: " + conceptNid
-							+ " definition: " + definition);
+					throw new IllegalStateException("Property chain " + ps.size() + " != 2. Concept: " + DiagnosticText.component(conceptNid)
+							+ " definition:\n" + DiTreeText.diagnostic(definition));
 				if (ps.get(0) != conceptNid)
 					throw new IllegalStateException(
-							"Property chain malformed. Concept: " + conceptNid + " definition: " + definition);
+							"Property chain malformed. Concept: " + DiagnosticText.component(conceptNid)
+									+ " definition:\n" + DiTreeText.diagnostic(definition));
 				RoleType prop1 = data.getOrCreateRoleType(ps.get(0));
 				RoleType prop2 = data.getOrCreateRoleType(ps.get(1));
 				if (!roleType.equals(prop1))
 					throw new IllegalStateException("This is a bug.");
 				roleType.setChained(prop2);
 			}
-			default -> throw new UnsupportedOperationException("Can't handle: " + node + " in: " + definition);
+			default -> throw new UnsupportedOperationException("Can't handle: " + DiTreeText.diagnostic(node) + " in:\n" + DiTreeText.diagnostic(definition));
 			}
 		}
 	}
@@ -399,7 +407,7 @@ public class ElkSnomedDataBuilder {
 				ConcreteRoleType roleType = data.getOrCreateConcreteRoleType(conceptNid);
 				roleType.addSuperConcreteRoleType(data.getOrCreateConcreteRoleType(nodeConcept.nid()));
 			}
-			default -> throw new UnsupportedOperationException("Can't handle: " + node + " in: " + definition);
+			default -> throw new UnsupportedOperationException("Can't handle: " + DiTreeText.diagnostic(node) + " in:\n" + DiTreeText.diagnostic(definition));
 			}
 		}
 	}

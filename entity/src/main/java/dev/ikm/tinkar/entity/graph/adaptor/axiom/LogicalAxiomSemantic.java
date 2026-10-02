@@ -15,7 +15,7 @@
  */
 package dev.ikm.tinkar.entity.graph.adaptor.axiom;
 
-import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.TinkarTerm;
 
@@ -59,7 +59,7 @@ public enum LogicalAxiomSemantic {
                 return meaning;
             }
         }
-        throw new IllegalStateException("No meaning for nid: " + meaningNid + " " + PrimitiveData.text(meaningNid));
+        throw new IllegalStateException("No meaning for: " + DiagnosticText.component(meaningNid));
     }
 
 }

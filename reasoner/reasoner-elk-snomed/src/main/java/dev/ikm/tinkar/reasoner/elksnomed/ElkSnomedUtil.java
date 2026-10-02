@@ -7,6 +7,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 
 import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.tinkar.common.id.IntIdSet;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
@@ -26,9 +27,9 @@ public class ElkSnomedUtil {
 		int[] statedSemanticNids = PrimitiveData.get().semanticNidsForComponentOfPattern(conceptNid,
 				TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid());
 		if (statedSemanticNids.length == 0)
-			throw new IllegalStateException("No stated form for concept: " + PrimitiveData.text(conceptNid));
+			throw new IllegalStateException("No stated form for concept: " + DiagnosticText.component(conceptNid));
 		if (statedSemanticNids.length > 1)
-			throw new IllegalStateException("More than one stated form for concept: " + PrimitiveData.text(conceptNid));
+			throw new IllegalStateException("More than one stated form for concept: " + DiagnosticText.component(conceptNid));
 		return statedSemanticNids[0];
 	}
 
@@ -90,14 +91,14 @@ public class ElkSnomedUtil {
 			Latest<SemanticEntityVersion> latestSemantic = vc.latest(semanticNids[0]);
 			if (latestSemantic.isPresent())
 				return latestSemantic.get();
-			throw new SemanticStateException("No LATEST semantic of pattern " + PrimitiveData.text(patternNid)
-					+ " for component: " + PrimitiveData.text(nid));
+			throw new SemanticStateException("No LATEST semantic of pattern " + DiagnosticText.component(patternNid)
+					+ " for component: " + DiagnosticText.component(nid));
 		}
 		if (semanticNids.length == 0)
-			throw new SemanticStateException("No semantic of pattern " + PrimitiveData.text(patternNid)
-					+ " for component: " + PrimitiveData.text(nid));
-		throw new SemanticStateException("More than one semantic of pattern " + PrimitiveData.text(patternNid)
-				+ " for component: " + PrimitiveData.text(nid));
+			throw new SemanticStateException("No semantic of pattern " + DiagnosticText.component(patternNid)
+					+ " for component: " + DiagnosticText.component(nid));
+		throw new SemanticStateException("More than one semantic of pattern " + DiagnosticText.component(patternNid)
+				+ " for component: " + DiagnosticText.component(nid));
 	}
 
 	public static Set<Integer> getInferredParents(ViewCalculator vc, long sctid) {

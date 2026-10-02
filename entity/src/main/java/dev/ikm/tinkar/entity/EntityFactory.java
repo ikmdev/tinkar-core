@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity;
 
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.component.*;
 import dev.ikm.tinkar.schema.StampChronology;
 import io.activej.bytebuf.ByteBuf;
@@ -93,7 +94,7 @@ public class EntityFactory {
     }
 
     public static StampEntity makeStamp(Stamp stamp) {
-        throw new UnsupportedOperationException("Can't makeStamp: " + stamp);
+        throw new UnsupportedOperationException("Can't makeStamp: " + DiagnosticText.component(stamp.publicId()));
         //return StampEntity.make(stampDTO);
     }
 }

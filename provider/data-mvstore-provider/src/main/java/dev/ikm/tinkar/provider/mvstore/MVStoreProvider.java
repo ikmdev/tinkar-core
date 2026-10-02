@@ -18,6 +18,7 @@ package dev.ikm.tinkar.provider.mvstore;
 import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.*;
+import dev.ikm.tinkar.entity.EntityText;
 import dev.ikm.tinkar.provider.search.DataStoreLockProbe;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
@@ -299,7 +300,7 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
         } else {
             Entity entity = Entity.getFast(patternNid);
             if (entity instanceof PatternEntity == false) {
-                throw new IllegalStateException("Trying to iterate elements for entity that is not a pattern: " + entity);
+                throw new IllegalStateException("Trying to iterate elements for entity that is not a pattern: " + EntityText.diagnostic(entity));
             }
 
         }

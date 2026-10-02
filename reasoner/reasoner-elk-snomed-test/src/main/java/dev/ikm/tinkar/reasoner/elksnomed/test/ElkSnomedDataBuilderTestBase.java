@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import dev.ikm.elk.snomed.SnomedConcepts;
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
@@ -155,7 +156,7 @@ public abstract class ElkSnomedDataBuilderTestBase extends ElkSnomedTestBase {
 									}
 								} else {
 									throw new RuntimeException(
-											"No latest for " + conceptNid + " " + PrimitiveData.text(conceptNid));
+											"No latest for " + DiagnosticText.component(conceptNid));
 								}
 							});
 				});

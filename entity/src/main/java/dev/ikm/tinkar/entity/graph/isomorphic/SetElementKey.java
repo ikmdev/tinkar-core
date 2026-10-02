@@ -18,6 +18,7 @@ package dev.ikm.tinkar.entity.graph.isomorphic;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.entity.graph.DiTreeAbstract;
+import dev.ikm.tinkar.entity.graph.DiTreeText;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiomSemantic;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -87,7 +88,7 @@ public class SetElementKey
 			return LogicalAxiomSemantic.INCLUSION_SET;
 		}
 		throw new IllegalStateException(
-				"vertex " + vertexIndex + " is not contained within a known set type: " + expression);
+				"vertex " + vertexIndex + " is not contained within a known set type:\n" + DiTreeText.diagnostic(expression));
 	}
 
     @Override

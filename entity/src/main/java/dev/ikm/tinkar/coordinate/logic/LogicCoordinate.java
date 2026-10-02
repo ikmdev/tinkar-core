@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.coordinate.logic;
 
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinate;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
@@ -250,7 +251,7 @@ public interface LogicCoordinate {
                 semanticList::add
         );
         if (semanticList.size() > 1) {
-            throw new IllegalStateException("Too many semantics for " + PrimitiveData.textWithNid(conceptNid) + " " + premiseType);
+            throw new IllegalStateException("Too many semantics for " + DiagnosticText.component(conceptNid) + " " + premiseType);
         }
         return semanticList.getFirst();
     }

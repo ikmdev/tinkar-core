@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.terms;
 
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.component.FieldDataType;
 
@@ -69,6 +70,6 @@ public class ConceptToDataType {
             return FieldDataType.DECIMAL;
         }
 
-        throw new UnsupportedOperationException("Can't handle: " + dataTypeConcept);
+        throw new UnsupportedOperationException("Can't handle: " + DiagnosticText.component(dataTypeConcept.publicId()));
     }
 }

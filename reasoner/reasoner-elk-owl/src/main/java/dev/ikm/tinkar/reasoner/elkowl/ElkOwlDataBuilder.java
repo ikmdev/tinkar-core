@@ -39,12 +39,14 @@ import org.slf4j.LoggerFactory;
 import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.IntIdList;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.entity.graph.DiTreeText;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiomSemantic;
 import dev.ikm.tinkar.terms.ConceptFacade;
@@ -150,7 +152,7 @@ public class ElkOwlDataBuilder {
 							if (axiomData.nidAxiomsMap.compareAndSet(conceptNid, null, axiomsForDefinition)) {
 								axiomData.axiomsSet.addAll(axiomsForDefinition.castToList());
 							} else {
-								alert(new IllegalStateException("Definition for " + conceptNid + " already exists"));
+								alert(new IllegalStateException("Definition for " + DiagnosticText.component(conceptNid) + " already exists"));
 							}
 							axiomData.incrementActiveConceptCount();
 						} else {
@@ -196,7 +198,7 @@ public class ElkOwlDataBuilder {
 		ImmutableList<OWLAxiom> additions = processDefinition(definition, conceptNid);
 		ImmutableList<OWLAxiom> deletions = axiomData.nidAxiomsMap.get(conceptNid);
 		if (deletions == null)
-			throw new RuntimeException(conceptNid + " " + PrimitiveData.text(conceptNid));
+			throw new RuntimeException("No axioms to replace for concept: " + DiagnosticText.component(conceptNid));
 		axiomData.nidAxiomsMap.put(conceptNid, additions);
 		deletions.forEach(axiomData.axiomsSet::remove);
 //		axiomData.axiomsSet.removeAll(deletions.castToList());
@@ -227,7 +229,7 @@ public class ElkOwlDataBuilder {
 				processPropertySet(childVertex, conceptNid, definition, axioms);
 			}
 			default ->
-				throw new IllegalStateException("Unexpected value: " + PrimitiveData.text(childVertex.getMeaningNid()));
+				throw new IllegalStateException("Unexpected value: " + DiagnosticText.component(childVertex.getMeaningNid()));
 			}
 		}
 		return axioms.toImmutable();
@@ -244,11 +246,11 @@ public class ElkOwlDataBuilder {
 						conjunctionConcept.get());
 				axioms.add(axiom);
 			} else {
-				throw new IllegalStateException("Child node must return a conjunction concept. Concept: " + conceptNid
-						+ " definition: " + definition);
+				throw new IllegalStateException("Child node must return a conjunction concept. Concept: "
+						+ DiagnosticText.component(conceptNid) + " definition:\n" + DiTreeText.diagnostic(definition));
 			}
 		} else {
-			throw new IllegalStateException("Necessary sets require a single AND child... " + childVertexList);
+			throw new IllegalStateException("Necessary sets require a single AND child... " + DiTreeText.diagnostic(childVertexList));
 		}
 	}
 
@@ -263,11 +265,11 @@ public class ElkOwlDataBuilder {
 						.getOWLEquivalentClassesAxiom(axiomData.getConcept(conceptNid), conjunctionConcept.get());
 				axioms.add(axiom);
 			} else {
-				throw new IllegalStateException("Child node must return a conjunction concept. Concept: " + conceptNid
-						+ " definition: " + definition);
+				throw new IllegalStateException("Child node must return a conjunction concept. Concept: "
+						+ DiagnosticText.component(conceptNid) + " definition:\n" + DiTreeText.diagnostic(definition));
 			}
 		} else {
-			throw new IllegalStateException("Sufficient sets require a single AND child... " + childVertexList);
+			throw new IllegalStateException("Sufficient sets require a single AND child... " + DiTreeText.diagnostic(childVertexList));
 		}
 	}
 
@@ -283,11 +285,11 @@ public class ElkOwlDataBuilder {
 				axioms.add(axiom);
 //				LOG.info("Inclusion set: " + PrimitiveData.text(conceptNid) + "\n" + definition + "\n" + axioms);
 			} else {
-				throw new IllegalStateException("Child node must return a conjunction concept. Concept: " + conceptNid
-						+ " definition: " + definition);
+				throw new IllegalStateException("Child node must return a conjunction concept. Concept: "
+						+ DiagnosticText.component(conceptNid) + " definition:\n" + DiTreeText.diagnostic(definition));
 			}
 		} else {
-			throw new IllegalStateException("Inclusion sets require a single AND child... " + childVertexList);
+			throw new IllegalStateException("Inclusion sets require a single AND child... " + DiTreeText.diagnostic(childVertexList));
 		}
 	}
 
@@ -334,7 +336,7 @@ public class ElkOwlDataBuilder {
 				return processRoleNodeSome(logicVertex, conceptNid, definition, axioms);
 			} else {
 				throw new UnsupportedOperationException(
-						"Role: " + PrimitiveData.text(roleOperator.nid()) + " not supported. ");
+						"Role: " + DiagnosticText.component(roleOperator.nid()) + " not supported. ");
 			}
 
 //		case LITERAL_BOOLEAN:
@@ -348,7 +350,7 @@ public class ElkOwlDataBuilder {
 		case SUFFICIENT_SET:
 		case NECESSARY_SET:
 		case INCLUSION_SET:
-			throw new UnsupportedOperationException("Not expected here: " + logicVertex);
+			throw new UnsupportedOperationException("Not expected here: " + DiTreeText.diagnostic(logicVertex));
 		case PROPERTY_SEQUENCE_IMPLICATION:
 			throw new UnsupportedOperationException();
 		}
@@ -361,11 +363,12 @@ public class ElkOwlDataBuilder {
 		final ImmutableList<EntityVertex> children = definition.successors(propertySetNode);
 		if (children.size() != 1) {
 			throw new IllegalStateException(
-					"PropertySetNode can only have one child. Concept: " + conceptNid + " definition: " + definition);
+					"PropertySetNode can only have one child. Concept: " + DiagnosticText.component(conceptNid)
+							+ " definition:\n" + DiTreeText.diagnostic(definition));
 		}
 		if (!(children.get(0).getMeaningNid() == TinkarTerm.AND.nid())) {
-			throw new IllegalStateException("PropertySetNode can only have AND for a child. Concept: " + conceptNid
-					+ " definition: " + definition);
+			throw new IllegalStateException("PropertySetNode can only have AND for a child. Concept: "
+					+ DiagnosticText.component(conceptNid) + " definition:\n" + DiTreeText.diagnostic(definition));
 		}
 		for (EntityVertex node : definition.successors(children.get(0))) {
 			switch (LogicalAxiomSemantic.get(node.getMeaningNid())) {
@@ -406,7 +409,7 @@ public class ElkOwlDataBuilder {
 				axioms.add(axiom);
 				break;
 			default:
-				throw new UnsupportedOperationException("Can't handle: " + node + " in: " + definition);
+				throw new UnsupportedOperationException("Can't handle: " + DiTreeText.diagnostic(node) + " in:\n" + DiTreeText.diagnostic(definition));
 			}
 		}
 	}
@@ -447,15 +450,16 @@ public class ElkOwlDataBuilder {
 		final ImmutableList<EntityVertex> children = definition.successors(roleNodeSome);
 		if (children.size() != 1) {
 			throw new IllegalStateException(
-					"RoleNodeSome can only have one child. Concept: " + conceptNid + " definition: " + definition);
+					"RoleNodeSome can only have one child. Concept: " + DiagnosticText.component(conceptNid)
+							+ " definition:\n" + DiTreeText.diagnostic(definition));
 		}
 		final Optional<OWLClassExpression> restrictionConcept = generateAxioms(children.get(0), conceptNid, definition,
 				axioms);
 		if (restrictionConcept.isPresent()) {
 			return Optional.of(owlDataFactory.getOWLObjectSomeValuesFrom(theRole, restrictionConcept.get()));
 		}
-		throw new UnsupportedOperationException("Child of role node can not return null concept. Concept: " + conceptNid
-				+ " definition: " + definition);
+		throw new UnsupportedOperationException("Child of role node can not return null concept. Concept: "
+				+ DiagnosticText.component(conceptNid) + " definition:\n" + DiTreeText.diagnostic(definition));
 	}
 
 	/**

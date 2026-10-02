@@ -21,6 +21,7 @@ import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.CachingService;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculator;
@@ -329,7 +330,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
                     }
                 },
                 () -> {
-                    throw new IllegalStateException("No active pattern version. " + latestPatternEntityVersion);
+                    throw new IllegalStateException("No active pattern version. " + DiagnosticText.component(patternNid));
                 });
     }
 

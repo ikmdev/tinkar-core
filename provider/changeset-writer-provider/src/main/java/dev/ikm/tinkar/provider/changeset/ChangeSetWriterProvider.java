@@ -11,6 +11,7 @@ import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.entity.ChangeSetWriterService;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityText;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.SemanticEntity;
@@ -383,7 +384,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                 authorList.add(stampEntity.author().publicId());
             }
             default -> {
-                throw new IllegalStateException("Unexpected value: " + entityToWrite);
+                throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(entityToWrite));
             }
         }
         // Transform and write data

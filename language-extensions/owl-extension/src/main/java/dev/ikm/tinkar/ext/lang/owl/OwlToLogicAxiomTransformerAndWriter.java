@@ -17,6 +17,7 @@ package dev.ikm.tinkar.ext.lang.owl;
 
 
 import dev.ikm.tinkar.common.id.IntIds;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
@@ -175,7 +176,7 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
                     switch (destinationSemanticNids.length) {
                         case 0 -> newSemanticWithVersion(conceptNid, logicalExpression, writeStampBuilder.build());
                         case 1 -> addSemanticVersionIfAbsent(conceptNid, logicalExpression, writeStampBuilder.build(), stampCoordinate, destinationSemanticNids[0]);
-                        default -> throw new IllegalStateException("To many graphs for component: " + PrimitiveData.text(conceptNid));
+                        default -> throw new IllegalStateException("To many graphs for component: " + DiagnosticText.component(conceptNid));
                     }
                 }
             }

@@ -23,6 +23,7 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.DefaultDescriptionForNidService;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PluggableService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.PrimitiveDataRepair;
@@ -38,6 +39,7 @@ import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.component.Chronology;
 import dev.ikm.tinkar.component.Version;
 import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.EntityText;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.State;
@@ -52,7 +54,6 @@ import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Future;
@@ -115,7 +116,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                         int indexForMeaning = patternEntityVersion.indexForMeaning(TinkarTerm.DESCRIPTION_TYPE);
                         int indexForText = patternEntityVersion.indexForMeaning(TinkarTerm.TEXT_FOR_DESCRIPTION);
                         if (indexForMeaning == -1 || indexForText == -1) {
-                            throw new IllegalStateException("Expecting a pattern entity with description and text fields. Found: " + patternEntityVersion);
+                            throw new IllegalStateException("Expecting a pattern entity with description and text fields. Found: " + EntityText.diagnostic(patternEntityVersion));
                         }
                         if (version.fieldValues().get(indexForMeaning).equals(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE)) {
                             return (String) version.fieldValues().get(indexForText);
@@ -133,9 +134,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                         } else {
                             Entity<?> entity = patternHandle.expectEntity();
                             anyString = " <" + entity.nid() + ">" + entity.asUuidList().toString();
-                            // Added in case entity.toString() itself throws an exception, at least get a UUID for the problem.
-                            AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a pattern entity. Found entity with id:  " + anyString)));
-                            AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a pattern entity. Found: " + entity)));
+                            AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a pattern entity. Found: " + EntityText.diagnostic(entity))));
                         }
                     }
                 } else {
@@ -154,10 +153,8 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                         LOG.error("ERROR Nid + 1: <" + (nid + 1) + "> " + getChronology(nid + 1));
                         LOG.error("ERROR Nid + 2: <" + (nid + 2) + "> " + getChronology(nid + 2));
 
-                        // Added in case entity.toString() itself throws an exception, at least get a UUID for the problem.
-                        AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a description semantic entity from list: " +
-                                Arrays.toString(semanticNids) + "\n Found entity with id:  " + anyString)));
-                        AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a description semantic. Found: " + entity)));
+                        AlertStreams.getRoot().dispatch(AlertObject.makeError(new IllegalStateException("Expecting a description semantic of "
+                                + DiagnosticText.component(nid) + ". Found: " + EntityText.diagnostic(entity))));
                     }
                 }
             }
@@ -295,7 +292,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                 yield PrimitiveData.get().merge(entity.nid(), Integer.MAX_VALUE, Integer.MAX_VALUE,
                         entity.getBytes(), entity, activity);
             }
-            default -> throw new IllegalStateException("Unexpected value: " + entity);
+            default -> throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(entity));
         };
 
         if (addToCache) {
@@ -342,7 +339,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                         parent = null;
                         STRING_CACHE.invalidate(stampEntity.nid());
                     }
-                    default -> throw new IllegalStateException("Unexpected value: " + parent);
+                    default -> throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(parent));
                 }
             }
         }
@@ -475,7 +472,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
             }
         } else {
             throw new IllegalStateException("Cannot merge entities of different types: \n" +
-                    entityToErase + "\n\n" + entityToMergeInto);
+                    EntityText.diagnostic(entityToErase) + "\n\n" + EntityText.diagnostic(entityToMergeInto));
         }
     }
 
@@ -520,7 +517,7 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
                 -> mergeAllPatternVersions(patternOneRecord, patternTwoRecord);
             case SemanticRecord semanticOneRecord when entityToMergeFrom instanceof SemanticRecord semanticTwoRecord
                     -> mergeAllSemanticVersions(semanticOneRecord, semanticTwoRecord);
-            default -> throw new IllegalStateException("Can't merge:\n" + entityToMergeInto + "\nand:\n" + entityToMergeFrom);
+            default -> throw new IllegalStateException("Can't merge:\n" + EntityText.diagnostic(entityToMergeInto) + "\nand:\n" + EntityText.diagnostic(entityToMergeFrom));
         };
     }
 

@@ -21,6 +21,7 @@ import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.PublicIdList;
 import dev.ikm.tinkar.common.id.PublicIdSet;
 import dev.ikm.tinkar.common.id.VertexId;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.component.Component;
 import dev.ikm.tinkar.component.graph.DiGraph;
@@ -32,6 +33,7 @@ import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.ConceptEntityVersion;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityText;
 import dev.ikm.tinkar.entity.FieldDefinitionRecord;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.PatternEntity;
@@ -137,7 +139,7 @@ public class EntityToTinkarSchemaTransformer {
             throw new RuntimeException("Exception thrown, Semantic Chronology can't contain zero versions");
         }
         if(semanticEntity.referencedComponent() == null){
-            throw new RuntimeException("Exception thrown, Semantic Chronology " + semanticEntity + " has null referenced component");
+            throw new RuntimeException("Exception thrown, Semantic Chronology " + EntityText.diagnostic(semanticEntity) + " has null referenced component");
         }
         return TinkarMsg.newBuilder()
                 .setSemanticChronology(SemanticChronology.newBuilder()
@@ -192,7 +194,7 @@ public class EntityToTinkarSchemaTransformer {
             case 1: stampBuilder.setFirstStampVersion(createPBStampVersion(stampEntity.versions().get(0)));
                     break;
             default: throw new RuntimeException("Unexpected number of version size: " + stampEntity.versions().size() +
-                    " for stamp entity: " + stampEntity.nid());
+                    " for stamp entity: " + DiagnosticText.component(stampEntity.nid()));
         }
         return stampBuilder.build();
     }

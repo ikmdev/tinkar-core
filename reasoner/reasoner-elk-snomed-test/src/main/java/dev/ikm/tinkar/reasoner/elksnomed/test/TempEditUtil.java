@@ -22,6 +22,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.component.graph.DiTree;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
@@ -59,9 +60,9 @@ public class TempEditUtil {
 		int[] statedSemanticNids = PrimitiveData.get().semanticNidsForComponentOfPattern(concept,
 				statedAxiomPattern.nid());
 		if (statedSemanticNids.length == 0)
-			throw new IllegalStateException("No stated form for concept: " + PrimitiveData.text(concept));
+			throw new IllegalStateException("No stated form for concept: " + DiagnosticText.component(concept));
 		if (statedSemanticNids.length > 1)
-			throw new IllegalStateException("More than one stated form for concept: " + PrimitiveData.text(concept));
+			throw new IllegalStateException("More than one stated form for concept: " + DiagnosticText.component(concept));
 		return statedSemanticNids[0];
 	}
 
@@ -113,7 +114,7 @@ public class TempEditUtil {
 		case LogicalAxiom.LogicalSet setAxiom -> {
 			statedBuilder.changeSetType(setAxiom, TinkarTerm.SUFFICIENT_SET);
 		}
-		default -> throw new IllegalStateException("Unexpected value: " + axiom);
+		default -> throw new IllegalStateException("Unexpected kind of axiom: " + axiom.getClass().getSimpleName());
 		}
 		LogicalExpression newStatedExpression = statedBuilder.build();
 

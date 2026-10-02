@@ -1,6 +1,7 @@
 package dev.ikm.tinkar.entity;
 
 import dev.ikm.tinkar.common.id.PublicId;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.component.graph.DiGraph;
 import dev.ikm.tinkar.component.graph.DiTree;
 import dev.ikm.tinkar.component.graph.Vertex;
@@ -172,11 +173,13 @@ public interface FieldHandle {
      */
     static FieldHandle of(SemanticEntityVersion version, ConceptFacade meaning, StampCalculator stampCalculator) {
         PatternEntityVersion patternVersion = stampCalculator.latestPatternEntityVersion(version.pattern())
-                .orElseThrow(() -> new IllegalStateException("No latest pattern version for: " + version.pattern()));
+                .orElseThrow(() -> new IllegalStateException(
+                        "No latest pattern version for: " + DiagnosticText.component(version.patternNid())));
         int index = patternVersion.indexForMeaning(meaning);
         if (index < 0) {
             throw new IllegalArgumentException(
-                    "No field with meaning '" + meaning.toXmlFragment() + "' found in pattern");
+                    "No field with meaning " + DiagnosticText.component(meaning.nid()) + " found in pattern "
+                            + DiagnosticText.component(patternVersion.nid()));
         }
         return of(version.fieldValues().get(index));
     }
@@ -203,11 +206,13 @@ public interface FieldHandle {
      */
     static FieldHandle ofMeaning(SemanticEntityVersion version, int meaningNid, StampCalculator stampCalculator) {
         PatternEntityVersion patternVersion = stampCalculator.latestPatternEntityVersion(version.pattern())
-                .orElseThrow(() -> new IllegalStateException("No latest pattern version for: " + version.pattern()));
+                .orElseThrow(() -> new IllegalStateException(
+                        "No latest pattern version for: " + DiagnosticText.component(version.patternNid())));
         int index = patternVersion.indexForMeaning(meaningNid);
         if (index < 0) {
             throw new IllegalArgumentException(
-                    "No field with meaning NID '" + meaningNid + "' found in pattern");
+                    "No field with meaning " + DiagnosticText.component(meaningNid) + " found in pattern "
+                            + DiagnosticText.component(patternVersion.nid()));
         }
         return of(version.fieldValues().get(index));
     }
@@ -230,11 +235,13 @@ public interface FieldHandle {
      */
     static FieldHandle ofPurpose(SemanticEntityVersion version, ConceptFacade purpose, StampCalculator stampCalculator) {
         PatternEntityVersion patternVersion = stampCalculator.latestPatternEntityVersion(version.pattern())
-                .orElseThrow(() -> new IllegalStateException("No latest pattern version for: " + version.pattern()));
+                .orElseThrow(() -> new IllegalStateException(
+                        "No latest pattern version for: " + DiagnosticText.component(version.patternNid())));
         int index = patternVersion.indexForPurpose(purpose);
         if (index < 0) {
             throw new IllegalArgumentException(
-                    "No field with purpose '" + purpose.toXmlFragment() + "' found in pattern");
+                    "No field with purpose " + DiagnosticText.component(purpose.nid()) + " found in pattern "
+                            + DiagnosticText.component(patternVersion.nid()));
         }
         return of(version.fieldValues().get(index));
     }
@@ -256,11 +263,13 @@ public interface FieldHandle {
      */
     static FieldHandle ofPurpose(SemanticEntityVersion version, int purposeNid, StampCalculator stampCalculator) {
         PatternEntityVersion patternVersion = stampCalculator.latestPatternEntityVersion(version.pattern())
-                .orElseThrow(() -> new IllegalStateException("No latest pattern version for: " + version.pattern()));
+                .orElseThrow(() -> new IllegalStateException(
+                        "No latest pattern version for: " + DiagnosticText.component(version.patternNid())));
         int index = patternVersion.indexForPurpose(purposeNid);
         if (index < 0) {
             throw new IllegalArgumentException(
-                    "No field with purpose NID '" + purposeNid + "' found in pattern");
+                    "No field with purpose " + DiagnosticText.component(purposeNid) + " found in pattern "
+                            + DiagnosticText.component(patternVersion.nid()));
         }
         return of(version.fieldValues().get(index));
     }

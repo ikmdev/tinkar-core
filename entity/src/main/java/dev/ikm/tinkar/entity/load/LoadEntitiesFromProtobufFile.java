@@ -32,6 +32,7 @@ import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinate;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
+import dev.ikm.tinkar.entity.EntityText;
 import dev.ikm.tinkar.entity.transform.TinkarSchemaToEntityTransformer;
 import dev.ikm.tinkar.schema.PatternChronology;
 import dev.ikm.tinkar.schema.SemanticChronology;
@@ -449,7 +450,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             case SemanticEntity ignored -> importSemanticCount.incrementAndGet();
             case PatternEntity ignored -> importPatternCount.incrementAndGet();
             case StampEntity ignored -> importStampCount.incrementAndGet();
-            default -> throw new IllegalStateException("Unexpected value: " + entity);
+            default -> throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(entity));
         }
     }
 

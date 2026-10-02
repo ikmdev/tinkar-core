@@ -56,6 +56,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.service.CachingService;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.functional.TriConsumer;
 import dev.ikm.tinkar.common.util.ints2long.IntsInLong;
@@ -69,6 +70,7 @@ import dev.ikm.tinkar.coordinate.stamp.StampPosition;
 import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.entity.*;
+import dev.ikm.tinkar.entity.EntityText;
 import dev.ikm.tinkar.entity.graph.DiTreeVersion;
 import dev.ikm.tinkar.entity.graph.VersionVertex;
 import dev.ikm.tinkar.terms.DefaultsTemplateTerm;
@@ -88,7 +90,6 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -265,8 +266,7 @@ public class StampCalculatorWithCache implements StampCalculator {
             return stampPath.get();
         }
 
-        throw new IllegalStateException("No path for: " + stampPathNid + " " +
-                EntityHandle.get(stampPathNid).entity());
+        throw new IllegalStateException("No path for: " + DiagnosticText.component(stampPathNid));
     }
 
     private static Optional<StampPathImmutable> constructFromSemantics(int stampPathNid) {
@@ -279,7 +279,8 @@ public class StampCalculatorWithCache implements StampCalculator {
             //this.pathMap.put(stampPathNid, stampPath);
             return Optional.of(stampPath);
         } else {
-            throw new UnsupportedOperationException("Wrong nid count: " + Arrays.toString(nids));
+            throw new UnsupportedOperationException("Expected one path semantic for " + DiagnosticText.component(stampPathNid)
+                    + ", found " + nids.length);
         }
     }
 
@@ -406,7 +407,7 @@ public class StampCalculatorWithCache implements StampCalculator {
         final ImmutableList<V> versions = chronicle.versions();
 
         if (versions.isEmpty()) {
-            throw new IllegalStateException("No versions for: " + chronicle.entityToString());
+            throw new IllegalStateException("No versions for: " + EntityText.diagnostic(chronicle));
         }
 
         final MutableList<EntityVersion> latestVersionList = Lists.mutable.ofInitialCapacity(Math.min(versions.size(), 4));
@@ -828,16 +829,16 @@ public class StampCalculatorWithCache implements StampCalculator {
                             case EQUAL:
                                 // TODO handle different modules... ?
                                 throw new IllegalStateException("Version can only be in one module at a time. \n"
-                                        + leafNode.version() + "\n" + versionWithDistance.version);
+                                        + EntityText.diagnostic(leafNode.version()) + "\n" + EntityText.diagnostic(versionWithDistance.version));
                             case BEFORE:
                                 throw new IllegalStateException("Sort order error. \n"
-                                        + leafNode.version() + "\n" + versionWithDistance.version);
+                                        + EntityText.diagnostic(leafNode.version()) + "\n" + EntityText.diagnostic(versionWithDistance.version));
                             case UNREACHABLE:
                                 // if not after by any leaf (unreachable from any leaf), then node will be left in set, and possibly added to next graph.
                                 break;
                             default:
                                 throw new IllegalStateException("Sort order error. Unhandled relative position:\n"
-                                        + leafNode.version() + "\n" + versionWithDistance.version +
+                                        + EntityText.diagnostic(leafNode.version()) + "\n" + EntityText.diagnostic(versionWithDistance.version) + "\n" +
                                         getRelativePosition(leafNode.version(), versionWithDistance.version));
                         }
                     }
@@ -895,7 +896,7 @@ public class StampCalculatorWithCache implements StampCalculator {
         if (stampPathNid == position.getPathForPositionNid()) {
             throw new IllegalStateException("You must check for relative position on the same path before calling traverseForks: " +
                     //Get.stampService().describeStampSequence(stamp) +
-                    " compared to: " + position);
+                    " compared to a position on path: " + DiagnosticText.component(position.getPathForPositionNid()));
         }
 
         for (StampBranchRecord branch : getBranches(position.getPathForPositionNid())) {

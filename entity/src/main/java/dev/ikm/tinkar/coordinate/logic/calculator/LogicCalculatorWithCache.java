@@ -17,6 +17,7 @@ package dev.ikm.tinkar.coordinate.logic.calculator;
 
 import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
 import dev.ikm.tinkar.common.service.CachingService;
+import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.PrimitiveDataRepair;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinate;
@@ -27,7 +28,6 @@ import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
-import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.Field;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
@@ -118,7 +118,7 @@ public class LogicCalculatorWithCache implements LogicCalculator {
                     };
                 }
                 // TODO Raise an alert...
-                throw new IllegalStateException("More than one set of axioms for concept: " + Entity.getFast(nid));
+                throw new IllegalStateException("More than one set of axioms for concept: " + DiagnosticText.component(nid));
         }
     }
 

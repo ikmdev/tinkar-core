@@ -19,6 +19,7 @@ import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
+import dev.ikm.tinkar.entity.graph.DiTreeText;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.entity.graph.isomorphic.SetElementKey;
 import dev.ikm.tinkar.terms.ConceptFacade;
@@ -328,7 +329,7 @@ public class LogicalExpressionBuilder {
     public void addToFirstAnd(int vertexIndex, LogicalAxiom... axioms) {
         int andIndex = findFirstAnd(vertexIndex);
         if (andIndex < 0) {
-            throw new IllegalStateException("No and vertex at index or below. Index: " + vertexIndex + " in graph: " + this.builder.build());
+            throw new IllegalStateException("No and vertex at index or below. Index: " + vertexIndex + " in graph:\n" + DiTreeText.diagnostic(this.builder.build()));
         }
         for (LogicalAxiom axiom : axioms) {
             this.builder.addEdge(axiom.vertexIndex(), andIndex);
@@ -546,7 +547,7 @@ public class LogicalExpressionBuilder {
                 sufficientSet.elements().forEach(element -> childElements.add(addCloneOfNode(element)));
                 yield (A) SufficientSet(sufficientSet.vertexUUID(), childElements.toArray(new LogicalAxiom.Atom[childElements.size()]));
             }
-            default -> throw new IllegalStateException("Unexpected value: " + rootToClone);
+            default -> throw new IllegalStateException("Unexpected kind of axiom: " + rootToClone.getClass().getSimpleName());
         };
     }
 
@@ -681,7 +682,7 @@ public class LogicalExpressionBuilder {
         EntityVertex roleVertex = this.builder.vertex(roleAxiom.vertexIndex());
         ImmutableList<EntityVertex> successors = this.builder.successors(roleVertex);
         if (successors.size() != 1) {
-            throw new IllegalStateException("Role should have 1 child for the concept restriction... " + builder.build());
+            throw new IllegalStateException("Role should have 1 child for the concept restriction...\n" + DiTreeText.diagnostic(builder.build()));
         }
         updateConceptReference(successors.get(0), conceptToChangeTo);
     }
