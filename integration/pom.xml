@@ -18,6 +18,7 @@
             --enable-preview
             -Xmx12G
             --add-modules jdk.incubator.vector
+            --sun-misc-unsafe-memory-access=allow
             -Dorg.apache.lucene.vectorization.upperJavaFeatureVersion=27
         </failsafeArgLine>
         <surefireArgLine>
