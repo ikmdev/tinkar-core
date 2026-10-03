@@ -12,7 +12,6 @@ open module dev.ikm.tinkar.reasoner.elksnomed.test {
 	requires dev.ikm.tinkar.collection;
     requires dev.ikm.tinkar.common;
 	requires dev.ikm.tinkar.entity;
-	requires dev.ikm.tinkar.ext.lang.owl;
 	requires dev.ikm.tinkar.provider.spinedarray;
 	requires dev.ikm.tinkar.reasoner.service;
 	requires dev.ikm.tinkar.reasoner.elksnomed;

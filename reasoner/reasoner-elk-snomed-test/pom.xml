@@ -58,10 +58,6 @@
 			<artifactId>eclipse-collections-api</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>dev.ikm.tinkar.ext.owl</groupId>
-			<artifactId>owl-extension</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>reasoner-elk-snomed</artifactId>
 		</dependency>

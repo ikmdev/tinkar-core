@@ -211,8 +211,7 @@
                                 <goals>
                                     <goal>analyze-only</goal>
                                 </goals>
-                                <configuration combine.self="override">
-                                    <!-- your desired config; no ignoredUsedUndeclaredDependencies -->
+                                <configuration>
                                     <ignoreUnusedRuntime>true</ignoreUnusedRuntime>
                                 </configuration>
                             </execution>
