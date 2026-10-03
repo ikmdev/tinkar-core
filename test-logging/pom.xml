@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.1.0 https://maven.apache.org/xsd/maven-4.1.0.xsd">
+    <modelVersion>4.1.0</modelVersion>
+
+    <parent/>
+
+    <artifactId>test-logging</artifactId>
+    <packaging>jar</packaging>
+
+    <name>TINKAR Test Logging</name>
+    <description>
+        The one Log4j 2 configuration for tests: a log4j2-test.xml and nothing else. Every
+        module with tests depends on it at test scope, here and in the projects built on
+        tinkar-core, so no library has to carry a logging configuration in its jar.
+    </description>
+</project>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The one Log4j 2 configuration for tests across the working set. Log4j reads a
+     log4j2-test file ahead of any log4j2 file on the class path, and this jar is on the
+     test class path only, so nothing here reaches an application. Everything goes to
+     the console, which surefire and failsafe write to the test class's own file. -->
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{ABSOLUTE} [%-6p] %40.40c - %m%n"/>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <Root level="info">
+            <AppenderRef ref="console"/>
+        </Root>
+    </Loggers>
+</Configuration>

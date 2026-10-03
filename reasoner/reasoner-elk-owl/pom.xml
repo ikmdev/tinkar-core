@@ -85,6 +85,11 @@
 			<artifactId>junit-jupiter-api</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>dev.ikm.tinkar</groupId>
+			<artifactId>test-logging</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>

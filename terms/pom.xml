@@ -33,5 +33,10 @@
             <groupId>dev.ikm.tinkar</groupId>
             <artifactId>component</artifactId>
         </dependency>
+        <dependency>
+            <groupId>dev.ikm.tinkar</groupId>
+            <artifactId>test-logging</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

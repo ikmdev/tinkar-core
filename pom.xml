@@ -45,6 +45,7 @@
     </developers>
 
     <subprojects>
+        <subproject>test-logging</subproject>
         <subproject>collection</subproject>
         <subproject>common</subproject>
         <subproject>component</subproject>
@@ -126,6 +127,13 @@
             <artifactId>log4j-slf4j2-impl</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- java.util.logging (Lucene, JavaFX) routed into Log4j in the test JVMs; the
+             argument line names the LogManager. -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-jul</artifactId>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -182,6 +190,7 @@
                             --enable-preview
                             --enable-native-access=ALL-UNNAMED
                             --sun-misc-unsafe-memory-access=allow
+                            -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager
                             --add-modules jdk.incubator.vector
                             -Dorg.apache.lucene.vectorization.upperJavaFeatureVersion=27
                         </argLine>

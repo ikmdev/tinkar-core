@@ -19,6 +19,7 @@
             -Xmx12G
             --add-modules jdk.incubator.vector
             --sun-misc-unsafe-memory-access=allow
+            -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager
             -Dorg.apache.lucene.vectorization.upperJavaFeatureVersion=27
         </failsafeArgLine>
         <surefireArgLine>
@@ -136,6 +137,11 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>reasoner-hybrid</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>dev.ikm.tinkar</groupId>
+            <artifactId>test-logging</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
