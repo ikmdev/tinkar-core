@@ -24,8 +24,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
+import org.eclipse.collections.api.LongIterable;
 import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.api.set.primitive.ImmutableLongSet;
 import org.junit.jupiter.api.Test;
@@ -50,8 +50,10 @@ public abstract class HybridClassifierWithoutAbsentTestBase extends HybridReason
 
 	private HashMap<Integer, Long> nid_sctid_map;
 
-	private Set<Long> toSctids(Set<Long> nids) {
-		return nids.stream().map(x -> nid_sctid_map.get(x.intValue())).collect(Collectors.toSet());
+	private Set<Long> toSctids(LongIterable nids) {
+		Set<Long> sctids = new HashSet<>();
+		nids.forEach(x -> sctids.add(nid_sctid_map.get((int) x)));
+		return sctids;
 	}
 
 	/**
@@ -103,7 +105,7 @@ public abstract class HybridClassifierWithoutAbsentTestBase extends HybridReason
 				assertTrue(parents.isEmpty());
 				// has a parent in the db
 				assertEquals(1, sups.size());
-				assertEquals(TinkarTerm.PHENOMENON.nid(), sso.getSuperConcepts(nid).iterator().next());
+				assertEquals(TinkarTerm.PHENOMENON.nid(), sso.getSuperConcepts(nid).longIterator().next());
 				continue;
 			} else {
 				assertNotNull(parents);
@@ -136,7 +138,7 @@ public abstract class HybridClassifierWithoutAbsentTestBase extends HybridReason
 			LOG.error("Elk:  " + sup);
 			if (sups.contains(null)) {
 				sso.getSuperConcepts(nid)
-						.forEach(sup_nid -> LOG.error("   :  " + PrimitiveData.text((sup_nid.intValue()))));
+						.forEach(sup_nid -> LOG.error("   :  " + PrimitiveData.text((int) sup_nid)));
 			}
 		}
 		LOG.error("Miss cnt: " + miss_cnt);
