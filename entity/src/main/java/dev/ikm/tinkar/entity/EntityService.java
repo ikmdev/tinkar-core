@@ -469,13 +469,6 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
         putEntityQuietly(entity, DataActivity.SYNCHRONIZABLE_EDIT);
     }
 
-    /**
-     * @param stampEntity
-     * @deprecated Use putEntity instead
-     */
-    @Deprecated
-    void putStamp(StampEntity stampEntity);
-
     default int nidForComponent(Component component) {
         if (component instanceof ComponentWithNid) {
             return ((ComponentWithNid) component).nid();

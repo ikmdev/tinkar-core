@@ -307,11 +307,6 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     }
 
     @Override
-    public void putStamp(StampEntity stampEntity) {
-        putEntity(stampEntity);
-    }
-
-    @Override
     public void invalidateCaches(Entity entity) {
         invalidateCaches(entity.nid());
         if (entity instanceof SemanticEntity semanticEntity) {
