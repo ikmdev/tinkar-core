@@ -53,7 +53,6 @@ package dev.ikm.tinkar.coordinate.stamp.calculator;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.DiagnosticText;
@@ -115,9 +114,7 @@ public class StampCalculatorWithCache implements StampCalculator {
      */
     private static final Logger LOG = LoggerFactory.getLogger(StampCalculatorWithCache.class);
 
-    private static final ConcurrentReferenceHashMap<StampCoordinateRecord, StampCalculatorWithCache> SINGLETONS =
-            new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
-                    ConcurrentReferenceHashMap.ReferenceType.WEAK);
+    private static final Cache<StampCoordinateRecord, StampCalculatorWithCache> SINGLETONS = Caffeine.newBuilder().weakValues().build();
     /**
      * The coordinate.
      */
@@ -204,7 +201,7 @@ public class StampCalculatorWithCache implements StampCalculator {
      * @return the stampCoordinateRecord
      */
     public static StampCalculatorWithCache getCalculator(StampCoordinateRecord filter) {
-        return SINGLETONS.computeIfAbsent(filter,
+        return SINGLETONS.get(filter,
                 filterKey -> new StampCalculatorWithCache(filter));
     }
 
@@ -1185,7 +1182,7 @@ public class StampCalculatorWithCache implements StampCalculator {
         // TODO: this has implicit assumption that no one will hold on to a calculator... Should we be defensive?
         @Override
         public void reset() {
-            SINGLETONS.clear();
+            SINGLETONS.invalidateAll();
         }
     }
 

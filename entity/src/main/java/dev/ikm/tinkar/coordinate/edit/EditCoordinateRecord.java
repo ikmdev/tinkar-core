@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.coordinate.edit;
 
-import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
 import dev.ikm.tinkar.common.binary.Decoder;
 import dev.ikm.tinkar.common.binary.DecoderInput;
 import dev.ikm.tinkar.common.binary.Encodable;
@@ -27,6 +26,7 @@ import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.terms.ConceptFacade;
 
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 // Component order MUST match how every positional constructor (the make() overloads, decode()) and
@@ -38,9 +38,7 @@ public record EditCoordinateRecord(int authorNid, int defaultModuleNid, int dest
                                    int defaultPathNid, int promotionPathNid)
         implements EditCoordinate, ImmutableCoordinate {
 
-    private static final ConcurrentReferenceHashMap<EditCoordinateRecord, EditCoordinateRecord> SINGLETONS =
-            new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
-                    ConcurrentReferenceHashMap.ReferenceType.WEAK);
+    private static final ConcurrentHashMap<EditCoordinateRecord, EditCoordinateRecord> SINGLETONS = new ConcurrentHashMap<>();
 
     /**
      * @param authorNid

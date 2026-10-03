@@ -15,7 +15,8 @@
  */
 package dev.ikm.tinkar.coordinate.stamp;
 
-import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.ikm.tinkar.common.binary.Decoder;
 import dev.ikm.tinkar.common.binary.DecoderInput;
 import dev.ikm.tinkar.common.binary.Encodable;
@@ -36,9 +37,7 @@ import java.util.Objects;
 
 public final class StampPathImmutable implements StampPath, ImmutableCoordinate {
 
-    private static final ConcurrentReferenceHashMap<Integer, StampPathImmutable> SINGLETONS =
-            new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.STRONG,
-                    ConcurrentReferenceHashMap.ReferenceType.WEAK);
+    private static final Cache<Integer, StampPathImmutable> SINGLETONS = Caffeine.newBuilder().weakValues().build();
     private final int pathConceptNid;
     private final ImmutableSet<StampPositionRecord> pathOrigins;
 
@@ -70,7 +69,7 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
         if (pathConceptNid == TinkarTerm.UNINITIALIZED_COMPONENT.nid()) {
             return new StampPathImmutable(pathConceptNid, pathOrigins);
         }
-        return SINGLETONS.computeIfAbsent(pathConceptNid,
+        return SINGLETONS.get(pathConceptNid,
                 pathNid -> new StampPathImmutable(pathConceptNid, pathOrigins));
     }
 
@@ -82,7 +81,7 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
         if (pathConceptNid == TinkarTerm.UNINITIALIZED_COMPONENT.nid()) {
             return new StampPathImmutable(pathConceptNid, Sets.immutable.empty());
         }
-        return SINGLETONS.computeIfAbsent(pathConceptNid,
+        return SINGLETONS.get(pathConceptNid,
                 pathNid -> {
                     ImmutableSet<StampPositionRecord> pathOrigins = PathService.get().getPathOrigins(pathNid);
                     return new StampPathImmutable(pathNid, pathOrigins);
@@ -101,7 +100,7 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
         if (stampPath.pathConceptNid == TinkarTerm.UNINITIALIZED_COMPONENT.nid()) {
             return stampPath;
         }
-        return SINGLETONS.computeIfAbsent(stampPath.pathConceptNid(),
+        return SINGLETONS.get(stampPath.pathConceptNid(),
                 pathNid -> stampPath);
     }
 
@@ -167,7 +166,7 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
 
         @Override
         public void reset() {
-            SINGLETONS.clear();
+            SINGLETONS.invalidateAll();
         }
     }
 

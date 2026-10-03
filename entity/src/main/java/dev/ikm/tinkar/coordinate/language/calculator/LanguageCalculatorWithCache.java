@@ -18,7 +18,6 @@ package dev.ikm.tinkar.coordinate.language.calculator;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -54,9 +53,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
      * The Constant LOG.
      */
     private static final Logger LOG = LoggerFactory.getLogger(LanguageCalculatorWithCache.class);
-    private static final ConcurrentReferenceHashMap<StampLangRecord, LanguageCalculatorWithCache> SINGLETONS =
-            new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
-                    ConcurrentReferenceHashMap.ReferenceType.WEAK);
+    private static final Cache<StampLangRecord, LanguageCalculatorWithCache> SINGLETONS = Caffeine.newBuilder().weakValues().build();
     final StampCalculator stampCalculator;
     final ImmutableList<LanguageCoordinateRecord> languageCoordinateList;
     private final Cache<Integer, String> preferredCache =
@@ -86,7 +83,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
      */
     public static LanguageCalculatorWithCache getCalculator(StampCoordinateRecord stampFilter,
                                                             ImmutableList<LanguageCoordinateRecord> languageCoordinateList) {
-        return SINGLETONS.computeIfAbsent(new StampLangRecord(stampFilter, languageCoordinateList),
+        return SINGLETONS.get(new StampLangRecord(stampFilter, languageCoordinateList),
                 filterKey -> new LanguageCalculatorWithCache(stampFilter, languageCoordinateList));
     }
 
@@ -101,7 +98,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
     public static class CacheProvider implements CachingService {
         @Override
         public void reset() {
-            SINGLETONS.clear();
+            SINGLETONS.invalidateAll();
         }
     }
 

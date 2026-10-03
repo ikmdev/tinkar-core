@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.coordinate.logic;
 
-import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
 import dev.ikm.tinkar.common.binary.Decoder;
 import dev.ikm.tinkar.common.binary.DecoderInput;
 import dev.ikm.tinkar.common.binary.Encodable;
@@ -30,12 +29,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PremiseSet implements ImmutableCoordinate {
 
-    private static final ConcurrentReferenceHashMap<PremiseSet, PremiseSet> SINGLETONS =
-            new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
-                    ConcurrentReferenceHashMap.ReferenceType.WEAK);
+    private static final ConcurrentHashMap<PremiseSet, PremiseSet> SINGLETONS = new ConcurrentHashMap<>();
 
     public static final PremiseSet INFERRED_ONLY = make(PremiseType.INFERRED);
     public static final PremiseSet STATED_ONLY = make(PremiseType.STATED);

@@ -15,7 +15,8 @@
  */
 package dev.ikm.tinkar.coordinate.navigation.calculator;
 
-import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.ikm.tinkar.common.id.IntIdCollection;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
@@ -62,9 +63,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
      * The Constant LOG.
      */
     private static final Logger LOG = LoggerFactory.getLogger(NavigationCalculatorWithCache.class);
-    private static final ConcurrentReferenceHashMap<StampLangNavRecord, NavigationCalculatorWithCache> SINGLETONS =
-            new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
-                    ConcurrentReferenceHashMap.ReferenceType.WEAK);
+    private static final Cache<StampLangNavRecord, NavigationCalculatorWithCache> SINGLETONS = Caffeine.newBuilder().weakValues().build();
     private final StampCalculatorWithCache stampCalculator;
     private final StampCalculatorWithCache vertexStampCalculator;
     private final LanguageCalculatorWithCache languageCalculator;
@@ -87,7 +86,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
     public static NavigationCalculatorWithCache getCalculator(StampCoordinateRecord stampFilter,
                                                               ImmutableList<LanguageCoordinateRecord> languageCoordinateList,
                                                               NavigationCoordinateRecord navigationCoordinate) {
-        return SINGLETONS.computeIfAbsent(new StampLangNavRecord(stampFilter, languageCoordinateList, navigationCoordinate),
+        return SINGLETONS.get(new StampLangNavRecord(stampFilter, languageCoordinateList, navigationCoordinate),
                 filterKey -> new NavigationCalculatorWithCache(stampFilter,
                         languageCoordinateList, navigationCoordinate));
     }
@@ -343,7 +342,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         // TODO: this has implicit assumption that no one will hold on to a calculator... Should we be defensive?
         @Override
         public void reset() {
-            SINGLETONS.clear();
+            SINGLETONS.invalidateAll();
         }
     }
 

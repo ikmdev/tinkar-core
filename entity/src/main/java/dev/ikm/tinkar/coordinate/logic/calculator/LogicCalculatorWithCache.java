@@ -15,7 +15,8 @@
  */
 package dev.ikm.tinkar.coordinate.logic.calculator;
 
-import dev.ikm.tinkar.collection.ConcurrentReferenceHashMap;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.ikm.tinkar.common.service.CachingService;
 import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -40,9 +41,7 @@ import java.util.OptionalInt;
 
 public class LogicCalculatorWithCache implements LogicCalculator {
     private static final Logger LOG = LoggerFactory.getLogger(LogicCalculatorWithCache.class);
-    private static final ConcurrentReferenceHashMap<LogicAndStampCoordinate, LogicCalculatorWithCache> SINGLETONS =
-            new ConcurrentReferenceHashMap<>(ConcurrentReferenceHashMap.ReferenceType.WEAK,
-                    ConcurrentReferenceHashMap.ReferenceType.WEAK);
+    private static final Cache<LogicAndStampCoordinate, LogicCalculatorWithCache> SINGLETONS = Caffeine.newBuilder().weakValues().build();
 
     ;
     private final LogicCoordinateRecord logicCoordinateRecord;
@@ -63,7 +62,7 @@ public class LogicCalculatorWithCache implements LogicCalculator {
      * @return the stampCoordinateRecord
      */
     public static LogicCalculatorWithCache getCalculator(LogicCoordinate logicCoordinate, StampCoordinate stampCoordinate) {
-        return SINGLETONS.computeIfAbsent(new LogicAndStampCoordinate(logicCoordinate.toLogicCoordinateRecord(),
+        return SINGLETONS.get(new LogicAndStampCoordinate(logicCoordinate.toLogicCoordinateRecord(),
                         stampCoordinate.toStampCoordinateRecord()),
                 logicCoordinateRecord -> new LogicCalculatorWithCache(logicCoordinate, stampCoordinate));
     }
@@ -74,7 +73,7 @@ public class LogicCalculatorWithCache implements LogicCalculator {
     public static class CacheProvider implements CachingService {
         @Override
         public void reset() {
-            SINGLETONS.clear();
+            SINGLETONS.invalidateAll();
         }
     }
 
