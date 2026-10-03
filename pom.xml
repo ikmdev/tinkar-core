@@ -5,7 +5,7 @@
     <parent>
         <groupId>network.ike.platform</groupId>
         <artifactId>ike-parent</artifactId>
-        <version>195</version>
+        <version>196</version>
         <relativePath/>
     </parent>
 
@@ -187,6 +187,7 @@
                              The property raises that limit; the full suite passes with it. Drop it when
                              a Lucene release supports Java 27. -->
                         <argLine>
+                            @{argLine}
                             --enable-preview
                             --enable-native-access=ALL-UNNAMED
                             --sun-misc-unsafe-memory-access=allow

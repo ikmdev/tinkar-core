@@ -7,7 +7,7 @@
     <artifactId>aggregator</artifactId>
     <packaging>pom</packaging>
 
-    <name>code coverage and documentation aggregator</name>
+    <name>tinkar-core coverage aggregate</name>
 
     <dependencies>
         <dependency>
@@ -123,9 +123,9 @@
                             <goal>report-aggregate</goal>
                         </goals>
                         <configuration>
-                            <dataFileIncludes>
-                                <dataFileInclude>**/jacoco-combined.exec</dataFileInclude>
-                            </dataFileIncludes>
+                            <!-- The default data files: target/*.exec of every module this one
+                                 depends on, which is jacoco.exec (unit tests) and jacoco-it.exec
+                                 (integration tests). -->
                             <outputDirectory>${project.reporting.outputDirectory}/jacoco-aggregate</outputDirectory>
                         </configuration>
                     </execution>
