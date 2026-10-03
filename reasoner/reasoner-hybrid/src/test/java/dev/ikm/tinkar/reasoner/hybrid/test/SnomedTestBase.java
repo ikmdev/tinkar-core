@@ -12,7 +12,9 @@ import org.slf4j.LoggerFactory;
 
 import dev.ikm.elk.snomed.SnomedDescriptions;
 import dev.ikm.elk.snomed.test.SnomedVersionBase;
+import org.junit.jupiter.api.Tag;
 
+@Tag("snomed") // TestTags.SNOMED: needs SNOMED CT test data; run with -Psnomed
 public abstract class SnomedTestBase extends SnomedVersionBase {
 
 	private static final Logger LOG = LoggerFactory.getLogger(SnomedTestBase.class);

@@ -20,7 +20,6 @@ import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
-import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
@@ -37,7 +36,6 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +47,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -71,39 +68,6 @@ public class DataIntegrityIT {
     @AfterAll
     public static void afterAll() {
         TestHelper.stopDatabase();
-    }
-
-    @Test
-    @Disabled
-    public void incorrectDataIntegrityTest() throws InterruptedException {
-        TinkExecutor.threadPool().awaitTermination(5, TimeUnit.SECONDS);
-
-        // Data Creation
-//        createData();
-
-        List<Integer> aggregatedNullNidList = new ArrayList<>();
-        Map<String, List<? extends Entity>> typeNameEntityMap = new HashMap<>();
-        typeNameEntityMap.put("Stamp", dataIntegrity.validateStampReferences(aggregatedNullNidList));
-        typeNameEntityMap.put("Concept", dataIntegrity.validateConceptReferences(aggregatedNullNidList));
-        typeNameEntityMap.put("Semantic", dataIntegrity.validateSemanticReferences(aggregatedNullNidList));
-        typeNameEntityMap.put("Pattern", dataIntegrity.validatePatternReferences(aggregatedNullNidList));
-        typeNameEntityMap.put("Semantic Field Data Type", dataIntegrity.validateSemanticFieldDataTypes());
-
-//        breakdown();
-        LOG.info("Report for {} database:", PrimitiveData.get().name());
-        typeNameEntityMap.forEach((typeString, misconfiguredList) -> {
-            LOG.info("Found {} {}s containing incorrect references.", misconfiguredList.size(), typeString);
-            if (!misconfiguredList.isEmpty()) {
-                LOG.info("Misconfigured {} PublicIds: ", typeString);
-                misconfiguredList.stream().map(Entity::publicId).map(PublicId::idString).forEach(LOG::info);
-            }
-        });
-        LOG.info("Found {} Nids containing incorrect references.", aggregatedNullNidList.size());
-        LOG.info("Misconfigured Nids:");
-        aggregatedNullNidList.stream().map(String::valueOf).forEach(LOG::info);
-
-        // ASSERTIONS
-        assertEquals(3, typeNameEntityMap.get("Semantic Field Data Type").size());
     }
 
     @Test
@@ -232,7 +196,6 @@ public class DataIntegrityIT {
     }
 
     @Test
-    @Disabled
     public void semanticFieldsMatchInt() {
         ImmutableList<EntityProxy.Concept> patternFieldDefinitions = Lists.immutable.of(
                 TinkarTerm.INTEGER_FIELD

@@ -19,6 +19,8 @@
 	<properties>
 		<maven-assembly-plugin.version>3.7.1</maven-assembly-plugin.version>
 		<reasoner-test-data.groupid>dev.ikm.reasoner-test-data</reasoner-test-data.groupid>
+		<!-- The integration tests here need SNOMED CT test data (tag "snomed"); they
+		     are left out unless the snomed profile is on. -->
 		<skipITs>true</skipITs>
 		<snomed-test-data.groupid>dev.ikm.snomed</snomed-test-data.groupid>
 		<snomed-test-data.version>0.1.0</snomed-test-data.version>
@@ -148,4 +150,14 @@
 			</plugin>
 		</plugins>
 	</build>
+	<profiles>
+		<!-- Runs the integration tests tagged "snomed": unpacks the SNOMED CT test data
+		     and lets failsafe run. The data is on a repository only some machines reach. -->
+		<profile>
+			<id>snomed</id>
+			<properties>
+				<skipITs>false</skipITs>
+			</properties>
+		</profile>
+	</profiles>
 </project>
