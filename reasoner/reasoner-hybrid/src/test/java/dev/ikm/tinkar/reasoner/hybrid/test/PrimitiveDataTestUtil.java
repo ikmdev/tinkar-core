@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.reasoner.hybrid;
+package dev.ikm.tinkar.reasoner.hybrid.test;
 
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 

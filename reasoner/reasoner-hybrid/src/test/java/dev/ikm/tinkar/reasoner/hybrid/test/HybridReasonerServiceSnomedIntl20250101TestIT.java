@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.reasoner.hybrid;
+package dev.ikm.tinkar.reasoner.hybrid.test;
 
 import java.io.IOException;
 
@@ -22,27 +22,25 @@ import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dev.ikm.elk.snomed.test.SnomedVersionUs;
+import dev.ikm.elk.snomed.test.SnomedVersionInternational;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
-public class HybridClassifierWithoutAbsentSnomedUs20250301TestIT extends HybridClassifierWithoutAbsentTestBase
-		implements SnomedVersionUs {
+public class HybridReasonerServiceSnomedIntl20250101TestIT extends HybridReasonerServiceTestBase
+		implements SnomedVersionInternational {
 
 	@SuppressWarnings("unused")
-	private static final Logger LOG = LoggerFactory
-			.getLogger(HybridClassifierWithoutAbsentSnomedUs20250301TestIT.class);
+	private static final Logger LOG = LoggerFactory.getLogger(HybridReasonerServiceSnomedIntl20250101TestIT.class);
 
 	static {
-		test_case = "snomed-us-20250301";
+		test_case = "snomed-intl-20250101";
+	}
+
+	{
+		expected_swec_children = 4;
 	}
 
 	@Override
 	public String getVersion() {
-		return "20250301";
-	}
-
-	@Override
-	public String getInternationalVersion() {
 		return "20250101";
 	}
 

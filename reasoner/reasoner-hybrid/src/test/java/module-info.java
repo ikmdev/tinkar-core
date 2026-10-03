@@ -14,37 +14,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import dev.ikm.tinkar.common.service.DataServiceController;
 import dev.ikm.tinkar.common.service.ServiceLifecycle;
 import dev.ikm.tinkar.provider.spinedarray.SpinedArrayProvider;
-import dev.ikm.tinkar.reasoner.hybrid.HybridReasonerService;
-import dev.ikm.tinkar.reasoner.hybrid.IntervalReasonerService;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
 
-module dev.ikm.tinkar.reasoner.hybrid {
+open module dev.ikm.tinkar.reasoner.hybrid.test {
 	requires org.eclipse.collections.api;
-	requires org.eclipse.collections.impl;
+	requires transitive org.junit.jupiter.api;
+	requires transitive org.junit.jupiter.engine;
 	requires org.slf4j;
 
-	requires dev.ikm.tinkar.collection;
 	requires dev.ikm.tinkar.common;
 	requires dev.ikm.tinkar.entity;
+	requires dev.ikm.tinkar.terms;
+	requires dev.ikm.tinkar.ext.lang.owl;
 	requires dev.ikm.tinkar.provider.spinedarray;
 	requires dev.ikm.tinkar.reasoner.service;
 	requires dev.ikm.tinkar.reasoner.elksnomed;
-
+	requires dev.ikm.tinkar.reasoner.hybrid;
 	requires dev.ikm.elk.snomed;
-
+	requires dev.ikm.elk.snomed.test;
 	requires dev.ikm.reasoner.hybrid.snomed;
 
-	exports dev.ikm.tinkar.reasoner.hybrid;
+	exports dev.ikm.tinkar.reasoner.hybrid.test;
 
-	provides ReasonerService with HybridReasonerService, IntervalReasonerService;
-
-	// TODO
 	uses ReasonerService;
 	uses DataServiceController;
 	uses SpinedArrayProvider.OpenController;
 	uses ServiceLifecycle;
-
 }

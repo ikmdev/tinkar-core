@@ -119,18 +119,13 @@
 								<ignoredUnusedDeclaredDependency>org.junit.jupiter:junit-jupiter-engine</ignoredUnusedDeclaredDependency>
 								<!-- JPMS ServiceLoader providers (runtime, not compile-visible) -->
 								<ignoredUnusedDeclaredDependency>dev.ikm.tinkar:executor-provider</ignoredUnusedDeclaredDependency>
-								<!-- JPMS module-info requires at compile scope, only test bytecode refs -->
-								<ignoredUnusedDeclaredDependency>dev.ikm.elk:elk-snomed-owl-el</ignoredUnusedDeclaredDependency>
-								<ignoredUnusedDeclaredDependency>dev.ikm.elk:elk-snomed-test</ignoredUnusedDeclaredDependency>
 							</ignoredUnusedDeclaredDependencies>
 							<ignoredNonTestScopedDependencies>
 								<!-- JPMS module-info requires these at compile scope -->
 								<ignoredNonTestScopedDependency>dev.ikm.elk:elk-owlapi</ignoredNonTestScopedDependency>
 								<ignoredNonTestScopedDependency>dev.ikm.elk:elk-snomed</ignoredNonTestScopedDependency>
-								<ignoredNonTestScopedDependency>dev.ikm.elk:elk-snomed-test</ignoredNonTestScopedDependency>
 								<ignoredNonTestScopedDependency>dev.ikm.owlapi:owlapi-apibinding</ignoredNonTestScopedDependency>
 								<ignoredNonTestScopedDependency>dev.ikm.tinkar:component</ignoredNonTestScopedDependency>
-								<ignoredNonTestScopedDependency>dev.ikm.tinkar.ext.owl:owl-extension</ignoredNonTestScopedDependency>
 							</ignoredNonTestScopedDependencies>
 						</configuration>
 					</execution>

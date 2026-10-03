@@ -64,14 +64,5 @@
 			<groupId>dev.ikm.elk</groupId>
 			<artifactId>elk-snomed</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>dev.ikm.elk</groupId>
-			<artifactId>elk-snomed-owl-el</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>dev.ikm.elk</groupId>
-			<artifactId>elk-snomed-test</artifactId>
-		</dependency>
 	</dependencies>
 </project>

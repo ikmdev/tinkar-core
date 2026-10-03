@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.reasoner.hybrid;
+package dev.ikm.tinkar.reasoner.hybrid.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import dev.ikm.tinkar.reasoner.hybrid.IntervalReasonerService;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.junit.jupiter.api.Test;

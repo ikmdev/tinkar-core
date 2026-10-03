@@ -1,4 +1,4 @@
-package dev.ikm.tinkar.reasoner.hybrid;
+package dev.ikm.tinkar.reasoner.hybrid.test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

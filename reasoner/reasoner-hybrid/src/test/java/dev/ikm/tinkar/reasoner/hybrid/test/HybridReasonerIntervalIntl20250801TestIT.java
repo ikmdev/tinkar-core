@@ -13,51 +13,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.reasoner.hybrid;
+package dev.ikm.tinkar.reasoner.hybrid.test;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dev.ikm.elk.snomed.test.SnomedVersionUs;
+import dev.ikm.elk.snomed.test.SnomedVersionInternational;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 
-public class HybridReasonerServiceSnomedUs20250301TestIT extends HybridReasonerServiceTestBase
-		implements SnomedVersionUs {
+public class HybridReasonerIntervalIntl20250801TestIT extends HybridReasonerIntervalTestBase
+		implements SnomedVersionInternational {
 
-	@SuppressWarnings("unused")
-	private static final Logger LOG = LoggerFactory.getLogger(HybridReasonerServiceSnomedUs20250301TestIT.class);
+	private static final Logger LOG = LoggerFactory.getLogger(HybridReasonerIntervalIntl20250801TestIT.class);
+
+	private static String write_db = "" + UUID.randomUUID();
 
 	static {
-		test_case = "snomed-us-20250301";
-	}
-
-	{
-		expected_swec_children = 3;
+		test_case = "snomed-intl-20250801";
 	}
 
 	@Override
 	public String getVersion() {
-		return "20250301";
-	}
-
-	@Override
-	public String getInternationalVersion() {
-		return "20250101";
+		return "20250801";
 	}
 
 	@BeforeAll
 	public static void startPrimitiveData() throws IOException {
-		PrimitiveDataTestUtil.setupPrimitiveData(test_case + "-sa");
+		LOG.info("Write: " + write_db);
+		PrimitiveDataTestUtil.copyDb(test_case + "-sa", write_db);
+		PrimitiveDataTestUtil.setupPrimitiveData(write_db);
 		PrimitiveData.start();
 	}
 
 	@AfterAll
-	public static void stopPrimitiveData() {
+	public static void stopPrimitiveData() throws IOException {
 		PrimitiveDataTestUtil.stopPrimitiveData();
+		PrimitiveDataTestUtil.deleteDb(write_db);
 	}
 
 }
