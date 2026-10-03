@@ -15,7 +15,6 @@
  */
 package dev.ikm.tinkar.integration.diagnostic;
 
-import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -40,8 +39,6 @@ import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
-import dev.ikm.tinkar.reasoner.elkowl.ElkOwlData;
-import dev.ikm.tinkar.reasoner.elkowl.ElkOwlDataBuilder;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedUtil;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.State;
@@ -51,7 +48,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.semanticweb.owlapi.model.OWLDataFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
@@ -252,29 +248,6 @@ class ExceptionMessageIT {
         assertNoNid(failure.getMessage());
     }
 
-    @Test
-    void theOwlBuilderNamesTheConceptAndWritesTheDefinitionWithNames() throws Exception {
-        OWLDataFactory dataFactory = SnomedOwlOntology.createOntology().getDataFactory();
-        ElkOwlDataBuilder builder = new ElkOwlDataBuilder(view, TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
-                new ElkOwlData(dataFactory), dataFactory);
-
-        DiTreeEntity twoChildren = aNecessarySetWithTwoChildren();
-        EntityVertex necessarySet = twoChildren.successors(twoChildren.root()).get(0);
-        IllegalStateException vertices = assertThrows(IllegalStateException.class,
-                () -> builder.processIncremental(twoChildren, malformedNid));
-        assertEquals("Necessary sets require a single AND child... "
-                + DiTreeText.diagnostic(twoChildren.successors(necessarySet)), vertices.getMessage());
-        assertNoNid(vertices.getMessage());
-
-        DiTreeEntity emptyPropertySet = aNecessarySetWithAnEmptyPropertySet();
-        IllegalStateException definition = assertThrows(IllegalStateException.class,
-                () -> builder.processIncremental(emptyPropertySet, malformedNid));
-        assertEquals("PropertySetNode can only have one child. Concept: UUID "
-                + fixtureUuid("concept with a malformed definition") + " definition:\n"
-                + DiTreeText.diagnostic(emptyPropertySet), definition.getMessage());
-        assertNoNid(definition.getMessage());
-    }
-
     // ── What the tests write and read ────────────────────────────────────────
 
     /** A definition whose necessary set has two children where one is allowed. */
@@ -286,17 +259,6 @@ class ExceptionMessageIT {
         builder.addEdge(necessarySet, root);
         builder.addEdge(EntityVertex.make(TinkarTerm.AND), necessarySet);
         builder.addEdge(EntityVertex.make(TinkarTerm.AND), necessarySet);
-        return builder.build();
-    }
-
-    /** A definition whose necessary set holds a property set with no child. */
-    private static DiTreeEntity aNecessarySetWithAnEmptyPropertySet() {
-        EntityVertex root = EntityVertex.make(TinkarTerm.DEFINITION_ROOT);
-        EntityVertex necessarySet = EntityVertex.make(TinkarTerm.NECESSARY_SET);
-        DiTreeEntity.Builder builder = DiTreeEntity.builder();
-        builder.setRoot(root);
-        builder.addEdge(necessarySet, root);
-        builder.addEdge(EntityVertex.make(TinkarTerm.PROPERTY_SET), necessarySet);
         return builder.build();
     }
 

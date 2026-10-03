@@ -10,7 +10,6 @@
 	<name>TINKAR Reasoner Service and Implementations</name>
 
 	<subprojects>
-		<subproject>reasoner-elk-owl</subproject>
 		<subproject>reasoner-elk-snomed</subproject>
 		<subproject>reasoner-elk-snomed-test</subproject>
 		<subproject>reasoner-hybrid</subproject>
@@ -120,12 +119,6 @@
 								<!-- JPMS ServiceLoader providers (runtime, not compile-visible) -->
 								<ignoredUnusedDeclaredDependency>dev.ikm.tinkar:executor-provider</ignoredUnusedDeclaredDependency>
 							</ignoredUnusedDeclaredDependencies>
-							<ignoredNonTestScopedDependencies>
-								<!-- reasoner-elk-owl: only its tests name component directly, but entity
-								     requires it transitively for main; a test-scope declaration would
-								     downgrade that and break the main compile. -->
-								<ignoredNonTestScopedDependency>dev.ikm.tinkar:component</ignoredNonTestScopedDependency>
-							</ignoredNonTestScopedDependencies>
 						</configuration>
 					</execution>
 				</executions>

@@ -34,7 +34,7 @@ import java.util.List;
  * shape (or its single-parent variant, {@code NecessarySet(ConceptAxiom)}); this class
  * detects that shape and extracts its parent concepts. Walks raw {@link EntityVertex}
  * nodes by {@link LogicalAxiomSemantic} tag — the same approach the platform's own
- * readers use (the reasoner's {@code ElkOwlDataBuilder}/{@code ElkSnomedDataBuilder}) —
+ * readers use (the reasoner's {@code ElkSnomedDataBuilder}) —
  * rather than the typed {@code LogicalAxiom.Atom} adaptor layer, whose
  * {@code PropertySequenceImplication.implication()} and interval-role bound accessors
  * are stubbed incomplete.

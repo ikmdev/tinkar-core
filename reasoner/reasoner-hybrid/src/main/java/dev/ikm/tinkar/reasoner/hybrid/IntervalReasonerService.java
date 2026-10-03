@@ -27,7 +27,6 @@ import dev.ikm.reasoner.hybrid.snomed.IntervalNecessaryNormalFormBuilder;
 import dev.ikm.reasoner.hybrid.snomed.IntervalReasoner;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedReasonerService;
 import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -67,11 +66,6 @@ public class IntervalReasonerService extends ElkSnomedReasonerService {
 	@Override
 	public boolean isIncrementalReady() {
 		return false;
-	}
-
-	@Override
-	public void processIncremental(DiTreeEntity definition, int conceptNid, TrackingCallable<?> progressUpdater) {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override

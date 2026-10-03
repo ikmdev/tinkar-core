@@ -89,11 +89,6 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>reasoner-elk-owl</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>reasoner-elk-snomed</artifactId>
         </dependency>
 

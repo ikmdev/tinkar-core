@@ -40,7 +40,6 @@ import dev.ikm.elk.snomed.model.Definition;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
-import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.ext.lang.owl.OwlElToLogicalExpression;
 import dev.ikm.tinkar.reasoner.service.ReasonerServiceBase;
@@ -180,11 +179,6 @@ public class ElkSnomedReasonerService extends ReasonerServiceBase {
 	@Override
 	public boolean isIncrementalReady() {
 		return reasoner != null;
-	}
-
-	@Override
-	public void processIncremental(DiTreeEntity definition, int conceptNid, TrackingCallable<?> progressUpdater) {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override

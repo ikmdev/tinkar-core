@@ -28,7 +28,6 @@ import dev.ikm.elk.snomed.SnomedOntology;
 import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology;
 import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology.SwecIds;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
-import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedReasonerService;
 import dev.ikm.tinkar.terms.PatternFacade;
@@ -82,10 +81,6 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 		return false;
 	}
 
-	@Override
-	public void processIncremental(DiTreeEntity definition, int conceptNid, TrackingCallable<?> progressUpdater) {
-		throw new UnsupportedOperationException();
-	}
 	@Override
 	public void buildNecessaryNormalForm(TrackingCallable<?> progressUpdater) {
 		nnfb = NecessaryNormalFormBuilder.create(sso.getOntology(),

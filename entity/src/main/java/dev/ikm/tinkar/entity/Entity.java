@@ -65,7 +65,7 @@ import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICI
  * </ul>
  *
  * <h2>⚠️ How to Access: Use EntityHandle</h2>
- * <p><b>DO NOT</b> call the static {@code get()}, {@code getOrThrow()}, or {@code getFast()} methods on this
+ * <p><b>DO NOT</b> call the static {@code get()} or {@code getFast()} methods on this
  * interface directly. They are deprecated and will be made module-internal in a future release. Instead,
  * use {@link EntityHandle}, which provides a fluent, type-safe API for accessing entities.
  *
@@ -330,33 +330,6 @@ public interface Entity<V extends EntityVersion>
     }
 
     /**
-     * @deprecated Use {@link EntityHandle#getConceptOrThrow(int)} or type-specific methods instead.
-     * <p>     * This static accessor method is being phased out in favor of the fluent
-     * {@link EntityHandle} API, which provides better type safety and composability.
-     * This method will be made module-internal in a future release.
-     * <p>     * <b>Migration:</b>
-     * <pre>{@code
-     * // Old (deprecated):
-     * Entity entity = Entity.getOrThrow(nid);
-     *
-     * // New (recommended - type-safe):
-     * ConceptEntity concept = EntityHandle.getConceptOrThrow(nid);
-     * SemanticEntity semantic = EntityHandle.getSemanticOrThrow(nid);
-     * }</pre>
-     *
-     * @see EntityHandle#getConceptOrThrow(int)
-     * @see EntityHandle#getSemanticOrThrow(int)
-     * @see EntityHandle#getPatternOrThrow(int)
-     * @see EntityHandle#getStampOrThrow(int)
-     * TODO: We should search for all methods that do this silent type casting, and replace them with
-     * a fluent API that better manages type determination.
-     */
-    @Deprecated(since = "Current", forRemoval = true)
-    static <T extends Entity<V>, V extends EntityVersion> T getOrThrow(int nid) {
-        return packagePrivateGetOrThrow(nid);
-    }
-
-    /**
      * Package-private method for internal use by EntityHandle.
      * External code should use {@link EntityHandle#get(EntityFacade)}.
      */
@@ -384,23 +357,6 @@ public interface Entity<V extends EntityVersion>
      */
     static  Entity<?> packagePrivateGetOrThrow(EntityFacade facade) {
         return EntityService.get().getEntity(facade.nid()).get();
-    }
-
-    /**
-     * @deprecated Use {@link EntityHandle#getConceptOrThrow(EntityFacade)} or type-specific methods instead.
-     * <p>     * This static accessor method is being phased out in favor of the fluent
-     * {@link EntityHandle} API. This method will be made module-internal in a future release.
-     *
-     * @see EntityHandle#getConceptOrThrow(EntityFacade)
-     * @see EntityHandle#getSemanticOrThrow(EntityFacade)
-     * @see EntityHandle#getPatternOrThrow(EntityFacade)
-     * @see EntityHandle#getStampOrThrow(EntityFacade)
-     * TODO: We should search for all methods that do this silent type casting, and replace them with
-     * a fluent API that better manages type determination.
-     */
-    @Deprecated(since = "Current", forRemoval = true)
-    static <T extends Entity<V>, V extends EntityVersion> T getOrThrow(EntityFacade facade) {
-        return (T) packagePrivateGetOrThrow(facade);
     }
 
     /**

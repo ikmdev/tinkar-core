@@ -126,11 +126,6 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>reasoner-elk-owl</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>reasoner-elk-snomed</artifactId>
             <scope>test</scope>
         </dependency>
