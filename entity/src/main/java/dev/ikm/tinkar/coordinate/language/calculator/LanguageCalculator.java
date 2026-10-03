@@ -501,23 +501,6 @@ public interface LanguageCalculator {
     }
 
     /**
-     * @deprecated use {@code getPreferredDescriptionTextOrNid}
-     */
-
-    @Deprecated
-    default String getPreferredDescriptionStringOrNid(int nid) {
-        return toEntityStringOrNid(nid, this::getRegularDescriptionText);
-    }
-
-    /**
-     * @deprecated use {@code getPreferredDescriptionTextOrNid}
-     */
-    @Deprecated
-    default String getPreferredDescriptionStringOrNid(EntityFacade entityFacade) {
-        return toEntityStringOrNid(entityFacade, this::getRegularDescriptionText);
-    }
-
-    /**
      * Retrieves the preferred description text or NID (numeric identifier) for a given entity.
      * The preferred description text is obtained using the provided method reference.
      *

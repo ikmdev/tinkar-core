@@ -74,7 +74,7 @@ public record ChangeChronology(int nid, ImmutableList<VersionChangeRecord> chang
                         default -> value.toString();
                     };
                 }
-                sb.append(viewCalculator.getPreferredDescriptionStringOrNid(fieldChange.currentValue().fieldDefinition(viewCalculator).meaningNid())).append(": ");
+                sb.append(viewCalculator.getPreferredDescriptionTextOrNid(fieldChange.currentValue().fieldDefinition(viewCalculator).meaningNid())).append(": ");
                 if (showPriorValue) {
                     sb.append(formatFunction.apply(fieldChange.priorValue().value())).append(" ").append(HEAVY_TRIANGLE_HEADED_RIGHTWARDS_ARROW).append(" ");
                 }
