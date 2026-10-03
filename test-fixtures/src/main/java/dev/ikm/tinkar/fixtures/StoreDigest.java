@@ -82,6 +82,23 @@ public record StoreDigest(long concepts, long patterns, long stamps, long semant
         return accumulator.digest();
     }
 
+    /**
+     * A component named the way the digest names it: its public id as sorted UUIDs, the
+     * same in every store.
+     */
+    public static String ids(int nid) {
+        return Accumulator.ids(nid);
+    }
+
+    /**
+     * A field value rendered the way the digest renders it: components by public id, sets
+     * sorted, a tree by its vertices' meanings and properties with children sorted. For
+     * digests of things that are not stores, such as a reasoner's results.
+     */
+    public static String render(Object value) {
+        return new Accumulator().value(value);
+    }
+
     /** The digest as properties whose keys start with the prefix, to hand from one JVM to another. */
     public void store(Properties properties, String prefix) {
         properties.setProperty(prefix + "concepts", Long.toString(concepts));
