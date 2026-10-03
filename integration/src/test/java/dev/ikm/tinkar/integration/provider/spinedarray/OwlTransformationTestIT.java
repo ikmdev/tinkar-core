@@ -16,11 +16,8 @@
 package dev.ikm.tinkar.integration.provider.spinedarray;
 
 import dev.ikm.tinkar.entity.*;
-import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.ext.lang.owl.Rf2OwlToLogicAxiomTransformer;
-import dev.ikm.tinkar.ext.lang.owl.SctOwlUtilities;
-import dev.ikm.tinkar.fixtures.KeyValueProviderExtension;
 import dev.ikm.tinkar.fixtures.OpenSpinedArrayKeyValueProvider;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
@@ -38,15 +35,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ExtendWith(OpenSpinedArrayKeyValueProvider.class)
 public class OwlTransformationTestIT {
@@ -133,38 +127,6 @@ public class OwlTransformationTestIT {
         LOG.info("Completed validation of " + testCount.get() + " axioms with user-defined coordinates");
     }
 
-    @Test
-    @Disabled("Requires Snomed data to run this test")
-    public void testOwlExpression(){
-        StringBuilder propertyBuilder = new StringBuilder();
-        StringBuilder classBuilder = new StringBuilder();
-        List<String> owlExpressionsToProcess = getOwlExpressionStrings();
-
-        for (String owlExpression : owlExpressionsToProcess) {
-            if (owlExpression.toLowerCase().contains("property")) {
-                propertyBuilder.append(" ").append(owlExpression);
-                if (!owlExpression.toLowerCase().contains("objectpropertychain")) {
-                    String tempExpression = owlExpression.toLowerCase().replace("subobjectpropertyof", " subclassof");
-                    tempExpression = tempExpression.toLowerCase().replace("subdatapropertyof", " subclassof");
-                    classBuilder.append(" ").append(tempExpression);
-                }
-            } else {
-                classBuilder.append(" ").append(owlExpression);
-            }
-        }
-
-        String owlClassExpressionsToProcess = classBuilder.toString();
-        String owlPropertyExpressionsToProcess = propertyBuilder.toString();
-        try {
-            LogicalExpression expression = SctOwlUtilities.sctToLogicalExpression(
-                    owlClassExpressionsToProcess,
-                    owlPropertyExpressionsToProcess);
-            assertNotNull(expression);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private static void generateTestAxiomData() {
         Entity<? extends EntityVersion> testStamp = createSTAMPTestHelper(TinkarTerm.ACTIVE_STATE,
                 System.currentTimeMillis(), TinkarTerm.USER, TinkarTerm.MODULE, TinkarTerm.SANDBOX_PATH);
@@ -177,30 +139,6 @@ public class OwlTransformationTestIT {
             createConceptTestHelper(concept, concept.description(), testStamp);
             createAxiomSyntaxSemanticTestHelper(concept.nid(), owlAxiomString, testStamp);
         });
-    }
-
-    private static List<String> getOwlExpressionStrings() {
-        String inputString1 =
-            "EquivalentClasses(:126885006 ObjectIntersectionOf(:64572001 ObjectSomeValuesFrom(:609096000 ObjectIntersectionOf(ObjectSomeValuesFrom(:116676008 :108369006) ObjectSomeValuesFrom(:363698007 :89837001)))))";
-        String inputString2 =
-            "EquivalentClasses(:895602001 ObjectIntersectionOf(:763158003 ObjectSomeValuesFrom(:411116001 :385287007) " +
-            "ObjectSomeValuesFrom(:609096000 ObjectSomeValuesFrom(:127489000 :704226002)) DataHasValue(:1142139005 \"1\"^^xsd:integer)))";
-        String inputString3 =
-            "EquivalentClasses(:428684004 ObjectIntersectionOf(:763158003 ObjectSomeValuesFrom(:411116001 :447079001) " +
-            "ObjectSomeValuesFrom(:609096000 ObjectIntersectionOf(ObjectSomeValuesFrom(:732943007 :386895008) ObjectSomeValuesFrom(:732945000 :258684004) ObjectSomeValuesFrom(:732947008 :732936001)" +
-            "ObjectSomeValuesFrom(:762949000 :386895008) DataHasValue(:1142135004 \"12\"^^xsd:decimal) DataHasValue(:1142136003 \"1\"^^xsd:decimal)))" +
-            "ObjectSomeValuesFrom(:609096000 ObjectIntersectionOf(ObjectSomeValuesFrom(:732943007 :386897000) ObjectSomeValuesFrom(:732945000 :258684004) ObjectSomeValuesFrom(:732947008 :732936001)" +
-            "ObjectSomeValuesFrom(:762949000 :386897000) DataHasValue(:1142135004 \"60\"^^xsd:decimal) DataHasValue(:1142136003 \"1\"^^xsd:decimal)))" +
-            "ObjectSomeValuesFrom(:609096000 ObjectIntersectionOf(ObjectSomeValuesFrom(:732943007 :386898005) ObjectSomeValuesFrom(:732945000 :258684004) ObjectSomeValuesFrom(:732947008 :732936001)" +
-            "ObjectSomeValuesFrom(:762949000 :386898005) DataHasValue(:1142135004 \"100\"^^xsd:decimal) DataHasValue(:1142136003 \"1\"^^xsd:decimal))))";
-        String inputString4 = "SubClassOf(:1222765007 ObjectIntersectionOf(:1222592004 :1222593009 :1222594003))";
-
-        List<String> owlExpressionsToProcess = new ArrayList<>();
-        owlExpressionsToProcess.add(inputString1);
-        owlExpressionsToProcess.add(inputString2);
-        owlExpressionsToProcess.add(inputString3);
-        owlExpressionsToProcess.add(inputString4);
-        return owlExpressionsToProcess;
     }
 
     private static Entity<? extends EntityVersion> createSTAMPTestHelper(EntityProxy.Concept status, long time, EntityProxy.Concept author, EntityProxy.Concept module, EntityProxy.Concept path){
