@@ -16,13 +16,13 @@
 package dev.ikm.tinkar.entity;
 
 import dev.ikm.tinkar.component.FieldDataType;
-import dev.ikm.tinkar.component.FieldDefinition;
+import dev.ikm.tinkar.component.FeatureDefinition;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.ConceptToDataType;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.PatternFacade;
 
-public interface FieldDefinitionForEntity extends FieldDefinition {
+public interface FieldDefinitionForEntity extends FeatureDefinition {
 
     /**
      * Underlying object type such as String or Integer.

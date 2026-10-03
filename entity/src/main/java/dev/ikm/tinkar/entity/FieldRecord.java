@@ -17,7 +17,7 @@ package dev.ikm.tinkar.entity;
 
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
-import dev.ikm.tinkar.component.FieldDefinition;
+import dev.ikm.tinkar.component.FeatureDefinition;
 import dev.ikm.tinkar.component.PatternVersion;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
@@ -46,7 +46,7 @@ public record FieldRecord<DT>(DT value, int nid, int versionStampNid,
     }
 
     @Override
-    public FieldDefinition fieldDefinition(StampCalculator stampCalculator) {
+    public FeatureDefinition fieldDefinition(StampCalculator stampCalculator) {
         PatternEntity<PatternEntityVersion> patternEntity = Entity.getFast(patternNid());
         Latest<PatternEntityVersion> patternVersion = stampCalculator.latest(patternEntity);
         return patternVersion.get().fieldDefinitions().get(indexInPattern());

@@ -15,12 +15,12 @@
  */
 package dev.ikm.tinkar.entity;
 
-import dev.ikm.tinkar.component.FieldDefinition;
+import dev.ikm.tinkar.component.FeatureDefinition;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 
 public interface Field<DT> {
 
-    FieldDefinition fieldDefinition(StampCalculator stampCalculator);
+    FeatureDefinition fieldDefinition(StampCalculator stampCalculator);
 
     DT value();
 

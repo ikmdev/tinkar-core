@@ -17,7 +17,7 @@ package dev.ikm.tinkar.entity;
 
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
-import dev.ikm.tinkar.component.FieldDefinition;
+import dev.ikm.tinkar.component.FeatureDefinition;
 import dev.ikm.tinkar.component.PatternVersion;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.factory.Lists;
@@ -46,7 +46,7 @@ public record PatternVersionRecord(PatternRecord chronology, int stampNid,
         int semanticMeaningNid = Entity.nid(patternVersion.semanticMeaning());
         MutableList<FieldDefinitionRecord> fieldDefinitions = Lists.mutable.ofInitialCapacity(patternVersion.fieldDefinitions().size());
         for (int index = 0; index < patternVersion.fieldDefinitions().size(); index++) {
-            FieldDefinition field = patternVersion.fieldDefinitions().get(index);
+            FeatureDefinition field = patternVersion.fieldDefinitions().get(index);
             fieldDefinitions.add(new FieldDefinitionRecord(Entity.nid(field.dataType()), Entity.nid(field.purpose()), Entity.nid(field.meaning()),
                     stampNid,
                     chronology.nid(), index));
