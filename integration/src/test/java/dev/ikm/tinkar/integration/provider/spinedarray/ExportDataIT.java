@@ -33,6 +33,7 @@ import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.fixtures.TestConstants;
+import dev.ikm.tinkar.fixtures.TestTags;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityProxy;
@@ -47,12 +48,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.jupiter.api.Tag;
 
 /**
  * Part 1 of the Export/Import test - Exports data to protobuf.
  * This test class runs first (alphabetically before ImportDataIT).
  * It modifies semantic field data and exports to a protobuf file.
  */
+@Tag(TestTags.STAGED)
 class ExportDataIT {
     private static final Logger LOG = LoggerFactory.getLogger(ExportDataIT.class);
     private static final File DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(ExportDataIT.class);

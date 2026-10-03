@@ -25,6 +25,7 @@ import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.entity.transform.EntityToTinkarSchemaTransformer;
 import dev.ikm.tinkar.fixtures.OpenSpinedArrayKeyValueProvider;
 import dev.ikm.tinkar.fixtures.TestConstants;
+import dev.ikm.tinkar.fixtures.TestTags;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import dev.ikm.tinkar.terms.State;
@@ -46,6 +47,7 @@ import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import org.junit.jupiter.api.Tag;
 
 import static dev.ikm.tinkar.fixtures.TestConstants.createFilePathInTarget;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -70,6 +72,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @ExtendWith(OpenSpinedArrayKeyValueProvider.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Tag(TestTags.STAGED)
 class ForwardReferenceChangeSetGenerateIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(ForwardReferenceChangeSetGenerateIT.class);

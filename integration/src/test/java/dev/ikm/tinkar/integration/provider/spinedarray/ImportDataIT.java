@@ -32,6 +32,7 @@ import dev.ikm.tinkar.entity.PatternEntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.fixtures.TestConstants;
+import dev.ikm.tinkar.fixtures.TestTags;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityProxy;
@@ -46,6 +47,7 @@ import java.io.File;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.jupiter.api.Tag;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -55,6 +57,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * This test class runs second (alphabetically after ExportDataIT).
  * It starts a fresh database, loads the exported protobuf file, and validates the data.
  */
+@Tag(TestTags.STAGED)
 class ImportDataIT {
     private static final Logger LOG = LoggerFactory.getLogger(ImportDataIT.class);
     private static final File DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(

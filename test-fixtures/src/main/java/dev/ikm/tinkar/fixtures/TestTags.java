@@ -43,6 +43,16 @@ public final class TestTags {
      */
     public static final String EXTERNAL = "external";
 
+    /**
+     * Takes more than one JVM. A JVM starts the store services once, so a test that
+     * needs a second store lifetime — close and reopen, or write from one store and read
+     * into another — runs each lifetime as a stage in a spawned JVM, with
+     * {@link ForkedJvm}. The older producer and consumer pairs, one class per stage in
+     * class-name order, carry the tag too. Staged tests that need only starter data run in
+     * the default build.
+     */
+    public static final String STAGED = "staged";
+
     /** Measures time or size and asserts a bound or records a baseline. */
     public static final String PERFORMANCE = "performance";
 

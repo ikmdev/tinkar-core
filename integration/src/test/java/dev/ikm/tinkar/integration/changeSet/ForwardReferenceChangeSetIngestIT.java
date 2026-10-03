@@ -24,6 +24,7 @@ import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.fixtures.OpenSpinedArrayKeyValueProvider;
 import dev.ikm.tinkar.fixtures.TestConstants;
+import dev.ikm.tinkar.fixtures.TestTags;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import org.junit.jupiter.api.Tag;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -61,6 +63,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @ExtendWith(OpenSpinedArrayKeyValueProvider.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@Tag(TestTags.STAGED)
 class ForwardReferenceChangeSetIngestIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(ForwardReferenceChangeSetIngestIT.class);
