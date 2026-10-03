@@ -374,6 +374,53 @@ public class DateTimeUtil {
     public static long toEpochMilliseconds(LocalDateTime localDateTime) {
         return localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
+
+    /**
+     * How long ago an instant was, in words: the largest whole unit that fits,
+     * from {@code "3 years ago"} down to {@code "12 seconds ago"}, or
+     * {@code "just now"} within the last second (and for an instant in the future,
+     * which a clock difference can produce). Months are thirty days.
+     *
+     * @param then the instant to describe
+     * @return the phrase, measured against the clock now
+     */
+    public static String elapsedSince(Instant then) {
+        return elapsedBetween(then, Instant.now());
+    }
+
+    /**
+     * {@link #elapsedSince(Instant)} for an epoch time in milliseconds.
+     */
+    public static String elapsedSince(long epochMilliSecond) {
+        return elapsedSince(Instant.ofEpochMilli(epochMilliSecond));
+    }
+
+    static String elapsedBetween(Instant then, Instant now) {
+        long elapsedMs = now.toEpochMilli() - then.toEpochMilli();
+        if (elapsedMs < MS_IN_SEC) {
+            return "just now";
+        }
+        if (elapsedMs >= MS_IN_YEAR) {
+            return ago(elapsedMs / MS_IN_YEAR, "year");
+        }
+        if (elapsedMs >= MS_IN_MONTH) {
+            return ago(elapsedMs / MS_IN_MONTH, "month");
+        }
+        if (elapsedMs >= MS_IN_DAY) {
+            return ago(elapsedMs / MS_IN_DAY, "day");
+        }
+        if (elapsedMs >= MS_IN_HOUR) {
+            return ago(elapsedMs / MS_IN_HOUR, "hour");
+        }
+        if (elapsedMs >= MS_IN_MINUTE) {
+            return ago(elapsedMs / MS_IN_MINUTE, "minute");
+        }
+        return ago(elapsedMs / MS_IN_SEC, "second");
+    }
+
+    private static String ago(long count, String unit) {
+        return count + " " + unit + (count == 1 ? "" : "s") + " ago";
+    }
     public static String getDayOfMonthSuffix(final int n) {
         if (n < 1 || n > 31) {
             throw new IllegalArgumentException("illegal day of month: " + n);
