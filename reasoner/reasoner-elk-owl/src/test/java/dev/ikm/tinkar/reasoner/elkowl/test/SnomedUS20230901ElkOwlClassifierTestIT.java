@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.reasoner.elkowl;
+package dev.ikm.tinkar.reasoner.elkowl.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -37,6 +37,8 @@ import org.slf4j.LoggerFactory;
 import dev.ikm.elk.snomed.SnomedIds;
 import dev.ikm.elk.snomed.SnomedIsa;
 import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
+import dev.ikm.tinkar.reasoner.elkowl.ElkOwlData;
+import dev.ikm.tinkar.reasoner.elkowl.ElkOwlDataBuilder;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidUtil;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;

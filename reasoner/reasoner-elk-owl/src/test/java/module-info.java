@@ -14,35 +14,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import dev.ikm.tinkar.reasoner.elkowl.ElkOwlReasonerService;
+
+import dev.ikm.tinkar.common.service.DataServiceController;
+import dev.ikm.tinkar.common.service.ServiceLifecycle;
+import dev.ikm.tinkar.provider.spinedarray.SpinedArrayProvider;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
 
-/**
- * @deprecated
- * No longer maintained.
- * 
- * Use dev.ikm.tinkar.reasoner.elksnomed
- */
-@Deprecated
-module dev.ikm.tinkar.reasoner.elkowl {
-    requires org.eclipse.collections.api;
-    requires org.eclipse.collections.impl;
+open module dev.ikm.tinkar.reasoner.elkowl.test {
+	requires org.eclipse.collections.api;
+	requires transitive org.junit.jupiter.api;
+	requires transitive org.junit.jupiter.engine;
 	requires org.slf4j;
 
-	requires dev.ikm.tinkar.collection;
-    requires dev.ikm.tinkar.common;
+	requires dev.ikm.tinkar.common;
+	requires dev.ikm.tinkar.component;
 	requires dev.ikm.tinkar.entity;
+	requires dev.ikm.tinkar.terms;
+	requires dev.ikm.tinkar.provider.spinedarray;
 	requires dev.ikm.tinkar.reasoner.service;
-
+	requires dev.ikm.tinkar.reasoner.elkowl;
 	requires org.semanticweb.owlapi;
-
-
+	requires org.semanticweb.owlapi.apibinding;
+	requires org.semanticweb.elk.owlapi;
+	requires dev.ikm.elk.snomed;
 	requires dev.ikm.elk.snomed.owl;
 
+	exports dev.ikm.tinkar.reasoner.elkowl.test;
 
-    exports dev.ikm.tinkar.reasoner.elkowl;
-
-	provides ReasonerService with ElkOwlReasonerService;
-
-
+	uses ReasonerService;
+	uses DataServiceController;
+	uses SpinedArrayProvider.OpenController;
+	uses ServiceLifecycle;
 }

@@ -55,10 +55,12 @@
 		<dependency>
 			<groupId>dev.ikm.elk</groupId>
 			<artifactId>elk-owlapi</artifactId>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>dev.ikm.elk</groupId>
 			<artifactId>elk-snomed</artifactId>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>dev.ikm.elk</groupId>
@@ -67,6 +69,7 @@
 		<dependency>
 			<groupId>dev.ikm.owlapi</groupId>
 			<artifactId>owlapi-apibinding</artifactId>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>dev.ikm.owlapi</groupId>

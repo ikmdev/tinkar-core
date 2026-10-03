@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.reasoner.elkowl;
+package dev.ikm.tinkar.reasoner.elkowl.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -25,6 +25,8 @@ import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.ikm.tinkar.reasoner.elkowl.ElkOwlData;
+import dev.ikm.tinkar.reasoner.elkowl.ElkOwlPrefixManager;
 import dev.ikm.elk.snomed.owl.SnomedOwlOntology;
 
 public class ElkOwlPrefixManagerTest {

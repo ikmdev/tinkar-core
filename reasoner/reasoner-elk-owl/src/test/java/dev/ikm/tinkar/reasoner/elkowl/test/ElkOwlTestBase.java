@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.ikm.tinkar.reasoner.elkowl;
+package dev.ikm.tinkar.reasoner.elkowl.test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -27,6 +27,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import dev.ikm.tinkar.reasoner.elkowl.ElkOwlData;
+import dev.ikm.tinkar.reasoner.elkowl.ElkOwlDataBuilder;
+import dev.ikm.tinkar.reasoner.elkowl.ElkOwlReasonerService;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import org.semanticweb.elk.owlapi.ElkReasonerFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
