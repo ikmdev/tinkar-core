@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.load;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.util.thread.StructuredScopes;
 import dev.ikm.tinkar.common.util.thread.SubtaskFailedException;
 import dev.ikm.tinkar.common.alert.AlertStreams;
@@ -298,7 +299,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                 int nid = PrimitiveData.get().nidForUuids(uuid);
                 int patternSequence = PrimitiveData.patternSequenceForNid(nid);
                 long elementSequence = PrimitiveData.elementSequenceForNid(nid);
-                byte[] entityBytes = PrimitiveData.get().getBytes(nid);
+                byte[] entityBytes = EntityStore.current().getBytes(nid);
                 sb.append("\n\nnid for ").append(uuid).append(" is: ").append(nid);
                 sb.append("\npatternSequence for ").append(uuid).append(" is: ").append(patternSequence);
                 sb.append("\nelementSequence for ").append(uuid).append(" is: ").append(elementSequence);

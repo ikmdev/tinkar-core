@@ -16,12 +16,12 @@
 package dev.ikm.tinkar.ext.lang.owl;
 
 
-import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.coordinate.logic.PremiseType;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -80,8 +80,10 @@ public class Rf2OwlToLogicAxiomTransformer extends TrackingCallable<Void> {
         try {
             List<Callable<Void>> tasks = new ArrayList<>();
 
-            PrimitiveData.get().forEachConceptNid(conceptNid -> {
-                int[] semanticNids = EntityService.get().semanticNidsForComponentOfPattern(conceptNid, rf2OwlPatternNid);
+            EntityService.get().forEachConceptEntity(concept -> {
+                int conceptNid = concept.nid();
+                int[] semanticNids = EntityService.get().semanticsForComponentOfPattern(conceptNid, rf2OwlPatternNid)
+                        .mapToInt(SemanticEntity::nid).toArray();
                 if (semanticNids != null) {
                     if (semanticNids.length > 0) {
                         TransformationGroup tg = new TransformationGroup(conceptNid, semanticNids, PremiseType.STATED);

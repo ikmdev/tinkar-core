@@ -35,6 +35,7 @@ import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.PatternEntityVersion;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -55,6 +56,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -556,9 +558,10 @@ public class Searcher {
         }
 
         try {
-            int[] semanticNids = EntityService.get().semanticNidsOfPattern(TinkarTerm.IDENTIFIER_PATTERN.nid());
-            for (int nid : semanticNids) {
-                EntityVersion entityVersion = viewCalc.latest(nid).get();
+            Iterator<SemanticEntity<SemanticEntityVersion>> semantics =
+                    EntityService.get().semanticsOfPattern(TinkarTerm.IDENTIFIER_PATTERN.nid()).iterator();
+            while (semantics.hasNext()) {
+                EntityVersion entityVersion = viewCalc.latest(semantics.next()).get();
                 if (entityVersion instanceof SemanticEntityVersion semanticEntityVersion) {
                     Object idValue = latestIdPattern.get().getFieldWithMeaning(TinkarTerm.IDENTIFIER_VALUE, semanticEntityVersion);
                     if (identifierValue != null && identifierValue.equals(idValue)) {

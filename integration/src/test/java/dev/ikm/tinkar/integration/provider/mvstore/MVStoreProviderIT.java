@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.integration.provider.mvstore;
 
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
@@ -88,22 +89,22 @@ class MVStoreProviderIT {
             LOG.info("Reloading in: " + reloadStopwatch.durationString() + "\n\n");
         }
         EntityProcessor processor = new EntityCounter();
-        PrimitiveData.get().forEach(processor);
+        EntityStore.current().forEach(processor);
         LOG.info("MVS Sequential count: \n" + processor.report() + "\n\n");
         processor = new EntityCounter();
-        PrimitiveData.get().forEachParallel(processor);
+        EntityStore.current().forEachParallel(processor);
         LOG.info("MVS Parallel count: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
-        PrimitiveData.get().forEach(processor);
+        EntityStore.current().forEach(processor);
         LOG.info("MVS Sequential realization: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
-        PrimitiveData.get().forEachParallel(processor);
+        EntityStore.current().forEachParallel(processor);
         LOG.info("MVS Parallel realization: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
-        PrimitiveData.get().forEach(processor);
+        EntityStore.current().forEach(processor);
         LOG.info("MVS Sequential realization: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
-        PrimitiveData.get().forEachParallel(processor);
+        EntityStore.current().forEachParallel(processor);
         LOG.info("MVS Parallel realization: \n" + processor.report() + "\n\n");
     }
 

@@ -16,7 +16,6 @@
 package dev.ikm.tinkar.integration.coordinate;
 
 import dev.ikm.tinkar.common.id.PublicIds;
-import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
@@ -24,6 +23,7 @@ import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.builder.ActiveStamp;
 import dev.ikm.tinkar.entity.builder.KnowledgeSet;
@@ -250,7 +250,7 @@ class DefaultsTemplateCalculatorIT {
 
         // Chronology-level enumeration is store truth — the excluded nids are still there.
         MutableIntSet patternChronologyNids =
-                IntSets.mutable.of(PrimitiveData.get().semanticNidsOfPattern(p1Nid));
+                IntSets.mutable.of(EntityService.get().semanticsOfPattern(p1Nid).mapToInt(SemanticEntity::nid).toArray());
         assertTrue(patternChronologyNids.contains(defaultsNid),
                 "chronology enumeration for the pattern must still return the defaults semantic nid");
         assertTrue(patternChronologyNids.contains(templateNid));
@@ -266,7 +266,7 @@ class DefaultsTemplateCalculatorIT {
         assertFalse(componentIterated.contains(defaultsNid));
         assertFalse(componentIterated.contains(nidOf(p2DefaultId)));
         MutableIntSet componentChronologyNids =
-                IntSets.mutable.of(PrimitiveData.get().semanticNidsForComponent(attachmentNid));
+                IntSets.mutable.of(EntityService.get().semanticsForComponent(attachmentNid).mapToInt(SemanticEntity::nid).toArray());
         assertTrue(componentChronologyNids.contains(defaultsNid));
     }
 

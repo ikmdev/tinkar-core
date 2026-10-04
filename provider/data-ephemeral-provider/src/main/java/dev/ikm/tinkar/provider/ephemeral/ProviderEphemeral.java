@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.provider.ephemeral;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.collection.KeyType;
 import dev.ikm.tinkar.collection.SpinedIntIntMapAtomic;
@@ -44,7 +45,7 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
 
 
-public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
+public class ProviderEphemeral implements PrimitiveDataService, EntityStore, NidGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(ProviderEphemeral.class);
     protected static AtomicReference<ProviderEphemeral> providerReference = new AtomicReference<>();
     protected static ProviderEphemeral singleton;

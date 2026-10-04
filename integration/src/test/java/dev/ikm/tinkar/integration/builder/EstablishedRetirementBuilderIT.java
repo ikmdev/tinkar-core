@@ -183,10 +183,10 @@ class EstablishedRetirementBuilderIT {
     @Test
     @DisplayName("No description is written for a concept opened by a retirement scope: its names stay with the base")
     void noDescriptionIsWritten() {
-        int[] descriptions = EntityService.get().semanticNidsForComponentOfPattern(
-                PrimitiveData.nid(RETIRED_ID), TinkarTerm.DESCRIPTION_PATTERN.nid());
-        assertEquals(1, descriptions.length, "the base's fully qualified name only");
-        assertEquals(1, EntityHandle.get(descriptions[0]).expectSemantic().versions().size(),
+        List<SemanticEntity<SemanticEntityVersion>> descriptions = EntityService.get().semanticsForComponentOfPattern(
+                PrimitiveData.nid(RETIRED_ID), TinkarTerm.DESCRIPTION_PATTERN.nid()).toList();
+        assertEquals(1, descriptions.size(), "the base's fully qualified name only");
+        assertEquals(1, descriptions.getFirst().versions().size(),
                 "and it gained no version");
     }
 
@@ -203,10 +203,10 @@ class EstablishedRetirementBuilderIT {
     @DisplayName("A born concept retires its own definition at a later inactive stamp")
     void bornConceptRetiresItsAxiomsLater() {
         int conceptNid = LEDGER_SET.conceptRef("Born kind (Test)").nid();
-        int[] axioms = EntityService.get().semanticNidsForComponentOfPattern(conceptNid,
-                TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid());
-        assertEquals(1, axioms.length, "one stated-axiom semantic");
-        SemanticEntity<? extends SemanticEntityVersion> semantic = EntityHandle.get(axioms[0]).expectSemantic();
+        List<SemanticEntity<SemanticEntityVersion>> axioms = EntityService.get().semanticsForComponentOfPattern(conceptNid,
+                TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()).toList();
+        assertEquals(1, axioms.size(), "one stated-axiom semantic");
+        SemanticEntity<? extends SemanticEntityVersion> semantic = axioms.getFirst();
         assertEquals(2, semantic.versions().size(), "the birth statement and the retirement");
         assertEquals(State.INACTIVE, onlyInactive(semantic).stamp().state());
     }

@@ -216,25 +216,25 @@ class ChronologyBuilderIT {
         assertEquals(birth.time(), birthStamp.time());
 
         // FQN + two synonyms + one definition — across two resumed sections.
-        int[] descriptionNids = EntityService.get().semanticNidsForComponentOfPattern(
-                conceptNid, TinkarTerm.DESCRIPTION_PATTERN.nid());
-        assertEquals(4, descriptionNids.length);
+        List<SemanticEntity<SemanticEntityVersion>> descriptions = EntityService.get().semanticsForComponentOfPattern(
+                conceptNid, TinkarTerm.DESCRIPTION_PATTERN.nid()).toList();
+        assertEquals(4, descriptions.size());
 
-        SemanticEntity<?> revised = findDescriptionByLatestText(descriptionNids, "Journal atom");
+        SemanticEntity<?> revised = findDescriptionByLatestText(descriptions, "Journal atom");
         assertEquals(2, revised.versions().size());
         assertEquals("Journal element", textOf(revised.versions().get(0)));
         assertEquals("Journal atom", textOf(revised.versions().get(1)));
         assertEquals(later.time(), Entity.getStamp(revised.versions().get(1).stampNid()).time());
 
-        for (int descriptionNid : descriptionNids) {
-            assertEquals(1, EntityService.get().semanticNidsForComponentOfPattern(
-                    descriptionNid, TinkarTerm.US_DIALECT_PATTERN.nid()).length);
+        for (SemanticEntity<SemanticEntityVersion> description : descriptions) {
+            assertEquals(1, EntityService.get().semanticsForComponentOfPattern(
+                    description.nid(), TinkarTerm.US_DIALECT_PATTERN.nid()).count());
         }
 
-        int[] axiomNids = EntityService.get().semanticNidsForComponentOfPattern(
-                conceptNid, TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid());
-        assertEquals(1, axiomNids.length);
-        SemanticEntity<?> axioms = EntityHandle.get(axiomNids[0]).expectSemantic();
+        List<SemanticEntity<SemanticEntityVersion>> axiomSemantics = EntityService.get().semanticsForComponentOfPattern(
+                conceptNid, TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()).toList();
+        assertEquals(1, axiomSemantics.size());
+        SemanticEntity<?> axioms = axiomSemantics.getFirst();
         Object axiomField = ((SemanticEntityVersion) axioms.versions().get(0)).fieldValues().get(0);
         assertInstanceOf(DiTreeEntity.class, axiomField);
         assertEquals(4, ((DiTreeEntity) axiomField).vertexCount());
@@ -250,9 +250,9 @@ class ChronologyBuilderIT {
         assertEquals(State.INACTIVE, lastStamp.state());
         assertEquals(retirement.time(), lastStamp.time());
 
-        int[] descriptionNids = EntityService.get().semanticNidsForComponentOfPattern(
-                conceptNid, TinkarTerm.DESCRIPTION_PATTERN.nid());
-        SemanticEntity<?> synonym = findDescriptionByLatestText(descriptionNids, "Temporary name");
+        List<SemanticEntity<SemanticEntityVersion>> descriptions = EntityService.get().semanticsForComponentOfPattern(
+                conceptNid, TinkarTerm.DESCRIPTION_PATTERN.nid()).toList();
+        SemanticEntity<?> synonym = findDescriptionByLatestText(descriptions, "Temporary name");
         assertEquals(2, synonym.versions().size());
         assertEquals(State.INACTIVE, Entity.getStamp(synonym.versions().get(1).stampNid()).state());
     }
@@ -350,11 +350,11 @@ class ChronologyBuilderIT {
     void isAWritesStatedAxiom() {
         // isA composes NecessarySet(And(ConceptAxiom(parent))) as the stated-axiom semantic;
         // the glossary extractor reads parents from this stored axiom (no builder read API).
-        int[] axiomNids = EntityService.get().semanticNidsForComponentOfPattern(
+        List<SemanticEntity<SemanticEntityVersion>> axioms = EntityService.get().semanticsForComponentOfPattern(
                 TEST_SET.conceptRef("Prose element (Test)").nid(),
-                TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid());
-        assertEquals(1, axiomNids.length);
-        SemanticEntity<?> axiom = EntityHandle.get(axiomNids[0]).expectSemantic();
+                TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()).toList();
+        assertEquals(1, axioms.size());
+        SemanticEntity<?> axiom = axioms.getFirst();
         Object field = ((SemanticEntityVersion) axiom.versions().get(0)).fieldValues().get(0);
         assertInstanceOf(DiTreeEntity.class, field);
     }
@@ -380,10 +380,9 @@ class ChronologyBuilderIT {
         assertTrue(source.contains("DO NOT EDIT"), "generation marker");
     }
 
-    private static SemanticEntity<?> findDescriptionByLatestText(int[] descriptionNids, String text) {
+    private static SemanticEntity<?> findDescriptionByLatestText(List<SemanticEntity<SemanticEntityVersion>> descriptions, String text) {
         List<String> latestTexts = new ArrayList<>();
-        for (int nid : descriptionNids) {
-            SemanticEntity<?> semantic = EntityHandle.get(nid).expectSemantic();
+        for (SemanticEntity<?> semantic : descriptions) {
             EntityVersion last = semantic.versions().get(semantic.versions().size() - 1);
             String latest = textOf(last);
             latestTexts.add(latest);

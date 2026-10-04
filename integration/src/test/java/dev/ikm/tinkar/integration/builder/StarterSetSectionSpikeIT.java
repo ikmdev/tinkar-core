@@ -94,9 +94,9 @@ class StarterSetSectionSpikeIT {
         buildTaxonomy(parentsFieldIndex);
 
         List<Integer> concepts = new ArrayList<>();
-        PrimitiveData.get().forEachConceptNid(concepts::add);
+        EntityService.get().forEachConceptEntity(concept -> concepts.add(concept.nid()));
         List<Integer> patterns = new ArrayList<>();
-        PrimitiveData.get().forEachPatternNid(patterns::add);
+        EntityService.get().forEachPatternEntity(pattern -> patterns.add(pattern.nid()));
 
         List<Integer> roots = concepts.stream()
                 .filter(nid -> !PARENTS.containsKey(nid) && CHILDREN.containsKey(nid))
@@ -193,10 +193,9 @@ class StarterSetSectionSpikeIT {
     }
 
     private static void buildTaxonomy(int parentsFieldIndex) {
-        List<Integer> semanticNids = new ArrayList<>();
-        PrimitiveData.get().forEachSemanticNid(semanticNids::add);
-        for (Integer semanticNid : semanticNids) {
-            SemanticEntity<?> semantic = EntityHandle.get(semanticNid).expectSemantic();
+        List<SemanticEntity<SemanticEntityVersion>> semantics = new ArrayList<>();
+        EntityService.get().forEachSemanticEntity(semantics::add);
+        for (SemanticEntity<?> semantic : semantics) {
             if (semantic.patternNid() != TinkarTerm.STATED_NAVIGATION_PATTERN.nid()) {
                 continue;
             }

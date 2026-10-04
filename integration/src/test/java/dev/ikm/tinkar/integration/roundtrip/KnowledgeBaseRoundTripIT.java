@@ -16,11 +16,11 @@
 package dev.ikm.tinkar.integration.roundtrip;
 
 import dev.ikm.tinkar.common.service.PluggableService;
-import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.fixtures.ForkedJvm;
@@ -213,9 +213,9 @@ class KnowledgeBaseRoundTripIT {
             int root = TinkarTerm.ROOT_VERTEX.nid();
             AtomicLong concepts = new AtomicLong();
             AtomicLong withoutDescription = new AtomicLong();
-            PrimitiveData.get().forEachConceptNid(nid -> {
+            EntityService.get().forEachConceptEntity(concept -> {
                 concepts.incrementAndGet();
-                if (view.getDescriptionText(nid).filter(text -> !text.isBlank()).isEmpty()) {
+                if (view.getDescriptionText(concept.nid()).filter(text -> !text.isBlank()).isEmpty()) {
                     withoutDescription.incrementAndGet();
                 }
             });

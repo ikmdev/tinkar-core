@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.coordinate.language.calculator;
 
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.ikm.tinkar.common.id.IntIdList;
@@ -166,7 +167,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
                 OptionalInt optionalTypeIndex = stampCalculator.getIndexForMeaning(descriptionPatternNid,
                         TinkarTerm.DESCRIPTION_TYPE.nid());
                 if (optionalTypeIndex.isPresent()) {
-                    PrimitiveData.get().forEachSemanticNidForComponentOfPattern(componentNid, descriptionPatternNid,
+                    EntityStore.current().forEachSemanticNidForComponentOfPattern(componentNid, descriptionPatternNid,
                             semanticNid -> {
                                 SemanticEntity descriptionSemantic = EntityHandle.get(semanticNid).expectSemantic();
                                 Latest<SemanticEntityVersion> latestDescriptionVersion =

@@ -1,5 +1,6 @@
 package dev.ikm.tinkar.reasoner.elksnomed;
 
+import java.util.List;
 import java.util.Set;
 
 import org.eclipse.collections.api.factory.Lists;
@@ -8,12 +9,12 @@ import org.eclipse.collections.api.list.ImmutableList;
 import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.service.DiagnosticText;
-import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
@@ -24,13 +25,13 @@ import dev.ikm.tinkar.terms.TinkarTerm;
 public class ElkSnomedUtil {
 
 	private static int getStatedSemanticNid(int conceptNid) {
-		int[] statedSemanticNids = PrimitiveData.get().semanticNidsForComponentOfPattern(conceptNid,
-				TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid());
-		if (statedSemanticNids.length == 0)
+		List<SemanticEntity<SemanticEntityVersion>> statedSemantics = EntityService.get()
+				.semanticsForComponentOfPattern(conceptNid, TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()).toList();
+		if (statedSemantics.isEmpty())
 			throw new IllegalStateException("No stated form for concept: " + DiagnosticText.component(conceptNid));
-		if (statedSemanticNids.length > 1)
+		if (statedSemantics.size() > 1)
 			throw new IllegalStateException("More than one stated form for concept: " + DiagnosticText.component(conceptNid));
-		return statedSemanticNids[0];
+		return statedSemantics.getFirst().nid();
 	}
 
 	public static SemanticEntityVersion getStatedSemantic(ViewCalculator viewCalculator, int conceptNid) {
@@ -86,15 +87,16 @@ public class ElkSnomedUtil {
 	}
 
 	public static SemanticEntityVersion getLatestSemantic(ViewCalculator vc, int patternNid, int nid) {
-		int[] semanticNids = PrimitiveData.get().semanticNidsForComponentOfPattern(nid, patternNid);
-		if (semanticNids.length == 1) {
-			Latest<SemanticEntityVersion> latestSemantic = vc.latest(semanticNids[0]);
+		List<SemanticEntity<SemanticEntityVersion>> semantics = EntityService.get()
+				.semanticsForComponentOfPattern(nid, patternNid).toList();
+		if (semantics.size() == 1) {
+			Latest<SemanticEntityVersion> latestSemantic = vc.latest(semantics.getFirst());
 			if (latestSemantic.isPresent())
 				return latestSemantic.get();
 			throw new SemanticStateException("No LATEST semantic of pattern " + DiagnosticText.component(patternNid)
 					+ " for component: " + DiagnosticText.component(nid));
 		}
-		if (semanticNids.length == 0)
+		if (semantics.isEmpty())
 			throw new SemanticStateException("No semantic of pattern " + DiagnosticText.component(patternNid)
 					+ " for component: " + DiagnosticText.component(nid));
 		throw new SemanticStateException("More than one semantic of pattern " + DiagnosticText.component(patternNid)

@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.maintenance;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.util.thread.StructuredScopes;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -220,7 +221,7 @@ public final class SingleSemanticDuplicateWithdrawer {
             }
             PatternEntity<?> patternEntity = EntityHandle.getPatternOrThrow(patternNid);
             MutableIntList allNids = IntLists.mutable.empty();
-            PrimitiveData.get().forEachSemanticNidOfPattern(patternNid, allNids::add);
+            EntityStore.current().forEachSemanticNidOfPattern(patternNid, allNids::add);
             enumerated.add(new PatternEnum(pattern, patternEntity, allNids));
             totalNids += allNids.size();
         }

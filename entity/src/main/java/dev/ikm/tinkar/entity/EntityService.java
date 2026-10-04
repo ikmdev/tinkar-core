@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
@@ -46,6 +47,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
 import static dev.ikm.tinkar.entity.Entity.LOG;
@@ -142,7 +144,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      *                 The consumer is invoked for each valid {@code StampEntity} found.
      */
     default void forEachStampEntity(Consumer<StampEntity<StampEntityVersion>> consumer) {
-        PrimitiveData.get().forEachStampNid(nid -> {
+        EntityStore.current().forEachStampNid(nid -> {
             EntityHandle.get(nid).ifPresent(entity -> {
                 switch (entity) {
                     case StampEntity stampEntity -> consumer.accept(stampEntity);
@@ -165,7 +167,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      *                 receive each resolved concept entity during the iteration.
      */
     default void forEachConceptEntity(Consumer<ConceptEntity<ConceptEntityVersion>> consumer) {
-        PrimitiveData.get().forEachConceptNid(nid -> {
+        EntityStore.current().forEachConceptNid(nid -> {
             EntityHandle.get(nid).ifPresent(entity -> {
                 switch (entity) {
                     case ConceptEntity conceptEntity -> consumer.accept(conceptEntity);
@@ -179,7 +181,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
     }
 
     default void forEachEntity(ImmutableIntList entityNids, Consumer<Entity<?>> consumer) {
-        PrimitiveData.get().forEach(entityNids, (bytes, _) -> {
+        EntityStore.current().forEach(entityNids, (bytes, _) -> {
             Entity<EntityVersion> entity = EntityRecordFactory.make(bytes);
             consumer.accept(entity);
         });
@@ -194,7 +196,7 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
      *                 with its associated {@link PatternEntityVersion}
      */
     default void forEachPatternEntity(Consumer<PatternEntity<PatternEntityVersion>> consumer) {
-        PrimitiveData.get().forEachPatternNid(nid -> {
+        EntityStore.current().forEachPatternNid(nid -> {
             EntityHandle.get(nid).ifPresent(entity -> {
                 switch (entity) {
                     case PatternEntity patternEntity -> consumer.accept(patternEntity);
@@ -310,15 +312,83 @@ public interface EntityService extends ChronologyService, Broadcaster<Integer> {
 
     void forEachSemanticOfPattern(int patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure);
 
-    int[] semanticNidsOfPattern(int patternNid);
+    /**
+     * The semantics of a pattern. Each is read as the stream reaches it, so a stream that stops
+     * early ({@code findAny}, {@code anyMatch}, {@code limit}) reads only what it needed.
+     *
+     * @param patternNid the pattern
+     * @return the pattern's semantics, in no particular order
+     */
+    Stream<SemanticEntity<SemanticEntityVersion>> semanticsOfPattern(int patternNid);
+
+    /**
+     * The semantics that reference a component, read as the stream reaches them.
+     *
+     * @param componentNid the referenced component
+     * @return the semantics referencing it, in no particular order
+     */
+    Stream<SemanticEntity<SemanticEntityVersion>> semanticsForComponent(int componentNid);
+
+    /**
+     * The semantics of a pattern that reference a component, read as the stream reaches them:
+     * a component's descriptions, its stated axioms, its membership in a pattern.
+     *
+     * @param componentNid the referenced component
+     * @param patternNid   the pattern
+     * @return the pattern's semantics referencing the component, in no particular order
+     */
+    Stream<SemanticEntity<SemanticEntityVersion>> semanticsForComponentOfPattern(int componentNid, int patternNid);
+
+    /**
+     * Every semantic in the store, of every pattern.
+     *
+     * @param consumer receives each semantic
+     */
+    default void forEachSemanticEntity(Consumer<SemanticEntity<SemanticEntityVersion>> consumer) {
+        forEachPatternEntity(pattern -> forEachSemanticOfPattern(pattern.nid(), consumer));
+    }
+
+    /**
+     * Every entity in the store: concepts, patterns, semantics and stamps.
+     *
+     * @param consumer receives each entity
+     */
+    default void forEachEntity(Consumer<Entity<?>> consumer) {
+        EntityStore.current().forEach((bytes, _) -> consumer.accept(EntityRecordFactory.make(bytes)));
+    }
+
+    /**
+     * Every entity in the store, given to the consumer from several threads at once, in no
+     * particular order: for work over the whole store, such as rebuilding an index.
+     *
+     * @param consumer receives each entity; must be safe to call concurrently
+     */
+    default void forEachEntityParallel(Consumer<Entity<?>> consumer) {
+        EntityStore.current().forEachParallel((bytes, _) -> {
+            if (bytes != null && bytes.length > 0) {
+                consumer.accept(EntityRecordFactory.make(bytes));
+            }
+        });
+    }
+
+    /**
+     * How many entities the store holds, of every kind, counted without reading them.
+     *
+     * @return the number of entities in the store
+     */
+    default long countEntities() {
+        java.util.concurrent.atomic.LongAdder count = new java.util.concurrent.atomic.LongAdder();
+        EntityStore.current().forEachParallel((bytes, _) -> {
+            if (bytes != null && bytes.length > 0) {
+                count.increment();
+            }
+        });
+        return count.sum();
+    }
 
     void forEachSemanticForComponent(int componentNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure);
 
-    int[] semanticNidsForComponent(int componentNid);
-
     void forEachSemanticForComponentOfPattern(int componentNid, int patternNid, Consumer<SemanticEntity<SemanticEntityVersion>> procedure);
-
-    int[] semanticNidsForComponentOfPattern(int componentNid, int patternNid);
 
     void notifyRefreshRequired(Transaction transaction);
 

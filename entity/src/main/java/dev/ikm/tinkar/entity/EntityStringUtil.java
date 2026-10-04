@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.terms.EntityFacade;
 
@@ -56,7 +57,7 @@ public final class EntityStringUtil {
         EntityHandle.get(nid).ifPresent(entity -> {
             sb.append(entity);
             sb.append("\n\n");
-            for (int semanticNid : PrimitiveData.get().semanticNidsForComponent(nid)) {
+            for (int semanticNid : EntityStore.current().semanticNidsForComponent(nid)) {
                 appendRecursiveEntityToString(semanticNid, sb);
             }
         });

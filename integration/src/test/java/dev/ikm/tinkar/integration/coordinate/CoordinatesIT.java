@@ -78,14 +78,13 @@ class CoordinatesIT {
         //      SandboxPath originates from PrimordialPath
         //      PrimordialPath is, by definition, the origin and therefore does not have a PathOrigin
         int expectedPathOriginsCount = 3;
-        Assertions.assertEquals(expectedPathOriginsCount, PrimitiveData.get().semanticNidsOfPattern(PATH_ORIGINS_PATTERN.nid()).length);
+        Assertions.assertEquals(expectedPathOriginsCount, EntityService.get().semanticsOfPattern(PATH_ORIGINS_PATTERN.nid()).count());
     }
 
     @Test
     @Order(3)
     void pathOrigins() {
-        for (int pathNid : PrimitiveData.get().semanticNidsOfPattern(PATH_ORIGINS_PATTERN.nid())) {
-            SemanticEntity originSemantic = EntityHandle.get(pathNid).expectSemantic();
+        for (SemanticEntity originSemantic : EntityService.get().semanticsOfPattern(PATH_ORIGINS_PATTERN.nid()).toList()) {
             Entity pathEntity = EntityHandle.get(originSemantic.referencedComponentNid()).expectEntity();
             ImmutableSet<StampPositionRecord> origin = PathService.get().getPathOrigins(originSemantic.referencedComponentNid());
             LOG.info("Path '" + PrimitiveData.text(pathEntity.nid()) + "' has an origin of: " + origin);
@@ -106,15 +105,13 @@ class CoordinatesIT {
 
         Entity.provider().forEachSemanticForComponent(TinkarTerm.ENGLISH_LANGUAGE.nid(), semanticEntity -> {
             LOG.info(semanticEntity.toString() + "\n");
-            for (int acceptibilityNid : EntityService.get().semanticNidsForComponentOfPattern(semanticEntity.nid(), TinkarTerm.US_DIALECT_PATTERN.nid())) {
-                LOG.info("  Acceptability US: \n    " + EntityHandle.get(acceptibilityNid).orNull());
-            }
+            EntityService.get().forEachSemanticForComponentOfPattern(semanticEntity.nid(), TinkarTerm.US_DIALECT_PATTERN.nid(), acceptibility ->
+                LOG.info("  Acceptability US: \n    " + acceptibility));
         });
         Entity.provider().forEachSemanticForComponent(TinkarTerm.NECESSARY_SET.nid(), semanticEntity -> {
             LOG.info(semanticEntity.toString() + "\n");
-            for (int acceptibilityNid : EntityService.get().semanticNidsForComponentOfPattern(semanticEntity.nid(), TinkarTerm.US_DIALECT_PATTERN.nid())) {
-                LOG.info("  Acceptability US: \n    " + EntityHandle.get(acceptibilityNid).orNull());
-            }
+            EntityService.get().forEachSemanticForComponentOfPattern(semanticEntity.nid(), TinkarTerm.US_DIALECT_PATTERN.nid(), acceptibility ->
+                LOG.info("  Acceptability US: \n    " + acceptibility));
         });
     }
 

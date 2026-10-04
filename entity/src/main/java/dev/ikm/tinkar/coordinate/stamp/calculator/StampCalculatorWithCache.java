@@ -51,6 +51,7 @@ package dev.ikm.tinkar.coordinate.stamp.calculator;
  *
  */
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.ikm.tinkar.common.id.IntIdSet;
@@ -267,7 +268,7 @@ public class StampCalculatorWithCache implements StampCalculator {
     }
 
     private static Optional<StampPathImmutable> constructFromSemantics(int stampPathNid) {
-        int[] nids = EntityService.get().semanticNidsForComponentOfPattern(stampPathNid, TinkarTerm.PATHS_PATTERN.nid());
+        int[] nids = EntityStore.current().semanticNidsForComponentOfPattern(stampPathNid, TinkarTerm.PATHS_PATTERN.nid());
         if (nids.length == 1) {
             int pathId = nids[0];
             assert pathId == stampPathNid :
@@ -319,7 +320,7 @@ public class StampCalculatorWithCache implements StampCalculator {
 
     @Override
     public Stream<Latest<SemanticEntityVersion>> streamLatestVersionForPattern(int patternNid) {
-        int[] semanticNids = PrimitiveData.get().semanticNidsOfPattern(patternNid);
+        int[] semanticNids = EntityStore.current().semanticNidsOfPattern(patternNid);
         ImmutableIntList nidsAsList = IntLists.immutable.of(semanticNids);
         return nidsAsList.primitiveStream().mapToObj(nid -> latestForVersionIteration(nid));
     }
@@ -459,7 +460,7 @@ public class StampCalculatorWithCache implements StampCalculator {
     @Override
     public void forEachSemanticVersionOfPattern(int patternNid, BiConsumer<SemanticEntityVersion, PatternEntityVersion> procedure) {
         Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
-        latestPatternVersion.ifPresent(patternEntityVersion -> PrimitiveData.get().forEachSemanticNidOfPattern(patternNid, semanticNid -> {
+        latestPatternVersion.ifPresent(patternEntityVersion -> EntityStore.current().forEachSemanticNidOfPattern(patternNid, semanticNid -> {
             Latest<SemanticEntityVersion> latestSemanticVersion = this.latestIfSemanticOfPattern(semanticNid, patternNid);
             latestSemanticVersion.ifPresent(semanticEntityVersion -> procedure.accept(semanticEntityVersion, patternEntityVersion));
         }));
@@ -470,8 +471,8 @@ public class StampCalculatorWithCache implements StampCalculator {
         // latest() when providing a nid does use the cache. It's ok to get the pattern from the cache, not the individual entities
         Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
         latestPatternVersion.ifPresent(patternEntityVersion -> {
-            int[] semanticNidsOfPattern = PrimitiveData.get().semanticNidsOfPattern(patternNid);
-            PrimitiveData.get().forEachParallel(IntLists.immutable.of(semanticNidsOfPattern), (byte[] bytes, int nid) -> {
+            int[] semanticNidsOfPattern = EntityStore.current().semanticNidsOfPattern(patternNid);
+            EntityStore.current().forEachParallel(IntLists.immutable.of(semanticNidsOfPattern), (byte[] bytes, int nid) -> {
                 if (bytes != null) {
                     Entity<EntityVersion> semanticRecord = EntityFactory.make(bytes);
                     // latest() when providing an entity does not use the cache.
@@ -488,7 +489,7 @@ public class StampCalculatorWithCache implements StampCalculator {
         // latest() when providing a nid does use the cache. It's ok to get the pattern from the cache, not the individual entities
         Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
         latestPatternVersion.ifPresent(patternEntityVersion -> {
-            PrimitiveData.get().forEachParallel(semanticNidSet.toSortedList().toImmutable(), (byte[] bytes, int nid) -> {
+            EntityStore.current().forEachParallel(semanticNidSet.toSortedList().toImmutable(), (byte[] bytes, int nid) -> {
                 if (bytes != null) {
                     Entity<EntityVersion> semanticRecord = EntityFactory.make(bytes);
                     // latest() when providing an entity does not use the cache.
@@ -504,7 +505,7 @@ public class StampCalculatorWithCache implements StampCalculator {
     public void forEachSemanticVersionForComponent(int componentNid,
                                                    BiConsumer<SemanticEntityVersion, EntityVersion> procedure) {
         Latest<EntityVersion> latestEntityVersion = this.latest(componentNid);
-        latestEntityVersion.ifPresent(entityVersion -> PrimitiveData.get().forEachSemanticNidForComponent(componentNid, semanticNid -> {
+        latestEntityVersion.ifPresent(entityVersion -> EntityStore.current().forEachSemanticNidForComponent(componentNid, semanticNid -> {
             Latest<SemanticEntityVersion> latestSemanticVersion = this.latestForVersionIteration(semanticNid);
             latestSemanticVersion.ifPresent(semanticEntityVersion -> procedure.accept(semanticEntityVersion, entityVersion));
         }));
@@ -517,7 +518,7 @@ public class StampCalculatorWithCache implements StampCalculator {
         latestComponentVersion.ifPresent(entityVersion -> {
             Latest<PatternEntityVersion> latestPatternVersion = this.latest(patternNid);
             latestPatternVersion.ifPresent(patternEntityVersion ->
-                    PrimitiveData.get().forEachSemanticNidForComponentOfPattern(componentNid, patternNid, semanticNid -> {
+                    EntityStore.current().forEachSemanticNidForComponentOfPattern(componentNid, patternNid, semanticNid -> {
                         Latest<SemanticEntityVersion> latestSemanticVersion = this.latestForVersionIteration(semanticNid);
                         latestSemanticVersion.ifPresent(semanticEntityVersion -> procedure.accept(semanticEntityVersion, entityVersion, patternEntityVersion));
                     }));

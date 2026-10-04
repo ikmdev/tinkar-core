@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.id.IntIdCollection;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
@@ -441,7 +442,7 @@ public final class KnowledgeSet {
      */
     private void verifyReferentialClosure() {
         List<String> dangling = new ArrayList<>();
-        PrimitiveData.get().forEachSemanticNid(nid -> {
+        EntityStore.current().forEachSemanticNid(nid -> {
             if (EntityHandle.get(nid).orNull() instanceof SemanticEntity<?> semantic) {
                 requirePresent(dangling, semantic, "referenced component", semantic.referencedComponentNid());
                 requirePresent(dangling, semantic, "pattern", semantic.patternNid());
@@ -452,7 +453,7 @@ public final class KnowledgeSet {
                 }
             }
         });
-        PrimitiveData.get().forEachPatternNid(nid -> {
+        EntityStore.current().forEachPatternNid(nid -> {
             if (EntityHandle.get(nid).orNull() instanceof PatternEntity<?> pattern) {
                 for (PatternEntityVersion version : pattern.versions()) {
                     requirePresent(dangling, pattern, "pattern meaning", version.semanticMeaningNid());
@@ -465,7 +466,7 @@ public final class KnowledgeSet {
                 }
             }
         });
-        PrimitiveData.get().forEachStampNid(nid -> {
+        EntityStore.current().forEachStampNid(nid -> {
             if (EntityHandle.get(nid).orNull() instanceof StampEntity<?> stamp) {
                 for (StampEntityVersion version : stamp.versions()) {
                     requirePresent(dangling, stamp, "stamp status", version.stateNid());

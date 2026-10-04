@@ -1,11 +1,8 @@
 
 package dev.ikm.tinkar.provider.search;
 
-import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.ServiceLifecycleManager;
 import dev.ikm.tinkar.common.service.TrackingCallable;
-import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityRecordFactory;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import org.slf4j.Logger;
@@ -137,11 +134,7 @@ public class RecreateIndex extends TrackingCallable<Void> {
             }
 
             // Count ACTUAL entities (non-null)
-            PrimitiveData.get().forEachParallel((bytes, nid) -> {
-                if (bytes != null && bytes.length > 0) {
-                    totalEntities.increment();
-                }
-            });
+            totalEntities.add(EntityService.get().countEntities());
 
             long totalCount = totalEntities.longValue();
             LOG.info("Total entities to index: {}", String.format("%,d", totalCount));
@@ -178,31 +171,27 @@ public class RecreateIndex extends TrackingCallable<Void> {
             // in tight succession.
             LongAdder docsAdded = new LongAdder();
 
-            PrimitiveData.get().forEachParallel((bytes, nid) -> {
+            EntityService.get().forEachEntityParallel(entity -> {
                 // Check for cancellation periodically
                 if (shouldStop()) {
                     return;
                 }
 
-                // Only process non-null entities. Lucene indexing applies to
-                // semantics only — concept/pattern/stamp content reaches the index
-                // through their description semantics.
-                if (bytes != null && bytes.length > 0) {
-                    Entity<?> entity = EntityRecordFactory.make(bytes);
-                    if (entity instanceof SemanticEntity<?> semantic) {
-                        // indexFresh skips the per-call delete-by-NID. The
-                        // writer was deleteAll()'d at the start of this run
-                        // (see above), so the delete would resolve to a
-                        // no-match query against an initially-empty writer
-                        // and accumulate tens of millions of buffered
-                        // PointRangeQuery entries that turn flush-time work
-                        // O(n²). Live writes through SearchProvider.index
-                        // still go through index(), preserving idempotent
-                        // delete-then-add for evolving entities.
-                        int added = this.indexer.indexFresh(semantic);
-                        docsAdded.add(added);
-                        indexedEntities.increment();
-                    }
+                // Lucene indexing applies to semantics only — concept/pattern/stamp
+                // content reaches the index through their description semantics.
+                if (entity instanceof SemanticEntity<?> semantic) {
+                    // indexFresh skips the per-call delete-by-NID. The
+                    // writer was deleteAll()'d at the start of this run
+                    // (see above), so the delete would resolve to a
+                    // no-match query against an initially-empty writer
+                    // and accumulate tens of millions of buffered
+                    // PointRangeQuery entries that turn flush-time work
+                    // O(n²). Live writes through SearchProvider.index
+                    // still go through index(), preserving idempotent
+                    // delete-then-add for evolving entities.
+                    int added = this.indexer.indexFresh(semantic);
+                    docsAdded.add(added);
+                    indexedEntities.increment();
                 }
 
                 // Increment processed for ACTUAL entities only

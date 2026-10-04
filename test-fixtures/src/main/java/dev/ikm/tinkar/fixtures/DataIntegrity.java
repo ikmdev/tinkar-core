@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.fixtures;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.id.IntIdCollection;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
@@ -105,7 +106,7 @@ public class DataIntegrity {
     public static List<Entity> validateStampReferences(List<Integer> nullNidList) {
         LOG.info("Validating Stamp References");
         List<Entity> listMisconfiguredStamps = new ArrayList<>();
-        PrimitiveData.get().forEachStampNid((stampNid) -> {
+        EntityStore.current().forEachStampNid((stampNid) -> {
             EntityHandle handle = EntityHandle.get(stampNid);
             if (handle.isPresent()) {
                 try {
@@ -136,7 +137,7 @@ public class DataIntegrity {
     public static List<Entity> validateConceptReferences(List<Integer> nullNidList) {
         LOG.info("Validating Concept References");
         List<Entity> listMisconfiguredConcepts = new ArrayList<>();
-        PrimitiveData.get().forEachConceptNid((conceptNid) -> {
+        EntityStore.current().forEachConceptNid((conceptNid) -> {
             try {
                 EntityHandle.get(conceptNid).expectConcept();
             } catch (Exception e) {
@@ -161,7 +162,7 @@ public class DataIntegrity {
     public static List<Entity> validateSemanticReferences(List<Integer> nullNidList) {
         LOG.info("Validating Semantics References");
         List<Entity> listMisconfiguredSemantics = new ArrayList<>();
-        PrimitiveData.get().forEachSemanticNid((semanticNid) -> {
+        EntityStore.current().forEachSemanticNid((semanticNid) -> {
             EntityHandle entityHandle = EntityHandle.get(semanticNid);
             if (entityHandle.isPresent()) {
                 try {
@@ -240,7 +241,7 @@ public class DataIntegrity {
     public static List<Entity> validatePatternReferences(List<Integer> nullNidList) {
         LOG.info("Validating Pattern References");
         List<Entity> listMisconfiguredPatterns = new ArrayList<>();
-        PrimitiveData.get().forEachPatternNid((patternNid) -> {
+        EntityStore.current().forEachPatternNid((patternNid) -> {
             EntityHandle handle = EntityHandle.get(patternNid);
             if (handle.isPresent()) {
                 try {
@@ -291,14 +292,12 @@ public class DataIntegrity {
     public static List<SemanticEntity> validateSemanticFieldDataTypes() {
         LOG.info("Validating Semantic Field Values align with Pattern Field Definitions");
         List<SemanticEntity> misconfiguredSemanticsSet = new ArrayList<>();
-        PrimitiveData.get().forEachSemanticNid((semanticNid) -> {
-            EntityHandle.get(semanticNid).ifPresent((entity) -> {
-                if (entity instanceof SemanticEntity semanticEntity) {
-                    if (!validateSemanticFieldDataType(semanticEntity)) {
-                        misconfiguredSemanticsSet.add(semanticEntity);
-                    }
+        EntityService.get().forEachEntity((entity) -> {
+            if (entity instanceof SemanticEntity semanticEntity) {
+                if (!validateSemanticFieldDataType(semanticEntity)) {
+                    misconfiguredSemanticsSet.add(semanticEntity);
                 }
-            });
+            }
         });
         return misconfiguredSemanticsSet;
     }

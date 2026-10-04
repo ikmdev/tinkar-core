@@ -16,15 +16,14 @@
 package dev.ikm.tinkar.integration.builder;
 
 import dev.ikm.tinkar.common.id.PublicIds;
-import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
-import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.builder.ActiveStamp;
 import dev.ikm.tinkar.entity.builder.KnowledgeSet;
@@ -46,6 +45,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -206,12 +206,12 @@ class DefaultsTemplateDslIT {
     @DisplayName("templatePurpose states the isA parentage under the Template concept, once")
     void templatePurposeParentsUnderTemplateConcept() {
         int purposeNid = TEST_SET.conceptRef(PURPOSE_FQN).nid();
-        int[] axiomNids = EntityService.get().semanticNidsForComponentOfPattern(
-                purposeNid, TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid());
-        assertEquals(1, axiomNids.length, "the purpose must carry its stated-axiom semantic");
+        List<SemanticEntity<SemanticEntityVersion>> axioms = EntityService.get().semanticsForComponentOfPattern(
+                purposeNid, TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()).toList();
+        assertEquals(1, axioms.size(), "the purpose must carry its stated-axiom semantic");
 
         Latest<SemanticEntityVersion> latestAxioms =
-                calculator(StateSet.ACTIVE).latest(axiomNids[0]);
+                calculator(StateSet.ACTIVE).latest(axioms.getFirst().nid());
         assertTrue(latestAxioms.isPresent());
         DiTreeEntity diTree = assertInstanceOf(DiTreeEntity.class,
                 latestAxioms.get().fieldValues().get(0));
@@ -221,7 +221,7 @@ class DefaultsTemplateDslIT {
         assertTrue(parented, "the verb must state isA(Template concept) — a purpose cannot be"
                 + " minted detached from the template taxonomy");
 
-        assertEquals(1, EntityHandle.get(axiomNids[0]).expectSemantic().versions().size(),
+        assertEquals(1, axioms.getFirst().versions().size(),
                 "the parentage is stated in the birth scope only — a resumed scope must not restate it");
     }
 
@@ -238,7 +238,7 @@ class DefaultsTemplateDslIT {
                 "the template semantic must be excluded from version iteration");
 
         MutableIntSet chronologyNids =
-                IntSets.mutable.of(PrimitiveData.get().semanticNidsOfPattern(patternNid));
+                IntSets.mutable.of(EntityService.get().semanticsOfPattern(patternNid).mapToInt(SemanticEntity::nid).toArray());
         assertTrue(chronologyNids.contains(nidOf(defaultId)),
                 "chronology enumeration is store truth — the nids are still there");
         assertTrue(chronologyNids.contains(nidOf(templateId)));

@@ -172,10 +172,11 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
                     }
 
                     // See if a semantic already exists in this pattern referencing this concept...
-                    int[] destinationSemanticNids = EntityService.get().semanticNidsForComponentOfPattern(conceptNid, destinationPatternNid);
-                    switch (destinationSemanticNids.length) {
+                    List<SemanticEntity<SemanticEntityVersion>> destinationSemantics =
+                            EntityService.get().semanticsForComponentOfPattern(conceptNid, destinationPatternNid).toList();
+                    switch (destinationSemantics.size()) {
                         case 0 -> newSemanticWithVersion(conceptNid, logicalExpression, writeStampBuilder.build());
-                        case 1 -> addSemanticVersionIfAbsent(conceptNid, logicalExpression, writeStampBuilder.build(), stampCoordinate, destinationSemanticNids[0]);
+                        case 1 -> addSemanticVersionIfAbsent(conceptNid, logicalExpression, writeStampBuilder.build(), stampCoordinate, destinationSemantics.getFirst().nid());
                         default -> throw new IllegalStateException("To many graphs for component: " + DiagnosticText.component(conceptNid));
                     }
                 }

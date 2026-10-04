@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed.test;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.eclipse.collections.api.factory.Lists;
@@ -28,6 +29,7 @@ import dev.ikm.tinkar.component.graph.DiTree;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.SemanticRecord;
 import dev.ikm.tinkar.entity.StampEntity;
@@ -57,13 +59,13 @@ public class TempEditUtil {
 	}
 
 	private int getStatedSemanticNid(int concept) {
-		int[] statedSemanticNids = PrimitiveData.get().semanticNidsForComponentOfPattern(concept,
-				statedAxiomPattern.nid());
-		if (statedSemanticNids.length == 0)
+		List<SemanticEntity<SemanticEntityVersion>> statedSemantics = EntityService.get()
+				.semanticsForComponentOfPattern(concept, statedAxiomPattern.nid()).toList();
+		if (statedSemantics.isEmpty())
 			throw new IllegalStateException("No stated form for concept: " + DiagnosticText.component(concept));
-		if (statedSemanticNids.length > 1)
+		if (statedSemantics.size() > 1)
 			throw new IllegalStateException("More than one stated form for concept: " + DiagnosticText.component(concept));
-		return statedSemanticNids[0];
+		return statedSemantics.getFirst().nid();
 	}
 
 	private void update(int statedSemanticNid, LogicalExpression newStatedExpression) {

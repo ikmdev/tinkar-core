@@ -16,10 +16,10 @@
 package dev.ikm.tinkar.integration.reasoner;
 
 import dev.ikm.tinkar.common.service.PluggableService;
-import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.coordinate.Calculators;
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
@@ -60,7 +60,7 @@ public class ReasonerIT {
     @Test
     public void reasonStarterData() throws Exception {
         AtomicInteger totalConcepts = new AtomicInteger();
-        PrimitiveData.get().forEachConceptNid(conceptNid -> totalConcepts.getAndIncrement());
+        EntityService.get().forEachConceptEntity(concept -> totalConcepts.getAndIncrement());
         LOG.info("Initial number of concepts " + totalConcepts.get());
         List<ReasonerService> rss = PluggableService.load(ReasonerService.class).stream().map(ServiceLoader.Provider::get)
                 .sorted(Comparator.comparing(ReasonerService::getName)).toList();
@@ -94,7 +94,7 @@ public class ReasonerIT {
             LOG.info("ClassifierResults: classificationconcept size " + results.getClassificationConceptSet().size());
         }
         AtomicInteger totalConcepts2 = new AtomicInteger();
-        PrimitiveData.get().forEachConceptNid(conceptNid ->
+        EntityService.get().forEachConceptEntity(concept ->
                 {totalConcepts2.getAndIncrement();}
         );
         LOG.info("Final number of concepts " + totalConcepts2.get());

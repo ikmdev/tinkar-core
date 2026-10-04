@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.coordinate.navigation.calculator;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.ikm.tinkar.common.id.IntIdCollection;
@@ -266,7 +267,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
         latestPatternEntityVersion.ifPresentOrElse(
                 (patternEntityVersion) -> {
                     int indexForMeaning = patternEntityVersion.indexForMeaning(fieldMeaning);
-                    int[] semantics = PrimitiveData.get().semanticNidsForComponentOfPattern(referencedComponentNid, patternNid);
+                    int[] semantics = EntityStore.current().semanticNidsForComponentOfPattern(referencedComponentNid, patternNid);
                     if (semantics.length > 1) {
                         LOG.warn("More than one navigation semantic for concept: " +
                                 PrimitiveData.text(referencedComponentNid) + " in " + PrimitiveData.text(patternNid) +

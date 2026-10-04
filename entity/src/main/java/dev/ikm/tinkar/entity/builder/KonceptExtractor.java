@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.id.EntityKey;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
@@ -144,9 +145,9 @@ public final class KonceptExtractor {
         StampCalculator calculator = Calculators.Stamp.DevelopmentLatestActiveOnly();
 
         List<Integer> conceptNids = new ArrayList<>();
-        PrimitiveData.get().forEachConceptNid(conceptNids::add);
+        EntityStore.current().forEachConceptNid(conceptNids::add);
         List<Integer> patternNids = new ArrayList<>();
-        PrimitiveData.get().forEachPatternNid(patternNids::add);
+        EntityStore.current().forEachPatternNid(patternNids::add);
 
         Map<Integer, String> identifierByNid = new LinkedHashMap<>();
         Map<Integer, String> labelByNid = new LinkedHashMap<>();
@@ -381,7 +382,7 @@ public final class KonceptExtractor {
      */
     private static List<String> activeComments(int componentNid, StampCalculator calculator) {
         List<String> comments = new ArrayList<>();
-        for (int semanticNid : EntityService.get().semanticNidsForComponentOfPattern(
+        for (int semanticNid : EntityStore.current().semanticNidsForComponentOfPattern(
                 componentNid, TinkarTerm.COMMENT_PATTERN.nid())) {
             Latest<SemanticEntityVersion> latest = calculator.latestSemanticVersion(semanticNid);
             if (latest.isPresent()) {
@@ -399,7 +400,7 @@ public final class KonceptExtractor {
      * component's single current name of a given type).
      */
     private static String narrativeText(int componentNid, StampCalculator calculator, int narrativePatternNid) {
-        for (int semanticNid : EntityService.get().semanticNidsForComponentOfPattern(
+        for (int semanticNid : EntityStore.current().semanticNidsForComponentOfPattern(
                 componentNid, narrativePatternNid)) {
             Latest<SemanticEntityVersion> latest = calculator.latestSemanticVersion(semanticNid);
             if (latest.isPresent()) {
@@ -420,7 +421,7 @@ public final class KonceptExtractor {
 
     private static List<RetiredComment> retiredComments(int componentNid, StampCalculator calculator) {
         List<RetiredComment> retired = new ArrayList<>();
-        for (int semanticNid : EntityService.get().semanticNidsForComponentOfPattern(
+        for (int semanticNid : EntityStore.current().semanticNidsForComponentOfPattern(
                 componentNid, TinkarTerm.COMMENT_PATTERN.nid())) {
             if (calculator.latestSemanticVersion(semanticNid).isPresent()) {
                 continue;
@@ -450,7 +451,7 @@ public final class KonceptExtractor {
      * the description-pattern semantics (latest version by stamp time), or null if none.
      */
     private static String descriptionText(int componentNid, int descriptionTypeNid) {
-        int[] descriptionSemanticNids = EntityService.get().semanticNidsForComponentOfPattern(
+        int[] descriptionSemanticNids = EntityStore.current().semanticNidsForComponentOfPattern(
                 componentNid, TinkarTerm.DESCRIPTION_PATTERN.nid());
         for (int semanticNid : descriptionSemanticNids) {
             SemanticEntityVersion version = latestVersion(EntityHandle.get(semanticNid).expectSemantic());
@@ -497,7 +498,7 @@ public final class KonceptExtractor {
      *         when the concept has no stated-axioms semantic in this store
      */
     private static StatedDefinition statedDefinition(int componentNid) {
-        int[] axiomNids = EntityService.get().semanticNidsForComponentOfPattern(
+        int[] axiomNids = EntityStore.current().semanticNidsForComponentOfPattern(
                 componentNid, TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid());
         boolean present = false;
         boolean sufficient = false;
@@ -639,7 +640,7 @@ public final class KonceptExtractor {
     private static ExampleSemantic exampleSemanticOf(int patternNid) {
         int bestNid = -1;
         long bestTime = Long.MAX_VALUE;
-        for (int semanticNid : EntityService.get().semanticNidsOfPattern(patternNid)) {
+        for (int semanticNid : EntityStore.current().semanticNidsOfPattern(patternNid)) {
             SemanticEntity<?> candidate = EntityHandle.get(semanticNid).expectSemantic();
             if (latestVersion(candidate) == null || isDefaultsOrTemplateContent(candidate)) {
                 continue;

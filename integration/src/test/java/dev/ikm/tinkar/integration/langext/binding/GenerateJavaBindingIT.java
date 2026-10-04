@@ -15,14 +15,13 @@
  */
 package dev.ikm.tinkar.integration.langext.binding;
 
-import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculator;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculatorWithCache;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityHandle;
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.ext.binding.BindingHelper;
 import dev.ikm.tinkar.ext.binding.GenerateJavaBindingTask;
@@ -84,8 +83,8 @@ public class GenerateJavaBindingIT {
             //Given a stream of Concepts and Patterns from the Tinkar Starter Data
             Stream.Builder<Entity<? extends EntityVersion>> conceptStreamBuilder = Stream.builder();
             Stream.Builder<Entity<? extends EntityVersion>> patternStreamBuilder = Stream.builder();
-            PrimitiveData.get().forEachConceptNid(nid -> conceptStreamBuilder.add(EntityHandle.get(nid).expectConcept()));
-            PrimitiveData.get().forEachPatternNid(nid -> patternStreamBuilder.add(EntityHandle.get(nid).expectPattern()));
+            EntityService.get().forEachConceptEntity(conceptStreamBuilder::add);
+            EntityService.get().forEachPatternEntity(patternStreamBuilder::add);
 
             //When interpolating the concept and pattern streams to a java file
             GenerateJavaBindingTask generateJavaBindingTask = new GenerateJavaBindingTask(

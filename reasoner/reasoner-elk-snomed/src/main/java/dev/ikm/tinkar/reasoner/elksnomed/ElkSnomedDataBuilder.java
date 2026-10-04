@@ -40,6 +40,7 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinateRecord;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeText;
@@ -83,9 +84,7 @@ public class ElkSnomedDataBuilder {
 	}
 
 	private int computeTotalCount() {
-		AtomicInteger totalCounter = new AtomicInteger();
-		PrimitiveData.get().forEachSemanticNidOfPattern(statedAxiomPattern.nid(), _ -> totalCounter.incrementAndGet());
-		return totalCounter.get();
+		return (int) EntityService.get().semanticsOfPattern(statedAxiomPattern.nid()).count();
 	}
 
 	public void build() throws Exception {

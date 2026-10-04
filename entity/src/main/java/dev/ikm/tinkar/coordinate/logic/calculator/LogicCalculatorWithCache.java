@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.coordinate.logic.calculator;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.ikm.tinkar.common.service.CachingService;
@@ -87,7 +88,7 @@ public class LogicCalculatorWithCache implements LogicCalculator {
     public boolean hasSufficientSet(int nid) {
         int axiomsPatternNid = logicCoordinateRecord.statedAxiomsPatternNid();
 
-        int[] semanticNids = PrimitiveData.get().semanticNidsForComponentOfPattern(nid, axiomsPatternNid);
+        int[] semanticNids = EntityStore.current().semanticNidsForComponentOfPattern(nid, axiomsPatternNid);
         switch (semanticNids.length) {
             case 0:
                 // TODO Raise an alert... ?
@@ -125,10 +126,10 @@ public class LogicCalculatorWithCache implements LogicCalculator {
     public Latest<SemanticEntityVersion> getAxiomSemanticForEntity(int entityNid, StampCalculator stampCalculator, PremiseType premiseType) {
         int[] semanticNids = switch (premiseType) {
             case STATED -> {
-                yield PrimitiveData.get().semanticNidsForComponentOfPattern(entityNid, logicCoordinateRecord().statedAxiomsPatternNid());
+                yield EntityStore.current().semanticNidsForComponentOfPattern(entityNid, logicCoordinateRecord().statedAxiomsPatternNid());
             }
             case INFERRED -> {
-                yield PrimitiveData.get().semanticNidsForComponentOfPattern(entityNid, logicCoordinateRecord().inferredAxiomsPatternNid());
+                yield EntityStore.current().semanticNidsForComponentOfPattern(entityNid, logicCoordinateRecord().inferredAxiomsPatternNid());
             }
             default -> {
                 throw new IllegalStateException("Can't handle PremiseType: " + premiseType);
@@ -148,10 +149,10 @@ public class LogicCalculatorWithCache implements LogicCalculator {
     public Latest<DiTreeEntity> getAxiomTreeForEntity(int entityNid, StampCalculator stampCalculator, PremiseType premiseType) {
         int[] semanticNids = switch (premiseType) {
             case STATED -> {
-                yield PrimitiveData.get().semanticNidsForComponentOfPattern(entityNid, logicCoordinateRecord().statedAxiomsPatternNid());
+                yield EntityStore.current().semanticNidsForComponentOfPattern(entityNid, logicCoordinateRecord().statedAxiomsPatternNid());
             }
             case INFERRED -> {
-                yield PrimitiveData.get().semanticNidsForComponentOfPattern(entityNid, logicCoordinateRecord().inferredAxiomsPatternNid());
+                yield EntityStore.current().semanticNidsForComponentOfPattern(entityNid, logicCoordinateRecord().inferredAxiomsPatternNid());
             }
             default -> {
                 throw new IllegalStateException("Can't handle PremiseType: " + premiseType);

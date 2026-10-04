@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.provider.mvstore;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.*;
@@ -53,7 +54,7 @@ import java.util.function.ObjIntConsumer;
 /**
  * TODO: Maybe also consider making use of: https://blogs.oracle.com/javamagazine/creating-a-java-off-heap-in-memory-database?source=:em:nw:mt:::RC_WWMK200429P00043:NSL400123121
  */
-public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
+public class MVStoreProvider implements PrimitiveDataService, EntityStore, NidGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(MVStoreProvider.class);
     private static final File defaultDataDirectory = new File("target/mvstore/");
     private static final String databaseFileName = "mvstore.dat";

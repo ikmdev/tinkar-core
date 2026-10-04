@@ -21,7 +21,7 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityHandle;
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.FieldDefinitionForEntity;
 import dev.ikm.tinkar.entity.PatternEntity;
@@ -78,7 +78,7 @@ public record StoreDigest(long concepts, long patterns, long stamps, long semant
     /** The digest of the store that is open in this JVM. */
     public static StoreDigest ofOpenStore() {
         Accumulator accumulator = new Accumulator();
-        PrimitiveData.get().forEach((bytes, nid) -> accumulator.add(EntityHandle.get(nid).expectEntity()));
+        EntityService.get().forEachEntity(accumulator::add);
         return accumulator.digest();
     }
 

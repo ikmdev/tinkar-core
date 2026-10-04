@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.aggregator;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.Entity;
@@ -53,7 +54,7 @@ public class TemporalEntityAggregator extends EntityAggregator {
         initCounts();
         // Filter Stamp Nids based on the supplied time span
         Set<Integer> filteredStampNids = new HashSet<>();
-        PrimitiveData.get().forEachStampNid((stampNid) -> {
+        EntityStore.current().forEachStampNid((stampNid) -> {
             EntityService.get().getStamp(stampNid).ifPresent((stampEntity) -> {
                 if (fromEpochMillis <= stampEntity.time() && stampEntity.time() <= toEpochMillis) {
                     filteredStampNids.add(stampEntity.nid());
@@ -70,7 +71,7 @@ public class TemporalEntityAggregator extends EntityAggregator {
         // is excluded from the count, the emission, and the stamp collection alike
         // (IKE-Network/ike-issues#933).
         lastOrphanCount = 0;
-        PrimitiveData.get().forEachConceptNid((conceptNid) -> {
+        EntityStore.current().forEachConceptNid((conceptNid) -> {
             Entity<?> conceptEntity = EntityHandle.get(conceptNid).orNull();
             if (conceptEntity == null) {
                 lastOrphanCount++;
@@ -86,7 +87,7 @@ public class TemporalEntityAggregator extends EntityAggregator {
         });
 
         // Aggregate semantics with a filtered stamp
-        PrimitiveData.get().forEachSemanticNid((semanticNid) -> {
+        EntityStore.current().forEachSemanticNid((semanticNid) -> {
             Entity<?> semanticEntity = EntityHandle.get(semanticNid).orNull();
             if (semanticEntity == null) {
                 lastOrphanCount++;
@@ -102,7 +103,7 @@ public class TemporalEntityAggregator extends EntityAggregator {
         });
 
         // Aggregate patterns with a filtered stamp
-        PrimitiveData.get().forEachPatternNid((patternNid) -> {
+        EntityStore.current().forEachPatternNid((patternNid) -> {
             Entity<?> patternEntity = EntityHandle.get(patternNid).orNull();
             if (patternEntity == null) {
                 lastOrphanCount++;

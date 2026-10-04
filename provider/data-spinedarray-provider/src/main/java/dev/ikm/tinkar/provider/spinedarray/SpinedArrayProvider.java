@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.provider.spinedarray;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.util.SetOnce;
 import dev.ikm.tinkar.collection.KeyType;
 import dev.ikm.tinkar.collection.SpinedByteArrayMap;
@@ -79,7 +80,7 @@ import java.util.function.ObjIntConsumer;
  * TODO: consider if we remove ConcurrentUuidIntHashMap, or improve.
  * <p>MVStore performs worse when iterating over entities.
  */
-public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, PrimitiveDataRepair {
+public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, NidGenerator, PrimitiveDataRepair {
     private static final Logger LOG = LoggerFactory.getLogger(SpinedArrayProvider.class);
     protected static final File defaultDataDirectory = new File("target/spinedarrays/");
 
@@ -621,7 +622,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
     public void mergeThenErase(int nidToErase, int nidToMergeInto) {
 
 
-        byte[] mergedBytes = merge(PrimitiveData.get().getBytes(nidToMergeInto), PrimitiveData.get().getBytes(nidToErase), DataActivity.DATA_REPAIR);
+        byte[] mergedBytes = merge(getBytes(nidToMergeInto), getBytes(nidToErase), DataActivity.DATA_REPAIR);
         erase(nidToErase);
         put(nidToMergeInto, mergedBytes);
         EntityService.get().invalidateCaches(nidToErase, nidToMergeInto);

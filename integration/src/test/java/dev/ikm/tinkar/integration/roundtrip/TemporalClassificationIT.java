@@ -27,8 +27,7 @@ import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculatorWithCache;
-import dev.ikm.tinkar.entity.EntityHandle;
-import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.StampEntityVersion;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
@@ -212,8 +211,7 @@ class TemporalClassificationIT {
                 new LoadEntitiesFromProtobufFile(new File(in.getProperty(IMPORT_FILE))).compute();
                 int pathNid = pathNid(in);
                 TreeSet<Long> times = new TreeSet<>();
-                PrimitiveData.get().forEachStampNid(nid -> {
-                    StampEntity<?> stamp = EntityHandle.get(nid).expectStamp();
+                EntityService.get().forEachStampEntity(stamp -> {
                     for (StampEntityVersion version : stamp.versions()) {
                         long time = version.time();
                         // Not the sentinels: uncommitted, canceled, and the pre-inception time.
@@ -252,10 +250,10 @@ class TemporalClassificationIT {
                 // Read through the view's calculators as of the time.
                 AtomicLong visibleConcepts = new AtomicLong();
                 AtomicLong described = new AtomicLong();
-                PrimitiveData.get().forEachConceptNid(nid -> {
-                    if (view.latestIsActive(nid)) {
+                EntityService.get().forEachConceptEntity(concept -> {
+                    if (view.latestIsActive(concept.nid())) {
                         visibleConcepts.incrementAndGet();
-                        if (view.getDescriptionText(nid).isPresent()) {
+                        if (view.getDescriptionText(concept.nid()).isPresent()) {
                             described.incrementAndGet();
                         }
                     }

@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.aggregator;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -119,7 +120,7 @@ public class AllowlistEntityAggregator extends EntityAggregator {
 
         // The stamps whose module (and path, when constrained) is allowlisted.
         Set<Integer> allowedStampNids = new HashSet<>();
-        PrimitiveData.get().forEachStampNid(stampNid ->
+        EntityStore.current().forEachStampNid(stampNid ->
                 EntityService.get().getStamp(stampNid).ifPresent(stampEntity -> {
                     boolean moduleOk = allowedModuleNids.contains(stampEntity.moduleNid());
                     boolean pathOk = allowedPathNids.isEmpty() || allowedPathNids.contains(stampEntity.pathNid());
@@ -131,7 +132,7 @@ public class AllowlistEntityAggregator extends EntityAggregator {
         List<Integer> referencedStampNids = new ArrayList<>();
 
         // Concepts included when any of their stamps is allowlisted.
-        PrimitiveData.get().forEachConceptNid(conceptNid ->
+        EntityStore.current().forEachConceptNid(conceptNid ->
                 EntityHandle.get(conceptNid).entity().filter(e -> !e.canceled()).ifPresent(conceptEntity -> {
                     Set<Integer> stampNids = conceptEntity.stampNids().mapToSet(i -> i);
                     if (!Collections.disjoint(allowedStampNids, stampNids)) {
@@ -143,7 +144,7 @@ public class AllowlistEntityAggregator extends EntityAggregator {
 
         // Patterns BEFORE semantics, so a consumer can resolve a semantic's pattern (and purpose) first;
         // a pattern entity is itself subject to the pattern include/exclude by its own nid.
-        PrimitiveData.get().forEachPatternNid(patternNid ->
+        EntityStore.current().forEachPatternNid(patternNid ->
                 EntityHandle.get(patternNid).entity().filter(e -> !e.canceled()).ifPresent(patternEntity -> {
                     Set<Integer> stampNids = patternEntity.stampNids().mapToSet(i -> i);
                     if (!Collections.disjoint(allowedStampNids, stampNids)
@@ -156,7 +157,7 @@ public class AllowlistEntityAggregator extends EntityAggregator {
 
         // Semantics included when any stamp is allowlisted, the semantic's pattern is allowed, and the
         // optional purpose refinement passes.
-        PrimitiveData.get().forEachSemanticNid(semanticNid ->
+        EntityStore.current().forEachSemanticNid(semanticNid ->
                 EntityHandle.get(semanticNid).entity().filter(e -> !e.canceled()).ifPresent(semanticEntity -> {
                     if (!(semanticEntity instanceof SemanticEntity<?> semantic)) {
                         return;

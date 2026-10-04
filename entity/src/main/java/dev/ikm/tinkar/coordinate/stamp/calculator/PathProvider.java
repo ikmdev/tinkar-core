@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.coordinate.stamp.calculator;
 
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.coordinate.PathService;
@@ -97,7 +98,7 @@ public class PathProvider implements PathService {
      */
     @Override
     public ImmutableSet<StampPathImmutable> getPaths() {
-        int[] pathsPatternSemanticNids = EntityService.get().semanticNidsOfPattern(TinkarTerm.PATHS_PATTERN.nid());
+        int[] pathsPatternSemanticNids = EntityStore.current().semanticNidsOfPattern(TinkarTerm.PATHS_PATTERN.nid());
         MutableSet<StampPathImmutable> pathSet = Sets.mutable.ofInitialCapacity(pathsPatternSemanticNids.length);
         for (int pathsPatternSemanticNid : pathsPatternSemanticNids) {
             SemanticEntity semanticEntity = EntityHandle.get(pathsPatternSemanticNid).expectSemantic();

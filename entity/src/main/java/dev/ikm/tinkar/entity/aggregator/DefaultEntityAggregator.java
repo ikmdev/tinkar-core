@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.aggregator;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.ConceptEntity;
@@ -38,25 +39,25 @@ public class DefaultEntityAggregator extends EntityAggregator {
     public EntityCountSummary aggregate(IntConsumer nidConsumer) {
         initCounts();
         // Aggregate all Stamps
-        PrimitiveData.get().forEachStampNid(stampNid -> {
+        EntityStore.current().forEachStampNid(stampNid -> {
             nidConsumer.accept(stampNid);
             stampsAggregatedCount.incrementAndGet();
         });
 
         // Aggregate all Concepts
-        PrimitiveData.get().forEachConceptNid(conceptNid -> {
+        EntityStore.current().forEachConceptNid(conceptNid -> {
             nidConsumer.accept(conceptNid);
             conceptsAggregatedCount.incrementAndGet();
         });
 
         // Aggregate all Semantics
-        PrimitiveData.get().forEachSemanticNid(semanticNid -> {
+        EntityStore.current().forEachSemanticNid(semanticNid -> {
             nidConsumer.accept(semanticNid);
             semanticsAggregatedCount.incrementAndGet();
         });
 
         // Aggregate all Patterns
-        PrimitiveData.get().forEachPatternNid(patternNid -> {
+        EntityStore.current().forEachPatternNid(patternNid -> {
             nidConsumer.accept(patternNid);
             patternsAggregatedCount.incrementAndGet();
         });
@@ -79,10 +80,10 @@ public class DefaultEntityAggregator extends EntityAggregator {
         initCounts();
         AtomicLong orphanCount = new AtomicLong();
 
-        PrimitiveData.get().forEachStampNid(nid -> dispatch(nid, entityConsumer, orphanCount));
-        PrimitiveData.get().forEachConceptNid(nid -> dispatch(nid, entityConsumer, orphanCount));
-        PrimitiveData.get().forEachSemanticNid(nid -> dispatch(nid, entityConsumer, orphanCount));
-        PrimitiveData.get().forEachPatternNid(nid -> dispatch(nid, entityConsumer, orphanCount));
+        EntityStore.current().forEachStampNid(nid -> dispatch(nid, entityConsumer, orphanCount));
+        EntityStore.current().forEachConceptNid(nid -> dispatch(nid, entityConsumer, orphanCount));
+        EntityStore.current().forEachSemanticNid(nid -> dispatch(nid, entityConsumer, orphanCount));
+        EntityStore.current().forEachPatternNid(nid -> dispatch(nid, entityConsumer, orphanCount));
 
         long orphans = orphanCount.get();
         if (orphans > 0) {

@@ -120,8 +120,8 @@ class DiagnosticTextIT {
 
     @Test
     void aSemanticHasNoDescriptionAndIsItsUuid() {
-        int semanticNid = PrimitiveData.get().semanticNidsForComponentOfPattern(
-                TinkarTerm.ENGLISH_LANGUAGE.nid(), TinkarTerm.DESCRIPTION_PATTERN.nid())[0];
+        int semanticNid = EntityService.get().semanticsForComponentOfPattern(
+                TinkarTerm.ENGLISH_LANGUAGE.nid(), TinkarTerm.DESCRIPTION_PATTERN.nid()).findFirst().orElseThrow().nid();
 
         String text = DiagnosticText.component(semanticNid);
 

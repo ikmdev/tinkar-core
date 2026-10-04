@@ -27,6 +27,7 @@ import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.FieldHandle;
+import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.SemanticRecord;
 import dev.ikm.tinkar.entity.StampEntity;
@@ -264,9 +265,9 @@ class ExceptionMessageIT {
 
     /** The latest version of a description of a concept. */
     private SemanticEntityVersion aDescriptionOf(EntityFacade concept) {
-        int semanticNid = PrimitiveData.get().semanticNidsForComponentOfPattern(
-                concept.nid(), TinkarTerm.DESCRIPTION_PATTERN.nid())[0];
-        Latest<SemanticEntityVersion> latest = view.stampCalculator().latest(semanticNid);
+        SemanticEntity<SemanticEntityVersion> semantic = EntityService.get().semanticsForComponentOfPattern(
+                concept.nid(), TinkarTerm.DESCRIPTION_PATTERN.nid()).findFirst().orElseThrow();
+        Latest<SemanticEntityVersion> latest = view.stampCalculator().latest(semantic);
         return latest.get();
     }
 

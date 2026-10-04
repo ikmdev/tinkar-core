@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.provider.spinedarray;
 
+import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.entity.util.EntityCounter;
@@ -53,22 +54,22 @@ class SpinedArrayProviderPerformanceIT {
         TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
         LOG.info("SAP Reloading in: " + reloadStopwatch.durationString() + "\n\n");
         EntityProcessor processor = new EntityCounter();
-        PrimitiveData.get().forEach(processor);
+        EntityStore.current().forEach(processor);
         LOG.info("SAP Sequential count: \n" + processor.report() + "\n\n");
         processor = new EntityCounter();
-        PrimitiveData.get().forEachParallel(processor);
+        EntityStore.current().forEachParallel(processor);
         LOG.info("SAP Parallel count: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
-        PrimitiveData.get().forEach(processor);
+        EntityStore.current().forEach(processor);
         LOG.info("SAP Sequential realization: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
-        PrimitiveData.get().forEachParallel(processor);
+        EntityStore.current().forEachParallel(processor);
         LOG.info("SAP Parallel realization: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
-        PrimitiveData.get().forEach(processor);
+        EntityStore.current().forEach(processor);
         LOG.info("SAP Sequential realization: \n" + processor.report() + "\n\n");
         processor = new EntityRealizer();
-        PrimitiveData.get().forEachParallel(processor);
+        EntityStore.current().forEachParallel(processor);
         LOG.info("SAP Parallel realization: \n" + processor.report() + "\n\n");
         PrimitiveData.get().close();
     }
