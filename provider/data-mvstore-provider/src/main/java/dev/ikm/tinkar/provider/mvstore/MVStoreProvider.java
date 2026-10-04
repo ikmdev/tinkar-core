@@ -45,7 +45,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ObjIntConsumer;
 
@@ -56,9 +55,8 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(MVStoreProvider.class);
     private static final File defaultDataDirectory = new File("target/mvstore/");
     private static final String databaseFileName = "mvstore.dat";
-    private static final UUID nextNidKey = new UUID(Long.MAX_VALUE, Long.MIN_VALUE);
     protected static MVStoreProvider singleton;
-    protected final AtomicInteger nextNid;
+    final NidAllocator nidAllocator;
     final OffHeapStore offHeap;
     final MVStore store;
     final MVMap<Integer, byte[]> nidToComponentMap;
@@ -107,11 +105,9 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
             }
         }
 
-        if (this.uuidToNidMap.containsKey(nextNidKey)) {
-            this.nextNid = new AtomicInteger(this.uuidToNidMap.get(nextNidKey));
-        } else {
-            this.nextNid = new AtomicInteger(PrimitiveDataService.FIRST_NID);
-        }
+        this.nidAllocator = new NidAllocator(uuidToNidMap,
+                PrimitiveDataService.FIRST_NID, NidAllocator.DEFAULT_BLOCK_SIZE,
+                List.of(nidToComponentMap, nidToPatternNidMap));
 
         MVStoreProvider.singleton = this;
         stopwatch.stop();
@@ -138,7 +134,7 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
 
     @Override
     public int newNid() {
-        return nextNid.getAndIncrement();
+        return nidAllocator.newNid();
     }
 
     @Override
@@ -163,7 +159,7 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
     public void save() {
         Stopwatch stopwatch = new Stopwatch();
         LOG.info("Saving MVStoreProvider");
-        this.uuidToNidMap.put(nextNidKey, nextNid.get());
+        // The nid watermark is maintained by NidAllocator ahead of allocation; nothing to write here.
         for (Pair<Integer, ConcurrentHashMap<Integer, Integer>> keyValue : patternElementNidsMap.keyValuesView()) {
             patternToElementNidsMap.put(keyValue.getOne(), keyValue.getTwo().keySet()
                     .stream().mapToInt(value -> (int) value).toArray());
@@ -221,19 +217,26 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
 
     @Override
     public byte[] merge(int nid, int patternNid, int referencedComponentNid, byte[] value, Object sourceObject, DataActivity dataActivity) {
-        if (!nidToPatternNidMap.containsKey(nid)) {
-            this.nidToPatternNidMap.put(nid, patternNid);
+        // putIfAbsent makes "first writer indexes" atomic; the former containsKey/put pair let
+        // concurrent first merges of the same nid race.
+        Integer priorPatternNid = this.nidToPatternNidMap.putIfAbsent(nid, patternNid);
+        if (priorPatternNid == null) {
             if (patternNid != Integer.MAX_VALUE) {
-
-                this.nidToPatternNidMap.put(nid, patternNid);
-                if (patternNid != Integer.MAX_VALUE) {
-                    long citationLong = IntsInLong.ints2Long(nid, patternNid);
-                    this.nidToCitingComponentsNidMap.merge(referencedComponentNid, new long[]{citationLong},
-                            PrimitiveDataService::mergeCitations);
-                    // TODO this will be slow merge for large sets. Consider alternatives.
-                    this.addToElementSet(patternNid, nid);
-                }
+                long citationLong = IntsInLong.ints2Long(nid, patternNid);
+                this.nidToCitingComponentsNidMap.merge(referencedComponentNid, new long[]{citationLong},
+                        PrimitiveDataService::mergeCitations);
+                // TODO this will be slow merge for large sets. Consider alternatives.
+                this.addToElementSet(patternNid, nid);
             }
+        } else if (priorPatternNid != patternNid) {
+            // A nid's pattern never changes. A mismatch means two different components were
+            // given the same nid, e.g. a concept (pattern MAX_VALUE) reusing a semantic's nid.
+            // Only collisions involving a semantic are detectable here; concepts, patterns and
+            // stamps all pass MAX_VALUE. Fail fast rather than merge unrelated bytes.
+            String message = "Nid collision: nid " + nid + " already bound to pattern " + priorPatternNid
+                    + " but merge supplied pattern " + patternNid + " for " + sourceObject;
+            LOG.error(message);
+            throw new IllegalStateException(message);
         }
         byte[] mergedBytes = nidToComponentMap.merge(nid, value, PrimitiveDataService::merge);
         writeSequence.increment();
