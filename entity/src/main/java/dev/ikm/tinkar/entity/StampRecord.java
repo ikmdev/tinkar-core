@@ -19,6 +19,7 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.Validator;
 import dev.ikm.tinkar.component.FieldDataType;
+import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.StampFacade;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -31,7 +32,6 @@ import java.util.Objects;
 import java.util.UUID;
 
 import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICID_FOR_NID;
-import static dev.ikm.tinkar.terms.TinkarTermV2.STAMP_PATTERN;
 
 @RecordBuilder
 public record StampRecord(
@@ -67,8 +67,12 @@ public record StampRecord(
     public static StampRecord make(UUID stampUuid, State state, long time, PublicId authorId, PublicId moduleId, PublicId pathId) {
         RecordListBuilder<StampVersionRecord> versionRecords = RecordListBuilder.make();
 
+        // The stamp pattern the providers file and enumerate stamps under, as the loader
+        // does: a provider that keys nids by pattern (Rocks) otherwise files a stamp made
+        // here where forEachStampNid never looks (TinkarTermV2.STAMP_PATTERN is a different
+        // pattern).
         int stampNid = ScopedValue
-                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, STAMP_PATTERN)
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern())
                 .call(() -> PrimitiveData.nid(stampUuid));
 
         StampRecord stampEntity = new StampRecord(stampUuid.getMostSignificantBits(),
