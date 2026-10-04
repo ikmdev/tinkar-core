@@ -179,10 +179,12 @@ public interface PrimitiveDataService {
                         /*
                             CONCEPT_VERSION((byte) 4, ConceptVersion.class),
                             PATTERN_VERSION((byte) 5, PatternVersion.class),
-                            SEMANTIC_VERSION((byte) 6, SemanticVersion.class),
-                            STAMP_VERSION((byte) 25, Stamp.class)
+                            SEMANTIC_VERSION((byte) 6, SemanticVersion.class)
+                            A stamp's own versions (STAMP_VERSION, 25) are not collected: the
+                            canceled version is what records that the stamp was canceled, and
+                            removing them left a canceled stamp with no version at all.
                          */
-                        case 4, 5, 6, 25 -> {
+                        case 4, 5, 6 -> {
                             int stampNid = ((versionBytes.get(1) & 0xFF) << 24) |
                                     ((versionBytes.get(2) & 0xFF) << 16) |
                                     ((versionBytes.get(3) & 0xFF) << 8) |

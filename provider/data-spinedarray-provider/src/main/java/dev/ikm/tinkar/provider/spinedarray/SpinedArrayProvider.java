@@ -183,43 +183,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
                     LOG.info("Finished UUID strategy 2 in: " + uuidNidMapFromEntitiesStopwatch.durationString());
                     LOG.info(uuidNidCollector.report());
                 }
-                LOG.info("Starting virtual thread for listAndCancelUncommittedStamps");
-                int[] sortedStampNids = stampNids.stream().sorted().mapToInt(value -> (int) value).toArray();
-                Thread.ofVirtual().name("cancel-uncommitted-stamps").start(() -> {
-                    // EntityService starts in ENTITIES phase, after DATA_STORAGE where this provider starts.
-                    // Wait for it to become available rather than failing immediately.
-                    ServiceLifecycleManager lifecycleManager = ServiceLifecycleManager.get();
-                    int maxAttempts = 60;
-                    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-                        // Stop waiting if startup is no longer in progress — e.g. a
-                        // non-retryable failure (data store already open in another
-                        // process) aborted it. Without this check the loop spins out
-                        // its full budget logging "getRunningService(EntityService)
-                        // called in state DISCOVERED" once per cycle for a service
-                        // that will never appear.
-                        if (!lifecycleManager.isStartupActive()) {
-                            LOG.info("Service startup no longer in progress (state {}); skipping "
-                                            + "uncommitted stamp cancellation at startup",
-                                    lifecycleManager.getState());
-                            return;
-                        }
-                        Optional<EntityService> entityServiceOpt =
-                                lifecycleManager.getRunningService(EntityService.class);
-                        if (entityServiceOpt.isPresent()) {
-                            entityServiceOpt.get().listAndCancelUncommittedStamps(sortedStampNids);
-                            return;
-                        }
-                        try {
-                            Thread.sleep(500);
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                            LOG.warn("Interrupted while waiting for EntityService");
-                            return;
-                        }
-                    }
-                    LOG.warn("EntityService not available after {}s, skipping uncommitted stamp cancellation at startup",
-                            maxAttempts / 2);
-                });
                 LOG.info("UUID loading task completed");
             }).get();
             LOG.info("UUID loading task .get() returned successfully");
@@ -285,15 +248,6 @@ public class SpinedArrayProvider implements PrimitiveDataService, NidGenerator, 
                 this.changeSetWriterServices.forEach(ChangeSetWriterService::shutdown);
                 save();
 
-                // Check for uncommitted stamps using EntityProvider while EntityService is still available
-                // This must happen before data provider shutdown since EntityProvider needs access to entities
-                try {
-                    EntityService.get().listAndCancelUncommittedStamps(
-                        stampNids.stream().sorted().mapToInt(value -> (int) value).toArray()
-                    );
-                } catch (java.util.NoSuchElementException e) {
-                    LOG.warn("EntityService not available during shutdown, skipping uncommitted stamp check");
-                }
 
                 entityToBytesMap.close();
             } catch (Exception e) {

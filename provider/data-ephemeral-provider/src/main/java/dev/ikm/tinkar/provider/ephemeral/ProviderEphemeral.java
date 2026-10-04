@@ -147,12 +147,22 @@ public class ProviderEphemeral implements PrimitiveDataService, NidGenerator {
 
     @Override
     public void forEachParallel(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
-        throw new UnsupportedOperationException();
+        nids.primitiveParallelStream().forEach(nid -> {
+            byte[] bytes = nidComponentMap.get(nid);
+            if (bytes != null) {
+                action.accept(bytes, nid);
+            }
+        });
     }
 
     @Override
     public void forEach(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
-        throw new UnsupportedOperationException();
+        nids.forEach(nid -> {
+            byte[] bytes = nidComponentMap.get(nid);
+            if (bytes != null) {
+                action.accept(bytes, nid);
+            }
+        });
     }
 
     @Override

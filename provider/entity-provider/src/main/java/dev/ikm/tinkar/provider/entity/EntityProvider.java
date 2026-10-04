@@ -26,6 +26,10 @@ import dev.ikm.tinkar.common.service.DefaultDescriptionForNidService;
 import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PluggableService;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.common.service.ServiceProperties;
+import dev.ikm.tinkar.common.service.ServiceKeys;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
+import org.eclipse.collections.api.factory.primitive.IntLists;
 import dev.ikm.tinkar.common.service.PrimitiveDataRepair;
 import dev.ikm.tinkar.common.service.ProviderController;
 import dev.ikm.tinkar.common.service.PublicIdService;
@@ -610,8 +614,8 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
                     if (stamp.time() == Long.MAX_VALUE && Transaction.forStamp(stamp).isEmpty()) {
                         // Uncommitted stamp found outside a transaction on restart. Set to canceled.
                         cancelUncommittedStamp(stampNid, (StampRecord) stamp);
-                    }
-                    if (stamp.lastVersion().stateNid() == State.CANCELED.nid()) {
+                        PrimitiveData.get().addCanceledStampNid(stampNid);
+                    } else if (stamp.lastVersion().stateNid() == State.CANCELED.nid()) {
                         PrimitiveData.get().addCanceledStampNid(stampNid);
                     }
                 }
@@ -619,6 +623,18 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
                 LOG.error("Error processing stamp {}", stampNid, e);
             }
         }
+    }
+
+    /**
+     * Cancels every stamp in the store left uncommitted outside a transaction: the
+     * {@link ServiceKeys#CANCEL_UNCOMMITTED_STAMPS_AT_STARTUP} option, run as the entity service
+     * starts, after the data store has opened and before anything has read from it.
+     */
+    void cancelUncommittedStamps() {
+        MutableIntList stampNids = IntLists.mutable.empty().asSynchronized();
+        PrimitiveData.get().forEachStampNid(stampNids::add);
+        LOG.info("Canceling uncommitted stamps at startup, among {} stamps", stampNids.size());
+        listAndCancelUncommittedStamps(stampNids.toSortedArray());
     }
 
     private void cancelUncommittedStamp(int stampNid, StampRecord stamp) {
@@ -649,15 +665,17 @@ public class EntityProvider implements EntityService, EntityLookup, PublicIdServ
 
         @Override
         protected void startProvider(EntityProvider provider) {
-            // EntityProvider starts immediately upon construction
-            // No explicit start method needed
+            // EntityProvider starts upon construction. Uncommitted stamps survive a restart
+            // unless the deployment asks for them to be canceled as it starts.
+            if (ServiceProperties.get(ServiceKeys.CANCEL_UNCOMMITTED_STAMPS_AT_STARTUP, Boolean.FALSE)) {
+                provider.cancelUncommittedStamps();
+            }
         }
 
         @Override
         protected void stopProvider(EntityProvider provider) {
             LOG.info("Stopping EntityProvider");
-            // Note: Uncommitted stamp checking is handled by data providers during their shutdown
-            // Data providers call provider.listAndCancelUncommittedStamps() before EntityService shuts down
+            // Uncommitted stamps are kept: they survive a restart, and change sets share them.
         }
 
         @Override
