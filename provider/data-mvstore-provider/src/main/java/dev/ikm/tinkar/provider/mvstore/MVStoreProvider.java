@@ -204,12 +204,22 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
 
     @Override
     public void forEachParallel(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
-        throw new UnsupportedOperationException();
+        nids.primitiveParallelStream().forEach(nid -> {
+            byte[] bytes = nidToComponentMap.get(nid);
+            if (bytes != null) {
+                action.accept(bytes, nid);
+            }
+        });
     }
 
     @Override
     public void forEach(ImmutableIntList nids, ObjIntConsumer<byte[]> action) {
-        throw new UnsupportedOperationException();
+        nids.forEach(nid -> {
+            byte[] bytes = nidToComponentMap.get(nid);
+            if (bytes != null) {
+                action.accept(bytes, nid);
+            }
+        });
     }
 
     @Override
@@ -316,22 +326,40 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
 
     @Override
     public void forEachPatternNid(IntProcedure procedure) {
-        throw new UnsupportedOperationException();
+        forEachNidOfType(PATTERN_TOKEN, procedure);
     }
 
     @Override
     public void forEachConceptNid(IntProcedure procedure) {
-        throw new UnsupportedOperationException();
+        forEachNidOfType(CONCEPT_TOKEN, procedure);
     }
 
     @Override
     public void forEachStampNid(IntProcedure procedure) {
-        throw new UnsupportedOperationException();
+        forEachNidOfType(STAMP_TOKEN, procedure);
     }
 
     @Override
     public void forEachSemanticNid(IntProcedure procedure) {
-        throw new UnsupportedOperationException();
+        forEachNidOfType(SEMANTIC_TOKEN, procedure);
+    }
+
+    // The entity type token of an entity's bytes: the chronology's first byte, after the
+    // array count, the chronology's length, and the entity format (see PrimitiveDataService.merge).
+    private static final int TYPE_TOKEN_OFFSET = 9;
+    private static final byte CONCEPT_TOKEN = 1;
+    private static final byte PATTERN_TOKEN = 2;
+    private static final byte SEMANTIC_TOKEN = 3;
+    private static final byte STAMP_TOKEN = PrimitiveDataService.STAMP_DATA_TYPE;
+
+    /** Visits the nid of every entity of one type, by the type token its bytes begin with. */
+    private void forEachNidOfType(byte typeToken, IntProcedure procedure) {
+        nidToComponentMap.entrySet().forEach(entry -> {
+            byte[] bytes = entry.getValue();
+            if (bytes != null && bytes.length > TYPE_TOKEN_OFFSET && bytes[TYPE_TOKEN_OFFSET] == typeToken) {
+                procedure.accept(entry.getKey());
+            }
+        });
     }
 
     @Override
