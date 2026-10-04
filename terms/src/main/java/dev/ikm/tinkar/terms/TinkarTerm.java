@@ -210,19 +210,6 @@ public class TinkarTerm {
             EntityProxy.Pattern.make("SOLOR concept assemblage (SOLOR)", UUID.fromString("d39b3ecd-9a80-5009-a8ac-0b947f95ca7c"));
 
     /**
-     * Java binding for the pattern described as <strong><em>STAMP Pattern</em></strong>;
-     * identified by UUID: {@code 9fd67fee-abf9-551d-9d0e-76a4b1e8b4ee}.
-     * <p> Used to define the structure of STAMP components.
-     * <p> Field 0 is a Component that represents the Status.
-     * <p> Field 1 is a Long that represents the Time of creation in Epoch Milliseconds.
-     * <p> Field 2 is a Component that represents the Author.
-     * <p> Field 3 is a Component that represents the Module.
-     * <p> Field 4 is a Component that represents the Path.
-     */
-    public static final EntityProxy.Pattern STAMP_PATTERN =
-            EntityProxy.Pattern.make("STAMP pattern", UUID.fromString("9fd67fee-abf9-551d-9d0e-76a4b1e8b4ee"));
-
-    /**
      * Java binding for the pattern described as <strong><em>Stated Navigation Pattern</em></strong>;
      * identified by UUID: {@code d02957d6-132d-5b3c-adba-505f5778d998}.
      * <p> Used to specify the relationship origins and destinations for concepts based on stated axioms.

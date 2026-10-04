@@ -211,22 +211,6 @@ public class TinkarTermV2 {
     public static final Pattern EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN = Pattern.make("EL++ Inferred Axioms Pattern", UUID.fromString("9f011812-15c9-5b1b-85f8-bb262bc1b2a2"));
 
     /**
-     * Java binding for the pattern described as STAMP pattern and identified by the following as UUID(s):
-     * <ul>
-     * <li>9fd67fee-abf9-551d-9d0e-76a4b1e8b4ee
-     * </ul>
-     * <p>     * Pattern contains the following fields
-     * <ul>
-     * <li>Field 0 is a Component display field that represents Status value.
-     * <li>Field 1 is a Long (SOLOR) that represents Time for version (SOLOR).
-     * <li>Field 2 is a Component display field that represents Author for version (SOLOR).
-     * <li>Field 3 is a Component display field that represents Module for version (SOLOR).
-     * <li>Field 4 is a Component display field that represents Path for version.
-     * </ul>
-     */
-    public static final Pattern STAMP_PATTERN = Pattern.make("STAMP pattern", UUID.fromString("9fd67fee-abf9-551d-9d0e-76a4b1e8b4ee"));
-
-    /**
      * Java binding for the pattern described as Component Version Pattern and identified by the following as UUID(s):
      * <ul>
      * <li>a38b7d2d-8fa5-4206-9185-a1af9f81be2c

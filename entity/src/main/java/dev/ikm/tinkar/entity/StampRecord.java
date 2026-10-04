@@ -69,8 +69,7 @@ public record StampRecord(
 
         // The stamp pattern the providers file and enumerate stamps under, as the loader
         // does: a provider that keys nids by pattern (Rocks) otherwise files a stamp made
-        // here where forEachStampNid never looks (TinkarTermV2.STAMP_PATTERN is a different
-        // pattern).
+        // here where forEachStampNid never looks.
         int stampNid = ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern())
                 .call(() -> PrimitiveData.nid(stampUuid));
