@@ -267,6 +267,13 @@ public record StoreDigest(long concepts, long patterns, long stamps, long semant
                     yield "GRAPH" + vertices;
                 }
                 case EntityVertex vertex -> "VERTEX " + vertexAlone(vertex);
+                case Object[] array -> {
+                    List<String> elements = new ArrayList<>();
+                    for (Object element : array) {
+                        elements.add(value(element));
+                    }
+                    yield "ARRAY" + elements;
+                }
                 case EntityFacade facade -> ids(facade.publicId());
                 case PublicId publicId -> ids(publicId);
                 default -> {
