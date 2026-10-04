@@ -117,6 +117,10 @@ public class TemporalEntityAggregator extends EntityAggregator {
             }
         });
 
+        // A stamp in the window is exported whether or not a version uses it: a set may
+        // declare one that no version does, such as the non-existent stamp.
+        stampsToExport.addAll(filteredStampNids);
+
         // Deduplicate and export aggregated stamps — resolution-checked like every
         // other bucket, so the count only claims stamps that can be delivered.
         Set<Integer> deduplicatedStampsToExport = new HashSet<>(stampsToExport);

@@ -17,9 +17,11 @@ package dev.ikm.tinkar.entity.builder;
 
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.State;
+import dev.ikm.tinkar.terms.TinkarTerm;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -48,7 +50,7 @@ import java.util.UUID;
  * {@link ConceptBuilder#at(InactiveStamp)} yields only retirement verbs, so authoring
  * content under an inactive stamp (or retiring under an active one) does not compile.
  */
-public sealed interface Stamp permits ActiveStamp, InactiveStamp {
+public sealed interface Stamp permits ActiveStamp, InactiveStamp, PrimordialStamp {
 
     /**
      * The status dimension of this stamp.
@@ -186,6 +188,23 @@ public sealed interface Stamp permits ActiveStamp, InactiveStamp {
     static ActiveStamp active(PublicId declaredIdentity, long time,
                               ConceptFacade author, ConceptFacade module, ConceptFacade path) {
         return new ActiveStamp(time, author, module, path, requireDeclared(declaredIdentity));
+    }
+
+    /**
+     * The non-existent stamp: the stamp of the value a component had before it existed, which
+     * the change chronology compares a component's first version against. Primordial, at
+     * pre-inception time, by the author-for-version concept, on the uninitialized module and
+     * path, under its permanent identity {@link PrimitiveData#NONEXISTENT_STAMP_UUID}; the
+     * same stamp {@link dev.ikm.tinkar.entity.StampRecord#nonExistentStamp()} names. A starter
+     * set declares it ({@link KnowledgeSet#stamp(Stamp)}) so every store loaded from the set
+     * holds it.
+     *
+     * @return the non-existent stamp
+     */
+    static PrimordialStamp nonExistent() {
+        return new PrimordialStamp(PrimitiveData.PRE_INCEPTION_TIME, TinkarTerm.AUTHOR_FOR_VERSION,
+                TinkarTerm.UNINITIALIZED_COMPONENT, TinkarTerm.UNINITIALIZED_COMPONENT,
+                PublicIds.of(PrimitiveData.NONEXISTENT_STAMP_UUID));
     }
 
     /**

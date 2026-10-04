@@ -99,6 +99,7 @@ public final class KnowledgeSet {
     private final Map<String, ConceptBuilder> concepts = new LinkedHashMap<>();
     private final Map<String, PatternBuilder> patterns = new LinkedHashMap<>();
     private final SessionRegistry registry = new SessionRegistry();
+    private final Map<UUID, Stamp> declaredStamps = new LinkedHashMap<>();
     private final Set<String> derivedReferencesIssued = new LinkedHashSet<>();
 
     private KnowledgeSet(UUID uuid) {
@@ -380,6 +381,24 @@ public final class KnowledgeSet {
     }
 
     /**
+     * Declares a stamp the set carries whether or not any of its versions uses it, such as
+     * the non-existent stamp ({@link Stamp#nonExistent()}) every store needs. The stamp is
+     * written with the set ({@link #write()}), so a store loaded from the set's export holds
+     * it. Declaring the same stamp again is a no-op; declaring another tuple under the same
+     * identity is refused, as for any declared stamp.
+     *
+     * @param stamp the stamp to carry
+     * @return this knowledge set
+     * @throws IllegalArgumentException if the stamp's identity is already declared with a
+     *                                  different tuple
+     */
+    public KnowledgeSet stamp(Stamp stamp) {
+        registry.requireStampAgreement(stamp);
+        declaredStamps.putIfAbsent(stamp.publicId().asUuidArray()[0], stamp);
+        return this;
+    }
+
+    /**
      * Replays the whole session — every concept and pattern builder this knowledge set
      * has opened — into the open datastore. Idempotent and repeatable: identities and stamps
      * are derived, so writing again merges to the same state. May be called mid-ledger
@@ -390,6 +409,9 @@ public final class KnowledgeSet {
      *                               pending version lacks meaning or purpose
      */
     public void write() {
+        for (Stamp stamp : declaredStamps.values()) {
+            ComponentLedger.putStampEntity(stamp, EntityService.get().nidForStamp(stamp.publicId()));
+        }
         for (ConceptBuilder builder : concepts.values()) {
             builder.writeInto();
         }

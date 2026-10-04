@@ -628,7 +628,6 @@ final class ComponentLedger {
     int writeStamp(Stamp stamp) {
         registry.requireStampAgreement(stamp);
         PublicId stampId = stamp.publicId();
-        UUID primordial = stampId.asUuidArray()[0];
         int stampNid = EntityService.get().nidForStamp(stampId);
         boolean alreadyWritten = false;
         for (UUID uuid : stampId.asUuidArray()) {
@@ -641,17 +640,27 @@ final class ComponentLedger {
             for (UUID uuid : stampId.asUuidArray()) {
                 writtenStamps.add(uuid);
             }
-            RecordListBuilder<StampVersionRecord> versionRecords = RecordListBuilder.make();
-            StampRecord stampEntity = new StampRecord(primordial.getMostSignificantBits(),
-                    primordial.getLeastSignificantBits(), stampId.additionalUuidLongs(), stampNid,
-                    versionRecords);
-            versionRecords.add(new StampVersionRecord(stampEntity, stamp.state().nid(), stamp.time(),
-                    nidFor(stamp.author().publicId()), nidFor(stamp.module().publicId()),
-                    nidFor(stamp.path().publicId())));
-            versionRecords.build();
-            EntityService.get().putEntity(stampEntity);
+            putStampEntity(stamp, stampNid);
         }
         return stampNid;
+    }
+
+    /**
+     * Writes the stamp entity for a declared stamp under its nid. Writing the same stamp
+     * again merges to the same entity.
+     */
+    static void putStampEntity(Stamp stamp, int stampNid) {
+        PublicId stampId = stamp.publicId();
+        UUID primordial = stampId.asUuidArray()[0];
+        RecordListBuilder<StampVersionRecord> versionRecords = RecordListBuilder.make();
+        StampRecord stampEntity = new StampRecord(primordial.getMostSignificantBits(),
+                primordial.getLeastSignificantBits(), stampId.additionalUuidLongs(), stampNid,
+                versionRecords);
+        versionRecords.add(new StampVersionRecord(stampEntity, stamp.state().nid(), stamp.time(),
+                nidFor(stamp.author().publicId()), nidFor(stamp.module().publicId()),
+                nidFor(stamp.path().publicId())));
+        versionRecords.build();
+        EntityService.get().putEntity(stampEntity);
     }
 
     /** Writes every description ledger and its dialect-acceptability semantic. */
