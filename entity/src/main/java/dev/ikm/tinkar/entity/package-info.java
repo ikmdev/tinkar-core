@@ -298,16 +298,15 @@
  * // Legacy static methods (being phased out)
  * ConceptEntity concept = Entity.getConceptForNid(conceptNid);
  * PatternEntity pattern = Entity.getPatternForNid(patternNid);
- * Entity entity = Entity.getFast(nid);  // Returns appropriate subtype
  * }</pre>
  *
  * <p><b>Provider-Based Access</b></p>
  * <pre>{@code
- * // Access via EntityService provider
- * EntityService provider = Entity.provider();
- * Entity entity = provider.getEntityFast(nid);
+ * // Look an entity up through its handle
+ * Entity<?> entity = EntityHandle.get(nid).orNull();
  *
- * // Iterate over all entities
+ * // Iterate over all entities via the EntityService provider
+ * EntityService provider = Entity.provider();
  * provider.forEachEntity(entity -> {
  *     // Process each entity
  * });

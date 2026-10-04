@@ -23,6 +23,7 @@ import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculatorWithCache;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.fixtures.TestConstants;
@@ -105,11 +106,11 @@ class SpinedArrayImportIT {
 
         //Semantic Changes
         UUID changedSemanticUUID = UUID.fromString("65378077-2984-413d-a9f5-b43e1c611732");
-        var changedSemantic = EntityService.get().getEntity(changedSemanticUUID).get();
+        var changedSemantic = EntityHandle.get(changedSemanticUUID).expectEntity();
         int changedSemanticNid = Entity.nid(PublicIds.of(changedSemanticUUID));
 
         var incorrectSemantic = viewCalc.latest(changedSemanticNid).get();
-        var correctSemantic = viewCalc.latest(Entity.get(changedSemanticNid).get()).get();
+        var correctSemantic = viewCalc.latest(EntityHandle.get(changedSemanticNid).expectEntity()).get();
 
         assertNotEquals(fqnBeforeFromEntityFacade, fqnAfterFromEntityFacade);
         assertNotEquals(fqnBeforeFromNid, fqnAfterFromNid);
@@ -143,11 +144,11 @@ class SpinedArrayImportIT {
 
         //Semantic Changes
         UUID changedSemanticUUID = UUID.fromString("101cea57-bfe4-4840-9cf4-da61ffb8463e");
-        var changedSemantic = EntityService.get().getEntity(changedSemanticUUID).get();
+        var changedSemantic = EntityHandle.get(changedSemanticUUID).expectEntity();
         int changedSemanticNid = Entity.nid(PublicIds.of(changedSemanticUUID));
 
         var incorrectSemantic = viewCalc.latest(changedSemanticNid).get();  //Directly from the cache
-        var correctSemantic = viewCalc.latest(Entity.get(changedSemanticNid).get()).get(); //iterating over the object
+        var correctSemantic = viewCalc.latest(EntityHandle.get(changedSemanticNid).expectEntity()).get(); //iterating over the object
 
         // Adding sleep to account for delay in Real world user scenarios
         try {

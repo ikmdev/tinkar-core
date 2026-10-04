@@ -21,6 +21,7 @@ import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.SemanticEntity;
@@ -45,7 +46,7 @@ public record ChangeChronology(int nid, ImmutableList<VersionChangeRecord> chang
 
     public String toString(ViewCalculator viewCalculator, boolean showPriorValue) {
         StringBuilder sb = new StringBuilder("Changes for ");
-        Entity referencedEntity = EntityService.get().getEntityFast(nid);
+        Entity referencedEntity = EntityHandle.get(nid).expectEntity();
         switch (referencedEntity) {
             case ConceptEntity conceptFacade -> sb.append("concept ");
             case PatternEntity patternFacade -> sb.append("pattern ");

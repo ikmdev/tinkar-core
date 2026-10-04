@@ -36,6 +36,8 @@ import dev.ikm.tinkar.entity.StampService;
 import dev.ikm.tinkar.entity.load.DataLoadController;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromFileController;
 
+// "module": the qualified export below names the entity provider, which is compiled after this module.
+@SuppressWarnings("module")
 module dev.ikm.tinkar.entity {
     requires com.github.benmanes.caffeine;
     requires dev.ikm.jpms.activej.bytebuf;
@@ -81,6 +83,8 @@ module dev.ikm.tinkar.entity {
     exports dev.ikm.tinkar.entity.transform;
     exports dev.ikm.tinkar.entity.util;
     exports dev.ikm.tinkar.entity;
+    // The provider's lookup by nid: EntityHandle is its only caller outside the provider.
+    exports dev.ikm.tinkar.entity.internal to dev.ikm.tinkar.provider.entity;
 
     opens dev.ikm.tinkar.entity.graph.adaptor.axiom;
 

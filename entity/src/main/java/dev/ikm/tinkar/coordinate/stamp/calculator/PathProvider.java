@@ -25,6 +25,7 @@ import dev.ikm.tinkar.coordinate.stamp.StampPathImmutable;
 import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
@@ -99,7 +100,7 @@ public class PathProvider implements PathService {
         int[] pathsPatternSemanticNids = EntityService.get().semanticNidsOfPattern(TinkarTerm.PATHS_PATTERN.nid());
         MutableSet<StampPathImmutable> pathSet = Sets.mutable.ofInitialCapacity(pathsPatternSemanticNids.length);
         for (int pathsPatternSemanticNid : pathsPatternSemanticNids) {
-            SemanticEntity semanticEntity = Entity.getFast(pathsPatternSemanticNid);
+            SemanticEntity semanticEntity = EntityHandle.get(pathsPatternSemanticNid).expectSemantic();
             int pathNid = semanticEntity.referencedComponentNid();
             pathSet.add(StampPathImmutable.make(pathNid, getPathOrigins(pathNid)));
         }

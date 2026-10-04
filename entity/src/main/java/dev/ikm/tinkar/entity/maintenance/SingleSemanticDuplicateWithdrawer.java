@@ -64,7 +64,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * <p>Patterns whose UUID is not registered in the active data store are
  * skipped with an INFO log. Nids that the pattern index points at but for
- * which {@code getEntityFast} returns no bytes are counted as
+ * which the entity lookup returns nothing are counted as
  * {@link PatternResult#nullSemanticNids()} — these signal an indexing
  * inconsistency separate from duplicate detection.
  *
@@ -324,7 +324,7 @@ public final class SingleSemanticDuplicateWithdrawer {
                     MutableIntObjectMap<MutableIntList> local = IntObjectMaps.mutable.empty();
                     for (int i = chunkStart; i < chunkEnd; i++) {
                         int nid = nids.get(i);
-                        Entity<?> entity = EntityService.get().getEntityFast(nid);
+                        Entity<?> entity = EntityHandle.get(nid).orNull();
                         if (entity == null) {
                             nullCount.incrementAndGet();
                             continue;

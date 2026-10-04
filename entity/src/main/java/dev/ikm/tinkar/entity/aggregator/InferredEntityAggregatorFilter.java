@@ -2,6 +2,7 @@ package dev.ikm.tinkar.entity.aggregator;
 
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntity;
@@ -25,7 +26,7 @@ public class InferredEntityAggregatorFilter extends EntityAggregatorFilter {
                 TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid());
 
         IntConsumer inferredFilterConsumer = (nid) -> {
-            Entity<? extends EntityVersion> entity = EntityService.get().getEntityFast(nid);
+            Entity<? extends EntityVersion> entity = EntityHandle.get(nid).orNull();
             // Filter out inferred Semantics
             if (entity instanceof SemanticEntity semanticEntity
                 && inferredNidList.contains(semanticEntity.patternNid())) {

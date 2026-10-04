@@ -26,6 +26,7 @@ import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.PatternFacade;
@@ -130,7 +131,7 @@ public record LanguageCoordinateRecord(int languageConceptNid,
     public PatternFacade[] descriptionPatternPreferenceArray() {
         PatternEntity[] patternEntities = new PatternEntity[this.descriptionPatternNidList.size()];
         for (int i = 0; i < patternEntities.length; i++) {
-            patternEntities[i] = Entity.getFast(this.descriptionPatternNidList.get(i));
+            patternEntities[i] = EntityHandle.get(this.descriptionPatternNidList.get(i)).expectPattern();
         }
         return patternEntities;
     }
@@ -152,7 +153,7 @@ public record LanguageCoordinateRecord(int languageConceptNid,
 
     @Override
     public dev.ikm.tinkar.terms.ConceptFacade languageConcept() {
-        return Entity.getFast(this.languageConceptNid);
+        return EntityHandle.get(this.languageConceptNid).expectConcept();
     }
 
     @Override

@@ -21,6 +21,7 @@ import dev.ikm.tinkar.coordinate.stamp.StampCoordinate;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
@@ -121,7 +122,7 @@ public interface LogicCoordinate {
      * @return The ConceptFacade representing the classifier for this LogicCoordinate.
      */
     default ConceptFacade classifier() {
-        return Entity.getFast(classifierNid());
+        return EntityHandle.get(classifierNid()).expectConcept();
     }
 
     /**
@@ -130,7 +131,7 @@ public interface LogicCoordinate {
      * @return The ConceptFacade representing the description logic profile.
      */
     default ConceptFacade descriptionLogicProfile() {
-        return Entity.getFast(descriptionLogicProfileNid());
+        return EntityHandle.get(descriptionLogicProfileNid()).expectConcept();
     }
 
     /**
@@ -316,7 +317,7 @@ public interface LogicCoordinate {
     }
 
     default ConceptFacade root() {
-        return Entity.getFast(rootNid());
+        return EntityHandle.get(rootNid()).expectConcept();
     }
 
     /**

@@ -19,6 +19,7 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.PatternEntityVersion;
@@ -131,7 +132,7 @@ public class AllowlistEntityAggregator extends EntityAggregator {
 
         // Concepts included when any of their stamps is allowlisted.
         PrimitiveData.get().forEachConceptNid(conceptNid ->
-                EntityService.get().getEntity(conceptNid).ifPresent(conceptEntity -> {
+                EntityHandle.get(conceptNid).entity().filter(e -> !e.canceled()).ifPresent(conceptEntity -> {
                     Set<Integer> stampNids = conceptEntity.stampNids().mapToSet(i -> i);
                     if (!Collections.disjoint(allowedStampNids, stampNids)) {
                         conceptsAggregatedCount.incrementAndGet();
@@ -143,7 +144,7 @@ public class AllowlistEntityAggregator extends EntityAggregator {
         // Patterns BEFORE semantics, so a consumer can resolve a semantic's pattern (and purpose) first;
         // a pattern entity is itself subject to the pattern include/exclude by its own nid.
         PrimitiveData.get().forEachPatternNid(patternNid ->
-                EntityService.get().getEntity(patternNid).ifPresent(patternEntity -> {
+                EntityHandle.get(patternNid).entity().filter(e -> !e.canceled()).ifPresent(patternEntity -> {
                     Set<Integer> stampNids = patternEntity.stampNids().mapToSet(i -> i);
                     if (!Collections.disjoint(allowedStampNids, stampNids)
                             && patternAllowed(patternNid, includedPatternNids, excludedPatternNids)) {
@@ -156,7 +157,7 @@ public class AllowlistEntityAggregator extends EntityAggregator {
         // Semantics included when any stamp is allowlisted, the semantic's pattern is allowed, and the
         // optional purpose refinement passes.
         PrimitiveData.get().forEachSemanticNid(semanticNid ->
-                EntityService.get().getEntity(semanticNid).ifPresent(semanticEntity -> {
+                EntityHandle.get(semanticNid).entity().filter(e -> !e.canceled()).ifPresent(semanticEntity -> {
                     if (!(semanticEntity instanceof SemanticEntity<?> semantic)) {
                         return;
                     }
@@ -200,7 +201,7 @@ public class AllowlistEntityAggregator extends EntityAggregator {
         if (purposeNidPredicate == null || !(entity instanceof SemanticEntity<?> semantic)) {
             return true;
         }
-        Entity<?> pattern = EntityService.get().getEntityFast(semantic.patternNid());
+        Entity<?> pattern = EntityHandle.get(semantic.patternNid()).orNull();
         if (pattern instanceof PatternEntity<?> patternEntity && !patternEntity.versions().isEmpty()) {
             PatternEntityVersion latest = patternEntity.versions().getLast();
             return purposeNidPredicate.test(latest.semanticPurposeNid());

@@ -21,6 +21,7 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.StampEntity;
@@ -236,7 +237,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                     .map(UUID::toString)
                     .collect(Collectors.joining(","));
             // Get Description
-            Optional<Entity<EntityVersion>> entity = EntityService.get().getEntity(PrimitiveData.nid(publicId));
+            Optional<Entity<? extends EntityVersion>> entity = EntityHandle.get(PrimitiveData.nid(publicId)).entity().filter(e -> !e.canceled());
             String manifestDescription = "Description Undefined";
             if (entity.isPresent()) {
                 manifestDescription = entity.get().description();

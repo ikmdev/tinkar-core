@@ -19,6 +19,7 @@ import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.SemanticEntity;
@@ -93,7 +94,7 @@ public class DefaultEntityAggregator extends EntityAggregator {
     private void dispatch(int nid,
                           Consumer<Entity<?>> entityConsumer,
                           AtomicLong orphanCount) {
-        Entity<?> entity = EntityService.get().getEntityFast(nid);
+        Entity<?> entity = EntityHandle.get(nid).orNull();
         if (entity == null) {
             orphanCount.incrementAndGet();
             return;

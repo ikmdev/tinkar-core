@@ -29,6 +29,7 @@ import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
 import dev.ikm.tinkar.entity.CacheInvalidationSubscriber;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.Field;
@@ -167,7 +168,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
                 if (optionalTypeIndex.isPresent()) {
                     PrimitiveData.get().forEachSemanticNidForComponentOfPattern(componentNid, descriptionPatternNid,
                             semanticNid -> {
-                                SemanticEntity descriptionSemantic = Entity.getFast(semanticNid);
+                                SemanticEntity descriptionSemantic = EntityHandle.get(semanticNid).expectSemantic();
                                 Latest<SemanticEntityVersion> latestDescriptionVersion =
                                         stampCalculator.latest(descriptionSemantic);
                                 latestDescriptionVersion.ifPresent(descriptionVersion -> {
@@ -385,7 +386,7 @@ public class LanguageCalculatorWithCache implements LanguageCalculator {
         if (textField.isPresent()) {
             return Optional.ofNullable(textField.get().value());
         }
-        Entity entity = Entity.getFast(nid);
+        Entity entity = EntityHandle.get(nid).orNull();
         if (entity instanceof SemanticEntity semanticEntity) {
             Latest<PatternEntityVersion> latestPatternVersion = stampCalculator.latestPatternEntityVersion(semanticEntity.patternNid());
             if (latestPatternVersion.isPresent()) {

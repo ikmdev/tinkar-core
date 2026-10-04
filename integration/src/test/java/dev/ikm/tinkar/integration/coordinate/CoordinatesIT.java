@@ -30,6 +30,7 @@ import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.ConceptEntityVersion;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.fixtures.TestConstants;
@@ -84,8 +85,8 @@ class CoordinatesIT {
     @Order(3)
     void pathOrigins() {
         for (int pathNid : PrimitiveData.get().semanticNidsOfPattern(PATH_ORIGINS_PATTERN.nid())) {
-            SemanticEntity originSemantic = EntityService.get().getEntityFast(pathNid);
-            Entity pathEntity = EntityService.get().getEntityFast(originSemantic.referencedComponentNid());
+            SemanticEntity originSemantic = EntityHandle.get(pathNid).expectSemantic();
+            Entity pathEntity = EntityHandle.get(originSemantic.referencedComponentNid()).expectEntity();
             ImmutableSet<StampPositionRecord> origin = PathService.get().getPathOrigins(originSemantic.referencedComponentNid());
             LOG.info("Path '" + PrimitiveData.text(pathEntity.nid()) + "' has an origin of: " + origin);
         }
@@ -98,7 +99,7 @@ class CoordinatesIT {
 
         StampCoordinateRecord developmentLatestFilter = Coordinates.Stamp.DevelopmentLatest();
         LOG.info("development latest filter '" + developmentLatestFilter);
-        ConceptEntity englishLanguage = Entity.getFast(TinkarTerm.ENGLISH_LANGUAGE.nid());
+        ConceptEntity englishLanguage = EntityHandle.get(TinkarTerm.ENGLISH_LANGUAGE.nid()).expectConcept();
         StampCalculatorWithCache calculator = StampCalculatorWithCache.getCalculator(developmentLatestFilter);
         Latest<ConceptEntityVersion> latest = calculator.latest(englishLanguage);
         LOG.info("Latest computed: '" + latest);
@@ -106,13 +107,13 @@ class CoordinatesIT {
         Entity.provider().forEachSemanticForComponent(TinkarTerm.ENGLISH_LANGUAGE.nid(), semanticEntity -> {
             LOG.info(semanticEntity.toString() + "\n");
             for (int acceptibilityNid : EntityService.get().semanticNidsForComponentOfPattern(semanticEntity.nid(), TinkarTerm.US_DIALECT_PATTERN.nid())) {
-                LOG.info("  Acceptability US: \n    " + EntityService.get().getEntityFast(acceptibilityNid));
+                LOG.info("  Acceptability US: \n    " + EntityHandle.get(acceptibilityNid).orNull());
             }
         });
         Entity.provider().forEachSemanticForComponent(TinkarTerm.NECESSARY_SET.nid(), semanticEntity -> {
             LOG.info(semanticEntity.toString() + "\n");
             for (int acceptibilityNid : EntityService.get().semanticNidsForComponentOfPattern(semanticEntity.nid(), TinkarTerm.US_DIALECT_PATTERN.nid())) {
-                LOG.info("  Acceptability US: \n    " + EntityService.get().getEntityFast(acceptibilityNid));
+                LOG.info("  Acceptability US: \n    " + EntityHandle.get(acceptibilityNid).orNull());
             }
         });
     }

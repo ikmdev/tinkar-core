@@ -16,7 +16,7 @@
 package dev.ikm.tinkar.provider.search;
 
 import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import org.apache.lucene.analysis.Analyzer;
@@ -45,7 +45,7 @@ import java.util.Set;
  * <ol>
  *   <li>Reads {@code nid} and {@code fieldOrdinal} from the doc's stored fields.</li>
  *   <li>Fetches the corresponding {@link SemanticEntity} via
- *       {@link EntityService#getEntityFast(int)}.</li>
+ *       {@link EntityHandle#get(int)}.</li>
  *   <li>Takes the latest version's {@code fieldValues().get(fieldOrdinal)} and
  *       returns it as the source text.</li>
  * </ol>
@@ -111,7 +111,7 @@ final class EntityStoreBackedHighlighter extends UnifiedHighlighter {
      * @return the rehydrated text, never {@code null}
      */
     private static String rehydrate(int nid, int fieldOrdinal) {
-        Entity<?> entity = EntityService.get().getEntityFast(nid);
+        Entity<?> entity = EntityHandle.get(nid).orNull();
         if (!(entity instanceof SemanticEntity<?> semantic)) {
             LOG.debug("rehydrate: nid {} is not a SemanticEntity (was {})",
                     nid, entity == null ? "null" : entity.getClass().getSimpleName());

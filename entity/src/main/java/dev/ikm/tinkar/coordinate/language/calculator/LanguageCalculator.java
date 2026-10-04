@@ -24,6 +24,7 @@ import dev.ikm.tinkar.coordinate.language.LanguageCoordinate;
 import dev.ikm.tinkar.coordinate.language.LanguageCoordinateRecord;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.StampEntity;
@@ -639,7 +640,7 @@ public interface LanguageCalculator {
         if (optionalEntityString.isPresent()) {
             return optionalEntityString.get();
         }
-        return Entity.get(entityFacade).get().publicId().toString() + " <" + Integer.toString(entityFacade.nid()) + ">";
+        return EntityHandle.get(entityFacade).expectEntity().publicId().toString() + " <" + Integer.toString(entityFacade.nid()) + ">";
     }
 
     /**

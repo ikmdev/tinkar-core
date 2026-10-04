@@ -190,9 +190,10 @@ import static dev.ikm.tinkar.common.service.PrimitiveData.SCOPED_PATTERN_PUBLICI
  *   <li>Used in parallel streams and concurrent collections</li>
  *   <li>Passed between background tasks and UI threads</li>
  * </ul>
- * <p>For best performance in tight loops or frequent access, use {@link EntityService#getEntityFast(int)}
- * via {@link EntityHandle} methods, which skip Optional wrapping. For most use cases, the standard
- * {@link EntityHandle} API provides the best balance of safety and performance.
+ * <p>Look entities up through {@link EntityHandle}, including in tight loops: it reaches the
+ * provider's cache directly, without Optional wrapping. The provider's lookup behind it,
+ * {@link dev.ikm.tinkar.entity.internal.EntityLookup}, is exported to no module but the
+ * provider's.
  *
  * @param <V> the version type ({@link ConceptEntityVersion}, {@link SemanticEntityVersion},
  *           {@link PatternEntityVersion}, or {@link StampEntityVersion})
@@ -256,7 +257,7 @@ public interface Entity<V extends EntityVersion>
     }
 
     static <V extends EntityVersion> V getVersionFast(int nid, int stampNid) {
-        Entity<EntityVersion> entity = EntityService.get().getEntityFast(nid);
+        Entity<?> entity = EntityHandle.get(nid).orNull();
         if (entity != null) {
             for (EntityVersion version : entity.versions()) {
                 if (version.stampNid() == stampNid) {
@@ -271,10 +272,11 @@ public interface Entity<V extends EntityVersion>
     ImmutableList<V> versions();
 
     static Optional<ConceptEntity> getConceptForSemantic(int semanticNid) {
-        Optional<? extends Entity<? extends EntityVersion>> optionalEntity = get(semanticNid);
+        Optional<Entity<? extends EntityVersion>> optionalEntity =
+                EntityHandle.get(semanticNid).entity().filter(e -> !e.canceled());
         if (optionalEntity.isPresent()) {
             if (optionalEntity.get() instanceof SemanticEntity semanticEntity) {
-                Entity<?> referencedEntity = getFast(semanticEntity.referencedComponentNid());
+                Entity<?> referencedEntity = EntityHandle.get(semanticEntity.referencedComponentNid()).orNull();
                 if (referencedEntity instanceof ConceptEntity conceptEntity) {
                     return Optional.of(conceptEntity);
                 } else if (referencedEntity instanceof SemanticEntity referencedSemantic) {
@@ -283,135 +285,6 @@ public interface Entity<V extends EntityVersion>
             }
         }
         return Optional.empty();
-    }
-
-    /**
-     * Package-private method for internal use by EntityHandle.
-     * External code should use {@link EntityHandle#get(int)}.
-     * TODO: We should search for all methods that do this silent type casting, and replace them with
-     * a fluent API that better manages type determination.
-     */
-    static <T extends Entity<V>, V extends EntityVersion> Optional<T> packagePrivateGet(int nid) {
-        return EntityService.get().getEntity(nid);
-    }
-
-    /**
-     * @deprecated Use {@link EntityHandle#get(int)} instead.
-     * <p>     * This static accessor method is being phased out in favor of the fluent
-     * {@link EntityHandle} API, which provides better type safety, null handling,
-     * and composability. This method will be made module-internal in a future release.
-     * <p>     * <b>Migration:</b>
-     * <pre>{@code
-     * // Old (deprecated):
-     * Optional<Entity> entity = Entity.get(nid);
-     *
-     * // New (recommended):
-     * EntityHandle handle = EntityHandle.get(nid);
-     * Optional<Entity<?>> entity = handle.entity();
-     * }</pre>
-     *
-     * @see EntityHandle#get(int)
-     * TODO: We should search for all methods that do this silent type casting, and replace them with
-     * a fluent API that better manages type determination.
-     */
-    @Deprecated(since = "Current", forRemoval = true)
-    static <T extends Entity<V>, V extends EntityVersion> Optional<T> get(int nid) {
-        return packagePrivateGet(nid);
-    }
-
-    /**
-     * Package-private method for internal use by EntityHandle.
-     * External code should use {@link EntityHandle#getConceptOrThrow(int)} or type-specific methods.
-     * TODO: We should search for all methods that do this silent type casting, and replace them with
-     * a fluent API that better manages type determination.
-     */
-    static <T extends Entity<V>, V extends EntityVersion> T packagePrivateGetOrThrow(int nid) {
-        return (T) EntityService.get().getEntity(nid).get();
-    }
-
-    /**
-     * Package-private method for internal use by EntityHandle.
-     * External code should use {@link EntityHandle#get(EntityFacade)}.
-     */
-    static Optional<Entity<?>> packagePrivateGet(EntityFacade facade) {
-        return EntityService.get().packagePrivateGetEntity(facade.nid());
-    }
-
-    /**
-     * @deprecated Use {@link EntityHandle#get(EntityFacade)} instead.
-     * <p>     * This static accessor method is being phased out in favor of the fluent
-     * {@link EntityHandle} API. This method will be made module-internal in a future release.
-     *
-     * @see EntityHandle#get(EntityFacade)
-     * TODO: We should search for all methods that do this silent type casting, and replace them with
-     * a fluent API that better manages type determination.
-     */
-    @Deprecated(since = "Current", forRemoval = true)
-    static <T extends Entity<V>, V extends EntityVersion> Optional<T> get(EntityFacade facade) {
-        return (Optional<T>) packagePrivateGet(facade);
-    }
-
-    /**
-     * Package-private method for internal use by EntityHandle.
-     * External code should use {@link EntityHandle#getConceptOrThrow(EntityFacade)} or type-specific methods.
-     */
-    static  Entity<?> packagePrivateGetOrThrow(EntityFacade facade) {
-        return EntityService.get().getEntity(facade.nid()).get();
-    }
-
-    /**
-     * @deprecated Use {@link EntityHandle#get(int)} instead.
-     * <p>     * This static accessor method is being phased out in favor of the fluent
-     * {@link EntityHandle} API. This method will be made module-internal in a future release.
-     * <p>     * <b>Migration:</b>
-     * <pre>{@code
-     * // Old (deprecated):
-     * Entity entity = Entity.getFast(nid);
-     *
-     * // New (recommended):
-     * Entity entity = EntityHandle.get(nid).orNull();
-     * // Or with type safety:
-     * ConceptEntity concept = EntityHandle.getConceptOrThrow(nid);
-     * }</pre>
-     *
-     * @see EntityHandle#get(int)
-     * @see EntityHandle#getConceptOrThrow(int)
-     * TODO: We should search for all methods that do this silent type casting, and replace them with
-     * a fluent API that better manages type determination.
-     */
-    @Deprecated(since = "Current", forRemoval = true)
-    static <T extends Entity<V>, V extends EntityVersion> T getFast(int nid) {
-        return (T) packagePrivateGetFast(nid);
-    }
-
-    /**
-     * Package-private method for internal use by EntityHandle.
-     * External code should use {@link EntityHandle#get(int)}.
-     */
-    static Entity<?> packagePrivateGetFast(int nid) {
-        return EntityService.get().getEntityFast(nid);
-    }
-
-    /**
-     * Package-private method for internal use by EntityHandle.
-     * External code should use {@link EntityHandle#get(EntityFacade)}.
-     */
-    static Entity<?> packagePrivateGetFast(EntityFacade facade) {
-        return EntityService.get().getEntityFast(facade.nid());
-    }
-
-    /**
-     * @deprecated Use {@link EntityHandle#get(EntityFacade)} instead.
-     * <p>     * This static accessor method is being phased out in favor of the fluent
-     * {@link EntityHandle} API. This method will be made module-internal in a future release.
-     *
-     * @see EntityHandle#get(EntityFacade)
-     * TODO: We should search for all methods that do this silent type casting, and replace them with
-     * a fluent API that better manages type determination.
-     */
-    @Deprecated(since = "Current", forRemoval = true)
-    static <T extends Entity<V>, V extends EntityVersion> T getFast(EntityFacade facade) {
-        return (T) packagePrivateGetFast(facade);
     }
 
     static <T extends StampEntity<? extends StampEntityVersion>> T getStamp(int nid) {

@@ -23,6 +23,7 @@ import dev.ikm.tinkar.coordinate.stamp.StampPositionRecord;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorWithCache;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.builder.ActiveStamp;
@@ -220,7 +221,7 @@ class DefaultsTemplateDslIT {
         assertTrue(parented, "the verb must state isA(Template concept) — a purpose cannot be"
                 + " minted detached from the template taxonomy");
 
-        assertEquals(1, EntityService.get().getEntityFast(axiomNids[0]).versions().size(),
+        assertEquals(1, EntityHandle.get(axiomNids[0]).expectSemantic().versions().size(),
                 "the parentage is stated in the birth scope only — a resumed scope must not restate it");
     }
 

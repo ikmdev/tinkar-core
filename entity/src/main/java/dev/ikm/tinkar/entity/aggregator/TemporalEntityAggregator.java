@@ -18,6 +18,7 @@ package dev.ikm.tinkar.entity.aggregator;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,14 +64,14 @@ public class TemporalEntityAggregator extends EntityAggregator {
         List<Integer> stampsToExport = new ArrayList<>();
 
         // Aggregate concepts with a filtered stamp. Resolution goes through
-        // getEntityFast — the byte-backed lookup the downstream consumer uses — so a
+        // EntityHandle — the byte-backed lookup the downstream consumer uses — so a
         // nid is counted if and only if it can actually be delivered: an orphan nid
         // (allocated, no committed bytes; the entity cache may still answer for it)
         // is excluded from the count, the emission, and the stamp collection alike
         // (IKE-Network/ike-issues#933).
         lastOrphanCount = 0;
         PrimitiveData.get().forEachConceptNid((conceptNid) -> {
-            Entity<?> conceptEntity = EntityService.get().getEntityFast(conceptNid);
+            Entity<?> conceptEntity = EntityHandle.get(conceptNid).orNull();
             if (conceptEntity == null) {
                 lastOrphanCount++;
                 return;
@@ -86,7 +87,7 @@ public class TemporalEntityAggregator extends EntityAggregator {
 
         // Aggregate semantics with a filtered stamp
         PrimitiveData.get().forEachSemanticNid((semanticNid) -> {
-            Entity<?> semanticEntity = EntityService.get().getEntityFast(semanticNid);
+            Entity<?> semanticEntity = EntityHandle.get(semanticNid).orNull();
             if (semanticEntity == null) {
                 lastOrphanCount++;
                 return;
@@ -102,7 +103,7 @@ public class TemporalEntityAggregator extends EntityAggregator {
 
         // Aggregate patterns with a filtered stamp
         PrimitiveData.get().forEachPatternNid((patternNid) -> {
-            Entity<?> patternEntity = EntityService.get().getEntityFast(patternNid);
+            Entity<?> patternEntity = EntityHandle.get(patternNid).orNull();
             if (patternEntity == null) {
                 lastOrphanCount++;
                 return;
@@ -121,7 +122,7 @@ public class TemporalEntityAggregator extends EntityAggregator {
         Set<Integer> deduplicatedStampsToExport = new HashSet<>(stampsToExport);
         List<Integer> deliverableStampNids = new ArrayList<>();
         for (int stampNid : deduplicatedStampsToExport) {
-            if (EntityService.get().getEntityFast(stampNid) != null) {
+            if (EntityHandle.get(stampNid).isPresent()) {
                 deliverableStampNids.add(stampNid);
             } else {
                 lastOrphanCount++;

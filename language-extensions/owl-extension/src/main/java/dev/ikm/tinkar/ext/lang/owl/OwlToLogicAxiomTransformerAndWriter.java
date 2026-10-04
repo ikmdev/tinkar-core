@@ -125,7 +125,7 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
         Set<StampCoordinateRecord> stampCoordinates = new HashSet<>();
 
         for (int owlNid : owlNids) {
-            EntityService.get().getEntity(owlNid).ifPresent(owlSemantic -> {
+            EntityHandle.get(owlNid).entity().filter(e -> !e.canceled()).ifPresent(owlSemantic -> {
                 owlEntitiesForConcept.add((SemanticEntity) owlSemantic);
             });
         }
@@ -209,9 +209,9 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
 
     private void newSemanticWithVersion(int conceptNid, LogicalExpression logicalExpression, StampVersionRecord writeStamp) {
         // Create UUID from seed and assign SemanticBuilder the value
-        Entity<EntityVersion> patternEntity = EntityService.get().getEntityFast(destinationPatternNid);
+        Entity<EntityVersion> patternEntity = EntityHandle.get(destinationPatternNid).expectPattern();
         UUID generartedSemanticUuid = UuidT5Generator.singleSemanticUuid(patternEntity,
-                EntityService.get().getEntityFast(conceptNid));
+                EntityHandle.get(conceptNid).expectEntity());
         int semanticNid = ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternEntity.publicId())
                 .call(() -> PrimitiveData.nid(generartedSemanticUuid));
@@ -229,7 +229,7 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
 
     private void addSemanticVersionIfAbsent(int conceptNid, LogicalExpression logicalExpression, StampVersionRecord writeStamp,
                                             StampCoordinateRecord stampCoordinate, int semanticNid) {
-        SemanticRecord existingSemantic = EntityService.get().getEntityFast(semanticNid);
+        SemanticRecord existingSemantic = EntityHandle.get(semanticNid).expectSemanticRecord();
         Latest<SemanticEntityVersion> latestSemanticVersion = stampCoordinate.stampCalculator().latest(semanticNid);
         if (latestSemanticVersion.isPresent()) {
             StampEntityVersion existingStampVer = latestSemanticVersion.get().stamp().lastVersion();

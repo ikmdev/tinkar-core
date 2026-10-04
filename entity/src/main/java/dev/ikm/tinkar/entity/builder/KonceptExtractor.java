@@ -581,7 +581,7 @@ public final class KonceptExtractor {
      * carry either, both, or neither.
      */
     private static PatternShape patternShape(int patternNid, Map<Integer, String> identifierByNid) {
-        PatternEntity<PatternEntityVersion> pattern = EntityService.get().getEntityFast(patternNid);
+        PatternEntity<PatternEntityVersion> pattern = EntityHandle.get(patternNid).expectPattern();
         PatternEntityVersion version = pattern.lastVersion();
         if (version == null) {
             return new PatternShape(null, null, null, List.of());

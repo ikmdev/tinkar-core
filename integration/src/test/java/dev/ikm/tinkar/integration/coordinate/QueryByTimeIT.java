@@ -24,6 +24,7 @@ import dev.ikm.tinkar.coordinate.stamp.StampPositionRecordBuilder;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.StampEntity;
@@ -82,7 +83,7 @@ public class QueryByTimeIT {
             })
         );
         pathNids.forEach(pathNid -> {
-            LOG.info("PATH NID: " + EntityService.get().getEntityFast(pathNid));
+            LOG.info("PATH NID: " + EntityHandle.get(pathNid).orNull());
             Stream<Latest<SemanticEntityVersion>> filteredVersionsStream =
                     findAllPatternsForPathByTime(patternNid, pathNid, timestamp);
             filteredVersionsStream.forEach(latestVersion -> {

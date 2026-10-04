@@ -40,6 +40,7 @@ import dev.ikm.tinkar.component.Chronology;
 import dev.ikm.tinkar.component.Version;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.entity.EntityText;
+import dev.ikm.tinkar.entity.internal.EntityLookup;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.State;
@@ -63,7 +64,7 @@ import java.util.function.Consumer;
 import static dev.ikm.tinkar.terms.TinkarTerm.DESCRIPTION_PATTERN;
 
 //@AutoService({EntityService.class, PublicIdService.class, DefaultDescriptionForNidService.class})
-public class EntityProvider implements EntityService, PublicIdService, DefaultDescriptionForNidService, EntityDataRepair {
+public class EntityProvider implements EntityService, EntityLookup, PublicIdService, DefaultDescriptionForNidService, EntityDataRepair {
 
     private static final Logger LOG = LoggerFactory.getLogger(EntityProvider.class);
     private static final Cache<Integer, String> STRING_CACHE = Caffeine.newBuilder().maximumSize(1024).build();
@@ -210,17 +211,21 @@ public class EntityProvider implements EntityService, PublicIdService, DefaultDe
     }
 
     /**
+     * The lookup {@link EntityHandle} reaches through {@link EntityLookup}.
      *
-     * @param nid
-     * @return
-     * @param <T>
-     * @param <V>
-     * TODO: We should search for all methods that do this silent type casting, and replace them with
-     * a fluent API that better manages type determination.
-     * @deprecated Use {@link EntityHandle#get(int)} instead.
+     * @param nid the entity's nid
+     * @return the entity, or {@code null} if the store holds none for the nid
      */
-    @Deprecated(since = "Current", forRemoval = true)
-    public <T extends Entity<V>, V extends EntityVersion> T getEntityFast(int nid) {
+    @Override
+    public Entity<?> entityOrNull(int nid) {
+        return getEntityFast(nid);
+    }
+
+    /**
+     * Reads an entity through the cache, cast unchecked to the type the caller in this class
+     * expects. Private: outside the provider, entities are looked up through {@link EntityHandle}.
+     */
+    private <T extends Entity<V>, V extends EntityVersion> T getEntityFast(int nid) {
         return (T) ENTITY_CACHE.get(nid, entityNid -> {
             byte[] bytes = PrimitiveData.get().getBytes(nid);
             if (bytes == null) {

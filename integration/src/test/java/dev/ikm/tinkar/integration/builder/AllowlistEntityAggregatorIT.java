@@ -3,7 +3,7 @@ package dev.ikm.tinkar.integration.builder;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.aggregator.AllowlistEntityAggregator;
@@ -90,7 +90,7 @@ class AllowlistEntityAggregatorIT {
         int lastPatternIndex = -1;
         int firstSemanticIndex = Integer.MAX_VALUE;
         for (int i = 0; i < emitted.size(); i++) {
-            Entity<?> entity = EntityService.get().getEntityFast(emitted.get(i));
+            Entity<?> entity = EntityHandle.get(emitted.get(i)).orNull();
             if (entity instanceof PatternEntity<?>) {
                 lastPatternIndex = i;
             } else if (entity instanceof SemanticEntity<?> && firstSemanticIndex == Integer.MAX_VALUE) {

@@ -17,6 +17,7 @@ package dev.ikm.tinkar.entity.aggregator;
 
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +57,7 @@ public abstract class EntityAggregator {
     public EntityCountSummary aggregateEntities(Consumer<Entity<?>> entityConsumer) {
         AtomicLong orphanCount = new AtomicLong();
         EntityCountSummary summary = aggregate((int nid) -> {
-            Entity<?> entity = EntityService.get().getEntityFast(nid);
+            Entity<?> entity = EntityHandle.get(nid).orNull();
             if (entity == null) {
                 orphanCount.incrementAndGet();
                 return;

@@ -25,6 +25,7 @@ import dev.ikm.tinkar.common.util.time.Stopwatch;
 import dev.ikm.tinkar.common.validation.ValidationRecord;
 import dev.ikm.tinkar.common.validation.ValidationSeverity;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.common.service.SearchService;
 import org.eclipse.collections.api.block.procedure.primitive.IntProcedure;
@@ -298,7 +299,7 @@ public class MVStoreProvider implements PrimitiveDataService, NidGenerator {
                 procedure.accept(elementNid);
             }
         } else {
-            Entity entity = Entity.getFast(patternNid);
+            Entity entity = EntityHandle.get(patternNid).orNull();
             if (entity instanceof PatternEntity == false) {
                 throw new IllegalStateException("Trying to iterate elements for entity that is not a pattern: " + EntityText.diagnostic(entity));
             }

@@ -23,6 +23,7 @@ import dev.ikm.tinkar.entity.ConceptRecord;
 import dev.ikm.tinkar.entity.ConceptRecordBuilder;
 import dev.ikm.tinkar.entity.ConceptVersionRecord;
 import dev.ikm.tinkar.entity.ConceptVersionRecordBuilder;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.RecordListBuilder;
 import dev.ikm.tinkar.entity.StampEntity;
@@ -92,12 +93,12 @@ class SpinedArrayEntityCacheIT {
         EntityService.get().putEntity(newConceptVersion);
 
         int expectedUuidCount = 1;
-        int actualUuidCount = EntityService.get().getEntityFast(conceptProxy).publicId().asUuidArray().length;
+        int actualUuidCount = EntityHandle.get(conceptProxy).expectConcept().publicId().asUuidArray().length;
         assertEquals(expectedUuidCount, actualUuidCount,
                 String.format("UUID count is not correct. Expect: %s, Actual: %s", expectedUuidCount, actualUuidCount));
 
         int expectedVersionCount = 1;
-        int actualVersionCount = EntityService.get().getEntityFast(conceptProxy).versions().size();
+        int actualVersionCount = EntityHandle.get(conceptProxy).expectConcept().versions().size();
         assertEquals(expectedVersionCount, actualVersionCount,
                 String.format("Version count is not correct. Expect: %s, Actual: %s", expectedVersionCount, actualVersionCount));
     }
@@ -130,12 +131,12 @@ class SpinedArrayEntityCacheIT {
         EntityService.get().putEntity(conceptRecordWithMultipleUuids);
 
         int expectedUuidCount = 1;
-        int actualUuidCount = EntityService.get().getEntityFast(conceptProxy).publicId().asUuidArray().length;
+        int actualUuidCount = EntityHandle.get(conceptProxy).expectConcept().publicId().asUuidArray().length;
         assertEquals(expectedUuidCount, actualUuidCount,
                 String.format("UUID count is not correct. Expect: %s, Actual: %s", expectedUuidCount, actualUuidCount));
 
         int expectedVersionCount = 2;
-        int actualVersionCount = EntityService.get().getEntityFast(conceptProxy).versions().size();
+        int actualVersionCount = EntityHandle.get(conceptProxy).expectConcept().versions().size();
         assertEquals(expectedVersionCount, actualVersionCount,
                 String.format("Version count is not correct. Expect: %s, Actual: %s", expectedVersionCount, actualVersionCount));
     }

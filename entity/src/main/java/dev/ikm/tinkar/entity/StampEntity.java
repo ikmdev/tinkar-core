@@ -44,15 +44,15 @@ public interface StampEntity<V extends StampEntityVersion> extends Entity<V>,
     }
 
     default ConceptFacade author() {
-        return Entity.provider().getEntityFast(authorNid());
+        return EntityHandle.get(authorNid()).expectConcept();
     }
 
     default ConceptFacade module() {
-        return Entity.provider().getEntityFast(moduleNid());
+        return EntityHandle.get(moduleNid()).expectConcept();
     }
 
     default ConceptFacade path() {
-        return Entity.provider().getEntityFast(pathNid());
+        return EntityHandle.get(pathNid()).expectConcept();
     }
 
     StampEntity stamp();

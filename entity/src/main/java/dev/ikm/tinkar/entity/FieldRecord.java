@@ -47,7 +47,7 @@ public record FieldRecord<DT>(DT value, int nid, int versionStampNid,
 
     @Override
     public FeatureDefinition fieldDefinition(StampCalculator stampCalculator) {
-        PatternEntity<PatternEntityVersion> patternEntity = Entity.getFast(patternNid());
+        PatternEntity<PatternEntityVersion> patternEntity = EntityHandle.get(patternNid()).expectPattern();
         Latest<PatternEntityVersion> patternVersion = stampCalculator.latest(patternEntity);
         return patternVersion.get().fieldDefinitions().get(indexInPattern());
     }
@@ -62,7 +62,7 @@ public record FieldRecord<DT>(DT value, int nid, int versionStampNid,
         return "FieldRecord{value: " + value +
                 ", for entity: " + PrimitiveData.textWithNid(nid) +
                 " of version: " + Entity.getStamp(versionStampNid).lastVersion().describe() +
-                " in pattern: " + Entity.getFast(patternNid()) +
+                " in pattern: " + EntityHandle.get(patternNid()).orNull() +
                 " with index: " + indexInPattern() +
                 '}';
     }

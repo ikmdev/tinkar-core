@@ -274,7 +274,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
 
             patternUuids.forEach(patternUuid -> {
                 int nid = PrimitiveData.get().nidForUuids(patternUuid);
-                PatternEntity patternEntity = EntityService.get().getEntityFast(nid);
+                PatternEntity patternEntity = EntityHandle.get(nid).asPattern().orElse(null);
                 StampCoordinate stampCoordinate = Coordinates.Stamp.DevelopmentLatest();
                 String entityText = PrimitiveData.textWithNid(nid);
                 PrimitiveData.getEntityKey(patternUuid).ifPresent(entityKey ->

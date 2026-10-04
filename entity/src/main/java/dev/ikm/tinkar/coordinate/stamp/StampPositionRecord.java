@@ -26,6 +26,7 @@ import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
 import dev.ikm.tinkar.coordinate.PathService;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import io.soabase.recordbuilder.core.RecordBuilder;
 import org.eclipse.collections.api.set.ImmutableSet;
@@ -122,7 +123,7 @@ public record StampPositionRecord(long time, int pathForPositionNid)
      * @return the stamp path ConceptFacade
      */
     public ConceptFacade getPathForPositionConcept() {
-        return Entity.getFast(this.pathForPositionNid);
+        return EntityHandle.get(this.pathForPositionNid).expectConcept();
     }
 
     @Override

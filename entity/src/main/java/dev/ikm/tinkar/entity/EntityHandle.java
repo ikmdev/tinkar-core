@@ -4,7 +4,9 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.entity.internal.EntityLookup;
 import dev.ikm.tinkar.terms.EntityFacade;
+import dev.ikm.tinkar.terms.EntityProxy;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -332,7 +334,7 @@ public interface EntityHandle {
         if (nid == Integer.MIN_VALUE || nid == Integer.MAX_VALUE || nid == 0) {
             return absent();
         }
-        Entity entity = Entity.packagePrivateGetFast(nid);
+        Entity entity = EntityLookup.current().entityOrNull(nid);
         if (entity != null) {
             return of(entity);
         }
@@ -392,6 +394,31 @@ public interface EntityHandle {
             return new AbsentHandle(() -> identification(entityFacade, nid));
         }
         return handle;
+    }
+
+    /**
+     * Retrieves an entity by an {@link EntityProxy}. A proxy is both an {@link EntityFacade} and a
+     * {@link PublicId}, so without this overload a call with one is ambiguous; it resolves as
+     * {@link #get(EntityFacade)} does.
+     *
+     * @param proxy the entity proxy
+     * @return an EntityHandle representing the entity, or an empty EntityHandle if absent.
+     */
+    static EntityHandle get(EntityProxy proxy) {
+        return get((EntityFacade) proxy);
+    }
+
+    /**
+     * Retrieves an entity by an {@link Entity} value, looking it up again by its nid. An entity is
+     * both an {@link EntityFacade} and a {@link PublicId}, so without this overload a call with one
+     * is ambiguous; it resolves as {@link #get(EntityFacade)} does. To wrap the instance itself, use
+     * {@link #of(Entity)}.
+     *
+     * @param entity the entity
+     * @return an EntityHandle representing the stored entity, or an empty EntityHandle if absent.
+     */
+    static EntityHandle get(Entity<?> entity) {
+        return get((EntityFacade) entity);
     }
 
     /**

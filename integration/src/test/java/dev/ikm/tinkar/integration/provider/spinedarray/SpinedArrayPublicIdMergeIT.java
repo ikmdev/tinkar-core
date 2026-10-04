@@ -23,6 +23,7 @@ import dev.ikm.tinkar.entity.ConceptRecord;
 import dev.ikm.tinkar.entity.ConceptRecordBuilder;
 import dev.ikm.tinkar.entity.ConceptVersionRecord;
 import dev.ikm.tinkar.entity.ConceptVersionRecordBuilder;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.RecordListBuilder;
 import dev.ikm.tinkar.entity.StampEntity;
@@ -110,16 +111,16 @@ class SpinedArrayPublicIdMergeIT {
         currentTransaction.commit();
 
         int expectedUuidCount = 2;
-        int actualUuidCountUuid1 = EntityService.get().getEntityFast(uuid1).publicId().asUuidArray().length;
-        int actualUuidCountUuid2 = EntityService.get().getEntityFast(uuid2).publicId().asUuidArray().length;
+        int actualUuidCountUuid1 = EntityHandle.get(uuid1).expectConcept().publicId().asUuidArray().length;
+        int actualUuidCountUuid2 = EntityHandle.get(uuid2).expectConcept().publicId().asUuidArray().length;
         assertEquals(expectedUuidCount, actualUuidCountUuid1,
                 String.format("UUID count is not correct for lookup on uuid1. Expect: %s, Actual: %s", expectedUuidCount, actualUuidCountUuid1));
         assertEquals(expectedUuidCount, actualUuidCountUuid2,
                 String.format("UUID count is not correct for lookup on uuid2. Expect: %s, Actual: %s", expectedUuidCount, actualUuidCountUuid2));
 
         int expectedVersionCount = 2;
-        int actualVersionCountUuid1 = EntityService.get().getEntityFast(uuid1).versions().size();
-        int actualVersionCountUuid2 = EntityService.get().getEntityFast(uuid2).versions().size();
+        int actualVersionCountUuid1 = EntityHandle.get(uuid1).expectConcept().versions().size();
+        int actualVersionCountUuid2 = EntityHandle.get(uuid2).expectConcept().versions().size();
         assertEquals(expectedVersionCount, actualVersionCountUuid1,
                 String.format("Version count is not correct for lookup on uuid1. Expect: %s, Actual: %s", expectedVersionCount, actualVersionCountUuid1));
         assertEquals(expectedVersionCount, actualVersionCountUuid2,
@@ -160,16 +161,16 @@ class SpinedArrayPublicIdMergeIT {
         currentTransaction.commit();
 
         int expectedUuidCount = 2;
-        int actualUuidCountUuid1 = EntityService.get().getEntityFast(uuid1).publicId().asUuidArray().length;
-        int actualUuidCountUuid2 = EntityService.get().getEntityFast(uuid2).publicId().asUuidArray().length;
+        int actualUuidCountUuid1 = EntityHandle.get(uuid1).expectConcept().publicId().asUuidArray().length;
+        int actualUuidCountUuid2 = EntityHandle.get(uuid2).expectConcept().publicId().asUuidArray().length;
         assertEquals(expectedUuidCount, actualUuidCountUuid1,
                 String.format("UUID count is not correct for lookup on uuid1. Expect: %s, Actual: %s", expectedUuidCount, actualUuidCountUuid1));
         assertEquals(expectedUuidCount, actualUuidCountUuid2,
                 String.format("UUID count is not correct for lookup on uuid2. Expect: %s, Actual: %s", expectedUuidCount, actualUuidCountUuid2));
 
         int expectedVersionCount = 2;
-        int actualVersionCountUuid1 = EntityService.get().getEntityFast(uuid1).versions().size();
-        int actualVersionCountUuid2 = EntityService.get().getEntityFast(uuid2).versions().size();
+        int actualVersionCountUuid1 = EntityHandle.get(uuid1).expectConcept().versions().size();
+        int actualVersionCountUuid2 = EntityHandle.get(uuid2).expectConcept().versions().size();
         assertEquals(expectedVersionCount, actualVersionCountUuid1,
                 String.format("Version count is not correct for lookup on uuid1. Expect: %s, Actual: %s", expectedVersionCount, actualVersionCountUuid1));
         assertEquals(expectedVersionCount, actualVersionCountUuid2,
@@ -211,9 +212,9 @@ class SpinedArrayPublicIdMergeIT {
         currentTransaction.commit();
 
         int expectedUuidCount = 3;
-        int actualUuidCountUuid1 = EntityService.get().getEntityFast(uuid1).publicId().asUuidArray().length;
-        int actualUuidCountUuid2 = EntityService.get().getEntityFast(uuid2).publicId().asUuidArray().length;
-        int actualUuidCountUuid3 = EntityService.get().getEntityFast(uuid3).publicId().asUuidArray().length;
+        int actualUuidCountUuid1 = EntityHandle.get(uuid1).expectConcept().publicId().asUuidArray().length;
+        int actualUuidCountUuid2 = EntityHandle.get(uuid2).expectConcept().publicId().asUuidArray().length;
+        int actualUuidCountUuid3 = EntityHandle.get(uuid3).expectConcept().publicId().asUuidArray().length;
         assertEquals(expectedUuidCount, actualUuidCountUuid1,
                 String.format("UUID count is not correct for lookup on uuid1. Expect: %s, Actual: %s", expectedUuidCount, actualUuidCountUuid1));
         assertEquals(expectedUuidCount, actualUuidCountUuid2,
@@ -222,9 +223,9 @@ class SpinedArrayPublicIdMergeIT {
                 String.format("UUID count is not correct for lookup on uuid3. Expect: %s, Actual: %s", expectedUuidCount, actualUuidCountUuid3));
 
         int expectedVersionCount = 2;
-        int actualVersionCountUuid1 = EntityService.get().getEntityFast(uuid1).versions().size();
-        int actualVersionCountUuid2 = EntityService.get().getEntityFast(uuid2).versions().size();
-        int actualVersionCountUuid3 = EntityService.get().getEntityFast(uuid3).versions().size();
+        int actualVersionCountUuid1 = EntityHandle.get(uuid1).expectConcept().versions().size();
+        int actualVersionCountUuid2 = EntityHandle.get(uuid2).expectConcept().versions().size();
+        int actualVersionCountUuid3 = EntityHandle.get(uuid3).expectConcept().versions().size();
         assertEquals(expectedVersionCount, actualVersionCountUuid1,
                 String.format("Version count is not correct for lookup on uuid1. Expect: %s, Actual: %s", expectedVersionCount, actualVersionCountUuid1));
         assertEquals(expectedVersionCount, actualVersionCountUuid2,

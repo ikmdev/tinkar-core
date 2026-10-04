@@ -27,8 +27,10 @@ import dev.ikm.tinkar.component.Semantic;
 import dev.ikm.tinkar.component.graph.Vertex;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityRecordFactory;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.RecordListBuilder;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.StampEntityVersion;
@@ -411,9 +413,9 @@ public class EntityVertex implements Vertex, VertexId {
 		if (optionalPropertyValue.isEmpty()) {
 			return Optional.empty();
 		}
-		Optional<Entity> optionalEntityValue = switch (optionalPropertyValue.get()) {
-		case Integer nid -> EntityService.get().getEntity(nid);
-		case EntityFacade facade -> EntityService.get().getEntity(facade);
+		Optional<Entity<? extends EntityVersion>> optionalEntityValue = switch (optionalPropertyValue.get()) {
+		case Integer nid -> EntityHandle.get(nid).entity().filter(e -> !e.canceled());
+		case EntityFacade facade -> EntityHandle.get(facade).entity().filter(e -> !e.canceled());
 		case null -> throw new IllegalStateException("optionalPropertyValue is null");
             default -> throw new IllegalStateException("optionalPropertyValue is not an identifier or facade: " + optionalPropertyValue.get());
 		};

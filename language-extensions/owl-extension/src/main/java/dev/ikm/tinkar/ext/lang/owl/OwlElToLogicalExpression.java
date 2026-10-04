@@ -8,7 +8,7 @@ import dev.ikm.elk.snomed.model.Definition;
 import dev.ikm.elk.snomed.model.Role;
 import dev.ikm.elk.snomed.model.RoleGroup;
 import dev.ikm.elk.snomed.model.RoleType;
-import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom.Atom;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom.Atom.Connective.And;
@@ -53,7 +53,7 @@ public class OwlElToLogicalExpression {
 
 	private ConceptFacade getConceptFacade(long id) {
 		// TODO Maybe (ConceptFacade) EntityProxy.Concept.make((int) role_type.getId()
-		Optional<? extends ConceptFacade> role_type_cf = EntityService.get().getEntity((int) id);
+		Optional<? extends ConceptFacade> role_type_cf = EntityHandle.get((int) id).asConcept();
 		return role_type_cf.get();
 	}
 

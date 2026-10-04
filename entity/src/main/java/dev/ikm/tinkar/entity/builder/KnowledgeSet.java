@@ -21,6 +21,7 @@ import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.FieldDefinitionForEntity;
 import dev.ikm.tinkar.entity.PatternEntity;
@@ -419,7 +420,7 @@ public final class KnowledgeSet {
     private void verifyReferentialClosure() {
         List<String> dangling = new ArrayList<>();
         PrimitiveData.get().forEachSemanticNid(nid -> {
-            if (EntityService.get().getEntityFast(nid) instanceof SemanticEntity<?> semantic) {
+            if (EntityHandle.get(nid).orNull() instanceof SemanticEntity<?> semantic) {
                 requirePresent(dangling, semantic, "referenced component", semantic.referencedComponentNid());
                 requirePresent(dangling, semantic, "pattern", semantic.patternNid());
                 for (SemanticEntityVersion version : semantic.versions()) {
@@ -430,7 +431,7 @@ public final class KnowledgeSet {
             }
         });
         PrimitiveData.get().forEachPatternNid(nid -> {
-            if (EntityService.get().getEntityFast(nid) instanceof PatternEntity<?> pattern) {
+            if (EntityHandle.get(nid).orNull() instanceof PatternEntity<?> pattern) {
                 for (PatternEntityVersion version : pattern.versions()) {
                     requirePresent(dangling, pattern, "pattern meaning", version.semanticMeaningNid());
                     requirePresent(dangling, pattern, "pattern purpose", version.semanticPurposeNid());
@@ -443,7 +444,7 @@ public final class KnowledgeSet {
             }
         });
         PrimitiveData.get().forEachStampNid(nid -> {
-            if (EntityService.get().getEntityFast(nid) instanceof StampEntity<?> stamp) {
+            if (EntityHandle.get(nid).orNull() instanceof StampEntity<?> stamp) {
                 for (StampEntityVersion version : stamp.versions()) {
                     requirePresent(dangling, stamp, "stamp status", version.stateNid());
                     requirePresent(dangling, stamp, "stamp author", version.authorNid());
@@ -520,7 +521,7 @@ public final class KnowledgeSet {
      * @param referenceNid the referenced component's nid
      */
     private static void requirePresent(List<String> dangling, Entity<?> source, String role, int referenceNid) {
-        if (EntityService.get().getEntityFast(referenceNid) != null) {
+        if (EntityHandle.get(referenceNid).isPresent()) {
             return;
         }
         String target;
