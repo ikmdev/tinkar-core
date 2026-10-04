@@ -779,14 +779,17 @@ public interface StampCalculator {
     private static void addChangesForStampFieldsForPattern(PatternEntityVersion latestPatternVersion, StampRecord newVersionStamp,
                                                            StampRecord predecessorStamp, MutableList<FieldChangeRecord> fieldChanges,
                                                            EntityVersion newVersion) {
-        // The stamp version pattern leads with a field for the stamp itself, which a stamp's
-        // field values (status, time, author, module, path) do not carry: pattern field i
-        // holds stamp value i - offset.
-        int offset = Math.max(0, latestPatternVersion.fieldDefinitions().size() - newVersionStamp.fieldValues().size());
-        for (int fieldIndex = offset; fieldIndex < latestPatternVersion.fieldDefinitions().size(); fieldIndex++) {
-            FieldDefinitionForEntity fieldDefinitionRecord = latestPatternVersion.fieldDefinitions().get(fieldIndex);
-            Object newVersionValue = newVersionStamp.fieldValues().get(fieldIndex - offset);
-            Object priorVersionValue = predecessorStamp.fieldValues().get(fieldIndex - offset);
+        // A stamp's field values are status, time, author, module and path, in that order;
+        // the stamp version pattern names them at its own indexes.
+        int[] fieldIndexes = {EntityBinding.Stamp.Version.statusFieldDefinitionIndex(),
+                EntityBinding.Stamp.Version.timeFieldDefinitionIndex(),
+                EntityBinding.Stamp.Version.authorFieldDefinitionIndex(),
+                EntityBinding.Stamp.Version.moduleFieldDefinitionIndex(),
+                EntityBinding.Stamp.Version.pathFieldDefinitionIndex()};
+        for (int valueIndex = 0; valueIndex < fieldIndexes.length; valueIndex++) {
+            FieldDefinitionForEntity fieldDefinitionRecord = latestPatternVersion.fieldDefinitions().get(fieldIndexes[valueIndex]);
+            Object newVersionValue = newVersionStamp.fieldValues().get(valueIndex);
+            Object priorVersionValue = predecessorStamp.fieldValues().get(valueIndex);
             if (!Objects.deepEquals(newVersionValue, priorVersionValue)) {
                 fieldChanges.add(makeFieldChangeRecord(newVersionValue, newVersion,
                         fieldDefinitionRecord, priorVersionValue, predecessorStamp));

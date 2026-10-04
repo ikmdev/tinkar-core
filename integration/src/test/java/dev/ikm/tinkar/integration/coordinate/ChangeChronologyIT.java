@@ -15,12 +15,14 @@
  */
 package dev.ikm.tinkar.integration.coordinate;
 
+import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.stamp.change.ChangeChronology;
 import dev.ikm.tinkar.coordinate.stamp.change.FieldChangeRecord;
 import dev.ikm.tinkar.coordinate.stamp.change.VersionChangeRecord;
 import dev.ikm.tinkar.entity.Entity;
+import dev.ikm.tinkar.entity.PatternEntityVersion;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.fixtures.TestConstants;
@@ -36,8 +38,10 @@ import org.junit.jupiter.api.TestInstance;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -64,6 +68,27 @@ class ChangeChronologyIT {
     void afterAll() {
         TestHelper.stopDatabase();
         FileUtil.recursiveDelete(DATASTORE_ROOT);
+    }
+
+    /**
+     * Each stamp field index the binding names is the field the starter data's stamp
+     * version pattern defines there, by the field's meaning.
+     */
+    @Test
+    void theStampVersionBindingNamesThePatternsFields() {
+        PatternEntityVersion pattern = (PatternEntityVersion) Calculators.Stamp.DevelopmentLatest()
+                .latest(EntityBinding.Stamp.Version.pattern().nid()).get();
+        Map<String, Integer> expected = Map.of(
+                "3d821e64-a2ee-4414-8949-1bc92ef5d5b6", EntityBinding.Stamp.Version.stampFieldDefinitionIndex(),   // STAMP field
+                "f2c79ebb-3095-44ea-831f-992aed48801f", EntityBinding.Stamp.Version.statusFieldDefinitionIndex(),  // Status field
+                "15293325-c16b-4f2e-8109-5b22b3355bcd", EntityBinding.Stamp.Version.timeFieldDefinitionIndex(),    // Time field
+                "a9210ad6-cc48-47df-86e5-2192d56704a6", EntityBinding.Stamp.Version.authorFieldDefinitionIndex(),  // Author field
+                "e6359a86-a1df-4721-8a1a-1f1f075ec3d9", EntityBinding.Stamp.Version.moduleFieldDefinitionIndex(),  // Module field
+                "6622a391-e2e6-45a0-97e1-c58cd0184092", EntityBinding.Stamp.Version.pathFieldDefinitionIndex());  // Path field
+        assertEquals(expected.size(), pattern.fieldDefinitions().size(), "Fields of the stamp version pattern");
+        expected.forEach((meaning, index) -> assertEquals(UUID.fromString(meaning),
+                PrimitiveData.publicId(pattern.fieldDefinitions().get(index).meaningNid()).asUuidArray()[0],
+                "Meaning of stamp version pattern field " + index));
     }
 
     @Test
