@@ -22,12 +22,12 @@ import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 
 public enum State implements dev.ikm.tinkar.component.Concept, ComponentWithNid {
-    ACTIVE(TinkarTerm.ACTIVE_STATE),
-    INACTIVE(TinkarTerm.INACTIVE_STATE),
-    WITHDRAWN(TinkarTerm.WITHDRAWN_STATE),
-    CANCELED(TinkarTerm.CANCELED_STATE),
+    ACTIVE(KernelTerm.ACTIVE_STATE),
+    INACTIVE(KernelTerm.INACTIVE_STATE),
+    WITHDRAWN(KernelTerm.WITHDRAWN_STATE),
+    CANCELED(KernelTerm.CANCELED_STATE),
     /* TODO Consider changing from PRIMORDIAL to Pre-inception (historically "premundane") */
-    PRIMORDIAL(TinkarTerm.PRIMORDIAL_STATE);
+    PRIMORDIAL(KernelTerm.PRIMORDIAL_STATE);
 
     final EntityProxy.Concept proxyForState;
 

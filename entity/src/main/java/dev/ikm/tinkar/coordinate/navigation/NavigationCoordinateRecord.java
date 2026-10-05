@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.coordinate.navigation;
 
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.binary.Decoder;
 import dev.ikm.tinkar.common.binary.DecoderInput;
 import dev.ikm.tinkar.common.binary.Encodable;
@@ -30,7 +31,6 @@ import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
 import dev.ikm.tinkar.coordinate.logic.LogicCoordinate;
 import dev.ikm.tinkar.coordinate.logic.PremiseType;
 import dev.ikm.tinkar.coordinate.stamp.StateSet;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import io.soabase.recordbuilder.core.RecordBuilder;
 
 import java.util.Objects;
@@ -56,13 +56,13 @@ public record NavigationCoordinateRecord(IntIdSet navigationPatternNids,
 
     public static NavigationCoordinateRecord makeInferred() {
         return new NavigationCoordinateRecord(
-                IntIds.set.of(TinkarTerm.INFERRED_NAVIGATION_PATTERN.nid()),
+                IntIds.set.of(KernelTerm.INFERRED_NAVIGATION_PATTERN.nid()),
                 StateSet.ACTIVE_AND_INACTIVE, true, IntIds.list.empty());
     }
 
     public static NavigationCoordinateRecord makeStated() {
         return new NavigationCoordinateRecord(
-                IntIds.set.of(TinkarTerm.STATED_NAVIGATION_PATTERN.nid()),
+                IntIds.set.of(KernelTerm.STATED_NAVIGATION_PATTERN.nid()),
                 StateSet.ACTIVE_AND_INACTIVE, true, IntIds.list.empty());
     }
 

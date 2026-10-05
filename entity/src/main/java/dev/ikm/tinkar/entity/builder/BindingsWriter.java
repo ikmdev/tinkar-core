@@ -158,7 +158,9 @@ public final class BindingsWriter {
                                    List<KnowledgeSet.StampBinding> stampBindings, Path outputDir) throws IOException {
         StringBuilder src = new StringBuilder();
         src.append("package ").append(packageName).append(";\n\n");
-        src.append("import dev.ikm.tinkar.common.id.PublicIds;\n");
+        if (!stampBindings.isEmpty()) {
+            src.append("import dev.ikm.tinkar.common.id.PublicIds;\n");
+        }
         if (!stampBindings.isEmpty()) {
             src.append("import dev.ikm.tinkar.terms.DeclaredStamp;\n");
         }
@@ -188,7 +190,6 @@ public final class BindingsWriter {
                 throw new IllegalStateException("Constant name collision in " + className + ": \"" + prior
                         + "\" and \"" + declaration.birthFqn() + "\" are both " + binding.constant());
             }
-            UUID uuid = declaration.publicId().asUuidArray()[0];
             String proxyType = switch (declaration.kind()) {
                 case CONCEPT -> "EntityProxy.Concept";
                 case PATTERN -> "EntityProxy.Pattern";
@@ -199,7 +200,7 @@ public final class BindingsWriter {
             src.append("    public static final ").append(proxyType).append(' ').append(binding.constant()).append(" =\n");
             src.append("            ").append(proxyType).append(".make(\"")
                     .append(escapeJava(declaration.birthFqn())).append("\",\n");
-            src.append("                    PublicIds.of(UUID.fromString(\"").append(uuid).append("\")));\n");
+            src.append("                    ").append(uuidsLiteral(declaration.publicId())).append(");\n");
         }
         for (KnowledgeSet.StampBinding stampBinding : stampBindings) {
             Stamp stamp = stampBinding.stamp();
@@ -256,7 +257,21 @@ public final class BindingsWriter {
 
     private static String conceptLiteral(dev.ikm.tinkar.terms.ConceptFacade concept) {
         return "EntityProxy.Concept.make(\"" + escapeJava(nameOf(concept)) + "\", "
-                + publicIdLiteral(concept.publicId()) + ")";
+                + uuidsLiteral(concept.publicId()) + ")";
+    }
+
+    /**
+     * A component's UUIDs as the arguments of {@code make(name, UUID...)}, the form
+     * {@code TinkarTerm} uses: the proxy keeps them sorted, so its first UUID is the least, as
+     * code that derives from a component's first UUID has always found it.
+     */
+    private static String uuidsLiteral(dev.ikm.tinkar.common.id.PublicId publicId) {
+        StringBuilder literal = new StringBuilder();
+        UUID[] uuids = publicId.asUuidArray();
+        for (int i = 0; i < uuids.length; i++) {
+            literal.append(i == 0 ? "" : ", ").append("UUID.fromString(\"").append(uuids[i]).append("\")");
+        }
+        return literal.toString();
     }
 
     private static String publicIdLiteral(dev.ikm.tinkar.common.id.PublicId publicId) {

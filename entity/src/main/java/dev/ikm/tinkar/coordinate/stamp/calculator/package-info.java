@@ -248,7 +248,7 @@
  * // Create snapshot of concept at specific time
  * StampPositionRecord historicPosition = StampPositionRecord.make(
  *     historicTimestamp,
- *     TinkarTerm.MASTER_PATH
+ *     KernelTerm.MASTER_PATH
  * );
  *
  * EntitySnapshot snapshot = calculator.snapshot(conceptEntity, historicPosition);
@@ -274,7 +274,7 @@
  * });
  *
  * // Stream pattern matching
- * calculator.streamLatestVersionForPattern(TinkarTerm.DESCRIPTION_PATTERN)
+ * calculator.streamLatestVersionForPattern(KernelTerm.DESCRIPTION_PATTERN)
  *     .filter(Latest::isPresent)
  *     .map(Latest::get)
  *     .forEach(desc -> {

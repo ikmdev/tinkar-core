@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.coordinate.language.calculator;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
@@ -33,7 +34,6 @@ import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.ProxyFactory;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -164,7 +164,7 @@ public interface LanguageCalculator {
      * @return an Optional containing the fully qualified name text if available; otherwise, an empty Optional
      */
     default Optional<String> getFullyQualifiedNameText(int componentNid) {
-        return getDescriptionTextForComponentOfType(componentNid, TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid());
+        return getDescriptionTextForComponentOfType(componentNid, KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid());
     }
 
     /**
@@ -185,7 +185,7 @@ public interface LanguageCalculator {
     Optional<String> getDescriptionTextForComponentOfType(int entityNid, int descriptionTypeNid);
 
     /**
-     * Gets the text of type {@link TinkarTerm#FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE}.  Will return empty, if
+     * Gets the text of type {@link KernelTerm#FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE}.  Will return empty, if
      * no matching description type is found in this or any nested language coordinates
      *
      * @param componentFacade the component to get a regular name for.
@@ -253,7 +253,7 @@ public interface LanguageCalculator {
      * @return the fully qualified name text if available; otherwise, the Nid as a string
      */
     default String getFullyQualifiedNameTextOrNid(int componentNid) {
-        Optional<String> optionalText = getDescriptionTextForComponentOfType(componentNid, TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid());
+        Optional<String> optionalText = getDescriptionTextForComponentOfType(componentNid, KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid());
         if (optionalText.isPresent()) {
             return optionalText.get();
         }
@@ -357,15 +357,15 @@ public interface LanguageCalculator {
      * <p>     * For any given step, if multiple descriptions match the criteria, an ACTIVE description should have priority over
      * an inactive one.
      * <p>     * To be returned, a description MUST match one of the description types, and the specified language.
-     * <p>     * If the specified language {@link LanguageCoordinate#languageConceptNid()} is {@link TinkarTerm#LANGUAGE},
+     * <p>     * If the specified language {@link LanguageCoordinate#languageConceptNid()} is {@link KernelTerm#LANGUAGE},
      * then language will be considered to always match, ignoring the actual value of the language in the description.
      * This allows this method to be used with a fallback behavior - where it will match a description of any language,
      * but still rank by the requested type.
      * <p>     * For any descriptions that matched the criteria, they are then compared with the requested
      * {@link LanguageCoordinate#dialectPatternPreferenceNidList()}
      * The dialect preferences are evaluated in array order.  Each description that has a dialect annotation that matches
-     * the dialect preference, with a type of {@link TinkarTerm#PREFERRED}, it is advanced to the next ranking step (below)
-     * <p>     * If none of the descriptions has a dialect annotation of type {@link TinkarTerm#PREFERRED} that matches a dialect
+     * the dialect preference, with a type of {@link KernelTerm#PREFERRED}, it is advanced to the next ranking step (below)
+     * <p>     * If none of the descriptions has a dialect annotation of type {@link KernelTerm#PREFERRED} that matches a dialect
      * in the {@link LanguageCoordinate#dialectPatternPreferenceNidList()}, then all matching language / type matching
      * descriptions are advanced to the next ranking step (below).
      * <p>     * The final ranking step, is to evaluate {@link LanguageCoordinate#modulePreferenceNidListForLanguage()}
@@ -730,14 +730,14 @@ public interface LanguageCalculator {
     }
 
     /**
-     * Gets the latestDescription of type {@link TinkarTerm#REGULAR_NAME_DESCRIPTION_TYPE}, according to dialect preferences.
+     * Gets the latestDescription of type {@link KernelTerm#REGULAR_NAME_DESCRIPTION_TYPE}, according to dialect preferences.
      * Will return empty, if no matching description type is found in this or any nested language coordinates
      *
      * @param descriptionList the latestDescription list
      * @return the regular name latestDescription, if available
      */
     default Latest<SemanticEntityVersion> getRegularDescription(ImmutableList<SemanticEntity> descriptionList) {
-        return getSpecifiedDescription(descriptionList, IntIds.list.of(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()));
+        return getSpecifiedDescription(descriptionList, IntIds.list.of(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()));
     }
 
     /**
@@ -756,14 +756,14 @@ public interface LanguageCalculator {
                                                           IntIdList descriptionTypePriority);
 
     /**
-     * Return a description of type {@link TinkarTerm#DEFINITION_DESCRIPTION_TYPE}, or an empty latest version, if none are of type definition in this or any
+     * Return a description of type {@link KernelTerm#DEFINITION_DESCRIPTION_TYPE}, or an empty latest version, if none are of type definition in this or any
      * nested language coordinates
      *
      * @param descriptionList
      * @return
      */
     default Latest<SemanticEntityVersion> getDefinitionDescription(ImmutableList<SemanticEntity> descriptionList) {
-        return getSpecifiedDescription(descriptionList, IntIds.list.of(TinkarTerm.DEFINITION_DESCRIPTION_TYPE.nid()));
+        return getSpecifiedDescription(descriptionList, IntIds.list.of(KernelTerm.DEFINITION_DESCRIPTION_TYPE.nid()));
     }
 
     /**
@@ -786,7 +786,7 @@ public interface LanguageCalculator {
      * @return an Optional containing the definition description text if available, otherwise an empty Optional
      */
     default Optional<String> getDefinitionDescriptionText(int entityNid) {
-        return getDescriptionTextForComponentOfType(entityNid, TinkarTerm.DEFINITION_DESCRIPTION_TYPE.nid());
+        return getDescriptionTextForComponentOfType(entityNid, KernelTerm.DEFINITION_DESCRIPTION_TYPE.nid());
     }
 
     /**
@@ -802,25 +802,25 @@ public interface LanguageCalculator {
     }
 
     /**
-     * Gets the latestDescription of type {@link TinkarTerm#REGULAR_NAME_DESCRIPTION_TYPE}.  Will return empty, if
+     * Gets the latestDescription of type {@link KernelTerm#REGULAR_NAME_DESCRIPTION_TYPE}.  Will return empty, if
      * no matching description type is found in this or any nested language coordinates
      *
      * @param entityNid the conceptId to get the fully specified latestDescription for
      * @return the regular name latestDescription
      */
     default Latest<SemanticEntityVersion> getRegularDescription(int entityNid) {
-        return getSpecifiedDescription(getDescriptionsForComponent(entityNid), IntIds.list.of(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()));
+        return getSpecifiedDescription(getDescriptionsForComponent(entityNid), IntIds.list.of(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()));
     }
 
     /**
-     * Gets the latestDescription of type {@link TinkarTerm#FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE}.  Will return empty, if
+     * Gets the latestDescription of type {@link KernelTerm#FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE}.  Will return empty, if
      * no matching description type is found in this or any nested language coordinates
      *
      * @param descriptionList the latestDescription list
      * @return the regular name latestDescription, if available
      */
     default Latest<SemanticEntityVersion> getFullyQualifiedDescription(ImmutableList<SemanticEntity> descriptionList) {
-        return getSpecifiedDescription(descriptionList, IntIds.list.of(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()));
+        return getSpecifiedDescription(descriptionList, IntIds.list.of(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()));
     }
 
     /**
@@ -834,14 +834,14 @@ public interface LanguageCalculator {
     }
 
     /**
-     * Gets the latestDescription of type {@link TinkarTerm#FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE}.  Will return empty, if
+     * Gets the latestDescription of type {@link KernelTerm#FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE}.  Will return empty, if
      * no matching description type is found in this or any nested language coordinates
      *
      * @param conceptId the conceptId to get the fully specified latestDescription for
      * @return the fully specified latestDescription
      */
     default Latest<SemanticEntityVersion> getFullyQualifiedDescription(int conceptId) {
-        return getSpecifiedDescription(getDescriptionsForComponent(conceptId), IntIds.list.of(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()));
+        return getSpecifiedDescription(getDescriptionsForComponent(conceptId), IntIds.list.of(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()));
     }
 
 }

@@ -99,7 +99,7 @@
  *     ImmutableList<Object> fieldValues = semantic.lastVersion().fieldValues();
  *
  *     // Process semantic based on pattern
- *     if (pattern.nid() == TinkarTerm.DESCRIPTION_PATTERN.nid()) {
+ *     if (pattern.nid() == KernelTerm.DESCRIPTION_PATTERN.nid()) {
  *         String descriptionText = (String) fieldValues.get(0);
  *         // ... process description
  *     }
@@ -130,7 +130,7 @@
  * <pre>{@code
  * // Example: Description Pattern defines structure for descriptions
  * PatternEntity descriptionPattern = Entity.getPatternForNid(
- *     TinkarTerm.DESCRIPTION_PATTERN.nid()
+ *     KernelTerm.DESCRIPTION_PATTERN.nid()
  * );
  *
  * PatternEntityVersion patternVersion = descriptionPattern.lastVersion();
@@ -240,7 +240,7 @@
  * // Find all descriptions for a concept
  * Entity.provider().forEachSemanticForComponentOfPattern(
  *     conceptNid,
- *     TinkarTerm.DESCRIPTION_PATTERN.nid(),
+ *     KernelTerm.DESCRIPTION_PATTERN.nid(),
  *     semantic -> {
  *         // Process each description semantic
  *         SemanticEntityVersion version = semantic.lastVersion();
@@ -252,7 +252,7 @@
  * // Find all axioms for a concept
  * Entity.provider().forEachSemanticForComponentOfPattern(
  *     conceptNid,
- *     TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
+ *     KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
  *     semantic -> {
  *         // Process each axiom semantic
  *         DiTreeEntity axiomTree = (DiTreeEntity) semantic.lastVersion().fieldValues().get(0);
@@ -332,7 +332,7 @@
  * // Create semantic to annotate concept
  * SemanticRecord description = SemanticRecord.build(
  *     publicId,
- *     TinkarTerm.DESCRIPTION_PATTERN.nid(),
+ *     KernelTerm.DESCRIPTION_PATTERN.nid(),
  *     conceptNid,  // references concept
  *     stampNid,
  *     fieldValues  // [text, type, language, case]

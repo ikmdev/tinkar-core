@@ -15,12 +15,12 @@
  */
 package dev.ikm.tinkar.entity.builder.generator;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiomSemantic;
 import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 
 import java.util.ArrayList;
@@ -117,7 +117,7 @@ public final class AxiomDecompiler {
     }
 
     private static ConceptFacade conceptOf(EntityVertex vertex) {
-        ConceptFacade concept = vertex.propertyFast(TinkarTerm.CONCEPT_REFERENCE);
+        ConceptFacade concept = vertex.propertyFast(KernelTerm.CONCEPT_REFERENCE);
         if (concept == null) {
             throw new IllegalStateException("A CONCEPT vertex carries no CONCEPT_REFERENCE property");
         }

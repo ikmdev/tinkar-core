@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.ext.lang.owl;
 
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -35,7 +36,6 @@ import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +55,7 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
     private final int destinationPatternNid;
     private final List<TransformationGroup> transformationRecords;
     private Transaction transaction;
-    private int authorNid = TinkarTerm.USER.nid();
+    private int authorNid = KernelTerm.USER.nid();
     private int moduleNid = Integer.MAX_VALUE;
     private int pathNid = Integer.MAX_VALUE;
 
@@ -187,7 +187,7 @@ public class OwlToLogicAxiomTransformerAndWriter extends TrackingCallable<Void> 
     private LogicalExpression generateLogicalExpression(int ConceptNid, List<SemanticEntity> owlEntities, StampCoordinateRecord stampCoordinate) {
         List<String> owlExpressionsToProcess = new ArrayList<>();
         StampCalculator stampCalc = stampCoordinate.stampCalculator();
-        int owlSyntaxIdx = stampCalc.getIndexForMeaning(TinkarTerm.OWL_AXIOM_SYNTAX_PATTERN.nid(), TinkarTerm.AXIOM_SYNTAX.nid()).orElse(0);
+        int owlSyntaxIdx = stampCalc.getIndexForMeaning(KernelTerm.OWL_AXIOM_SYNTAX_PATTERN.nid(), KernelTerm.AXIOM_SYNTAX.nid()).orElse(0);
         for (SemanticEntity<SemanticEntityVersion> owlEntity : owlEntities) {
             stampCalc.latest(owlEntity).ifPresent(latestVersion -> {
                 owlExpressionsToProcess.add((String) latestVersion.fieldValues().get(owlSyntaxIdx));

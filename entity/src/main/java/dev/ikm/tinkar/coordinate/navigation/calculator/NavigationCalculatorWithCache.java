@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.coordinate.navigation.calculator;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -39,7 +40,6 @@ import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.PatternEntityVersion;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
@@ -142,7 +142,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
 
     @Override
     public IntIdList unsortedParentsOf(int conceptNid) {
-        return getIntIdListForMeaning(conceptNid, TinkarTerm.RELATIONSHIP_ORIGIN);
+        return getIntIdListForMeaning(conceptNid, KernelTerm.RELATIONSHIP_ORIGIN);
     }
 
     @Override
@@ -173,7 +173,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
 
     @Override
     public ImmutableList<Edge> unsortedChildEdges(int conceptNid) {
-        return getEdges(conceptNid, TinkarTerm.RELATIONSHIP_DESTINATION);
+        return getEdges(conceptNid, KernelTerm.RELATIONSHIP_DESTINATION);
     }
 
     @Override
@@ -183,7 +183,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
 
     @Override
     public ImmutableList<Edge> unsortedParentEdges(int conceptNid) {
-        return getEdges(conceptNid, TinkarTerm.RELATIONSHIP_ORIGIN);
+        return getEdges(conceptNid, KernelTerm.RELATIONSHIP_ORIGIN);
     }
 
     @Override
@@ -193,15 +193,15 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
 
     @Override
     public IntIdList unsortedChildrenOf(int conceptNid) {
-        return getIntIdListForMeaning(conceptNid, TinkarTerm.RELATIONSHIP_DESTINATION);
+        return getIntIdListForMeaning(conceptNid, KernelTerm.RELATIONSHIP_DESTINATION);
     }
     @Override
     public IntIdList unsortedUnversionedChildrenOf(int conceptNid) {
-        return getIntIdListForMeaningUnversioned(conceptNid, TinkarTerm.RELATIONSHIP_DESTINATION);
+        return getIntIdListForMeaningUnversioned(conceptNid, KernelTerm.RELATIONSHIP_DESTINATION);
     }
     @Override
     public IntIdList unsortedUnversionedParentsOf(int conceptNid) {
-        return getIntIdListForMeaningUnversioned(conceptNid, TinkarTerm.RELATIONSHIP_ORIGIN);
+        return getIntIdListForMeaningUnversioned(conceptNid, KernelTerm.RELATIONSHIP_ORIGIN);
     }
 
     @Override
@@ -217,7 +217,7 @@ public class NavigationCalculatorWithCache implements NavigationCalculator {
 
     @Override
     public IntIdList unsortedParentsOf(int conceptNid, int patternNid) {
-        return getIntIdListForMeaningFromPattern(conceptNid, TinkarTerm.RELATIONSHIP_ORIGIN, patternNid);
+        return getIntIdListForMeaningFromPattern(conceptNid, KernelTerm.RELATIONSHIP_ORIGIN, patternNid);
     }
 
     private ImmutableList<Edge> getEdges(int conceptNid, EntityProxy.Concept relationshipDirection) {

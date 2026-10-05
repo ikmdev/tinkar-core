@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed.test;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,7 +43,6 @@ import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpressionBuilder;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.PatternFacade;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 public class TempEditUtil {
 
@@ -114,7 +114,7 @@ public class TempEditUtil {
 		LOG.info("Axiom: " + axiom);
 		switch (axiom) {
 		case LogicalAxiom.LogicalSet setAxiom -> {
-			statedBuilder.changeSetType(setAxiom, TinkarTerm.SUFFICIENT_SET);
+			statedBuilder.changeSetType(setAxiom, KernelTerm.SUFFICIENT_SET);
 		}
 		default -> throw new IllegalStateException("Unexpected kind of axiom: " + axiom.getClass().getSimpleName());
 		}

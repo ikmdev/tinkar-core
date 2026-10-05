@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.PublicId;
@@ -38,7 +39,6 @@ import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpressionBuilder;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 
 import java.math.BigDecimal;
@@ -65,6 +65,15 @@ final class ComponentLedger {
     /** The component's primordial (first) UUID — the T5 namespace for attached-semantic derivation. */
     final UUID componentUuid;
     final String birthFqn;
+
+    /**
+     * The language seed of every derived description identity: {@code T5(component,
+     * kind|seed|ordinal)}. A permanent literal, English language's least UUID, which is the first
+     * UUID {@code TinkarTerm.ENGLISH_LANGUAGE} carried when the derivation was defined (a proxy
+     * made from UUIDs keeps them sorted), and never read from a proxy again: a derived identity
+     * must not move with how some binding lists a component's UUIDs.
+     */
+    private static final UUID DESCRIPTION_LANGUAGE_SEED = UUID.fromString("02018e5a-46ba-5297-92f1-6931b9f98a12");
     /** The component's name in each binding class it is bound in, in binding order. */
     final Map<BindingClass, String> bindings = new LinkedHashMap<>();
 
@@ -176,10 +185,10 @@ final class ComponentLedger {
         fqnSeeded = true;
         DescriptionLedger fqn = new DescriptionLedger(
                 UuidT5Generator.get(componentUuid,
-                        "fully-qualified-name|" + TinkarTerm.ENGLISH_LANGUAGE.publicId().asUuidArray()[0]),
-                TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE, TinkarTerm.ENGLISH_LANGUAGE);
+                        "fully-qualified-name|" + DESCRIPTION_LANGUAGE_SEED),
+                KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE, KernelTerm.ENGLISH_LANGUAGE);
         fqn.versions.add(new VersionEntry<>(birthStamp, birthFqn));
-        fqn.dialects.add(new VersionEntry<>(birthStamp, TinkarTerm.PREFERRED));
+        fqn.dialects.add(new VersionEntry<>(birthStamp, KernelTerm.PREFERRED));
         descriptions.add(0, fqn);
     }
 
@@ -215,10 +224,10 @@ final class ComponentLedger {
     void addDescription(EntityProxy.Concept type, String kindKey, String text, Stamp stamp) {
         long ordinal = descriptions.stream().filter(d -> d.type.equals(type)).count();
         UUID descriptionUuid = UuidT5Generator.get(componentUuid,
-                kindKey + "|" + TinkarTerm.ENGLISH_LANGUAGE.publicId().asUuidArray()[0] + "|" + ordinal);
-        DescriptionLedger description = new DescriptionLedger(descriptionUuid, type, TinkarTerm.ENGLISH_LANGUAGE);
+                kindKey + "|" + DESCRIPTION_LANGUAGE_SEED + "|" + ordinal);
+        DescriptionLedger description = new DescriptionLedger(descriptionUuid, type, KernelTerm.ENGLISH_LANGUAGE);
         description.versions.add(new VersionEntry<>(stamp, text));
-        description.dialects.add(new VersionEntry<>(stamp, TinkarTerm.PREFERRED));
+        description.dialects.add(new VersionEntry<>(stamp, KernelTerm.PREFERRED));
         descriptions.add(description);
     }
 
@@ -314,7 +323,7 @@ final class ComponentLedger {
     /** The current text of the first live definition description, if any. */
     java.util.Optional<String> currentDefinition() {
         return descriptions.stream()
-                .filter(d -> d.type.equals(TinkarTerm.DEFINITION_DESCRIPTION_TYPE))
+                .filter(d -> d.type.equals(KernelTerm.DEFINITION_DESCRIPTION_TYPE))
                 .filter(d -> !d.retired())
                 .findFirst()
                 .map(DescriptionLedger::currentText);
@@ -550,7 +559,7 @@ final class ComponentLedger {
      */
     private static boolean isExplicitDescriptionDeclaration(EntityProxy.Pattern pattern, Object[] fieldValues) {
         return firstUuidOf(pattern.publicId())
-                .equals(firstUuidOf(TinkarTerm.DESCRIPTION_PATTERN.publicId()))
+                .equals(firstUuidOf(KernelTerm.DESCRIPTION_PATTERN.publicId()))
                 && fieldValues.length == 4;
     }
 
@@ -695,14 +704,14 @@ final class ComponentLedger {
         int descriptionNid = nidFor(description.uuid);
         RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
         SemanticRecord bootstrap = newSemantic(PublicIds.of(description.uuid),
-                TinkarTerm.DESCRIPTION_PATTERN, componentNid, versions);
+                KernelTerm.DESCRIPTION_PATTERN, componentNid, versions);
         for (VersionEntry<String> version : description.versions) {
             versions.add(SemanticVersionRecordBuilder.builder()
                     .chronology(bootstrap)
                     .stampNid(writeStamp(version.stamp()))
                     .fieldValues(Lists.immutable.of(
                             description.language, version.value(),
-                            TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE, description.type))
+                            KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE, description.type))
                     .build());
         }
         EntityService.get().putEntity(
@@ -715,7 +724,7 @@ final class ComponentLedger {
         UUID dialectUuid = UuidT5Generator.get(description.uuid, "us-dialect");
         RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
         SemanticRecord bootstrap = newSemantic(PublicIds.of(dialectUuid),
-                TinkarTerm.US_DIALECT_PATTERN, descriptionNid, versions);
+                KernelTerm.US_DIALECT_PATTERN, descriptionNid, versions);
         for (VersionEntry<EntityProxy.Concept> dialect : description.dialects) {
             versions.add(SemanticVersionRecordBuilder.builder()
                     .chronology(bootstrap)
@@ -746,7 +755,7 @@ final class ComponentLedger {
         UUID axiomUuid = firstUuidOf(axiomId);
         RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
         SemanticRecord bootstrap = newSemantic(axiomId,
-                TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, componentNid, versions);
+                KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, componentNid, versions);
         for (VersionEntry<Consumer<LogicalExpressionBuilder>> axiom : axiomVersions) {
             UUID stampUuid = firstUuidOf(axiom.stamp().publicId());
             int[] vertexOrdinal = {0};

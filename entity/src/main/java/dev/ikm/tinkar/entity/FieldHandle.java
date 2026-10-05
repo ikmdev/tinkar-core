@@ -1,5 +1,6 @@
 package dev.ikm.tinkar.entity;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.component.graph.DiGraph;
@@ -76,17 +77,17 @@ import java.util.function.Supplier;
  * ConceptFacade concept = FieldHandle.of(version, 0).expectConcept();
  *
  * // By meaning (when you know the semantic meaning):
- * ConceptFacade caseSig = FieldHandle.of(version, TinkarTerm.DESCRIPTION_CASE_SIGNIFICANCE, stampCalculator)
+ * ConceptFacade caseSig = FieldHandle.of(version, KernelTerm.DESCRIPTION_CASE_SIGNIFICANCE, stampCalculator)
  *     .expectConcept();
  *
  * // By purpose (when you want to find by purpose):
- * String text = FieldHandle.ofPurpose(version, TinkarTerm.TEXT_FOR_DESCRIPTION, stampCalculator)
+ * String text = FieldHandle.ofPurpose(version, KernelTerm.TEXT_FOR_DESCRIPTION, stampCalculator)
  *     .expectString();
  *
  * // Compared to the verbose alternative:
  * PatternEntityVersion pattern = stampCalculator.latestPatternEntityVersion(version.pattern())
  *     .orElseThrow(() -> new IllegalStateException("No latest pattern version for: " + version.pattern()));
- * int index = pattern.indexForMeaning(TinkarTerm.DESCRIPTION_CASE_SIGNIFICANCE);
+ * int index = pattern.indexForMeaning(KernelTerm.DESCRIPTION_CASE_SIGNIFICANCE);
  * ConceptFacade caseSig2 = FieldHandle.of(version.fieldValues().get(index)).expectConcept();
  * }</pre>
  *
@@ -157,11 +158,11 @@ public interface FieldHandle {
      * field but not its position:
      * <pre>{@code
      * // Instead of:
-     * int index = patternVersion.indexForMeaning(TinkarTerm.DESCRIPTION_CASE_SIGNIFICANCE);
+     * int index = patternVersion.indexForMeaning(KernelTerm.DESCRIPTION_CASE_SIGNIFICANCE);
      * FieldHandle.of(version.fieldValues().get(index))
      *
      * // You can write:
-     * FieldHandle.of(version, TinkarTerm.DESCRIPTION_CASE_SIGNIFICANCE, stampCalculator)
+     * FieldHandle.of(version, KernelTerm.DESCRIPTION_CASE_SIGNIFICANCE, stampCalculator)
      * }</pre>
      *
      * @param version the semantic version containing the field

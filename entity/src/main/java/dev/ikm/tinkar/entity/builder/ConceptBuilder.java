@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.builder;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.entity.ConceptRecord;
 import dev.ikm.tinkar.entity.ConceptRecordBuilder;
@@ -27,7 +28,6 @@ import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpressionBuilder;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -219,7 +219,7 @@ public final class ConceptBuilder {
          * @return this scope, for chaining
          */
         public ActiveScope synonym(String text) {
-            ledger.addDescription(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE, "synonym", text, stamp);
+            ledger.addDescription(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE, "synonym", text, stamp);
             return this;
         }
 
@@ -231,7 +231,7 @@ public final class ConceptBuilder {
          * @return this scope, for chaining
          */
         public ActiveScope definition(String text) {
-            ledger.addDescription(TinkarTerm.DEFINITION_DESCRIPTION_TYPE, "definition", text, stamp);
+            ledger.addDescription(KernelTerm.DEFINITION_DESCRIPTION_TYPE, "definition", text, stamp);
             return this;
         }
 
@@ -248,7 +248,7 @@ public final class ConceptBuilder {
          */
         public ActiveScope reviseSynonym(String currentText, String newText) {
             ledger.appendDescriptionVersion(
-                    ledger.resolveLive(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym"),
+                    ledger.resolveLive(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym"),
                     stamp, newText);
             return this;
         }
@@ -509,7 +509,7 @@ public final class ConceptBuilder {
          */
         public RetireScope retireSynonym(String currentText) {
             ledger.appendDescriptionVersion(
-                    ledger.resolveLive(TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym"),
+                    ledger.resolveLive(KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE, currentText, "synonym"),
                     stamp, currentText);
             return this;
         }
@@ -525,7 +525,7 @@ public final class ConceptBuilder {
          */
         public RetireScope retireDefinition(String currentText) {
             ledger.appendDescriptionVersion(
-                    ledger.resolveLive(TinkarTerm.DEFINITION_DESCRIPTION_TYPE, currentText, "definition"),
+                    ledger.resolveLive(KernelTerm.DEFINITION_DESCRIPTION_TYPE, currentText, "definition"),
                     stamp, currentText);
             return this;
         }

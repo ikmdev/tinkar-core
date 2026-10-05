@@ -51,6 +51,7 @@ package dev.ikm.tinkar.coordinate.stamp.calculator;
  *
  */
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -75,7 +76,6 @@ import dev.ikm.tinkar.entity.graph.DiTreeVersion;
 import dev.ikm.tinkar.entity.graph.VersionVertex;
 import dev.ikm.tinkar.terms.DefaultsTemplateTerm;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -212,7 +212,7 @@ public class StampCalculatorWithCache implements StampCalculator {
     }
 
     private static int pathDistanceFromOrigin(int cumulativeDistance, StampPositionRecord positionImmutable) {
-        if (positionImmutable.getPathForPositionNid() != TinkarTerm.PRIMORDIAL_PATH.nid()) {
+        if (positionImmutable.getPathForPositionNid() != KernelTerm.PRIMORDIAL_PATH.nid()) {
             int computedDistance = Integer.MAX_VALUE;
             for (StampPositionRecord origin : positionImmutable.getPathOrigins()) {
                 computedDistance = Math.min(computedDistance, pathDistanceFromOrigin(cumulativeDistance + 1, origin));
@@ -268,7 +268,7 @@ public class StampCalculatorWithCache implements StampCalculator {
     }
 
     private static Optional<StampPathImmutable> constructFromSemantics(int stampPathNid) {
-        int[] nids = EntityStore.current().semanticNidsForComponentOfPattern(stampPathNid, TinkarTerm.PATHS_PATTERN.nid());
+        int[] nids = EntityStore.current().semanticNidsForComponentOfPattern(stampPathNid, KernelTerm.PATHS_PATTERN.nid());
         if (nids.length == 1) {
             int pathId = nids[0];
             assert pathId == stampPathNid :
@@ -308,7 +308,7 @@ public class StampCalculatorWithCache implements StampCalculator {
             }
             modulesInPriorityOrder.add(currModuleNid);
             EntityService.get().forEachSemanticForComponentOfPattern(currModuleNid,
-                    TinkarTerm.MODULE_ORIGINS_PATTERN.nid(), (moduleOriginSemantic) -> {
+                    KernelTerm.MODULE_ORIGINS_PATTERN.nid(), (moduleOriginSemantic) -> {
                         stampCalculator.latest(moduleOriginSemantic).ifPresent(latestModuleOriginSemanticVersion -> {
                             IntIdSet moduleOrigins = (IntIdSet) latestModuleOriginSemanticVersion.fieldValues().get(0);
                             stack.addAll(moduleOrigins.mapToList(i -> i).reversed());

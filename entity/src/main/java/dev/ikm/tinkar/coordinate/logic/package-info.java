@@ -119,14 +119,14 @@
  *
  * // Custom logic coordinate
  * LogicCoordinateRecord custom = LogicCoordinateRecord.make(
- *     TinkarTerm.SNOROCKET_CLASSIFIER,
- *     TinkarTerm.EL_PLUS_PLUS_PROFILE,
- *     TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN,
- *     TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
- *     TinkarTerm.SOLOR_CONCEPT_ASSEMBLAGE,
- *     TinkarTerm.STATED_NAVIGATION_PATTERN,
- *     TinkarTerm.INFERRED_NAVIGATION_PATTERN,
- *     TinkarTerm.ROOT_VERTEX
+ *     KernelTerm.SNOROCKET_CLASSIFIER,
+ *     KernelTerm.EL_PLUS_PLUS_PROFILE,
+ *     KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN,
+ *     KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+ *     KernelTerm.SOLOR_CONCEPT_ASSEMBLAGE,
+ *     KernelTerm.STATED_NAVIGATION_PATTERN,
+ *     KernelTerm.INFERRED_NAVIGATION_PATTERN,
+ *     KernelTerm.ROOT_VERTEX
  * );
  * }</pre>
  *

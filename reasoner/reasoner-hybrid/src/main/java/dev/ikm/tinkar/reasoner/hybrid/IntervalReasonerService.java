@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.hybrid;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import java.util.List;
 
 import dev.ikm.tinkar.common.service.TrackingCallable;
@@ -29,7 +30,6 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedReasonerService;
 import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 public class IntervalReasonerService extends ElkSnomedReasonerService {
 
@@ -72,7 +72,7 @@ public class IntervalReasonerService extends ElkSnomedReasonerService {
 	public void buildNecessaryNormalForm(TrackingCallable<?> progressUpdater) {
 		List<ConcreteRoleType> intervalRoles = List.copyOf(data.getIntervalRoleTypes());
 		nnfb = IntervalNecessaryNormalFormBuilder.create(ontology, reasoner.getSuperConcepts(),
-				reasoner.getSuperRoleTypes(false), TinkarTerm.ROOT_VERTEX.nid(), intervalRoles,
+				reasoner.getSuperRoleTypes(false), KernelTerm.ROOT_VERTEX.nid(), intervalRoles,
 				(workDone, max) -> progressUpdater.updateProgress(workDone, max));
 		nnfb.generate();
 	}

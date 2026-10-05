@@ -1,5 +1,6 @@
 package dev.ikm.tinkar.ext.lang.owl;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.elk.snomed.interval.Interval;
 import dev.ikm.elk.snomed.model.Concept;
 import dev.ikm.elk.snomed.model.ConcreteRole;
@@ -16,7 +17,6 @@ import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalAxiom.Atom.TypedAtom.Int
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpressionBuilder;
 import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.slf4j.Logger;
@@ -63,9 +63,9 @@ public class OwlElToLogicalExpression {
 			exprs.add(builder.ConceptAxiom((int) sup.getId()));
 		}
 		if (role_type.isTransitive())
-			exprs.add(builder.ConceptAxiom(TinkarTerm.TRANSITIVE_PROPERTY));
+			exprs.add(builder.ConceptAxiom(KernelTerm.TRANSITIVE_PROPERTY));
 		if (role_type.isReflexive())
-			exprs.add(builder.ConceptAxiom(TinkarTerm.REFLEXIVE_PROPERTY));
+			exprs.add(builder.ConceptAxiom(KernelTerm.REFLEXIVE_PROPERTY));
 		if (role_type.getChained() != null) {
 			ImmutableList<ConceptFacade> chain = Lists.immutable.of(getConceptFacade(role_type.getId()),
 					getConceptFacade(role_type.getChained().getId()));
@@ -107,7 +107,7 @@ public class OwlElToLogicalExpression {
 		for (RoleGroup rg : def.getRoleGroups()) {
 			List<Atom> roles = buildRoles(rg.getRoles());
 			roles.addAll(buildConcreteRoles(rg.getConcreteRoles()));
-			exprs.add(builder.SomeRole(TinkarTerm.ROLE_GROUP, builder.And(toArray(roles))));
+			exprs.add(builder.SomeRole(KernelTerm.ROLE_GROUP, builder.And(toArray(roles))));
 		}
 		And expr = builder.And(toArray(exprs));
 		if (gci) {
@@ -149,7 +149,7 @@ public class OwlElToLogicalExpression {
 				case String -> role.getValue();
 				};
 				exprs.add(builder.FeatureAxiom(getConceptFacade(role.getConcreteRoleType().getId()),
-						TinkarTerm.EQUAL_TO, value));
+						KernelTerm.EQUAL_TO, value));
 			}
 		}
 		return exprs;

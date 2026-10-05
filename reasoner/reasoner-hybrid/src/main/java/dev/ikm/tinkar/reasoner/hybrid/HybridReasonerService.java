@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.hybrid;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import org.eclipse.collections.api.factory.primitive.IntSets;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
@@ -31,7 +32,6 @@ import dev.ikm.tinkar.coordinate.view.calculator.ViewCalculator;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedReasonerService;
 import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 public class HybridReasonerService extends ElkSnomedReasonerService {
 
@@ -45,7 +45,7 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 	}
 
 	public static long getRootId() {
-		return TinkarTerm.ROOT_VERTEX.nid();
+		return KernelTerm.ROOT_VERTEX.nid();
 	}
 
 	private static final SwecIds swec_ids = StatementSnomedOntology.swec_nfh_sctids; // swec_sctids;
@@ -86,7 +86,7 @@ public class HybridReasonerService extends ElkSnomedReasonerService {
 		nnfb = NecessaryNormalFormBuilder.create(sso.getOntology(),
 				sso.getSuperConcepts(),
 				sso.getSuperRoleTypes(false),
-				TinkarTerm.ROOT_VERTEX.nid(),
+				KernelTerm.ROOT_VERTEX.nid(),
 				(workDone, max) -> progressUpdater.updateProgress(workDone, max));
 		nnfb.generate();
 	}

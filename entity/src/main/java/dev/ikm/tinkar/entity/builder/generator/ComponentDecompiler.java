@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.builder.generator;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.coordinate.stamp.calculator.Latest;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.EntityHandle;
@@ -25,7 +26,6 @@ import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -81,16 +81,16 @@ public final class ComponentDecompiler {
 
         calculator.forEachSemanticVersionForComponent(component, (semanticVersion, entityVersion) -> {
             int patternNid = semanticVersion.patternNid();
-            if (patternNid == TinkarTerm.STATED_NAVIGATION_PATTERN.nid()
-                    || patternNid == TinkarTerm.INFERRED_NAVIGATION_PATTERN.nid()
-                    || patternNid == TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid()) {
+            if (patternNid == KernelTerm.STATED_NAVIGATION_PATTERN.nid()
+                    || patternNid == KernelTerm.INFERRED_NAVIGATION_PATTERN.nid()
+                    || patternNid == KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid()) {
                 return; // Derived — excluded, regenerated at assembly (#872).
             }
-            if (patternNid == TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()) {
+            if (patternNid == KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()) {
                 decompileAxioms(semanticVersion, resolver, lines, notes);
                 return;
             }
-            if (patternNid == TinkarTerm.DESCRIPTION_PATTERN.nid()) {
+            if (patternNid == KernelTerm.DESCRIPTION_PATTERN.nid()) {
                 descriptions.add(EntityFacade.make(semanticVersion.chronology().nid()));
             }
             decompileGenericSemantic(semanticVersion, resolver, lines, notes);
@@ -163,12 +163,12 @@ public final class ComponentDecompiler {
     private static void decompileDialects(EntityFacade description, StampCalculator calculator,
                                           TinkarTermReferenceResolver resolver, List<String> lines,
                                           List<String> notes) {
-        calculator.forEachSemanticVersionForComponentOfPattern(description, TinkarTerm.US_DIALECT_PATTERN,
+        calculator.forEachSemanticVersionForComponentOfPattern(description, KernelTerm.US_DIALECT_PATTERN,
                 (semanticVersion, entityVersion, patternVersion) ->
-                        emitSemanticOn(description, semanticVersion, TinkarTerm.US_DIALECT_PATTERN, resolver, lines, notes));
-        calculator.forEachSemanticVersionForComponentOfPattern(description, TinkarTerm.GB_DIALECT_PATTERN,
+                        emitSemanticOn(description, semanticVersion, KernelTerm.US_DIALECT_PATTERN, resolver, lines, notes));
+        calculator.forEachSemanticVersionForComponentOfPattern(description, KernelTerm.GB_DIALECT_PATTERN,
                 (semanticVersion, entityVersion, patternVersion) ->
-                        emitSemanticOn(description, semanticVersion, TinkarTerm.GB_DIALECT_PATTERN, resolver, lines, notes));
+                        emitSemanticOn(description, semanticVersion, KernelTerm.GB_DIALECT_PATTERN, resolver, lines, notes));
     }
 
     private static void decompileGenericSemantic(SemanticEntityVersion semanticVersion,

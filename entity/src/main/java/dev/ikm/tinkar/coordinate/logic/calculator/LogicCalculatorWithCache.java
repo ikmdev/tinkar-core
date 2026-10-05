@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.coordinate.logic.calculator;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -34,7 +35,6 @@ import dev.ikm.tinkar.entity.Field;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,12 +97,12 @@ public class LogicCalculatorWithCache implements LogicCalculator {
                 Latest<SemanticEntityVersion> latestAxioms = stampCalculator.latest(semanticNids[0]);
                 if (latestAxioms.isPresent()) {
                     SemanticEntityVersion axioms = latestAxioms.get();
-                    OptionalInt optionalIndexForMeaning = stampCalculator.getIndexForMeaning(axiomsPatternNid, TinkarTerm.EL_PLUS_PLUS_STATED_TERMINOLOGICAL_AXIOMS.nid());
+                    OptionalInt optionalIndexForMeaning = stampCalculator.getIndexForMeaning(axiomsPatternNid, KernelTerm.EL_PLUS_PLUS_STATED_TERMINOLOGICAL_AXIOMS.nid());
                     if (optionalIndexForMeaning.isPresent()) {
                         DiTreeEntity axiomsField =
                                 (DiTreeEntity) axioms.fieldValues().get(optionalIndexForMeaning.getAsInt());
                         for (EntityVertex vertex : axiomsField.vertexMap()) {
-                            if (vertex.getMeaningNid() == TinkarTerm.SUFFICIENT_SET.nid()) {
+                            if (vertex.getMeaningNid() == KernelTerm.SUFFICIENT_SET.nid()) {
                                 return true;
                             }
                         }
@@ -168,10 +168,10 @@ public class LogicCalculatorWithCache implements LogicCalculator {
 
         Latest<Field<DiTreeEntity>> latestAxiomField = switch (premiseType) {
             case INFERRED -> {
-                yield stampCalculator.getFieldForSemanticWithMeaning(semanticNids[0], TinkarTerm.EL_PLUS_PLUS_INFERRED_TERMINOLOGICAL_AXIOMS);
+                yield stampCalculator.getFieldForSemanticWithMeaning(semanticNids[0], KernelTerm.EL_PLUS_PLUS_INFERRED_TERMINOLOGICAL_AXIOMS);
             }
             case STATED -> {
-                yield stampCalculator.getFieldForSemanticWithMeaning(semanticNids[0], TinkarTerm.EL_PLUS_PLUS_STATED_TERMINOLOGICAL_AXIOMS);
+                yield stampCalculator.getFieldForSemanticWithMeaning(semanticNids[0], KernelTerm.EL_PLUS_PLUS_STATED_TERMINOLOGICAL_AXIOMS);
             }
         };
         if (latestAxiomField.isPresent()) {

@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.graph.adaptor.axiom;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -83,7 +84,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public AndAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(TinkarTerm.AND);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelTerm.AND);
 		}
 
 		@Override
@@ -96,7 +97,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public OrAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(TinkarTerm.OR);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelTerm.OR);
 		}
 
 		@Override
@@ -110,12 +111,12 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public ConceptAxiomAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(TinkarTerm.CONCEPT_REFERENCE);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelTerm.CONCEPT_REFERENCE);
 		}
 
 		@Override
 		public ConceptFacade concept() {
-			return property(TinkarTerm.CONCEPT_REFERENCE);
+			return property(KernelTerm.CONCEPT_REFERENCE);
 		}
 
 		@Override
@@ -129,12 +130,12 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public DisjointWithAxiomAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(TinkarTerm.DISJOINT_WITH);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelTerm.DISJOINT_WITH);
 		}
 
 		@Override
 		public ConceptFacade disjointWith() {
-			return property(TinkarTerm.DISJOINT_WITH);
+			return property(KernelTerm.DISJOINT_WITH);
 		}
 	}
 
@@ -142,7 +143,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public DefinitionRootAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(TinkarTerm.DEFINITION_ROOT);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelTerm.DEFINITION_ROOT);
 		}
 
 		@Override
@@ -156,7 +157,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public NecessarySetAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(TinkarTerm.NECESSARY_SET);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelTerm.NECESSARY_SET);
 		}
 
 		@Override
@@ -170,7 +171,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public SufficientSetAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(TinkarTerm.SUFFICIENT_SET);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelTerm.SUFFICIENT_SET);
 		}
 
 		@Override
@@ -184,7 +185,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public PropertySetAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(TinkarTerm.PROPERTY_SET);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelTerm.PROPERTY_SET);
 		}
 
 		@Override
@@ -198,7 +199,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public DataPropertySetAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(TinkarTerm.DATA_PROPERTY_SET);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelTerm.DATA_PROPERTY_SET);
 		}
 
 		@Override
@@ -213,7 +214,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 		public IntervalPropertySetAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
 			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning()
-					.equals(TinkarTerm.INTERVAL_PROPERTY_SET);
+					.equals(KernelTerm.INTERVAL_PROPERTY_SET);
 		}
 
 		@Override
@@ -227,7 +228,7 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public InclusionSetAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(TinkarTerm.INCLUSION_SET);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelTerm.INCLUSION_SET);
 		}
 
 		@Override
@@ -240,17 +241,17 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public RoleAxiomAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(TinkarTerm.ROLE);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelTerm.ROLE);
 		}
 
 		@Override
 		public ConceptFacade type() {
-			return property(TinkarTerm.ROLE_TYPE);
+			return property(KernelTerm.ROLE_TYPE);
 		}
 
 		@Override
 		public ConceptFacade roleOperator() {
-			return property(TinkarTerm.ROLE_OPERATOR);
+			return property(KernelTerm.ROLE_OPERATOR);
 		}
 
 		@Override
@@ -276,20 +277,20 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public IntervalRoleAxiomAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(TinkarTerm.INTERVAL_ROLE);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelTerm.INTERVAL_ROLE);
 		}
 
 		@Override
 		public ConceptFacade type() {
-			return property(TinkarTerm.INTERVAL_ROLE_TYPE);
+			return property(KernelTerm.INTERVAL_ROLE_TYPE);
 		}
 
 		@Override
 		public String interval() {
-			return property(TinkarTerm.LOWER_BOUND_OPEN) + " " + property(TinkarTerm.INTERVAL_LOWER_BOUND)
-					+ " , " + property(TinkarTerm.INTERVAL_UPPER_BOUND) + " "
-					+ property(TinkarTerm.UPPER_BOUND_OPEN) + " "
-					+ property(TinkarTerm.UNIT_OF_MEASURE);
+			return property(KernelTerm.LOWER_BOUND_OPEN) + " " + property(KernelTerm.INTERVAL_LOWER_BOUND)
+					+ " , " + property(KernelTerm.INTERVAL_UPPER_BOUND) + " "
+					+ property(KernelTerm.UPPER_BOUND_OPEN) + " "
+					+ property(KernelTerm.UNIT_OF_MEASURE);
 		}
 
 		@Override
@@ -303,22 +304,22 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 
 		public FeatureAxiomAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
-			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(TinkarTerm.FEATURE);
+			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning().equals(KernelTerm.FEATURE);
 		}
 
 		@Override
 		public ConceptFacade type() {
-			return property(TinkarTerm.FEATURE_TYPE);
+			return property(KernelTerm.FEATURE_TYPE);
 		}
 
 		@Override
 		public Object literal() {
-			return this.adaptedExpression.sourceGraph.vertex(vertexIndex).propertyFast(TinkarTerm.LITERAL_VALUE);
+			return this.adaptedExpression.sourceGraph.vertex(vertexIndex).propertyFast(KernelTerm.LITERAL_VALUE);
 		}
 
 		@Override
 		public ConceptFacade concreteDomainOperator() {
-			return property(TinkarTerm.CONCRETE_DOMAIN_OPERATOR);
+			return property(KernelTerm.CONCRETE_DOMAIN_OPERATOR);
 		}
 	}
 
@@ -328,13 +329,13 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 		public PropertySequenceImplicationAdaptor(LogicalExpression enclosingExpression, int vertexIndex) {
 			super(enclosingExpression, vertexIndex);
 			assert enclosingExpression.sourceGraph.vertex(vertexIndex).meaning()
-					.equals(TinkarTerm.PROPERTY_SEQUENCE_IMPLICATION);
+					.equals(KernelTerm.PROPERTY_SEQUENCE_IMPLICATION);
 		}
 
 		@Override
 		public ImmutableList<ConceptFacade> propertySequence() {
 			Optional<IntIdList> optionalPattern = this.adaptedExpression.sourceGraph.vertex(this.vertexIndex)
-					.property(TinkarTerm.PROPERTY_SEQUENCE);
+					.property(KernelTerm.PROPERTY_SEQUENCE);
 			if (optionalPattern.isPresent()) {
 				IntIdList pattern = optionalPattern.get();
 				return pattern.map(nid -> EntityProxy.Concept.make(nid));

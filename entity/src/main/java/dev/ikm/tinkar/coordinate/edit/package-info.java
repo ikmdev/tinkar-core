@@ -149,11 +149,11 @@
  * <pre>{@code
  * // Create an edit coordinate for development work
  * EditCoordinateRecord editCoord = EditCoordinateRecord.make(
- *     TinkarTerm.USER.nid(),                    // author
- *     TinkarTerm.SOLOR_OVERLAY_MODULE.nid(),    // default module for new content
- *     TinkarTerm.SOLOR_OVERLAY_MODULE.nid(),    // destination module (when modularizing)
- *     TinkarTerm.DEVELOPMENT_PATH.nid(),        // default path for new content
- *     TinkarTerm.MASTER_PATH.nid()              // promotion path (when promoting)
+ *     KernelTerm.USER.nid(),                    // author
+ *     KernelTerm.SOLOR_OVERLAY_MODULE.nid(),    // default module for new content
+ *     KernelTerm.SOLOR_OVERLAY_MODULE.nid(),    // destination module (when modularizing)
+ *     KernelTerm.DEVELOPMENT_PATH.nid(),        // default path for new content
+ *     KernelTerm.MASTER_PATH.nid()              // promotion path (when promoting)
  * );
  *
  * // Use in content creation

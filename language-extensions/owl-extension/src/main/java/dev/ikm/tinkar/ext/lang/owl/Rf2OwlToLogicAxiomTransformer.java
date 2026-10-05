@@ -16,6 +16,7 @@
 package dev.ikm.tinkar.ext.lang.owl;
 
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.TinkExecutor;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.common.util.time.Stopwatch;
@@ -24,7 +25,6 @@ import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.transaction.Transaction;
 import dev.ikm.tinkar.terms.PatternFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +40,7 @@ public class Rf2OwlToLogicAxiomTransformer extends TrackingCallable<Void> {
 
     private final PatternFacade rf2OwlPattern;
     private final PatternFacade logicalAxiomPattern;
-    private int authorNid = TinkarTerm.USER.nid();
+    private int authorNid = KernelTerm.USER.nid();
     private int moduleNid = Integer.MAX_VALUE;
     private int pathNid = Integer.MAX_VALUE;
 

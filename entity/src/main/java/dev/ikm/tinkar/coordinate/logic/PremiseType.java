@@ -16,13 +16,13 @@
 package dev.ikm.tinkar.coordinate.logic;
 
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.entity.Entity;
 import dev.ikm.tinkar.terms.ComponentWithNid;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 /**
  * The Enum PremiseType.
@@ -33,12 +33,12 @@ public enum PremiseType implements dev.ikm.tinkar.component.Concept, ComponentWi
     /**
      * Compute the taxonomy from stated axioms.
      */
-    STATED("Stated", TinkarTerm.STATED_PREMISE_TYPE, TaxonomyFlag.STATED),
+    STATED("Stated", KernelTerm.STATED_PREMISE_TYPE, TaxonomyFlag.STATED),
 
     /**
      * Compute the taxonomy from inferred axioms.
      */
-    INFERRED("Inferred", TinkarTerm.INFERRED_PREMISE_TYPE, TaxonomyFlag.INFERRED);
+    INFERRED("Inferred", KernelTerm.INFERRED_PREMISE_TYPE, TaxonomyFlag.INFERRED);
 
     String displayName;
     EntityProxy.Concept premiseTypeConcept;
@@ -51,10 +51,10 @@ public enum PremiseType implements dev.ikm.tinkar.component.Concept, ComponentWi
     }
 
     public static PremiseType fromConcept(ConceptFacade concept) {
-        if (Entity.nid(concept) == TinkarTerm.INFERRED_PREMISE_TYPE.nid()) {
+        if (Entity.nid(concept) == KernelTerm.INFERRED_PREMISE_TYPE.nid()) {
             return INFERRED;
         }
-        if (Entity.nid(concept) == TinkarTerm.STATED_PREMISE_TYPE.nid()) {
+        if (Entity.nid(concept) == KernelTerm.STATED_PREMISE_TYPE.nid()) {
             return STATED;
         }
         throw new IllegalStateException("PremiseType.fromConcept can't handle: " + DiagnosticText.component(Entity.nid(concept)));

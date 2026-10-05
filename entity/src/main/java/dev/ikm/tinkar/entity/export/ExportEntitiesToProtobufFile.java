@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.export;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -31,7 +32,6 @@ import dev.ikm.tinkar.entity.aggregator.MembershipEntityAggregator;
 import dev.ikm.tinkar.entity.aggregator.TemporalEntityAggregator;
 import dev.ikm.tinkar.entity.transform.EntityToTinkarSchemaTransformer;
 import dev.ikm.tinkar.schema.TinkarMsg;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -216,7 +216,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                                            Set<PublicId> authorList){
         StringBuilder manifestContent = new StringBuilder()
                 // TODO: Dynamically populate this user
-                .append("Packager-Name: ").append(TinkarTerm.KOMET_USER.description()).append("\n")
+                .append("Packager-Name: ").append(KernelTerm.KOMET_USER.description()).append("\n")
                 .append("Package-Date: ").append(LocalDateTime.now(Clock.systemUTC())).append("\n")
                 .append("Total-Count: ").append(entityCount).append("\n")
                 .append("Concept-Count: ").append(conceptsCount).append("\n")

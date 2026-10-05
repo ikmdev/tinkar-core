@@ -84,7 +84,7 @@
  * ConceptEntity meaning = Entity.getConceptForNid(meaningNid);
  *
  * // Check for specific meanings
- * if (vertex.getMeaningNid() == TinkarTerm.SUFFICIENT_SET.nid()) {
+ * if (vertex.getMeaningNid() == KernelTerm.SUFFICIENT_SET.nid()) {
  *     // This is a sufficient definition
  * }
  * }</pre>
@@ -125,7 +125,7 @@
  * DiTreeEntity axiomTree = ...;
  * EntityVertex root = axiomTree.root();
  *
- * if (root.getMeaningNid() == TinkarTerm.SUFFICIENT_SET.nid()) {
+ * if (root.getMeaningNid() == KernelTerm.SUFFICIENT_SET.nid()) {
  *     // Sufficient definition
  *     processChildren(axiomTree, root);
  * }
@@ -135,7 +135,7 @@
  *         EntityVertex child = tree.vertex(childIndex);
  *         int meaning = child.getMeaningNid();
  *
- *         if (meaning == TinkarTerm.AND.nid()) {
+ *         if (meaning == KernelTerm.AND.nid()) {
  *             // Conjunction - process all children
  *             processChildren(tree, child);
  *         } else if (meaning == TinkarTerm.SOME.nid()) {
@@ -162,14 +162,14 @@
  * // Add root vertex (SUFFICIENT_SET)
  * int rootIndex = 0;
  * vertices.add(EntityVertex.make(
- *     TinkarTerm.SUFFICIENT_SET.nid(),
+ *     KernelTerm.SUFFICIENT_SET.nid(),
  *     rootIndex
  * ));
  *
  * // Add AND vertex
  * int andIndex = 1;
  * vertices.add(EntityVertex.make(
- *     TinkarTerm.AND.nid(),
+ *     KernelTerm.AND.nid(),
  *     andIndex
  * ));
  * successorMap.put(rootIndex, IntLists.mutable.of(andIndex));

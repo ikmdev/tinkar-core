@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.coordinate.view.calculator;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculatorDelegate;
 import dev.ikm.tinkar.coordinate.logic.PremiseType;
 import dev.ikm.tinkar.coordinate.logic.calculator.LogicCalculatorDelegate;
@@ -24,7 +25,6 @@ import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculatorDelegate;
 import dev.ikm.tinkar.coordinate.view.ViewCoordinateRecord;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.terms.EntityFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 public interface ViewCalculator extends StampCalculatorDelegate, LanguageCalculatorDelegate, NavigationCalculatorDelegate, LogicCalculatorDelegate {
 
@@ -43,7 +43,7 @@ public interface ViewCalculator extends StampCalculatorDelegate, LanguageCalcula
         if (!conceptExpression.isPresent()) {
             return false;
         }
-        return conceptExpression.get().containsVertexWithMeaning(TinkarTerm.SUFFICIENT_SET);
+        return conceptExpression.get().containsVertexWithMeaning(KernelTerm.SUFFICIENT_SET);
     }
 
 }

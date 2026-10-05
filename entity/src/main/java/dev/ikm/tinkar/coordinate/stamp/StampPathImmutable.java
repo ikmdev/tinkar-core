@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.coordinate.stamp;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import dev.ikm.tinkar.common.binary.Decoder;
@@ -28,7 +29,6 @@ import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.ImmutableCoordinate;
 import dev.ikm.tinkar.coordinate.PathService;
 import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.MutableSet;
@@ -66,7 +66,7 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
     }
 
     public static StampPathImmutable make(int pathConceptNid, ImmutableSet<StampPositionRecord> pathOrigins) {
-        if (pathConceptNid == TinkarTerm.UNINITIALIZED_COMPONENT.nid()) {
+        if (pathConceptNid == KernelTerm.UNINITIALIZED_COMPONENT.nid()) {
             return new StampPathImmutable(pathConceptNid, pathOrigins);
         }
         return SINGLETONS.get(pathConceptNid,
@@ -78,7 +78,7 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
     }
 
     public static StampPathImmutable make(int pathConceptNid) {
-        if (pathConceptNid == TinkarTerm.UNINITIALIZED_COMPONENT.nid()) {
+        if (pathConceptNid == KernelTerm.UNINITIALIZED_COMPONENT.nid()) {
             return new StampPathImmutable(pathConceptNid, Sets.immutable.empty());
         }
         return SINGLETONS.get(pathConceptNid,
@@ -97,7 +97,7 @@ public final class StampPathImmutable implements StampPath, ImmutableCoordinate 
     @Decoder
     public static StampPathImmutable make(DecoderInput in) {
         StampPathImmutable stampPath = new StampPathImmutable(in, Encodable.checkVersion(in));
-        if (stampPath.pathConceptNid == TinkarTerm.UNINITIALIZED_COMPONENT.nid()) {
+        if (stampPath.pathConceptNid == KernelTerm.UNINITIALIZED_COMPONENT.nid()) {
             return stampPath;
         }
         return SINGLETONS.get(stampPath.pathConceptNid(),

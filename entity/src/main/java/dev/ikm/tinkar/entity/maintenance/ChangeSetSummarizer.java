@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.maintenance;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -29,7 +30,6 @@ import dev.ikm.tinkar.schema.SemanticVersion;
 import dev.ikm.tinkar.schema.StampChronology;
 import dev.ikm.tinkar.schema.StampVersion;
 import dev.ikm.tinkar.schema.TinkarMsg;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -920,29 +920,26 @@ public final class ChangeSetSummarizer {
             List<SemanticAccum> related = byRef.getOrDefault(conceptKey, Lists.mutable.empty());
 
             int desc = 0, fqn = 0, stated = 0, inferred = 0, navS = 0, navI = 0, ident = 0, other = 0;
-            UUID descPattern = TinkarTerm.DESCRIPTION_PATTERN.asUuidArray()[0];
-            UUID statedPattern = TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.asUuidArray()[0];
-            UUID inferredPattern = TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.asUuidArray()[0];
-            UUID statedNav = TinkarTerm.STATED_NAVIGATION_PATTERN.asUuidArray()[0];
-            UUID inferredNav = TinkarTerm.INFERRED_NAVIGATION_PATTERN.asUuidArray()[0];
-            UUID solorNav = TinkarTerm.NAVIGATION_PATTERN.asUuidArray()[0];
-            UUID statedDigraph = TinkarTerm.EL_PLUS_PLUS_STATED_DIGRAPH.asUuidArray()[0];
-            UUID inferredDigraph = TinkarTerm.EL_PLUS_PLUS_INFERRED_DIGRAPH.asUuidArray()[0];
-            UUID identifierPattern = TinkarTerm.IDENTIFIER_PATTERN.asUuidArray()[0];
-            UUID fqnTypeUuid = TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.asUuidArray()[0];
+            UUID descPattern = KernelTerm.DESCRIPTION_PATTERN.asUuidArray()[0];
+            UUID statedPattern = KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.asUuidArray()[0];
+            UUID inferredPattern = KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.asUuidArray()[0];
+            UUID statedNav = KernelTerm.STATED_NAVIGATION_PATTERN.asUuidArray()[0];
+            UUID inferredNav = KernelTerm.INFERRED_NAVIGATION_PATTERN.asUuidArray()[0];
+            UUID identifierPattern = KernelTerm.IDENTIFIER_PATTERN.asUuidArray()[0];
+            UUID fqnTypeUuid = KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.asUuidArray()[0];
 
             for (SemanticAccum s : related) {
                 UUID patternKey = s.patternId.asUuidArray()[0];
                 if (patternKey.equals(descPattern)) {
                     if (latestDescriptionTypeIs(s.latestVersion, fqnTypeUuid)) fqn++;
                     else desc++;
-                } else if (patternKey.equals(statedPattern) || patternKey.equals(statedDigraph)) {
+                } else if (patternKey.equals(statedPattern)) {
                     stated++;
-                } else if (patternKey.equals(inferredPattern) || patternKey.equals(inferredDigraph)) {
+                } else if (patternKey.equals(inferredPattern)) {
                     inferred++;
                 } else if (patternKey.equals(statedNav)) {
                     navS++;
-                } else if (patternKey.equals(inferredNav) || patternKey.equals(solorNav)) {
+                } else if (patternKey.equals(inferredNav)) {
                     navI++;
                 } else if (patternKey.equals(identifierPattern)) {
                     ident++;
@@ -1046,28 +1043,27 @@ public final class ChangeSetSummarizer {
         if (v == null || v.getFieldsCount() == 0) return "(no fields)";
         UUID patternKey = patternId.asUuidArray()[0];
 
-        if (patternKey.equals(TinkarTerm.DESCRIPTION_PATTERN.asUuidArray()[0])) {
+        if (patternKey.equals(KernelTerm.DESCRIPTION_PATTERN.asUuidArray()[0])) {
             // language, text, case, descType
             String text = fieldString(v, 1);
             String descType = resolver.resolve(fieldPublicId(v, 3));
             String lang = resolver.resolve(fieldPublicId(v, 0));
             return "[" + descType + "/" + lang + "] " + truncate(text, 120);
         }
-        if (patternKey.equals(TinkarTerm.IDENTIFIER_PATTERN.asUuidArray()[0])) {
+        if (patternKey.equals(KernelTerm.IDENTIFIER_PATTERN.asUuidArray()[0])) {
             String source = resolver.resolve(fieldPublicId(v, 0));
             String id = fieldString(v, 1);
             return source + " = " + id;
         }
-        if (patternKey.equals(TinkarTerm.STATED_NAVIGATION_PATTERN.asUuidArray()[0])
-                || patternKey.equals(TinkarTerm.INFERRED_NAVIGATION_PATTERN.asUuidArray()[0])
-                || patternKey.equals(TinkarTerm.NAVIGATION_PATTERN.asUuidArray()[0])) {
+        if (patternKey.equals(KernelTerm.STATED_NAVIGATION_PATTERN.asUuidArray()[0])
+                || patternKey.equals(KernelTerm.INFERRED_NAVIGATION_PATTERN.asUuidArray()[0])) {
             // Field 0 = destinations (children), Field 1 = origins (parents)
             String children = renderPublicIdSet(v, 0, resolver);
             String parents = renderPublicIdSet(v, 1, resolver);
             return "parents=[" + parents + "] children=[" + children + "]";
         }
-        if (patternKey.equals(TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.asUuidArray()[0])
-                || patternKey.equals(TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.asUuidArray()[0])) {
+        if (patternKey.equals(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.asUuidArray()[0])
+                || patternKey.equals(KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.asUuidArray()[0])) {
             return summarizeAxiomTree(v, 0);
         }
         return renderGenericFields(v, resolver);

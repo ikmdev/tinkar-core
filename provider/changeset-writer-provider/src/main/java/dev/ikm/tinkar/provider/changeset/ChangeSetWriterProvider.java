@@ -1,5 +1,6 @@
 package dev.ikm.tinkar.provider.changeset;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.DataActivity;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -19,7 +20,6 @@ import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
 import dev.ikm.tinkar.entity.transform.EntityToTinkarSchemaTransformer;
 import dev.ikm.tinkar.schema.TinkarMsg;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.multimap.MutableMultimap;
 import org.eclipse.collections.impl.factory.Multimaps;
@@ -174,7 +174,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      */
     private File newZipFile() {
         return new File(changeSetFolder,
-                TinkarTerm.USER.description() + " " +
+                KernelTerm.USER.description() + " " +
                         DateTimeUtil.nowWithZoneCompact().replace(':', '\uA789') +
                         " " + generateRandomString(3) + " ike-cs.zip");
     }

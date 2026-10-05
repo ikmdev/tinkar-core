@@ -48,10 +48,10 @@
  * StampCalculator calculator = StampCalculatorWithCache.getCalculator(stampCoord);
  *
  * StampPositionRecord fromPos = StampPositionRecord.make(
- *     time1, TinkarTerm.DEVELOPMENT_PATH
+ *     time1, KernelTerm.DEVELOPMENT_PATH
  * );
  * StampPositionRecord toPos = StampPositionRecord.make(
- *     time2, TinkarTerm.DEVELOPMENT_PATH
+ *     time2, KernelTerm.DEVELOPMENT_PATH
  * );
  *
  * ChangeChronology changes = calculator.getChanges(conceptEntity, fromPos, toPos);
