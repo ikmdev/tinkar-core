@@ -28,6 +28,13 @@ public final class KernelTerm {
                     UUID.fromString("f56fa231-10f9-5e7f-a86d-a1d61b5b56e3"));
 
     /**
+     * Irish language (SOLOR)
+     */
+    public static final EntityProxy.Concept IRISH_LANGUAGE =
+            EntityProxy.Concept.make("Irish language (SOLOR)",
+                    UUID.fromString("58e82fc4-1492-5cf8-8997-43800360bbd6"));
+
+    /**
      * English Language
      */
     public static final EntityProxy.Concept ENGLISH_LANGUAGE =
@@ -35,11 +42,60 @@ public final class KernelTerm {
                     UUID.fromString("02018e5a-46ba-5297-92f1-6931b9f98a12"), UUID.fromString("06d905ea-c647-3af9-bfe5-2514e135b558"), UUID.fromString("45021920-9567-11e5-8994-feff819cdc9f"));
 
     /**
+     * Czech language (SOLOR)
+     */
+    public static final EntityProxy.Concept CZECH_LANGUAGE =
+            EntityProxy.Concept.make("Czech language (SOLOR)",
+                    UUID.fromString("33aa2d26-0541-557c-b796-904cbf245101"));
+
+    /**
+     * Danish language (SOLOR)
+     */
+    public static final EntityProxy.Concept DANISH_LANGUAGE =
+            EntityProxy.Concept.make("Danish language (SOLOR)",
+                    UUID.fromString("987681fb-f3ef-595d-90e2-067baf2bc71f"), UUID.fromString("45021f10-9567-11e5-8994-feff819cdc9f"), UUID.fromString("7e462e33-6d94-38ae-a044-492a857a6853"));
+
+    /**
+     * French Language (SOLOR)
+     */
+    public static final EntityProxy.Concept FRENCH_LANGUAGE =
+            EntityProxy.Concept.make("French Language (SOLOR)",
+                    UUID.fromString("8b23e636-a0bd-30fb-b8e2-1f77eaa3a87e"), UUID.fromString("01707e47-5f6d-555e-80af-3c1ffb297eaa"), UUID.fromString("45021dbc-9567-11e5-8994-feff819cdc9f"));
+
+    /**
+     * German Language (SOLOR)
+     */
+    public static final EntityProxy.Concept GERMAN_LANGUAGE =
+            EntityProxy.Concept.make("German Language (SOLOR)",
+                    UUID.fromString("5f144b18-76a8-5c7e-8480-55a5030d707f"));
+
+    /**
+     * Italian Language (SOLOR)
+     */
+    public static final EntityProxy.Concept ITALIAN_LANGUAGE =
+            EntityProxy.Concept.make("Italian Language (SOLOR)",
+                    UUID.fromString("bdd59458-381a-5818-8577-60525f11ac6c"));
+
+    /**
+     * Chinese language (SOLOR)
+     */
+    public static final EntityProxy.Concept CHINESE_LANGUAGE =
+            EntityProxy.Concept.make("Chinese language (SOLOR)",
+                    UUID.fromString("aacbc859-e9a0-5e01-b6a9-9a255a47b0c9"), UUID.fromString("ba2efe6b-fe56-3d91-ae0f-3b389628f74c"), UUID.fromString("45022532-9567-11e5-8994-feff819cdc9f"));
+
+    /**
      * Spanish language
      */
     public static final EntityProxy.Concept SPANISH_LANGUAGE =
             EntityProxy.Concept.make("Spanish language",
                     UUID.fromString("0fcf44fb-d0a7-3a67-bc9f-eb3065ed3c8e"), UUID.fromString("45021c36-9567-11e5-8994-feff819cdc9f"));
+
+    /**
+     * Dutch language (SOLOR)
+     */
+    public static final EntityProxy.Concept DUTCH_LANGUAGE =
+            EntityProxy.Concept.make("Dutch language (SOLOR)",
+                    UUID.fromString("21d11bd1-3dab-5034-9625-81b9ae2bd8e7"), UUID.fromString("45022280-9567-11e5-8994-feff819cdc9f"), UUID.fromString("674ad858-0224-3f90-bcf0-bc4cab753d2d"));
 
     /**
      * Author
@@ -61,6 +117,13 @@ public final class KernelTerm {
     public static final EntityProxy.Concept IDENTIFIER_VALUE =
             EntityProxy.Concept.make("Identifier Value (SOLOR)",
                     UUID.fromString("b32dd26b-c3fc-487e-987e-16ace71a0d0f"));
+
+    /**
+     * Anonymous concept (SOLOR)
+     */
+    public static final EntityProxy.Concept ANONYMOUS_CONCEPT =
+            EntityProxy.Concept.make("Anonymous concept (SOLOR)",
+                    UUID.fromString("f8f936d4-3ac7-5629-9f65-9452608056a1"));
 
     /**
      * EL++ Inferred terminological axioms
@@ -539,6 +602,20 @@ public final class KernelTerm {
                     UUID.fromString("ecea41a2-f596-3d98-99d1-771b667e55b8"));
 
     /**
+     * Description case sensitive
+     */
+    public static final EntityProxy.Concept DESCRIPTION_CASE_SENSITIVE =
+            EntityProxy.Concept.make("Description case sensitive",
+                    UUID.fromString("0def37bc-7e1b-384b-a6a3-3e3ceee9c52e"));
+
+    /**
+     * Description initial character case sensitive (SOLOR)
+     */
+    public static final EntityProxy.Concept DESCRIPTION_INITIAL_CHARACTER_CASE_SENSITIVE =
+            EntityProxy.Concept.make("Description initial character case sensitive (SOLOR)",
+                    UUID.fromString("17915e0d-ed38-3488-a35c-cda966db306a"));
+
+    /**
      * Transitive Feature (SOLOR)
      */
     public static final EntityProxy.Concept TRANSITIVE_PROPERTY =
@@ -679,6 +756,13 @@ public final class KernelTerm {
                     UUID.fromString("0418a591-f75b-39ad-be2c-3ab849326da9"), UUID.fromString("87360947-e603-3397-804b-efd0fcc509b9"), UUID.fromString("ab9a0e0a-6359-5462-859c-96c3d4ef2341"));
 
     /**
+     * IKE base model component pattern
+     */
+    public static final EntityProxy.Pattern TINKAR_BASE_MODEL_COMPONENT_PATTERN =
+            EntityProxy.Pattern.make("IKE base model component pattern",
+                    UUID.fromString("6070f6f5-893d-5144-adce-7d305c391cf9"));
+
+    /**
      * Description Pattern
      */
     public static final EntityProxy.Pattern DESCRIPTION_PATTERN =
@@ -761,6 +845,13 @@ public final class KernelTerm {
     public static final EntityProxy.Pattern US_DIALECT_PATTERN =
             EntityProxy.Pattern.make("US Dialect Pattern",
                     UUID.fromString("08f9112c-c041-56d3-b89b-63258f070074"));
+
+    /**
+     * Komet base model component pattern
+     */
+    public static final EntityProxy.Pattern KOMET_BASE_MODEL_COMPONENT_PATTERN =
+            EntityProxy.Pattern.make("Komet base model component pattern",
+                    UUID.fromString("bbbbf1fe-00f0-55e0-a19c-6300dbaab9b2"));
 
     /**
      * GB Dialect Pattern
