@@ -22,12 +22,15 @@ import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.SemanticEntity;
+import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.builder.KnowledgeSet;
 import dev.ikm.tinkar.entity.builder.KnowledgeSetSource;
 import dev.ikm.tinkar.entity.builder.generator.SectionEmitter;
 import dev.ikm.tinkar.entity.builder.generator.TaxonomySectioner;
 import dev.ikm.tinkar.entity.builder.generator.TaxonomySectioner.Section;
 import dev.ikm.tinkar.entity.builder.generator.TinkarTermReferenceResolver;
+import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
@@ -51,8 +54,10 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -120,6 +125,28 @@ class GeneratorEndToEndIT {
         Set<Integer> userModuleParentsBefore = latestIsAParents(userModuleNid, calculator);
         int descriptionPatternVersionsBefore = EntityHandle.get(KernelTerm.DESCRIPTION_PATTERN.nid()).expectPattern()
                 .versions().size();
+        // Every stated definition, not a sample: each stated-axiom semantic's latest
+        // expression in canonical form (concept references as nids, so the comparison is
+        // independent of how the generated source names them), with the stamps it carried
+        // before the round trip, so the version the replay adds can be told apart.
+        Map<Integer, String> statedExpressionsBefore = new HashMap<>();
+        Map<Integer, Integer> statedReferencedComponents = new HashMap<>();
+        Map<Integer, Set<Integer>> statedStampsBefore = new HashMap<>();
+        Set<Integer> beyondSimpleIsA = new HashSet<>();
+        calculator.forEachSemanticVersionOfPattern(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+                (semanticVersion, patternVersion) -> {
+                    int semanticNid = semanticVersion.nid();
+                    statedExpressionsBefore.put(semanticNid,
+                            canonicalExpression((DiTreeEntity) semanticVersion.fieldValues().get(0)));
+                    statedReferencedComponents.put(semanticNid, semanticVersion.referencedComponentNid());
+                    if (!dev.ikm.tinkar.entity.builder.generator.AxiomDecompiler.decompile(
+                            (DiTreeEntity) semanticVersion.fieldValues().get(0)).simpleIsA()) {
+                        beyondSimpleIsA.add(semanticNid);
+                    }
+                    Set<Integer> stamps = new HashSet<>();
+                    semanticVersion.entity().stampNids().forEach(stamps::add);
+                    statedStampsBefore.put(semanticNid, stamps);
+                });
 
         // Sections are not disjoint by design (TaxonomySectioner's own contract) — a
         // dual-parented concept is a member of every section whose root reaches it.
@@ -156,17 +183,16 @@ class GeneratorEndToEndIT {
             emissionNotes.addAll(emitted.manifestNotes());
             writeSourceFile(sourceDir, packageName, className, emitted.source());
         }
-        // The IKE starter set's 43 definitions that are not the simple isA shape (role groups,
-        // restrictions) are beyond the axiom decompiler: each is reported for hand authoring.
-        // The IKE starter set's 63 concepts with no fully qualified name cannot be declared
+        // Every stated definition decompiles — the 43 beyond the simple isA shape included — so
+        // none is reported for hand authoring. The IKE starter set's 63 concepts with no fully qualified name cannot be declared
         // (every component must carry one), so the emitter skips them; a data finding to fix in
         // the set, pinned here so a fix, or a new one, shows.
-        long nonSimpleDefinitions = emissionNotes.stream().filter(note -> note.startsWith("Stated axioms on ")).count();
+        long definitionsToHandAuthor = emissionNotes.stream().filter(note -> note.startsWith("Stated axioms on ")).count();
         long skippedWithoutFqn = emissionNotes.stream()
                 .filter(note -> note.startsWith("Skipped component nid ") && note.contains("no fully-qualified-name")).count();
-        assertEquals(43, nonSimpleDefinitions, "the 43 non-simple definitions to hand-author: " + emissionNotes);
+        assertEquals(0, definitionsToHandAuthor, "no definition needs hand authoring: " + emissionNotes);
         assertEquals(63, skippedWithoutFqn, "the 63 components without a fully qualified name: " + emissionNotes);
-        assertEquals(nonSimpleDefinitions + skippedWithoutFqn, emissionNotes.size(),
+        assertEquals(definitionsToHandAuthor + skippedWithoutFqn, emissionNotes.size(),
                 "no manifest note of another kind: " + emissionNotes);
         String aggregatorClassName = "GeneratedStarterKnowledgeSource";
         String aggregatorSource = SectionEmitter.emitAggregator(packageName, aggregatorClassName,
@@ -223,9 +249,73 @@ class GeneratorEndToEndIT {
         assertEquals(userModuleParentsBefore, userModuleParentsAfter,
                 "the round trip must not change the calculator-resolved latest isA parents");
 
+        // Every stated definition round-trips: the one version the replay adds to each
+        // declared component's stated-axiom semantic rebuilds the very expression it was
+        // decompiled from — roles, property sets, and every other shape, not just isA.
+        // A component skipped for lacking a fully qualified name gains no version at all.
+        Set<Integer> skippedNids = new HashSet<>();
+        emissionNotes.stream().filter(note -> note.startsWith("Skipped component nid "))
+                .forEach(note -> skippedNids.add(Integer.parseInt(
+                        note.substring("Skipped component nid ".length(), note.indexOf(' ', "Skipped component nid ".length())))));
+        int restated = 0;
+        int nonSimpleRestated = 0;
+        List<String> roundTripFailures = new ArrayList<>();
+        for (Map.Entry<Integer, String> before : statedExpressionsBefore.entrySet()) {
+            int semanticNid = before.getKey();
+            Set<Integer> stampsBefore = statedStampsBefore.get(semanticNid);
+            List<SemanticEntityVersion> added = new ArrayList<>();
+            SemanticEntity<? extends SemanticEntityVersion> semantic = EntityHandle.get(semanticNid).expectSemantic();
+            for (SemanticEntityVersion version : semantic.versions()) {
+                if (!stampsBefore.contains(version.stampNid())) {
+                    added.add(version);
+                }
+            }
+            String component = dev.ikm.tinkar.common.service.PrimitiveData.text(statedReferencedComponents.get(semanticNid));
+            if (skippedNids.contains(statedReferencedComponents.get(semanticNid))) {
+                if (!added.isEmpty()) {
+                    roundTripFailures.add(component + ": skipped, yet gained " + added.size() + " versions");
+                }
+                continue;
+            }
+            if (added.size() != 1) {
+                roundTripFailures.add(component + ": gained " + added.size() + " versions, expected one");
+                continue;
+            }
+            String after = canonicalExpression((DiTreeEntity) added.getFirst().fieldValues().get(0));
+            if (!before.getValue().equals(after)) {
+                roundTripFailures.add(component + ": " + before.getValue() + " became " + after);
+                continue;
+            }
+            restated++;
+            if (beyondSimpleIsA.contains(semanticNid)) {
+                nonSimpleRestated++;
+            }
+        }
+        assertEquals(List.of(), roundTripFailures, "every stated definition must round-trip exactly");
+        LOG.info("{} stated definitions round-tripped exactly, {} of them beyond the simple isA shape",
+                restated, nonSimpleRestated);
+        assertEquals(1295 - skippedWithoutFqn, restated,
+                "every stated definition of a declared component round-trips (each FQN-less one carries one too)");
+        assertEquals(43, nonSimpleRestated,
+                "the 43 definitions beyond the simple isA shape — existential roles, a property set, an empty And"
+                        + " — round-trip with the rest");
+
         LOG.info("Round trip verified: {} concepts, {} patterns unchanged; sampled concepts and one pattern"
                 + " each gained exactly one inception version; FQN text and isA parents unchanged for"
                 + " sampled concepts", conceptsAfter, patternsAfter);
+    }
+
+    /**
+     * A stated-axiom tree in canonical form: its decompiled builder source with every
+     * concept reference written as its nid — equal for two trees exactly when they hold
+     * the same sets, atoms, properties, and child order, whatever their vertex UUIDs.
+     */
+    private static String canonicalExpression(DiTreeEntity tree) {
+        dev.ikm.tinkar.entity.builder.generator.AxiomDecompiler.Result result =
+                dev.ikm.tinkar.entity.builder.generator.AxiomDecompiler.decompile(tree);
+        return result.decompiled()
+                ? result.builderLambda(concept -> Integer.toString(concept.nid()))
+                : "not decompiled: " + result.diagnosticDump();
     }
 
     /** The latest-active stated-axiom semantic's isA parent nids for one component, if simple isA. */

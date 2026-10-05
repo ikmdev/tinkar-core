@@ -138,25 +138,22 @@ public final class ComponentDecompiler {
         DiTreeEntity tree = (DiTreeEntity) semanticVersion.fieldValues().get(0);
         AxiomDecompiler.Result result = AxiomDecompiler.decompile(tree);
         String declaredId = TinkarTermReferenceResolver.publicIdLiteral(semanticVersion.chronology().publicId());
-        if (result.simpleIsA()) {
+        if (result.decompiled()) {
             // Declared identity via statedAxioms(PublicId, Consumer) — NOT
             // isA(ConceptFacade...), which is derived-identity only. There is no
             // declared-identity isA overload: EntityProxy implements both
             // ConceptFacade and PublicId, so isA(PublicId, ConceptFacade...) would be
             // genuinely ambiguous against isA(ConceptFacade...) for every real
             // argument (a structural conflict, not a naming one) — the verbose form
-            // below is the only unambiguous way to declare an is-a axiom's identity.
-            String conceptAxioms = result.parents().stream()
-                    .map(parent -> "leb.ConceptAxiom(" + resolver.resolve(parent).sourceExpression() + ")")
-                    .reduce((first, second) -> first + ", " + second)
-                    .orElseThrow();
-            lines.add(".statedAxioms(" + declaredId + ", leb -> leb.NecessarySet(leb.And("
-                    + conceptAxioms + ")))");
+            // below is the only unambiguous way to declare an is-a axiom's identity,
+            // and the same form carries every other expression shape.
+            lines.add(".statedAxioms(" + declaredId + ", "
+                    + result.builderLambda(concept -> resolver.resolve(concept).sourceExpression()) + ")");
             return;
         }
         notes.add("Stated axioms on " + semanticVersion.referencedComponentNid()
-                + " are not the simple isA shape — hand-author statedAxioms(" + declaredId + ", ...):\n"
-                + result.diagnosticDump());
+                + " cannot be rebuilt by the logic-expression builder — hand-author statedAxioms("
+                + declaredId + ", ...):\n" + result.diagnosticDump());
         lines.add("// TODO hand-author statedAxioms(" + declaredId + ", ...) — see generator manifest");
     }
 
