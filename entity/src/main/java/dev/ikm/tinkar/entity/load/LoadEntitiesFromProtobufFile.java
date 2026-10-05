@@ -78,6 +78,9 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
     private final AtomicLong importStampCount = new AtomicLong();
     
     private final AtomicLong identifierCount = new AtomicLong();
+
+    /** Whether the last multi-pass import took its identities from the file's identity index. */
+    private volatile boolean usedIdentityIndex;
     private final boolean useMultiPassImport;
     private final Set<UUID> watchList = new CopyOnWriteArraySet<>();
 
@@ -150,57 +153,70 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         EntityService.get().beginLoadPhase();
         CopyOnWriteArrayList<UUID> patternUuids = new CopyOnWriteArrayList<>();
 
-        try (FileInputStream fileIn = new FileInputStream(importFile);
-             BufferedInputStream buffIn = new BufferedInputStream(fileIn, InputStreamBufferSize);
-             CountingInputStream countingIn = new CountingInputStream(buffIn);
-             ZipInputStream zis = new ZipInputStream(countingIn)) {
-            ZipEntry zipEntry;
-            int messageIndex = 0;
-            while ((zipEntry = zis.getNextEntry()) != null) {
-                if (!zipEntry.getName().equals(MANIFEST_RELPATH)) {
-                    Semaphore permits = new Semaphore(Runtime.getRuntime().availableProcessors() * 8);
+        // With an identity index the patterns of every component are listed up front, so the nids
+        // can be assigned from that small table and the records read only once. Without one —
+        // a changeset written before the index existed — pass 1 reads every record to find them.
+        long indexed = IdentityIndex.registerNids(importFile,
+                registered -> updateProgress(registered, expectedImports * 2));
+        usedIdentityIndex = indexed >= 0;
+        if (indexed >= 0) {
+            updateMessage("Registered identifiers from the identity index...");
+            identifierCount.set(indexed);
+        } else {
 
-                    try (StructuredTaskScope<Object, Void, SubtaskFailedException> scope = StructuredScopes.open()) {
-                        while (zis.available() > 0) {
-                            // zis.available returns 1 until AFTER EOF has been reached
-                            TinkarMsg pbTinkarMsg = TinkarMsg.parseDelimitedFrom(zis);
-                            permits.acquire();
-                            scope.fork(() -> {
-                                try {
-                                    ScopedValue.where(SCOPED_TINKAR_MSG, pbTinkarMsg)
-                                            .where(SCOPED_WATCH_LIST, watchList).call(() -> {
-                                                if (pbTinkarMsg != null) {
-                                                    // Batch progress updates to prevent hanging the UI thread
-                                                    if (identifierCount.incrementAndGet() % 1000 == 0) {
-                                                        updateProgress(countingIn.getBytesRead(), this.importFile.length() * 2);
-                                                    }
-                                                    int nid = pbTinkarMsg.getValueCase() == TinkarMsg.ValueCase.SEMANTIC_CHRONOLOGY
-                                                            ? makeNid(pbTinkarMsg.getSemanticChronology())
-                                                            : makeNid(patternOf(pbTinkarMsg), publicIdOf(pbTinkarMsg));
-                                                    if (pbTinkarMsg.getValueCase().getNumber() == TinkarMsg.ValueCase.PATTERN_CHRONOLOGY.getNumber()) {
-                                                        PatternChronology patternChronology = pbTinkarMsg.getPatternChronology();
-                                                        String uuidStr = patternChronology.getPublicId().getUuidsList().get(0);
-                                                        UUID uuid = UUID.fromString(uuidStr);
-                                                        patternUuids.add(uuid);
-                                                    }
-                                                }
-                                                return null;
+            try (FileInputStream fileIn = new FileInputStream(importFile);
+                 BufferedInputStream buffIn = new BufferedInputStream(fileIn, InputStreamBufferSize);
+                 CountingInputStream countingIn = new CountingInputStream(buffIn);
+                 ZipInputStream zis = new ZipInputStream(countingIn)) {
+                ZipEntry zipEntry;
+                int messageIndex = 0;
+                while ((zipEntry = zis.getNextEntry()) != null) {
+                    if (!IdentityIndex.isMetadata(zipEntry.getName())) {
+                        Semaphore permits = new Semaphore(Runtime.getRuntime().availableProcessors() * 8);
 
-                                            });
-                                } catch (Throwable t) {
-                                    LOG.error("Unhandled exception in identifier subtask for msg: {}", pbTinkarMsg, t);
-                                    throw t; // preserve failure semantics
-                                } finally {
-                                    permits.release();
-                                }
-                            });
+                        try (StructuredTaskScope<Object, Void, SubtaskFailedException> scope = StructuredScopes.open()) {
+                            while (zis.available() > 0) {
+                                // zis.available returns 1 until AFTER EOF has been reached
+                                TinkarMsg pbTinkarMsg = TinkarMsg.parseDelimitedFrom(zis);
+                                permits.acquire();
+                                scope.fork(() -> {
+                                    try {
+                                        ScopedValue.where(SCOPED_TINKAR_MSG, pbTinkarMsg)
+                                                .where(SCOPED_WATCH_LIST, watchList).call(() -> {
+                                                    if (pbTinkarMsg != null) {
+                                                        // Batch progress updates to prevent hanging the UI thread
+                                                        if (identifierCount.incrementAndGet() % 1000 == 0) {
+                                                            updateProgress(countingIn.getBytesRead(), this.importFile.length() * 2);
+                                                        }
+                                                        int nid = pbTinkarMsg.getValueCase() == TinkarMsg.ValueCase.SEMANTIC_CHRONOLOGY
+                                                                ? makeNid(pbTinkarMsg.getSemanticChronology())
+                                                                : makeNid(EntityProxy.Pattern.make(IdentityIndex.patternOf(pbTinkarMsg)), IdentityIndex.componentOf(pbTinkarMsg));
+                                                        if (pbTinkarMsg.getValueCase().getNumber() == TinkarMsg.ValueCase.PATTERN_CHRONOLOGY.getNumber()) {
+                                                            PatternChronology patternChronology = pbTinkarMsg.getPatternChronology();
+                                                            String uuidStr = patternChronology.getPublicId().getUuidsList().get(0);
+                                                            UUID uuid = UUID.fromString(uuidStr);
+                                                            patternUuids.add(uuid);
+                                                        }
+                                                    }
+                                                    return null;
+
+                                                });
+                                    } catch (Throwable t) {
+                                        LOG.error("Unhandled exception in identifier subtask for msg: {}", pbTinkarMsg, t);
+                                        throw t; // preserve failure semantics
+                                    } finally {
+                                        permits.release();
+                                    }
+                                });
+                            }
+                            scope.join();
                         }
-                        scope.join();
                     }
                 }
+                updateMessage("Imported identifiers...");
+                LOG.info("Imported {} identifiers", String.format("%,d",identifierCount.get()));
             }
-            updateMessage("Imported identifiers...");
-            LOG.info("Imported {} identifiers", String.format("%,d",identifierCount.get()));
+
         }
 
         // Pass 2: load entities into RocksDB
@@ -217,7 +233,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             ZipEntry zipEntry;
             final AtomicInteger errorCount = new AtomicInteger();
             while ((zipEntry = zis.getNextEntry()) != null) {
-                if (zipEntry.getName().equals(MANIFEST_RELPATH)) {
+                if (IdentityIndex.isMetadata(zipEntry.getName())) {
                     continue;
                 }
                 try (StructuredTaskScope<Object, Void, SubtaskFailedException> scope = StructuredScopes.open()) {
@@ -318,6 +334,14 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         return summarize();
     }
 
+    /**
+     * Whether the import took every component's identity from the file's {@link IdentityIndex},
+     * reading the records once, rather than reading them twice to find the identities.
+     */
+    public boolean usedIdentityIndex() {
+        return usedIdentityIndex;
+    }
+
     private static void verifyManifest(Map<PublicId, String> manifestEntryData) {
         manifestEntryData.keySet().forEach((publicId) -> {
             if (!PrimitiveData.get().hasPublicId(publicId)) {
@@ -346,7 +370,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
 
             ZipEntry zipEntry;
             while ((zipEntry = zis.getNextEntry()) != null) {
-                if (zipEntry.getName().equals(MANIFEST_RELPATH)) {
+                if (IdentityIndex.isMetadata(zipEntry.getName())) {
                     continue;
                 }
 
@@ -400,44 +424,9 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
      * This allows Pass 2 to resolve references.
      */
     private int makeNidForMessage(TinkarMsg pbTinkarMsg) {
-        return Entity.nidForSemantic(patternOf(pbTinkarMsg).publicId(), getEntityPublicId(publicIdOf(pbTinkarMsg)));
+        return Entity.nidForSemantic(IdentityIndex.patternOf(pbTinkarMsg), getEntityPublicId(IdentityIndex.componentOf(pbTinkarMsg)));
     }
 
-    /**
-     * The pattern a record's component is an element of — what a pattern-encoding store (Rocks)
-     * needs to assign its nid.
-     *
-     * <p>Semantics have always named theirs. Concepts, patterns and stamps carry one since
-     * tinkar-schema#43; a changeset written before that leaves it out, which means the well-known
-     * default for the type.
-     */
-    private static EntityProxy.Pattern patternOf(TinkarMsg pbTinkarMsg) {
-        return switch (pbTinkarMsg.getValueCase()) {
-            case SEMANTIC_CHRONOLOGY -> EntityProxy.Pattern.make(
-                    getEntityPublicId(pbTinkarMsg.getSemanticChronology().getPatternForSemanticPublicId()));
-            case CONCEPT_CHRONOLOGY -> pbTinkarMsg.getConceptChronology().hasPatternForConceptPublicId()
-                    ? EntityProxy.Pattern.make(getEntityPublicId(pbTinkarMsg.getConceptChronology().getPatternForConceptPublicId()))
-                    : EntityBinding.Concept.pattern();
-            case PATTERN_CHRONOLOGY -> pbTinkarMsg.getPatternChronology().hasPatternForPatternPublicId()
-                    ? EntityProxy.Pattern.make(getEntityPublicId(pbTinkarMsg.getPatternChronology().getPatternForPatternPublicId()))
-                    : EntityBinding.Pattern.pattern();
-            case STAMP_CHRONOLOGY -> pbTinkarMsg.getStampChronology().hasPatternForStampPublicId()
-                    ? EntityProxy.Pattern.make(getEntityPublicId(pbTinkarMsg.getStampChronology().getPatternForStampPublicId()))
-                    : EntityBinding.Stamp.pattern();
-            case VALUE_NOT_SET -> throw new IllegalStateException("Tinkar message value not set");
-        };
-    }
-
-    /** The public id of a record's component. */
-    private static dev.ikm.tinkar.schema.PublicId publicIdOf(TinkarMsg pbTinkarMsg) {
-        return switch (pbTinkarMsg.getValueCase()) {
-            case CONCEPT_CHRONOLOGY -> pbTinkarMsg.getConceptChronology().getPublicId();
-            case SEMANTIC_CHRONOLOGY -> pbTinkarMsg.getSemanticChronology().getPublicId();
-            case PATTERN_CHRONOLOGY -> pbTinkarMsg.getPatternChronology().getPublicId();
-            case STAMP_CHRONOLOGY -> pbTinkarMsg.getStampChronology().getPublicId();
-            case VALUE_NOT_SET -> throw new IllegalStateException("Tinkar message value not set");
-        };
-    }
 
     /**
      * Extract PublicId from protobuf PublicId message.

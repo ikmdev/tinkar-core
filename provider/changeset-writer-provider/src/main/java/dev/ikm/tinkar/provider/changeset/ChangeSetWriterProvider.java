@@ -16,6 +16,7 @@ import dev.ikm.tinkar.entity.PatternEntity;
 import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
+import dev.ikm.tinkar.entity.load.IdentityIndex;
 import dev.ikm.tinkar.entity.transform.EntityToTinkarSchemaTransformer;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import dev.ikm.tinkar.terms.TinkarTerm;
@@ -243,7 +244,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                 LOG.trace("ChangeSetWriterProvider starting new zip file: {}", zipfile.getAbsolutePath());
                 try (FileOutputStream fos = new FileOutputStream(zipfile);
                      BufferedOutputStream bos = new BufferedOutputStream(fos);
-                     ZipOutputStream zos = new ZipOutputStream(bos)) {
+                     ZipOutputStream zos = new ZipOutputStream(bos);
+                     IdentityIndex.Writer identities = new IdentityIndex.Writer()) {
                     // Create a single entry for all changes in this zip file
                     final ZipEntry zipEntry = new ZipEntry("Entities");
                     zos.putNextEntry(zipEntry);
@@ -278,9 +280,9 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                         writeStampSnapshotsThenDependents(
                                                 uncommittedEntitiesByStamp.removeAll(stampEntity.nid()),
                                                 entityCount, conceptsCount, semanticsCount, patternsCount,
-                                                stampsCount, moduleList, authorList, entityTransformer, zos);
+                                                stampsCount, moduleList, authorList, entityTransformer, identities, zos);
                                     }
-                                    writeEntity(entityCount, entityToWrite, conceptsCount, semanticsCount, patternsCount, stampsCount, moduleList, authorList, entityTransformer, zos);
+                                    writeEntity(entityCount, entityToWrite, conceptsCount, semanticsCount, patternsCount, stampsCount, moduleList, authorList, entityTransformer, identities, zos);
                                 }
                             }
                             if (System.currentTimeMillis() - lastWriteTimeMillis.get() > INACTIVITY_THRESHOLD_MILLIS) {
@@ -304,12 +306,15 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                         writeStampSnapshotsThenDependents(
                                 uncommittedEntitiesByStamp.removeAll(stampNid),
                                 entityCount, conceptsCount, semanticsCount, patternsCount,
-                                stampsCount, moduleList, authorList, entityTransformer, zos);
+                                stampsCount, moduleList, authorList, entityTransformer, identities, zos);
                     }
                     zos.closeEntry();
                     if (entityCount.sum() > 0) {
                         LOG.debug("Data zipEntry size: " + zipEntry.getSize());
                         LOG.debug("Data zipEntry compressed size: " + zipEntry.getCompressedSize());
+
+                        // So a pattern-encoding store can import this changeset in one pass.
+                        identities.writeTo(zos);
 
                         // Write Manifest File
                         final ZipEntry manifestEntry = new ZipEntry("META-INF/MANIFEST.MF");
@@ -370,6 +375,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                     Set<PublicId> moduleList,
                                     Set<PublicId> authorList,
                                     EntityToTinkarSchemaTransformer entityTransformer,
+                                    IdentityIndex.Writer identities,
                                     ZipOutputStream zos) {
         entityCount.increment();
         switch (entityToWrite) {
@@ -390,6 +396,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
         try {
             TinkarMsg tinkarMsg = entityTransformer.transform(entityToWrite);
             tinkarMsg.writeDelimitedTo(zos);
+            identities.add(tinkarMsg);
             LOG.debug("ChangeSetWriterProvider wrote Entity:\n{}", entityToWrite);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -430,6 +437,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
             Set<PublicId> moduleList,
             Set<PublicId> authorList,
             EntityToTinkarSchemaTransformer entityTransformer,
+            IdentityIndex.Writer identities,
             ZipOutputStream zos) {
         List<Entity<EntityVersion>> stampSnapshots = new ArrayList<>();
         List<Entity<EntityVersion>> dependents = new ArrayList<>();
@@ -442,11 +450,11 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
         }
         for (Entity<EntityVersion> e : stampSnapshots) {
             writeEntity(entityCount, e, conceptsCount, semanticsCount, patternsCount,
-                    stampsCount, moduleList, authorList, entityTransformer, zos);
+                    stampsCount, moduleList, authorList, entityTransformer, identities, zos);
         }
         for (Entity<EntityVersion> e : dependents) {
             writeEntity(entityCount, e, conceptsCount, semanticsCount, patternsCount,
-                    stampsCount, moduleList, authorList, entityTransformer, zos);
+                    stampsCount, moduleList, authorList, entityTransformer, identities, zos);
         }
     }
 

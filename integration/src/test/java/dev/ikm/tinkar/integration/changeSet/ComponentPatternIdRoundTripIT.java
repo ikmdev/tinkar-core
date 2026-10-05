@@ -4,6 +4,7 @@ import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.entity.export.ExportEntitiesToProtobufFile;
+import dev.ikm.tinkar.entity.load.IdentityIndex;
 import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
@@ -105,6 +106,60 @@ class ComponentPatternIdRoundTripIT {
         assertEquals(exported.stampCount(), reimported.stampCount());
     }
 
+    @Test
+    void theExportCarriesAnIdentityIndexListingEveryRecord() throws IOException {
+        File export = new File(DATASTORE_ROOT, "pattern-id-indexed.zip");
+        new ExportEntitiesToProtobufFile(export).compute();
+
+        List<TinkarMsg> records = readRecords(export);
+        java.util.Map<String, String> patternByComponent = readIndex(export);
+        assertEquals(records.size(), patternByComponent.size(), "one index entry per record");
+        for (TinkarMsg record : records) {
+            String component = String.join(",", IdentityIndex.componentOf(record).getUuidsList());
+            assertEquals(IdentityIndex.patternOf(record).idString(), patternByComponent.get(component),
+                    "pattern listed for " + component);
+        }
+    }
+
+    @Test
+    void anExportCanLeaveTheIndexOut_forReadersThatPredateIt() throws IOException {
+        File export = new File(DATASTORE_ROOT, "pattern-id-plain.zip");
+        new ExportEntitiesToProtobufFile(export).withIdentityIndex(false).compute();
+
+        try (java.util.zip.ZipFile zip = new java.util.zip.ZipFile(export)) {
+            assertEquals(null, zip.getEntry(IdentityIndex.ENTRY));
+        }
+        LoadEntitiesFromProtobufFile loader = new LoadEntitiesFromProtobufFile(export, true);
+        loader.compute();
+        assertFalse(loader.usedIdentityIndex());
+    }
+
+    @Test
+    void theSummarizerSkipsTheIndex() throws IOException {
+        File export = new File(DATASTORE_ROOT, "pattern-id-summarized.zip");
+        EntityCountSummary exported = new ExportEntitiesToProtobufFile(export).compute();
+
+        var report = new dev.ikm.tinkar.entity.maintenance.ChangeSetSummarizer().summarize(export);
+
+        assertEquals(exported.getTotalCount(), report.observedTotal());
+    }
+
+    private static java.util.Map<String, String> readIndex(File zipFile) throws IOException {
+        java.util.Map<String, String> patternByComponent = new java.util.HashMap<>();
+        try (java.util.zip.ZipFile zip = new java.util.zip.ZipFile(zipFile);
+             java.io.InputStream in = zip.getInputStream(zip.getEntry(IdentityIndex.ENTRY))) {
+            dev.ikm.tinkar.schema.PatternMembers members;
+            while ((members = dev.ikm.tinkar.schema.PatternMembers.parseDelimitedFrom(in)) != null) {
+                String pattern = dev.ikm.tinkar.common.id.PublicIds.of(members.getPatternPublicId().getUuidsList()
+                        .stream().map(UUID::fromString).toArray(UUID[]::new)).idString();
+                for (dev.ikm.tinkar.schema.PublicId component : members.getComponentPublicIdsList()) {
+                    patternByComponent.put(String.join(",", component.getUuidsList()), pattern);
+                }
+            }
+        }
+        return patternByComponent;
+    }
+
     private static void assertPattern(PublicId expected, dev.ikm.tinkar.schema.PublicId actual) {
         List<UUID> uuids = actual.getUuidsList().stream().map(UUID::fromString).toList();
         assertEquals(expected.asUuidList().castToList(), uuids);
@@ -115,7 +170,7 @@ class ComponentPatternIdRoundTripIT {
         try (ZipInputStream in = new ZipInputStream(new FileInputStream(zip))) {
             ZipEntry entry;
             while ((entry = in.getNextEntry()) != null) {
-                if (entry.getName().startsWith("META-INF")) {
+                if (IdentityIndex.isMetadata(entry.getName())) {
                     continue;
                 }
                 TinkarMsg record;

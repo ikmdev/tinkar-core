@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.maintenance;
 
+import dev.ikm.tinkar.entity.load.IdentityIndex;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -707,7 +708,8 @@ public final class ChangeSetSummarizer {
              ZipInputStream zis = new ZipInputStream(bis)) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
-                if (entry.getName().equals(MANIFEST_RELPATH)) {
+                // The manifest, the identity index, and any later metadata are not records.
+                if (IdentityIndex.isMetadata(entry.getName())) {
                     zis.closeEntry();
                     continue;
                 }

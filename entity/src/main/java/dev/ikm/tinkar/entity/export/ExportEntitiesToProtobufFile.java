@@ -26,6 +26,7 @@ import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.aggregator.DefaultEntityAggregator;
 import dev.ikm.tinkar.entity.aggregator.EntityAggregator;
+import dev.ikm.tinkar.entity.load.IdentityIndex;
 import dev.ikm.tinkar.entity.aggregator.MembershipEntityAggregator;
 import dev.ikm.tinkar.entity.aggregator.TemporalEntityAggregator;
 import dev.ikm.tinkar.entity.transform.EntityToTinkarSchemaTransformer;
@@ -75,6 +76,20 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
     private long skippedStamps;
     private final EntityAggregator entityAggregator;
 
+    /**
+     * Whether to write the {@link IdentityIndex}, which lets a pattern-encoding store import the file
+     * in one pass. On by default; off for a file meant for readers that predate the index, which
+     * cannot read a changeset carrying one. Defaults from {@code tinkar.changeset.identity-index}.
+     */
+    private boolean writeIdentityIndex =
+            Boolean.parseBoolean(System.getProperty("tinkar.changeset.identity-index", "true"));
+
+    /** Sets whether to write the identity index; see {@link #writeIdentityIndex}. Returns this exporter. */
+    public ExportEntitiesToProtobufFile withIdentityIndex(boolean write) {
+        this.writeIdentityIndex = write;
+        return this;
+    }
+
 
     public ExportEntitiesToProtobufFile(File file, EntityAggregator entityAggregator) {
         super(false, true);
@@ -112,7 +127,8 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
 
         try (FileOutputStream fos = new FileOutputStream(protobufFile);
              BufferedOutputStream bos = new BufferedOutputStream(fos);
-             ZipOutputStream zos = new ZipOutputStream(bos)) {
+             ZipOutputStream zos = new ZipOutputStream(bos);
+             IdentityIndex.Writer identities = writeIdentityIndex ? new IdentityIndex.Writer() : null) {
 
             // Create a single entry
             ZipEntry zipEntry = new ZipEntry(protobufFile.getName().replace(".zip", ""));
@@ -132,6 +148,10 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                     TinkarMsg pbTinkarMsg = entityTransformer.transform(entity);
                     synchronized (writeLock) {
                         pbTinkarMsg.writeDelimitedTo(zos);
+                    }
+                    // After the record is written, so the index lists exactly what the file carries.
+                    if (identities != null) {
+                        identities.add(pbTinkarMsg);
                     }
                     completedUnitOfWork();
                 } catch (IOException e) {
@@ -174,6 +194,11 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             zos.flush();
             LOG.info("Data zipEntry size: " + zipEntry.getSize());
             LOG.info("Data zipEntry compressed size: " + zipEntry.getCompressedSize());
+
+            if (identities != null) {
+                identities.writeTo(zos);
+                LOG.info("Identity index lists {} component(s)", identities.count());
+            }
 
             // Write Manifest File
             ZipEntry manifestEntry = new ZipEntry("META-INF/MANIFEST.MF");
