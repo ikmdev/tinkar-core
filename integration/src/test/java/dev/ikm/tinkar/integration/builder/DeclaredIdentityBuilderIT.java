@@ -107,6 +107,8 @@ class DeclaredIdentityBuilderIT {
             PublicIds.of(UUID.fromString("7dcbaa23-3a49-4801-9372-a0b1c2d3e4f4"));
     private static final PublicId PATTERN_RETIRE_ID =
             PublicIds.of(UUID.fromString("6cba9934-2938-4790-8261-9fa0b1c2d3e3"));
+    private static final PublicId KEYWORD_DESCRIPTION_ID =
+            PublicIds.of(UUID.fromString("5ba98845-1827-468f-9150-8e9fa0b1c2d4"));
 
     private static final Instant PATH_ORIGIN_TIME = Instant.parse("2020-01-01T00:00:00Z");
     private static final byte[] BYTES_FIELD = {1, 2, 3};
@@ -166,6 +168,16 @@ class DeclaredIdentityBuilderIT {
                         KernelTerm.ENGLISH_LANGUAGE.publicId(), "Bare id kind (Test)",
                         KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE.publicId(),
                         KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.publicId());
+
+        // An authored concept that declares one description through the generic verb — a
+        // keyword spelling with an established identity, as the IKE starter set's
+        // expression-language concepts carry. It is a regular name, not the FQN, so the
+        // derived FQN still seeds.
+        TEST_SET.concept("Keyword kind (Test)").at(birth)
+                .semantic(KernelTerm.DESCRIPTION_PATTERN, KEYWORD_DESCRIPTION_ID,
+                        KernelTerm.ENGLISH_LANGUAGE, "kw",
+                        KernelTerm.DESCRIPTION_CASE_SENSITIVE,
+                        KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE);
 
         // Every remaining accepted field value type, through the write path once.
         TEST_SET.concept("Typed fields kind (Test)").at(birth)
@@ -339,6 +351,22 @@ class DeclaredIdentityBuilderIT {
                 .filter(semantic -> semantic.patternNid() == KernelTerm.DESCRIPTION_PATTERN.nid())
                 .count();
         assertEquals(2, descriptions, "the derived FQN plus the authored synonym");
+    }
+
+    @Test
+    @DisplayName("A generic non-FQN description leaves the derived FQN auto-seed in place")
+    void genericNonFqnDescriptionKeepsAutoSeed() {
+        int conceptNid = PrimitiveData.nid(PublicIds.of(TEST_SET.uuidFor("Keyword kind (Test)")));
+        List<String> descriptionTypes = new ArrayList<>();
+        for (SemanticEntity<SemanticEntityVersion> semantic : semanticsFor(conceptNid)) {
+            if (semantic.patternNid() == KernelTerm.DESCRIPTION_PATTERN.nid()) {
+                EntityFacade type = (EntityFacade) semantic.versions().getFirst().fieldValues().get(3);
+                descriptionTypes.add(PrimitiveData.text(type.nid()));
+            }
+        }
+        assertEquals(2, descriptionTypes.size(), "the derived FQN plus the declared keyword: " + descriptionTypes);
+        assertTrue(descriptionTypes.contains(PrimitiveData.text(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid())),
+                "a concept declaring only a non-FQN description still carries its FQN: " + descriptionTypes);
     }
 
     @Test

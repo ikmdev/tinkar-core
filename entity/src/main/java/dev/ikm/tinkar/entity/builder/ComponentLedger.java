@@ -96,7 +96,7 @@ final class ComponentLedger {
 
     private PublicId declaredAxiomIdentity;
     private ActiveStamp birthStamp;
-    private boolean descriptionsDeclaredExplicitly = false;
+    private boolean fqnDeclaredExplicitly = false;
     private boolean fqnSeeded = false;
     private long lastStampTime = Long.MIN_VALUE;
     private boolean born = false;
@@ -180,16 +180,18 @@ final class ComponentLedger {
 
     /**
      * Seeds the derived-identity fully-qualified-name description — and its US-dialect
-     * acceptability — at the birth stamp, unless the ledger declared any description
-     * explicitly as a generic declared-identity semantic. The auto-seed is an authoring
-     * convenience default; ingested content carries its descriptions' established
-     * identities — the FQN included — and seeding a derived twin would break
-     * identity-exact round trip. Idempotent; runs on demand (write, or the first
+     * acceptability — at the birth stamp, unless the ledger declared its fully qualified
+     * name explicitly as a generic declared-identity semantic. The auto-seed is an
+     * authoring convenience default; ingested content carries its FQN description's
+     * established identity, and seeding a derived twin would break identity-exact round
+     * trip. Another description declared that way — a keyword spelling, a synonym with
+     * an established identity — leaves the seed in place: a component without a fully
+     * qualified name cannot be declared at all. Idempotent; runs on demand (write, or the first
      * FQN-referencing verb). A component opened by a retirement scope seeds nothing
      * either: its descriptions are the base's (IKE-Network/ike-issues#1130).
      */
     private void seedFqnIfImplicit() {
-        if (fqnSeeded || descriptionsDeclaredExplicitly || bornRetired) {
+        if (fqnSeeded || fqnDeclaredExplicitly || bornRetired) {
             return;
         }
         fqnSeeded = true;
@@ -270,10 +272,10 @@ final class ComponentLedger {
                     "The descriptions of " + birthFqn + " are the base's — a component opened by a"
                             + " retirement scope carries no ledger fully qualified name to revise");
         }
-        if (descriptionsDeclaredExplicitly) {
+        if (fqnDeclaredExplicitly) {
             throw new IllegalStateException(
-                    "The descriptions of " + birthFqn + " are declared explicitly with their"
-                            + " established identities — revise the FQN by restating that generic"
+                    "The fully qualified name of " + birthFqn + " is declared explicitly with its"
+                            + " established identity — revise it by restating that generic"
                             + " semantic, not with reviseFullyQualifiedName");
         }
         seedFqnIfImplicit();
@@ -356,9 +358,8 @@ final class ComponentLedger {
         }
         // All validation precedes any mutation: a rejected declaration must leave the
         // session exactly as it was, or a caught rejection corrupts a later write().
-        boolean explicitDescription =
-                referencedComponent == null && isExplicitDescriptionDeclaration(pattern, fieldValues);
-        if (explicitDescription && fqnSeeded) {
+        boolean explicitFqn = referencedComponent == null && isExplicitFqnDeclaration(pattern, fieldValues);
+        if (explicitFqn && fqnSeeded) {
             throw new IllegalStateException(
                     "The derived-identity fully qualified name of " + birthFqn + " was already"
                             + " seeded — declare established descriptions before any FQN-referencing"
@@ -369,8 +370,8 @@ final class ComponentLedger {
         requireNewStamp(semantic.versions.stream().map(VersionEntry::stamp).toList(), stamp,
                 "semantic " + semantic.semanticId);
         semantic.versions.add(new VersionEntry<>(stamp, values));
-        if (explicitDescription) {
-            descriptionsDeclaredExplicitly = true;
+        if (explicitFqn) {
+            fqnDeclaredExplicitly = true;
         }
     }
 
@@ -563,14 +564,24 @@ final class ComponentLedger {
     }
 
     /**
-     * Whether a generic declaration is an explicit description of this component — any
-     * well-formed description-pattern semantic, whatever its type field. Explicitly
-     * declared descriptions mean the content arrives established (ingest), so the
-     * derived FQN auto-seed must not add a twin.
+     * Whether a generic declaration is an explicit fully-qualified-name description of
+     * this component: a well-formed description-pattern semantic whose type field — an
+     * entity handle or a bare {@link PublicId} — is the FQN type. An explicit FQN means
+     * the content arrives established (ingest), so the derived auto-seed must not add a
+     * twin; any other description type leaves the seed in place.
      */
-    private static boolean isExplicitDescriptionDeclaration(EntityProxy.Pattern pattern, Object[] fieldValues) {
-        return PublicId.equals(pattern.publicId(), KernelTerm.DESCRIPTION_PATTERN.publicId())
-                && fieldValues.length == 4;
+    private static boolean isExplicitFqnDeclaration(EntityProxy.Pattern pattern, Object[] fieldValues) {
+        if (!PublicId.equals(pattern.publicId(), KernelTerm.DESCRIPTION_PATTERN.publicId())
+                || fieldValues.length != 4) {
+            return false;
+        }
+        PublicId type = switch (fieldValues[3]) {
+            case EntityFacade facade -> facade.publicId();
+            case PublicId publicId -> publicId;
+            case null, default -> null;
+        };
+        return type != null
+                && PublicId.equals(type, KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.publicId());
     }
 
     /**

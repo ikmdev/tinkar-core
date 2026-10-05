@@ -61,7 +61,10 @@ class EntityServiceIT {
         // Add your assertions here based on the expected summary values
         // For example:
         assertEquals(1295, summary.conceptCount(), summary.toString());
-        assertEquals(10790, summary.semanticCount(), summary.toString());
+        // 10916 since the 63 expression-language concepts regained their FQN description and its
+        // US-dialect acceptability (126 semantics), which a generic keyword description had
+        // suppressed.
+        assertEquals(10916, summary.semanticCount(), summary.toString());
         assertEquals(64, summary.patternCount(), summary.toString());
         assertEquals(2, summary.stampCount(), summary.toString());
         // To ensure exports are self-contained, when a Component has a version in the specified time range, all its versions

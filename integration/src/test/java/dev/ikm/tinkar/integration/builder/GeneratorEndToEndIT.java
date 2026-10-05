@@ -183,17 +183,10 @@ class GeneratorEndToEndIT {
             emissionNotes.addAll(emitted.manifestNotes());
             writeSourceFile(sourceDir, packageName, className, emitted.source());
         }
-        // Every stated definition decompiles — the 43 beyond the simple isA shape included — so
-        // none is reported for hand authoring. The IKE starter set's 63 concepts with no fully qualified name cannot be declared
-        // (every component must carry one), so the emitter skips them; a data finding to fix in
-        // the set, pinned here so a fix, or a new one, shows.
-        long definitionsToHandAuthor = emissionNotes.stream().filter(note -> note.startsWith("Stated axioms on ")).count();
-        long skippedWithoutFqn = emissionNotes.stream()
-                .filter(note -> note.startsWith("Skipped component nid ") && note.contains("no fully-qualified-name")).count();
-        assertEquals(0, definitionsToHandAuthor, "no definition needs hand authoring: " + emissionNotes);
-        assertEquals(63, skippedWithoutFqn, "the 63 components without a fully qualified name: " + emissionNotes);
-        assertEquals(definitionsToHandAuthor + skippedWithoutFqn, emissionNotes.size(),
-                "no manifest note of another kind: " + emissionNotes);
+        // Every stated definition decompiles — the 43 beyond the simple isA shape included —
+        // and every component carries the fully qualified name a declaration requires, so
+        // nothing is reported for hand authoring and nothing is skipped.
+        assertEquals(List.of(), emissionNotes, "expected zero manifest notes for this starter set");
         String aggregatorClassName = "GeneratedStarterKnowledgeSource";
         String aggregatorSource = SectionEmitter.emitAggregator(packageName, aggregatorClassName,
                 UUID.randomUUID().toString(), sectionClassNames);
@@ -206,8 +199,8 @@ class GeneratorEndToEndIT {
             Class<?> aggregatorClass = loader.loadClass(packageName + "." + aggregatorClassName);
             KnowledgeSetSource generatedSource = (KnowledgeSetSource) aggregatorClass.getDeclaredConstructor().newInstance();
             KnowledgeSet set = generatedSource.compose();
-            assertEquals(distinctMembers - skippedWithoutFqn, set.declarations().size(),
-                    "every distinct component (post cross-section dedup) with a fully qualified name is declared exactly once");
+            assertEquals(distinctMembers, set.declarations().size(),
+                    "every distinct component (post cross-section dedup) is declared exactly once");
             set.write();
         }
 
@@ -252,11 +245,6 @@ class GeneratorEndToEndIT {
         // Every stated definition round-trips: the one version the replay adds to each
         // declared component's stated-axiom semantic rebuilds the very expression it was
         // decompiled from — roles, property sets, and every other shape, not just isA.
-        // A component skipped for lacking a fully qualified name gains no version at all.
-        Set<Integer> skippedNids = new HashSet<>();
-        emissionNotes.stream().filter(note -> note.startsWith("Skipped component nid "))
-                .forEach(note -> skippedNids.add(Integer.parseInt(
-                        note.substring("Skipped component nid ".length(), note.indexOf(' ', "Skipped component nid ".length())))));
         int restated = 0;
         int nonSimpleRestated = 0;
         List<String> roundTripFailures = new ArrayList<>();
@@ -271,12 +259,6 @@ class GeneratorEndToEndIT {
                 }
             }
             String component = dev.ikm.tinkar.common.service.PrimitiveData.text(statedReferencedComponents.get(semanticNid));
-            if (skippedNids.contains(statedReferencedComponents.get(semanticNid))) {
-                if (!added.isEmpty()) {
-                    roundTripFailures.add(component + ": skipped, yet gained " + added.size() + " versions");
-                }
-                continue;
-            }
             if (added.size() != 1) {
                 roundTripFailures.add(component + ": gained " + added.size() + " versions, expected one");
                 continue;
@@ -294,8 +276,7 @@ class GeneratorEndToEndIT {
         assertEquals(List.of(), roundTripFailures, "every stated definition must round-trip exactly");
         LOG.info("{} stated definitions round-tripped exactly, {} of them beyond the simple isA shape",
                 restated, nonSimpleRestated);
-        assertEquals(1295 - skippedWithoutFqn, restated,
-                "every stated definition of a declared component round-trips (each FQN-less one carries one too)");
+        assertEquals(1295, restated, "every one of the set's 1295 stated definitions round-trips");
         assertEquals(43, nonSimpleRestated,
                 "the 43 definitions beyond the simple isA shape — existential roles, a property set, an empty And"
                         + " — round-trip with the rest");
