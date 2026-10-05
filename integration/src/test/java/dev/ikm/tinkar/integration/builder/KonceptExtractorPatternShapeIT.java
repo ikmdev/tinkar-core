@@ -250,13 +250,15 @@ class KonceptExtractorPatternShapeIT {
                         // structurally and never the <nid> debug fallback (the US
                         // Dialect regression: a dialect semantic's referenced component
                         // is a description). The probe subject's auto-seeded FQN
-                        // description; identity per ComponentLedger.seedFqnIfImplicit.
+                        // description; identity per ComponentLedger.seedFqnIfImplicit: the
+                        // subject's least UUID, and the permanent literal language seed
+                        // (English language's least UUID).
                         EntityProxy.Semantic.make("Probe subject FQN description",
                                 PublicIds.of(UuidT5Generator.get(
                                         TEST_SET.conceptRef("Pattern shape probe subject (Test)")
-                                                .publicId().asUuidArray()[0],
+                                                .publicId().leastUuid(),
                                         "fully-qualified-name|"
-                                                + TinkarTerm.ENGLISH_LANGUAGE.publicId().asUuidArray()[0]))));
+                                                + "02018e5a-46ba-5297-92f1-6931b9f98a12"))));
     }
 
     @AfterAll

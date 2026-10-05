@@ -56,9 +56,9 @@ public class TestEntityToProtobufStampTransformIT {
         Concept moduleConcept = conceptMap.get(MODULE_CONCEPT_NAME);
         Concept pathConcept = conceptMap.get(PATH_CONCEPT_NAME);
 
-        PublicId stampPublicId = PublicIds.newRandom();
+        UUID stampUuid = UUID.randomUUID();
+        PublicId stampPublicId = PublicIds.of(stampUuid);
         int stampNid = Entity.nid(stampPublicId);
-        UUID stampUuid = stampPublicId.asUuidArray()[0];
 
         RecordListBuilder<StampVersionRecord> stampVersions = RecordListBuilder.make();
         StampRecord stampRecord = StampRecordBuilder.builder()
@@ -190,9 +190,9 @@ public class TestEntityToProtobufStampTransformIT {
         Concept moduleConcept = conceptMap.get(MODULE_CONCEPT_NAME);
         Concept pathConcept = conceptMap.get(PATH_CONCEPT_NAME);
 
-        PublicId stampPublicId = PublicIds.newRandom();
+        UUID stampUuid = UUID.randomUUID();
+        PublicId stampPublicId = PublicIds.of(stampUuid);
         int stampNid = Entity.nid(stampPublicId);
-        UUID stampUuid = stampPublicId.asUuidArray()[0];
 
         RecordListBuilder<StampVersionRecord> stampVersions = RecordListBuilder.make();
         StampRecord stampRecord = StampRecordBuilder.builder()

@@ -156,14 +156,14 @@ public class ElkSnomedData {
 
 	public void writeConcepts(Path path) throws Exception {
 		Files.write(path, nidConceptMap.keySet().stream() //
-				.map(key -> PrimitiveData.publicId(key).asUuidArray()[0] + "\t" + PrimitiveData.text(key)) //
+				.map(key -> PrimitiveData.publicId(key).idString() + "\t" + PrimitiveData.text(key)) //
 				.sorted() //
 				.toList());
 	}
 
 	public void writeRoleTypes(Path path) throws Exception {
 		Files.write(path, nidRoleTypeMap.keySet().stream() //
-				.map(key -> PrimitiveData.publicId(key).asUuidArray()[0] + "\t" + PrimitiveData.text(key)) //
+				.map(key -> PrimitiveData.publicId(key).idString() + "\t" + PrimitiveData.text(key)) //
 				.sorted() //
 				.toList());
 	}

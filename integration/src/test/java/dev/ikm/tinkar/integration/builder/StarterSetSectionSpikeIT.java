@@ -344,13 +344,14 @@ class StarterSetSectionSpikeIT {
     }
 
     private static boolean tupleDerived(StampEntity<?> stamp) {
-        String canonical = stamp.state().publicId().asUuidArray()[0]
+        // Mirrors Stamp.stampUuid: each dimension's least UUID.
+        String canonical = stamp.state().publicId().leastUuid()
                 + "|" + stamp.time()
-                + "|" + firstUuid(stamp.authorNid())
-                + "|" + firstUuid(stamp.moduleNid())
-                + "|" + firstUuid(stamp.pathNid());
+                + "|" + leastUuid(stamp.authorNid())
+                + "|" + leastUuid(stamp.moduleNid())
+                + "|" + leastUuid(stamp.pathNid());
         UUID tuple = UuidT5Generator.get(UuidT5Generator.STAMP_NAMESPACE, canonical);
-        return tuple.equals(stamp.publicId().asUuidArray()[0]);
+        return stamp.publicId().contains(tuple);
     }
 
     private static int nidOf(Object fieldValue) {
@@ -360,8 +361,8 @@ class StarterSetSectionSpikeIT {
         return 0;
     }
 
-    private static UUID firstUuid(int nid) {
-        return PrimitiveData.publicId(nid).asUuidArray()[0];
+    private static UUID leastUuid(int nid) {
+        return PrimitiveData.publicId(nid).leastUuid();
     }
 
     private static void tally(String dimension) {

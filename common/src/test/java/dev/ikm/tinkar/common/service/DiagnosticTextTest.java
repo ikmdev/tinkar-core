@@ -47,9 +47,10 @@ class DiagnosticTextTest {
     }
 
     @Test
-    void aPublicIdIsWrittenByItsFirstUuid() {
+    void aPublicIdIsWrittenByEveryUuid() {
         assertEquals("UUID " + FIRST, DiagnosticText.component(PublicIds.of(FIRST)));
-        assertEquals("UUID " + FIRST, DiagnosticText.component(PublicIds.of(FIRST, SECOND)));
+        assertEquals("UUIDs " + FIRST + ", " + SECOND, DiagnosticText.component(PublicIds.of(FIRST, SECOND)));
+        assertEquals("UUIDs " + SECOND + ", " + FIRST, DiagnosticText.component(PublicIds.of(SECOND, FIRST)));
     }
 
     @Test

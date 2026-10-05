@@ -73,8 +73,9 @@ class DiTreeTextIT {
      */
     private static final Pattern STORE_NID = Pattern.compile("-2147[34]\\d{5}(?!\\d)");
 
-    /** Names a component by its first UUID, as text for another store does when it has no description. */
-    private static final IntFunction<String> BY_UUID = nid -> PrimitiveData.publicId(nid).asUuidArray()[0].toString();
+    /** Names a component by its UUIDs, every one, as text for another store does when it has no description. */
+    private static final IntFunction<String> BY_UUID =
+            nid -> PrimitiveData.publicId(nid).asUuidList().collect(java.util.UUID::toString).makeString(",");
 
     private ViewCalculator view;
 

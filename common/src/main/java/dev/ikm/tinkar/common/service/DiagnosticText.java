@@ -24,7 +24,8 @@ import java.util.UUID;
  * How a component is identified in a diagnostic message, such as the message of an exception
  * ({@code IKE-Network/ike-issues#1189}).
  *
- * <p>A message identifies a component by its description and its UUID. A nid is written only
+ * <p>A message identifies a component by its description and its UUIDs (every one: each
+ * identifies the component, and none is primordial; most components have one). A nid is written only
  * when the store has no public id for it, because the nid is then the only identifier there
  * is, and the text states that it is a nid of this store. A nid means something only in the
  * store that assigned it, and a message leaves the store: a service copies it into an error
@@ -66,14 +67,14 @@ public final class DiagnosticText {
      * component the message is about.
      *
      * @param nid the component's nid in the open store
-     * @return the description followed by the UUID in parentheses; the UUID alone when the
-     *         component has no description; and in place of the UUID, the nid as a nid of this
+     * @return the description followed by the UUIDs in parentheses; the UUIDs alone when the
+     *         component has no description; and in place of the UUIDs, the nid as a nid of this
      *         store when the store has no public id for it
      */
     public static String component(int nid) {
-        Optional<UUID> uuid = firstUuid(nid);
-        String identifier = uuid.isPresent()
-                ? "UUID " + uuid.get()
+        Optional<UUID[]> uuids = uuids(nid);
+        String identifier = uuids.isPresent()
+                ? uuidLabel(uuids.get())
                 : nidInThisStore(nid) + ", which has no public id for it";
         return description(nid).map(text -> text + " (" + identifier + ")").orElse(identifier);
     }
@@ -84,16 +85,16 @@ public final class DiagnosticText {
      * is assigned.
      *
      * @param publicId the component's public id; may be null
-     * @return the description followed by the UUID in parentheses; the UUID alone when the
+     * @return the description followed by the UUIDs in parentheses; the UUIDs alone when the
      *         store holds no description for it; {@code a component with no public id} when
      *         the public id is null or holds no UUID
      */
     public static String component(PublicId publicId) {
-        Optional<UUID> uuid = firstUuid(publicId);
-        if (uuid.isEmpty()) {
+        Optional<UUID[]> uuids = uuids(publicId);
+        if (uuids.isEmpty()) {
             return "a component with no public id";
         }
-        String identifier = "UUID " + uuid.get();
+        String identifier = uuidLabel(uuids.get());
         return description(publicId).map(text -> text + " (" + identifier + ")").orElse(identifier);
     }
 
@@ -102,7 +103,7 @@ public final class DiagnosticText {
      * vertices of a definition tree, or the elements of a list.
      *
      * @param nid the component's nid in the open store
-     * @return the description; the UUID when the component has no description; the nid as a
+     * @return the description; the UUIDs when the component has no description; the nid as a
      *         nid of this store when the store has neither
      */
     public static String name(int nid) {
@@ -110,8 +111,8 @@ public final class DiagnosticText {
         if (description.isPresent()) {
             return description.get();
         }
-        Optional<UUID> uuid = firstUuid(nid);
-        return uuid.isPresent() ? uuid.get().toString() : nidInThisStore(nid);
+        Optional<UUID[]> uuids = uuids(nid);
+        return uuids.isPresent() ? joined(uuids.get()) : nidInThisStore(nid);
     }
 
     /** A nid, written so that it cannot be read as a nid of any other store. */
@@ -119,23 +120,41 @@ public final class DiagnosticText {
         return "nid " + nid + " in this store";
     }
 
-    /** The first UUID of the public id the store has for a nid, or empty when it has none. */
-    private static Optional<UUID> firstUuid(int nid) {
+    /**
+     * Every UUID of a component, labelled: {@code UUID 0b6f…} for one, {@code UUIDs 0b6f…, 4a2c…}
+     * for several. Each identifies the component, and none of them is its primordial UUID, so a
+     * message names them all.
+     */
+    private static String uuidLabel(UUID[] uuids) {
+        return (uuids.length == 1 ? "UUID " : "UUIDs ") + joined(uuids);
+    }
+
+    /** UUIDs separated by commas, in the order the public id lists them. */
+    private static String joined(UUID[] uuids) {
+        StringBuilder text = new StringBuilder();
+        for (UUID uuid : uuids) {
+            text.append(text.isEmpty() ? "" : ", ").append(uuid);
+        }
+        return text.toString();
+    }
+
+    /** The UUIDs of the public id the store has for a nid, or empty when it has none. */
+    private static Optional<UUID[]> uuids(int nid) {
         try {
-            return firstUuid(PrimitiveData.publicId(nid));
+            return uuids(PrimitiveData.publicId(nid));
         } catch (RuntimeException noPublicIdForTheNid) {
             return Optional.empty();
         }
     }
 
-    /** The first UUID of a public id, or empty when it is null or holds none. */
-    private static Optional<UUID> firstUuid(PublicId publicId) {
+    /** The UUIDs of a public id, or empty when it is null or holds none. */
+    private static Optional<UUID[]> uuids(PublicId publicId) {
         if (publicId == null) {
             return Optional.empty();
         }
         try {
             UUID[] uuids = publicId.asUuidArray();
-            return uuids.length == 0 ? Optional.empty() : Optional.of(uuids[0]);
+            return uuids.length == 0 ? Optional.empty() : Optional.of(uuids);
         } catch (RuntimeException noUuids) {
             return Optional.empty();
         }

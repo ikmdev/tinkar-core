@@ -59,8 +59,8 @@ public class TestEntityToProtobufConceptTransform {
     @DisplayName("createPBStampChronology function throws error When StampEntity is empty")
     public void testStampEntityWithEmptyVersions() {
         // Given a StampEntity with empty versions
-        PublicId randomPublicID = PublicIds.newRandom();
-        UUID uuid = randomPublicID.asUuidArray()[0];
+        UUID uuid = UUID.randomUUID();
+        PublicId randomPublicID = PublicIds.of(uuid);
         RecordListBuilder<StampVersionRecord> emptyVersions = RecordListBuilder.make();
         emptyVersions.build();
         StampRecord stampRecord = new StampRecord(
@@ -81,8 +81,8 @@ public class TestEntityToProtobufConceptTransform {
     public void testStampEntityWithMoreThanTwoVersions() {
         // Given a StampEntity with three versions
         // We need a StampRecord with 3 versions. StampVersionRecord requires non-zero nids.
-        PublicId randomPublicID = PublicIds.newRandom();
-        UUID uuid = randomPublicID.asUuidArray()[0];
+        UUID uuid = UUID.randomUUID();
+        PublicId randomPublicID = PublicIds.of(uuid);
         RecordListBuilder<StampVersionRecord> versions = RecordListBuilder.make();
         StampRecord stampRecord = new StampRecord(
                 uuid.getMostSignificantBits(),

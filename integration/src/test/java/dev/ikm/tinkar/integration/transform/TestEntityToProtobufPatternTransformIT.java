@@ -55,9 +55,9 @@ public class TestEntityToProtobufPatternTransformIT {
     }
 
     private PatternRecord createPatternWithVersions(int numVersions) {
-        PublicId patternPublicId = PublicIds.newRandom();
+        UUID patternUuid = UUID.randomUUID();
+        PublicId patternPublicId = PublicIds.of(patternUuid);
         int patternNid = Entity.nid(patternPublicId);
-        UUID patternUuid = patternPublicId.asUuidArray()[0];
 
         Concept purposeConcept = conceptMap.get(REF_COMP_PURPOSE_CONCEPT_NAME);
         Concept meaningConcept = conceptMap.get(REF_COMP_MEANING_CONCEPT_NAME);
@@ -132,9 +132,9 @@ public class TestEntityToProtobufPatternTransformIT {
     @DisplayName("Transform one Entity Pattern Version with Meaning missing and Purpose present - requires entity service")
     public void patternVersionTransformWithOneVersionWithMeaningMissingPurposePresent() {
         assertThrows(Throwable.class, () -> {
-            PublicId patternPublicId = PublicIds.newRandom();
+            UUID patternUuid = UUID.randomUUID();
+            PublicId patternPublicId = PublicIds.of(patternUuid);
             int patternNid = Entity.nid(patternPublicId);
-            UUID patternUuid = patternPublicId.asUuidArray()[0];
 
             RecordListBuilder<PatternVersionRecord> patternVersions = RecordListBuilder.make();
             PatternRecord patternRecord = PatternRecordBuilder.builder()
@@ -159,9 +159,9 @@ public class TestEntityToProtobufPatternTransformIT {
     @DisplayName("Transform one Entity Pattern Version with Purpose missing and Meaning present - requires entity service")
     public void patternVersionTransformWithOneVersionWithPurposeMissingMeaningPresent() {
         assertThrows(Throwable.class, () -> {
-            PublicId patternPublicId = PublicIds.newRandom();
+            UUID patternUuid = UUID.randomUUID();
+            PublicId patternPublicId = PublicIds.of(patternUuid);
             int patternNid = Entity.nid(patternPublicId);
-            UUID patternUuid = patternPublicId.asUuidArray()[0];
 
             RecordListBuilder<PatternVersionRecord> patternVersions = RecordListBuilder.make();
             PatternRecord patternRecord = PatternRecordBuilder.builder()

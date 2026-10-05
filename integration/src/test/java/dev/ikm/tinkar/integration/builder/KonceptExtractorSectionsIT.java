@@ -75,7 +75,7 @@ class KonceptExtractorSectionsIT {
     void sectionsMatchTaxonomySectioner() {
         String yaml = KonceptExtractor.extractYaml();
 
-        Map<String, UUID> uuidByIdentifier = new HashMap<>();
+        Map<String, List<UUID>> uuidByIdentifier = new HashMap<>();
         Map<String, String> sectionByIdentifier = new HashMap<>();
         parseEntries(yaml, uuidByIdentifier, sectionByIdentifier);
         assertFalse(uuidByIdentifier.isEmpty(), "sanity: the real starter set extracts a non-empty koncept set");
@@ -93,9 +93,12 @@ class KonceptExtractorSectionsIT {
         List<Section> sections = sectioner.sectionsCoveringFullStore(
                 TinkarTerm.ROOT_VERTEX.nid(), SPLIT_THRESHOLD, MAX_DEPTH, RESIDUAL_BATCH_SIZE);
 
+        // Every UUID the extract lists for a koncept finds its section.
         Map<UUID, String> sectionByUuid = new HashMap<>();
         for (Map.Entry<String, String> e : sectionByIdentifier.entrySet()) {
-            sectionByUuid.put(uuidByIdentifier.get(e.getKey()), e.getValue());
+            for (UUID uuid : uuidByIdentifier.getOrDefault(e.getKey(), List.of())) {
+                sectionByUuid.put(uuid, e.getValue());
+            }
         }
 
         // A dual-parented node reached at different depths via different top-level
@@ -114,8 +117,13 @@ class KonceptExtractorSectionsIT {
             nonEmptySectionCount++;
             Set<String> valuesInThisSection = new HashSet<>();
             for (int memberNid : section.members()) {
-                UUID memberUuid = PrimitiveData.publicId(memberNid).asUuidArray()[0];
-                String extractedValue = sectionByUuid.get(memberUuid);
+                String extractedValue = null;
+                for (UUID memberUuid : PrimitiveData.publicId(memberNid).asUuidArray()) {
+                    extractedValue = sectionByUuid.get(memberUuid);
+                    if (extractedValue != null) {
+                        break;
+                    }
+                }
                 if (extractedValue == null) {
                     continue; // member has no FQN in-store -- naturally excluded, as documented
                 }
@@ -151,7 +159,7 @@ class KonceptExtractorSectionsIT {
     private static final Pattern SECTION_LINE = Pattern.compile("^ {2}section: \"(.*)\"$");
 
     /** Parses the flat, hand-emitted YAML for just the fields this test needs. */
-    private static void parseEntries(String yaml, Map<String, UUID> uuidByIdentifier,
+    private static void parseEntries(String yaml, Map<String, List<UUID>> uuidByIdentifier,
                                       Map<String, String> sectionByIdentifier) {
         String currentIdentifier = null;
         boolean afterUuidsKey = false;
@@ -175,11 +183,14 @@ class KonceptExtractorSectionsIT {
                 continue;
             }
             if (afterUuidsKey) {
+                // The uuids: list names every UUID of the koncept, one per line.
                 Matcher uuidLine = UUID_LINE.matcher(line);
                 if (uuidLine.matches()) {
-                    uuidByIdentifier.putIfAbsent(currentIdentifier, UUID.fromString(uuidLine.group(1)));
+                    uuidByIdentifier.computeIfAbsent(currentIdentifier, _ -> new java.util.ArrayList<>())
+                            .add(UUID.fromString(uuidLine.group(1)));
+                } else {
+                    afterUuidsKey = false;
                 }
-                afterUuidsKey = false;
             }
         }
     }

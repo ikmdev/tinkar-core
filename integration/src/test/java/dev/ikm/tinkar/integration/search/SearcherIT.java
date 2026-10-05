@@ -179,18 +179,18 @@ public class SearcherIT {
     public void searchExistingIdentifier() {
         //source: TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER
         //identifier: LANGUAGE_NID_FOR_LANGUAGE_COORDINATE
-        Optional<PublicId> publicId = Searcher.getPublicId(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, TinkarTerm.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE.asUuidArray()[0].toString());
+        Optional<PublicId> publicId = Searcher.getPublicId(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, TinkarTerm.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE.leastUuid().toString());
         assertTrue(publicId.isPresent(), "PublicId should be found");
         assertTrue(PublicId.equals(publicId.get(), TinkarTerm.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE), "Concept PublicId should be LANGUAGE_NID_FOR_LANGUAGE_COORDINATE");
     }
 
     @Test
     public void searchNonExistingIdentifier() {
-        Optional<PublicId> publicId = Searcher.getPublicId(PublicIds.newRandom(), TinkarTerm.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE.asUuidArray()[0].toString());
+        Optional<PublicId> publicId = Searcher.getPublicId(PublicIds.newRandom(), TinkarTerm.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE.leastUuid().toString());
         assertFalse(publicId.isPresent(), "Concept should be null for non-existing Identifier Source");
         publicId = Searcher.getPublicId(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "abcxyz");
         assertFalse(publicId.isPresent(), "Concept should be null for non-existing Identifier Value");
-        publicId = Searcher.getPublicId(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, TinkarTerm.KOMET_BASE_MODEL_COMPONENT_PATTERN.asUuidArray()[0].toString());
+        publicId = Searcher.getPublicId(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, TinkarTerm.KOMET_BASE_MODEL_COMPONENT_PATTERN.leastUuid().toString());
         assertFalse(publicId.isPresent(), "Concept should be null for non-semantic uuid");
     }
 

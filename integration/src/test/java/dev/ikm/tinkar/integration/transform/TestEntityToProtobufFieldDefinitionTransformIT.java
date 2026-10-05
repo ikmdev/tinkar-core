@@ -62,9 +62,9 @@ public class TestEntityToProtobufFieldDefinitionTransformIT {
         Concept dataTypeConcept = conceptMap.get(DATATYPE_CONCEPT_NAME);
         Concept purposeConcept = conceptMap.get(PURPOSE_CONCEPT_NAME);
 
-        PublicId patternPublicId = PublicIds.newRandom();
+        UUID patternUuid = UUID.randomUUID();
+        PublicId patternPublicId = PublicIds.of(patternUuid);
         int patternNid = Entity.nid(patternPublicId);
-        UUID patternUuid = patternPublicId.asUuidArray()[0];
         int stampNid = createAndStoreStamp();
 
         FieldDefinitionRecord fieldDef = FieldDefinitionRecordBuilder.builder()

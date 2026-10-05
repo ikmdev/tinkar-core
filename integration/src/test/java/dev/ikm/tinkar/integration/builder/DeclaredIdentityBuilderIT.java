@@ -51,8 +51,8 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -215,10 +215,10 @@ class DeclaredIdentityBuilderIT {
     void declaredIdentityStamp() {
         int stampNid = PrimitiveData.nid(STAMP_ID);
         StampEntity<?> stamp = Entity.getStamp(stampNid);
-        assertEquals(STAMP_ID.asUuidArray()[0], stamp.publicId().asUuidArray()[0]);
+        assertTrue(PublicId.equals(STAMP_ID, stamp.publicId()));
         UUID tupleDerived = Stamp.stampUuid(State.ACTIVE, declaredBirth.time(),
                 TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        assertNotEquals(tupleDerived, stamp.publicId().asUuidArray()[0],
+        assertFalse(stamp.publicId().contains(tupleDerived),
                 "the declared identity must win over the tuple derivation");
         assertEquals(State.ACTIVE, stamp.state());
         assertEquals(declaredBirth.time(), stamp.time());
@@ -232,32 +232,34 @@ class DeclaredIdentityBuilderIT {
     void tupleDerivedStampUnchanged() {
         UUID tupleDerived = Stamp.stampUuid(State.ACTIVE, birth.time(),
                 TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        assertEquals(tupleDerived, birth.publicId().asUuidArray()[0]);
+        assertTrue(birth.publicId().contains(tupleDerived));
         StampEntity<?> stamp = Entity.getStamp(PrimitiveData.nid(PublicIds.of(tupleDerived)));
-        assertEquals(tupleDerived, stamp.publicId().asUuidArray()[0]);
+        assertTrue(stamp.publicId().contains(tupleDerived));
     }
 
     @Test
     @DisplayName("A multi-UUID declared stamp resolves by every UUID to one stamp entity")
     void multiUuidDeclaredStamp() {
-        UUID[] uuids = MULTI_STAMP_ID.asUuidArray();
-        int byFirst = PrimitiveData.nid(PublicIds.of(uuids[0]));
-        int bySecond = PrimitiveData.nid(PublicIds.of(uuids[1]));
-        assertEquals(byFirst, bySecond, "every declared UUID registers to the one nid");
-        StampEntity<?> stamp = Entity.getStamp(byFirst);
+        int stampNid = PrimitiveData.nid(MULTI_STAMP_ID);
+        for (UUID uuid : MULTI_STAMP_ID.asUuidArray()) {
+            assertEquals(stampNid, PrimitiveData.nid(PublicIds.of(uuid)), "every declared UUID registers to the one nid");
+        }
+        StampEntity<?> stamp = Entity.getStamp(stampNid);
         assertEquals(2, stamp.publicId().uuidCount());
     }
 
     @Test
     @DisplayName("A multi-UUID declared concept identity is adopted in full")
     void multiUuidConceptIdentity() {
-        UUID[] uuids = CONCEPT_ID.asUuidArray();
-        int byFirst = PrimitiveData.nid(PublicIds.of(uuids[0]));
-        int bySecond = PrimitiveData.nid(PublicIds.of(uuids[1]));
-        assertEquals(byFirst, bySecond);
-        Entity<?> concept = EntityHandle.get(byFirst).expectEntity();
+        int conceptNid = PrimitiveData.nid(CONCEPT_ID);
+        for (UUID uuid : CONCEPT_ID.asUuidArray()) {
+            assertEquals(conceptNid, PrimitiveData.nid(PublicIds.of(uuid)), "every declared UUID registers to the one nid");
+        }
+        Entity<?> concept = EntityHandle.get(conceptNid).expectEntity();
         assertEquals(2, concept.publicId().uuidCount());
-        assertEquals(uuids[0], concept.publicId().asUuidArray()[0], "the primordial UUID leads");
+        for (UUID uuid : CONCEPT_ID.asUuidArray()) {
+            assertTrue(concept.publicId().contains(uuid), "the concept carries every declared UUID: " + uuid);
+        }
         assertEquals(1, concept.versions().size());
     }
 
@@ -356,8 +358,10 @@ class DeclaredIdentityBuilderIT {
     @Test
     @DisplayName("A multi-UUID declared pattern identity is adopted in full, memberships attached")
     void multiUuidPatternIdentity() {
-        UUID[] uuids = PATTERN_ID.asUuidArray();
-        assertEquals(PrimitiveData.nid(PublicIds.of(uuids[0])), PrimitiveData.nid(PublicIds.of(uuids[1])));
+        for (UUID uuid : PATTERN_ID.asUuidArray()) {
+            assertEquals(PrimitiveData.nid(PATTERN_ID), PrimitiveData.nid(PublicIds.of(uuid)),
+                    "every declared UUID registers to the one nid");
+        }
         Entity<?> pattern = EntityHandle.get(PrimitiveData.nid(PATTERN_ID)).expectEntity();
         assertEquals(2, pattern.publicId().uuidCount());
         SemanticEntity<SemanticEntityVersion> membership = semanticFor(PATTERN_MEMBERSHIP_ID);
@@ -603,7 +607,7 @@ class DeclaredIdentityBuilderIT {
                 "expected a semantic at " + declaredIdentity);
         @SuppressWarnings("unchecked")
         SemanticEntity<SemanticEntityVersion> semantic = (SemanticEntity<SemanticEntityVersion>) entity;
-        assertTrue(semantic.publicId().asUuidArray()[0].equals(declaredIdentity.asUuidArray()[0]),
+        assertTrue(PublicId.equals(semantic.publicId(), declaredIdentity),
                 "the semantic adopts its declared identity");
         return semantic;
     }

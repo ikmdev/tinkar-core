@@ -45,6 +45,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * A component's change chronology records each stamp field against the stamp version
@@ -86,8 +87,8 @@ class ChangeChronologyIT {
                 "e6359a86-a1df-4721-8a1a-1f1f075ec3d9", EntityBinding.Stamp.Version.moduleFieldDefinitionIndex(),  // Module field
                 "6622a391-e2e6-45a0-97e1-c58cd0184092", EntityBinding.Stamp.Version.pathFieldDefinitionIndex());  // Path field
         assertEquals(expected.size(), pattern.fieldDefinitions().size(), "Fields of the stamp version pattern");
-        expected.forEach((meaning, index) -> assertEquals(UUID.fromString(meaning),
-                PrimitiveData.publicId(pattern.fieldDefinitions().get(index).meaningNid()).asUuidArray()[0],
+        expected.forEach((meaning, index) -> assertTrue(
+                PrimitiveData.publicId(pattern.fieldDefinitions().get(index).meaningNid()).contains(UUID.fromString(meaning)),
                 "Meaning of stamp version pattern field " + index));
     }
 

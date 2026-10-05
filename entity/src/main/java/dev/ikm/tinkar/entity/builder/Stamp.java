@@ -116,9 +116,11 @@ public sealed interface Stamp permits ActiveStamp, InactiveStamp, PrimordialStam
      * Derives the deterministic identity of a stamp tuple: a type-5 UUID in
      * {@link UuidT5Generator#STAMP_NAMESPACE} seeded by the canonical form
      * {@code statusUuid|time|authorUuid|moduleUuid|pathUuid}, where each UUID is the
-     * primordial (first) UUID of the concept's public id and time is epoch milliseconds
-     * in decimal. Two declarations of the same tuple therefore resolve to the same stamp
-     * entity, which is what makes ledger replay idempotent at the stamp level.
+     * least UUID of the concept's public id ({@link PublicId#leastUuid()}) and time is epoch
+     * milliseconds in decimal. Taking the least makes the identity depend on each concept's
+     * UUIDs, not on the order its public id lists them. Two declarations of the same tuple
+     * therefore resolve to the same stamp entity, which is what makes ledger replay idempotent
+     * at the stamp level.
      *
      * @param state  the status dimension
      * @param time   the time dimension, in epoch milliseconds
@@ -128,11 +130,11 @@ public sealed interface Stamp permits ActiveStamp, InactiveStamp, PrimordialStam
      * @return the tuple-derived UUID
      */
     static UUID stampUuid(State state, long time, ConceptFacade author, ConceptFacade module, ConceptFacade path) {
-        String canonical = state.publicId().asUuidArray()[0]
+        String canonical = state.publicId().leastUuid()
                 + "|" + time
-                + "|" + author.publicId().asUuidArray()[0]
-                + "|" + module.publicId().asUuidArray()[0]
-                + "|" + path.publicId().asUuidArray()[0];
+                + "|" + author.publicId().leastUuid()
+                + "|" + module.publicId().leastUuid()
+                + "|" + path.publicId().leastUuid();
         return UuidT5Generator.get(UuidT5Generator.STAMP_NAMESPACE, canonical);
     }
 
@@ -302,7 +304,7 @@ public sealed interface Stamp permits ActiveStamp, InactiveStamp, PrimordialStam
      */
     static Stamp from(DeclaredStamp declared) {
         PublicId identity = declared.identity().publicId();
-        boolean derived = identity.asUuidArray().length == 1 && identity.asUuidArray()[0].equals(
+        boolean derived = identity.uuidCount() == 1 && identity.contains(
                 stampUuid(declared.state(), declared.time(), declared.author(), declared.module(), declared.path()));
         return switch (declared.state()) {
             case ACTIVE -> derived

@@ -44,7 +44,7 @@ import org.eclipse.collections.api.factory.Lists;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -62,7 +62,11 @@ import java.util.function.Consumer;
 final class ComponentLedger {
 
     final PublicId componentId;
-    /** The component's primordial (first) UUID — the T5 namespace for attached-semantic derivation. */
+    /**
+     * The component's least UUID ({@link PublicId#leastUuid()}) — the T5 namespace for
+     * attached-semantic derivation. The least, so a derived identity depends on the component's
+     * UUIDs and not on the order its public id lists them.
+     */
     final UUID componentUuid;
     final String birthFqn;
 
@@ -79,7 +83,13 @@ final class ComponentLedger {
 
     final List<Stamp> componentStamps = new ArrayList<>();
     final List<DescriptionLedger> descriptions = new ArrayList<>();
-    private final Map<UUID, GenericSemanticLedger> genericSemantics = new LinkedHashMap<>();
+    /** The generic declared-identity semantic ledgers, in the order they were opened. */
+    private final List<GenericSemanticLedger> genericSemantics = new ArrayList<>();
+    /**
+     * Every UUID of every generic semantic's declared identity, to its ledger: a declaration
+     * naming any of a semantic's UUIDs finds that semantic.
+     */
+    private final Map<UUID, GenericSemanticLedger> genericSemanticsByUuid = new HashMap<>();
     private final List<VersionEntry<Consumer<LogicalExpressionBuilder>>> axiomVersions = new ArrayList<>();
     private final Set<UUID> writtenStamps = new HashSet<>();
     private final SessionRegistry registry;
@@ -101,7 +111,7 @@ final class ComponentLedger {
 
     ComponentLedger(PublicId componentId, String birthFqn, SessionRegistry registry, boolean identityDeclared) {
         this.componentId = componentId;
-        this.componentUuid = componentId.asUuidArray()[0];
+        this.componentUuid = componentId.leastUuid();
         this.birthFqn = birthFqn;
         this.registry = registry;
         this.identityDeclared = identityDeclared;
@@ -299,25 +309,13 @@ final class ComponentLedger {
      */
     void requireNewStamp(Iterable<Stamp> stampsInUse, Stamp stamp, String what) {
         for (Stamp used : stampsInUse) {
-            if (stampIdentityOverlaps(used, stamp)) {
+            if (PublicId.equals(used.publicId(), stamp.publicId())) {
                 throw new IllegalArgumentException(
                         what + " of " + birthFqn + " already has a version at stamp "
-                                + firstUuidOf(stamp.publicId()) + " — the store keys versions by"
+                                + stamp.publicId().idString() + " — the store keys versions by"
                                 + " stamp, so a second payload would silently replace the first");
             }
         }
-    }
-
-    /** Whether two stamps share any identity UUID — the store's merge-identity notion. */
-    private static boolean stampIdentityOverlaps(Stamp first, Stamp second) {
-        for (UUID firstUuid : first.publicId().asUuidArray()) {
-            for (UUID secondUuid : second.publicId().asUuidArray()) {
-                if (firstUuid.equals(secondUuid)) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     /** The current text of the first live definition description, if any. */
@@ -353,7 +351,7 @@ final class ComponentLedger {
         requireDeclaredIdentity(declaredIdentity);
         // A reference to the component's own identity is a self-reference, whichever of
         // its UUIDs named it — normalize so the suppression gate and agreement see it.
-        if (referencedComponent != null && identityOverlaps(referencedComponent, componentId)) {
+        if (referencedComponent != null && PublicId.equals(referencedComponent, componentId)) {
             referencedComponent = null;
         }
         // All validation precedes any mutation: a rejected declaration must leave the
@@ -390,7 +388,7 @@ final class ComponentLedger {
     void retireGenericVersion(EntityProxy.Pattern pattern, PublicId declaredIdentity,
                               InactiveStamp stamp, Object[] fieldValues) {
         requireDeclaredIdentity(declaredIdentity);
-        GenericSemanticLedger semantic = genericSemantics.get(firstUuidOf(declaredIdentity));
+        GenericSemanticLedger semantic = genericSemantic(declaredIdentity);
         List<Object> values;
         if (semantic == null) {
             if (!bornRetired) {
@@ -417,13 +415,16 @@ final class ComponentLedger {
 
     private GenericSemanticLedger openGenericSemantic(EntityProxy.Pattern pattern, PublicId declaredIdentity,
                                                       PublicId referencedComponent) {
-        GenericSemanticLedger opened = genericSemantics.get(firstUuidOf(declaredIdentity));
+        GenericSemanticLedger opened = genericSemantic(declaredIdentity);
         if (opened == null) {
             registry.registerIdentity(declaredIdentity,
-                    "semantic " + firstUuidOf(declaredIdentity) + " on \"" + birthFqn + "\"");
+                    "semantic " + declaredIdentity.idString() + " on \"" + birthFqn + "\"");
             GenericSemanticLedger created =
                     new GenericSemanticLedger(declaredIdentity, pattern, referencedComponent);
-            genericSemantics.put(firstUuidOf(declaredIdentity), created);
+            genericSemantics.add(created);
+            for (UUID uuid : declaredIdentity.asUuidArray()) {
+                genericSemanticsByUuid.put(uuid, created);
+            }
             return created;
         }
         requireSemanticIdentityAgreement(opened, declaredIdentity);
@@ -431,8 +432,7 @@ final class ComponentLedger {
         boolean sameReference = opened.referencedComponent == null
                 ? referencedComponent == null
                 : referencedComponent != null
-                        && Arrays.equals(opened.referencedComponent.asUuidArray(),
-                                referencedComponent.asUuidArray());
+                        && PublicId.equals(opened.referencedComponent, referencedComponent);
         if (!sameReference) {
             throw new IllegalArgumentException(
                     "Semantic " + declaredIdentity + " on " + birthFqn
@@ -441,8 +441,19 @@ final class ComponentLedger {
         return opened;
     }
 
+    /** The generic semantic ledger a declared identity names by any of its UUIDs, or null. */
+    private GenericSemanticLedger genericSemantic(PublicId declaredIdentity) {
+        for (UUID uuid : declaredIdentity.asUuidArray()) {
+            GenericSemanticLedger semantic = genericSemanticsByUuid.get(uuid);
+            if (semantic != null) {
+                return semantic;
+            }
+        }
+        return null;
+    }
+
     private void requireSemanticIdentityAgreement(GenericSemanticLedger semantic, PublicId declaredIdentity) {
-        if (!Arrays.equals(semantic.semanticId.asUuidArray(), declaredIdentity.asUuidArray())) {
+        if (!sameUuids(semantic.semanticId, declaredIdentity)) {
             throw new IllegalArgumentException(
                     "Semantic " + declaredIdentity + " on " + birthFqn + " is already opened with"
                             + " identity " + semantic.semanticId + " — declared identities must agree exactly");
@@ -450,7 +461,7 @@ final class ComponentLedger {
     }
 
     private void requirePatternAgreement(GenericSemanticLedger semantic, EntityProxy.Pattern pattern) {
-        if (pattern == null || !firstUuidOf(semantic.pattern.publicId()).equals(firstUuidOf(pattern.publicId()))) {
+        if (pattern == null || !PublicId.equals(semantic.pattern.publicId(), pattern.publicId())) {
             throw new IllegalArgumentException(
                     "Semantic " + semantic.semanticId + " on " + birthFqn + " belongs to pattern "
                             + semantic.pattern.description() + " — patterns must agree on resume");
@@ -558,25 +569,17 @@ final class ComponentLedger {
      * derived FQN auto-seed must not add a twin.
      */
     private static boolean isExplicitDescriptionDeclaration(EntityProxy.Pattern pattern, Object[] fieldValues) {
-        return firstUuidOf(pattern.publicId())
-                .equals(firstUuidOf(KernelTerm.DESCRIPTION_PATTERN.publicId()))
+        return PublicId.equals(pattern.publicId(), KernelTerm.DESCRIPTION_PATTERN.publicId())
                 && fieldValues.length == 4;
     }
 
-    /** Whether two identities share any UUID — the store's merge-by-any-UUID identity notion. */
-    private static boolean identityOverlaps(PublicId first, PublicId second) {
-        for (UUID firstUuid : first.asUuidArray()) {
-            for (UUID secondUuid : second.asUuidArray()) {
-                if (firstUuid.equals(secondUuid)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private static UUID firstUuidOf(PublicId publicId) {
-        return publicId.asUuidArray()[0];
+    /**
+     * Whether two declared identities carry exactly the same UUIDs, in whatever order each lists
+     * them — the agreement a restated declaration owes the first one ({@link PublicId#compareTo}
+     * compares the sorted UUIDs whole).
+     */
+    private static boolean sameUuids(PublicId first, PublicId second) {
+        return first.compareTo(second) == 0;
     }
 
     // ------------------------------------------------------------------ axioms
@@ -611,7 +614,7 @@ final class ComponentLedger {
             registry.registerIdentity(declaredIdentity,
                     "stated-axiom semantic of \"" + birthFqn + "\"");
             declaredAxiomIdentity = declaredIdentity;
-        } else if (!Arrays.equals(declaredAxiomIdentity.asUuidArray(), declaredIdentity.asUuidArray())) {
+        } else if (!sameUuids(declaredAxiomIdentity, declaredIdentity)) {
             throw new IllegalArgumentException(
                     "The stated-axiom semantic of " + birthFqn + " is declared with identity "
                             + declaredAxiomIdentity + " — cannot restate it with " + declaredIdentity);
@@ -679,11 +682,10 @@ final class ComponentLedger {
      * again merges to the same entity.
      */
     static void putStampEntity(Stamp stamp, int stampNid) {
-        PublicId stampId = stamp.publicId();
-        UUID primordial = stampId.asUuidArray()[0];
+        PublicIdentifierRecord stampIdRecord = PublicIdentifierRecord.make(stamp.publicId());
         RecordListBuilder<StampVersionRecord> versionRecords = RecordListBuilder.make();
-        StampRecord stampEntity = new StampRecord(primordial.getMostSignificantBits(),
-                primordial.getLeastSignificantBits(), stampId.additionalUuidLongs(), stampNid,
+        StampRecord stampEntity = new StampRecord(stampIdRecord.mostSignificantBits(),
+                stampIdRecord.leastSignificantBits(), stampIdRecord.additionalUuidLongs(), stampNid,
                 versionRecords);
         versionRecords.add(new StampVersionRecord(stampEntity, stamp.state().nid(), stamp.time(),
                 nidFor(stamp.author().publicId()), nidFor(stamp.module().publicId()),
@@ -752,12 +754,12 @@ final class ComponentLedger {
         PublicId axiomId = declaredAxiomIdentity != null
                 ? declaredAxiomIdentity
                 : PublicIds.of(UuidT5Generator.get(componentUuid, "el-plus-plus-stated-axioms"));
-        UUID axiomUuid = firstUuidOf(axiomId);
+        UUID axiomUuid = axiomId.leastUuid();
         RecordListBuilder<SemanticVersionRecord> versions = RecordListBuilder.make();
         SemanticRecord bootstrap = newSemantic(axiomId,
                 KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, componentNid, versions);
         for (VersionEntry<Consumer<LogicalExpressionBuilder>> axiom : axiomVersions) {
-            UUID stampUuid = firstUuidOf(axiom.stamp().publicId());
+            UUID stampUuid = axiom.stamp().publicId().leastUuid();
             int[] vertexOrdinal = {0};
             LogicalExpressionBuilder logicalExpressionBuilder = new LogicalExpressionBuilder(
                     UuidT5Generator.get(axiomUuid, "definition-root|" + stampUuid),
@@ -783,7 +785,7 @@ final class ComponentLedger {
      * (IKE-Network/ike-issues#885).
      */
     void writeGenericSemantics(int componentNid) {
-        for (GenericSemanticLedger semantic : genericSemantics.values()) {
+        for (GenericSemanticLedger semantic : genericSemantics) {
             int referencedNid = semantic.referencedComponent == null
                     ? componentNid
                     : nidFor(semantic.referencedComponent);

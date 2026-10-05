@@ -40,7 +40,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -100,7 +99,7 @@ public final class KnowledgeSet {
     private final Map<String, ConceptBuilder> concepts = new LinkedHashMap<>();
     private final Map<String, PatternBuilder> patterns = new LinkedHashMap<>();
     private final SessionRegistry registry = new SessionRegistry();
-    private final Map<UUID, Stamp> declaredStamps = new LinkedHashMap<>();
+    private final List<Stamp> declaredStamps = new ArrayList<>();
     private final Map<String, BindingClass> bindingClasses = new LinkedHashMap<>();
     private final List<StampBinding> stampBindings = new ArrayList<>();
     private final Set<String> derivedReferencesIssued = new LinkedHashSet<>();
@@ -397,7 +396,10 @@ public final class KnowledgeSet {
      */
     public KnowledgeSet stamp(Stamp stamp) {
         registry.requireStampAgreement(stamp);
-        declaredStamps.putIfAbsent(stamp.publicId().asUuidArray()[0], stamp);
+        // The same stamp is the one sharing any UUID; the registry has refused another tuple.
+        if (declaredStamps.stream().noneMatch(declared -> PublicId.equals(declared.publicId(), stamp.publicId()))) {
+            declaredStamps.add(stamp);
+        }
         return this;
     }
 
@@ -412,7 +414,7 @@ public final class KnowledgeSet {
      *                               pending version lacks meaning or purpose
      */
     public void write() {
-        for (Stamp stamp : declaredStamps.values()) {
+        for (Stamp stamp : declaredStamps) {
             ComponentLedger.putStampEntity(stamp, EntityService.get().nidForStamp(stamp.publicId()));
         }
         for (ConceptBuilder builder : concepts.values()) {
@@ -798,8 +800,7 @@ public final class KnowledgeSet {
             return;
         }
         UUID derived = uuidFor(fullyQualifiedName);
-        UUID[] declared = declaredIdentity.asUuidArray();
-        if (declared.length == 1 && declared[0].equals(derived)) {
+        if (declaredIdentity.uuidCount() == 1 && declaredIdentity.contains(derived)) {
             return;
         }
         throw new IllegalArgumentException(
@@ -819,10 +820,9 @@ public final class KnowledgeSet {
 
     private static void requireIdentityAgreement(String fullyQualifiedName, PublicId openedIdentity,
                                                  PublicId declaredIdentity) {
-        // Identity-exact agreement: the full UUID lists must match, in order. Comparison
-        // is by UUID array because PublicId implementations vary by arity.
-        if (declaredIdentity != null
-                && !Arrays.equals(declaredIdentity.asUuidArray(), openedIdentity.asUuidArray())) {
+        // Identity-exact agreement: the same UUIDs, in whatever order each lists them
+        // (compareTo compares the sorted UUIDs whole). No UUID among them is first.
+        if (declaredIdentity != null && declaredIdentity.compareTo(openedIdentity) != 0) {
             throw new IllegalArgumentException(
                     "\"" + fullyQualifiedName + "\" is already opened with identity " + openedIdentity
                             + " — cannot resume it with declared identity " + declaredIdentity);

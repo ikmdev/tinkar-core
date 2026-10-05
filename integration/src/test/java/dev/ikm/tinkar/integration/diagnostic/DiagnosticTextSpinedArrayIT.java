@@ -34,6 +34,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * {@link DiagnosticText} against a spined-array store, which reads the public id of a nid from
@@ -67,8 +68,13 @@ class DiagnosticTextSpinedArrayIT {
         int nid = TinkarTerm.ENGLISH_LANGUAGE.nid();
         String description = PrimitiveData.textOptional(nid).orElseThrow();
 
-        assertEquals(description + " (UUID " + TinkarTerm.ENGLISH_LANGUAGE.publicId().asUuidArray()[0] + ")",
-                DiagnosticText.component(nid));
+        String text = DiagnosticText.component(nid);
+
+        assertTrue(text.startsWith(description + " (UUID"), text);
+        // Every UUID is named: none of them is the component's primordial UUID.
+        for (UUID uuid : TinkarTerm.ENGLISH_LANGUAGE.publicId().asUuidArray()) {
+            assertTrue(text.contains(uuid.toString()), "the text names " + uuid + ": " + text);
+        }
     }
 
     @Test

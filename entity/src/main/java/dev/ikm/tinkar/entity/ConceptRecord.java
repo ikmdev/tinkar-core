@@ -67,18 +67,13 @@ public record ConceptRecord(
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern().publicId())
                 .call(() -> PrimitiveData.nid(publicId));
 
-        ConceptRecord conceptRecord = switch (publicId.uuidCount()) {
-            case 1 -> ConceptRecordBuilder.builder()
-                    .leastSignificantBits(publicId.asUuidArray()[0].getLeastSignificantBits())
-                    .mostSignificantBits(publicId.asUuidArray()[0].getMostSignificantBits())
-                    .nid(conceptNid)
-                    .versions(versionRecords).build();
-            case 2 -> ConceptRecordBuilder.builder()
-                    .leastSignificantBits(publicId.asUuidArray()[0].getLeastSignificantBits())
-                    .mostSignificantBits(publicId.asUuidArray()[0].getMostSignificantBits())
-                    .additionalUuidLongs(publicId.additionalUuidLongs()).build();
-            default -> throw new IllegalStateException("Unexpected value: " + publicId.uuidCount());
-        };
+        PublicIdentifierRecord publicIdRecord = PublicIdentifierRecord.make(publicId);
+        ConceptRecord conceptRecord = ConceptRecordBuilder.builder()
+                .leastSignificantBits(publicIdRecord.leastSignificantBits())
+                .mostSignificantBits(publicIdRecord.mostSignificantBits())
+                .additionalUuidLongs(publicIdRecord.additionalUuidLongs())
+                .nid(conceptNid)
+                .versions(versionRecords).build();
         versionRecords.addAndBuild(new ConceptVersionRecord(conceptRecord, stampVersion.stampNid()));
         return conceptRecord;
     }

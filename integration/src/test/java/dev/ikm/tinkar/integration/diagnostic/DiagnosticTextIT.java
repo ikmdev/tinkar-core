@@ -104,7 +104,8 @@ class DiagnosticTextIT {
 
         String text = DiagnosticText.component(nid);
 
-        assertEquals(description + " (UUID " + firstUuid(TinkarTerm.ENGLISH_LANGUAGE) + ")", text);
+        assertEquals(description + " (" + writtenUuids(PrimitiveData.publicId(nid)) + ")", text);
+        assertNamesEveryUuid(TinkarTerm.ENGLISH_LANGUAGE, text);
         assertEquals(description, DiagnosticText.name(nid));
         assertNoNid(text);
     }
@@ -125,7 +126,7 @@ class DiagnosticTextIT {
 
         String text = DiagnosticText.component(semanticNid);
 
-        assertEquals("UUID " + PrimitiveData.publicId(semanticNid).asUuidArray()[0], text);
+        assertEquals(writtenUuids(PrimitiveData.publicId(semanticNid)), text);
         assertNoNid(text);
     }
 
@@ -151,15 +152,18 @@ class DiagnosticTextIT {
     void aPublicIdTheStoreHoldsIsWrittenWithItsDescription() {
         String description = PrimitiveData.textOptional(TinkarTerm.ENGLISH_LANGUAGE.nid()).orElseThrow();
 
-        assertEquals(description + " (UUID " + firstUuid(TinkarTerm.ENGLISH_LANGUAGE) + ")",
-                DiagnosticText.component(TinkarTerm.ENGLISH_LANGUAGE.publicId()));
+        String text = DiagnosticText.component(TinkarTerm.ENGLISH_LANGUAGE.publicId());
+
+        assertEquals(description + " (" + writtenUuids(TinkarTerm.ENGLISH_LANGUAGE.publicId()) + ")", text);
+        assertNamesEveryUuid(TinkarTerm.ENGLISH_LANGUAGE, text);
     }
 
     @Test
     void aPublicIdTheStoreDoesNotHoldIsItsUuidAndIsAssignedNoNid() {
-        PublicId unknown = PublicIds.of(UUID.randomUUID().toString());
+        String unknownUuid = UUID.randomUUID().toString();
+        PublicId unknown = PublicIds.of(unknownUuid);
 
-        assertEquals("UUID " + unknown.asUuidArray()[0], DiagnosticText.component(unknown));
+        assertEquals("UUID " + unknownUuid, DiagnosticText.component(unknown));
         assertFalse(PrimitiveData.get().hasPublicId(unknown), "writing the text assigned the public id a nid");
     }
 
@@ -234,8 +238,21 @@ class DiagnosticTextIT {
         vertex.setProperties(properties);
     }
 
-    private static String firstUuid(EntityFacade component) {
-        return component.publicId().asUuidArray()[0].toString();
+    /** A public id's UUIDs as a message writes them: every one, in the order it lists them. */
+    private static String writtenUuids(PublicId publicId) {
+        UUID[] uuids = publicId.asUuidArray();
+        StringBuilder text = new StringBuilder(uuids.length == 1 ? "UUID " : "UUIDs ");
+        for (int i = 0; i < uuids.length; i++) {
+            text.append(i == 0 ? "" : ", ").append(uuids[i]);
+        }
+        return text.toString();
+    }
+
+    /** Every UUID of the component appears in the text: none of them is its primordial UUID. */
+    private static void assertNamesEveryUuid(EntityFacade component, String text) {
+        for (UUID uuid : component.publicId().asUuidArray()) {
+            assertTrue(text.contains(uuid.toString()), "the text names " + uuid + ": " + text);
+        }
     }
 
     private static void assertNoNid(String text) {

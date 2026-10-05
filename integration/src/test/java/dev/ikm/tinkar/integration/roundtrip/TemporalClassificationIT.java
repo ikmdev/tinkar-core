@@ -124,7 +124,7 @@ class TemporalClassificationIT {
         Properties in = new Properties();
         in.setProperty(STORE, new File(WORK, "store").getPath());
         in.setProperty(IMPORT_FILE, TestConstants.PB_STARTER_DATA.getPath());
-        in.setProperty(PATH, TinkarTerm.PRIMORDIAL_PATH.publicId().asUuidArray()[0].toString());
+        in.setProperty(PATH, TinkarTerm.PRIMORDIAL_PATH.publicId().leastUuid().toString());
 
         Properties imported = ForkedJvm.run(ImportAndFindTimes.class, in);
         List<String> allTimes = List.of(imported.getProperty(TIMES).split(","));

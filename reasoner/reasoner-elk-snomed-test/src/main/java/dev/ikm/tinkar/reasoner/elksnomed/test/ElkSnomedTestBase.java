@@ -100,10 +100,10 @@ public abstract class ElkSnomedTestBase extends SnomedTestBase {
 		ArrayList<String> lines = new ArrayList<>();
 		for (Concept con : reasoner.getSnomedOntology().getConcepts()) {
 			int con_id = (int) con.getId();
-			String con_str = PrimitiveData.publicId(con_id).asUuidArray()[0] + "\t" + PrimitiveData.text(con_id);
+			String con_str = PrimitiveData.publicId(con_id).idString() + "\t" + PrimitiveData.text(con_id);
 			for (Concept sup : reasoner.getSuperConcepts(con)) {
 				int sup_id = (int) sup.getId();
-				String sup_str = PrimitiveData.publicId(sup_id).asUuidArray()[0] + "\t" + PrimitiveData.text(sup_id);
+				String sup_str = PrimitiveData.publicId(sup_id).idString() + "\t" + PrimitiveData.text(sup_id);
 				lines.add(con_str + "\t" + sup_str);
 			}
 		}
@@ -144,9 +144,9 @@ public abstract class ElkSnomedTestBase extends SnomedTestBase {
 	public ArrayList<String> getSupercs(ReasonerService rs) {
 		ArrayList<String> lines = new ArrayList<>();
 		for (int con_id : rs.getReasonerConceptSet().toArray()) {
-			String con_str = PrimitiveData.publicId(con_id).asUuidArray()[0] + "\t" + PrimitiveData.text(con_id);
+			String con_str = PrimitiveData.publicId(con_id).idString() + "\t" + PrimitiveData.text(con_id);
 			for (int sup_id : rs.getParents(con_id).toArray()) {
-				String sup_str = PrimitiveData.publicId(sup_id).asUuidArray()[0] + "\t" + PrimitiveData.text(sup_id);
+				String sup_str = PrimitiveData.publicId(sup_id).idString() + "\t" + PrimitiveData.text(sup_id);
 				lines.add(con_str + "\t" + sup_str);
 			}
 		}

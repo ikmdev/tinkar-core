@@ -286,8 +286,11 @@ public final class KonceptExtractor {
             // extension's KonceptDefinition still parses a seeAlso key so nothing here
             // needs to change again once such a pattern exists.
 
-            UUID uuid = PrimitiveData.publicId(nid).asUuidArray()[0];
-            sb.append("  uuids:\n    - ").append(uuid).append('\n');
+            // Every UUID: each identifies the component, and none is primordial.
+            sb.append("  uuids:\n");
+            for (UUID uuid : PrimitiveData.publicId(nid).asUuidArray()) {
+                sb.append("    - ").append(uuid).append('\n');
+            }
             sb.append('\n');
         }
         return sb.toString();

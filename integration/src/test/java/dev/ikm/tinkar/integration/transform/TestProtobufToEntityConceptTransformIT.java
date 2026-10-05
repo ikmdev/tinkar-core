@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.transform;
 
+import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.component.Concept;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.Entity;
@@ -96,8 +97,7 @@ public class TestProtobufToEntityConceptTransformIT {
         assertNotNull(result.get());
         assertInstanceOf(ConceptEntity.class, result.get());
         ConceptEntity<?> conceptEntity = (ConceptEntity<?>) result.get();
-        assertEquals(testConcept.publicId().asUuidArray()[0],
-                conceptEntity.publicId().asUuidArray()[0],
+        assertTrue(PublicId.equals(testConcept.publicId(), conceptEntity.publicId()),
                 "Public IDs should match");
         assertEquals(1, conceptEntity.versions().size(), "Should have one version");
     }

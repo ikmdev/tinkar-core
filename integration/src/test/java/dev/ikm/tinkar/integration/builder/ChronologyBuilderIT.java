@@ -156,8 +156,7 @@ class ChronologyBuilderIT {
     void buildersResume() {
         ConceptBuilder resumed = TEST_SET.concept("Journal element (Test)");
         assertSame(resumed, TEST_SET.concept("Journal element (Test)"));
-        assertEquals(UuidT5Generator.get(TEST_SET.uuid(), "Journal element (Test)"),
-                resumed.publicId().asUuidArray()[0]);
+        assertTrue(resumed.publicId().contains(UuidT5Generator.get(TEST_SET.uuid(), "Journal element (Test)")));
         assertEquals(resumed.publicId(),
                 TEST_SET.conceptRef("Journal element (Test)").publicId());
     }
@@ -166,7 +165,7 @@ class ChronologyBuilderIT {
     @DisplayName("Declared identity: FQN + UUID adopts an established identity; resume must agree")
     void declaredIdentity() {
         ConceptBuilder adopted = TEST_SET.concept("Adopted kind (Test)");
-        assertEquals(ADOPTED_CONCEPT_IDENTITY, adopted.publicId().asUuidArray()[0],
+        assertTrue(adopted.publicId().contains(ADOPTED_CONCEPT_IDENTITY),
                 "declared identity, not T5(setUuid, fqn)");
         assertEquals(adopted.publicId(), TEST_SET.conceptRef("Adopted kind (Test)").publicId(),
                 "a ref after the declaration answers the declared identity");
@@ -186,10 +185,10 @@ class ChronologyBuilderIT {
         // Replay wrote the entity under the declared identity.
         ConceptEntity<?> entity = EntityHandle.get(
                 TEST_SET.conceptRef("Adopted kind (Test)").nid()).expectConcept();
-        assertEquals(ADOPTED_CONCEPT_IDENTITY, entity.publicId().asUuidArray()[0]);
+        assertTrue(entity.publicId().contains(ADOPTED_CONCEPT_IDENTITY));
 
         PatternBuilder adoptedPattern = TEST_SET.pattern("Adopted pattern (Test)");
-        assertEquals(ADOPTED_PATTERN_IDENTITY, adoptedPattern.publicId().asUuidArray()[0]);
+        assertTrue(adoptedPattern.publicId().contains(ADOPTED_PATTERN_IDENTITY));
         assertEquals(adoptedPattern.publicId(),
                 TEST_SET.patternRef("Adopted pattern (Test)").publicId());
     }
@@ -372,9 +371,9 @@ class ChronologyBuilderIT {
                 "concept constant with tag-stripped name");
         assertTrue(source.contains("public static final EntityProxy.Pattern JOURNAL_MANIFEST_PATTERN ="),
                 "pattern constant");
-        assertTrue(source.contains(TEST_SET.conceptRef("Journal element (Test)")
-                        .publicId().asUuidArray()[0].toString()),
-                "resolved UUID literal embedded");
+        for (UUID uuid : TEST_SET.conceptRef("Journal element (Test)").publicId().asUuidArray()) {
+            assertTrue(source.contains(uuid.toString()), "resolved UUID literal embedded: " + uuid);
+        }
         assertTrue(source.contains("Root kind of the blocks a conversation journal orders."),
                 "definition text as javadoc");
         assertTrue(source.contains("DO NOT EDIT"), "generation marker");

@@ -164,7 +164,7 @@ class EstablishedRetirementBuilderIT {
     @DisplayName("The retired definition carries the restated expression under the established identity")
     void retiredAxiomsCarryTheRestatedExpression() {
         SemanticEntity<? extends SemanticEntityVersion> axioms = semantic(RETIRED_AXIOMS_ID);
-        assertEquals(RETIRED_ID.asUuidArray()[0], PrimitiveData.publicId(axioms.referencedComponentNid()).asUuidArray()[0],
+        assertTrue(PublicId.equals(RETIRED_ID, PrimitiveData.publicId(axioms.referencedComponentNid())),
                 "the base's axiom semantic, on the base's concept");
         assertEquals(2, axioms.versions().size(), "the base's version and the retirement");
         SemanticEntityVersion inactive = onlyInactive(axioms);

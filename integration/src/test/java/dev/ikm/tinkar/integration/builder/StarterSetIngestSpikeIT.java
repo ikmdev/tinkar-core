@@ -166,20 +166,21 @@ class StarterSetIngestSpikeIT {
     /** A stamp whose UUID is not the tuple derivation demands declared-identity stamps. */
     private static void checkStamp(int stampNid) {
         StampEntity<?> stamp = Entity.getStamp(stampNid);
-        String canonical = stamp.state().publicId().asUuidArray()[0]
+        // Mirrors Stamp.stampUuid: each dimension's least UUID.
+        String canonical = stamp.state().publicId().leastUuid()
                 + "|" + stamp.time()
-                + "|" + firstUuid(stamp.authorNid())
-                + "|" + firstUuid(stamp.moduleNid())
-                + "|" + firstUuid(stamp.pathNid());
+                + "|" + leastUuid(stamp.authorNid())
+                + "|" + leastUuid(stamp.moduleNid())
+                + "|" + leastUuid(stamp.pathNid());
         UUID tupleDerived = UuidT5Generator.get(UuidT5Generator.STAMP_NAMESPACE, canonical);
-        if (!tupleDerived.equals(stamp.publicId().asUuidArray()[0])) {
+        if (!stamp.publicId().contains(tupleDerived)) {
             tally(GAPS, "declared-identity stamps");
         }
     }
 
-    private static UUID firstUuid(int nid) {
+    private static UUID leastUuid(int nid) {
         PublicId publicId = PrimitiveData.publicId(nid);
-        return publicId.asUuidArray()[0];
+        return publicId.leastUuid();
     }
 
     private static void tally(Map<String, Integer> tallies, String key) {

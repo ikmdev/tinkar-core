@@ -162,7 +162,8 @@ class SpinedArrayIdentifierMergeIT {
     }
 
     private EntityProxy.Concept createIdentifierSemantic(Session session, UUID namespace, String name) {
-        EntityProxy.Concept snomedIdentifier = EntityProxy.Concept.make(name, UuidT5Generator.get(namespace, name));
+        UUID snomedIdentifierUuid = UuidT5Generator.get(namespace, name);
+        EntityProxy.Concept snomedIdentifier = EntityProxy.Concept.make(name, snomedIdentifierUuid);
         session.compose((ConceptAssembler concept) -> concept
                 .concept(snomedIdentifier)
                 .attach(FullyQualifiedName.class, fqn -> fqn
@@ -182,7 +183,7 @@ class SpinedArrayIdentifierMergeIT {
                 )
                 .attach(Identifier.class, identifier -> identifier
                         .source(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER)
-                        .identifier(snomedIdentifier.asUuidArray()[0].toString())
+                        .identifier(snomedIdentifierUuid.toString())
                 )
                 .attach(StatedAxiom.class, statedAxiom -> statedAxiom
                         .isA(TinkarTerm.IDENTIFIER_SOURCE)
@@ -202,7 +203,7 @@ class SpinedArrayIdentifierMergeIT {
                 .concept(concept)
                 .attach(Identifier.class, identifier -> identifier
                         .source(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER)
-                        .identifier(concept.asUuidArray()[0].toString())
+                        .identifier(uuid.toString())
                 )
                 .attach(Identifier.class, identifier -> identifier
                         .source(identifierSource)
@@ -232,7 +233,7 @@ class SpinedArrayIdentifierMergeIT {
                 )
                 .attach(Identifier.class, identifier -> identifier
                         .source(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER)
-                        .identifier(author.asUuidArray()[0].toString())
+                        .identifier(author.leastUuid().toString())
                 )
                 .attach(StatedAxiom.class, statedAxiom -> statedAxiom
                         .isA(TinkarTerm.USER)

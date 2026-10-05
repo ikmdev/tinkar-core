@@ -151,7 +151,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
 
         // Pass 1: generate identifiers for all entities
         EntityService.get().beginLoadPhase();
-        CopyOnWriteArrayList<UUID> patternUuids = new CopyOnWriteArrayList<>();
+        CopyOnWriteArrayList<PublicId> patternIds = new CopyOnWriteArrayList<>();
 
         try (FileInputStream fileIn = new FileInputStream(importFile);
              BufferedInputStream buffIn = new BufferedInputStream(fileIn, InputStreamBufferSize);
@@ -191,9 +191,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                                                     };
                                                     if (pbTinkarMsg.getValueCase().getNumber() == TinkarMsg.ValueCase.PATTERN_CHRONOLOGY.getNumber()) {
                                                         PatternChronology patternChronology = pbTinkarMsg.getPatternChronology();
-                                                        String uuidStr = patternChronology.getPublicId().getUuidsList().get(0);
-                                                        UUID uuid = UUID.fromString(uuidStr);
-                                                        patternUuids.add(uuid);
+                                                        patternIds.add(getEntityPublicId(patternChronology.getPublicId()));
                                                     }
                                                 }
                                                 return null;
@@ -276,13 +274,15 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             }
             StringBuilder stringBuilder = new StringBuilder();
 
-            patternUuids.forEach(patternUuid -> {
-                int nid = PrimitiveData.get().nidForUuids(patternUuid);
+            patternIds.forEach(patternId -> {
+                int nid = PrimitiveData.get().nidForUuids(patternId.asUuidArray());
                 PatternEntity patternEntity = EntityHandle.get(nid).asPattern().orElse(null);
                 StampCoordinate stampCoordinate = Coordinates.Stamp.DevelopmentLatest();
                 String entityText = PrimitiveData.textWithNid(nid);
-                PrimitiveData.getEntityKey(patternUuid).ifPresent(entityKey ->
-                        stringBuilder.append("\n\nPattern: ").append(entityText).append(" EntityKey: ").append(entityKey));
+                // Any of the pattern's UUIDs finds its key.
+                PrimitiveData.getEntityKey(patternId.leastUuid()).ifPresent(entityKey ->
+                        stringBuilder.append("\n\nPattern: ").append(entityText).append(" ").append(patternId.idString())
+                                .append(" EntityKey: ").append(entityKey));
 
                 stringBuilder.append("\n nid=").append(nid).append(" (0x").append(String.format("%08X", nid)).append(")").append(" pattern sequence=").append(NidLayout.active().decodePatternSequence(nid)).append(" element sequence=").append(NidLayout.active().decodeElementSequence(nid));
                 stringBuilder.append("\nPatternEntity: ").append(patternEntity);

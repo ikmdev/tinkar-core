@@ -28,7 +28,6 @@ import dev.ikm.tinkar.common.sets.ConcurrentHashSet;
 import dev.ikm.tinkar.common.util.broadcast.CommitBroadcaster;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.entity.Entity;
-import dev.ikm.tinkar.entity.EntityText;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.StampAnalogueBuilder;
 import dev.ikm.tinkar.entity.StampEntity;
@@ -163,13 +162,13 @@ public class Transaction implements Comparable<Transaction>, Encodable {
     public static Optional<Transaction> forVersion(EntityVersion version) {
         StampEntity stamp = version.stamp();
         UUID[] stampUuids = stamp.asUuidArray();
-        if (stampUuids.length > 1) {
-            throw new IllegalStateException("Can only handle one UUID for stamp. Found: " + EntityText.diagnostic(version));
-        }
         for (Transaction transaction : activeTransactions) {
-            if (transaction.stampsInTransaction.contains(stampUuids[0])) {
-                if (transaction.componentsInTransaction.contains(version.nid())) {
-                    return Optional.of(transaction);
+            if (transaction.componentsInTransaction.contains(version.nid())) {
+                // A stamp has one UUID (getStamp mints it); the loop only avoids reading it by position.
+                for (UUID stampUuid : stampUuids) {
+                    if (transaction.stampsInTransaction.contains(stampUuid)) {
+                        return Optional.of(transaction);
+                    }
                 }
             }
         }

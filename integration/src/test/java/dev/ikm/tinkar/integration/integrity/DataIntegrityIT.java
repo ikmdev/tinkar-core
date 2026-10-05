@@ -834,11 +834,12 @@ public class DataIntegrityIT {
             }
 
             RecordListBuilder<PatternVersionRecord> versions = RecordListBuilder.make();
+            PublicIdentifierRecord patternIdRecord = PublicIdentifierRecord.make(pattern);
             PatternRecord patternRecord = PatternRecordBuilder.builder()
                     .nid(pattern.nid())
-                    .leastSignificantBits(pattern.asUuidArray()[0].getLeastSignificantBits())
-                    .mostSignificantBits(pattern.asUuidArray()[0].getMostSignificantBits())
-                    .additionalUuidLongs(null)
+                    .leastSignificantBits(patternIdRecord.leastSignificantBits())
+                    .mostSignificantBits(patternIdRecord.mostSignificantBits())
+                    .additionalUuidLongs(patternIdRecord.additionalUuidLongs())
                     .versions(versions.toImmutable())
                     .build();
 

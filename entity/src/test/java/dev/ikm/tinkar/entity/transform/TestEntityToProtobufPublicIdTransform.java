@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.util.Map;
+import java.util.UUID;
 
 import static dev.ikm.tinkar.entity.transform.ProtobufToEntityTestHelper.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -64,7 +65,7 @@ public class TestEntityToProtobufPublicIdTransform {
         PublicId actualPublicId = testConcept.publicId();
         // Creating a Protobuf with the Expected value
         dev.ikm.tinkar.schema.PublicId expectedPBPublicId = dev.ikm.tinkar.schema.PublicId.newBuilder()
-                .addUuids(actualPublicId.asUuidList().get(0).toString()).build();
+                .addAllUuids(actualPublicId.asUuidList().collect(UUID::toString)).build();
 
         // When I try to transform it into a public ID protobuf message
         dev.ikm.tinkar.schema.PublicId actualPBPublicId = EntityToTinkarSchemaTransformer.getInstance().createPBPublicId(actualPublicId);

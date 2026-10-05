@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.builder.ActiveStamp;
 import dev.ikm.tinkar.entity.builder.BindingClass;
@@ -81,13 +82,13 @@ class BindingClassesIT {
         String defaults = Files.readString(files.get(0));
         String elPlusSource = Files.readString(files.get(1));
         String cqlSource = Files.readString(files.get(2));
-        String conjunction = set.conceptRef("Conjunction (Test)").publicId().asUuidArray()[0].toString();
+        PublicId conjunction = set.conceptRef("Conjunction (Test)").publicId();
 
         assertTrue(defaults.contains("EntityProxy.Concept UNBOUND_CONCEPT ="), "unbound, named from its FQN");
         assertFalse(defaults.contains("CONJUNCTION"), "a bound component is not in the default class");
-        assertTrue(elPlusSource.contains("EntityProxy.Concept AND =") && elPlusSource.contains(conjunction),
+        assertTrue(elPlusSource.contains("EntityProxy.Concept AND =") && containsEveryUuid(elPlusSource, conjunction),
                 "the shared concept, in ElPlus");
-        assertTrue(cqlSource.contains("EntityProxy.Concept AND =") && cqlSource.contains(conjunction),
+        assertTrue(cqlSource.contains("EntityProxy.Concept AND =") && containsEveryUuid(cqlSource, conjunction),
                 "the shared concept, in Cql, under the same identity");
         assertTrue(elPlusSource.contains("EntityProxy.Concept SOME =") && !cqlSource.contains(" SOME ="),
                 "a component bound in one class only");
@@ -111,10 +112,20 @@ class BindingClassesIT {
         String source = Files.readString(files.get(1));
 
         assertTrue(source.contains("public static final DeclaredStamp INCEPTION ="));
-        assertTrue(source.contains(inception.publicId().asUuidArray()[0].toString()), "the stamp's identity");
+        assertTrue(containsEveryUuid(source, inception.publicId()), "the stamp's identity");
         assertTrue(source.contains("State.ACTIVE, " + PrimitiveData.INCEPTION_EPOCH + "L"), "status and time");
-        assertTrue(source.contains(module.publicId().asUuidArray()[0].toString()), "the module");
-        assertTrue(source.contains(TinkarTerm.DEVELOPMENT_PATH.publicId().asUuidArray()[0].toString()), "the path");
+        assertTrue(containsEveryUuid(source, module.publicId()), "the module");
+        assertTrue(containsEveryUuid(source, TinkarTerm.DEVELOPMENT_PATH.publicId()), "the path");
+    }
+
+    /** Whether generated source names every UUID of a component: a binding carries them all. */
+    private static boolean containsEveryUuid(String source, PublicId publicId) {
+        for (java.util.UUID uuid : publicId.asUuidArray()) {
+            if (!source.contains(uuid.toString())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Test

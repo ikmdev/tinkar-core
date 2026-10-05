@@ -236,7 +236,7 @@ class ForwardReferenceChangeSetGenerateIT {
         int conceptNid = EntityService.get().nidForPublicId(newConceptPublicId);
 
         return SemanticRecord.build(
-                descriptionSemanticPublicId.asUuidArray()[0],
+                SEMANTIC_UUID,
                 TinkarTerm.DESCRIPTION_PATTERN.nid(),
                 conceptNid,  // References the concept that will be written AFTER this semantic
                 testStamp.lastVersion(),

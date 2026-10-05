@@ -25,6 +25,7 @@ import dev.ikm.tinkar.entity.ConceptVersionRecord;
 import dev.ikm.tinkar.entity.ConceptVersionRecordBuilder;
 import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
+import dev.ikm.tinkar.entity.PublicIdentifierRecord;
 import dev.ikm.tinkar.entity.RecordListBuilder;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.transaction.Transaction;
@@ -35,7 +36,6 @@ import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.impl.factory.Lists;
-import org.eclipse.collections.impl.factory.primitive.LongLists;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -147,11 +147,8 @@ class SpinedArrayEntityCacheIT {
         PublicId conceptId = concept.publicId();
         RecordListBuilder<ConceptVersionRecord> versions = RecordListBuilder.make();
 
-        //Pull out primordial UUID from PublicId
-        UUID primordialUUID = conceptId.asUuidArray()[0];
-        //Process additional UUID longs from PublicId
-
-        long[] additionalLongs = additionalLongsHelper(conceptId);
+        //The record header holds every UUID of the PublicId
+        PublicIdentifierRecord conceptIdRecord = PublicIdentifierRecord.make(conceptId);
 
         //Assign nids for PublicIds
         int stampNid = EntityService.get().nidForPublicId(stampId);
@@ -159,9 +156,9 @@ class SpinedArrayEntityCacheIT {
         //Create Concept Chronology
         ConceptRecord conceptRecord = ConceptRecordBuilder.builder()
                 .nid(concept.nid())
-                .leastSignificantBits(primordialUUID.getLeastSignificantBits())
-                .mostSignificantBits(primordialUUID.getMostSignificantBits())
-                .additionalUuidLongs(LongLists.immutable.of(additionalLongs))
+                .leastSignificantBits(conceptIdRecord.leastSignificantBits())
+                .mostSignificantBits(conceptIdRecord.mostSignificantBits())
+                .additionalUuidLongs(conceptIdRecord.additionalUuidLongs())
                 .versions(versions)
                 .build();
 
@@ -173,17 +170,6 @@ class SpinedArrayEntityCacheIT {
 
         //Rebuild the ConceptRecord with the now populated version data
         return ConceptRecordBuilder.builder(conceptRecord).versions(versions.toImmutable()).build();
-    }
-
-    private static long[] additionalLongsHelper(PublicId publicId) {
-        long[] additionalLongs = new long[(publicId.uuidCount() * 2) - 2];
-        int index = 0;
-        for (int i = 1; i < publicId.uuidCount(); i++) {
-            UUID uuid = publicId.asUuidArray()[i];
-            additionalLongs[index++] = uuid.getMostSignificantBits();
-            additionalLongs[index++] = uuid.getLeastSignificantBits();
-        }
-        return additionalLongs.length == 0 ? null : additionalLongs;
     }
 
 }

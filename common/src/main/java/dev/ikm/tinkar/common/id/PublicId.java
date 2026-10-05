@@ -61,6 +61,25 @@ import static dev.ikm.tinkar.common.id.IdCollection.TO_STRING_LIMIT;
  */
 public interface PublicId extends Comparable<PublicId> {
 
+    /**
+     * The least of this public id's UUIDs, by {@link UUID#compareTo} (which compares signed): the
+     * one UUID to derive from, when a single UUID must be derived from (a type 5 UUID minted from
+     * a component's). It depends on the public id's UUIDs, not on the order they are listed in.
+     * It identifies nothing by itself: a differing least UUID does not make two public ids differ.
+     *
+     * @return the least UUID
+     */
+    default UUID leastUuid() {
+        UUID[] uuids = asUuidArray();
+        UUID least = uuids[0];
+        for (int i = 1; i < uuids.length; i++) {
+            if (uuids[i].compareTo(least) < 0) {
+                least = uuids[i];
+            }
+        }
+        return least;
+    }
+
     static boolean equals(PublicId one, PublicId two) {
         if (one == two) {
             return true;

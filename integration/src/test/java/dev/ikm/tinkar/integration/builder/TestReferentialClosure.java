@@ -129,8 +129,9 @@ class TestReferentialClosure {
             assertTrue(message.contains("graph vertex meaning"), message);
             assertTrue(message.contains("graph vertex property key"), message);
             assertTrue(message.contains("graph vertex property value"), message);
-            assertTrue(message.contains(TinkarTerm.MODEL_CONCEPT.publicId().asUuidArray()[0].toString()),
-                    message);
+            for (java.util.UUID uuid : TinkarTerm.MODEL_CONCEPT.publicId().asUuidArray()) {
+                assertTrue(message.contains(uuid.toString()), message);
+            }
 
             // The original surfaces still report: description fields and their pattern.
             assertTrue(message.contains("field value"), message);

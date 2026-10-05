@@ -293,7 +293,7 @@ public class SpinedArrayProvider implements PrimitiveDataService, EntityStore, N
 
             for (UUID uuid : uuids) {
                 if (nid == Integer.MAX_VALUE) {
-                    nid = uuidToNidMap.computeIfAbsent(uuids[0], uuidKey -> newNid());
+                    nid = uuidToNidMap.computeIfAbsent(uuid, uuidKey -> newNid());
                 } else {
                     uuidToNidMap.put(uuid, nid);
                 }
