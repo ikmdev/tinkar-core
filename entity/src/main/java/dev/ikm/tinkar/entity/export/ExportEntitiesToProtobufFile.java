@@ -26,6 +26,7 @@ import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.EntityVersion;
 import dev.ikm.tinkar.entity.StampEntity;
+import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.entity.aggregator.DefaultEntityAggregator;
 import dev.ikm.tinkar.entity.aggregator.EntityAggregator;
 import dev.ikm.tinkar.entity.aggregator.MembershipEntityAggregator;
@@ -129,9 +130,14 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                         moduleNids.add(stampEntity.moduleNid());
                         authorNids.add(stampEntity.authorNid());
                     }
+                    // A committed stamp still holds the uncommitted version its commit
+                    // superseded; an exported file carries committed knowledge only.
+                    Entity<?> written = entity instanceof StampRecord stampRecord
+                            ? stampRecord.withoutSupersededUncommittedVersions()
+                            : entity;
                     // Transform concurrently; write one whole record at a time, or
                     // records from different threads interleave in the stream.
-                    TinkarMsg pbTinkarMsg = entityTransformer.transform(entity);
+                    TinkarMsg pbTinkarMsg = entityTransformer.transform(written);
                     synchronized (writeLock) {
                         pbTinkarMsg.writeDelimitedTo(zos);
                     }

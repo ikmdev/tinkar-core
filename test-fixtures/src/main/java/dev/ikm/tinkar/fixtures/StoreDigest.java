@@ -30,6 +30,7 @@ import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.entity.SemanticEntityVersion;
 import dev.ikm.tinkar.entity.StampEntity;
 import dev.ikm.tinkar.entity.StampEntityVersion;
+import dev.ikm.tinkar.entity.StampRecord;
 import dev.ikm.tinkar.entity.graph.DiGraphEntity;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
@@ -60,6 +61,10 @@ import java.util.UUID;
  * hold the same entities, versions and field values, whatever provider or nid layout each
  * uses, which is what an export and import, a migration, or a change of nid width must
  * preserve.
+ *
+ * <p>A committed stamp is digested without the uncommitted version its commit
+ * superseded, which the store keeps and an export leaves out
+ * ({@link StampRecord#withoutSupersededUncommittedVersions()}).
  *
  * <p>A directed graph that is not a tree is rendered as the multiset of its vertices,
  * without its edges; a field value of a type not known here is rendered as its class name
@@ -168,6 +173,9 @@ public record StoreDigest(long concepts, long patterns, long stamps, long semant
         private final MessageDigest sha256 = sha256();
 
         void add(Entity<?> entity) {
+            if (entity instanceof StampRecord stamp) {
+                entity = stamp.withoutSupersededUncommittedVersions();
+            }
             StringBuilder text = new StringBuilder();
             switch (entity) {
                 case ConceptEntity<?> concept -> {

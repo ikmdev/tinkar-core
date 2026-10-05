@@ -166,6 +166,34 @@ public record StampRecord(
         return new StampAnalogueBuilder(analogueStampRecord, versionRecords);
     }
 
+    /**
+     * This stamp without the uncommitted version its commit superseded. Committing a stamp
+     * adds a version at the commit time beside the uncommitted version (time
+     * {@link Long#MAX_VALUE}) its transaction began with; the store and change sets keep
+     * both, and {@link #lastVersion()} ignores the uncommitted one. An exported file holds
+     * committed knowledge, so it writes this form. A stamp with no committed version —
+     * still uncommitted, or canceled — is returned as it is.
+     *
+     * @return this stamp, or its analogue without the superseded uncommitted versions
+     */
+    public StampRecord withoutSupersededUncommittedVersions() {
+        if (versions.noneSatisfy(version -> version.time() == Long.MAX_VALUE)
+                || versions.noneSatisfy(version -> version.time() != Long.MAX_VALUE
+                        && version.time() != Long.MIN_VALUE)) {
+            return this;
+        }
+        RecordListBuilder<StampVersionRecord> versionRecords = RecordListBuilder.make();
+        StampRecord analogue = new StampRecord(mostSignificantBits, leastSignificantBits, additionalUuidLongs, nid, versionRecords);
+        for (StampVersionRecord version : versions) {
+            if (version.time() != Long.MAX_VALUE) {
+                versionRecords.add(new StampVersionRecord(analogue, version.stateNid(), version.time(),
+                        version.authorNid(), version.moduleNid(), version.pathNid()));
+            }
+        }
+        versionRecords.build();
+        return analogue;
+    }
+
     public StampRecord withAndBuild(StampVersionRecord versionRecord) {
         return analogueBuilder().with(versionRecord).build();
     }
