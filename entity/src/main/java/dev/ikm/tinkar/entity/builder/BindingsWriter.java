@@ -20,7 +20,10 @@ import dev.ikm.tinkar.entity.builder.KnowledgeSet.Declaration;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -32,10 +35,11 @@ import java.util.UUID;
  * {@code dev.ikm.tinkar.terms}, so consumers of a bindings artifact do not depend on the
  * ledger or this builder API.
  * <p>
- * Constant names derive from birth FQNs: the trailing semantic tag is stripped, the rest
- * upper-snake-cased. Two declarations whose FQNs reduce to the same constant name fail
- * generation with both names cited — rename one, or accept the tag into the name by
- * changing the FQN.
+ * A set generates one class per binding class it declares, holding the components bound in
+ * it under the names the ledger gave them, and its default class, holding every component
+ * bound in none. A default-class name derives from the birth FQN: the trailing semantic tag
+ * is stripped, the rest upper-snake-cased. Two components with the same name in one class
+ * fail generation with both cited — bind one under another name, or rename its FQN.
  */
 public final class BindingsWriter {
 
@@ -43,25 +47,76 @@ public final class BindingsWriter {
     }
 
     /**
-     * Writes the bindings source file for the given knowledge set.
+     * Writes the set's default bindings class: the components bound in no binding class.
+     * The set's binding classes are written beside it; see {@link #writeAll}.
      *
      * @param knowledgeSet the composed set to generate bindings for
-     * @param packageName  the generated class's package
-     * @param className    the generated class's simple name
+     * @param packageName  the generated classes' package
+     * @param className    the default class's simple name
      * @param outputDir    the generated-sources root; package directories are created below it
-     * @return the path of the written source file
-     * @throws IOException           if the file cannot be written
-     * @throws IllegalStateException if two declarations reduce to the same constant name
+     * @return the path of the default class's source file
+     * @throws IOException           if a file cannot be written
+     * @throws IllegalStateException if two components have the same name in one class
      */
     public static Path write(KnowledgeSet knowledgeSet, String packageName, String className,
                              Path outputDir) throws IOException {
+        return writeAll(knowledgeSet, packageName, className, outputDir).getFirst();
+    }
+
+    /**
+     * Writes every bindings class of the set: the default class first, then one per binding
+     * class the set declares, in declaration order.
+     *
+     * @param knowledgeSet the composed set to generate bindings for
+     * @param packageName  the generated classes' package
+     * @param className    the default class's simple name
+     * @param outputDir    the generated-sources root; package directories are created below it
+     * @return the paths of the written source files, the default class's first
+     * @throws IOException           if a file cannot be written
+     * @throws IllegalStateException if two components have the same name in one class, or a
+     *                               binding class has the default class's name
+     */
+    public static List<Path> writeAll(KnowledgeSet knowledgeSet, String packageName, String className,
+                                      Path outputDir) throws IOException {
+        Map<String, List<Binding>> classes = new LinkedHashMap<>();
+        classes.put(className, new ArrayList<>());
+        for (BindingClass bindingClass : knowledgeSet.bindingClasses()) {
+            if (classes.putIfAbsent(bindingClass.name(), new ArrayList<>()) != null) {
+                throw new IllegalStateException("The binding class " + bindingClass.name()
+                        + " has the default bindings class's name");
+            }
+        }
+        for (Declaration declaration : knowledgeSet.declarations()) {
+            if (declaration.bindings().isEmpty()) {
+                classes.get(className).add(new Binding(constantName(declaration.birthFqn()), declaration));
+            }
+            declaration.bindings().forEach((bindingClass, constant) ->
+                    classes.get(bindingClass.name()).add(new Binding(constant, declaration)));
+        }
+        List<Path> files = new ArrayList<>();
+        for (Map.Entry<String, List<Binding>> bindingsClass : classes.entrySet()) {
+            String description = bindingsClass.getKey().equals(className)
+                    ? "Generated bindings for the knowledge set"
+                    : "Generated " + bindingsClass.getKey() + " bindings of the knowledge set";
+            files.add(writeClass(knowledgeSet, packageName, bindingsClass.getKey(), description,
+                    bindingsClass.getValue(), outputDir));
+        }
+        return files;
+    }
+
+    /** A component's constant in one generated class. */
+    private record Binding(String constant, Declaration declaration) {
+    }
+
+    private static Path writeClass(KnowledgeSet knowledgeSet, String packageName, String className,
+                                   String description, List<Binding> bindings, Path outputDir) throws IOException {
         StringBuilder src = new StringBuilder();
         src.append("package ").append(packageName).append(";\n\n");
         src.append("import dev.ikm.tinkar.common.id.PublicIds;\n");
         src.append("import dev.ikm.tinkar.terms.EntityProxy;\n\n");
         src.append("import java.util.UUID;\n\n");
         src.append("/**\n");
-        src.append(" * Generated bindings for the knowledge set {@code ").append(knowledgeSet.uuid())
+        src.append(" * ").append(description).append(" {@code ").append(knowledgeSet.uuid())
                 .append("} — DO NOT EDIT.\n");
         src.append(" * Every identity is {@code T5(setUuid, fullyQualifiedNameAtBirth)}; regenerate from the ledger.\n");
         src.append(" */\n");
@@ -69,12 +124,12 @@ public final class BindingsWriter {
         src.append("    private ").append(className).append("() {\n    }\n");
 
         Map<String, String> constantToFqn = new HashMap<>();
-        for (Declaration declaration : knowledgeSet.declarations()) {
-            String constant = constantName(declaration.birthFqn());
-            String prior = constantToFqn.putIfAbsent(constant, declaration.birthFqn());
+        for (Binding binding : bindings) {
+            Declaration declaration = binding.declaration();
+            String prior = constantToFqn.putIfAbsent(binding.constant(), declaration.birthFqn());
             if (prior != null) {
-                throw new IllegalStateException("Constant name collision: \"" + prior + "\" and \""
-                        + declaration.birthFqn() + "\" both reduce to " + constant);
+                throw new IllegalStateException("Constant name collision in " + className + ": \"" + prior
+                        + "\" and \"" + declaration.birthFqn() + "\" are both " + binding.constant());
             }
             UUID uuid = declaration.publicId().asUuidArray()[0];
             String proxyType = switch (declaration.kind()) {
@@ -84,7 +139,7 @@ public final class BindingsWriter {
             src.append("\n    /**\n");
             src.append("     * ").append(javadocText(declaration)).append("\n");
             src.append("     */\n");
-            src.append("    public static final ").append(proxyType).append(' ').append(constant).append(" =\n");
+            src.append("    public static final ").append(proxyType).append(' ').append(binding.constant()).append(" =\n");
             src.append("            ").append(proxyType).append(".make(\"")
                     .append(escapeJava(declaration.birthFqn())).append("\",\n");
             src.append("                    PublicIds.of(UUID.fromString(\"").append(uuid).append("\")));\n");

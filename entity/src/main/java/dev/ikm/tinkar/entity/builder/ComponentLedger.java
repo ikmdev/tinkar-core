@@ -65,6 +65,8 @@ final class ComponentLedger {
     /** The component's primordial (first) UUID — the T5 namespace for attached-semantic derivation. */
     final UUID componentUuid;
     final String birthFqn;
+    /** The component's name in each binding class it is bound in, in binding order. */
+    final Map<BindingClass, String> bindings = new LinkedHashMap<>();
 
     final List<Stamp> componentStamps = new ArrayList<>();
     final List<DescriptionLedger> descriptions = new ArrayList<>();
@@ -94,6 +96,24 @@ final class ComponentLedger {
         this.birthFqn = birthFqn;
         this.registry = registry;
         this.identityDeclared = identityDeclared;
+    }
+
+    /**
+     * Binds the component in a binding class under a constant name.
+     *
+     * @throws IllegalArgumentException if the name is not a Java identifier
+     * @throws IllegalStateException    if the component is bound in the class under another name
+     */
+    void bind(BindingClass bindingClass, String constant) {
+        if (!BindingClass.isJavaIdentifier(constant)) {
+            throw new IllegalArgumentException("A binding must be a Java identifier: \"" + constant
+                    + "\" for " + birthFqn);
+        }
+        String prior = bindings.putIfAbsent(bindingClass, constant);
+        if (prior != null && !prior.equals(constant)) {
+            throw new IllegalStateException(birthFqn + " is bound in " + bindingClass.name() + " as " + prior
+                    + "; a component has one name in a binding class, not also " + constant);
+        }
     }
 
     boolean born() {

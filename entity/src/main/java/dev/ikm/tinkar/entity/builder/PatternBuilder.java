@@ -86,6 +86,21 @@ public final class PatternBuilder {
         return ledger.componentId;
     }
 
+    /**
+     * Binds this pattern in a binding class the set declared, under a constant name: the
+     * generated class {@code bindingClass.name()} gets a constant of that name for it. A
+     * pattern may be bound in each class it belongs to, with one name in each.
+     *
+     * @param bindingClass a binding class declared by this pattern's set
+     * @param constant     the constant's name, a Java identifier
+     * @return this builder
+     * @throws IllegalStateException if the pattern is already bound in the class under another name
+     */
+    public PatternBuilder binding(BindingClass bindingClass, String constant) {
+        ledger.bind(bindingClass, constant);
+        return this;
+    }
+
     ComponentLedger ledger() {
         return ledger;
     }

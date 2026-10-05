@@ -101,6 +101,7 @@ public final class KnowledgeSet {
     private final Map<String, PatternBuilder> patterns = new LinkedHashMap<>();
     private final SessionRegistry registry = new SessionRegistry();
     private final Map<UUID, Stamp> declaredStamps = new LinkedHashMap<>();
+    private final Map<String, BindingClass> bindingClasses = new LinkedHashMap<>();
     private final Set<String> derivedReferencesIssued = new LinkedHashSet<>();
 
     private KnowledgeSet(UUID uuid) {
@@ -567,13 +568,49 @@ public final class KnowledgeSet {
         List<Declaration> result = new ArrayList<>();
         for (ConceptBuilder builder : concepts.values()) {
             result.add(new Declaration(Declaration.Kind.CONCEPT, builder.ledger().birthFqn,
-                    builder.publicId(), builder.ledger().currentDefinition()));
+                    builder.publicId(), builder.ledger().currentDefinition(), bindingsOf(builder.ledger())));
         }
         for (PatternBuilder builder : patterns.values()) {
             result.add(new Declaration(Declaration.Kind.PATTERN, builder.ledger().birthFqn,
-                    builder.publicId(), builder.ledger().currentDefinition()));
+                    builder.publicId(), builder.ledger().currentDefinition(), bindingsOf(builder.ledger())));
         }
         return result;
+    }
+
+    /**
+     * Declares a binding class of this set: a generated class its declarations bind
+     * components into. Declared once, in the ledger; declarations then refer to it.
+     *
+     * @param name the generated class's simple name, a Java identifier
+     * @return the binding class
+     * @throws IllegalStateException if the set already declares a binding class of the name
+     */
+    public BindingClass bindingClass(String name) {
+        BindingClass bindingClass = new BindingClass(uuid, name);
+        if (bindingClasses.putIfAbsent(name, bindingClass) != null) {
+            throw new IllegalStateException("The binding class " + name + " is already declared; a binding class "
+                    + "is declared once, and declarations refer to it");
+        }
+        return bindingClass;
+    }
+
+    /**
+     * The binding classes this set declares, in declaration order.
+     *
+     * @return the declared binding classes
+     */
+    public List<BindingClass> bindingClasses() {
+        return List.copyOf(bindingClasses.values());
+    }
+
+    private Map<BindingClass, String> bindingsOf(ComponentLedger ledger) {
+        for (BindingClass bindingClass : ledger.bindings.keySet()) {
+            if (!bindingClass.equals(bindingClasses.get(bindingClass.name()))) {
+                throw new IllegalStateException(ledger.birthFqn + " is bound in " + bindingClass.name()
+                        + ", which this set does not declare");
+            }
+        }
+        return java.util.Collections.unmodifiableMap(new LinkedHashMap<>(ledger.bindings));
     }
 
     /**
@@ -586,8 +623,11 @@ public final class KnowledgeSet {
      * @param publicId   the identity — derived {@code T5(setUuid, birthFqn)}, or the
      *                   declared identity the ledger adopted
      * @param definition the current text of the first live definition description, if any
+     * @param bindings   the component's name in each binding class it is bound in; empty
+     *                   when it is bound in none, and named in the set's default class
      */
-    public record Declaration(Kind kind, String birthFqn, PublicId publicId, Optional<String> definition) {
+    public record Declaration(Kind kind, String birthFqn, PublicId publicId, Optional<String> definition,
+                              Map<BindingClass, String> bindings) {
 
         /** The kind of a declaration. */
         public enum Kind {
