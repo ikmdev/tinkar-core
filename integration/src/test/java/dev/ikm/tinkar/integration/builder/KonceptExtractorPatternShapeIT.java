@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import network.ike.foundation.ike.bindings.IkeTerms;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -28,7 +29,6 @@ import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.DefaultsTemplateTerm;
 import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -77,34 +77,34 @@ class KonceptExtractorPatternShapeIT {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
 
         ActiveStamp birth = Stamp.active("2020-01-01T00:00:00Z",
-                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
 
-        // Self-minted, not TinkarTerm constants: a bare ephemeral store only materializes the
-        // handful of TinkarTerm concepts STAMP dimensions themselves need (USER, DEVELOPMENT_
+        // Self-minted, not KernelTerm constants: a bare ephemeral store only materializes the
+        // handful of kernel concepts STAMP dimensions themselves need (USER, DEVELOPMENT_
         // MODULE, DEVELOPMENT_PATH, ...) -- most others carry no FQN description here, so
         // identifierByNid wouldn't resolve them. Minting our own guarantees every meaning/
         // purpose/dataType concept this test references is genuinely extractable.
         TEST_SET.concept("Pattern shape probe meaning (Test)").at(birth)
                 .definition("Meaning concept for the pattern-shape probe test.")
-                .isA(TinkarTerm.MODEL_CONCEPT);
+                .isA(IkeTerms.MODEL_CONCEPT);
         TEST_SET.concept("Pattern shape probe purpose (Test)").at(birth)
                 .definition("Purpose concept for the pattern-shape probe test.")
-                .isA(TinkarTerm.MODEL_CONCEPT);
+                .isA(IkeTerms.MODEL_CONCEPT);
         TEST_SET.concept("Pattern shape probe field meaning (Test)").at(birth)
                 .definition("Field meaning concept for the pattern-shape probe test.")
-                .isA(TinkarTerm.MODEL_CONCEPT);
+                .isA(IkeTerms.MODEL_CONCEPT);
         TEST_SET.concept("Pattern shape probe field purpose (Test)").at(birth)
                 .definition("Field purpose concept for the pattern-shape probe test.")
-                .isA(TinkarTerm.MODEL_CONCEPT);
+                .isA(IkeTerms.MODEL_CONCEPT);
         TEST_SET.concept("Pattern shape probe field data type (Test)").at(birth)
                 .definition("Field data-type concept for the pattern-shape probe test.")
-                .isA(TinkarTerm.MODEL_CONCEPT);
+                .isA(IkeTerms.MODEL_CONCEPT);
         // The referenced component of the example semantic below -- a real concept, so
         // referencedComponentExample resolves to its own koncept identifier (the bare,
         // unquoted style), the same way a field value that resolves to a koncept does.
         TEST_SET.concept("Pattern shape probe subject (Test)").at(birth)
                 .definition("The subject an example semantic of the probe pattern attaches to.")
-                .isA(TinkarTerm.MODEL_CONCEPT);
+                .isA(IkeTerms.MODEL_CONCEPT);
 
         TEST_SET.pattern("Pattern shape probe pattern (Test)").at(birth)
                 .meaning(TEST_SET.conceptRef("Pattern shape probe meaning (Test)"))
@@ -171,7 +171,7 @@ class KonceptExtractorPatternShapeIT {
                 "Defaults display probe data type (Test)",
                 "Defaults display probe meaning (Test)",
                 "Defaults display probe pattern purpose (Test)")) {
-            TEST_SET.concept(fqn).at(birth).isA(TinkarTerm.MODEL_CONCEPT);
+            TEST_SET.concept(fqn).at(birth).isA(IkeTerms.MODEL_CONCEPT);
         }
 
         EntityProxy.Concept sweepPurpose = TEST_SET.conceptRef("Defaults display probe purpose (Test)");

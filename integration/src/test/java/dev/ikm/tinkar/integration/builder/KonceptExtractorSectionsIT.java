@@ -129,6 +129,9 @@ class KonceptExtractorSectionsIT {
                 }
                 valuesInThisSection.add(extractedValue);
             }
+            if (valuesInThisSection.isEmpty()) {
+                continue; // no member has an FQN in-store -- the whole section is excluded
+            }
             assertEquals(1, valuesInThisSection.size(),
                     "every member of one TaxonomySectioner Section must share one section: value, got "
                             + valuesInThisSection + " for root nid " + section.rootNid());

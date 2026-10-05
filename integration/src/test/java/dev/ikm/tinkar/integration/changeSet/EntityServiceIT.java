@@ -48,9 +48,10 @@ class EntityServiceIT {
         File exportFile = createFilePathInTarget.apply("data/testExportEntitiesInSpecifiedTemporalRange-pb.zip");
         exportFile.delete(); // Clean up previously created file
 
-        // Starter Data is created at pre-inception time which is Long.MIN_VALUE+1 epoch milliseconds
-        long fromEpoch = Long.MIN_VALUE;
-        long toEpoch = Long.MIN_VALUE+2;
+        // The IKE starter set is authored at 2026-01-01T00:00:00.777Z (1767225600777); the
+        // classifier's versions come later, outside the range.
+        long fromEpoch = 1767225600777L;
+        long toEpoch = 1767225600778L;
 
         // Perform the temporal export operation
         EntityCountSummary summary = EntityService.get().temporalExport(exportFile, fromEpoch, toEpoch).get();
@@ -59,10 +60,10 @@ class EntityServiceIT {
         assertNotNull(summary);
         // Add your assertions here based on the expected summary values
         // For example:
-        assertEquals(319, summary.conceptCount());
-        assertEquals(3253, summary.semanticCount());
-        assertEquals(18, summary.patternCount());
-        assertEquals(45, summary.stampCount());
+        assertEquals(1295, summary.conceptCount(), summary.toString());
+        assertEquals(10790, summary.semanticCount(), summary.toString());
+        assertEquals(64, summary.patternCount(), summary.toString());
+        assertEquals(2, summary.stampCount(), summary.toString());
         // To ensure exports are self-contained, when a Component has a version in the specified time range, all its versions
         // are exported with the specified stamp. Therefore, many stamps are expected to be exported here.
     }

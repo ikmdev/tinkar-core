@@ -80,7 +80,7 @@ public class GenerateJavaBindingIT {
 
         try (DataOutputStream dataOutputStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(bindingJavaOutput)))) {
 
-            //Given a stream of Concepts and Patterns from the Tinkar Starter Data
+            //Given a stream of Concepts and Patterns from the IKE starter set
             Stream.Builder<Entity<? extends EntityVersion>> conceptStreamBuilder = Stream.builder();
             Stream.Builder<Entity<? extends EntityVersion>> patternStreamBuilder = Stream.builder();
             EntityService.get().forEachConceptEntity(conceptStreamBuilder::add);

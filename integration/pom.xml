@@ -104,6 +104,14 @@
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- The IKE starter set's bindings (IkeTerms): the components tests name beyond the
+             kernel, from the set the tests load. -->
+        <dependency>
+            <groupId>network.ike.foundation</groupId>
+            <artifactId>ike-bindings</artifactId>
+            <version>${ike-starter-set.version}</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
@@ -219,24 +227,24 @@
                                 <configuration>
                                     <artifactItems>
                                         <artifactItem>
-                                            <groupId>dev.ikm.data.tinkar</groupId>
-                                            <artifactId>tinkar-starter-data</artifactId>
-                                            <version>${tinkar-starter-data.version}</version>
+                                            <groupId>network.ike.foundation</groupId>
+                                            <artifactId>ike-starter-set</artifactId>
+                                            <version>${ike-starter-set.version}</version>
                                             <classifier>reasoned-pb</classifier>
                                             <type>zip</type>
                                             <overWrite>false</overWrite>
                                             <outputDirectory>${project.build.directory}/data</outputDirectory>
-                                            <destFileName>tinkar-starter-data-reasoned-pb.zip</destFileName>
+                                            <destFileName>ike-starter-set-reasoned-pb.zip</destFileName>
                                         </artifactItem>
                                         <artifactItem>
-                                            <groupId>dev.ikm.data.tinkar</groupId>
-                                            <artifactId>tinkar-starter-data</artifactId>
-                                            <version>${tinkar-starter-data.version}</version>
+                                            <groupId>network.ike.foundation</groupId>
+                                            <artifactId>ike-starter-set</artifactId>
+                                            <version>${ike-starter-set.version}</version>
                                             <classifier>unreasoned-pb</classifier>
                                             <type>zip</type>
                                             <overWrite>false</overWrite>
                                             <outputDirectory>${project.build.directory}/data</outputDirectory>
-                                            <destFileName>tinkar-starter-data-unreasoned-pb.zip</destFileName>
+                                            <destFileName>ike-starter-set-unreasoned-pb.zip</destFileName>
                                         </artifactItem>
                                         <artifactItem>
                                             <groupId>dev.ikm.data.tinkar</groupId>

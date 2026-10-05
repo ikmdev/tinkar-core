@@ -204,7 +204,7 @@ public class TransformTestHelper {
                 .versions(stampVersions)
                 .build();
 
-        // Use real concept NIDs from known TinkarTerm UUIDs for STAMP fields
+        // Use real concept NIDs from known kernel UUIDs for STAMP fields
         int stateNid = State.ACTIVE.nid();
         int authorNid = Entity.nid(PublicIds.of(UUID.fromString("76fdab49-b0ee-4c83-900e-8064103ef3b0")));
         int moduleNid = Entity.nid(PublicIds.of(UUID.fromString("840928b5-480c-4e8d-af77-7c817e880aed")));

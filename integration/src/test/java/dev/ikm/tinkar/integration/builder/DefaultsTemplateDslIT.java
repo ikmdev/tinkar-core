@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import network.ike.foundation.ike.bindings.IkeTerms;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
@@ -37,7 +38,6 @@ import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.DefaultsTemplateTerm;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.junit.jupiter.api.AfterAll;
@@ -77,7 +77,7 @@ class DefaultsTemplateDslIT {
     private static final String SUBJECT_FQN = "Verb probe subject (Test)";
 
     private static final ActiveStamp BIRTH = Stamp.active("2020-01-01T00:00:00Z",
-            KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+            KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
     private static final ActiveStamp SUPPORT = Stamp.active("2020-02-01T00:00:00Z",
             KernelTerm.USER, DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE,
             KernelTerm.DEVELOPMENT_PATH);

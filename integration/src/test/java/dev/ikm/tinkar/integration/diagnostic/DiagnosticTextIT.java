@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.diagnostic;
 
+import network.ike.foundation.ike.bindings.IkeTerms;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.id.PublicId;
@@ -34,7 +35,6 @@ import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.junit.jupiter.api.AfterAll;
@@ -220,7 +220,7 @@ class DiagnosticTextIT {
 
         EntityVertex propertySet = EntityVertex.make(KernelTerm.PROPERTY_SET);
         setProperty(propertySet, KernelTerm.PROPERTY_SEQUENCE,
-                IntIds.list.of(TinkarTerm.PART_OF.nid(), undescribedNid, UNASSIGNED_NID));
+                IntIds.list.of(IkeTerms.PART_OF.nid(), undescribedNid, UNASSIGNED_NID));
 
         DiTreeEntity.Builder builder = DiTreeEntity.builder();
         builder.setRoot(root);

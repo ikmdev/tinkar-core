@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.provider.spinedarray;
 
+import network.ike.foundation.ike.bindings.IkeTerms;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
@@ -35,7 +36,6 @@ import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -90,7 +90,7 @@ class SpinedArrayPublicIdMergeIT {
         StampEntity preInceptionStampEntity = preInceptionTransaction.getStamp(State.ACTIVE,
                 PrimitiveData.PRE_INCEPTION_TIME,
                 KernelTerm.USER.publicId(),
-                TinkarTerm.DEVELOPMENT_MODULE.publicId(),
+                IkeTerms.DEVELOPMENT_MODULE.publicId(),
                 KernelTerm.DEVELOPMENT_PATH.publicId());
 
         //Write Concept with Multiple UUIDs
@@ -102,7 +102,7 @@ class SpinedArrayPublicIdMergeIT {
         Transaction currentTransaction = new Transaction();
         StampEntity currentStampEntity = currentTransaction.getStamp(State.ACTIVE,
                 KernelTerm.USER,
-                TinkarTerm.DEVELOPMENT_MODULE,
+                IkeTerms.DEVELOPMENT_MODULE,
                 KernelTerm.DEVELOPMENT_PATH);
 
         //Then Write Concept with Single UUID - invoking PublicID merge process
@@ -140,7 +140,7 @@ class SpinedArrayPublicIdMergeIT {
         StampEntity preInceptionStampEntity = preInceptionTransaction.getStamp(State.ACTIVE,
                 PrimitiveData.PRE_INCEPTION_TIME,
                 KernelTerm.USER.publicId(),
-                TinkarTerm.DEVELOPMENT_MODULE.publicId(),
+                IkeTerms.DEVELOPMENT_MODULE.publicId(),
                 KernelTerm.DEVELOPMENT_PATH.publicId());
 
         //Write Concept with Single UUID
@@ -152,7 +152,7 @@ class SpinedArrayPublicIdMergeIT {
         Transaction currentTransaction = new Transaction();
         StampEntity currentStampEntity = currentTransaction.getStamp(State.ACTIVE,
                 KernelTerm.USER,
-                TinkarTerm.DEVELOPMENT_MODULE,
+                IkeTerms.DEVELOPMENT_MODULE,
                 KernelTerm.DEVELOPMENT_PATH);
 
         //Then Write Concept with Multiple UUIDs - invoking PublicID merge process
@@ -191,7 +191,7 @@ class SpinedArrayPublicIdMergeIT {
         StampEntity preInceptionStampEntity = preInceptionTransaction.getStamp(State.ACTIVE,
                 PrimitiveData.PRE_INCEPTION_TIME,
                 KernelTerm.USER.publicId(),
-                TinkarTerm.DEVELOPMENT_MODULE.publicId(),
+                IkeTerms.DEVELOPMENT_MODULE.publicId(),
                 KernelTerm.DEVELOPMENT_PATH.publicId());
 
         //Write Concept with the first set of Multiple Uuids (uuid1 & uuid2)
@@ -203,7 +203,7 @@ class SpinedArrayPublicIdMergeIT {
         Transaction currentTransaction = new Transaction();
         StampEntity currentStampEntity = currentTransaction.getStamp(State.ACTIVE,
                 KernelTerm.USER,
-                TinkarTerm.DEVELOPMENT_MODULE,
+                IkeTerms.DEVELOPMENT_MODULE,
                 KernelTerm.DEVELOPMENT_PATH);
 
         //Then Write Concept with second set of Multiple UUIDs (uuid2 & uuid3) - invoking PublicID merge process

@@ -79,7 +79,7 @@ class StarterSetSectionSpikeIT {
     @BeforeAll
     static void loadUnreasonedStarterSet() {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
-        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA);
+        TestHelper.loadDataFile(TestConstants.PB_STARTER_DATA_REASONED);
     }
 
     @AfterAll

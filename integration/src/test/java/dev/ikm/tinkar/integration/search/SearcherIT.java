@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.search;
 
+import network.ike.foundation.ike.bindings.IkeTerms;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
@@ -33,7 +34,6 @@ import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.provider.search.Searcher;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -102,46 +102,38 @@ public class SearcherIT {
 
     @Test
     public void searchFromDescendantsOfConceptWithDefaultCalculatorIT() throws Exception {
-        //Role: [46ae9325-dd24-5008-8fda-80cf1f0977c7]
-        //    Role group: [a63f4bf2-a040-11e5-8994-feff819cdc9f]
-        //    Role operator: [f9860cb8-a7c7-5743-9d7c-ffc6e8a24a0f]
-        //        Refrenced component subtype restriction: [8af1045e-1122-5072-9f29-ce7da9337915]
-        //        Refrenced component type restriction: [902f97b6-2ef4-59d7-b6f9-01278a00061c]
-        //        Universal restriction: [fc18c082-c6ad-52d2-b568-cc9568ace6c9]
-        //    Role type: [76320274-be2a-5ba0-b3e8-e6d2e383ee6a]
+        //Role: [46ae9325-dd24-5008-8fda-80cf1f0977c7], inferred in the IKE starter set
+        //    Interval role: [ed9d3506-65ad-48ea-bd01-95474fecdbc4]
+        //    Role value: [988bb02a-9b4a-4ef9-937e-fa8a6afc6c42]
 
-        //Given a datastore loaded with tinkar starter data (via setup()) and a navigatorCalculator/stampCalculator for Primordial Path
+        //Given a datastore loaded with the IKE starter set (via setup()) and a navigatorCalculator/stampCalculator for Primordial Path
         var stampCoordinate = Coordinates.Stamp.DevelopmentLatestActiveOnly();
 
         //When I search "Component" for only the descendants of Role
-        var searchResults = stampCoordinate.stampCalculator().searchDescendants(KernelTerm.ROLE, "Feature", 100);
+        var searchResults = stampCoordinate.stampCalculator().searchDescendants(KernelTerm.ROLE, "Interval", 100);
 
         //Then there should only be 2 LatestVersionSearchResults, a grouping of FQN, SYN for the following concepts:
-        // 1) Feature Role Type
+        // 1) Interval role
         assertEquals(2, searchResults.size(), "Exactly 2 search results should be returned");
     }
 
     @Test
     public void searchFromDescendantsOfConceptWithCustomCalculatorIT() throws Exception {
-        //Role: [46ae9325-dd24-5008-8fda-80cf1f0977c7]
-        //    Role group: [a63f4bf2-a040-11e5-8994-feff819cdc9f]
-        //    Role operator: [f9860cb8-a7c7-5743-9d7c-ffc6e8a24a0f]
-        //        Refrenced component subtype restriction: [8af1045e-1122-5072-9f29-ce7da9337915]
-        //        Refrenced component type restriction: [902f97b6-2ef4-59d7-b6f9-01278a00061c]
-        //        Universal restriction: [fc18c082-c6ad-52d2-b568-cc9568ace6c9]
-        //    Role type: [76320274-be2a-5ba0-b3e8-e6d2e383ee6a]
+        //Role: [46ae9325-dd24-5008-8fda-80cf1f0977c7], inferred in the IKE starter set
+        //    Interval role: [ed9d3506-65ad-48ea-bd01-95474fecdbc4]
+        //    Role value: [988bb02a-9b4a-4ef9-937e-fa8a6afc6c42]
 
-        //Given a datastore loaded with tinkar starter data (via setup()) and a navigatorCalculator/stampCalculator for Primordial Path
+        //Given a datastore loaded with the IKE starter set (via setup()) and a navigatorCalculator/stampCalculator for Primordial Path
         var stampCoordinate = Coordinates.Stamp.DevelopmentLatestActiveOnly();
         var languageCoordinate = Coordinates.Language.UsEnglishRegularName();
         var navigationCoordinate = Coordinates.Navigation.inferred().toNavigationCoordinateRecord();
         var navigationCalculator = NavigationCalculatorWithCache.getCalculator(stampCoordinate, Lists.immutable.of(languageCoordinate), navigationCoordinate);
 
         //When I search "Component" for only the descendants of Role
-        var searchResults = stampCoordinate.stampCalculator().searchDescendants(navigationCalculator, KernelTerm.ROLE, "Feature", 100);
+        var searchResults = stampCoordinate.stampCalculator().searchDescendants(navigationCalculator, KernelTerm.ROLE, "Interval", 100);
 
         //Then there should only be 2 LatestVersionSearchResults, a grouping of FQN, SYN for the following concepts:
-        // 1) Feature Role Type
+        // 1) Interval role
         assertEquals(2, searchResults.size(), "Exactly 2 search results should be returned");
     }
 
@@ -171,27 +163,27 @@ public class SearcherIT {
     public void searchConceptsWithTaggedMembershipSemantic() {
         // test memberPatternId with tagged concepts
         List<PublicId> conceptIds = Searcher.membersOf(KernelTerm.KOMET_BASE_MODEL_COMPONENT_PATTERN);
-        assertEquals(6, conceptIds.size(), "there should be 6 tagged concept associated with this pattern");
+        assertEquals(1, conceptIds.size(), "there should be 1 tagged concept associated with this pattern");
         conceptIds = Searcher.membersOf(KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
-        assertEquals(379, conceptIds.size(), "there should be 379 tagged concept associated with this pattern");
+        assertEquals(1295, conceptIds.size(), "there should be 1295 tagged concept associated with this pattern");
     }
 
     @Test
     public void searchExistingIdentifier() {
-        //source: TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER
+        //source: IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER
         //identifier: LANGUAGE_NID_FOR_LANGUAGE_COORDINATE
-        Optional<PublicId> publicId = Searcher.getPublicId(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, TinkarTerm.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE.leastUuid().toString());
+        Optional<PublicId> publicId = Searcher.getPublicId(IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER, IkeTerms.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE.leastUuid().toString());
         assertTrue(publicId.isPresent(), "PublicId should be found");
-        assertTrue(PublicId.equals(publicId.get(), TinkarTerm.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE), "Concept PublicId should be LANGUAGE_NID_FOR_LANGUAGE_COORDINATE");
+        assertTrue(PublicId.equals(publicId.get(), IkeTerms.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE), "Concept PublicId should be LANGUAGE_NID_FOR_LANGUAGE_COORDINATE");
     }
 
     @Test
     public void searchNonExistingIdentifier() {
-        Optional<PublicId> publicId = Searcher.getPublicId(PublicIds.newRandom(), TinkarTerm.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE.leastUuid().toString());
+        Optional<PublicId> publicId = Searcher.getPublicId(PublicIds.newRandom(), IkeTerms.LANGUAGE_NID_FOR_LANGUAGE_COORDINATE.leastUuid().toString());
         assertFalse(publicId.isPresent(), "Concept should be null for non-existing Identifier Source");
-        publicId = Searcher.getPublicId(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "abcxyz");
+        publicId = Searcher.getPublicId(IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER, "abcxyz");
         assertFalse(publicId.isPresent(), "Concept should be null for non-existing Identifier Value");
-        publicId = Searcher.getPublicId(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, KernelTerm.KOMET_BASE_MODEL_COMPONENT_PATTERN.leastUuid().toString());
+        publicId = Searcher.getPublicId(IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER, KernelTerm.KOMET_BASE_MODEL_COMPONENT_PATTERN.leastUuid().toString());
         assertFalse(publicId.isPresent(), "Concept should be null for non-semantic uuid");
     }
 
@@ -285,13 +277,13 @@ public class SearcherIT {
     }
 
     /**
-     * Composes a new Synonym description with the given text on {@link TinkarTerm#USER},
+     * Composes a new Synonym description with the given text on {@link KernelTerm#USER},
      * returning the {@link EntityProxy.Semantic} proxy so callers can identify the resulting
      * search hit by nid.
      */
     private EntityProxy.Semantic composeSynonym(String text) {
         EntityProxy.Semantic semanticProxy = EntityProxy.Semantic.make(PublicIds.newRandom());
-        Session session = composer.open(State.ACTIVE, KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+        Session session = composer.open(State.ACTIVE, KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
         session.compose(new Synonym()
                         .semantic(semanticProxy)
                         .language(KernelTerm.ENGLISH_LANGUAGE)

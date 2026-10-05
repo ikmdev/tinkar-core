@@ -106,13 +106,17 @@ class ComponentDecompilerIT {
         LOG.info("Verb kinds: {}", verbKindCounts);
         allNotes.forEach(note -> LOG.info("Manifest note: {}", note));
 
-        assertEquals(407, totalComponents, "379 concepts + 28 patterns");
+        assertEquals(1295 + 64, totalComponents, "1295 concepts + 64 patterns");
         assertTrue(totalVerbLines > 2000, "expected thousands of verb lines across the full set");
-        assertEquals(0, verbKindCounts.getOrDefault("TODO", 0),
-                "every axiom in this starter set decompiles to a declared-identity statedAxioms call"
-                        + " — no hand-authoring TODOs expected");
-        assertEquals(28, verbKindCounts.getOrDefault("patternDefinition", 0),
+        // The IKE starter set's 43 definitions that are not the simple isA shape (role groups,
+        // restrictions) are beyond the axiom decompiler: each is reported for hand authoring.
+        assertEquals(43, verbKindCounts.getOrDefault("TODO", 0),
+                "every axiom but the 43 non-simple definitions decompiles to a declared-identity"
+                        + " statedAxioms call");
+        assertEquals(64, verbKindCounts.getOrDefault("patternDefinition", 0),
                 "every pattern declares exactly one meaning/purpose/field definition line");
-        assertTrue(allNotes.isEmpty(), "expected zero manifest notes for this starter set: " + allNotes);
+        assertEquals(43, allNotes.size(), "the only manifest notes are the 43 non-simple definitions: " + allNotes);
+        assertTrue(allNotes.stream().allMatch(note -> note.startsWith("Stated axioms on ")),
+                "every manifest note is a non-simple definition to hand-author: " + allNotes);
     }
 }

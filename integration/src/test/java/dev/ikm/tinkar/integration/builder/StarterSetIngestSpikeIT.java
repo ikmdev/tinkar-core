@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import network.ike.foundation.ike.bindings.IkeTerms;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -31,7 +32,6 @@ import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -60,7 +60,7 @@ class StarterSetIngestSpikeIT {
 
     /** Representative components: platform concepts and patterns of varied shape. */
     private static final List<EntityFacade> SAMPLE = List.of(
-            TinkarTerm.MODEL_CONCEPT, TinkarTerm.MODULE, TinkarTerm.PATH,
+            IkeTerms.MODEL_CONCEPT, IkeTerms.MODULE, IkeTerms.PATH,
             KernelTerm.USER, KernelTerm.ENGLISH_LANGUAGE, KernelTerm.DEVELOPMENT_PATH,
             KernelTerm.PRIMORDIAL_MODULE, KernelTerm.ROOT_VERTEX,
             KernelTerm.DESCRIPTION_PATTERN, KernelTerm.US_DIALECT_PATTERN);
@@ -96,8 +96,10 @@ class StarterSetIngestSpikeIT {
         LOG.info(report.toString());
 
         assertFalse(GAPS.isEmpty(), "the spike exists to find gaps — none found means it looked away");
-        assertTrue(GAPS.containsKey("declared-identity stamps"),
-                "store stamps are not tuple-derived; declared-identity stamps are required");
+        // The IKE starter set is itself ledger-authored: its stamps are the tuple derivation
+        // the ledger mints, so none needs a declared identity.
+        assertFalse(GAPS.containsKey("declared-identity stamps"),
+                "the IKE starter set's stamps are tuple-derived; no declared-identity stamps are needed");
         assertTrue(GAPS.containsKey("declared-identity description semantics"),
                 "description semantic ids are store-established; declared identities required");
     }

@@ -1,5 +1,6 @@
 package dev.ikm.tinkar.integration.builder;
 
+import network.ike.foundation.ike.bindings.IkeTerms;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
@@ -14,7 +15,6 @@ import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -62,8 +62,8 @@ class AllowlistEntityAggregatorIT {
         set.concept("Thing B (Probe)").at(stampB).synonym("Thing B");
         // A pattern in module A, so an in-store pattern exists to test emission ordering.
         set.pattern("Probe pattern (Probe)").at(stampA)
-                .meaning(TinkarTerm.MEANING).purpose(TinkarTerm.PURPOSE)
-                .field(TinkarTerm.MEANING, TinkarTerm.PURPOSE, KernelTerm.STRING)
+                .meaning(IkeTerms.MEANING).purpose(IkeTerms.PURPOSE)
+                .field(IkeTerms.MEANING, IkeTerms.PURPOSE, KernelTerm.STRING)
                 .synonym("Probe pattern");
         set.write();
     }
@@ -108,7 +108,7 @@ class AllowlistEntityAggregatorIT {
         List<PublicId> allow = List.of(moduleA.publicId());
         EntityCountSummary noPredicate = new AllowlistEntityAggregator(allow).aggregate(nid -> { });
         // Fail-open: purpose never drops a semantic whose pattern-purpose it cannot classify (the
-        // description semantics here sit on TinkarTerm patterns absent from this replay-seeded store),
+        // description semantics here sit on kernel patterns absent from this replay-seeded store),
         // so a reject-everything predicate leaves the semantic count unchanged.
         EntityCountSummary rejectAll =
                 new AllowlistEntityAggregator(allow, List.of(), List.of(), List.of(), nid -> false).aggregate(nid -> { });
@@ -143,7 +143,7 @@ class AllowlistEntityAggregatorIT {
                 mod, List.of(), List.of(probePattern.publicId()), List.of(), null).aggregate(nid -> { });
 
         assertEquals(1, included.patternCount(), "only the included pattern is exported");
-        // The module's description semantics sit on external TinkarTerm patterns, so an include-set
+        // The module's description semantics sit on external kernel patterns, so an include-set
         // limited to the probe pattern drops them — nothing in this fixture uses the probe pattern.
         assertEquals(0, included.semanticCount(), "only semantics on the included pattern would cross");
     }

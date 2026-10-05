@@ -15,14 +15,13 @@
  */
 package dev.ikm.tinkar.integration.provider.search;
 
+import network.ike.foundation.ike.bindings.IkeTerms;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.provider.search.Searcher;
-import dev.ikm.tinkar.terms.TinkarTerm;
-import dev.ikm.tinkar.terms.TinkarTermV2;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -50,16 +49,10 @@ public class SearchProviderIT {
     @Test
     public void getChildrenIT() {
         List<PublicId> expectedUserChildren = Arrays.asList(
-                TinkarTerm.ORDER_FOR_AXIOM_ATTACHMENTS.publicId(),
-                TinkarTerm.ORDER_FOR_CONCEPT_ATTACHMENTS.publicId(),
-                TinkarTerm.ORDER_FOR_DESCRIPTION_ATTACHMENTS.publicId(),
                 KernelTerm.KOMET_USER.publicId(),
-                TinkarTerm.KOMET_USER_LIST.publicId(),
-                TinkarTerm.MODULE_FOR_USER.publicId(),
-                TinkarTerm.PATH_FOR_USER.publicId(),
-                TinkarTerm.STARTER_DATA_AUTHORING.publicId(),
-                TinkarTermV2.TINKAR_STARTER_DATA_AUTHOR_OPENPARENTHESIS_USER_CLOSEPARENTHESIS_.publicId(),
-                TinkarTermV2.GRETEL_OPENPARENTHESIS_USER_CLOSEPARENTHESIS_.publicId()
+                IkeTerms.IKE_COMMUNITY.publicId(),
+                IkeTerms.BASELINE_STARTER_DATA_AUTHOR.publicId(),
+                IkeTerms.GRETEL.publicId()
         );
 
         List<PublicId> actualUserChildren = Searcher.childrenOf(KernelTerm.USER.publicId());
@@ -77,11 +70,8 @@ public class SearchProviderIT {
     @Test
     public void getDescendantsIT() {
         List<PublicId> expectedUserDescendants = Arrays.asList(
-                KernelTerm.ROLE_TYPE.publicId(),
-                TinkarTerm.ROLE_RESTRICTION.publicId(),
-                KernelTerm.INTERVAL_ROLE.publicId(),
-                KernelTerm.INTERVAL_ROLE_TYPE.publicId(),
-                TinkarTermV2.FEATURE_ROLE_TYPE.publicId()
+                IkeTerms.ROLE_RESTRICTION.publicId(),
+                KernelTerm.INTERVAL_ROLE.publicId()
         );
 
         List<PublicId> actualUserDescendants = Searcher.descendantsOf(KernelTerm.ROLE.publicId());
@@ -106,8 +96,8 @@ public class SearchProviderIT {
 
         List<PublicId> conceptsWithFQNs = List.of(
                 KernelTerm.ROOT_VERTEX.publicId(),
-                TinkarTerm.MEANING.publicId(),
-                TinkarTerm.PURPOSE.publicId()
+                IkeTerms.MEANING.publicId(),
+                IkeTerms.PURPOSE.publicId()
         );
 
         List<String> actualFQNs = Searcher.descriptionsOf(conceptsWithFQNs);

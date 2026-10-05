@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.coordinate;
 
+import network.ike.foundation.ike.bindings.IkeTerms;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
@@ -33,7 +34,6 @@ import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.DefaultsTemplateTerm;
 import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.primitive.IntSets;
 import org.junit.jupiter.api.AfterAll;
@@ -99,7 +99,7 @@ class DefaultsTemplateCalculatorIT {
         // category's live-and-die invariant is about defaults/template chronologies,
         // and the anchor concepts themselves are ordinary content.
         ActiveStamp birth = Stamp.active("2020-01-01T00:00:00Z",
-                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
         ActiveStamp defaultsAuthored = Stamp.active("2020-02-01T00:00:00Z", KernelTerm.USER,
                 DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE, KernelTerm.DEVELOPMENT_PATH);
 
@@ -133,7 +133,7 @@ class DefaultsTemplateCalculatorIT {
                 .at(birth).synonym("Defaults");
 
         // Self-minted pattern metadata: a bare ephemeral store materializes only the
-        // TinkarTerm concepts the STAMP dimensions need, so probe patterns declare
+        // kernel concepts the STAMP dimensions need, so probe patterns declare
         // their own meaning/purpose/field concepts.
         TEST_SET.concept("Probe meaning (Test)").at(birth);
         TEST_SET.concept("Probe purpose (Test)").at(birth);

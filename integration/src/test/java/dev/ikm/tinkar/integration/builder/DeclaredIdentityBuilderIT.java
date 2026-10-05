@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import network.ike.foundation.ike.bindings.IkeTerms;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
@@ -38,7 +39,6 @@ import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -122,15 +122,15 @@ class DeclaredIdentityBuilderIT {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
 
         birth = Stamp.active("2026-07-15T00:00:00Z",
-                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
         declaredBirth = Stamp.active(STAMP_ID, "2026-07-15T00:00:00Z",
-                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
         multiDeclared = Stamp.active(MULTI_STAMP_ID, "2026-07-16T00:00:00Z",
-                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
         later = Stamp.active("2026-07-17T00:00:00Z",
-                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
         retirement = Stamp.inactive("2026-07-18T00:00:00Z",
-                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
 
         // An ingested concept: every identity established elsewhere, nothing derived —
         // the FQN description arrives explicitly, so no derived-identity auto-seed.
@@ -143,11 +143,11 @@ class DeclaredIdentityBuilderIT {
                         KernelTerm.PREFERRED)
                 .semantic(KernelTerm.TINKAR_BASE_MODEL_COMPONENT_PATTERN, MEMBERSHIP_ID)
                 .semantic(KernelTerm.IDENTIFIER_PATTERN, IDENTIFIER_ID,
-                        TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "8f3e2a1b-4c5d-4e6f-9a0b-1c2d3e4f5a6b")
+                        IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER, "8f3e2a1b-4c5d-4e6f-9a0b-1c2d3e4f5a6b")
                 .semantic(KernelTerm.PATH_ORIGINS_PATTERN, PATH_ORIGIN_ID,
                         KernelTerm.DEVELOPMENT_PATH, PATH_ORIGIN_TIME)
                 .statedAxioms(AXIOM_ID,
-                        leb -> leb.NecessarySet(leb.And(leb.ConceptAxiom(TinkarTerm.MODEL_CONCEPT))));
+                        leb -> leb.NecessarySet(leb.And(leb.ConceptAxiom(IkeTerms.MODEL_CONCEPT))));
 
         // An authored concept under a multi-UUID declared stamp: the auto-FQN seeds.
         // A later revise() records a second active concept version — the multi-version
@@ -171,35 +171,35 @@ class DeclaredIdentityBuilderIT {
         TEST_SET.concept("Typed fields kind (Test)").at(birth)
                 .semantic(KernelTerm.COMMENT_PATTERN, TYPED_FIELDS_ID,
                         new java.math.BigDecimal("1.25"), BYTES_FIELD,
-                        PublicIds.list.of(TinkarTerm.MODEL_CONCEPT.publicId(),
+                        PublicIds.list.of(IkeTerms.MODEL_CONCEPT.publicId(),
                                 KernelTerm.USER.publicId()),
                         PublicIds.set.of(KernelTerm.DEVELOPMENT_PATH.publicId()));
 
         // Retirement with an explicit payload — retired versions carry field values.
         TEST_SET.concept("Explicit retire kind (Test)").at(birth)
                 .semantic(KernelTerm.IDENTIFIER_PATTERN, EXPLICIT_RETIRE_ID,
-                        TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "before")
+                        IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER, "before")
                 .at(retirement)
                 .retireSemantic(KernelTerm.IDENTIFIER_PATTERN, EXPLICIT_RETIRE_ID,
-                        TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "after");
+                        IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER, "after");
 
         // A generic semantic versioning across scopes, then retiring by restatement.
         TEST_SET.concept("Revised semantic kind (Test)").at(birth)
                 .semantic(KernelTerm.IDENTIFIER_PATTERN, REVISED_IDENTIFIER_ID,
-                        TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "first value")
+                        IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER, "first value")
                 .at(later)
                 .semantic(KernelTerm.IDENTIFIER_PATTERN, REVISED_IDENTIFIER_ID,
-                        TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "second value")
+                        IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER, "second value")
                 .at(retirement)
                 .retireSemantic(KernelTerm.IDENTIFIER_PATTERN, REVISED_IDENTIFIER_ID);
 
         // An ingested pattern: multi-UUID declared identity plus a membership tag, and a
         // second declared semantic retired from the pattern's retire scope.
         TEST_SET.pattern("Ingested pattern (Test)", PATTERN_ID).at(declaredBirth)
-                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(KernelTerm.USER)
+                .meaning(IkeTerms.MODEL_CONCEPT).purpose(KernelTerm.USER)
                 .semantic(KernelTerm.TINKAR_BASE_MODEL_COMPONENT_PATTERN, PATTERN_MEMBERSHIP_ID)
                 .semantic(KernelTerm.IDENTIFIER_PATTERN, PATTERN_RETIRE_ID,
-                        TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "pattern identifier")
+                        IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER, "pattern identifier")
                 .at(retirement)
                 .retireSemantic(KernelTerm.IDENTIFIER_PATTERN, PATTERN_RETIRE_ID);
 
@@ -218,13 +218,13 @@ class DeclaredIdentityBuilderIT {
         StampEntity<?> stamp = Entity.getStamp(stampNid);
         assertTrue(PublicId.equals(STAMP_ID, stamp.publicId()));
         UUID tupleDerived = Stamp.stampUuid(State.ACTIVE, declaredBirth.time(),
-                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
         assertFalse(stamp.publicId().contains(tupleDerived),
                 "the declared identity must win over the tuple derivation");
         assertEquals(State.ACTIVE, stamp.state());
         assertEquals(declaredBirth.time(), stamp.time());
         assertEquals(KernelTerm.USER.nid(), stamp.authorNid());
-        assertEquals(TinkarTerm.DEVELOPMENT_MODULE.nid(), stamp.moduleNid());
+        assertEquals(IkeTerms.DEVELOPMENT_MODULE.nid(), stamp.moduleNid());
         assertEquals(KernelTerm.DEVELOPMENT_PATH.nid(), stamp.pathNid());
     }
 
@@ -232,7 +232,7 @@ class DeclaredIdentityBuilderIT {
     @DisplayName("A tuple-derived stamp still derives: declared identity is opt-in")
     void tupleDerivedStampUnchanged() {
         UUID tupleDerived = Stamp.stampUuid(State.ACTIVE, birth.time(),
-                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
         assertTrue(birth.publicId().contains(tupleDerived));
         StampEntity<?> stamp = Entity.getStamp(PrimitiveData.nid(PublicIds.of(tupleDerived)));
         assertTrue(stamp.publicId().contains(tupleDerived));
@@ -395,11 +395,11 @@ class DeclaredIdentityBuilderIT {
                         KernelTerm.PREFERRED)
                 .semantic(KernelTerm.TINKAR_BASE_MODEL_COMPONENT_PATTERN, MEMBERSHIP_ID)
                 .semantic(KernelTerm.IDENTIFIER_PATTERN, IDENTIFIER_ID,
-                        TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "8f3e2a1b-4c5d-4e6f-9a0b-1c2d3e4f5a6b")
+                        IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER, "8f3e2a1b-4c5d-4e6f-9a0b-1c2d3e4f5a6b")
                 .semantic(KernelTerm.PATH_ORIGINS_PATTERN, PATH_ORIGIN_ID,
                         KernelTerm.DEVELOPMENT_PATH, PATH_ORIGIN_TIME)
                 .statedAxioms(AXIOM_ID,
-                        leb -> leb.NecessarySet(leb.And(leb.ConceptAxiom(TinkarTerm.MODEL_CONCEPT))));
+                        leb -> leb.NecessarySet(leb.And(leb.ConceptAxiom(IkeTerms.MODEL_CONCEPT))));
         freshSession.write();
 
         assertEquals(semanticsBefore, semanticsFor(PrimitiveData.nid(CONCEPT_ID)).size(),
@@ -430,7 +430,7 @@ class DeclaredIdentityBuilderIT {
         assertArrayEquals(BYTES_FIELD, (byte[]) version.fieldValues().get(1));
         IntIdList components = (IntIdList) version.fieldValues().get(2);
         assertEquals(2, components.size());
-        assertTrue(components.contains(TinkarTerm.MODEL_CONCEPT.nid()));
+        assertTrue(components.contains(IkeTerms.MODEL_CONCEPT.nid()));
         assertTrue(components.contains(KernelTerm.USER.nid()));
         IntIdSet componentSet = (IntIdSet) version.fieldValues().get(3);
         assertTrue(componentSet.contains(KernelTerm.DEVELOPMENT_PATH.nid()));
@@ -489,12 +489,12 @@ class DeclaredIdentityBuilderIT {
     void grammarRejections() {
         KnowledgeSet scratch = KnowledgeSet.of("1b2c3d4e-5f60-5182-93a4-b5c6d7e8f901");
         ActiveStamp stamp = Stamp.active("2026-07-15T00:00:00Z",
-                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
         PublicId identity = PublicIds.of(UUID.fromString("90fedcba-5c6b-4a23-8594-c2d3e4f50617"));
 
         // Declared identities are never null or empty.
         assertThrows(IllegalArgumentException.class, () -> Stamp.active((PublicId) null,
-                "2026-07-15T00:00:00Z", KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE,
+                "2026-07-15T00:00:00Z", KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE,
                 KernelTerm.DEVELOPMENT_PATH));
         assertThrows(IllegalArgumentException.class,
                 () -> scratch.concept("Null identity (Test)", (PublicId) null));
@@ -502,7 +502,7 @@ class DeclaredIdentityBuilderIT {
         // Field values: no nulls, no silently narrowed doubles, no nid-based collections.
         assertThrows(IllegalArgumentException.class, () -> scratch.concept("Null field (Test)")
                 .at(stamp).semantic(KernelTerm.IDENTIFIER_PATTERN, identity,
-                        TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, null));
+                        IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER, null));
         assertThrows(IllegalArgumentException.class, () -> scratch.concept("Double field (Test)")
                 .at(stamp).semantic(KernelTerm.IDENTIFIER_PATTERN, identity, 1.5d));
         assertThrows(IllegalArgumentException.class, () -> scratch.concept("Nid field (Test)")
@@ -512,9 +512,9 @@ class DeclaredIdentityBuilderIT {
         assertThrows(IllegalArgumentException.class, () -> scratch.concept("Same stamp (Test)")
                 .at(stamp)
                 .semantic(KernelTerm.IDENTIFIER_PATTERN, identity,
-                        TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "once")
+                        IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER, "once")
                 .semantic(KernelTerm.IDENTIFIER_PATTERN, identity,
-                        TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "twice"));
+                        IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER, "twice"));
 
         // Resume must agree: identity, pattern, referenced component.
         PublicId resumedIdentity =
@@ -522,7 +522,7 @@ class DeclaredIdentityBuilderIT {
         assertThrows(IllegalArgumentException.class,
                 () -> scratch.concept("Ingested kind (Test)", CONCEPT_ID)
                         .at(stamp).semantic(KernelTerm.IDENTIFIER_PATTERN, resumedIdentity,
-                                TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "value")
+                                IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER, "value")
                         .semantic(KernelTerm.US_DIALECT_PATTERN, resumedIdentity, KernelTerm.PREFERRED));
         assertThrows(IllegalArgumentException.class,
                 () -> scratch.concept("Ingested kind (Test)",
@@ -535,18 +535,18 @@ class DeclaredIdentityBuilderIT {
         assertThrows(IllegalArgumentException.class,
                 () -> scratch.concept("Semantic thief (Test)").at(stamp)
                         .semantic(KernelTerm.IDENTIFIER_PATTERN, resumedIdentity,
-                                TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "stolen"),
+                                IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER, "stolen"),
                 "the same declared semantic identity on two components is rejected");
 
         // A declared stamp identity binds one tuple, session-wide.
         PublicId conflictedStampId =
                 PublicIds.of(UUID.fromString("bcde1234-7e8d-4c45-a734-e4f506172839"));
         scratch.concept("First tuple (Test)").at(Stamp.active(conflictedStampId,
-                "2026-07-15T00:00:00Z", KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE,
+                "2026-07-15T00:00:00Z", KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE,
                 KernelTerm.DEVELOPMENT_PATH)).synonym("First");
         assertThrows(IllegalArgumentException.class,
                 () -> scratch.concept("Second tuple (Test)").at(Stamp.active(conflictedStampId,
-                        "2026-08-15T00:00:00Z", KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE,
+                        "2026-08-15T00:00:00Z", KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE,
                         KernelTerm.DEVELOPMENT_PATH)),
                 "the same declared stamp identity with a different tuple is a silent fork");
 
@@ -568,22 +568,22 @@ class DeclaredIdentityBuilderIT {
         assertThrows(IllegalArgumentException.class, () -> scratch.concept("Unretireable (Test)")
                 .at(stamp).synonym("Present")
                 .at(Stamp.inactive("2026-08-01T00:00:00Z", KernelTerm.USER,
-                        TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH))
+                        IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH))
                 .retireSemantic(KernelTerm.IDENTIFIER_PATTERN, identity));
 
         // The axiom identity is declared at first statement, and only there.
         assertThrows(IllegalArgumentException.class, () -> scratch.concept("Late axiom identity (Test)")
                 .at(stamp)
-                .statedAxioms(leb -> leb.NecessarySet(leb.And(leb.ConceptAxiom(TinkarTerm.MODEL_CONCEPT))))
+                .statedAxioms(leb -> leb.NecessarySet(leb.And(leb.ConceptAxiom(IkeTerms.MODEL_CONCEPT))))
                 .statedAxioms(identity,
-                        leb -> leb.NecessarySet(leb.And(leb.ConceptAxiom(TinkarTerm.MODEL_CONCEPT)))));
+                        leb -> leb.NecessarySet(leb.And(leb.ConceptAxiom(IkeTerms.MODEL_CONCEPT)))));
 
         // An explicit FQN declaration cannot follow the derived seed.
         assertThrows(IllegalStateException.class, () -> {
             scratch.concept("Seed conflict (Test)").at(stamp).synonym("Present");
             ConceptBuilder.ActiveScope laterScope = scratch.concept("Seed conflict (Test)")
                     .at(Stamp.active("2026-09-01T00:00:00Z", KernelTerm.USER,
-                            TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH));
+                            IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH));
             laterScope.reviseFullyQualifiedName("Seed conflict revised (Test)");
             laterScope.semantic(KernelTerm.DESCRIPTION_PATTERN, identity,
                     KernelTerm.ENGLISH_LANGUAGE, "Seed conflict (Test)",

@@ -124,8 +124,10 @@ class AxiomDecompilerIT {
         fallbackExamples.forEach(example -> LOG.info("Fallback parent: {}", example));
         notSimpleDumps.forEach(dump -> LOG.info("Needs hand authoring:\n{}", dump));
 
-        assertEquals(379, simpleIsACount[0]);
-        assertEquals(0, notSimpleCount[0]);
+        // The IKE starter set's 43 definitions that are not the simple isA shape (role groups,
+        // restrictions) are beyond the axiom decompiler: each is reported for hand authoring.
+        assertEquals(1252, simpleIsACount[0]);
+        assertEquals(43, notSimpleCount[0]);
         assertTrue(sawFormerOutlier[0], "expected to encounter 'Concept versions field' in the full scan");
         assertTrue(fallbackParents[0] > 0,
                 "expected the declared-identity fallback to actually be exercised by the meta-schema"

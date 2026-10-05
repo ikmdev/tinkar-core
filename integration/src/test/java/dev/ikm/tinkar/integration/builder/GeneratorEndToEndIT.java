@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import network.ike.foundation.ike.bindings.IkeTerms;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculator;
@@ -56,6 +57,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
@@ -95,11 +97,13 @@ class GeneratorEndToEndIT {
         StampCalculator calculator = Calculators.Stamp.DevelopmentLatestActiveOnly();
         TinkarTermReferenceResolver resolver = TinkarTermReferenceResolver.build();
         LanguageCalculator languageCalculator = Calculators.Language.UsEnglishFullyQualifiedName(calculator.stampCoordinate());
-        TaxonomySectioner sectioner = TaxonomySectioner.fromStatedNavigation(calculator);
+        // The unreasoned set is a freshly authored ledger with no navigation semantics, so
+        // sections come from its stated axioms, as KonceptExtractor's do.
+        TaxonomySectioner sectioner = TaxonomySectioner.fromStatedAxioms(calculator);
 
         int conceptsBefore = countConcepts();
         int patternsBefore = countPatterns();
-        int modelConceptVersionsBefore = EntityHandle.get(TinkarTerm.MODEL_CONCEPT.nid()).expectConcept()
+        int modelConceptVersionsBefore = EntityHandle.get(IkeTerms.MODEL_CONCEPT.nid()).expectConcept()
                 .versions().size();
         int userModuleVersionsBefore = EntityHandle.get(findByName("User module")).expectConcept()
                 .versions().size();
@@ -111,7 +115,7 @@ class GeneratorEndToEndIT {
         int userModuleNid = findByName("User module");
         String userModuleFqnBefore = languageCalculator.getFullyQualifiedNameText(
                 dev.ikm.tinkar.terms.EntityProxy.Concept.make(userModuleNid)).orElseThrow();
-        String modelConceptFqnBefore = languageCalculator.getFullyQualifiedNameText(TinkarTerm.MODEL_CONCEPT)
+        String modelConceptFqnBefore = languageCalculator.getFullyQualifiedNameText(IkeTerms.MODEL_CONCEPT)
                 .orElseThrow();
         Set<Integer> userModuleParentsBefore = latestIsAParents(userModuleNid, calculator);
         int descriptionPatternVersionsBefore = EntityHandle.get(KernelTerm.DESCRIPTION_PATTERN.nid()).expectPattern()
@@ -119,9 +123,9 @@ class GeneratorEndToEndIT {
 
         // Sections are not disjoint by design (TaxonomySectioner's own contract) — a
         // dual-parented concept is a member of every section whose root reaches it.
-        // TaxonomySectioner only walks concepts reachable via stated navigation, too —
-        // the ~60 unanchored meta-schema concepts the #873 scan found, and all 28
-        // patterns (an entirely separate taxonomy), need a residual catch-all so the
+        // TaxonomySectioner only walks concepts reachable from the root, too —
+        // unanchored concepts, and all 64 patterns (an entirely separate taxonomy),
+        // need a residual catch-all so the
         // round trip actually covers the full store, not just the navigable subset.
         // sectionsCoveringFullStore does both (first-section-wins dedup + residual
         // catch-all, batched to stay under the JVM's 64KB bytecode-per-method limit) —
@@ -152,7 +156,18 @@ class GeneratorEndToEndIT {
             emissionNotes.addAll(emitted.manifestNotes());
             writeSourceFile(sourceDir, packageName, className, emitted.source());
         }
-        assertEquals(List.of(), emissionNotes, "expected zero manifest notes for this starter set");
+        // The IKE starter set's 43 definitions that are not the simple isA shape (role groups,
+        // restrictions) are beyond the axiom decompiler: each is reported for hand authoring.
+        // The IKE starter set's 63 concepts with no fully qualified name cannot be declared
+        // (every component must carry one), so the emitter skips them; a data finding to fix in
+        // the set, pinned here so a fix, or a new one, shows.
+        long nonSimpleDefinitions = emissionNotes.stream().filter(note -> note.startsWith("Stated axioms on ")).count();
+        long skippedWithoutFqn = emissionNotes.stream()
+                .filter(note -> note.startsWith("Skipped component nid ") && note.contains("no fully-qualified-name")).count();
+        assertEquals(43, nonSimpleDefinitions, "the 43 non-simple definitions to hand-author: " + emissionNotes);
+        assertEquals(63, skippedWithoutFqn, "the 63 components without a fully qualified name: " + emissionNotes);
+        assertEquals(nonSimpleDefinitions + skippedWithoutFqn, emissionNotes.size(),
+                "no manifest note of another kind: " + emissionNotes);
         String aggregatorClassName = "GeneratedStarterKnowledgeSource";
         String aggregatorSource = SectionEmitter.emitAggregator(packageName, aggregatorClassName,
                 UUID.randomUUID().toString(), sectionClassNames);
@@ -165,8 +180,8 @@ class GeneratorEndToEndIT {
             Class<?> aggregatorClass = loader.loadClass(packageName + "." + aggregatorClassName);
             KnowledgeSetSource generatedSource = (KnowledgeSetSource) aggregatorClass.getDeclaredConstructor().newInstance();
             KnowledgeSet set = generatedSource.compose();
-            assertEquals(distinctMembers, set.declarations().size(),
-                    "every distinct component (post cross-section dedup) is declared exactly once");
+            assertEquals(distinctMembers - skippedWithoutFqn, set.declarations().size(),
+                    "every distinct component (post cross-section dedup) with a fully qualified name is declared exactly once");
             set.write();
         }
 
@@ -175,7 +190,7 @@ class GeneratorEndToEndIT {
         assertEquals(conceptsBefore, conceptsAfter, "identity-exact ingest mints no new concepts");
         assertEquals(patternsBefore, patternsAfter, "identity-exact ingest mints no new patterns");
 
-        int modelConceptVersionsAfter = EntityHandle.get(TinkarTerm.MODEL_CONCEPT.nid()).expectConcept()
+        int modelConceptVersionsAfter = EntityHandle.get(IkeTerms.MODEL_CONCEPT.nid()).expectConcept()
                 .versions().size();
         assertEquals(modelConceptVersionsBefore + 1, modelConceptVersionsAfter,
                 "the round trip adds exactly one new (inception) version — a true merge, not a replace");
@@ -189,7 +204,8 @@ class GeneratorEndToEndIT {
         assertEquals(descriptionPatternVersionsBefore + 1, descriptionPatternVersionsAfter,
                 "a pattern from the residual catch-all also merges cleanly, meaning and purpose intact");
 
-        assertEquals(407, distinctMembers, "the residual catch-all closes the gap to full-store coverage");
+        assertEquals(1295 + 64, distinctMembers,
+                "the residual catch-all closes the gap to full-store coverage: 1295 concepts and 64 patterns");
 
         // Content checks: the calculator-resolved latest-active state after the round
         // trip must carry the SAME FQN text and the SAME isA parents as before — not
@@ -199,7 +215,7 @@ class GeneratorEndToEndIT {
                 dev.ikm.tinkar.terms.EntityProxy.Concept.make(userModuleNid)).orElseThrow();
         assertEquals(userModuleFqnBefore, userModuleFqnAfter,
                 "the round trip must not change the calculator-resolved FQN text");
-        String modelConceptFqnAfter = languageCalculator.getFullyQualifiedNameText(TinkarTerm.MODEL_CONCEPT)
+        String modelConceptFqnAfter = languageCalculator.getFullyQualifiedNameText(IkeTerms.MODEL_CONCEPT)
                 .orElseThrow();
         assertEquals(modelConceptFqnBefore, modelConceptFqnAfter,
                 "the round trip must not change the calculator-resolved FQN text");

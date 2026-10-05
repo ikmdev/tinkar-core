@@ -28,7 +28,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
  * }
  * </pre>
  *
- * @see StarterDataEphemeralProvider to load tinkar-starter-data
+ * @see StarterDataEphemeralProvider to load the IKE starter set
  * @see NewSpinedArrayKeyValueProvider for persistent storage
  */
 public class NewEphemeralKeyValueProvider extends KeyValueProviderExtension {

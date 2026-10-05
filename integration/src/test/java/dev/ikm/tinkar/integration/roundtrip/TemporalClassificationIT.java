@@ -75,24 +75,23 @@ import static org.junit.jupiter.api.Assertions.fail;
  * history as the release before it.
  *
  * <p>A store built from release files changes at a few dozen times, its release dates, and
- * every one of them is worth a classification. A store built by authoring, as the starter
- * data is, changes at hundreds of times milliseconds apart. So the selection is the first
- * and last times and others spaced evenly between them by position, {@value #DEFAULT_TIMES}
- * in all unless the {@value #MAX_TIMES_PROPERTY} system property says otherwise; a store
- * with no more times than that has all of them classified.
+ * every one of them is worth a classification. A store built by authoring changes at
+ * whatever times its stamps carry: the IKE starter set's content is stamped at one
+ * authoring time, so it has one time to classify. The selection is the first and last times
+ * and others spaced evenly between them by position, {@value #DEFAULT_TIMES} in all unless
+ * the {@value #MAX_TIMES_PROPERTY} system property says otherwise; a store with no more
+ * times than that has all of them classified.
  *
- * <p>The view stands on the path the content was written on. A path sees its origins as
- * of the origin's own time, not the view's, and the development path's origin is "latest":
- * a view on the development path fixed at a past time still sees everything on the
- * primordial path, where the starter data is, and so reads the same at every time. The
- * times are therefore the times of stamps on the content's path, and the view is fixed on
- * that path.
+ * <p>The view stands on the path the content was written on, the development path for the
+ * IKE starter set. A path sees its origins as of the origin's own time, not the view's, so
+ * the times are the times of stamps on the content's path, and the view is fixed on that
+ * path.
  *
  * <p>Each time is a stage in its own JVM ({@link ForkedJvm}). Nothing is written to the
  * store: the comparison is of the reasoner's results, not of saved semantics, so every
  * time is classified against the same data.
  *
- * <p>The reference is {@code temporal-classification-starter-data.properties} beside this
+ * <p>The reference is {@code temporal-classification-starter-set.properties} beside this
  * class's resources. A run writes what it observed to
  * {@code target/.../observed.properties}; recording a new reference is the deliberate act
  * of copying that file over the reference, after looking at why it changed. This is the
@@ -106,7 +105,7 @@ class TemporalClassificationIT {
     private static final Logger LOG = LoggerFactory.getLogger(TemporalClassificationIT.class);
 
     private static final File WORK = TestConstants.createFilePathInTargetFromClassName.apply(TemporalClassificationIT.class);
-    private static final String REFERENCE = "temporal-classification-starter-data.properties";
+    private static final String REFERENCE = "temporal-classification-starter-set.properties";
 
     private static final String STORE = "store";
     private static final String IMPORT_FILE = "import.file";
@@ -124,7 +123,7 @@ class TemporalClassificationIT {
         Properties in = new Properties();
         in.setProperty(STORE, new File(WORK, "store").getPath());
         in.setProperty(IMPORT_FILE, TestConstants.PB_STARTER_DATA.getPath());
-        in.setProperty(PATH, KernelTerm.PRIMORDIAL_PATH.publicId().leastUuid().toString());
+        in.setProperty(PATH, KernelTerm.DEVELOPMENT_PATH.publicId().leastUuid().toString());
 
         Properties imported = ForkedJvm.run(ImportAndFindTimes.class, in);
         List<String> allTimes = List.of(imported.getProperty(TIMES).split(","));

@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.integrity;
 
+import network.ike.foundation.ike.bindings.IkeTerms;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
@@ -31,7 +32,6 @@ import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
@@ -819,7 +819,7 @@ public class DataIntegrityIT {
         public static Entity<? extends EntityVersion> createPattern(EntityProxy.Pattern pattern,
                                                                     Entity<? extends EntityVersion> authoringSTAMP,
                                                                     ImmutableList<EntityProxy.Concept> fieldDefinitionConcepts) {
-            return createPattern(pattern, TinkarTerm.MEANING, TinkarTerm.PURPOSE, authoringSTAMP, fieldDefinitionConcepts);
+            return createPattern(pattern, IkeTerms.MEANING, IkeTerms.PURPOSE, authoringSTAMP, fieldDefinitionConcepts);
         }
 
         public static Entity<? extends EntityVersion> createPattern(EntityProxy.Pattern pattern,
@@ -857,7 +857,7 @@ public class DataIntegrityIT {
 
         public static FieldDefinitionRecord fieldDefinition(int patternNid, EntityProxy.Concept dataType,
                                                             Entity<? extends EntityVersion> authoringSTAMP, int idx) {
-            return fieldDefinition(patternNid, TinkarTerm.MEANING, TinkarTerm.PURPOSE, dataType, authoringSTAMP, idx);
+            return fieldDefinition(patternNid, IkeTerms.MEANING, IkeTerms.PURPOSE, dataType, authoringSTAMP, idx);
         }
 
         public static FieldDefinitionRecord fieldDefinition(int patternNid, EntityProxy.Concept meaning, EntityProxy.Concept purpose,

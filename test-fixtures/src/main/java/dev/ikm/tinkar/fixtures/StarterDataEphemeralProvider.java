@@ -1,10 +1,10 @@
 package dev.ikm.tinkar.fixtures;
 
 /**
- * JUnit 5 extension that loads tinkar-starter-data into ephemeral store.
+ * JUnit 5 extension that loads the IKE starter set into ephemeral store.
  * <p><b>Store Type:</b> Ephemeral (in-memory)
  * <br>
- * <b>Data Loaded:</b> tinkar-starter-data-reasoned-pb.zip
+ * <b>Data Loaded:</b> ike-starter-set-reasoned-pb.zip
  * <p><b>Usage:</b>
  * <pre>
  * {@code
@@ -37,6 +37,6 @@ public class StarterDataEphemeralProvider extends NewEphemeralKeyValueProvider {
 
     @Override
     protected String getImportPath() {
-        return "target/data/tinkar-starter-data-reasoned-pb.zip";
+        return "target/data/ike-starter-set-reasoned-pb.zip";
     }
 }

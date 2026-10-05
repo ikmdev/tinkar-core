@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import network.ike.foundation.ike.bindings.IkeTerms;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.entity.ConceptEntity;
@@ -38,7 +39,6 @@ import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -87,12 +87,12 @@ class ChronologyBuilderIT {
         // ---- The ledger, time-major: a stamp, then the edits under it. ----
 
         birth = Stamp.active("2026-07-15T00:00:00Z",
-                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
 
         TEST_SET.concept("Journal element (Test)").at(birth)
                 .synonym("Journal element")
                 .definition("Root kind of the blocks a conversation journal orders.")
-                .isA(TinkarTerm.MODEL_CONCEPT);
+                .isA(IkeTerms.MODEL_CONCEPT);
 
         // A child under Journal element — the structural taxonomy the glossary reads.
         TEST_SET.concept("Prose element (Test)").at(birth)
@@ -103,13 +103,13 @@ class ChronologyBuilderIT {
                 .synonym("Temporary name");
 
         TEST_SET.pattern("Journal manifest pattern (Test)").at(birth)
-                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(KernelTerm.USER)
-                .field(TinkarTerm.MODEL_CONCEPT, KernelTerm.USER, KernelTerm.COMPONENT_ID_LIST_FIELD)
-                .field(KernelTerm.USER, TinkarTerm.MODEL_CONCEPT, KernelTerm.STRING)
+                .meaning(IkeTerms.MODEL_CONCEPT).purpose(KernelTerm.USER)
+                .field(IkeTerms.MODEL_CONCEPT, KernelTerm.USER, KernelTerm.COMPONENT_ID_LIST_FIELD)
+                .field(KernelTerm.USER, IkeTerms.MODEL_CONCEPT, KernelTerm.STRING)
                 .synonym("Journal manifest");
 
         TEST_SET.pattern("Evolving pattern (Test)").at(birth)
-                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(KernelTerm.USER);
+                .meaning(IkeTerms.MODEL_CONCEPT).purpose(KernelTerm.USER);
 
         // Declared identity — content whose identity was established elsewhere (ingest
         // of an existing set, or a Komet-minted component lifted back into the ledger).
@@ -118,10 +118,10 @@ class ChronologyBuilderIT {
                 .isA(TEST_SET.conceptRef("Journal element (Test)"));
 
         TEST_SET.pattern("Adopted pattern (Test)", ADOPTED_PATTERN_IDENTITY).at(birth)
-                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(KernelTerm.USER);
+                .meaning(IkeTerms.MODEL_CONCEPT).purpose(KernelTerm.USER);
 
         later = Stamp.active("2026-09-01T00:00:00Z",
-                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
 
         // Resume by FQN — no restatement; the ledger simply continues.
         TEST_SET.concept("Journal element (Test)").at(later)
@@ -129,11 +129,11 @@ class ChronologyBuilderIT {
                 .reviseSynonym("Journal element", "Journal atom");
 
         TEST_SET.pattern("Evolving pattern (Test)").at(later)
-                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(KernelTerm.USER)
-                .field(TinkarTerm.MODEL_CONCEPT, KernelTerm.USER, KernelTerm.STRING);
+                .meaning(IkeTerms.MODEL_CONCEPT).purpose(KernelTerm.USER)
+                .field(IkeTerms.MODEL_CONCEPT, KernelTerm.USER, KernelTerm.STRING);
 
         retirement = Stamp.inactive("2026-10-01T00:00:00Z",
-                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
 
         TEST_SET.concept("Retiring kind (Test)").at(retirement)
                 .retire()
@@ -198,7 +198,7 @@ class ChronologyBuilderIT {
     @DisplayName("Same stamp tuple, same stamp identity — declared stamps are idempotent")
     void stampTupleIdentity() {
         ActiveStamp restated = Stamp.active("2026-07-15T00:00:00Z",
-                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
         assertEquals(birth.publicId(), restated.publicId());
         assertEquals(birth.time(), Instant.parse("2026-07-15T00:00:00Z").toEpochMilli());
     }
@@ -264,7 +264,7 @@ class ChronologyBuilderIT {
         PatternEntity<?> manifest = EntityHandle.get(manifestNid).expectPattern();
         assertEquals(1, manifest.versions().size());
         PatternEntityVersion manifestVersion = (PatternEntityVersion) manifest.versions().get(0);
-        assertEquals(TinkarTerm.MODEL_CONCEPT.nid(), manifestVersion.semanticMeaningNid());
+        assertEquals(IkeTerms.MODEL_CONCEPT.nid(), manifestVersion.semanticMeaningNid());
         assertEquals(KernelTerm.USER.nid(), manifestVersion.semanticPurposeNid());
         assertEquals(2, manifestVersion.fieldDefinitions().size());
         assertEquals(KernelTerm.COMPONENT_ID_LIST_FIELD.nid(),
@@ -324,15 +324,15 @@ class ChronologyBuilderIT {
     void patternValidation() {
         KnowledgeSet probe = KnowledgeSet.of("44444444-4444-5444-9444-444444444444");
         probe.pattern("Partial pattern (Probe)").at(birth)
-                .field(TinkarTerm.MODEL_CONCEPT, KernelTerm.USER, KernelTerm.STRING);
+                .field(IkeTerms.MODEL_CONCEPT, KernelTerm.USER, KernelTerm.STRING);
         assertThrows(IllegalStateException.class, probe::write,
                 "a scope declaring fields must restate meaning and purpose");
 
         KnowledgeSet duplicates = KnowledgeSet.of("55555555-5555-5555-9555-555555555555");
         PatternBuilder.ActiveScope duplicate = duplicates.pattern("Duplicate meanings (Probe)").at(birth)
-                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(KernelTerm.USER)
-                .field(TinkarTerm.MODEL_CONCEPT, KernelTerm.USER, KernelTerm.STRING)
-                .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.MODEL_CONCEPT, KernelTerm.STRING);
+                .meaning(IkeTerms.MODEL_CONCEPT).purpose(KernelTerm.USER)
+                .field(IkeTerms.MODEL_CONCEPT, KernelTerm.USER, KernelTerm.STRING)
+                .field(IkeTerms.MODEL_CONCEPT, IkeTerms.MODEL_CONCEPT, KernelTerm.STRING);
         assertThrows(IllegalStateException.class, () -> duplicate.at(later),
                 "duplicate field meanings are rejected at version flush");
     }

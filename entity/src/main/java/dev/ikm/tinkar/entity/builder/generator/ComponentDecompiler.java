@@ -241,9 +241,9 @@ public final class ComponentDecompiler {
     /**
      * Serializes one field value to a Java source expression. Supports the value
      * types this starter set's own semantics actually carry — {@link EntityFacade},
-     * {@link String}, {@link Instant} — and reports (never guesses at) anything else,
-     * so a future starter set's unsupported field type surfaces as a manifest note,
-     * not a silently wrong or dropped value.
+     * {@link String}, {@link Instant}, {@link Integer}, {@link Long} — and reports
+     * (never guesses at) anything else, so a future starter set's unsupported field
+     * type surfaces as a manifest note, not a silently wrong or dropped value.
      */
     private static String fieldValueExpression(Object value, TinkarTermReferenceResolver resolver) {
         if (value instanceof EntityFacade facade) {
@@ -254,6 +254,12 @@ public final class ComponentDecompiler {
         }
         if (value instanceof Instant instant) {
             return "Instant.parse(\"" + instant + "\")";
+        }
+        if (value instanceof Integer number) {
+            return Integer.toString(number);
+        }
+        if (value instanceof Long number) {
+            return number + "L";
         }
         throw new IllegalArgumentException("unsupported field value type: "
                 + (value == null ? "null" : value.getClass().getName()));

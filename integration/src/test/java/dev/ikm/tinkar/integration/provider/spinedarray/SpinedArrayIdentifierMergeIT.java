@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.provider.spinedarray;
 
+import network.ike.foundation.ike.bindings.IkeTerms;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
@@ -41,7 +42,6 @@ import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -183,7 +183,7 @@ class SpinedArrayIdentifierMergeIT {
                         .caseSignificance(DESCRIPTION_NOT_CASE_SENSITIVE)
                 )
                 .attach(Identifier.class, identifier -> identifier
-                        .source(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER)
+                        .source(IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER)
                         .identifier(snomedIdentifierUuid.toString())
                 )
                 .attach(StatedAxiom.class, statedAxiom -> statedAxiom
@@ -203,7 +203,7 @@ class SpinedArrayIdentifierMergeIT {
         session.compose((ConceptAssembler conceptAssembler) -> conceptAssembler
                 .concept(concept)
                 .attach(Identifier.class, identifier -> identifier
-                        .source(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER)
+                        .source(IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER)
                         .identifier(uuid.toString())
                 )
                 .attach(Identifier.class, identifier -> identifier
@@ -233,7 +233,7 @@ class SpinedArrayIdentifierMergeIT {
                         .caseSignificance(DESCRIPTION_NOT_CASE_SENSITIVE)
                 )
                 .attach(Identifier.class, identifier -> identifier
-                        .source(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER)
+                        .source(IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER)
                         .identifier(author.leastUuid().toString())
                 )
                 .attach(StatedAxiom.class, statedAxiom -> statedAxiom
@@ -252,7 +252,7 @@ class SpinedArrayIdentifierMergeIT {
         EntityService.get().forEachSemanticForComponentOfPattern(componentInDetailsViewer.nid(), KernelTerm.IDENTIFIER_PATTERN.nid(), (semanticEntity) -> {
             viewCalc.latest(semanticEntity).ifPresent((latestSemanticVersion -> {
                 EntityProxy identifierSource = latestIdPattern.get().getFieldWithMeaning(KernelTerm.IDENTIFIER_SOURCE, latestSemanticVersion);
-                if (!PublicId.equals(identifierSource, TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER)) {
+                if (!PublicId.equals(identifierSource, IkeTerms.UNIVERSALLY_UNIQUE_IDENTIFIER)) {
                     try {
                         String idSourceName = viewCalc.getPreferredDescriptionTextWithFallbackOrNid(identifierSource);
                         String idValue = latestIdPattern.get().getFieldWithMeaning(KernelTerm.IDENTIFIER_VALUE, latestSemanticVersion);

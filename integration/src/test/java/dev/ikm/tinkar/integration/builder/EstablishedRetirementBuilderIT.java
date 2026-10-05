@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import network.ike.foundation.ike.bindings.IkeTerms;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
@@ -35,7 +36,6 @@ import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -102,9 +102,9 @@ class EstablishedRetirementBuilderIT {
         baseStamp = Stamp.active("2020-01-01T00:00:00Z",
                 KernelTerm.USER, KernelTerm.PRIMORDIAL_MODULE, KernelTerm.PRIMORDIAL_PATH);
         birth = Stamp.active("2026-07-15T00:00:00Z",
-                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
         retirement = Stamp.inactive("2026-09-01T00:00:00Z",
-                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
 
         // The base: three established concepts, each with its own names and definition.
         baseConcept("Retired kind (Test)", RETIRED_ID, RETIRED_FQN_ID, RETIRED_AXIOMS_ID, KernelTerm.USER)
@@ -127,9 +127,9 @@ class EstablishedRetirementBuilderIT {
         // A born concept retiring its own definition at a later inactive stamp.
         LEDGER_SET.concept("Born kind (Test)").at(birth)
                 .synonym("Born")
-                .isA(TinkarTerm.MODEL_CONCEPT)
+                .isA(IkeTerms.MODEL_CONCEPT)
                 .at(retirement)
-                .retireStatedAxioms(leb -> leb.NecessarySet(leb.And(leb.ConceptAxiom(TinkarTerm.MODEL_CONCEPT))));
+                .retireStatedAxioms(leb -> leb.NecessarySet(leb.And(leb.ConceptAxiom(IkeTerms.MODEL_CONCEPT))));
         LEDGER_SET.write();
     }
 
