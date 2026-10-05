@@ -137,6 +137,28 @@ class BindingClassesIT {
     }
 
     @Test
+    @DisplayName("A binding class with a package of its own is written apart; its members stay in the default class")
+    void classGeneratedApart() throws Exception {
+        KnowledgeSet set = KnowledgeSet.of("3c8f1a2e-6b4d-5e7f-8a9b-0c1d2e3f4a57");
+        BindingClass kernel = set.bindingClass("test.binding.kernel", "TestKernel");
+        set.concept("Kernel concept (Test)");
+        set.bind(set.conceptRef("Kernel concept (Test)").publicId(), kernel, "KERNEL_CONCEPT");
+        assertThrows(IllegalArgumentException.class, () -> set.bind(
+                dev.ikm.tinkar.common.id.PublicIds.of(java.util.UUID.fromString("00000000-0000-5000-8000-000000000001")),
+                kernel, "ABSENT"), "an identity the set does not declare");
+
+        List<Path> files = BindingsWriter.writeAll(set, "test.binding.apart", "TestTerms", outputDir);
+        assertEquals(List.of("TestTerms.java"), files.stream().map(file -> file.getFileName().toString()).toList(),
+                "the class with a package of its own is not among the set's bindings");
+        assertTrue(Files.readString(files.getFirst()).contains("EntityProxy.Concept KERNEL_CONCEPT ="),
+                "its member stays in the default class");
+
+        Path apart = BindingsWriter.writeBindingClass(set, kernel, outputDir);
+        assertTrue(apart.endsWith(Path.of("test", "binding", "kernel", "TestKernel.java")), "written into its own package");
+        assertTrue(Files.readString(apart).contains("EntityProxy.Concept KERNEL_CONCEPT ="));
+    }
+
+    @Test
     @DisplayName("A binding class is declared once")
     void declaredOnce() {
         KnowledgeSet set = KnowledgeSet.of("3c8f1a2e-6b4d-5e7f-8a9b-0c1d2e3f4a52");

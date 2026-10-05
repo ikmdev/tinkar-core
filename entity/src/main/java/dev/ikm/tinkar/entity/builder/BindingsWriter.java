@@ -37,7 +37,8 @@ import java.util.UUID;
  * <p>
  * A set generates one class per binding class it declares, holding the components bound in
  * it under the names the ledger gave them, and its default class, holding every component
- * bound in none. A default-class name derives from the birth FQN: the trailing semantic tag
+ * bound in none of them. A binding class with a package of its own (the kernel) is another
+ * product, written apart ({@link #writeBindingClass}); its members stay in the default class. A default-class name derives from the birth FQN: the trailing semantic tag
  * is stripped, the rest upper-snake-cased. Two components with the same name in one class
  * fail generation with both cited — bind one under another name, or rename its FQN.
  */
@@ -82,20 +83,30 @@ public final class BindingsWriter {
         Map<String, List<KnowledgeSet.StampBinding>> stamps = new HashMap<>();
         classes.put(className, new ArrayList<>());
         for (BindingClass bindingClass : knowledgeSet.bindingClasses()) {
+            if (!bindingClass.generatedWith(packageName)) {
+                continue;
+            }
             if (classes.putIfAbsent(bindingClass.name(), new ArrayList<>()) != null) {
                 throw new IllegalStateException("The binding class " + bindingClass.name()
                         + " has the default bindings class's name");
             }
         }
         for (KnowledgeSet.StampBinding stampBinding : knowledgeSet.stampBindings()) {
-            stamps.computeIfAbsent(stampBinding.bindingClass().name(), _ -> new ArrayList<>()).add(stampBinding);
+            if (stampBinding.bindingClass().generatedWith(packageName)) {
+                stamps.computeIfAbsent(stampBinding.bindingClass().name(), _ -> new ArrayList<>()).add(stampBinding);
+            }
         }
         for (Declaration declaration : knowledgeSet.declarations()) {
-            if (declaration.bindings().isEmpty()) {
+            // A component bound only in classes generated elsewhere (the kernel) is still named
+            // here: those classes are another product, not a home among the set's bindings.
+            if (declaration.bindings().keySet().stream().noneMatch(bindingClass -> bindingClass.generatedWith(packageName))) {
                 classes.get(className).add(new Binding(constantName(declaration.birthFqn()), declaration));
             }
-            declaration.bindings().forEach((bindingClass, constant) ->
-                    classes.get(bindingClass.name()).add(new Binding(constant, declaration)));
+            declaration.bindings().forEach((bindingClass, constant) -> {
+                if (bindingClass.generatedWith(packageName)) {
+                    classes.get(bindingClass.name()).add(new Binding(constant, declaration));
+                }
+            });
         }
         List<Path> files = new ArrayList<>();
         for (Map.Entry<String, List<Binding>> bindingsClass : classes.entrySet()) {
@@ -106,6 +117,36 @@ public final class BindingsWriter {
                     bindingsClass.getValue(), stamps.getOrDefault(bindingsClass.getKey(), List.of()), outputDir));
         }
         return files;
+    }
+
+    /**
+     * Writes one binding class into its own package: for a class generated apart from the
+     * set's bindings, such as the kernel tinkar-core commits.
+     *
+     * @param knowledgeSet the composed set
+     * @param bindingClass a binding class the set declares, with a package of its own
+     * @param outputDir    the generated-sources root; package directories are created below it
+     * @return the path of the written source file
+     * @throws IOException           if the file cannot be written
+     * @throws IllegalStateException if two components have the same name in the class
+     */
+    public static Path writeBindingClass(KnowledgeSet knowledgeSet, BindingClass bindingClass, Path outputDir)
+            throws IOException {
+        if (bindingClass.packageName() == null) {
+            throw new IllegalArgumentException(bindingClass.name() + " is generated with the set's bindings");
+        }
+        List<Binding> bindings = new ArrayList<>();
+        for (Declaration declaration : knowledgeSet.declarations()) {
+            String constant = declaration.bindings().get(bindingClass);
+            if (constant != null) {
+                bindings.add(new Binding(constant, declaration));
+            }
+        }
+        List<KnowledgeSet.StampBinding> stampBindings = knowledgeSet.stampBindings().stream()
+                .filter(stampBinding -> stampBinding.bindingClass().equals(bindingClass)).toList();
+        return writeClass(knowledgeSet, bindingClass.packageName(), bindingClass.name(),
+                "The " + bindingClass.name() + " bindings, generated apart and committed where they are used,"
+                        + " of the knowledge set", bindings, stampBindings, outputDir);
     }
 
     /** A component's constant in one generated class. */
@@ -121,8 +162,11 @@ public final class BindingsWriter {
         if (!stampBindings.isEmpty()) {
             src.append("import dev.ikm.tinkar.terms.DeclaredStamp;\n");
         }
-        src.append("import dev.ikm.tinkar.terms.EntityProxy;\n");
-        if (!stampBindings.isEmpty()) {
+        boolean inTerms = packageName.equals("dev.ikm.tinkar.terms");
+        if (!inTerms) {
+            src.append("import dev.ikm.tinkar.terms.EntityProxy;\n");
+        }
+        if (!stampBindings.isEmpty() && !inTerms) {
             src.append("import dev.ikm.tinkar.terms.State;\n");
         }
         src.append("\n");

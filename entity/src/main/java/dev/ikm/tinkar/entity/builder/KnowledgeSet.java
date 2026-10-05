@@ -642,12 +642,55 @@ public final class KnowledgeSet {
      * @throws IllegalStateException if the set already declares a binding class of the name
      */
     public BindingClass bindingClass(String name) {
-        BindingClass bindingClass = new BindingClass(uuid, name);
+        return bindingClass(null, name);
+    }
+
+    /**
+     * Declares a binding class of this set generated into a package of its own rather than the
+     * package of the set's bindings: the kernel, for one, which tinkar-core commits into
+     * {@code dev.ikm.tinkar.terms}.
+     *
+     * @param packageName the class's package, or {@code null} for the package of the set's bindings
+     * @param name        the generated class's simple name, a Java identifier
+     * @return the binding class
+     * @throws IllegalStateException if the set already declares a binding class of the name
+     */
+    public BindingClass bindingClass(String packageName, String name) {
+        BindingClass bindingClass = new BindingClass(uuid, packageName, name);
         if (bindingClasses.putIfAbsent(name, bindingClass) != null) {
             throw new IllegalStateException("The binding class " + name + " is already declared; a binding class "
                     + "is declared once, and declarations refer to it");
         }
         return bindingClass;
+    }
+
+    /**
+     * Binds a component this set declares, found by its identity, in a binding class: for
+     * binding classes declared apart from the components they name, such as the kernel, whose
+     * members are declared throughout the ledger.
+     *
+     * @param identity     the component's identity; any of its UUIDs finds it
+     * @param bindingClass a binding class this set declares
+     * @param constant     the constant's name, a Java identifier
+     * @return this knowledge set
+     * @throws IllegalArgumentException if the set declares no component with the identity
+     * @throws IllegalStateException    if the component is bound in the class under another name
+     */
+    public KnowledgeSet bind(PublicId identity, BindingClass bindingClass, String constant) {
+        for (ConceptBuilder builder : concepts.values()) {
+            if (PublicId.equals(identity, builder.publicId())) {
+                builder.binding(bindingClass, constant);
+                return this;
+            }
+        }
+        for (PatternBuilder builder : patterns.values()) {
+            if (PublicId.equals(identity, builder.publicId())) {
+                builder.binding(bindingClass, constant);
+                return this;
+            }
+        }
+        throw new IllegalArgumentException("The set declares no component " + identity.idString()
+                + " to bind in " + bindingClass.name() + " as " + constant);
     }
 
     /**
