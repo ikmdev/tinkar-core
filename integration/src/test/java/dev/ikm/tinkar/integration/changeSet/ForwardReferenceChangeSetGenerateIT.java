@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.changeSet;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.entity.ConceptRecord;
@@ -29,7 +30,6 @@ import dev.ikm.tinkar.fixtures.TestTags;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -117,9 +117,9 @@ class ForwardReferenceChangeSetGenerateIT {
                 UUID.randomUUID(),
                 State.ACTIVE,
                 System.currentTimeMillis(),
-                TinkarTerm.USER.publicId(),
-                TinkarTerm.PRIMORDIAL_MODULE.publicId(),
-                TinkarTerm.DEVELOPMENT_PATH.publicId()
+                KernelTerm.USER.publicId(),
+                KernelTerm.PRIMORDIAL_MODULE.publicId(),
+                KernelTerm.DEVELOPMENT_PATH.publicId()
         );
         EntityService.get().putEntity(testStamp);
 
@@ -225,10 +225,10 @@ class ForwardReferenceChangeSetGenerateIT {
         // Create field values for description pattern
         // Description pattern fields: language, text, case significance, description type
         ImmutableList<Object> fieldValues = org.eclipse.collections.api.factory.Lists.immutable.of(
-                TinkarTerm.ENGLISH_LANGUAGE.nid(),  // Language
+                KernelTerm.ENGLISH_LANGUAGE.nid(),  // Language
                 "Test Description for Forward Reference", // Text
-                TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE.nid(), // Case significance
-                TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()  // Description type
+                KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE.nid(), // Case significance
+                KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()  // Description type
         );
 
         // Note: We need to get the NID for the concept that doesn't exist yet
@@ -237,7 +237,7 @@ class ForwardReferenceChangeSetGenerateIT {
 
         return SemanticRecord.build(
                 SEMANTIC_UUID,
-                TinkarTerm.DESCRIPTION_PATTERN.nid(),
+                KernelTerm.DESCRIPTION_PATTERN.nid(),
                 conceptNid,  // References the concept that will be written AFTER this semantic
                 testStamp.lastVersion(),
                 fieldValues

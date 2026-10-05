@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.coordinate;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
@@ -98,9 +99,9 @@ class DefaultsTemplateCalculatorIT {
         // category's live-and-die invariant is about defaults/template chronologies,
         // and the anchor concepts themselves are ordinary content.
         ActiveStamp birth = Stamp.active("2020-01-01T00:00:00Z",
-                TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
-        ActiveStamp defaultsAuthored = Stamp.active("2020-02-01T00:00:00Z", TinkarTerm.USER,
-                DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
+        ActiveStamp defaultsAuthored = Stamp.active("2020-02-01T00:00:00Z", KernelTerm.USER,
+                DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE, KernelTerm.DEVELOPMENT_PATH);
 
         // The three seam concepts, minted here with the identities tinkar-core declares
         // (in ike-starter-set the IkeFoundation ledger mints them from the same birth
@@ -113,12 +114,12 @@ class DefaultsTemplateCalculatorIT {
                 .semantic(p1, PublicIds.of(p1DefaultId), "parent default value")
                 .semantic(p2, PublicIds.of(p2DefaultId), "retired default value")
                 // Retirement of P2's default: an inactive version, same module, same path.
-                .at(Stamp.inactive("2020-03-01T00:00:00Z", TinkarTerm.USER,
-                        DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE, TinkarTerm.DEVELOPMENT_PATH))
+                .at(Stamp.inactive("2020-03-01T00:00:00Z", KernelTerm.USER,
+                        DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE, KernelTerm.DEVELOPMENT_PATH))
                 .retireSemantic(p2, PublicIds.of(p2DefaultId))
                 // A later default for P1 authored on the child path overrides the
                 // parent-path default for calculators positioned on the child path.
-                .at(Stamp.active("2021-01-01T00:00:00Z", TinkarTerm.USER,
+                .at(Stamp.active("2021-01-01T00:00:00Z", KernelTerm.USER,
                         DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE,
                         TEST_SET.conceptRef(CHILD_PATH_FQN)))
                 .semantic(p1, PublicIds.of(p1DefaultId), "child default value");
@@ -166,15 +167,15 @@ class DefaultsTemplateCalculatorIT {
         // A child path forked from the development path at 2020-06-01: a paths-pattern
         // membership semantic plus a path-origins semantic (origin path, origin instant).
         TEST_SET.concept(CHILD_PATH_FQN).at(birth)
-                .semantic(TinkarTerm.PATHS_PATTERN,
+                .semantic(KernelTerm.PATHS_PATTERN,
                         PublicIds.of(UuidT5Generator.singleSemanticUuid(
-                                TinkarTerm.PATHS_PATTERN.publicId(),
+                                KernelTerm.PATHS_PATTERN.publicId(),
                                 TEST_SET.conceptRef(CHILD_PATH_FQN).publicId())))
-                .semantic(TinkarTerm.PATH_ORIGINS_PATTERN,
+                .semantic(KernelTerm.PATH_ORIGINS_PATTERN,
                         PublicIds.of(UuidT5Generator.singleSemanticUuid(
-                                TinkarTerm.PATH_ORIGINS_PATTERN.publicId(),
+                                KernelTerm.PATH_ORIGINS_PATTERN.publicId(),
                                 TEST_SET.conceptRef(CHILD_PATH_FQN).publicId())),
-                        TinkarTerm.DEVELOPMENT_PATH, Instant.parse("2020-06-01T00:00:00Z"));
+                        KernelTerm.DEVELOPMENT_PATH, Instant.parse("2020-06-01T00:00:00Z"));
 
         TEST_SET.write();
     }
@@ -190,7 +191,7 @@ class DefaultsTemplateCalculatorIT {
     }
 
     private static StampCalculatorWithCache developmentCalculator() {
-        return calculatorOn(TinkarTerm.DEVELOPMENT_PATH.nid(), StateSet.ACTIVE_AND_INACTIVE);
+        return calculatorOn(KernelTerm.DEVELOPMENT_PATH.nid(), StateSet.ACTIVE_AND_INACTIVE);
     }
 
     private static int nidOf(UUID semanticUuid) {
@@ -301,7 +302,7 @@ class DefaultsTemplateCalculatorIT {
                 "retirement restates the prior version's fields");
 
         Latest<SemanticEntityVersion> activeOnly =
-                calculatorOn(TinkarTerm.DEVELOPMENT_PATH.nid(), StateSet.ACTIVE)
+                calculatorOn(KernelTerm.DEVELOPMENT_PATH.nid(), StateSet.ACTIVE)
                         .getDefault(TEST_SET.patternRef(P2_FQN));
         assertTrue(activeOnly.isAbsent(),
                 "an ACTIVE-only calculator must not resurrect the earlier active default");

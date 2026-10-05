@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
@@ -121,30 +122,30 @@ class DeclaredIdentityBuilderIT {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
 
         birth = Stamp.active("2026-07-15T00:00:00Z",
-                TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
         declaredBirth = Stamp.active(STAMP_ID, "2026-07-15T00:00:00Z",
-                TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
         multiDeclared = Stamp.active(MULTI_STAMP_ID, "2026-07-16T00:00:00Z",
-                TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
         later = Stamp.active("2026-07-17T00:00:00Z",
-                TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
         retirement = Stamp.inactive("2026-07-18T00:00:00Z",
-                TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
 
         // An ingested concept: every identity established elsewhere, nothing derived —
         // the FQN description arrives explicitly, so no derived-identity auto-seed.
         TEST_SET.concept("Ingested kind (Test)", CONCEPT_ID).at(declaredBirth)
-                .semantic(TinkarTerm.DESCRIPTION_PATTERN, FQN_DESCRIPTION_ID,
-                        TinkarTerm.ENGLISH_LANGUAGE, "Ingested kind (Test)",
-                        TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE,
-                        TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE)
-                .semanticOn(FQN_DESCRIPTION_ID, TinkarTerm.US_DIALECT_PATTERN, DIALECT_ID,
-                        TinkarTerm.PREFERRED)
-                .semantic(TinkarTerm.TINKAR_BASE_MODEL_COMPONENT_PATTERN, MEMBERSHIP_ID)
-                .semantic(TinkarTerm.IDENTIFIER_PATTERN, IDENTIFIER_ID,
+                .semantic(KernelTerm.DESCRIPTION_PATTERN, FQN_DESCRIPTION_ID,
+                        KernelTerm.ENGLISH_LANGUAGE, "Ingested kind (Test)",
+                        KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE,
+                        KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE)
+                .semanticOn(FQN_DESCRIPTION_ID, KernelTerm.US_DIALECT_PATTERN, DIALECT_ID,
+                        KernelTerm.PREFERRED)
+                .semantic(KernelTerm.TINKAR_BASE_MODEL_COMPONENT_PATTERN, MEMBERSHIP_ID)
+                .semantic(KernelTerm.IDENTIFIER_PATTERN, IDENTIFIER_ID,
                         TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "8f3e2a1b-4c5d-4e6f-9a0b-1c2d3e4f5a6b")
-                .semantic(TinkarTerm.PATH_ORIGINS_PATTERN, PATH_ORIGIN_ID,
-                        TinkarTerm.DEVELOPMENT_PATH, PATH_ORIGIN_TIME)
+                .semantic(KernelTerm.PATH_ORIGINS_PATTERN, PATH_ORIGIN_ID,
+                        KernelTerm.DEVELOPMENT_PATH, PATH_ORIGIN_TIME)
                 .statedAxioms(AXIOM_ID,
                         leb -> leb.NecessarySet(leb.And(leb.ConceptAxiom(TinkarTerm.MODEL_CONCEPT))));
 
@@ -161,46 +162,46 @@ class DeclaredIdentityBuilderIT {
         TEST_SET.concept("Bare id kind (Test)",
                         PublicIds.of(UUID.fromString("5ba98845-1827-468f-9150-8e9fa0b1c2d2")))
                 .at(declaredBirth)
-                .semantic(TinkarTerm.DESCRIPTION_PATTERN, BARE_FQN_DESCRIPTION_ID,
-                        TinkarTerm.ENGLISH_LANGUAGE.publicId(), "Bare id kind (Test)",
-                        TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE.publicId(),
-                        TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.publicId());
+                .semantic(KernelTerm.DESCRIPTION_PATTERN, BARE_FQN_DESCRIPTION_ID,
+                        KernelTerm.ENGLISH_LANGUAGE.publicId(), "Bare id kind (Test)",
+                        KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE.publicId(),
+                        KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.publicId());
 
         // Every remaining accepted field value type, through the write path once.
         TEST_SET.concept("Typed fields kind (Test)").at(birth)
-                .semantic(TinkarTerm.COMMENT_PATTERN, TYPED_FIELDS_ID,
+                .semantic(KernelTerm.COMMENT_PATTERN, TYPED_FIELDS_ID,
                         new java.math.BigDecimal("1.25"), BYTES_FIELD,
                         PublicIds.list.of(TinkarTerm.MODEL_CONCEPT.publicId(),
-                                TinkarTerm.USER.publicId()),
-                        PublicIds.set.of(TinkarTerm.DEVELOPMENT_PATH.publicId()));
+                                KernelTerm.USER.publicId()),
+                        PublicIds.set.of(KernelTerm.DEVELOPMENT_PATH.publicId()));
 
         // Retirement with an explicit payload — retired versions carry field values.
         TEST_SET.concept("Explicit retire kind (Test)").at(birth)
-                .semantic(TinkarTerm.IDENTIFIER_PATTERN, EXPLICIT_RETIRE_ID,
+                .semantic(KernelTerm.IDENTIFIER_PATTERN, EXPLICIT_RETIRE_ID,
                         TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "before")
                 .at(retirement)
-                .retireSemantic(TinkarTerm.IDENTIFIER_PATTERN, EXPLICIT_RETIRE_ID,
+                .retireSemantic(KernelTerm.IDENTIFIER_PATTERN, EXPLICIT_RETIRE_ID,
                         TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "after");
 
         // A generic semantic versioning across scopes, then retiring by restatement.
         TEST_SET.concept("Revised semantic kind (Test)").at(birth)
-                .semantic(TinkarTerm.IDENTIFIER_PATTERN, REVISED_IDENTIFIER_ID,
+                .semantic(KernelTerm.IDENTIFIER_PATTERN, REVISED_IDENTIFIER_ID,
                         TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "first value")
                 .at(later)
-                .semantic(TinkarTerm.IDENTIFIER_PATTERN, REVISED_IDENTIFIER_ID,
+                .semantic(KernelTerm.IDENTIFIER_PATTERN, REVISED_IDENTIFIER_ID,
                         TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "second value")
                 .at(retirement)
-                .retireSemantic(TinkarTerm.IDENTIFIER_PATTERN, REVISED_IDENTIFIER_ID);
+                .retireSemantic(KernelTerm.IDENTIFIER_PATTERN, REVISED_IDENTIFIER_ID);
 
         // An ingested pattern: multi-UUID declared identity plus a membership tag, and a
         // second declared semantic retired from the pattern's retire scope.
         TEST_SET.pattern("Ingested pattern (Test)", PATTERN_ID).at(declaredBirth)
-                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER)
-                .semantic(TinkarTerm.TINKAR_BASE_MODEL_COMPONENT_PATTERN, PATTERN_MEMBERSHIP_ID)
-                .semantic(TinkarTerm.IDENTIFIER_PATTERN, PATTERN_RETIRE_ID,
+                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(KernelTerm.USER)
+                .semantic(KernelTerm.TINKAR_BASE_MODEL_COMPONENT_PATTERN, PATTERN_MEMBERSHIP_ID)
+                .semantic(KernelTerm.IDENTIFIER_PATTERN, PATTERN_RETIRE_ID,
                         TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "pattern identifier")
                 .at(retirement)
-                .retireSemantic(TinkarTerm.IDENTIFIER_PATTERN, PATTERN_RETIRE_ID);
+                .retireSemantic(KernelTerm.IDENTIFIER_PATTERN, PATTERN_RETIRE_ID);
 
         TEST_SET.write();
     }
@@ -217,21 +218,21 @@ class DeclaredIdentityBuilderIT {
         StampEntity<?> stamp = Entity.getStamp(stampNid);
         assertTrue(PublicId.equals(STAMP_ID, stamp.publicId()));
         UUID tupleDerived = Stamp.stampUuid(State.ACTIVE, declaredBirth.time(),
-                TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
         assertFalse(stamp.publicId().contains(tupleDerived),
                 "the declared identity must win over the tuple derivation");
         assertEquals(State.ACTIVE, stamp.state());
         assertEquals(declaredBirth.time(), stamp.time());
-        assertEquals(TinkarTerm.USER.nid(), stamp.authorNid());
+        assertEquals(KernelTerm.USER.nid(), stamp.authorNid());
         assertEquals(TinkarTerm.DEVELOPMENT_MODULE.nid(), stamp.moduleNid());
-        assertEquals(TinkarTerm.DEVELOPMENT_PATH.nid(), stamp.pathNid());
+        assertEquals(KernelTerm.DEVELOPMENT_PATH.nid(), stamp.pathNid());
     }
 
     @Test
     @DisplayName("A tuple-derived stamp still derives: declared identity is opt-in")
     void tupleDerivedStampUnchanged() {
         UUID tupleDerived = Stamp.stampUuid(State.ACTIVE, birth.time(),
-                TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
         assertTrue(birth.publicId().contains(tupleDerived));
         StampEntity<?> stamp = Entity.getStamp(PrimitiveData.nid(PublicIds.of(tupleDerived)));
         assertTrue(stamp.publicId().contains(tupleDerived));
@@ -272,7 +273,7 @@ class DeclaredIdentityBuilderIT {
         assertEquals(5, attached.size(),
                 "an ingested concept carries exactly its declared semantics: " + attached);
         long descriptions = attached.stream()
-                .filter(semantic -> semantic.patternNid() == TinkarTerm.DESCRIPTION_PATTERN.nid())
+                .filter(semantic -> semantic.patternNid() == KernelTerm.DESCRIPTION_PATTERN.nid())
                 .count();
         assertEquals(1, descriptions, "one description — the declared FQN, no derived twin");
     }
@@ -281,13 +282,13 @@ class DeclaredIdentityBuilderIT {
     @DisplayName("The generic description semantic carries its declared identity and verbatim fields")
     void genericDescriptionSemantic() {
         SemanticEntity<SemanticEntityVersion> description = semanticFor(FQN_DESCRIPTION_ID);
-        assertEquals(TinkarTerm.DESCRIPTION_PATTERN.nid(), description.patternNid());
+        assertEquals(KernelTerm.DESCRIPTION_PATTERN.nid(), description.patternNid());
         assertEquals(PrimitiveData.nid(CONCEPT_ID), description.referencedComponentNid());
         SemanticEntityVersion version = description.versions().getFirst();
-        assertEquals(TinkarTerm.ENGLISH_LANGUAGE.nid(),
+        assertEquals(KernelTerm.ENGLISH_LANGUAGE.nid(),
                 ((EntityFacade) version.fieldValues().get(0)).nid());
         assertEquals("Ingested kind (Test)", version.fieldValues().get(1));
-        assertEquals(TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
+        assertEquals(KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid(),
                 ((EntityFacade) version.fieldValues().get(3)).nid());
     }
 
@@ -295,7 +296,7 @@ class DeclaredIdentityBuilderIT {
     @DisplayName("semanticOn references another declared component: the dialect rides its description")
     void semanticOnReferencesDeclaredComponent() {
         SemanticEntity<SemanticEntityVersion> dialect = semanticFor(DIALECT_ID);
-        assertEquals(TinkarTerm.US_DIALECT_PATTERN.nid(), dialect.patternNid());
+        assertEquals(KernelTerm.US_DIALECT_PATTERN.nid(), dialect.patternNid());
         assertEquals(PrimitiveData.nid(FQN_DESCRIPTION_ID), dialect.referencedComponentNid(),
                 "the dialect references the declared description, not the concept");
     }
@@ -304,11 +305,11 @@ class DeclaredIdentityBuilderIT {
     @DisplayName("A membership semantic declares no fields; an identifier declares component + string")
     void membershipAndIdentifierSemantics() {
         SemanticEntity<SemanticEntityVersion> membership = semanticFor(MEMBERSHIP_ID);
-        assertEquals(TinkarTerm.TINKAR_BASE_MODEL_COMPONENT_PATTERN.nid(), membership.patternNid());
+        assertEquals(KernelTerm.TINKAR_BASE_MODEL_COMPONENT_PATTERN.nid(), membership.patternNid());
         assertEquals(0, membership.versions().getFirst().fieldValues().size());
 
         SemanticEntity<SemanticEntityVersion> identifier = semanticFor(IDENTIFIER_ID);
-        assertEquals(TinkarTerm.IDENTIFIER_PATTERN.nid(), identifier.patternNid());
+        assertEquals(KernelTerm.IDENTIFIER_PATTERN.nid(), identifier.patternNid());
         assertEquals("8f3e2a1b-4c5d-4e6f-9a0b-1c2d3e4f5a6b",
                 identifier.versions().getFirst().fieldValues().get(1));
     }
@@ -324,7 +325,7 @@ class DeclaredIdentityBuilderIT {
     @DisplayName("Declared-identity stated axioms adopt the established semantic identity")
     void declaredIdentityAxioms() {
         SemanticEntity<SemanticEntityVersion> axioms = semanticFor(AXIOM_ID);
-        assertEquals(TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(), axioms.patternNid());
+        assertEquals(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(), axioms.patternNid());
         assertEquals(PrimitiveData.nid(CONCEPT_ID), axioms.referencedComponentNid());
         assertInstanceOf(DiTreeEntity.class, axioms.versions().getFirst().fieldValues().get(0));
     }
@@ -335,7 +336,7 @@ class DeclaredIdentityBuilderIT {
         int conceptNid = PrimitiveData.nid(
                 PublicIds.of(TEST_SET.uuidFor("Multi-stamp kind (Test)")));
         long descriptions = semanticsFor(conceptNid).stream()
-                .filter(semantic -> semantic.patternNid() == TinkarTerm.DESCRIPTION_PATTERN.nid())
+                .filter(semantic -> semantic.patternNid() == KernelTerm.DESCRIPTION_PATTERN.nid())
                 .count();
         assertEquals(2, descriptions, "the derived FQN plus the authored synonym");
     }
@@ -386,17 +387,17 @@ class DeclaredIdentityBuilderIT {
 
         KnowledgeSet freshSession = KnowledgeSet.of("2a7b9c4e-6d1f-5e3a-8b0c-4f2d7e9a1c5b");
         freshSession.concept("Ingested kind (Test)", CONCEPT_ID).at(declaredBirth)
-                .semantic(TinkarTerm.DESCRIPTION_PATTERN, FQN_DESCRIPTION_ID,
-                        TinkarTerm.ENGLISH_LANGUAGE, "Ingested kind (Test)",
-                        TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE,
-                        TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE)
-                .semanticOn(FQN_DESCRIPTION_ID, TinkarTerm.US_DIALECT_PATTERN, DIALECT_ID,
-                        TinkarTerm.PREFERRED)
-                .semantic(TinkarTerm.TINKAR_BASE_MODEL_COMPONENT_PATTERN, MEMBERSHIP_ID)
-                .semantic(TinkarTerm.IDENTIFIER_PATTERN, IDENTIFIER_ID,
+                .semantic(KernelTerm.DESCRIPTION_PATTERN, FQN_DESCRIPTION_ID,
+                        KernelTerm.ENGLISH_LANGUAGE, "Ingested kind (Test)",
+                        KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE,
+                        KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE)
+                .semanticOn(FQN_DESCRIPTION_ID, KernelTerm.US_DIALECT_PATTERN, DIALECT_ID,
+                        KernelTerm.PREFERRED)
+                .semantic(KernelTerm.TINKAR_BASE_MODEL_COMPONENT_PATTERN, MEMBERSHIP_ID)
+                .semantic(KernelTerm.IDENTIFIER_PATTERN, IDENTIFIER_ID,
                         TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "8f3e2a1b-4c5d-4e6f-9a0b-1c2d3e4f5a6b")
-                .semantic(TinkarTerm.PATH_ORIGINS_PATTERN, PATH_ORIGIN_ID,
-                        TinkarTerm.DEVELOPMENT_PATH, PATH_ORIGIN_TIME)
+                .semantic(KernelTerm.PATH_ORIGINS_PATTERN, PATH_ORIGIN_ID,
+                        KernelTerm.DEVELOPMENT_PATH, PATH_ORIGIN_TIME)
                 .statedAxioms(AXIOM_ID,
                         leb -> leb.NecessarySet(leb.And(leb.ConceptAxiom(TinkarTerm.MODEL_CONCEPT))));
         freshSession.write();
@@ -413,9 +414,9 @@ class DeclaredIdentityBuilderIT {
     @DisplayName("A bare-PublicId FQN type field still suppresses the derived auto-seed")
     void bareIdFqnSuppression() {
         SemanticEntity<SemanticEntityVersion> description = semanticFor(BARE_FQN_DESCRIPTION_ID);
-        assertEquals(TinkarTerm.DESCRIPTION_PATTERN.nid(), description.patternNid());
+        assertEquals(KernelTerm.DESCRIPTION_PATTERN.nid(), description.patternNid());
         long descriptions = semanticsFor(description.referencedComponentNid()).stream()
-                .filter(semantic -> semantic.patternNid() == TinkarTerm.DESCRIPTION_PATTERN.nid())
+                .filter(semantic -> semantic.patternNid() == KernelTerm.DESCRIPTION_PATTERN.nid())
                 .count();
         assertEquals(1, descriptions, "one description — the declared FQN, no derived twin");
     }
@@ -430,9 +431,9 @@ class DeclaredIdentityBuilderIT {
         IntIdList components = (IntIdList) version.fieldValues().get(2);
         assertEquals(2, components.size());
         assertTrue(components.contains(TinkarTerm.MODEL_CONCEPT.nid()));
-        assertTrue(components.contains(TinkarTerm.USER.nid()));
+        assertTrue(components.contains(KernelTerm.USER.nid()));
         IntIdSet componentSet = (IntIdSet) version.fieldValues().get(3);
-        assertTrue(componentSet.contains(TinkarTerm.DEVELOPMENT_PATH.nid()));
+        assertTrue(componentSet.contains(KernelTerm.DEVELOPMENT_PATH.nid()));
     }
 
     @Test
@@ -488,31 +489,31 @@ class DeclaredIdentityBuilderIT {
     void grammarRejections() {
         KnowledgeSet scratch = KnowledgeSet.of("1b2c3d4e-5f60-5182-93a4-b5c6d7e8f901");
         ActiveStamp stamp = Stamp.active("2026-07-15T00:00:00Z",
-                TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
         PublicId identity = PublicIds.of(UUID.fromString("90fedcba-5c6b-4a23-8594-c2d3e4f50617"));
 
         // Declared identities are never null or empty.
         assertThrows(IllegalArgumentException.class, () -> Stamp.active((PublicId) null,
-                "2026-07-15T00:00:00Z", TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE,
-                TinkarTerm.DEVELOPMENT_PATH));
+                "2026-07-15T00:00:00Z", KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE,
+                KernelTerm.DEVELOPMENT_PATH));
         assertThrows(IllegalArgumentException.class,
                 () -> scratch.concept("Null identity (Test)", (PublicId) null));
 
         // Field values: no nulls, no silently narrowed doubles, no nid-based collections.
         assertThrows(IllegalArgumentException.class, () -> scratch.concept("Null field (Test)")
-                .at(stamp).semantic(TinkarTerm.IDENTIFIER_PATTERN, identity,
+                .at(stamp).semantic(KernelTerm.IDENTIFIER_PATTERN, identity,
                         TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, null));
         assertThrows(IllegalArgumentException.class, () -> scratch.concept("Double field (Test)")
-                .at(stamp).semantic(TinkarTerm.IDENTIFIER_PATTERN, identity, 1.5d));
+                .at(stamp).semantic(KernelTerm.IDENTIFIER_PATTERN, identity, 1.5d));
         assertThrows(IllegalArgumentException.class, () -> scratch.concept("Nid field (Test)")
-                .at(stamp).semantic(TinkarTerm.IDENTIFIER_PATTERN, identity, IntIds.list.of(1, 2)));
+                .at(stamp).semantic(KernelTerm.IDENTIFIER_PATTERN, identity, IntIds.list.of(1, 2)));
 
         // One version per stamp per semantic — merge would silently replace.
         assertThrows(IllegalArgumentException.class, () -> scratch.concept("Same stamp (Test)")
                 .at(stamp)
-                .semantic(TinkarTerm.IDENTIFIER_PATTERN, identity,
+                .semantic(KernelTerm.IDENTIFIER_PATTERN, identity,
                         TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "once")
-                .semantic(TinkarTerm.IDENTIFIER_PATTERN, identity,
+                .semantic(KernelTerm.IDENTIFIER_PATTERN, identity,
                         TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "twice"));
 
         // Resume must agree: identity, pattern, referenced component.
@@ -520,9 +521,9 @@ class DeclaredIdentityBuilderIT {
                 PublicIds.of(UUID.fromString("cdef0123-8f9e-4d56-b845-f5061728394a"));
         assertThrows(IllegalArgumentException.class,
                 () -> scratch.concept("Ingested kind (Test)", CONCEPT_ID)
-                        .at(stamp).semantic(TinkarTerm.IDENTIFIER_PATTERN, resumedIdentity,
+                        .at(stamp).semantic(KernelTerm.IDENTIFIER_PATTERN, resumedIdentity,
                                 TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "value")
-                        .semantic(TinkarTerm.US_DIALECT_PATTERN, resumedIdentity, TinkarTerm.PREFERRED));
+                        .semantic(KernelTerm.US_DIALECT_PATTERN, resumedIdentity, KernelTerm.PREFERRED));
         assertThrows(IllegalArgumentException.class,
                 () -> scratch.concept("Ingested kind (Test)",
                         PublicIds.of(UUID.fromString("8091a2b3-4b5a-4c78-b869-d0e1f2030415"))));
@@ -533,7 +534,7 @@ class DeclaredIdentityBuilderIT {
                 "two components adopting one identity cross-write a single chronology");
         assertThrows(IllegalArgumentException.class,
                 () -> scratch.concept("Semantic thief (Test)").at(stamp)
-                        .semantic(TinkarTerm.IDENTIFIER_PATTERN, resumedIdentity,
+                        .semantic(KernelTerm.IDENTIFIER_PATTERN, resumedIdentity,
                                 TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "stolen"),
                 "the same declared semantic identity on two components is rejected");
 
@@ -541,12 +542,12 @@ class DeclaredIdentityBuilderIT {
         PublicId conflictedStampId =
                 PublicIds.of(UUID.fromString("bcde1234-7e8d-4c45-a734-e4f506172839"));
         scratch.concept("First tuple (Test)").at(Stamp.active(conflictedStampId,
-                "2026-07-15T00:00:00Z", TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE,
-                TinkarTerm.DEVELOPMENT_PATH)).synonym("First");
+                "2026-07-15T00:00:00Z", KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE,
+                KernelTerm.DEVELOPMENT_PATH)).synonym("First");
         assertThrows(IllegalArgumentException.class,
                 () -> scratch.concept("Second tuple (Test)").at(Stamp.active(conflictedStampId,
-                        "2026-08-15T00:00:00Z", TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE,
-                        TinkarTerm.DEVELOPMENT_PATH)),
+                        "2026-08-15T00:00:00Z", KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE,
+                        KernelTerm.DEVELOPMENT_PATH)),
                 "the same declared stamp identity with a different tuple is a silent fork");
 
         // A reference answered with the derived identity pins the later declaration.
@@ -566,9 +567,9 @@ class DeclaredIdentityBuilderIT {
         // Retirement follows declaration.
         assertThrows(IllegalArgumentException.class, () -> scratch.concept("Unretireable (Test)")
                 .at(stamp).synonym("Present")
-                .at(Stamp.inactive("2026-08-01T00:00:00Z", TinkarTerm.USER,
-                        TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH))
-                .retireSemantic(TinkarTerm.IDENTIFIER_PATTERN, identity));
+                .at(Stamp.inactive("2026-08-01T00:00:00Z", KernelTerm.USER,
+                        TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH))
+                .retireSemantic(KernelTerm.IDENTIFIER_PATTERN, identity));
 
         // The axiom identity is declared at first statement, and only there.
         assertThrows(IllegalArgumentException.class, () -> scratch.concept("Late axiom identity (Test)")
@@ -581,13 +582,13 @@ class DeclaredIdentityBuilderIT {
         assertThrows(IllegalStateException.class, () -> {
             scratch.concept("Seed conflict (Test)").at(stamp).synonym("Present");
             ConceptBuilder.ActiveScope laterScope = scratch.concept("Seed conflict (Test)")
-                    .at(Stamp.active("2026-09-01T00:00:00Z", TinkarTerm.USER,
-                            TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH));
+                    .at(Stamp.active("2026-09-01T00:00:00Z", KernelTerm.USER,
+                            TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH));
             laterScope.reviseFullyQualifiedName("Seed conflict revised (Test)");
-            laterScope.semantic(TinkarTerm.DESCRIPTION_PATTERN, identity,
-                    TinkarTerm.ENGLISH_LANGUAGE, "Seed conflict (Test)",
-                    TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE,
-                    TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE);
+            laterScope.semantic(KernelTerm.DESCRIPTION_PATTERN, identity,
+                    KernelTerm.ENGLISH_LANGUAGE, "Seed conflict (Test)",
+                    KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE,
+                    KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE);
         });
     }
 

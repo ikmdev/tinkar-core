@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.hybrid.test;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -32,7 +33,6 @@ import dev.ikm.reasoner.hybrid.snomed.StatementSnomedOntology.SwecIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 public abstract class HybridReasonerServiceTestBase extends HybridReasonerTestBase {
 
@@ -80,7 +80,7 @@ public abstract class HybridReasonerServiceTestBase extends HybridReasonerTestBa
 			LOG.info(PrimitiveData.text(nid) + " " + nid);
 		}
 		{
-			int nid = TinkarTerm.ROOT_VERTEX.nid();
+			int nid = KernelTerm.ROOT_VERTEX.nid();
 			LOG.info(PrimitiveData.text(nid) + " " + nid);
 		}
 	}

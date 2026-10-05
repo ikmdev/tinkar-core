@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.elksnomed.test2;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -52,7 +53,6 @@ import dev.ikm.tinkar.reasoner.elksnomed.test.ElkSnomedTestBase;
 import dev.ikm.tinkar.reasoner.elksnomed.test.PrimitiveDataTestUtil;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
 import dev.ikm.tinkar.reasoner.service.UnsupportedReasonerProcessIncremental;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 
@@ -62,7 +62,7 @@ public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 		LOG.info("Init reasoner service");
 		ViewCalculator vc = PrimitiveDataTestUtil.getViewCalculator(version);
 		ReasonerService rs = ElkSnomedTestBase.getElkSnomedReasonerService();
-		rs.init(vc, TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
+		rs.init(vc, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN, KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
 		rs.extractData(new TrackingCallable<Object>() {
 			@Override
 			protected Object compute() throws Exception {
@@ -99,7 +99,7 @@ public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 			LOG.info("\tView calculator time: " + Instant.ofEpochMilli(time) + " " + time);
 			HashMap<Integer, SemanticEntityVersion> active = new HashMap<>();
 			HashMap<Integer, SemanticEntityVersion> inactive = new HashMap<>();
-			vc.forEachSemanticVersionOfPattern(TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
+			vc.forEachSemanticVersionOfPattern(KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid(),
 					(semanticEntityVersion, _) -> {
 						if (semanticEntityVersion.time() == time) {
 							int nid = semanticEntityVersion.referencedComponentNid();
@@ -176,7 +176,7 @@ public class ElkSnomedIncrementalTestIT extends ElkSnomedIncrementalTestBase {
 				assertTrue(parents.isEmpty());
 				// has a parent in the db
 				assertEquals(1, sups.size());
-				assertEquals(TinkarTerm.PHENOMENON.nid(), rs.getParents(nid).intIterator().next());
+				assertEquals(KernelTerm.PHENOMENON.nid(), rs.getParents(nid).intIterator().next());
 				continue;
 			} else {
 				assertNotNull(parents);

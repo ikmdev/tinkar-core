@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.coordinate.stamp.StampCoordinateRecord;
@@ -76,13 +77,13 @@ class DefaultsTemplateDslIT {
     private static final String SUBJECT_FQN = "Verb probe subject (Test)";
 
     private static final ActiveStamp BIRTH = Stamp.active("2020-01-01T00:00:00Z",
-            TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+            KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
     private static final ActiveStamp SUPPORT = Stamp.active("2020-02-01T00:00:00Z",
-            TinkarTerm.USER, DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE,
-            TinkarTerm.DEVELOPMENT_PATH);
+            KernelTerm.USER, DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE,
+            KernelTerm.DEVELOPMENT_PATH);
     private static final ActiveStamp SUPPORT_LATER = Stamp.active("2020-03-01T00:00:00Z",
-            TinkarTerm.USER, DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE,
-            TinkarTerm.DEVELOPMENT_PATH);
+            KernelTerm.USER, DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE,
+            KernelTerm.DEVELOPMENT_PATH);
 
     /** Identity the fieldDefaults verb must compute for the probe pattern's default. */
     private static UUID defaultId;
@@ -121,14 +122,14 @@ class DefaultsTemplateDslIT {
                 .meaning(TEST_SET.conceptRef("Verb probe meaning (Test)"))
                 .purpose(TEST_SET.conceptRef("Verb probe purpose (Test)"))
                 .field(TEST_SET.conceptRef("Verb text field meaning (Test)"),
-                        TEST_SET.conceptRef("Verb field purpose (Test)"), TinkarTerm.STRING)
+                        TEST_SET.conceptRef("Verb field purpose (Test)"), KernelTerm.STRING)
                 .field(TEST_SET.conceptRef("Verb concept field meaning (Test)"),
-                        TEST_SET.conceptRef("Verb field purpose (Test)"), TinkarTerm.CONCEPT_FIELD);
+                        TEST_SET.conceptRef("Verb field purpose (Test)"), KernelTerm.CONCEPT_FIELD);
         TEST_SET.pattern(RETIRED_PATTERN_FQN).at(BIRTH)
                 .meaning(TEST_SET.conceptRef("Verb probe meaning (Test)"))
                 .purpose(TEST_SET.conceptRef("Verb probe purpose (Test)"))
                 .field(TEST_SET.conceptRef("Verb text field meaning (Test)"),
-                        TEST_SET.conceptRef("Verb field purpose (Test)"), TinkarTerm.STRING);
+                        TEST_SET.conceptRef("Verb field purpose (Test)"), KernelTerm.STRING);
 
         // The purpose: minted through the verb, two scopes — the isA parentage under the
         // Template concept must be stated once, in the birth scope only.
@@ -146,9 +147,9 @@ class DefaultsTemplateDslIT {
         // A default authored then retired through the verb's retirement scope.
         TEST_SET.fieldDefaults(RETIRED_PATTERN_FQN)
                 .at(SUPPORT).values("short-lived default")
-                .at(Stamp.inactive("2020-04-01T00:00:00Z", TinkarTerm.USER,
+                .at(Stamp.inactive("2020-04-01T00:00:00Z", KernelTerm.USER,
                         DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE,
-                        TinkarTerm.DEVELOPMENT_PATH))
+                        KernelTerm.DEVELOPMENT_PATH))
                 .retire();
 
         TEST_SET.write();
@@ -161,7 +162,7 @@ class DefaultsTemplateDslIT {
 
     private static StampCalculatorWithCache calculator(StateSet allowedStates) {
         return StampCoordinateRecord.make(allowedStates,
-                StampPositionRecord.make(Long.MAX_VALUE, TinkarTerm.DEVELOPMENT_PATH.nid()))
+                StampPositionRecord.make(Long.MAX_VALUE, KernelTerm.DEVELOPMENT_PATH.nid()))
                 .stampCalculator();
     }
 
@@ -207,7 +208,7 @@ class DefaultsTemplateDslIT {
     void templatePurposeParentsUnderTemplateConcept() {
         int purposeNid = TEST_SET.conceptRef(PURPOSE_FQN).nid();
         List<SemanticEntity<SemanticEntityVersion>> axioms = EntityService.get().semanticsForComponentOfPattern(
-                purposeNid, TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()).toList();
+                purposeNid, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()).toList();
         assertEquals(1, axioms.size(), "the purpose must carry its stated-axiom semantic");
 
         Latest<SemanticEntityVersion> latestAxioms =
@@ -274,9 +275,9 @@ class DefaultsTemplateDslIT {
                 .meaning(set.conceptRef("Gate meaning (Test)"))
                 .purpose(set.conceptRef("Gate purpose (Test)"))
                 .field(set.conceptRef("Gate text field meaning (Test)"),
-                        set.conceptRef("Gate field purpose (Test)"), TinkarTerm.STRING)
+                        set.conceptRef("Gate field purpose (Test)"), KernelTerm.STRING)
                 .field(set.conceptRef("Gate concept field meaning (Test)"),
-                        set.conceptRef("Gate field purpose (Test)"), TinkarTerm.CONCEPT_FIELD);
+                        set.conceptRef("Gate field purpose (Test)"), KernelTerm.CONCEPT_FIELD);
         return set;
     }
 

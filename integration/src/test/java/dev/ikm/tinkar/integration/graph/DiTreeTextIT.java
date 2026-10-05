@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.graph;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.Calculators;
@@ -60,8 +61,8 @@ class DiTreeTextIT {
 
     /** Concepts of the starter data whose stated and inferred definitions are written. */
     private static final List<EntityFacade> DEFINED = List.of(
-            TinkarTerm.ENGLISH_LANGUAGE, TinkarTerm.LANGUAGE, TinkarTerm.PART_OF,
-            TinkarTerm.ROLE_TYPE, TinkarTerm.NECESSARY_SET, TinkarTerm.DESCRIPTION_TYPE);
+            KernelTerm.ENGLISH_LANGUAGE, KernelTerm.LANGUAGE, TinkarTerm.PART_OF,
+            KernelTerm.ROLE_TYPE, KernelTerm.NECESSARY_SET, KernelTerm.DESCRIPTION_TYPE);
 
     /** The form {@code PrimitiveData.text} writes for a component with no description. */
     private static final Pattern ANGLE_BRACKET_NID = Pattern.compile("<-?\\d+>");
@@ -102,20 +103,20 @@ class DiTreeTextIT {
         // Role's two properties are written in the order of their names, whatever order the
         // vertex holds them in.
         List<String> roleProperties = new ArrayList<>(List.of(
-                name(TinkarTerm.ROLE_TYPE) + ": " + name(TinkarTerm.PART_OF),
-                name(TinkarTerm.ROLE_OPERATOR) + ": " + name(TinkarTerm.EXISTENTIAL_RESTRICTION)));
+                name(KernelTerm.ROLE_TYPE) + ": " + name(TinkarTerm.PART_OF),
+                name(KernelTerm.ROLE_OPERATOR) + ": " + name(KernelTerm.EXISTENTIAL_RESTRICTION)));
         roleProperties.sort(null);
 
-        String expected = "   [0]➞[1] " + name(TinkarTerm.DEFINITION_ROOT) + "\n"
-                + "     [1]➞[2] " + name(TinkarTerm.NECESSARY_SET) + "\n"
-                + "       [2]➞[3,4,5] " + name(TinkarTerm.AND) + "\n"
-                + "         [3] " + name(TinkarTerm.CONCEPT_REFERENCE) + ": " + name(TinkarTerm.LANGUAGE) + "\n"
-                + "         [4] " + name(TinkarTerm.ROLE) + "\n"
+        String expected = "   [0]➞[1] " + name(KernelTerm.DEFINITION_ROOT) + "\n"
+                + "     [1]➞[2] " + name(KernelTerm.NECESSARY_SET) + "\n"
+                + "       [2]➞[3,4,5] " + name(KernelTerm.AND) + "\n"
+                + "         [3] " + name(KernelTerm.CONCEPT_REFERENCE) + ": " + name(KernelTerm.LANGUAGE) + "\n"
+                + "         [4] " + name(KernelTerm.ROLE) + "\n"
                 + "            •" + roleProperties.get(0) + "\n"
                 + "            •" + roleProperties.get(1) + "\n"
-                + "         [5] " + name(TinkarTerm.PROPERTY_SET) + "\n"
-                + "            •" + name(TinkarTerm.PROPERTY_SEQUENCE) + ": ["
-                + name(TinkarTerm.PART_OF) + ", " + name(TinkarTerm.ROLE_TYPE) + "]\n";
+                + "         [5] " + name(KernelTerm.PROPERTY_SET) + "\n"
+                + "            •" + name(KernelTerm.PROPERTY_SEQUENCE) + ": ["
+                + name(TinkarTerm.PART_OF) + ", " + name(KernelTerm.ROLE_TYPE) + "]\n";
 
         String text = DiTreeText.tree(tree, byDescription);
         assertEquals(expected, text);
@@ -133,10 +134,10 @@ class DiTreeTextIT {
         });
 
         Set<Integer> components = new TreeSet<>();
-        for (EntityFacade component : List.of(TinkarTerm.DEFINITION_ROOT, TinkarTerm.NECESSARY_SET, TinkarTerm.AND,
-                TinkarTerm.CONCEPT_REFERENCE, TinkarTerm.LANGUAGE, TinkarTerm.ROLE, TinkarTerm.ROLE_TYPE,
-                TinkarTerm.PART_OF, TinkarTerm.ROLE_OPERATOR, TinkarTerm.EXISTENTIAL_RESTRICTION,
-                TinkarTerm.PROPERTY_SET, TinkarTerm.PROPERTY_SEQUENCE)) {
+        for (EntityFacade component : List.of(KernelTerm.DEFINITION_ROOT, KernelTerm.NECESSARY_SET, KernelTerm.AND,
+                KernelTerm.CONCEPT_REFERENCE, KernelTerm.LANGUAGE, KernelTerm.ROLE, KernelTerm.ROLE_TYPE,
+                TinkarTerm.PART_OF, KernelTerm.ROLE_OPERATOR, KernelTerm.EXISTENTIAL_RESTRICTION,
+                KernelTerm.PROPERTY_SET, KernelTerm.PROPERTY_SEQUENCE)) {
             components.add(component.nid());
         }
         assertEquals(components, named,
@@ -165,9 +166,9 @@ class DiTreeTextIT {
         String text = DiTreeText.tree(tree, BY_UUID);
         assertNoNid("the tree named by UUID", text);
         assertFalse(text.contains(Integer.toString(partOf)), text);
-        assertTrue(text.contains("[" + BY_UUID.apply(partOf) + ", " + BY_UUID.apply(TinkarTerm.ROLE_TYPE.nid()) + "]"),
+        assertTrue(text.contains("[" + BY_UUID.apply(partOf) + ", " + BY_UUID.apply(KernelTerm.ROLE_TYPE.nid()) + "]"),
                 "an id list is the list of its components' names");
-        assertTrue(text.startsWith("   [0]➞[1] " + BY_UUID.apply(TinkarTerm.DEFINITION_ROOT.nid()) + "\n"),
+        assertTrue(text.startsWith("   [0]➞[1] " + BY_UUID.apply(KernelTerm.DEFINITION_ROOT.nid()) + "\n"),
                 "a vertex is named for its meaning");
     }
 
@@ -201,19 +202,19 @@ class DiTreeTextIT {
 
     @Test
     void aVertexOnItsOwnIsOneLineOfNames() {
-        EntityVertex reference = EntityVertex.make(TinkarTerm.CONCEPT_REFERENCE);
-        setProperty(reference, TinkarTerm.CONCEPT_REFERENCE, TinkarTerm.LANGUAGE);
-        assertEquals(name(TinkarTerm.CONCEPT_REFERENCE) + ": " + name(TinkarTerm.LANGUAGE),
+        EntityVertex reference = EntityVertex.make(KernelTerm.CONCEPT_REFERENCE);
+        setProperty(reference, KernelTerm.CONCEPT_REFERENCE, KernelTerm.LANGUAGE);
+        assertEquals(name(KernelTerm.CONCEPT_REFERENCE) + ": " + name(KernelTerm.LANGUAGE),
                 DiTreeText.vertex(reference, byDescription));
 
-        EntityVertex bare = EntityVertex.make(TinkarTerm.AND);
-        assertEquals(name(TinkarTerm.AND), DiTreeText.vertex(bare, byDescription));
+        EntityVertex bare = EntityVertex.make(KernelTerm.AND);
+        assertEquals(name(KernelTerm.AND), DiTreeText.vertex(bare, byDescription));
 
         int partOf = TinkarTerm.PART_OF.nid();
-        EntityVertex role = EntityVertex.make(TinkarTerm.ROLE);
-        setProperty(role, TinkarTerm.ROLE_TYPE, TinkarTerm.PART_OF);
+        EntityVertex role = EntityVertex.make(KernelTerm.ROLE);
+        setProperty(role, KernelTerm.ROLE_TYPE, TinkarTerm.PART_OF);
         String text = DiTreeText.vertex(role, byDescription);
-        assertEquals(name(TinkarTerm.ROLE) + " {" + name(TinkarTerm.ROLE_TYPE) + "=" + name(TinkarTerm.PART_OF) + "}",
+        assertEquals(name(KernelTerm.ROLE) + " {" + name(KernelTerm.ROLE_TYPE) + "=" + name(TinkarTerm.PART_OF) + "}",
                 text);
         assertNoNid("the vertex", text);
 
@@ -224,19 +225,19 @@ class DiTreeTextIT {
 
     @Test
     void aVertexOrATreeHeldAsAPropertyValueIsWrittenTheSameWay() {
-        EntityVertex held = EntityVertex.make(TinkarTerm.CONCEPT_REFERENCE);
-        setProperty(held, TinkarTerm.CONCEPT_REFERENCE, TinkarTerm.LANGUAGE);
-        EntityVertex holder = EntityVertex.make(TinkarTerm.ROLE);
-        setProperty(holder, TinkarTerm.ROLE_TYPE, held);
+        EntityVertex held = EntityVertex.make(KernelTerm.CONCEPT_REFERENCE);
+        setProperty(held, KernelTerm.CONCEPT_REFERENCE, KernelTerm.LANGUAGE);
+        EntityVertex holder = EntityVertex.make(KernelTerm.ROLE);
+        setProperty(holder, KernelTerm.ROLE_TYPE, held);
 
         String text = DiTreeText.vertex(holder, BY_UUID);
-        assertEquals(BY_UUID.apply(TinkarTerm.ROLE.nid()) + " {" + BY_UUID.apply(TinkarTerm.ROLE_TYPE.nid()) + "="
-                        + BY_UUID.apply(TinkarTerm.CONCEPT_REFERENCE.nid()) + ": " + BY_UUID.apply(TinkarTerm.LANGUAGE.nid()) + "}",
+        assertEquals(BY_UUID.apply(KernelTerm.ROLE.nid()) + " {" + BY_UUID.apply(KernelTerm.ROLE_TYPE.nid()) + "="
+                        + BY_UUID.apply(KernelTerm.CONCEPT_REFERENCE.nid()) + ": " + BY_UUID.apply(KernelTerm.LANGUAGE.nid()) + "}",
                 text);
         assertNoNid("a vertex that holds a vertex", text);
 
-        EntityVertex treeHolder = EntityVertex.make(TinkarTerm.ROLE);
-        setProperty(treeHolder, TinkarTerm.ROLE_TYPE, aTreeWithEveryKindOfPropertyValue());
+        EntityVertex treeHolder = EntityVertex.make(KernelTerm.ROLE);
+        setProperty(treeHolder, KernelTerm.ROLE_TYPE, aTreeWithEveryKindOfPropertyValue());
         String treeText = DiTreeText.vertex(treeHolder, BY_UUID);
         assertNoNid("a vertex that holds a tree", treeText);
         assertTrue(treeText.contains(DiTreeText.tree(aTreeWithEveryKindOfPropertyValue(), BY_UUID).lines().findFirst().orElseThrow().strip()),
@@ -245,20 +246,20 @@ class DiTreeTextIT {
 
     @Test
     void aPropertyValueThatIsNotAComponentIsWrittenAsItsOwnText() {
-        EntityVertex vertex = EntityVertex.make(TinkarTerm.ROLE);
+        EntityVertex vertex = EntityVertex.make(KernelTerm.ROLE);
         MutableIntObjectMap<Object> properties = IntObjectMaps.mutable.empty();
-        properties.put(TinkarTerm.ROLE_TYPE.nid(), "a string");
-        properties.put(TinkarTerm.ROLE_OPERATOR.nid(), 42);
-        properties.put(TinkarTerm.PROPERTY_SEQUENCE.nid(), true);
+        properties.put(KernelTerm.ROLE_TYPE.nid(), "a string");
+        properties.put(KernelTerm.ROLE_OPERATOR.nid(), 42);
+        properties.put(KernelTerm.PROPERTY_SEQUENCE.nid(), true);
         vertex.setProperties(properties);
 
         List<String> expected = new ArrayList<>(List.of(
-                name(TinkarTerm.ROLE_TYPE) + "=a string",
-                name(TinkarTerm.ROLE_OPERATOR) + "=42",
-                name(TinkarTerm.PROPERTY_SEQUENCE) + "=true"));
+                name(KernelTerm.ROLE_TYPE) + "=a string",
+                name(KernelTerm.ROLE_OPERATOR) + "=42",
+                name(KernelTerm.PROPERTY_SEQUENCE) + "=true"));
         expected.sort(null);
 
-        assertEquals(name(TinkarTerm.ROLE) + " {" + String.join(", ", expected) + "}",
+        assertEquals(name(KernelTerm.ROLE) + " {" + String.join(", ", expected) + "}",
                 DiTreeText.vertex(vertex, byDescription));
     }
 
@@ -268,22 +269,22 @@ class DiTreeTextIT {
      * vertex that holds an id list.
      */
     private static DiTreeEntity aTreeWithEveryKindOfPropertyValue() {
-        EntityVertex root = EntityVertex.make(TinkarTerm.DEFINITION_ROOT);
-        EntityVertex necessarySet = EntityVertex.make(TinkarTerm.NECESSARY_SET);
-        EntityVertex and = EntityVertex.make(TinkarTerm.AND);
+        EntityVertex root = EntityVertex.make(KernelTerm.DEFINITION_ROOT);
+        EntityVertex necessarySet = EntityVertex.make(KernelTerm.NECESSARY_SET);
+        EntityVertex and = EntityVertex.make(KernelTerm.AND);
 
-        EntityVertex reference = EntityVertex.make(TinkarTerm.CONCEPT_REFERENCE);
-        setProperty(reference, TinkarTerm.CONCEPT_REFERENCE, TinkarTerm.LANGUAGE);
+        EntityVertex reference = EntityVertex.make(KernelTerm.CONCEPT_REFERENCE);
+        setProperty(reference, KernelTerm.CONCEPT_REFERENCE, KernelTerm.LANGUAGE);
 
-        EntityVertex role = EntityVertex.make(TinkarTerm.ROLE);
+        EntityVertex role = EntityVertex.make(KernelTerm.ROLE);
         MutableIntObjectMap<Object> roleProperties = IntObjectMaps.mutable.empty();
-        roleProperties.put(TinkarTerm.ROLE_TYPE.nid(), TinkarTerm.PART_OF);
-        roleProperties.put(TinkarTerm.ROLE_OPERATOR.nid(), TinkarTerm.EXISTENTIAL_RESTRICTION);
+        roleProperties.put(KernelTerm.ROLE_TYPE.nid(), TinkarTerm.PART_OF);
+        roleProperties.put(KernelTerm.ROLE_OPERATOR.nid(), KernelTerm.EXISTENTIAL_RESTRICTION);
         role.setProperties(roleProperties);
 
-        EntityVertex propertySet = EntityVertex.make(TinkarTerm.PROPERTY_SET);
-        setProperty(propertySet, TinkarTerm.PROPERTY_SEQUENCE,
-                IntIds.list.of(TinkarTerm.PART_OF.nid(), TinkarTerm.ROLE_TYPE.nid()));
+        EntityVertex propertySet = EntityVertex.make(KernelTerm.PROPERTY_SET);
+        setProperty(propertySet, KernelTerm.PROPERTY_SEQUENCE,
+                IntIds.list.of(TinkarTerm.PART_OF.nid(), KernelTerm.ROLE_TYPE.nid()));
 
         DiTreeEntity.Builder builder = DiTreeEntity.builder();
         builder.setRoot(root);

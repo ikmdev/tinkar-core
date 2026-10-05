@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.provider.spinedarray;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -88,9 +89,9 @@ class SpinedArrayPublicIdMergeIT {
         Transaction preInceptionTransaction = new Transaction();
         StampEntity preInceptionStampEntity = preInceptionTransaction.getStamp(State.ACTIVE,
                 PrimitiveData.PRE_INCEPTION_TIME,
-                TinkarTerm.USER.publicId(),
+                KernelTerm.USER.publicId(),
                 TinkarTerm.DEVELOPMENT_MODULE.publicId(),
-                TinkarTerm.DEVELOPMENT_PATH.publicId());
+                KernelTerm.DEVELOPMENT_PATH.publicId());
 
         //Write Concept with Multiple UUIDs
         ConceptEntity conceptRecordWithMultipleUuids = writeConceptHelper(conceptWithMultipleUuids, preInceptionStampEntity);
@@ -100,9 +101,9 @@ class SpinedArrayPublicIdMergeIT {
 
         Transaction currentTransaction = new Transaction();
         StampEntity currentStampEntity = currentTransaction.getStamp(State.ACTIVE,
-                TinkarTerm.USER,
+                KernelTerm.USER,
                 TinkarTerm.DEVELOPMENT_MODULE,
-                TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.DEVELOPMENT_PATH);
 
         //Then Write Concept with Single UUID - invoking PublicID merge process
         ConceptEntity conceptRecordWithSingleUuid = writeConceptHelper(conceptWithSingleUuid, currentStampEntity);
@@ -138,9 +139,9 @@ class SpinedArrayPublicIdMergeIT {
         Transaction preInceptionTransaction = new Transaction();
         StampEntity preInceptionStampEntity = preInceptionTransaction.getStamp(State.ACTIVE,
                 PrimitiveData.PRE_INCEPTION_TIME,
-                TinkarTerm.USER.publicId(),
+                KernelTerm.USER.publicId(),
                 TinkarTerm.DEVELOPMENT_MODULE.publicId(),
-                TinkarTerm.DEVELOPMENT_PATH.publicId());
+                KernelTerm.DEVELOPMENT_PATH.publicId());
 
         //Write Concept with Single UUID
         ConceptEntity conceptRecordWithSingleUuid = writeConceptHelper(conceptWithSingleUuid, preInceptionStampEntity);
@@ -150,9 +151,9 @@ class SpinedArrayPublicIdMergeIT {
 
         Transaction currentTransaction = new Transaction();
         StampEntity currentStampEntity = currentTransaction.getStamp(State.ACTIVE,
-                TinkarTerm.USER,
+                KernelTerm.USER,
                 TinkarTerm.DEVELOPMENT_MODULE,
-                TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.DEVELOPMENT_PATH);
 
         //Then Write Concept with Multiple UUIDs - invoking PublicID merge process
         ConceptEntity conceptRecordWithMultipleUuids = writeConceptHelper(conceptWithMultipleUuids, currentStampEntity);
@@ -189,9 +190,9 @@ class SpinedArrayPublicIdMergeIT {
         Transaction preInceptionTransaction = new Transaction();
         StampEntity preInceptionStampEntity = preInceptionTransaction.getStamp(State.ACTIVE,
                 PrimitiveData.PRE_INCEPTION_TIME,
-                TinkarTerm.USER.publicId(),
+                KernelTerm.USER.publicId(),
                 TinkarTerm.DEVELOPMENT_MODULE.publicId(),
-                TinkarTerm.DEVELOPMENT_PATH.publicId());
+                KernelTerm.DEVELOPMENT_PATH.publicId());
 
         //Write Concept with the first set of Multiple Uuids (uuid1 & uuid2)
         ConceptEntity conceptRecordWithFirstSetOfMultipleUuids = writeConceptHelper(conceptWithFirstSetOfMultipleUuids, preInceptionStampEntity);
@@ -201,9 +202,9 @@ class SpinedArrayPublicIdMergeIT {
 
         Transaction currentTransaction = new Transaction();
         StampEntity currentStampEntity = currentTransaction.getStamp(State.ACTIVE,
-                TinkarTerm.USER,
+                KernelTerm.USER,
                 TinkarTerm.DEVELOPMENT_MODULE,
-                TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.DEVELOPMENT_PATH);
 
         //Then Write Concept with second set of Multiple UUIDs (uuid2 & uuid3) - invoking PublicID merge process
         ConceptEntity conceptRecordWithSecondSetOfMultipleUuids = writeConceptHelper(conceptWithSecondSetOfMultipleUuids, currentStampEntity);

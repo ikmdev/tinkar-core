@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.entity.builder.ActiveStamp;
@@ -25,7 +26,6 @@ import dev.ikm.tinkar.entity.builder.Stamp;
 import dev.ikm.tinkar.terms.DeclaredStamp;
 import dev.ikm.tinkar.terms.EntityProxy;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import org.junit.jupiter.api.AfterAll;
@@ -101,8 +101,8 @@ class BindingClassesIT {
         KnowledgeSet set = KnowledgeSet.of("3c8f1a2e-6b4d-5e7f-8a9b-0c1d2e3f4a56");
         BindingClass stamps = set.bindingClass("TestStamps");
         EntityProxy.Concept module = set.conceptRef("Test module (Test)");
-        ActiveStamp inception = Stamp.active(PrimitiveData.INCEPTION_EPOCH, TinkarTerm.USER, module,
-                TinkarTerm.DEVELOPMENT_PATH);
+        ActiveStamp inception = Stamp.active(PrimitiveData.INCEPTION_EPOCH, KernelTerm.USER, module,
+                KernelTerm.DEVELOPMENT_PATH);
         set.bindStamp(inception, stamps, "INCEPTION");
         set.bindStamp(inception, stamps, "INCEPTION");
         assertThrows(IllegalStateException.class, () -> set.bindStamp(inception, stamps, "BIRTH"),
@@ -115,7 +115,7 @@ class BindingClassesIT {
         assertTrue(containsEveryUuid(source, inception.publicId()), "the stamp's identity");
         assertTrue(source.contains("State.ACTIVE, " + PrimitiveData.INCEPTION_EPOCH + "L"), "status and time");
         assertTrue(containsEveryUuid(source, module.publicId()), "the module");
-        assertTrue(containsEveryUuid(source, TinkarTerm.DEVELOPMENT_PATH.publicId()), "the path");
+        assertTrue(containsEveryUuid(source, KernelTerm.DEVELOPMENT_PATH.publicId()), "the path");
     }
 
     /** Whether generated source names every UUID of a component: a binding carries them all. */
@@ -133,16 +133,16 @@ class BindingClassesIT {
     void declaredStampRoundTrips() {
         EntityProxy.Concept module = EntityProxy.Concept.make("Test module (Test)",
                 dev.ikm.tinkar.common.id.PublicIds.of(java.util.UUID.fromString("7b0e6f3a-1c2d-5e4f-9a8b-7c6d5e4f3a21")));
-        ActiveStamp derived = Stamp.active(PrimitiveData.INCEPTION_EPOCH, TinkarTerm.USER, module,
-                TinkarTerm.DEVELOPMENT_PATH);
+        ActiveStamp derived = Stamp.active(PrimitiveData.INCEPTION_EPOCH, KernelTerm.USER, module,
+                KernelTerm.DEVELOPMENT_PATH);
         Stamp back = Stamp.from(new DeclaredStamp(EntityProxy.Stamp.make("INCEPTION", derived.publicId()),
-                State.ACTIVE, derived.time(), TinkarTerm.USER, module, TinkarTerm.DEVELOPMENT_PATH));
+                State.ACTIVE, derived.time(), KernelTerm.USER, module, KernelTerm.DEVELOPMENT_PATH));
         assertEquals(derived, back, "a derived identity comes back derived");
 
         Stamp nonExistent = Stamp.nonExistent();
         Stamp primordial = Stamp.from(new DeclaredStamp(EntityProxy.Stamp.make("NON_EXISTENT", nonExistent.publicId()),
-                State.PRIMORDIAL, nonExistent.time(), TinkarTerm.AUTHOR_FOR_VERSION,
-                TinkarTerm.UNINITIALIZED_COMPONENT, TinkarTerm.UNINITIALIZED_COMPONENT));
+                State.PRIMORDIAL, nonExistent.time(), KernelTerm.AUTHOR_FOR_VERSION,
+                KernelTerm.UNINITIALIZED_COMPONENT, KernelTerm.UNINITIALIZED_COMPONENT));
         assertEquals(nonExistent.publicId(), primordial.publicId(), "a declared identity is kept");
         assertEquals(State.PRIMORDIAL, primordial.state());
     }

@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.provider.spinedarray;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.id.impl.IntIdListArray;
 import dev.ikm.tinkar.common.id.impl.IntIdSetArray;
@@ -156,11 +157,11 @@ class ImportDataIT {
                 intIdSet.set(latestPattern.getFieldWithMeaning(COMPONENT_SET_FIELD_MEANING, latestActive2.get()));
                 // Reassign elements
                 int [] tempSetArray2 = intIdSet.get().toArray();
-                assertEquals(TinkarTerm.ACTIVE_STATE.nid(), tempSetArray2 [0]);
+                assertEquals(KernelTerm.ACTIVE_STATE.nid(), tempSetArray2 [0]);
 
                 intIdList.set(latestPattern.getFieldWithMeaning(COMPONENT_LIST_FIELD_MEANING, latestActive2.get()));
                 int [] tempListArray2 = intIdList.get().toArray();
-                assertEquals(TinkarTerm.ACTIVE_STATE.nid(), tempListArray2 [0]);
+                assertEquals(KernelTerm.ACTIVE_STATE.nid(), tempListArray2 [0]);
 
                 atomicBoolean.set(true);
             }

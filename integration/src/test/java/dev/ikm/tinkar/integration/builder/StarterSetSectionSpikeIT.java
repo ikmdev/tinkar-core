@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
@@ -32,7 +33,6 @@ import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.factory.primitive.IntLists;
 import org.junit.jupiter.api.AfterAll;
@@ -180,7 +180,7 @@ class StarterSetSectionSpikeIT {
      */
     private static int statedNavigationParentsIndex() {
         PatternEntity<?> navigation =
-                EntityHandle.get(TinkarTerm.STATED_NAVIGATION_PATTERN.nid()).expectPattern();
+                EntityHandle.get(KernelTerm.STATED_NAVIGATION_PATTERN.nid()).expectPattern();
         PatternEntityVersion latest = navigation.versions().getLast();
         for (int index = 0; index < latest.fieldDefinitions().size(); index++) {
             FieldDefinitionForEntity field = latest.fieldDefinitions().get(index);
@@ -196,7 +196,7 @@ class StarterSetSectionSpikeIT {
         List<SemanticEntity<SemanticEntityVersion>> semantics = new ArrayList<>();
         EntityService.get().forEachSemanticEntity(semantics::add);
         for (SemanticEntity<?> semantic : semantics) {
-            if (semantic.patternNid() != TinkarTerm.STATED_NAVIGATION_PATTERN.nid()) {
+            if (semantic.patternNid() != KernelTerm.STATED_NAVIGATION_PATTERN.nid()) {
                 continue;
             }
             int child = semantic.referencedComponentNid();
@@ -266,9 +266,9 @@ class StarterSetSectionSpikeIT {
     private int verbEstimate(int conceptNid) {
         int[] verbs = {1};
         EntityService.get().forEachSemanticForComponent(conceptNid, semantic -> {
-            if (semantic.patternNid() != TinkarTerm.STATED_NAVIGATION_PATTERN.nid()
-                    && semantic.patternNid() != TinkarTerm.INFERRED_NAVIGATION_PATTERN.nid()
-                    && semantic.patternNid() != TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid()) {
+            if (semantic.patternNid() != KernelTerm.STATED_NAVIGATION_PATTERN.nid()
+                    && semantic.patternNid() != KernelTerm.INFERRED_NAVIGATION_PATTERN.nid()
+                    && semantic.patternNid() != KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid()) {
                 verbs[0] += semantic.versions().size();
             }
         });
@@ -325,20 +325,20 @@ class StarterSetSectionSpikeIT {
             }
         }
         int patternNid = semantic.patternNid();
-        if (patternNid == TinkarTerm.DESCRIPTION_PATTERN.nid()) {
+        if (patternNid == KernelTerm.DESCRIPTION_PATTERN.nid()) {
             SemanticEntityVersion latest = semantic.versions().getLast();
-            if (nidOf(latest.fieldValues().get(0)) != TinkarTerm.ENGLISH_LANGUAGE.nid()) {
+            if (nidOf(latest.fieldValues().get(0)) != KernelTerm.ENGLISH_LANGUAGE.nid()) {
                 tally("non-English descriptions");
             }
-            if (nidOf(latest.fieldValues().get(2)) != TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE.nid()) {
+            if (nidOf(latest.fieldValues().get(2)) != KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE.nid()) {
                 tally("non-default case significance");
             }
-        } else if (patternNid == TinkarTerm.GB_DIALECT_PATTERN.nid()) {
+        } else if (patternNid == KernelTerm.GB_DIALECT_PATTERN.nid()) {
             tally("GB dialect semantics");
-        } else if (patternNid == TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid() && onPattern) {
+        } else if (patternNid == KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid() && onPattern) {
             tally("stated-axiom semantics on PATTERN components");
         }
-        if (onPattern && patternNid == TinkarTerm.STATED_NAVIGATION_PATTERN.nid()) {
+        if (onPattern && patternNid == KernelTerm.STATED_NAVIGATION_PATTERN.nid()) {
             tally("navigation semantics on PATTERN components");
         }
     }

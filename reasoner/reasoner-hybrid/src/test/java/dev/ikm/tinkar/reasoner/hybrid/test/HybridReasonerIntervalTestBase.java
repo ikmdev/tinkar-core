@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.reasoner.hybrid.test;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.nio.file.Files;
@@ -48,7 +49,6 @@ import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedData;
 import dev.ikm.tinkar.reasoner.elksnomed.ElkSnomedUtil;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
 import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestBase {
 
@@ -109,8 +109,8 @@ public abstract class HybridReasonerIntervalTestBase extends HybridReasonerTestB
 
 	public ReasonerService initReasonerService() {
 		ReasonerService rs = new IntervalReasonerService();
-		rs.init(getViewCalculator(), TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
-				TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
+		rs.init(getViewCalculator(), KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+				KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
 		return rs;
 	}
 

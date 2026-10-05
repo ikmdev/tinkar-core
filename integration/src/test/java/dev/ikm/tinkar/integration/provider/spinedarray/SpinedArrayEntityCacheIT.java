@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.provider.spinedarray;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -82,9 +83,9 @@ class SpinedArrayEntityCacheIT {
         /* Start: Seed database with one STAMP */
         Transaction transaction = new Transaction();
         StampEntity currentStampEntity = transaction.getStamp(State.ACTIVE,
-                TinkarTerm.USER,
+                KernelTerm.USER,
                 TinkarTerm.DEVELOPMENT_MODULE,
-                TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.DEVELOPMENT_PATH);
         transaction.commit();
         /* End: Seed database with one STAMP */
 
@@ -112,13 +113,13 @@ class SpinedArrayEntityCacheIT {
         Transaction transaction = new Transaction();
         StampEntity preInceptionStampEntity = transaction.getStamp(State.ACTIVE,
                 PrimitiveData.PRE_INCEPTION_TIME,
-                TinkarTerm.USER.publicId(),
+                KernelTerm.USER.publicId(),
                 TinkarTerm.DEVELOPMENT_MODULE.publicId(),
-                TinkarTerm.DEVELOPMENT_PATH.publicId());
+                KernelTerm.DEVELOPMENT_PATH.publicId());
         StampEntity currentStampEntity = transaction.getStamp(State.ACTIVE,
-                TinkarTerm.USER,
+                KernelTerm.USER,
                 TinkarTerm.DEVELOPMENT_MODULE,
-                TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.DEVELOPMENT_PATH);
         //Write Concept Version to database
         ConceptEntity seedConceptVersion = writeConceptHelper(conceptProxy, preInceptionStampEntity);
         transaction.addComponent(seedConceptVersion);

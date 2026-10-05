@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.diagnostic;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.IntIds;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
@@ -84,7 +85,7 @@ class DiagnosticTextIT {
 
         Transaction transaction = Transaction.make("A concept with no description");
         StampEntity<?> stamp = transaction.getStamp(State.ACTIVE, System.currentTimeMillis(),
-                TinkarTerm.USER.nid(), TinkarTerm.SOLOR_OVERLAY_MODULE.nid(), TinkarTerm.DEVELOPMENT_PATH.nid());
+                KernelTerm.USER.nid(), KernelTerm.SOLOR_OVERLAY_MODULE.nid(), KernelTerm.DEVELOPMENT_PATH.nid());
         ConceptRecord undescribed = ConceptRecord.build(UNDESCRIBED_UUID, stamp.versions().get(0));
         EntityService.get().putEntity(undescribed);
         transaction.addComponent(undescribed);
@@ -99,13 +100,13 @@ class DiagnosticTextIT {
 
     @Test
     void aDescribedComponentIsItsDescriptionThenItsUuid() {
-        int nid = TinkarTerm.ENGLISH_LANGUAGE.nid();
+        int nid = KernelTerm.ENGLISH_LANGUAGE.nid();
         String description = PrimitiveData.textOptional(nid).orElseThrow();
 
         String text = DiagnosticText.component(nid);
 
         assertEquals(description + " (" + writtenUuids(PrimitiveData.publicId(nid)) + ")", text);
-        assertNamesEveryUuid(TinkarTerm.ENGLISH_LANGUAGE, text);
+        assertNamesEveryUuid(KernelTerm.ENGLISH_LANGUAGE, text);
         assertEquals(description, DiagnosticText.name(nid));
         assertNoNid(text);
     }
@@ -122,7 +123,7 @@ class DiagnosticTextIT {
     @Test
     void aSemanticHasNoDescriptionAndIsItsUuid() {
         int semanticNid = EntityService.get().semanticsForComponentOfPattern(
-                TinkarTerm.ENGLISH_LANGUAGE.nid(), TinkarTerm.DESCRIPTION_PATTERN.nid()).findFirst().orElseThrow().nid();
+                KernelTerm.ENGLISH_LANGUAGE.nid(), KernelTerm.DESCRIPTION_PATTERN.nid()).findFirst().orElseThrow().nid();
 
         String text = DiagnosticText.component(semanticNid);
 
@@ -150,12 +151,12 @@ class DiagnosticTextIT {
 
     @Test
     void aPublicIdTheStoreHoldsIsWrittenWithItsDescription() {
-        String description = PrimitiveData.textOptional(TinkarTerm.ENGLISH_LANGUAGE.nid()).orElseThrow();
+        String description = PrimitiveData.textOptional(KernelTerm.ENGLISH_LANGUAGE.nid()).orElseThrow();
 
-        String text = DiagnosticText.component(TinkarTerm.ENGLISH_LANGUAGE.publicId());
+        String text = DiagnosticText.component(KernelTerm.ENGLISH_LANGUAGE.publicId());
 
-        assertEquals(description + " (" + writtenUuids(TinkarTerm.ENGLISH_LANGUAGE.publicId()) + ")", text);
-        assertNamesEveryUuid(TinkarTerm.ENGLISH_LANGUAGE, text);
+        assertEquals(description + " (" + writtenUuids(KernelTerm.ENGLISH_LANGUAGE.publicId()) + ")", text);
+        assertNamesEveryUuid(KernelTerm.ENGLISH_LANGUAGE, text);
     }
 
     @Test
@@ -174,7 +175,7 @@ class DiagnosticTextIT {
         String text = DiTreeText.diagnostic(tree);
 
         assertEquals(DiTreeText.tree(tree, DiagnosticText::name), text);
-        assertTrue(text.contains(DiagnosticText.name(TinkarTerm.LANGUAGE.nid())), text);
+        assertTrue(text.contains(DiagnosticText.name(KernelTerm.LANGUAGE.nid())), text);
         assertTrue(text.contains(": " + UNDESCRIBED + "\n"), "a concept with no description is its UUID:\n" + text);
         assertTrue(text.contains("nid " + UNASSIGNED_NID + " in this store"),
                 "a nid with no public id is written as a nid of this store:\n" + text);
@@ -192,13 +193,13 @@ class DiagnosticTextIT {
         assertEquals("no vertex", DiTreeText.diagnostic((EntityVertex) null));
         assertEquals("no vertices", DiTreeText.diagnostic((List<EntityVertex>) null));
 
-        EntityVertex reference = EntityVertex.make(TinkarTerm.CONCEPT_REFERENCE);
-        setProperty(reference, TinkarTerm.CONCEPT_REFERENCE, TinkarTerm.LANGUAGE);
-        EntityVertex and = EntityVertex.make(TinkarTerm.AND);
+        EntityVertex reference = EntityVertex.make(KernelTerm.CONCEPT_REFERENCE);
+        setProperty(reference, KernelTerm.CONCEPT_REFERENCE, KernelTerm.LANGUAGE);
+        EntityVertex and = EntityVertex.make(KernelTerm.AND);
         assertEquals("[" + DiTreeText.diagnostic(reference) + "; " + DiTreeText.diagnostic(and) + "]",
                 DiTreeText.diagnostic(List.of(reference, and)));
-        assertEquals(DiagnosticText.name(TinkarTerm.CONCEPT_REFERENCE.nid()) + ": "
-                + DiagnosticText.name(TinkarTerm.LANGUAGE.nid()), DiTreeText.diagnostic(reference));
+        assertEquals(DiagnosticText.name(KernelTerm.CONCEPT_REFERENCE.nid()) + ": "
+                + DiagnosticText.name(KernelTerm.LANGUAGE.nid()), DiTreeText.diagnostic(reference));
     }
 
     /**
@@ -207,18 +208,18 @@ class DiagnosticTextIT {
      * never assigned.
      */
     private DiTreeEntity aTreeThatRefersToEveryKindOfComponent() {
-        EntityVertex root = EntityVertex.make(TinkarTerm.DEFINITION_ROOT);
-        EntityVertex necessarySet = EntityVertex.make(TinkarTerm.NECESSARY_SET);
-        EntityVertex and = EntityVertex.make(TinkarTerm.AND);
+        EntityVertex root = EntityVertex.make(KernelTerm.DEFINITION_ROOT);
+        EntityVertex necessarySet = EntityVertex.make(KernelTerm.NECESSARY_SET);
+        EntityVertex and = EntityVertex.make(KernelTerm.AND);
 
-        EntityVertex described = EntityVertex.make(TinkarTerm.CONCEPT_REFERENCE);
-        setProperty(described, TinkarTerm.CONCEPT_REFERENCE, TinkarTerm.LANGUAGE);
+        EntityVertex described = EntityVertex.make(KernelTerm.CONCEPT_REFERENCE);
+        setProperty(described, KernelTerm.CONCEPT_REFERENCE, KernelTerm.LANGUAGE);
 
-        EntityVertex undescribed = EntityVertex.make(TinkarTerm.CONCEPT_REFERENCE);
-        setProperty(undescribed, TinkarTerm.CONCEPT_REFERENCE, EntityProxy.Concept.make(PublicIds.of(UNDESCRIBED)));
+        EntityVertex undescribed = EntityVertex.make(KernelTerm.CONCEPT_REFERENCE);
+        setProperty(undescribed, KernelTerm.CONCEPT_REFERENCE, EntityProxy.Concept.make(PublicIds.of(UNDESCRIBED)));
 
-        EntityVertex propertySet = EntityVertex.make(TinkarTerm.PROPERTY_SET);
-        setProperty(propertySet, TinkarTerm.PROPERTY_SEQUENCE,
+        EntityVertex propertySet = EntityVertex.make(KernelTerm.PROPERTY_SET);
+        setProperty(propertySet, KernelTerm.PROPERTY_SEQUENCE,
                 IntIds.list.of(TinkarTerm.PART_OF.nid(), undescribedNid, UNASSIGNED_NID));
 
         DiTreeEntity.Builder builder = DiTreeEntity.builder();

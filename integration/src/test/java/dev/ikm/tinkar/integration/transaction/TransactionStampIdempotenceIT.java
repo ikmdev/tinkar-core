@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.transaction;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -108,9 +109,9 @@ class TransactionStampIdempotenceIT {
 
         // Define stamp coordinates
         State state = State.ACTIVE;
-        PublicId authorId = TinkarTerm.USER;
+        PublicId authorId = KernelTerm.USER;
         PublicId moduleId = TinkarTerm.DEVELOPMENT_MODULE;
-        PublicId pathId = TinkarTerm.DEVELOPMENT_PATH;
+        PublicId pathId = KernelTerm.DEVELOPMENT_PATH;
 
         // Create a mock entity facade for testing
         PublicId entityId = PublicIds.of(UUID.randomUUID());

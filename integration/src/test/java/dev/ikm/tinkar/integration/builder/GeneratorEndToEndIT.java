@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.language.calculator.LanguageCalculator;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
@@ -113,7 +114,7 @@ class GeneratorEndToEndIT {
         String modelConceptFqnBefore = languageCalculator.getFullyQualifiedNameText(TinkarTerm.MODEL_CONCEPT)
                 .orElseThrow();
         Set<Integer> userModuleParentsBefore = latestIsAParents(userModuleNid, calculator);
-        int descriptionPatternVersionsBefore = EntityHandle.get(TinkarTerm.DESCRIPTION_PATTERN.nid()).expectPattern()
+        int descriptionPatternVersionsBefore = EntityHandle.get(KernelTerm.DESCRIPTION_PATTERN.nid()).expectPattern()
                 .versions().size();
 
         // Sections are not disjoint by design (TaxonomySectioner's own contract) — a
@@ -126,7 +127,7 @@ class GeneratorEndToEndIT {
         // catch-all, batched to stay under the JVM's 64KB bytecode-per-method limit) —
         // shared with LedgerGeneratorMain's real ingest run so the two can't drift.
         List<Section> exclusiveSections = sectioner.sectionsCoveringFullStore(
-                TinkarTerm.ROOT_VERTEX.nid(), 60, 4, 50);
+                KernelTerm.ROOT_VERTEX.nid(), 60, 4, 50);
         int distinctMembers = exclusiveSections.stream().mapToInt(section -> section.members().size()).sum();
         LOG.info("{} sections covering {} distinct components after cross-section dedup + residual catch-all",
                 exclusiveSections.size(), distinctMembers);
@@ -183,7 +184,7 @@ class GeneratorEndToEndIT {
         assertEquals(userModuleVersionsBefore + 1, userModuleVersionsAfter,
                 "a leaf concept from a split section also merges cleanly");
 
-        int descriptionPatternVersionsAfter = EntityHandle.get(TinkarTerm.DESCRIPTION_PATTERN.nid()).expectPattern()
+        int descriptionPatternVersionsAfter = EntityHandle.get(KernelTerm.DESCRIPTION_PATTERN.nid()).expectPattern()
                 .versions().size();
         assertEquals(descriptionPatternVersionsBefore + 1, descriptionPatternVersionsAfter,
                 "a pattern from the residual catch-all also merges cleanly, meaning and purpose intact");
@@ -216,7 +217,7 @@ class GeneratorEndToEndIT {
         Set<Integer> parents = new HashSet<>();
         calculator.forEachSemanticVersionForComponentOfPattern(
                 dev.ikm.tinkar.terms.EntityProxy.Concept.make(componentNid),
-                TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+                KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
                 (semanticVersion, entityVersion, patternVersion) -> {
                     dev.ikm.tinkar.entity.graph.DiTreeEntity tree =
                             (dev.ikm.tinkar.entity.graph.DiTreeEntity) semanticVersion.fieldValues().get(0);

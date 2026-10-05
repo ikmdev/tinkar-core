@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.coordinate;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.coordinate.Calculators;
@@ -29,7 +30,6 @@ import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityBinding;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -95,7 +95,7 @@ class ChangeChronologyIT {
     @Test
     void stampFieldsAreRecordedAgainstTheStampVersionPattern() {
         int stampVersionPattern = EntityBinding.Stamp.Version.pattern().nid();
-        ChangeChronology chronology = Calculators.Stamp.DevelopmentLatest().changeChronology(TinkarTerm.ROOT_VERTEX.nid());
+        ChangeChronology chronology = Calculators.Stamp.DevelopmentLatest().changeChronology(KernelTerm.ROOT_VERTEX.nid());
         assertFalse(chronology.changeRecords().isEmpty(), "No change records for the root concept");
 
         for (VersionChangeRecord versionChange : chronology.changeRecords()) {

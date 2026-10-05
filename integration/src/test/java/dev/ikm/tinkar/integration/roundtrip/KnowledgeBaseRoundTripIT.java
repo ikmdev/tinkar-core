@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.roundtrip;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.service.PluggableService;
 import dev.ikm.tinkar.common.service.TrackingCallable;
 import dev.ikm.tinkar.common.util.io.FileUtil;
@@ -31,7 +32,6 @@ import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.reasoner.service.ClassifierResults;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -175,8 +175,8 @@ class KnowledgeBaseRoundTripIT {
                     .map(ServiceLoader.Provider::get)
                     .findFirst().orElseThrow(() -> new IllegalStateException("No ReasonerService is provided"));
             long start = System.currentTimeMillis();
-            reasoner.init(Calculators.View.Default(), TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
-                    TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
+            reasoner.init(Calculators.View.Default(), KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+                    KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
             reasoner.extractData(quiet());
             reasoner.loadData(quiet());
             reasoner.computeInferences();
@@ -210,7 +210,7 @@ class KnowledgeBaseRoundTripIT {
         void work(Properties in, Properties out) {
             ViewCalculator view = Calculators.View.Default();
             long start = System.currentTimeMillis();
-            int root = TinkarTerm.ROOT_VERTEX.nid();
+            int root = KernelTerm.ROOT_VERTEX.nid();
             AtomicLong concepts = new AtomicLong();
             AtomicLong withoutDescription = new AtomicLong();
             EntityService.get().forEachConceptEntity(concept -> {

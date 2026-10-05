@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.time.DateTimeUtil;
 import dev.ikm.tinkar.entity.builder.ActiveStamp;
@@ -62,21 +63,21 @@ class KonceptExtractorHistoryIT {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
 
         birth = Stamp.active("2020-01-01T00:00:00Z",
-                TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
 
         TEST_SET.concept("History probe concept (Test)").at(birth)
                 .definition("A concept authored only to exercise since/comments/retiredComments extraction.")
                 .isA(TinkarTerm.MODEL_CONCEPT)
-                .semantic(TinkarTerm.COMMENT_PATTERN, PublicIds.of(RETIRED_COMMENT_ID), "Original comment text")
-                .semantic(TinkarTerm.COMMENT_PATTERN, PublicIds.of(ACTIVE_COMMENT_ID), "Still active comment text");
+                .semantic(KernelTerm.COMMENT_PATTERN, PublicIds.of(RETIRED_COMMENT_ID), "Original comment text")
+                .semantic(KernelTerm.COMMENT_PATTERN, PublicIds.of(ACTIVE_COMMENT_ID), "Still active comment text");
 
         retirement = Stamp.inactive("2020-06-01T00:00:00Z",
-                TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
 
         // Empty field values restate the prior text verbatim under the new inactive stamp --
         // ConceptBuilder.RetireScope#retireSemantic's documented behavior.
         TEST_SET.concept("History probe concept (Test)").at(retirement)
-                .retireSemantic(TinkarTerm.COMMENT_PATTERN, PublicIds.of(RETIRED_COMMENT_ID));
+                .retireSemantic(KernelTerm.COMMENT_PATTERN, PublicIds.of(RETIRED_COMMENT_ID));
 
         TEST_SET.write();
     }

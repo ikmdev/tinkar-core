@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.search;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
@@ -113,7 +114,7 @@ public class SearcherIT {
         var stampCoordinate = Coordinates.Stamp.DevelopmentLatestActiveOnly();
 
         //When I search "Component" for only the descendants of Role
-        var searchResults = stampCoordinate.stampCalculator().searchDescendants(TinkarTerm.ROLE, "Feature", 100);
+        var searchResults = stampCoordinate.stampCalculator().searchDescendants(KernelTerm.ROLE, "Feature", 100);
 
         //Then there should only be 2 LatestVersionSearchResults, a grouping of FQN, SYN for the following concepts:
         // 1) Feature Role Type
@@ -137,7 +138,7 @@ public class SearcherIT {
         var navigationCalculator = NavigationCalculatorWithCache.getCalculator(stampCoordinate, Lists.immutable.of(languageCoordinate), navigationCoordinate);
 
         //When I search "Component" for only the descendants of Role
-        var searchResults = stampCoordinate.stampCalculator().searchDescendants(navigationCalculator, TinkarTerm.ROLE, "Feature", 100);
+        var searchResults = stampCoordinate.stampCalculator().searchDescendants(navigationCalculator, KernelTerm.ROLE, "Feature", 100);
 
         //Then there should only be 2 LatestVersionSearchResults, a grouping of FQN, SYN for the following concepts:
         // 1) Feature Role Type
@@ -155,23 +156,23 @@ public class SearcherIT {
     @Test
     public void searchConceptsNonPatternMembershipSemantic() {
         // test memberPatternId exists but is not a pattern
-        List<PublicId> conceptIds = Searcher.membersOf(TinkarTerm.ROLE.publicId());
+        List<PublicId> conceptIds = Searcher.membersOf(KernelTerm.ROLE.publicId());
         assertTrue(conceptIds.isEmpty(), "memberPatternId exists but not a pattern, should return empty list");
     }
 
     @Test
     public void searchConceptsNoTaggedMembershipSemantic() {
         // test memberPatternId with no tagged concepts
-        List<PublicId> conceptIds = Searcher.membersOf(TinkarTerm.COMMENT_PATTERN);
+        List<PublicId> conceptIds = Searcher.membersOf(KernelTerm.COMMENT_PATTERN);
         assertTrue(conceptIds.isEmpty(), "memberPatternId has no tagged concepts, should return empty list");
     }
 
     @Test
     public void searchConceptsWithTaggedMembershipSemantic() {
         // test memberPatternId with tagged concepts
-        List<PublicId> conceptIds = Searcher.membersOf(TinkarTerm.KOMET_BASE_MODEL_COMPONENT_PATTERN);
+        List<PublicId> conceptIds = Searcher.membersOf(KernelTerm.KOMET_BASE_MODEL_COMPONENT_PATTERN);
         assertEquals(6, conceptIds.size(), "there should be 6 tagged concept associated with this pattern");
-        conceptIds = Searcher.membersOf(TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
+        conceptIds = Searcher.membersOf(KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN);
         assertEquals(379, conceptIds.size(), "there should be 379 tagged concept associated with this pattern");
     }
 
@@ -190,7 +191,7 @@ public class SearcherIT {
         assertFalse(publicId.isPresent(), "Concept should be null for non-existing Identifier Source");
         publicId = Searcher.getPublicId(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, "abcxyz");
         assertFalse(publicId.isPresent(), "Concept should be null for non-existing Identifier Value");
-        publicId = Searcher.getPublicId(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, TinkarTerm.KOMET_BASE_MODEL_COMPONENT_PATTERN.leastUuid().toString());
+        publicId = Searcher.getPublicId(TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER, KernelTerm.KOMET_BASE_MODEL_COMPONENT_PATTERN.leastUuid().toString());
         assertFalse(publicId.isPresent(), "Concept should be null for non-semantic uuid");
     }
 
@@ -290,13 +291,13 @@ public class SearcherIT {
      */
     private EntityProxy.Semantic composeSynonym(String text) {
         EntityProxy.Semantic semanticProxy = EntityProxy.Semantic.make(PublicIds.newRandom());
-        Session session = composer.open(State.ACTIVE, TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+        Session session = composer.open(State.ACTIVE, KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
         session.compose(new Synonym()
                         .semantic(semanticProxy)
-                        .language(TinkarTerm.ENGLISH_LANGUAGE)
-                        .caseSignificance(TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE)
+                        .language(KernelTerm.ENGLISH_LANGUAGE)
+                        .caseSignificance(KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE)
                         .text(text),
-                TinkarTerm.USER);
+                KernelTerm.USER);
         composer.commitSession(session);
         return semanticProxy;
     }

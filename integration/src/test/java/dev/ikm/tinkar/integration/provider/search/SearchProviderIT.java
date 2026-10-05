@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.provider.search;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
@@ -52,7 +53,7 @@ public class SearchProviderIT {
                 TinkarTerm.ORDER_FOR_AXIOM_ATTACHMENTS.publicId(),
                 TinkarTerm.ORDER_FOR_CONCEPT_ATTACHMENTS.publicId(),
                 TinkarTerm.ORDER_FOR_DESCRIPTION_ATTACHMENTS.publicId(),
-                TinkarTerm.KOMET_USER.publicId(),
+                KernelTerm.KOMET_USER.publicId(),
                 TinkarTerm.KOMET_USER_LIST.publicId(),
                 TinkarTerm.MODULE_FOR_USER.publicId(),
                 TinkarTerm.PATH_FOR_USER.publicId(),
@@ -61,7 +62,7 @@ public class SearchProviderIT {
                 TinkarTermV2.GRETEL_OPENPARENTHESIS_USER_CLOSEPARENTHESIS_.publicId()
         );
 
-        List<PublicId> actualUserChildren = Searcher.childrenOf(TinkarTerm.USER.publicId());
+        List<PublicId> actualUserChildren = Searcher.childrenOf(KernelTerm.USER.publicId());
 
         expectedUserChildren.sort(Comparator.naturalOrder());
         actualUserChildren.sort(Comparator.naturalOrder());
@@ -76,14 +77,14 @@ public class SearchProviderIT {
     @Test
     public void getDescendantsIT() {
         List<PublicId> expectedUserDescendants = Arrays.asList(
-                TinkarTerm.ROLE_TYPE.publicId(),
+                KernelTerm.ROLE_TYPE.publicId(),
                 TinkarTerm.ROLE_RESTRICTION.publicId(),
-                TinkarTerm.INTERVAL_ROLE.publicId(),
-                TinkarTerm.INTERVAL_ROLE_TYPE.publicId(),
+                KernelTerm.INTERVAL_ROLE.publicId(),
+                KernelTerm.INTERVAL_ROLE_TYPE.publicId(),
                 TinkarTermV2.FEATURE_ROLE_TYPE.publicId()
         );
 
-        List<PublicId> actualUserDescendants = Searcher.descendantsOf(TinkarTerm.ROLE.publicId());
+        List<PublicId> actualUserDescendants = Searcher.descendantsOf(KernelTerm.ROLE.publicId());
 
         expectedUserDescendants.sort(Comparator.naturalOrder());
         actualUserDescendants.sort(Comparator.naturalOrder());
@@ -104,7 +105,7 @@ public class SearchProviderIT {
         );
 
         List<PublicId> conceptsWithFQNs = List.of(
-                TinkarTerm.ROOT_VERTEX.publicId(),
+                KernelTerm.ROOT_VERTEX.publicId(),
                 TinkarTerm.MEANING.publicId(),
                 TinkarTerm.PURPOSE.publicId()
         );

@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.provider.spinedarray;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.id.impl.IntIdListArray;
 import dev.ikm.tinkar.common.id.impl.IntIdSetArray;
@@ -135,12 +136,12 @@ class ExportDataIT {
                 intIdSet.set(latestPattern.getFieldWithMeaning(COMPONENT_SET_FIELD_MEANING, latestActive.get()));
                 // Reassign elements
                 int [] tempSetArray = intIdSet.get().toArray();
-                tempSetArray [0] = TinkarTerm.ACTIVE_STATE.nid();
+                tempSetArray [0] = KernelTerm.ACTIVE_STATE.nid();
 
                 intIdList.set(latestPattern.getFieldWithMeaning(COMPONENT_LIST_FIELD_MEANING, latestActive.get()));
                 // Reassign elements
                 int [] tempListArray = intIdList.get().toArray();
-                tempListArray [0] = TinkarTerm.ACTIVE_STATE.nid();
+                tempListArray [0] = KernelTerm.ACTIVE_STATE.nid();
             }
 
         });

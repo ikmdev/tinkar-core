@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
@@ -76,7 +77,7 @@ class KonceptExtractorPatternShapeIT {
         TestHelper.startDataBase(DataStore.EPHEMERAL_STORE);
 
         ActiveStamp birth = Stamp.active("2020-01-01T00:00:00Z",
-                TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
 
         // Self-minted, not TinkarTerm constants: a bare ephemeral store only materializes the
         // handful of TinkarTerm concepts STAMP dimensions themselves need (USER, DEVELOPMENT_
@@ -146,8 +147,8 @@ class KonceptExtractorPatternShapeIT {
 
         // Instance content stamps in the defaults module -- the module IS the category
         // boundary that keeps a defaults semantic out of the example channel.
-        ActiveStamp defaultsAuthored = Stamp.active("2020-02-01T00:00:00Z", TinkarTerm.USER,
-                DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+        ActiveStamp defaultsAuthored = Stamp.active("2020-02-01T00:00:00Z", KernelTerm.USER,
+                DefaultsTemplateTerm.DEFAULTS_AND_TEMPLATES_MODULE, KernelTerm.DEVELOPMENT_PATH);
 
         // Per-field meaning concepts for the display-sweep pattern -- distinct, so each
         // emitted field block is unambiguous to assert against; purpose and data type are

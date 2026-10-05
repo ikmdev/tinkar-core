@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.provider.spinedarray;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.coordinate.Coordinates;
@@ -29,7 +30,6 @@ import dev.ikm.tinkar.entity.load.LoadEntitiesFromProtobufFile;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,9 +72,9 @@ class SpinedArrayImportIT {
         StampCalculatorWithCache stampCalc = StampCalculatorWithCache.getCalculator(viewCoord.stampCoordinate());
 
         // Query concept using Calculator.latest() (use both methods: latest(entity) AND latest(nid))
-        String fqnBeforeFromEntityFacade = viewCalc.getFullyQualifiedDescriptionTextWithFallbackOrNid(TinkarTerm.ACTIVE_STATE);
-        String fqnBeforeFromNid = viewCalc.getFullyQualifiedDescriptionTextWithFallbackOrNid(TinkarTerm.ACTIVE_STATE.nid());
-        String otherBeforeFromNid = viewCalc.getRegularDescriptionText(TinkarTerm.ACTIVE_STATE.nid()).get();
+        String fqnBeforeFromEntityFacade = viewCalc.getFullyQualifiedDescriptionTextWithFallbackOrNid(KernelTerm.ACTIVE_STATE);
+        String fqnBeforeFromNid = viewCalc.getFullyQualifiedDescriptionTextWithFallbackOrNid(KernelTerm.ACTIVE_STATE.nid());
+        String otherBeforeFromNid = viewCalc.getRegularDescriptionText(KernelTerm.ACTIVE_STATE.nid()).get();
 
         // Import pb file
         URL pbResourceUrl = getClass().getClassLoader().getResource("active-state-fqn-change-ike-cs.zip");
@@ -87,8 +87,8 @@ class SpinedArrayImportIT {
         LOG.info(count + " entitles loaded from file: " + loadProto.summarize() + "\n\n");
 
         // Query again and compare results
-        String fqnAfterFromEntityFacade = viewCalc.getFullyQualifiedDescriptionTextWithFallbackOrNid(TinkarTerm.ACTIVE_STATE);
-        String fqnAfterFromNid = viewCalc.getFullyQualifiedDescriptionTextWithFallbackOrNid(TinkarTerm.ACTIVE_STATE.nid());
+        String fqnAfterFromEntityFacade = viewCalc.getFullyQualifiedDescriptionTextWithFallbackOrNid(KernelTerm.ACTIVE_STATE);
+        String fqnAfterFromNid = viewCalc.getFullyQualifiedDescriptionTextWithFallbackOrNid(KernelTerm.ACTIVE_STATE.nid());
 
         // Adding sleep to account for delay in Real world user scenarios
         try {
@@ -97,7 +97,7 @@ class SpinedArrayImportIT {
             throw new RuntimeException(e);
         }
 
-        String otherAfterFromNid = viewCalc.getRegularDescriptionText(TinkarTerm.ACTIVE_STATE.nid()).get();
+        String otherAfterFromNid = viewCalc.getRegularDescriptionText(KernelTerm.ACTIVE_STATE.nid()).get();
 
         //STAMP Changes
         UUID changedStampUUID = UUID.fromString("3d296499-654f-566a-83ea-334cbec2c2e1");
@@ -126,7 +126,7 @@ class SpinedArrayImportIT {
         StampCalculatorWithCache stampCalc = StampCalculatorWithCache.getCalculator(viewCoord.stampCoordinate());
 
         // Query concept using Calculator.latest() (use both methods: latest(entity) AND latest(nid))
-        String otherBeforeFromNid = viewCalc.getRegularDescriptionText(TinkarTerm.ACTIVE_STATE.nid()).get();
+        String otherBeforeFromNid = viewCalc.getRegularDescriptionText(KernelTerm.ACTIVE_STATE.nid()).get();
 
         // Import pb file
         URL pbResourceUrl = getClass().getClassLoader().getResource("active-state-other-change-ike-cs.zip");
@@ -158,7 +158,7 @@ class SpinedArrayImportIT {
         }
 
         // Query again and compare results
-		String otherAfterFromNid = viewCalc.getRegularDescriptionText(TinkarTerm.ACTIVE_STATE.nid()).get();
+		String otherAfterFromNid = viewCalc.getRegularDescriptionText(KernelTerm.ACTIVE_STATE.nid()).get();
 
         assertNotEquals(otherBeforeFromNid, otherAfterFromNid); //Wrong from a langcalc perspective
         assertEquals(incorrectSemantic, correctSemantic); //wrong from stampcalc perspective

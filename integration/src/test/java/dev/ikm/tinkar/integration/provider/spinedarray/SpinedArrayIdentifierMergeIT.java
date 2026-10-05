@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.provider.spinedarray;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.util.io.FileUtil;
@@ -53,8 +54,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import static dev.ikm.tinkar.terms.TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE;
-import static dev.ikm.tinkar.terms.TinkarTerm.ENGLISH_LANGUAGE;
+import static dev.ikm.tinkar.terms.KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE;
+import static dev.ikm.tinkar.terms.KernelTerm.ENGLISH_LANGUAGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -86,7 +87,7 @@ class SpinedArrayIdentifierMergeIT {
         EntityProxy.Concept author = EntityProxy.Concept.make("IHTSDO SNOMED CT Starter Data Author",
                 UuidT5Generator.get(namespace, "IHTSDO SNOMED CT Starter Data Author"));
 
-        Session session = composer.open(State.ACTIVE, author, TinkarTerm.PRIMORDIAL_MODULE, TinkarTerm.PRIMORDIAL_PATH);
+        Session session = composer.open(State.ACTIVE, author, KernelTerm.PRIMORDIAL_MODULE, KernelTerm.PRIMORDIAL_PATH);
 
         initializeAuthor(session, namespace, author);
 
@@ -126,7 +127,7 @@ class SpinedArrayIdentifierMergeIT {
         EntityProxy.Concept author = EntityProxy.Concept.make("IHTSDO SNOMED CT Starter Data Author",
                 UuidT5Generator.get(namespace, "IHTSDO SNOMED CT Starter Data Author"));
 
-        Session session = composer.open(State.ACTIVE, author, TinkarTerm.PRIMORDIAL_MODULE, TinkarTerm.PRIMORDIAL_PATH);
+        Session session = composer.open(State.ACTIVE, author, KernelTerm.PRIMORDIAL_MODULE, KernelTerm.PRIMORDIAL_PATH);
 
         initializeAuthor(session, namespace, author);
 
@@ -186,7 +187,7 @@ class SpinedArrayIdentifierMergeIT {
                         .identifier(snomedIdentifierUuid.toString())
                 )
                 .attach(StatedAxiom.class, statedAxiom -> statedAxiom
-                        .isA(TinkarTerm.IDENTIFIER_SOURCE)
+                        .isA(KernelTerm.IDENTIFIER_SOURCE)
                 )
         );
         return snomedIdentifier;
@@ -236,7 +237,7 @@ class SpinedArrayIdentifierMergeIT {
                         .identifier(author.leastUuid().toString())
                 )
                 .attach(StatedAxiom.class, statedAxiom -> statedAxiom
-                        .isA(TinkarTerm.USER)
+                        .isA(KernelTerm.USER)
                 )
         );
     }
@@ -245,16 +246,16 @@ class SpinedArrayIdentifierMergeIT {
         ViewCoordinateRecord viewCoord = Coordinates.View.DefaultView();
         ViewCalculatorWithCache viewCalc = ViewCalculatorWithCache.getCalculator(viewCoord);
 
-        Latest<PatternEntityVersion> latestIdPattern = viewCalc.latestPatternEntityVersion(TinkarTerm.IDENTIFIER_PATTERN);
+        Latest<PatternEntityVersion> latestIdPattern = viewCalc.latestPatternEntityVersion(KernelTerm.IDENTIFIER_PATTERN);
         Set<String> identifiers = new HashSet<>();
 
-        EntityService.get().forEachSemanticForComponentOfPattern(componentInDetailsViewer.nid(), TinkarTerm.IDENTIFIER_PATTERN.nid(), (semanticEntity) -> {
+        EntityService.get().forEachSemanticForComponentOfPattern(componentInDetailsViewer.nid(), KernelTerm.IDENTIFIER_PATTERN.nid(), (semanticEntity) -> {
             viewCalc.latest(semanticEntity).ifPresent((latestSemanticVersion -> {
-                EntityProxy identifierSource = latestIdPattern.get().getFieldWithMeaning(TinkarTerm.IDENTIFIER_SOURCE, latestSemanticVersion);
+                EntityProxy identifierSource = latestIdPattern.get().getFieldWithMeaning(KernelTerm.IDENTIFIER_SOURCE, latestSemanticVersion);
                 if (!PublicId.equals(identifierSource, TinkarTerm.UNIVERSALLY_UNIQUE_IDENTIFIER)) {
                     try {
                         String idSourceName = viewCalc.getPreferredDescriptionTextWithFallbackOrNid(identifierSource);
-                        String idValue = latestIdPattern.get().getFieldWithMeaning(TinkarTerm.IDENTIFIER_VALUE, latestSemanticVersion);
+                        String idValue = latestIdPattern.get().getFieldWithMeaning(KernelTerm.IDENTIFIER_VALUE, latestSemanticVersion);
 
                         identifiers.add("%s: %s".formatted(idSourceName, idValue));
                     } catch (IndexOutOfBoundsException exception) {

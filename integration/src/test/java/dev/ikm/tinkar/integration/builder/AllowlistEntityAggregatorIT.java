@@ -1,5 +1,6 @@
 package dev.ikm.tinkar.integration.builder;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.Entity;
@@ -51,8 +52,8 @@ class AllowlistEntityAggregatorIT {
         thingB = set.conceptRef("Thing B (Probe)");
         probePattern = set.patternRef("Probe pattern (Probe)");
 
-        ActiveStamp stampA = Stamp.active("2026-07-10T00:00:00Z", TinkarTerm.USER, moduleA, TinkarTerm.DEVELOPMENT_PATH);
-        ActiveStamp stampB = Stamp.active("2026-07-10T00:00:00Z", TinkarTerm.USER, moduleB, TinkarTerm.DEVELOPMENT_PATH);
+        ActiveStamp stampA = Stamp.active("2026-07-10T00:00:00Z", KernelTerm.USER, moduleA, KernelTerm.DEVELOPMENT_PATH);
+        ActiveStamp stampB = Stamp.active("2026-07-10T00:00:00Z", KernelTerm.USER, moduleB, KernelTerm.DEVELOPMENT_PATH);
 
         // Two modules, each with a module concept (stamped under itself) and a thing.
         set.concept("Module A (Probe)").at(stampA).synonym("Module A");
@@ -62,7 +63,7 @@ class AllowlistEntityAggregatorIT {
         // A pattern in module A, so an in-store pattern exists to test emission ordering.
         set.pattern("Probe pattern (Probe)").at(stampA)
                 .meaning(TinkarTerm.MEANING).purpose(TinkarTerm.PURPOSE)
-                .field(TinkarTerm.MEANING, TinkarTerm.PURPOSE, TinkarTerm.STRING)
+                .field(TinkarTerm.MEANING, TinkarTerm.PURPOSE, KernelTerm.STRING)
                 .synonym("Probe pattern");
         set.write();
     }

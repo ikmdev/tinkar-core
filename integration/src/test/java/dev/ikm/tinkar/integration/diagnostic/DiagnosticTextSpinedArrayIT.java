@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.diagnostic;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.DiagnosticText;
 import dev.ikm.tinkar.common.service.PrimitiveData;
@@ -23,7 +24,6 @@ import dev.ikm.tinkar.entity.EntityHandle;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -65,14 +65,14 @@ class DiagnosticTextSpinedArrayIT {
 
     @Test
     void aDescribedComponentIsItsDescriptionThenItsUuid() {
-        int nid = TinkarTerm.ENGLISH_LANGUAGE.nid();
+        int nid = KernelTerm.ENGLISH_LANGUAGE.nid();
         String description = PrimitiveData.textOptional(nid).orElseThrow();
 
         String text = DiagnosticText.component(nid);
 
         assertTrue(text.startsWith(description + " (UUID"), text);
         // Every UUID is named: none of them is the component's primordial UUID.
-        for (UUID uuid : TinkarTerm.ENGLISH_LANGUAGE.publicId().asUuidArray()) {
+        for (UUID uuid : KernelTerm.ENGLISH_LANGUAGE.publicId().asUuidArray()) {
             assertTrue(text.contains(uuid.toString()), "the text names " + uuid + ": " + text);
         }
     }

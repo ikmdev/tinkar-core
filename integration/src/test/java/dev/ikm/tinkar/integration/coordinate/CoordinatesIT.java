@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.coordinate;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.coordinate.Calculators;
@@ -36,7 +37,6 @@ import dev.ikm.tinkar.entity.SemanticEntity;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.junit.jupiter.api.Assertions;
@@ -52,7 +52,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.Optional;
 
-import static dev.ikm.tinkar.terms.TinkarTerm.PATH_ORIGINS_PATTERN;
+import static dev.ikm.tinkar.terms.KernelTerm.PATH_ORIGINS_PATTERN;
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -98,19 +98,19 @@ class CoordinatesIT {
 
         StampCoordinateRecord developmentLatestFilter = Coordinates.Stamp.DevelopmentLatest();
         LOG.info("development latest filter '" + developmentLatestFilter);
-        ConceptEntity englishLanguage = EntityHandle.get(TinkarTerm.ENGLISH_LANGUAGE.nid()).expectConcept();
+        ConceptEntity englishLanguage = EntityHandle.get(KernelTerm.ENGLISH_LANGUAGE.nid()).expectConcept();
         StampCalculatorWithCache calculator = StampCalculatorWithCache.getCalculator(developmentLatestFilter);
         Latest<ConceptEntityVersion> latest = calculator.latest(englishLanguage);
         LOG.info("Latest computed: '" + latest);
 
-        Entity.provider().forEachSemanticForComponent(TinkarTerm.ENGLISH_LANGUAGE.nid(), semanticEntity -> {
+        Entity.provider().forEachSemanticForComponent(KernelTerm.ENGLISH_LANGUAGE.nid(), semanticEntity -> {
             LOG.info(semanticEntity.toString() + "\n");
-            EntityService.get().forEachSemanticForComponentOfPattern(semanticEntity.nid(), TinkarTerm.US_DIALECT_PATTERN.nid(), acceptibility ->
+            EntityService.get().forEachSemanticForComponentOfPattern(semanticEntity.nid(), KernelTerm.US_DIALECT_PATTERN.nid(), acceptibility ->
                 LOG.info("  Acceptability US: \n    " + acceptibility));
         });
-        Entity.provider().forEachSemanticForComponent(TinkarTerm.NECESSARY_SET.nid(), semanticEntity -> {
+        Entity.provider().forEachSemanticForComponent(KernelTerm.NECESSARY_SET.nid(), semanticEntity -> {
             LOG.info(semanticEntity.toString() + "\n");
-            EntityService.get().forEachSemanticForComponentOfPattern(semanticEntity.nid(), TinkarTerm.US_DIALECT_PATTERN.nid(), acceptibility ->
+            EntityService.get().forEachSemanticForComponentOfPattern(semanticEntity.nid(), KernelTerm.US_DIALECT_PATTERN.nid(), acceptibility ->
                 LOG.info("  Acceptability US: \n    " + acceptibility));
         });
     }
@@ -121,9 +121,9 @@ class CoordinatesIT {
         LOG.info("names()");
         LanguageCoordinateRecord usFqn = Coordinates.Language.UsEnglishFullyQualifiedName();
         LanguageCalculatorWithCache usFqnCalc = LanguageCalculatorWithCache.getCalculator(Coordinates.Stamp.DevelopmentLatest(), Lists.immutable.of(usFqn));
-        LOG.info("fqn: " + usFqnCalc.getDescriptionText(TinkarTerm.NECESSARY_SET) + "\n");
-        LOG.info("reg: " + usFqnCalc.getRegularDescriptionText(TinkarTerm.NECESSARY_SET) + "\n");
-        LOG.info("def: " + usFqnCalc.getDefinitionDescriptionText(TinkarTerm.NECESSARY_SET) + "\n");
+        LOG.info("fqn: " + usFqnCalc.getDescriptionText(KernelTerm.NECESSARY_SET) + "\n");
+        LOG.info("reg: " + usFqnCalc.getRegularDescriptionText(KernelTerm.NECESSARY_SET) + "\n");
+        LOG.info("def: " + usFqnCalc.getDefinitionDescriptionText(KernelTerm.NECESSARY_SET) + "\n");
     }
 
     @Test
@@ -131,10 +131,10 @@ class CoordinatesIT {
     void navigate() {
         LOG.info("navigate()");
         ViewCalculator viewCalculator = Calculators.View.Default();
-        IntIdList children = viewCalculator.childrenOf(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
+        IntIdList children = viewCalculator.childrenOf(KernelTerm.DESCRIPTION_ACCEPTABILITY);
         StringBuilder sb = new StringBuilder("Focus: [");
-        Optional<String> optionalName = viewCalculator.getRegularDescriptionText(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
-        optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(TinkarTerm.DESCRIPTION_ACCEPTABILITY.nid()));
+        Optional<String> optionalName = viewCalculator.getRegularDescriptionText(KernelTerm.DESCRIPTION_ACCEPTABILITY);
+        optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(KernelTerm.DESCRIPTION_ACCEPTABILITY.nid()));
         sb.append("]\nchildren: [");
         for (int childNid : children.toArray()) {
             optionalName = viewCalculator.getRegularDescriptionText(childNid);
@@ -143,7 +143,7 @@ class CoordinatesIT {
         }
         sb.delete(sb.length() - 2, sb.length());
         sb.append("]\nparents: [");
-        IntIdList parents = viewCalculator.parentsOf(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
+        IntIdList parents = viewCalculator.parentsOf(KernelTerm.DESCRIPTION_ACCEPTABILITY);
         for (int parentNid : parents.toArray()) {
             optionalName = viewCalculator.getRegularDescriptionText(parentNid);
             optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(parentNid));
@@ -159,10 +159,10 @@ class CoordinatesIT {
     void sortedNavigate() {
         LOG.info("sortedNavigate()");
         ViewCalculator viewCalculator = Calculators.View.Default();
-        IntIdList children = viewCalculator.sortedChildrenOf(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
+        IntIdList children = viewCalculator.sortedChildrenOf(KernelTerm.DESCRIPTION_ACCEPTABILITY);
         StringBuilder sb = new StringBuilder("Focus: [");
-        Optional<String> optionalName = viewCalculator.getRegularDescriptionText(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
-        optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(TinkarTerm.DESCRIPTION_ACCEPTABILITY.nid()));
+        Optional<String> optionalName = viewCalculator.getRegularDescriptionText(KernelTerm.DESCRIPTION_ACCEPTABILITY);
+        optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(KernelTerm.DESCRIPTION_ACCEPTABILITY.nid()));
         sb.append("]\nsorted children: [");
         for (int childNid : children.toArray()) {
             optionalName = viewCalculator.getRegularDescriptionText(childNid);
@@ -171,7 +171,7 @@ class CoordinatesIT {
         }
         sb.delete(sb.length() - 2, sb.length());
         sb.append("]\nsorted parents: [");
-        IntIdList parents = viewCalculator.sortedParentsOf(TinkarTerm.DESCRIPTION_ACCEPTABILITY);
+        IntIdList parents = viewCalculator.sortedParentsOf(KernelTerm.DESCRIPTION_ACCEPTABILITY);
         for (int parentNid : parents.toArray()) {
             optionalName = viewCalculator.getRegularDescriptionText(parentNid);
             optionalName.ifPresentOrElse(name -> sb.append(name), () -> sb.append(parentNid));

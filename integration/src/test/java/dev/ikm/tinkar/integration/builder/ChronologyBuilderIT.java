@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.entity.ConceptEntity;
 import dev.ikm.tinkar.entity.Entity;
@@ -86,7 +87,7 @@ class ChronologyBuilderIT {
         // ---- The ledger, time-major: a stamp, then the edits under it. ----
 
         birth = Stamp.active("2026-07-15T00:00:00Z",
-                TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
 
         TEST_SET.concept("Journal element (Test)").at(birth)
                 .synonym("Journal element")
@@ -102,13 +103,13 @@ class ChronologyBuilderIT {
                 .synonym("Temporary name");
 
         TEST_SET.pattern("Journal manifest pattern (Test)").at(birth)
-                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER)
-                .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.COMPONENT_ID_LIST_FIELD)
-                .field(TinkarTerm.USER, TinkarTerm.MODEL_CONCEPT, TinkarTerm.STRING)
+                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(KernelTerm.USER)
+                .field(TinkarTerm.MODEL_CONCEPT, KernelTerm.USER, KernelTerm.COMPONENT_ID_LIST_FIELD)
+                .field(KernelTerm.USER, TinkarTerm.MODEL_CONCEPT, KernelTerm.STRING)
                 .synonym("Journal manifest");
 
         TEST_SET.pattern("Evolving pattern (Test)").at(birth)
-                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER);
+                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(KernelTerm.USER);
 
         // Declared identity — content whose identity was established elsewhere (ingest
         // of an existing set, or a Komet-minted component lifted back into the ledger).
@@ -117,10 +118,10 @@ class ChronologyBuilderIT {
                 .isA(TEST_SET.conceptRef("Journal element (Test)"));
 
         TEST_SET.pattern("Adopted pattern (Test)", ADOPTED_PATTERN_IDENTITY).at(birth)
-                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER);
+                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(KernelTerm.USER);
 
         later = Stamp.active("2026-09-01T00:00:00Z",
-                TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
 
         // Resume by FQN — no restatement; the ledger simply continues.
         TEST_SET.concept("Journal element (Test)").at(later)
@@ -128,11 +129,11 @@ class ChronologyBuilderIT {
                 .reviseSynonym("Journal element", "Journal atom");
 
         TEST_SET.pattern("Evolving pattern (Test)").at(later)
-                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER)
-                .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.STRING);
+                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(KernelTerm.USER)
+                .field(TinkarTerm.MODEL_CONCEPT, KernelTerm.USER, KernelTerm.STRING);
 
         retirement = Stamp.inactive("2026-10-01T00:00:00Z",
-                TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
 
         TEST_SET.concept("Retiring kind (Test)").at(retirement)
                 .retire()
@@ -197,7 +198,7 @@ class ChronologyBuilderIT {
     @DisplayName("Same stamp tuple, same stamp identity — declared stamps are idempotent")
     void stampTupleIdentity() {
         ActiveStamp restated = Stamp.active("2026-07-15T00:00:00Z",
-                TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
         assertEquals(birth.publicId(), restated.publicId());
         assertEquals(birth.time(), Instant.parse("2026-07-15T00:00:00Z").toEpochMilli());
     }
@@ -216,7 +217,7 @@ class ChronologyBuilderIT {
 
         // FQN + two synonyms + one definition — across two resumed sections.
         List<SemanticEntity<SemanticEntityVersion>> descriptions = EntityService.get().semanticsForComponentOfPattern(
-                conceptNid, TinkarTerm.DESCRIPTION_PATTERN.nid()).toList();
+                conceptNid, KernelTerm.DESCRIPTION_PATTERN.nid()).toList();
         assertEquals(4, descriptions.size());
 
         SemanticEntity<?> revised = findDescriptionByLatestText(descriptions, "Journal atom");
@@ -227,11 +228,11 @@ class ChronologyBuilderIT {
 
         for (SemanticEntity<SemanticEntityVersion> description : descriptions) {
             assertEquals(1, EntityService.get().semanticsForComponentOfPattern(
-                    description.nid(), TinkarTerm.US_DIALECT_PATTERN.nid()).count());
+                    description.nid(), KernelTerm.US_DIALECT_PATTERN.nid()).count());
         }
 
         List<SemanticEntity<SemanticEntityVersion>> axiomSemantics = EntityService.get().semanticsForComponentOfPattern(
-                conceptNid, TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()).toList();
+                conceptNid, KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()).toList();
         assertEquals(1, axiomSemantics.size());
         SemanticEntity<?> axioms = axiomSemantics.getFirst();
         Object axiomField = ((SemanticEntityVersion) axioms.versions().get(0)).fieldValues().get(0);
@@ -250,7 +251,7 @@ class ChronologyBuilderIT {
         assertEquals(retirement.time(), lastStamp.time());
 
         List<SemanticEntity<SemanticEntityVersion>> descriptions = EntityService.get().semanticsForComponentOfPattern(
-                conceptNid, TinkarTerm.DESCRIPTION_PATTERN.nid()).toList();
+                conceptNid, KernelTerm.DESCRIPTION_PATTERN.nid()).toList();
         SemanticEntity<?> synonym = findDescriptionByLatestText(descriptions, "Temporary name");
         assertEquals(2, synonym.versions().size());
         assertEquals(State.INACTIVE, Entity.getStamp(synonym.versions().get(1).stampNid()).state());
@@ -264,12 +265,12 @@ class ChronologyBuilderIT {
         assertEquals(1, manifest.versions().size());
         PatternEntityVersion manifestVersion = (PatternEntityVersion) manifest.versions().get(0);
         assertEquals(TinkarTerm.MODEL_CONCEPT.nid(), manifestVersion.semanticMeaningNid());
-        assertEquals(TinkarTerm.USER.nid(), manifestVersion.semanticPurposeNid());
+        assertEquals(KernelTerm.USER.nid(), manifestVersion.semanticPurposeNid());
         assertEquals(2, manifestVersion.fieldDefinitions().size());
-        assertEquals(TinkarTerm.COMPONENT_ID_LIST_FIELD.nid(),
+        assertEquals(KernelTerm.COMPONENT_ID_LIST_FIELD.nid(),
                 manifestVersion.fieldDefinitions().get(0).dataTypeNid());
         assertEquals(0, manifestVersion.fieldDefinitions().get(0).indexInPattern());
-        assertEquals(TinkarTerm.STRING.nid(),
+        assertEquals(KernelTerm.STRING.nid(),
                 manifestVersion.fieldDefinitions().get(1).dataTypeNid());
 
         int evolvingNid = TEST_SET.patternRef("Evolving pattern (Test)").nid();
@@ -323,15 +324,15 @@ class ChronologyBuilderIT {
     void patternValidation() {
         KnowledgeSet probe = KnowledgeSet.of("44444444-4444-5444-9444-444444444444");
         probe.pattern("Partial pattern (Probe)").at(birth)
-                .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.STRING);
+                .field(TinkarTerm.MODEL_CONCEPT, KernelTerm.USER, KernelTerm.STRING);
         assertThrows(IllegalStateException.class, probe::write,
                 "a scope declaring fields must restate meaning and purpose");
 
         KnowledgeSet duplicates = KnowledgeSet.of("55555555-5555-5555-9555-555555555555");
         PatternBuilder.ActiveScope duplicate = duplicates.pattern("Duplicate meanings (Probe)").at(birth)
-                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER)
-                .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.STRING)
-                .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.MODEL_CONCEPT, TinkarTerm.STRING);
+                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(KernelTerm.USER)
+                .field(TinkarTerm.MODEL_CONCEPT, KernelTerm.USER, KernelTerm.STRING)
+                .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.MODEL_CONCEPT, KernelTerm.STRING);
         assertThrows(IllegalStateException.class, () -> duplicate.at(later),
                 "duplicate field meanings are rejected at version flush");
     }
@@ -351,7 +352,7 @@ class ChronologyBuilderIT {
         // the glossary extractor reads parents from this stored axiom (no builder read API).
         List<SemanticEntity<SemanticEntityVersion>> axioms = EntityService.get().semanticsForComponentOfPattern(
                 TEST_SET.conceptRef("Prose element (Test)").nid(),
-                TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()).toList();
+                KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()).toList();
         assertEquals(1, axioms.size());
         SemanticEntity<?> axiom = axioms.getFirst();
         Object field = ((SemanticEntityVersion) axiom.versions().get(0)).fieldValues().get(0);

@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
@@ -60,9 +61,9 @@ class StarterSetIngestSpikeIT {
     /** Representative components: platform concepts and patterns of varied shape. */
     private static final List<EntityFacade> SAMPLE = List.of(
             TinkarTerm.MODEL_CONCEPT, TinkarTerm.MODULE, TinkarTerm.PATH,
-            TinkarTerm.USER, TinkarTerm.ENGLISH_LANGUAGE, TinkarTerm.DEVELOPMENT_PATH,
-            TinkarTerm.PRIMORDIAL_MODULE, TinkarTerm.ROOT_VERTEX,
-            TinkarTerm.DESCRIPTION_PATTERN, TinkarTerm.US_DIALECT_PATTERN);
+            KernelTerm.USER, KernelTerm.ENGLISH_LANGUAGE, KernelTerm.DEVELOPMENT_PATH,
+            KernelTerm.PRIMORDIAL_MODULE, KernelTerm.ROOT_VERTEX,
+            KernelTerm.DESCRIPTION_PATTERN, KernelTerm.US_DIALECT_PATTERN);
 
     private static final Map<String, Integer> GAPS = new TreeMap<>();
     private static final Map<String, Integer> PATTERNS_SEEN = new TreeMap<>();
@@ -126,37 +127,37 @@ class StarterSetIngestSpikeIT {
         }
 
         int patternNid = semantic.patternNid();
-        if (patternNid == TinkarTerm.DESCRIPTION_PATTERN.nid()) {
+        if (patternNid == KernelTerm.DESCRIPTION_PATTERN.nid()) {
             tally(GAPS, "declared-identity description semantics");
             SemanticEntityVersion latest = semantic.versions().getLast();
             Object language = latest.fieldValues().get(0);
             if (language instanceof EntityFacade languageConcept
-                    && languageConcept.nid() != TinkarTerm.ENGLISH_LANGUAGE.nid()) {
+                    && languageConcept.nid() != KernelTerm.ENGLISH_LANGUAGE.nid()) {
                 tally(GAPS, "per-description language (non-English)");
             }
             Object caseSignificance = latest.fieldValues().get(2);
             if (caseSignificance instanceof EntityFacade caseConcept
-                    && caseConcept.nid() != TinkarTerm.DESCRIPTION_NOT_CASE_SENSITIVE.nid()) {
+                    && caseConcept.nid() != KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE.nid()) {
                 tally(GAPS, "per-description case significance");
             }
             Object type = latest.fieldValues().get(3);
             if (type instanceof EntityFacade typeConcept
-                    && typeConcept.nid() != TinkarTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()
-                    && typeConcept.nid() != TinkarTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()
-                    && typeConcept.nid() != TinkarTerm.DEFINITION_DESCRIPTION_TYPE.nid()) {
+                    && typeConcept.nid() != KernelTerm.FULLY_QUALIFIED_NAME_DESCRIPTION_TYPE.nid()
+                    && typeConcept.nid() != KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()
+                    && typeConcept.nid() != KernelTerm.DEFINITION_DESCRIPTION_TYPE.nid()) {
                 tally(GAPS, "description types beyond FQN/regular/definition");
             }
-        } else if (patternNid == TinkarTerm.US_DIALECT_PATTERN.nid()
-                || patternNid == TinkarTerm.GB_DIALECT_PATTERN.nid()) {
+        } else if (patternNid == KernelTerm.US_DIALECT_PATTERN.nid()
+                || patternNid == KernelTerm.GB_DIALECT_PATTERN.nid()) {
             tally(GAPS, "declared-identity dialect semantics");
-            if (patternNid == TinkarTerm.GB_DIALECT_PATTERN.nid()) {
+            if (patternNid == KernelTerm.GB_DIALECT_PATTERN.nid()) {
                 tally(GAPS, "GB dialect declarations (ledger emits US only)");
             }
-        } else if (patternNid == TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()) {
+        } else if (patternNid == KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN.nid()) {
             tally(GAPS, "declared-identity axiom semantics");
-        } else if (patternNid == TinkarTerm.INFERRED_NAVIGATION_PATTERN.nid()
-                || patternNid == TinkarTerm.STATED_NAVIGATION_PATTERN.nid()
-                || patternNid == TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid()) {
+        } else if (patternNid == KernelTerm.INFERRED_NAVIGATION_PATTERN.nid()
+                || patternNid == KernelTerm.STATED_NAVIGATION_PATTERN.nid()
+                || patternNid == KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN.nid()) {
             tally(GAPS, "derived semantics present in source artifact (exclude from ingest)");
         } else {
             tally(GAPS, "no ledger verb for pattern: " + PrimitiveData.text(patternNid));

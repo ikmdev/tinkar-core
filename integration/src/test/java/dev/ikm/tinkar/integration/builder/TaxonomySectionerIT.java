@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.builder.generator.TaxonomySectioner;
@@ -64,7 +65,7 @@ class TaxonomySectionerIT {
         StampCalculator calculator = Calculators.Stamp.DevelopmentLatestActiveOnly();
         TaxonomySectioner sectioner = TaxonomySectioner.fromStatedNavigation(calculator);
 
-        int platformRoot = TinkarTerm.ROOT_VERTEX.nid();
+        int platformRoot = KernelTerm.ROOT_VERTEX.nid();
         assertTrue(sectioner.childrenOf(platformRoot).size() >= 9,
                 "the platform root's stated-nav children seed the depth-1 sections");
 
@@ -100,7 +101,7 @@ class TaxonomySectionerIT {
         StampCalculator calculator = Calculators.Stamp.DevelopmentLatestActiveOnly();
         TaxonomySectioner sectioner = TaxonomySectioner.fromStatedNavigation(calculator);
 
-        List<Section> sections = sectioner.sectionsUnder(TinkarTerm.ROOT_VERTEX.nid(), 60, 2);
+        List<Section> sections = sectioner.sectionsUnder(KernelTerm.ROOT_VERTEX.nid(), 60, 2);
         Map<String, Integer> sizes = new TreeMap<>();
         sections.forEach(section -> sizes.merge(section.name(), section.members().size(), Integer::sum));
         LOG.info("Split sections (threshold 60): {}", sizes);

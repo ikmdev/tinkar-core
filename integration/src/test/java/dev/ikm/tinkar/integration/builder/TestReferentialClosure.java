@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.entity.builder.ActiveStamp;
 import dev.ikm.tinkar.entity.builder.KnowledgeSet;
@@ -75,13 +76,13 @@ class TestReferentialClosure {
         // Stamp dimensions dangle: USER / DEVELOPMENT_MODULE / DEVELOPMENT_PATH and the
         // Active status concept have no entities in a bare store.
         ActiveStamp birth = Stamp.active("2026-08-11T00:00:00Z",
-                TinkarTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.DEVELOPMENT_PATH);
+                KernelTerm.USER, TinkarTerm.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
 
         // The roster pattern is declared, so the pattern itself is present — only its
         // meaning/purpose/field-definition references (TinkarTerm) dangle.
         OPEN_SET.pattern("Roster pattern (ClosureTest)").at(birth)
-                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(TinkarTerm.USER)
-                .field(TinkarTerm.MODEL_CONCEPT, TinkarTerm.USER, TinkarTerm.COMPONENT_ID_LIST_FIELD)
+                .meaning(TinkarTerm.MODEL_CONCEPT).purpose(KernelTerm.USER)
+                .field(TinkarTerm.MODEL_CONCEPT, KernelTerm.USER, KernelTerm.COMPONENT_ID_LIST_FIELD)
                 .synonym("Roster pattern");
 
         // The concept's stated axiom cites MODEL_CONCEPT — a graph vertex property value
