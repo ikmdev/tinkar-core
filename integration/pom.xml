@@ -10,7 +10,6 @@
 
     <properties>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-        <tinkar-composer.version>1.14.4</tinkar-composer.version>
         <!-- Lucene 10.5.1 turns its Vector API code on only up to Java 26 and warns on 27.
              The property raises that limit; the full suite passes with it. Drop it when
              a Lucene release supports Java 27. -->
@@ -49,10 +48,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>test-fixtures</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>composer</artifactId>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>

@@ -23,11 +23,9 @@ import dev.ikm.tinkar.common.service.PrimitiveDataSearchResult;
 import dev.ikm.tinkar.common.service.SearchService;
 import dev.ikm.tinkar.common.service.ServiceLifecycleManager;
 import dev.ikm.tinkar.common.util.io.FileUtil;
-import dev.ikm.tinkar.composer.Composer;
-import dev.ikm.tinkar.composer.Session;
-import dev.ikm.tinkar.composer.template.Synonym;
 import dev.ikm.tinkar.coordinate.Coordinates;
 import dev.ikm.tinkar.coordinate.navigation.calculator.NavigationCalculatorWithCache;
+import dev.ikm.tinkar.entity.transaction.StampedWriter;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
@@ -57,7 +55,6 @@ public class SearcherIT {
     private static final Logger LOG = LoggerFactory.getLogger(SearcherIT.class);
     private static final File DATASTORE_ROOT = TestConstants.createFilePathInTargetFromClassName.apply(
             SearcherIT.class);
-    private final Composer composer = new Composer("SearcherIT");
     @BeforeAll
     public void beforeAll() {
         TestHelper.startDataBase(DataStore.SPINED_ARRAY_STORE, DATASTORE_ROOT);
@@ -277,20 +274,19 @@ public class SearcherIT {
     }
 
     /**
-     * Composes a new Synonym description with the given text on {@link KernelTerm#USER},
+     * Writes a new synonym description with the given text on {@link KernelTerm#USER},
      * returning the {@link EntityProxy.Semantic} proxy so callers can identify the resulting
      * search hit by nid.
      */
     private EntityProxy.Semantic composeSynonym(String text) {
         EntityProxy.Semantic semanticProxy = EntityProxy.Semantic.make(PublicIds.newRandom());
-        Session session = composer.open(State.ACTIVE, KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH);
-        session.compose(new Synonym()
-                        .semantic(semanticProxy)
-                        .language(KernelTerm.ENGLISH_LANGUAGE)
-                        .caseSignificance(KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE)
-                        .text(text),
-                KernelTerm.USER);
-        composer.commitSession(session);
+        try (StampedWriter writer = StampedWriter.open("SearcherIT",
+                State.ACTIVE, KernelTerm.USER, IkeTerms.DEVELOPMENT_MODULE, KernelTerm.DEVELOPMENT_PATH)) {
+            writer.semantic(semanticProxy, KernelTerm.DESCRIPTION_PATTERN, KernelTerm.USER,
+                    KernelTerm.ENGLISH_LANGUAGE, text,
+                    KernelTerm.DESCRIPTION_NOT_CASE_SENSITIVE, KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE);
+            writer.commit();
+        }
         return semanticProxy;
     }
 
