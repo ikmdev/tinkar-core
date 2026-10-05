@@ -15,9 +15,16 @@
  */
 package dev.ikm.tinkar.integration.builder;
 
+import dev.ikm.tinkar.common.service.PrimitiveData;
+import dev.ikm.tinkar.entity.builder.ActiveStamp;
 import dev.ikm.tinkar.entity.builder.BindingClass;
 import dev.ikm.tinkar.entity.builder.BindingsWriter;
 import dev.ikm.tinkar.entity.builder.KnowledgeSet;
+import dev.ikm.tinkar.entity.builder.Stamp;
+import dev.ikm.tinkar.terms.DeclaredStamp;
+import dev.ikm.tinkar.terms.EntityProxy;
+import dev.ikm.tinkar.terms.State;
+import dev.ikm.tinkar.terms.TinkarTerm;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import org.junit.jupiter.api.AfterAll;
@@ -85,6 +92,48 @@ class BindingClassesIT {
         assertTrue(elPlusSource.contains("EntityProxy.Concept SOME =") && !cqlSource.contains(" SOME ="),
                 "a component bound in one class only");
         assertTrue(cqlSource.contains("EntityProxy.Concept RETRIEVE ="));
+    }
+
+    @Test
+    @DisplayName("A bound stamp is generated in its class, with its identity and every dimension")
+    void stampsBesideBindings() throws Exception {
+        KnowledgeSet set = KnowledgeSet.of("3c8f1a2e-6b4d-5e7f-8a9b-0c1d2e3f4a56");
+        BindingClass stamps = set.bindingClass("TestStamps");
+        EntityProxy.Concept module = set.conceptRef("Test module (Test)");
+        ActiveStamp inception = Stamp.active(PrimitiveData.INCEPTION_EPOCH, TinkarTerm.USER, module,
+                TinkarTerm.DEVELOPMENT_PATH);
+        set.bindStamp(inception, stamps, "INCEPTION");
+        set.bindStamp(inception, stamps, "INCEPTION");
+        assertThrows(IllegalStateException.class, () -> set.bindStamp(inception, stamps, "BIRTH"),
+                "a second name for the stamp in the class");
+
+        List<Path> files = BindingsWriter.writeAll(set, "test.binding.stamps", "TestTerms", outputDir);
+        String source = Files.readString(files.get(1));
+
+        assertTrue(source.contains("public static final DeclaredStamp INCEPTION ="));
+        assertTrue(source.contains(inception.publicId().asUuidArray()[0].toString()), "the stamp's identity");
+        assertTrue(source.contains("State.ACTIVE, " + PrimitiveData.INCEPTION_EPOCH + "L"), "status and time");
+        assertTrue(source.contains(module.publicId().asUuidArray()[0].toString()), "the module");
+        assertTrue(source.contains(TinkarTerm.DEVELOPMENT_PATH.publicId().asUuidArray()[0].toString()), "the path");
+    }
+
+    @Test
+    @DisplayName("A declared stamp turns back into the builder stamp it was generated from")
+    void declaredStampRoundTrips() {
+        EntityProxy.Concept module = EntityProxy.Concept.make("Test module (Test)",
+                dev.ikm.tinkar.common.id.PublicIds.of(java.util.UUID.fromString("7b0e6f3a-1c2d-5e4f-9a8b-7c6d5e4f3a21")));
+        ActiveStamp derived = Stamp.active(PrimitiveData.INCEPTION_EPOCH, TinkarTerm.USER, module,
+                TinkarTerm.DEVELOPMENT_PATH);
+        Stamp back = Stamp.from(new DeclaredStamp(EntityProxy.Stamp.make("INCEPTION", derived.publicId()),
+                State.ACTIVE, derived.time(), TinkarTerm.USER, module, TinkarTerm.DEVELOPMENT_PATH));
+        assertEquals(derived, back, "a derived identity comes back derived");
+
+        Stamp nonExistent = Stamp.nonExistent();
+        Stamp primordial = Stamp.from(new DeclaredStamp(EntityProxy.Stamp.make("NON_EXISTENT", nonExistent.publicId()),
+                State.PRIMORDIAL, nonExistent.time(), TinkarTerm.AUTHOR_FOR_VERSION,
+                TinkarTerm.UNINITIALIZED_COMPONENT, TinkarTerm.UNINITIALIZED_COMPONENT));
+        assertEquals(nonExistent.publicId(), primordial.publicId(), "a declared identity is kept");
+        assertEquals(State.PRIMORDIAL, primordial.state());
     }
 
     @Test

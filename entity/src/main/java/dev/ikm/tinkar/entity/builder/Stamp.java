@@ -20,6 +20,7 @@ import dev.ikm.tinkar.common.id.PublicIds;
 import dev.ikm.tinkar.common.service.PrimitiveData;
 import dev.ikm.tinkar.common.util.uuid.UuidT5Generator;
 import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.DeclaredStamp;
 import dev.ikm.tinkar.terms.State;
 import dev.ikm.tinkar.terms.TinkarTerm;
 
@@ -288,6 +289,33 @@ public sealed interface Stamp permits ActiveStamp, InactiveStamp, PrimordialStam
     static InactiveStamp inactive(PublicId declaredIdentity, long time,
                                   ConceptFacade author, ConceptFacade module, ConceptFacade path) {
         return new InactiveStamp(time, author, module, path, requireDeclared(declaredIdentity));
+    }
+
+    /**
+     * The builder stamp a set's generated bindings declare: active, inactive or primordial as
+     * its status dimension says, carrying its identity as a declared identity unless the
+     * identity is the one its dimensions derive.
+     *
+     * @param declared a stamp from a set's generated bindings
+     * @return the stamp, for authoring under it
+     * @throws IllegalArgumentException if the status is not active, inactive or primordial
+     */
+    static Stamp from(DeclaredStamp declared) {
+        PublicId identity = declared.identity().publicId();
+        boolean derived = identity.asUuidArray().length == 1 && identity.asUuidArray()[0].equals(
+                stampUuid(declared.state(), declared.time(), declared.author(), declared.module(), declared.path()));
+        return switch (declared.state()) {
+            case ACTIVE -> derived
+                    ? new ActiveStamp(declared.time(), declared.author(), declared.module(), declared.path())
+                    : new ActiveStamp(declared.time(), declared.author(), declared.module(), declared.path(), identity);
+            case INACTIVE -> derived
+                    ? new InactiveStamp(declared.time(), declared.author(), declared.module(), declared.path())
+                    : new InactiveStamp(declared.time(), declared.author(), declared.module(), declared.path(), identity);
+            case PRIMORDIAL -> new PrimordialStamp(declared.time(), declared.author(), declared.module(),
+                    declared.path(), identity);
+            default -> throw new IllegalArgumentException("A declared stamp is active, inactive or primordial, not "
+                    + declared.state() + ": " + identity.idString());
+        };
     }
 
     private static PublicId requireDeclared(PublicId declaredIdentity) {

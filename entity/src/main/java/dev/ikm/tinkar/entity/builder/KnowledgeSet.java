@@ -102,6 +102,7 @@ public final class KnowledgeSet {
     private final SessionRegistry registry = new SessionRegistry();
     private final Map<UUID, Stamp> declaredStamps = new LinkedHashMap<>();
     private final Map<String, BindingClass> bindingClasses = new LinkedHashMap<>();
+    private final List<StampBinding> stampBindings = new ArrayList<>();
     private final Set<String> derivedReferencesIssued = new LinkedHashSet<>();
 
     private KnowledgeSet(UUID uuid) {
@@ -575,6 +576,61 @@ public final class KnowledgeSet {
                     builder.publicId(), builder.ledger().currentDefinition(), bindingsOf(builder.ledger())));
         }
         return result;
+    }
+
+    /**
+     * Declares a stamp of this set ({@link #stamp(Stamp)}) and binds it in a binding class
+     * under a constant name: the generated class carries it as a
+     * {@link dev.ikm.tinkar.terms.DeclaredStamp}, so code that authors under the set's stamps
+     * names them as it names the set's components.
+     *
+     * @param stamp        the stamp
+     * @param bindingClass a binding class this set declares
+     * @param constant     the constant's name, a Java identifier
+     * @return this knowledge set
+     * @throws IllegalArgumentException if the name is not a Java identifier
+     * @throws IllegalStateException    if the class is not this set's, or the stamp is already
+     *                                  bound in it under another name
+     */
+    public KnowledgeSet bindStamp(Stamp stamp, BindingClass bindingClass, String constant) {
+        if (!BindingClass.isJavaIdentifier(constant)) {
+            throw new IllegalArgumentException("A binding must be a Java identifier: \"" + constant + "\"");
+        }
+        if (!bindingClass.equals(bindingClasses.get(bindingClass.name()))) {
+            throw new IllegalStateException("A stamp is bound in " + bindingClass.name()
+                    + ", which this set does not declare");
+        }
+        stamp(stamp);
+        for (StampBinding prior : stampBindings) {
+            if (prior.bindingClass().equals(bindingClass) && prior.stamp().publicId().equals(stamp.publicId())) {
+                if (!prior.constant().equals(constant)) {
+                    throw new IllegalStateException("The stamp is bound in " + bindingClass.name() + " as "
+                            + prior.constant() + "; a stamp has one name in a binding class, not also " + constant);
+                }
+                return this;
+            }
+        }
+        stampBindings.add(new StampBinding(stamp, bindingClass, constant));
+        return this;
+    }
+
+    /**
+     * The stamps this set binds, in binding order.
+     *
+     * @return the stamp bindings
+     */
+    public List<StampBinding> stampBindings() {
+        return List.copyOf(stampBindings);
+    }
+
+    /**
+     * A stamp's name in a binding class.
+     *
+     * @param stamp        the stamp
+     * @param bindingClass the binding class
+     * @param constant     the constant's name
+     */
+    public record StampBinding(Stamp stamp, BindingClass bindingClass, String constant) {
     }
 
     /**
