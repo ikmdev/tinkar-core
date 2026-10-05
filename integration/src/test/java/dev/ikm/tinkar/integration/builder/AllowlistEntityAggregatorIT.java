@@ -21,7 +21,6 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -75,7 +74,7 @@ class AllowlistEntityAggregatorIT {
 
     @Test
     void allowlistIncludesOnlyTheAllowedModule() {
-        List<Integer> emitted = collect(new AllowlistEntityAggregator(Set.of(moduleA.publicId())));
+        List<Integer> emitted = collect(new AllowlistEntityAggregator(List.of(moduleA.publicId())));
 
         assertTrue(emitted.contains(moduleA.nid()), "the allowed module's own concept is exported");
         assertTrue(emitted.contains(thingA.nid()), "content authored in the allowed module is exported");
@@ -85,7 +84,7 @@ class AllowlistEntityAggregatorIT {
 
     @Test
     void patternsAreEmittedBeforeSemantics() {
-        List<Integer> emitted = collect(new AllowlistEntityAggregator(Set.of(moduleA.publicId())));
+        List<Integer> emitted = collect(new AllowlistEntityAggregator(List.of(moduleA.publicId())));
 
         int lastPatternIndex = -1;
         int firstSemanticIndex = Integer.MAX_VALUE;
@@ -105,13 +104,13 @@ class AllowlistEntityAggregatorIT {
 
     @Test
     void purposePredicateIsOffByDefaultAndFailOpen() {
-        Set<PublicId> allow = Set.of(moduleA.publicId());
+        List<PublicId> allow = List.of(moduleA.publicId());
         EntityCountSummary noPredicate = new AllowlistEntityAggregator(allow).aggregate(nid -> { });
         // Fail-open: purpose never drops a semantic whose pattern-purpose it cannot classify (the
         // description semantics here sit on TinkarTerm patterns absent from this replay-seeded store),
         // so a reject-everything predicate leaves the semantic count unchanged.
         EntityCountSummary rejectAll =
-                new AllowlistEntityAggregator(allow, Set.of(), Set.of(), Set.of(), nid -> false).aggregate(nid -> { });
+                new AllowlistEntityAggregator(allow, List.of(), List.of(), List.of(), nid -> false).aggregate(nid -> { });
 
         assertTrue(noPredicate.semanticCount() > 0, "the allowed module has description semantics");
         assertEquals(noPredicate.semanticCount(), rejectAll.semanticCount(),
@@ -122,13 +121,13 @@ class AllowlistEntityAggregatorIT {
 
     @Test
     void excludingAPatternDropsItButKeepsSemanticsOnOtherPatterns() {
-        Set<PublicId> mod = Set.of(moduleA.publicId());
+        List<PublicId> mod = List.of(moduleA.publicId());
         EntityCountSummary baseline = new AllowlistEntityAggregator(mod).aggregate(nid -> { });
         AllowlistEntityAggregator excluding = new AllowlistEntityAggregator(
-                mod, Set.of(), Set.of(), Set.of(probePattern.publicId()), null);
+                mod, List.of(), List.of(), List.of(probePattern.publicId()), null);
         List<Integer> emitted = collect(excluding);
         EntityCountSummary excluded = new AllowlistEntityAggregator(
-                mod, Set.of(), Set.of(), Set.of(probePattern.publicId()), null).aggregate(nid -> { });
+                mod, List.of(), List.of(), List.of(probePattern.publicId()), null).aggregate(nid -> { });
 
         assertFalse(emitted.contains(probePattern.nid()), "an excluded pattern is not exported");
         assertEquals(baseline.patternCount() - 1, excluded.patternCount(), "exactly the excluded pattern is dropped");
@@ -138,9 +137,9 @@ class AllowlistEntityAggregatorIT {
 
     @Test
     void includingOnlyOnePatternKeepsOnlyThatPattern() {
-        Set<PublicId> mod = Set.of(moduleA.publicId());
+        List<PublicId> mod = List.of(moduleA.publicId());
         EntityCountSummary included = new AllowlistEntityAggregator(
-                mod, Set.of(), Set.of(probePattern.publicId()), Set.of(), null).aggregate(nid -> { });
+                mod, List.of(), List.of(probePattern.publicId()), List.of(), null).aggregate(nid -> { });
 
         assertEquals(1, included.patternCount(), "only the included pattern is exported");
         // The module's description semantics sit on external TinkarTerm patterns, so an include-set

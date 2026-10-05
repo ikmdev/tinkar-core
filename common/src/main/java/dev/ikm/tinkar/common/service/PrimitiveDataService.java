@@ -76,30 +76,37 @@ public interface PrimitiveDataService {
         return nid;
     }
 
+    /**
+     * The nid of a public id with more than one UUID: the nid of its least UUID the store knows,
+     * or a new one if it knows none. Every UUID no component holds is then mapped to that nid, so a
+     * later lookup by it finds the component; a UUID another component holds keeps its nid.
+     * <p>
+     * When the UUIDs belong to more than one component, the public id names components the store
+     * holds as distinct. That is advised ({@link IdentityAdvisories#componentsShareUuids}) and left
+     * for review, not reconciled here: the store goes on, the id resolving by its least known UUID.
+     *
+     * @param sortedUuidList the public id's UUIDs, sorted
+     */
     static int valueOrGenerateForList(ListIterable<UUID> sortedUuidList,
                                       ConcurrentMap<UUID, Integer> uuidNidMap,
                                       NidGenerator nidGenerator) {
         boolean missingMap = false;
         int foundValue = Integer.MIN_VALUE;
+        java.util.TreeSet<Integer> foundNids = new java.util.TreeSet<>();
 
         for (UUID uuid : sortedUuidList) {
             Integer nid = uuidNidMap.get(uuid);
             if (nid == null) {
                 missingMap = true;
             } else {
+                foundNids.add(nid);
                 if (foundValue == Integer.MIN_VALUE) {
                     foundValue = nid;
-                } else {
-                    if (foundValue != nid) {
-                        StringBuilder sb = new StringBuilder();
-                        sb.append("Multiple nids for: ");
-                        sb.append(sortedUuidList);
-                        sb.append(" first value: ").append(foundValue);
-                        sb.append(" second value: ").append(nid);
-                        throw new IllegalStateException(sb.toString());
-                    }
                 }
             }
+        }
+        if (foundNids.size() > 1) {
+            IdentityAdvisories.componentsShareUuids(sortedUuidList.toList(), foundNids);
         }
         if (!missingMap) {
             return foundValue;
@@ -108,7 +115,7 @@ public interface PrimitiveDataService {
             foundValue = valueOrGenerateAndPut(sortedUuidList.get(0), uuidNidMap, nidGenerator);
         }
         for (UUID uuid : sortedUuidList) {
-            uuidNidMap.put(uuid, foundValue);
+            uuidNidMap.putIfAbsent(uuid, foundValue);
         }
         return foundValue;
     }
@@ -120,8 +127,9 @@ public interface PrimitiveDataService {
             case 1:
                 return valueOrGenerateAndPut(uuids[0], uuidNidMap, nidGenerator);
         }
-        Arrays.sort(uuids);
-        return valueOrGenerateForList(Lists.immutable.of(uuids), uuidNidMap, nidGenerator);
+        UUID[] sorted = uuids.clone();
+        Arrays.sort(sorted);
+        return valueOrGenerateForList(Lists.immutable.of(sorted), uuidNidMap, nidGenerator);
     }
 
     /**
@@ -133,6 +141,26 @@ public interface PrimitiveDataService {
      * @param newBytes
      * @return
      */
+    /** The UUIDs of the component whose record these are: its chronology follows a 9 byte header. */
+    private static MutableSet<UUID> recordUuids(byte[] recordBytes) {
+        ByteBuf buf = ByteBuf.wrapForReading(recordBytes);
+        buf.moveHead(9 + 1 + 4); // part count, first part size, format version; entity type token, nid
+        MutableLongList longList = LongLists.mutable.empty();
+        longList.add(buf.readLong());
+        longList.add(buf.readLong());
+        int additionalUuidLongs = buf.readByte();
+        for (int i = 0; i < additionalUuidLongs; i++) {
+            longList.add(buf.readLong());
+        }
+        return Sets.mutable.withAll(UuidUtil.toList(longList.toArray()).castToList());
+    }
+
+    private static int recordNid(byte[] recordBytes) {
+        ByteBuf buf = ByteBuf.wrapForReading(recordBytes);
+        buf.moveHead(9 + 1); // part count, first part size, format version; entity type token
+        return buf.readInt();
+    }
+
     static byte[] merge(byte[] oldBytes, byte[] newBytes) {
         if (oldBytes == null) {
             return newBytes;
@@ -219,6 +247,13 @@ public interface PrimitiveDataService {
                         uuids.addAll(UuidUtil.toList(longList.toArray()).castToList());
                     }
                     ImmutableList<UUID> uuidList = uuids.toImmutableList();
+                    // An existing component gaining UUIDs it did not hold is rare (a change set
+                    // naming it under more UUIDs); the store holds them all now, and says so.
+                    MutableSet<UUID> held = recordUuids(oldBytes);
+                    MutableSet<UUID> added = uuids.reject(held::contains);
+                    if (!added.isEmpty()) {
+                        IdentityAdvisories.uuidsAdded(recordNid(oldBytes), held, added);
+                    }
                     ByteBuf chronologyBytes = ByteBuf.wrapForReading(chronologyByteLists.get(0).toArray());
                     ByteBuf writeBuf = ByteBufPool.allocate(16 * uuidList.size() + chronologyBytes.array().length);
                     writeBuf.writeByte(chronologyBytes.readByte()); // EntityType token

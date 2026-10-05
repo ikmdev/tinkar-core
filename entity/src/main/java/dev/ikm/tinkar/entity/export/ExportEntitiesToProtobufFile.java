@@ -62,8 +62,9 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
     // Entities may be delivered concurrently (RocksProvider iterates semantics in
     // parallel), so shared state is concurrent and stream writes are serialized
     // (IKE-Network/ike-issues#1142).
-    private final Set<PublicId> moduleList = ConcurrentHashMap.newKeySet();
-    private final Set<PublicId> authorList = ConcurrentHashMap.newKeySet();
+    // The modules and authors of the exported stamps, by nid: a public id is never a hash key.
+    private final Set<Integer> moduleNids = ConcurrentHashMap.newKeySet();
+    private final Set<Integer> authorNids = ConcurrentHashMap.newKeySet();
     /** Guards writes to the zip stream and the skip tallies. */
     private final Object writeLock = new Object();
     // Per-type tallies of entities whose transform failed on a dangling reference and
@@ -125,8 +126,8 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                         // Store Module & Author Dependencies for Manifest
                         // Resolve via the nid->publicId map: module/author concepts need
                         // not be present as entities in the exporting store.
-                        moduleList.add(PrimitiveData.publicId(stampEntity.moduleNid()));
-                        authorList.add(PrimitiveData.publicId(stampEntity.authorNid()));
+                        moduleNids.add(stampEntity.moduleNid());
+                        authorNids.add(stampEntity.authorNid());
                     }
                     // Transform concurrently; write one whole record at a time, or
                     // records from different threads interleave in the stream.
@@ -184,8 +185,8 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                     entityCountSummary.semanticCount(),
                     entityCountSummary.patternCount(),
                     entityCountSummary.stampCount(),
-                    moduleList,
-                    authorList
+                    publicIds(moduleNids),
+                    publicIds(authorNids)
                 ).getBytes(StandardCharsets.UTF_8));
             zos.closeEntry();
             zos.flush();
@@ -212,8 +213,8 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                                            long semanticsCount,
                                            long patternsCount,
                                            long stampsCount,
-                                           Set<PublicId> moduleList,
-                                           Set<PublicId> authorList){
+                                           Collection<PublicId> moduleList,
+                                           Collection<PublicId> authorList){
         StringBuilder manifestContent = new StringBuilder()
                 // TODO: Dynamically populate this user
                 .append("Packager-Name: ").append(KernelTerm.KOMET_USER.description()).append("\n")
@@ -227,6 +228,17 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                 .append(idsToManifestEntry(authorList))
                 .append("\n"); // Final new line necessary per Manifest spec
         return manifestContent.toString();
+    }
+
+    /**
+     * The public ids of components given by nid, each once: for a manifest's module and author
+     * entries, collected by nid because a public id is never a hash key.
+     *
+     * @param nids the components' nids
+     * @return their public ids, in nid order
+     */
+    public static List<PublicId> publicIds(Collection<Integer> nids) {
+        return nids.stream().sorted().map(PrimitiveData::publicId).toList();
     }
 
     public static String idsToManifestEntry(Collection<PublicId> publicIds) {

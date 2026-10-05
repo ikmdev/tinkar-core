@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.IntConsumer;
@@ -67,10 +68,11 @@ import java.util.function.IntPredicate;
  */
 public class AllowlistEntityAggregator extends EntityAggregator {
 
-    private final Set<PublicId> allowedModules;
-    private final Set<PublicId> allowedPaths;
-    private final Set<PublicId> includedPatterns;
-    private final Set<PublicId> excludedPatterns;
+    // Lists, not sets: a public id is never a hash key. Membership is decided on nids (aggregate).
+    private final List<PublicId> allowedModules;
+    private final List<PublicId> allowedPaths;
+    private final List<PublicId> includedPatterns;
+    private final List<PublicId> excludedPatterns;
     private final IntPredicate purposeNidPredicate;
 
     /**
@@ -78,8 +80,8 @@ public class AllowlistEntityAggregator extends EntityAggregator {
      *
      * @param allowedModules the module concepts whose content may cross the boundary
      */
-    public AllowlistEntityAggregator(Set<PublicId> allowedModules) {
-        this(allowedModules, Set.of(), Set.of(), Set.of(), null);
+    public AllowlistEntityAggregator(Collection<PublicId> allowedModules) {
+        this(allowedModules, List.of(), List.of(), List.of(), null);
     }
 
     /**
@@ -95,13 +97,13 @@ public class AllowlistEntityAggregator extends EntityAggregator {
      *                            their pattern's purpose nid; {@code null} disables purpose filtering
      *                            (purpose is a permitted, complementary key — off by default)
      */
-    public AllowlistEntityAggregator(Set<PublicId> allowedModules, Set<PublicId> allowedPaths,
-                                     Set<PublicId> includedPatterns, Set<PublicId> excludedPatterns,
+    public AllowlistEntityAggregator(Collection<PublicId> allowedModules, Collection<PublicId> allowedPaths,
+                                     Collection<PublicId> includedPatterns, Collection<PublicId> excludedPatterns,
                                      IntPredicate purposeNidPredicate) {
-        this.allowedModules = Set.copyOf(Objects.requireNonNull(allowedModules, "allowedModules"));
-        this.allowedPaths = allowedPaths == null ? Set.of() : Set.copyOf(allowedPaths);
-        this.includedPatterns = includedPatterns == null ? Set.of() : Set.copyOf(includedPatterns);
-        this.excludedPatterns = excludedPatterns == null ? Set.of() : Set.copyOf(excludedPatterns);
+        this.allowedModules = List.copyOf(Objects.requireNonNull(allowedModules, "allowedModules"));
+        this.allowedPaths = allowedPaths == null ? List.of() : List.copyOf(allowedPaths);
+        this.includedPatterns = includedPatterns == null ? List.of() : List.copyOf(includedPatterns);
+        this.excludedPatterns = excludedPatterns == null ? List.of() : List.copyOf(excludedPatterns);
         this.purposeNidPredicate = purposeNidPredicate;
     }
 

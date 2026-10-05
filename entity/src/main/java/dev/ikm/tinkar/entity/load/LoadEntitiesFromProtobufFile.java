@@ -47,6 +47,9 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -122,7 +125,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             updateMessage("Analyzing Import File...");
 
             // Analyze Manifest and update tracking callable
-            Map<PublicId, String> manifestEntryData =new HashMap();
+            List<Map.Entry<PublicId, String>> manifestEntryData = new ArrayList<>(); // a public id is never a hash key
             long expectedImports = analyzeManifest(manifestEntryData);
             LOG.info(expectedImports + " Entities to process...");
 
@@ -142,7 +145,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
      * Pass 2+: Import semantics whose referenced components now exist in the database
      * Repeats until all semantics are successfully imported or no progress is made.
      */
-    private EntityCountSummary computeMultiPass(long expectedImports, Map<PublicId, String> manifestEntryData) throws Exception {
+    private EntityCountSummary computeMultiPass(long expectedImports, List<Map.Entry<PublicId, String>> manifestEntryData) throws Exception {
         updateMessage("Starting multi-pass import...");
         updateProgress(0, expectedImports * 2);
 
@@ -327,12 +330,12 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         return summarize();
     }
 
-    private static void verifyManifest(Map<PublicId, String> manifestEntryData) {
-        manifestEntryData.keySet().forEach((publicId) -> {
-            if (!PrimitiveData.get().hasPublicId(publicId)) {
+    private static void verifyManifest(List<Map.Entry<PublicId, String>> manifestEntryData) {
+        manifestEntryData.forEach(entry -> {
+            if (!PrimitiveData.get().hasPublicId(entry.getKey())) {
                 LOG.warn("Dependent Module or Author is not Present -" +
-                        " PublicId: " + publicId.idString() +
-                        " Description: " + manifestEntryData.get(publicId));
+                        " PublicId: " + entry.getKey().idString() +
+                        " Description: " + entry.getValue());
             }
         });
     }
@@ -341,7 +344,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
      * One-pass import: Load entities directly without pre-registering NIDs.
      * This may fail if the changeset contains forward references.
      */
-    private EntityCountSummary computeOnePass(long expectedImports, Map<PublicId, String> manifestEntryData) {
+    private EntityCountSummary computeOnePass(long expectedImports, List<Map.Entry<PublicId, String>> manifestEntryData) {
         updateMessage("Importing Protobuf Data (1-pass mode)...");
         LOG.debug("Expected imports: " + expectedImports);
 
@@ -501,7 +504,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         });
     }
 
-    private long analyzeManifest(Map<PublicId, String> manifestEntryData) {
+    private long analyzeManifest(List<Map.Entry<PublicId, String>> manifestEntryData) {
         long expectedImports = -1;
 
         // Read Manifest from Zip
@@ -519,7 +522,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                     manifest.getEntries().keySet().forEach((publicIdKey) -> {
                         PublicId publicId = PublicIds.of(publicIdKey.split(","));
                         String description = manifest.getEntries().get(publicIdKey).getValue("Description");
-                        manifestEntryData.put(publicId, description);
+                        manifestEntryData.add(Map.entry(publicId, description));
                     });
                     foundManifest = true;
                 }

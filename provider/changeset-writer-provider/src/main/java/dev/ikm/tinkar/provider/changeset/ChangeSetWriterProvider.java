@@ -235,8 +235,9 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                 final LongAdder patternsCount = new LongAdder();
                 final LongAdder stampsCount = new LongAdder();
 
-                final Set<PublicId> moduleList = new HashSet<>();
-                final Set<PublicId> authorList = new HashSet<>();
+                // By nid: a public id is never a hash key.
+                final Set<Integer> moduleList = new HashSet<>();
+                final Set<Integer> authorList = new HashSet<>();
                 final EntityToTinkarSchemaTransformer entityTransformer =
                         EntityToTinkarSchemaTransformer.getInstance();
 
@@ -357,8 +358,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      * @param semanticsCount the counter for the number of semantic entities processed
      * @param patternsCount the counter for the number of pattern entities processed
      * @param stampsCount the counter for the number of stamp entities processed
-     * @param moduleList the set to collect module public IDs for manifest generation
-     * @param authorList the set to collect author public IDs for manifest generation
+     * @param moduleList the set collecting the nids of modules, for manifest generation
+     * @param authorList the set collecting the nids of authors, for manifest generation
      * @param entityTransformer the transformer used to convert entities to Tinkar schema messages
      * @param zos the ZIP output stream to write the entity data into
      */
@@ -368,8 +369,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                     LongAdder semanticsCount,
                                     LongAdder patternsCount,
                                     LongAdder stampsCount,
-                                    Set<PublicId> moduleList,
-                                    Set<PublicId> authorList,
+                                    Set<Integer> moduleList,
+                                    Set<Integer> authorList,
                                     EntityToTinkarSchemaTransformer entityTransformer,
                                     ZipOutputStream zos) {
         entityCount.increment();
@@ -380,8 +381,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
             case StampEntity stampEntity -> {
                 stampsCount.increment();
                 // Store Module & Author Dependencies for Manifest
-                moduleList.add(stampEntity.module().publicId());
-                authorList.add(stampEntity.author().publicId());
+                moduleList.add(stampEntity.moduleNid());
+                authorList.add(stampEntity.authorNid());
             }
             default -> {
                 throw new IllegalStateException("Unexpected value: " + EntityText.diagnostic(entityToWrite));
@@ -416,7 +417,7 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      * @param semanticsCount    counter for semantic entities written
      * @param patternsCount     counter for pattern entities written
      * @param stampsCount       counter for stamp entities written
-     * @param moduleList        set collecting module public IDs for the manifest
+     * @param moduleList        set collecting the nids of modules, for the manifest
      * @param authorList        set collecting author public IDs for the manifest
      * @param entityTransformer transformer that produces protobuf messages
      * @param zos               the open ZIP output stream
@@ -428,8 +429,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
             LongAdder semanticsCount,
             LongAdder patternsCount,
             LongAdder stampsCount,
-            Set<PublicId> moduleList,
-            Set<PublicId> authorList,
+            Set<Integer> moduleList,
+            Set<Integer> authorList,
             EntityToTinkarSchemaTransformer entityTransformer,
             ZipOutputStream zos) {
         List<Entity<EntityVersion>> stampSnapshots = new ArrayList<>();
@@ -461,8 +462,8 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
      * @param semanticsCount the counter for the total number of semantics processed
      * @param patternsCount the counter for the total number of patterns processed
      * @param stampsCount the counter for the total number of stamps processed
-     * @param moduleList the set of module public IDs collected for the manifest
-     * @param authorList the set of author public IDs collected for the manifest
+     * @param moduleList the nids of the modules collected for the manifest
+     * @param authorList the nids of the authors collected for the manifest
      * @return the generated manifest content as a String
      */
     private String generateManifestContent(LongAdder entityCount,
@@ -470,15 +471,15 @@ public class ChangeSetWriterProvider implements ChangeSetWriterService, SaveStat
                                            LongAdder semanticsCount,
                                            LongAdder patternsCount,
                                            LongAdder stampsCount,
-                                           Set<PublicId> moduleList,
-                                           Set<PublicId> authorList) {
+                                           Set<Integer> moduleList,
+                                           Set<Integer> authorList) {
         return ExportEntitiesToProtobufFile.generateManifestContent(entityCount.sum(),
                 conceptsCount.sum(),
                 semanticsCount.sum(),
                 patternsCount.sum(),
                 stampsCount.sum(),
-                moduleList,
-                authorList);
+                ExportEntitiesToProtobufFile.publicIds(moduleList),
+                ExportEntitiesToProtobufFile.publicIds(authorList));
     }
 
     /**

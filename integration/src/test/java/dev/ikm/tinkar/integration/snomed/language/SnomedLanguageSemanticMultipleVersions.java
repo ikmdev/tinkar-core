@@ -32,9 +32,9 @@ import dev.ikm.tinkar.integration.snomed.core.SnomedCTHelper;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 
 import static dev.ikm.tinkar.integration.snomed.core.MockDataType.ENTITYREF;
@@ -49,7 +49,8 @@ import static dev.ikm.tinkar.integration.snomed.core.TinkarStarterConceptUtil.lo
 
 public class SnomedLanguageSemanticMultipleVersions {
     public static List<SemanticRecord> createLanguageAcceptabilitySemantic(String input) {
-        Set<PublicId> uniquePublicIds = new HashSet<>();
+        // Sorted, not hashed: a public id is never a hash key; a TreeSet holds the same UUIDs once.
+        Set<PublicId> uniquePublicIds = new TreeSet<>();
         List<SemanticRecord> semanticRecordList = new ArrayList<>();
         List<String> rows = loadSnomedFile(SnomedLanguageSemanticMultipleVersions.class, input);
         for (String row : rows) {

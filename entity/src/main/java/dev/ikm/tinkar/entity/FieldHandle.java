@@ -347,9 +347,9 @@ public interface FieldHandle {
         return this;
     }
 
-    default FieldHandle ifPublicIdSet(Consumer<ImmutableSet<PublicId>> consumer) {
+    default FieldHandle ifPublicIdSet(Consumer<ImmutableSet<PublicId>> consumer) { // public-id-hash-key: accessor for a field value's own type, built nowhere in main code
         if (value() instanceof ImmutableSet<?> set && (set.isEmpty() || set.iterator().next() instanceof PublicId)) {
-            consumer.accept((ImmutableSet<PublicId>) set);
+            consumer.accept((ImmutableSet<PublicId>) set); // public-id-hash-key: as above
         }
         return this;
     }
@@ -490,9 +490,9 @@ public interface FieldHandle {
         return Optional.empty();
     }
 
-    default Optional<ImmutableSet<PublicId>> asPublicIdSet() {
+    default Optional<ImmutableSet<PublicId>> asPublicIdSet() { // public-id-hash-key: as above
         if (value() instanceof ImmutableSet<?> set && (set.isEmpty() || set.iterator().next() instanceof PublicId)) {
-            return Optional.of((ImmutableSet<PublicId>) set);
+            return Optional.of((ImmutableSet<PublicId>) set); // public-id-hash-key: as above
         }
         return Optional.empty();
     }
