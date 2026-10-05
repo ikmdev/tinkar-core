@@ -33,8 +33,10 @@ import dev.ikm.tinkar.coordinate.stamp.StampCoordinate;
 import dev.ikm.tinkar.entity.*;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.entity.transform.TinkarSchemaToEntityTransformer;
+import dev.ikm.tinkar.schema.ConceptChronology;
 import dev.ikm.tinkar.schema.PatternChronology;
 import dev.ikm.tinkar.schema.SemanticChronology;
+import dev.ikm.tinkar.schema.StampChronology;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import dev.ikm.tinkar.terms.EntityBinding;
 import dev.ikm.tinkar.terms.EntityProxy;
@@ -172,18 +174,9 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                                                     if (identifierCount.incrementAndGet() % 1000 == 0) {
                                                         updateProgress(countingIn.getBytesRead(), this.importFile.length() * 2);
                                                     }
-                                                    int nid = switch (pbTinkarMsg.getValueCase()) {
-                                                        case CONCEPT_CHRONOLOGY ->
-                                                                makeNid(EntityBinding.Concept.pattern(), pbTinkarMsg.getConceptChronology().getPublicId());
-                                                        case SEMANTIC_CHRONOLOGY ->
-                                                                makeNid(pbTinkarMsg.getSemanticChronology());
-                                                        case PATTERN_CHRONOLOGY ->
-                                                                makeNid(EntityBinding.Pattern.pattern(), pbTinkarMsg.getPatternChronology().getPublicId());
-                                                        case STAMP_CHRONOLOGY ->
-                                                                makeNid(EntityBinding.Stamp.pattern(), pbTinkarMsg.getStampChronology().getPublicId());
-                                                        case VALUE_NOT_SET ->
-                                                                throw new IllegalStateException("Tinkar message value not set");
-                                                    };
+                                                    int nid = pbTinkarMsg.getValueCase() == TinkarMsg.ValueCase.SEMANTIC_CHRONOLOGY
+                                                            ? makeNid(pbTinkarMsg.getSemanticChronology())
+                                                            : makeNid(patternOf(pbTinkarMsg), publicIdOf(pbTinkarMsg));
                                                     if (pbTinkarMsg.getValueCase().getNumber() == TinkarMsg.ValueCase.PATTERN_CHRONOLOGY.getNumber()) {
                                                         PatternChronology patternChronology = pbTinkarMsg.getPatternChronology();
                                                         String uuidStr = patternChronology.getPublicId().getUuidsList().get(0);
@@ -407,21 +400,42 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
      * This allows Pass 2 to resolve references.
      */
     private int makeNidForMessage(TinkarMsg pbTinkarMsg) {
+        return Entity.nidForSemantic(patternOf(pbTinkarMsg).publicId(), getEntityPublicId(publicIdOf(pbTinkarMsg)));
+    }
+
+    /**
+     * The pattern a record's component is an element of — what a pattern-encoding store (Rocks)
+     * needs to assign its nid.
+     *
+     * <p>Semantics have always named theirs. Concepts, patterns and stamps carry one since
+     * tinkar-schema#43; a changeset written before that leaves it out, which means the well-known
+     * default for the type.
+     */
+    private static EntityProxy.Pattern patternOf(TinkarMsg pbTinkarMsg) {
         return switch (pbTinkarMsg.getValueCase()) {
-            case CONCEPT_CHRONOLOGY -> 
-                Entity.nidForConcept(getEntityPublicId(pbTinkarMsg.getConceptChronology().getPublicId()));
-            case SEMANTIC_CHRONOLOGY -> {
-                var semanticChronology = pbTinkarMsg.getSemanticChronology();
-                PublicId patternPublicId = getEntityPublicId(semanticChronology.getPatternForSemanticPublicId());
-                PublicId semanticPublicId = getEntityPublicId(semanticChronology.getPublicId());
-                yield Entity.nidForSemantic(patternPublicId, semanticPublicId);
-            }
-            case PATTERN_CHRONOLOGY ->
-                Entity.nidForPattern(getEntityPublicId(pbTinkarMsg.getPatternChronology().getPublicId()));
-            case STAMP_CHRONOLOGY ->
-                Entity.nidForStamp(getEntityPublicId(pbTinkarMsg.getStampChronology().getPublicId()));
-            case VALUE_NOT_SET ->
-                throw new IllegalStateException("Tinkar message value not set");
+            case SEMANTIC_CHRONOLOGY -> EntityProxy.Pattern.make(
+                    getEntityPublicId(pbTinkarMsg.getSemanticChronology().getPatternForSemanticPublicId()));
+            case CONCEPT_CHRONOLOGY -> pbTinkarMsg.getConceptChronology().hasPatternForConceptPublicId()
+                    ? EntityProxy.Pattern.make(getEntityPublicId(pbTinkarMsg.getConceptChronology().getPatternForConceptPublicId()))
+                    : EntityBinding.Concept.pattern();
+            case PATTERN_CHRONOLOGY -> pbTinkarMsg.getPatternChronology().hasPatternForPatternPublicId()
+                    ? EntityProxy.Pattern.make(getEntityPublicId(pbTinkarMsg.getPatternChronology().getPatternForPatternPublicId()))
+                    : EntityBinding.Pattern.pattern();
+            case STAMP_CHRONOLOGY -> pbTinkarMsg.getStampChronology().hasPatternForStampPublicId()
+                    ? EntityProxy.Pattern.make(getEntityPublicId(pbTinkarMsg.getStampChronology().getPatternForStampPublicId()))
+                    : EntityBinding.Stamp.pattern();
+            case VALUE_NOT_SET -> throw new IllegalStateException("Tinkar message value not set");
+        };
+    }
+
+    /** The public id of a record's component. */
+    private static dev.ikm.tinkar.schema.PublicId publicIdOf(TinkarMsg pbTinkarMsg) {
+        return switch (pbTinkarMsg.getValueCase()) {
+            case CONCEPT_CHRONOLOGY -> pbTinkarMsg.getConceptChronology().getPublicId();
+            case SEMANTIC_CHRONOLOGY -> pbTinkarMsg.getSemanticChronology().getPublicId();
+            case PATTERN_CHRONOLOGY -> pbTinkarMsg.getPatternChronology().getPublicId();
+            case STAMP_CHRONOLOGY -> pbTinkarMsg.getStampChronology().getPublicId();
+            case VALUE_NOT_SET -> throw new IllegalStateException("Tinkar message value not set");
         };
     }
 

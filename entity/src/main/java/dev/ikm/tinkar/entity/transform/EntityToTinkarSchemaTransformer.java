@@ -59,6 +59,7 @@ import dev.ikm.tinkar.schema.StampVersion;
 import dev.ikm.tinkar.schema.TinkarMsg;
 import dev.ikm.tinkar.schema.VertexUUID;
 import dev.ikm.tinkar.terms.ConceptFacade;
+import dev.ikm.tinkar.terms.EntityBinding;
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
@@ -117,6 +118,7 @@ public class EntityToTinkarSchemaTransformer {
                 .setConceptChronology(ConceptChronology.newBuilder()
                         .setPublicId(createPBPublicId(conceptEntity.publicId()))
                         .addAllConceptVersions(createPBConceptVersions(conceptEntity.versions()))
+                        .setPatternForConceptPublicId(createPBPublicId(EntityBinding.Concept.pattern().publicId()))
                         .build())
                 .build();
     }
@@ -165,6 +167,7 @@ public class EntityToTinkarSchemaTransformer {
                 .setPatternChronology(PatternChronology.newBuilder()
                         .setPublicId(createPBPublicId(patternEntity.publicId()))
                         .addAllPatternVersions(createPBPatternVersions(patternEntity.versions()))
+                        .setPatternForPatternPublicId(createPBPublicId(EntityBinding.Pattern.pattern().publicId()))
                         .build())
                 .build();
     }
@@ -186,7 +189,8 @@ public class EntityToTinkarSchemaTransformer {
 
     protected StampChronology createPBStampChronology(StampEntity<StampVersionRecord> stampEntity){
         StampChronology.Builder stampBuilder = StampChronology.newBuilder()
-                .setPublicId(createPBPublicId(stampEntity.publicId()));
+                .setPublicId(createPBPublicId(stampEntity.publicId()))
+                .setPatternForStampPublicId(createPBPublicId(EntityBinding.Stamp.pattern().publicId()));
         switch (stampEntity.versions().size()){
             case 2: stampBuilder.setSecondStampVersion(createPBStampVersion(stampEntity.versions().get(1)));
             case 1: stampBuilder.setFirstStampVersion(createPBStampVersion(stampEntity.versions().get(0)));

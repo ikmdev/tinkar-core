@@ -105,7 +105,8 @@ public class TinkarSchemaToEntityTransformer {
         if(pbConceptChronology.getConceptVersionsCount() == 0){
             throw new RuntimeException("Exception thrown, Concept Chronology can't contain zero versions");
         }
-        int conceptNid = nidForConcept(pbConceptChronology.getPublicId());
+        int conceptNid = nidForConcept(pbConceptChronology.getPublicId(),
+                pbConceptChronology.hasPatternForConceptPublicId() ? pbConceptChronology.getPatternForConceptPublicId() : null);
         PublicId conceptPublicId = transformPublicId(pbConceptChronology.getPublicId());
         RecordListBuilder<ConceptVersionRecord> conceptVersions = RecordListBuilder.make();
         ConceptRecord conceptRecord = switch (conceptPublicId.uuidCount()) {
@@ -223,7 +224,8 @@ public class TinkarSchemaToEntityTransformer {
                 patternRecord = PatternRecordBuilder.builder()
                         .leastSignificantBits(patternPublicId.asUuidArray()[0].getLeastSignificantBits())
                         .mostSignificantBits(patternPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .nid(nidForPattern(patternPublicId))
+                        .nid(nidForPattern(pbPatternChronology.getPublicId(),
+                                pbPatternChronology.hasPatternForPatternPublicId() ? pbPatternChronology.getPatternForPatternPublicId() : null))
                         .additionalUuidLongs(UuidUtil.asImmutableLongList(Arrays.copyOfRange(patternPublicId.asUuidArray(),
                                 1, patternPublicId.uuidCount())))
                         .versions(patternVersions)
@@ -232,7 +234,8 @@ public class TinkarSchemaToEntityTransformer {
                 patternRecord = PatternRecordBuilder.builder()
                         .leastSignificantBits(patternPublicId.asUuidArray()[0].getLeastSignificantBits())
                         .mostSignificantBits(patternPublicId.asUuidArray()[0].getMostSignificantBits())
-                        .nid(nidForPattern(patternPublicId))
+                        .nid(nidForPattern(pbPatternChronology.getPublicId(),
+                                pbPatternChronology.hasPatternForPatternPublicId() ? pbPatternChronology.getPatternForPatternPublicId() : null))
                         .versions(patternVersions)
                         .build();
             }
@@ -273,7 +276,8 @@ public class TinkarSchemaToEntityTransformer {
         PublicId stampPublicId = transformPublicId(stampChronology.getPublicId());
         StampRecord stampRecord;
         if (stampPublicId.uuidCount() > 0) {
-            int stampNid = nidForStamp(stampChronology.getPublicId());
+            int stampNid = nidForStamp(stampChronology.getPublicId(),
+                    stampChronology.hasPatternForStampPublicId() ? stampChronology.getPatternForStampPublicId() : null);
             if (stampPublicId.uuidCount() > 1) {
                 stampRecord = StampRecordBuilder.builder()
                         .leastSignificantBits(stampPublicId.asUuidArray()[0].getLeastSignificantBits())
@@ -597,9 +601,21 @@ public class TinkarSchemaToEntityTransformer {
     }
 
     protected int nidForPattern(dev.ikm.tinkar.schema.PublicId pbPublicId) {
+        return nidForPattern(pbPublicId, null);
+    }
+
+    /**
+     * @param pbPatternPublicId explicit pattern this pattern chronology is an element of
+     *                          (tinkar-schema#43); absent (null or empty) falls back to the
+     *                          well-known default pattern-pattern for backward compatibility.
+     */
+    protected int nidForPattern(dev.ikm.tinkar.schema.PublicId pbPublicId, dev.ikm.tinkar.schema.PublicId pbPatternPublicId) {
         PublicId componentPublicId = transformPublicId(pbPublicId);
+        PublicId patternPublicId = hasPublicId(pbPatternPublicId)
+                ? transformPublicId(pbPatternPublicId)
+                : EntityBinding.Pattern.pattern().publicId();
         return ScopedValue
-                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Pattern.pattern())
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternPublicId)
                 .call(() -> Entity.nid(componentPublicId));
     }
 
@@ -610,9 +626,21 @@ public class TinkarSchemaToEntityTransformer {
     }
 
     protected int nidForStamp(dev.ikm.tinkar.schema.PublicId pbPublicId) {
+        return nidForStamp(pbPublicId, null);
+    }
+
+    /**
+     * @param pbPatternPublicId explicit pattern this STAMP is an element of (tinkar-schema#43);
+     *                          absent (null or empty) falls back to the well-known default
+     *                          STAMP pattern for backward compatibility.
+     */
+    protected int nidForStamp(dev.ikm.tinkar.schema.PublicId pbPublicId, dev.ikm.tinkar.schema.PublicId pbPatternPublicId) {
         PublicId componentPublicId = transformPublicId(pbPublicId);
+        PublicId patternPublicId = hasPublicId(pbPatternPublicId)
+                ? transformPublicId(pbPatternPublicId)
+                : EntityBinding.Stamp.pattern().publicId();
         return ScopedValue
-                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Stamp.pattern())
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternPublicId)
                 .call(() -> Entity.nid(componentPublicId));
     }
 
@@ -623,9 +651,21 @@ public class TinkarSchemaToEntityTransformer {
     }
 
     protected int nidForConcept(dev.ikm.tinkar.schema.PublicId pbPublicId) {
+        return nidForConcept(pbPublicId, null);
+    }
+
+    /**
+     * @param pbPatternPublicId explicit pattern this concept is an element of (tinkar-schema#43);
+     *                          absent (null or empty) falls back to the well-known default
+     *                          concept pattern for backward compatibility.
+     */
+    protected int nidForConcept(dev.ikm.tinkar.schema.PublicId pbPublicId, dev.ikm.tinkar.schema.PublicId pbPatternPublicId) {
         PublicId componentPublicId = transformPublicId(pbPublicId);
+        PublicId patternPublicId = hasPublicId(pbPatternPublicId)
+                ? transformPublicId(pbPatternPublicId)
+                : EntityBinding.Concept.pattern().publicId();
         return ScopedValue
-                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern())
+                .where(SCOPED_PATTERN_PUBLICID_FOR_NID, patternPublicId)
                 .call(() -> Entity.nid(componentPublicId));
     }
 
@@ -633,5 +673,9 @@ public class TinkarSchemaToEntityTransformer {
         return ScopedValue
                 .where(SCOPED_PATTERN_PUBLICID_FOR_NID, EntityBinding.Concept.pattern())
                 .call(() -> Entity.nid(conceptPublicId));
+    }
+
+    private static boolean hasPublicId(dev.ikm.tinkar.schema.PublicId pbPublicId) {
+        return pbPublicId != null && pbPublicId.getUuidsCount() > 0;
     }
 }
