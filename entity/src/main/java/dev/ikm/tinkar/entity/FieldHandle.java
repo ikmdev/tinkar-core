@@ -224,7 +224,7 @@ public interface FieldHandle {
      * then retrieves the field value. This is useful when you want to find a field by its purpose
      * rather than its semantic meaning:
      * <pre>{@code
-     * FieldHandle.ofPurpose(version, TinkarTerm.REFERENCED_COMPONENT_PURPOSE, stampCalculator)
+     * FieldHandle.ofPurpose(version, MyTerms.REFERENCED_COMPONENT_PURPOSE, stampCalculator)
      * }</pre>
      *
      * @param version the semantic version containing the field

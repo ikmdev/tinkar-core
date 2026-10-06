@@ -15,6 +15,7 @@
  */
 package dev.ikm.tinkar.entity.transform;
 
+import dev.ikm.tinkar.entity.changeset.SchemaIds;
 import dev.ikm.tinkar.common.id.IntIdList;
 import dev.ikm.tinkar.common.id.IntIdSet;
 import dev.ikm.tinkar.common.id.IntIds;
@@ -352,12 +353,10 @@ public class TinkarSchemaToEntityTransformer {
         return elements;
     }
     protected PublicId transformPublicId(dev.ikm.tinkar.schema.PublicId pbPublicId){
-        if (pbPublicId == null || pbPublicId.getUuidsCount() == 0){
+        if (!SchemaIds.hasUuids(pbPublicId)){
             throw new RuntimeException("Exception thrown, null Public ID is present.");
         }
-        return PublicIds.of(pbPublicId.getUuidsList().stream()
-                .map(UUID::fromString)
-                .toList());
+        return SchemaIds.toPublicId(pbPublicId);
     }
     protected IntIdList transformPublicIdList(dev.ikm.tinkar.schema.PublicIdList pbPublicIdList) {
         if(pbPublicIdList.getPublicIdsCount() == 0){
@@ -381,7 +380,7 @@ public class TinkarSchemaToEntityTransformer {
         return IntIds.set.of(nids);
     }
     protected UUID transformVertexUUID(VertexUUID vertexUUID) {
-        return UUID.fromString(vertexUUID.getUuid());
+        return SchemaIds.toUuid(vertexUUID);
     }
     protected DiGraphEntity<EntityVertex> transformDigraph(DiGraph pbDiGraph, Consumer<StampEntity<StampEntityVersion>> stampEntityConsumer){
         List<IntToMultipleIntMap> PredecessorMapList = pbDiGraph.getPredecessorMapList();

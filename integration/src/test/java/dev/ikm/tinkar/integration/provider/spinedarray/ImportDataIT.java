@@ -37,7 +37,6 @@ import dev.ikm.tinkar.fixtures.TestTags;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -136,7 +135,7 @@ class ImportDataIT {
         StampCalculator stampCalcActive = StampCalculatorWithCache
                 .getCalculator(StampCoordinateRecord.make(stateActive, Coordinates.Position.LatestOnDevelopment()));
 
-        // NOTE. There's not TinkarTerm.EXAMPLE_PATTERN_TWO declared. Instead, tinkar-example-data repo creates its own EntityProxy.Pattern
+        // NOTE. No binding declares EXAMPLE_PATTERN_TWO. Instead, tinkar-example-data repo creates its own EntityProxy.Pattern
         // Therefore, we declare it here to be used for PatternEntityVersion
         EntityProxy.Pattern EXAMPLE_PATTERN_TWO = EntityProxy.Pattern.make("Example Pattern Two", UUID.fromString("7222d538-9641-474a-94ce-72c5bf6462b3"));
         // Repeat the same for the following Concepts related to EXAMPLE_PATTERN_TWO
@@ -156,8 +155,8 @@ class ImportDataIT {
             if (latestActive2.isPresent()) {
                 intIdSet.set(latestPattern.getFieldWithMeaning(COMPONENT_SET_FIELD_MEANING, latestActive2.get()));
                 // Reassign elements
-                int [] tempSetArray2 = intIdSet.get().toArray();
-                assertEquals(KernelTerm.ACTIVE_STATE.nid(), tempSetArray2 [0]);
+                // A set: Active state is a member, in no particular position.
+                assertTrue(intIdSet.get().contains(KernelTerm.ACTIVE_STATE.nid()));
 
                 intIdList.set(latestPattern.getFieldWithMeaning(COMPONENT_LIST_FIELD_MEANING, latestActive2.get()));
                 int [] tempListArray2 = intIdList.get().toArray();

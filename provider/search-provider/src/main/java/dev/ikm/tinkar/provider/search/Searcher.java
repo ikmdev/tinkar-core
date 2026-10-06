@@ -235,8 +235,8 @@ public class Searcher {
             // is indexed-only in v3, so the override pulls source text from the
             // entity binary store per hit. Uppercase <B>/</B> tags match what
             // HighlightedSegments parses on the UI side.
-            UnifiedHighlighter highlighter = new EntityStoreBackedHighlighter(indexSearcher, Indexer.analyzer());
-            highlighter.setFormatter(new DefaultPassageFormatter("<B>", "</B>", "", false));
+            UnifiedHighlighter highlighter = new EntityStoreBackedHighlighter(indexSearcher, Indexer.analyzer(),
+                    new DefaultPassageFormatter("<B>", "</B>", "", false));
             String[] snippets = highlighter.highlight(IndexerSchema.TEXT.name(), query.get(), topDocs);
 
             PrimitiveDataSearchResult[] results = new PrimitiveDataSearchResult[hits.length];

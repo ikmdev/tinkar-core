@@ -138,7 +138,7 @@
  *         if (meaning == KernelTerm.AND.nid()) {
  *             // Conjunction - process all children
  *             processChildren(tree, child);
- *         } else if (meaning == TinkarTerm.SOME.nid()) {
+ *         } else if (meaning == MyTerms.SOME.nid()) {
  *             // Existential - get role and filler
  *             IntList successors = tree.successors(child).toList();
  *             int roleNid = tree.vertex(successors.get(0)).getMeaningNid();

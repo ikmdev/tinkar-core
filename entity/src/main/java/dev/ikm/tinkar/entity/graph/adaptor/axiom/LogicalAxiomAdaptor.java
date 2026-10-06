@@ -33,7 +33,6 @@ import dev.ikm.tinkar.entity.graph.DiTreeText;
 import dev.ikm.tinkar.entity.graph.EntityVertex;
 import dev.ikm.tinkar.terms.ConceptFacade;
 import dev.ikm.tinkar.terms.EntityProxy;
-import dev.ikm.tinkar.terms.TinkarTerm;
 
 public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 	final LogicalExpression adaptedExpression;
@@ -346,8 +345,6 @@ public abstract sealed class LogicalAxiomAdaptor implements LogicalAxiom {
 		@Override
 		public ConceptFacade implication() {
 			throw new UnsupportedOperationException();
-			// return
-			// enclosingExpression.sourceGraph.vertex(vertexIndex).propertyFast(TinkarTerm);
 		}
 	}
 

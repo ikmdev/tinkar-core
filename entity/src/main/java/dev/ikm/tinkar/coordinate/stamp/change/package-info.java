@@ -162,7 +162,7 @@
  * for (VersionChangeRecord versionChange : changes.versionChanges()) {
  *     for (FieldChangeRecord fieldChange : versionChange.fieldChanges()) {
  *         // Check if this is a description field
- *         if (fieldChange.fieldMeaning() == TinkarTerm.DESCRIPTION_TEXT.nid()) {
+ *         if (fieldChange.fieldMeaning() == MyTerms.DESCRIPTION_TEXT.nid()) {
  *             String oldText = (String) fieldChange.oldValue();
  *             String newText = (String) fieldChange.newValue();
  *             System.out.println("Description changed:");

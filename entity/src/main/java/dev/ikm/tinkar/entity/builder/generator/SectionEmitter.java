@@ -73,7 +73,7 @@ public final class SectionEmitter {
      */
     public static EmittedSection emitSection(String packageName, String className, Section section,
                                              StampCalculator calculator, LanguageCalculator languageCalculator,
-                                             TinkarTermReferenceResolver resolver, String stampRef) {
+                                             BindingReferenceResolver resolver, String stampRef) {
         StringBuilder source = new StringBuilder();
         List<String> notes = new ArrayList<>();
         source.append("package ").append(packageName).append(";\n\n");
@@ -87,7 +87,9 @@ public final class SectionEmitter {
             source.append("import dev.ikm.tinkar.entity.builder.Stamp;\n");
         }
         source.append("import dev.ikm.tinkar.terms.EntityProxy;\n");
-        source.append("import dev.ikm.tinkar.terms.TinkarTerm;\n");
+        for (Class<?> bindingClass : resolver.bindingClasses()) {
+            source.append("import ").append(bindingClass.getName()).append(";\n");
+        }
         source.append("import java.time.Instant;\n\n");
         source.append("/** The \"").append(section.name()).append("\" section — a taxonomy subtree of the")
                 .append(" retrofitted starter set (IKE-Network/ike-issues#869). */\n");
@@ -126,7 +128,7 @@ public final class SectionEmitter {
      * @return whether a statement was appended
      */
     private static boolean emitComponent(int memberNid, StampCalculator calculator,
-                                         LanguageCalculator languageCalculator, TinkarTermReferenceResolver resolver,
+                                         LanguageCalculator languageCalculator, BindingReferenceResolver resolver,
                                          StringBuilder source, List<String> notes, String sectionName) {
         EntityHandle handle = EntityHandle.get(memberNid);
         boolean isPattern = handle.isPattern();
@@ -148,8 +150,8 @@ public final class SectionEmitter {
         ComponentSource componentSource = ComponentDecompiler.decompile(component, calculator, resolver);
         notes.addAll(componentSource.manifestNotes());
 
-        String fqn = TinkarTermReferenceResolver.escapeForJavaStringLiteral(rawFqn.get());
-        String declaredId = TinkarTermReferenceResolver.publicIdLiteral(component.publicId());
+        String fqn = BindingReferenceResolver.escapeForJavaStringLiteral(rawFqn.get());
+        String declaredId = BindingReferenceResolver.publicIdLiteral(component.publicId());
         source.append("        set.").append(isPattern ? "pattern(" : "concept(")
                 .append('"').append(fqn).append("\", ").append(declaredId).append(").at(inception)\n");
         for (String verbLine : componentSource.verbLines()) {

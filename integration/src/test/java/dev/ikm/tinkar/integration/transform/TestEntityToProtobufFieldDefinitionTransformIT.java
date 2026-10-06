@@ -103,9 +103,9 @@ public class TestEntityToProtobufFieldDefinitionTransformIT {
         assertTrue(msg.hasPatternChronology());
         var fieldDefs = msg.getPatternChronology().getPatternVersions(0).getFieldDefinitionsList();
         assertEquals(1, fieldDefs.size());
-        assertFalse(fieldDefs.get(0).getMeaningPublicId().getUuidsList().isEmpty());
-        assertFalse(fieldDefs.get(0).getDataTypePublicId().getUuidsList().isEmpty());
-        assertFalse(fieldDefs.get(0).getPurposePublicId().getUuidsList().isEmpty());
+        assertFalse(fieldDefs.get(0).getMeaningPublicId().getUuidBitsList().isEmpty());
+        assertFalse(fieldDefs.get(0).getDataTypePublicId().getUuidBitsList().isEmpty());
+        assertFalse(fieldDefs.get(0).getPurposePublicId().getUuidBitsList().isEmpty());
     }
 
     @Test

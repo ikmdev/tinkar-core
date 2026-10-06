@@ -20,13 +20,12 @@ import dev.ikm.tinkar.coordinate.Calculators;
 import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.builder.generator.AxiomDecompiler;
 import dev.ikm.tinkar.entity.builder.generator.AxiomDecompiler.Result;
-import dev.ikm.tinkar.entity.builder.generator.TinkarTermReferenceResolver;
+import dev.ikm.tinkar.entity.builder.generator.BindingReferenceResolver;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
 import dev.ikm.tinkar.terms.ConceptFacade;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -73,7 +72,7 @@ class AxiomDecompilerIT {
     @DisplayName("Every stated-axiom semantic's true latest state decompiles to builder source")
     void decompileEveryStatedAxiom() {
         StampCalculator calculator = Calculators.Stamp.DevelopmentLatestActiveOnly();
-        TinkarTermReferenceResolver resolver = TinkarTermReferenceResolver.build();
+        BindingReferenceResolver resolver = BindingReferenceResolver.build();
 
         int[] simpleIsACount = {0};
         int[] fullExpressionCount = {0};
@@ -88,12 +87,12 @@ class AxiomDecompilerIT {
         // must at least be well-formed Java — both forms are exercised end-to-end by the
         // section emitter's own compile-and-load IT (#869 verification step).
         Function<ConceptFacade, String> reference = concept -> {
-            TinkarTermReferenceResolver.Resolved resolved = resolver.resolve(concept);
-            assertTrue(resolved.sourceExpression().startsWith("TinkarTerm.")
+            BindingReferenceResolver.Resolved resolved = resolver.resolve(concept);
+            assertTrue(resolved.sourceExpression().startsWith("KernelTerm.")
                             || resolved.sourceExpression().startsWith("EntityProxy.Concept.make("),
                     "unexpected source expression form: " + resolved.sourceExpression());
             totalReferences[0]++;
-            if (!resolved.isTinkarTermConstant()) {
+            if (!resolved.isBindingConstant()) {
                 fallbackReferences[0]++;
                 if (fallbackExamples.size() < 10) {
                     fallbackExamples.add(concept.description() + " -> " + resolved.sourceExpression());

@@ -81,8 +81,7 @@ public class TransformTestHelper {
     }
 
     public static dev.ikm.tinkar.schema.PublicId createPBPublicId(PublicId publicId) {
-        return dev.ikm.tinkar.schema.PublicId.newBuilder()
-                .addAllUuids(publicId.asUuidList().collect(UUID::toString)).build();
+        return dev.ikm.tinkar.entity.changeset.SchemaIds.toSchema(publicId);
     }
 
     public static long nowEpochMillis() {

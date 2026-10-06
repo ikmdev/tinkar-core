@@ -187,7 +187,7 @@
  *         KernelTerm.REGULAR_NAME_DESCRIPTION_TYPE.nid()
  *     ),
  *     IntIds.list.of(KernelTerm.US_DIALECT_PATTERN.nid()),
- *     IntIds.list.of(TinkarTerm.TECHNICAL_MODULE.nid())      // Custom module priority
+ *     IntIds.list.of(MyTerms.TECHNICAL_MODULE.nid())      // Custom module priority
  * );
  * }</pre>
  *

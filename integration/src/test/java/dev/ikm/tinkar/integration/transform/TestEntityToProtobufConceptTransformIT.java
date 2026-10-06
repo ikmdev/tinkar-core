@@ -79,7 +79,7 @@ public class TestEntityToProtobufConceptTransformIT {
         assertTrue(msg.hasConceptChronology());
         assertEquals(1, msg.getConceptChronology().getConceptVersionsCount());
         assertFalse(msg.getConceptChronology().getConceptVersions(0)
-                .getStampChronologyPublicId().getUuidsList().isEmpty(),
+                .getStampChronologyPublicId().getUuidBitsList().isEmpty(),
                 "Stamp public ID should not be empty");
     }
 

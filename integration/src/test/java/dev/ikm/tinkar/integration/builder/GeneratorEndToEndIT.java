@@ -29,12 +29,11 @@ import dev.ikm.tinkar.entity.builder.KnowledgeSetSource;
 import dev.ikm.tinkar.entity.builder.generator.SectionEmitter;
 import dev.ikm.tinkar.entity.builder.generator.TaxonomySectioner;
 import dev.ikm.tinkar.entity.builder.generator.TaxonomySectioner.Section;
-import dev.ikm.tinkar.entity.builder.generator.TinkarTermReferenceResolver;
+import dev.ikm.tinkar.entity.builder.generator.BindingReferenceResolver;
 import dev.ikm.tinkar.entity.graph.DiTreeEntity;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -100,7 +99,7 @@ class GeneratorEndToEndIT {
     @DisplayName("Generate, compile, load, compose, and replay the full starter set — identity-exact, no drift")
     void generateCompileReplayVerify() throws Exception {
         StampCalculator calculator = Calculators.Stamp.DevelopmentLatestActiveOnly();
-        TinkarTermReferenceResolver resolver = TinkarTermReferenceResolver.build();
+        BindingReferenceResolver resolver = BindingReferenceResolver.build();
         LanguageCalculator languageCalculator = Calculators.Language.UsEnglishFullyQualifiedName(calculator.stampCoordinate());
         // The unreasoned set is a freshly authored ledger with no navigation semantics, so
         // sections come from its stated axioms, as KonceptExtractor's do.
@@ -178,8 +177,8 @@ class GeneratorEndToEndIT {
             sectionClassNames.add(className);
             SectionEmitter.EmittedSection emitted = SectionEmitter.emitSection(packageName, className, section,
                     calculator, languageCalculator, resolver,
-                    "Stamp.active(PrimitiveData.INCEPTION_EPOCH, TinkarTerm.USER,"
-                            + " TinkarTerm.DEVELOPMENT_MODULE, TinkarTerm.PRIMORDIAL_PATH)");
+                    "Stamp.active(PrimitiveData.INCEPTION_EPOCH, KernelTerm.USER,"
+                            + " KernelTerm.PRIMORDIAL_MODULE, KernelTerm.PRIMORDIAL_PATH)");
             emissionNotes.addAll(emitted.manifestNotes());
             writeSourceFile(sourceDir, packageName, className, emitted.source());
         }

@@ -20,7 +20,7 @@ import dev.ikm.tinkar.coordinate.stamp.calculator.StampCalculator;
 import dev.ikm.tinkar.entity.EntityService;
 import dev.ikm.tinkar.entity.builder.generator.ComponentDecompiler;
 import dev.ikm.tinkar.entity.builder.generator.ComponentDecompiler.ComponentSource;
-import dev.ikm.tinkar.entity.builder.generator.TinkarTermReferenceResolver;
+import dev.ikm.tinkar.entity.builder.generator.BindingReferenceResolver;
 import dev.ikm.tinkar.fixtures.TestConstants;
 import dev.ikm.tinkar.integration.helper.DataStore;
 import dev.ikm.tinkar.integration.helper.TestHelper;
@@ -66,7 +66,7 @@ class ComponentDecompilerIT {
     @DisplayName("Every concept and pattern decompiles to well-formed verb lines, with zero manifest notes")
     void decompileEveryComponent() {
         StampCalculator calculator = Calculators.Stamp.DevelopmentLatestActiveOnly();
-        TinkarTermReferenceResolver resolver = TinkarTermReferenceResolver.build();
+        BindingReferenceResolver resolver = BindingReferenceResolver.build();
 
         List<Integer> conceptNids = new ArrayList<>();
         EntityService.get().forEachConceptEntity(concept -> conceptNids.add(concept.nid()));

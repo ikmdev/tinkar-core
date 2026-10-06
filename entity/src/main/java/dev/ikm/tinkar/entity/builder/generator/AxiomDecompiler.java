@@ -272,7 +272,7 @@ public final class AxiomDecompiler {
      */
     private static String literalSource(Object literal) {
         return switch (literal) {
-            case String text -> '"' + TinkarTermReferenceResolver.escapeForJavaStringLiteral(text) + '"';
+            case String text -> '"' + BindingReferenceResolver.escapeForJavaStringLiteral(text) + '"';
             case Integer number -> "Integer.valueOf(" + number + ")";
             case Long number -> "Long.valueOf(" + number + "L)";
             case Float number -> "Float.valueOf(\"" + number + "\")";

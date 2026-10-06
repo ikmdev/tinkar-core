@@ -45,7 +45,6 @@ import dev.ikm.tinkar.entity.graph.adaptor.axiom.LogicalExpression;
 import dev.ikm.tinkar.terms.DefaultsTemplateTerm;
 import dev.ikm.tinkar.terms.EntityFacade;
 import dev.ikm.tinkar.terms.State;
-import dev.ikm.tinkar.terms.TinkarTerm;
 import org.eclipse.collections.api.list.ImmutableList;
 
 import java.nio.ByteBuffer;
@@ -104,7 +103,7 @@ import java.util.UUID;
  * {@link #extractYaml(Integer)}.
  * <p>
  * A component is in the set when it has a fully qualified name description in this store —
- * referenced-but-unwritten externals (for example {@code TinkarTerm} parents) carry a nid
+ * referenced-but-unwritten externals (for example kernel parents) carry a nid
  * but no description here, so they are naturally excluded.
  */
 public final class KonceptExtractor {

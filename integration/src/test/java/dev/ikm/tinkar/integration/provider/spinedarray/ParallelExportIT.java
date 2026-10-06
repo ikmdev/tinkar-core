@@ -1,5 +1,6 @@
 package dev.ikm.tinkar.integration.provider.spinedarray;
 
+import dev.ikm.tinkar.entity.changeset.ChangeSetFormat;
 import dev.ikm.tinkar.common.service.EntityCountSummary;
 import dev.ikm.tinkar.common.util.io.FileUtil;
 import dev.ikm.tinkar.entity.aggregator.DefaultEntityAggregator;
@@ -84,6 +85,9 @@ class ParallelExportIT {
                 if (entry.getName().equals("META-INF/MANIFEST.MF")) {
                     manifest = new String(zis.readAllBytes(), StandardCharsets.UTF_8);
                     continue;
+                }
+                if (ChangeSetFormat.isMetadata(entry.getName())) {
+                    continue; // the identity index, or other metadata: not records
                 }
                 // Throws InvalidProtocolBufferException on an interleaved stream.
                 while (TinkarMsg.parseDelimitedFrom(zis) != null) {

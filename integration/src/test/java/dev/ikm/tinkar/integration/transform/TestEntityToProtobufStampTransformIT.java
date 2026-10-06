@@ -94,10 +94,10 @@ public class TestEntityToProtobufStampTransformIT {
         assertTrue(msg.hasStampChronology());
         assertTrue(msg.getStampChronology().hasFirstStampVersion());
         assertEquals(expectedTime, msg.getStampChronology().getFirstStampVersion().getTime());
-        assertFalse(msg.getStampChronology().getFirstStampVersion().getStatusPublicId().getUuidsList().isEmpty());
-        assertFalse(msg.getStampChronology().getFirstStampVersion().getAuthorPublicId().getUuidsList().isEmpty());
-        assertFalse(msg.getStampChronology().getFirstStampVersion().getModulePublicId().getUuidsList().isEmpty());
-        assertFalse(msg.getStampChronology().getFirstStampVersion().getPathPublicId().getUuidsList().isEmpty());
+        assertFalse(msg.getStampChronology().getFirstStampVersion().getStatusPublicId().getUuidBitsList().isEmpty());
+        assertFalse(msg.getStampChronology().getFirstStampVersion().getAuthorPublicId().getUuidBitsList().isEmpty());
+        assertFalse(msg.getStampChronology().getFirstStampVersion().getModulePublicId().getUuidBitsList().isEmpty());
+        assertFalse(msg.getStampChronology().getFirstStampVersion().getPathPublicId().getUuidBitsList().isEmpty());
     }
 
     @Test

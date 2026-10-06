@@ -15,6 +15,8 @@
  */
 package dev.ikm.tinkar.entity.maintenance;
 
+import dev.ikm.tinkar.entity.changeset.ChangeSetFormat;
+import dev.ikm.tinkar.entity.changeset.SchemaIds;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.id.PublicId;
 import dev.ikm.tinkar.common.id.PublicIds;
@@ -81,7 +83,6 @@ import java.util.zip.ZipInputStream;
 public final class ChangeSetSummarizer {
 
     private static final Logger LOG = LoggerFactory.getLogger(ChangeSetSummarizer.class);
-    private static final String MANIFEST_RELPATH = "META-INF/MANIFEST.MF";
     private static final DateTimeFormatter STAMP_TIME = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
     public record ManifestInfo(
@@ -648,7 +649,7 @@ public final class ChangeSetSummarizer {
              ZipInputStream zis = new ZipInputStream(bis)) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
-                if (entry.getName().equals(MANIFEST_RELPATH)) {
+                if (entry.getName().equals(ChangeSetFormat.MANIFEST)) {
                     Manifest mf = new Manifest(zis);
                     Attributes main = mf.getMainAttributes();
                     MutableList<NamedPublicId> entries = Lists.mutable.empty();
@@ -707,7 +708,8 @@ public final class ChangeSetSummarizer {
              ZipInputStream zis = new ZipInputStream(bis)) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
-                if (entry.getName().equals(MANIFEST_RELPATH)) {
+                // The manifest, the identity index, and any later metadata are not records.
+                if (ChangeSetFormat.isMetadata(entry.getName())) {
                     zis.closeEntry();
                     continue;
                 }
@@ -970,12 +972,8 @@ public final class ChangeSetSummarizer {
         if (v == null || v.getFieldsCount() < 4) return false;
         Field typeField = v.getFields(3);
         if (typeField.getValueCase() != Field.ValueCase.PUBLIC_ID) return false;
-        for (String u : typeField.getPublicId().getUuidsList()) {
-            try {
-                if (type.contains(UUID.fromString(u))) return true;
-            } catch (IllegalArgumentException ignored) { /* ignore malformed */ }
-        }
-        return false;
+        PublicId typeId = toPublicId(typeField.getPublicId());
+        return typeId != null && PublicId.equals(type, typeId);
     }
 
     private ImmutableList<Diagnostic> buildDiagnostics(
@@ -1149,13 +1147,12 @@ public final class ChangeSetSummarizer {
     // -- Public-id helpers ---------------------------------------------------
 
     private static PublicId toPublicId(dev.ikm.tinkar.schema.PublicId pb) {
-        if (pb == null || pb.getUuidsCount() == 0) return null;
-        List<UUID> uuids = new ArrayList<>(pb.getUuidsCount());
-        for (String u : pb.getUuidsList()) {
-            try { uuids.add(UUID.fromString(u)); }
-            catch (IllegalArgumentException e) { return null; }
+        if (!SchemaIds.hasUuids(pb)) return null;
+        try {
+            return SchemaIds.toPublicId(pb);
+        } catch (IllegalArgumentException e) {
+            return null; // malformed
         }
-        return PublicIds.of(uuids);
     }
 
     /** True when a {@link PrimitiveData} service is running and contains the given public id. */

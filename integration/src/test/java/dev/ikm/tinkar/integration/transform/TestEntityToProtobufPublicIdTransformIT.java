@@ -80,8 +80,9 @@ public class TestEntityToProtobufPublicIdTransformIT {
         assertNotNull(msg);
         assertTrue(msg.hasConceptChronology());
         var pbPublicId = msg.getConceptChronology().getPublicId();
-        assertFalse(pbPublicId.getUuidsList().isEmpty(), "Should have at least one UUID");
-        assertEquals(java.util.Set.of(uuid1.toString(), uuid2.toString()), java.util.Set.copyOf(pbPublicId.getUuidsList()),
+        assertFalse(pbPublicId.getUuidBitsList().isEmpty(), "Should have at least one UUID");
+        assertEquals(0, pbPublicId.getUuidsCount(), "No UUID should be written as text");
+        assertEquals(java.util.Set.of(uuid1, uuid2), java.util.Set.of(dev.ikm.tinkar.entity.changeset.SchemaIds.uuids(pbPublicId)),
                 "Every UUID should be carried");
     }
 }

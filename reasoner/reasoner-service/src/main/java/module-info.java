@@ -22,7 +22,6 @@ module dev.ikm.tinkar.reasoner.service {
     requires org.eclipse.collections.api;
     requires org.eclipse.collections.impl;
 	requires dev.ikm.tinkar.entity;
-	requires org.jgrapht.core;
 
 	exports dev.ikm.tinkar.reasoner.service;
 

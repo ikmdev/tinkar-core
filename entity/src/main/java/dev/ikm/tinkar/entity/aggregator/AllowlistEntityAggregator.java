@@ -197,7 +197,7 @@ public class AllowlistEntityAggregator extends EntityAggregator {
      * purpose predicate is set — all semantics pass. Purpose is a <em>complementary</em> refinement, so
      * it is <b>fail-open</b>: a semantic is excluded only when its pattern-purpose is positively
      * resolved and the predicate rejects it; a semantic whose pattern-purpose cannot be resolved (for
-     * example a description on a {@code TinkarTerm} pattern absent from a replay-seeded store) is
+     * example a description on a kernel pattern absent from a replay-seeded store) is
      * <em>kept</em>. Purpose never drops content it cannot classify.
      */
     private boolean purposeAllows(Entity<?> entity) {

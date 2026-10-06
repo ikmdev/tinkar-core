@@ -73,7 +73,7 @@ final class ComponentLedger {
     /**
      * The language seed of every derived description identity: {@code T5(component,
      * kind|seed|ordinal)}. A permanent literal, English language's least UUID, which is the first
-     * UUID {@code TinkarTerm.ENGLISH_LANGUAGE} carried when the derivation was defined (a proxy
+     * UUID {@code KernelTerm.ENGLISH_LANGUAGE} carried when the derivation was defined (a proxy
      * made from UUIDs keeps them sorted), and never read from a proxy again: a derived identity
      * must not move with how some binding lists a component's UUIDs.
      */

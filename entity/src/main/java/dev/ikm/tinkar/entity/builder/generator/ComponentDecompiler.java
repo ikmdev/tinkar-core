@@ -67,7 +67,7 @@ public final class ComponentDecompiler {
      * @return the verb-call lines (in discovery order) and any hand-authoring notes
      */
     public static ComponentSource decompile(EntityFacade component, StampCalculator calculator,
-                                            TinkarTermReferenceResolver resolver) {
+                                            BindingReferenceResolver resolver) {
         List<String> lines = new ArrayList<>();
         List<String> notes = new ArrayList<>();
         List<EntityFacade> descriptions = new ArrayList<>();
@@ -112,7 +112,7 @@ public final class ComponentDecompiler {
      * with no definition cannot compile as a ledger declaration at all).
      */
     private static void decompilePatternDefinition(PatternFacade patternFacade, StampCalculator calculator,
-                                                    TinkarTermReferenceResolver resolver, List<String> lines,
+                                                    BindingReferenceResolver resolver, List<String> lines,
                                                     List<String> notes) {
         Latest<PatternEntityVersion> latest = calculator.latestPatternEntityVersion(patternFacade);
         if (!latest.isPresent()) {
@@ -133,11 +133,11 @@ public final class ComponentDecompiler {
         lines.add(line.toString());
     }
 
-    private static void decompileAxioms(SemanticEntityVersion semanticVersion, TinkarTermReferenceResolver resolver,
+    private static void decompileAxioms(SemanticEntityVersion semanticVersion, BindingReferenceResolver resolver,
                                         List<String> lines, List<String> notes) {
         DiTreeEntity tree = (DiTreeEntity) semanticVersion.fieldValues().get(0);
         AxiomDecompiler.Result result = AxiomDecompiler.decompile(tree);
-        String declaredId = TinkarTermReferenceResolver.publicIdLiteral(semanticVersion.chronology().publicId());
+        String declaredId = BindingReferenceResolver.publicIdLiteral(semanticVersion.chronology().publicId());
         if (result.decompiled()) {
             // Declared identity via statedAxioms(PublicId, Consumer) — NOT
             // isA(ConceptFacade...), which is derived-identity only. There is no
@@ -158,7 +158,7 @@ public final class ComponentDecompiler {
     }
 
     private static void decompileDialects(EntityFacade description, StampCalculator calculator,
-                                          TinkarTermReferenceResolver resolver, List<String> lines,
+                                          BindingReferenceResolver resolver, List<String> lines,
                                           List<String> notes) {
         calculator.forEachSemanticVersionForComponentOfPattern(description, KernelTerm.US_DIALECT_PATTERN,
                 (semanticVersion, entityVersion, patternVersion) ->
@@ -169,7 +169,7 @@ public final class ComponentDecompiler {
     }
 
     private static void decompileGenericSemantic(SemanticEntityVersion semanticVersion,
-                                                 TinkarTermReferenceResolver resolver, List<String> lines,
+                                                 BindingReferenceResolver resolver, List<String> lines,
                                                  List<String> notes) {
         // patternNid() is always a pattern — EntityFacade.make(nid) returns a
         // kind-less wrapper that is never instanceof PatternFacade, so wrapping it
@@ -181,7 +181,7 @@ public final class ComponentDecompiler {
     }
 
     private static void emitSemanticOn(EntityFacade referencedComponent, SemanticEntityVersion semanticVersion,
-                                       EntityFacade patternConstant, TinkarTermReferenceResolver resolver,
+                                       EntityFacade patternConstant, BindingReferenceResolver resolver,
                                        List<String> lines, List<String> notes) {
         emitGenericSemantic(referencedComponent, semanticVersion, patternConstant, resolver, lines, notes);
     }
@@ -199,12 +199,12 @@ public final class ComponentDecompiler {
      * instead of degrading gracefully.
      */
     private static void emitGenericSemantic(EntityFacade referencedComponent, SemanticEntityVersion semanticVersion,
-                                            EntityFacade patternFacade, TinkarTermReferenceResolver resolver,
+                                            EntityFacade patternFacade, BindingReferenceResolver resolver,
                                             List<String> lines, List<String> notes) {
-        String declaredId = TinkarTermReferenceResolver.publicIdLiteral(semanticVersion.chronology().publicId());
+        String declaredId = BindingReferenceResolver.publicIdLiteral(semanticVersion.chronology().publicId());
         String patternRef = resolver.resolve(patternFacade).sourceExpression();
         String referencedId = referencedComponent == null ? null
-                : TinkarTermReferenceResolver.publicIdLiteral(referencedComponent.publicId());
+                : BindingReferenceResolver.publicIdLiteral(referencedComponent.publicId());
         String location = referencedId == null ? declaredId : declaredId + " (on " + referencedId + ")";
 
         // Every field is scanned before any decision is made — collecting a note for
@@ -242,12 +242,12 @@ public final class ComponentDecompiler {
      * (never guesses at) anything else, so a future starter set's unsupported field
      * type surfaces as a manifest note, not a silently wrong or dropped value.
      */
-    private static String fieldValueExpression(Object value, TinkarTermReferenceResolver resolver) {
+    private static String fieldValueExpression(Object value, BindingReferenceResolver resolver) {
         if (value instanceof EntityFacade facade) {
             return resolver.resolve(facade).sourceExpression();
         }
         if (value instanceof String text) {
-            return '"' + TinkarTermReferenceResolver.escapeForJavaStringLiteral(text) + '"';
+            return '"' + BindingReferenceResolver.escapeForJavaStringLiteral(text) + '"';
         }
         if (value instanceof Instant instant) {
             return "Instant.parse(\"" + instant + "\")";

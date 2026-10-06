@@ -417,6 +417,7 @@ public class RecordListBuilder<T> implements ImmutableList<T> {
     }
 
     @Override
+    @SuppressWarnings("deprecation") // still part of the eclipse-collections interface
     public <S> ImmutableList<Pair<T, S>> zip(Iterable<S> iterable) {
         if (immutableList == null) {
             return mutableList.toImmutable().zip(iterable);
@@ -425,6 +426,7 @@ public class RecordListBuilder<T> implements ImmutableList<T> {
     }
 
     @Override
+    @SuppressWarnings("deprecation") // still part of the eclipse-collections interface
     public ImmutableList<Pair<T, Integer>> zipWithIndex() {
         if (immutableList == null) {
             return mutableList.toImmutable().zipWithIndex();
@@ -1114,6 +1116,7 @@ public class RecordListBuilder<T> implements ImmutableList<T> {
     }
 
     @Override
+    @SuppressWarnings("deprecation") // still part of the eclipse-collections interface
     public int injectInto(int i, IntObjectToIntFunction<? super T> intObjectToIntFunction) {
         if (immutableList == null) {
             return mutableList.toImmutable().injectInto(i, intObjectToIntFunction);
@@ -1123,6 +1126,7 @@ public class RecordListBuilder<T> implements ImmutableList<T> {
     }
 
     @Override
+    @SuppressWarnings("deprecation") // still part of the eclipse-collections interface
     public long injectInto(long l, LongObjectToLongFunction<? super T> longObjectToLongFunction) {
         if (immutableList == null) {
             return mutableList.toImmutable().injectInto(l, longObjectToLongFunction);
@@ -1132,6 +1136,7 @@ public class RecordListBuilder<T> implements ImmutableList<T> {
     }
 
     @Override
+    @SuppressWarnings("deprecation") // still part of the eclipse-collections interface
     public float injectInto(float v, FloatObjectToFloatFunction<? super T> floatObjectToFloatFunction) {
         if (immutableList == null) {
             return mutableList.toImmutable().injectInto(v, floatObjectToFloatFunction);
@@ -1141,6 +1146,7 @@ public class RecordListBuilder<T> implements ImmutableList<T> {
     }
 
     @Override
+    @SuppressWarnings("deprecation") // still part of the eclipse-collections interface
     public double injectInto(double v, DoubleObjectToDoubleFunction<? super T> doubleObjectToDoubleFunction) {
         if (immutableList == null) {
             return mutableList.toImmutable().injectInto(v, doubleObjectToDoubleFunction);

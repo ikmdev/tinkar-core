@@ -15,6 +15,8 @@
  */
 package dev.ikm.tinkar.entity.export;
 
+import dev.ikm.tinkar.entity.changeset.ChangeSetFormat;
+import dev.ikm.tinkar.entity.changeset.IdentityIndex;
 import dev.ikm.tinkar.terms.KernelTerm;
 import dev.ikm.tinkar.common.alert.AlertStreams;
 import dev.ikm.tinkar.common.id.PublicId;
@@ -115,7 +117,8 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
 
         try (FileOutputStream fos = new FileOutputStream(protobufFile);
              BufferedOutputStream bos = new BufferedOutputStream(fos);
-             ZipOutputStream zos = new ZipOutputStream(bos)) {
+             ZipOutputStream zos = new ZipOutputStream(bos);
+             IdentityIndex.Writer identities = new IdentityIndex.Writer(false)) {
 
             // Create a single entry
             ZipEntry zipEntry = new ZipEntry(protobufFile.getName().replace(".zip", ""));
@@ -141,6 +144,8 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                     synchronized (writeLock) {
                         pbTinkarMsg.writeDelimitedTo(zos);
                     }
+                    // After the record is written, so the index lists exactly what the file carries.
+                    identities.add(pbTinkarMsg);
                     completedUnitOfWork();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -183,6 +188,9 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
             LOG.info("Data zipEntry size: " + zipEntry.getSize());
             LOG.info("Data zipEntry compressed size: " + zipEntry.getCompressedSize());
 
+            identities.writeTo(zos);
+            LOG.info("Identity index lists {} component(s)", identities.count());
+
             // Write Manifest File
             ZipEntry manifestEntry = new ZipEntry("META-INF/MANIFEST.MF");
             zos.putNextEntry(manifestEntry);
@@ -222,6 +230,7 @@ public class ExportEntitiesToProtobufFile extends TrackingCallable<EntityCountSu
                                            Collection<PublicId> moduleList,
                                            Collection<PublicId> authorList){
         StringBuilder manifestContent = new StringBuilder()
+                .append(ChangeSetFormat.VERSION_ATTRIBUTE).append(": ").append(ChangeSetFormat.CURRENT_VERSION).append("\n")
                 // TODO: Dynamically populate this user
                 .append("Packager-Name: ").append(KernelTerm.KOMET_USER.description()).append("\n")
                 .append("Package-Date: ").append(LocalDateTime.now(Clock.systemUTC())).append("\n")

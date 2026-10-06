@@ -15,6 +15,9 @@
  */
 package dev.ikm.tinkar.entity.load;
 
+import dev.ikm.tinkar.entity.changeset.ChangeSetFormat;
+import dev.ikm.tinkar.entity.changeset.IdentityIndex;
+import dev.ikm.tinkar.entity.changeset.SchemaIds;
 import dev.ikm.tinkar.common.service.internal.EntityStore;
 import dev.ikm.tinkar.common.util.thread.StructuredScopes;
 import dev.ikm.tinkar.common.util.thread.SubtaskFailedException;
@@ -83,7 +86,9 @@ import java.util.zip.ZipInputStream;
  * </ul>
  * The watch list is bound to {@link #SCOPED_WATCH_LIST} for the whole import, so a store can
  * trace its own work on watched components: the RocksDB store logs each watched entity-key
- * allocation.
+ * allocation. Work an import hands to a parallel stream, rather than to a structured task
+ * scope, runs outside that binding; the identity index (format version 2) registers its nids
+ * that way, so the store traces only the allocations made on the importing thread.
  */
 public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSummary> {
 
@@ -92,7 +97,6 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
 
     private final TinkarSchemaToEntityTransformer entityTransformer =
             TinkarSchemaToEntityTransformer.getInstance();
-    private static final String MANIFEST_RELPATH = "META-INF/MANIFEST.MF";
     private final File importFile;
     private final AtomicLong importCount = new AtomicLong();
     private final AtomicLong importConceptCount = new AtomicLong();
@@ -102,6 +106,10 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
     
     private final AtomicLong identifierCount = new AtomicLong();
     private final boolean useMultiPassImport;
+    /** The format version the changeset's manifest names; known once {@link #compute()} has read it. */
+    private volatile int formatVersion;
+    /** Whether the import took every component's identity from the changeset's identity index. */
+    private volatile boolean usedIdentityIndex;
     private final Set<UUID> watchList = new CopyOnWriteArraySet<>(watchListFromProperty());
 
     /**
@@ -231,12 +239,19 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             // Analyze Manifest and update tracking callable
             List<Map.Entry<PublicId, String>> manifestEntryData = new ArrayList<>(); // a public id is never a hash key
             long expectedImports = analyzeManifest(manifestEntryData);
-            LOG.info(expectedImports + " Entities to process...");
+            LOG.info(expectedImports + " Entities to process, format version " + formatVersion + "...");
 
+            // With an identity index every nid is assigned from it and the records are read
+            // once, in either mode; without one (format version 1), the mode decides.
+            boolean indexed = ChangeSetFormat.hasIdentityIndex(importFile);
+            if (formatVersion >= 2 && !indexed) {
+                throw new IllegalStateException(importFile.getName() + " names " + ChangeSetFormat.VERSION_ATTRIBUTE
+                        + ": " + formatVersion + " but carries no identity index (" + ChangeSetFormat.IDENTITY_INDEX + ")");
+            }
             Set<UUID> watched = Collections.unmodifiableSet(watchList);
-            if (useMultiPassImport) {
+            if (useMultiPassImport || indexed) {
                 return ScopedValue.where(SCOPED_WATCH_LIST, watched)
-                        .call(() -> computeMultiPass(expectedImports, manifestEntryData));
+                        .call(() -> computeMultiPass(expectedImports, manifestEntryData, indexed));
             } else {
                 return ScopedValue.where(SCOPED_WATCH_LIST, watched)
                         .call(() -> computeOnePass(expectedImports, manifestEntryData));
@@ -247,12 +262,12 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
     }
 
     /**
-     * Multi-pass import: Imports entities in dependency order to handle forward references.
-     * Pass 1: Import non-semantics (Concepts, Patterns, Stamps) - these have no referenced components
-     * Pass 2+: Import semantics whose referenced components now exist in the database
-     * Repeats until all semantics are successfully imported or no progress is made.
+     * Import with every nid assigned before any record is transformed, so forward references
+     * resolve. Pass 1 assigns the nids: from the changeset's identity index when it has one,
+     * else by reading every record for its identity. Pass 2 transforms and stores the records.
      */
-    private EntityCountSummary computeMultiPass(long expectedImports, List<Map.Entry<PublicId, String>> manifestEntryData) throws Exception {
+    private EntityCountSummary computeMultiPass(long expectedImports, List<Map.Entry<PublicId, String>> manifestEntryData,
+                                                boolean indexed) throws Exception {
         updateMessage("Starting multi-pass import...");
         updateProgress(0, expectedImports * 2);
 
@@ -260,14 +275,18 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
         EntityService.get().beginLoadPhase();
         CopyOnWriteArrayList<PublicId> patternIds = new CopyOnWriteArrayList<>();
 
-        try (FileInputStream fileIn = new FileInputStream(importFile);
+        if (indexed) {
+            updateMessage("Registering identifiers from the identity index...");
+            identifierCount.set(IdentityIndex.registerNids(importFile, registered -> updateProgress(registered, expectedImports * 2)));
+            usedIdentityIndex = true;
+        } else try (FileInputStream fileIn = new FileInputStream(importFile);
              BufferedInputStream buffIn = new BufferedInputStream(fileIn, InputStreamBufferSize);
              CountingInputStream countingIn = new CountingInputStream(buffIn);
              ZipInputStream zis = new ZipInputStream(countingIn)) {
             ZipEntry zipEntry;
             int messageIndex = 0;
             while ((zipEntry = zis.getNextEntry()) != null) {
-                if (!zipEntry.getName().equals(MANIFEST_RELPATH)) {
+                if (!ChangeSetFormat.isMetadata(zipEntry.getName())) {
                     Semaphore permits = new Semaphore(Runtime.getRuntime().availableProcessors() * 8);
 
                     try (StructuredTaskScope<Object, Void, SubtaskFailedException> scope = StructuredScopes.open()) {
@@ -334,7 +353,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             ZipEntry zipEntry;
             final AtomicInteger errorCount = new AtomicInteger();
             while ((zipEntry = zis.getNextEntry()) != null) {
-                if (zipEntry.getName().equals(MANIFEST_RELPATH)) {
+                if (ChangeSetFormat.isMetadata(zipEntry.getName())) {
                     continue;
                 }
                 try (StructuredTaskScope<Object, Void, SubtaskFailedException> scope = StructuredScopes.open()) {
@@ -451,7 +470,7 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
 
             ZipEntry zipEntry;
             while ((zipEntry = zis.getNextEntry()) != null) {
-                if (zipEntry.getName().equals(MANIFEST_RELPATH)) {
+                if (ChangeSetFormat.isMetadata(zipEntry.getName())) {
                     continue;
                 }
 
@@ -528,9 +547,20 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
      * Extract PublicId from protobuf PublicId message.
      */
     private static PublicId getEntityPublicId(dev.ikm.tinkar.schema.PublicId pbPublicId) {
-        return PublicIds.of(pbPublicId.getUuidsList().stream()
-                .map(UUID::fromString)
-                .toList());
+        return SchemaIds.toPublicId(pbPublicId);
+    }
+
+    /** The format version the changeset's manifest names (1 when it names none); known once {@link #compute()} has run. */
+    public int formatVersion() {
+        return formatVersion;
+    }
+
+    /**
+     * Whether the import took every component's identity from the changeset's identity index,
+     * reading the records once, rather than reading them for their identities first.
+     */
+    public boolean usedIdentityIndex() {
+        return usedIdentityIndex;
     }
 
     protected void initCounts() {
@@ -609,8 +639,9 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
             ZipEntry zipEntry;
             boolean foundManifest = false;
             while (!foundManifest && (zipEntry = zis.getNextEntry()) != null) {
-                if (zipEntry.getName().equals(MANIFEST_RELPATH)) {
+                if (zipEntry.getName().equals(ChangeSetFormat.MANIFEST)) {
                     Manifest manifest = new Manifest(zis);
+                    formatVersion = ChangeSetFormat.version(manifest.getMainAttributes(), importFile.getName());
                     expectedImports = Long.parseLong(manifest.getMainAttributes().getValue("Total-Count"));
                     // Get Dependent Module / Author PublicIds and Descriptions
                     manifest.getEntries().keySet().forEach((publicIdKey) -> {
@@ -623,6 +654,8 @@ public class LoadEntitiesFromProtobufFile extends TrackingCallable<EntityCountSu
                 zis.closeEntry();
                 LOG.info(zipEntry.getName() + " zip entry size: " + zipEntry.getSize());
             }
+        } catch (ChangeSetFormat.UnsupportedFormatException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

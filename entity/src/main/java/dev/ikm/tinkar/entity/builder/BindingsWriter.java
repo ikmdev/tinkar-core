@@ -29,7 +29,7 @@ import java.util.UUID;
 
 /**
  * Writes the generated bindings class for a composed {@link KnowledgeSet}: the
- * {@code TinkarTerm} idiom — one {@code EntityProxy} constant per declaration, its
+ * {@code KernelTerm} idiom — one {@code EntityProxy} constant per declaration, its
  * identity embedded as a resolved UUID literal, its javadoc generated from the
  * declaration's definition text. The generated class depends only on
  * {@code dev.ikm.tinkar.terms}, so consumers of a bindings artifact do not depend on the
@@ -261,9 +261,9 @@ public final class BindingsWriter {
     }
 
     /**
-     * A component's UUIDs as the arguments of {@code make(name, UUID...)}, the form
-     * {@code TinkarTerm} uses: the proxy keeps them sorted, so its first UUID is the least, as
-     * code that derives from a component's first UUID has always found it.
+     * A component's UUIDs as the arguments of {@code make(name, UUID...)}: the proxy keeps
+     * them sorted, so a generated class lists them the same way whatever order the set
+     * declared them in.
      */
     private static String uuidsLiteral(dev.ikm.tinkar.common.id.PublicId publicId) {
         StringBuilder literal = new StringBuilder();

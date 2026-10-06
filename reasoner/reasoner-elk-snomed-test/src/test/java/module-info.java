@@ -3,7 +3,7 @@ import dev.ikm.tinkar.common.service.ServiceLifecycle;
 import dev.ikm.tinkar.provider.spinedarray.SpinedArrayProvider;
 import dev.ikm.tinkar.reasoner.service.ReasonerService;
 
-open module dev.ikm.tinkar.reasoner.elksnomed.test2 {
+open module dev.ikm.tinkar.reasoner.elksnomed.test.it {
     requires org.eclipse.collections.api;
     requires org.eclipse.collections.impl;
 	requires transitive org.junit.jupiter.api;

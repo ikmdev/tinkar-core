@@ -63,9 +63,13 @@ public class TestEntityToProtobufPublicIdTransform {
         // Given a Public ID with one public id
         Concept testConcept = conceptMap.get(TEST_CONCEPT_NAME);
         PublicId actualPublicId = testConcept.publicId();
-        // Creating a Protobuf with the Expected value
-        dev.ikm.tinkar.schema.PublicId expectedPBPublicId = dev.ikm.tinkar.schema.PublicId.newBuilder()
-                .addAllUuids(actualPublicId.asUuidList().collect(UUID::toString)).build();
+        // Creating a Protobuf with the Expected value: format version 2 writes each UUID as two
+        // longs, most significant bits first, and no UUID as text
+        dev.ikm.tinkar.schema.PublicId.Builder expectedBuilder = dev.ikm.tinkar.schema.PublicId.newBuilder();
+        actualPublicId.asUuidList().forEach(uuid -> expectedBuilder
+                .addUuidBits(uuid.getMostSignificantBits())
+                .addUuidBits(uuid.getLeastSignificantBits()));
+        dev.ikm.tinkar.schema.PublicId expectedPBPublicId = expectedBuilder.build();
 
         // When I try to transform it into a public ID protobuf message
         dev.ikm.tinkar.schema.PublicId actualPBPublicId = EntityToTinkarSchemaTransformer.getInstance().createPBPublicId(actualPublicId);
@@ -73,7 +77,8 @@ public class TestEntityToProtobufPublicIdTransform {
         // Then we will check to verify that the transformed public ID matches that of the original.
         assertEquals(expectedPBPublicId, actualPBPublicId, "Protobuf Public ID's do not match.");
         assertEquals(expectedPBPublicId.hashCode(), actualPBPublicId.hashCode(), "Protobuf Public ID's hash codes not match.");
-        assertEquals(expectedPBPublicId.getUuidsList(), actualPBPublicId.getUuidsList(), "Protobuf Public ID's lists not match.");
+        assertEquals(expectedPBPublicId.getUuidBitsList(), actualPBPublicId.getUuidBitsList(), "Protobuf Public ID's lists not match.");
+        assertEquals(0, actualPBPublicId.getUuidsCount(), "Protobuf Public ID carries UUIDs as text.");
     }
 
 }

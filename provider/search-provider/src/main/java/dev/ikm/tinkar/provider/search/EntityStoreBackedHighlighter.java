@@ -24,6 +24,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.StoredFields;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.uhighlight.PassageFormatter;
 import org.apache.lucene.search.uhighlight.UnifiedHighlighter;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.slf4j.Logger;
@@ -70,8 +71,8 @@ final class EntityStoreBackedHighlighter extends UnifiedHighlighter {
             IndexerSchema.INDEXED_FIELD_ORDINAL.name()
     );
 
-    EntityStoreBackedHighlighter(IndexSearcher searcher, Analyzer analyzer) {
-        super(searcher, analyzer);
+    EntityStoreBackedHighlighter(IndexSearcher searcher, Analyzer analyzer, PassageFormatter formatter) {
+        super(new UnifiedHighlighter.Builder(searcher, analyzer).withFormatter(formatter));
     }
 
     @Override

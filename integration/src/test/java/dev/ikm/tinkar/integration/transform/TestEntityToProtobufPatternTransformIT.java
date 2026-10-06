@@ -110,9 +110,9 @@ public class TestEntityToProtobufPatternTransformIT {
         assertEquals(1, msg.getPatternChronology().getPatternVersionsCount());
         assertEquals(1, msg.getPatternChronology().getPatternVersions(0).getFieldDefinitionsCount());
         assertFalse(msg.getPatternChronology().getPatternVersions(0)
-                .getReferencedComponentPurposePublicId().getUuidsList().isEmpty());
+                .getReferencedComponentPurposePublicId().getUuidBitsList().isEmpty());
         assertFalse(msg.getPatternChronology().getPatternVersions(0)
-                .getReferencedComponentMeaningPublicId().getUuidsList().isEmpty());
+                .getReferencedComponentMeaningPublicId().getUuidBitsList().isEmpty());
     }
 
     @Test

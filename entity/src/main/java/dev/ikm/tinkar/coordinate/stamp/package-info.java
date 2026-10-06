@@ -196,13 +196,13 @@
  * StampCoordinateRecord filtered = stamp.withModuleNids(
  *     IntIds.set.of(
  *         KernelTerm.SOLOR_MODULE.nid(),
- *         TinkarTerm.SNOMED_CT_CORE_MODULE.nid()
+ *         MyTerms.SNOMED_CT_CORE_MODULE.nid()
  *     )
  * );
  *
  * // Exclude specific modules
  * StampCoordinateRecord excluded = stamp.withExcludedModuleNids(
- *     IntIds.set.of(TinkarTerm.DEPRECATED_MODULE.nid())
+ *     IntIds.set.of(MyTerms.DEPRECATED_MODULE.nid())
  * );
  * }</pre>
  *

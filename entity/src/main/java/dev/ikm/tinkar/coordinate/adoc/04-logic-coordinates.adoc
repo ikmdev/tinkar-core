@@ -56,14 +56,14 @@ LogicCoordinateRecord elPlusPlus = Coordinates.Logic.ElPlusPlus();
 
 // Equivalent to:
 LogicCoordinateRecord elPlusPlus = LogicCoordinateRecord.make(
-    TinkarTerm.SNOROCKET_CLASSIFIER,              // Classifier
-    TinkarTerm.EL_PLUS_PLUS_PROFILE,             // Profile
-    TinkarTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN,
-    TinkarTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
-    TinkarTerm.SOLOR_CONCEPT_PATTERN,            // Concept membership
-    TinkarTerm.STATED_NAVIGATION_PATTERN,
-    TinkarTerm.INFERRED_NAVIGATION_PATTERN,
-    TinkarTerm.NAVIGATION_VERTEX                 // Root
+    KernelTerm.SNOROCKET_CLASSIFIER,              // Classifier
+    KernelTerm.EL_PLUS_PLUS_PROFILE,             // Profile
+    KernelTerm.EL_PLUS_PLUS_INFERRED_AXIOMS_PATTERN,
+    KernelTerm.EL_PLUS_PLUS_STATED_AXIOMS_PATTERN,
+    MyTerms.SOLOR_CONCEPT_PATTERN,            // Concept membership
+    KernelTerm.STATED_NAVIGATION_PATTERN,
+    KernelTerm.INFERRED_NAVIGATION_PATTERN,
+    KernelTerm.NAVIGATION_VERTEX                 // Root
 );
 ----
 
@@ -200,7 +200,7 @@ Latest<DiTreeEntity> statedAxioms = calc.getStatedAxiomTree(conceptNid);
 if (statedAxioms.isPresent()) {
     DiTreeEntity tree = statedAxioms.get();
     boolean isSufficientlyDefined =
-        tree.containsVertexWithMeaning(TinkarTerm.SUFFICIENT_SET);
+        tree.containsVertexWithMeaning(KernelTerm.SUFFICIENT_SET);
 
     if (isSufficientlyDefined) {
         System.out.println("Concept has sufficient definition");
@@ -263,7 +263,7 @@ private void processVertex(DiTreeEntity tree, int vertexIndex,
                           List<Relationship> relationships) {
     EntityVertex vertex = tree.vertex(vertexIndex);
 
-    if (vertex.getMeaningNid() == TinkarTerm.SOME.nid()) {
+    if (vertex.getMeaningNid() == MyTerms.SOME.nid()) {
         // Existential restriction: SOME role.filler
         IntList successors = tree.successors(vertexIndex).toList();
         int roleNid = tree.vertex(successors.get(0)).getMeaningNid();
@@ -311,7 +311,7 @@ for (int conceptNid : allConceptNids) {
 
     if (axioms.isPresent()) {
         DiTreeEntity tree = axioms.get();
-        if (tree.containsVertexWithMeaning(TinkarTerm.SUFFICIENT_SET)) {
+        if (tree.containsVertexWithMeaning(KernelTerm.SUFFICIENT_SET)) {
             definedConcepts.add(conceptNid);
         }
     }

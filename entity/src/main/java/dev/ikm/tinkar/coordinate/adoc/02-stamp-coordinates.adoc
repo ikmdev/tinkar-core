@@ -54,13 +54,13 @@ A position specifies *when* on *which path*:
 // Latest on development path
 StampPositionRecord latest = StampPositionRecord.make(
     Long.MAX_VALUE,                      // Latest
-    TinkarTerm.DEVELOPMENT_PATH
+    KernelTerm.DEVELOPMENT_PATH
 );
 
 // Specific date on master path
 StampPositionRecord historic = StampPositionRecord.make(
     Instant.parse("2024-01-01T00:00:00Z").toEpochMilli(),
-    TinkarTerm.MASTER_PATH
+    KernelTerm.MASTER_PATH
 );
 ----
 
@@ -72,17 +72,17 @@ Paths represent development branches with their origins:
 ----
 // Master path branches from primordial path
 StampPathImmutable masterPath = StampPathImmutable.make(
-    TinkarTerm.MASTER_PATH.nid(),
+    KernelTerm.MASTER_PATH.nid(),
     Sets.immutable.of(
-        StampPositionRecord.make(Long.MAX_VALUE, TinkarTerm.PRIMORDIAL_PATH.nid())
+        StampPositionRecord.make(Long.MAX_VALUE, KernelTerm.PRIMORDIAL_PATH.nid())
     )
 );
 
 // Development branches from master at specific time
 StampPathImmutable devPath = StampPathImmutable.make(
-    TinkarTerm.DEVELOPMENT_PATH.nid(),
+    KernelTerm.DEVELOPMENT_PATH.nid(),
     Sets.immutable.of(
-        StampPositionRecord.make(branchTimestamp, TinkarTerm.MASTER_PATH.nid())
+        StampPositionRecord.make(branchTimestamp, KernelTerm.MASTER_PATH.nid())
     )
 );
 ----
@@ -97,7 +97,7 @@ StampCoordinateRecord coordinate = StampCoordinateRecord.make(
     StateSet.ACTIVE,                     // Only active content
     StampPositionRecord.make(            // Latest on master
         Long.MAX_VALUE,
-        TinkarTerm.MASTER_PATH
+        KernelTerm.MASTER_PATH
     ),
     IntIds.set.empty()                   // All modules (wildcard)
 );
@@ -177,7 +177,7 @@ StateSet both = StateSet.ACTIVE_AND_INACTIVE;
 // Latest versions
 StampPositionRecord latest = StampPositionRecord.make(
     Long.MAX_VALUE,
-    TinkarTerm.DEVELOPMENT_PATH
+    KernelTerm.DEVELOPMENT_PATH
 );
 ----
 
@@ -189,7 +189,7 @@ StampPositionRecord latest = StampPositionRecord.make(
 long timestamp = Instant.parse("2024-01-01T00:00:00Z").toEpochMilli();
 StampPositionRecord pointInTime = StampPositionRecord.make(
     timestamp,
-    TinkarTerm.MASTER_PATH
+    KernelTerm.MASTER_PATH
 );
 
 // Use in coordinate
@@ -211,11 +211,11 @@ Latest<ConceptVersion> historicVersion = calc.latest(concept);
 // Find what changed between two dates
 StampPositionRecord start = StampPositionRecord.make(
     startTimestamp,
-    TinkarTerm.MASTER_PATH
+    KernelTerm.MASTER_PATH
 );
 StampPositionRecord end = StampPositionRecord.make(
     endTimestamp,
-    TinkarTerm.MASTER_PATH
+    KernelTerm.MASTER_PATH
 );
 
 // Get changes
@@ -237,8 +237,8 @@ if (!changes.versionChanges().isEmpty()) {
 ----
 // Include specific modules only
 IntIdSet allowedModules = IntIds.set.of(
-    TinkarTerm.SOLOR_MODULE.nid(),
-    TinkarTerm.SNOMED_CT_CORE_MODULE.nid()
+    KernelTerm.SOLOR_MODULE.nid(),
+    MyTerms.SNOMED_CT_CORE_MODULE.nid()
 );
 
 StampCoordinateRecord filtered = coordinate.withModuleNids(allowedModules);
@@ -250,7 +250,7 @@ StampCoordinateRecord filtered = coordinate.withModuleNids(allowedModules);
 ----
 // Exclude deprecated modules
 IntIdSet excludedModules = IntIds.set.of(
-    TinkarTerm.DEPRECATED_MODULE.nid()
+    MyTerms.DEPRECATED_MODULE.nid()
 );
 
 StampCoordinateRecord filtered = coordinate.withExcludedModuleNids(excludedModules);
@@ -264,8 +264,8 @@ When multiple versions exist with the same timestamp:
 ----
 // Prefer versions from these modules (in order)
 IntIdList modulePriority = IntIds.list.of(
-    TinkarTerm.SOLOR_OVERLAY_MODULE.nid(),  // 1st preference
-    TinkarTerm.SOLOR_MODULE.nid()           // 2nd preference
+    KernelTerm.SOLOR_OVERLAY_MODULE.nid(),  // 1st preference
+    KernelTerm.SOLOR_MODULE.nid()           // 2nd preference
 );
 
 StampCoordinateRecord prioritized = coordinate.withModulePriorityNidList(modulePriority);
@@ -340,7 +340,7 @@ StampCoordinateRecord production = Coordinates.Stamp.MasterLatestActiveOnly();
 long historicDate = Instant.parse("2023-01-01T00:00:00Z").toEpochMilli();
 StampCoordinateRecord historic = StampCoordinateRecord.make(
     StateSet.ACTIVE_AND_INACTIVE,  // See everything
-    StampPositionRecord.make(historicDate, TinkarTerm.MASTER_PATH),
+    StampPositionRecord.make(historicDate, KernelTerm.MASTER_PATH),
     IntIds.set.empty()
 );
 ----
@@ -352,8 +352,8 @@ StampCoordinateRecord historic = StampCoordinateRecord.make(
 // Only SNOMED CT core content
 StampCoordinateRecord snomedOnly = StampCoordinateRecord.make(
     StateSet.ACTIVE,
-    StampPositionRecord.make(Long.MAX_VALUE, TinkarTerm.MASTER_PATH),
-    IntIds.set.of(TinkarTerm.SNOMED_CT_CORE_MODULE.nid())
+    StampPositionRecord.make(Long.MAX_VALUE, KernelTerm.MASTER_PATH),
+    IntIds.set.of(MyTerms.SNOMED_CT_CORE_MODULE.nid())
 );
 ----
 
@@ -462,11 +462,11 @@ long sevenDaysAgo = Instant.now()
 
 StampPositionRecord weekAgo = StampPositionRecord.make(
     sevenDaysAgo,
-    TinkarTerm.DEVELOPMENT_PATH
+    KernelTerm.DEVELOPMENT_PATH
 );
 StampPositionRecord now = StampPositionRecord.make(
     Long.MAX_VALUE,
-    TinkarTerm.DEVELOPMENT_PATH
+    KernelTerm.DEVELOPMENT_PATH
 );
 
 List<Integer> changedConcepts = new ArrayList<>();
