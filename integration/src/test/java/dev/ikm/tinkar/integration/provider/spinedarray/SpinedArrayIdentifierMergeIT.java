@@ -38,7 +38,6 @@ import dev.ikm.tinkar.terms.State;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.opentest4j.AssertionFailedError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -101,7 +100,7 @@ class SpinedArrayIdentifierMergeIT {
         Set<String> identifiers = extractIdentifiers(compoundConcept);
 
         // TODO remove after fixing root cause
-        assertThrows(AssertionFailedError.class, () -> {
+        assertThrows(AssertionError.class, () -> {
             verifyIdentifiers(identifiers);
         });
     }
