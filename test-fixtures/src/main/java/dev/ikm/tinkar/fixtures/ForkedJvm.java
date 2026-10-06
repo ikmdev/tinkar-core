@@ -57,6 +57,11 @@ import java.util.concurrent.TimeUnit;
  * the parent's, each line marked with its stage, so a test's log holds its stages' logs in
  * order. A stage that throws fails the
  * test with the stage's stack trace.
+ *
+ * <p>The child also receives the parent's {@value #FORWARDED_PREFIX}* system properties,
+ * which Maven's test plugins set from the command line rather than as JVM options, so a
+ * diagnostic switch such as {@code -Dtinkar.import.watch=<uuid>} reaches the stages:
+ * {@code ./mvnw verify -Dit.test=SomeIT -Dtinkar.import.watch=<uuid>}.
  */
 public final class ForkedJvm {
 
@@ -69,6 +74,9 @@ public final class ForkedJvm {
          */
         void run(Properties in, Properties out) throws Exception;
     }
+
+    /** The prefix of the system properties the child receives from the parent. */
+    public static final String FORWARDED_PREFIX = "tinkar.";
 
     /** How long a stage may run before the test fails, unless the test says otherwise. */
     public static final Duration DEFAULT_TIMEOUT = Duration.ofMinutes(10);
@@ -95,6 +103,7 @@ public final class ForkedJvm {
             List<String> command = new ArrayList<>();
             command.add(Path.of(System.getProperty("java.home"), "bin", "java").toString());
             command.addAll(jvmOptions());
+            command.addAll(forwardedProperties());
             command.add("-cp");
             command.add(classPath());
             command.add(ForkedJvm.class.getName());
@@ -201,6 +210,19 @@ public final class ForkedJvm {
                 }
             }
         }
+    }
+
+    /**
+     * The parent's {@value #FORWARDED_PREFIX}* system properties as {@code -D} options; a
+     * property already among the JVM options is passed again, and the later one wins.
+     */
+    private static List<String> forwardedProperties() {
+        List<String> options = new ArrayList<>();
+        System.getProperties().stringPropertyNames().stream()
+                .filter(name -> name.startsWith(FORWARDED_PREFIX))
+                .sorted()
+                .forEach(name -> options.add("-D" + name + "=" + System.getProperty(name)));
+        return options;
     }
 
     /**
